@@ -299,7 +299,7 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
     formatted = formatted.replace(/^(AUFTRAGGEBER|AUFTRAGNEHMER|VERKÄUFER|KÄUFER|VERMIETER|MIETER|ARBEITGEBER|ARBEITNEHMER|PARTEI [AB]):/gm, '<strong style="display: block; margin-top: 10px;">$1:</strong>');
     
     // Unterschriftenbereich formatieren
-    formatted = formatted.replace(/_____+/g, '<span style="display: inline-block; width: 200px; border-bottom: 1px solid #000; margin: 20px 10px 5px 0;">&nbsp;</span>');
+    formatted = formatted.replace(/_____+/g, '<span style="display: inline-block; max-width: 200px; min-width: 100px; width: 100%; border-bottom: 1px solid #000; margin: 20px 10px 5px 0;">&nbsp;</span>');
     
     // Zeilenumbrüche zu HTML
     formatted = formatted.replace(/\n/g, '<br/>');
@@ -874,8 +874,8 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
                   </div>
                 </div>
                 ${companyProfile.logoUrl ? `
-                  <div style="width: 150px; text-align: right;">
-                    <img src="${companyProfile.logoUrl}" style="max-width: 150px; max-height: 80px;" alt="Logo" />
+                  <div style="max-width: 150px; text-align: right;">
+                    <img src="${companyProfile.logoUrl}" style="max-width: 100%; max-height: 80px;" alt="Logo" />
                   </div>
                 ` : ''}
               </div>

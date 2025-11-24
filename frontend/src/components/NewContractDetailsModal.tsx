@@ -1329,12 +1329,11 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             </h4>
             {originalPdfUrl ? (
               <div>
-                <div className={styles.pdfViewerContainer} style={{ maxHeight: '400px' }}>
+                <div className={styles.pdfViewerContainer}>
                   <iframe
                     src={originalPdfUrl}
                     className={styles.pdfViewer}
                     title="Original PDF"
-                    style={{ height: '400px' }}
                   />
                 </div>
                 <div className={styles.pdfActions} style={{ marginTop: '0.75rem' }}>
@@ -1359,12 +1358,11 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             </h4>
             {signedPdfUrl ? (
               <div>
-                <div className={styles.pdfViewerContainer} style={{ maxHeight: '400px' }}>
+                <div className={styles.pdfViewerContainer}>
                   <iframe
                     src={signedPdfUrl}
                     className={styles.pdfViewer}
                     title="Signiertes PDF"
-                    style={{ height: '400px' }}
                   />
                 </div>
                 <div className={styles.pdfActions} style={{ marginTop: '0.75rem' }}>
