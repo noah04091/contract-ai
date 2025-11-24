@@ -730,10 +730,60 @@
 
   .actionBtnSmall {
     font-size: 0.75rem;
-    padding: 0.4rem 0.5rem; /* ✅ FIX: Weniger Padding für schmalere Buttons */
-    flex-shrink: 0; /* ✅ FIX: Auch in Mobile View */
-    white-space: nowrap; /* ✅ FIX: Auch in Mobile View */
-    gap: 0.25rem; /* ✅ FIX: Kleinerer Abstand zwischen Icon und Text */
+    padding: 0.4rem 0.5rem;
+    flex-shrink: 0;
+    white-space: nowrap;
+    gap: 0.25rem;
+  }
+
+  /* ✅ FIX: Icon-only buttons mobile optimierung */
+  .actionBtnIcon {
+    min-width: 44px;
+    min-height: 44px;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 10px;
+  }
+
+  .actionBtnIcon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Card Actions horizontal scroll optimieren */
+  .cardActions {
+    gap: 0.5rem;
+    padding-top: 1rem;
+  }
+
+  /* Status Badge nicht abschneiden */
+  .statusBadge {
+    min-width: fit-content;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.65rem;
+  }
+
+  /* Card Header Layout verbessern */
+  .cardHeader {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .cardHeaderLeft {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .cardCheckbox {
+    min-width: 32px;
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 

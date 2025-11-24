@@ -2890,6 +2890,46 @@
     min-width: max(240px, 70vw); /* Breiter für bessere Lesbarkeit */
   }
 
+  /* 📁 Regular Folder Dropdown auf Mobile Cards - auch FIXED */
+  .folderDropdown {
+    position: fixed !important;
+    bottom: 50% !important;
+    left: 50% !important;
+    right: auto !important;
+    top: auto !important;
+    transform: translate(-50%, 50%);
+    max-width: calc(100vw - 2rem);
+    min-width: max(260px, 75vw);
+    max-height: 50vh;
+    overflow-y: auto;
+    z-index: 1001;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  }
+
+  .folderDropdownWrapper {
+    position: static;
+  }
+
+  /* Overlay für Modal-ähnliches Verhalten */
+  .folderDropdownWrapper::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .folderDropdownWrapper.active::before {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
   /* HIDE TABLE, SHOW CARDS on Mobile */
   .tableContainer {
     display: none;
