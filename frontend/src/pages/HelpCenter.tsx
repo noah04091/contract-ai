@@ -7,7 +7,7 @@ import {
   AlertCircle, Info, Sparkles, Mail,
   Filter, Layout, X, Lightbulb
 } from 'lucide-react';
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import { Link } from 'react-router-dom';
 import styles from '../styles/HelpCenter.module.css';
 import Footer from '../components/Footer';

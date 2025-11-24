@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import { Mail } from "lucide-react";
 import styles from "./ForgotPassword.module.css";
 import { Link } from "react-router-dom";
@@ -73,14 +73,14 @@ export default function ForgotPassword() {
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Passwort vergessen | Contract AI" />
         <meta property="og:description" content="Hier kannst du dein Contract AI Passwort zurücksetzen, wenn du es vergessen hast." />
-        <meta property="og:url" content="https://contract-ai.de/forgot-password" />
+        <meta property="og:url" content="https://www.contract-ai.de/forgot-password" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
+        <meta property="og:image" content="https://www.contract-ai.de/og-image.jpg" />
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Passwort vergessen | Contract AI" />
         <meta name="twitter:description" content="Zurücksetzen deines Contract AI Passworts, schnell und einfach." />
-        <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
       </Helmet>
       
       <div className={styles.container}>

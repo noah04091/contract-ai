@@ -19,7 +19,7 @@ export default function SEO({
   title = "Contract AI – Verträge analysieren & optimieren mit KI",
   description = "Analysiere, optimiere und verwalte deine Verträge mit KI. Contract AI bietet dir volle Kontrolle, rechtliche Sicherheit und smarte Features in einer Plattform.",
   keywords = "Vertragsanalyse, KI, Vertragsoptimierung, Vertragsmanagement, Legal Tech, DSGVO",
-  image = "https://contract-ai.de/og-image.jpg",
+  image = "https://www.contract-ai.de/og-image.jpg",
   type = "website",
   noindex = false,
 }: SEOProps) {

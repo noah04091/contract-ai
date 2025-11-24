@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import { CreditCard, Star, CheckCircle, AlertCircle, Zap, Shield, Lock, BarChart } from "lucide-react";
 import styles from "../styles/Subscribe.module.css";
 
@@ -124,14 +124,14 @@ export default function Subscribe() {
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Abo abschließen | Contract AI" />
         <meta property="og:description" content="Entdecke alle Vorteile von Contract AI Premium und starte direkt mit der besten Vertragsanalyse." />
-        <meta property="og:url" content="https://contract-ai.de/subscribe" />
+        <meta property="og:url" content="https://www.contract-ai.de/subscribe" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
+        <meta property="og:image" content="https://www.contract-ai.de/og-image.jpg" />
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Abo abschließen | Contract AI" />
         <meta name="twitter:description" content="Schalte jetzt Contract AI Premium frei und sichere dir alle Profi-Funktionen für deine Verträge." />
-        <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
       </Helmet>
       
       <div className={styles.pageContainer}>

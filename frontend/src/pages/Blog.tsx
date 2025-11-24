@@ -1,7 +1,7 @@
 // 📁 src/pages/Blog.tsx - MODIFIZIERT für zentrale Artikel-Daten
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import { Search, Calendar, Clock, ArrowRight } from 'lucide-react';
 import styles from '../styles/Blog.module.css';
 
@@ -84,10 +84,10 @@ const Blog: React.FC = () => {
           property="og:description"
           content="Lesen Sie spannende Beiträge über Vertragsanalyse, Optimierung und KI-basierte Lösungen. Immer up to date mit dem Contract AI Blog."
         />
-        <meta property="og:url" content="https://contract-ai.de/blog" />
+        <meta property="og:url" content="https://www.contract-ai.de/blog" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
-        
+        <meta property="og:image" content="https://www.contract-ai.de/og-image.jpg" />
+
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Blog & News zu Vertragsanalyse | Contract AI" />
@@ -95,7 +95,7 @@ const Blog: React.FC = () => {
           name="twitter:description"
           content="Insights und Expertenwissen rund um Verträge, KI und Optimierung — im Contract AI Blog."
         />
-        <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
       </Helmet>
 
       <div className={styles.blog}>

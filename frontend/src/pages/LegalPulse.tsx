@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import styles from "./LegalPulse.module.css";
 import Notification from "../components/Notification";
 import RiskCard from "../components/RiskCard";
@@ -1205,15 +1205,15 @@ export default function LegalPulse() {
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Legal Pulse – Risiken erkennen & Verträge schützen | Contract AI" />
         <meta property="og:description" content="Mit Legal Pulse erkennst du rechtliche Risiken frühzeitig & schützt deine Verträge proaktiv. Bleib immer up to date. Jetzt ausprobieren!" />
-        <meta property="og:url" content="https://contract-ai.de/legalpulse" />
+        <meta property="og:url" content="https://www.contract-ai.de/legalpulse" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
-        
+        <meta property="og:image" content="https://www.contract-ai.de/og-image.jpg" />
+
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Legal Pulse – Risiken erkennen & Verträge schützen | Contract AI" />
         <meta name="twitter:description" content="Erkenne rechtliche Risiken & sichere deine Verträge ab – mit Legal Pulse von Contract AI. Jetzt prüfen & geschützt bleiben!" />
-        <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
       </Helmet>
 
       {notification && (

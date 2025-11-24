@@ -1,4 +1,4 @@
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import Footer from "../components/Footer";
 
 export default function AGB() {
@@ -12,14 +12,14 @@ export default function AGB() {
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Allgemeine Geschäftsbedingungen | Contract AI" />
         <meta property="og:description" content="Unsere AGB geben dir volle Transparenz zu den Vertragsbedingungen und der Nutzung von Contract AI." />
-        <meta property="og:url" content="https://contract-ai.de/agb" />
+        <meta property="og:url" content="https://www.contract-ai.de/agb" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
+        <meta property="og:image" content="https://www.contract-ai.de/og-image.jpg" />
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Allgemeine Geschäftsbedingungen | Contract AI" />
         <meta name="twitter:description" content="Lies hier die Vertrags- und Nutzungsbedingungen von Contract AI. Transparent und klar formuliert." />
-        <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
       </Helmet>
 
       <div style={{ backgroundColor: '#f5f5f7', minHeight: '100vh', paddingTop: '80px', paddingBottom: '0' }}>

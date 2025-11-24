@@ -77,7 +77,7 @@ export default function ContractShareModal({
   }, [show, onClose]);
 
   // Generiere den Contract-Link
-  const contractLink = `https://contract-ai.de/contracts/${contract._id}`;
+  const contractLink = `https://www.contract-ai.de/contracts/${contract._id}`;
   
   // Erstelle Share-Texte
   const shareText = `Vertrag "${contract.name}" - Contract AI`;

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import styles from "../styles/About.module.css";
 import Footer from "../components/Footer";
 
@@ -35,14 +35,14 @@ const About: React.FC = () => {
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Über uns – Contract AI" />
         <meta property="og:description" content="Lerne das Team kennen, das Contract AI entwickelt hat, um deine Verträge smarter, sicherer und transparenter zu machen." />
-        <meta property="og:url" content="https://contract-ai.de/about" />
+        <meta property="og:url" content="https://www.contract-ai.de/about" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
+        <meta property="og:image" content="https://www.contract-ai.de/og-image.jpg" />
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Über uns – Contract AI" />
         <meta name="twitter:description" content="Wir sind das Team hinter Contract AI – der führenden Plattform für smarte, KI-gestützte Vertragsanalysen." />
-        <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
       </Helmet>
       
       <div className={styles.aboutContainer}>

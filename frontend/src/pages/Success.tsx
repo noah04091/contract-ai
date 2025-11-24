@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import styles from "../styles/Success.module.css";
 import { fetchUserData } from '../utils/fetchUserData';
 
@@ -88,14 +88,14 @@ const Success: React.FC = () => {
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Erfolgreich abonniert | Contract AI" />
         <meta property="og:description" content="Du hast erfolgreich dein Contract AI Abo abgeschlossen. Los geht's mit allen Premium-Funktionen!" />
-        <meta property="og:url" content="https://contract-ai.de/success" />
+        <meta property="og:url" content="https://www.contract-ai.de/success" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
+        <meta property="og:image" content="https://www.contract-ai.de/og-image.jpg" />
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Erfolgreich abonniert | Contract AI" />
         <meta name="twitter:description" content="Abo abgeschlossen — jetzt alle Premium-Funktionen nutzen und Verträge wie ein Profi managen!" />
-        <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
       </Helmet>
       
       <div className={styles.successContainer}>

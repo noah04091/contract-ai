@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import {
   FileText, RefreshCw, Upload, CheckCircle, AlertCircle,
   Plus, Calendar, Clock, Trash2, Eye, Edit,
@@ -2463,15 +2463,15 @@ export default function Contracts() {
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Verträge mit KI analysieren & optimieren | Contract AI" />
         <meta property="og:description" content="Lade deine Verträge hoch, erkenne Risiken & optimiere Inhalte sofort mit KI. Mehr Sicherheit & bessere Ergebnisse." />
-        <meta property="og:url" content="https://contract-ai.de/contracts" />
+        <meta property="og:url" content="https://www.contract-ai.de/contracts" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
-        
+        <meta property="og:image" content="https://www.contract-ai.de/og-image.jpg" />
+
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Verträge mit KI analysieren & optimieren | Contract AI" />
         <meta name="twitter:description" content="Verträge einfach hochladen, Risiken erkennen & optimieren – mit KI. Mehr Kontrolle & Klarheit für deine Verträge." />
-        <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
       </Helmet>
 
       <div className={styles.pageContainer}>

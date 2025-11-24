@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import { CreditCard, Star, CheckCircle, AlertCircle, Zap, Shield, Lock, BarChart, Rocket } from "lucide-react";
 import styles from "../styles/Upgrade.module.css";
 
@@ -103,14 +103,14 @@ export default function Upgrade() {
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Upgrade auf Premium | Contract AI" />
         <meta property="og:description" content="Wechsle jetzt auf Premium und profitiere von allen Profi-Funktionen für deine Vertragsanalyse." />
-        <meta property="og:url" content="https://contract-ai.de/upgrade" />
+        <meta property="og:url" content="https://www.contract-ai.de/upgrade" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
+        <meta property="og:image" content="https://www.contract-ai.de/og-image.jpg" />
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Upgrade auf Premium | Contract AI" />
         <meta name="twitter:description" content="Starte mit Contract AI Premium durch und hol das Maximum aus deinen Verträgen heraus." />
-        <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
       </Helmet>
 
       <div className={styles.pageContainer}>

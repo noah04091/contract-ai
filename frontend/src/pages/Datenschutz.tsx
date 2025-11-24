@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
 import './Datenschutz.css';
 import Footer from "../components/Footer";
@@ -47,15 +47,15 @@ export default function Datenschutz() {
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Datenschutzerklärung | Contract AI" />
         <meta property="og:description" content="Lies alles über unseren Umgang mit deinen Daten und wie Contract AI deine Privatsphäre schützt." />
-        <meta property="og:url" content="https://contract-ai.de/datenschutz" />
+        <meta property="og:url" content="https://www.contract-ai.de/datenschutz" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
-        
+        <meta property="og:image" content="https://www.contract-ai.de/og-image.jpg" />
+
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Datenschutzerklärung | Contract AI" />
         <meta name="twitter:description" content="Vertraue auf höchste Sicherheit und Datenschutz bei Contract AI. Hier findest du alle Infos." />
-        <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
       </Helmet>
 
       <div className="privacy-container">

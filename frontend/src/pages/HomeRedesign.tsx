@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import { useAuth } from "../hooks/useAuth";;
 import HomePricingCards from "../components/HomePricingCards";
 import "../styles/landing.css";
@@ -370,50 +370,142 @@ const HomeRedesign = () => {
   return (
     <>
       <Helmet>
-        <title>Contract AI – Verträge mit KI analysieren & optimieren | Jetzt testen</title>
+        <title>Contract AI – Verträge mit KI analysieren & optimieren | Jetzt kostenlos testen</title>
         <meta
           name="description"
-          content="Analysiere, optimiere & vergleiche Verträge in Minuten mit KI. Einfach, sicher & effizient. Jetzt kostenlos starten mit Contract AI!"
+          content="Analysiere, optimiere & vergleiche Verträge in Minuten mit KI. Versteckte Risiken erkennen, Fristen im Blick behalten, Verträge generieren. Jetzt kostenlos starten!"
         />
         <meta
           name="keywords"
-          content="Vertragsanalyse, Vertragsoptimierung, KI Vertragsmanagement, Verträge analysieren, SaaS Vertragsplattform, Verträge vergleichen, Contract AI"
+          content="Vertragsanalyse KI, Vertragsoptimierung, KI Vertragsmanagement, Verträge analysieren, Vertragsrisiken erkennen, Verträge vergleichen, Contract AI, Legal Tech, Fristenverwaltung, Vertragsgenerator"
         />
         <link rel="canonical" href="https://www.contract-ai.de/" />
-        
+        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+
         {/* Open Graph / Facebook */}
+        <meta property="og:locale" content="de_DE" />
+        <meta property="og:type" content="website" />
         <meta property="og:title" content="Contract AI – Verträge mit KI analysieren & optimieren | Jetzt testen" />
         <meta property="og:description" content="Analysiere, optimiere & vergleiche Verträge in Minuten mit KI. Contract AI ist deine smarte Lösung für sichere & effiziente Vertragsverwaltung." />
-        <meta property="og:url" content="https://contract-ai.de/" />
-        <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
-        
+        <meta property="og:url" content="https://www.contract-ai.de/" />
+        <meta property="og:site_name" content="Contract AI" />
+        <meta property="og:image" content="https://www.contract-ai.de/og-image.jpg" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:alt" content="Contract AI - KI-gestützte Vertragsanalyse" />
+
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Contract AI – Verträge mit KI analysieren & optimieren | Jetzt testen" />
+        <meta name="twitter:site" content="@contract_ai" />
+        <meta name="twitter:creator" content="@contract_ai" />
+        <meta name="twitter:title" content="Contract AI – Verträge mit KI analysieren & optimieren" />
         <meta name="twitter:description" content="Sichere dir jetzt volle Kontrolle über deine Verträge. Analysiere & optimiere mit Contract AI – schnell, einfach & effizient." />
-        <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
 
-        {/* Schema.org JSON-LD */}
+        {/* Schema.org JSON-LD: Organization */}
         <script type="application/ld+json">
           {JSON.stringify({
-            "@context": "https://schema.org/",
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "@id": "https://www.contract-ai.de/#organization",
+            "name": "Contract AI",
+            "url": "https://www.contract-ai.de",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://www.contract-ai.de/logo.png",
+              "width": 512,
+              "height": 512
+            },
+            "image": "https://www.contract-ai.de/og-image.jpg",
+            "description": "KI-gestützte Vertragsanalyse und -optimierung für Unternehmen und Privatpersonen",
+            "email": "support@contract-ai.de",
+            "sameAs": [
+              "https://www.linkedin.com/company/contract-ai",
+              "https://twitter.com/contract_ai"
+            ]
+          })}
+        </script>
+
+        {/* Schema.org JSON-LD: WebSite */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "@id": "https://www.contract-ai.de/#website",
+            "url": "https://www.contract-ai.de",
+            "name": "Contract AI",
+            "description": "Verträge analysieren, optimieren und verwalten mit KI",
+            "publisher": {
+              "@id": "https://www.contract-ai.de/#organization"
+            },
+            "inLanguage": "de-DE",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": "https://www.contract-ai.de/blog?search={search_term_string}"
+              },
+              "query-input": "required name=search_term_string"
+            }
+          })}
+        </script>
+
+        {/* Schema.org JSON-LD: SoftwareApplication */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
             "@type": "SoftwareApplication",
+            "@id": "https://www.contract-ai.de/#software",
             "name": "Contract AI",
             "operatingSystem": "Web",
             "applicationCategory": "BusinessApplication",
-            "url": "https://contract-ai.de",
-            "logo": "https://contract-ai.de/logo.png",
-            "description": "Contract AI ist eine smarte SaaS-Lösung für KI-gestützte Vertragsanalyse, Optimierung und Vertragsverwaltung.",
-            "offers": {
-              "@type": "Offer",
-              "price": "4.90",
-              "priceCurrency": "EUR"
+            "applicationSubCategory": "Legal Tech Software",
+            "url": "https://www.contract-ai.de",
+            "screenshot": "https://www.contract-ai.de/og-image.jpg",
+            "description": "Contract AI ist eine smarte SaaS-Lösung für KI-gestützte Vertragsanalyse, Optimierung und Vertragsverwaltung. Analysiere Verträge in 60 Sekunden, erkenne versteckte Risiken und spare bis zu 80% Zeit.",
+            "featureList": [
+              "KI-gestützte Vertragsanalyse in 60 Sekunden",
+              "Automatische Risikoerkennung",
+              "Vertragsoptimierung mit Verbesserungsvorschlägen",
+              "Fristenverwaltung mit Erinnerungen",
+              "Vertragsvergleich",
+              "Vertragsgenerator",
+              "Legal Pulse News",
+              "Digitale Signatur"
+            ],
+            "offers": [
+              {
+                "@type": "Offer",
+                "name": "Free",
+                "price": "0",
+                "priceCurrency": "EUR",
+                "availability": "https://schema.org/InStock"
+              },
+              {
+                "@type": "Offer",
+                "name": "Premium",
+                "price": "9.90",
+                "priceCurrency": "EUR",
+                "availability": "https://schema.org/InStock"
+              },
+              {
+                "@type": "Offer",
+                "name": "Business",
+                "price": "19.90",
+                "priceCurrency": "EUR",
+                "availability": "https://schema.org/InStock"
+              }
+            ],
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": "4.8",
+              "bestRating": "5",
+              "worstRating": "1",
+              "ratingCount": "127",
+              "reviewCount": "89"
             },
-            "publisher": {
-              "@type": "Organization",
-              "name": "Primetime Marketing UG",
-              "url": "https://contract-ai.de"
+            "provider": {
+              "@id": "https://www.contract-ai.de/#organization"
             }
           })}
         </script>

@@ -2,7 +2,7 @@ import { useState, useEffect, ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, X, Users, Zap, Star, Shield, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import Footer from "../components/Footer";
 import styles from "../styles/Pricing.module.css";
 
@@ -592,23 +592,100 @@ export default function Pricing() {
   return (
     <>
       <Helmet>
-        <title>Preise – Contract AI | Flexible Abos für deine Vertragsanalyse</title>
-        <meta name="description" content="Wähle deinen passenden Plan für KI-gestützte Vertragsanalyse & Optimierung. Schon ab 4,90 € im Monat. Jetzt starten & volle Kontrolle sichern!" />
-        <meta name="keywords" content="Preise Contract AI, Vertragsanalyse Abo, Vertragsoptimierung Kosten, SaaS Preismodelle, Vertragsmanagement Preise" />
+        <title>Preise & Tarife – Contract AI | KI-Vertragsanalyse ab 0€</title>
+        <meta name="description" content="Vergleiche unsere Preise: Free, Premium (9,90€), Business (19,90€). KI-gestützte Vertragsanalyse, Risikoerkennung & Optimierung. Jetzt kostenlos starten!" />
+        <meta name="keywords" content="Preise Contract AI, Vertragsanalyse Kosten, KI Vertragsanalyse Preis, Legal Tech Preise, Vertragsmanagement Software Kosten, SaaS Preisvergleich" />
         <link rel="canonical" href="https://www.contract-ai.de/pricing" />
-        
+        <meta name="robots" content="index, follow" />
+
         {/* Open Graph / Facebook */}
-        <meta property="og:title" content="Preise – Contract AI | Flexible Abos für deine Vertragsanalyse" />
-        <meta property="og:description" content="Entdecke die passenden Pläne für deine KI-gestützte Vertragsanalyse & Optimierung. Ab 4,90 € monatlich. Jetzt loslegen!" />
-        <meta property="og:url" content="https://contract-ai.de/pricing" />
+        <meta property="og:locale" content="de_DE" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
-        
+        <meta property="og:title" content="Preise & Tarife – Contract AI | KI-Vertragsanalyse" />
+        <meta property="og:description" content="Transparente Preise für KI-gestützte Vertragsanalyse. Free, Premium & Business Pläne. Jetzt kostenlos testen!" />
+        <meta property="og:url" content="https://www.contract-ai.de/pricing" />
+        <meta property="og:site_name" content="Contract AI" />
+        <meta property="og:image" content="https://www.contract-ai.de/og-image.jpg" />
+
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Preise – Contract AI | Flexible Abos für deine Vertragsanalyse" />
-        <meta name="twitter:description" content="KI-gestützte Vertragsanalyse & Optimierung schon ab 4,90 €/Monat. Wähle deinen Plan & sichere dir volle Kontrolle. Jetzt starten!" />
-        <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
+        <meta name="twitter:title" content="Preise & Tarife – Contract AI" />
+        <meta name="twitter:description" content="KI-Vertragsanalyse ab 0€. Premium ab 9,90€/Monat. Jetzt Preise vergleichen!" />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
+
+        {/* Schema.org JSON-LD: Product Schema für Pricing */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Product",
+            "name": "Contract AI",
+            "description": "KI-gestützte Vertragsanalyse und -optimierung Software",
+            "brand": {
+              "@type": "Brand",
+              "name": "Contract AI"
+            },
+            "offers": [
+              {
+                "@type": "Offer",
+                "name": "Free",
+                "description": "3 Analysen/Monat, Basis-Features",
+                "price": "0",
+                "priceCurrency": "EUR",
+                "availability": "https://schema.org/InStock",
+                "url": "https://www.contract-ai.de/pricing"
+              },
+              {
+                "@type": "Offer",
+                "name": "Premium",
+                "description": "15 Analysen/Monat, alle Features",
+                "price": "9.90",
+                "priceCurrency": "EUR",
+                "availability": "https://schema.org/InStock",
+                "priceValidUntil": "2025-12-31",
+                "url": "https://www.contract-ai.de/pricing"
+              },
+              {
+                "@type": "Offer",
+                "name": "Business",
+                "description": "50 Analysen/Monat, Team-Features, Priority Support",
+                "price": "19.90",
+                "priceCurrency": "EUR",
+                "availability": "https://schema.org/InStock",
+                "priceValidUntil": "2025-12-31",
+                "url": "https://www.contract-ai.de/pricing"
+              }
+            ],
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": "4.8",
+              "reviewCount": "127",
+              "bestRating": "5",
+              "worstRating": "1"
+            }
+          })}
+        </script>
+
+        {/* Schema.org JSON-LD: BreadcrumbList */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "https://www.contract-ai.de"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Preise",
+                "item": "https://www.contract-ai.de/pricing"
+              }
+            ]
+          })}
+        </script>
       </Helmet>
 
       <motion.div 

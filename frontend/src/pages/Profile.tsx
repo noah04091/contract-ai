@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import { User, Key, CreditCard, Trash2, AlertCircle, CheckCircle, LogOut, FileText, Download, MessageSquare, Users } from "lucide-react";
 import styles from "../styles/Profile.module.css";
 import { useAuth } from "../hooks/useAuth";;
@@ -255,15 +255,15 @@ export default function Profile() {
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Mein Profil & Vertragsstatus | Contract AI" />
         <meta property="og:description" content="Alle Vertragsdetails und Abo-Infos auf einen Blick. Verwalte dein Contract AI Profil einfach und sicher." />
-        <meta property="og:url" content="https://contract-ai.de/profile" />
+        <meta property="og:url" content="https://www.contract-ai.de/profile" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
-        
+        <meta property="og:image" content="https://www.contract-ai.de/og-image.jpg" />
+
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Mein Profil & Vertragsstatus | Contract AI" />
         <meta name="twitter:description" content="Deine persönlichen Vertrags- und Abo-Infos jederzeit im Blick. Mit Contract AI alles an einem Ort." />
-        <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
       </Helmet>
 
       <div className={styles.pageContainer}>

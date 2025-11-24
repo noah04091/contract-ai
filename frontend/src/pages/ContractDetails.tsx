@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import styles from "../styles/ContractDetails.module.css";
 import { generateICS } from "../utils/icsGenerator";
 import Notification from "../components/Notification";
@@ -307,14 +307,14 @@ export default function ContractDetails() {
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Vertragsdetails ansehen | Contract AI" />
         <meta property="og:description" content="Alle Details zu deinem Vertrag übersichtlich aufbereitet. Mit Contract AI alles im Blick." />
-        <meta property="og:url" content="https://contract-ai.de/contract-details" />
+        <meta property="og:url" content="https://www.contract-ai.de/contract-details" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
+        <meta property="og:image" content="https://www.contract-ai.de/og-image.jpg" />
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Vertragsdetails ansehen | Contract AI" />
         <meta name="twitter:description" content="Alle Vertragsdetails transparent einsehen und verstehen. Contract AI zeigt dir alles auf einen Blick." />
-        <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
       </Helmet>
 
       <div className={styles.container}>

@@ -1,5 +1,5 @@
 # robots.txt für contract-ai.de
-# Professional SEO Configuration
+# Professional SEO Configuration - Updated 2025-11
 
 User-agent: *
 Allow: /
@@ -7,7 +7,10 @@ Allow: /
 # 🔒 Private/geschützte Bereiche (Login-required)
 Disallow: /dashboard
 Disallow: /contracts
+Disallow: /contracts/*
 Disallow: /optimizer
+Disallow: /optimizer/*
+Disallow: /optimize/*
 Disallow: /me
 Disallow: /profile
 Disallow: /compare
@@ -19,18 +22,85 @@ Disallow: /subscribe
 Disallow: /generate
 Disallow: /company-profile
 Disallow: /better-contracts
+Disallow: /api-keys
+Disallow: /team
+Disallow: /envelopes
+Disallow: /envelopes/*
+Disallow: /signature/*
+Disallow: /accept-invite/*
+Disallow: /verify-success
+Disallow: /reset-password
+Disallow: /success
+Disallow: /cancel
 
-# 🗺️ Sitemap
+# 🚫 API & System-Pfade
+Disallow: /api/
+Disallow: /api/*
+
+# 🗺️ Sitemaps
 Sitemap: https://www.contract-ai.de/sitemap.xml
 
-# 🤖 Spezielle Bot-Konfiguration
+# 🤖 Google Bot - Spezielle Konfiguration
 User-agent: Googlebot
-Allow: /
+Allow: /blog/
+Allow: /features/
+Allow: /pricing
+Allow: /about
+Allow: /hilfe
+Allow: /impressum
+Allow: /datenschutz
+Allow: /agb
+Disallow: /dashboard
+Disallow: /contracts
+Disallow: /contracts/*
+Disallow: /optimizer
+Disallow: /optimizer/*
+Disallow: /profile
+Disallow: /compare
+Disallow: /calendar
+Disallow: /chat
+Disallow: /legalpulse
+Disallow: /upgrade
+Disallow: /subscribe
+Disallow: /generate
+Disallow: /api/
+Disallow: /api/*
 
+# 🖼️ Google Image Bot
 User-agent: Googlebot-Image
+Allow: /
 Allow: /assets/
 Allow: /*.png$
 Allow: /*.jpg$
 Allow: /*.jpeg$
 Allow: /*.webp$
 Allow: /*.svg$
+Allow: /*.gif$
+
+# 🤖 Bing Bot
+User-agent: Bingbot
+Allow: /
+Disallow: /api/
+
+# 🕷️ Crawl-Delay für aggressive Bots
+User-agent: MJ12bot
+Crawl-delay: 10
+
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+User-agent: SemrushBot
+Crawl-delay: 10
+
+# 🔒 Block bekannte Bad Bots
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: BLEXBot
+Disallow: /
+
+# Host
+Host: https://www.contract-ai.de

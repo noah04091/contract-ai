@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import { Key, Lock, CheckCircle, AlertCircle, ChevronLeft } from "lucide-react";
 import styles from "./ResetPassword.module.css";
 
@@ -151,14 +151,14 @@ export default function ResetPassword() {
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Passwort zurücksetzen | Contract AI" />
         <meta property="og:description" content="Sichere Passwortänderung für dein Contract AI Konto. Schnell und unkompliziert." />
-        <meta property="og:url" content="https://contract-ai.de/reset-password" />
+        <meta property="og:url" content="https://www.contract-ai.de/reset-password" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
+        <meta property="og:image" content="https://www.contract-ai.de/og-image.jpg" />
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Passwort zurücksetzen | Contract AI" />
         <meta name="twitter:description" content="Setze dein Passwort für Contract AI jetzt sicher zurück und greife sofort wieder auf deine Verträge zu." />
-        <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
       </Helmet>
       
       <div className={styles.container}>

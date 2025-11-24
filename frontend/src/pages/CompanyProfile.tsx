@@ -1,7 +1,7 @@
 // Company Profile Page with Logo Upload
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Helmet } from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import {
   Building, Upload, X, Save, Eye, Camera,
   Phone, FileText, CreditCard, Globe,

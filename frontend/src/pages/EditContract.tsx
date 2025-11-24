@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import "./EditContract.module.css";
 
 interface Contract {
@@ -147,14 +147,14 @@ export default function EditContract() {
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Vertrag bearbeiten | Contract AI" />
         <meta property="og:description" content="Aktualisiere deine Vertragsdaten online einfach und sicher mit dem Contract AI Editor." />
-        <meta property="og:url" content="https://contract-ai.de/edit-contract" />
+        <meta property="og:url" content="https://www.contract-ai.de/edit-contract" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
+        <meta property="og:image" content="https://www.contract-ai.de/og-image.jpg" />
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Vertrag bearbeiten | Contract AI" />
         <meta name="twitter:description" content="Bearbeite deine Verträge in wenigen Schritten online mit Contract AI." />
-        <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
       </Helmet>
 
       <motion.div 

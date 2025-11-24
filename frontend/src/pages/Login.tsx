@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import { useAuth } from "../hooks/useAuth";;
 import "../styles/AppleAuth.css";
 
@@ -298,9 +298,10 @@ export default function Login() {
   return (
     <>
       <Helmet>
-        <title>Login | Contract AI</title>
+        <title>Anmelden | Contract AI</title>
         <meta name="robots" content="noindex, nofollow" />
-        <meta name="description" content="Melde dich bei Contract AI an und verwalte deine Verträge intelligent mit KI." />
+        <meta name="description" content="Melde dich bei Contract AI an und verwalte deine Verträge intelligent mit KI. Sichere Anmeldung mit E-Mail und Passwort." />
+        <link rel="canonical" href="https://www.contract-ai.de/login" />
       </Helmet>
 
       <div className="apple-auth-container" ref={containerRef}>

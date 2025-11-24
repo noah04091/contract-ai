@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import {
   FileText, Download, ArrowRight, CheckCircle, AlertCircle,
   RefreshCw, Upload, Info, PlusCircle, MinusCircle,
@@ -596,14 +596,14 @@ export default function EnhancedCompare() {
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Verträge vergleichen & bessere Wahl treffen mit KI | Contract AI" />
         <meta property="og:description" content="Vergleiche Verträge schnell & transparent mit KI. Unterschiede erkennen, Fairness prüfen & bessere Konditionen wählen. Jetzt ausprobieren!" />
-        <meta property="og:url" content="https://contract-ai.de/compare" />
+        <meta property="og:url" content="https://www.contract-ai.de/compare" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
+        <meta property="og:image" content="https://www.contract-ai.de/og-image.jpg" />
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Verträge vergleichen & bessere Wahl treffen mit KI | Contract AI" />
         <meta name="twitter:description" content="Vergleiche Verträge in Sekunden mit KI: Fairness prüfen, Unterschiede sehen & die beste Wahl treffen. Jetzt testen!" />
-        <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
       </Helmet>
 
       <div style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif", backgroundColor: 'white', minHeight: '100vh', color: '#1d1d1f' }}>

@@ -1022,7 +1022,7 @@ export const articles: Article[] = [
   },
   {
     id: 5,
-    slug: 'autokauf-vertrag-gewährleistung',
+    slug: 'autokauf-vertrag-gewaehrleistung',
     title: 'Autokauf-Vertrag: Gewährleistung, Sachmängel & Rücktritt',
     subtitle: 'Beim Autokauf kann viel schiefgehen. So schützen Sie sich vor versteckten Mängeln und problematischen Verkäufern',
     excerpt: 'Beim Autokauf kann viel schiefgehen. So schützen Sie sich vor versteckten Mängeln und problematischen Verkäufern.',

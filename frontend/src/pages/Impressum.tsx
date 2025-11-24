@@ -1,4 +1,4 @@
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
 import styles from "../styles/Impressum.module.css";
 import { FileText, Mail, Phone, User, Globe, Building, CreditCard, AlertCircle } from "lucide-react";
@@ -15,14 +15,14 @@ export default function Impressum() {
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Impressum | Contract AI" />
         <meta property="og:description" content="Rechtliche Informationen und Kontaktdaten zu Contract AI findest du hier im Impressum." />
-        <meta property="og:url" content="https://contract-ai.de/impressum" />
+        <meta property="og:url" content="https://www.contract-ai.de/impressum" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
+        <meta property="og:image" content="https://www.contract-ai.de/og-image.jpg" />
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Impressum | Contract AI" />
         <meta name="twitter:description" content="Hier findest du alle rechtlichen Angaben zu Contract AI." />
-        <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
       </Helmet>
 
       <div className={styles.container}>

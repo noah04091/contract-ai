@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import "../styles/AppleAuth.css";
 
 export default function Register() {
@@ -211,9 +211,10 @@ export default function Register() {
   return (
     <>
       <Helmet>
-        <title>Registrieren | Contract AI</title>
+        <title>Kostenlos registrieren | Contract AI</title>
         <meta name="robots" content="noindex, nofollow" />
-        <meta name="description" content="Erstelle dein kostenloses Contract AI Konto und starte mit KI-gestützter Vertragsanalyse." />
+        <meta name="description" content="Erstelle dein kostenloses Contract AI Konto und starte mit KI-gestützter Vertragsanalyse. Jetzt registrieren und 3 Analysen gratis testen." />
+        <link rel="canonical" href="https://www.contract-ai.de/register" />
       </Helmet>
 
       <div className="apple-auth-container" ref={containerRef}>

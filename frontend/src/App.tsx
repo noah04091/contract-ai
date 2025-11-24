@@ -1,5 +1,5 @@
 // 📄 src/App.tsx
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { useEffect, useState, lazy, Suspense } from "react";
 import Navbar from "./components/Navbar";
 import RequireAuth from "./components/RequireAuth";
@@ -165,6 +165,13 @@ function AppWithLoader() {
             <Route path="/features/vertragsverwaltung" element={<Vertragsverwaltung />} />
             <Route path="/features/digitalesignatur" element={<DigitaleSignatur />} />
             <Route path="/features/email-upload" element={<EmailUpload />} />
+
+            {/* 🔄 SEO Redirects für alte/falsche URLs (301 Redirects) */}
+            <Route path="/features/legal-pulse" element={<Navigate to="/features/legalpulse" replace />} />
+            <Route path="/features/fristenkalender" element={<Navigate to="/features/fristen" replace />} />
+            <Route path="/calendar-view" element={<Navigate to="/calendar" replace />} />
+            <Route path="/help-center" element={<Navigate to="/hilfe" replace />} />
+            <Route path="/blog/autokauf-vertrag-gewährleistung" element={<Navigate to="/blog/autokauf-vertrag-gewaehrleistung" replace />} />
 
             {/* 🔒 Geschützte Seiten */}
             <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />

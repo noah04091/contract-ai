@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import BetterContractsResults from "../components/BetterContractsResults";
 import SavedAlternativesFull from "../components/SavedAlternativesFull";
 import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
@@ -389,14 +389,14 @@ const BetterContracts: React.FC = () => {
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Bessere Vertragsalternativen finden | Contract AI" />
         <meta property="og:description" content="Vergleiche deine aktuellen Verträge mit besseren Angeboten. Spare sofort mit Contract AI Better Contracts." />
-        <meta property="og:url" content="https://contract-ai.de/better-contracts" />
+        <meta property="og:url" content="https://www.contract-ai.de/better-contracts" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
+        <meta property="og:image" content="https://www.contract-ai.de/og-image.jpg" />
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Bessere Vertragsalternativen finden | Contract AI" />
         <meta name="twitter:description" content="Finde automatisch die besten Vertragsalternativen mit Contract AI. Einfach vergleichen & sparen." />
-        <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
       </Helmet>
       
       <div className="contract-page">

@@ -1,6 +1,6 @@
 // 📁 frontend/src/pages/Chat.tsx - Legal Chat 2.0 with Sidebar, SSE Streaming & Markdown
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import styles from "../styles/Chat.module.css";
 import { useAuth } from "../context/AuthContext";
 
