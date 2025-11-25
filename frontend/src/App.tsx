@@ -23,6 +23,10 @@ import HomeRedesign from "./pages/HomeRedesign";
 import Login from "./pages/Login";
 import Contracts from "./pages/Contracts"; // 🔧 FIX: Direct import verhindert CSS-Preload-Fehler
 import Profile from "./pages/Profile"; // 🔧 FIX: Direct import verhindert CSS-Preload-Fehler
+// 🔧 FIX: Direct imports für rechtliche Seiten - verhindert CSS-Preload-Fehler
+import Impressum from "./pages/Impressum";
+import Datenschutz from "./pages/Datenschutz";
+import AGB from "./pages/AGB";
 
 // 🔓 Öffentliche Seiten - Lazy Loading
 const Register = lazy(() => import("./pages/Register"));
@@ -38,9 +42,7 @@ const SignaturePageComponent = useEnhancedSignUI
 const Pricing = lazy(() => import("./pages/Pricing"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
-const Impressum = lazy(() => import("./pages/Impressum"));
-const Datenschutz = lazy(() => import("./pages/Datenschutz"));
-const AGB = lazy(() => import("./pages/AGB"));
+// Impressum, Datenschutz, AGB werden direkt importiert (siehe oben)
 const About = lazy(() => import("./pages/About"));
 const Press = lazy(() => import("./pages/Press"));
 const Success = lazy(() => import("./pages/Success"));
