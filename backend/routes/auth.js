@@ -38,9 +38,9 @@ module.exports = (db) => {
   return router;
 };
 
-// ✅ Registrierung - ERWEITERT mit Double-Opt-In
+// ✅ Registrierung - ERWEITERT mit Double-Opt-In + Beta-Tester Support
 router.post("/register", async (req, res) => {
-  const { email: rawEmail, password } = req.body;
+  const { email: rawEmail, password, isBetaTester } = req.body;
   if (!rawEmail || !password)
     return res.status(400).json({ message: "❌ E-Mail und Passwort erforderlich" });
 
@@ -51,27 +51,34 @@ router.post("/register", async (req, res) => {
     if (existing) return res.status(409).json({ message: "❌ E-Mail bereits registriert" });
 
     const hashed = await bcrypt.hash(password, PASSWORD_SALT_ROUNDS);
-    
+
     // ✅ ERWEITERTE User-Erstellung mit allen notwendigen Feldern
     // 🔒 E-MAIL INBOX: Sichere Upload-Adresse generieren
     const userId = new ObjectId();
     const randomSuffix = crypto.randomBytes(8).toString('hex'); // 16 chars, nicht erratbar
     const emailInboxAddress = `u_${userId.toString()}.${randomSuffix}@upload.contract-ai.de`;
 
+    // 🎁 BETA-TESTER: 3 Monate Premium/Legendary Status
+    const betaExpiresAt = isBetaTester ? new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) : null; // +90 Tage
+
     const newUser = {
       _id: userId, // ✅ Explizit setzen, damit wir es für E-Mail-Adresse nutzen können
       email,
       password: hashed,
       verified: false, // ⭐ NEU: Double-Opt-In Status
-      isPremium: false,
+      isPremium: isBetaTester ? true : false, // 🎁 Beta-Tester = Premium
       role: 'user', // 🔐 NEW: User role (user|admin) - default: user
       // ⭐ ANALYSE & OPTIMIERUNG LIMITS
       analysisCount: 0,
       optimizationCount: 0, // ⭐ NEU HINZUGEFÜGT
-      // 📋 SUBSCRIPTION INFO
-      subscriptionPlan: "free",
-      subscriptionStatus: "inactive",
-      subscriptionActive: false,
+      // 📋 SUBSCRIPTION INFO - 🎁 Beta-Tester bekommen Legendary!
+      subscriptionPlan: isBetaTester ? "legendary" : "free",
+      subscriptionStatus: isBetaTester ? "active" : "inactive",
+      subscriptionActive: isBetaTester ? true : false,
+      // 🎁 BETA-TESTER FELDER
+      betaTester: isBetaTester ? true : false,
+      betaExpiresAt: betaExpiresAt,
+      betaRegisteredAt: isBetaTester ? new Date() : null,
       // 📅 TIMESTAMPS
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -85,20 +92,33 @@ router.post("/register", async (req, res) => {
     };
 
     await usersCollection.insertOne(newUser);
-    
-    console.log("✅ Neuer User registriert:", {
-      email: newUser.email,
-      plan: newUser.subscriptionPlan,
-      verified: newUser.verified,
-      analysisCount: newUser.analysisCount,
-      optimizationCount: newUser.optimizationCount
-    });
-    
+
+    // 🎁 Beta-Tester Logging
+    if (isBetaTester) {
+      console.log("🎁 BETA-TESTER registriert:", {
+        email: newUser.email,
+        plan: newUser.subscriptionPlan,
+        betaExpiresAt: betaExpiresAt,
+        verified: newUser.verified
+      });
+    } else {
+      console.log("✅ Neuer User registriert:", {
+        email: newUser.email,
+        plan: newUser.subscriptionPlan,
+        verified: newUser.verified,
+        analysisCount: newUser.analysisCount,
+        optimizationCount: newUser.optimizationCount
+      });
+    }
+
     // ⭐ NEU: Keine automatische Anmeldung - User muss E-Mail bestätigen
-    res.status(201).json({ 
-      message: "✅ Registrierung erfolgreich. Bitte bestätigen Sie Ihre E-Mail-Adresse.",
+    res.status(201).json({
+      message: isBetaTester
+        ? "✅ Beta-Registrierung erfolgreich! Bitte bestätigen Sie Ihre E-Mail-Adresse."
+        : "✅ Registrierung erfolgreich. Bitte bestätigen Sie Ihre E-Mail-Adresse.",
       email: newUser.email,
-      verified: false
+      verified: false,
+      isBetaTester: isBetaTester || false
     });
   } catch (err) {
     console.error("❌ Registrierung fehlgeschlagen:", err);

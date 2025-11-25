@@ -26,6 +26,7 @@ export default function Register() {
   // URL-Parameter auslesen
   const fromPricing = searchParams.get('from') === 'pricing';
   const selectedPlan = searchParams.get('plan');
+  const isBetaTester = searchParams.get('beta') === 'true';
 
   // ✅ E-Mail-Verification senden mit Retry-Logic
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -130,7 +131,11 @@ export default function Register() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({
+          email,
+          password,
+          isBetaTester // 🎁 Beta-Tester Flag ans Backend senden
+        }),
       });
 
       const data = await res.json();
@@ -233,16 +238,38 @@ export default function Register() {
           </svg>
         </div>
         
+        {/* 🎁 Beta-Tester Badge */}
+        {isBetaTester && !showEmailVerification && (
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            background: 'linear-gradient(135deg, #ff6b35 0%, #f7931e 100%)',
+            color: 'white',
+            padding: '8px 20px',
+            borderRadius: '100px',
+            fontSize: '14px',
+            fontWeight: '600',
+            marginBottom: '16px',
+            boxShadow: '0 4px 15px rgba(255, 107, 53, 0.3)'
+          }}>
+            <span style={{ fontSize: '16px' }}>🎁</span>
+            Beta-Tester Registrierung
+          </div>
+        )}
+
         {/* ✅ CONDITIONAL TITLE - ZENTRIERT */}
         <h1 className="apple-auth-title">
-          {showEmailVerification ? "E-Mail bestätigen" : "Konto erstellen"}
+          {showEmailVerification ? "E-Mail bestätigen" : isBetaTester ? "Willkommen!" : "Konto erstellen"}
         </h1>
         <p className="apple-auth-subtitle">
           {showEmailVerification
-            ? `Wir haben eine Bestätigungs-E-Mail an ${email} gesendet. Klicken Sie auf den Link in der E-Mail, um Ihr Konto zu aktivieren.${fromPricing && selectedPlan ? ` Danach können Sie Ihr ${selectedPlan}-Abo abschließen.` : ''}`
-            : fromPricing && selectedPlan
-              ? `Erstellen Sie ein Konto, um das ${selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)}-Abo zu kaufen`
-              : "Erstellen Sie ein Konto, um Contract AI nutzen zu können"
+            ? `Wir haben eine Bestätigungs-E-Mail an ${email} gesendet. Klicken Sie auf den Link in der E-Mail, um Ihr Konto zu aktivieren.${isBetaTester ? ' Danach erhalten Sie sofort Zugang zu allen Premium-Features!' : fromPricing && selectedPlan ? ` Danach können Sie Ihr ${selectedPlan}-Abo abschließen.` : ''}`
+            : isBetaTester
+              ? "Als Beta-Tester erhältst du 3 Monate kostenlosen Premium-Zugang zu allen Features!"
+              : fromPricing && selectedPlan
+                ? `Erstellen Sie ein Konto, um das ${selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)}-Abo zu kaufen`
+                : "Erstellen Sie ein Konto, um Contract AI nutzen zu können"
           }
         </p>
         
