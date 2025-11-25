@@ -1324,8 +1324,126 @@ const connectDB = async () => {
           console.error("❌ Legal Pulse Scan Error:", error);
         }
       });
-      
-      console.log("✅ Alle Cron Jobs aktiviert (inkl. Calendar Events)");
+
+      // 🎁 BETA-TESTER: Feedback-Erinnerung nach 2 Tagen (täglich um 10 Uhr)
+      cron.schedule("0 10 * * *", async () => {
+        console.log("🎁 [BETA] Starte Feedback-Erinnerungs-Check...");
+        try {
+          // Finde Beta-Tester, die sich vor genau 2 Tagen registriert haben
+          const twoDaysAgo = new Date();
+          twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+          twoDaysAgo.setHours(0, 0, 0, 0);
+
+          const threeDaysAgo = new Date();
+          threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+          threeDaysAgo.setHours(0, 0, 0, 0);
+
+          // Beta-Tester die sich vor 2 Tagen registriert haben
+          const betaTestersToRemind = await db.collection("users").find({
+            betaTester: true,
+            betaRegisteredAt: {
+              $gte: threeDaysAgo,
+              $lt: twoDaysAgo
+            },
+            betaReminderSent: { $ne: true } // Noch keine Erinnerung gesendet
+          }).toArray();
+
+          console.log(`🎁 [BETA] ${betaTestersToRemind.length} Beta-Tester für Erinnerung gefunden`);
+
+          for (const user of betaTestersToRemind) {
+            // Prüfen ob bereits Feedback gegeben wurde
+            const existingFeedback = await db.collection("betaFeedback").findOne({
+              email: user.email
+            });
+
+            if (existingFeedback) {
+              console.log(`✅ [BETA] ${user.email} hat bereits Feedback gegeben - überspringe`);
+              // Markiere als erinnert, damit wir nicht nochmal prüfen
+              await db.collection("users").updateOne(
+                { _id: user._id },
+                { $set: { betaReminderSent: true } }
+              );
+              continue;
+            }
+
+            // Erinnerungs-E-Mail senden
+            const reminderHtml = `
+              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%); color: white; padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
+                  <h1 style="margin: 0; font-size: 24px;">🎁 Wie gefällt dir Contract AI?</h1>
+                </div>
+
+                <div style="background: #f5f5f7; padding: 30px; border-radius: 0 0 16px 16px;">
+                  <p style="font-size: 16px; color: #333; line-height: 1.6;">
+                    Hallo!
+                  </p>
+
+                  <p style="font-size: 16px; color: #333; line-height: 1.6;">
+                    Du hast dich vor 2 Tagen als <strong>Beta-Tester</strong> bei Contract AI registriert – vielen Dank dafür! 🙏
+                  </p>
+
+                  <p style="font-size: 16px; color: #333; line-height: 1.6;">
+                    Wir haben dir <strong>3 Monate kostenlosen Premium-Zugang</strong> zu allen Features freigeschaltet.
+                    Dafür würden wir uns sehr über dein ehrliches Feedback freuen!
+                  </p>
+
+                  <p style="font-size: 16px; color: #333; line-height: 1.6;">
+                    <strong>Dein Feedback hilft uns:</strong>
+                  </p>
+                  <ul style="font-size: 16px; color: #333; line-height: 1.8;">
+                    <li>Contract AI noch besser zu machen</li>
+                    <li>Zu verstehen, was wirklich gebraucht wird</li>
+                    <li>Bugs und Probleme zu finden</li>
+                  </ul>
+
+                  <div style="text-align: center; margin: 30px 0;">
+                    <a href="https://www.contract-ai.de/beta#feedback"
+                       style="display: inline-block; background: linear-gradient(135deg, #007aff 0%, #409cff 100%); color: white; padding: 16px 40px; border-radius: 100px; font-size: 18px; font-weight: 600; text-decoration: none; box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);">
+                      Jetzt Feedback geben
+                    </a>
+                  </div>
+
+                  <p style="font-size: 14px; color: #666; line-height: 1.6; text-align: center;">
+                    Dauert nur 2 Minuten – versprochen! ⏱️
+                  </p>
+
+                  <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 30px 0;">
+
+                  <p style="font-size: 14px; color: #999; text-align: center;">
+                    Du erhältst diese E-Mail, weil du dich als Beta-Tester registriert hast.<br>
+                    Bei Fragen antworte einfach auf diese E-Mail.
+                  </p>
+                </div>
+              </div>
+            `;
+
+            try {
+              await transporter.sendMail({
+                from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
+                to: user.email,
+                subject: "🎁 Wie gefällt dir Contract AI? Wir freuen uns auf dein Feedback!",
+                html: reminderHtml,
+              });
+
+              // Markiere User als erinnert
+              await db.collection("users").updateOne(
+                { _id: user._id },
+                { $set: { betaReminderSent: true, betaReminderSentAt: new Date() } }
+              );
+
+              console.log(`📧 [BETA] Erinnerung gesendet an: ${user.email}`);
+            } catch (emailError) {
+              console.error(`❌ [BETA] Fehler beim Senden an ${user.email}:`, emailError.message);
+            }
+          }
+
+          console.log("✅ [BETA] Feedback-Erinnerungs-Check abgeschlossen");
+        } catch (error) {
+          console.error("❌ [BETA] Feedback Reminder Cron Error:", error);
+        }
+      });
+
+      console.log("✅ Alle Cron Jobs aktiviert (inkl. Calendar Events & Beta Reminder)");
     } catch (err) {
       console.error("❌ Cron Jobs konnten nicht gestartet werden:", err);
     }
