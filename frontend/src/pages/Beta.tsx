@@ -4,15 +4,20 @@ import { Helmet } from 'react-helmet-async';
 import {
   Gift,
   Star,
-  Clock,
   CheckCircle,
   Sparkles,
-  FileText,
   Shield,
   Zap,
   Heart,
   Send,
-  Loader2
+  Loader2,
+  FolderOpen,
+  PenTool,
+  GitCompare,
+  FilePlus,
+  Mail,
+  Bell,
+  Search
 } from 'lucide-react';
 import styles from '../styles/FeaturePage.module.css';
 import betaStyles from '../styles/Beta.module.css';
@@ -148,15 +153,27 @@ const Beta: React.FC = () => {
           <section className={styles.funktionSection}>
             <h2 className={styles.sectionTitle}>Was ist Contract AI?</h2>
             <p className={betaStyles.introText}>
-              Contract AI ist ein KI-gestütztes Tool, das dir hilft, Verträge schneller zu verstehen,
-              zu analysieren und zu optimieren. Egal ob Freelancer, Gründer oder kleine Agentur –
-              du sparst Zeit und vermeidest teure Fehler.
+              Contract AI ist deine All-in-One Plattform für smartes Vertragsmanagement.
+              Von der Erstellung über die Analyse bis zur digitalen Unterschrift – alles an einem Ort.
+              Egal ob Freelancer, Gründer oder kleine Agentur – du sparst Zeit und behältst den Überblick.
             </p>
 
             <div className={styles.funktionGrid}>
+              {/* Vertragsverwaltung - Hauptfeature */}
               <div className={styles.funktionItem}>
                 <div className={styles.funktionIcon}>
-                  <FileText size={20} />
+                  <FolderOpen size={20} />
+                </div>
+                <p className={styles.funktionText}>
+                  <strong>Zentrale Vertragsverwaltung:</strong> Alle Verträge an einem Ort – übersichtlich
+                  sortiert in Ordnern. Mehrfach-Upload, per E-Mail senden oder direkt hochladen.
+                </p>
+              </div>
+
+              {/* KI-Analyse */}
+              <div className={styles.funktionItem}>
+                <div className={styles.funktionIcon}>
+                  <Search size={20} />
                 </div>
                 <p className={styles.funktionText}>
                   <strong>KI-Vertragsanalyse:</strong> Lade deinen Vertrag hoch und erhalte in Sekunden
@@ -164,26 +181,73 @@ const Beta: React.FC = () => {
                 </p>
               </div>
 
+              {/* Optimierung */}
               <div className={styles.funktionItem}>
                 <div className={styles.funktionIcon}>
                   <Zap size={20} />
                 </div>
                 <p className={styles.funktionText}>
-                  <strong>Optimierungsvorschläge:</strong> Die KI erkennt problematische Klauseln und
-                  schlägt bessere Formulierungen vor.
+                  <strong>KI-Optimierung:</strong> Die KI erkennt problematische Klauseln und
+                  schlägt bessere Formulierungen vor – mit einem Klick übernehmen.
                 </p>
               </div>
 
+              {/* Vertragsgenerierung */}
               <div className={styles.funktionItem}>
                 <div className={styles.funktionIcon}>
-                  <Clock size={20} />
+                  <FilePlus size={20} />
                 </div>
                 <p className={styles.funktionText}>
-                  <strong>Fristenmanagement:</strong> Verpasse nie wieder wichtige Deadlines –
-                  automatische Erinnerungen für alle Vertragsfristen.
+                  <strong>Vertragsgenerierung:</strong> Erstelle rechtssichere Verträge in Minuten –
+                  aus Vorlagen oder komplett individuell mit KI-Unterstützung.
                 </p>
               </div>
 
+              {/* Digitale Signatur */}
+              <div className={styles.funktionItem}>
+                <div className={styles.funktionIcon}>
+                  <PenTool size={20} />
+                </div>
+                <p className={styles.funktionText}>
+                  <strong>Digitale Signatur:</strong> Starte Signaturprozesse direkt aus der App –
+                  Verträge versenden, unterschreiben lassen und tracken.
+                </p>
+              </div>
+
+              {/* Vertragsvergleich */}
+              <div className={styles.funktionItem}>
+                <div className={styles.funktionIcon}>
+                  <GitCompare size={20} />
+                </div>
+                <p className={styles.funktionText}>
+                  <strong>Vertragsvergleich:</strong> Vergleiche zwei Verträge nebeneinander –
+                  die KI zeigt dir alle Unterschiede und Abweichungen.
+                </p>
+              </div>
+
+              {/* Fristenmanagement */}
+              <div className={styles.funktionItem}>
+                <div className={styles.funktionIcon}>
+                  <Bell size={20} />
+                </div>
+                <p className={styles.funktionText}>
+                  <strong>Fristenkalender:</strong> Verpasse nie wieder Deadlines –
+                  automatische Erinnerungen für Kündigungsfristen und Verlängerungen.
+                </p>
+              </div>
+
+              {/* E-Mail Upload */}
+              <div className={styles.funktionItem}>
+                <div className={styles.funktionIcon}>
+                  <Mail size={20} />
+                </div>
+                <p className={styles.funktionText}>
+                  <strong>E-Mail-Upload:</strong> Leite Verträge einfach per E-Mail weiter –
+                  sie landen automatisch in deinem Account.
+                </p>
+              </div>
+
+              {/* DSGVO */}
               <div className={styles.funktionItem}>
                 <div className={styles.funktionIcon}>
                   <Shield size={20} />
