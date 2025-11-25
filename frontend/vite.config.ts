@@ -60,7 +60,10 @@ export default defineConfig({
     sourcemap: false,
     minify: "esbuild",
     chunkSizeWarningLimit: 1000,
-    modulePreload: false, // 🔧 FIX: Deaktiviert CSS-Preload-Fehler bei lazy-loaded routes
+    modulePreload: {
+      polyfill: false, // 🔧 Deaktiviert modulepreload polyfill komplett
+    },
+    cssCodeSplit: true, // CSS wird in separate Dateien gesplittet
     rollupOptions: {
       output: {
         manualChunks: {

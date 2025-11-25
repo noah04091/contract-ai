@@ -23,7 +23,12 @@
       "Bash(done)",
       "Bash(grep:*)",
       "Bash(dir \"C:\\Users\\liebo\\Documents\\contract-ai\\frontend\\public\")",
-      "Bash(do mv \"$f\" \"$f%.mp4.mp4.mp4\")"
+      "Bash(do mv \"$f\" \"$f%.mp4.mp4.mp4\")",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(npx vercel domains ls)",
+      "Bash(npx vercel:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

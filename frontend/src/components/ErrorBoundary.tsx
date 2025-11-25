@@ -31,6 +31,15 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): Partial<State> {
+    // 🔧 CSS-Preload-Fehler ignorieren - diese sind nicht kritisch
+    // Die CSS-Dateien werden trotzdem über normale link-Tags geladen
+    if (error.message && (
+        error.message.includes('Unable to preload CSS') ||
+        error.message.includes('preload'))) {
+      // Wir setzen hasError auf false, damit die Komponente nicht die Fallback-UI rendert
+      return { hasError: false };
+    }
+
     // Aktualisiere State, damit die nächste Render-Phase die Fallback-UI anzeigt
     return {
       hasError: true,

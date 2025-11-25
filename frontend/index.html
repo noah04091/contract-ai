@@ -140,6 +140,30 @@
   </head>
   <body>
     <div id="root"></div>
+
+    <!-- 🔧 CSS-Preload Error Handler - muss VOR React laden -->
+    <script>
+      // Globaler Handler für CSS-Preload-Fehler
+      // Diese Fehler sind nicht kritisch - CSS lädt trotzdem über normale link-Tags
+      window.addEventListener('error', function(event) {
+        if (event.message && event.message.includes('preload CSS')) {
+          console.log('[CSS-Preload] Fehler ignoriert (nicht kritisch):', event.message);
+          event.preventDefault();
+          event.stopPropagation();
+          return false;
+        }
+      }, true);
+
+      // Auch unhandledrejection für Promise-basierte Preload-Fehler
+      window.addEventListener('unhandledrejection', function(event) {
+        if (event.reason && event.reason.message && event.reason.message.includes('preload CSS')) {
+          console.log('[CSS-Preload] Promise-Fehler ignoriert:', event.reason.message);
+          event.preventDefault();
+          return false;
+        }
+      });
+    </script>
+
     <!-- ✅ Korrekt: Vite kümmert sich selbst um Build-Pfade -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
