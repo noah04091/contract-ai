@@ -31,12 +31,11 @@
     {
       "source": "/api/:path*",
       "destination": "https://api.contract-ai.de/api/:path*"
+    },
+    {
+      "source": "/:path((?!assets/).*)",
+      "destination": "/index.html"
     }
-  ],
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/assets/(.*)", "dest": "/assets/$1" },
-    { "src": "/(.*)", "dest": "/index.html" }
   ],
   "cleanUrls": true,
   "trailingSlash": false,
