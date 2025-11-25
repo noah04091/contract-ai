@@ -1,6 +1,4 @@
 {
-  "version": 2,
-  "framework": "vite",
   "buildCommand": "cd frontend && npm run build",
   "outputDirectory": "frontend/dist",
   "installCommand": "cd frontend && npm install",
@@ -10,7 +8,7 @@
       "destination": "https://api.contract-ai.de/api/:path*"
     },
     {
-      "source": "/(.*)",
+      "source": "/:path*",
       "destination": "/index.html"
     }
   ],
@@ -41,7 +39,6 @@
       "permanent": true
     }
   ],
-  "cleanUrls": true,
   "trailingSlash": false,
   "headers": [
     {

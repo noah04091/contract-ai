@@ -60,9 +60,7 @@ export default defineConfig({
     sourcemap: false,
     minify: "esbuild",
     chunkSizeWarningLimit: 1000,
-    modulePreload: {
-      polyfill: false, // 🔧 Deaktiviert modulepreload polyfill komplett
-    },
+    modulePreload: false, // 🔧 Deaktiviert modulepreload komplett - verhindert CSS-Preload-Fehler
     cssCodeSplit: true, // CSS wird in separate Dateien gesplittet
     rollupOptions: {
       output: {

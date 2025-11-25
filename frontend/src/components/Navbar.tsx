@@ -32,7 +32,7 @@ export default function Navbar() {
   const isProtectedPage = protectedRoutes.includes(location.pathname);
   
   // Definiere nicht-geschützte Seiten (außer Homepage und Auth-Seiten)
-  const publicRoutes = ["/about", "/blog", "/pricing", "/help", "/Datenschutz", "/AGB", "/Impressum"];
+  const publicRoutes = ["/about", "/blog", "/pricing", "/help", "/datenschutz", "/agb", "/impressum"];
   const isPublicPage = publicRoutes.includes(location.pathname);
   
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -925,17 +925,17 @@ export default function Navbar() {
                       </Link>
                     </li>
                     <li>
-                      <Link to="/Datenschutz" className={`${styles.sidebarLink} ${styles.secondary}`} onClick={() => setSidebarOpen(false)}>
+                      <Link to="/datenschutz" className={`${styles.sidebarLink} ${styles.secondary}`} onClick={() => setSidebarOpen(false)}>
                         Datenschutz
                       </Link>
                     </li>
                     <li>
-                      <Link to="/AGB" className={`${styles.sidebarLink} ${styles.secondary}`} onClick={() => setSidebarOpen(false)}>
+                      <Link to="/agb" className={`${styles.sidebarLink} ${styles.secondary}`} onClick={() => setSidebarOpen(false)}>
                         AGB
                       </Link>
                     </li>
                     <li>
-                      <Link to="/Impressum" className={`${styles.sidebarLink} ${styles.secondary}`} onClick={() => setSidebarOpen(false)}>
+                      <Link to="/impressum" className={`${styles.sidebarLink} ${styles.secondary}`} onClick={() => setSidebarOpen(false)}>
                         Impressum
                       </Link>
                     </li>

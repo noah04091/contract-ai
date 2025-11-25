@@ -1610,9 +1610,9 @@ const HomeRedesign = () => {
                 <div className="footer-column">
                   <h4>Rechtliches</h4>
                   <ul>
-                    <li><Link to="/Datenschutz">Datenschutz</Link></li>
-                    <li><Link to="/AGB">AGB</Link></li>
-                    <li><Link to="/Impressum">Impressum</Link></li>
+                    <li><Link to="/datenschutz">Datenschutz</Link></li>
+                    <li><Link to="/agb">AGB</Link></li>
+                    <li><Link to="/impressum">Impressum</Link></li>
                     <li><a href="#" onClick={handleOpenCookieSettings}>Cookie-Einstellungen ändern</a></li>
                   </ul>
                 </div>
