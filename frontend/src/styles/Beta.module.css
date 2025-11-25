@@ -450,3 +450,310 @@
     font-size: 14px;
   }
 }
+
+/* ========================================
+   FEEDBACK FORM STYLES
+   ======================================== */
+
+.feedbackForm {
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 24px;
+  padding: 40px;
+  max-width: 700px;
+  margin: 0 auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.formGroup {
+  margin-bottom: 24px;
+}
+
+.formGroup label {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin-bottom: 8px;
+}
+
+.labelHint {
+  font-weight: 400;
+  color: #666;
+  font-size: 13px;
+  margin-left: 8px;
+}
+
+.formGroup input,
+.formGroup textarea,
+.formGroup select {
+  width: 100%;
+  padding: 14px 16px;
+  font-size: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 12px;
+  background: #fafafa;
+  color: #1d1d1f;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.formGroup input:focus,
+.formGroup textarea:focus,
+.formGroup select:focus {
+  outline: none;
+  border-color: #007aff;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+.formGroup input::placeholder,
+.formGroup textarea::placeholder {
+  color: #999;
+}
+
+.formGroup textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.formGroup select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 44px;
+}
+
+/* Rating Stars */
+.ratingStars {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.starButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  transition: transform 0.2s ease;
+  color: #ddd;
+}
+
+.starButton:hover {
+  transform: scale(1.2);
+}
+
+.starButton.starActive {
+  color: #FFD700;
+}
+
+.ratingLabel {
+  font-size: 14px;
+  color: #666;
+  margin-left: 12px;
+}
+
+/* Submit Button */
+.submitButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 16px 32px;
+  font-size: 17px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #007aff 0%, #409cff 100%);
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);
+}
+
+.submitButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 122, 255, 0.4);
+}
+
+.submitButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Success Message */
+.successMessage {
+  text-align: center;
+  padding: 60px 40px;
+  background: linear-gradient(135deg, #f0fff4 0%, #e6ffed 100%);
+  border: 1px solid rgba(52, 199, 89, 0.2);
+  border-radius: 24px;
+}
+
+.successMessage svg {
+  color: #34c759;
+  margin-bottom: 20px;
+}
+
+.successMessage h3 {
+  font-size: 28px;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0 0 12px;
+}
+
+.successMessage p {
+  font-size: 17px;
+  color: #666;
+  margin: 0;
+}
+
+/* Error Message */
+.errorMessage {
+  background: #fff5f5;
+  border: 1px solid rgba(255, 59, 48, 0.2);
+  color: #ff3b30;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+/* Responsive Form */
+@media (max-width: 768px) {
+  .feedbackForm {
+    padding: 28px 20px;
+  }
+
+  .formRow {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .formGroup label {
+    font-size: 14px;
+  }
+
+  .formGroup input,
+  .formGroup textarea,
+  .formGroup select {
+    padding: 12px 14px;
+    font-size: 16px;
+  }
+
+  .starButton svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .submitButton {
+    padding: 14px 24px;
+    font-size: 16px;
+  }
+
+  .successMessage {
+    padding: 40px 24px;
+  }
+
+  .successMessage h3 {
+    font-size: 24px;
+  }
+
+  .successMessage p {
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .feedbackForm {
+    padding: 24px 16px;
+    border-radius: 16px;
+  }
+
+  .ratingStars {
+    gap: 4px;
+  }
+
+  .starButton {
+    padding: 2px;
+  }
+
+  .starButton svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .ratingLabel {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 8px;
+  }
+
+  .labelHint {
+    display: block;
+    margin-left: 0;
+    margin-top: 4px;
+  }
+}
+
+@media (max-width: 375px) {
+  .feedbackForm {
+    padding: 20px 14px;
+  }
+
+  .formGroup {
+    margin-bottom: 20px;
+  }
+
+  .formGroup input,
+  .formGroup textarea,
+  .formGroup select {
+    padding: 11px 12px;
+    font-size: 15px;
+    border-radius: 10px;
+  }
+
+  .submitButton {
+    padding: 12px 20px;
+    font-size: 15px;
+    border-radius: 10px;
+  }
+
+  .successMessage {
+    padding: 32px 20px;
+    border-radius: 16px;
+  }
+
+  .successMessage svg {
+    width: 40px;
+    height: 40px;
+  }
+
+  .successMessage h3 {
+    font-size: 20px;
+  }
+
+  .successMessage p {
+    font-size: 14px;
+  }
+}

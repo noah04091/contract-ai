@@ -1330,6 +1330,94 @@ const connectDB = async () => {
       console.error("❌ Cron Jobs konnten nicht gestartet werden:", err);
     }
 
+    // ========================================
+    // 🎁 BETA FEEDBACK ENDPOINT
+    // ========================================
+    app.post('/api/beta-feedback', async (req, res) => {
+      try {
+        const { name, email, rating, improvements, wouldPay, testimonial } = req.body;
+
+        // Validation
+        if (!name || !email || !rating || !wouldPay) {
+          return res.status(400).json({ error: 'Bitte fülle alle Pflichtfelder aus.' });
+        }
+
+        // Store feedback in database
+        const feedbackData = {
+          name,
+          email,
+          rating: parseInt(rating),
+          improvements: improvements || '',
+          wouldPay,
+          testimonial: testimonial || '',
+          createdAt: new Date(),
+          source: 'beta-landing-page'
+        };
+
+        await db.collection('betaFeedback').insertOne(feedbackData);
+        console.log(`✅ [BETA] Neues Feedback von ${name} (${email}) - ${rating} Sterne`);
+
+        // Send email notification to admin
+        const ratingStars = '⭐'.repeat(rating);
+        const wouldPayText = wouldPay === 'ja' ? '✅ Ja!' : wouldPay === 'vielleicht' ? '🤔 Vielleicht' : '❌ Nein';
+
+        const emailHtml = `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #007aff 0%, #409cff 100%); color: white; padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
+              <h1 style="margin: 0; font-size: 24px;">🎁 Neues Beta-Feedback!</h1>
+            </div>
+
+            <div style="background: #f5f5f7; padding: 30px; border-radius: 0 0 16px 16px;">
+              <div style="background: white; padding: 24px; border-radius: 12px; margin-bottom: 20px;">
+                <h2 style="margin: 0 0 16px; color: #1d1d1f; font-size: 18px;">Tester-Infos</h2>
+                <p style="margin: 8px 0; color: #333;"><strong>Name:</strong> ${name}</p>
+                <p style="margin: 8px 0; color: #333;"><strong>E-Mail:</strong> <a href="mailto:${email}">${email}</a></p>
+              </div>
+
+              <div style="background: white; padding: 24px; border-radius: 12px; margin-bottom: 20px;">
+                <h2 style="margin: 0 0 16px; color: #1d1d1f; font-size: 18px;">Bewertung</h2>
+                <p style="margin: 8px 0; font-size: 24px;">${ratingStars} (${rating}/5)</p>
+                <p style="margin: 8px 0; color: #333;"><strong>Würde zahlen:</strong> ${wouldPayText}</p>
+              </div>
+
+              ${improvements ? `
+              <div style="background: white; padding: 24px; border-radius: 12px; margin-bottom: 20px;">
+                <h2 style="margin: 0 0 16px; color: #1d1d1f; font-size: 18px;">Verbesserungsvorschläge</h2>
+                <p style="margin: 0; color: #333; line-height: 1.6;">${improvements}</p>
+              </div>
+              ` : ''}
+
+              ${testimonial ? `
+              <div style="background: linear-gradient(135deg, #fff9f0 0%, #fffaf5 100%); padding: 24px; border-radius: 12px; border: 1px solid rgba(255, 140, 0, 0.2);">
+                <h2 style="margin: 0 0 16px; color: #1d1d1f; font-size: 18px;">📝 Testimonial</h2>
+                <p style="margin: 0; color: #333; line-height: 1.6; font-style: italic;">"${testimonial}"</p>
+                <p style="margin: 12px 0 0; color: #666; font-size: 14px;">– ${name}</p>
+              </div>
+              ` : ''}
+            </div>
+
+            <p style="text-align: center; color: #666; font-size: 12px; margin-top: 20px;">
+              Contract AI Beta-Feedback System
+            </p>
+          </div>
+        `;
+
+        await transporter.sendMail({
+          from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
+          to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
+          subject: `🎁 Beta-Feedback: ${name} (${rating}⭐) - ${wouldPay === 'ja' ? 'Würde zahlen!' : wouldPay}`,
+          html: emailHtml,
+        });
+
+        console.log(`📧 [BETA] Admin-Benachrichtigung gesendet`);
+
+        res.json({ success: true, message: 'Feedback erfolgreich gesendet!' });
+      } catch (error) {
+        console.error('❌ [BETA] Feedback Error:', error);
+        res.status(500).json({ error: 'Feedback konnte nicht gespeichert werden.' });
+      }
+    });
+
     // Internal Email API für Webhook Server
     app.post('/api/internal/send-email', async (req, res) => {
       try {

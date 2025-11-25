@@ -1,26 +1,93 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
   Gift,
   Star,
   Clock,
-  MessageSquare,
   CheckCircle,
   Sparkles,
   FileText,
   Shield,
   Zap,
-  Heart
+  Heart,
+  Send,
+  Loader2
 } from 'lucide-react';
 import styles from '../styles/FeaturePage.module.css';
 import betaStyles from '../styles/Beta.module.css';
 import Footer from '../components/Footer';
 
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
+
+interface FeedbackForm {
+  name: string;
+  email: string;
+  rating: number;
+  improvements: string;
+  wouldPay: string;
+  testimonial: string;
+}
+
 const Beta: React.FC = () => {
+  const [feedbackForm, setFeedbackForm] = useState<FeedbackForm>({
+    name: '',
+    email: '',
+    rating: 0,
+    improvements: '',
+    wouldPay: '',
+    testimonial: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFeedbackForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleRatingClick = (rating: number) => {
+    setFeedbackForm(prev => ({ ...prev, rating }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitError('');
+
+    try {
+      const response = await fetch(`${API_URL}/api/beta-feedback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(feedbackForm),
+      });
+
+      if (!response.ok) {
+        throw new Error('Feedback konnte nicht gesendet werden');
+      }
+
+      setSubmitSuccess(true);
+      setFeedbackForm({
+        name: '',
+        email: '',
+        rating: 0,
+        improvements: '',
+        wouldPay: '',
+        testimonial: ''
+      });
+    } catch (error) {
+      setSubmitError('Fehler beim Senden. Bitte versuche es erneut.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <>
@@ -218,24 +285,138 @@ const Beta: React.FC = () => {
             </div>
           </section>
 
-          {/* Feedback Form Link */}
-          <section className={betaStyles.feedbackSection}>
-            <div className={betaStyles.feedbackCard}>
-              <MessageSquare size={40} className={betaStyles.feedbackIcon} />
-              <h3>Feedback-Formular</h3>
-              <p>
-                Nach dem Testen kannst du hier dein Feedback abgeben.
-                Dauert nur 2 Minuten und hilft mir enorm!
-              </p>
-              <a
-                href="https://forms.google.com/YOUR-FORM-ID"
-                target="_blank"
-                rel="noopener noreferrer"
-                className={betaStyles.feedbackButton}
-              >
-                Zum Feedback-Formular
-              </a>
-            </div>
+          {/* Feedback Form */}
+          <section className={betaStyles.feedbackSection} id="feedback">
+            <h2 className={styles.sectionTitle}>Dein Feedback</h2>
+
+            {submitSuccess ? (
+              <div className={betaStyles.successMessage}>
+                <CheckCircle size={48} />
+                <h3>Vielen Dank!</h3>
+                <p>Dein Feedback wurde erfolgreich gesendet. Ich melde mich bei dir!</p>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className={betaStyles.feedbackForm}>
+                {/* Name & Email */}
+                <div className={betaStyles.formRow}>
+                  <div className={betaStyles.formGroup}>
+                    <label htmlFor="name">Dein Name</label>
+                    <input
+                      type="text"
+                      id="name"
+                      name="name"
+                      value={feedbackForm.name}
+                      onChange={handleInputChange}
+                      placeholder="Max Mustermann"
+                      required
+                    />
+                  </div>
+                  <div className={betaStyles.formGroup}>
+                    <label htmlFor="email">Deine E-Mail</label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={feedbackForm.email}
+                      onChange={handleInputChange}
+                      placeholder="max@beispiel.de"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Rating */}
+                <div className={betaStyles.formGroup}>
+                  <label>Wie hilfreich war die Analyse? *</label>
+                  <div className={betaStyles.ratingStars}>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => handleRatingClick(star)}
+                        className={`${betaStyles.starButton} ${feedbackForm.rating >= star ? betaStyles.starActive : ''}`}
+                        aria-label={`${star} Sterne`}
+                      >
+                        <Star size={32} fill={feedbackForm.rating >= star ? '#FFD700' : 'none'} />
+                      </button>
+                    ))}
+                    <span className={betaStyles.ratingLabel}>
+                      {feedbackForm.rating > 0 ? `${feedbackForm.rating}/5 Sterne` : 'Bitte bewerten'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Improvements */}
+                <div className={betaStyles.formGroup}>
+                  <label htmlFor="improvements">Was würdest du verbessern?</label>
+                  <textarea
+                    id="improvements"
+                    name="improvements"
+                    value={feedbackForm.improvements}
+                    onChange={handleInputChange}
+                    placeholder="z.B. schnellere Analyse, bessere Übersicht, mehr Features..."
+                    rows={3}
+                  />
+                </div>
+
+                {/* Would Pay */}
+                <div className={betaStyles.formGroup}>
+                  <label htmlFor="wouldPay">Würdest du Contract AI nutzen, wenn es kostenpflichtig wäre? *</label>
+                  <select
+                    id="wouldPay"
+                    name="wouldPay"
+                    value={feedbackForm.wouldPay}
+                    onChange={handleInputChange}
+                    required
+                  >
+                    <option value="">Bitte auswählen...</option>
+                    <option value="ja">Ja, auf jeden Fall!</option>
+                    <option value="vielleicht">Vielleicht, kommt auf den Preis an</option>
+                    <option value="nein">Nein, eher nicht</option>
+                  </select>
+                </div>
+
+                {/* Testimonial */}
+                <div className={betaStyles.formGroup}>
+                  <label htmlFor="testimonial">
+                    Optional: Kurzes Testimonial
+                    <span className={betaStyles.labelHint}>(Darf ich auf der Website zeigen?)</span>
+                  </label>
+                  <textarea
+                    id="testimonial"
+                    name="testimonial"
+                    value={feedbackForm.testimonial}
+                    onChange={handleInputChange}
+                    placeholder="z.B. 'Contract AI hat mir geholfen, versteckte Klauseln in meinem Freelancer-Vertrag zu finden. Super Tool!'"
+                    rows={3}
+                  />
+                </div>
+
+                {submitError && (
+                  <div className={betaStyles.errorMessage}>
+                    {submitError}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  className={betaStyles.submitButton}
+                  disabled={isSubmitting || feedbackForm.rating === 0}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={20} className={betaStyles.spinner} />
+                      Wird gesendet...
+                    </>
+                  ) : (
+                    <>
+                      <Send size={20} />
+                      Feedback absenden
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
           </section>
 
           {/* Final CTA */}
