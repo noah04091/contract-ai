@@ -33,14 +33,7 @@
       "destination": "https://api.contract-ai.de/api/:path*"
     },
     {
-      "source": "/:path*",
-      "has": [
-        {
-          "type": "header",
-          "key": "accept",
-          "value": ".*text/html.*"
-        }
-      ],
+      "source": "/((?!assets|api|favicon|robots|sitemap|og-).*)",
       "destination": "/index.html"
     }
   ],
