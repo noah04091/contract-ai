@@ -31,10 +31,6 @@
     {
       "source": "/api/:path*",
       "destination": "https://api.contract-ai.de/api/:path*"
-    },
-    {
-      "source": "/((?!api/|_next|static|assets/|.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|map)$).*)",
-      "destination": "/"
     }
   ],
   "cleanUrls": true,
