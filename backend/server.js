@@ -1404,7 +1404,7 @@ const connectDB = async () => {
 
         await transporter.sendMail({
           from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
-          to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
+          to: "info@contract-ai.de",
           subject: `🎁 Beta-Feedback: ${name} (${rating}⭐) - ${wouldPay === 'ja' ? 'Würde zahlen!' : wouldPay}`,
           html: emailHtml,
         });
