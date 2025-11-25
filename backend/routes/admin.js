@@ -282,4 +282,175 @@ router.get("/stats", verifyToken, verifyAdmin, async (req, res) => {
   }
 });
 
+// ===== 🎁 GET BETA PROGRAM STATISTICS =====
+// GET /api/admin/beta-stats
+// Returns: Beta tester metrics, feedback summary, engagement data
+router.get("/beta-stats", verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    console.log('🎁 [ADMIN] Fetching beta program statistics...');
+
+    const { MongoClient } = require("mongodb");
+    const client = new MongoClient(process.env.MONGO_URI);
+    await client.connect();
+
+    const db = client.db("contract_ai");
+    const usersCollection = db.collection("users");
+    const betaFeedbackCollection = db.collection("betaFeedback");
+
+    // ===== 👥 BETA TESTER COUNTS =====
+    const totalBetaTesters = await usersCollection.countDocuments({ betaTester: true });
+    const verifiedBetaTesters = await usersCollection.countDocuments({ betaTester: true, verified: true });
+    const pendingVerification = await usersCollection.countDocuments({ betaTester: true, verified: false });
+
+    // Beta testers with reminder sent
+    const remindersSent = await usersCollection.countDocuments({ betaTester: true, betaReminderSent: true });
+
+    // ===== 📊 FEEDBACK STATISTICS =====
+    const totalFeedbacks = await betaFeedbackCollection.countDocuments();
+
+    // Average rating
+    const ratingAgg = await betaFeedbackCollection.aggregate([
+      { $group: { _id: null, avgRating: { $avg: "$rating" }, count: { $sum: 1 } } }
+    ]).toArray();
+    const avgRating = ratingAgg[0]?.avgRating || 0;
+
+    // Rating distribution
+    const ratingDistribution = await betaFeedbackCollection.aggregate([
+      { $group: { _id: "$rating", count: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
+    ]).toArray();
+
+    // Payment willingness
+    const paymentWillingness = await betaFeedbackCollection.aggregate([
+      { $group: { _id: "$wouldPay", count: { $sum: 1 } } }
+    ]).toArray();
+
+    // Feedbacks with testimonials
+    const feedbacksWithTestimonial = await betaFeedbackCollection.countDocuments({
+      testimonial: { $exists: true, $ne: "" }
+    });
+
+    // ===== 📋 RECENT BETA TESTERS =====
+    const recentBetaTesters = await usersCollection.find(
+      { betaTester: true },
+      {
+        projection: {
+          email: 1,
+          verified: 1,
+          betaRegisteredAt: 1,
+          betaExpiresAt: 1,
+          betaReminderSent: 1,
+          betaReminderSentAt: 1,
+          analysisCount: 1,
+          optimizationCount: 1
+        }
+      }
+    )
+    .sort({ betaRegisteredAt: -1 })
+    .limit(50)
+    .toArray();
+
+    // Add feedback status to each beta tester
+    const betaTestersWithFeedback = await Promise.all(
+      recentBetaTesters.map(async (tester) => {
+        const feedback = await betaFeedbackCollection.findOne({ email: tester.email });
+        return {
+          ...tester,
+          hasFeedback: !!feedback,
+          feedbackRating: feedback?.rating || null,
+          feedbackDate: feedback?.createdAt || null
+        };
+      })
+    );
+
+    // ===== 📝 RECENT FEEDBACKS =====
+    const recentFeedbacks = await betaFeedbackCollection.find()
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .toArray();
+
+    // ===== 📊 BETA ENGAGEMENT METRICS =====
+    // Beta testers who have used the platform (at least 1 analysis)
+    const engagedBetaTesters = await usersCollection.countDocuments({
+      betaTester: true,
+      verified: true,
+      analysisCount: { $gte: 1 }
+    });
+
+    // Beta testers approaching expiration (within 7 days)
+    const sevenDaysFromNow = new Date();
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+    const expiringBetaTesters = await usersCollection.countDocuments({
+      betaTester: true,
+      betaExpiresAt: { $lte: sevenDaysFromNow, $gte: new Date() }
+    });
+
+    // Expired beta testers
+    const expiredBetaTesters = await usersCollection.countDocuments({
+      betaTester: true,
+      betaExpiresAt: { $lt: new Date() }
+    });
+
+    await client.close();
+
+    // ===== 📊 COMPILE RESPONSE =====
+    const response = {
+      // Overview
+      overview: {
+        totalBetaTesters,
+        verifiedBetaTesters,
+        pendingVerification,
+        remindersSent,
+        totalFeedbacks,
+        feedbackRate: totalBetaTesters > 0
+          ? parseFloat(((totalFeedbacks / totalBetaTesters) * 100).toFixed(1))
+          : 0
+      },
+
+      // Feedback metrics
+      feedback: {
+        total: totalFeedbacks,
+        avgRating: parseFloat(avgRating.toFixed(2)),
+        ratingDistribution: ratingDistribution.map(r => ({
+          stars: r._id,
+          count: r.count
+        })),
+        paymentWillingness: paymentWillingness.map(p => ({
+          answer: p._id,
+          count: p.count
+        })),
+        withTestimonial: feedbacksWithTestimonial
+      },
+
+      // Engagement
+      engagement: {
+        engaged: engagedBetaTesters,
+        engagementRate: verifiedBetaTesters > 0
+          ? parseFloat(((engagedBetaTesters / verifiedBetaTesters) * 100).toFixed(1))
+          : 0,
+        expiringSoon: expiringBetaTesters,
+        expired: expiredBetaTesters
+      },
+
+      // Lists
+      betaTesters: betaTestersWithFeedback,
+      recentFeedbacks: recentFeedbacks.map(f => ({
+        ...f,
+        _id: f._id.toString()
+      }))
+    };
+
+    console.log('✅ [ADMIN] Beta statistics compiled successfully');
+    res.json(response);
+
+  } catch (error) {
+    console.error('❌ [ADMIN] Error fetching beta statistics:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Laden der Beta-Statistiken',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;

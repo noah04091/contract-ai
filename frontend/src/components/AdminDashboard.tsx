@@ -12,7 +12,13 @@ import {
   Zap,
   AlertCircle,
   CheckCircle,
-  XCircle
+  XCircle,
+  Gift,
+  Star,
+  MessageSquare,
+  Clock,
+  Mail,
+  ExternalLink
 } from 'lucide-react';
 import {
   LineChart,
@@ -40,6 +46,58 @@ interface User {
   optimizationCount: number;
   createdAt: string;
   verified?: boolean;
+}
+
+interface BetaTester {
+  _id: string;
+  email: string;
+  verified: boolean;
+  betaRegisteredAt: string;
+  betaExpiresAt: string;
+  betaReminderSent: boolean;
+  betaReminderSentAt?: string;
+  analysisCount: number;
+  optimizationCount: number;
+  hasFeedback: boolean;
+  feedbackRating: number | null;
+  feedbackDate: string | null;
+}
+
+interface BetaFeedback {
+  _id: string;
+  name: string;
+  email: string;
+  rating: number;
+  improvements: string;
+  wouldPay: string;
+  testimonial: string;
+  createdAt: string;
+}
+
+interface BetaStats {
+  overview: {
+    totalBetaTesters: number;
+    verifiedBetaTesters: number;
+    pendingVerification: number;
+    remindersSent: number;
+    totalFeedbacks: number;
+    feedbackRate: number;
+  };
+  feedback: {
+    total: number;
+    avgRating: number;
+    ratingDistribution: Array<{ stars: number; count: number }>;
+    paymentWillingness: Array<{ answer: string; count: number }>;
+    withTestimonial: number;
+  };
+  engagement: {
+    engaged: number;
+    engagementRate: number;
+    expiringSoon: number;
+    expired: number;
+  };
+  betaTesters: BetaTester[];
+  recentFeedbacks: BetaFeedback[];
 }
 
 interface AdminStats {
@@ -123,9 +181,10 @@ interface AdminStats {
 }
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<'costs' | 'system' | 'users'>('costs');
+  const [activeTab, setActiveTab] = useState<'costs' | 'system' | 'users' | 'beta'>('costs');
   const [users, setUsers] = useState<User[]>([]);
   const [adminStats, setAdminStats] = useState<AdminStats | null>(null);
+  const [betaStats, setBetaStats] = useState<BetaStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -155,6 +214,16 @@ export default function AdminDashboard() {
         if (usersResponse.ok) {
           const usersData = await usersResponse.json();
           setUsers(usersData.users || []);
+        }
+
+        // Fetch beta stats
+        const betaResponse = await fetch('/api/admin/beta-stats', {
+          credentials: 'include'
+        });
+
+        if (betaResponse.ok) {
+          const betaData = await betaResponse.json();
+          setBetaStats(betaData);
         }
 
         setIsLoading(false);
@@ -242,6 +311,13 @@ export default function AdminDashboard() {
         >
           <Users size={20} />
           <span>User Management</span>
+        </button>
+        <button
+          className={`${styles.tab} ${activeTab === 'beta' ? styles.active : ''}`}
+          onClick={() => setActiveTab('beta')}
+        >
+          <Gift size={20} />
+          <span>Beta Program</span>
         </button>
       </div>
 
@@ -721,6 +797,278 @@ export default function AdminDashboard() {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {/* 🎁 BETA PROGRAM TAB */}
+        {activeTab === 'beta' && (
+          <div className={styles.betaTab}>
+            {/* Beta Overview Cards */}
+            <div className={styles.statsGrid}>
+              <div className={styles.statCard}>
+                <div className={`${styles.statIcon} ${styles.betaIcon}`}>
+                  <Gift />
+                </div>
+                <div className={styles.statContent}>
+                  <h3>Beta-Tester Gesamt</h3>
+                  <p className={styles.statValue}>{betaStats?.overview.totalBetaTesters || 0}</p>
+                  <span className={styles.statSubtext}>
+                    {betaStats?.overview.verifiedBetaTesters || 0} verifiziert
+                  </span>
+                </div>
+              </div>
+
+              <div className={styles.statCard}>
+                <div className={styles.statIcon}>
+                  <MessageSquare />
+                </div>
+                <div className={styles.statContent}>
+                  <h3>Feedbacks erhalten</h3>
+                  <p className={styles.statValue}>{betaStats?.feedback.total || 0}</p>
+                  <span className={styles.statSubtext}>
+                    {betaStats?.overview.feedbackRate || 0}% Feedback-Rate
+                  </span>
+                </div>
+              </div>
+
+              <div className={styles.statCard}>
+                <div className={styles.statIcon}>
+                  <Star />
+                </div>
+                <div className={styles.statContent}>
+                  <h3>Ø Bewertung</h3>
+                  <p className={styles.statValue}>
+                    {betaStats?.feedback.avgRating.toFixed(1) || '0.0'} ⭐
+                  </p>
+                  <span className={styles.statSubtext}>
+                    {betaStats?.feedback.withTestimonial || 0} Testimonials
+                  </span>
+                </div>
+              </div>
+
+              <div className={styles.statCard}>
+                <div className={styles.statIcon}>
+                  <Activity />
+                </div>
+                <div className={styles.statContent}>
+                  <h3>Engagement</h3>
+                  <p className={styles.statValue}>
+                    {betaStats?.engagement.engagementRate || 0}%
+                  </p>
+                  <span className={styles.statSubtext}>
+                    {betaStats?.engagement.engaged || 0} aktive Tester
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Status Cards */}
+            <div className={styles.betaStatusRow}>
+              <div className={`${styles.statusCard} ${styles.pending}`}>
+                <Clock size={24} />
+                <div>
+                  <h4>Ausstehende Verifizierung</h4>
+                  <p>{betaStats?.overview.pendingVerification || 0}</p>
+                </div>
+              </div>
+
+              <div className={`${styles.statusCard} ${styles.sent}`}>
+                <Mail size={24} />
+                <div>
+                  <h4>Erinnerungen gesendet</h4>
+                  <p>{betaStats?.overview.remindersSent || 0}</p>
+                </div>
+              </div>
+
+              <div className={`${styles.statusCard} ${styles.warning}`}>
+                <AlertCircle size={24} />
+                <div>
+                  <h4>Laufen bald ab</h4>
+                  <p>{betaStats?.engagement.expiringSoon || 0}</p>
+                </div>
+              </div>
+
+              <div className={`${styles.statusCard} ${styles.expired}`}>
+                <XCircle size={24} />
+                <div>
+                  <h4>Abgelaufen</h4>
+                  <p>{betaStats?.engagement.expired || 0}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Charts Row */}
+            {betaStats && (
+              <div className={styles.chartsRow}>
+                {/* Rating Distribution */}
+                <div className={styles.chartCard}>
+                  <h3>⭐ Bewertungsverteilung</h3>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={betaStats.feedback.ratingDistribution}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="stars" tickFormatter={(v) => `${v}⭐`} />
+                      <YAxis />
+                      <Tooltip formatter={(value) => [`${value} Bewertungen`]} />
+                      <Bar dataKey="count" fill="#f7931e" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Payment Willingness */}
+                <div className={styles.chartCard}>
+                  <h3>💰 Zahlungsbereitschaft</h3>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <PieChart>
+                      <Pie
+                        data={betaStats.feedback.paymentWillingness.map(p => ({
+                          name: p.answer === 'ja' ? 'Ja' : p.answer === 'vielleicht' ? 'Vielleicht' : 'Nein',
+                          value: p.count,
+                          color: p.answer === 'ja' ? '#10b981' : p.answer === 'vielleicht' ? '#f59e0b' : '#ef4444'
+                        }))}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, value }) => `${name}: ${value}`}
+                        outerRadius={80}
+                        dataKey="value"
+                      >
+                        {betaStats.feedback.paymentWillingness.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={entry.answer === 'ja' ? '#10b981' : entry.answer === 'vielleicht' ? '#f59e0b' : '#ef4444'}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
+
+            {/* Beta Testers Table */}
+            <div className={styles.tableCard}>
+              <div className={styles.tableHeader}>
+                <h3>🎁 Beta-Tester ({betaStats?.betaTesters.length || 0})</h3>
+                <a
+                  href="https://www.contract-ai.de/beta"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.betaLink}
+                >
+                  <ExternalLink size={16} />
+                  Beta-Seite öffnen
+                </a>
+              </div>
+              <div className={styles.tableContainer}>
+                <table className={styles.userTable}>
+                  <thead>
+                    <tr>
+                      <th>E-Mail</th>
+                      <th>Status</th>
+                      <th>Registriert</th>
+                      <th>Läuft ab</th>
+                      <th>Analysen</th>
+                      <th>Feedback</th>
+                      <th>Erinnerung</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {betaStats?.betaTesters.map(tester => (
+                      <tr key={tester._id}>
+                        <td className={styles.emailCell}>{tester.email}</td>
+                        <td>
+                          {tester.verified ? (
+                            <span className={`${styles.statusBadge} ${styles.active}`}>
+                              <CheckCircle size={14} /> Verifiziert
+                            </span>
+                          ) : (
+                            <span className={`${styles.statusBadge} ${styles.inactive}`}>
+                              <Clock size={14} /> Ausstehend
+                            </span>
+                          )}
+                        </td>
+                        <td>{new Date(tester.betaRegisteredAt).toLocaleDateString('de-DE')}</td>
+                        <td>
+                          {new Date(tester.betaExpiresAt) < new Date() ? (
+                            <span className={styles.expiredBadge}>Abgelaufen</span>
+                          ) : (
+                            new Date(tester.betaExpiresAt).toLocaleDateString('de-DE')
+                          )}
+                        </td>
+                        <td>{tester.analysisCount || 0}</td>
+                        <td>
+                          {tester.hasFeedback ? (
+                            <span className={styles.feedbackBadge}>
+                              {tester.feedbackRating}⭐
+                            </span>
+                          ) : (
+                            <span className={styles.noFeedbackBadge}>—</span>
+                          )}
+                        </td>
+                        <td>
+                          {tester.betaReminderSent ? (
+                            <CheckCircle size={18} className={styles.verifiedIcon} />
+                          ) : (
+                            <span className={styles.noFeedbackBadge}>—</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Recent Feedbacks */}
+            {betaStats && betaStats.recentFeedbacks.length > 0 && (
+              <div className={styles.tableCard}>
+                <h3>📝 Letzte Feedbacks</h3>
+                <div className={styles.feedbackList}>
+                  {betaStats.recentFeedbacks.map(feedback => (
+                    <div key={feedback._id} className={styles.feedbackItem}>
+                      <div className={styles.feedbackHeader}>
+                        <div className={styles.feedbackUser}>
+                          <strong>{feedback.name}</strong>
+                          <span>{feedback.email}</span>
+                        </div>
+                        <div className={styles.feedbackMeta}>
+                          <span className={styles.feedbackRating}>
+                            {'⭐'.repeat(feedback.rating)}
+                          </span>
+                          <span className={styles.feedbackDate}>
+                            {new Date(feedback.createdAt).toLocaleDateString('de-DE')}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className={styles.feedbackDetails}>
+                        <div className={styles.feedbackWouldPay}>
+                          <strong>Würde zahlen:</strong>
+                          <span className={`${styles.payBadge} ${styles[feedback.wouldPay]}`}>
+                            {feedback.wouldPay === 'ja' ? '✅ Ja' : feedback.wouldPay === 'vielleicht' ? '🤔 Vielleicht' : '❌ Nein'}
+                          </span>
+                        </div>
+
+                        {feedback.improvements && (
+                          <div className={styles.feedbackText}>
+                            <strong>Verbesserungsvorschläge:</strong>
+                            <p>{feedback.improvements}</p>
+                          </div>
+                        )}
+
+                        {feedback.testimonial && (
+                          <div className={styles.feedbackTestimonial}>
+                            <strong>📝 Testimonial:</strong>
+                            <blockquote>"{feedback.testimonial}"</blockquote>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

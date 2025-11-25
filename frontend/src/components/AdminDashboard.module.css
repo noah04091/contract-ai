@@ -520,3 +520,293 @@
     gap: 1rem;
   }
 }
+
+/* ========================================
+   🎁 BETA PROGRAM TAB STYLES
+   ======================================== */
+
+.betaTab {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.betaIcon {
+  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%) !important;
+}
+
+/* Beta Status Row */
+.betaStatusRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.statusCard {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  background: white;
+  border: 1px solid #e5e7eb;
+}
+
+.statusCard svg {
+  flex-shrink: 0;
+}
+
+.statusCard h4 {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.statusCard p {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.statusCard.pending {
+  border-left: 4px solid #f59e0b;
+}
+
+.statusCard.pending svg {
+  color: #f59e0b;
+}
+
+.statusCard.sent {
+  border-left: 4px solid #3b82f6;
+}
+
+.statusCard.sent svg {
+  color: #3b82f6;
+}
+
+.statusCard.warning {
+  border-left: 4px solid #f97316;
+}
+
+.statusCard.warning svg {
+  color: #f97316;
+}
+
+.statusCard.expired {
+  border-left: 4px solid #ef4444;
+}
+
+.statusCard.expired svg {
+  color: #ef4444;
+}
+
+/* Beta Link Button */
+.betaLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  color: white;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.betaLink:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+}
+
+/* Expired Badge */
+.expiredBadge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  background: #fee2e2;
+  color: #991b1b;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Feedback Badge */
+.feedbackBadge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #92400e;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.noFeedbackBadge {
+  color: #94a3b8;
+  font-size: 1rem;
+}
+
+/* Feedback List */
+.feedbackList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.feedbackItem {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.feedbackHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.feedbackUser {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.feedbackUser strong {
+  font-size: 1rem;
+  color: #1e293b;
+}
+
+.feedbackUser span {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.feedbackMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.feedbackRating {
+  font-size: 1.25rem;
+}
+
+.feedbackDate {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.feedbackDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.feedbackWouldPay {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.feedbackWouldPay strong {
+  color: #64748b;
+}
+
+.payBadge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 100px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.payBadge.ja {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.payBadge.vielleicht {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.payBadge.nein {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.feedbackText {
+  font-size: 0.875rem;
+}
+
+.feedbackText strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #64748b;
+}
+
+.feedbackText p {
+  margin: 0;
+  color: #334155;
+  line-height: 1.6;
+}
+
+.feedbackTestimonial {
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.feedbackTestimonial strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #9a3412;
+  font-size: 0.875rem;
+}
+
+.feedbackTestimonial blockquote {
+  margin: 0;
+  font-style: italic;
+  color: #c2410c;
+  line-height: 1.6;
+}
+
+/* Responsive Beta Tab */
+@media (max-width: 1024px) {
+  .betaStatusRow {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .betaStatusRow {
+    grid-template-columns: 1fr;
+  }
+
+  .feedbackHeader {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .feedbackMeta {
+    align-items: flex-start;
+  }
+
+  .statusCard {
+    padding: 0.875rem 1rem;
+  }
+
+  .statusCard p {
+    font-size: 1.25rem;
+  }
+}
