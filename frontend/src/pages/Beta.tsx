@@ -82,7 +82,7 @@ const Beta: React.FC = () => {
         wouldPay: '',
         testimonial: ''
       });
-    } catch (error) {
+    } catch {
       setSubmitError('Fehler beim Senden. Bitte versuche es erneut.');
     } finally {
       setIsSubmitting(false);
