@@ -90,6 +90,29 @@
   letter-spacing: -0.02em;
 }
 
+.privacy-section h3 {
+  font-size: 1.15rem;
+  margin-top: 1.5rem;
+  margin-bottom: 0.8rem;
+  font-weight: 500;
+  color: #333;
+  letter-spacing: -0.01em;
+}
+
+.privacy-section h3:first-of-type {
+  margin-top: 0.5rem;
+}
+
+.legal-basis {
+  margin-top: 1rem;
+  padding: 0.8rem 1rem;
+  background: linear-gradient(135deg, rgba(0, 113, 227, 0.08), rgba(0, 113, 227, 0.04));
+  border-left: 3px solid #0071e3;
+  border-radius: 0 8px 8px 0;
+  font-size: 0.9rem;
+  color: #444;
+}
+
 .contact-card {
   background: rgba(240, 240, 247, 0.7);
   border-radius: 12px;
