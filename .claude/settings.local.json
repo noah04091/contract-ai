@@ -11,7 +11,19 @@
       "Bash(git push:*)",
       "Bash(find:*)",
       "Bash(git show:*)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "Bash(cat:*)",
+      "Bash(dir /s \"C:\\Users\\liebo\\Documents\\contract-ai\\frontend\")",
+      "Bash(nul)",
+      "Bash(npm run lint:*)",
+      "Bash(for:*)",
+      "Bash(do if ! grep -q \"@media\" \"$f\")",
+      "Bash(then echo \"$f\")",
+      "Bash(fi)",
+      "Bash(done)",
+      "Bash(grep:*)",
+      "Bash(dir \"C:\\Users\\liebo\\Documents\\contract-ai\\frontend\\public\")",
+      "Bash(do mv \"$f\" \"$f%.mp4.mp4.mp4\")"
     ],
     "deny": [],
     "ask": []
