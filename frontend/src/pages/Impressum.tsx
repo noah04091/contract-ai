@@ -1,7 +1,7 @@
 import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
 import styles from "../styles/Impressum.module.css";
-import { FileText, Mail, Phone, User, Globe, Building, CreditCard, AlertCircle } from "lucide-react";
+import { FileText, Mail, Phone, User, Globe, Building, CreditCard, AlertCircle, Link as LinkIcon, Scale, Shield, Copyright } from "lucide-react";
 import Footer from "../components/Footer";
 
 export default function Impressum() {
@@ -64,30 +64,32 @@ export default function Impressum() {
           transition={{ delay: 0.4, duration: 0.5 }}
         >
           <div className={styles.card}>
-            <motion.div 
+            {/* Betreiber-Info */}
+            <motion.div
               className={styles.section}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5, duration: 0.3 }}
             >
-              <h2>Angaben gemäß § 5 TMG</h2>
+              <h2>Contract AI – betrieben von</h2>
               <div className={styles.sectionContent}>
                 <div className={styles.infoGroup}>
                   <User size={18} className={styles.infoIcon} />
-                  <div>Noah Liebold</div>
-                </div>
-                <div className={styles.infoGroup}>
-                  <Globe size={18} className={styles.infoIcon} />
-                  <div>Richard Oberle Weg 27<br />76448 Durmersheim<br />Deutschland</div>
+                  <div><strong>Noah Liebold</strong></div>
                 </div>
                 <div className={styles.infoGroup}>
                   <Building size={18} className={styles.infoIcon} />
-                  <div>Einzelunternehmen</div>
+                  <div>Einzelunternehmen<br />Tätigkeitsbereich: Softwareentwicklung & KI-basierte SaaS-Lösungen</div>
+                </div>
+                <div className={styles.infoGroup}>
+                  <Globe size={18} className={styles.infoIcon} />
+                  <div>Richard-Oberle-Weg 27<br />76648 Durmersheim<br />Deutschland</div>
                 </div>
               </div>
             </motion.div>
 
-            <motion.div 
+            {/* Kontakt */}
+            <motion.div
               className={styles.section}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -97,20 +99,45 @@ export default function Impressum() {
               <div className={styles.sectionContent}>
                 <div className={styles.infoGroup}>
                   <Phone size={18} className={styles.infoIcon} />
-                  <div>–</div>
+                  <div><a href="tel:+4917655549923" className={styles.link}>0176 5554 9923</a></div>
                 </div>
                 <div className={styles.infoGroup}>
                   <Mail size={18} className={styles.infoIcon} />
                   <div><a href="mailto:info@contract-ai.de" className={styles.link}>info@contract-ai.de</a></div>
                 </div>
+                <div className={styles.infoGroup}>
+                  <LinkIcon size={18} className={styles.infoIcon} />
+                  <div><a href="https://contract-ai.de" target="_blank" rel="noreferrer" className={styles.link}>https://contract-ai.de</a></div>
+                </div>
               </div>
             </motion.div>
 
-            <motion.div 
+            {/* Angaben gemäß § 5 TMG */}
+            <motion.div
               className={styles.section}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7, duration: 0.3 }}
+            >
+              <h2>Angaben gemäß § 5 TMG</h2>
+              <div className={styles.sectionContent}>
+                <div className={styles.infoGroup}>
+                  <User size={18} className={styles.infoIcon} />
+                  <div>
+                    <strong>Noah Liebold</strong><br />
+                    Einzelunternehmer<br />
+                    Haupttätigkeit: Softwareentwicklung, KI-gestützte Webanwendungen, digitale SaaS-Plattformen.
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* USt-IdNr */}
+            <motion.div
+              className={styles.section}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8, duration: 0.3 }}
             >
               <h2>Umsatzsteuer-Identifikationsnummer</h2>
               <div className={styles.sectionContent}>
@@ -121,29 +148,70 @@ export default function Impressum() {
               </div>
             </motion.div>
 
-            <motion.div 
-              className={styles.section}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8, duration: 0.3 }}
-            >
-              <h2>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</h2>
-              <div className={styles.sectionContent}>
-                <div className={styles.infoGroup}>
-                  <User size={18} className={styles.infoIcon} />
-                  <div>Noah Liebold<br />Richard Oberle Weg 27<br />76448 Durmersheim</div>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div 
+            {/* Verantwortlich für Inhalt */}
+            <motion.div
               className={styles.section}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.9, duration: 0.3 }}
             >
-              <h2>Streitbeilegung</h2>
+              <h2>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</h2>
               <div className={styles.sectionContent}>
+                <div className={styles.infoGroup}>
+                  <User size={18} className={styles.infoIcon} />
+                  <div>Noah Liebold<br />Richard-Oberle-Weg 27<br />76648 Durmersheim</div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Haftungsausschluss */}
+            <motion.div
+              className={styles.section}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.0, duration: 0.3 }}
+            >
+              <h2>Haftungsausschluss</h2>
+              <div className={styles.sectionContent}>
+                <div className={styles.infoGroup}>
+                  <Scale size={18} className={styles.infoIcon} />
+                  <div>
+                    <strong>Haftung für Inhalte:</strong><br />
+                    Ich bin gemäß § 7 Abs. 1 TMG für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen verantwortlich. Für fremde Inhalte übernehme ich gemäß §§ 8–10 TMG keine Haftung.
+                  </div>
+                </div>
+                <div className={styles.infoGroup}>
+                  <LinkIcon size={18} className={styles.infoIcon} />
+                  <div>
+                    <strong>Haftung für Links:</strong><br />
+                    Für Inhalte externer Webseiten, auf die ich verlinke, übernehme ich keine Verantwortung. Für diese sind ausschließlich deren Betreiber verantwortlich.
+                  </div>
+                </div>
+                <div className={styles.infoGroup}>
+                  <Copyright size={18} className={styles.infoIcon} />
+                  <div>
+                    <strong>Urheberrecht:</strong><br />
+                    Alle Inhalte dieser Website unterliegen dem deutschen Urheberrecht.
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Verbraucherstreitbeilegung */}
+            <motion.div
+              className={styles.section}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.1, duration: 0.3 }}
+            >
+              <h2>Verbraucherstreitbeilegung (VSBG)</h2>
+              <div className={styles.sectionContent}>
+                <div className={styles.infoGroup}>
+                  <Shield size={18} className={styles.infoIcon} />
+                  <div>
+                    Ich bin nicht verpflichtet und nicht bereit, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.
+                  </div>
+                </div>
                 <div className={styles.infoGroup}>
                   <AlertCircle size={18} className={styles.infoIcon} />
                   <div>
