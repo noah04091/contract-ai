@@ -1361,12 +1361,12 @@ const connectDB = async () => {
 
             // Erinnerungs-E-Mail senden
             const reminderHtml = `
-              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                <div style="background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%); color: white; padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
-                  <h1 style="margin: 0; font-size: 24px;">🎁 Wie gefällt dir Contract AI?</h1>
+              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff;">
+                <div style="background-color: #fff3ed; padding: 30px; border-radius: 16px 16px 0 0; text-align: center; border-bottom: 3px solid #ff6b35;">
+                  <h1 style="margin: 0; font-size: 24px; color: #1d1d1f;">🎁 Wie gefällt dir Contract AI?</h1>
                 </div>
 
-                <div style="background: #f5f5f7; padding: 30px; border-radius: 0 0 16px 16px;">
+                <div style="background-color: #f5f5f7; padding: 30px; border-radius: 0 0 16px 16px;">
                   <p style="font-size: 16px; color: #333; line-height: 1.6;">
                     Hallo!
                   </p>
@@ -1391,7 +1391,7 @@ const connectDB = async () => {
 
                   <div style="text-align: center; margin: 30px 0;">
                     <a href="https://www.contract-ai.de/beta#feedback"
-                       style="display: inline-block; background: linear-gradient(135deg, #007aff 0%, #409cff 100%); color: white; padding: 16px 40px; border-radius: 100px; font-size: 18px; font-weight: 600; text-decoration: none; box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);">
+                       style="display: inline-block; background-color: #007aff; color: #ffffff !important; padding: 16px 40px; border-radius: 100px; font-size: 18px; font-weight: 600; text-decoration: none; border: 2px solid #007aff;">
                       Jetzt Feedback geben
                     </a>
                   </div>
@@ -1465,12 +1465,12 @@ const connectDB = async () => {
 
             // Zweite Erinnerungs-E-Mail - persönlicher und freundlicher
             const secondReminderHtml = `
-              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
-                  <h1 style="margin: 0; font-size: 24px;">💬 Kurz 2 Minuten Zeit?</h1>
+              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff;">
+                <div style="background-color: #f0f0ff; padding: 30px; border-radius: 16px 16px 0 0; text-align: center; border-bottom: 3px solid #667eea;">
+                  <h1 style="margin: 0; font-size: 24px; color: #1d1d1f;">💬 Kurz 2 Minuten Zeit?</h1>
                 </div>
 
-                <div style="background: #f5f5f7; padding: 30px; border-radius: 0 0 16px 16px;">
+                <div style="background-color: #f5f5f7; padding: 30px; border-radius: 0 0 16px 16px;">
                   <p style="font-size: 16px; color: #333; line-height: 1.6;">
                     Hallo nochmal!
                   </p>
@@ -1483,7 +1483,7 @@ const connectDB = async () => {
                     Als kleines Ein-Mann-Startup ist <strong>jedes einzelne Feedback Gold wert</strong> für mich. Es hilft mir zu verstehen, was gut funktioniert und wo ich noch nachbessern muss.
                   </p>
 
-                  <div style="background: white; border-radius: 12px; padding: 20px; margin: 25px 0; border-left: 4px solid #667eea;">
+                  <div style="background-color: #ffffff; border-radius: 12px; padding: 20px; margin: 25px 0; border-left: 4px solid #667eea;">
                     <p style="font-size: 15px; color: #333; line-height: 1.6; margin: 0;">
                       <strong>Was mich interessiert:</strong><br>
                       • Wie hilfreich war die Vertragsanalyse?<br>
@@ -1494,7 +1494,7 @@ const connectDB = async () => {
 
                   <div style="text-align: center; margin: 30px 0;">
                     <a href="https://www.contract-ai.de/beta#feedback"
-                       style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 16px 40px; border-radius: 100px; font-size: 18px; font-weight: 600; text-decoration: none; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                       style="display: inline-block; background-color: #667eea; color: #ffffff !important; padding: 16px 40px; border-radius: 100px; font-size: 18px; font-weight: 600; text-decoration: none; border: 2px solid #667eea;">
                       Feedback geben (2 Min.)
                     </a>
                   </div>
