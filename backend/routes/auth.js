@@ -186,21 +186,46 @@ router.get("/me", verifyToken, async (req, res) => {
       return res.status(404).json({ message: "❌ Benutzer nicht gefunden" });
     }
 
-    const plan = user.subscriptionPlan || "free";
+    let plan = user.subscriptionPlan || "free";
     const status = user.subscriptionStatus || "inactive";
     const analysisCount = user.analysisCount ?? 0;
     const optimizationCount = user.optimizationCount ?? 0;
-    const subscriptionActive = user.subscriptionActive ?? false;
+    let subscriptionActive = user.subscriptionActive ?? false;
 
-    // 📊 ANALYSE LIMITS - KORRIGIERT für 3-Stufen-Modell
-    let analysisLimit = 0;  // ✅ Free: 0 Analysen (statt 10!)
+    // 🎁 BETA-TESTER: Prüfen ob Beta noch gültig ist
+    if (user.betaTester && user.betaExpiresAt) {
+      const betaExpired = new Date(user.betaExpiresAt) < new Date();
+      if (betaExpired) {
+        // Beta abgelaufen → zurück auf Free setzen
+        console.log("⏰ Beta-Zugang abgelaufen für:", user.email);
+        plan = "free";
+        subscriptionActive = false;
+        // Optional: User in DB aktualisieren (async, non-blocking)
+        usersCollection.updateOne(
+          { _id: user._id },
+          {
+            $set: {
+              subscriptionPlan: "free",
+              subscriptionActive: false,
+              subscriptionStatus: "expired",
+              isPremium: false,
+              betaExpired: true,
+              updatedAt: new Date()
+            }
+          }
+        ).catch(err => console.error("❌ Fehler beim Beta-Expiry-Update:", err));
+      }
+    }
+
+    // 📊 ANALYSE LIMITS - KORRIGIERT für alle Pläne inkl. legendary
+    let analysisLimit = 0;  // ✅ Free: 0 Analysen
     if (plan === "business") analysisLimit = 50;  // 📊 Business: 50 pro Monat
-    if (plan === "premium") analysisLimit = Infinity; // ♾️ Premium: Unbegrenzt
+    if (plan === "premium" || plan === "legendary") analysisLimit = Infinity; // ♾️ Premium/Legendary: Unbegrenzt
 
-    // 🔧 OPTIMIERUNG LIMITS (NEU)
-    let optimizationLimit = 0; // ✅ Free: 0 Optimierungen (statt 5!)
+    // 🔧 OPTIMIERUNG LIMITS - inkl. legendary
+    let optimizationLimit = 0; // ✅ Free: 0 Optimierungen
     if (plan === "business") optimizationLimit = 25;
-    if (plan === "premium") optimizationLimit = Infinity;
+    if (plan === "premium" || plan === "legendary") optimizationLimit = Infinity; // ♾️ Premium/Legendary: Unbegrenzt
 
     const userData = {
       email: user.email,
@@ -209,9 +234,13 @@ router.get("/me", verifyToken, async (req, res) => {
       subscriptionPlan: plan,
       subscriptionStatus: status,
       subscriptionActive,
-      isPremium: plan === "premium",
+      isPremium: plan === "premium" || plan === "legendary", // 🎁 Legendary = auch Premium-Features
       isBusiness: plan === "business",
       isFree: plan === "free",
+      isLegendary: plan === "legendary", // 🎁 NEU: Legendary Flag
+      // 🎁 Beta-Tester Info
+      betaTester: user.betaTester || false,
+      betaExpiresAt: user.betaExpiresAt || null,
       // ⭐ ANALYSE INFO
       analysisCount,
       analysisLimit,

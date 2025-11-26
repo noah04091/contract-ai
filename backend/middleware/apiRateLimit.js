@@ -22,8 +22,8 @@ const apiRateLimiter = rateLimit({
 
     const plan = req.user.subscriptionPlan;
 
-    // Enterprise/Premium: Höheres Limit
-    if (plan === "premium") {
+    // Enterprise/Premium/Legendary: Höheres Limit
+    if (plan === "premium" || plan === "legendary") {
       return 1000; // 1000 Requests/Stunde
     }
 
@@ -60,11 +60,11 @@ const apiRateLimiter = rateLimit({
       error: "TOO_MANY_REQUESTS",
       limits: {
         plan,
-        maxRequests: plan === "premium" ? 1000 : 100,
+        maxRequests: (plan === "premium" || plan === "legendary") ? 1000 : 100,
         window: "1 hour",
         resetAt: resetTime
       },
-      upgrade: plan !== "premium" ? {
+      upgrade: (plan !== "premium" && plan !== "legendary") ? {
         message: "Upgrade zu Enterprise für höheres Rate Limit",
         upgradeUrl: "/pricing"
       } : null

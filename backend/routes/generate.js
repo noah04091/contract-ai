@@ -2180,7 +2180,7 @@ router.post("/", verifyToken, async (req, res) => {
 
     let limit = 0; // Free: 0 (gesperrt)
     if (plan === "business") limit = 10; // Business: 10/Monat
-    if (plan === "premium") limit = Infinity; // Enterprise: Unbegrenzt
+    if (plan === "premium" || plan === "legendary") limit = Infinity; // Premium/Legendary: Unbegrenzt
 
     if (count >= limit) {
       return res.status(403).json({

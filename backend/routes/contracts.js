@@ -3363,7 +3363,7 @@ router.post("/bulk-delete", verifyToken, async (req, res) => {
       });
     }
 
-    // 🔒 ENTERPRISE-CHECK: Nur Premium/Enterprise-User
+    // 🔒 ENTERPRISE-CHECK: Nur Premium/Enterprise/Legendary-User
     const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
 
     if (!user) {
@@ -3371,7 +3371,7 @@ router.post("/bulk-delete", verifyToken, async (req, res) => {
     }
 
     const plan = user.subscriptionPlan || "free";
-    if (plan !== "premium") {
+    if (plan !== "premium" && plan !== "legendary") {
       return res.status(403).json({
         success: false,
         message: "⛔ Bulk-Operationen sind nur im Enterprise-Plan verfügbar.",
@@ -3448,7 +3448,7 @@ router.post("/bulk-move", verifyToken, async (req, res) => {
       });
     }
 
-    // 🔒 ENTERPRISE-CHECK: Nur Premium/Enterprise-User
+    // 🔒 ENTERPRISE-CHECK: Nur Premium/Enterprise/Legendary-User
     const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
 
     if (!user) {
@@ -3456,7 +3456,7 @@ router.post("/bulk-move", verifyToken, async (req, res) => {
     }
 
     const plan = user.subscriptionPlan || "free";
-    if (plan !== "premium") {
+    if (plan !== "premium" && plan !== "legendary") {
       return res.status(403).json({
         success: false,
         message: "⛔ Bulk-Operationen sind nur im Enterprise-Plan verfügbar.",

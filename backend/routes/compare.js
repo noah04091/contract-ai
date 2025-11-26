@@ -270,9 +270,9 @@ router.post("/", verifyToken, upload.fields([
 
     let limit = 0; // Free: 0 (gesperrt)
     if (plan === "business") limit = 20; // Business: 20/Monat
-    if (plan === "premium") limit = Infinity; // Enterprise: Unbegrenzt
+    if (plan === "premium" || plan === "legendary") limit = Infinity; // Premium/Legendary: Unbegrenzt
 
-    if (compareCount >= limit && plan !== "premium") {
+    if (compareCount >= limit && plan !== "premium" && plan !== "legendary") {
       return res.status(403).json({
         message: "❌ Vergleichs-Limit erreicht. Bitte Paket upgraden."
       });
@@ -451,7 +451,7 @@ router.get("/history", verifyToken, async (req, res) => {
       remainingComparisons: (() => {
         const plan = user.subscriptionPlan || "free";
         const used = user.compareCount || 0;
-        if (plan === "premium") return "unlimited";
+        if (plan === "premium" || plan === "legendary") return "unlimited";
         if (plan === "business") return Math.max(0, 50 - used);
         return Math.max(0, 5 - used);
       })()

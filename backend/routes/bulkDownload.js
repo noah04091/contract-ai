@@ -33,7 +33,7 @@ const requireEnterprisePlan = async (req, res, next) => {
     const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
     const plan = user?.subscriptionPlan || 'free';
 
-    if (plan !== 'premium' && plan !== 'enterprise') {
+    if (plan !== 'premium' && plan !== 'enterprise' && plan !== 'legendary') {
       return res.status(403).json({
         error: 'Bulk-Download ist nur für Enterprise verfügbar',
         requiresUpgrade: true,

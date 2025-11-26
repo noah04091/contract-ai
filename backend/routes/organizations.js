@@ -48,7 +48,7 @@ router.post('/', verifyToken, async (req, res) => {
     }
 
     const plan = user.subscriptionPlan || 'free';
-    if (plan !== 'premium') {
+    if (plan !== 'premium' && plan !== 'legendary') {
       return res.status(403).json({
         success: false,
         message: '⛔ Team-Management ist nur im Enterprise-Plan verfügbar.',

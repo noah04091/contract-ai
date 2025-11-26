@@ -87,8 +87,8 @@ const requireEnterprise = async (req, res, next) => {
     const user = await req.db.collection("users").findOne({ _id: new ObjectId(userId) });
     const plan = user?.subscriptionPlan || 'free';
 
-    // Nur Enterprise (premium) hat Zugriff auf Firmenprofil/White-Label
-    if (plan !== 'premium' && plan !== 'enterprise') {
+    // Nur Enterprise (premium/legendary) hat Zugriff auf Firmenprofil/White-Label
+    if (plan !== 'premium' && plan !== 'enterprise' && plan !== 'legendary') {
       return res.status(403).json({
         success: false,
         error: 'Firmenprofil & White-Label ist nur für Enterprise verfügbar',
