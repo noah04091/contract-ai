@@ -1430,7 +1430,111 @@ const connectDB = async () => {
             }
           }
 
-          console.log("✅ [BETA] Feedback-Erinnerungs-Check abgeschlossen");
+          console.log("✅ [BETA] Feedback-Erinnerungs-Check (1. Erinnerung) abgeschlossen");
+
+          // ========================================
+          // 🎁 ZWEITE ERINNERUNG nach 4 Tagen
+          // ========================================
+          const fourDaysAgo = new Date();
+          fourDaysAgo.setDate(fourDaysAgo.getDate() - 4);
+
+          // Beta-Tester die vor mindestens 4 Tagen registriert, 1. Erinnerung bekommen, aber noch kein Feedback
+          const betaTestersSecondReminder = await db.collection("users").find({
+            betaTester: true,
+            betaRegisteredAt: { $lte: fourDaysAgo }, // Mindestens 4 Tage her
+            betaReminderSent: true, // Erste Erinnerung bereits gesendet
+            betaSecondReminderSent: { $ne: true } // Zweite Erinnerung noch nicht gesendet
+          }).toArray();
+
+          console.log(`🎁 [BETA] ${betaTestersSecondReminder.length} Beta-Tester für 2. Erinnerung gefunden`);
+
+          for (const user of betaTestersSecondReminder) {
+            // Prüfen ob bereits Feedback gegeben wurde
+            const existingFeedback = await db.collection("betaFeedback").findOne({
+              email: user.email
+            });
+
+            if (existingFeedback) {
+              console.log(`✅ [BETA] ${user.email} hat bereits Feedback gegeben - überspringe 2. Erinnerung`);
+              await db.collection("users").updateOne(
+                { _id: user._id },
+                { $set: { betaSecondReminderSent: true } }
+              );
+              continue;
+            }
+
+            // Zweite Erinnerungs-E-Mail - persönlicher und freundlicher
+            const secondReminderHtml = `
+              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
+                  <h1 style="margin: 0; font-size: 24px;">💬 Kurz 2 Minuten Zeit?</h1>
+                </div>
+
+                <div style="background: #f5f5f7; padding: 30px; border-radius: 0 0 16px 16px;">
+                  <p style="font-size: 16px; color: #333; line-height: 1.6;">
+                    Hallo nochmal!
+                  </p>
+
+                  <p style="font-size: 16px; color: #333; line-height: 1.6;">
+                    Ich wollte mich nur kurz melden – du nutzt Contract AI jetzt seit ein paar Tagen und ich würde mich riesig über deine Meinung freuen.
+                  </p>
+
+                  <p style="font-size: 16px; color: #333; line-height: 1.6;">
+                    Als kleines Ein-Mann-Startup ist <strong>jedes einzelne Feedback Gold wert</strong> für mich. Es hilft mir zu verstehen, was gut funktioniert und wo ich noch nachbessern muss.
+                  </p>
+
+                  <div style="background: white; border-radius: 12px; padding: 20px; margin: 25px 0; border-left: 4px solid #667eea;">
+                    <p style="font-size: 15px; color: #333; line-height: 1.6; margin: 0;">
+                      <strong>Was mich interessiert:</strong><br>
+                      • Wie hilfreich war die Vertragsanalyse?<br>
+                      • Was hat dir gefallen / was nicht?<br>
+                      • Würdest du Contract AI weiterempfehlen?
+                    </p>
+                  </div>
+
+                  <div style="text-align: center; margin: 30px 0;">
+                    <a href="https://www.contract-ai.de/beta#feedback"
+                       style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 16px 40px; border-radius: 100px; font-size: 18px; font-weight: 600; text-decoration: none; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                      Feedback geben (2 Min.)
+                    </a>
+                  </div>
+
+                  <p style="font-size: 15px; color: #555; line-height: 1.6; text-align: center;">
+                    Vielen Dank, dass du Contract AI testest! 🙏<br>
+                    <em>– Noah, Gründer von Contract AI</em>
+                  </p>
+
+                  <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 30px 0;">
+
+                  <p style="font-size: 13px; color: #999; text-align: center;">
+                    PS: Falls du Probleme hattest oder etwas nicht funktioniert hat,<br>
+                    antworte einfach auf diese E-Mail – ich helfe dir gerne!
+                  </p>
+                </div>
+              </div>
+            `;
+
+            try {
+              await transporter.sendMail({
+                from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
+                to: user.email,
+                subject: "💬 Kurze Frage: Wie findest du Contract AI bisher?",
+                html: secondReminderHtml,
+              });
+
+              // Markiere User als 2x erinnert
+              await db.collection("users").updateOne(
+                { _id: user._id },
+                { $set: { betaSecondReminderSent: true, betaSecondReminderSentAt: new Date() } }
+              );
+
+              console.log(`📧 [BETA] 2. Erinnerung gesendet an: ${user.email}`);
+            } catch (emailError) {
+              console.error(`❌ [BETA] Fehler beim Senden der 2. Erinnerung an ${user.email}:`, emailError.message);
+            }
+          }
+
+          console.log("✅ [BETA] Feedback-Erinnerungs-Check (beide Erinnerungen) abgeschlossen");
         } catch (error) {
           console.error("❌ [BETA] Feedback Reminder Cron Error:", error);
         }
