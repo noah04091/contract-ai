@@ -82,7 +82,7 @@ const About: React.FC = () => {
             {/* Team Member 1 */}
             <div className={`${styles.teamMember} fadeInUp`} style={{ animationDelay: '0.6s' }}>
               <img
-                src="/team/noah-liebold.jpg"
+                src="/team/noah-liebold.jpg.png"
                 alt="Noah Liebold - Gründer & CEO"
                 className={styles.memberImage}
                 onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.classList.remove(styles.hidden); }}
@@ -95,7 +95,7 @@ const About: React.FC = () => {
             {/* Team Member 2 */}
             <div className={`${styles.teamMember} fadeInUp`} style={{ animationDelay: '0.7s' }}>
               <img
-                src="/team/michael-weber.jpg"
+                src="/team/michael-weber.jpg.png"
                 alt="Michael Weber - CTO"
                 className={styles.memberImage}
                 onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.classList.remove(styles.hidden); }}
@@ -108,7 +108,7 @@ const About: React.FC = () => {
             {/* Team Member 3 */}
             <div className={`${styles.teamMember} fadeInUp`} style={{ animationDelay: '0.8s' }}>
               <img
-                src="/team/laura-mueller.jpg"
+                src="/team/laura-mueller.jpg.png"
                 alt="Laura Müller - Head of Design"
                 className={styles.memberImage}
                 onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.classList.remove(styles.hidden); }}
