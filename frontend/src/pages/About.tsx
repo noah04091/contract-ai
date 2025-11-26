@@ -77,25 +77,43 @@ const About: React.FC = () => {
           <h2 className={`${styles.sectionTitle} scaleIn`} style={{ animationDelay: '0.4s' }}>
             Unser Team
           </h2>
-          
+
           <div className={styles.teamGrid}>
             {/* Team Member 1 */}
             <div className={`${styles.teamMember} fadeInUp`} style={{ animationDelay: '0.6s' }}>
-              <div className={styles.memberImagePlaceholder}></div>
+              <img
+                src="/team/noah-liebold.jpg"
+                alt="Noah Liebold - Gründer & CEO"
+                className={styles.memberImage}
+                onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.classList.remove(styles.hidden); }}
+              />
+              <div className={`${styles.memberImagePlaceholder} ${styles.hidden}`}></div>
               <h3 className={styles.memberName}>Noah Liebold</h3>
               <p className={styles.memberRole}>Gründer & CEO</p>
             </div>
-            
+
             {/* Team Member 2 */}
             <div className={`${styles.teamMember} fadeInUp`} style={{ animationDelay: '0.7s' }}>
-              <div className={styles.memberImagePlaceholder}></div>
+              <img
+                src="/team/michael-weber.jpg"
+                alt="Michael Weber - CTO"
+                className={styles.memberImage}
+                onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.classList.remove(styles.hidden); }}
+              />
+              <div className={`${styles.memberImagePlaceholder} ${styles.hidden}`}></div>
               <h3 className={styles.memberName}>Michael Weber</h3>
               <p className={styles.memberRole}>CTO</p>
             </div>
-            
+
             {/* Team Member 3 */}
             <div className={`${styles.teamMember} fadeInUp`} style={{ animationDelay: '0.8s' }}>
-              <div className={styles.memberImagePlaceholder}></div>
+              <img
+                src="/team/laura-mueller.jpg"
+                alt="Laura Müller - Head of Design"
+                className={styles.memberImage}
+                onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.classList.remove(styles.hidden); }}
+              />
+              <div className={`${styles.memberImagePlaceholder} ${styles.hidden}`}></div>
               <h3 className={styles.memberName}>Laura Müller</h3>
               <p className={styles.memberRole}>Head of Design</p>
             </div>
