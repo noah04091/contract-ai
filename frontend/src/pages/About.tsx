@@ -81,39 +81,39 @@ const About: React.FC = () => {
           <div className={styles.teamGrid}>
             {/* Team Member 1 */}
             <div className={`${styles.teamMember} fadeInUp`} style={{ animationDelay: '0.6s' }}>
-              <img
-                src="/team/noah-liebold.jpg.png"
-                alt="Noah Liebold - Gründer & CEO"
-                className={styles.memberImage}
-                onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.classList.remove(styles.hidden); }}
-              />
-              <div className={`${styles.memberImagePlaceholder} ${styles.hidden}`}></div>
+              <div className={styles.memberImageWrapper}>
+                <img
+                  src="/team/noah-liebold.jpg.png"
+                  alt="Noah Liebold - Gründer & CEO"
+                  className={styles.memberImage}
+                />
+              </div>
               <h3 className={styles.memberName}>Noah Liebold</h3>
               <p className={styles.memberRole}>Gründer & CEO</p>
             </div>
 
             {/* Team Member 2 */}
             <div className={`${styles.teamMember} fadeInUp`} style={{ animationDelay: '0.7s' }}>
-              <img
-                src="/team/michael-weber.jpg.png"
-                alt="Michael Weber - CTO"
-                className={styles.memberImage}
-                onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.classList.remove(styles.hidden); }}
-              />
-              <div className={`${styles.memberImagePlaceholder} ${styles.hidden}`}></div>
+              <div className={styles.memberImageWrapper}>
+                <img
+                  src="/team/michael-weber.jpg.png"
+                  alt="Michael Weber - CTO"
+                  className={styles.memberImage}
+                />
+              </div>
               <h3 className={styles.memberName}>Michael Weber</h3>
               <p className={styles.memberRole}>CTO</p>
             </div>
 
             {/* Team Member 3 */}
             <div className={`${styles.teamMember} fadeInUp`} style={{ animationDelay: '0.8s' }}>
-              <img
-                src="/team/laura-mueller.jpg.png"
-                alt="Laura Müller - Head of Design"
-                className={styles.memberImage}
-                onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.classList.remove(styles.hidden); }}
-              />
-              <div className={`${styles.memberImagePlaceholder} ${styles.hidden}`}></div>
+              <div className={styles.memberImageWrapper}>
+                <img
+                  src="/team/laura-mueller.jpg.png"
+                  alt="Laura Müller - Head of Design"
+                  className={styles.memberImage}
+                />
+              </div>
               <h3 className={styles.memberName}>Laura Müller</h3>
               <p className={styles.memberRole}>Head of Design</p>
             </div>
