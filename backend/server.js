@@ -1329,22 +1329,15 @@ const connectDB = async () => {
       cron.schedule("0 10 * * *", async () => {
         console.log("🎁 [BETA] Starte Feedback-Erinnerungs-Check...");
         try {
-          // Finde Beta-Tester, die sich vor genau 2 Tagen registriert haben
+          // Finde ALLE Beta-Tester, die sich vor MINDESTENS 2 Tagen registriert haben
+          // und noch keine Erinnerung bekommen haben (niemand rutscht durch!)
           const twoDaysAgo = new Date();
           twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-          twoDaysAgo.setHours(0, 0, 0, 0);
 
-          const threeDaysAgo = new Date();
-          threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-          threeDaysAgo.setHours(0, 0, 0, 0);
-
-          // Beta-Tester die sich vor 2 Tagen registriert haben
+          // Beta-Tester die sich vor mindestens 2 Tagen registriert haben
           const betaTestersToRemind = await db.collection("users").find({
             betaTester: true,
-            betaRegisteredAt: {
-              $gte: threeDaysAgo,
-              $lt: twoDaysAgo
-            },
+            betaRegisteredAt: { $lte: twoDaysAgo }, // Mindestens 2 Tage her
             betaReminderSent: { $ne: true } // Noch keine Erinnerung gesendet
           }).toArray();
 
