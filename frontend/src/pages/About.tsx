@@ -3,6 +3,11 @@ import { Helmet } from "react-helmet-async";
 import styles from "../styles/About.module.css";
 import Footer from "../components/Footer";
 
+// Team Bilder
+import noahImg from "../assets/team/noah-liebold.jpg.png";
+import michaelImg from "../assets/team/michael-weber.jpg.png";
+import lauraImg from "../assets/team/laura-mueller.jpg.png";
+
 const About: React.FC = () => {
   useEffect(() => {
     // Setze den document title manuell
@@ -83,7 +88,7 @@ const About: React.FC = () => {
             <div className={`${styles.teamMember} fadeInUp`} style={{ animationDelay: '0.6s' }}>
               <div className={styles.memberImageWrapper}>
                 <img
-                  src="/team/noah-liebold.jpg.png"
+                  src={noahImg}
                   alt="Noah Liebold - Gründer & CEO"
                   className={styles.memberImage}
                 />
@@ -96,7 +101,7 @@ const About: React.FC = () => {
             <div className={`${styles.teamMember} fadeInUp`} style={{ animationDelay: '0.7s' }}>
               <div className={styles.memberImageWrapper}>
                 <img
-                  src="/team/michael-weber.jpg.png"
+                  src={michaelImg}
                   alt="Michael Weber - CTO"
                   className={styles.memberImage}
                 />
@@ -109,7 +114,7 @@ const About: React.FC = () => {
             <div className={`${styles.teamMember} fadeInUp`} style={{ animationDelay: '0.8s' }}>
               <div className={styles.memberImageWrapper}>
                 <img
-                  src="/team/laura-mueller.jpg.png"
+                  src={lauraImg}
                   alt="Laura Müller - Head of Design"
                   className={styles.memberImage}
                 />

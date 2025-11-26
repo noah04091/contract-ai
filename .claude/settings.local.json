@@ -28,7 +28,14 @@
       "Bash(findstr:*)",
       "Bash(npx vercel domains ls)",
       "Bash(npx vercel:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(ren:*)",
+      "Bash(ren \"laura-mueller.jpg.png\" \"laura-mueller.jpg\")",
+      "Bash(move \"noah-liebold.jpg.png\" \"noah-liebold.jpg\")",
+      "Bash(move \"michael-weber.jpg.png\" \"michael-weber.jpg\")",
+      "Bash(move \"laura-mueller.jpg.png\" \"laura-mueller.jpg\")",
+      "Bash(cmd /c:*)",
+      "WebFetch(domain:www.contract-ai.de)"
     ],
     "deny": [],
     "ask": []
