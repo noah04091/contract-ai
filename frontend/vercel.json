@@ -5,7 +5,7 @@
       "destination": "https://api.contract-ai.de/api/:path*"
     },
     {
-      "source": "/:path*",
+      "source": "/((?!team|assets|images|Videos|.*\\..*).*)",
       "destination": "/index.html"
     }
   ],
