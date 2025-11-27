@@ -118,6 +118,13 @@ export default function VerifySuccess() {
         {/* Right Side - Success Content */}
         <div className="split-auth-form-side">
           <div className="split-auth-form-container">
+            {/* Mobile Logo */}
+            <Link to="/" className="split-auth-mobile-logo-link">
+              <div className="split-auth-mobile-back-arrow">
+                <BackArrowIcon />
+              </div>
+              <img src="/logo.png" alt="Contract AI" className="split-auth-mobile-logo-img" />
+            </Link>
 
             {/* Success Content */}
             <div className="split-auth-success">

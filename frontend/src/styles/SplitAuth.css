@@ -267,6 +267,48 @@
   color: #111827;
 }
 
+/* Mobile Logo Link (mit Zurück-Pfeil) */
+.split-auth-mobile-logo-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 32px;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.split-auth-mobile-logo-link:hover {
+  opacity: 0.8;
+}
+
+.split-auth-mobile-back-arrow {
+  width: 36px;
+  height: 36px;
+  background: #2563eb;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.split-auth-mobile-logo-link:hover .split-auth-mobile-back-arrow {
+  background: #1d4ed8;
+}
+
+.split-auth-mobile-back-arrow svg {
+  width: 20px;
+  height: 20px;
+  color: white;
+}
+
+.split-auth-mobile-logo-img {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+
 /* Notification */
 .split-auth-notification {
   margin-bottom: 24px;
@@ -820,6 +862,10 @@
   }
 
   .split-auth-mobile-logo {
+    display: none;
+  }
+
+  .split-auth-mobile-logo-link {
     display: none;
   }
 

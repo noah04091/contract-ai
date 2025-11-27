@@ -14,14 +14,46 @@ interface User {
   subscriptionPlan?: string;
 }
 
+// Feature-Daten für das Mega-Menü
+const featureCategories = [
+  {
+    title: "Analyse & Optimierung",
+    features: [
+      { name: "KI-Vertragsanalyse", description: "Automatische Analyse mit GPT-4", icon: "🔍", path: "/features/vertragsanalyse" },
+      { name: "Vertragsoptimierung", description: "KI-gestützte Verbesserungsvorschläge", icon: "✨", path: "/features/optimierung" },
+      { name: "Legal Pulse", description: "Rechtliche Risikoanalyse", icon: "⚖️", path: "/features/legalpulse" },
+      { name: "Vertragsvergleich", description: "Zwei Verträge vergleichen", icon: "📊", path: "/features/vergleich" },
+    ]
+  },
+  {
+    title: "Verwaltung & Organisation",
+    features: [
+      { name: "Vertragsverwaltung", description: "Alle Verträge an einem Ort", icon: "📁", path: "/features/vertragsverwaltung" },
+      { name: "Fristenkalender", description: "Keine Frist mehr verpassen", icon: "📅", path: "/features/fristen" },
+      { name: "E-Mail Upload", description: "Verträge per E-Mail hochladen", icon: "📧", path: "/features/email-upload" },
+    ]
+  },
+  {
+    title: "Erstellung & Signatur",
+    features: [
+      { name: "Vertragsgenerator", description: "Verträge mit KI erstellen", icon: "📝", path: "/features/generator" },
+      { name: "Digitale Signatur", description: "Rechtsgültig digital unterschreiben", icon: "✍️", path: "/features/digitalesignatur" },
+    ]
+  }
+];
+
 export default function Navbar() {
   const { user, setUser } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [megaMenuOpen, setMegaMenuOpen] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type?: "success" | "error" } | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+
+  const megaMenuRef = useRef<HTMLDivElement>(null);
+  const megaMenuTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const location = useLocation();
   const isHomePage = location.pathname === "/";
@@ -67,19 +99,24 @@ export default function Navbar() {
 
   // Auth-Status wird jetzt über useAuth() verwaltet
 
-  // 🧠 Klick außerhalb des Dropdowns/Mobilmenüs/Sidebar
+  // 🧠 Klick außerhalb des Dropdowns/Mobilmenüs/Sidebar/MegaMenu
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setDropdownOpen(false);
       }
-      
+
+      // Schließe das Mega-Menü bei Klick außerhalb
+      if (megaMenuOpen && megaMenuRef.current && !megaMenuRef.current.contains(e.target as Node)) {
+        setMegaMenuOpen(false);
+      }
+
       // Schließe das mobile Menü bei Klick außerhalb, aber nicht beim Hamburger-Button
       if (
-        !isHomePage && 
-        mobileMenuOpen && 
-        mobileMenuRef.current && 
-        !mobileMenuRef.current.contains(e.target as Node) && 
+        !isHomePage &&
+        mobileMenuOpen &&
+        mobileMenuRef.current &&
+        !mobileMenuRef.current.contains(e.target as Node) &&
         !(e.target as Element).closest(`.${styles.hamburger}`)
       ) {
         setMobileMenuOpen(false);
@@ -93,10 +130,10 @@ export default function Navbar() {
         }
       }
     };
-    
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [mobileMenuOpen, isHomePage, sidebarOpen]);
+  }, [mobileMenuOpen, isHomePage, sidebarOpen, megaMenuOpen]);
 
   // Scroll-Handler für Glasmorphismus-Effekt
   useEffect(() => {
@@ -122,12 +159,27 @@ export default function Navbar() {
         setDropdownOpen(false);
         setMobileMenuOpen(false);
         setSidebarOpen(false);
+        setMegaMenuOpen(false);
       }
     };
 
     document.addEventListener("keydown", handleEscKey);
     return () => document.removeEventListener("keydown", handleEscKey);
   }, []);
+
+  // Mega-Menu Hover Handler mit Delay
+  const handleMegaMenuEnter = () => {
+    if (megaMenuTimeoutRef.current) {
+      clearTimeout(megaMenuTimeoutRef.current);
+    }
+    setMegaMenuOpen(true);
+  };
+
+  const handleMegaMenuLeave = () => {
+    megaMenuTimeoutRef.current = setTimeout(() => {
+      setMegaMenuOpen(false);
+    }, 150);
+  };
 
   // 🚪 Logout-Handler
   const handleLogout = async () => {
@@ -153,85 +205,275 @@ export default function Navbar() {
 
   // Render HomePage Navbar
   const renderHomePageNavbar = () => {
-    return (
-      <>
-        {/* Left Section - Desktop: Logo, Mobile: leer oder Hamburger wenn eingeloggt */}
-        <div className={styles.leftSection}>
-          {/* Desktop: Logo hier */}
-          {!isMobile && (
-            <Link to="/" className={styles.logoLink}>
-              <motion.img 
-                src={logo} 
-                alt="Contract AI Logo" 
-                className={styles.logoImage}
-                whileHover={{ scale: 1.05 }}
-                transition={{ duration: 0.2 }}
-              />
-            </Link>
-          )}
-        </div>
+    // Wenn eingeloggt: Zeige App-Navigation
+    if (user) {
+      return (
+        <>
+          {/* Left Section - Logo */}
+          <div className={styles.leftSection}>
+            {!isMobile && (
+              <Link to="/" className={styles.logoLink}>
+                <motion.img
+                  src={logo}
+                  alt="Contract AI Logo"
+                  className={styles.logoImage}
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ duration: 0.2 }}
+                />
+              </Link>
+            )}
+          </div>
 
-        {/* Center Section - Desktop: Navigation, Mobile: Logo */}
-        <div className={styles.centerSection}>
-          {/* Mobile: Logo zentriert */}
-          {isMobile && (
-            <Link to="/" className={styles.logoLink}>
-              <motion.img 
-                src={logo} 
-                alt="Contract AI Logo" 
-                className={styles.logoImage}
-                whileHover={{ scale: 1.05 }}
-                transition={{ duration: 0.2 }}
-              />
-            </Link>
-          )}
-          
-          {/* Desktop: Navigation */}
-          {!isMobile && (
-            <div className={styles.navLinks}>
-              <motion.div className={styles.navLinksInner}>
-                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Link to={user ? "/dashboard" : "/"} className={`${styles.navLink} ${location.pathname === "/dashboard" ? styles.activeNavLink : ""}`}>
-                    <span className={styles.navLinkIcon}>📊</span>
-                    <span className={styles.navLinkText}>Dashboard</span>
-                  </Link>
-                </motion.div>
-                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Link to={user ? "/contracts" : "/features/vertragsverwaltung"} className={`${styles.navLink} ${location.pathname === "/contracts" ? styles.activeNavLink : ""}`}>
-                    <span className={styles.navLinkIcon}>📁</span>
-                    <span className={styles.navLinkText}>Verträge</span>
-                  </Link>
-                </motion.div>
-                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Link to={user ? "/calendar" : "/features/fristen"} className={`${styles.navLink} ${location.pathname === "/calendar" ? styles.activeNavLink : ""}`}>
-                    <span className={styles.navLinkIcon}>📅</span>
-                    <span className={styles.navLinkText}>Kalender</span>
-                  </Link>
-                </motion.div>
-                {!user ? (
+          {/* Center Section - App Navigation für eingeloggte User */}
+          <div className={styles.centerSection}>
+            {isMobile && (
+              <Link to="/" className={styles.logoLink}>
+                <motion.img
+                  src={logo}
+                  alt="Contract AI Logo"
+                  className={styles.logoImage}
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ duration: 0.2 }}
+                />
+              </Link>
+            )}
+
+            {!isMobile && (
+              <div className={styles.navLinks}>
+                <motion.div className={styles.navLinksInner}>
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Link to="/pricing" className={`${styles.navLink} ${location.pathname === "/pricing" ? styles.activeNavLink : ""}`}>
-                      <span className={styles.navLinkIcon}>💰</span>
-                      <span className={styles.navLinkText}>Preise</span>
+                    <Link to="/dashboard" className={`${styles.navLink} ${location.pathname === "/dashboard" ? styles.activeNavLink : ""}`}>
+                      <span className={styles.navLinkIcon}>📊</span>
+                      <span className={styles.navLinkText}>Dashboard</span>
                     </Link>
                   </motion.div>
-                ) : (
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <Link to="/contracts" className={`${styles.navLink} ${location.pathname === "/contracts" ? styles.activeNavLink : ""}`}>
+                      <span className={styles.navLinkIcon}>📁</span>
+                      <span className={styles.navLinkText}>Verträge</span>
+                    </Link>
+                  </motion.div>
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <Link to="/calendar" className={`${styles.navLink} ${location.pathname === "/calendar" ? styles.activeNavLink : ""}`}>
+                      <span className={styles.navLinkIcon}>📅</span>
+                      <span className={styles.navLinkText}>Kalender</span>
+                    </Link>
+                  </motion.div>
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                     <Link to="/legalpulse" className={`${styles.navLink} ${location.pathname === "/legalpulse" ? styles.activeNavLink : ""}`}>
                       <span className={styles.navLinkIcon}>⚖️</span>
                       <span className={styles.navLinkText}>Legal Pulse</span>
                     </Link>
                   </motion.div>
-                )}
+                </motion.div>
+              </div>
+            )}
+          </div>
+
+          {/* Right Section - User Menu */}
+          <div className={styles.rightSection}>
+            {isMobile ? (
+              <div className={styles.dropdownWrapper} ref={dropdownRef}>
+                <motion.button
+                  onClick={() => setDropdownOpen((prev) => !prev)}
+                  className={styles.profileButtonMobile}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  Account
+                  {renderSubscriptionBadge(user, true)}
+                </motion.button>
+
+                <AnimatePresence>
+                  {dropdownOpen && (
+                    <motion.div
+                      className={styles.dropdownMenu}
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <span className={styles.dropdownItem}>{user.email}</span>
+                      <Link to="/me" className={styles.dropdownItem}>Profil</Link>
+                      <button onClick={handleLogout} className={styles.dropdownItem}>Logout</button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <div className={styles.dropdownWrapper} ref={dropdownRef}>
+                <motion.button
+                  onClick={() => setDropdownOpen((prev) => !prev)}
+                  className={styles.profileButton}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  {renderSubscriptionBadge(user)}
+                  <span>Account</span>
+                  <motion.span
+                    animate={{ rotate: dropdownOpen ? 180 : 0 }}
+                    transition={{ duration: 0.3 }}
+                    className={styles.dropdownArrow}
+                  >
+                    ▾
+                  </motion.span>
+                </motion.button>
+
+                <AnimatePresence>
+                  {dropdownOpen && (
+                    <motion.div
+                      className={styles.dropdownMenu}
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <span className={styles.dropdownItem}>{user.email}</span>
+                      <Link to="/me" className={styles.dropdownItem}>Profil</Link>
+                      <button onClick={handleLogout} className={styles.dropdownItem}>Logout</button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+          </div>
+        </>
+      );
+    }
+
+    // Nicht eingeloggt: Zeige Marketing-Navigation mit Mega-Menü
+    return (
+      <>
+        {/* Left Section - Logo */}
+        <div className={styles.leftSection}>
+          {!isMobile && (
+            <Link to="/" className={styles.logoLink}>
+              <motion.img
+                src={logo}
+                alt="Contract AI Logo"
+                className={styles.logoImage}
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.2 }}
+              />
+            </Link>
+          )}
+        </div>
+
+        {/* Center Section - Marketing Navigation */}
+        <div className={styles.centerSection}>
+          {isMobile && (
+            <Link to="/" className={styles.logoLink}>
+              <motion.img
+                src={logo}
+                alt="Contract AI Logo"
+                className={styles.logoImage}
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.2 }}
+              />
+            </Link>
+          )}
+
+          {!isMobile && (
+            <div className={styles.navLinks}>
+              <motion.div className={styles.navLinksInner}>
+                {/* Funktionen mit Mega-Menü */}
+                <div
+                  className={styles.megaMenuWrapper}
+                  ref={megaMenuRef}
+                  onMouseEnter={handleMegaMenuEnter}
+                  onMouseLeave={handleMegaMenuLeave}
+                >
+                  <motion.button
+                    className={`${styles.navLink} ${styles.megaMenuTrigger} ${megaMenuOpen ? styles.activeNavLink : ""}`}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setMegaMenuOpen(!megaMenuOpen)}
+                  >
+                    <span className={styles.navLinkText}>Funktionen</span>
+                    <motion.span
+                      className={styles.megaMenuArrow}
+                      animate={{ rotate: megaMenuOpen ? 180 : 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+                        <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </motion.span>
+                  </motion.button>
+
+                  <AnimatePresence>
+                    {megaMenuOpen && (
+                      <motion.div
+                        className={styles.megaMenu}
+                        initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.98 }}
+                        transition={{ duration: 0.2, ease: "easeOut" }}
+                      >
+                        <div className={styles.megaMenuContent}>
+                          {featureCategories.map((category, catIndex) => (
+                            <div key={catIndex} className={styles.megaMenuCategory}>
+                              <h3 className={styles.megaMenuCategoryTitle}>{category.title}</h3>
+                              <div className={styles.megaMenuFeatures}>
+                                {category.features.map((feature, featIndex) => (
+                                  <Link
+                                    key={featIndex}
+                                    to={feature.path}
+                                    className={styles.megaMenuFeature}
+                                    onClick={() => setMegaMenuOpen(false)}
+                                  >
+                                    <span className={styles.megaMenuFeatureIcon}>{feature.icon}</span>
+                                    <div className={styles.megaMenuFeatureText}>
+                                      <span className={styles.megaMenuFeatureName}>{feature.name}</span>
+                                      <span className={styles.megaMenuFeatureDesc}>{feature.description}</span>
+                                    </div>
+                                  </Link>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <div className={styles.megaMenuFooter}>
+                          <Link to="/pricing" className={styles.megaMenuFooterLink} onClick={() => setMegaMenuOpen(false)}>
+                            <span>Alle Preise ansehen</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                          </Link>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Preise */}
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Link to="/pricing" className={`${styles.navLink} ${location.pathname === "/pricing" ? styles.activeNavLink : ""}`}>
+                    <span className={styles.navLinkText}>Preise</span>
+                  </Link>
+                </motion.div>
+
+                {/* Über uns */}
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Link to="/about" className={`${styles.navLink} ${location.pathname === "/about" ? styles.activeNavLink : ""}`}>
+                    <span className={styles.navLinkText}>Über uns</span>
+                  </Link>
+                </motion.div>
+
+                {/* Blog */}
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Link to="/blog" className={`${styles.navLink} ${location.pathname === "/blog" ? styles.activeNavLink : ""}`}>
+                    <span className={styles.navLinkText}>Blog</span>
+                  </Link>
+                </motion.div>
               </motion.div>
             </div>
           )}
         </div>
 
-        {/* Right Section */}
+        {/* Right Section - Auth Buttons */}
         <div className={styles.rightSection}>
-          {/* Mobile: Auth Buttons oder User Dropdown */}
-          {isMobile && !user && (
+          {isMobile ? (
             <div className={styles.authButtonsMobile}>
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Link to="/login" className={styles.loginButtonMobile}>
@@ -240,44 +482,11 @@ export default function Navbar() {
               </motion.div>
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Link to="/register" className={styles.registerButtonMobile}>
-                  Register
+                  Starten
                 </Link>
               </motion.div>
             </div>
-          )}
-
-          {isMobile && user && (
-            <div className={styles.dropdownWrapper} ref={dropdownRef}>
-              <motion.button
-                onClick={() => setDropdownOpen((prev) => !prev)}
-                className={styles.profileButtonMobile}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                Account
-                {renderSubscriptionBadge(user, true)} {/* ✅ KORRIGIERT */}
-              </motion.button>
-              
-              <AnimatePresence>
-                {dropdownOpen && (
-                  <motion.div 
-                    className={styles.dropdownMenu}
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <span className={styles.dropdownItem}>{user.email}</span>
-                    <Link to="/me" className={styles.dropdownItem}>Profil</Link>
-                    <button onClick={handleLogout} className={styles.dropdownItem}>Logout</button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
-
-          {/* Desktop: Auth Buttons wenn nicht eingeloggt */}
-          {!isMobile && !user && (
+          ) : (
             <div className={styles.authButtons}>
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Link to="/login" className={styles.loginButton}>
@@ -286,47 +495,9 @@ export default function Navbar() {
               </motion.div>
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Link to="/register" className={styles.registerButton}>
-                  <span>Registrieren</span>
+                  <span>Kostenlos starten</span>
                 </Link>
               </motion.div>
-            </div>
-          )}
-
-          {/* Desktop: User Dropdown wenn eingeloggt */}
-          {!isMobile && user && (
-            <div className={styles.dropdownWrapper} ref={dropdownRef}>
-              <motion.button
-                onClick={() => setDropdownOpen((prev) => !prev)}
-                className={styles.profileButton}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                {renderSubscriptionBadge(user)} {/* ✅ KORRIGIERT */}
-                <span>Account</span>
-                <motion.span
-                  animate={{ rotate: dropdownOpen ? 180 : 0 }}
-                  transition={{ duration: 0.3 }}
-                  className={styles.dropdownArrow}
-                >
-                  ▾
-                </motion.span>
-              </motion.button>
-              
-              <AnimatePresence>
-                {dropdownOpen && (
-                  <motion.div 
-                    className={styles.dropdownMenu}
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <span className={styles.dropdownItem}>{user.email}</span>
-                    <Link to="/me" className={styles.dropdownItem}>Profil</Link>
-                    <button onClick={handleLogout} className={styles.dropdownItem}>Logout</button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
           )}
         </div>
