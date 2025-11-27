@@ -1,122 +1,59 @@
-import { useState, useRef, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import "../styles/AppleAuth.css";
 
 export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [notification, setNotification] = useState<{
-    message: string;
-    type?: "success" | "error" | "info";
-  } | null>(null);
-  const [emailFocused, setEmailFocused] = useState(false);
-  const [passwordFocused, setPasswordFocused] = useState(false);
-  
-  // ✅ E-Mail-Verification States
+  const [notification, setNotification] = useState<{ message: string; type?: "success" | "error" | "info" } | null>(null);
+
+  // E-Mail-Verification States
   const [showEmailVerification, setShowEmailVerification] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
-  
-  const containerRef = useRef<HTMLDivElement>(null);
+
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-
-  // URL-Parameter auslesen
-  const fromPricing = searchParams.get('from') === 'pricing';
-  const selectedPlan = searchParams.get('plan');
   const isBetaTester = searchParams.get('beta') === 'true';
 
-  // ✅ E-Mail-Verification senden mit Retry-Logic
-  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
+  // E-Mail-Verification senden
   const sendVerificationEmail = async (emailToVerify: string) => {
-    // Kleiner Puffer nach Registration
-    await sleep(400);
-
-    const attempts = [0, 300, 800, 1500]; // sofort + 3 Retries mit exponential backoff
-
-    for (let i = 0; i < attempts.length; i++) {
-      if (attempts[i]) {
-        console.log(`⏳ Retry ${i}/${attempts.length - 1} nach ${attempts[i]}ms...`);
-        await sleep(attempts[i]);
+    await new Promise(resolve => setTimeout(resolve, 400));
+    try {
+      const response = await fetch("/api/email-verification/send-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email: emailToVerify }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        return { success: true, message: data.message };
       }
-
-      try {
-        const response = await fetch("/api/email-verification/send-verification", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({ email: emailToVerify }),
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          // Erfolg oder idempotente Responses (kein Fehler)
-          if (data.status === "queued" || data.status === "already_sent_recently" || data.status === "already_verified") {
-            console.log(`✅ E-Mail-Verifikation: ${data.status} -`, data);
-            return { success: true, message: data.message };
-          }
-        }
-
-        // Bei 4xx/5xx Fehlern: letzter Versuch = echten Fehler zurückgeben
-        if (i === attempts.length - 1) {
-          console.error("❌ Finaler Fehler beim E-Mail-Versand:", data);
-          return { success: false, message: data.message || "Fehler beim Senden der E-Mail" };
-        }
-
-        console.warn(`⚠️ Versuch ${i + 1} fehlgeschlagen (${response.status}), retry...`);
-
-      } catch (err) {
-        // Netzwerk-Fehler: letzter Versuch = echten Fehler zurückgeben
-        if (i === attempts.length - 1) {
-          console.error("❌ Finaler Netzwerk-Fehler beim E-Mail-Versand:", err);
-          return { success: false, message: "Verbindung fehlgeschlagen" };
-        }
-
-        console.warn(`⚠️ Netzwerk-Fehler bei Versuch ${i + 1}, retry...`, err);
-      }
+      return { success: false, message: data.message || "Fehler beim Senden der E-Mail" };
+    } catch {
+      return { success: false, message: "Verbindung fehlgeschlagen" };
     }
-
-    return { success: false, message: "Alle Versuche fehlgeschlagen" };
   };
 
-  // ✅ Resend E-Mail mit Cooldown
+  // Resend E-Mail mit Cooldown
   const handleResendEmail = async () => {
     if (resendCooldown > 0 || resendLoading) return;
-    
     setResendLoading(true);
-    
     const result = await sendVerificationEmail(email);
-    
     if (result.success) {
-      setNotification({ 
-        message: "Bestätigungs-E-Mail wurde erneut gesendet", 
-        type: "success" 
-      });
-      
-      // 60 Sekunden Cooldown
+      setNotification({ message: "Bestätigungs-E-Mail wurde erneut gesendet", type: "success" });
       setResendCooldown(60);
       const countdown = setInterval(() => {
         setResendCooldown((prev) => {
-          if (prev <= 1) {
-            clearInterval(countdown);
-            return 0;
-          }
+          if (prev <= 1) { clearInterval(countdown); return 0; }
           return prev - 1;
         });
       }, 1000);
     } else {
-      setNotification({ 
-        message: result.message, 
-        type: "error" 
-      });
+      setNotification({ message: result.message, type: "error" });
     }
-    
     setResendLoading(false);
   };
 
@@ -128,463 +65,285 @@ export default function Register() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          isBetaTester // 🎁 Beta-Tester Flag ans Backend senden
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, isBetaTester }),
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        // ✅ Nach erfolgreichem Register → E-Mail-Verification senden
-        console.log("✅ Registrierung erfolgreich, sende Verification-E-Mail...");
-
-        // ⏱️ Kurzer Delay um sicherzustellen, dass User in DB gespeichert ist
         await new Promise(resolve => setTimeout(resolve, 1000));
-
         const emailResult = await sendVerificationEmail(email);
-        
+
         if (emailResult.success) {
           setShowEmailVerification(true);
-          setNotification({ 
-            message: "Bitte überprüfen Sie Ihre E-Mail und bestätigen Sie Ihre Registrierung.", 
-            type: "info" 
-          });
+          setNotification({ message: "Bitte bestätigen Sie Ihre E-Mail-Adresse.", type: "info" });
         } else {
-          // Fallback: Registrierung war erfolgreich, aber E-Mail konnte nicht gesendet werden
-          setNotification({ 
-            message: "Registrierung erfolgreich, aber E-Mail konnte nicht gesendet werden. Versuchen Sie es erneut.", 
-            type: "error" 
-          });
-          setShowEmailVerification(true); // Zeige Resend-Option
+          setNotification({ message: "Registrierung erfolgreich, E-Mail konnte nicht gesendet werden.", type: "error" });
+          setShowEmailVerification(true);
         }
       } else {
         setNotification({ message: data.message, type: "error" });
       }
-    } catch (err) {
-      console.error("❌ Fehler bei Registrierung:", err);
+    } catch {
       setNotification({ message: "Verbindung fehlgeschlagen", type: "error" });
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    // Add parallax effect on mouse move
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!containerRef.current) return;
-      
-      const container = containerRef.current;
-      const containerRect = container.getBoundingClientRect();
-      
-      const mouseX = e.clientX - containerRect.left;
-      const mouseY = e.clientY - containerRect.top;
-      
-      const centerX = containerRect.width / 2;
-      const centerY = containerRect.height / 2;
-      
-      const moveX = (mouseX - centerX) / 20;
-      const moveY = (mouseY - centerY) / 20;
-      
-      const card = container.querySelector('.apple-auth-card') as HTMLElement;
-      if (card) {
-        card.style.transform = `perspective(1000px) rotateY(${moveX * 0.2}deg) rotateX(${-moveY * 0.2}deg) translateZ(10px)`;
-      }
-
-      const shapes = container.querySelectorAll('.shape');
-      shapes.forEach((shape, index) => {
-        const element = shape as HTMLElement;
-        const speed = index % 2 === 0 ? 0.05 : 0.03;
-        const offsetX = moveX * speed * (index + 1);
-        const offsetY = moveY * speed * (index + 1);
-        element.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
-      });
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-    };
-  }, []);
-
   return (
     <>
       <Helmet>
         <title>Kostenlos registrieren | Contract AI</title>
         <meta name="robots" content="noindex, nofollow" />
-        <meta name="description" content="Erstelle dein kostenloses Contract AI Konto und starte mit KI-gestützter Vertragsanalyse. Jetzt registrieren und 3 Analysen gratis testen." />
-        <link rel="canonical" href="https://www.contract-ai.de/register" />
+        <meta name="description" content="Erstelle dein kostenloses Contract AI Konto und starte mit KI-gestützter Vertragsanalyse." />
       </Helmet>
 
-      <div className="apple-auth-container" ref={containerRef}>
-        <div className="apple-bg">
-          <div className="shape shape-1"></div>
-          <div className="shape shape-2"></div>
-          <div className="shape shape-3"></div>
-        </div>
-
-        <div className="apple-auth-card">
-          <div className="apple-logo">
-          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
-            <path d="M9 12h6"></path>
-            <path d="M12 9v6"></path>
-          </svg>
-        </div>
-        
-        {/* 🎁 Beta-Tester Badge */}
-        {isBetaTester && !showEmailVerification && (
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            background: 'linear-gradient(135deg, #ff6b35 0%, #f7931e 100%)',
-            color: 'white',
-            padding: '8px 20px',
-            borderRadius: '100px',
-            fontSize: '14px',
-            fontWeight: '600',
-            marginBottom: '16px',
-            boxShadow: '0 4px 15px rgba(255, 107, 53, 0.3)'
-          }}>
-            <span style={{ fontSize: '16px' }}>🎁</span>
-            Beta-Tester Registrierung
+      <div className="min-h-screen flex">
+        {/* Left Side - Branding */}
+        <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 p-12 flex-col justify-between relative overflow-hidden">
+          {/* Background Pattern */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-20 left-20 w-72 h-72 bg-white rounded-full blur-3xl"></div>
+            <div className="absolute bottom-20 right-20 w-96 h-96 bg-blue-400 rounded-full blur-3xl"></div>
           </div>
-        )}
 
-        {/* ✅ CONDITIONAL TITLE - ZENTRIERT */}
-        <h1 className="apple-auth-title">
-          {showEmailVerification ? "E-Mail bestätigen" : isBetaTester ? "Willkommen!" : "Konto erstellen"}
-        </h1>
-        <p className="apple-auth-subtitle">
-          {showEmailVerification
-            ? `Wir haben eine Bestätigungs-E-Mail an ${email} gesendet. Klicken Sie auf den Link in der E-Mail, um Ihr Konto zu aktivieren.${isBetaTester ? ' Danach erhalten Sie sofort Zugang zu allen Premium-Features!' : fromPricing && selectedPlan ? ` Danach können Sie Ihr ${selectedPlan}-Abo abschließen.` : ''}`
-            : isBetaTester
-              ? "Als Beta-Tester erhältst du 3 Monate kostenlosen Premium-Zugang zu allen Features!"
-              : fromPricing && selectedPlan
-                ? `Erstellen Sie ein Konto, um das ${selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)}-Abo zu kaufen`
-                : "Erstellen Sie ein Konto, um Contract AI nutzen zu können"
-          }
-        </p>
-        
-        {/* ✅ STANDARD REGISTER FORM - nur anzeigen wenn noch nicht verifiziert */}
-        {!showEmailVerification && (
-          <form onSubmit={handleRegister} className="apple-auth-form">
-            <div className={`apple-input-group ${emailFocused || email ? 'focused' : ''}`}>
-              <label htmlFor="email">E-Mail</label>
-              <div className="apple-input-container">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2" y="4" width="20" height="16" rx="2"></rect>
-                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+          <div className="relative z-10">
+            {/* Logo */}
+            <div className="flex items-center gap-3 mb-16">
+              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                <input 
-                  type="email" 
-                  id="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onFocus={() => setEmailFocused(true)}
-                  onBlur={() => setEmailFocused(false)}
-                  required
-                  autoComplete="email"
-                />
               </div>
-            </div>
-            
-            <div className={`apple-input-group ${passwordFocused || password ? 'focused' : ''}`}>
-              <label htmlFor="password">Passwort</label>
-              <div className="apple-input-container">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                </svg>
-                <input 
-                  type="password" 
-                  id="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onFocus={() => setPasswordFocused(true)}
-                  onBlur={() => setPasswordFocused(false)}
-                  required
-                  autoComplete="new-password"
-                />
-              </div>
-              <div className="password-hint">
-                Mindestens 8 Zeichen empfohlen
-              </div>
-            </div>
-            
-            <div className="apple-terms">
-              <p>
-                Mit der Registrierung stimmen Sie unseren <a href="/terms" className="apple-link">Nutzungsbedingungen</a> und <a href="/privacy" className="apple-link">Datenschutzrichtlinien</a> zu.
-              </p>
-            </div>
-            
-            <button type="submit" className={`apple-auth-button ${loading ? 'loading' : ''}`} disabled={loading}>
-              {loading ? (
-                <span className="loading-spinner"></span>
-              ) : (
-                <>
-                  <span className="button-text">Konto erstellen</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12h14"></path>
-                    <path d="m12 5 7 7-7 7"></path>
-                  </svg>
-                </>
-              )}
-            </button>
-          </form>
-        )}
-
-        {/* ✅ E-MAIL VERIFICATION SEKTION - SCHWARZE SCHRIFT & ZENTRIERT */}
-        {showEmailVerification && (
-          <div className="email-verification-section" style={{ textAlign: 'center', color: '#1f2937' }}>
-            {/* ✅ ANIMATED MAIL ICON - ZENTRIERT */}
-            <div className="verification-mail-icon" style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
-              <div className="mail-animation">
-                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="1.5">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                  <polyline points="22,6 12,13 2,6"/>
-                </svg>
-                <div className="mail-pulse"></div>
-              </div>
+              <span className="text-2xl font-bold text-white">Contract AI</span>
             </div>
 
-            {/* ✅ SUCCESS CHECK ICON - ZENTRIERT */}
-            <div className="verification-check-icon" style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" fill="#10b981"/>
-                <path d="M8 12l2 2 4-4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
-            
-            {/* ✅ EMAIL BADGE - ZENTRIERT & SCHWARZE SCHRIFT */}
-            <div className="verified-email-badge" style={{ 
-              display: 'inline-flex', 
-              alignItems: 'center', 
-              gap: '8px',
-              background: 'linear-gradient(135deg, #ecfdf5, #f0fdf4)',
-              border: '1px solid #10b981',
-              padding: '12px 20px',
-              borderRadius: '50px',
-              margin: '20px 0',
-              color: '#065f46',
-              fontWeight: '600'
-            }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                <polyline points="22,6 12,13 2,6"/>
-              </svg>
-              <span style={{ color: '#065f46' }}>{email}</span>
-            </div>
-            
-            {/* ✅ NEXT STEPS - ZENTRIERT & SCHWARZE SCHRIFT */}
-            <div className="verification-steps" style={{ margin: '30px 0', display: 'flex', justifyContent: 'center' }}>
-              <div className="step-indicator" style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '15px',
-                color: '#1f2937'
-              }}>
-                <div className="step-item active" style={{ 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  alignItems: 'center', 
-                  gap: '8px' 
-                }}>
-                  <div className="step-number" style={{ 
-                    background: '#10b981', 
-                    color: 'white', 
-                    width: '30px', 
-                    height: '30px', 
-                    borderRadius: '50%', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center',
-                    fontSize: '14px',
-                    fontWeight: 'bold'
-                  }}>1</div>
-                  <span style={{ color: '#1f2937', fontSize: '14px', fontWeight: '500' }}>E-Mail öffnen</span>
-                </div>
-                <div className="step-line" style={{ width: '30px', height: '2px', background: '#e5e7eb' }}></div>
-                <div className="step-item" style={{ 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  alignItems: 'center', 
-                  gap: '8px' 
-                }}>
-                  <div className="step-number" style={{ 
-                    background: '#e5e7eb', 
-                    color: '#6b7280', 
-                    width: '30px', 
-                    height: '30px', 
-                    borderRadius: '50%', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center',
-                    fontSize: '14px',
-                    fontWeight: 'bold'
-                  }}>2</div>
-                  <span style={{ color: '#1f2937', fontSize: '14px', fontWeight: '500' }}>Link klicken</span>
-                </div>
-                <div className="step-line" style={{ width: '30px', height: '2px', background: '#e5e7eb' }}></div>
-                <div className="step-item" style={{ 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  alignItems: 'center', 
-                  gap: '8px' 
-                }}>
-                  <div className="step-number" style={{ 
-                    background: '#e5e7eb', 
-                    color: '#6b7280', 
-                    width: '30px', 
-                    height: '30px', 
-                    borderRadius: '50%', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center',
-                    fontSize: '14px',
-                    fontWeight: 'bold'
-                  }}>3</div>
-                  <span style={{ color: '#1f2937', fontSize: '14px', fontWeight: '500' }}>Anmelden</span>
-                </div>
-              </div>
-            </div>
-            
-            {/* ✅ ACTION BUTTONS - ZENTRIERT */}
-            <div className="verification-actions" style={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              gap: '12px', 
-              alignItems: 'center',
-              margin: '30px 0'
-            }}>
-              <button 
-                className={`apple-auth-button primary ${resendLoading ? 'loading' : ''} ${resendCooldown > 0 ? 'disabled' : ''}`}
-                onClick={handleResendEmail}
-                disabled={resendLoading || resendCooldown > 0}
-                style={{ width: '100%', maxWidth: '300px' }}
-              >
-                {resendLoading ? (
-                  <span className="loading-spinner"></span>
-                ) : resendCooldown > 0 ? (
-                  <>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10"/>
-                      <polyline points="12,6 12,12 16,14"/>
-                    </svg>
-                    <span>Erneut senden ({resendCooldown}s)</span>
-                  </>
-                ) : (
-                  <>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
-                    </svg>
-                    <span>E-Mail erneut senden</span>
-                  </>
-                )}
-              </button>
-              
-              <button 
-                className="apple-auth-button secondary"
-                onClick={() => navigate("/login")}
-                style={{ width: '100%', maxWidth: '300px' }}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                  <polyline points="16,17 21,12 16,7"/>
-                  <path d="M21 12H9"/>
-                </svg>
-                <span>Zur Anmeldung</span>
-              </button>
-            </div>
-
-            {/* ✅ HELPFUL TIP - ZENTRIERT & SCHWARZE SCHRIFT */}
-            <div className="verification-tip" style={{ 
-              background: 'rgba(59, 130, 246, 0.1)',
-              border: '1px solid rgba(59, 130, 246, 0.3)',
-              borderRadius: '12px',
-              padding: '15px',
-              margin: '20px 0',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '10px'
-            }}>
-              <div className="tip-icon">💡</div>
-              <p style={{ 
-                color: '#1f2937', 
-                margin: '0', 
-                fontSize: '14px',
-                textAlign: 'center'
-              }}>
-                <strong>Tipp:</strong> Schauen Sie auch in Ihren Spam-Ordner, falls die E-Mail nicht in wenigen Minuten ankommt.
-              </p>
-            </div>
-          </div>
-        )}
-        
-        {/* ✅ AUTH LINKS - nur anzeigen wenn nicht in Verification-Mode */}
-        {!showEmailVerification && (
-          <div className="apple-auth-links">
-            <p>
-              Bereits ein Konto?
-              <span className="apple-link" onClick={() => navigate("/login")}>
-                Anmelden
-              </span>
+            {/* Headline */}
+            <h1 className="text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
+              Starte kostenlos<br />in wenigen Minuten
+            </h1>
+            <p className="text-xl text-blue-100 mb-12 max-w-md">
+              Erstelle professionelle Vertragsanalysen, verwalte Fristen und optimiere deine Verträge mit KI.
             </p>
-            {fromPricing && (
-              <p>
-                <span className="apple-link" onClick={() => navigate("/pricing")}>
-                  ← Zurück zur Preisübersicht
-                </span>
-              </p>
+
+            {/* Benefits */}
+            <div className="space-y-4">
+              {[
+                "Kostenloser Start – keine Kreditkarte nötig",
+                "3 kostenlose Analysen zum Testen",
+                "KI-gestützte Vertragsoptimierung",
+                "Jederzeit kündbar",
+              ].map((benefit, i) => (
+                <div key={i} className="flex items-center gap-3 text-white/90">
+                  <svg className="w-5 h-5 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-lg">{benefit}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Bottom Text */}
+          <div className="relative z-10">
+            <p className="text-blue-200 text-sm">
+              Bereits über 1.000+ Verträge analysiert
+            </p>
+          </div>
+        </div>
+
+        {/* Right Side - Register Form */}
+        <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-gray-50">
+          <div className="w-full max-w-md">
+            {/* Mobile Logo */}
+            <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
+              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <span className="text-xl font-bold text-gray-900">Contract AI</span>
+            </div>
+
+            {/* Notification */}
+            {notification && (
+              <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 ${
+                notification.type === "success" ? "bg-green-50 text-green-800 border border-green-200" :
+                notification.type === "error" ? "bg-red-50 text-red-800 border border-red-200" :
+                "bg-blue-50 text-blue-800 border border-blue-200"
+              }`}>
+                <span>{notification.type === "success" ? "✓" : notification.type === "error" ? "✕" : "ℹ"}</span>
+                <span className="text-sm">{notification.message}</span>
+                <button onClick={() => setNotification(null)} className="ml-auto text-current opacity-50 hover:opacity-100">✕</button>
+              </div>
+            )}
+
+            {!showEmailVerification ? (
+              <>
+                {/* Beta Badge */}
+                {isBetaTester && (
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-full text-sm font-semibold mb-6 shadow-lg shadow-orange-500/25">
+                    <span>🎁</span>
+                    <span>Beta-Tester Registrierung</span>
+                  </div>
+                )}
+
+                {/* Header */}
+                <div className="mb-8">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                    {isBetaTester ? "Willkommen, Beta-Tester!" : "Konto erstellen"}
+                  </h2>
+                  <p className="text-gray-600">
+                    {isBetaTester
+                      ? "3 Monate Premium kostenlos – alle Features inklusive!"
+                      : "Füllen Sie das Formular aus, um loszulegen"
+                    }
+                  </p>
+                </div>
+
+                {/* Form */}
+                <form onSubmit={handleRegister} className="space-y-5">
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                      E-Mail Adresse
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white"
+                      placeholder="name@beispiel.de"
+                      required
+                      autoComplete="email"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                      Passwort
+                    </label>
+                    <input
+                      type="password"
+                      id="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white"
+                      placeholder="Mindestens 6 Zeichen"
+                      required
+                      autoComplete="new-password"
+                    />
+                  </div>
+
+                  <p className="text-xs text-gray-500">
+                    Mit der Registrierung akzeptieren Sie unsere{" "}
+                    <Link to="/agb" className="text-blue-600 hover:underline">AGB</Link> und{" "}
+                    <Link to="/datenschutz" className="text-blue-600 hover:underline">Datenschutzerklärung</Link>.
+                  </p>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/25"
+                  >
+                    {loading ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    ) : (
+                      <>
+                        <span>🚀 Kostenlos registrieren</span>
+                      </>
+                    )}
+                  </button>
+                </form>
+
+                {/* Divider */}
+                <div className="my-8 flex items-center">
+                  <div className="flex-1 border-t border-gray-200"></div>
+                  <span className="px-4 text-sm text-gray-500">oder</span>
+                  <div className="flex-1 border-t border-gray-200"></div>
+                </div>
+
+                {/* Login Link */}
+                <p className="text-center text-gray-600">
+                  Bereits ein Konto?{" "}
+                  <Link to="/login" className="text-blue-600 hover:text-blue-700 font-semibold">
+                    Jetzt anmelden
+                  </Link>
+                </p>
+              </>
+            ) : (
+              /* Email Verification */
+              <div className="text-center">
+                <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">E-Mail bestätigen</h2>
+                <p className="text-gray-600 mb-4">
+                  Wir haben eine Bestätigungs-E-Mail gesendet an:
+                </p>
+
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-full text-green-700 font-medium mb-6">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  <span>{email}</span>
+                </div>
+
+                {/* Steps */}
+                <div className="flex items-center justify-center gap-4 mb-8">
+                  {[
+                    { num: "1", label: "E-Mail öffnen", active: true },
+                    { num: "2", label: "Link klicken", active: false },
+                    { num: "3", label: "Anmelden", active: false },
+                  ].map((step, i) => (
+                    <div key={i} className="flex flex-col items-center gap-2">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                        step.active ? "bg-green-500 text-white" : "bg-gray-200 text-gray-500"
+                      }`}>
+                        {step.num}
+                      </div>
+                      <span className="text-xs text-gray-600">{step.label}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-3">
+                  <button
+                    onClick={handleResendEmail}
+                    disabled={resendLoading || resendCooldown > 0}
+                    className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {resendLoading ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto"></div>
+                    ) : resendCooldown > 0 ? (
+                      `E-Mail erneut senden (${resendCooldown}s)`
+                    ) : (
+                      "E-Mail erneut senden"
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => navigate("/login")}
+                    className="w-full py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-all"
+                  >
+                    Zur Anmeldung
+                  </button>
+                </div>
+
+                <div className="mt-8 p-4 bg-blue-50 rounded-xl">
+                  <p className="text-sm text-blue-800">
+                    <strong>💡 Tipp:</strong> Schauen Sie auch in Ihren Spam-Ordner, falls die E-Mail nicht ankommt.
+                  </p>
+                </div>
+              </div>
             )}
           </div>
-        )}
-      </div>
-      
-      {notification && (
-        <div className={`apple-notification ${notification.type}`}>
-          <div className="apple-notification-content">
-            <span className="notification-icon">
-              {notification.type === "success" ? (
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                </svg>
-              ) : notification.type === "info" ? (
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <path d="M12 16v-4"></path>
-                  <path d="M12 8h.01"></path>
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <line x1="12" y1="8" x2="12" y2="12"></line>
-                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                </svg>
-              )}
-            </span>
-            <p>{notification.message}</p>
-          </div>
-          <button 
-            className="apple-notification-close"
-            onClick={() => setNotification(null)}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
         </div>
-      )}
       </div>
     </>
   );
