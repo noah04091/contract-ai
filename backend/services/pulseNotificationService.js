@@ -3,6 +3,7 @@
 
 const PulseNotification = require("../models/PulseNotification");
 const nodemailer = require("nodemailer");
+const generateEmailTemplate = require("../utils/emailTemplate"); // 📧 V4 Email Template
 
 class PulseNotificationService {
   constructor() {
@@ -178,80 +179,50 @@ class PulseNotificationService {
    */
   generateEmailHTML(notification, user) {
     const severityColors = {
-      low: '#10b981',
-      medium: '#f59e0b',
-      high: '#ef4444',
-      critical: '#dc2626'
+      low: { bg: '#ecfdf5', text: '#065f46', label: 'LOW' },
+      medium: { bg: '#fffbeb', text: '#92400e', label: 'MEDIUM' },
+      high: { bg: '#fef2f2', text: '#dc2626', label: 'HIGH' },
+      critical: { bg: '#fef2f2', text: '#dc2626', label: 'CRITICAL' }
     };
 
-    const severityColor = severityColors[notification.severity] || '#6b7280';
+    const severity = severityColors[notification.severity] || severityColors.medium;
 
-    return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc;">
-  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-    <!-- Header -->
-    <div style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
-      <h1 style="color: white; margin: 0; font-size: 24px;">⚡ Legal Pulse Alert</h1>
-    </div>
+    const lawRefHtml = notification.lawReference ? `
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa; border-radius: 12px; margin-bottom: 25px;">
+        <tr><td style="padding: 20px;">
+          <p style="margin: 0; font-size: 14px; color: #555;">
+            <strong>Betroffen:</strong> ${notification.lawReference.lawId} ${notification.lawReference.sectionId || ''}
+            ${notification.lawReference.area ? `(${notification.lawReference.area})` : ''}
+          </p>
+        </td></tr>
+      </table>
+    ` : '';
 
-    <!-- Content -->
-    <div style="background-color: white; padding: 30px; border-radius: 0 0 12px 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
-      <!-- Severity Badge -->
-      <div style="margin-bottom: 20px;">
-        <span style="display: inline-block; padding: 6px 12px; background-color: ${severityColor}20; color: ${severityColor}; border-radius: 6px; font-size: 12px; font-weight: 700; text-transform: uppercase;">
-          ${notification.severity} Priority
-        </span>
-      </div>
+    return generateEmailTemplate({
+      title: "Legal Pulse Alert",
+      preheader: notification.title,
+      body: `
+        <div style="margin-bottom: 20px; text-align: center;">
+          <span style="display: inline-block; padding: 6px 14px; background-color: ${severity.bg}; color: ${severity.text}; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase;">
+            ⚠️ ${severity.label} Priority
+          </span>
+        </div>
 
-      <!-- Title -->
-      <h2 style="color: #1e293b; margin: 0 0 15px 0; font-size: 20px;">
-        ${notification.title}
-      </h2>
+        <h2 style="font-size: 20px; font-weight: 600; color: #1a1a1a; text-align: center; margin: 0 0 20px 0;">
+          ${notification.title}
+        </h2>
 
-      <!-- Description -->
-      <p style="color: #64748b; line-height: 1.6; margin: 0 0 25px 0;">
-        ${notification.description}
-      </p>
-
-      <!-- Law Reference (if available) -->
-      ${notification.lawReference ? `
-      <div style="background-color: #f1f5f9; padding: 15px; border-radius: 8px; margin-bottom: 25px;">
-        <p style="margin: 0; color: #475569; font-size: 14px;">
-          <strong>Betroffen:</strong> ${notification.lawReference.lawId} ${notification.lawReference.sectionId || ''}
-          ${notification.lawReference.area ? `(${notification.lawReference.area})` : ''}
+        <p style="text-align: center; margin-bottom: 25px;">
+          ${notification.description}
         </p>
-      </div>
-      ` : ''}
 
-      <!-- Action Button -->
-      ${notification.actionUrl ? `
-      <div style="text-align: center; margin-top: 30px;">
-        <a href="${notification.actionUrl}" style="display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
-          ${this.getActionButtonText(notification.actionType)}
-        </a>
-      </div>
-      ` : ''}
-
-      <!-- Footer -->
-      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center;">
-        <p style="color: #94a3b8; font-size: 12px; margin: 0;">
-          Diese Benachrichtigung wurde automatisch von Legal Pulse generiert.
-        </p>
-        <p style="color: #94a3b8; font-size: 12px; margin: 10px 0 0 0;">
-          <a href="https://contract-ai.de/legalpulse" style="color: #6366f1; text-decoration: none;">Legal Pulse Dashboard öffnen</a>
-        </p>
-      </div>
-    </div>
-  </div>
-</body>
-</html>
-    `;
+        ${lawRefHtml}
+      `,
+      cta: notification.actionUrl ? {
+        text: this.getActionButtonText(notification.actionType),
+        url: notification.actionUrl
+      } : null
+    });
   }
 
   /**

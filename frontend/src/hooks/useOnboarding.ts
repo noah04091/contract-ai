@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
 const ONBOARDING_KEY = 'contractai_onboarding_tours';
-const ONBOARDING_VERSION = '1.0';
+const ONBOARDING_VERSION = '2.0'; // V2: Modern Design Update
 
 interface CompletedTours {
   [path: string]: string; // path -> version

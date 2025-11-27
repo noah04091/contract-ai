@@ -9,6 +9,7 @@ const OrganizationMember = require('../models/OrganizationMember');
 const OrganizationInvitation = require('../models/OrganizationInvitation');
 const verifyToken = require('../middleware/verifyToken');
 const nodemailer = require('nodemailer');
+const generateEmailTemplate = require('../utils/emailTemplate'); // 📧 V4 Email Template
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -347,29 +348,34 @@ router.post('/:id/invite', verifyToken, async (req, res) => {
     // Sende Einladungs-Email
     const inviteLink = `${process.env.FRONTEND_URL || 'https://www.contract-ai.de'}/accept-invite/${invitation.token}`;
 
-    const emailHtml = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>🎉 Einladung zu ${organization.name}</h2>
-        <p>Du wurdest eingeladen, dem Team von <strong>${organization.name}</strong> auf Contract AI beizutreten!</p>
+    const roleDisplay = role === 'admin' ? 'Administrator' : role === 'member' ? 'Mitglied' : 'Betrachter';
 
-        <p><strong>Deine Rolle:</strong> ${role === 'admin' ? 'Administrator' : role === 'member' ? 'Mitglied' : 'Betrachter'}</p>
-
-        <div style="margin: 30px 0;">
-          <a href="${inviteLink}" style="background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-            Einladung annehmen
-          </a>
+    const emailHtml = generateEmailTemplate({
+      title: "Team-Einladung",
+      preheader: `Sie wurden zum Team von ${organization.name} eingeladen`,
+      body: `
+        <div style="background-color: #f0f9ff; border-radius: 12px; padding: 20px; margin-bottom: 25px; text-align: center;">
+          <span style="font-size: 48px;">🎉</span>
+          <p style="color: #0369a1; font-size: 18px; font-weight: 600; margin: 10px 0 0 0;">Sie wurden eingeladen!</p>
         </div>
 
-        <p style="color: #666; font-size: 13px;">
-          Oder kopiere diesen Link in deinen Browser:<br/>
-          <code>${inviteLink}</code>
+        <p style="text-align: center; margin-bottom: 25px;">
+          Sie wurden eingeladen, dem Team von <strong>${organization.name}</strong> auf Contract AI beizutreten.
         </p>
 
-        <p style="color: #666; font-size: 13px;">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa; border-radius: 12px; margin-bottom: 25px;">
+          <tr><td style="padding: 20px; text-align: center;">
+            <p style="margin: 0 0 8px 0; font-size: 14px; color: #555;"><strong>Organisation:</strong> ${organization.name}</p>
+            <p style="margin: 0; font-size: 14px; color: #555;"><strong>Ihre Rolle:</strong> ${roleDisplay}</p>
+          </td></tr>
+        </table>
+
+        <p style="font-size: 13px; color: #888; text-align: center;">
           Diese Einladung ist 7 Tage gültig.
         </p>
-      </div>
-    `;
+      `,
+      cta: { text: "Einladung annehmen", url: inviteLink }
+    });
 
     await transporter.sendMail({
       from: `"Contract AI" <${process.env.EMAIL_USER}>`,

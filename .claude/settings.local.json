@@ -35,7 +35,10 @@
       "Bash(move \"michael-weber.jpg.png\" \"michael-weber.jpg\")",
       "Bash(move \"laura-mueller.jpg.png\" \"laura-mueller.jpg\")",
       "Bash(cmd /c:*)",
-      "WebFetch(domain:www.contract-ai.de)"
+      "WebFetch(domain:www.contract-ai.de)",
+      "Bash(certutil -encode:*)",
+      "Bash(del temp.b64)",
+      "Bash(copy:*)"
     ],
     "deny": [],
     "ask": []
