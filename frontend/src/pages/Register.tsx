@@ -93,13 +93,6 @@ export default function Register() {
     }
   };
 
-  // Contract Icon SVG
-  const ContractIcon = () => (
-    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-    </svg>
-  );
-
   // Mail Icon SVG
   const MailIcon = () => (
     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -134,10 +127,7 @@ export default function Register() {
           <div className="split-auth-branding-content">
             {/* Logo */}
             <div className="split-auth-logo">
-              <div className="split-auth-logo-icon">
-                <ContractIcon />
-              </div>
-              <span className="split-auth-logo-text">Contract AI</span>
+              <img src="/logo-contractai.png" alt="Contract AI" className="split-auth-logo-img" />
             </div>
 
             {/* Headline */}
@@ -175,13 +165,6 @@ export default function Register() {
         {/* Right Side - Register Form */}
         <div className="split-auth-form-side">
           <div className="split-auth-form-container">
-            {/* Mobile Logo */}
-            <div className="split-auth-mobile-logo">
-              <div className="split-auth-mobile-logo-icon">
-                <ContractIcon />
-              </div>
-              <span className="split-auth-mobile-logo-text">Contract AI</span>
-            </div>
 
             {/* Notification */}
             {notification && (

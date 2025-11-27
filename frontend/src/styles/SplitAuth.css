@@ -106,6 +106,12 @@
   color: white;
 }
 
+.split-auth-logo-img {
+  height: 48px;
+  width: auto;
+  object-fit: contain;
+}
+
 /* Headlines */
 .split-auth-headline {
   font-size: 48px;
