@@ -1094,7 +1094,7 @@ a {
   padding: 0 20px 60px;
   margin: 0 !important;
   text-align: center;
-  /* overflow: hidden entfernt - Lichteffekte können fließen */
+  overflow: hidden; /* Verhindert dass Glass-Orbs über die Section hinausragen */
   min-height: 100vh;
   display: flex;
   flex-direction: column;
