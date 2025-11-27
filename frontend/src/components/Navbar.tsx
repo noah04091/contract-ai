@@ -65,10 +65,6 @@ export default function Navbar() {
   const protectedRoutes = ["/dashboard", "/contracts", "/optimizer", "/premium", "/me", "/calendar", "/compare", "/better-contracts", "/Generate", "/chat", "/envelopes", "/generate", "/legal-pulse"];
   const isProtectedPage = protectedRoutes.includes(location.pathname);
   
-  // Definiere nicht-geschützte Seiten (außer Homepage und Auth-Seiten)
-  const publicRoutes = ["/about", "/blog", "/pricing", "/help", "/datenschutz", "/agb", "/impressum"];
-  const isPublicPage = publicRoutes.includes(location.pathname);
-  
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -820,8 +816,8 @@ export default function Navbar() {
 
   return (
     <>
-      <motion.nav 
-        className={`${styles.navbar} ${isScrolled ? styles.navbarScrolled : ""} ${!isHomePage ? styles.innerPageNavbar : ""} ${isAuthPage ? styles.authPageNavbar : ""} ${isMobile && isPublicPage ? styles.mobileLogoOnly : ""}`}
+      <motion.nav
+        className={`${styles.navbar} ${isScrolled ? styles.navbarScrolled : ""} ${!isHomePage ? styles.innerPageNavbar : ""} ${isAuthPage ? styles.authPageNavbar : ""}`}
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.19, 1.0, 0.22, 1.0] }}
