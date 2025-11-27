@@ -8,6 +8,7 @@ const { ObjectId } = require("mongodb");
 const verifyToken = require("../middleware/verifyToken");
 const verifyAdmin = require("../middleware/verifyAdmin"); // 🔐 Admin-only access
 const sendEmail = require("../utils/sendEmail");
+const generateEmailTemplate = require("../utils/emailTemplate"); // 📧 V4 Email Template
 const { normalizeEmail } = require("../utils/normalizeEmail");
 require("dotenv").config();
 
@@ -348,17 +349,37 @@ router.post("/forgot-password", async (req, res) => {
     await usersCollection.updateOne({ email }, { $set: { resetToken, resetTokenExpires } });
 
     const resetLink = `https://contract-ai.de/reset-password?token=${resetToken}`;
-    const html = `
-      <div style="font-family: Arial, sans-serif; padding: 20px;">
-        <h2>🔐 Passwort zurücksetzen</h2>
-        <p>Klicke auf den Button, um dein Passwort zurückzusetzen:</p>
-        <a href="${resetLink}" style="background: #36a3f5; padding: 10px 18px; text-decoration: none; color: black; border-radius: 6px;">🔁 Neues Passwort festlegen</a>
-        <p style="margin-top: 30px;">Wenn du das nicht warst, ignoriere diese E-Mail.</p>
-        <hr />
-        <p style="font-size: 0.8rem; color: #aaa;">Contract AI • Automatisierte Vertragsanalyse</p>
-      </div>
-    `;
-    await sendEmail(email, "🔐 Passwort zurücksetzen", html);
+
+    // ✅ V4 CLEAN E-MAIL-TEMPLATE
+    const html = generateEmailTemplate({
+      title: "Passwort zurücksetzen",
+      preheader: "Setzen Sie Ihr Passwort zurück",
+      body: `
+        <p style="text-align: center; margin-bottom: 25px;">
+          Sie haben angefordert, Ihr Passwort zurückzusetzen.<br>
+          Klicken Sie auf den Button, um ein neues Passwort festzulegen.
+        </p>
+
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa; border-radius: 12px; margin-bottom: 25px;">
+          <tr><td style="padding: 20px; text-align: center;">
+            <p style="margin: 0; font-size: 14px; color: #555;">
+              <strong>Gültig für:</strong> 15 Minuten
+            </p>
+          </td></tr>
+        </table>
+
+        <p style="font-size: 13px; color: #888; text-align: center;">
+          Falls Sie dies nicht angefordert haben, ignorieren Sie diese E-Mail.<br>
+          Ihr Passwort bleibt unverändert.
+        </p>
+      `,
+      cta: {
+        text: "Neues Passwort festlegen",
+        url: resetLink
+      }
+    });
+
+    await sendEmail({ to: email, subject: "Passwort zurücksetzen", html });
     res.json({ message: "✅ Reset-Link gesendet" });
   } catch (err) {
     console.error("❌ Fehler bei forgot-password:", err);
