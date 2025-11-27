@@ -153,22 +153,19 @@
 .leftSection {
   display: flex;
   align-items: center;
-  flex: 1;
-  justify-content: flex-start;
 }
 
 .centerSection {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 auto;
+  gap: 32px;
 }
 
 .rightSection {
   display: flex;
   align-items: center;
-  flex: 1;
-  justify-content: flex-end;
+  gap: 12px;
 }
 
 .logoLink {
@@ -225,7 +222,6 @@
 .navLinks {
   display: flex;
   align-items: center;
-  margin: 0 auto;
 }
 
 .navLinksInner {
