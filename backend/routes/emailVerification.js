@@ -164,10 +164,13 @@ module.exports = function(db) {
 
             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa; border-radius: 12px; margin-bottom: 25px;">
               <tr><td style="padding: 20px;">
-                <p style="margin: 0 0 12px 0; font-size: 15px; font-weight: 600; color: #1a1a1a;">Ihre nächsten Schritte:</p>
-                <p style="margin: 0 0 8px 0; font-size: 14px; color: #555;">1. Ersten Vertrag hochladen</p>
-                <p style="margin: 0 0 8px 0; font-size: 14px; color: #555;">2. KI-Analyse starten</p>
-                <p style="margin: 0; font-size: 14px; color: #555;">3. Optimierungsvorschläge erhalten</p>
+                <p style="margin: 0 0 12px 0; font-size: 15px; font-weight: 600; color: #1a1a1a;">Ihre Vorteile:</p>
+                <p style="margin: 0 0 8px 0; font-size: 14px; color: #555;">• KI-gestützte Vertragsanalyse</p>
+                <p style="margin: 0 0 8px 0; font-size: 14px; color: #555;">• Automatische Fristenverwaltung</p>
+                <p style="margin: 0 0 8px 0; font-size: 14px; color: #555;">• Optimierungsvorschläge</p>
+                <p style="margin: 0 0 8px 0; font-size: 14px; color: #555;">• Risiko-Erkennung</p>
+                <p style="margin: 0 0 8px 0; font-size: 14px; color: #555;">• Vertragsgenerator</p>
+                <p style="margin: 0; font-size: 14px; color: #555;">• Digitale Signaturen</p>
               </td></tr>
             </table>
           `,
