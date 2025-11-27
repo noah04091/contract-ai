@@ -112,6 +112,41 @@
   object-fit: contain;
 }
 
+/* Klickbarer Logo-Link mit Zurück-Pfeil */
+.split-auth-logo-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.split-auth-logo-link:hover {
+  opacity: 0.9;
+}
+
+.split-auth-back-arrow {
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.split-auth-logo-link:hover .split-auth-back-arrow {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.split-auth-back-arrow svg {
+  width: 18px;
+  height: 18px;
+  color: white;
+}
+
 /* Headlines */
 .split-auth-headline {
   font-size: 48px;

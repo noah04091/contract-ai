@@ -127,14 +127,18 @@ function AppWithLoader() {
     return () => clearTimeout(timer);
   }, [location.pathname]); // Nur pathname, nicht location.search!
 
+  // Seiten ohne Navbar (Auth-Seiten mit Split-Screen Design)
+  const hideNavbarRoutes = ['/login', '/register', '/verify-success'];
+  const shouldHideNavbar = hideNavbarRoutes.includes(location.pathname);
+
   return (
     <ErrorBoundary>
       <SkipNavigation />
       <ScrollToTop />
       <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         {loading && <PageLoader />}
-        <Navbar />
-        <main id="main-content" style={{ flex: 1, paddingTop: "60px" }}>
+        {!shouldHideNavbar && <Navbar />}
+        <main id="main-content" style={{ flex: 1, paddingTop: shouldHideNavbar ? "0" : "60px" }}>
           <Suspense fallback={<PageLoader />}>
             <Routes>
             {/* 🔓 Öffentliche Seiten */}

@@ -3,6 +3,13 @@ import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import "../styles/SplitAuth.css";
 
+// Back Arrow Icon SVG
+const BackArrowIcon = () => (
+  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+  </svg>
+);
+
 export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -125,10 +132,13 @@ export default function Register() {
           </div>
 
           <div className="split-auth-branding-content">
-            {/* Logo */}
-            <div className="split-auth-logo">
+            {/* Logo - Klickbar zur Homepage */}
+            <Link to="/" className="split-auth-logo-link">
+              <div className="split-auth-back-arrow">
+                <BackArrowIcon />
+              </div>
               <img src="/logo-contractai.png" alt="Contract AI" className="split-auth-logo-img" />
-            </div>
+            </Link>
 
             {/* Headline */}
             <h1 className="split-auth-headline">
