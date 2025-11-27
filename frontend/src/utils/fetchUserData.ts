@@ -21,7 +21,8 @@ export interface UserData {
 export const fetchUserData = async (): Promise<UserData> => {
   try {
     // ✅ Token aus localStorage holen (falls vorhanden)
-    const token = localStorage.getItem("token");
+    // WICHTIG: Login speichert als "authToken", also beide prüfen!
+    const token = localStorage.getItem("authToken") || localStorage.getItem("token");
     
     // ✅ Headers vorbereiten
     const headers: Record<string, string> = {
