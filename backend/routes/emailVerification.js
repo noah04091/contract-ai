@@ -74,29 +74,14 @@ module.exports = function(db) {
       const frontendUrl = process.env.FRONTEND_URL || "https://contract-ai.de";
       const verificationLink = `${frontendUrl}/api/email-verification/verify?token=${verificationToken}`;
 
-      // ✅ V4 CLEAN E-MAIL-TEMPLATE
+      // ✅ V4 CLEAN E-MAIL-TEMPLATE - Minimalistisch & Button im Fokus
       const emailHtml = generateEmailTemplate({
         title: "E-Mail bestätigen",
-        preheader: "Bestätigen Sie Ihre E-Mail-Adresse, um loszulegen",
+        preheader: "Bestätigen Sie Ihre E-Mail-Adresse",
         body: `
-          <p style="text-align: center; margin-bottom: 25px;">
+          <p style="text-align: center; margin-bottom: 30px;">
             Vielen Dank für Ihre Registrierung bei <strong>Contract AI</strong>.<br>
             Bitte bestätigen Sie Ihre E-Mail-Adresse, um Ihr Konto zu aktivieren.
-          </p>
-
-          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa; border-radius: 12px; margin-bottom: 25px;">
-            <tr><td style="padding: 20px;">
-              <p style="margin: 0 0 12px 0; font-size: 15px; font-weight: 600; color: #1a1a1a;">Was Sie erwartet:</p>
-              <p style="margin: 0 0 8px 0; font-size: 14px; color: #555;">• KI-gestützte Vertragsanalyse</p>
-              <p style="margin: 0 0 8px 0; font-size: 14px; color: #555;">• Automatische Fristenverwaltung</p>
-              <p style="margin: 0 0 8px 0; font-size: 14px; color: #555;">• Optimierungsvorschläge</p>
-              <p style="margin: 0; font-size: 14px; color: #555;">• Risiko-Erkennung</p>
-            </td></tr>
-          </table>
-
-          <p style="font-size: 13px; color: #888; text-align: center;">
-            Dieser Link ist 24 Stunden gültig.<br>
-            Falls Sie diese E-Mail nicht angefordert haben, können Sie sie ignorieren.
           </p>
         `,
         cta: {
