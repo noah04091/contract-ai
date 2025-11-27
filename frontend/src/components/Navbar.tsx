@@ -709,8 +709,14 @@ export default function Navbar() {
     );
   };
 
-  // Render Public Pages Navbar (Logo zentriert, Hamburger auf allen Geräten)
+  // Render Public Pages Navbar (für nicht-eingeloggte: Marketing-Navbar, für eingeloggte: Hamburger)
   const renderPublicPagesNavbar = () => {
+    // Nicht eingeloggt: Zeige die gleiche Marketing-Navbar wie auf der Homepage
+    if (!user) {
+      return renderHomePageNavbar();
+    }
+
+    // Eingeloggt: Zeige Hamburger-Navbar
     return (
       <>
         {/* Left Section */}
