@@ -134,11 +134,14 @@
   transition: height 0.3s ease;
 }
 
-/* Navigation absolut zentriert auf der Seite */
+/* Navigation absolut zentriert auf der Seite (relativ zum Viewport) */
 .navbarContent .centerSection {
-  position: absolute;
+  position: fixed;
   left: 50%;
   transform: translateX(-50%);
+  top: 0;
+  height: 64px;
+  pointer-events: auto;
 }
 
 /* 📱 Mobile: Navbar Content Padding */
