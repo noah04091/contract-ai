@@ -48,6 +48,8 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [megaMenuOpen, setMegaMenuOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [mobileFeaturesOpen, setMobileFeaturesOpen] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type?: "success" | "error" } | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -344,9 +346,25 @@ export default function Navbar() {
     // Nicht eingeloggt: Zeige Marketing-Navigation mit Mega-Menü
     return (
       <>
-        {/* Left Section - Logo */}
+        {/* Left Section - Logo (Desktop) oder Hamburger (Mobile) */}
         <div className={styles.leftSection}>
-          {!isMobile && (
+          {isMobile ? (
+            <motion.button
+              className={styles.mobileHamburger}
+              onClick={() => setMobileNavOpen(!mobileNavOpen)}
+              whileTap={{ scale: 0.95 }}
+              aria-label="Menü öffnen"
+            >
+              <motion.div
+                animate={mobileNavOpen ? "open" : "closed"}
+                className={styles.hamburgerIcon}
+              >
+                <span className={`${styles.hamburgerLine} ${mobileNavOpen ? styles.hamburgerLineOpen1 : ''}`}></span>
+                <span className={`${styles.hamburgerLine} ${mobileNavOpen ? styles.hamburgerLineOpen2 : ''}`}></span>
+                <span className={`${styles.hamburgerLine} ${mobileNavOpen ? styles.hamburgerLineOpen3 : ''}`}></span>
+              </motion.div>
+            </motion.button>
+          ) : (
             <Link to="/" className={styles.logoLink}>
               <motion.img
                 src={logo}
@@ -359,14 +377,14 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Center Section - Marketing Navigation */}
+        {/* Center Section - Logo (Mobile) oder Marketing Navigation (Desktop) */}
         <div className={styles.centerSection}>
           {isMobile && (
             <Link to="/" className={styles.logoLink}>
               <motion.img
                 src={logo}
                 alt="Contract AI Logo"
-                className={styles.logoImage}
+                className={styles.logoImageMobile}
                 whileHover={{ scale: 1.05 }}
                 transition={{ duration: 0.2 }}
               />
@@ -474,18 +492,11 @@ export default function Navbar() {
         {/* Right Section - Auth Buttons */}
         <div className={styles.rightSection}>
           {isMobile ? (
-            <div className={styles.authButtonsMobile}>
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Link to="/login" className={styles.loginButtonMobile}>
-                  Login
-                </Link>
-              </motion.div>
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Link to="/register" className={styles.registerButtonMobile}>
-                  Starten
-                </Link>
-              </motion.div>
-            </div>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Link to="/register" className={styles.registerButtonMobile}>
+                Starten
+              </Link>
+            </motion.div>
           ) : (
             <div className={styles.authButtons}>
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
@@ -912,6 +923,156 @@ export default function Navbar() {
           )}
         </AnimatePresence>
       </motion.nav>
+
+      {/* Mobile Navigation Slide-In Panel (für nicht-eingeloggte User) */}
+      <AnimatePresence>
+        {mobileNavOpen && !user && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              className={styles.mobileNavBackdrop}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setMobileNavOpen(false);
+                setMobileFeaturesOpen(false);
+              }}
+            />
+
+            {/* Slide-In Panel */}
+            <motion.div
+              className={styles.mobileNavPanel}
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            >
+              {/* Panel Header */}
+              <div className={styles.mobileNavHeader}>
+                <span className={styles.mobileNavTitle}>Menü</span>
+                <motion.button
+                  className={styles.mobileNavClose}
+                  onClick={() => {
+                    setMobileNavOpen(false);
+                    setMobileFeaturesOpen(false);
+                  }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </motion.button>
+              </div>
+
+              {/* Navigation Links */}
+              <div className={styles.mobileNavLinks}>
+                {/* Funktionen mit Aufklapp-Menü */}
+                <div className={styles.mobileNavSection}>
+                  <motion.button
+                    className={styles.mobileNavLinkWithArrow}
+                    onClick={() => setMobileFeaturesOpen(!mobileFeaturesOpen)}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <span className={styles.mobileNavLinkIcon}>✨</span>
+                    <span className={styles.mobileNavLinkText}>Funktionen</span>
+                    <motion.span
+                      className={styles.mobileNavArrow}
+                      animate={{ rotate: mobileFeaturesOpen ? 180 : 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </motion.span>
+                  </motion.button>
+
+                  {/* Features Submenu */}
+                  <AnimatePresence>
+                    {mobileFeaturesOpen && (
+                      <motion.div
+                        className={styles.mobileNavSubmenu}
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        {featureCategories.map((category, catIndex) => (
+                          <div key={catIndex} className={styles.mobileNavCategory}>
+                            <span className={styles.mobileNavCategoryTitle}>{category.title}</span>
+                            {category.features.map((feature, featIndex) => (
+                              <Link
+                                key={featIndex}
+                                to={feature.path}
+                                className={styles.mobileNavFeature}
+                                onClick={() => {
+                                  setMobileNavOpen(false);
+                                  setMobileFeaturesOpen(false);
+                                }}
+                              >
+                                <span className={styles.mobileNavFeatureIcon}>{feature.icon}</span>
+                                <span className={styles.mobileNavFeatureName}>{feature.name}</span>
+                              </Link>
+                            ))}
+                          </div>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Preise */}
+                <Link
+                  to="/pricing"
+                  className={styles.mobileNavLinkItem}
+                  onClick={() => setMobileNavOpen(false)}
+                >
+                  <span className={styles.mobileNavLinkIcon}>💰</span>
+                  <span className={styles.mobileNavLinkText}>Preise</span>
+                </Link>
+
+                {/* Über uns */}
+                <Link
+                  to="/about"
+                  className={styles.mobileNavLinkItem}
+                  onClick={() => setMobileNavOpen(false)}
+                >
+                  <span className={styles.mobileNavLinkIcon}>👥</span>
+                  <span className={styles.mobileNavLinkText}>Über uns</span>
+                </Link>
+
+                {/* Blog */}
+                <Link
+                  to="/blog"
+                  className={styles.mobileNavLinkItem}
+                  onClick={() => setMobileNavOpen(false)}
+                >
+                  <span className={styles.mobileNavLinkIcon}>📝</span>
+                  <span className={styles.mobileNavLinkText}>Blog</span>
+                </Link>
+              </div>
+
+              {/* Auth Buttons am Ende */}
+              <div className={styles.mobileNavAuth}>
+                <Link
+                  to="/login"
+                  className={styles.mobileNavLoginBtn}
+                  onClick={() => setMobileNavOpen(false)}
+                >
+                  Anmelden
+                </Link>
+                <Link
+                  to="/register"
+                  className={styles.mobileNavRegisterBtn}
+                  onClick={() => setMobileNavOpen(false)}
+                >
+                  Kostenlos starten
+                </Link>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Sidebar Implementation - Enhanced Apple Design */}
       <AnimatePresence>
