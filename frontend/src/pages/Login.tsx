@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useAuth } from "../hooks/useAuth";
+import "../styles/SplitAuth.css";
 
 interface AuthResponse {
   token?: string;
@@ -126,6 +127,34 @@ export default function Login() {
     return () => { if (redirectTimeout.current) clearTimeout(redirectTimeout.current); };
   }, [navigate, refetchUser, redirectUrl]);
 
+  // Contract Icon SVG
+  const ContractIcon = () => (
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+  );
+
+  // Mail Icon SVG
+  const MailIcon = () => (
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+    </svg>
+  );
+
+  // Checkmark Icon SVG
+  const CheckIcon = () => (
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+    </svg>
+  );
+
+  // Arrow Icon SVG
+  const ArrowIcon = () => (
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+    </svg>
+  );
+
   return (
     <>
       <Helmet>
@@ -134,97 +163,90 @@ export default function Login() {
         <meta name="description" content="Melde dich bei Contract AI an und verwalte deine Verträge intelligent mit KI." />
       </Helmet>
 
-      <div className="min-h-screen flex">
+      <div className="split-auth-container">
         {/* Left Side - Branding */}
-        <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 p-12 flex-col justify-between relative overflow-hidden">
-          {/* Background Pattern */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-20 left-20 w-72 h-72 bg-white rounded-full blur-3xl"></div>
-            <div className="absolute bottom-20 right-20 w-96 h-96 bg-blue-400 rounded-full blur-3xl"></div>
+        <div className="split-auth-branding blue">
+          {/* Background Effects */}
+          <div className="split-auth-bg-effects">
+            <div className="split-auth-bg-circle-1"></div>
+            <div className="split-auth-bg-circle-2"></div>
           </div>
 
-          <div className="relative z-10">
+          <div className="split-auth-branding-content">
             {/* Logo */}
-            <div className="flex items-center gap-3 mb-16">
-              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
+            <div className="split-auth-logo">
+              <div className="split-auth-logo-icon">
+                <ContractIcon />
               </div>
-              <span className="text-2xl font-bold text-white">Contract AI</span>
+              <span className="split-auth-logo-text">Contract AI</span>
             </div>
 
             {/* Headline */}
-            <h1 className="text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
+            <h1 className="split-auth-headline">
               Verträge intelligent<br />verwalten
             </h1>
-            <p className="text-xl text-blue-100 mb-12 max-w-md">
+            <p className="split-auth-subheadline">
               Die All-in-One Plattform für KI-gestützte Vertragsanalyse, Optimierung und Fristenverwaltung.
             </p>
 
             {/* Features */}
-            <div className="space-y-4">
+            <div className="split-auth-features">
               {[
-                { icon: "📄", text: "KI-Vertragsanalyse in Sekunden" },
-                { icon: "⏰", text: "Automatische Fristenverwaltung" },
-                { icon: "🚀", text: "Optimierungsvorschläge" },
-                { icon: "🛡️", text: "Risiko-Erkennung" },
+                "KI-Vertragsanalyse in Sekunden",
+                "Automatische Fristenverwaltung",
+                "Optimierungsvorschläge",
+                "Risiko-Erkennung",
               ].map((feature, i) => (
-                <div key={i} className="flex items-center gap-3 text-white/90">
-                  <span className="text-xl">{feature.icon}</span>
-                  <span className="text-lg">{feature.text}</span>
+                <div key={i} className="split-auth-feature">
+                  <span className="split-auth-feature-icon check"><CheckIcon /></span>
+                  <span className="split-auth-feature-text">{feature}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Bottom Text */}
-          <div className="relative z-10">
-            <p className="text-blue-200 text-sm">
+          {/* Footer */}
+          <div className="split-auth-branding-footer">
+            <p className="split-auth-footer-text">
               Bereits über 1.000+ Verträge analysiert
             </p>
           </div>
         </div>
 
         {/* Right Side - Login Form */}
-        <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-gray-50">
-          <div className="w-full max-w-md">
+        <div className="split-auth-form-side">
+          <div className="split-auth-form-container">
             {/* Mobile Logo */}
-            <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
+            <div className="split-auth-mobile-logo">
+              <div className="split-auth-mobile-logo-icon">
+                <ContractIcon />
               </div>
-              <span className="text-xl font-bold text-gray-900">Contract AI</span>
+              <span className="split-auth-mobile-logo-text">Contract AI</span>
             </div>
 
             {/* Notification */}
             {notification && (
-              <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 ${
-                notification.type === "success" ? "bg-green-50 text-green-800 border border-green-200" :
-                notification.type === "error" ? "bg-red-50 text-red-800 border border-red-200" :
-                notification.type === "info" ? "bg-blue-50 text-blue-800 border border-blue-200" :
-                "bg-yellow-50 text-yellow-800 border border-yellow-200"
-              }`}>
-                <span>{notification.type === "success" ? "✓" : notification.type === "error" ? "✕" : "ℹ"}</span>
-                <span className="text-sm">{notification.message}</span>
-                <button onClick={() => setNotification(null)} className="ml-auto text-current opacity-50 hover:opacity-100">✕</button>
+              <div className={`split-auth-notification ${notification.type || 'info'}`}>
+                <span className="split-auth-notification-icon">
+                  {notification.type === "success" ? "✓" : notification.type === "error" ? "✕" : "ℹ"}
+                </span>
+                <span className="split-auth-notification-text">{notification.message}</span>
+                <button onClick={() => setNotification(null)} className="split-auth-notification-close">✕</button>
               </div>
             )}
 
             {!showVerificationPrompt ? (
               <>
                 {/* Header */}
-                <div className="mb-8">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Willkommen zurück</h2>
-                  <p className="text-gray-600">Melden Sie sich an, um fortzufahren</p>
+                <div className="split-auth-header">
+                  <h2 className="split-auth-title">Willkommen zurück</h2>
+                  <p className="split-auth-subtitle">Melden Sie sich an, um fortzufahren</p>
                 </div>
 
                 {/* Form */}
-                <form onSubmit={handleLogin} className="space-y-5">
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                <form onSubmit={handleLogin} className="split-auth-form">
+                  <div className="split-auth-input-group">
+                    <label htmlFor="email" className="split-auth-label">
                       E-Mail Adresse
                     </label>
                     <input
@@ -232,19 +254,19 @@ export default function Login() {
                       id="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white"
+                      className="split-auth-input"
                       placeholder="name@beispiel.de"
                       required
                       autoComplete="email"
                     />
                   </div>
 
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  <div className="split-auth-input-group">
+                    <div className="split-auth-label-row">
+                      <label htmlFor="password" className="split-auth-label">
                         Passwort
                       </label>
-                      <Link to="/forgot-password" className="text-sm text-blue-600 hover:text-blue-700">
+                      <Link to="/forgot-password" className="split-auth-forgot-link">
                         Passwort vergessen?
                       </Link>
                     </div>
@@ -253,7 +275,7 @@ export default function Login() {
                       id="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white"
+                      className="split-auth-input"
                       placeholder="••••••••"
                       required
                       autoComplete="current-password"
@@ -263,65 +285,57 @@ export default function Login() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/25"
+                    className="split-auth-submit"
                   >
                     {loading ? (
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <div className="split-auth-spinner"></div>
                     ) : (
                       <>
                         <span>Anmelden</span>
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                        </svg>
+                        <ArrowIcon />
                       </>
                     )}
                   </button>
                 </form>
 
                 {/* Divider */}
-                <div className="my-8 flex items-center">
-                  <div className="flex-1 border-t border-gray-200"></div>
-                  <span className="px-4 text-sm text-gray-500">oder</span>
-                  <div className="flex-1 border-t border-gray-200"></div>
+                <div className="split-auth-divider">
+                  <div className="split-auth-divider-line"></div>
+                  <span className="split-auth-divider-text">oder</span>
+                  <div className="split-auth-divider-line"></div>
                 </div>
 
                 {/* Register Link */}
-                <p className="text-center text-gray-600">
+                <p className="split-auth-switch">
                   Noch kein Konto?{" "}
-                  <Link to="/register" className="text-blue-600 hover:text-blue-700 font-semibold">
-                    Jetzt kostenlos registrieren
-                  </Link>
+                  <Link to="/register">Jetzt kostenlos registrieren</Link>
                 </p>
               </>
             ) : (
               /* Email Verification Prompt */
-              <div className="text-center">
-                <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
+              <div className="split-auth-verification">
+                <div className="split-auth-verification-icon">
+                  <MailIcon />
                 </div>
 
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">E-Mail bestätigen</h2>
-                <p className="text-gray-600 mb-6">
+                <h2 className="split-auth-verification-title">E-Mail bestätigen</h2>
+                <p className="split-auth-verification-text">
                   Bitte bestätigen Sie Ihre E-Mail-Adresse, um sich anmelden zu können.
                 </p>
 
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-full text-green-700 font-medium mb-8">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
+                <div className="split-auth-email-badge">
+                  <MailIcon />
                   <span>{verificationEmail}</span>
                 </div>
 
-                <div className="space-y-3">
+                <div className="split-auth-verification-actions">
                   <button
                     onClick={handleResendEmail}
                     disabled={resendLoading || resendCooldown > 0}
-                    className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="split-auth-submit"
                   >
                     {resendLoading ? (
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto"></div>
+                      <div className="split-auth-spinner"></div>
                     ) : resendCooldown > 0 ? (
                       `E-Mail erneut senden (${resendCooldown}s)`
                     ) : (
@@ -331,15 +345,15 @@ export default function Login() {
 
                   <button
                     onClick={() => { setShowVerificationPrompt(false); setNotification(null); }}
-                    className="w-full py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-all"
+                    className="split-auth-secondary-btn"
                   >
                     Zurück zur Anmeldung
                   </button>
                 </div>
 
-                <div className="mt-8 p-4 bg-blue-50 rounded-xl">
-                  <p className="text-sm text-blue-800">
-                    <strong>💡 Tipp:</strong> Schauen Sie auch in Ihren Spam-Ordner!
+                <div className="split-auth-tip">
+                  <p className="split-auth-tip-text">
+                    <strong>Tipp:</strong> Schauen Sie auch in Ihren Spam-Ordner!
                   </p>
                 </div>
               </div>
