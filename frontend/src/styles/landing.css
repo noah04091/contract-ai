@@ -1232,26 +1232,26 @@ a {
 }
 
 .glass-orb-3 {
-  width: 140px;
-  height: 140px;
-  top: 55%;
-  left: 8%;
+  width: 200px;
+  height: 200px;
+  bottom: 20%;
+  left: 5%;
   animation: sophisticatedGlassFloat 28s ease-in-out infinite;
 }
 
 .glass-orb-4 {
-  width: 50px;
-  height: 50px;
-  top: 45%;
-  right: 12%;
+  width: 60px;
+  height: 60px;
+  bottom: 30%;
+  right: 20%;
   animation: sophisticatedGlassFloat 16s ease-in-out infinite reverse;
 }
 
 .glass-orb-5 {
-  width: 100px;
-  height: 100px;
-  top: 35%;
-  right: 8%;
+  width: 150px;
+  height: 150px;
+  top: 60%;
+  right: 5%;
   animation: sophisticatedGlassFloat 24s ease-in-out infinite;
 }
 
@@ -1810,12 +1810,12 @@ a {
     rgba(249, 250, 251, 1) 40%,
     rgba(249, 250, 251, 1) 100%
   );
-  padding: 40px 20px 60px;
+  padding: 60px 20px 60px;
   position: relative;
   z-index: 3;
   width: 100%;
   box-sizing: border-box;
-  margin-top: -100px; /* Mehr Überlappung für fließenden Übergang */
+  margin-top: -60px; /* Perfekter Übergang mit Hero */
 }
 
 .trustbar {
