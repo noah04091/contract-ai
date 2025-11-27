@@ -153,20 +153,21 @@
 .leftSection {
   display: flex;
   align-items: center;
-  min-width: 120px;
+  flex: 1;
+  justify-content: flex-start;
 }
 
 .centerSection {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 1;
+  flex: 0 0 auto;
 }
 
 .rightSection {
   display: flex;
   align-items: center;
-  min-width: 120px;
+  flex: 1;
   justify-content: flex-end;
 }
 
@@ -183,7 +184,6 @@
 
 .logoImage {
   height: 28px;
-  margin-right: 24px;
   transition: height 0.3s ease;
 }
 
