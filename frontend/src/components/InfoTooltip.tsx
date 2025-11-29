@@ -1,4 +1,4 @@
-// InfoTooltip.tsx - Mit Portal für Card-Container
+// InfoTooltip.tsx - Modern Design mit Glassmorphism
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import styles from './InfoTooltip.module.css';
@@ -10,9 +10,9 @@ interface InfoTooltipProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-const InfoTooltip: React.FC<InfoTooltipProps> = ({ 
-  title, 
-  content, 
+const InfoTooltip: React.FC<InfoTooltipProps> = ({
+  title,
+  content,
   position = 'bottom',
   size = 'md'
 }) => {
@@ -51,16 +51,16 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({
     if (!triggerRef.current || isMobile) return {};
 
     const triggerRect = triggerRef.current.getBoundingClientRect();
-    
+
     // Tooltip dimensions based on size
     const tooltipWidth = size === 'lg' ? 350 : size === 'md' ? 280 : 220;
-    const tooltipHeight = 100;
-    const offset = 12;
+    const tooltipHeight = 120;
+    const offset = 10;
 
     // Calculate best position based on viewport space
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    
+
     const spaceTop = triggerRect.top;
     const spaceBottom = viewportHeight - triggerRect.bottom;
     const spaceLeft = triggerRect.left;
@@ -140,7 +140,7 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
     };
-    
+
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
@@ -149,18 +149,18 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (tooltipRef.current && triggerRef.current) {
-        if (!tooltipRef.current.contains(event.target as Node) && 
+        if (!tooltipRef.current.contains(event.target as Node) &&
             !triggerRef.current.contains(event.target as Node)) {
           setIsVisible(false);
         }
       }
     };
 
-    if (isVisible && isMobile) {
+    if (isVisible) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [isVisible, isMobile]);
+  }, [isVisible]);
 
   const handleMouseEnter = () => {
     if (!isMobile) {
@@ -177,13 +177,9 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (isMobile) {
-      setIsVisible(!isVisible);
-    } else {
-      const style = calculateTooltipPosition();
-      setTooltipStyle(style);
-      setIsVisible(!isVisible);
-    }
+    const style = calculateTooltipPosition();
+    setTooltipStyle(style);
+    setIsVisible(!isVisible);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -201,12 +197,12 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({
   // Tooltip content
   const tooltipContent = (
     <>
-      {isMobile && <div className={styles.mobileOverlay} />}
+      {isMobile && isVisible && <div className={styles.mobileOverlay} onClick={() => setIsVisible(false)} />}
       <div
         ref={tooltipRef}
         className={`
-          ${styles.tooltipContent} 
-          ${styles[actualPosition]} 
+          ${styles.tooltipContent}
+          ${styles[actualPosition]}
           ${styles[size]}
           ${isMobile ? styles.mobile : styles.desktop}
         `}
@@ -220,22 +216,33 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({
             onClick={() => setIsVisible(false)}
             aria-label="Schließen"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path 
-                d="M18 6L6 18M6 6L18 18" 
-                stroke="currentColor" 
-                strokeWidth="2" 
-                strokeLinecap="round" 
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M18 6L6 18M6 6L18 18"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
                 strokeLinejoin="round"
               />
             </svg>
           </button>
         )}
-        
+
         <div className={styles.tooltipHeader}>
+          <div className={styles.tooltipIconWrapper}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 16V12M12 8H12.01M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
           <h4 className={styles.tooltipTitle}>{title}</h4>
         </div>
-        
+
         <div className={styles.tooltipBody}>
           <p className={styles.tooltipText}>{content}</p>
         </div>
@@ -249,7 +256,7 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({
     <div className={styles.tooltipContainer}>
       <button
         ref={triggerRef}
-        className={styles.tooltipTrigger}
+        className={`${styles.tooltipTrigger} ${isVisible ? styles.active : ''}`}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         onClick={handleClick}
@@ -258,49 +265,26 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({
         aria-expanded={isVisible}
         type="button"
       >
-        {/* CLEAR INFO ICON - Simple and recognizable */}
-        <svg 
-          width="14" 
-          height="14" 
-          viewBox="0 0 20 20" 
-          fill="none" 
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className={styles.infoIcon}
         >
-          {/* Simple "i" in circle - VERY clear */}
-          <circle 
-            cx="10" 
-            cy="10" 
-            r="9" 
-            fill="white"
-            stroke="#3b82f6" 
+          <path
+            d="M12 16V12M12 8H12.01M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z"
+            stroke="currentColor"
             strokeWidth="2"
-          />
-          {/* Top dot of "i" */}
-          <circle 
-            cx="10" 
-            cy="6" 
-            r="1.5" 
-            fill="#3b82f6"
-          />
-          {/* Bottom line of "i" */}
-          <rect 
-            x="9" 
-            y="9" 
-            width="2" 
-            height="6" 
-            rx="1"
-            fill="#3b82f6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
         </svg>
       </button>
 
       {/* Render tooltip via portal to avoid container overflow issues */}
-      {isVisible && portalContainer && (
-        isMobile ? 
-          createPortal(tooltipContent, portalContainer) :
-          createPortal(tooltipContent, portalContainer)
-      )}
+      {isVisible && portalContainer && createPortal(tooltipContent, portalContainer)}
     </div>
   );
 };

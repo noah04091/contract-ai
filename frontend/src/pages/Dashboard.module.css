@@ -67,6 +67,12 @@
   margin-bottom: 2rem;
 }
 
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .dashboardHeader h1 {
   font-size: 2.5rem;
   font-weight: 600;
@@ -74,16 +80,71 @@
   margin: 0;
 }
 
+/* 🎛️ Settings Button */
+.settingsButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.settingsButton:hover {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-color: #3b82f6;
+  color: #3b82f6;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.settingsButton:active {
+  transform: translateY(0);
+}
+
+.settingsButton svg {
+  transition: transform 0.3s ease;
+}
+
+.settingsButton:hover svg {
+  transform: rotate(45deg);
+}
+
 /* 📱 Mobile: H1 kleiner */
 @media (max-width: 640px) {
   .dashboardHeader h1 {
     font-size: 1.75rem;
+  }
+
+  .settingsButton {
+    width: 36px;
+    height: 36px;
   }
 }
 
 @media (max-width: 480px) {
   .dashboardHeader h1 {
     font-size: 1.5rem;
+  }
+
+  .settingsButton {
+    width: 32px;
+    height: 32px;
+  }
+
+  .settingsButton svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .headerLeft {
+    gap: 8px;
   }
 }
 
@@ -122,6 +183,229 @@
   display: flex;
   flex-direction: column;
   gap: 2rem;
+}
+
+/* ====================================== */
+/* WELCOME BANNER - Onboarding für neue Nutzer */
+/* ====================================== */
+
+.welcomeBanner {
+  background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 50%, #e0f2fe 100%);
+  border-radius: var(--radius-xl);
+  padding: 2.5rem;
+  border: 1px solid rgba(59, 130, 246, 0.15);
+  box-shadow:
+    0 4px 6px -1px rgba(59, 130, 246, 0.05),
+    0 10px 15px -3px rgba(59, 130, 246, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.welcomeBanner::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.welcomeContent {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  position: relative;
+  z-index: 1;
+}
+
+.welcomeIcon {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.welcomeIcon svg {
+  width: 28px;
+  height: 28px;
+  color: white;
+}
+
+.welcomeText h2 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: -0.02em;
+}
+
+.welcomeText p {
+  margin: 0;
+  font-size: 1rem;
+  color: #64748b;
+  line-height: 1.6;
+  max-width: 500px;
+}
+
+.welcomeSteps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  position: relative;
+  z-index: 1;
+}
+
+.welcomeStep {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  transition: all 0.2s ease;
+}
+
+.welcomeStep:hover {
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+}
+
+.stepNumber {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.stepContent h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.stepContent p {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.welcomeActions {
+  display: flex;
+  gap: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.welcomePrimaryButton {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.875rem 1.5rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.welcomePrimaryButton:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+.welcomePrimaryButton svg {
+  width: 20px;
+  height: 20px;
+}
+
+.welcomeSecondaryButton {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.875rem 1.5rem;
+  background: white;
+  color: #3b82f6;
+  border: 2px solid #3b82f6;
+  border-radius: var(--radius-md);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.welcomeSecondaryButton:hover {
+  background: #eff6ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.welcomeSecondaryButton svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Responsive: Welcome Banner */
+@media (max-width: 900px) {
+  .welcomeSteps {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .welcomeBanner {
+    padding: 1.5rem;
+  }
+
+  .welcomeContent {
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+  }
+
+  .welcomeText h2 {
+    font-size: 1.375rem;
+  }
+
+  .welcomeText p {
+    font-size: 0.9375rem;
+  }
+
+  .welcomeActions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .welcomePrimaryButton,
+  .welcomeSecondaryButton {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 /* Analyse-Limit Warnung */
@@ -1438,6 +1722,42 @@
   background-color: rgba(0, 0, 0, 0.05);
 }
 
+/* Modal Primary Button - abgerundete Ecken wie secondaryButton */
+.modalPrimaryButton {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+}
+
+.modalPrimaryButton:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+  transform: translateY(-1px);
+}
+
+.modalPrimaryButton.disabled,
+.modalPrimaryButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.modalPrimaryButton.disabled:hover,
+.modalPrimaryButton:disabled:hover {
+  transform: none;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+}
+
 /* File Upload */
 .fileUploadContainer {
   width: 100%;
@@ -1597,6 +1917,8 @@
   margin-bottom: 24px;
   flex-wrap: wrap;
   gap: 16px;
+  position: relative;
+  z-index: 50;
 }
 
 /* 📱 Mobile: Section Header responsive */
@@ -1640,6 +1962,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  position: relative;
+  z-index: 100;
 }
 
 /* Category Styling */
@@ -2004,7 +2328,36 @@
 }
 
 .quickActionCard.primaryAction:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+  color: white;
+}
+
+/* Nicht-primary Cards: Dunkler Hintergrund, weiße Schrift */
+.quickActionCard:not(.primaryAction) {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  color: white;
+  border-color: #475569;
+}
+
+.quickActionCard:not(.primaryAction):hover {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  color: #1e293b;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.quickActionCard:not(.primaryAction):hover .quickActionIcon {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border-color: #93c5fd;
+}
+
+.quickActionCard:not(.primaryAction):hover .quickActionIcon svg {
+  color: #2563eb;
+}
+
+.quickActionCard:not(.primaryAction):hover .quickActionContent h4,
+.quickActionCard:not(.primaryAction):hover .quickActionContent p {
+  color: #1e293b;
 }
 
 .quickActionIcon {
@@ -2019,8 +2372,8 @@
 }
 
 .quickActionCard:not(.primaryAction) .quickActionIcon {
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-  border: 1px solid #e0f2fe;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .quickActionIcon svg {
@@ -2034,7 +2387,7 @@
 }
 
 .quickActionCard:not(.primaryAction) .quickActionIcon svg {
-  color: #0369a1;
+  color: white;
 }
 
 .quickActionContent h4 {

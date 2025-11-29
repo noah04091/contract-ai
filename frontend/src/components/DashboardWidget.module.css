@@ -1,0 +1,146 @@
+/* DashboardWidget Styles */
+
+.widgetContainer {
+  position: relative;
+  width: 100%;
+}
+
+/* Edit Mode - visuelles Feedback */
+.editMode {
+  border: 2px dashed transparent;
+  border-radius: 16px;
+  transition: all 0.2s ease;
+}
+
+.editMode:hover {
+  border-color: rgba(59, 130, 246, 0.4);
+  background-color: rgba(59, 130, 246, 0.02);
+}
+
+/* Dragging State */
+.dragging {
+  cursor: grabbing !important;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+  border-radius: 16px;
+  background-color: #ffffff;
+}
+
+/* Widget Controls - nur im Edit Mode sichtbar */
+.widgetControls {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.editMode:hover .widgetControls,
+.editMode:focus-within .widgetControls {
+  opacity: 1;
+}
+
+/* Drag Handle */
+.dragHandle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: grab;
+  color: #64748b;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.dragHandle:hover {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-color: #cbd5e1;
+  color: #3b82f6;
+  transform: scale(1.05);
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+  transform: scale(0.98);
+}
+
+/* Remove Button */
+.removeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #ef4444;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.removeButton:hover {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-color: #f87171;
+  transform: scale(1.05);
+}
+
+/* Widget Content */
+.widgetContent {
+  width: 100%;
+}
+
+/* Drop Indicator - wird angezeigt wenn ein Widget hierher gezogen wird */
+.dropIndicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 2px dashed #3b82f6;
+  border-radius: 16px;
+  background: rgba(59, 130, 246, 0.05);
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Mobile Anpassungen */
+@media (max-width: 768px) {
+  .widgetControls {
+    opacity: 1; /* Immer sichtbar auf Mobile */
+  }
+
+  .dragHandle {
+    width: 36px;
+    height: 36px;
+  }
+
+  .removeButton {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* Animation für Widget-Einfügen/Entfernen */
+@keyframes widgetFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.widgetContainer {
+  animation: widgetFadeIn 0.3s ease-out;
+}
