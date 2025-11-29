@@ -522,39 +522,60 @@ const HomeRedesign = () => {
       </Helmet>
 
       <div className="landing-page">
+        {/* Floating Light Elements */}
+        <div className="floating-light floating-light-left" style={{ left: '20px' }}></div>
+        <div className="floating-light floating-light-right" style={{ right: '20px', animationDelay: '4s' }}></div>
+
         {/* Sophisticated Apple-Hero with Modern Effects */}
         <section className="hero sophisticated-hero" ref={heroRef}>
-          {/* Advanced Background with Multiple Layers */}
-          <div className="sophisticated-hero-bg">
-            {/* Gradient Mesh Layer */}
-            <div className="gradient-mesh-layer">
-              <div className="gradient-mesh gradient-mesh-1"></div>
-              <div className="gradient-mesh gradient-mesh-2"></div>
-              <div className="gradient-mesh gradient-mesh-3"></div>
-              <div className="gradient-mesh gradient-mesh-4"></div>
-            </div>
-            
-            {/* Floating Glass Orbs */}
-            <div className="floating-orbs-layer">
-              <div className="glass-orb glass-orb-1"></div>
-              <div className="glass-orb glass-orb-2"></div>
-              <div className="glass-orb glass-orb-3"></div>
-              <div className="glass-orb glass-orb-4"></div>
-              <div className="glass-orb glass-orb-5"></div>
-            </div>
-            
-            {/* Light Rays Layer */}
-            <div className="light-rays-layer">
-              <div className="light-ray light-ray-1"></div>
-              <div className="light-ray light-ray-2"></div>
-            </div>
-            
-            {/* Noise Texture Overlay */}
-            <div className="noise-texture-overlay"></div>
+          {/* Contract Theme Background Effects */}
+
+          {/* Paper Lines - Like a contract document */}
+          <div className="contract-paper-lines"></div>
+
+          {/* Floating Document Icons - VERSTÄRKT */}
+          <div className="floating-document floating-document-1">
+            <svg viewBox="0 0 60 75" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="2" width="56" height="71" rx="4" stroke="rgba(99, 102, 241, 0.5)" strokeWidth="2.5" fill="rgba(255,255,255,0.5)"/>
+              <line x1="12" y1="20" x2="48" y2="20" stroke="rgba(99, 102, 241, 0.4)" strokeWidth="2.5"/>
+              <line x1="12" y1="32" x2="48" y2="32" stroke="rgba(99, 102, 241, 0.4)" strokeWidth="2.5"/>
+              <line x1="12" y1="44" x2="36" y2="44" stroke="rgba(99, 102, 241, 0.4)" strokeWidth="2.5"/>
+              <line x1="12" y1="56" x2="42" y2="56" stroke="rgba(99, 102, 241, 0.4)" strokeWidth="2.5"/>
+              {/* Signatur-Linien unten */}
+              <path d="M12,64 Q20,60 28,64 T44,62" stroke="rgba(99, 102, 241, 0.5)" strokeWidth="1.5" fill="none"/>
+            </svg>
           </div>
-          
-          {/* Content Glow Backdrop */}
-          <div className="content-glow-backdrop"></div>
+          <div className="floating-document floating-document-2">
+            <svg viewBox="0 0 60 75" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="2" width="56" height="71" rx="4" stroke="rgba(99, 102, 241, 0.5)" strokeWidth="2.5" fill="rgba(255,255,255,0.5)"/>
+              <line x1="12" y1="20" x2="48" y2="20" stroke="rgba(99, 102, 241, 0.4)" strokeWidth="2.5"/>
+              <line x1="12" y1="32" x2="48" y2="32" stroke="rgba(99, 102, 241, 0.4)" strokeWidth="2.5"/>
+              <line x1="12" y1="44" x2="36" y2="44" stroke="rgba(99, 102, 241, 0.4)" strokeWidth="2.5"/>
+              {/* Checkbox */}
+              <rect x="12" y="54" width="12" height="12" rx="2" stroke="rgba(99, 102, 241, 0.5)" strokeWidth="1.5" fill="none"/>
+              <path d="M14,60 L17,63 L22,56" stroke="rgba(34, 197, 94, 0.6)" strokeWidth="2" fill="none"/>
+            </svg>
+          </div>
+          <div className="floating-document floating-document-3">
+            <svg viewBox="0 0 60 75" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="2" width="56" height="71" rx="4" stroke="rgba(99, 102, 241, 0.5)" strokeWidth="2.5" fill="rgba(255,255,255,0.5)"/>
+              <line x1="12" y1="20" x2="48" y2="20" stroke="rgba(99, 102, 241, 0.4)" strokeWidth="2.5"/>
+              <line x1="12" y1="32" x2="40" y2="32" stroke="rgba(99, 102, 241, 0.4)" strokeWidth="2.5"/>
+              {/* Paragraph Symbol */}
+              <text x="20" y="58" fill="rgba(99, 102, 241, 0.5)" fontSize="20" fontFamily="Georgia, serif">§</text>
+            </svg>
+          </div>
+          <div className="floating-document floating-document-4">
+            <svg viewBox="0 0 60 75" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="2" width="56" height="71" rx="4" stroke="rgba(99, 102, 241, 0.5)" strokeWidth="2.5" fill="rgba(255,255,255,0.5)"/>
+              <line x1="12" y1="20" x2="48" y2="20" stroke="rgba(99, 102, 241, 0.4)" strokeWidth="2.5"/>
+              <line x1="12" y1="32" x2="48" y2="32" stroke="rgba(99, 102, 241, 0.4)" strokeWidth="2.5"/>
+              <line x1="12" y1="44" x2="30" y2="44" stroke="rgba(99, 102, 241, 0.4)" strokeWidth="2.5"/>
+              {/* Stempel */}
+              <circle cx="42" cy="58" r="10" stroke="rgba(34, 197, 94, 0.5)" strokeWidth="2" fill="none"/>
+              <text x="38" y="61" fill="rgba(34, 197, 94, 0.5)" fontSize="6" fontWeight="bold">OK</text>
+            </svg>
+          </div>
 
           <div className="sophisticated-logo-hero">
             <img src={logoHeader} alt="Contract AI Logo" className="sophisticated-logo-animation" />
@@ -567,7 +588,38 @@ const HomeRedesign = () => {
                 <h1 className="sophisticated-hero-headline sophisticated-fade-up">
                   <span className="headline-line">Verträge im Griff.</span>
                   <span className="headline-line">Kosten gespart.</span>
-                  <span className="headline-line">Zeit gewonnen.</span>
+                  <span className="headline-line headline-line-with-signature">
+                    Zeit gewonnen.
+                    {/* "Contract AI" als handschriftliche Unterschrift - inline nach dem Punkt */}
+                    <svg className="contractai-signature" viewBox="0 0 200 50" preserveAspectRatio="xMinYMid meet">
+                      {/* "C" - Großbuchstabe */}
+                      <path
+                        className="sig-c"
+                        d="M18,18 C8,20 4,28 6,36 C8,44 16,48 26,46 C30,45 33,43 35,40"
+                      />
+                      {/* "ontract" - verbunden, schnell geschrieben */}
+                      <path
+                        className="sig-ontract"
+                        d="M28,38 C32,36 35,32 38,34 C41,36 40,40 43,38 C46,36 48,32 52,34 C54,35 54,38 56,36 C58,34 60,30 64,32 C66,33 66,38 69,36 C72,34 74,30 78,32 C80,34 80,38 83,35 C86,32 88,28 92,32"
+                      />
+                      {/* Leerzeichen + "A" - Großbuchstabe */}
+                      <path
+                        className="sig-a"
+                        d="M105,42 L112,22 L119,42 M108,34 L116,34"
+                      />
+                      {/* "I" - mit Punkt */}
+                      <path
+                        className="sig-i"
+                        d="M128,26 L128,42"
+                      />
+                      <circle className="sig-i-dot" cx="128" cy="20" r="2" />
+                      {/* Schwungvoller Unterstrich */}
+                      <path
+                        className="sig-flourish"
+                        d="M6,50 Q60,55 120,48 Q150,45 180,50"
+                      />
+                    </svg>
+                  </span>
                 </h1>
               </div>
 
@@ -677,11 +729,10 @@ const HomeRedesign = () => {
 
         {/* Features Section - Erweitert auf 6 Cards */}
         <section className="features-section" ref={(el) => registerSection('features', el)}>
-          <div className="floating-shapes">
-            <div className="floating-shape floating-shape-1"></div>
-            <div className="floating-shape floating-shape-2"></div>
-            <div className="floating-shape floating-shape-3 triangle"></div>
-          </div>
+          {/* Contract Theme: Floating § (Paragraph) Symbols */}
+          <span className="floating-paragraph floating-paragraph-1">§</span>
+          <span className="floating-paragraph floating-paragraph-2">§</span>
+          <span className="floating-paragraph floating-paragraph-3">§</span>
           <div className="section-container">
             <div className="section-title">
               <div className="section-title-decoration">
@@ -1453,6 +1504,9 @@ const HomeRedesign = () => {
 
         {/* Testimonials Section */}
         <section className="testimonials-section" ref={(el) => registerSection('testimonials', el)}>
+          {/* Contract Theme: Stamp Effects */}
+          <div className="stamp-effect stamp-effect-1"></div>
+          <div className="stamp-effect stamp-effect-2"></div>
           <div className="section-container">
             <div className="section-title">
               <div className="section-title-decoration">
@@ -1469,9 +1523,53 @@ const HomeRedesign = () => {
 
         {/* Pricing Section */}
         <section className="pricing-section" ref={(el) => registerSection('pricing', el)}>
-          <div className="pricing-bg">
-            <div className="pricing-shape shape-1"></div>
-            <div className="pricing-shape shape-2"></div>
+          {/* Contract Theme: Paper texture background */}
+          <div className="contract-texture"></div>
+
+          {/* Pricing Theme: Floating Elements - Preis & Vertrag bezogen */}
+          <div className="pricing-float-elements">
+            {/* Euro-Zeichen */}
+            <div className="pricing-float pricing-euro-1">€</div>
+            <div className="pricing-float pricing-euro-2">€</div>
+
+            {/* Prozent-Zeichen für Rabatte */}
+            <div className="pricing-float pricing-percent">%</div>
+
+            {/* Approved Stempel */}
+            <div className="pricing-stamp">
+              <svg viewBox="0 0 80 80" fill="none">
+                <circle cx="40" cy="40" r="35" stroke="rgba(34, 197, 94, 0.4)" strokeWidth="3" fill="none"/>
+                <circle cx="40" cy="40" r="28" stroke="rgba(34, 197, 94, 0.3)" strokeWidth="1.5" fill="none"/>
+                <text x="40" y="38" textAnchor="middle" fill="rgba(34, 197, 94, 0.5)" fontSize="10" fontWeight="bold">FAIR</text>
+                <text x="40" y="50" textAnchor="middle" fill="rgba(34, 197, 94, 0.5)" fontSize="8">PRICING</text>
+              </svg>
+            </div>
+
+            {/* Kleine Vertragsklausel-Icons */}
+            <div className="pricing-clause pricing-clause-1">
+              <svg viewBox="0 0 40 50" fill="none">
+                <rect x="2" y="2" width="36" height="46" rx="3" stroke="rgba(99, 102, 241, 0.3)" strokeWidth="1.5" fill="rgba(255,255,255,0.3)"/>
+                <line x1="8" y1="12" x2="32" y2="12" stroke="rgba(99, 102, 241, 0.25)" strokeWidth="1.5"/>
+                <line x1="8" y1="20" x2="28" y2="20" stroke="rgba(99, 102, 241, 0.25)" strokeWidth="1.5"/>
+                <line x1="8" y1="28" x2="30" y2="28" stroke="rgba(99, 102, 241, 0.25)" strokeWidth="1.5"/>
+                <path d="M8,38 L12,42 L20,34" stroke="rgba(34, 197, 94, 0.5)" strokeWidth="2" fill="none"/>
+              </svg>
+            </div>
+            <div className="pricing-clause pricing-clause-2">
+              <svg viewBox="0 0 40 50" fill="none">
+                <rect x="2" y="2" width="36" height="46" rx="3" stroke="rgba(99, 102, 241, 0.3)" strokeWidth="1.5" fill="rgba(255,255,255,0.3)"/>
+                <line x1="8" y1="12" x2="32" y2="12" stroke="rgba(99, 102, 241, 0.25)" strokeWidth="1.5"/>
+                <line x1="8" y1="20" x2="28" y2="20" stroke="rgba(99, 102, 241, 0.25)" strokeWidth="1.5"/>
+                <path d="M8,32 L12,36 L20,28" stroke="rgba(34, 197, 94, 0.5)" strokeWidth="2" fill="none"/>
+              </svg>
+            </div>
+
+            {/* Checkboxen (verbessert) */}
+            <div className="pricing-checkbox pricing-checkbox-1"></div>
+            <div className="pricing-checkbox pricing-checkbox-2"></div>
+            <div className="pricing-checkbox pricing-checkbox-3"></div>
+            <div className="pricing-checkbox pricing-checkbox-4"></div>
+            <div className="pricing-checkbox pricing-checkbox-5"></div>
           </div>
           <div className="section-container">
             <div className="section-title">
@@ -1489,50 +1587,61 @@ const HomeRedesign = () => {
 
         {/* CTA Section */}
         <section className="cta-section" ref={(el) => registerSection('cta', el)}>
-          <div className="cta-bg">
-            <div className="cta-shape shape-1"></div>
-            <div className="cta-shape shape-2"></div>
+          {/* Contract Theme: Signature Animation with Pen */}
+          <div className="cta-signature-wrapper">
+            <svg className="cta-signature-svg" viewBox="0 0 200 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                className="cta-signature-line"
+                d="M10,35 Q30,5 50,30 T90,25 T130,32 T170,20 T190,28"
+                stroke="rgba(255,255,255,0.3)"
+                strokeWidth="2"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <div className="cta-pen-icon">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 19l7-7 3 3-7 7-3-3z" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" fill="none"/>
+                <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" fill="none"/>
+              </svg>
+            </div>
           </div>
           <div className="section-container">
             <h2 className="reveal-text">Bereit, Ihre Verträge zu optimieren?</h2>
             <p className="reveal-text">Starten Sie jetzt mit Contract AI und erleben Sie die Zukunft des Vertragsmanagements.</p>
             <div className="cta-buttons reveal-text">
               {user ? (
-                <Link to="/dashboard" className="cta-button primary glow">
-                  <span className="button-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <Link to="/dashboard" className="cta-button-hero">
+                  <span className="cta-button-hero-bg"></span>
+                  <span className="cta-button-hero-content">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                       <line x1="8" y1="12" x2="16" y2="12"></line>
                       <line x1="8" y1="16" x2="16" y2="16"></line>
                       <line x1="8" y1="8" x2="10" y2="8"></line>
                     </svg>
+                    <span>Zum Dashboard</span>
+                    <svg className="cta-arrow" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                      <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
                   </span>
-                  Zum Dashboard
                 </Link>
               ) : (
-                <>
-                  <Link to="/register" className="cta-button primary glow">
-                    <span className="button-icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="8.5" cy="7" r="4"></circle>
-                        <line x1="20" y1="8" x2="20" y2="14"></line>
-                        <line x1="23" y1="11" x2="17" y2="11"></line>
-                      </svg>
-                    </span>
-                    Jetzt registrieren
-                  </Link>
-                  <Link to="/login" className="cta-button secondary">
-                    <span className="button-icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
-                        <polyline points="10 17 15 12 10 7"></polyline>
-                        <line x1="15" y1="12" x2="3" y2="12"></line>
-                      </svg>
-                    </span>
-                    Einloggen
-                  </Link>
-                </>
+                <Link to="/register" className="cta-button-hero">
+                  <span className="cta-button-hero-bg"></span>
+                  <span className="cta-button-hero-content">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                    </svg>
+                    <span>Jetzt kostenlos starten</span>
+                    <svg className="cta-arrow" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                      <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                  </span>
+                </Link>
               )}
             </div>
 

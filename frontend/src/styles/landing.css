@@ -29,6 +29,7 @@ html {
 
 /* === FLOATING DESIGN ELEMENTS === */
 .floating-shapes {
+  display: none; /* Alte Effekte ausblenden für cleanes Design */
   position: absolute;
   top: 0;
   left: 0;
@@ -1078,23 +1079,13 @@ a {
 
 /* Main Hero Container */
 .sophisticated-hero {
-  background:
-    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.08), transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(255, 177, 153, 0.06), transparent 50%),
-    radial-gradient(circle at 40% 40%, rgba(99, 102, 241, 0.04), transparent 50%),
-    linear-gradient(180deg,
-      rgba(247, 250, 255, 0.95) 0%,
-      rgba(255, 255, 255, 0.98) 40%,
-      rgba(248, 251, 255, 0.95) 70%,
-      rgba(249, 250, 251, 0.9) 85%,
-      rgba(249, 250, 251, 1) 100%
-    );
+  background: #ffffff;
   color: #1d1d1f;
   position: relative;
-  padding: 0 20px 60px;
+  padding: 0 20px 80px;
   margin: 0 !important;
   text-align: center;
-  overflow: hidden; /* Verhindert dass Glass-Orbs über die Section hinausragen */
+  overflow: hidden;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -1112,13 +1103,956 @@ a {
   left: 0;
   right: 0;
   height: 64px;
-  background: inherit;
+  background: #ffffff;
   z-index: -1;
 }
 
-/* === SOPHISTICATED BACKGROUND LAYERS === */
+/* Modern Hero Accent - Subtiler Glow hinter dem Content */
+.sophisticated-hero::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 800px;
+  height: 500px;
+  background: radial-gradient(ellipse at center,
+    rgba(99, 102, 241, 0.08) 0%,
+    rgba(99, 102, 241, 0.03) 40%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
 
+/* === CONTRACT THEME BACKGROUND EFFECTS === */
+
+/* Hide old effects */
+.hero-dot-grid,
+.hero-blur-orb,
+.hero-gradient-mesh,
+.hero-particles {
+  display: none;
+}
+
+/* ===== HERO SECTION: Contract Paper Lines + Signature ===== */
+
+/* Paper Lines - Like a contract document - VERSTÄRKT */
+.contract-paper-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image:
+    /* Horizontale Linien */
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 34px,
+      rgba(99, 102, 241, 0.15) 34px,
+      rgba(99, 102, 241, 0.15) 36px
+    ),
+    /* Vertikale Linien für Raster-Effekt */
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 34px,
+      rgba(99, 102, 241, 0.08) 34px,
+      rgba(99, 102, 241, 0.08) 36px
+    );
+  pointer-events: none;
+  z-index: 0;
+  opacity: 1;
+  mask-image: radial-gradient(ellipse 90% 80% at 50% 50%, black 30%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse 90% 80% at 50% 50%, black 30%, transparent 75%);
+}
+
+/* ============================================
+   "CONTRACT AI" HANDSCHRIFTLICHE UNTERSCHRIFT
+   Direkt nach "Zeit gewonnen." - ohne Text zu verschieben
+   ============================================ */
+
+.headline-line-with-signature {
+  position: relative;
+  display: block; /* Bleibt Block wie andere Headlines! */
+}
+
+/* Desktop: Signatur absolut positioniert, aber berechnet vom Text-Ende */
+.contractai-signature {
+  position: absolute;
+  top: 62%; /* Noch etwas weiter runter (war 55%) */
+  /* Positioniere relativ zum Text "Zeit gewonnen." */
+  /* Der Text ist ca. 380px breit bei 5rem, also setzen wir left entsprechend */
+  left: calc(50% + 240px); /* Mitte + halbe Textbreite + mehr Abstand */
+  transform: translateY(-50%) rotate(-12deg); /* Noch schräger: von -8deg auf -12deg */
+  width: 160px;
+  height: 50px;
+  pointer-events: none;
+}
+
+/* "C" - Großbuchstabe, schwungvoll */
+.sig-c {
+  stroke: rgba(61, 124, 243, 0.95); /* Button-Farbe #3d7cf3 */
+  stroke-width: 2.8;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: drawSig 0.5s cubic-bezier(0.4, 0, 0.2, 1) 1s forwards;
+  filter: drop-shadow(0 1px 3px rgba(61, 124, 243, 0.3));
+}
+
+/* "ontract" - verbunden, schnell */
+.sig-ontract {
+  stroke: rgba(61, 124, 243, 0.9); /* Button-Farbe #3d7cf3 */
+  stroke-width: 2.2;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  animation: drawSig 0.8s cubic-bezier(0.4, 0, 0.2, 1) 1.4s forwards;
+  filter: drop-shadow(0 1px 2px rgba(61, 124, 243, 0.25));
+}
+
+/* "A" - Großbuchstabe */
+.sig-a {
+  stroke: rgba(61, 124, 243, 0.95); /* Button-Farbe #3d7cf3 */
+  stroke-width: 2.6;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 80;
+  stroke-dashoffset: 80;
+  animation: drawSig 0.4s cubic-bezier(0.4, 0, 0.2, 1) 2.1s forwards;
+  filter: drop-shadow(0 1px 3px rgba(61, 124, 243, 0.3));
+}
+
+/* "I" - Strich */
+.sig-i {
+  stroke: rgba(61, 124, 243, 0.95); /* Button-Farbe #3d7cf3 */
+  stroke-width: 2.6;
+  fill: none;
+  stroke-linecap: round;
+  stroke-dasharray: 20;
+  stroke-dashoffset: 20;
+  animation: drawSig 0.2s cubic-bezier(0.4, 0, 0.2, 1) 2.4s forwards;
+  filter: drop-shadow(0 1px 3px rgba(61, 124, 243, 0.3));
+}
+
+/* "I" - Punkt */
+.sig-i-dot {
+  fill: rgba(61, 124, 243, 0); /* Button-Farbe #3d7cf3 */
+  animation: dotAppear 0.15s ease-out 2.55s forwards;
+}
+
+@keyframes dotAppear {
+  to {
+    fill: rgba(61, 124, 243, 0.95); /* Button-Farbe #3d7cf3 */
+  }
+}
+
+/* Schwungvoller Unterstrich */
+.sig-flourish {
+  stroke: rgba(61, 124, 243, 0.55); /* Button-Farbe #3d7cf3 */
+  stroke-width: 1.5;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  animation: drawSig 0.6s cubic-bezier(0.4, 0, 0.2, 1) 2.7s forwards;
+}
+
+/* Animation für das Zeichnen */
+@keyframes drawSig {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Subtiles Pulsieren nach dem Zeichnen */
+.contractai-signature {
+  animation: sigPulse 4s ease-in-out 3.5s infinite;
+}
+
+@keyframes sigPulse {
+  0%, 100% {
+    filter: drop-shadow(0 1px 3px rgba(61, 124, 243, 0.2));
+    opacity: 1;
+  }
+  50% {
+    filter: drop-shadow(0 2px 8px rgba(61, 124, 243, 0.4));
+    opacity: 0.9;
+  }
+}
+
+/* =============================================
+   Responsive Anpassungen für Signatur
+   ============================================= */
+
+/* Große Desktops */
+@media (min-width: 1400px) {
+  .contractai-signature {
+    left: calc(50% + 260px); /* war 220px */
+  }
+}
+
+/* Normale Desktops */
+@media (max-width: 1399px) and (min-width: 1025px) {
+  .contractai-signature {
+    left: calc(50% + 220px); /* war 180px */
+  }
+}
+
+/* Tablets */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .contractai-signature {
+    left: calc(50% + 200px); /* war 160px */
+    width: 140px;
+    height: 45px;
+  }
+}
+
+/* Mobile - Signatur unter dem Text, zentriert */
+@media (max-width: 768px) {
+  .headline-line-with-signature {
+    display: block;
+    text-align: center; /* Text zentrieren */
+  }
+
+  .contractai-signature {
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: rotate(-5deg);
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 8px;
+    width: 120px;
+    height: 35px;
+    display: block;
+  }
+
+  .sig-c {
+    stroke-width: 2.4;
+  }
+
+  .sig-ontract {
+    stroke-width: 1.8;
+  }
+
+  .sig-a,
+  .sig-i {
+    stroke-width: 2.2;
+  }
+
+  .sig-flourish {
+    stroke-width: 1.2;
+  }
+}
+
+@media (max-width: 480px) {
+  .contractai-signature {
+    width: 100px;
+    height: 30px;
+    margin-top: 3px;
+  }
+
+  .sig-c {
+    stroke-width: 2;
+  }
+
+  .sig-ontract {
+    stroke-width: 1.5;
+  }
+
+  .sig-a,
+  .sig-i {
+    stroke-width: 1.8;
+  }
+
+  .sig-flourish {
+    stroke-width: 1;
+  }
+
+  .sig-i-dot {
+    r: 1.5;
+  }
+}
+
+/* Floating Document Icons - VERSTÄRKT */
+.floating-document {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  animation: floatDocument 15s ease-in-out infinite, fadeInDocument 1.5s ease-out forwards;
+  filter: drop-shadow(0 4px 8px rgba(99, 102, 241, 0.2));
+}
+
+.floating-document svg {
+  width: 100%;
+  height: 100%;
+}
+
+.floating-document-1 {
+  width: 90px;
+  height: 112px;
+  top: 12%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.floating-document-2 {
+  width: 80px;
+  height: 100px;
+  top: 20%;
+  right: 10%;
+  animation-delay: -4s;
+}
+
+.floating-document-3 {
+  width: 70px;
+  height: 88px;
+  bottom: 25%;
+  left: 8%;
+  animation-delay: -8s;
+}
+
+.floating-document-4 {
+  width: 85px;
+  height: 106px;
+  bottom: 20%;
+  right: 12%;
+  animation-delay: -12s;
+}
+
+@keyframes floatDocument {
+  0%, 100% {
+    transform: translateY(0) rotate(-8deg);
+  }
+  25% {
+    transform: translateY(-30px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-15px) rotate(8deg);
+  }
+  75% {
+    transform: translateY(-35px) rotate(3deg);
+  }
+}
+
+@keyframes fadeInDocument {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.35;
+  }
+}
+
+/* ===== FEATURES SECTION: Floating § Symbols - VERSTÄRKT ===== */
+.floating-paragraph {
+  position: absolute;
+  font-family: Georgia, serif;
+  font-size: 80px;
+  font-weight: 400;
+  color: rgba(99, 102, 241, 0.25);
+  pointer-events: none;
+  z-index: 0;
+  animation: floatParagraph 20s ease-in-out infinite;
+  text-shadow: 0 4px 15px rgba(99, 102, 241, 0.15);
+}
+
+.floating-paragraph-1 {
+  top: 8%;
+  left: 3%;
+  font-size: 120px;
+  animation-delay: 0s;
+}
+
+.floating-paragraph-2 {
+  top: 35%;
+  right: 5%;
+  font-size: 90px;
+  animation-delay: -7s;
+}
+
+.floating-paragraph-3 {
+  bottom: 15%;
+  left: 8%;
+  font-size: 100px;
+  animation-delay: -14s;
+}
+
+@keyframes floatParagraph {
+  0%, 100% {
+    transform: translateY(0) rotate(-5deg);
+    opacity: 0.25;
+  }
+  50% {
+    transform: translateY(-40px) rotate(10deg);
+    opacity: 0.4;
+  }
+}
+
+/* ===== TESTIMONIALS SECTION: Stamp Effects - VERSTÄRKT ===== */
+.stamp-effect {
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  border: 4px solid rgba(34, 197, 94, 0.35);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(-15deg);
+  animation: stampPulse 5s ease-in-out infinite;
+  box-shadow:
+    inset 0 0 20px rgba(34, 197, 94, 0.1),
+    0 0 30px rgba(34, 197, 94, 0.1);
+}
+
+.stamp-effect::before {
+  content: '';
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  border: 2px dashed rgba(34, 197, 94, 0.25);
+  border-radius: 50%;
+}
+
+.stamp-effect::after {
+  content: 'VERIFIED';
+  font-size: 14px;
+  font-weight: 800;
+  color: rgba(34, 197, 94, 0.45);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.stamp-effect-1 {
+  top: 5%;
+  right: 8%;
+  animation-delay: 0s;
+}
+
+.stamp-effect-2 {
+  bottom: 10%;
+  left: 5%;
+  transform: rotate(12deg);
+  animation-delay: -2.5s;
+  border-color: rgba(99, 102, 241, 0.35);
+  box-shadow:
+    inset 0 0 20px rgba(99, 102, 241, 0.1),
+    0 0 30px rgba(99, 102, 241, 0.1);
+}
+
+.stamp-effect-2::before {
+  border-color: rgba(99, 102, 241, 0.25);
+}
+
+.stamp-effect-2::after {
+  content: 'APPROVED';
+  color: rgba(99, 102, 241, 0.45);
+}
+
+@keyframes stampPulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: rotate(-15deg) scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: rotate(-15deg) scale(1.08);
+  }
+}
+
+/* Mobile Anpassung für Stempel - weg von Überschrift */
+@media (max-width: 768px) {
+  .stamp-effect {
+    width: 100px;
+    height: 100px;
+  }
+
+  .stamp-effect::before {
+    width: 85px;
+    height: 85px;
+  }
+
+  .stamp-effect::after {
+    font-size: 10px;
+  }
+
+  /* Stempel weiter nach unten/außen verschieben */
+  .stamp-effect-1 {
+    top: auto;
+    bottom: 5%;
+    right: 5%;
+  }
+
+  .stamp-effect-2 {
+    top: auto;
+    bottom: 25%;
+    left: 3%;
+  }
+}
+
+/* ===== PRICING SECTION: Contract Texture - VERSTÄRKT ===== */
+.contract-texture {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image:
+    /* Horizontale Linien */
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 28px,
+      rgba(99, 102, 241, 0.12) 28px,
+      rgba(99, 102, 241, 0.12) 30px
+    ),
+    /* Vertikale Rasterlinien */
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 28px,
+      rgba(99, 102, 241, 0.06) 28px,
+      rgba(99, 102, 241, 0.06) 30px
+    );
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.8;
+  /* Sanfter Fade-Out oben und unten - Raster wird langsam transparent */
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0,0,0,0.1) 10%,
+    rgba(0,0,0,0.3) 15%,
+    rgba(0,0,0,0.6) 20%,
+    black 25%,
+    black 75%,
+    rgba(0,0,0,0.6) 80%,
+    rgba(0,0,0,0.3) 85%,
+    rgba(0,0,0,0.1) 90%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0,0,0,0.1) 10%,
+    rgba(0,0,0,0.3) 15%,
+    rgba(0,0,0,0.6) 20%,
+    black 25%,
+    black 75%,
+    rgba(0,0,0,0.6) 80%,
+    rgba(0,0,0,0.3) 85%,
+    rgba(0,0,0,0.1) 90%,
+    transparent 100%
+  );
+}
+
+/* ===== PRICING SECTION: Floating Elements ===== */
+.pricing-float-elements {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
+/* Euro-Zeichen */
+.pricing-float {
+  position: absolute;
+  font-size: 3rem;
+  font-weight: 700;
+  color: rgba(99, 102, 241, 0.12);
+  animation: pricingFloat 8s ease-in-out infinite;
+}
+
+.pricing-euro-1 {
+  top: 8%;
+  left: 6%;
+  font-size: 4rem;
+  animation-delay: 0s;
+}
+
+.pricing-euro-2 {
+  bottom: 15%;
+  right: 5%;
+  font-size: 3rem;
+  animation-delay: -3s;
+}
+
+.pricing-percent {
+  top: 20%;
+  right: 8%;
+  font-size: 3.5rem;
+  color: rgba(34, 197, 94, 0.15);
+  animation-delay: -5s;
+}
+
+@keyframes pricingFloat {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-15px) rotate(5deg);
+    opacity: 1;
+  }
+}
+
+/* Fair Pricing Stempel */
+.pricing-stamp {
+  position: absolute;
+  bottom: 12%;
+  left: 5%;
+  width: 80px;
+  height: 80px;
+  transform: rotate(-15deg);
+  animation: stampPulse 4s ease-in-out infinite;
+}
+
+@keyframes stampPulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: rotate(-15deg) scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: rotate(-12deg) scale(1.05);
+  }
+}
+
+/* Vertragsklausel-Icons */
+.pricing-clause {
+  position: absolute;
+  width: 45px;
+  height: 55px;
+  animation: clauseFloat 6s ease-in-out infinite;
+}
+
+.pricing-clause-1 {
+  top: 35%;
+  left: 3%;
+  animation-delay: -1s;
+}
+
+.pricing-clause-2 {
+  bottom: 40%;
+  right: 4%;
+  animation-delay: -4s;
+}
+
+@keyframes clauseFloat {
+  0%, 100% {
+    transform: translateY(0) rotate(-3deg);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateY(-10px) rotate(3deg);
+    opacity: 1;
+  }
+}
+
+/* Checkbox Animation for Pricing - VERSTÄRKT */
+.pricing-checkbox {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  border: 2.5px solid rgba(99, 102, 241, 0.3);
+  border-radius: 5px;
+  pointer-events: none;
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 3px 10px rgba(99, 102, 241, 0.1);
+}
+
+.pricing-checkbox::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 4px;
+  width: 8px;
+  height: 15px;
+  border: solid rgba(34, 197, 94, 0.7);
+  border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg);
+  opacity: 0;
+  animation: checkmarkAppear 2.5s ease-in-out infinite;
+}
+
+/* 5 Checkboxen verteilt */
+.pricing-checkbox-1 { top: 18%; left: 12%; }
+.pricing-checkbox-2 { top: 55%; right: 10%; }
+.pricing-checkbox-3 { bottom: 25%; left: 15%; }
+.pricing-checkbox-4 { top: 30%; right: 15%; }
+.pricing-checkbox-5 { bottom: 45%; right: 12%; }
+
+.pricing-checkbox-1::after { animation-delay: 0s; }
+.pricing-checkbox-2::after { animation-delay: -0.5s; }
+.pricing-checkbox-3::after { animation-delay: -1s; }
+.pricing-checkbox-4::after { animation-delay: -1.5s; }
+.pricing-checkbox-5::after { animation-delay: -2s; }
+
+@keyframes checkmarkAppear {
+  0%, 30% {
+    opacity: 0;
+    transform: rotate(45deg) scale(0.5);
+  }
+  40%, 85% {
+    opacity: 1;
+    transform: rotate(45deg) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(45deg) scale(0.5);
+  }
+}
+
+/* Mobile Anpassung für Pricing Elemente */
+@media (max-width: 768px) {
+  .pricing-float {
+    font-size: 2rem;
+  }
+
+  .pricing-euro-1 {
+    font-size: 2.5rem;
+    top: auto;
+    bottom: 5%;
+    left: 5%;
+  }
+
+  .pricing-euro-2 {
+    font-size: 2rem;
+    bottom: 12%;
+    right: 5%;
+  }
+
+  .pricing-percent {
+    font-size: 2.5rem;
+    top: auto;
+    bottom: 18%;
+    right: 15%;
+  }
+
+  .pricing-stamp {
+    width: 60px;
+    height: 60px;
+    bottom: 8%;
+    left: 50%;
+    transform: translateX(-50%) rotate(-15deg);
+  }
+
+  .pricing-clause-1,
+  .pricing-clause-2 {
+    display: none;
+  }
+
+  .pricing-checkbox {
+    width: 26px;
+    height: 26px;
+  }
+
+  .pricing-checkbox::after {
+    left: 8px;
+    top: 3px;
+    width: 6px;
+    height: 12px;
+  }
+
+  /* Checkboxen auf Mobile weiter außen */
+  .pricing-checkbox-1 { top: auto; bottom: 25%; left: 3%; }
+  .pricing-checkbox-2 { top: auto; bottom: 35%; right: 3%; }
+  .pricing-checkbox-3 { bottom: 45%; left: 5%; }
+  .pricing-checkbox-4 { top: auto; bottom: 55%; right: 5%; }
+  .pricing-checkbox-5 { bottom: 65%; right: 8%; }
+}
+
+/* ===== CTA SECTION: Signature Animation - VERSTÄRKT ===== */
+.cta-signature-wrapper {
+  position: absolute;
+  bottom: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  height: 80px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.8;
+}
+
+.cta-signature-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.cta-signature-line {
+  stroke: rgba(255, 255, 255, 0.6) !important;
+  stroke-width: 3 !important;
+  stroke-dasharray: 300;
+  stroke-dashoffset: 300;
+  animation: drawCTASignature 3.5s ease-out infinite;
+  filter: drop-shadow(0 2px 6px rgba(255, 255, 255, 0.3));
+}
+
+.cta-pen-icon {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  bottom: 0;
+  right: -20px;
+  opacity: 0;
+  animation: ctaPenMove 3.5s ease-in-out infinite;
+}
+
+.cta-pen-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.cta-pen-icon svg path {
+  stroke: rgba(255, 255, 255, 0.7) !important;
+  stroke-width: 2 !important;
+}
+
+@keyframes drawCTASignature {
+  0% {
+    stroke-dashoffset: 300;
+  }
+  45%, 100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes ctaPenMove {
+  0% {
+    opacity: 0;
+    transform: translate(250px, -10px);
+  }
+  8% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.6;
+    transform: translate(0, 0);
+  }
+  60%, 100% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+}
+
+/* === MODERNE SEITLICHE AKZENTE === */
+/* Linker Akzent */
+.landing-page::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    rgba(99, 102, 241, 0.3) 20%,
+    rgba(99, 102, 241, 0.6) 50%,
+    rgba(99, 102, 241, 0.3) 80%,
+    transparent 100%
+  );
+  z-index: 100;
+  pointer-events: none;
+}
+
+/* Rechter Akzent */
+.landing-page::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    rgba(99, 102, 241, 0.3) 20%,
+    rgba(99, 102, 241, 0.6) 50%,
+    rgba(99, 102, 241, 0.3) 80%,
+    transparent 100%
+  );
+  z-index: 100;
+  pointer-events: none;
+}
+
+/* Mobile: Dünnere Akzente */
+@media (max-width: 768px) {
+  .landing-page::before,
+  .landing-page::after {
+    width: 2px;
+  }
+}
+
+/* === SCHWEBENDE LICHT-AKZENTE === */
+.floating-light {
+  position: fixed;
+  width: 3px;
+  height: 100px;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    rgba(99, 102, 241, 0.6) 50%,
+    transparent 100%
+  );
+  border-radius: 3px;
+  pointer-events: none;
+  z-index: 99;
+  animation: floatingLightMove 8s ease-in-out infinite;
+}
+
+.floating-light.left {
+  left: 8px;
+  animation-delay: 0s;
+}
+
+.floating-light.right {
+  right: 8px;
+  animation-delay: 4s;
+}
+
+/* Mobile: Lichter ausblenden */
+@media (max-width: 768px) {
+  .floating-light {
+    display: none;
+  }
+}
+
+/* Animation für schwebende Lichtlinie */
+@keyframes floatingLightMove {
+  0% {
+    top: 20%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  90% {
+    opacity: 0.8;
+  }
+  100% {
+    top: 80%;
+    opacity: 0;
+  }
+}
+
+/* === SOPHISTICATED BACKGROUND LAYERS === */
+/* Versteckt - alte komplexe Hintergründe */
 .sophisticated-hero-bg {
+  display: none;
   position: absolute;
   top: 0;
   left: 0;
@@ -1805,17 +2739,13 @@ a {
 
 /* === TRUSTBAR SECTION === */
 .trustbar-section {
-  background: linear-gradient(180deg,
-    rgba(249, 250, 251, 1) 0%,
-    rgba(249, 250, 251, 1) 40%,
-    rgba(249, 250, 251, 1) 100%
-  );
-  padding: 60px 20px 60px;
+  background: #ffffff;
+  padding: 60px 20px 80px;
   position: relative;
   z-index: 3;
   width: 100%;
   box-sizing: border-box;
-  margin-top: -60px; /* Perfekter Übergang mit Hero */
+  margin-top: 0;
 }
 
 .trustbar {
@@ -1869,18 +2799,53 @@ a {
 
 /* === FEATURES SECTION === */
 .features-section {
-  padding: 120px 20px;
-  background: linear-gradient(180deg,
-    rgba(249, 250, 251, 1) 0%,
-    rgba(255, 255, 255, 0.98) 30%,
-    rgba(255, 255, 255, 0.95) 70%,
-    rgba(255, 255, 255, 1) 100%
-  );
+  padding: 140px 20px 120px;
+  background: linear-gradient(to bottom, #ffffff 0%, #f8f9fa 80px, #f8f9fa 100%);
   position: relative;
-  /* overflow: hidden entfernt - Lichteffekte können fließen */
+  overflow: hidden;
   width: 100%;
   box-sizing: border-box;
-  margin-top: 0; /* Fließender Übergang statt -2px */
+  margin-top: 0;
+}
+
+/* Section Divider - Sanfte Welle oben */
+.features-section::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: #ffffff;
+  clip-path: polygon(
+    0% 0%,
+    100% 0%,
+    100% 70%,
+    75% 85%,
+    50% 100%,
+    25% 85%,
+    0% 70%
+  );
+}
+
+/* Welle unten (Übergang zu nächster weißer Sektion) */
+.features-section::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: #ffffff;
+  clip-path: polygon(
+    0% 30%,
+    25% 15%,
+    50% 0%,
+    75% 15%,
+    100% 30%,
+    100% 100%,
+    0% 100%
+  );
 }
 
 /* Feature Grid: 4 Spalten für 8 Cards (4-4 Layout auf Desktop) */
@@ -2081,16 +3046,11 @@ a {
 
 /* === CONTRACTS MANAGEMENT SECTION === */
 .contracts-management {
-  background: linear-gradient(180deg,
-    rgba(255, 255, 255, 1) 0%,
-    rgba(248, 249, 250, 0.7) 30%,
-    rgba(248, 249, 250, 0.8) 70%,
-    rgba(248, 249, 250, 1) 100%
-  );
+  background: #ffffff;
   padding: 120px 20px;
   position: relative;
-  /* overflow: hidden entfernt - Lichteffekte können fließen */
-  margin-top: 0; /* Fließender Übergang statt -2px */
+  overflow: hidden;
+  margin-top: 0;
 }
 
 .contracts-management::before {
@@ -2135,17 +3095,12 @@ a {
   order: 1;
 }
 
-/* === EMAIL UPLOAD SECTION - Fließender Übergang === */
+/* === EMAIL UPLOAD SECTION === */
 .email-upload-section {
-  background: linear-gradient(180deg,
-    rgba(248, 249, 250, 1) 0%,
-    rgba(248, 249, 250, 0.8) 30%,
-    rgba(255, 255, 255, 0.9) 70%,
-    rgba(248, 249, 250, 1) 100%
-  );
+  background: #ffffff;
   padding: 120px 20px;
   position: relative;
-  margin-top: -80px; /* Fließender Übergang zur oberen Sektion */
+  margin-top: 0;
 }
 
 .email-upload-section::before {
@@ -2352,6 +3307,30 @@ a {
   .cm-visual {
     order: 2;
     min-height: 250px;
+    /* SVGs auf Mobile zentrieren - volle Breite nutzen */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+  }
+
+  /* Override für cm-grid-reverse auf Mobile - Text zuerst, dann SVG */
+  .cm-grid-reverse .cm-text {
+    order: 1;
+  }
+
+  .cm-grid-reverse .cm-visual {
+    order: 2;
+  }
+
+  /* SVGs innerhalb von cm-visual zentrieren - überschreibt inline-styles */
+  .cm-visual svg {
+    margin: 0 auto !important;
+    display: block !important;
+    max-width: 280px !important;
+    width: 100% !important;
+    height: auto !important;
+    transform: none !important; /* Entfernt translateX */
   }
 }
 
@@ -2597,21 +3576,59 @@ a {
 
 /* === SHOWCASE SECTION === */
 .showcase-section {
-  background: linear-gradient(180deg,
-    rgba(248, 249, 250, 1) 0%,
-    rgba(255, 255, 255, 0.8) 30%,
-    rgba(255, 255, 255, 0.9) 70%,
-    rgba(255, 255, 255, 1) 100%
-  );
-  padding: 120px 20px;
+  background: linear-gradient(to bottom, #ffffff 0%, #f8f9fa 80px, #f8f9fa calc(100% - 80px), #ffffff 100%);
+  padding: 140px 20px 120px;
   position: relative;
-  /* overflow: hidden entfernt - Lichteffekte können fließen */
+  overflow: hidden;
   width: 100%;
   box-sizing: border-box;
-  margin-top: -80px; /* Fließender Übergang zur Email-Upload Sektion */
+  margin-top: 0;
+}
+
+/* Sanfte Welle oben */
+.showcase-section::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: #ffffff;
+  clip-path: polygon(
+    0% 0%,
+    100% 0%,
+    100% 70%,
+    75% 85%,
+    50% 100%,
+    25% 85%,
+    0% 70%
+  );
+  z-index: 1;
+}
+
+/* Sanfte Welle unten */
+.showcase-section::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: #ffffff;
+  clip-path: polygon(
+    0% 30%,
+    25% 15%,
+    50% 0%,
+    75% 15%,
+    100% 30%,
+    100% 100%,
+    0% 100%
+  );
+  z-index: 1;
 }
 
 .showcase-bg {
+  display: none;
   position: absolute;
   top: 0;
   left: 0;
@@ -2910,18 +3927,14 @@ a {
 
 /* === TESTIMONIALS SECTION === */
 .testimonials-section {
-  background: linear-gradient(180deg,
-    rgba(255, 255, 255, 1) 0%,
-    rgba(247, 248, 249, 0.6) 30%,
-    rgba(247, 248, 249, 0.8) 70%,
-    rgba(247, 248, 249, 1) 100%
-  );
-  padding: 120px 20px 150px 20px; /* Mehr Padding unten für Schatten */
+  background: #ffffff;
+  padding: 120px 20px 150px 20px;
   position: relative;
   width: 100%;
   box-sizing: border-box;
-  margin-top: 0; /* Fließender Übergang statt -2px */
-  overflow: visible; /* WICHTIG: Schatten nicht abschneiden */
+  margin-top: 0;
+  overflow: visible;
+  z-index: 1; /* Unter Pricing-Sektion */
 }
 
 .testimonials-slider {
@@ -3253,9 +4266,9 @@ a {
     padding-right: 0 !important;
   }
 
-  /* ÜBERSCHRIFT BÜNDIG an Karten */
+  /* ÜBERSCHRIFT direkt an Karten - wie bei Features-Section */
   .testimonials-section .section-title {
-    margin-bottom: 12px !important; /* Reduziert auf 12px für bündiges Layout */
+    margin-bottom: 0 !important;
   }
 
   /* Slider Container: Kein Transform, kein Full-Bleed - EINFACH! */
@@ -3453,21 +4466,50 @@ a {
 
 /* === PRICING SECTION === */
 .pricing-section {
-  background: linear-gradient(180deg,
-    rgba(247, 248, 249, 1) 0%,
-    rgba(255, 255, 255, 0.7) 30%,
-    rgba(255, 255, 255, 0.9) 70%,
-    rgba(255, 255, 255, 1) 100%
+  /* Maximaler Verlauf - extrem sanfte Verschmelzung oben */
+  background: linear-gradient(
+    to bottom,
+    #ffffff 0%,
+    #ffffff 8%,
+    #fefefe 10%,
+    #fefefe 12%,
+    #fefefe 14%,
+    #fdfdfe 16%,
+    #fdfdfe 18%,
+    #fdfdfe 20%,
+    #fcfcfd 22%,
+    #fcfcfd 24%,
+    #fbfbfc 26%,
+    #fbfbfc 28%,
+    #fafafb 30%,
+    #fafafb 32%,
+    #f9f9fa 34%,
+    #f9f9fa 38%,
+    #f8f9fa 42%,
+    #f8f9fa 65%,
+    #f9f9fa 70%,
+    #fafafb 75%,
+    #fbfbfc 80%,
+    #fcfcfd 85%,
+    #fdfdfe 90%,
+    #fefefe 95%,
+    #ffffff 100%
   );
-  padding: 120px 20px;
+  padding: 140px 20px 120px;
   position: relative;
-  /* overflow: hidden entfernt - Lichteffekte können fließen */
-  margin-top: 0; /* Fließender Übergang statt -2px */
+  overflow: hidden;
+  margin-top: -300px; /* Maximale Überlappung oben */
+  padding-top: 500px; /* Sehr viel Padding oben */
+  margin-bottom: -120px;
+  padding-bottom: 260px;
   width: 100%;
   box-sizing: border-box;
 }
 
+/* Keine harten Wellen mehr - nur der sanfte Gradient-Verlauf */
+
 .pricing-bg {
+  display: none;
   position: absolute;
   top: 0;
   left: 0;
@@ -3499,20 +4541,6 @@ a {
   bottom: -100px;
   left: -200px;
   animation: rotateBlob 30s linear infinite reverse;
-}
-
-.pricing-section::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: 
-    linear-gradient(rgba(200, 200, 200, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(200, 200, 200, 0.05) 1px, transparent 1px);
-  background-size: 20px 20px;
-  z-index: 0;
 }
 
 .pricing-plan {
@@ -4019,15 +5047,16 @@ a[href*="kontakt"]:hover,
 
 /* === CTA SECTION === */
 .cta-section {
-  background: linear-gradient(180deg, #ffffff 0%, #f0f7ff 50%, #dbeafe 100%);
+  background: #ffffff;
   color: #1a1a1a;
-  padding: 120px 20px;
+  padding: 140px 20px 120px;
   text-align: center;
   position: relative;
-  /* overflow: hidden entfernt - Lichteffekte können fließen */
+  overflow: hidden;
   width: 100%;
   box-sizing: border-box;
-  margin-top: 0; /* Fließender Übergang statt -2px */
+  margin-top: 0;
+  z-index: 1; /* Unter Pricing-Sektion */
 }
 
 .cta-section .section-container {
@@ -4038,34 +5067,19 @@ a[href*="kontakt"]:hover,
 }
 
 .cta-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
+  display: none;
 }
 
 .cta-shape {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(50px);
+  display: none;
 }
 
 .cta-shape.shape-1 {
-  background: rgba(255, 255, 255, 0.1);
-  width: 400px;
-  height: 400px;
-  top: -100px;
-  right: -100px;
+  display: none;
 }
 
 .cta-shape.shape-2 {
-  background: rgba(78, 32, 228, 0.2);
-  width: 300px;
-  height: 300px;
-  bottom: -50px;
-  left: -50px;
+  display: none;
 }
 
 .cta-section h2 {
@@ -4095,8 +5109,130 @@ a[href*="kontakt"]:hover,
   justify-content: center !important;
   align-items: center !important;
   position: relative !important;
-  z-index: 2 !important;
-  flex-wrap: wrap !important;
+}
+
+/* ===== HERO CTA BUTTON - Starker Call-to-Action ===== */
+.cta-button-hero {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 40px;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: white;
+  text-decoration: none;
+  border-radius: 14px;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  border: none;
+  z-index: 1;
+}
+
+.cta-button-hero-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #3d7cf3 0%, #6366f1 50%, #8b5cf6 100%);
+  background-size: 200% 200%;
+  animation: gradientShift 3s ease infinite;
+  z-index: -1;
+  transition: all 0.4s ease;
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.cta-button-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%, rgba(255,255,255,0.1) 100%);
+  z-index: 0;
+}
+
+.cta-button-hero::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: 0;
+}
+
+.cta-button-hero:hover::after {
+  opacity: 1;
+}
+
+.cta-button-hero-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  z-index: 2;
+}
+
+.cta-button-hero-content svg:first-child {
+  width: 22px;
+  height: 22px;
+}
+
+.cta-button-hero-content span {
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.cta-button-hero .cta-arrow {
+  width: 20px;
+  height: 20px;
+  transition: transform 0.3s ease;
+}
+
+.cta-button-hero:hover .cta-arrow {
+  transform: translateX(5px);
+}
+
+.cta-button-hero:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow:
+    0 15px 40px rgba(99, 102, 241, 0.4),
+    0 5px 15px rgba(139, 92, 246, 0.3),
+    inset 0 1px 0 rgba(255,255,255,0.2);
+}
+
+.cta-button-hero:active {
+  transform: translateY(-1px) scale(1);
+}
+
+/* Glow-Effekt */
+.cta-button-hero::before {
+  box-shadow: 0 0 30px rgba(99, 102, 241, 0.5);
+}
+
+/* Mobile Anpassung */
+@media (max-width: 768px) {
+  .cta-button-hero {
+    padding: 16px 32px;
+    font-size: 1.05rem;
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .cta-button-hero-content svg:first-child {
+    width: 20px;
+    height: 20px;
+  }
+
+  .cta-button-hero .cta-arrow {
+    width: 18px;
+    height: 18px;
+  }
 }
 
 /* === CTA BUTTONS (Apple Style) === */
@@ -5582,22 +6718,91 @@ main,
 @media (max-width: 767px) {
   .pricing-section {
     overflow: visible !important;
-    padding-top: 100px !important;
-    padding-bottom: 100px !important;
+    padding-top: 450px !important; /* Viel Platz für sanften Gradient-Übergang */
+    padding-bottom: 180px !important; /* Auch unten mehr Platz für Übergang */
+    margin-top: -250px !important; /* Überlappung oben für weichen Übergang */
+    margin-bottom: -100px !important; /* Überlappung unten */
+    /* Sanfter Gradient für Mobile */
+    background: linear-gradient(
+      to bottom,
+      #ffffff 0%,
+      #ffffff 15%,
+      #fefefe 18%,
+      #fdfdfe 21%,
+      #fcfcfd 24%,
+      #fbfbfc 27%,
+      #fafafb 30%,
+      #f9f9fa 35%,
+      #f8f9fa 45%,
+      #f8f9fa 55%,
+      #f9f9fa 65%,
+      #fafafb 70%,
+      #fbfbfc 75%,
+      #fcfcfd 80%,
+      #fdfdfe 85%,
+      #fefefe 90%,
+      #ffffff 100%
+    ) !important;
   }
 
   .pricing-bg {
     overflow: hidden; /* Nur der Background darf overflow: hidden haben */
   }
 
-  /* ÜBERSCHRIFT BÜNDIG an Pricing Cards */
-  .pricing-section .section-title {
-    margin-bottom: 12px !important; /* Reduziert auf 12px für bündiges Layout */
+  /* Contract Texture Raster - sanfter Fade für Mobile */
+  .contract-texture {
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      transparent 5%,
+      rgba(0,0,0,0.05) 10%,
+      rgba(0,0,0,0.1) 15%,
+      rgba(0,0,0,0.2) 20%,
+      rgba(0,0,0,0.4) 25%,
+      rgba(0,0,0,0.6) 30%,
+      rgba(0,0,0,0.8) 35%,
+      black 40%,
+      black 60%,
+      rgba(0,0,0,0.8) 65%,
+      rgba(0,0,0,0.6) 70%,
+      rgba(0,0,0,0.4) 75%,
+      rgba(0,0,0,0.2) 80%,
+      rgba(0,0,0,0.1) 85%,
+      rgba(0,0,0,0.05) 90%,
+      transparent 95%,
+      transparent 100%
+    ) !important;
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      transparent 5%,
+      rgba(0,0,0,0.05) 10%,
+      rgba(0,0,0,0.1) 15%,
+      rgba(0,0,0,0.2) 20%,
+      rgba(0,0,0,0.4) 25%,
+      rgba(0,0,0,0.6) 30%,
+      rgba(0,0,0,0.8) 35%,
+      black 40%,
+      black 60%,
+      rgba(0,0,0,0.8) 65%,
+      rgba(0,0,0,0.6) 70%,
+      rgba(0,0,0,0.4) 75%,
+      rgba(0,0,0,0.2) 80%,
+      rgba(0,0,0,0.1) 85%,
+      rgba(0,0,0,0.05) 90%,
+      transparent 95%,
+      transparent 100%
+    ) !important;
   }
 
-  /* Section Container mehr Platz geben */
+  /* ÜBERSCHRIFT direkt an Pricing Cards - wie bei Features-Section */
+  .pricing-section .section-title {
+    margin-bottom: 0 !important;
+  }
+
+  /* Section Container */
   .pricing-section .section-container {
-    padding-top: 2rem;
+    padding-top: 0;
     padding-bottom: 2rem;
   }
 

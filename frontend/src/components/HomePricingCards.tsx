@@ -1,8 +1,28 @@
 import { Link } from 'react-router-dom';
 import { CheckCircle, X, Users, Zap, Star } from "lucide-react";
+import { useEffect, useRef } from 'react';
 import styles from "../styles/Pricing.module.css";
 
 export default function HomePricingCards() {
+  const plansRef = useRef<HTMLDivElement>(null);
+
+  // Auf Mobile zur Business-Karte (mittlere Karte) scrollen
+  useEffect(() => {
+    const scrollToBusinessCard = () => {
+      if (plansRef.current && window.innerWidth <= 767) {
+        const cards = plansRef.current.querySelectorAll(`.${styles.cardWrapper}`);
+        if (cards.length >= 2) {
+          const businessCard = cards[1] as HTMLElement; // Index 1 = Business (mittlere Karte)
+          const scrollLeft = businessCard.offsetLeft - (plansRef.current.offsetWidth - businessCard.offsetWidth) / 2;
+          plansRef.current.scrollLeft = scrollLeft;
+        }
+      }
+    };
+
+    // Kurze Verzögerung damit das Layout fertig ist
+    const timer = setTimeout(scrollToBusinessCard, 100);
+    return () => clearTimeout(timer);
+  }, []);
   const plans = [
     {
       title: "Starter",
@@ -88,7 +108,7 @@ export default function HomePricingCards() {
 
   return (
     <div className={styles.plansContainer}>
-      <div className={styles.plans}>
+      <div className={styles.plans} ref={plansRef}>
         {plans.map((plan, index) => (
           <div key={index} className={styles.cardWrapper}>
             <div className={`${styles.card} ${plan.popular ? styles.popularCard : ''}`}>
