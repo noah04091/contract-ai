@@ -1276,16 +1276,12 @@ export default function Contracts() {
       return;
     }
 
-    // ✅ KORRIGIERT: Free-User Check
-    if (userInfo.subscriptionPlan === 'free') {
-      alert("❌ Vertragsanalyse ist nur für Business- und Premium-Nutzer verfügbar.\n\n🚀 Jetzt upgraden für Zugriff auf KI-Vertragsanalyse!");
-      e.target.value = ''; // ✅ Reset Input
-      return;
-    }
+    // ✅ KORRIGIERT: Free-User dürfen 3 Analysen machen!
+    // (Limit-Check erfolgt unten)
 
-    // ✅ KORRIGIERT: Business vs Premium Check
-    if (userInfo.subscriptionPlan === 'business' && files.length > 1) {
-      alert("📊 Mehrere Verträge gleichzeitig analysieren ist nur für Premium-Nutzer verfügbar.\n\n👑 Upgrade auf Premium für Batch-Analyse!");
+    // ✅ KORRIGIERT: Multi-Upload nur für Premium
+    if (userInfo.subscriptionPlan !== 'premium' && files.length > 1) {
+      alert("📊 Mehrere Verträge gleichzeitig hochladen ist nur für Premium-Nutzer verfügbar.\n\n👑 Upgrade auf Premium für Batch-Upload!");
       e.target.value = ''; // ✅ Reset Input
       return;
     }
@@ -1622,12 +1618,7 @@ export default function Contracts() {
   const handleAnalyzeExistingContract = async (contract: Contract) => {
     console.log("🔍 Analyzing existing contract:", contract._id, contract.name);
 
-    // Check subscription & limits
-    if (userInfo.subscriptionPlan === 'free') {
-      alert("❌ Vertragsanalyse ist nur für Business- und Premium-Nutzer verfügbar.\n\n🚀 Jetzt upgraden!");
-      return;
-    }
-
+    // Check subscription & limits - Free hat 3 Analysen, nicht 0!
     if (userInfo.analysisCount >= userInfo.analysisLimit && userInfo.analysisLimit !== Infinity) {
       alert(`📊 Analyse-Limit erreicht (${userInfo.analysisCount}/${userInfo.analysisLimit}).\n\n🚀 Upgrade für mehr Analysen!`);
       return;
@@ -1932,15 +1923,12 @@ export default function Contracts() {
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const files = e.dataTransfer.files;
       
-      // ✅ KORRIGIERT: Free-User Check
-      if (userInfo.subscriptionPlan === 'free') {
-        alert("❌ Vertragsanalyse ist nur für Business- und Premium-Nutzer verfügbar.\n\n🚀 Jetzt upgraden für Zugriff auf KI-Vertragsanalyse!");
-        return;
-      }
+      // ✅ KORRIGIERT: Free-User dürfen auch uploaden (3 Analysen)!
+      // Limit-Check erfolgt beim Analysieren
 
-      // ✅ KORRIGIERT: Business vs Premium Check
-      if (userInfo.subscriptionPlan === 'business' && files.length > 1) {
-        alert("📊 Mehrere Verträge gleichzeitig analysieren ist nur für Premium-Nutzer verfügbar.\n\n👑 Upgrade auf Premium für Batch-Analyse!");
+      // ✅ KORRIGIERT: Multi-Upload nur für Premium
+      if (userInfo.subscriptionPlan !== 'premium' && files.length > 1) {
+        alert("📊 Mehrere Verträge gleichzeitig hochladen ist nur für Premium-Nutzer verfügbar.\n\n👑 Upgrade auf Premium für Batch-Upload!");
         return;
       }
 
@@ -2231,8 +2219,8 @@ export default function Contracts() {
     }
   };
 
-  // ✅ KORRIGIERT: Upload-Berechtigung prüfen
-  const canUpload = userInfo.subscriptionPlan !== 'free';
+  // ✅ KORRIGIERT: Upload-Berechtigung prüfen - Free darf auch uploaden!
+  const canUpload = true; // Alle Pläne dürfen uploaden (Free: 3, Business: 25, Premium: ∞)
   const canMultiUpload = userInfo.subscriptionPlan === 'premium';
   const hasAnalysesLeft = userInfo.analysisLimit === Infinity || userInfo.analysisCount < userInfo.analysisLimit;
 
@@ -2538,24 +2526,18 @@ export default function Contracts() {
                 <span className={styles.tabBadge}>{contracts.length}</span>
               )}
             </button>
-            <button 
-              className={`${styles.tabButton} ${activeSection === 'upload' ? styles.activeTab : ''} ${!canUpload ? styles.disabledTab : ''}`}
-              onClick={() => canUpload && setActiveSection('upload')}
-              disabled={!canUpload}
+            <button
+              className={`${styles.tabButton} ${activeSection === 'upload' ? styles.activeTab : ''}`}
+              onClick={() => setActiveSection('upload')}
               data-section="upload"
             >
               <Upload size={18} />
-              <span>
-                {userInfo.subscriptionPlan === 'free' ? 'Upgrade erforderlich' : 'Hochladen'}
-              </span>
+              <span>Hochladen</span>
               {canMultiUpload && (
                 <span className={styles.premiumTabBadge}>
                   <Crown size={12} />
                   Multi
                 </span>
-              )}
-              {!canUpload && (
-                <Lock size={14} className={styles.lockIcon} />
               )}
             </button>
 
