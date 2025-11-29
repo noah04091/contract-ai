@@ -19,9 +19,6 @@ import { useAuth } from "../context/AuthContext"; // 🔐 Auth Context
 // 🎛️ Dashboard Customization
 import { useDashboardConfig } from "../hooks/useDashboardConfig";
 import DashboardSettingsModal from "../components/DashboardSettingsModal";
-// ✅ Upload Success Modal für Two-Step Upload Flow
-import UploadSuccessModal from "../components/UploadSuccessModal";
-import { uploadOnly } from "../utils/api";
 
 interface Contract {
   _id: string;
@@ -61,9 +58,6 @@ export default function Dashboard() {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  // ✅ Upload Success Modal States
-  const [showUploadSuccessModal, setShowUploadSuccessModal] = useState(false);
-  const [uploadedContracts, setUploadedContracts] = useState<Array<{ _id: string; name: string; uploadedAt: string }>>([]);
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth(); // 🔐 Get user from Auth Context
@@ -269,14 +263,6 @@ export default function Dashboard() {
   };
 
   // Hilfsfunktionen
-  const getProgressBarColor = () => {
-    if (!userData || !userData.analysisCount || !userData.analysisLimit) return "";
-    const usagePercentage = (userData.analysisCount / userData.analysisLimit) * 100;
-    if (usagePercentage >= 100) return styles.progressRed;
-    if (usagePercentage >= 80) return styles.progressOrange;
-    return styles.progressGreen;
-  };
-
   const countStatus = (status: string) => {
     return contracts.filter((c) => c && c.status === status).length;
   };
@@ -433,105 +419,37 @@ export default function Dashboard() {
   }, [location.search]);
 
   // Event Handlers
-  // ✅ Two-Step Upload Flow: Erst hochladen, dann Analyse-Option anbieten
+  // ✅ Einfacher Upload-Handler für das Modal (falls noch verwendet)
   const handleFileUpload = async () => {
     if (!file) return;
 
-    console.log("📤 Dashboard: Starting Two-Step Upload Flow...");
     setIsLoading(true);
+    const formData = new FormData();
+    formData.append("file", file);
 
     try {
-      // Schritt 1: Nur hochladen (ohne Analyse)
-      console.log("📤 Dashboard: Calling uploadOnly...");
-      const result = await uploadOnly(file) as {
-        success?: boolean;
-        contract?: { _id: string; name: string; uploadedAt: string };
-        duplicate?: boolean;
-        message?: string;
-      };
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
 
-      console.log("📤 Dashboard: uploadOnly result:", result);
-
-      if (result?.contract) {
-        // Upload erfolgreich - zeige Auswahl-Modal
-        console.log("✅ Dashboard: Upload successful, showing UploadSuccessModal");
-        setUploadedContracts([result.contract]);
+      const data = await res.json();
+      if (res.ok) {
+        const updatedContracts = [...contracts, data.contract];
+        setContracts(updatedContracts);
         setShowModal(false);
         setFile(null);
-        setShowUploadSuccessModal(true);
-      } else if (result?.duplicate) {
-        console.log("⚠️ Dashboard: Duplicate detected");
-        setNotification({ message: "Dieser Vertrag wurde bereits hochgeladen.", type: "error" });
-        setShowModal(false);
-        setFile(null);
+        setNotification({ message: "Vertrag erfolgreich hochgeladen", type: "success" });
       } else {
-        console.log("❌ Dashboard: Upload failed, no contract in result");
-        setNotification({ message: result?.message || "Fehler beim Hochladen", type: "error" });
+        setNotification({ message: `Fehler beim Hochladen: ${data.message}`, type: "error" });
       }
     } catch (err) {
-      console.error("❌ Dashboard: Upload error:", err);
+      console.error(err);
       setNotification({ message: "Ein unerwarteter Fehler ist aufgetreten", type: "error" });
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // ✅ Handler für "Jetzt analysieren" im UploadSuccessModal
-  const handleAnalyzeUploaded = async () => {
-    if (uploadedContracts.length === 0) return;
-
-    setIsLoading(true);
-    setShowUploadSuccessModal(false);
-
-    try {
-      // Hole die hochgeladene Datei und analysiere sie
-      for (const contract of uploadedContracts) {
-        // Wir müssen den Vertrag aus dem Backend holen und analysieren lassen
-        const res = await fetch(`/api/contracts/${contract._id}/analyze`, {
-          method: "POST",
-          credentials: "include",
-        });
-
-        if (res.ok) {
-          const updatedContract = await res.json();
-          // Aktualisiere den Vertrag in der Liste
-          setContracts(prev => {
-            const existing = prev.find(c => c._id === contract._id);
-            if (existing) {
-              return prev.map(c => c._id === contract._id ? { ...c, ...updatedContract } : c);
-            } else {
-              return [...prev, updatedContract];
-            }
-          });
-        }
-      }
-
-      setNotification({ message: "Vertrag erfolgreich analysiert!", type: "success" });
-    } catch (err) {
-      console.error(err);
-      setNotification({ message: "Fehler bei der Analyse", type: "error" });
-    } finally {
-      setIsLoading(false);
-      setUploadedContracts([]);
-    }
-  };
-
-  // ✅ Handler für "Speichern" (ohne Analyse) im UploadSuccessModal
-  const handleSkipAnalysis = () => {
-    // Füge die hochgeladenen Verträge zur Liste hinzu
-    const newContracts = uploadedContracts.map(uc => ({
-      _id: uc._id,
-      name: uc.name,
-      uploadedAt: uc.uploadedAt,
-      laufzeit: '',
-      kuendigung: '',
-      status: 'Nicht analysiert'
-    } as Contract));
-
-    setContracts(prev => [...prev, ...newContracts]);
-    setShowUploadSuccessModal(false);
-    setUploadedContracts([]);
-    setNotification({ message: "Vertrag gespeichert! Du kannst ihn jederzeit später analysieren.", type: "success" });
   };
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
@@ -733,23 +651,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Analyse-Fortschrittsbalken */}
-      {userData && 
-       userData.analysisCount !== undefined && 
-       userData.analysisLimit !== undefined && 
-       userData.analysisLimit > 0 && (
-        <div className={styles.analysisProgressContainer}>
-          <div className={styles.progressInfo}>
-            <span>{userData.analysisCount} / {userData.analysisLimit} Analysen genutzt</span>
-          </div>
-          <div className={styles.progressBarContainer}>
-            <div 
-              className={`${styles.progressBar} ${getProgressBarColor()}`}
-              style={{ width: `${Math.min((userData.analysisCount / userData.analysisLimit) * 100, 100)}%` }}
-            ></div>
-          </div>
-        </div>
-      )}
+      {/* Analyse-Fortschrittsbalken - Entfernt, zu prominent für Dashboard */}
 
       {/* Dashboard Content or Skeleton */}
       {isLoading ? (
@@ -798,7 +700,7 @@ export default function Dashboard() {
             <div className={styles.welcomeActions}>
               <button
                 className={styles.welcomePrimaryButton}
-                onClick={() => setShowModal(true)}
+                onClick={() => navigate('/contracts?tab=upload')}
               >
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1782,20 +1684,6 @@ export default function Dashboard() {
         </>
       )}
       {/* 🔐 END CONDITIONAL RENDERING */}
-
-      {/* ✅ Upload Success Modal - Two-Step Upload Flow */}
-      <UploadSuccessModal
-        isOpen={showUploadSuccessModal}
-        onClose={() => {
-          setShowUploadSuccessModal(false);
-          setUploadedContracts([]);
-        }}
-        uploadedContracts={uploadedContracts}
-        onAnalyze={handleAnalyzeUploaded}
-        onSkip={handleSkipAnalysis}
-        analysisCount={userData?.analysisCount || 0}
-        analysisLimit={userData?.analysisLimit || 0}
-      />
 
       {/* 🎛️ Dashboard Settings Modal */}
       <DashboardSettingsModal
