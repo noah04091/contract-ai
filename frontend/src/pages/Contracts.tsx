@@ -163,12 +163,12 @@ export default function Contracts() {
   // ✅ BUG FIX 1: Neuer State für Edit-Modal direkt öffnen
   const [openEditModalDirectly, setOpenEditModalDirectly] = useState(false);
   
-  // ✅ KORRIGIERT: User-Plan States
+  // ✅ KORRIGIERT: User-Plan States - Free = 3 Analysen!
   const [userInfo, setUserInfo] = useState<UserInfo>({
     subscriptionPlan: 'free',
     isPremium: false,
     analysisCount: 0,
-    analysisLimit: 0
+    analysisLimit: 3  // ✅ Free: 3 Analysen laut Preisliste
   });
   const [uploadFiles, setUploadFiles] = useState<UploadFileItem[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -1032,10 +1032,10 @@ export default function Contracts() {
       const isPremium = response.user?.isPremium || plan === 'premium';
       const analysisCount = response.user?.analysisCount || 0;
 
-      // ✅ KORRIGIERT: Limits nach 3-Stufen-Modell
-      let analysisLimit = 0;
-      if (plan === 'free') analysisLimit = 0;        // ❌ Keine Analysen
-      else if (plan === 'business') analysisLimit = 50;  // 📊 50 pro Monat
+      // ✅ KORRIGIERT: Limits laut Preisliste
+      let analysisLimit = 3; // Default: Free = 3
+      if (plan === 'free') analysisLimit = 3;           // ✅ Free: 3 Analysen (einmalig)
+      else if (plan === 'business') analysisLimit = 25; // 📊 Business: 25 pro Monat
       else if (plan === 'premium') analysisLimit = Infinity; // ♾️ Unbegrenzt
 
       const newUserInfo: UserInfo = {
@@ -1063,7 +1063,7 @@ export default function Contracts() {
         subscriptionPlan: 'free',
         isPremium: false,
         analysisCount: 0,
-        analysisLimit: 0
+        analysisLimit: 3  // ✅ Free: 3 Analysen
       });
     }
   };
