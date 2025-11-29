@@ -1070,20 +1070,20 @@ export const checkPremiumStatus = async (): Promise<{
     const isPremium = userInfo.user?.isPremium || plan === 'premium';
     const analysisCount = userInfo.user?.analysisCount || 0;
     
-    // ✅ KORRIGIERT: Limits nach 3-Stufen-Modell
-    let analysisLimit = 0;
-    if (plan === 'free') analysisLimit = 0;           // ❌ Keine Analysen
-    else if (plan === 'business') analysisLimit = 50; // 📊 50 pro Monat
+    // ✅ KORRIGIERT: Limits laut Preisliste
+    let analysisLimit = 3;
+    if (plan === 'free') analysisLimit = 3;           // ✅ Free: 3 Analysen (einmalig)
+    else if (plan === 'business') analysisLimit = 25; // 📊 Business: 25 pro Monat
     else if (plan === 'premium') analysisLimit = Infinity; // ♾️ Unbegrenzt
     
     return { subscriptionPlan: plan, isPremium, analysisCount, analysisLimit };
   } catch (error) {
     console.warn("⚠️ Premium-Status konnte nicht geprüft werden:", error);
-    return { 
-      subscriptionPlan: 'free', 
-      isPremium: false, 
+    return {
+      subscriptionPlan: 'free',
+      isPremium: false,
       analysisCount: 0,
-      analysisLimit: 0
+      analysisLimit: 3  // ✅ Free: 3 Analysen
     };
   }
 };

@@ -218,14 +218,14 @@ router.get("/me", verifyToken, async (req, res) => {
       }
     }
 
-    // 📊 ANALYSE LIMITS - KORRIGIERT für alle Pläne inkl. legendary
-    let analysisLimit = 0;  // ✅ Free: 0 Analysen
-    if (plan === "business") analysisLimit = 50;  // 📊 Business: 50 pro Monat
+    // 📊 ANALYSE LIMITS - KORRIGIERT laut Preisliste
+    let analysisLimit = 3;  // ✅ Free: 3 Analysen (einmalig, kein Reset)
+    if (plan === "business") analysisLimit = 25;  // 📊 Business: 25 pro Monat
     if (plan === "premium" || plan === "legendary") analysisLimit = Infinity; // ♾️ Premium/Legendary: Unbegrenzt
 
-    // 🔧 OPTIMIERUNG LIMITS - inkl. legendary
+    // 🔧 OPTIMIERUNG LIMITS - laut Preisliste
     let optimizationLimit = 0; // ✅ Free: 0 Optimierungen
-    if (plan === "business") optimizationLimit = 25;
+    if (plan === "business") optimizationLimit = 15; // 📊 Business: 15 Optimierungen
     if (plan === "premium" || plan === "legendary") optimizationLimit = Infinity; // ♾️ Premium/Legendary: Unbegrenzt
 
     const userData = {
