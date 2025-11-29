@@ -1,6 +1,11 @@
 // 📁 backend/cron/resetAnalysisCount.js
 // 🔄 Monatlicher Reset von analysisCount und legalPulseScanCount
 // Läuft automatisch am 1. jeden Monats um 00:00 Uhr
+//
+// ⚠️ WICHTIG: NUR Business-User werden resettet!
+// - Free: 3 Analysen EINMALIG (kein Reset!)
+// - Business: 25 Analysen pro MONAT (wird am 1. resettet)
+// - Premium/Legendary: Unbegrenzt (kein Reset nötig)
 
 const cron = require('node-cron');
 const { MongoClient } = require('mongodb');
@@ -11,7 +16,7 @@ require('dotenv').config();
 // '0 0 1 * *' = 00:00 Uhr am 1. jeden Monats
 cron.schedule('0 0 1 * *', async () => {
   console.log('\n🔄 ═══════════════════════════════════════════════════════');
-  console.log('🔄 [CRON] Monatlicher Reset: analysisCount wird zurückgesetzt...');
+  console.log('🔄 [CRON] Monatlicher Reset: NUR Business-User werden zurückgesetzt...');
   console.log('🔄 ═══════════════════════════════════════════════════════\n');
 
   let client;
@@ -23,12 +28,11 @@ cron.schedule('0 0 1 * *', async () => {
 
     const usersCollection = client.db("contract_ai").collection("users");
 
-    // Statistiken vor dem Reset sammeln
+    // Statistiken vor dem Reset sammeln - NUR Business!
     const statsBefore = await usersCollection.aggregate([
       {
         $match: {
-          subscriptionPlan: { $in: ['free', 'business'] },
-          subscriptionActive: true
+          subscriptionPlan: 'business' // ✅ NUR Business - Free hat EINMALIGE Analysen!
         }
       },
       {
@@ -42,15 +46,13 @@ cron.schedule('0 0 1 * *', async () => {
       }
     ]).toArray();
 
-    console.log('📊 [CRON] Statistiken VOR Reset:', statsBefore[0] || 'Keine Daten');
+    console.log('📊 [CRON] Business-Statistiken VOR Reset:', statsBefore[0] || 'Keine Daten');
 
-    // Reset durchführen
-    // Nur Free und Business User (Premium hat Infinity Limit)
-    // Nur aktive Abos
+    // ✅ KORRIGIERT: Reset NUR für Business-User durchführen
+    // Free-User haben EINMALIGE 3 Analysen - werden NICHT resettet!
     const result = await usersCollection.updateMany(
       {
-        subscriptionPlan: { $in: ['free', 'business'] },
-        subscriptionActive: true
+        subscriptionPlan: 'business' // ✅ NUR Business!
       },
       {
         $set: {
@@ -61,14 +63,13 @@ cron.schedule('0 0 1 * *', async () => {
       }
     );
 
-    console.log(`✅ [CRON] Reset erfolgreich: ${result.modifiedCount} User zurückgesetzt`);
+    console.log(`✅ [CRON] Reset erfolgreich: ${result.modifiedCount} Business-User zurückgesetzt`);
 
-    // Statistiken nach dem Reset
+    // Statistiken nach dem Reset - NUR Business
     const statsAfter = await usersCollection.aggregate([
       {
         $match: {
-          subscriptionPlan: { $in: ['free', 'business'] },
-          subscriptionActive: true
+          subscriptionPlan: 'business'
         }
       },
       {
@@ -81,7 +82,7 @@ cron.schedule('0 0 1 * *', async () => {
       }
     ]).toArray();
 
-    console.log('📊 [CRON] Statistiken NACH Reset:', statsAfter[0] || 'Keine Daten');
+    console.log('📊 [CRON] Business-Statistiken NACH Reset:', statsAfter[0] || 'Keine Daten');
 
     // Optional: Admin-Benachrichtigung (später implementieren)
     // await sendAdminNotification({

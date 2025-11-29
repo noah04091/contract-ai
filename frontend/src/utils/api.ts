@@ -1050,32 +1050,41 @@ export const batchUploadAndAnalyze = async (
 
 /**
  * ⭐ KORRIGIERT: Premium-Status für 3-Stufen-Modell prüfen
+ *
+ * Limits laut Preisliste:
+ * - Free: 3 Analysen EINMALIG (kein monatlicher Reset)
+ * - Business: 25 Analysen pro MONAT (wird monatlich resettet)
+ * - Premium/Legendary: Unbegrenzt
  */
-export const checkPremiumStatus = async (): Promise<{ 
-  subscriptionPlan: 'free' | 'business' | 'premium'; 
-  isPremium: boolean; 
+export const checkPremiumStatus = async (): Promise<{
+  subscriptionPlan: 'free' | 'business' | 'premium' | 'legendary';
+  isPremium: boolean;
   analysisCount: number;
   analysisLimit: number;
 }> => {
   try {
-    const userInfo = await apiCall("/auth/me") as { 
-      user: { 
-        subscriptionPlan: string; 
+    const userInfo = await apiCall("/auth/me") as {
+      user: {
+        subscriptionPlan: string;
         isPremium: boolean;
         analysisCount: number;
-      } 
+        analysisLimit?: number; // Backend sendet jetzt auch Limit mit
+      }
     };
-    
-    const plan = userInfo.user?.subscriptionPlan as 'free' | 'business' | 'premium' || 'free';
-    const isPremium = userInfo.user?.isPremium || plan === 'premium';
+
+    const plan = userInfo.user?.subscriptionPlan as 'free' | 'business' | 'premium' | 'legendary' || 'free';
+    const isPremium = userInfo.user?.isPremium || plan === 'premium' || plan === 'legendary';
     const analysisCount = userInfo.user?.analysisCount || 0;
-    
+
     // ✅ KORRIGIERT: Limits laut Preisliste
-    let analysisLimit = 3;
-    if (plan === 'free') analysisLimit = 3;           // ✅ Free: 3 Analysen (einmalig)
-    else if (plan === 'business') analysisLimit = 25; // 📊 Business: 25 pro Monat
-    else if (plan === 'premium') analysisLimit = Infinity; // ♾️ Unbegrenzt
-    
+    // Wenn Backend analysisLimit mitsendet, nutze das; sonst fallback
+    let analysisLimit = userInfo.user?.analysisLimit ?? 3;
+    if (!userInfo.user?.analysisLimit) {
+      if (plan === 'free') analysisLimit = 3;           // ✅ Free: 3 Analysen (einmalig)
+      else if (plan === 'business') analysisLimit = 25; // 📊 Business: 25 pro Monat
+      else if (plan === 'premium' || plan === 'legendary') analysisLimit = Infinity; // ♾️ Unbegrenzt
+    }
+
     return { subscriptionPlan: plan, isPremium, analysisCount, analysisLimit };
   } catch (error) {
     console.warn("⚠️ Premium-Status konnte nicht geprüft werden:", error);

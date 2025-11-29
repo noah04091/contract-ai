@@ -1982,23 +1982,28 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     // Statt: 1) Read count, 2) Check limit, 3) Later increment
     // Jetzt: 1) Atomic increment-and-check in ONE operation
     const plan = user.subscriptionPlan || "free";
-    let limit = 3; // Free: 3 Analysen
-    if (plan === "business") limit = 25; // Business: 25 Analysen/Monat
-    if (plan === "premium" || plan === "enterprise") limit = Infinity; // Enterprise: Unlimited (premium = legacy)
 
-    // ✅ isPremium Flag für spätere Verwendung
-    const isPremium = plan === "premium" || plan === "enterprise";
+    // ✅ KORRIGIERT: Limits laut Preisliste
+    // - Free: 3 Analysen (einmalig, KEIN monatlicher Reset)
+    // - Business: 25 Analysen pro Monat (MIT monatlichem Reset)
+    // - Premium/Legendary/Enterprise: Unbegrenzt
+    let limit = 3; // Free: 3 Analysen (einmalig)
+    if (plan === "business") limit = 25; // Business: 25 Analysen/Monat
+    if (plan === "premium" || plan === "legendary" || plan === "enterprise") limit = Infinity; // Unlimited
+
+    // ✅ isPremium Flag für spätere Verwendung (inkl. legendary!)
+    const isPremium = plan === "premium" || plan === "legendary" || plan === "enterprise";
 
     console.log(`📊 [${requestId}] User Plan: ${plan}, Current count: ${user.analysisCount ?? 0}, Limit: ${limit}`);
 
     // ✅ ATOMIC UPDATE: Build query based on plan
-    // For enterprise/premium: No limit check needed
+    // For premium/legendary/enterprise: No limit check needed
     // For others: Check if count is under limit
     const updateQuery = {
       _id: user._id  // Use the actual ObjectId from the fetched user
     };
 
-    if (plan !== 'premium' && plan !== 'enterprise') {
+    if (plan !== 'premium' && plan !== 'legendary' && plan !== 'enterprise') {
       // Only add limit check for non-unlimited users (free + business)
       updateQuery.analysisCount = { $lt: limit };
     }

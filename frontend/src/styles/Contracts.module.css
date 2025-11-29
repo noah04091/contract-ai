@@ -3754,3 +3754,50 @@
     padding: 3px 6px;
   }
 }
+
+/* ===== 📊 DEZENTE ANALYSE-LIMIT ANZEIGE (Free & Business) ===== */
+.limitBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 14px;
+  margin-bottom: 16px;
+}
+
+.limitBadgeText {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.limitBadgeUpgrade {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.limitBadgeUpgrade:hover {
+  background: #2563eb;
+}
+
+/* 📱 Mobile Responsive für Limit-Badge */
+@media (max-width: 480px) {
+  .limitBadge {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+    padding: 10px 12px;
+  }
+
+  .limitBadgeText {
+    font-size: 0.8rem;
+  }
+}

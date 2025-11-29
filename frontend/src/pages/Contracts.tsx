@@ -127,7 +127,7 @@ interface UploadFileItem {
 
 // ✅ User Info Interface
 interface UserInfo {
-  subscriptionPlan: 'free' | 'business' | 'premium';
+  subscriptionPlan: 'free' | 'business' | 'premium' | 'legendary';
   isPremium: boolean;
   analysisCount: number;
   analysisLimit: number;
@@ -1023,20 +1023,24 @@ export default function Contracts() {
           subscriptionPlan: string;
           isPremium: boolean;
           analysisCount: number;
+          analysisLimit?: number; // Backend sendet jetzt Limit mit!
           emailInboxAddress?: string | null;
           emailInboxEnabled?: boolean;
         }
       };
 
-      const plan = response.user?.subscriptionPlan as 'free' | 'business' | 'premium' || 'free';
-      const isPremium = response.user?.isPremium || plan === 'premium';
+      const plan = response.user?.subscriptionPlan as 'free' | 'business' | 'premium' | 'legendary' || 'free';
+      const isPremium = response.user?.isPremium || plan === 'premium' || plan === 'legendary';
       const analysisCount = response.user?.analysisCount || 0;
 
       // ✅ KORRIGIERT: Limits laut Preisliste
-      let analysisLimit = 3; // Default: Free = 3
-      if (plan === 'free') analysisLimit = 3;           // ✅ Free: 3 Analysen (einmalig)
-      else if (plan === 'business') analysisLimit = 25; // 📊 Business: 25 pro Monat
-      else if (plan === 'premium') analysisLimit = Infinity; // ♾️ Unbegrenzt
+      // Nutze Backend-Wert wenn vorhanden, sonst Fallback
+      let analysisLimit = response.user?.analysisLimit ?? 3;
+      if (!response.user?.analysisLimit) {
+        if (plan === 'free') analysisLimit = 3;           // ✅ Free: 3 Analysen (einmalig)
+        else if (plan === 'business') analysisLimit = 25; // 📊 Business: 25 pro Monat
+        else if (plan === 'premium' || plan === 'legendary') analysisLimit = Infinity; // ♾️ Unbegrenzt
+      }
 
       const newUserInfo: UserInfo = {
         subscriptionPlan: plan,
@@ -2498,20 +2502,6 @@ export default function Contracts() {
               }
             </motion.p>
 
-            {/* ✅ KORRIGIERT: Analysis-Limit-Anzeige für Business */}
-            {userInfo.subscriptionPlan === 'business' && (
-              <div className={styles.limitProgress}>
-                <div className={styles.limitText}>
-                  {userInfo.analysisCount} von {userInfo.analysisLimit} Analysen verwendet
-                </div>
-                <div className={styles.limitBar}>
-                  <div 
-                    className={styles.limitBarFill}
-                    style={{ width: `${Math.min((userInfo.analysisCount / userInfo.analysisLimit) * 100, 100)}%` }}
-                  />
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Tabs */}
@@ -2615,13 +2605,32 @@ export default function Contracts() {
                   </div>
                 ) : (
                   <>
+                    {/* ✅ Dezente Analyse-Limit-Anzeige für Free & Business */}
+                    {(userInfo.subscriptionPlan === 'free' || userInfo.subscriptionPlan === 'business') && userInfo.analysisLimit !== Infinity && (
+                      <div className={styles.limitBadge}>
+                        <span className={styles.limitBadgeText}>
+                          {Math.max(0, userInfo.analysisLimit - userInfo.analysisCount)} von {userInfo.analysisLimit} Analysen verfügbar
+                          {userInfo.subscriptionPlan === 'free' && ' (einmalig)'}
+                          {userInfo.subscriptionPlan === 'business' && ' (mtl.)'}
+                        </span>
+                        {userInfo.analysisCount >= userInfo.analysisLimit && (
+                          <button
+                            className={styles.limitBadgeUpgrade}
+                            onClick={() => window.location.href = '/pricing'}
+                          >
+                            Upgrade
+                          </button>
+                        )}
+                      </div>
+                    )}
+
                     {/* ✅ KORRIGIERT: Upload-Bereich für Business/Premium */}
                     <div className={styles.sectionHeader}>
                       <h2>
                         {canMultiUpload ? "Verträge hochladen" : "Vertrag hochladen"}
                       </h2>
                       <p className={styles.sectionDescription}>
-                        {canMultiUpload 
+                        {canMultiUpload
                           ? "Lade einen oder mehrere Verträge gleichzeitig hoch, um sie zu analysieren und zu verwalten"
                           : "Lade einen Vertrag hoch, um ihn zu analysieren und zu verwalten"
                         }

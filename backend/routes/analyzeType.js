@@ -40,13 +40,21 @@ router.post("/", verifyToken, async (req, res) => {
     const plan = user.subscriptionPlan || "free";
     const count = user.analysisCount ?? 0;
 
-    let limit = 10;
-    if (plan === "business") limit = 50;
-    if (plan === "premium") limit = Infinity;
+    // ✅ KORRIGIERT: Limits laut Preisliste
+    // - Free: 3 Analysen EINMALIG
+    // - Business: 25 Analysen pro Monat
+    // - Premium/Legendary: Unbegrenzt
+    let limit = 3; // Free: 3 Analysen
+    if (plan === "business") limit = 25;
+    if (plan === "premium" || plan === "legendary") limit = Infinity;
 
     if (count >= limit) {
       return res.status(403).json({
         message: "❌ Analyse-Limit erreicht. Bitte Paket upgraden.",
+        error: "LIMIT_EXCEEDED",
+        currentCount: count,
+        limit: limit,
+        plan: plan
       });
     }
 
