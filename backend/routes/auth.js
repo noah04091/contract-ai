@@ -288,6 +288,38 @@ router.get("/me", verifyToken, async (req, res) => {
   }
 });
 
+// 🔧 TEMP: Reset eigenen analysisCount (für Testing nach 500-Fehlern)
+// DELETE nach erfolgreichem Test!
+router.post("/reset-my-analysis-count", verifyToken, async (req, res) => {
+  try {
+    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
+    if (!user) {
+      return res.status(404).json({ message: "User nicht gefunden" });
+    }
+
+    const previousCount = user.analysisCount ?? 0;
+
+    await usersCollection.updateOne(
+      { _id: user._id },
+      { $set: { analysisCount: 0 } }
+    );
+
+    console.log(`🔧 [AUTH] Reset analysisCount for ${user.email}: ${previousCount} -> 0`);
+
+    res.json({
+      success: true,
+      message: "analysisCount zurückgesetzt",
+      previousCount,
+      newCount: 0,
+      email: user.email,
+      plan: user.subscriptionPlan || 'free'
+    });
+  } catch (err) {
+    console.error("❌ Reset error:", err);
+    res.status(500).json({ message: "Fehler beim Zurücksetzen" });
+  }
+});
+
 // 🔄 Passwort ändern
 router.put("/change-password", verifyToken, async (req, res) => {
   const { oldPassword, newPassword } = req.body;
