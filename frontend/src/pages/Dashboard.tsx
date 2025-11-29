@@ -386,8 +386,17 @@ export default function Dashboard() {
         const userDataResponse = await userResponse.json();
         const contractsData = await contractsResponse.json();
 
-        setUserEmail(userDataResponse.email);
-        setUserData(userDataResponse);
+        // ✅ Backend gibt { user: {...} } zurück
+        const user = userDataResponse.user || userDataResponse;
+        setUserEmail(user.email);
+        setUserData(user);
+
+        console.log("📊 User Data loaded:", {
+          email: user.email,
+          plan: user.subscriptionPlan,
+          analysisCount: user.analysisCount,
+          analysisLimit: user.analysisLimit
+        });
 
         // Handle both old format (array) and new format (object with contracts property)
         const contractsArray = Array.isArray(contractsData)
