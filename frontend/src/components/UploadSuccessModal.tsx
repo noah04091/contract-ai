@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, FileText, Zap, X } from "lucide-react";
+import { Link } from "react-router-dom";
 import styles from "./UploadSuccessModal.module.css";
 
 interface UploadedContract {
@@ -122,7 +123,7 @@ export default function UploadSuccessModal({
                 </button>
                 {!hasEnoughAnalyses && (
                   <p className={styles.upgradeHint}>
-                    <a href="/pricing">Upgrade für mehr Analysen</a>
+                    <Link to="/pricing" onClick={onClose}>Upgrade für mehr Analysen</Link>
                   </p>
                 )}
               </motion.div>
