@@ -243,15 +243,28 @@
 }
 
 .upgradeHint {
-  margin-top: 8px;
-  font-size: 12px;
+  margin-top: 12px;
+  font-size: 13px;
   color: #6b7280;
+  position: relative;
+  z-index: 10;
 }
 
 .upgradeHint a {
   color: #3b82f6;
   text-decoration: underline;
   font-weight: 600;
+  cursor: pointer;
+  pointer-events: auto;
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.upgradeHint a:hover {
+  color: #2563eb;
+  background: rgba(59, 130, 246, 0.1);
 }
 
 /* Footer */
