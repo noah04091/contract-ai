@@ -1945,6 +1945,11 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     s3Key: storageInfo.s3Key || 'none'
   });
 
+  // 🔧 FIX: Track if counter was incremented for rollback on error
+  let analysisCountIncremented = false;
+  let incrementedUserId = null;
+  let usersCollectionRef = null;
+
   try {
     const { analysisCollection, usersCollection: users, contractsCollection } = await getMongoCollections();
     console.log(`📊 [${requestId}] MongoDB collections available`);
@@ -2069,6 +2074,11 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     // ✅ Counter wurde erfolgreich erhöht - fortfahren mit Analyse
     const newCount = updateResult.analysisCount;  // Document returned directly!
     console.log(`✅ [${requestId}] analysisCount atomar erhöht auf ${newCount}/${limit}`);
+
+    // 🔧 FIX: Track successful increment for rollback on error
+    analysisCountIncremented = true;
+    incrementedUserId = user._id;
+    usersCollectionRef = users;
 
     // User-Referenz aktualisieren für spätere Verwendung
     user.analysisCount = newCount;
@@ -2835,6 +2845,19 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       filename: req.file?.originalname,
       uploadType: storageInfo?.uploadType
     });
+
+    // 🔧 FIX: Rollback analysisCount if it was incremented but analysis failed
+    if (analysisCountIncremented && incrementedUserId && usersCollectionRef) {
+      try {
+        await usersCollectionRef.updateOne(
+          { _id: incrementedUserId },
+          { $inc: { analysisCount: -1 } }
+        );
+        console.log(`🔄 [${requestId}] analysisCount rolled back (-1) due to failed analysis`);
+      } catch (rollbackError) {
+        console.error(`❌ [${requestId}] Failed to rollback analysisCount:`, rollbackError.message);
+      }
+    }
 
     // Cleanup local file on error
     if (req.file && req.file.path && fsSync.existsSync(req.file.path)) {

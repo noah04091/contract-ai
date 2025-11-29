@@ -453,4 +453,68 @@ router.get("/beta-stats", verifyToken, verifyAdmin, async (req, res) => {
   }
 });
 
+// ===== 🔧 RESET USER ANALYSIS COUNT =====
+// POST /api/admin/reset-analysis-count
+// Body: { email: "user@example.com" }
+// Used to reset a user's analysis count (e.g., after failed analyses counted)
+router.post("/reset-analysis-count", verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required"
+      });
+    }
+
+    console.log(`🔧 [ADMIN] Resetting analysis count for: ${email}`);
+
+    const { MongoClient } = require("mongodb");
+    const client = new MongoClient(process.env.MONGO_URI);
+    await client.connect();
+
+    const usersCollection = client.db("contract_ai").collection("users");
+
+    // Find user
+    const user = await usersCollection.findOne({ email: email.toLowerCase() });
+
+    if (!user) {
+      await client.close();
+      return res.status(404).json({
+        success: false,
+        message: `User not found: ${email}`
+      });
+    }
+
+    const previousCount = user.analysisCount ?? 0;
+
+    // Reset
+    await usersCollection.updateOne(
+      { _id: user._id },
+      { $set: { analysisCount: 0 } }
+    );
+
+    await client.close();
+
+    console.log(`✅ [ADMIN] Reset ${email}: ${previousCount} -> 0`);
+
+    res.json({
+      success: true,
+      message: `Analysis count reset for ${email}`,
+      previousCount,
+      newCount: 0,
+      plan: user.subscriptionPlan || 'free'
+    });
+
+  } catch (error) {
+    console.error('❌ [ADMIN] Error resetting analysis count:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Zurücksetzen des Zählers',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
