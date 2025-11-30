@@ -593,6 +593,13 @@ export default function Contracts() {
 
   // 📊 Excel Export Handler
   const handleExportExcel = async () => {
+    // ✅ Premium-Check: Excel Export nur für Business/Premium
+    if (!userInfo.isPremium && userInfo.subscriptionPlan !== 'business') {
+      alert('📊 Excel-Export ist ein Premium-Feature.\n\n🚀 Upgrade auf Business oder Premium für diese Funktion!');
+      window.location.href = '/pricing';
+      return;
+    }
+
     if (contracts.length === 0) {
       alert('Keine Verträge zum Exportieren vorhanden');
       return;
@@ -655,6 +662,13 @@ export default function Contracts() {
 
   // 📦 Bulk ZIP Download Handler
   const handleBulkDownloadZip = async () => {
+    // ✅ Premium-Check: Bulk Download nur für Business/Premium
+    if (!userInfo.isPremium && userInfo.subscriptionPlan !== 'business') {
+      alert('📦 Bulk-Download ist ein Premium-Feature.\n\n🚀 Upgrade auf Business oder Premium für diese Funktion!');
+      window.location.href = '/pricing';
+      return;
+    }
+
     if (selectedContracts.length === 0) {
       alert('Keine Verträge ausgewählt');
       return;
@@ -2849,11 +2863,12 @@ export default function Contracts() {
                             </div>
                           )}
                           {!hasAnalysesLeft && (
-                            <button 
+                            <button
                               type="button"
-                              className={styles.upgradeButton}
+                              className={`${styles.upgradeButton} ${styles.uploadPromptButton}`}
                               onClick={(e) => {
                                 e.stopPropagation();
+                                e.preventDefault();
                                 window.location.href = '/pricing';
                               }}
                             >

@@ -530,7 +530,14 @@ export default function EnhancedCompare() {
 
   const exportToPDF = () => {
     if (!result) return;
-    
+
+    // ✅ Premium-Check: PDF Export nur für Premium
+    if (!isPremium) {
+      alert('📄 PDF-Export ist ein Premium-Feature.\n\n🚀 Upgrade auf Premium für diese Funktion!');
+      window.location.href = '/pricing';
+      return;
+    }
+
     // Enhanced PDF export with comparison results
     const element = document.createElement("div");
     element.innerHTML = `

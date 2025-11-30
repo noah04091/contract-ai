@@ -515,6 +515,15 @@ export default function Dashboard() {
   };
 
   const exportToCSV = () => {
+    // ✅ Premium-Check: CSV Export nur für Business/Premium
+    const plan = user?.subscriptionPlan as string | undefined;
+    const isPaidPlan = plan === 'business' || plan === 'premium' || plan === 'legendary' || plan === 'enterprise';
+    if (!isPaidPlan) {
+      alert('📊 CSV-Export ist ein Premium-Feature.\n\n🚀 Upgrade auf Business oder Premium für diese Funktion!');
+      window.location.href = '/pricing';
+      return;
+    }
+
     const headers = ["Name", "Laufzeit", "Kündigungsfrist", "Ablaufdatum", "Status"];
     const rows = contracts.map((c) => [
       `"${c.name || ""}"`,
@@ -540,6 +549,15 @@ export default function Dashboard() {
   };
 
   const exportAllICS = () => {
+    // ✅ Premium-Check: ICS Export nur für Business/Premium
+    const plan = user?.subscriptionPlan as string | undefined;
+    const isPaidPlan = plan === 'business' || plan === 'premium' || plan === 'legendary' || plan === 'enterprise';
+    if (!isPaidPlan) {
+      alert('📅 Kalender-Export ist ein Premium-Feature.\n\n🚀 Upgrade auf Business oder Premium für diese Funktion!');
+      window.location.href = '/pricing';
+      return;
+    }
+
     const soonExpiring = contracts.filter((c) => {
       if (!c || !c.expiryDate) return false;
       const daysLeft = (new Date(c.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24);

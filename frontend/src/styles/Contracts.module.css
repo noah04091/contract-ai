@@ -863,9 +863,16 @@
 }
 
 .disabledUpload {
-  opacity: 0.6;
   cursor: not-allowed;
   pointer-events: none;
+}
+
+/* Nur Texte und Icons verblassen, nicht den Button */
+.disabledUpload .uploadPrompt h3,
+.disabledUpload .uploadPrompt p,
+.disabledUpload .uploadIcon,
+.disabledUpload .uploadFormats {
+  opacity: 0.6;
 }
 
 .lockIcon {
@@ -1312,6 +1319,15 @@
 
 .uploadPrompt {
   pointer-events: none;
+}
+
+/* ✅ FIX: Klickbare Elemente innerhalb uploadPrompt */
+.uploadPromptButton {
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 10;
+  opacity: 1 !important;
+  cursor: pointer !important;
 }
 
 .uploadIcon {
