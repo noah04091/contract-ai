@@ -520,12 +520,37 @@ router.get("/", verifyToken, async (req, res) => {
       }
     }
 
-    // 📅 Datums-Filter
+    // 📅 Datums-Filter (erweitert für Mobile UI)
     if (dateFilter !== 'alle') {
       const now = new Date();
       let dateThreshold;
 
       switch (dateFilter) {
+        // Neue Filter-Werte (Mobile UI)
+        case 'heute':
+          // Heute 00:00:00
+          dateThreshold = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          break;
+        case 'woche':
+          // Diese Woche (Montag 00:00:00)
+          const dayOfWeek = now.getDay();
+          const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Montag als Wochenstart
+          dateThreshold = new Date(now.getFullYear(), now.getMonth(), now.getDate() - diff);
+          break;
+        case 'monat':
+          // Dieser Monat (1. des Monats 00:00:00)
+          dateThreshold = new Date(now.getFullYear(), now.getMonth(), 1);
+          break;
+        case 'quartal':
+          // Dieses Quartal (1. des Quartals)
+          const quarterMonth = Math.floor(now.getMonth() / 3) * 3;
+          dateThreshold = new Date(now.getFullYear(), quarterMonth, 1);
+          break;
+        case 'jahr':
+          // Dieses Jahr (1. Januar 00:00:00)
+          dateThreshold = new Date(now.getFullYear(), 0, 1);
+          break;
+        // Legacy Filter-Werte (für Abwärtskompatibilität)
         case 'letzte_7_tage':
           dateThreshold = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
           break;
@@ -539,6 +564,7 @@ router.get("/", verifyToken, async (req, res) => {
 
       if (dateThreshold) {
         mongoFilter.createdAt = { $gte: dateThreshold };
+        console.log(`📅 Date Filter: ${dateFilter} -> Verträge ab ${dateThreshold.toISOString()}`);
       }
     }
 
