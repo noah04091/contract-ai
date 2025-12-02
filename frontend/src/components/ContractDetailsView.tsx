@@ -94,7 +94,7 @@ export default function ContractDetailsView({
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   // Tab state - Mobile uses new 3-tab system
-  const [activeTab, setActiveTab] = useState<'overview' | 'document' | 'insights'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'document' | 'insights' | 'signature'>('overview');
 
   // Modal states
   const [showShareModal, setShowShareModal] = useState(false);
