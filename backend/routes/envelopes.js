@@ -1809,15 +1809,18 @@ router.put("/envelopes/:id", verifyToken, async (req, res) => {
 
     // Validate field assignments (nur wenn Felder vorhanden)
     if (signatureFields.length > 0) {
-      const signerEmails = new Set(envelope.signers.map(s => s.email));
+      // Normalize all signer emails to lowercase for comparison
+      const signerEmails = new Set(envelope.signers.map(s => s.email.toLowerCase().trim()));
       const invalidFields = signatureFields.filter(
-        field => !signerEmails.has(field.assigneeEmail.toLowerCase())
+        field => !signerEmails.has(field.assigneeEmail.toLowerCase().trim())
       );
 
       if (invalidFields.length > 0) {
+        console.log("⚠️ Invalid field emails:", invalidFields.map(f => f.assigneeEmail));
+        console.log("✅ Valid signer emails:", Array.from(signerEmails));
         return res.status(400).json({
           success: false,
-          error: "Signaturfelder enthalten ungültige Unterzeichner-E-Mails"
+          error: `Signaturfelder enthalten ungültige Unterzeichner-E-Mails: ${invalidFields.map(f => f.assigneeEmail).join(", ")}. Gültige Emails: ${Array.from(signerEmails).join(", ")}`
         });
       }
     }
