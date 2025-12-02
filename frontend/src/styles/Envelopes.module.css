@@ -131,11 +131,20 @@
   }
 }
 
+/* ===== FILTER ROW (Tabs + Search + Filter in one line) ===== */
+.filterRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
 /* ===== FILTER TABS ===== */
 .filterTabs {
   display: flex;
   gap: 0.75rem;
-  margin-bottom: 1.5rem;
   flex-wrap: wrap;
 }
 
@@ -702,12 +711,6 @@
 
   .header h1 {
     font-size: 1.5rem;
-  }
-
-  .filterTabs {
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    padding-bottom: 0.5rem;
   }
 
   .filterTab {
@@ -1781,19 +1784,9 @@
 }
 
 /* ========== ARCHIVE TAB ========== */
+/* Archive tab uses same styling as other tabs */
 .filterTabArchive {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  color: white;
-  border-color: transparent;
-}
-
-.filterTabArchive:hover {
-  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-}
-
-.filterTabArchive.filterTabActive {
-  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-  border-color: #b45309;
+  /* Same as other filterTab buttons - no special styling needed */
 }
 
 /* ========== LOAD MORE BUTTON ========== */
@@ -1838,8 +1831,162 @@
   to { transform: rotate(360deg); }
 }
 
+/* ========== SEARCH + FILTER GROUP (inline with tabs) ========== */
+.searchFilterGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.searchBarCompact {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0.5rem 0.75rem;
+  min-width: 200px;
+  transition: all 0.2s ease;
+}
+
+.searchBarCompact:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.searchBarCompact .searchIcon {
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.searchBarCompact .searchInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 0.9rem;
+  background: transparent;
+  color: #1d1d1f;
+  min-width: 100px;
+}
+
+.searchBarCompact .searchInput::placeholder {
+  color: #9ca3af;
+}
+
+.searchBarCompact .searchClear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: #f3f4f6;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #6b7280;
+  transition: all 0.2s ease;
+}
+
+.searchBarCompact .searchClear:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+/* ========== FILTER DROPDOWN ========== */
+.filterDropdownWrapper {
+  position: relative;
+}
+
+.filterDropdownBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #6e6e73;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.filterDropdownBtn:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.filterDropdownBtn svg:first-child {
+  color: #9ca3af;
+}
+
+.chevronUp {
+  transform: rotate(180deg);
+}
+
+.filterDropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  min-width: 160px;
+  z-index: 100;
+  overflow: hidden;
+}
+
+.filterDropdownItem {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.9rem;
+  color: #1d1d1f;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.filterDropdownItem:hover {
+  background: #f3f4f6;
+}
+
+.filterDropdownItemActive {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #1e40af;
+  font-weight: 600;
+}
+
 /* ========== MOBILE SEARCH ========== */
 @media (max-width: 768px) {
+  .filterRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .filterTabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 0.25rem;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .searchFilterGroup {
+    width: 100%;
+  }
+
+  .searchBarCompact {
+    flex: 1;
+    min-width: 0;
+  }
+
   .searchBar {
     margin: 0 1rem 1rem;
   }
@@ -1852,5 +1999,31 @@
 
   .loadMoreContainer {
     padding: 1rem;
+  }
+}
+
+/* ========== SMALL MOBILE ========== */
+@media (max-width: 480px) {
+  .searchFilterGroup {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .searchBarCompact {
+    width: 100%;
+  }
+
+  .filterDropdownWrapper {
+    width: 100%;
+  }
+
+  .filterDropdownBtn {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .filterDropdown {
+    left: 0;
+    right: 0;
   }
 }

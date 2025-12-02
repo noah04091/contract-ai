@@ -478,9 +478,9 @@ router.post("/envelopes", verifyToken, async (req, res) => {
  */
 router.get("/envelopes", verifyToken, async (req, res) => {
   try {
-    const { status, archived, search, limit = 50, offset = 0 } = req.query;
+    const { status, archived, search, limit = 50, offset = 0, sort = 'newest' } = req.query;
 
-    console.log(`📦 Loading envelopes for user: ${req.user.userId}`, { status, archived, search });
+    console.log(`📦 Loading envelopes for user: ${req.user.userId}`, { status, archived, search, sort });
 
     const query = { ownerId: req.user.userId };
 
@@ -507,8 +507,26 @@ router.get("/envelopes", verifyToken, async (req, res) => {
       ];
     }
 
+    // Determine sort order
+    let sortOption = { createdAt: -1 }; // Default: newest first
+    switch (sort) {
+      case 'oldest':
+        sortOption = { createdAt: 1 };
+        break;
+      case 'a-z':
+        sortOption = { title: 1 };
+        break;
+      case 'z-a':
+        sortOption = { title: -1 };
+        break;
+      case 'newest':
+      default:
+        sortOption = { createdAt: -1 };
+        break;
+    }
+
     const envelopes = await Envelope.find(query)
-      .sort({ createdAt: -1 })
+      .sort(sortOption)
       .limit(parseInt(limit))
       .skip(parseInt(offset))
       .populate('contractId', 'name')
