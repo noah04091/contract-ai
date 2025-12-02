@@ -195,12 +195,14 @@ export default function NewSignatureRequest() {
 
       const uploadData = await uploadRes.json();
       const s3Key = uploadData.contract?.s3Key || uploadData.s3Key;
+      const contractId = uploadData.contract?._id || uploadData.contractId;
 
       if (!s3Key) {
         throw new Error("Keine S3-Key in der Antwort erhalten");
       }
 
       console.log("✅ PDF uploaded:", s3Key);
+      console.log("📋 Contract ID:", contractId);
 
       // Step 2: Build signers array with order
       const allSigners = [];
@@ -252,6 +254,7 @@ export default function NewSignatureRequest() {
           title: title || file.name,
           message: message || `Bitte unterschreiben Sie das Dokument "${title || file.name}"`,
           s3Key,
+          contractId, // Link envelope to contract for Signierprozess tab
           signers: allSigners,
           signatureFields: [] // Will be added in next step
         })

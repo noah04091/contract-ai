@@ -1191,7 +1191,7 @@ export default function ContractDetailsView({
                 onClick={() => setActiveTab('document')}
               >
                 <Eye size={16} />
-                <span>Inhalt</span>
+                <span>PDF</span>
               </button>
               <button
                 className={`${styles.tab} ${activeTab === 'insights' ? styles.activeTab : ''}`}
@@ -1200,6 +1200,16 @@ export default function ContractDetailsView({
                 <BarChart3 size={16} />
                 <span>Analyse</span>
               </button>
+              {/* Signierprozess Tab - nur anzeigen wenn Envelope existiert */}
+              {(contract.envelope || contract.signatureEnvelopeId) && (
+                <button
+                  className={`${styles.tab} ${activeTab === 'signature' ? styles.activeTab : ''}`}
+                  onClick={() => setActiveTab('signature')}
+                >
+                  <PenTool size={16} />
+                  <span>Signierprozess</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -1446,6 +1456,83 @@ export default function ContractDetailsView({
                         <span>{isAnalyzing ? 'Analysiere...' : 'Jetzt analysieren'}</span>
                       </button>
                     </div>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {/* ========== TAB 4: SIGNIERPROZESS ========== */}
+            {activeTab === 'signature' && (contract.envelope || contract.signatureEnvelopeId) && (
+              <motion.div
+                className={styles.signatureTab}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className={styles.signatureHeader}>
+                  <PenTool size={24} />
+                  <div>
+                    <h3>Signierprozess</h3>
+                    <p>Status und Fortschritt der digitalen Signatur</p>
+                  </div>
+                </div>
+
+                {/* Status Badge */}
+                <div className={styles.signatureStatus}>
+                  <div className={`${styles.signatureStatusBadge} ${
+                    contract.envelope?.signatureStatus === 'COMPLETED' ? styles.signatureCompleted :
+                    contract.envelope?.signatureStatus === 'VOIDED' ? styles.signatureVoided :
+                    styles.signaturePending
+                  }`}>
+                    {contract.envelope?.signatureStatus === 'COMPLETED' ? (
+                      <><CheckCircle size={18} /> Vollständig signiert</>
+                    ) : contract.envelope?.signatureStatus === 'VOIDED' ? (
+                      <><X size={18} /> Widerrufen</>
+                    ) : (
+                      <><Clock size={18} /> Warte auf Unterschriften</>
+                    )}
+                  </div>
+                </div>
+
+                {/* Progress */}
+                {contract.envelope && (
+                  <div className={styles.signatureProgress}>
+                    <div className={styles.signatureProgressHeader}>
+                      <span>Fortschritt</span>
+                      <span>{contract.envelope.signersSigned || 0} von {contract.envelope.signersTotal || 0} signiert</span>
+                    </div>
+                    <div className={styles.signatureProgressBar}>
+                      <div
+                        className={styles.signatureProgressFill}
+                        style={{
+                          width: `${contract.envelope.signersTotal ? ((contract.envelope.signersSigned || 0) / contract.envelope.signersTotal) * 100 : 0}%`
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Link to Envelope Details */}
+                <div className={styles.signatureActions}>
+                  <button
+                    className={styles.viewEnvelopeBtn}
+                    onClick={() => {
+                      const envelopeId = contract.envelope?._id || contract.signatureEnvelopeId;
+                      if (envelopeId) {
+                        window.location.href = `/envelopes?view=${envelopeId}`;
+                      }
+                    }}
+                  >
+                    <ExternalLink size={16} />
+                    <span>Details im Signatur-Dashboard anzeigen</span>
+                  </button>
+                </div>
+
+                {/* Completion Info */}
+                {contract.envelope?.completedAt && (
+                  <div className={styles.signatureCompletionInfo}>
+                    <CheckCircle size={16} />
+                    <span>Abgeschlossen am {formatDate(contract.envelope.completedAt)}</span>
                   </div>
                 )}
               </motion.div>
