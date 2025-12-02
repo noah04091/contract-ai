@@ -118,6 +118,16 @@ export default function Envelopes() {
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const LIMIT = 50;
 
+  // Confirmation dialog state
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText: string;
+    confirmStyle: "danger" | "warning" | "primary";
+    onConfirm: () => void;
+  } | null>(null);
+
   // Responsive handler
   useEffect(() => {
     const handleResize = () => {
@@ -331,33 +341,41 @@ export default function Envelopes() {
   };
 
   // Permanently delete archived envelopes
-  const handleBatchPermanentDelete = async () => {
+  const handleBatchPermanentDelete = () => {
     if (selectedEnvelopeIds.length === 0) return;
 
-    if (!confirm(`⚠️ ${selectedEnvelopeIds.length} Signaturanfrage(n) ENDGÜLTIG löschen?\n\nDiese Aktion kann nicht rückgängig gemacht werden!`)) return;
+    setConfirmDialog({
+      isOpen: true,
+      title: "Endgültig löschen?",
+      message: `Sie sind dabei, ${selectedEnvelopeIds.length} Signaturanfrage(n) endgültig zu löschen. Diese Aktion kann nicht rückgängig gemacht werden.`,
+      confirmText: "Endgültig löschen",
+      confirmStyle: "danger",
+      onConfirm: async () => {
+        try {
+          const token = localStorage.getItem("token");
+          const response = await fetch("/api/envelopes/bulk", {
+            method: "DELETE",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json"
+            },
+            credentials: "include",
+            body: JSON.stringify({ envelopeIds: selectedEnvelopeIds })
+          });
 
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("/api/envelopes/bulk", {
-        method: "DELETE",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        credentials: "include",
-        body: JSON.stringify({ envelopeIds: selectedEnvelopeIds })
-      });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.message || "Fehler beim Löschen");
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Fehler beim Löschen");
-
-      toast.success(`🗑️ ${data.deletedCount} Signaturanfrage(n) endgültig gelöscht`);
-      setSelectedEnvelopeIds([]);
-      loadEnvelopes(true, 0);
-    } catch (err) {
-      console.error("Error deleting:", err);
-      toast.error("Fehler beim Löschen");
-    }
+          toast.success(`${data.deletedCount} Signaturanfrage(n) endgültig gelöscht`);
+          setSelectedEnvelopeIds([]);
+          loadEnvelopes(true, 0);
+        } catch (err) {
+          console.error("Error deleting:", err);
+          toast.error("Fehler beim Löschen");
+        }
+        setConfirmDialog(null);
+      }
+    });
   };
 
   // Copy signature link to clipboard
@@ -395,35 +413,41 @@ export default function Envelopes() {
   };
 
   // Cancel envelope
-  const handleCancel = async (envelopeId: string) => {
-    if (!confirm("Möchten Sie diese Signaturanfrage wirklich stornieren?")) {
-      return;
-    }
+  const handleCancel = (envelopeId: string, envelopeTitle: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: "Signaturanfrage stornieren?",
+      message: `Möchten Sie "${envelopeTitle}" wirklich stornieren? Die Unterzeichner können dann nicht mehr unterschreiben.`,
+      confirmText: "Stornieren",
+      confirmStyle: "warning",
+      onConfirm: async () => {
+        try {
+          const token = localStorage.getItem("token");
 
-    try {
-      const token = localStorage.getItem("token");
+          const response = await fetch(`/api/envelopes/${envelopeId}/void`, {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json"
+            },
+            credentials: "include"
+          });
 
-      const response = await fetch(`/api/envelopes/${envelopeId}/void`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        credentials: "include"
-      });
+          const data = await response.json();
 
-      const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.error || "Fehler beim Stornieren");
+          }
 
-      if (!response.ok) {
-        throw new Error(data.error || "Fehler beim Stornieren");
+          toast.success("Signaturanfrage storniert");
+          loadEnvelopes(); // Reload list
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : "Unbekannter Fehler";
+          toast.error(`Fehler: ${errorMessage}`);
+        }
+        setConfirmDialog(null);
       }
-
-      alert("✅ Signaturanfrage storniert!");
-      loadEnvelopes(); // Reload list
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Unbekannter Fehler";
-      alert(`❌ Fehler: ${errorMessage}`);
-    }
+    });
   };
 
   // Get status badge color
@@ -1069,42 +1093,48 @@ export default function Envelopes() {
     handleDeselectAll();
   };
 
-  const handleBatchDelete = async () => {
+  const handleBatchDelete = () => {
     if (selectedEnvelopeIds.length === 0) return;
 
-    if (!confirm(`Möchten Sie ${selectedEnvelopeIds.length} Signaturanfragen wirklich stornieren?`)) {
-      return;
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: "Mehrere stornieren?",
+      message: `Möchten Sie ${selectedEnvelopeIds.length} Signaturanfrage(n) wirklich stornieren? Die Unterzeichner können dann nicht mehr unterschreiben.`,
+      confirmText: "Alle stornieren",
+      confirmStyle: "warning",
+      onConfirm: async () => {
+        let success = 0;
+        let failed = 0;
 
-    let success = 0;
-    let failed = 0;
+        for (const envId of selectedEnvelopeIds) {
+          try {
+            const token = localStorage.getItem("token");
 
-    for (const envId of selectedEnvelopeIds) {
-      try {
-        const token = localStorage.getItem("token");
+            const response = await fetch(`/api/envelopes/${envId}/void`, {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+              },
+              credentials: "include"
+            });
 
-        const response = await fetch(`/api/envelopes/${envId}/void`, {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json"
-          },
-          credentials: "include"
-        });
-
-        if (response.ok) {
-          success++;
-        } else {
-          failed++;
+            if (response.ok) {
+              success++;
+            } else {
+              failed++;
+            }
+          } catch {
+            failed++;
+          }
         }
-      } catch {
-        failed++;
-      }
-    }
 
-    toast.success(`${success} storniert${failed > 0 ? `, ${failed} fehlgeschlagen` : ""}`);
-    handleDeselectAll();
-    loadEnvelopes(false);
+        toast.success(`${success} storniert${failed > 0 ? `, ${failed} fehlgeschlagen` : ""}`);
+        handleDeselectAll();
+        loadEnvelopes(false);
+        setConfirmDialog(null);
+      }
+    });
   };
 
   // Loading state
@@ -1430,13 +1460,94 @@ export default function Envelopes() {
         <div className={styles.section}>
           {filteredEnvelopes.length === 0 ? (
             <div className={styles.emptyState}>
-              <Mail size={64} className={styles.emptyIcon} />
-              <h3>Keine Signaturanfragen gefunden</h3>
-              <p>
-                {activeFilter === "all"
-                  ? "Sie haben noch keine Signaturanfragen erstellt."
-                  : `Keine Signaturanfragen mit Status "${activeFilter}".`}
-              </p>
+              {/* Different empty states based on context */}
+              {debouncedSearchQuery ? (
+                // Search returned no results
+                <>
+                  <Search size={64} className={styles.emptyIcon} />
+                  <h3>Keine Ergebnisse gefunden</h3>
+                  <p>Für "{debouncedSearchQuery}" wurden keine Signaturanfragen gefunden.</p>
+                  <button
+                    className={styles.emptyStateBtn}
+                    onClick={() => setSearchQuery("")}
+                  >
+                    Suche zurücksetzen
+                  </button>
+                </>
+              ) : statusFilter !== "all" ? (
+                // Filter returned no results
+                <>
+                  <Filter size={64} className={styles.emptyIcon} />
+                  <h3>Keine Signaturanfragen</h3>
+                  <p>Es gibt keine Signaturanfragen mit dem Status "{
+                    statusFilter === "DRAFT" ? "Entwurf" :
+                    statusFilter === "SENT" ? "Versendet" :
+                    statusFilter === "COMPLETED" ? "Abgeschlossen" :
+                    statusFilter === "EXPIRED" ? "Abgelaufen" :
+                    statusFilter === "VOIDED" ? "Storniert" : statusFilter
+                  }".</p>
+                  <button
+                    className={styles.emptyStateBtn}
+                    onClick={() => setStatusFilter("all")}
+                  >
+                    Filter zurücksetzen
+                  </button>
+                </>
+              ) : activeFilter === "archived" ? (
+                // Archive is empty
+                <>
+                  <Archive size={64} className={styles.emptyIcon} />
+                  <h3>Archiv ist leer</h3>
+                  <p>Sie haben noch keine Signaturanfragen archiviert.</p>
+                  <button
+                    className={styles.emptyStateBtn}
+                    onClick={() => setActiveFilter("all")}
+                  >
+                    Alle Anfragen anzeigen
+                  </button>
+                </>
+              ) : activeFilter === "open" ? (
+                // No open requests
+                <>
+                  <CheckCircle size={64} className={`${styles.emptyIcon} ${styles.emptyIconSuccess}`} />
+                  <h3>Alles erledigt!</h3>
+                  <p>Sie haben keine offenen Signaturanfragen. Erstellen Sie eine neue Anfrage.</p>
+                  <button
+                    className={styles.emptyStateBtnPrimary}
+                    onClick={() => navigate("/signature/new")}
+                  >
+                    <Plus size={18} />
+                    Neue Signaturanfrage
+                  </button>
+                </>
+              ) : activeFilter === "completed" ? (
+                // No completed requests
+                <>
+                  <FileText size={64} className={styles.emptyIcon} />
+                  <h3>Noch keine abgeschlossenen Anfragen</h3>
+                  <p>Sobald Ihre Signaturanfragen vollständig unterschrieben sind, erscheinen sie hier.</p>
+                  <button
+                    className={styles.emptyStateBtn}
+                    onClick={() => setActiveFilter("all")}
+                  >
+                    Alle Anfragen anzeigen
+                  </button>
+                </>
+              ) : (
+                // No envelopes at all - first time user
+                <>
+                  <Mail size={64} className={styles.emptyIcon} />
+                  <h3>Willkommen bei Digitale Signaturen</h3>
+                  <p>Erstellen Sie Ihre erste Signaturanfrage und lassen Sie Dokumente rechtssicher unterschreiben.</p>
+                  <button
+                    className={styles.emptyStateBtnPrimary}
+                    onClick={() => navigate("/signature/new")}
+                  >
+                    <Plus size={18} />
+                    Erste Signaturanfrage erstellen
+                  </button>
+                </>
+              )}
             </div>
           ) : (
             <>
@@ -1632,7 +1743,7 @@ export default function Envelopes() {
                                     className={`${styles.actionBtnIcon} ${styles.actionBtnDanger}`}
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      handleCancel(envelope._id);
+                                      handleCancel(envelope._id, envelope.title);
                                     }}
                                     title="Stornieren"
                                   >
@@ -1829,7 +1940,7 @@ export default function Envelopes() {
                                         className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          handleCancel(envelope._id);
+                                          handleCancel(envelope._id, envelope.title);
                                         }}
                                         title="Stornieren"
                                       >
@@ -2350,6 +2461,55 @@ export default function Envelopes() {
                     Änderungen speichern
                   </button>
                 </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Confirmation Dialog Modal */}
+      <AnimatePresence>
+        {confirmDialog?.isOpen && (
+          <motion.div
+            className={styles.modalOverlay}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setConfirmDialog(null)}
+          >
+            <motion.div
+              className={styles.confirmModal}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className={styles.confirmIcon}>
+                {confirmDialog.confirmStyle === "danger" ? (
+                  <Trash2 size={32} />
+                ) : (
+                  <AlertCircle size={32} />
+                )}
+              </div>
+              <h3 className={styles.confirmTitle}>{confirmDialog.title}</h3>
+              <p className={styles.confirmMessage}>{confirmDialog.message}</p>
+              <div className={styles.confirmActions}>
+                <button
+                  className={styles.confirmCancelBtn}
+                  onClick={() => setConfirmDialog(null)}
+                >
+                  Abbrechen
+                </button>
+                <button
+                  className={`${styles.confirmBtn} ${
+                    confirmDialog.confirmStyle === "danger" ? styles.confirmBtnDanger :
+                    confirmDialog.confirmStyle === "warning" ? styles.confirmBtnWarning :
+                    styles.confirmBtnPrimary
+                  }`}
+                  onClick={confirmDialog.onConfirm}
+                >
+                  {confirmDialog.confirmText}
+                </button>
               </div>
             </motion.div>
           </motion.div>
