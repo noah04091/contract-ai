@@ -139,7 +139,7 @@ export default function Envelopes() {
   // Load envelopes from API (triggered by debounced search, not direct input)
   useEffect(() => {
     loadEnvelopes(true, 0);
-  }, [activeFilter, debouncedSearchQuery, sortBy]);
+  }, [activeFilter, debouncedSearchQuery, sortBy, statusFilter]);
 
   const loadEnvelopes = useCallback(async (isInitial: boolean = false, newOffset: number = 0) => {
     try {
@@ -172,6 +172,11 @@ export default function Envelopes() {
       // Sort parameter
       if (sortBy) {
         params.append("sort", sortBy);
+      }
+
+      // Status filter (from dropdown, not tabs)
+      if (statusFilter && statusFilter !== "all") {
+        params.append("status", statusFilter);
       }
 
       const response = await fetch(`/api/envelopes?${params.toString()}`, {
@@ -242,7 +247,7 @@ export default function Envelopes() {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [envelopes, selectedEnvelope, activeFilter, debouncedSearchQuery, sortBy]);
+  }, [envelopes, selectedEnvelope, activeFilter, debouncedSearchQuery, sortBy, statusFilter]);
 
   // Load more (infinite scroll)
   const handleLoadMore = () => {
