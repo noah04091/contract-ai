@@ -133,7 +133,7 @@ const signatureFieldSchema = new mongoose.Schema({
 
   type: {
     type: String,
-    enum: ["signature", "initial", "date", "text"],
+    enum: ["signature", "initial", "date", "text", "location"],
     default: "signature"
   },
   assigneeEmail: {
