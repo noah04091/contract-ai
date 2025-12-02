@@ -149,7 +149,8 @@ export default function NewSignatureRequest() {
       return;
     }
 
-    setSigners([...signers, { email: currentEmail, name: currentName }]);
+    // Normalize email to lowercase before storing
+    setSigners([...signers, { email: currentEmail.toLowerCase().trim(), name: currentName.trim() }]);
     setCurrentEmail("");
     setCurrentName("");
     setError(null);
