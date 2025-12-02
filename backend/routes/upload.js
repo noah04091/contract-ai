@@ -310,12 +310,14 @@ router.post("/", verifyToken, uploadMiddleware.single("file"), async (req, res) 
       message: "Vertrag erfolgreich hochgeladen",
       contractId: result.insertedId,
       analyzed: false,
+      s3Key: storageInfo.s3Key || null, // ✅ NEU: s3Key direkt in Response für Envelope-Erstellung
       contract: {
         _id: result.insertedId,
         name: req.file.originalname,
         uploadedAt: contractData.uploadedAt,
         analyzed: false,
-        status: "Unbekannt"
+        status: "Unbekannt",
+        s3Key: storageInfo.s3Key || null // ✅ NEU: s3Key auch im Contract-Objekt
       }
     });
 

@@ -89,6 +89,27 @@
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
 }
 
+.newRequestBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  background: linear-gradient(135deg, #2E6CF6 0%, #1E53D8 100%);
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.newRequestBtn:hover {
+  background: linear-gradient(135deg, #1E53D8 0%, #1643B8 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(46, 108, 246, 0.3);
+}
+
 .refreshBtnActive {
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   border-color: #3b82f6;

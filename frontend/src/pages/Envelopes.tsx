@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Mail,
@@ -24,7 +25,8 @@ import {
   CheckSquare,
   Square,
   Trash2,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Plus
 } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -72,6 +74,7 @@ interface Envelope {
 type FilterTab = "all" | "open" | "completed";
 
 export default function Envelopes() {
+  const navigate = useNavigate();
   const [envelopes, setEnvelopes] = useState<Envelope[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1004,6 +1007,14 @@ export default function Envelopes() {
             >
               <RefreshCw size={16} />
               Aktualisieren
+            </button>
+            <button
+              className={styles.newRequestBtn}
+              onClick={() => navigate("/envelopes/new")}
+              title="Neue Signaturanfrage"
+            >
+              <Plus size={18} />
+              Neue Anfrage
             </button>
           </div>
         </div>
