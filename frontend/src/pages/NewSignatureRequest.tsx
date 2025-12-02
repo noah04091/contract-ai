@@ -210,18 +210,18 @@ export default function NewSignatureRequest() {
           allSigners.push({
             email: currentUser.email,
             name: currentUser.name,
-            role: "Absender",
+            role: "sender",
             order: order++
           });
         }
       }
 
       // Add external signers
-      signers.forEach((signer, idx) => {
+      signers.forEach((signer) => {
         allSigners.push({
           email: signer.email,
           name: signer.name,
-          role: signers.length > 1 ? `Unterzeichner ${idx + 1}` : "Unterzeichner",
+          role: "signer",
           order: order++
         });
       });
@@ -231,7 +231,7 @@ export default function NewSignatureRequest() {
           allSigners.push({
             email: currentUser.email,
             name: currentUser.name,
-            role: "Absender",
+            role: "sender",
             order: order++
           });
         }
