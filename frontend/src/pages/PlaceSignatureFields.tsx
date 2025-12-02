@@ -1,7 +1,7 @@
 // 📝 PlaceSignatureFields.tsx - Feld-Platzierung für bestehende Envelopes
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send, Loader, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Send, Loader, ExternalLink, HelpCircle, X } from 'lucide-react';
 import PDFFieldPlacementEditor, { SignatureField, Signer } from '../components/PDFFieldPlacementEditor';
 import styles from '../styles/PlaceSignatureFields.module.css';
 
@@ -29,6 +29,7 @@ export default function PlaceSignatureFields() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
 
   // Signer Colors (optimized for maximum contrast between first 2 colors)
   const SIGNER_COLORS = [
@@ -67,6 +68,7 @@ export default function PlaceSignatureFields() {
 
         const envelopeData = await envelopeRes.json();
         console.log('✅ Envelope loaded:', envelopeData);
+        console.log('📋 Signers in envelope:', envelopeData.envelope.signers.map((s: { email: string; name: string }) => `${s.name} <${s.email}>`));
 
         setEnvelope(envelopeData.envelope);
         setFields(envelopeData.envelope.signatureFields || []);
@@ -99,10 +101,10 @@ export default function PlaceSignatureFields() {
     loadEnvelope();
   }, [envelopeId]);
 
-  // Convert envelope signers to editor format with colors
+  // Convert envelope signers to editor format with colors (normalize emails)
   const editorSigners: Signer[] = envelope
     ? envelope.signers.map((signer, index) => ({
-        email: signer.email,
+        email: signer.email.toLowerCase().trim(),
         name: signer.name,
         color: SIGNER_COLORS[index % SIGNER_COLORS.length]
       }))
@@ -117,9 +119,9 @@ export default function PlaceSignatureFields() {
   const handleSaveAndSend = async () => {
     if (!envelope || !envelopeId) return;
 
-    // Validation: Check if all signers have at least one signature field
-    const signersWithFields = new Set(fields.map(f => f.assigneeEmail));
-    const signersWithoutFields = envelope.signers.filter(s => !signersWithFields.has(s.email));
+    // Validation: Check if all signers have at least one signature field (case-insensitive)
+    const signersWithFields = new Set(fields.map(f => f.assigneeEmail.toLowerCase().trim()));
+    const signersWithoutFields = envelope.signers.filter(s => !signersWithFields.has(s.email.toLowerCase().trim()));
 
     if (signersWithoutFields.length > 0) {
       const missing = signersWithoutFields.map(s => `- ${s.name} (${s.email})`).join('\n');
@@ -132,8 +134,14 @@ export default function PlaceSignatureFields() {
     try {
       const token = localStorage.getItem('token');
 
-      // 1. Update envelope with fields
-      console.log(`📤 Updating envelope with ${fields.length} fields...`);
+      // 1. Update envelope with fields (normalize emails before sending)
+      const normalizedFields = fields.map(field => ({
+        ...field,
+        assigneeEmail: field.assigneeEmail.toLowerCase().trim()
+      }));
+
+      console.log(`📤 Updating envelope with ${normalizedFields.length} fields...`);
+      console.log('📊 Field data being sent:', JSON.stringify(normalizedFields, null, 2));
 
       const updateRes = await fetch(`/api/envelopes/${envelopeId}`, {
         method: 'PUT',
@@ -143,7 +151,7 @@ export default function PlaceSignatureFields() {
         },
         credentials: 'include',
         body: JSON.stringify({
-          signatureFields: fields
+          signatureFields: normalizedFields
         })
       });
 
@@ -225,41 +233,36 @@ export default function PlaceSignatureFields() {
         <button
           className={styles.backButton}
           onClick={() => navigate('/contracts')}
+          title="Zurück"
         >
-          <ArrowLeft size={16} />
-          Zurück
+          <ArrowLeft size={18} />
+          <span>Zurück</span>
         </button>
 
-        <div className={styles.headerInfo}>
-          <h1 className={styles.title}>Signaturfelder platzieren</h1>
-          <p className={styles.subtitle}>{envelope.title}</p>
-        </div>
-
         <button
-          className={styles.openButton}
+          className={styles.iconButton}
           onClick={() => window.open(pdfUrl, '_blank')}
           title="PDF in neuem Fenster öffnen"
         >
-          <ExternalLink size={16} />
-          <span className={styles.openButtonText}>In neuem Fenster öffnen</span>
+          <ExternalLink size={18} />
+        </button>
+
+        <button
+          className={styles.iconButton}
+          onClick={() => setShowHelp(true)}
+          title="Anleitung"
+        >
+          <HelpCircle size={18} />
         </button>
 
         <button
           className={styles.sendButton}
           onClick={handleSaveAndSend}
           disabled={saving || fields.length === 0}
+          title="Speichern & Absenden"
         >
-          {saving ? (
-            <>
-              <Loader size={16} className={styles.spinner} />
-              Wird gesendet...
-            </>
-          ) : (
-            <>
-              <Send size={16} />
-              Speichern & Absenden
-            </>
-          )}
+          <Send size={18} />
+          <span>Speichern & Absenden</span>
         </button>
       </div>
 
@@ -273,17 +276,29 @@ export default function PlaceSignatureFields() {
         />
       </div>
 
-      {/* Info Box */}
-      <div className={styles.infoBox}>
-        <h3>📋 Anleitung</h3>
-        <ul>
-          <li>Wählen Sie einen Feldtyp (Signatur, Datum, Text) und einen Unterzeichner aus der Toolbar</li>
-          <li>Klicken Sie auf "Feld hinzufügen" oder klicken Sie direkt auf das PDF, um ein Feld zu platzieren</li>
-          <li>Ziehen Sie Felder an die gewünschte Position</li>
-          <li>Stellen Sie sicher, dass jeder Unterzeichner mindestens ein Signaturfeld hat</li>
-          <li>Klicken Sie auf "Speichern & Absenden", um die Einladungen zu verschicken</li>
-        </ul>
-      </div>
+      {/* Help Modal */}
+      {showHelp && (
+        <div className={styles.helpOverlay} onClick={() => setShowHelp(false)}>
+          <div className={styles.helpModal} onClick={e => e.stopPropagation()}>
+            <div className={styles.helpHeader}>
+              <h3>📋 Anleitung</h3>
+              <button
+                className={styles.helpCloseBtn}
+                onClick={() => setShowHelp(false)}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <ul className={styles.helpList}>
+              <li>Wählen Sie einen Feldtyp (Signatur, Datum, Text) und einen Unterzeichner aus</li>
+              <li>Tippen Sie auf "Feld hinzufügen" um ein Feld zu platzieren</li>
+              <li>Ziehen Sie Felder an die gewünschte Position</li>
+              <li>Jeder Unterzeichner braucht mindestens ein Signaturfeld</li>
+              <li>Tippen Sie auf "Speichern & Absenden" zum Versenden</li>
+            </ul>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
