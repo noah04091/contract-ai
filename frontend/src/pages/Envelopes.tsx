@@ -26,7 +26,11 @@ import {
   Square,
   Trash2,
   FileSpreadsheet,
-  Plus
+  Plus,
+  Search,
+  Archive,
+  RotateCcw,
+  Loader
 } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -66,12 +70,14 @@ interface Envelope {
   createdAt: string;
   updatedAt: string;
   expiresAt?: string;
-  completedAt?: string; // ✅ FIX: TypeScript error - Property completedAt
+  completedAt?: string;
   internalNote?: string;
   contract?: Contract;
+  archived?: boolean;
+  archivedAt?: string;
 }
 
-type FilterTab = "all" | "open" | "completed";
+type FilterTab = "all" | "open" | "completed" | "archived";
 
 export default function Envelopes() {
   const navigate = useNavigate();
@@ -96,6 +102,14 @@ export default function Envelopes() {
   const [savingNote, setSavingNote] = useState(false);
   const [selectedEnvelopeIds, setSelectedEnvelopeIds] = useState<string[]>([]);
 
+  // Search, pagination and archive states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [archivedCount, setArchivedCount] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [offset, setOffset] = useState(0);
+  const LIMIT = 50;
+
   // Responsive handler
   useEffect(() => {
     const handleResize = () => {
@@ -108,15 +122,35 @@ export default function Envelopes() {
 
   // Load envelopes from API
   useEffect(() => {
-    loadEnvelopes(true);
-  }, []);
+    loadEnvelopes(true, 0);
+  }, [activeFilter, searchQuery]);
 
-  const loadEnvelopes = useCallback(async (isInitial: boolean = false) => {
+  const loadEnvelopes = useCallback(async (isInitial: boolean = false, newOffset: number = 0) => {
     try {
-      if (isInitial) setLoading(true);
+      if (isInitial) {
+        setLoading(true);
+        setOffset(0);
+      } else {
+        setLoadingMore(true);
+      }
       const token = localStorage.getItem("token");
 
-      const response = await fetch("/api/envelopes", {
+      // Build query params
+      const params = new URLSearchParams();
+      params.append("limit", String(LIMIT));
+      params.append("offset", String(newOffset));
+
+      // Archive filter
+      if (activeFilter === "archived") {
+        params.append("archived", "true");
+      }
+
+      // Search query
+      if (searchQuery.trim()) {
+        params.append("search", searchQuery.trim());
+      }
+
+      const response = await fetch(`/api/envelopes?${params.toString()}`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -133,12 +167,11 @@ export default function Envelopes() {
 
       const newEnvelopes = data.envelopes || [];
 
-      // Check for status changes and show notifications
-      if (!isInitial && envelopes.length > 0) {
+      // Check for status changes and show notifications (only on refresh, not initial load)
+      if (!isInitial && newOffset === 0 && envelopes.length > 0) {
         newEnvelopes.forEach((newEnv: Envelope) => {
           const oldEnv = envelopes.find(e => e._id === newEnv._id);
           if (oldEnv) {
-            // Status changed
             if (oldEnv.status !== newEnv.status) {
               if (newEnv.status === "COMPLETED") {
                 toast.success(`🎉 "${newEnv.title}" wurde vollständig signiert!`, {
@@ -152,27 +185,22 @@ export default function Envelopes() {
                 });
               }
             }
-
-            // Check for new signatures
-            const oldSigned = oldEnv.signers.filter(s => s.status === "SIGNED").length;
-            const newSigned = newEnv.signers.filter(s => s.status === "SIGNED").length;
-            if (newSigned > oldSigned) {
-              const newSigner = newEnv.signers.find(
-                s => s.status === "SIGNED" && !oldEnv.signers.find(o => o.email === s.email && o.status === "SIGNED")
-              );
-              if (newSigner) {
-                toast.success(`✓ ${newSigner.name} hat "${newEnv.title}" signiert!`, {
-                  position: "top-right",
-                  autoClose: 4000,
-                });
-              }
-            }
           }
         });
       }
 
       console.log("✅ Envelopes loaded:", data);
-      setEnvelopes(newEnvelopes);
+
+      // Set or append envelopes
+      if (isInitial || newOffset === 0) {
+        setEnvelopes(newEnvelopes);
+      } else {
+        setEnvelopes(prev => [...prev, ...newEnvelopes]);
+      }
+
+      setOffset(newOffset);
+      setHasMore(data.pagination?.hasMore || false);
+      setArchivedCount(data.archivedCount || 0);
       setLastUpdated(new Date());
 
       // Update selected envelope if it's currently open
@@ -188,23 +216,128 @@ export default function Envelopes() {
       if (isInitial) setError(errorMessage);
     } finally {
       if (isInitial) setLoading(false);
+      setLoadingMore(false);
     }
-  }, [envelopes, selectedEnvelope]);
+  }, [envelopes, selectedEnvelope, activeFilter, searchQuery]);
+
+  // Load more (infinite scroll)
+  const handleLoadMore = () => {
+    if (!loadingMore && hasMore) {
+      loadEnvelopes(false, offset + LIMIT);
+    }
+  };
 
   // Manual refresh
   const handleManualRefresh = () => {
-    loadEnvelopes(false);
+    loadEnvelopes(true, 0);
     toast.info("Aktualisiert!", { autoClose: 2000 });
   };
 
-  // Filter envelopes based on active tab
+  // Filter envelopes based on active tab (now done server-side for archived, but still filter for open/completed)
   const filteredEnvelopes = envelopes.filter(env => {
+    // Archived is handled by API, so if activeFilter is "archived", show all returned envelopes
+    if (activeFilter === "archived") return true;
     if (activeFilter === "all") return true;
-    // "Offen" = Alle außer COMPLETED und VOIDED (inkl. DRAFT, AWAITING_SIGNER_X, SENT, SIGNED, DECLINED)
     if (activeFilter === "open") return env.status !== "COMPLETED" && env.status !== "VOIDED";
     if (activeFilter === "completed") return env.status === "COMPLETED";
     return true;
   });
+
+  // Archive selected envelopes
+  const handleBatchArchive = async () => {
+    if (selectedEnvelopeIds.length === 0) return;
+
+    if (!confirm(`${selectedEnvelopeIds.length} Signaturanfrage(n) archivieren?`)) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("/api/envelopes/archive", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        credentials: "include",
+        body: JSON.stringify({ envelopeIds: selectedEnvelopeIds })
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Fehler beim Archivieren");
+
+      toast.success(`📦 ${data.archivedCount} Signaturanfrage(n) archiviert`);
+      setSelectedEnvelopeIds([]);
+      loadEnvelopes(true, 0);
+    } catch (err) {
+      console.error("Error archiving:", err);
+      toast.error("Fehler beim Archivieren");
+    }
+  };
+
+  // Unarchive selected envelopes
+  const handleBatchUnarchive = async () => {
+    if (selectedEnvelopeIds.length === 0) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("/api/envelopes/unarchive", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        credentials: "include",
+        body: JSON.stringify({ envelopeIds: selectedEnvelopeIds })
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Fehler beim Wiederherstellen");
+
+      toast.success(`✅ ${data.unarchivedCount} Signaturanfrage(n) wiederhergestellt`);
+      setSelectedEnvelopeIds([]);
+      loadEnvelopes(true, 0);
+    } catch (err) {
+      console.error("Error unarchiving:", err);
+      toast.error("Fehler beim Wiederherstellen");
+    }
+  };
+
+  // Permanently delete archived envelopes
+  const handleBatchPermanentDelete = async () => {
+    if (selectedEnvelopeIds.length === 0) return;
+
+    if (!confirm(`⚠️ ${selectedEnvelopeIds.length} Signaturanfrage(n) ENDGÜLTIG löschen?\n\nDiese Aktion kann nicht rückgängig gemacht werden!`)) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("/api/envelopes/bulk", {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        credentials: "include",
+        body: JSON.stringify({ envelopeIds: selectedEnvelopeIds })
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Fehler beim Löschen");
+
+      toast.success(`🗑️ ${data.deletedCount} Signaturanfrage(n) endgültig gelöscht`);
+      setSelectedEnvelopeIds([]);
+      loadEnvelopes(true, 0);
+    } catch (err) {
+      console.error("Error deleting:", err);
+      toast.error("Fehler beim Löschen");
+    }
+  };
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // Search is triggered by the searchQuery dependency in loadEnvelopes useEffect
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Copy signature link to clipboard
   const handleCopyLink = (token: string) => {
@@ -1019,29 +1152,60 @@ export default function Envelopes() {
           </div>
         </div>
 
+        {/* Search Bar */}
+        <div className={styles.searchBar}>
+          <Search size={18} className={styles.searchIcon} />
+          <input
+            type="text"
+            placeholder="Suchen nach Titel oder Empfänger..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className={styles.searchInput}
+          />
+          {searchQuery && (
+            <button
+              className={styles.searchClear}
+              onClick={() => setSearchQuery("")}
+              title="Suche leeren"
+            >
+              <X size={16} />
+            </button>
+          )}
+        </div>
+
         {/* Filter Tabs */}
         <div className={styles.filterTabs}>
           <button
             className={`${styles.filterTab} ${activeFilter === "all" ? styles.filterTabActive : ""}`}
-            onClick={() => setActiveFilter("all")}
+            onClick={() => { setActiveFilter("all"); setSelectedEnvelopeIds([]); }}
           >
             <FileText size={16} />
-            Alle ({envelopes.length})
+            Alle
           </button>
           <button
             className={`${styles.filterTab} ${activeFilter === "open" ? styles.filterTabActive : ""}`}
-            onClick={() => setActiveFilter("open")}
+            onClick={() => { setActiveFilter("open"); setSelectedEnvelopeIds([]); }}
           >
             <Clock size={16} />
-            Offen ({envelopes.filter(e => e.status !== "COMPLETED" && e.status !== "VOIDED").length})
+            Offen
           </button>
           <button
             className={`${styles.filterTab} ${activeFilter === "completed" ? styles.filterTabActive : ""}`}
-            onClick={() => setActiveFilter("completed")}
+            onClick={() => { setActiveFilter("completed"); setSelectedEnvelopeIds([]); }}
           >
             <CheckCircle size={16} />
-            Abgeschlossen ({envelopes.filter(e => e.status === "COMPLETED").length})
+            Abgeschlossen
           </button>
+          {/* Archive Tab - nur anzeigen wenn archivierte Envelopes existieren */}
+          {archivedCount > 0 && (
+            <button
+              className={`${styles.filterTab} ${styles.filterTabArchive} ${activeFilter === "archived" ? styles.filterTabActive : ""}`}
+              onClick={() => { setActiveFilter("archived"); setSelectedEnvelopeIds([]); }}
+            >
+              <Archive size={16} />
+              Archiv ({archivedCount})
+            </button>
+          )}
         </div>
 
         {/* Batch Actions Bar */}
@@ -1069,38 +1233,69 @@ export default function Envelopes() {
                   </button>
                 </div>
                 <div className={styles.batchActions}>
-                  <button
-                    className={styles.batchActionBtn}
-                    onClick={handleBatchRemind}
-                    title="Erinnerungen versenden"
-                  >
-                    <Send size={16} />
-                    Erinnern
-                  </button>
-                  <button
-                    className={styles.batchActionBtn}
-                    onClick={handleBatchDownload}
-                    title="Alle herunterladen"
-                  >
-                    <Download size={16} />
-                    Download
-                  </button>
-                  <button
-                    className={styles.batchActionBtn}
-                    onClick={handleBatchExport}
-                    title="Als CSV exportieren"
-                  >
-                    <FileSpreadsheet size={16} />
-                    Export CSV
-                  </button>
-                  <button
-                    className={`${styles.batchActionBtn} ${styles.batchActionBtnDanger}`}
-                    onClick={handleBatchDelete}
-                    title="Ausgewählte stornieren"
-                  >
-                    <Trash2 size={16} />
-                    Stornieren
-                  </button>
+                  {activeFilter !== "archived" ? (
+                    <>
+                      <button
+                        className={styles.batchActionBtn}
+                        onClick={handleBatchRemind}
+                        title="Erinnerungen versenden"
+                      >
+                        <Send size={16} />
+                        Erinnern
+                      </button>
+                      <button
+                        className={styles.batchActionBtn}
+                        onClick={handleBatchDownload}
+                        title="Alle herunterladen"
+                      >
+                        <Download size={16} />
+                        Download
+                      </button>
+                      <button
+                        className={styles.batchActionBtn}
+                        onClick={handleBatchExport}
+                        title="Als CSV exportieren"
+                      >
+                        <FileSpreadsheet size={16} />
+                        Export CSV
+                      </button>
+                      <button
+                        className={styles.batchActionBtn}
+                        onClick={handleBatchArchive}
+                        title="Ausgewählte archivieren"
+                      >
+                        <Archive size={16} />
+                        Archivieren
+                      </button>
+                      <button
+                        className={`${styles.batchActionBtn} ${styles.batchActionBtnDanger}`}
+                        onClick={handleBatchDelete}
+                        title="Ausgewählte stornieren"
+                      >
+                        <Trash2 size={16} />
+                        Stornieren
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        className={styles.batchActionBtn}
+                        onClick={handleBatchUnarchive}
+                        title="Wiederherstellen"
+                      >
+                        <RotateCcw size={16} />
+                        Wiederherstellen
+                      </button>
+                      <button
+                        className={`${styles.batchActionBtn} ${styles.batchActionBtnDanger}`}
+                        onClick={handleBatchPermanentDelete}
+                        title="Endgültig löschen"
+                      >
+                        <Trash2 size={16} />
+                        Endgültig löschen
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -1526,6 +1721,29 @@ export default function Envelopes() {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              )}
+
+              {/* Load More Button */}
+              {hasMore && (
+                <div className={styles.loadMoreContainer}>
+                  <button
+                    className={styles.loadMoreBtn}
+                    onClick={handleLoadMore}
+                    disabled={loadingMore}
+                  >
+                    {loadingMore ? (
+                      <>
+                        <Loader size={16} className={styles.loadingSpinner} />
+                        Lade mehr...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw size={16} />
+                        Mehr laden
+                      </>
+                    )}
+                  </button>
                 </div>
               )}
             </>

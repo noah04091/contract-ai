@@ -469,17 +469,42 @@ router.post("/envelopes", verifyToken, async (req, res) => {
 
 /**
  * GET /api/envelopes - Get all envelopes for user
+ * Query params:
+ * - status: filter by status (DRAFT, SENT, COMPLETED, etc.)
+ * - archived: 'true' to show only archived, 'false' or omit for non-archived
+ * - search: search in title and signer emails
+ * - limit: pagination limit (default 50)
+ * - offset: pagination offset (default 0)
  */
 router.get("/envelopes", verifyToken, async (req, res) => {
   try {
-    const { status, limit = 50, offset = 0 } = req.query;
+    const { status, archived, search, limit = 50, offset = 0 } = req.query;
 
-    console.log(`📦 Loading envelopes for user: ${req.user.userId}`);
+    console.log(`📦 Loading envelopes for user: ${req.user.userId}`, { status, archived, search });
 
     const query = { ownerId: req.user.userId };
 
+    // Filter by archived status
+    if (archived === 'true') {
+      query.archived = true;
+    } else {
+      // By default, don't show archived envelopes
+      query.archived = { $ne: true };
+    }
+
+    // Filter by status
     if (status) {
       query.status = status;
+    }
+
+    // Search in title and signer emails
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      query.$or = [
+        { title: searchRegex },
+        { 'signers.email': searchRegex },
+        { 'signers.name': searchRegex }
+      ];
     }
 
     const envelopes = await Envelope.find(query)
@@ -491,7 +516,13 @@ router.get("/envelopes", verifyToken, async (req, res) => {
 
     const total = await Envelope.countDocuments(query);
 
-    console.log(`✅ Loaded ${envelopes.length} envelopes (total: ${total})`);
+    // Also count archived envelopes to show/hide archive tab
+    const archivedCount = await Envelope.countDocuments({
+      ownerId: req.user.userId,
+      archived: true
+    });
+
+    console.log(`✅ Loaded ${envelopes.length} envelopes (total: ${total}, archived: ${archivedCount})`);
 
     res.json({
       success: true,
@@ -504,6 +535,8 @@ router.get("/envelopes", verifyToken, async (req, res) => {
         s3Key: env.s3Key, // ✉️ Original PDF
         s3KeySealed: env.s3KeySealed, // ✉️ Signiertes PDF
         internalNote: env.internalNote, // ✉️ Interne Notizen
+        archived: env.archived || false,
+        archivedAt: env.archivedAt,
         createdAt: env.createdAt,
         expiresAt: env.expiresAt,
         completedAt: env.completedAt
@@ -512,8 +545,9 @@ router.get("/envelopes", verifyToken, async (req, res) => {
         total,
         limit: parseInt(limit),
         offset: parseInt(offset),
-        hasMore: offset + envelopes.length < total
-      }
+        hasMore: parseInt(offset) + envelopes.length < total
+      },
+      archivedCount // For showing/hiding archive tab
     });
 
   } catch (error) {
@@ -1132,6 +1166,141 @@ router.post("/envelopes/:id/void", verifyToken, async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Fehler beim Stornieren des Envelopes",
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/envelopes/archive - Archive multiple envelopes (bulk)
+ */
+router.post("/envelopes/archive", verifyToken, async (req, res) => {
+  try {
+    const { envelopeIds } = req.body;
+
+    if (!envelopeIds || !Array.isArray(envelopeIds) || envelopeIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Keine Envelope-IDs angegeben"
+      });
+    }
+
+    console.log(`📦 Archiving ${envelopeIds.length} envelopes for user: ${req.user.userId}`);
+
+    const result = await Envelope.updateMany(
+      {
+        _id: { $in: envelopeIds },
+        ownerId: req.user.userId
+      },
+      {
+        $set: {
+          archived: true,
+          archivedAt: new Date()
+        }
+      }
+    );
+
+    console.log(`✅ Archived ${result.modifiedCount} envelopes`);
+
+    res.json({
+      success: true,
+      message: `${result.modifiedCount} Envelope(s) archiviert`,
+      archivedCount: result.modifiedCount
+    });
+
+  } catch (error) {
+    console.error("❌ Error archiving envelopes:", error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Archivieren",
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/envelopes/unarchive - Unarchive multiple envelopes (bulk)
+ */
+router.post("/envelopes/unarchive", verifyToken, async (req, res) => {
+  try {
+    const { envelopeIds } = req.body;
+
+    if (!envelopeIds || !Array.isArray(envelopeIds) || envelopeIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Keine Envelope-IDs angegeben"
+      });
+    }
+
+    console.log(`📦 Unarchiving ${envelopeIds.length} envelopes for user: ${req.user.userId}`);
+
+    const result = await Envelope.updateMany(
+      {
+        _id: { $in: envelopeIds },
+        ownerId: req.user.userId
+      },
+      {
+        $set: {
+          archived: false,
+          archivedAt: null
+        }
+      }
+    );
+
+    console.log(`✅ Unarchived ${result.modifiedCount} envelopes`);
+
+    res.json({
+      success: true,
+      message: `${result.modifiedCount} Envelope(s) wiederhergestellt`,
+      unarchivedCount: result.modifiedCount
+    });
+
+  } catch (error) {
+    console.error("❌ Error unarchiving envelopes:", error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Wiederherstellen",
+      error: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /api/envelopes/bulk - Permanently delete multiple envelopes (only archived ones)
+ */
+router.delete("/envelopes/bulk", verifyToken, async (req, res) => {
+  try {
+    const { envelopeIds } = req.body;
+
+    if (!envelopeIds || !Array.isArray(envelopeIds) || envelopeIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Keine Envelope-IDs angegeben"
+      });
+    }
+
+    console.log(`🗑️ Deleting ${envelopeIds.length} envelopes for user: ${req.user.userId}`);
+
+    // Only allow deletion of archived envelopes
+    const result = await Envelope.deleteMany({
+      _id: { $in: envelopeIds },
+      ownerId: req.user.userId,
+      archived: true // Safety: only delete archived envelopes
+    });
+
+    console.log(`✅ Deleted ${result.deletedCount} envelopes`);
+
+    res.json({
+      success: true,
+      message: `${result.deletedCount} Envelope(s) endgültig gelöscht`,
+      deletedCount: result.deletedCount
+    });
+
+  } catch (error) {
+    console.error("❌ Error deleting envelopes:", error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Löschen",
       error: error.message
     });
   }

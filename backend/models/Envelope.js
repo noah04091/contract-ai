@@ -314,6 +314,15 @@ const envelopeSchema = new mongoose.Schema({
     default: null,
     maxlength: 500
   },
+  archived: {
+    type: Boolean,
+    default: false,
+    index: true
+  },
+  archivedAt: {
+    type: Date,
+    default: null
+  },
   audit: [auditEventSchema],
   createdAt: {
     type: Date,
