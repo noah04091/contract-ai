@@ -640,7 +640,11 @@ export default function Generate() {
   useEffect(() => {
     if (currentStep === 3 && contractText && !pdfPreviewUrl && !isGeneratingPreview) {
       console.log('✅ Step 3 reached - auto-loading PDF preview');
-      generatePDFPreview();
+      // ⏳ Warte 5 Sekunden damit Auto-PDF im Backend fertig wird
+      const timer = setTimeout(() => {
+        generatePDFPreview();
+      }, 5000);
+      return () => clearTimeout(timer);
     }
   }, [currentStep, contractText]);
 
@@ -1102,9 +1106,11 @@ export default function Generate() {
             setSavedContractId(saveData.contractId);
             setSaved(true);
             console.log("✅ Vertrag automatisch gespeichert:", saveData.contractId);
-            
-            // Wichtige Verzögerung für MongoDB
-            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            // ⏳ Warte auf Auto-PDF Generierung im Backend (contracts.js)
+            // Auto-PDF braucht ca. 3-5 Sekunden für Puppeteer + S3 Upload
+            console.log("⏳ Warte auf Auto-PDF Generierung...");
+            await new Promise(resolve => setTimeout(resolve, 5000));
           } else {
             console.warn("⚠️ Automatisches Speichern fehlgeschlagen:", saveData.error);
           }
