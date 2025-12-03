@@ -3244,9 +3244,9 @@ router.post("/pdf", verifyToken, async (req, res) => {
     }
 
     // 🔴 FIX: HTML aus DB laden oder neu generieren
-    // 🚧 DEVELOPMENT FLAG: Force-Regenerate für Unterschrifts-Testing
-    const FORCE_REGENERATE_HTML = true; // <- Auf false setzen nach Testing
-    
+    // ✅ FLAG deaktiviert - verwendet gespeicherten HTML aus contracts.js Auto-PDF
+    const FORCE_REGENERATE_HTML = false;
+
     let htmlContent = FORCE_REGENERATE_HTML ? null : (contract.contractHTML || contract.htmlContent || contract.contentHTML);
     
     if (!htmlContent) {
