@@ -820,10 +820,14 @@ router.post("/", verifyToken, async (req, res) => {
       designVariant,
       metadata,
       contractHTML,
+      htmlContent, // 🆕 Frontend sendet auch als htmlContent
       formData
     } = req.body;
 
-    console.log("📁 Speichere Vertrag:", { name, isGenerated });
+    // 🆕 Verwende contractHTML oder htmlContent (Frontend-Kompatibilität)
+    const finalHTML = contractHTML || htmlContent;
+
+    console.log("📁 Speichere Vertrag:", { name, isGenerated, hasHTML: !!(contractHTML || htmlContent), htmlLength: finalHTML?.length || 0 });
 
     // ✅ NEU: Provider Detection
     let detectedProvider = provider;
@@ -902,12 +906,13 @@ router.post("/", verifyToken, async (req, res) => {
     }
 
     // 🆕 AUTO-PDF: Für generierte Verträge mit HTML automatisch PDF erstellen und zu S3 hochladen
-    if (isGenerated && contractHTML && contractHTML.length > 100) {
+    if (isGenerated && finalHTML && finalHTML.length > 100) {
       console.log("🚀 [AUTO-PDF] Starte automatische PDF-Generierung für generierten Vertrag...");
+      console.log(`📄 [AUTO-PDF] HTML-Länge: ${finalHTML.length} Zeichen`);
       generatePDFAndUploadToS3ForContract(
         contractId.toString(),
         req.user.userId,
-        contractHTML,
+        finalHTML,
         name
       ).then(pdfResult => {
         if (pdfResult.success) {
@@ -918,6 +923,8 @@ router.post("/", verifyToken, async (req, res) => {
       }).catch(err => {
         console.error(`❌ [AUTO-PDF] Exception für ${name}:`, err);
       });
+    } else if (isGenerated) {
+      console.log(`⚠️ [AUTO-PDF] Übersprungen - kein HTML vorhanden (isGenerated: ${isGenerated}, hasHTML: ${!!finalHTML}, htmlLength: ${finalHTML?.length || 0})`);
     }
 
     res.status(201).json({
