@@ -2071,11 +2071,23 @@ router.post("/", verifyToken, async (req, res) => {
       );
 
       // HTML-Formatierung (wie bei V1)
+      // 🔧 FIX: Company Profile aus company_profiles Collection laden (nicht aus user)
       let companyProfile = null;
       if (db && useCompanyProfile) {
-        const usersCollection = db.collection("users");
-        const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
-        companyProfile = user?.companyProfile || null;
+        try {
+          companyProfile = await db.collection("company_profiles").findOne({
+            userId: new ObjectId(req.user.userId)
+          });
+          console.log("🏢 [V2] Company Profile geladen:", !!companyProfile);
+          if (companyProfile) {
+            console.log("📊 [V2] Company Profile Details:", {
+              name: companyProfile.companyName,
+              hasLogo: !!companyProfile.logoUrl
+            });
+          }
+        } catch (profileError) {
+          console.error("⚠️ [V2] Fehler beim Laden des Company Profiles:", profileError);
+        }
       }
 
       const formattedHTML = await formatContractToHTML(
@@ -2084,7 +2096,7 @@ router.post("/", verifyToken, async (req, res) => {
         type,
         designVariant,
         formData.isDraft || false,
-        null
+        formData // 🔧 FIX: Pass formData as parties for proper data display
       );
 
       // Speichern in contracts Collection (wie bei V1)
@@ -2988,13 +3000,14 @@ DAS IST KEIN "Vertrag neu schreiben" - DAS IST "Vertrag gezielt verbessern"!`;
     // 🎨 ENTERPRISE HTML-Formatierung
     let formattedHTML = "";
     const isDraft = formData.isDraft || false;
-    
+
     formattedHTML = await formatContractToHTML(
-      contractText, 
+      contractText,
       companyProfile,  // Jetzt korrekt geladen mit Logo
-      type, 
+      type,
       designVariant,   // Wird korrekt durchgereicht
-      isDraft          // Entwurf-Modus
+      isDraft,         // Entwurf-Modus
+      formData         // 🔧 FIX: Pass formData as parties for proper data display
     );
     
     console.log("✅ Enterprise HTML-Formatierung erstellt:", {
