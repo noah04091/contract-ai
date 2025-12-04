@@ -3090,7 +3090,7 @@ export default function Generate() {
 
   const validatePhone = (phone: string): boolean => {
     // Deutsche Telefonnummer (flexibel)
-    const cleaned = phone.replace(/[\s\-\/\(\)]/g, '');
+    const cleaned = phone.replace(/[\s\-/()]/g, '');
     return /^(\+49|0049|0)?[1-9]\d{6,14}$/.test(cleaned);
   };
 
