@@ -74,7 +74,6 @@ const Optimizer = lazy(() => import("./pages/Optimizer"));
 const Compare = lazy(() => import("./pages/Compare"));
 const Chat = lazy(() => import("./pages/Chat"));
 const Generate = lazy(() => import("./pages/Generate"));
-const Generate2 = lazy(() => import("./pages/Generate2")); // 🆕 Generate 2.0 - Premium Legal Style
 const CompanyProfile = lazy(() => import("./pages/CompanyProfile"));
 const ApiKeys = lazy(() => import("./pages/ApiKeys")); // 🔑 REST API-Zugang (Enterprise)
 const ApiDocs = lazy(() => import("./pages/ApiDocs")); // 📚 REST API-Dokumentation
@@ -214,7 +213,6 @@ function AppWithLoader() {
             <Route path="/compare" element={<RequireAuth><Compare /></RequireAuth>} />
             <Route path="/chat" element={<RequireAuth><Chat /></RequireAuth>} />
             <Route path="/Generate" element={<RequireAuth><Generate /></RequireAuth>} />
-            <Route path="/generate2" element={<RequireAuth><Generate2 /></RequireAuth>} />
             <Route path="/company-profile" element={<RequireAuth><CompanyProfile /></RequireAuth>} />
             <Route path="/api-keys" element={<RequireAuth><ApiKeys /></RequireAuth>} />
             <Route path="/team" element={<RequireAuth><Team /></RequireAuth>} />
