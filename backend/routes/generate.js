@@ -453,7 +453,9 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
   });
 
   // Generiere Dokument-ID und Hash
-  const documentId = `${contractType.toUpperCase()}-${new Date().getTime()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+  // 🔧 FIX: contractType kann null sein - Fallback verwenden
+  const safeContractType = contractType || 'VERTRAG';
+  const documentId = `${safeContractType.toUpperCase()}-${new Date().getTime()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
   const documentHash = generateDocumentHash(contractText);
   
   // 🆕 ENTERPRISE QR-CODE GENERATION - WELTKLASSE-NIVEAU
