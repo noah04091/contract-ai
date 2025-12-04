@@ -4135,8 +4135,8 @@ export default function Generate() {
         isLoading: true
       });
 
-      // 🆕 Rufe die neue V2-Route auf
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/generate/pdf-v2`, {
+      // 🆕 Rufe die neue V2-Route auf (unter /api/contracts/generate gemountet)
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/generate/pdf-v2`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
