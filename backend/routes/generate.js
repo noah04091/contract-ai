@@ -453,11 +453,9 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
   });
 
   // Generiere Dokument-ID und Hash
-  // 🔧 FIX: contractType kann null sein - Fallback verwenden
-  const safeContractType = contractType || 'VERTRAG';
-  const documentId = `${safeContractType.toUpperCase()}-${new Date().getTime()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+  const documentId = `${contractType.toUpperCase()}-${new Date().getTime()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
   const documentHash = generateDocumentHash(contractText);
-
+  
   // 🆕 ENTERPRISE QR-CODE GENERATION - WELTKLASSE-NIVEAU
   let enterpriseQRCode = null;
   try {
@@ -477,201 +475,120 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
   // Generiere Inhaltsverzeichnis
   const tableOfContents = generateTableOfContents(contractText);
 
-  // 🎨 PREMIUM DESIGN-VARIANTEN - WELTKLASSE-KANZLEI & DESIGN-AGENTUR NIVEAU
-  // Entwickelt wie von Freshfields, Clifford Chance, Hengeler Mueller mit Top-Designern
+  // 🎨 ENTERPRISE DESIGN-VARIANTEN - WELTKLASSE-KANZLEI-NIVEAU
   const designVariants = {
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    // 🏛️ EXECUTIVE - Klassische Großkanzlei (Freshfields/Clifford Chance Style)
-    // ═══════════════════════════════════════════════════════════════════════════
     executive: {
-      primary: '#1a1a1a',              // Tiefschwarz - maximale Autorität
-      secondary: '#2d2d2d',            // Anthrazit für Akzente
-      accent: '#8B7355',               // Warmes Bronze - subtiler Luxus
-      text: '#1a1a1a',                 // Perfektes Schwarz
-      lightBg: '#fdfcfb',              // Warmes Off-White (wie hochwertiges Papier)
-      border: '#d4d0c8',               // Elegantes Beige-Grau
-      headerBg: 'transparent',
-
-      // Premium Serif-Typografie
-      fontFamily: '"Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif',
-      headingFont: '"Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif',
-      fontSize: '11pt',
-      lineHeight: '1.6',
-      letterSpacing: '0.01em',
-      textAlign: 'justify',
-
-      // Elegante Abstände
-      sectionMargin: 'margin: 28px 0;',
-      paragraphSpacing: 'margin-bottom: 14px;',
-
-      // Klassische §-Nummerierung mit Bronze-Akzent
-      sectionNumberStyle: 'color: #8B7355; margin-right: 12px; font-weight: 600; font-size: 12pt; font-family: "Palatino Linotype", Georgia, serif;',
+      // 🆕 FRESHFIELDS/CLIFFORD CHANCE NIVEAU - WELTKLASSE-KANZLEI-STANDARD
+      primary: '#1a1a1a',              // TIEFSCHWARZ für maximale Seriosität
+      secondary: '#2c2c2c',             // Dunkelgrau für Akzente
+      accent: '#333333',                // SERIÖSES DUNKELGRAU (Kanzlei-Standard)
+      text: '#1a1a1a',                  // Tiefschwarz für Text
+      lightBg: '#fefefe',               // Nahezu reines Weiß
+      border: '#cccccc',                // Neutrales Grau für Abgrenzungen
+      headerBg: 'transparent', // Kanzlei-Standard: Kein Background
+      
+      // 🔥 EXAKTE KANZLEI-TYPOGRAFIE (PREMIUM LEGAL DESIGN)
+      fontFamily: '"Georgia", "Times New Roman", "Liberation Serif", serif',
+      headingFont: '"Georgia", "Times New Roman", serif',
+      fontSize: '11pt',                 // 11pt für optimale Lesbarkeit
+      lineHeight: '1.25',               // 1.25 für professionelle Lesbarkeit
+      letterSpacing: '0px',             // Kein Letter-Spacing bei Kanzleien
+      textAlign: 'justify',             // BLOCKSATZ - Kanzlei-Pflicht
+      hyphens: 'auto',                  // Automatische Silbentrennung
+      hyphenateCharacter: '"-"',        // Deutsche Silbentrennung
+      
+      // 🔥 MILLIMETER-BASIERTE ABSTÄNDE (PROFESSIONELL)
+      sectionMargin: 'margin: 10.58mm 0;',         // 30pt = 10.58mm (mehr Raum zwischen §§)
+      paragraphSpacing: 'margin-bottom: 4.23mm;',  // 12pt = 4.23mm
+      indentation: 'text-indent: 12.7mm;',         // 36pt = 12.7mm für Einrückungen
+      
+      // 🔥 SEITENUMBRUCH-KONTROLLE (WELTKLASSE)
+      orphans: '3',                     // Min. 3 Zeilen am Seitenende
+      widows: '3',                      // Min. 3 Zeilen am Seitenanfang
+      pageBreakInside: 'avoid',         // Blockelemente nicht trennen
+      
+      // DESIGN-ELEMENTE
+      sectionNumberStyle: 'color: #1a1a1a; margin-right: 10mm; font-weight: bold; font-size: 11pt; min-width: 12.7mm; display: inline-block; text-align: left;',
       pageMargins: 'margin: 0; padding: 0;',
-      headerHeight: '100px',
-      useGradients: false,
-      useSerif: true,
-      borderRadius: '0',
-      boxShadow: 'none',
-
-      // Spezielle Executive-Elemente
-      headerStyle: 'border-bottom: 2px solid #8B7355; padding-bottom: 20px;',
-      sectionDivider: 'border-top: 1px solid #d4d0c8; margin: 30px 0; padding-top: 25px;'
+      headerHeight: '33.87mm',          // ~96pt in mm für professionellen Header
+      useGradients: false,              // Kanzleien verwenden keine Gradienten
+      useSerif: true,                   // Times New Roman ist Kanzlei-Standard
+      borderRadius: '0px',              // Keine abgerundeten Ecken
+      boxShadow: 'none'                 // Keine Schatten - Clean & Professional
     },
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    // 🌊 MODERN - Premium Tech & Startup (Silicon Valley / Berlin Style)
-    // ═══════════════════════════════════════════════════════════════════════════
-    modern: {
-      primary: '#0F172A',              // Tiefes Slate - Tech-Eleganz
-      secondary: '#334155',            // Slate für Hierarchie
-      accent: '#3B82F6',               // Brillantes Blau - Vertrauen & Innovation
-      accentLight: '#DBEAFE',          // Helles Blau für Hintergründe
-      text: '#1E293B',                 // Dunkles Slate - optimal lesbar
-      lightBg: '#F8FAFC',              // Kühles Off-White
-      border: '#E2E8F0',               // Zartes Slate-Grau
-      headerBg: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
-
-      // Moderne Sans-Serif
-      fontFamily: '"Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-      headingFont: '"Inter", "SF Pro Display", -apple-system, sans-serif',
-      fontSize: '10.5pt',
-      lineHeight: '1.65',
-      letterSpacing: '-0.01em',
-      textAlign: 'left',
-
-      // Luftige Abstände
-      sectionMargin: 'margin: 32px 0;',
-      paragraphSpacing: 'margin-bottom: 16px;',
-
-      // Moderne Pill-Badge Nummerierung
-      sectionNumberStyle: 'background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); color: white; padding: 6px 14px; border-radius: 20px; font-weight: 600; font-size: 11px; margin-right: 14px; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px;',
+    
+    // 🔄 BEHALTE BESTEHENDE VARIANTEN FÜR KOMPATIBILITÄT
+    executive_legacy: {
+      // Alte Executive-Variante bleibt verfügbar
+      primary: '#1a2332',           
+      secondary: '#2c3e50',         
+      accent: '#c9a961',            
+      text: '#2c3e50',              
+      lightBg: '#f7f9fc',           
+      border: '#e1e8f0',            
+      headerBg: 'transparent', // Kanzlei-Standard: Neutral
+      fontFamily: '"Georgia", "Times New Roman", serif',
+      headingFont: '"Georgia", "Times New Roman", serif',
+      fontSize: '10.5pt',               // KOMPAKT für mehr Inhalt
+      lineHeight: '1.35',               // KOMPAKT für 5-6 Seiten
+      letterSpacing: '0.3px',
+      sectionNumberStyle: 'background: #c9a961; color: white; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-right: 18px; font-weight: bold; font-size: 14px;',
       pageMargins: 'margin: 0; padding: 0;',
+      sectionMargin: 'margin: 8.8mm 0;',      // 25px = 8.8mm
+      paragraphSpacing: 'margin-bottom: 4.9mm;', // 14px = 4.9mm
+      headerHeight: '100px',
+      useGradients: true,
+      useSerif: true,
+      borderRadius: '8px',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+    },
+    modern: {
+      // Tech-Style: Blau-Grün, Sans-Serif, Clean
+      primary: '#0ea5e9',           // Himmelblau
+      secondary: '#0284c7',         // Dunkleres Blau
+      accent: '#06b6d4',            // Cyan
+      text: '#1e293b',              // Dunkles Grau
+      lightBg: '#f0f9ff',           // Sehr helles Blau
+      border: '#e0f2fe',            // Blau Border
+      headerBg: 'transparent', // Kanzlei-Standard: Neutral
+      fontFamily: '"Arial", "Helvetica", sans-serif',
+      headingFont: '"Arial", "Helvetica", sans-serif',
+      fontSize: '10.5pt',
+      lineHeight: '1.35',               // KOMPAKT für mehr Inhalt
+      letterSpacing: '0px',
+      sectionNumberStyle: 'background: white; color: #0ea5e9; border: 2px solid #0ea5e9; width: 30px; height: 30px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; margin-right: 15px; font-weight: 600; font-size: 13px;',
+      pageMargins: 'margin: 0; padding: 0;',
+      sectionMargin: 'margin: 7.1mm 0;',      // 20px = 7.1mm  
+      paragraphSpacing: 'margin-bottom: 4.2mm;', // 12px = 4.2mm
       headerHeight: '90px',
       useGradients: true,
       useSerif: false,
       borderRadius: '12px',
-      boxShadow: '0 4px 20px rgba(15, 23, 42, 0.08)',
-
-      // Moderne Elemente
-      headerStyle: 'background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); color: white; padding: 25px; border-radius: 12px 12px 0 0;',
-      cardStyle: 'background: white; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); padding: 24px;'
+      boxShadow: '0 4px 12px rgba(14,165,233,0.1)'
     },
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    // ⬛ MINIMAL - Swiss Design / Bauhaus (Zurückhaltende Eleganz)
-    // ═══════════════════════════════════════════════════════════════════════════
     minimal: {
-      primary: '#000000',              // Reines Schwarz
-      secondary: '#525252',            // Neutrales Grau
-      accent: '#000000',               // Schwarz als Akzent
-      text: '#171717',                 // Fast-Schwarz
-      lightBg: '#FAFAFA',              // Minimales Off-White
-      border: '#E5E5E5',               // Zartes Grau
+      // Schweizer Style: Nur Schwarz-Weiß, Ultra-Clean
+      primary: '#000000',           // Schwarz
+      secondary: '#4b5563',         // Mittelgrau
+      accent: '#9ca3af',            // Hellgrau
+      text: '#111827',              // Fast Schwarz
+      lightBg: '#fafafa',           // Fast Weiß
+      border: '#e5e7eb',            // Grau Border
       headerBg: '#000000',
-
-      // Helvetica - Die Ikone des Swiss Design
-      fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
-      headingFont: '"Helvetica Neue", Helvetica, Arial, sans-serif',
-      fontSize: '10.5pt',
-      lineHeight: '1.55',
-      letterSpacing: '0',
-      textAlign: 'left',
-
-      // Strenge Abstände
-      sectionMargin: 'margin: 24px 0;',
-      paragraphSpacing: 'margin-bottom: 12px;',
-
-      // Puristische Nummerierung
-      sectionNumberStyle: 'color: #000; font-weight: 700; font-size: 11pt; margin-right: 16px; min-width: 30px; display: inline-block;',
+      fontFamily: '"Helvetica Neue", "Arial", sans-serif',
+      headingFont: '"Helvetica Neue", "Arial", sans-serif',
+      fontSize: '10.5pt',               // KOMPAKT aber lesbar
+      lineHeight: '1.35',               // KOMPAKT für 5-6 Seiten
+      letterSpacing: '-0.2px',
+      sectionNumberStyle: 'color: #000; margin-right: 20px; font-weight: 400; font-size: 14px; min-width: 25px; display: inline-block;',
       pageMargins: 'margin: 0; padding: 0;',
+      sectionMargin: 'margin: 6.4mm 0;',      // 18px = 6.4mm
+      paragraphSpacing: 'margin-bottom: 3.5mm;', // 10px = 3.5mm
       headerHeight: '70px',
       useGradients: false,
       useSerif: false,
-      borderRadius: '0',
-      boxShadow: 'none',
-
-      // Minimale Elemente
-      headerStyle: 'border-bottom: 3px solid #000; padding-bottom: 15px;',
-      sectionDivider: 'border-top: 1px solid #000; margin: 20px 0; padding-top: 20px;'
-    },
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    // 🌿 ELEGANT - Boutique-Kanzlei / Luxus-Marken (Hermès/Bottega Style)
-    // ═══════════════════════════════════════════════════════════════════════════
-    elegant: {
-      primary: '#2C2416',              // Dunkles Espresso-Braun
-      secondary: '#4A3F2F',            // Warmes Mokka
-      accent: '#B8860B',               // Dunkles Gold - Luxus pur
-      accentLight: '#F5E6C8',          // Champagner
-      text: '#2C2416',                 // Warmes Dunkelbraun
-      lightBg: '#FAF8F5',              // Cremiges Off-White
-      border: '#E8E2D9',               // Warmes Beige
-      headerBg: 'linear-gradient(135deg, #2C2416 0%, #4A3F2F 100%)',
-
-      // Elegante Garamond-Typografie
-      fontFamily: '"EB Garamond", "Cormorant Garamond", Garamond, "Times New Roman", serif',
-      headingFont: '"EB Garamond", "Cormorant Garamond", Garamond, serif',
-      fontSize: '11.5pt',
-      lineHeight: '1.7',
-      letterSpacing: '0.02em',
-      textAlign: 'justify',
-
-      // Großzügige Abstände
-      sectionMargin: 'margin: 30px 0;',
-      paragraphSpacing: 'margin-bottom: 16px;',
-
-      // Gold-Akzent Nummerierung
-      sectionNumberStyle: 'color: #B8860B; font-weight: 600; font-size: 13pt; margin-right: 10px; font-family: "EB Garamond", Garamond, serif; font-style: italic;',
-      pageMargins: 'margin: 0; padding: 0;',
-      headerHeight: '95px',
-      useGradients: true,
-      useSerif: true,
-      borderRadius: '4px',
-      boxShadow: '0 2px 15px rgba(44, 36, 22, 0.06)',
-
-      // Luxuriöse Elemente
-      headerStyle: 'border-bottom: 1px solid #B8860B; padding-bottom: 20px;',
-      decorativeElement: 'background: linear-gradient(90deg, transparent 0%, #B8860B 50%, transparent 100%); height: 1px; margin: 30px 0;'
-    },
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    // 🏢 CORPORATE - DAX-Konzern / Enterprise (Siemens/SAP/Allianz Style)
-    // ═══════════════════════════════════════════════════════════════════════════
-    corporate: {
-      primary: '#003366',              // Corporate Navy - Vertrauen & Stabilität
-      secondary: '#004D99',            // Helleres Navy
-      accent: '#0066CC',               // Corporate Blue
-      accentLight: '#E6F0FF',          // Sehr helles Blau
-      text: '#1A1A1A',                 // Neutrales Schwarz
-      lightBg: '#F5F7FA',              // Kühles Grau-Weiß
-      border: '#D1D9E6',               // Business-Grau
-      headerBg: '#003366',
-
-      // Corporate Sans-Serif
-      fontFamily: '"Source Sans Pro", "Segoe UI", Roboto, "Helvetica Neue", sans-serif',
-      headingFont: '"Source Sans Pro", "Segoe UI", Roboto, sans-serif',
-      fontSize: '10.5pt',
-      lineHeight: '1.6',
-      letterSpacing: '0',
-      textAlign: 'left',
-
-      // Strukturierte Abstände
-      sectionMargin: 'margin: 26px 0;',
-      paragraphSpacing: 'margin-bottom: 14px;',
-
-      // Corporate Badge-Nummerierung
-      sectionNumberStyle: 'background: #003366; color: white; width: 28px; height: 28px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; margin-right: 14px; font-weight: 600; font-size: 12px;',
-      pageMargins: 'margin: 0; padding: 0;',
-      headerHeight: '85px',
-      useGradients: false,
-      useSerif: false,
-      borderRadius: '6px',
-      boxShadow: '0 2px 8px rgba(0, 51, 102, 0.08)',
-
-      // Corporate Elemente
-      headerStyle: 'background: #003366; color: white; padding: 20px 25px;',
-      accentBar: 'background: #0066CC; height: 4px; margin-bottom: 20px;'
+      borderRadius: '0px',
+      boxShadow: 'none'
     }
   };
 
@@ -1959,7 +1876,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
         margin: 0;
         letter-spacing: 2.5px;
       ">${contractType?.toUpperCase() || 'KAUFVERTRAG'}</h1>
-
+      
       <!-- Elegante Datumszeile -->
       <div style="
         font-family: 'Times New Roman', serif;
@@ -1968,14 +1885,14 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
         font-style: italic;
         margin-top: 5mm;
       ">
-        geschlossen am ${new Date().toLocaleDateString('de-DE', {
-          day: '2-digit',
-          month: 'long',
-          year: 'numeric'
+        geschlossen am ${new Date().toLocaleDateString('de-DE', { 
+          day: '2-digit', 
+          month: 'long', 
+          year: 'numeric' 
         })}
       </div>
     </div>
-
+    
     <!-- PARTEIENBLOCK ("zwischen") -->
     <div style="
       font-family: 'Times New Roman', serif;
@@ -1985,13 +1902,13 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       color: #1a1a1a;
     ">
       <div style="font-weight: bold; margin-bottom: 8mm;">zwischen</div>
-
+      
       <div style="margin-bottom: 10mm;">
         <div style="font-weight: bold;">${companyProfile?.companyName || 'ACME GmbH'}${companyProfile?.legalForm ? ` ${companyProfile.legalForm}` : ''}</div>
         <div style="font-style: italic; margin-top: 2mm; color: #666666; font-size: 10pt;">(vollständige Angaben siehe Briefkopf)</div>
         <div style="font-style: italic; margin-top: 3mm;">– nachfolgend "Verkäufer" genannt –</div>
       </div>
-
+      
       <div style="font-weight: bold; margin-bottom: 6mm;">und</div>
 
       <div style="margin-bottom: 10mm;">
@@ -2092,546 +2009,6 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
   return fullHTML;
 };
 
-// ═══════════════════════════════════════════════════════════════════════════════════════════════════
-// 🆕 VERSION 2: KOMPLETT NEUE PDF-GENERIERUNG - SAUBERE STRUKTUR
-// ═══════════════════════════════════════════════════════════════════════════════════════════════════
-// Struktur:
-// - Seite 1: Deckblatt (Titel, Parteien, Datum)
-// - Seiten 2-N: Vertragsinhalt (so viele wie nötig)
-// - Letzte Seite: Unterschriften, QR-Code, Rechtliche Hinweise
-// ═══════════════════════════════════════════════════════════════════════════════════════════════════
-
-const formatContractToHTMLv2 = async (contractText, companyProfile, contractType, designVariant = 'executive', isDraft = false, parties = null) => {
-  console.log("🚀 [V2] Starte NEUE PDF-Generierung für:", contractType);
-  console.log('🎨 [V2] Design-Variante:', designVariant);
-  console.log('📝 [V2] Entwurf-Modus:', isDraft);
-  console.log('👥 [V2] Parties Data:', parties);
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // SCHRITT 1: LOGO LADEN
-  // ═══════════════════════════════════════════════════════════════════════════
-  let logoBase64 = null;
-  let useInitialsFallback = false;
-
-  if (companyProfile && (companyProfile.logoUrl || companyProfile.logoKey)) {
-    logoBase64 = await loadLogoWithFallbacks(companyProfile);
-    if (logoBase64) {
-      logoBase64 = optimizeLogoBase64(logoBase64, 100);
-    } else {
-      useInitialsFallback = true;
-    }
-  } else {
-    useInitialsFallback = true;
-  }
-
-  if (useInitialsFallback && companyProfile?.companyName) {
-    const initials = generateCompanyInitials(companyProfile.companyName);
-    logoBase64 = generateInitialsLogo(initials, '#1a1a1a');
-  }
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // SCHRITT 2: DOKUMENT-METADATEN
-  // ═══════════════════════════════════════════════════════════════════════════
-  const safeContractType = contractType || 'VERTRAG';
-  const documentId = `${safeContractType.toUpperCase()}-${new Date().getTime()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-  const documentHash = generateDocumentHash(contractText);
-
-  // QR-Code generieren
-  let enterpriseQRCode = null;
-  try {
-    const qrData = {
-      documentId: documentId,
-      documentHash: documentHash,
-      contractType: contractType,
-      isDraft: isDraft
-    };
-    enterpriseQRCode = await generateEnterpriseQRCode(qrData, companyProfile);
-  } catch (qrError) {
-    console.error("⚠️ [V2] QR-Code Generierung fehlgeschlagen:", qrError.message);
-  }
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // SCHRITT 3: PARTY LABELS BESTIMMEN (dynamisch je nach Vertragstyp)
-  // ═══════════════════════════════════════════════════════════════════════════
-  const getPartyLabels = (type) => {
-    const typeLC = (type || '').toLowerCase();
-    if (typeLC.includes('kauf')) return { partyA: 'Verkäufer', partyB: 'Käufer' };
-    if (typeLC.includes('miet')) return { partyA: 'Vermieter', partyB: 'Mieter' };
-    if (typeLC.includes('arbeit')) return { partyA: 'Arbeitgeber', partyB: 'Arbeitnehmer' };
-    if (typeLC.includes('dienst')) return { partyA: 'Auftraggeber', partyB: 'Auftragnehmer' };
-    if (typeLC.includes('werkvertrag')) return { partyA: 'Besteller', partyB: 'Unternehmer' };
-    if (typeLC.includes('darlehen') || typeLC.includes('kredit')) return { partyA: 'Darlehensgeber', partyB: 'Darlehensnehmer' };
-    if (typeLC.includes('gesellschaft')) return { partyA: 'Gesellschafter A', partyB: 'Gesellschafter B' };
-    if (typeLC.includes('lizenz')) return { partyA: 'Lizenzgeber', partyB: 'Lizenznehmer' };
-    if (typeLC.includes('geheim') || typeLC.includes('nda')) return { partyA: 'Offenlegender', partyB: 'Empfänger' };
-    return { partyA: 'Partei A', partyB: 'Partei B' };
-  };
-
-  const partyLabels = getPartyLabels(contractType);
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // SCHRITT 4: VERTRAGSINHALT ZU HTML KONVERTIEREN (V1-STYLE MIT NUMMERIERTEN KREISEN)
-  // ═══════════════════════════════════════════════════════════════════════════
-  const convertContractTextToHTML = (text) => {
-    const lines = text.split('\n');
-    let html = '';
-    let skipPartiesSection = false;
-    let currentParagraphNum = 0;
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const trimmedLine = line.trim();
-
-      // Überspringe leere Zeilen
-      if (!trimmedLine) {
-        continue;
-      }
-
-      // Überspringe === Linien
-      if (trimmedLine.startsWith('===') || trimmedLine.endsWith('===')) {
-        continue;
-      }
-
-      // PARTEIEN-BEREICH ÜBERSPRINGEN (wird im Deckblatt gehandhabt)
-      if (trimmedLine.toLowerCase() === 'zwischen') {
-        skipPartiesSection = true;
-        continue;
-      }
-
-      // Ende des Parteien-Bereichs
-      if (skipPartiesSection && (trimmedLine === 'PRÄAMBEL' || trimmedLine === 'Präambel' || trimmedLine.startsWith('§'))) {
-        skipPartiesSection = false;
-      }
-
-      if (skipPartiesSection) {
-        continue;
-      }
-
-      // Überspringe die Hauptüberschrift (z.B. "KAUFVERTRAG") - wird im Deckblatt gehandhabt
-      if (trimmedLine === trimmedLine.toUpperCase() &&
-          trimmedLine.length > 5 &&
-          !trimmedLine.startsWith('§') &&
-          !trimmedLine.includes(':') &&
-          !['PRÄAMBEL', 'ZWISCHEN', 'UND', 'ANLAGEN'].includes(trimmedLine)) {
-        continue;
-      }
-
-      // PRÄAMBEL - V1-Style mit dekorativen Linien
-      if (trimmedLine === 'PRÄAMBEL' || trimmedLine === 'Präambel') {
-        html += `
-          <div style="margin: 10mm 0 6mm 0; page-break-after: avoid;">
-            <div style="display: flex; align-items: center; gap: 4mm;">
-              <div style="flex: 0 0 15mm; height: 1px; background: #8B7355;"></div>
-              <h2 style="
-                font-family: 'Times New Roman', serif;
-                font-size: 13pt;
-                font-weight: bold;
-                color: #1a1a1a;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-                margin: 0;
-                white-space: nowrap;
-              ">PRÄAMBEL</h2>
-              <div style="flex: 0 0 15mm; height: 1px; background: #8B7355;"></div>
-            </div>
-          </div>
-        `;
-        continue;
-      }
-
-      // PARAGRAPHEN (§ 1 Vertragsgegenstand etc.) - V1-Style
-      if (trimmedLine.startsWith('§')) {
-        const cleanTitle = trimmedLine.replace(/\*\*/g, '');
-        currentParagraphNum = 0; // Reset für jeden neuen Paragraphen
-
-        html += `
-          <div style="margin: 12mm 0 5mm 0; page-break-after: avoid;">
-            <h2 style="
-              font-family: 'Times New Roman', serif;
-              font-size: 13pt;
-              font-weight: bold;
-              color: #1a1a1a;
-              margin: 0;
-              text-transform: uppercase;
-              letter-spacing: 0.5px;
-            ">${cleanTitle}</h2>
-          </div>
-        `;
-        continue;
-      }
-
-      // NUMMERIERTE ABSÄTZE (1), (2), (3) etc. - V1-Style mit Nummernkreis
-      if (/^\(?\d+\)?\.?\s/.test(trimmedLine)) {
-        currentParagraphNum++;
-        const cleanText = trimmedLine.replace(/^\(?\d+\)?\.?\s*/, '').replace(/\*\*/g, '');
-
-        html += `
-          <div style="display: flex; align-items: flex-start; gap: 4mm; margin: 0 0 4mm 0;">
-            <div style="
-              flex: 0 0 auto;
-              min-width: 7mm;
-              height: 7mm;
-              border: 1.5px solid #8B7355;
-              border-radius: 50%;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 9pt;
-              font-weight: bold;
-              color: #8B7355;
-              margin-top: 1mm;
-            ">${currentParagraphNum}</div>
-            <p style="
-              font-family: 'Times New Roman', serif;
-              font-size: 11pt;
-              line-height: 1.55;
-              color: #1a1a1a;
-              margin: 0;
-              text-align: justify;
-              flex: 1;
-            ">${cleanText}</p>
-          </div>
-        `;
-        continue;
-      }
-
-      // AUFZÄHLUNGEN mit Buchstaben a), b), c) - V1-Style mit umkreisten Buchstaben
-      if (/^[a-z]\)/.test(trimmedLine)) {
-        const letter = trimmedLine.charAt(0);
-        const cleanText = trimmedLine.substring(2).trim().replace(/\*\*/g, '');
-
-        html += `
-          <div style="display: flex; align-items: flex-start; gap: 3mm; margin: 0 0 3mm 12mm;">
-            <div style="
-              flex: 0 0 auto;
-              min-width: 5.5mm;
-              height: 5.5mm;
-              border: 1px solid #999;
-              border-radius: 50%;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 8pt;
-              color: #666;
-              margin-top: 1.5mm;
-            ">${letter}</div>
-            <p style="
-              font-family: 'Times New Roman', serif;
-              font-size: 10.5pt;
-              line-height: 1.5;
-              color: #1a1a1a;
-              margin: 0;
-              text-align: justify;
-              flex: 1;
-            ">${cleanText}</p>
-          </div>
-        `;
-        continue;
-      }
-
-      // Spiegelstriche
-      if (trimmedLine.startsWith('-') || trimmedLine.startsWith('•')) {
-        const cleanText = trimmedLine.substring(1).trim().replace(/\*\*/g, '');
-        html += `
-          <div style="display: flex; align-items: flex-start; gap: 3mm; margin: 0 0 2mm 12mm;">
-            <span style="color: #8B7355; font-size: 12pt;">•</span>
-            <p style="
-              font-family: 'Times New Roman', serif;
-              font-size: 10.5pt;
-              line-height: 1.5;
-              color: #1a1a1a;
-              margin: 0;
-              text-align: justify;
-              flex: 1;
-            ">${cleanText}</p>
-          </div>
-        `;
-        continue;
-      }
-
-      // NORMALE ABSÄTZE - Markdown bereinigen
-      let cleanText = trimmedLine
-        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*([^*]+)\*/g, '<em>$1</em>');
-
-      html += `
-        <p style="
-          font-family: 'Times New Roman', serif;
-          font-size: 11pt;
-          line-height: 1.55;
-          color: #1a1a1a;
-          margin: 0 0 4mm 0;
-          text-align: justify;
-        ">${cleanText}</p>
-      `;
-    }
-
-    return html;
-  };
-
-  const contractContentHTML = convertContractTextToHTML(contractText);
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // SCHRITT 5: VOLLSTÄNDIGES HTML DOKUMENT ERSTELLEN
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  const currentDate = new Date().toLocaleDateString('de-DE', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric'
-  });
-
-  // Seitenzahl berechnen (Deckblatt=1, dann Inhalt, dann Unterschriften)
-  const totalPages = 5; // Wird dynamisch berechnet durch Puppeteer
-
-  const fullHTML = `
-<!DOCTYPE html>
-<html lang="de">
-<head>
-  <meta charset="UTF-8">
-  <title>${contractType || 'Vertrag'} - ${companyProfile?.companyName || 'Vertragsdokument'}</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    @page {
-      size: A4;
-      margin: 25mm 20mm 20mm 25mm;
-    }
-
-    body {
-      font-family: 'Times New Roman', Georgia, serif;
-      font-size: 11pt;
-      line-height: 1.5;
-      color: #1a1a1a;
-      background: #fff;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    }
-
-    .page { page-break-after: always; }
-    .page:last-child { page-break-after: avoid; }
-    .no-break { page-break-inside: avoid; }
-
-    /* Footer auf jeder Seite */
-    .page-footer {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      border-top: 1px solid #ccc;
-      padding-top: 3mm;
-      font-size: 8pt;
-      color: #666;
-    }
-
-    ${isDraft ? `.watermark { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 100pt; color: rgba(180,0,0,0.07); font-weight: bold; pointer-events: none; z-index: 9999; }` : ''}
-  </style>
-</head>
-<body>
-${isDraft ? '<div class="watermark">ENTWURF</div>' : ''}
-
-<!-- ══════════════════════════════════════════════════════════════════════════════════ -->
-<!-- SEITE 1: DECKBLATT (V1-Style mit Briefkopf) -->
-<!-- ══════════════════════════════════════════════════════════════════════════════════ -->
-<div class="page" style="position: relative; min-height: 250mm;">
-
-  <!-- BRIEFKOPF: Logo links, Firmeninfos rechts -->
-  <header style="margin-bottom: 15mm;">
-    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-
-      <!-- Logo links -->
-      <div style="flex: 0 0 auto; max-width: 60mm;">
-        ${logoBase64 ? `<img src="${logoBase64}" style="max-height: 20mm; width: auto; display: block;" alt="Logo"/>` : ''}
-      </div>
-
-      <!-- Firmeninfos rechts -->
-      <div style="text-align: right; font-size: 10pt; line-height: 1.3;">
-        <div style="font-weight: bold; margin-bottom: 2mm;">
-          ${companyProfile?.companyName || 'Ihr Unternehmen'}${companyProfile?.legalForm ? ` ${companyProfile.legalForm}` : ''}
-        </div>
-        <div>${companyProfile?.street || 'Musterstraße 123'}</div>
-        <div style="margin-bottom: 2mm;">${companyProfile?.postalCode || '12345'} ${companyProfile?.city || 'Musterstadt'}</div>
-        ${companyProfile?.contactEmail ? `<div>E-Mail: ${companyProfile.contactEmail}</div>` : ''}
-        ${companyProfile?.contactPhone ? `<div style="margin-bottom: 2mm;">Telefon: ${companyProfile.contactPhone}</div>` : ''}
-        ${companyProfile?.tradeRegister ? `<div>${companyProfile.tradeRegister}</div>` : ''}
-        ${companyProfile?.vatId ? `<div>USt-ID: ${companyProfile.vatId}</div>` : ''}
-      </div>
-    </div>
-
-    <!-- Trennlinie -->
-    <div style="margin: 6mm 0; height: 1.5px; background: #666;"></div>
-  </header>
-
-  <!-- VERTRAGSTITEL -->
-  <div style="text-align: center; margin: 15mm 0 20mm 0;">
-    <h1 style="font-size: 21pt; font-weight: bold; text-transform: uppercase; letter-spacing: 2.5px; margin: 0;">
-      ${(contractType || 'VERTRAG').toUpperCase()}
-    </h1>
-    <div style="font-size: 11pt; color: #666; font-style: italic; margin-top: 5mm;">
-      geschlossen am ${currentDate}
-    </div>
-  </div>
-
-  <!-- PARTEIENBLOCK -->
-  <div style="font-size: 11pt; line-height: 1.4; margin: 0 0 20mm 0;">
-    <div style="font-weight: bold; margin-bottom: 8mm;">zwischen</div>
-
-    <!-- Partei A -->
-    <div style="margin-bottom: 10mm;">
-      <div style="font-weight: bold;">${companyProfile?.companyName || 'Vertragspartei A'}${companyProfile?.legalForm ? ` ${companyProfile.legalForm}` : ''}</div>
-      <div style="font-style: italic; margin-top: 2mm; color: #666; font-size: 10pt;">(vollständige Angaben siehe Briefkopf)</div>
-      <div style="font-style: italic; margin-top: 3mm;">– nachfolgend "${partyLabels.partyA}" genannt –</div>
-    </div>
-
-    <div style="font-weight: bold; margin-bottom: 6mm;">und</div>
-
-    <!-- Partei B -->
-    <div style="margin-bottom: 10mm;">
-      <div style="font-weight: bold;">${parties?.buyer || parties?.buyerName || parties?.partyB || 'Vertragspartei B'}</div>
-      <div>${parties?.buyerAddress || parties?.partyBAddress || 'Adresse'}</div>
-      <div>${parties?.buyerCity || parties?.partyBCity || 'Ort'}</div>
-      <div style="font-style: italic; margin-top: 3mm;">– nachfolgend "${partyLabels.partyB}" genannt –</div>
-    </div>
-  </div>
-
-  <!-- Footer Seite 1 -->
-  <div class="page-footer">
-    <table style="width: 100%; font-size: 8pt; color: #666;">
-      <tr>
-        <td style="text-align: left;">DOK-ID: ${documentId.substring(0, 20)}...</td>
-        <td style="text-align: center;">Seite 1 | ${totalPages}</td>
-        <td style="text-align: right;">${new Date().toLocaleDateString('de-DE')}</td>
-      </tr>
-    </table>
-  </div>
-
-</div>
-
-<!-- ══════════════════════════════════════════════════════════════════════════════════ -->
-<!-- SEITEN 2-N: VERTRAGSINHALT -->
-<!-- ══════════════════════════════════════════════════════════════════════════════════ -->
-<div class="contract-content">
-  ${contractContentHTML}
-</div>
-
-<!-- ══════════════════════════════════════════════════════════════════════════════════ -->
-<!-- LETZTE SEITE: UNTERSCHRIFTEN (V1-Style mit beigem Header) -->
-<!-- ══════════════════════════════════════════════════════════════════════════════════ -->
-<div class="page" style="position: relative; page-break-before: always; min-height: 250mm;">
-
-  <!-- Beiger Header-Balken wie V1 -->
-  <div style="background: linear-gradient(180deg, #f5f0e6 0%, #ebe5d9 100%); padding: 15mm 0 12mm 0; margin: -25mm -20mm 0 -25mm; width: calc(100% + 45mm);">
-    <h2 style="text-align: center; font-size: 16pt; font-weight: bold; color: #1a1a1a; margin: 0; padding: 0 25mm;">
-      Unterschriften der Vertragsparteien
-    </h2>
-  </div>
-
-  <!-- Unterschriften-Container -->
-  <div style="margin-top: 10mm;">
-
-    <!-- Zwei-Spalten Unterschriften -->
-    <div style="display: flex; gap: 10mm; margin-bottom: 15mm;">
-
-      <!-- Partei A (links) -->
-      <div style="flex: 1; padding: 5mm;">
-        <h3 style="font-size: 10pt; font-weight: 600; text-transform: uppercase; margin-bottom: 8mm;">${partyLabels.partyA} / Partei A</h3>
-
-        <div style="margin-bottom: 8mm;">
-          <div style="border-bottom: 1px solid #666; height: 8mm; margin-bottom: 2mm;"></div>
-          <p style="font-size: 9pt; color: #666; margin: 0;">Ort, Datum</p>
-        </div>
-
-        <div style="margin-bottom: 8mm;">
-          <div style="border-bottom: 2px solid #333; height: 12mm; margin-bottom: 2mm;"></div>
-          <p style="font-size: 9pt; color: #666; margin: 0;">(Unterschrift / Stempel)</p>
-        </div>
-
-        <div style="padding-top: 5mm; border-top: 1px dotted #ccc;">
-          <p style="font-size: 10pt; font-weight: 600; margin: 0 0 2mm 0;">${companyProfile?.companyName || partyLabels.partyA}</p>
-          <p style="font-size: 9pt; color: #666; margin: 0;">(Geschäftsführung)</p>
-        </div>
-      </div>
-
-      <!-- Partei B (rechts) -->
-      <div style="flex: 1; padding: 5mm;">
-        <h3 style="font-size: 10pt; font-weight: 600; text-transform: uppercase; margin-bottom: 8mm;">${partyLabels.partyB} / Partei B</h3>
-
-        <div style="margin-bottom: 8mm;">
-          <div style="border-bottom: 1px solid #666; height: 8mm; margin-bottom: 2mm;"></div>
-          <p style="font-size: 9pt; color: #666; margin: 0;">Ort, Datum</p>
-        </div>
-
-        <div style="margin-bottom: 8mm;">
-          <div style="border-bottom: 2px solid #333; height: 12mm; margin-bottom: 2mm;"></div>
-          <p style="font-size: 9pt; color: #666; margin: 0;">(Unterschrift)</p>
-        </div>
-
-        <div style="padding-top: 5mm; border-top: 1px dotted #ccc;">
-          <div style="border-bottom: 1px solid #ccc; height: 6mm; margin-bottom: 2mm;"></div>
-          <p style="font-size: 9pt; color: #666; margin: 0;">(Name in Druckschrift)</p>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- Anlagen-Bereich wie V1 -->
-    <div style="background: #faf8f5; border: 1px solid #e5e0d5; padding: 4mm 5mm; margin-bottom: 15mm;">
-      <h4 style="font-size: 11pt; font-weight: bold; color: #8B7355; margin: 0 0 2mm 0; font-style: italic;">ANLAGEN</h4>
-      <p style="font-size: 10pt; color: #666; margin: 0;">Diesem Vertrag sind keine Anlagen beigefügt.</p>
-    </div>
-
-  </div>
-
-  <!-- Footer mit QR-Code und Verifizierung (V1-Style) -->
-  <div style="position: absolute; bottom: 0; left: 0; right: 0; background: #f9f7f4; border-top: 1px solid #ddd; padding: 5mm 0;">
-
-    <div style="display: flex; align-items: flex-start; gap: 8mm;">
-
-      <!-- Links: Vertragsinfo -->
-      <div style="font-size: 9pt; color: #666;">
-        <div style="font-weight: bold; text-transform: uppercase; margin-bottom: 1mm;">${(contractType || 'Vertrag').toUpperCase()}</div>
-        <div>© ${new Date().getFullYear()} ${companyProfile?.companyName || 'Contract AI'}</div>
-      </div>
-
-      <!-- Mitte: QR-Code -->
-      <div style="flex: 1; text-align: center;">
-        ${enterpriseQRCode ? `<img src="${enterpriseQRCode}" style="width: 18mm; height: 18mm; display: inline-block;" alt="QR"/>` : '<div style="width: 18mm; height: 18mm; border: 1px dashed #ccc; display: inline-block;"></div>'}
-        <div style="font-size: 8pt; color: #888; margin-top: 1mm;">Digitale Verifizierung</div>
-        <div style="font-size: 7pt; font-family: monospace; color: #666;">${documentHash}</div>
-      </div>
-
-      <!-- Rechts: Rechtliche Hinweise -->
-      <div style="text-align: right; font-size: 8pt; color: #666; line-height: 1.4;">
-        <div style="font-weight: bold;">Rechtlicher Hinweis:</div>
-        <div>Dieses Dokument ist rechtlich bindend.</div>
-        <div>Alle Rechte vorbehalten.</div>
-        <div>Gerichtsstand: ${companyProfile?.city || 'Deutschland'}</div>
-      </div>
-
-    </div>
-
-    <!-- Footer-Zeile -->
-    <div style="margin-top: 4mm; padding-top: 3mm; border-top: 1px solid #ddd;">
-      <table style="width: 100%; font-size: 8pt; color: #666;">
-        <tr>
-          <td style="text-align: left;">DOK-ID: ${documentId.substring(0, 20)}...</td>
-          <td style="text-align: center;">Seite ${totalPages} | ${totalPages}</td>
-          <td style="text-align: right;">${new Date().toLocaleDateString('de-DE')}</td>
-        </tr>
-      </table>
-    </div>
-
-  </div>
-
-</div>
-
-</body>
-</html>`;
-
-  console.log("✅ [V2] HTML erfolgreich generiert, Länge:", fullHTML.length);
-  return fullHTML;
-};
-
 const router = express.Router();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -2653,56 +2030,6 @@ let usersCollection, contractsCollection, db;
 })();
 
 // ℹ️ AUTO-PDF wurde zu contracts.js verschoben (verhindert Puppeteer Race Conditions)
-
-// 📋 HELPER: Formatiere alle formData-Felder für den Prompt
-function formatAllFormData(formData, excludeKeys = ['title', 'customRequirements']) {
-  const lines = [];
-
-  // Gruppiere Felder nach Kategorien (basierend auf Feldnamen-Mustern)
-  const entries = Object.entries(formData)
-    .filter(([key, value]) => !excludeKeys.includes(key) && value && value.toString().trim() !== '');
-
-  for (const [key, value] of entries) {
-    // Formatiere den Schlüssel lesbarer (camelCase zu Titel)
-    const label = key
-      .replace(/([A-Z])/g, ' $1')
-      .replace(/^./, str => str.toUpperCase())
-      .trim();
-
-    lines.push(`${label}: ${value}`);
-  }
-
-  return lines.join('\n');
-}
-
-// 📋 HELPER: Füge alle zusätzlichen formData-Felder als Kontext hinzu
-function getAdditionalContext(formData, usedFields = []) {
-  const additionalFields = Object.entries(formData)
-    .filter(([key, value]) =>
-      !usedFields.includes(key) &&
-      !['title', 'customRequirements'].includes(key) &&
-      value &&
-      value.toString().trim() !== ''
-    );
-
-  if (additionalFields.length === 0) return '';
-
-  let context = '\n\n═══════════════════════════════════════════════════════\n';
-  context += '§ ZUSÄTZLICHE ANGABEN AUS DEM FORMULAR\n';
-  context += '═══════════════════════════════════════════════════════\n\n';
-
-  for (const [key, value] of additionalFields) {
-    const label = key
-      .replace(/([A-Z])/g, ' $1')
-      .replace(/^./, str => str.toUpperCase())
-      .trim();
-    context += `${label}: ${value}\n`;
-  }
-
-  context += '\nBITTE ALLE OBIGEN ZUSÄTZLICHEN ANGABEN IM VERTRAG BERÜCKSICHTIGEN!';
-
-  return context;
-}
 
 // 🎯 PROFESSIONELLE VERTRAGSGENERIERUNG - HAUPTROUTE
 router.post("/", verifyToken, async (req, res) => {
@@ -3036,77 +2363,32 @@ PRÄAMBEL
     
     switch (type) {
       case "kaufvertrag":
-        const verkäufer = companyDetails || formData.seller || "Max Mustermann GmbH";
-        const verkäuferAdresse = formData.sellerAddress || "Musterstraße 1, 12345 Musterstadt";
-        const verkäuferTyp = formData.sellerType || "Privatperson";
-        const käufer = formData.buyer || "Erika Musterfrau";
-        const käuferAdresse = formData.buyerAddress || "Beispielweg 2, 54321 Beispielstadt";
-
-        userPrompt = `Erstelle einen VOLLSTÄNDIGEN, professionellen Kaufvertrag mit MINDESTENS 12 Paragraphen.
+        const verkäufer = companyDetails || formData.seller || "Max Mustermann GmbH, Musterstraße 1, 12345 Musterstadt";
+        const käufer = formData.buyer || "Erika Musterfrau, Beispielweg 2, 54321 Beispielstadt";
+        
+        userPrompt = `Erstelle einen VOLLSTÄNDIGEN, professionellen Kaufvertrag mit MINDESTENS 11 Paragraphen.
 
 VERTRAGSTYP: KAUFVERTRAG
 
-═══════════════════════════════════════════════════════
-§ VERTRAGSPARTEIEN
-═══════════════════════════════════════════════════════
+VERKÄUFER (verwende als Partei A):
+${verkäufer}
 
-VERKÄUFER (Partei A):
-Name: ${verkäufer}
-Adresse: ${verkäuferAdresse}
-Verkäufertyp: ${verkäuferTyp}
+KÄUFER (verwende als Partei B):
+${käufer}
 
-KÄUFER (Partei B):
-Name: ${käufer}
-Adresse: ${käuferAdresse}
+KAUFGEGENSTAND:
+${formData.item || "Hochwertige Büromöbel bestehend aus 10 Schreibtischen, 10 Bürostühlen und 5 Aktenschränken"}
 
-═══════════════════════════════════════════════════════
-§ KAUFGEGENSTAND
-═══════════════════════════════════════════════════════
+KAUFPREIS:
+${formData.price || "15.000 EUR zzgl. 19% MwSt."}
 
-Art des Kaufgegenstands: ${formData.itemCategory || "Sonstige Waren"}
-Genaue Beschreibung: ${formData.item || "Kaufgegenstand laut Vereinbarung"}
-Zustand: ${formData.condition || "Gebraucht"}
-${formData.defects ? `Bekannte Mängel: ${formData.defects}` : 'Bekannte Mängel: Keine bekannt'}
-${formData.accessories ? `Zubehör/Lieferumfang: ${formData.accessories}` : ''}
+ÜBERGABE/LIEFERUNG:
+${formData.deliveryDate || new Date().toISOString().split('T')[0]}
 
-═══════════════════════════════════════════════════════
-§ KAUFPREIS & ZAHLUNG
-═══════════════════════════════════════════════════════
+ZAHLUNGSBEDINGUNGEN:
+${formData.paymentTerms || "14 Tage netto nach Rechnungsstellung"}
 
-Kaufpreis: ${formData.price || "Nach Vereinbarung"} (${formData.priceType || "Festpreis (Brutto)"})
-Zahlungsart: ${formData.paymentMethod || "Barzahlung bei Übergabe"}
-Zahlungsfrist: ${formData.paymentDeadline || "Bei Übergabe"}
-
-═══════════════════════════════════════════════════════
-§ ÜBERGABE & LIEFERUNG
-═══════════════════════════════════════════════════════
-
-Übergabeart: ${formData.deliveryType || "Abholung durch Käufer"}
-Übergabedatum: ${formData.deliveryDate || new Date().toISOString().split('T')[0]}
-Übergabeort: ${formData.deliveryLocation || "Adresse des Verkäufers"}
-Versandkosten: ${formData.shippingCosts || "Entfällt (Abholung)"}
-
-═══════════════════════════════════════════════════════
-§ GEWÄHRLEISTUNG & HAFTUNG
-═══════════════════════════════════════════════════════
-
-Gewährleistung: ${formData.warranty || "Gewährleistung ausgeschlossen (Privatverkauf)"}
-Eigentumsübergang: ${formData.ownershipTransfer || "Bei vollständiger Zahlung"}
-Gefahrübergang: ${formData.riskTransfer || "Bei Übergabe"}
-
-═══════════════════════════════════════════════════════
-WICHTIGE HINWEISE FÜR DIE VERTRAGSERSTELLUNG:
-═══════════════════════════════════════════════════════
-
-1. ALLE obigen Angaben müssen im Vertrag vollständig übernommen werden
-2. Bei Verkäufertyp "${verkäuferTyp}": ${verkäuferTyp === 'Privatperson' ? 'Gewährleistungsausschluss ist zulässig' : 'Gesetzliche Gewährleistung muss gewährt werden'}
-3. Der Vertrag muss nach deutschem Recht (BGB) formuliert sein
-4. Füge eine Salvatorische Klausel hinzu
-5. Erstelle einen professionellen, rechtssicheren Vertrag mit allen genannten Paragraphen
-${getAdditionalContext(formData, ['seller', 'sellerAddress', 'sellerType', 'buyer', 'buyerAddress', 'itemCategory', 'item', 'condition', 'defects', 'accessories', 'price', 'priceType', 'paymentMethod', 'paymentDeadline', 'deliveryType', 'deliveryDate', 'deliveryLocation', 'shippingCosts', 'warranty', 'ownershipTransfer', 'riskTransfer'])}
-${formData.customRequirements ? `\n\n═══════════════════════════════════════════════════════\n§ INDIVIDUELLE ANPASSUNGEN (VOM NUTZER GEWÜNSCHT)\n═══════════════════════════════════════════════════════\n\n${formData.customRequirements}\n\nDIESE INDIVIDUELLEN WÜNSCHE MÜSSEN IM VERTRAG BERÜCKSICHTIGT WERDEN!` : ''}
-
-Erstelle den VOLLSTÄNDIGEN Kaufvertrag mit professioneller juristischer Sprache!`;
+Erstelle einen VOLLSTÄNDIGEN Vertrag mit allen erforderlichen Paragraphen. Verwende professionelle juristische Sprache und fülle ALLE Angaben vollständig aus!`;
         break;
 
       case "freelancer":
@@ -3144,192 +2426,115 @@ WEITERE DETAILS:
 - Haftung: ${formData.liability || 'Begrenzt auf die Höhe des Auftragswerts'}
 - Kündigung: ${formData.terminationClause || "4 Wochen zum Monatsende"}
 - Gerichtsstand: ${formData.jurisdiction || 'Sitz des Auftraggebers'}
-${getAdditionalContext(formData, ['nameClient', 'clientAddress', 'nameFreelancer', 'freelancerAddress', 'freelancerTaxId', 'description', 'timeframe', 'payment', 'paymentTerms', 'invoiceInterval', 'workLocation', 'workingHours', 'rights', 'confidentiality', 'liability', 'terminationClause', 'jurisdiction', 'governingLaw', 'ipOwnership'])}
-${formData.customRequirements ? `\n\n═══════════════════════════════════════════════════════\n§ INDIVIDUELLE ANPASSUNGEN (VOM NUTZER GEWÜNSCHT)\n═══════════════════════════════════════════════════════\n\n${formData.customRequirements}\n\nDIESE INDIVIDUELLEN WÜNSCHE MÜSSEN IM VERTRAG BERÜCKSICHTIGT WERDEN!` : ''}
 
 Erstelle einen VOLLSTÄNDIGEN Vertrag mit allen erforderlichen Paragraphen für einen professionellen Freelancer-Vertrag!`;
         break;
 
       case "mietvertrag":
-        const vermieter = companyDetails || formData.landlord || "Immobilien GmbH";
-        const vermieterAdresse = formData.landlordAddress || "Vermietstraße 1, 60311 Frankfurt";
+        const vermieter = companyDetails || formData.landlord || "Immobilien GmbH, Vermietstraße 1, 60311 Frankfurt";
         const mieter = formData.tenant || "Familie Mustermann";
-        const mieterAdresse = formData.tenantAddress || "";
-
+        
         userPrompt = `Erstelle einen VOLLSTÄNDIGEN Mietvertrag für Wohnraum mit MINDESTENS 15 Paragraphen.
 
-VERTRAGSTYP: MIETVERTRAG FÜR ${formData.propertyType === 'Bürofläche' || formData.propertyType === 'Gewerbefläche' || formData.propertyType === 'Ladenfläche' || formData.propertyType === 'Lager/Halle' ? 'GEWERBEFLÄCHE' : 'WOHNRAUM'}
+VERTRAGSTYP: MIETVERTRAG FÜR WOHNRAUM
 
-═══════════════════════════════════════════════════════
-§ VERTRAGSPARTEIEN
-═══════════════════════════════════════════════════════
+VERMIETER (verwende als Partei A):
+${vermieter}
 
-VERMIETER (Partei A):
-Name: ${vermieter}
-Adresse: ${vermieterAdresse}
+MIETER (verwende als Partei B):
+${mieter}
+${formData.tenantAddress || ""}
 
-MIETER (Partei B):
-Name: ${mieter}
-${mieterAdresse ? `Aktuelle Adresse: ${mieterAdresse}` : ''}
+MIETOBJEKT:
+${formData.address || "3-Zimmer-Wohnung, 2. OG rechts, Musterstraße 15, 10115 Berlin"}
+Wohnfläche: ${formData.size || "85 qm"}
+Zimmer: ${formData.rooms || "3 Zimmer, Küche, Bad, Balkon"}
 
-═══════════════════════════════════════════════════════
-§ MIETOBJEKT
-═══════════════════════════════════════════════════════
+MIETBEGINN:
+${formData.startDate || new Date().toISOString().split('T')[0]}
 
-Art des Mietobjekts: ${formData.propertyType || "Wohnung"}
-Adresse: ${formData.address || "Musterstraße 15, 10115 Berlin"}
-Wohnfläche: ${formData.size || "85 m²"}
-Zimmer: ${formData.rooms || "3 Zimmer, Küche, Bad"}
-Ausstattung: ${formData.furnishing || "Unmöbliert"}
-
-═══════════════════════════════════════════════════════
-§ MIETKONDITIONEN
-═══════════════════════════════════════════════════════
-
-Mietbeginn: ${formData.startDate || new Date().toISOString().split('T')[0]}
-Mietdauer: ${formData.duration || "Unbefristet"}
-${formData.minDuration && formData.minDuration !== 'Keine' ? `Mindestmietdauer: ${formData.minDuration}` : ''}
-
-Kaltmiete (monatlich): ${formData.baseRent || "950,00 EUR"}
+MIETE:
+Kaltmiete: ${formData.baseRent || "950,00 EUR"}
 Nebenkosten-Vorauszahlung: ${formData.extraCosts || "200,00 EUR"}
-Heizkosten: ${formData.heatingCosts || "In Nebenkosten enthalten"}
-Gesamtmiete: ${parseFloat(formData.baseRent?.replace(/[^0-9,]/g, '').replace(',', '.') || 950) + parseFloat(formData.extraCosts?.replace(/[^0-9,]/g, '').replace(',', '.') || 200)} EUR
+Gesamtmiete: ${formData.totalRent || "1.150,00 EUR"}
 
-═══════════════════════════════════════════════════════
-§ KAUTION & ZAHLUNG
-═══════════════════════════════════════════════════════
+KAUTION:
+${formData.deposit || "3 Kaltmieten (2.850,00 EUR)"}
 
-Kaution: ${formData.deposit || "3 Nettokaltmieten"}
-Kautionszahlung: ${formData.depositPayment || "Einmalzahlung vor Einzug"}
-Mietzahlung fällig: ${formData.paymentDue || "1. des Monats (im Voraus)"}
+KÜNDIGUNG:
+${formData.termination || "Gesetzliche Kündigungsfrist von 3 Monaten"}
 
-═══════════════════════════════════════════════════════
-§ KÜNDIGUNG & LAUFZEIT
-═══════════════════════════════════════════════════════
-
-Kündigungsfrist: ${formData.termination || "Gesetzlich (3 Monate)"}
-${formData.minDuration && formData.minDuration !== 'Keine' ? `Beidseitiger Kündigungsverzicht: ${formData.minDuration}` : ''}
-
-═══════════════════════════════════════════════════════
-§ BESONDERE VEREINBARUNGEN
-═══════════════════════════════════════════════════════
-
+BESONDERE VEREINBARUNGEN:
 - Haustiere: ${formData.pets || "Nach Absprache mit dem Vermieter"}
-- Rauchen: ${formData.smoking || "Nicht gestattet in Gemeinschaftsräumen"}
 - Schönheitsreparaturen: ${formData.renovations || "Nach gesetzlichen Bestimmungen"}
-- Untervermietung: ${formData.subletting || "Nur mit Zustimmung des Vermieters"}
-- Garten/Balkon: ${formData.garden || "Sofern vorhanden: Mitbenutzung"}
+- Garten/Balkon: ${formData.garden || "Mitbenutzung des Gartens"}
 
-═══════════════════════════════════════════════════════
-WICHTIGE HINWEISE FÜR DIE VERTRAGSERSTELLUNG:
-═══════════════════════════════════════════════════════
-
-1. ALLE obigen Angaben müssen im Vertrag vollständig übernommen werden
-2. Bei ${formData.propertyType === 'Bürofläche' || formData.propertyType === 'Gewerbefläche' ? 'Gewerbemietvertrag' : 'Wohnraummietvertrag'} gelten unterschiedliche gesetzliche Regelungen
-3. Füge alle mietrechtlich relevanten Paragraphen ein (Betriebskosten, Hausordnung, Modernisierung, Mieterhöhung)
-4. Der Vertrag muss nach deutschem Mietrecht (BGB §§ 535 ff.) konform sein
-5. Füge eine Salvatorische Klausel hinzu
-${getAdditionalContext(formData, ['landlord', 'landlordAddress', 'tenant', 'tenantAddress', 'propertyType', 'address', 'size', 'rooms', 'furnishing', 'startDate', 'duration', 'baseRent', 'extraCosts', 'heatingCosts', 'deposit', 'depositPayment', 'paymentDue', 'termination', 'minDuration', 'pets', 'smoking', 'renovations', 'subletting', 'garden'])}
-${formData.customRequirements ? `\n\n═══════════════════════════════════════════════════════\n§ INDIVIDUELLE ANPASSUNGEN (VOM NUTZER GEWÜNSCHT)\n═══════════════════════════════════════════════════════\n\n${formData.customRequirements}\n\nDIESE INDIVIDUELLEN WÜNSCHE MÜSSEN IM VERTRAG BERÜCKSICHTIGT WERDEN!` : ''}
-
-Erstelle den VOLLSTÄNDIGEN Mietvertrag mit professioneller juristischer Sprache!`;
+Füge alle mietrechtlich relevanten Klauseln ein, inklusive:
+- Betriebskosten-Aufstellung
+- Schönheitsreparaturen
+- Hausordnung
+- Untervermietung
+- Modernisierung
+- Mieterhöhung
+- Betreten der Wohnung
+- Tierhaltung`;
         break;
 
       case "arbeitsvertrag":
-        const arbeitgeber = companyDetails || formData.employer || "Arbeitgeber GmbH";
-        const arbeitgeberAdresse = formData.employerAddress || "Firmenweg 1, 80331 München";
+        const arbeitgeber = companyDetails || formData.employer || "Arbeitgeber GmbH, Firmenweg 1, 80331 München";
         const arbeitnehmer = formData.employee || "Max Mustermann";
-        const arbeitnehmerAdresse = formData.employeeAddress || "Arbeitnehmerstraße 10, 80331 München";
-
+        
         userPrompt = `Erstelle einen VOLLSTÄNDIGEN Arbeitsvertrag mit MINDESTENS 18 Paragraphen.
 
 VERTRAGSTYP: ARBEITSVERTRAG
 
-═══════════════════════════════════════════════════════
-§ VERTRAGSPARTEIEN
-═══════════════════════════════════════════════════════
+ARBEITGEBER (verwende als Partei A):
+${arbeitgeber}
+vertreten durch: ${formData.representative || "Geschäftsführer Hans Schmidt"}
 
-ARBEITGEBER (Partei A):
-Firma: ${arbeitgeber}
-Adresse: ${arbeitgeberAdresse}
+ARBEITNEHMER (verwende als Partei B):
+${arbeitnehmer}
+${formData.employeeAddress || "Arbeitnehmerstraße 10, 80331 München"}
+geboren am: ${formData.birthDate || "01.01.1990"}
+Sozialversicherungsnummer: ${formData.socialSecurityNumber || "[wird nachgereicht]"}
 
-ARBEITNEHMER (Partei B):
-Name: ${arbeitnehmer}
-Adresse: ${arbeitnehmerAdresse}
-${formData.employeeBirthdate ? `Geburtsdatum: ${formData.employeeBirthdate}` : ''}
+POSITION/TÄTIGKEIT:
+${formData.position || "Senior Software Developer"}
+Abteilung: ${formData.department || "IT-Entwicklung"}
+Vorgesetzter: ${formData.supervisor || "Abteilungsleiter IT"}
 
-═══════════════════════════════════════════════════════
-§ TÄTIGKEIT
-═══════════════════════════════════════════════════════
+ARBEITSBEGINN:
+${formData.startDate || new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0]}
 
-Position: ${formData.position || "Mitarbeiter"}
-${formData.department ? `Abteilung: ${formData.department}` : ''}
-Tätigkeitsbeschreibung: ${formData.duties || "Entsprechend der Stellenausschreibung"}
-Arbeitsort: ${formData.workplace || "Firmensitz"}
+PROBEZEIT:
+${formData.probation || "6 Monate"}
 
-═══════════════════════════════════════════════════════
-§ VERTRAGSBEGINN & -DAUER
-═══════════════════════════════════════════════════════
+VERGÜTUNG:
+Bruttogehalt: ${formData.salary || "5.500,00 EUR monatlich"}
+Sonderzahlungen: ${formData.bonuses || "Weihnachtsgeld in Höhe eines Monatsgehalts"}
+Überstunden: ${formData.overtime || "Mit Gehalt abgegolten bis 10 Std./Monat"}
 
-Arbeitsbeginn: ${formData.startDate || new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0]}
-Vertragsart: ${formData.contractType || "Unbefristet"}
-${formData.endDate ? `Befristung bis: ${formData.endDate}` : ''}
-Probezeit: ${formData.probation || "6 Monate"}
-Kündigungsfrist in Probezeit: ${formData.probationNotice || "2 Wochen"}
+ARBEITSZEIT:
+${formData.workingHours || "40 Stunden pro Woche, Montag bis Freitag"}
+Gleitzeit: ${formData.flexTime || "Kernarbeitszeit 10:00 - 15:00 Uhr"}
+Homeoffice: ${formData.homeOffice || "2 Tage pro Woche nach Absprache"}
 
-═══════════════════════════════════════════════════════
-§ VERGÜTUNG
-═══════════════════════════════════════════════════════
+URLAUB:
+${formData.vacation || "30 Arbeitstage pro Kalenderjahr"}
 
-Bruttogehalt: ${formData.salary || "Nach Vereinbarung"}
-Gehaltszahlung: ${formData.paymentSchedule || "Monatlich zum Monatsende"}
-${formData.bonus ? `Variable Vergütung / Bonus: ${formData.bonus}` : ''}
-${formData.benefits ? `Zusatzleistungen: ${formData.benefits}` : ''}
+WEITERE REGELUNGEN:
+- Fortbildung: ${formData.training || "5 Tage Bildungsurlaub pro Jahr"}
+- Firmenwagen: ${formData.companyCar || "nicht vorgesehen"}
+- Betriebliche Altersvorsorge: ${formData.pension || "Arbeitgeberzuschuss 50%"}
 
-═══════════════════════════════════════════════════════
-§ ARBEITSZEIT
-═══════════════════════════════════════════════════════
-
-Wöchentliche Arbeitszeit: ${formData.workingHours || "40 Stunden"}
-Arbeitstage: ${formData.workingDays || "Montag bis Freitag"}
-Überstundenregelung: ${formData.overtime || "Mit Gehalt abgegolten"}
-
-═══════════════════════════════════════════════════════
-§ URLAUB & FREISTELLUNG
-═══════════════════════════════════════════════════════
-
-Jahresurlaub: ${formData.vacation || "30 Tage"}
-${formData.specialLeave ? `Sonderurlaub: ${formData.specialLeave}` : ''}
-
-═══════════════════════════════════════════════════════
-§ KÜNDIGUNG
-═══════════════════════════════════════════════════════
-
-Kündigungsfrist (nach Probezeit): ${formData.noticePeriod || "Gesetzlich (§622 BGB)"}
-Kündigungsfrist in Probezeit: ${formData.probationNotice || "2 Wochen"}
-
-═══════════════════════════════════════════════════════
-§ WEITERE VEREINBARUNGEN
-═══════════════════════════════════════════════════════
-
-Geheimhaltung: ${formData.confidentiality || "Standard-Klausel"}
-Wettbewerbsverbot: ${formData.nonCompete || "Keines"}
-${formData.nonCompete && formData.nonCompete !== 'Keines' ? `HINWEIS: Nachvertragliches Wettbewerbsverbot erfordert Karenzentschädigung von mind. 50% des Gehalts!` : ''}
-Geistiges Eigentum: ${formData.intellectualProperty || "Alle Arbeitsergebnisse gehen an Arbeitgeber"}
-
-═══════════════════════════════════════════════════════
-WICHTIGE HINWEISE FÜR DIE VERTRAGSERSTELLUNG:
-═══════════════════════════════════════════════════════
-
-1. ALLE obigen Angaben müssen im Vertrag vollständig übernommen werden
-2. Der Vertrag muss nach deutschem Arbeitsrecht (TzBfG, BUrlG, NachwG, etc.) konform sein
-3. Füge Paragraphen zu Nebentätigkeit, Krankheit, Zeugnis, Rückzahlungsklauseln ein
-4. Bei Wettbewerbsverbot: Karenzentschädigung (§ 74 HGB) nicht vergessen
-5. Füge eine Salvatorische Klausel und Schriftformklausel hinzu
-${getAdditionalContext(formData, ['employer', 'employerAddress', 'employee', 'employeeAddress', 'employeeBirthdate', 'position', 'department', 'duties', 'workplace', 'startDate', 'contractType', 'endDate', 'probation', 'probationNotice', 'salary', 'paymentSchedule', 'bonus', 'benefits', 'workingHours', 'workingDays', 'overtime', 'vacation', 'specialLeave', 'noticePeriod', 'confidentiality', 'nonCompete', 'intellectualProperty'])}
-${formData.customRequirements ? `\n\n═══════════════════════════════════════════════════════\n§ INDIVIDUELLE ANPASSUNGEN (VOM NUTZER GEWÜNSCHT)\n═══════════════════════════════════════════════════════\n\n${formData.customRequirements}\n\nDIESE INDIVIDUELLEN WÜNSCHE MÜSSEN IM VERTRAG BERÜCKSICHTIGT WERDEN!` : ''}
-
-Erstelle den VOLLSTÄNDIGEN Arbeitsvertrag mit professioneller juristischer Sprache!`;
+Füge alle arbeitsrechtlich relevanten Klauseln ein, inklusive:
+- Verschwiegenheitspflicht
+- Nebentätigkeit
+- Krankheit
+- Wettbewerbsverbot
+- Rückzahlungsklauseln
+- Vertragsstrafen
+- Zeugnis`;
         break;
 
       case "nda":
@@ -3369,523 +2574,254 @@ Füge alle relevanten Klauseln ein, inklusive:
 - Rückgabe/Vernichtung von Unterlagen
 - Keine Lizenzgewährung
 - Rechtsmittel bei Verstößen
-- Keine Verpflichtung zur Offenlegung
-${getAdditionalContext(formData, ['partyA', 'partyAAddress', 'partyB', 'partyBAddress', 'purpose', 'informationType', 'duration', 'confidentialityPeriod', 'permittedUse', 'penalty', 'ndaType'])}
-${formData.customRequirements ? `\n\n═══════════════════════════════════════════════════════\n§ INDIVIDUELLE ANPASSUNGEN (VOM NUTZER GEWÜNSCHT)\n═══════════════════════════════════════════════════════\n\n${formData.customRequirements}\n\nDIESE INDIVIDUELLEN WÜNSCHE MÜSSEN IM VERTRAG BERÜCKSICHTIGT WERDEN!` : ''}`;
+- Keine Verpflichtung zur Offenlegung`;
         break;
 
       case "gesellschaftsvertrag":
-        // 🏢 GESELLSCHAFTSVERTRAG - Alle Frontend-Felder strukturiert einbinden
-        const gesellschaftsform = formData.companyType || "GmbH (Gesellschaft mit beschränkter Haftung)";
-        const firmenname = formData.companyName || "Neue Ventures GmbH";
-        const firmensitz = formData.seat || formData.companySeat || "Berlin";
-        const geschaeftsadresse = formData.address || "Musterstraße 1, 10115 Berlin";
-        const unternehmensgegenstand = formData.purpose || "Entwicklung und Vertrieb von Software, IT-Beratung und damit verbundene Dienstleistungen";
+        userPrompt = `Erstelle einen VOLLSTÄNDIGEN Gesellschaftsvertrag (GmbH) mit MINDESTENS 20 Paragraphen.
 
-        userPrompt = `Erstelle einen VOLLSTÄNDIGEN ${gesellschaftsform}-Gesellschaftsvertrag mit MINDESTENS 20 Paragraphen.
+VERTRAGSTYP: GESELLSCHAFTSVERTRAG (GmbH)
 
-═══════════════════════════════════════════════════════
-VERTRAGSTYP: GESELLSCHAFTSVERTRAG (${gesellschaftsform})
-═══════════════════════════════════════════════════════
+GESELLSCHAFTSNAME:
+${formData.companyName || "Neue Ventures GmbH"}
 
-§ GRUNDLAGEN DER GESELLSCHAFT
-═══════════════════════════════════════════════════════
-Gesellschaftsform: ${gesellschaftsform}
-Firma/Name: ${firmenname}
-Sitz der Gesellschaft: ${firmensitz}
-Geschäftsadresse: ${geschaeftsadresse}
-Unternehmensgegenstand: ${unternehmensgegenstand}
+SITZ DER GESELLSCHAFT:
+${formData.companySeat || "Berlin"}
 
-§ GESELLSCHAFTER
-═══════════════════════════════════════════════════════
-Anzahl der Gesellschafter: ${formData.numberOfPartners || "2 Gesellschafter"}
-Gesellschafter (Namen, Adressen, Geburtsdaten):
-${formData.partners || `1. Max Mustermann, Musterstraße 1, 10115 Berlin, geb. 01.01.1980 - 60% Anteile
-2. Erika Musterfrau, Beispielweg 2, 10115 Berlin, geb. 15.06.1985 - 40% Anteile`}
+GESELLSCHAFTER:
+${formData.partners || `1. Max Mustermann, Musterstraße 1, 10115 Berlin - 60% Anteile
+2. Erika Musterfrau, Beispielweg 2, 10115 Berlin - 40% Anteile`}
 
-§ KAPITAL & ANTEILE
-═══════════════════════════════════════════════════════
-Stammkapital: ${formData.capital || "25.000 EUR"}
-Geschäftsanteile Verteilung:
-${formData.shares || `Gesellschafter 1: 15.000 EUR (Geschäftsanteil Nr. 1) = 60%
-Gesellschafter 2: 10.000 EUR (Geschäftsanteil Nr. 2) = 40%`}
-Einzahlung Stammkapital: ${formData.capitalContribution || "100% sofort bei Gründung"}
+STAMMKAPITAL:
+${formData.capital || "25.000 EUR"}
 
-§ GESCHÄFTSFÜHRUNG
-═══════════════════════════════════════════════════════
-Geschäftsführer: ${formData.management || "Max Mustermann"}
-Vertretungsregelung: ${formData.managementType || "Einzelvertretung (jeder GF allein)"}
-Vergütung Geschäftsführer: ${formData.managementCompensation || "Nach gesonderter Vereinbarung"}
+GESCHÄFTSANTEILE:
+${formData.shares || `Gesellschafter 1: 15.000 EUR (Geschäftsanteil Nr. 1)
+Gesellschafter 2: 10.000 EUR (Geschäftsanteil Nr. 2)`}
 
-§ GEWINNVERTEILUNG & BESCHLÜSSE
-═══════════════════════════════════════════════════════
-Gewinnverteilung: ${formData.profitDistribution || "Nach Geschäftsanteilen"}
-Rücklagenbildung (UG): ${formData.reserveRequirement || "Gesetzlich (25% des Jahresüberschusses)"}
-Stimmrechte: ${formData.votingRights || "Nach Geschäftsanteilen"}
-Beschlussmehrheit: ${formData.majorityRequirement || "Einfache Mehrheit (>50%)"}
+UNTERNEHMENSGEGENSTAND:
+${formData.purpose || "Entwicklung und Vertrieb von Software, IT-Beratung und damit verbundene Dienstleistungen"}
 
-§ ÜBERTRAGUNG & AUSTRITT
-═══════════════════════════════════════════════════════
-Übertragung von Anteilen: ${formData.shareTransfer || "Mit Zustimmung der Gesellschafterversammlung"}
-Vererbung von Anteilen: ${formData.inheritance || "Anteile vererbbar"}
-Austritt/Kündigung: ${formData.exitClause || "Mit 6 Monaten Kündigungsfrist"}
+GESCHÄFTSFÜHRUNG:
+${formData.management || "Max Mustermann (Einzelvertretungsberechtigung)"}
 
-§ LAUFZEIT
-═══════════════════════════════════════════════════════
-Dauer der Gesellschaft: ${formData.duration || "Unbefristet"}
-Geschäftsjahr: ${formData.fiscalYear || "Kalenderjahr (31.12.)"}
+GESCHÄFTSJAHR:
+${formData.fiscalYear || "Kalenderjahr"}
 
-${getAdditionalContext(formData, ['companyType', 'companyName', 'seat', 'companySeat', 'address', 'purpose', 'numberOfPartners', 'partners', 'capital', 'shares', 'capitalContribution', 'management', 'managementType', 'managementCompensation', 'profitDistribution', 'reserveRequirement', 'votingRights', 'majorityRequirement', 'shareTransfer', 'inheritance', 'exitClause', 'duration', 'fiscalYear'])}
-
-${formData.customRequirements ? `
-═══════════════════════════════════════════════════════
-§ INDIVIDUELLE ANPASSUNGEN (VOM NUTZER GEWÜNSCHT)
-═══════════════════════════════════════════════════════
-${formData.customRequirements}
-
-WICHTIG: Die obigen individuellen Anforderungen MÜSSEN im Vertrag berücksichtigt werden!
-` : ''}
-
-Erstelle einen VOLLSTÄNDIGEN, rechtssicheren Gesellschaftsvertrag mit MINDESTENS 20 Paragraphen:
-- § 1 Firma und Sitz
-- § 2 Gegenstand des Unternehmens
-- § 3 Stammkapital
-- § 4 Geschäftsanteile
-- § 5 Einlagen und Einzahlung
-- § 6 Geschäftsführung
-- § 7 Vertretung der Gesellschaft
-- § 8 Gesellschafterversammlung
-- § 9 Einberufung der Gesellschafterversammlung
-- § 10 Gesellschafterbeschlüsse
-- § 11 Gewinnverteilung und Entnahmen
-- § 12 Jahresabschluss
-- § 13 Abtretung und Belastung von Geschäftsanteilen
-- § 14 Vorkaufsrecht
-- § 15 Einziehung von Geschäftsanteilen
-- § 16 Abfindung ausscheidender Gesellschafter
-- § 17 Tod eines Gesellschafters
-- § 18 Wettbewerbsverbot
-- § 19 Kündigung
-- § 20 Auflösung und Liquidation
-- § 21 Bekanntmachungen
-- § 22 Gründungskosten
-- § 23 Schlussbestimmungen`;
+Füge alle gesellschaftsrechtlich relevanten Klauseln ein, inklusive:
+- Einlagen und Einzahlung
+- Geschäftsführung und Vertretung
+- Gesellschafterversammlung
+- Gesellschafterbeschlüsse
+- Gewinnverteilung
+- Jahresabschluss
+- Abtretung von Geschäftsanteilen
+- Vorkaufsrecht
+- Einziehung von Geschäftsanteilen
+- Abfindung
+- Wettbewerbsverbot
+- Kündigung
+- Auflösung und Liquidation`;
         break;
 
       case "darlehensvertrag":
-        // 💰 DARLEHENSVERTRAG - Alle Frontend-Felder strukturiert einbinden
-        const darlehensart = formData.loanType || "Privatdarlehen";
-        const darlehensgeberTyp = formData.lenderType || "Privatperson";
-        const darlehensgeber = companyDetails || formData.lender || "Max Mustermann";
-        const darlehensgeberAdresse = formData.lenderAddress || "Musterstraße 1, 10115 Berlin";
-        const darlehensnehmerTyp = formData.borrowerType || "Privatperson";
-        const darlehensnehmer = formData.borrower || "Erika Beispiel";
-        const darlehensnehmerAdresse = formData.borrowerAddress || "Beispielweg 5, 10115 Berlin";
+        const darlehensgeber = companyDetails || formData.lender || "Finanz GmbH, Kapitalweg 1, 60311 Frankfurt";
+        const darlehensnehmer = formData.borrower || "Max Mustermann, Kreditstraße 5, 10115 Berlin";
+        
+        userPrompt = `Erstelle einen VOLLSTÄNDIGEN Darlehensvertrag mit MINDESTENS 14 Paragraphen.
 
-        userPrompt = `Erstelle einen VOLLSTÄNDIGEN ${darlehensart} mit MINDESTENS 14 Paragraphen.
+VERTRAGSTYP: DARLEHENSVERTRAG
 
-═══════════════════════════════════════════════════════
-VERTRAGSTYP: DARLEHENSVERTRAG (${darlehensart})
-═══════════════════════════════════════════════════════
+DARLEHENSGEBER (Partei A):
+${darlehensgeber}
 
-§ DARLEHENSART
-═══════════════════════════════════════════════════════
-Art des Darlehens: ${darlehensart}
-Verwendungszweck: ${formData.purpose || "Nicht zweckgebunden"}
+DARLEHENSNEHMER (Partei B):
+${darlehensnehmer}
 
-§ DARLEHENSGEBER (PARTEI A)
-═══════════════════════════════════════════════════════
-Darlehensgeber ist: ${darlehensgeberTyp}
-Name: ${darlehensgeber}
-Anschrift: ${darlehensgeberAdresse}
+DARLEHENSSUMME:
+${formData.amount || "50.000,00 EUR (in Worten: fünfzigtausend Euro)"}
 
-§ DARLEHENSNEHMER (PARTEI B)
-═══════════════════════════════════════════════════════
-Darlehensnehmer ist: ${darlehensnehmerTyp}
-Name: ${darlehensnehmer}
-Anschrift: ${darlehensnehmerAdresse}
+AUSZAHLUNG:
+${formData.disbursement || "Überweisung auf das Konto des Darlehensnehmers binnen 5 Werktagen nach Unterzeichnung"}
 
-§ DARLEHENSSUMME & AUSZAHLUNG
-═══════════════════════════════════════════════════════
-Darlehenssumme: ${formData.amount ? formData.amount + " EUR" : "50.000,00 EUR"}
-Auszahlungsdatum: ${formData.disbursementDate || new Date().toISOString().split('T')[0]}
-Auszahlungsart: ${formData.disbursementMethod || "Vollständige Auszahlung"}
-Bankverbindung für Auszahlung: ${formData.bankDetails || "Wird separat mitgeteilt"}
+ZINSSATZ:
+${formData.interestRate || "4,5% p.a. (nominal)"}
+Zinsberechnung: ${formData.interestCalculation || "30/360 Tage Methode"}
+Zinszahlung: ${formData.interestPayment || "Monatlich zum Monatsende"}
 
-§ ZINSEN & KONDITIONEN
-═══════════════════════════════════════════════════════
-Zinsvereinbarung: ${formData.interestType || "Fester Zinssatz"}
-Zinssatz (% p.a.): ${formData.interestRate || "3,5"}
-Zinszahlung: ${formData.interestPayment || "Monatlich"}
-Verzugszinsen: ${formData.defaultInterest || "Gesetzlicher Verzugszins (5% über Basiszins)"}
+LAUFZEIT:
+${formData.duration || "5 Jahre (60 Monate)"}
+Beginn: ${formData.startDate || new Date().toISOString().split('T')[0]}
 
-§ TILGUNG & RÜCKZAHLUNG
-═══════════════════════════════════════════════════════
-Tilgungsart: ${formData.repayment || "Annuitätendarlehen (konstante Raten)"}
-Ratenhöhe: ${formData.installmentAmount ? formData.installmentAmount + " EUR" : "Nach Berechnung"}
-Ratenintervall: ${formData.installmentInterval || "Monatlich"}
-Erste Rate fällig am: ${formData.firstInstallmentDate || "01. des Folgemonats"}
+TILGUNG:
+${formData.repayment || "Monatliche Annuität von 932,56 EUR"}
+Sondertilgungen: ${formData.specialRepayments || "Jährlich bis zu 20% der ursprünglichen Darlehenssumme kostenfrei möglich"}
 
-§ LAUFZEIT & KÜNDIGUNG
-═══════════════════════════════════════════════════════
-Laufzeit: ${formData.duration || "5 Jahre"}
-Laufzeitende / Fälligkeit: ${formData.endDate || "Nach Ablauf der vereinbarten Laufzeit"}
-Ordentliche Kündigung: ${formData.terminationRight || "Beide Seiten mit 3 Monaten Frist"}
-Vorzeitige Rückzahlung: ${formData.earlyRepayment || "Jederzeit ohne Vorfälligkeitsentschädigung"}
+SICHERHEITEN:
+${formData.security || "Grundschuld auf Immobilie Grundbuch Berlin Blatt 12345"}
 
-§ SICHERHEITEN
-═══════════════════════════════════════════════════════
-Art der Sicherheiten: ${formData.securityType || "Keine Sicherheiten (Blankokredit)"}
-Beschreibung der Sicherheiten: ${formData.securityDetails || "Entfällt"}
+VERWENDUNGSZWECK:
+${formData.purpose || "Immobilienfinanzierung / Modernisierung"}
 
-§ BESONDERE VEREINBARUNGEN
-═══════════════════════════════════════════════════════
-Außerordentliche Kündigung bei: ${formData.extraordinaryTermination || "Zahlungsverzug (2+ Raten)"}
-Verwendungsnachweis: ${formData.usageRestriction || "Nicht erforderlich"}
-Besondere Vereinbarungen: ${formData.specialConditions || "Keine besonderen Vereinbarungen"}
-
-${getAdditionalContext(formData, ['loanType', 'lenderType', 'lender', 'lenderAddress', 'borrowerType', 'borrower', 'borrowerAddress', 'purpose', 'amount', 'disbursementDate', 'disbursementMethod', 'bankDetails', 'interestType', 'interestRate', 'interestPayment', 'defaultInterest', 'repayment', 'installmentAmount', 'installmentInterval', 'firstInstallmentDate', 'duration', 'endDate', 'terminationRight', 'earlyRepayment', 'securityType', 'securityDetails', 'extraordinaryTermination', 'usageRestriction', 'specialConditions'])}
-
-${formData.customRequirements ? `
-═══════════════════════════════════════════════════════
-§ INDIVIDUELLE ANPASSUNGEN (VOM NUTZER GEWÜNSCHT)
-═══════════════════════════════════════════════════════
-${formData.customRequirements}
-
-WICHTIG: Die obigen individuellen Anforderungen MÜSSEN im Vertrag berücksichtigt werden!
-` : ''}
-
-Erstelle einen VOLLSTÄNDIGEN, rechtssicheren Darlehensvertrag mit MINDESTENS 14 Paragraphen:
-- § 1 Vertragsgegenstand
-- § 2 Darlehenssumme und Auszahlung
-- § 3 Zinsen
-- § 4 Tilgung und Rückzahlung
-- § 5 Sondertilgungen
-- § 6 Laufzeit
-- § 7 Sicherheiten
-- § 8 Verwendungszweck
-- § 9 Verzug und Verzugszinsen
-- § 10 Ordentliche Kündigung
-- § 11 Außerordentliche Kündigung
-- § 12 Vorfälligkeitsentschädigung
-- § 13 Abtretungsverbot
-- § 14 Schlussbestimmungen`;
+Füge alle relevanten Klauseln ein, inklusive:
+- Auszahlungsvoraussetzungen
+- Verzug und Verzugszinsen
+- Kündigungsrechte
+- Vorfälligkeitsentschädigung
+- Aufrechnung und Abtretung
+- Kosten und Gebühren`;
         break;
 
       case "lizenzvertrag":
-        // ©️ LIZENZVERTRAG - Alle Frontend-Felder strukturiert einbinden
-        const ipTyp = formData.ipType || "Software/App";
-        const lizenzgeberTyp = formData.licensorType || "Unternehmen";
-        const lizenzgeber = companyDetails || formData.licensor || "Software Innovations GmbH";
-        const lizenzgeberAdresse = formData.licensorAddress || "Techpark 1, 80331 München";
-        const rechtestellung = formData.licensorRights || "Alleiniger Rechteinhaber";
-        const lizenznehmerTyp = formData.licenseeType || "Unternehmen";
-        const lizenznehmer = formData.licensee || "Anwender AG";
-        const lizenznehmerAdresse = formData.licenseeAddress || "Nutzerweg 10, 10115 Berlin";
+        const lizenzgeber = companyDetails || formData.licensor || "Software Innovations GmbH, Techpark 1, 80331 München";
+        const lizenznehmer = formData.licensee || "Anwender AG, Nutzerweg 10, 10115 Berlin";
+        
+        userPrompt = `Erstelle einen VOLLSTÄNDIGEN Lizenzvertrag mit MINDESTENS 15 Paragraphen.
 
-        userPrompt = `Erstelle einen VOLLSTÄNDIGEN Lizenzvertrag für ${ipTyp} mit MINDESTENS 15 Paragraphen.
+VERTRAGSTYP: LIZENZVERTRAG
 
-═══════════════════════════════════════════════════════
-VERTRAGSTYP: LIZENZVERTRAG (${ipTyp})
-═══════════════════════════════════════════════════════
+LIZENZGEBER (Partei A):
+${lizenzgeber}
 
-§ LIZENZGEGENSTAND
-═══════════════════════════════════════════════════════
-Art des geistigen Eigentums: ${ipTyp}
-Bezeichnung: ${formData.subject || "Lizenzgegenstand"}
-Detaillierte Beschreibung: ${formData.subjectDescription || "Vollständige Beschreibung des Lizenzgegenstands"}
-Registernummer (falls vorhanden): ${formData.registrationNumber || "Nicht registriert / Entfällt"}
+LIZENZNEHMER (Partei B):
+${lizenznehmer}
 
-§ LIZENZGEBER (PARTEI A)
-═══════════════════════════════════════════════════════
-Lizenzgeber ist: ${lizenzgeberTyp}
-Name: ${lizenzgeber}
-Anschrift: ${lizenzgeberAdresse}
-Rechtestellung: ${rechtestellung}
+LIZENZGEGENSTAND:
+${formData.subject || "Software 'DataAnalyzer Pro' Version 5.0 inklusive Updates für die Vertragslaufzeit"}
 
-§ LIZENZNEHMER (PARTEI B)
-═══════════════════════════════════════════════════════
-Lizenznehmer ist: ${lizenznehmerTyp}
-Name: ${lizenznehmer}
-Anschrift: ${lizenznehmerAdresse}
+LIZENZART:
+${formData.licenseType || "Nicht-exklusive, übertragbare Unternehmenslizenz"}
 
-§ LIZENZUMFANG
-═══════════════════════════════════════════════════════
-Lizenzart: ${formData.licenseType || "Einfache Lizenz (nicht-exklusiv)"}
-Territorium: ${formData.territory || "Deutschland"}
-Territorium Details: ${formData.territoryDetails || "Wie oben angegeben"}
-Nutzungsarten: ${formData.usageRights || "Alle Nutzungsarten"}
-Unterlizenzierung: ${formData.sublicenseRight || "Nicht gestattet"}
-Übertragbarkeit: ${formData.transferRight || "Nicht übertragbar"}
+LIZENZUMFANG:
+Nutzer: ${formData.users || "bis zu 50 gleichzeitige Nutzer"}
+Installation: ${formData.installations || "Unbegrenzte Installationen innerhalb des Unternehmens"}
+Nutzungsart: ${formData.usage || "Kommerzielle Nutzung erlaubt"}
 
-§ LIZENZGEBÜHREN
-═══════════════════════════════════════════════════════
-Vergütungsmodell: ${formData.feeModel || "Einmalzahlung (Flat Fee)"}
-Einmalzahlung: ${formData.upfrontFee ? formData.upfrontFee + " EUR" : "Nach Vereinbarung"}
-Lizenzgebühr / Royalty: ${formData.royaltyRate || "Entfällt"}
-Mindestlizenzgebühr (€/Jahr): ${formData.minimumRoyalty ? formData.minimumRoyalty + " EUR" : "Keine Mindestgebühr"}
-Abrechnungszeitraum: ${formData.paymentInterval || "Einmalig"}
+TERRITORIUM:
+${formData.territory || "Deutschland, Österreich, Schweiz (DACH-Region)"}
 
-§ LAUFZEIT & KÜNDIGUNG
-═══════════════════════════════════════════════════════
-Laufzeit: ${formData.duration || "Unbefristet"}
-Lizenzbeginn: ${formData.startDate || new Date().toISOString().split('T')[0]}
-Kündigungsfrist: ${formData.terminationNotice || "3 Monate"}
-Automatische Verlängerung: ${formData.autoRenewal || "Keine Verlängerung (endet automatisch)"}
+LIZENZGEBÜHREN:
+Einmalige Lizenzgebühr: ${formData.fee || "25.000,00 EUR netto"}
+Jährliche Wartung: ${formData.maintenance || "5.000,00 EUR netto"}
+Zahlungsbedingungen: ${formData.payment || "30 Tage netto nach Rechnungsstellung"}
 
-§ GEWÄHRLEISTUNG & HAFTUNG
-═══════════════════════════════════════════════════════
-Gewährleistung: ${formData.warranty || "Standardgewährleistung (12 Monate)"}
-Haftungsbegrenzung: ${formData.liabilityLimit || "Auf Vorsatz/grobe Fahrlässigkeit begrenzt"}
-Freistellung bei Rechtsmängeln: ${formData.indemnification || "Lizenzgeber stellt Lizenznehmer frei"}
+LAUFZEIT:
+${formData.duration || "Unbefristet mit jährlicher Wartungsverlängerung"}
 
-§ SONDERBESTIMMUNGEN
-═══════════════════════════════════════════════════════
-Verbesserungen/Weiterentwicklungen: ${formData.improvements || "Verbleiben beim Lizenznehmer"}
-Prüfungsrecht: ${formData.auditRight || "Jährliches Audit-Recht"}
-Vertraulichkeit: ${formData.confidentiality || "Standard-Vertraulichkeit"}
-Besondere Vereinbarungen: ${formData.specialTerms || "Keine besonderen Vereinbarungen"}
+SUPPORT:
+${formData.support || "E-Mail und Telefon-Support werktags 9-17 Uhr, Updates und Patches inklusive"}
 
-${getAdditionalContext(formData, ['ipType', 'licensorType', 'licensor', 'licensorAddress', 'licensorRights', 'licenseeType', 'licensee', 'licenseeAddress', 'subject', 'subjectDescription', 'registrationNumber', 'licenseType', 'territory', 'territoryDetails', 'usageRights', 'sublicenseRight', 'transferRight', 'feeModel', 'upfrontFee', 'royaltyRate', 'minimumRoyalty', 'paymentInterval', 'duration', 'startDate', 'terminationNotice', 'autoRenewal', 'warranty', 'liabilityLimit', 'indemnification', 'improvements', 'auditRight', 'confidentiality', 'specialTerms'])}
-
-${formData.customRequirements ? `
-═══════════════════════════════════════════════════════
-§ INDIVIDUELLE ANPASSUNGEN (VOM NUTZER GEWÜNSCHT)
-═══════════════════════════════════════════════════════
-${formData.customRequirements}
-
-WICHTIG: Die obigen individuellen Anforderungen MÜSSEN im Vertrag berücksichtigt werden!
-` : ''}
-
-Erstelle einen VOLLSTÄNDIGEN, rechtssicheren Lizenzvertrag mit MINDESTENS 15 Paragraphen:
-- § 1 Vertragsgegenstand und Definitionen
-- § 2 Lizenzgegenstand
-- § 3 Lizenzerteilung
-- § 4 Lizenzumfang und Nutzungsrechte
-- § 5 Territoriale Beschränkungen
-- § 6 Unterlizenzierung
-- § 7 Lizenzgebühren und Zahlungsbedingungen
-- § 8 Abrechnung und Nachweis
-- § 9 Laufzeit und Kündigung
-- § 10 Gewährleistung
-- § 11 Haftung und Haftungsbeschränkung
-- § 12 Schutzrechte Dritter und Freistellung
-- § 13 Geheimhaltung
-- § 14 Prüfungsrechte (Audit)
-- § 15 Schlussbestimmungen`;
+Füge alle relevanten Klauseln ein, inklusive:
+- Rechteeinräumung im Detail
+- Nutzungsbeschränkungen
+- Quellcode-Hinterlegung
+- Gewährleistung und Haftung
+- Schutzrechte Dritter
+- Vertraulichkeit
+- Audit-Rechte`;
         break;
 
       case "aufhebungsvertrag":
-        // 🤝 AUFHEBUNGSVERTRAG - Alle Frontend-Felder strukturiert einbinden
-        const arbeitgeberAufhebung = companyDetails || formData.employer || "Arbeitgeber GmbH";
-        const arbeitgeberAdresseAufhebung = formData.employerAddress || "Unternehmensstraße 1, 50667 Köln";
-        const vertretenDurch = formData.employerRepresentative || "Geschäftsführer/Personalleiter";
-        const arbeitnehmerAufhebung = formData.employee || "Max Mustermann";
-        const arbeitnehmerAdresseAufhebung = formData.employeeAddress || "Arbeitnehmerstraße 20, 50667 Köln";
-
+        const arbeitgeberAufhebung = companyDetails || formData.employer || "Arbeitgeber GmbH, Trennungsweg 1, 50667 Köln";
+        const arbeitnehmerAufhebung = formData.employee || "Maria Musterfrau";
+        
         userPrompt = `Erstelle einen VOLLSTÄNDIGEN Aufhebungsvertrag mit MINDESTENS 16 Paragraphen.
 
-═══════════════════════════════════════════════════════
-VERTRAGSTYP: AUFHEBUNGSVERTRAG (Arbeitsrecht)
-═══════════════════════════════════════════════════════
+VERTRAGSTYP: AUFHEBUNGSVERTRAG
 
-§ VERTRAGSPARTEIEN
-═══════════════════════════════════════════════════════
-ARBEITGEBER:
-Name/Firma: ${arbeitgeberAufhebung}
-Anschrift: ${arbeitgeberAdresseAufhebung}
-Vertreten durch: ${vertretenDurch}
+ARBEITGEBER (Partei A):
+${arbeitgeberAufhebung}
+vertreten durch: ${formData.representative || "Personalleiter Thomas Schmidt"}
 
-ARBEITNEHMER/IN:
-Name: ${arbeitnehmerAufhebung}
-Anschrift: ${arbeitnehmerAdresseAufhebung}
-Geburtsdatum: ${formData.employeeBirthdate || "Wird ergänzt"}
+ARBEITNEHMER (Partei B):
+${arbeitnehmerAufhebung}
+${formData.employeeAddress || "Arbeitnehmerstraße 20, 50667 Köln"}
+Personalnummer: ${formData.employeeNumber || "2024-4567"}
 
-§ BISHERIGES ARBEITSVERHÄLTNIS
-═══════════════════════════════════════════════════════
-Position/Tätigkeit: ${formData.position || "Angestellte/r"}
-Abteilung: ${formData.department || "Nicht angegeben"}
-Beschäftigt seit: ${formData.employmentStart || "Datum wird ergänzt"}
-Aktuelles Bruttogehalt (€/Monat): ${formData.currentSalary ? formData.currentSalary + " EUR" : "Wird ergänzt"}
+BESTEHENDES ARBEITSVERHÄLTNIS:
+Beginn: ${formData.employmentStart || "01.04.2020"}
+Position: ${formData.position || "Marketing Manager"}
 
-§ BEENDIGUNG
-═══════════════════════════════════════════════════════
-Beendigungsgrund: ${formData.reason || "Einvernehmlich ohne nähere Angabe"}
-Beendigungsdatum: ${formData.endDate || "Wird ergänzt"}
-Kündigungsfrist: ${formData.noticePeriodWaived || "Kündigungsfrist eingehalten"}
-Initiative ging aus von: ${formData.initiator || "Einvernehmlich/Beide"}
+BEENDIGUNGSDATUM:
+${formData.endDate || "31.12.2024"}
 
-§ ABFINDUNG
-═══════════════════════════════════════════════════════
-Abfindungsregelung: ${formData.severanceType || "Einmalzahlung"}
-Abfindungshöhe: ${formData.severanceAmount ? formData.severanceAmount + " EUR brutto" : "Nach Vereinbarung"}
-Fälligkeit der Abfindung: ${formData.severancePaymentDate || "Mit letzter Gehaltsabrechnung"}
+BEENDIGUNGSGRUND:
+${formData.reason || "Einvernehmliche Beendigung auf Wunsch des Arbeitnehmers wegen beruflicher Neuorientierung"}
 
-§ FREISTELLUNG & RESTURLAUB
-═══════════════════════════════════════════════════════
-Freistellung: ${formData.releaseFromWork || "Bezahlte Freistellung (unwiderruflich)"}
-Freistellung ab: ${formData.releaseFromDate || "Nach Vereinbarung"}
-Resturlaub (Tage): ${formData.vacationDaysRemaining || "Wird berechnet"}
-Urlaubsabgeltung: ${formData.vacationHandling || "Urlaubsgewährung während Freistellung"}
-Überstundenabgeltung: ${formData.overtimeHandling || "Mit Abfindung abgegolten"}
+ABFINDUNG:
+${formData.severance || "3 Bruttomonatsgehälter = 15.000,00 EUR brutto"}
+Auszahlung: ${formData.severancePayment || "Mit der letzten Gehaltsabrechnung"}
+Versteuerung: ${formData.taxation || "Nach § 34 EStG (Fünftelregelung)"}
 
-§ ARBEITSZEUGNIS
-═══════════════════════════════════════════════════════
-Art des Zeugnisses: ${formData.referenceType || "Qualifiziertes Zeugnis"}
-Zeugnisqualität: ${formData.referenceGrade || "Gut (Note 2)"}
-Zeugnis bis: ${formData.referenceDeadline || "Zum Beendigungsdatum"}
+RESTURLAUB:
+${formData.vacation || "25 Tage, werden bis zum Beendigungsdatum gewährt"}
 
-§ RÜCKGABEPFLICHTEN
-═══════════════════════════════════════════════════════
-Rückzugebende Gegenstände: ${formData.returnItems || "Keine besonderen Gegenstände"}
-Details zu Rückgaben: ${formData.returnItemsDetails || "Entfällt"}
-Dienstwagenregelung: ${formData.companyCarHandling || "Kein Dienstwagen"}
+FREISTELLUNG:
+${formData.gardenLeave || "Unwiderrufliche Freistellung ab 01.11.2024 unter Anrechnung von Resturlaub"}
 
-§ ABSCHLIESSENDE REGELUNGEN
-═══════════════════════════════════════════════════════
-Verschwiegenheitspflicht: ${formData.confidentialityClause || "Gesetzliche Verschwiegenheit"}
-Wettbewerbsverbot: ${formData.nonCompete || "Kein Wettbewerbsverbot"}
-Erledigungsklausel: ${formData.settlementClause || "Vollständige Erledigung (Generalquittung)"}
-Besondere Vereinbarungen: ${formData.specialAgreements || "Keine besonderen Vereinbarungen"}
+ARBEITSZEUGNIS:
+${formData.reference || "Qualifiziertes Zeugnis mit der Note 'sehr gut', Entwurf als Anlage"}
 
-${getAdditionalContext(formData, ['employer', 'employerAddress', 'employerRepresentative', 'employee', 'employeeAddress', 'employeeBirthdate', 'position', 'department', 'employmentStart', 'currentSalary', 'reason', 'endDate', 'noticePeriodWaived', 'initiator', 'severanceType', 'severanceAmount', 'severancePaymentDate', 'releaseFromWork', 'releaseFromDate', 'vacationDaysRemaining', 'vacationHandling', 'overtimeHandling', 'referenceType', 'referenceGrade', 'referenceDeadline', 'returnItems', 'returnItemsDetails', 'companyCarHandling', 'confidentialityClause', 'nonCompete', 'settlementClause', 'specialAgreements'])}
+WEITERE REGELUNGEN:
+- Bonuszahlung: ${formData.bonus || "Anteiliger Bonus für 2024"}
+- Firmenwagen: ${formData.companyCar || "Rückgabe zum Beendigungsdatum"}
+- Firmenhandy/Laptop: ${formData.equipment || "Rückgabe zum Beendigungsdatum"}
+- Betriebliche Altersvorsorge: ${formData.pension || "Unverfallbare Anwartschaften bleiben bestehen"}
 
-${formData.customRequirements ? `
-═══════════════════════════════════════════════════════
-§ INDIVIDUELLE ANPASSUNGEN (VOM NUTZER GEWÜNSCHT)
-═══════════════════════════════════════════════════════
-${formData.customRequirements}
-
-WICHTIG: Die obigen individuellen Anforderungen MÜSSEN im Vertrag berücksichtigt werden!
-` : ''}
-
-WICHTIG: Füge einen Hinweis zur möglichen Sperrzeit beim Arbeitslosengeld (§ 159 SGB III) ein!
-
-Erstelle einen VOLLSTÄNDIGEN, rechtssicheren Aufhebungsvertrag mit MINDESTENS 16 Paragraphen:
-- § 1 Beendigung des Arbeitsverhältnisses
-- § 2 Beendigungszeitpunkt
-- § 3 Abfindung
-- § 4 Vergütung und Gehaltsfortzahlung
-- § 5 Freistellung
-- § 6 Resturlaub
-- § 7 Überstunden
-- § 8 Arbeitszeugnis
-- § 9 Rückgabe von Firmeneigentum
-- § 10 Verschwiegenheitspflicht
-- § 11 Wettbewerbsverbot
-- § 12 Betriebliche Altersversorgung
-- § 13 Ausgleichsklausel
-- § 14 Hinweis zur Sperrzeit beim Arbeitslosengeld
-- § 15 Widerrufsbelehrung
-- § 16 Schlussbestimmungen`;
+Füge alle relevanten Klauseln ein, inklusive:
+- Gehaltsfortzahlung
+- Wettbewerbsverbot
+- Verschwiegenheit
+- Rückgabe von Firmeneigentum
+- Ausgleichsklausel
+- Sperrzeit-Hinweis`;
         break;
 
       case "pachtvertrag":
-        // 🌾 PACHTVERTRAG - Alle Frontend-Felder strukturiert einbinden
-        const pachtTyp = formData.pachtType || "Landwirtschaftliche Fläche";
-        const verpächterTyp = formData.lessorType || "Privatperson";
-        const verpächter = companyDetails || formData.lessor || "Verpächter GmbH";
-        const verpächterAdresse = formData.lessorAddress || "Eigentumsweg 1, 01067 Dresden";
-        const pächterTyp = formData.lesseeType || "Landwirtschaftlicher Betrieb";
-        const pächter = formData.lessee || "Landwirt Müller";
-        const pächterAdresse = formData.lesseeAddress || "Feldweg 10, 01099 Dresden";
+        const verpächter = companyDetails || formData.lessor || "Grundstücks GmbH, Pachtweg 1, 01067 Dresden";
+        const pächter = formData.lessee || "Landwirt Müller, Feldweg 10, 01099 Dresden";
+        
+        userPrompt = `Erstelle einen VOLLSTÄNDIGEN Pachtvertrag mit MINDESTENS 14 Paragraphen.
 
-        userPrompt = `Erstelle einen VOLLSTÄNDIGEN ${pachtTyp}-Pachtvertrag mit MINDESTENS 14 Paragraphen.
+VERTRAGSTYP: PACHTVERTRAG
 
-═══════════════════════════════════════════════════════
-VERTRAGSTYP: PACHTVERTRAG (${pachtTyp})
-═══════════════════════════════════════════════════════
+VERPÄCHTER (Partei A):
+${verpächter}
 
-§ PACHTGEGENSTAND
-═══════════════════════════════════════════════════════
-Art der Pacht: ${pachtTyp}
-Bezeichnung: ${formData.object || "Pachtobjekt"}
-Adresse/Lage: ${formData.objectAddress || "Wird ergänzt"}
-Größe/Fläche: ${formData.objectSize || "Wird ergänzt"}
-Detailbeschreibung: ${formData.objectDescription || "Detaillierte Beschreibung des Pachtobjekts"}
-Grundbuch/Kataster: ${formData.cadastralInfo || "Entfällt / Nicht registriert"}
+PÄCHTER (Partei B):
+${pächter}
 
-§ VERPÄCHTER (PARTEI A)
-═══════════════════════════════════════════════════════
-Verpächter ist: ${verpächterTyp}
-Name: ${verpächter}
-Anschrift: ${verpächterAdresse}
+PACHTOBJEKT:
+${formData.object || "Landwirtschaftliche Nutzfläche, 10 Hektar, Flurstück 123/45, Gemarkung Dresden"}
+Lage: ${formData.location || "Angrenzend an B6, mit Zufahrt über Feldweg"}
+Bodenbeschaffenheit: ${formData.soilQuality || "Ackerland, Bodenqualität 65 Punkte"}
 
-§ PÄCHTER (PARTEI B)
-═══════════════════════════════════════════════════════
-Pächter ist: ${pächterTyp}
-Name: ${pächter}
-Anschrift: ${pächterAdresse}
-Befähigung/Qualifikation: ${formData.lesseeQualification || "Nicht angegeben"}
+PACHTBEGINN:
+${formData.startDate || "01.01.2025"}
 
-§ NUTZUNG
-═══════════════════════════════════════════════════════
-Nutzungszweck: ${formData.usage || "Nach Vereinbarung"}
-Nutzungsdetails/-beschränkungen: ${formData.usageDetails || "Keine besonderen Einschränkungen"}
-Erforderliche Genehmigungen: ${formData.operatingLicense || "Keine besonderen Genehmigungen nötig"}
-Mitgepachtetes Inventar: ${formData.inventoryIncluded || "Kein Inventar enthalten"}
+PACHTDAUER:
+${formData.duration || "12 Jahre (bis 31.12.2036)"}
 
-§ PACHTZINS
-═══════════════════════════════════════════════════════
-Pachtzins: ${formData.rentAmount ? formData.rentAmount + " EUR" : "Nach Vereinbarung"}
-Zahlungsintervall: ${formData.rentInterval || "Monatlich im Voraus"}
-Fällig zum: ${formData.rentDueDay || "1. des Monats"}
-Pachtzinsanpassung: ${formData.rentAdjustment || "Indexanpassung (Verbraucherpreisindex)"}
-Nebenkosten: ${formData.rentAdditionalCosts || "Zusätzlich nach Verbrauch"}
+PACHTZINS:
+${formData.rent || "500,00 EUR pro Hektar und Jahr = 5.000,00 EUR jährlich"}
+Zahlungsweise: ${formData.paymentMethod || "Jährlich im Voraus zum 01.01."}
+Anpassung: ${formData.adjustment || "Alle 3 Jahre entsprechend dem Verbraucherpreisindex"}
 
-§ LAUFZEIT & KÜNDIGUNG
-═══════════════════════════════════════════════════════
-Pachtbeginn: ${formData.startDate || new Date().toISOString().split('T')[0]}
-Pachtdauer: ${formData.duration || "5 Jahre"}
-Pachtende (falls befristet): ${formData.endDate || "Nach Ablauf der Laufzeit"}
-Kündigungsfrist: ${formData.terminationNotice || "6 Monate zum Jahresende"}
-Verlängerungsoption: ${formData.renewalOption || "Automatische Verlängerung"}
+NUTZUNGSZWECK:
+${formData.usage || "Landwirtschaftliche Nutzung, Anbau von Getreide und Feldfrüchten"}
 
-§ PFLICHTEN & INSTANDHALTUNG
-═══════════════════════════════════════════════════════
-Instandhaltung: ${formData.maintenance || "Kleine Reparaturen Pächter, große Verpächter"}
-Versicherungen: ${formData.insurances || "Gebäudeversicherung Verpächter, Inventar Pächter"}
-Investitionspflichten: ${formData.investmentObligation || "Keine besonderen Investitionspflichten"}
-Zustandsprotokoll: ${formData.conditionProtocol || "Übergabeprotokoll wird erstellt"}
+BESONDERE VEREINBARUNGEN:
+- Düngung: ${formData.fertilization || "Nach guter fachlicher Praxis"}
+- Fruchtfolge: ${formData.cropRotation || "Mindestens 3-gliedrig"}
+- Pflege: ${formData.maintenance || "Hecken und Gräben durch Pächter"}
 
-§ KAUTION & SICHERHEITEN
-═══════════════════════════════════════════════════════
-Kaution/Pacht-Sicherheit: ${formData.deposit || "Barkaution (3 Monatspachten)"}
-Kautionshöhe: ${formData.depositAmount ? formData.depositAmount + " EUR" : "Nach Vereinbarung"}
-
-§ BESONDERE VEREINBARUNGEN
-═══════════════════════════════════════════════════════
-Unterverpachtung: ${formData.subletting || "Nicht gestattet"}
-Vorkaufsrecht: ${formData.preemptiveRight || "Kein Vorkaufsrecht"}
-Entschädigung für Goodwill: ${formData.goodwillCompensation || "Keine Entschädigung"}
-Konkurrenzschutz: ${formData.competitionClause || "Kein Konkurrenzschutz"}
-
-${getAdditionalContext(formData, ['pachtType', 'lessorType', 'lessor', 'lessorAddress', 'lesseeType', 'lessee', 'lesseeAddress', 'lesseeQualification', 'object', 'objectAddress', 'objectSize', 'objectDescription', 'cadastralInfo', 'usage', 'usageDetails', 'operatingLicense', 'inventoryIncluded', 'rentAmount', 'rentInterval', 'rentDueDay', 'rentAdjustment', 'rentAdditionalCosts', 'startDate', 'duration', 'endDate', 'terminationNotice', 'renewalOption', 'maintenance', 'insurances', 'investmentObligation', 'conditionProtocol', 'deposit', 'depositAmount', 'subletting', 'preemptiveRight', 'goodwillCompensation', 'competitionClause'])}
-
-${formData.customRequirements ? `
-═══════════════════════════════════════════════════════
-§ INDIVIDUELLE ANPASSUNGEN (VOM NUTZER GEWÜNSCHT)
-═══════════════════════════════════════════════════════
-${formData.customRequirements}
-
-WICHTIG: Die obigen individuellen Anforderungen MÜSSEN im Vertrag berücksichtigt werden!
-` : ''}
-
-Erstelle einen VOLLSTÄNDIGEN, rechtssicheren Pachtvertrag mit MINDESTENS 14 Paragraphen:
-- § 1 Pachtgegenstand
-- § 2 Pachtzeit und Kündigung
-- § 3 Pachtzins
-- § 4 Nebenkosten
-- § 5 Kaution/Sicherheitsleistung
-- § 6 Nutzung und Nutzungszweck
-- § 7 Übergabe und Zustand
-- § 8 Instandhaltung und Reparaturen
-- § 9 Inventar
-- § 10 Versicherungen
-- § 11 Unterverpachtung
-- § 12 Vorkaufsrecht
-- § 13 Rückgabe bei Pachtende
-- § 14 Schlussbestimmungen`;
+Füge alle relevanten Klauseln ein, inklusive:
+- Übergabe und Rückgabe
+- Instandhaltung und Verbesserungen
+- Unterverpachtung
+- Betretungsrecht
+- Jagd- und Fischereirechte
+- Vorzeitige Kündigung`;
         break;
 
       case "custom":
@@ -4691,183 +3627,10 @@ router.post("/pdf", verifyToken, async (req, res) => {
   }
 });
 
-// ═══════════════════════════════════════════════════════════════════════════════════════════════════
-// 🆕 NEUE ROUTE: PDF-V2 - Komplett neue PDF-Struktur (Deckblatt + Inhalt + Unterschriften-Seite)
-// ═══════════════════════════════════════════════════════════════════════════════════════════════════
-router.post("/pdf-v2", verifyToken, async (req, res) => {
-  const { contractId } = req.body;
-
-  console.log("🚀 [PDF-V2] Neue PDF-Generierung gestartet für Vertrag:", contractId);
-  console.log("📊 [PDF-V2] User ID:", req.user.userId);
-
-  try {
-    // Validierung
-    if (!contractId) {
-      return res.status(400).json({ message: "Contract ID fehlt" });
-    }
-
-    // DB-Verbindung prüfen
-    if (!db || !contractsCollection) {
-      console.error("❌ [PDF-V2] Datenbank nicht verbunden!");
-      try {
-        await client.connect();
-        db = client.db("contract_ai");
-        contractsCollection = db.collection("contracts");
-        usersCollection = db.collection("users");
-        console.log("✅ [PDF-V2] Datenbank neu verbunden");
-      } catch (reconnectError) {
-        return res.status(500).json({ message: "Datenbankverbindung fehlgeschlagen" });
-      }
-    }
-
-    // Vertrag laden (mit flexiblem userId-Vergleich)
-    let contract = null;
-
-    try {
-      contract = await contractsCollection.findOne({
-        _id: new ObjectId(contractId),
-        userId: new ObjectId(req.user.userId)
-      });
-    } catch (e) {}
-
-    if (!contract) {
-      try {
-        contract = await contractsCollection.findOne({
-          _id: new ObjectId(contractId),
-          userId: req.user.userId
-        });
-      } catch (e) {}
-    }
-
-    if (!contract) {
-      try {
-        const tempContract = await contractsCollection.findOne({ _id: new ObjectId(contractId) });
-        if (tempContract) {
-          const contractUserId = tempContract.userId?.toString?.() || String(tempContract.userId);
-          const requestUserId = req.user.userId?.toString?.() || String(req.user.userId);
-          if (contractUserId === requestUserId) {
-            contract = tempContract;
-          } else {
-            return res.status(403).json({ message: "Keine Berechtigung für diesen Vertrag" });
-          }
-        }
-      } catch (e) {}
-    }
-
-    if (!contract) {
-      return res.status(404).json({ message: "Vertrag nicht gefunden" });
-    }
-
-    console.log("✅ [PDF-V2] Vertrag gefunden:", {
-      name: contract.name,
-      type: contract.contractType
-    });
-
-    // Company Profile laden
-    let companyProfile = null;
-    try {
-      companyProfile = await db.collection("company_profiles").findOne({
-        userId: new ObjectId(req.user.userId)
-      });
-      console.log("🏢 [PDF-V2] Company Profile geladen:", !!companyProfile);
-    } catch (profileError) {
-      console.error("⚠️ [PDF-V2] Fehler beim Laden des Company Profiles:", profileError);
-    }
-
-    // Parties aus Vertrag extrahieren
-    const parties = contract.metadata?.parties || contract.parties || contract.formData || null;
-    console.log("👥 [PDF-V2] Parties:", parties);
-
-    // 🆕 HTML MIT NEUER V2 FUNKTION GENERIEREN
-    const isDraft = contract.status === 'Entwurf' || contract.formData?.isDraft;
-
-    const htmlContent = await formatContractToHTMLv2(
-      contract.content,
-      companyProfile,
-      contract.contractType || contract.metadata?.contractType || 'Vertrag',
-      contract.designVariant || contract.metadata?.designVariant || 'executive',
-      isDraft,
-      parties
-    );
-
-    console.log("✅ [PDF-V2] HTML generiert, Länge:", htmlContent.length);
-
-    // 🔥 PUPPETEER PDF GENERIERUNG
-    let browser = null;
-
-    try {
-      // Browser starten
-      if (chromium) {
-        browser = await puppeteer.launch({
-          args: chromium.args,
-          defaultViewport: chromium.defaultViewport,
-          executablePath: await chromium.executablePath(),
-          headless: chromium.headless,
-          ignoreHTTPSErrors: true,
-        });
-      } else {
-        browser = await puppeteer.launch({
-          headless: 'new',
-          args: ['--no-sandbox', '--disable-setuid-sandbox'],
-        });
-      }
-
-      const page = await browser.newPage();
-
-      // HTML laden
-      await page.setContent(htmlContent, {
-        waitUntil: ['domcontentloaded', 'networkidle0'],
-        timeout: 30000
-      });
-
-      // Kurz warten
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // PDF generieren - EINFACH und SAUBER
-      // Die Seitenränder kommen aus dem CSS @page, nicht aus Puppeteer!
-      const pdfBuffer = await page.pdf({
-        format: 'A4',
-        printBackground: true,
-        displayHeaderFooter: false, // Wir machen alles im HTML selbst!
-        preferCSSPageSize: true,
-        margin: { top: '0', bottom: '0', left: '0', right: '0' } // Keine zusätzlichen Margins!
-      });
-
-      console.log("✅ [PDF-V2] PDF erfolgreich generiert, Größe:", Math.round(pdfBuffer.length / 1024), "KB");
-
-      // PDF senden
-      res.set({
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${contract.name || 'Vertrag'}_V2_${new Date().toISOString().split('T')[0]}.pdf"`,
-        'Content-Length': pdfBuffer.length,
-        'Cache-Control': 'no-cache'
-      });
-
-      res.end(pdfBuffer, 'binary');
-
-    } catch (pageError) {
-      console.error("❌ [PDF-V2] Fehler bei der PDF-Generierung:", pageError);
-      throw pageError;
-    } finally {
-      if (browser) {
-        await browser.close();
-        console.log("✅ [PDF-V2] Browser geschlossen");
-      }
-    }
-
-  } catch (error) {
-    console.error("❌ [PDF-V2] Error:", error);
-    res.status(500).json({
-      message: "PDF-V2-Generierung fehlgeschlagen",
-      error: error.message
-    });
-  }
-});
-
 // 🆕 NEUE ROUTE: HTML-Vorschau generieren (ohne PDF)
 router.post("/preview", verifyToken, async (req, res) => {
   const { contractId } = req.body;
-
+  
   console.log("👁️ HTML-Vorschau angefordert für Vertrag:", contractId);
   
   try {
@@ -4944,40 +3707,26 @@ router.post("/preview", verifyToken, async (req, res) => {
 // 🆕 NEUE ROUTE: Design-Variante ändern
 router.post("/change-design", verifyToken, async (req, res) => {
   const { contractId, newDesignVariant } = req.body;
-
+  
   console.log("🎨 Design-Änderung angefordert:", { contractId, newDesignVariant });
-
+  
   try {
     if (!contractId || !newDesignVariant) {
       return res.status(400).json({ message: "Contract ID oder Design-Variante fehlt" });
     }
-
+    
     // Validiere Design-Variante
-    const validDesigns = ['executive', 'modern', 'minimal', 'elegant', 'corporate'];
+    const validDesigns = ['executive', 'modern', 'minimal'];
     if (!validDesigns.includes(newDesignVariant)) {
       return res.status(400).json({ message: "Ungültige Design-Variante" });
     }
-
-    // 🔧 FIX: userId kann String oder ObjectId sein - beide Varianten prüfen
-    const userId = req.user.userId || req.user.id;
-    console.log("🔍 Suche Vertrag:", { contractId, userId });
-
-    // Vertrag laden - versuche beide userId-Formate
-    let contract = await contractsCollection.findOne({
+    
+    // Vertrag laden
+    const contract = await contractsCollection.findOne({ 
       _id: new ObjectId(contractId),
-      userId: new ObjectId(userId)
+      userId: req.user.userId
     });
-
-    // Fallback: userId als String
-    if (!contract) {
-      contract = await contractsCollection.findOne({
-        _id: new ObjectId(contractId),
-        userId: userId
-      });
-    }
-
-    console.log("📄 Vertrag gefunden:", !!contract);
-
+    
     if (!contract) {
       return res.status(404).json({ message: "Vertrag nicht gefunden" });
     }
@@ -5000,24 +3749,18 @@ router.post("/change-design", verifyToken, async (req, res) => {
       isDraft
     );
     
-    // Vertrag aktualisieren - WICHTIG: pdfAutoGenerated zurücksetzen damit neue PDF generiert wird!
+    // Vertrag aktualisieren
     await contractsCollection.updateOne(
       { _id: new ObjectId(contractId) },
-      {
-        $set: {
+      { 
+        $set: { 
           designVariant: newDesignVariant,
           contractHTML: newHTML,
-          lastModified: new Date(),
-          pdfAutoGenerated: false  // 🔧 FIX: Erzwingt neue PDF-Generierung mit neuem Design
-        },
-        $unset: {
-          s3Key: ""  // 🔧 FIX: Alte PDF-Referenz entfernen
-        }
+          lastModified: new Date()
+        } 
       }
     );
-
-    console.log("✅ Design geändert zu:", newDesignVariant, "- PDF-Cache invalidiert");
-
+    
     res.json({
       message: "✅ Design-Variante erfolgreich geändert",
       newDesignVariant: newDesignVariant,
