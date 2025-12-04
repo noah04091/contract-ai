@@ -264,9 +264,10 @@ function generateWebcalLink(token) {
  * Generiert Kalender-Abonnement-Links für verschiedene Kalender-Apps
  */
 function generateCalendarLinks(token) {
-  const baseUrl = process.env.FRONTEND_URL || 'https://contract-ai.de';
-  const icsUrl = `${baseUrl}/api/calendar/ics?token=${token}`;
-  const webcalUrl = generateWebcalLink(token);
+  // WICHTIG: ICS-Endpoint ist auf dem Backend-Server, nicht Frontend!
+  const backendUrl = process.env.BACKEND_URL || 'https://api.contract-ai.de';
+  const icsUrl = `${backendUrl}/api/calendar/ics?token=${token}`;
+  const webcalUrl = icsUrl.replace('https://', 'webcal://').replace('http://', 'webcal://');
   
   return {
     // Direct ICS download

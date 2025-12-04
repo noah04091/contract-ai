@@ -2,9 +2,10 @@
 const express = require("express");
 const { ObjectId } = require("mongodb");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const verifyToken = require("../middleware/verifyToken");
 const { generateEventsForContract, regenerateAllEvents } = require("../services/calendarEvents");
-const { generateICSFeed } = require("../utils/icsGenerator");
+const { generateICSFeed, generateCalendarLinks } = require("../utils/icsGenerator");
 
 const router = express.Router();
 
@@ -564,6 +565,113 @@ router.post("/quick-action", verifyToken, async (req, res) => {
   }
 });
 
+// GET /api/calendar/sync-links - Sync-Links für externe Kalender abrufen
+router.get("/sync-links", verifyToken, async (req, res) => {
+  try {
+    const userId = new ObjectId(req.user.userId);
+
+    // Check if user has a sync token, create one if not
+    let user = await req.db.collection("users").findOne({ _id: userId });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "Benutzer nicht gefunden"
+      });
+    }
+
+    let syncToken = user.calendarSyncToken;
+
+    // Generate new sync token if none exists
+    if (!syncToken) {
+      syncToken = generateSyncToken(userId);
+
+      await req.db.collection("users").updateOne(
+        { _id: userId },
+        {
+          $set: {
+            calendarSyncToken: syncToken,
+            calendarSyncTokenCreatedAt: new Date()
+          }
+        }
+      );
+    }
+
+    // Generate calendar links using the sync token
+    const links = generateCalendarLinks(syncToken);
+
+    res.json({
+      success: true,
+      links,
+      tokenCreatedAt: user.calendarSyncTokenCreatedAt
+    });
+
+  } catch (error) {
+    console.error("❌ Error fetching sync links:", error);
+    res.status(500).json({
+      success: false,
+      error: "Fehler beim Abrufen der Sync-Links"
+    });
+  }
+});
+
+// POST /api/calendar/regenerate-sync-token - Neuen Sync-Token generieren
+router.post("/regenerate-sync-token", verifyToken, async (req, res) => {
+  try {
+    const userId = new ObjectId(req.user.userId);
+
+    // Generate new sync token
+    const syncToken = generateSyncToken(userId);
+
+    await req.db.collection("users").updateOne(
+      { _id: userId },
+      {
+        $set: {
+          calendarSyncToken: syncToken,
+          calendarSyncTokenCreatedAt: new Date()
+        }
+      }
+    );
+
+    // Generate calendar links using the new sync token
+    const links = generateCalendarLinks(syncToken);
+
+    res.json({
+      success: true,
+      message: "Neuer Sync-Token generiert",
+      links,
+      tokenCreatedAt: new Date()
+    });
+
+  } catch (error) {
+    console.error("❌ Error regenerating sync token:", error);
+    res.status(500).json({
+      success: false,
+      error: "Fehler beim Generieren des Sync-Tokens"
+    });
+  }
+});
+
+/**
+ * Generiert einen sicheren Sync-Token für den ICS-Feed
+ * Der Token ist ein JWT mit langer Gültigkeit (1 Jahr)
+ */
+function generateSyncToken(userId) {
+  // Create a special sync token with extended validity
+  const token = jwt.sign(
+    {
+      userId: userId.toString(),
+      type: 'calendar_sync',
+      // Add a random component for uniqueness
+      nonce: crypto.randomBytes(8).toString('hex')
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: '365d' } // 1 year validity
+  );
+
+  return token;
+}
+
 // Helper function for cancellation
 async function triggerCancellation(db, contractId, userId) {
   try {
@@ -571,11 +679,11 @@ async function triggerCancellation(db, contractId, userId) {
       _id: contractId,
       userId
     });
-    
+
     if (!contract) {
       throw new Error("Vertrag nicht gefunden");
     }
-    
+
     // Create cancellation record
     const cancellation = await db.collection("cancellations").insertOne({
       contractId,
@@ -585,12 +693,12 @@ async function triggerCancellation(db, contractId, userId) {
       status: "draft",
       createdAt: new Date()
     });
-    
+
     return {
       cancellationId: cancellation.insertedId,
       redirect: `/cancel/${contractId}`
     };
-    
+
   } catch (error) {
     console.error("Error triggering cancellation:", error);
     throw error;

@@ -4,10 +4,10 @@ import { Helmet } from "react-helmet-async";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  AlertCircle, 
-  Clock, 
-  X, 
+import {
+  AlertCircle,
+  Clock,
+  X,
   ChevronRight,
   ChevronLeft,
   Zap,
@@ -24,10 +24,12 @@ import {
   Sparkles,
   Target,
   BarChart3,
-  ArrowRight
+  ArrowRight,
+  Link2
 } from "lucide-react";
 import axios from "axios";
 import "../styles/AppleCalendar.css";
+import CalendarSyncModal from "../components/CalendarSyncModal";
 
 // Type for provider
 type ProviderType = string | {
@@ -692,6 +694,7 @@ export default function CalendarPage() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showStatsModal, setShowStatsModal] = useState(false);
   const [selectedStatFilter, setSelectedStatFilter] = useState<"total" | "past" | "thisMonth" | "notified">("total");
+  const [showSyncModal, setShowSyncModal] = useState(false);
 
   const EVENTS_PER_PAGE = isMobile ? 3 : 5;
 
@@ -1088,7 +1091,7 @@ export default function CalendarPage() {
                 </select>
               </div>
               
-              <motion.button 
+              <motion.button
                 className={`refresh-btn-premium ${refreshing ? 'refreshing' : ''}`}
                 onClick={handleRegenerateEvents}
                 disabled={refreshing}
@@ -1097,6 +1100,16 @@ export default function CalendarPage() {
               >
                 <RefreshCw size={16} className={refreshing ? "spinning" : ""} />
                 <span>{refreshing ? "Aktualisiere..." : "Events neu generieren"}</span>
+              </motion.button>
+
+              <motion.button
+                className="sync-calendar-btn-premium"
+                onClick={() => setShowSyncModal(true)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Link2 size={16} />
+                <span>Kalender synchronisieren</span>
               </motion.button>
             </div>
           )}
@@ -1140,13 +1153,24 @@ export default function CalendarPage() {
                   </select>
                 </div>
                 
-                <button 
+                <button
                   className="mobile-refresh-btn"
                   onClick={handleRegenerateEvents}
                   disabled={refreshing}
                 >
                   <RefreshCw size={16} className={refreshing ? "spinning" : ""} />
                   {refreshing ? "Aktualisiere..." : "Events generieren"}
+                </button>
+
+                <button
+                  className="mobile-sync-btn"
+                  onClick={() => {
+                    setShowMobileMenu(false);
+                    setShowSyncModal(true);
+                  }}
+                >
+                  <Link2 size={16} />
+                  Kalender synchronisieren
                 </button>
               </div>
             </motion.div>
@@ -1475,6 +1499,12 @@ export default function CalendarPage() {
           onClose={() => setShowStatsModal(false)}
           title={getStatsModalTitle()}
           events={getFilteredStatsEvents()}
+        />
+
+        {/* Calendar Sync Modal */}
+        <CalendarSyncModal
+          isOpen={showSyncModal}
+          onClose={() => setShowSyncModal(false)}
         />
       </div>
     </>
