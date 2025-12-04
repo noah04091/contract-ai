@@ -15,6 +15,7 @@ interface EnhancedTemplateLibraryProps {
   onCreateTemplate: () => void;
   isPremium: boolean;
   onUserTemplatesChange?: () => void;
+  compact?: boolean; // Kompakter Modus für Sidebar
 }
 
 const EnhancedTemplateLibrary: React.FC<EnhancedTemplateLibraryProps> = ({
@@ -23,7 +24,8 @@ const EnhancedTemplateLibrary: React.FC<EnhancedTemplateLibraryProps> = ({
   onSelectTemplate,
   onCreateTemplate,
   isPremium,
-  onUserTemplatesChange
+  onUserTemplatesChange,
+  compact = false
 }) => {
   const [userTemplates, setUserTemplates] = useState<UserTemplate[]>([]);
   const [isLoadingUserTemplates, setIsLoadingUserTemplates] = useState(true);
@@ -74,16 +76,18 @@ const EnhancedTemplateLibrary: React.FC<EnhancedTemplateLibraryProps> = ({
   if (!hasTemplates && !isLoadingUserTemplates) {
     return (
       <motion.div
-        className={styles.templateLibrary}
+        className={`${styles.templateLibrary} ${compact ? styles.templateLibraryCompact : ''}`}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <div className={styles.templateHeader}>
-          <BookOpen size={20} />
-          <h3>Vorlagen-Bibliothek</h3>
-          <span className={styles.templateCount}>Keine Vorlagen</span>
-        </div>
+        {!compact && (
+          <div className={styles.templateHeader}>
+            <BookOpen size={20} />
+            <h3>Vorlagen-Bibliothek</h3>
+            <span className={styles.templateCount}>Keine Vorlagen</span>
+          </div>
+        )}
 
         <div className={styles.emptyTemplates}>
           <p>Noch keine Vorlagen vorhanden.</p>
@@ -101,34 +105,47 @@ const EnhancedTemplateLibrary: React.FC<EnhancedTemplateLibraryProps> = ({
 
   return (
     <motion.div
-      className={styles.templateLibrary}
+      className={`${styles.templateLibrary} ${compact ? styles.templateLibraryCompact : ''}`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <div className={styles.templateHeader}>
-        <BookOpen size={20} />
-        <h3>Vorlagen-Bibliothek</h3>
-        <span className={styles.templateCount}>
-          {totalTemplates} {totalTemplates === 1 ? 'Vorlage' : 'Vorlagen'}
-        </span>
-        <button
-          className={styles.createTemplateIconButton}
-          onClick={onCreateTemplate}
-          title="Eigene Vorlage erstellen"
-        >
-          <Plus size={18} />
-        </button>
-      </div>
+      {!compact && (
+        <div className={styles.templateHeader}>
+          <BookOpen size={20} />
+          <h3>Vorlagen-Bibliothek</h3>
+          <span className={styles.templateCount}>
+            {totalTemplates} {totalTemplates === 1 ? 'Vorlage' : 'Vorlagen'}
+          </span>
+          <button
+            className={styles.createTemplateIconButton}
+            onClick={onCreateTemplate}
+            title="Eigene Vorlage erstellen"
+          >
+            <Plus size={18} />
+          </button>
+        </div>
+      )}
 
-      <div className={styles.templateGrid}>
+      {/* Compact: Vorlage erstellen Button oben */}
+      {compact && (
+        <button
+          className={styles.createTemplateButtonCompact}
+          onClick={onCreateTemplate}
+        >
+          <Plus size={14} />
+          <span>Neue Vorlage</span>
+        </button>
+      )}
+
+      <div className={`${styles.templateGrid} ${compact ? styles.templateGridCompact : ''}`}>
         {/* User Templates Section */}
         {userTemplates.length > 0 && (
           <>
             {userTemplates.map((template) => (
               <motion.div
                 key={template.id}
-                className={`${styles.templateCard} ${styles.userTemplate}`}
+                className={`${styles.templateCard} ${styles.userTemplate} ${compact ? styles.templateCardCompact : ''}`}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => {
@@ -139,12 +156,14 @@ const EnhancedTemplateLibrary: React.FC<EnhancedTemplateLibraryProps> = ({
                 <div className={styles.templateIcon}>📝</div>
                 <div className={styles.templateInfo}>
                   <h4>{template.name}</h4>
-                  <p>{template.description || 'Eigene Vorlage'}</p>
-                  <div className={styles.templateTags}>
-                    <span className={`${styles.tag} ${styles.userTag}`}>
-                      Meine Vorlage
-                    </span>
-                  </div>
+                  {!compact && <p>{template.description || 'Eigene Vorlage'}</p>}
+                  {!compact && (
+                    <div className={styles.templateTags}>
+                      <span className={`${styles.tag} ${styles.userTag}`}>
+                        Meine Vorlage
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <button
                   className={styles.deleteTemplateButton}
@@ -168,7 +187,7 @@ const EnhancedTemplateLibrary: React.FC<EnhancedTemplateLibraryProps> = ({
         {systemTemplates.map((template) => (
           <motion.div
             key={template.id}
-            className={`${styles.templateCard} ${template.isPremium && !isPremium ? styles.locked : ''}`}
+            className={`${styles.templateCard} ${template.isPremium && !isPremium ? styles.locked : ''} ${compact ? styles.templateCardCompact : ''}`}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => {
@@ -183,17 +202,19 @@ const EnhancedTemplateLibrary: React.FC<EnhancedTemplateLibraryProps> = ({
             <div className={styles.templateIcon}>{template.icon}</div>
             <div className={styles.templateInfo}>
               <h4>{template.name}</h4>
-              <p>{template.description}</p>
-              <div className={styles.templateTags}>
-                {template.tags.map(tag => (
-                  <span key={tag} className={styles.tag}>{tag}</span>
-                ))}
-              </div>
+              {!compact && <p>{template.description}</p>}
+              {!compact && (
+                <div className={styles.templateTags}>
+                  {template.tags.map(tag => (
+                    <span key={tag} className={styles.tag}>{tag}</span>
+                  ))}
+                </div>
+              )}
             </div>
             {template.isPremium && (
               <div className={styles.premiumBadge}>
                 <Star size={12} />
-                Premium
+                {!compact && 'Premium'}
               </div>
             )}
           </motion.div>
