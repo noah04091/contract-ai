@@ -3707,26 +3707,40 @@ router.post("/preview", verifyToken, async (req, res) => {
 // 🆕 NEUE ROUTE: Design-Variante ändern
 router.post("/change-design", verifyToken, async (req, res) => {
   const { contractId, newDesignVariant } = req.body;
-  
+
   console.log("🎨 Design-Änderung angefordert:", { contractId, newDesignVariant });
-  
+
   try {
     if (!contractId || !newDesignVariant) {
       return res.status(400).json({ message: "Contract ID oder Design-Variante fehlt" });
     }
-    
+
     // Validiere Design-Variante
     const validDesigns = ['executive', 'modern', 'minimal'];
     if (!validDesigns.includes(newDesignVariant)) {
       return res.status(400).json({ message: "Ungültige Design-Variante" });
     }
-    
-    // Vertrag laden
-    const contract = await contractsCollection.findOne({ 
+
+    // 🔧 FIX: userId kann String oder ObjectId sein - beide Varianten prüfen
+    const userId = req.user.userId || req.user.id;
+    console.log("🔍 Suche Vertrag:", { contractId, userId });
+
+    // Vertrag laden - versuche beide userId-Formate
+    let contract = await contractsCollection.findOne({
       _id: new ObjectId(contractId),
-      userId: req.user.userId
+      userId: new ObjectId(userId)
     });
-    
+
+    // Fallback: userId als String
+    if (!contract) {
+      contract = await contractsCollection.findOne({
+        _id: new ObjectId(contractId),
+        userId: userId
+      });
+    }
+
+    console.log("📄 Vertrag gefunden:", !!contract);
+
     if (!contract) {
       return res.status(404).json({ message: "Vertrag nicht gefunden" });
     }
