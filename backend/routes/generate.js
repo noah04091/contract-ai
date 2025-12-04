@@ -2386,9 +2386,7 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
   <!-- SEITE 1: DECKBLATT - KONZERN-NIVEAU DESIGN -->
   <!-- ═══════════════════════════════════════════════════════════════════════════ -->
   <div class="cover-page" style="
-    height: 252mm;
-    max-height: 252mm;
-    overflow: hidden;
+    min-height: 240mm;
     display: flex;
     flex-direction: column;
     page-break-after: always;
@@ -2417,8 +2415,8 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
       <div style="flex: 0 0 auto;">
         ${logoBase64 ? `
           <img src="${logoBase64}" style="
-            height: 18mm;
-            max-width: 55mm;
+            height: 16mm;
+            max-width: 50mm;
             object-fit: contain;
           " alt="Logo"/>
         ` : ''}
@@ -2428,35 +2426,35 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
       <div style="
         background: #1a1a1a;
         color: white;
-        padding: 2mm 5mm;
+        padding: 2mm 4mm;
         font-family: 'Helvetica Neue', Arial, sans-serif;
         font-size: 7pt;
         font-weight: 600;
-        letter-spacing: 2px;
+        letter-spacing: 1.5px;
         text-transform: uppercase;
       ">VERTRAGSDOKUMENT</div>
     </div>
 
-    <!-- HAUPTTITEL-BEREICH - Großzügig und elegant -->
+    <!-- HAUPTTITEL-BEREICH -->
     <div style="
       flex: 0 0 auto;
       text-align: center;
-      margin: 25mm 0 20mm 0;
+      margin: 20mm 0 15mm 0;
       padding-left: 8mm;
     ">
       <h1 style="
         font-family: 'Helvetica Neue', Arial, sans-serif;
-        font-size: 32pt;
+        font-size: 28pt;
         font-weight: 300;
         color: #1a1a1a;
         text-transform: uppercase;
-        letter-spacing: 8px;
-        margin: 0 0 8mm 0;
-        line-height: 1.1;
+        letter-spacing: 6px;
+        margin: 0 0 6mm 0;
+        line-height: 1.2;
       ">${(contractType || 'VERTRAG').toUpperCase()}</h1>
 
       <div style="
-        width: 60mm;
+        width: 50mm;
         height: 2px;
         background: #1a1a1a;
         margin: 0 auto;
@@ -2466,12 +2464,12 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
         font-family: 'Times New Roman', serif;
         font-size: 10pt;
         color: #666;
-        margin-top: 6mm;
+        margin-top: 5mm;
         font-style: italic;
       ">zwischen den nachfolgend genannten Vertragsparteien</div>
     </div>
 
-    <!-- VERTRAGSPARTEIEN - Elegant und kompakt -->
+    <!-- VERTRAGSPARTEIEN -->
     <div style="
       flex: 0 0 auto;
       margin: 0 0 0 8mm;
@@ -2480,12 +2478,12 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
       <div style="
         display: flex;
         align-items: flex-start;
-        margin-bottom: 8mm;
-        padding-bottom: 8mm;
+        margin-bottom: 6mm;
+        padding-bottom: 6mm;
         border-bottom: 1px solid #e5e5e5;
       ">
         <div style="
-          width: 28mm;
+          width: 25mm;
           font-family: 'Helvetica Neue', Arial, sans-serif;
           font-size: 8pt;
           font-weight: 600;
@@ -2497,28 +2495,28 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
         <div style="flex: 1;">
           <div style="
             font-family: 'Times New Roman', serif;
-            font-size: 12pt;
+            font-size: 11pt;
             font-weight: bold;
             color: #1a1a1a;
-            margin-bottom: 2mm;
+            margin-bottom: 1mm;
           ">${companyProfile?.companyName || parties?.seller || 'Partei A'}${companyProfile?.legalForm ? ` ${companyProfile.legalForm}` : ''}</div>
           <div style="
             font-family: 'Times New Roman', serif;
-            font-size: 10pt;
+            font-size: 9pt;
             color: #444;
-            line-height: 1.5;
-          ">${companyProfile?.street || parties?.sellerAddress || ''}<br/>${companyProfile?.postalCode || ''} ${companyProfile?.city || parties?.sellerCity || ''}${companyProfile?.vatId ? `<br/><span style="color: #777; font-size: 9pt;">USt-IdNr.: ${companyProfile.vatId}</span>` : ''}</div>
+            line-height: 1.4;
+          ">${companyProfile?.street || parties?.sellerAddress || ''}<br/>${companyProfile?.postalCode || ''} ${companyProfile?.city || parties?.sellerCity || ''}${companyProfile?.vatId ? `<br/><span style="color: #777; font-size: 8pt;">USt-IdNr.: ${companyProfile.vatId}</span>` : ''}</div>
         </div>
       </div>
 
       <!-- "und" Trenner -->
       <div style="
         text-align: center;
-        margin: -2mm 0 6mm 0;
+        margin: -1mm 0 5mm 0;
       ">
         <span style="
           font-family: 'Times New Roman', serif;
-          font-size: 10pt;
+          font-size: 9pt;
           color: #999;
           font-style: italic;
         ">– und –</span>
@@ -2528,9 +2526,10 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
       <div style="
         display: flex;
         align-items: flex-start;
+        margin-bottom: 6mm;
       ">
         <div style="
-          width: 28mm;
+          width: 25mm;
           font-family: 'Helvetica Neue', Arial, sans-serif;
           font-size: 8pt;
           font-weight: 600;
@@ -2542,29 +2541,30 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
         <div style="flex: 1;">
           <div style="
             font-family: 'Times New Roman', serif;
-            font-size: 12pt;
+            font-size: 11pt;
             font-weight: bold;
             color: #1a1a1a;
-            margin-bottom: 2mm;
+            margin-bottom: 1mm;
           ">${parties?.buyer || parties?.buyerName || parties?.partyB || 'Partei B'}</div>
           <div style="
             font-family: 'Times New Roman', serif;
-            font-size: 10pt;
+            font-size: 9pt;
             color: #444;
-            line-height: 1.5;
+            line-height: 1.4;
           ">${(parties?.buyerAddress || parties?.partyBAddress || '').replace(/\n/g, '<br/>')}<br/>${parties?.buyerCity || parties?.partyBCity || ''}</div>
         </div>
       </div>
     </div>
 
     <!-- SPACER -->
-    <div style="flex: 1;"></div>
+    <div style="flex: 1; min-height: 20mm;"></div>
 
-    <!-- FOOTER - Dokumentinfos -->
+    <!-- FOOTER - Dokumentinfos (WICHTIG: Muss sichtbar sein!) -->
     <div style="
       padding-left: 8mm;
       border-top: 1px solid #e5e5e5;
-      padding-top: 6mm;
+      padding-top: 5mm;
+      margin-top: auto;
     ">
       <div style="
         display: flex;
@@ -2582,7 +2582,7 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
           ">Erstellungsdatum</div>
           <div style="
             font-family: 'Times New Roman', serif;
-            font-size: 10pt;
+            font-size: 9pt;
             color: #1a1a1a;
           ">${currentDate}</div>
         </div>
@@ -2598,7 +2598,7 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
           ">Vertragsort</div>
           <div style="
             font-family: 'Times New Roman', serif;
-            font-size: 10pt;
+            font-size: 9pt;
             color: #1a1a1a;
           ">${companyProfile?.city || 'Deutschland'}</div>
         </div>
@@ -2634,9 +2634,7 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
   <!-- LETZTE SEITE: UNTERSCHRIFTEN - KONZERN-NIVEAU DESIGN -->
   <!-- ═══════════════════════════════════════════════════════════════════════════ -->
   <div class="signature-page" style="
-    height: 252mm;
-    max-height: 252mm;
-    overflow: hidden;
+    min-height: 200mm;
     display: flex;
     flex-direction: column;
     page-break-before: always;
@@ -2657,9 +2655,9 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
     <!-- HEADER -->
     <div style="
       padding-left: 8mm;
-      padding-bottom: 6mm;
+      padding-bottom: 5mm;
       border-bottom: 2px solid #1a1a1a;
-      margin-bottom: 8mm;
+      margin-bottom: 6mm;
     ">
       <div style="
         display: flex;
@@ -2668,11 +2666,11 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
       ">
         <h2 style="
           font-family: 'Helvetica Neue', Arial, sans-serif;
-          font-size: 14pt;
+          font-size: 13pt;
           font-weight: 300;
           color: #1a1a1a;
           text-transform: uppercase;
-          letter-spacing: 4px;
+          letter-spacing: 3px;
           margin: 0;
         ">Unterschriften</h2>
         <div style="
@@ -2685,9 +2683,8 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
 
     <!-- Rechtsverbindlichkeitshinweis -->
     <div style="
-      padding-left: 8mm;
-      margin-bottom: 10mm;
-      padding: 4mm 4mm 4mm 12mm;
+      margin: 0 0 8mm 8mm;
+      padding: 3mm 4mm 3mm 10mm;
       background: #f8f8f8;
       border-left: 3px solid #1a1a1a;
     ">
@@ -2695,7 +2692,7 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #444;
-        line-height: 1.5;
+        line-height: 1.4;
       ">
         Mit ihrer Unterschrift erklären die Vertragsparteien ihr Einverständnis mit sämtlichen
         Bestimmungen dieses Vertrages und bestätigen, dass sie zur rechtsgeschäftlichen
@@ -2708,12 +2705,12 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
       flex: 0 0 auto;
       padding-left: 8mm;
       display: flex;
-      gap: 12mm;
+      gap: 10mm;
     ">
       <!-- Partei A -->
       <div style="
         flex: 1;
-        padding: 6mm;
+        padding: 5mm;
         background: white;
         border: 1px solid #e0e0e0;
       ">
@@ -2724,24 +2721,24 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
           color: #999;
           text-transform: uppercase;
           letter-spacing: 1px;
-          margin-bottom: 3mm;
+          margin-bottom: 2mm;
         ">${partyLabels.partyA}</div>
 
         <div style="
           font-family: 'Times New Roman', serif;
-          font-size: 11pt;
+          font-size: 10pt;
           font-weight: bold;
           color: #1a1a1a;
-          margin-bottom: 5mm;
-          padding-bottom: 3mm;
+          margin-bottom: 4mm;
+          padding-bottom: 2mm;
           border-bottom: 1px solid #eee;
         ">${companyProfile?.companyName || parties?.seller || partyLabels.partyA}</div>
 
         <!-- Ort, Datum -->
-        <div style="margin-bottom: 8mm;">
+        <div style="margin-bottom: 6mm;">
           <div style="
             border-bottom: 1px solid #bbb;
-            height: 8mm;
+            height: 6mm;
             margin-bottom: 1mm;
           "></div>
           <div style="
@@ -2752,10 +2749,10 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
         </div>
 
         <!-- Unterschrift -->
-        <div style="margin-bottom: 5mm;">
+        <div style="margin-bottom: 4mm;">
           <div style="
             border-bottom: 2px solid #1a1a1a;
-            height: 18mm;
+            height: 15mm;
             margin-bottom: 1mm;
           "></div>
           <div style="
@@ -2768,10 +2765,10 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
         <!-- Funktionsbezeichnung -->
         <div style="
           font-family: 'Times New Roman', serif;
-          font-size: 8pt;
+          font-size: 7pt;
           color: #666;
           text-align: center;
-          padding-top: 3mm;
+          padding-top: 2mm;
           border-top: 1px dotted #ddd;
         ">${companyProfile?.legalForm ? 'Geschäftsführung / Vertretungsberechtigte(r)' : 'Vertragspartei'}</div>
       </div>
@@ -2779,7 +2776,7 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
       <!-- Partei B -->
       <div style="
         flex: 1;
-        padding: 6mm;
+        padding: 5mm;
         background: white;
         border: 1px solid #e0e0e0;
       ">
@@ -2790,24 +2787,24 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
           color: #999;
           text-transform: uppercase;
           letter-spacing: 1px;
-          margin-bottom: 3mm;
+          margin-bottom: 2mm;
         ">${partyLabels.partyB}</div>
 
         <div style="
           font-family: 'Times New Roman', serif;
-          font-size: 11pt;
+          font-size: 10pt;
           font-weight: bold;
           color: #1a1a1a;
-          margin-bottom: 5mm;
-          padding-bottom: 3mm;
+          margin-bottom: 4mm;
+          padding-bottom: 2mm;
           border-bottom: 1px solid #eee;
         ">${parties?.buyer || parties?.buyerName || partyLabels.partyB}</div>
 
         <!-- Ort, Datum -->
-        <div style="margin-bottom: 8mm;">
+        <div style="margin-bottom: 6mm;">
           <div style="
             border-bottom: 1px solid #bbb;
-            height: 8mm;
+            height: 6mm;
             margin-bottom: 1mm;
           "></div>
           <div style="
@@ -2818,10 +2815,10 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
         </div>
 
         <!-- Unterschrift -->
-        <div style="margin-bottom: 5mm;">
+        <div style="margin-bottom: 4mm;">
           <div style="
             border-bottom: 2px solid #1a1a1a;
-            height: 18mm;
+            height: 15mm;
             margin-bottom: 1mm;
           "></div>
           <div style="
@@ -2835,7 +2832,7 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
         <div>
           <div style="
             border-bottom: 1px solid #ccc;
-            height: 6mm;
+            height: 5mm;
             margin-bottom: 1mm;
           "></div>
           <div style="
@@ -2848,34 +2845,35 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
     </div>
 
     <!-- SPACER -->
-    <div style="flex: 1;"></div>
+    <div style="flex: 1; min-height: 15mm;"></div>
 
-    <!-- FOOTER - Dokumentverifizierung -->
+    <!-- FOOTER - Dokumentverifizierung (MUSS SICHTBAR SEIN!) -->
     <div style="
       padding-left: 8mm;
       border-top: 1px solid #e5e5e5;
-      padding-top: 5mm;
+      padding-top: 4mm;
+      margin-top: auto;
     ">
       <div style="
         display: flex;
         align-items: flex-start;
-        gap: 8mm;
+        gap: 6mm;
       ">
         <!-- QR-Code -->
         <div style="flex: 0 0 auto;">
           ${enterpriseQRCode ? `
             <div style="
-              padding: 2mm;
+              padding: 1.5mm;
               background: white;
               border: 1px solid #e0e0e0;
             ">
               <img src="${enterpriseQRCode}" style="
-                width: 20mm;
-                height: 20mm;
+                width: 18mm;
+                height: 18mm;
                 display: block;
               " alt="QR"/>
             </div>
-          ` : ''}
+          ` : '<div style="width: 18mm; height: 18mm; border: 1px dashed #ccc;"></div>'}
         </div>
 
         <!-- Dokumentinformationen -->
@@ -2892,19 +2890,20 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
 
           <div style="
             display: flex;
-            gap: 8mm;
+            gap: 6mm;
+            flex-wrap: wrap;
           ">
             <div>
-              <div style="font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 7pt; color: #999;">Dokument-ID</div>
-              <div style="font-family: 'Courier New', monospace; font-size: 8pt; color: #444;">${documentId.substring(0, 24)}</div>
+              <div style="font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 6pt; color: #999;">Dokument-ID</div>
+              <div style="font-family: 'Courier New', monospace; font-size: 7pt; color: #444;">${documentId.substring(0, 20)}</div>
             </div>
             <div>
-              <div style="font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 7pt; color: #999;">Hash</div>
-              <div style="font-family: 'Courier New', monospace; font-size: 8pt; color: #444;">${documentHash}</div>
+              <div style="font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 6pt; color: #999;">Hash</div>
+              <div style="font-family: 'Courier New', monospace; font-size: 7pt; color: #444;">${documentHash}</div>
             </div>
             <div>
-              <div style="font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 7pt; color: #999;">Erstellt</div>
-              <div style="font-family: 'Times New Roman', serif; font-size: 9pt; color: #444;">${currentDate}</div>
+              <div style="font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 6pt; color: #999;">Erstellt</div>
+              <div style="font-family: 'Times New Roman', serif; font-size: 8pt; color: #444;">${currentDate}</div>
             </div>
           </div>
         </div>
@@ -2913,14 +2912,14 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
         <div style="
           flex: 0 0 auto;
           text-align: right;
-          padding-left: 6mm;
+          padding-left: 5mm;
           border-left: 1px solid #e5e5e5;
         ">
           <div style="
             font-family: 'Times New Roman', serif;
-            font-size: 8pt;
+            font-size: 7pt;
             color: #666;
-            line-height: 1.4;
+            line-height: 1.3;
           ">
             <strong style="color: #1a1a1a;">Gerichtsstand:</strong> ${companyProfile?.city || 'Deutschland'}<br/>
             <strong style="color: #1a1a1a;">Anwendbares Recht:</strong> BRD<br/>
