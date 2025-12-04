@@ -2170,12 +2170,13 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
   const partyLabels = getPartyLabels(contractType);
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // SCHRITT 4: VERTRAGSINHALT ZU HTML KONVERTIEREN (SAUBERE MARKDOWN-KONVERTIERUNG)
+  // SCHRITT 4: VERTRAGSINHALT ZU HTML KONVERTIEREN (V1-STYLE MIT NUMMERIERTEN KREISEN)
   // ═══════════════════════════════════════════════════════════════════════════
   const convertContractTextToHTML = (text) => {
     const lines = text.split('\n');
     let html = '';
     let skipPartiesSection = false;
+    let currentParagraphNum = 0;
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
@@ -2215,91 +2216,151 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
         continue;
       }
 
-      // PRÄAMBEL
+      // PRÄAMBEL - V1-Style mit dekorativen Linien
       if (trimmedLine === 'PRÄAMBEL' || trimmedLine === 'Präambel') {
         html += `
-          <div style="margin: 8mm 0 6mm 0;">
-            <h2 style="
-              font-family: 'Times New Roman', serif;
-              font-size: 12pt;
-              font-weight: bold;
-              color: #1a1a1a;
-              text-transform: uppercase;
-              letter-spacing: 1px;
-              margin: 0;
-              padding-bottom: 3mm;
-              border-bottom: 1px solid #ccc;
-            ">Präambel</h2>
+          <div style="margin: 10mm 0 6mm 0; page-break-after: avoid;">
+            <div style="display: flex; align-items: center; gap: 4mm;">
+              <div style="flex: 0 0 15mm; height: 1px; background: #8B7355;"></div>
+              <h2 style="
+                font-family: 'Times New Roman', serif;
+                font-size: 13pt;
+                font-weight: bold;
+                color: #1a1a1a;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                margin: 0;
+                white-space: nowrap;
+              ">PRÄAMBEL</h2>
+              <div style="flex: 0 0 15mm; height: 1px; background: #8B7355;"></div>
+            </div>
           </div>
         `;
         continue;
       }
 
-      // PARAGRAPHEN (§ 1 Vertragsgegenstand etc.)
+      // PARAGRAPHEN (§ 1 Vertragsgegenstand etc.) - V1-Style
       if (trimmedLine.startsWith('§')) {
-        // Entferne Markdown-Formatierung (** **) falls vorhanden
         const cleanTitle = trimmedLine.replace(/\*\*/g, '');
+        currentParagraphNum = 0; // Reset für jeden neuen Paragraphen
 
         html += `
-          <div style="margin: 10mm 0 4mm 0; page-break-after: avoid;">
+          <div style="margin: 12mm 0 5mm 0; page-break-after: avoid;">
             <h2 style="
               font-family: 'Times New Roman', serif;
-              font-size: 12pt;
+              font-size: 13pt;
               font-weight: bold;
               color: #1a1a1a;
               margin: 0;
               text-transform: uppercase;
+              letter-spacing: 0.5px;
             ">${cleanTitle}</h2>
           </div>
         `;
         continue;
       }
 
-      // NUMMERIERTE ABSÄTZE (1), (2), (3) etc.
-      if (/^\(\d+\)/.test(trimmedLine)) {
-        const cleanText = trimmedLine.replace(/\*\*/g, '');
+      // NUMMERIERTE ABSÄTZE (1), (2), (3) etc. - V1-Style mit Nummernkreis
+      if (/^\(?\d+\)?\.?\s/.test(trimmedLine)) {
+        currentParagraphNum++;
+        const cleanText = trimmedLine.replace(/^\(?\d+\)?\.?\s*/, '').replace(/\*\*/g, '');
+
         html += `
-          <p style="
-            font-family: 'Times New Roman', serif;
-            font-size: 11pt;
-            line-height: 1.5;
-            color: #1a1a1a;
-            margin: 0 0 3mm 0;
-            text-align: justify;
-            text-indent: 0;
-          ">${cleanText}</p>
+          <div style="display: flex; align-items: flex-start; gap: 4mm; margin: 0 0 4mm 0;">
+            <div style="
+              flex: 0 0 auto;
+              min-width: 7mm;
+              height: 7mm;
+              border: 1.5px solid #8B7355;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 9pt;
+              font-weight: bold;
+              color: #8B7355;
+              margin-top: 1mm;
+            ">${currentParagraphNum}</div>
+            <p style="
+              font-family: 'Times New Roman', serif;
+              font-size: 11pt;
+              line-height: 1.55;
+              color: #1a1a1a;
+              margin: 0;
+              text-align: justify;
+              flex: 1;
+            ">${cleanText}</p>
+          </div>
         `;
         continue;
       }
 
-      // AUFZÄHLUNGEN mit Buchstaben a), b), c) oder Spiegelstrichen
-      if (/^[a-z]\)/.test(trimmedLine) || trimmedLine.startsWith('-') || trimmedLine.startsWith('•')) {
-        const cleanText = trimmedLine.replace(/\*\*/g, '');
+      // AUFZÄHLUNGEN mit Buchstaben a), b), c) - V1-Style mit umkreisten Buchstaben
+      if (/^[a-z]\)/.test(trimmedLine)) {
+        const letter = trimmedLine.charAt(0);
+        const cleanText = trimmedLine.substring(2).trim().replace(/\*\*/g, '');
+
         html += `
-          <p style="
-            font-family: 'Times New Roman', serif;
-            font-size: 11pt;
-            line-height: 1.5;
-            color: #1a1a1a;
-            margin: 0 0 2mm 8mm;
-            text-align: justify;
-          ">${cleanText}</p>
+          <div style="display: flex; align-items: flex-start; gap: 3mm; margin: 0 0 3mm 12mm;">
+            <div style="
+              flex: 0 0 auto;
+              min-width: 5.5mm;
+              height: 5.5mm;
+              border: 1px solid #999;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 8pt;
+              color: #666;
+              margin-top: 1.5mm;
+            ">${letter}</div>
+            <p style="
+              font-family: 'Times New Roman', serif;
+              font-size: 10.5pt;
+              line-height: 1.5;
+              color: #1a1a1a;
+              margin: 0;
+              text-align: justify;
+              flex: 1;
+            ">${cleanText}</p>
+          </div>
+        `;
+        continue;
+      }
+
+      // Spiegelstriche
+      if (trimmedLine.startsWith('-') || trimmedLine.startsWith('•')) {
+        const cleanText = trimmedLine.substring(1).trim().replace(/\*\*/g, '');
+        html += `
+          <div style="display: flex; align-items: flex-start; gap: 3mm; margin: 0 0 2mm 12mm;">
+            <span style="color: #8B7355; font-size: 12pt;">•</span>
+            <p style="
+              font-family: 'Times New Roman', serif;
+              font-size: 10.5pt;
+              line-height: 1.5;
+              color: #1a1a1a;
+              margin: 0;
+              text-align: justify;
+              flex: 1;
+            ">${cleanText}</p>
+          </div>
         `;
         continue;
       }
 
       // NORMALE ABSÄTZE - Markdown bereinigen
       let cleanText = trimmedLine
-        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')  // **fett** -> <strong>
-        .replace(/\*([^*]+)\*/g, '<em>$1</em>');              // *kursiv* -> <em>
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*([^*]+)\*/g, '<em>$1</em>');
 
       html += `
         <p style="
           font-family: 'Times New Roman', serif;
           font-size: 11pt;
-          line-height: 1.5;
+          line-height: 1.55;
           color: #1a1a1a;
-          margin: 0 0 3mm 0;
+          margin: 0 0 4mm 0;
           text-align: justify;
         ">${cleanText}</p>
       `;
@@ -2320,25 +2381,28 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
     year: 'numeric'
   });
 
+  // Seitenzahl berechnen (Deckblatt=1, dann Inhalt, dann Unterschriften)
+  const totalPages = 5; // Wird dynamisch berechnet durch Puppeteer
+
   const fullHTML = `
 <!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>${contractType || 'Vertrag'}</title>
+  <title>${contractType || 'Vertrag'} - ${companyProfile?.companyName || 'Vertragsdokument'}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     @page {
       size: A4;
-      margin: 20mm 20mm 22mm 20mm;
+      margin: 25mm 20mm 20mm 25mm;
     }
 
     body {
-      font-family: 'Georgia', 'Times New Roman', serif;
-      font-size: 10.5pt;
-      line-height: 1.55;
-      color: #222;
+      font-family: 'Times New Roman', Georgia, serif;
+      font-size: 11pt;
+      line-height: 1.5;
+      color: #1a1a1a;
       background: #fff;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
@@ -2348,6 +2412,18 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
     .page:last-child { page-break-after: avoid; }
     .no-break { page-break-inside: avoid; }
 
+    /* Footer auf jeder Seite */
+    .page-footer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      border-top: 1px solid #ccc;
+      padding-top: 3mm;
+      font-size: 8pt;
+      color: #666;
+    }
+
     ${isDraft ? `.watermark { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 100pt; color: rgba(180,0,0,0.07); font-weight: bold; pointer-events: none; z-index: 9999; }` : ''}
   </style>
 </head>
@@ -2355,56 +2431,76 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
 ${isDraft ? '<div class="watermark">ENTWURF</div>' : ''}
 
 <!-- ══════════════════════════════════════════════════════════════════════════════════ -->
-<!-- SEITE 1: DECKBLATT -->
+<!-- SEITE 1: DECKBLATT (V1-Style mit Briefkopf) -->
 <!-- ══════════════════════════════════════════════════════════════════════════════════ -->
-<div class="page" style="position: relative;">
+<div class="page" style="position: relative; min-height: 250mm;">
 
-  <!-- Logo oben links -->
-  ${logoBase64 ? `<img src="${logoBase64}" style="height: 14mm; max-width: 45mm; margin-bottom: 8mm;" alt="Logo"/>` : '<div style="height: 14mm; margin-bottom: 8mm;"></div>'}
+  <!-- BRIEFKOPF: Logo links, Firmeninfos rechts -->
+  <header style="margin-bottom: 15mm;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
 
-  <!-- Titel-Bereich -->
-  <div style="text-align: center; margin: 30mm 0 25mm 0;">
-    <div style="font-size: 9pt; color: #888; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 4mm;">Vertragsdokument</div>
-    <h1 style="font-family: Georgia, serif; font-size: 24pt; font-weight: normal; color: #111; letter-spacing: 2px; margin: 0;">${(contractType || 'VERTRAG').toUpperCase()}</h1>
-    <div style="width: 40mm; height: 1px; background: #333; margin: 6mm auto 0 auto;"></div>
+      <!-- Logo links -->
+      <div style="flex: 0 0 auto; max-width: 60mm;">
+        ${logoBase64 ? `<img src="${logoBase64}" style="max-height: 20mm; width: auto; display: block;" alt="Logo"/>` : ''}
+      </div>
+
+      <!-- Firmeninfos rechts -->
+      <div style="text-align: right; font-size: 10pt; line-height: 1.3;">
+        <div style="font-weight: bold; margin-bottom: 2mm;">
+          ${companyProfile?.companyName || 'Ihr Unternehmen'}${companyProfile?.legalForm ? ` ${companyProfile.legalForm}` : ''}
+        </div>
+        <div>${companyProfile?.street || 'Musterstraße 123'}</div>
+        <div style="margin-bottom: 2mm;">${companyProfile?.postalCode || '12345'} ${companyProfile?.city || 'Musterstadt'}</div>
+        ${companyProfile?.contactEmail ? `<div>E-Mail: ${companyProfile.contactEmail}</div>` : ''}
+        ${companyProfile?.contactPhone ? `<div style="margin-bottom: 2mm;">Telefon: ${companyProfile.contactPhone}</div>` : ''}
+        ${companyProfile?.tradeRegister ? `<div>${companyProfile.tradeRegister}</div>` : ''}
+        ${companyProfile?.vatId ? `<div>USt-ID: ${companyProfile.vatId}</div>` : ''}
+      </div>
+    </div>
+
+    <!-- Trennlinie -->
+    <div style="margin: 6mm 0; height: 1.5px; background: #666;"></div>
+  </header>
+
+  <!-- VERTRAGSTITEL -->
+  <div style="text-align: center; margin: 15mm 0 20mm 0;">
+    <h1 style="font-size: 21pt; font-weight: bold; text-transform: uppercase; letter-spacing: 2.5px; margin: 0;">
+      ${(contractType || 'VERTRAG').toUpperCase()}
+    </h1>
+    <div style="font-size: 11pt; color: #666; font-style: italic; margin-top: 5mm;">
+      geschlossen am ${currentDate}
+    </div>
   </div>
 
-  <!-- Vertragsparteien -->
-  <div style="margin: 0 auto; max-width: 140mm;">
+  <!-- PARTEIENBLOCK -->
+  <div style="font-size: 11pt; line-height: 1.4; margin: 0 0 20mm 0;">
+    <div style="font-weight: bold; margin-bottom: 8mm;">zwischen</div>
 
     <!-- Partei A -->
-    <div style="margin-bottom: 6mm; padding-bottom: 6mm; border-bottom: 1px solid #ddd;">
-      <div style="font-size: 8pt; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2mm;">${partyLabels.partyA}</div>
-      <div style="font-size: 12pt; font-weight: bold; color: #111; margin-bottom: 1mm;">${companyProfile?.companyName || parties?.seller || 'Vertragspartei A'}${companyProfile?.legalForm ? ` ${companyProfile.legalForm}` : ''}</div>
-      <div style="font-size: 10pt; color: #444; line-height: 1.4;">
-        ${companyProfile?.street || parties?.sellerAddress || 'Adresse'}<br/>
-        ${companyProfile?.postalCode || ''} ${companyProfile?.city || parties?.sellerCity || 'Ort'}
-        ${companyProfile?.vatId ? `<br/><span style="font-size: 9pt; color: #666;">USt-IdNr.: ${companyProfile.vatId}</span>` : ''}
-      </div>
+    <div style="margin-bottom: 10mm;">
+      <div style="font-weight: bold;">${companyProfile?.companyName || 'Vertragspartei A'}${companyProfile?.legalForm ? ` ${companyProfile.legalForm}` : ''}</div>
+      <div style="font-style: italic; margin-top: 2mm; color: #666; font-size: 10pt;">(vollständige Angaben siehe Briefkopf)</div>
+      <div style="font-style: italic; margin-top: 3mm;">– nachfolgend "${partyLabels.partyA}" genannt –</div>
     </div>
 
-    <!-- Trenner -->
-    <div style="text-align: center; margin: 3mm 0; font-style: italic; color: #999; font-size: 10pt;">– und –</div>
+    <div style="font-weight: bold; margin-bottom: 6mm;">und</div>
 
     <!-- Partei B -->
-    <div style="margin-top: 6mm;">
-      <div style="font-size: 8pt; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2mm;">${partyLabels.partyB}</div>
-      <div style="font-size: 12pt; font-weight: bold; color: #111; margin-bottom: 1mm;">${parties?.buyer || parties?.buyerName || parties?.partyB || 'Vertragspartei B'}</div>
-      <div style="font-size: 10pt; color: #444; line-height: 1.4;">
-        ${(parties?.buyerAddress || parties?.partyBAddress || 'Adresse').replace(/\\n/g, '<br/>')}<br/>
-        ${parties?.buyerCity || parties?.partyBCity || 'Ort'}
-      </div>
+    <div style="margin-bottom: 10mm;">
+      <div style="font-weight: bold;">${parties?.buyer || parties?.buyerName || parties?.partyB || 'Vertragspartei B'}</div>
+      <div>${parties?.buyerAddress || parties?.partyBAddress || 'Adresse'}</div>
+      <div>${parties?.buyerCity || parties?.partyBCity || 'Ort'}</div>
+      <div style="font-style: italic; margin-top: 3mm;">– nachfolgend "${partyLabels.partyB}" genannt –</div>
     </div>
-
   </div>
 
-  <!-- Footer mit Meta-Informationen - FIXIERT am unteren Rand mit klarer Trennung -->
-  <div style="position: absolute; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #ddd; padding: 4mm 0 0 0;">
-    <table style="width: 100%; font-size: 8pt; color: #666; border-collapse: collapse;">
+  <!-- Footer Seite 1 -->
+  <div class="page-footer">
+    <table style="width: 100%; font-size: 8pt; color: #666;">
       <tr>
-        <td style="text-align: left; width: 33%; padding: 0;"><span style="color: #999;">Datum:</span>&nbsp;${currentDate}</td>
-        <td style="text-align: center; width: 34%; padding: 0;"><span style="color: #999;">Ort:</span>&nbsp;${companyProfile?.city || 'Deutschland'}</td>
-        <td style="text-align: right; width: 33%; padding: 0;"><span style="color: #999;">ID:</span>&nbsp;<span style="font-family: monospace;">${documentId.substring(0, 16)}</span></td>
+        <td style="text-align: left;">DOK-ID: ${documentId.substring(0, 20)}...</td>
+        <td style="text-align: center;">Seite 1 | ${totalPages}</td>
+        <td style="text-align: right;">${new Date().toLocaleDateString('de-DE')}</td>
       </tr>
     </table>
   </div>
@@ -2419,78 +2515,110 @@ ${isDraft ? '<div class="watermark">ENTWURF</div>' : ''}
 </div>
 
 <!-- ══════════════════════════════════════════════════════════════════════════════════ -->
-<!-- LETZTE SEITE: UNTERSCHRIFTEN -->
+<!-- LETZTE SEITE: UNTERSCHRIFTEN (V1-Style mit beigem Header) -->
 <!-- ══════════════════════════════════════════════════════════════════════════════════ -->
-<div class="page" style="position: relative; page-break-before: always;">
+<div class="page" style="position: relative; page-break-before: always; min-height: 250mm;">
 
-  <!-- Header -->
-  <div style="border-bottom: 1px solid #333; padding-bottom: 3mm; margin-bottom: 6mm; display: flex; justify-content: space-between; align-items: center;">
-    <div style="font-size: 12pt; font-weight: bold; text-transform: uppercase; letter-spacing: 2px;">Unterschriften</div>
-    <div style="font-size: 8pt; color: #888;">${(contractType || 'Vertrag').toUpperCase()}</div>
+  <!-- Beiger Header-Balken wie V1 -->
+  <div style="background: linear-gradient(180deg, #f5f0e6 0%, #ebe5d9 100%); padding: 15mm 0 12mm 0; margin: -25mm -20mm 0 -25mm; width: calc(100% + 45mm);">
+    <h2 style="text-align: center; font-size: 16pt; font-weight: bold; color: #1a1a1a; margin: 0; padding: 0 25mm;">
+      Unterschriften der Vertragsparteien
+    </h2>
   </div>
 
-  <!-- Rechtshinweis -->
-  <div style="background: #f5f5f5; padding: 3mm 4mm; margin-bottom: 8mm; border-left: 2px solid #333; font-size: 9pt; color: #555; line-height: 1.4;">
-    Mit ihrer Unterschrift bestätigen die Vertragsparteien ihr Einverständnis mit sämtlichen Bestimmungen dieses Vertrages.
+  <!-- Unterschriften-Container -->
+  <div style="margin-top: 10mm;">
+
+    <!-- Zwei-Spalten Unterschriften -->
+    <div style="display: flex; gap: 10mm; margin-bottom: 15mm;">
+
+      <!-- Partei A (links) -->
+      <div style="flex: 1; padding: 5mm;">
+        <h3 style="font-size: 10pt; font-weight: 600; text-transform: uppercase; margin-bottom: 8mm;">${partyLabels.partyA} / Partei A</h3>
+
+        <div style="margin-bottom: 8mm;">
+          <div style="border-bottom: 1px solid #666; height: 8mm; margin-bottom: 2mm;"></div>
+          <p style="font-size: 9pt; color: #666; margin: 0;">Ort, Datum</p>
+        </div>
+
+        <div style="margin-bottom: 8mm;">
+          <div style="border-bottom: 2px solid #333; height: 12mm; margin-bottom: 2mm;"></div>
+          <p style="font-size: 9pt; color: #666; margin: 0;">(Unterschrift / Stempel)</p>
+        </div>
+
+        <div style="padding-top: 5mm; border-top: 1px dotted #ccc;">
+          <p style="font-size: 10pt; font-weight: 600; margin: 0 0 2mm 0;">${companyProfile?.companyName || partyLabels.partyA}</p>
+          <p style="font-size: 9pt; color: #666; margin: 0;">(Geschäftsführung)</p>
+        </div>
+      </div>
+
+      <!-- Partei B (rechts) -->
+      <div style="flex: 1; padding: 5mm;">
+        <h3 style="font-size: 10pt; font-weight: 600; text-transform: uppercase; margin-bottom: 8mm;">${partyLabels.partyB} / Partei B</h3>
+
+        <div style="margin-bottom: 8mm;">
+          <div style="border-bottom: 1px solid #666; height: 8mm; margin-bottom: 2mm;"></div>
+          <p style="font-size: 9pt; color: #666; margin: 0;">Ort, Datum</p>
+        </div>
+
+        <div style="margin-bottom: 8mm;">
+          <div style="border-bottom: 2px solid #333; height: 12mm; margin-bottom: 2mm;"></div>
+          <p style="font-size: 9pt; color: #666; margin: 0;">(Unterschrift)</p>
+        </div>
+
+        <div style="padding-top: 5mm; border-top: 1px dotted #ccc;">
+          <div style="border-bottom: 1px solid #ccc; height: 6mm; margin-bottom: 2mm;"></div>
+          <p style="font-size: 9pt; color: #666; margin: 0;">(Name in Druckschrift)</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Anlagen-Bereich wie V1 -->
+    <div style="background: #faf8f5; border: 1px solid #e5e0d5; padding: 4mm 5mm; margin-bottom: 15mm;">
+      <h4 style="font-size: 11pt; font-weight: bold; color: #8B7355; margin: 0 0 2mm 0; font-style: italic;">ANLAGEN</h4>
+      <p style="font-size: 10pt; color: #666; margin: 0;">Diesem Vertrag sind keine Anlagen beigefügt.</p>
+    </div>
+
   </div>
 
-  <!-- Unterschrifts-Boxen -->
-  <div style="display: flex; gap: 8mm;">
+  <!-- Footer mit QR-Code und Verifizierung (V1-Style) -->
+  <div style="position: absolute; bottom: 0; left: 0; right: 0; background: #f9f7f4; border-top: 1px solid #ddd; padding: 5mm 0;">
 
-    <!-- Partei A -->
-    <div style="flex: 1; border: 1px solid #ddd; padding: 4mm;">
-      <div style="font-size: 8pt; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2mm;">${partyLabels.partyA}</div>
-      <div style="font-size: 10pt; font-weight: bold; margin-bottom: 4mm; padding-bottom: 2mm; border-bottom: 1px solid #eee;">${companyProfile?.companyName || parties?.seller || partyLabels.partyA}</div>
-      <div style="margin-bottom: 5mm;">
-        <div style="border-bottom: 1px solid #999; height: 5mm;"></div>
-        <div style="font-size: 7pt; color: #999; margin-top: 1mm;">Ort, Datum</div>
+    <div style="display: flex; align-items: flex-start; gap: 8mm;">
+
+      <!-- Links: Vertragsinfo -->
+      <div style="font-size: 9pt; color: #666;">
+        <div style="font-weight: bold; text-transform: uppercase; margin-bottom: 1mm;">${(contractType || 'Vertrag').toUpperCase()}</div>
+        <div>© ${new Date().getFullYear()} ${companyProfile?.companyName || 'Contract AI'}</div>
       </div>
-      <div style="margin-bottom: 3mm;">
-        <div style="border-bottom: 2px solid #333; height: 12mm;"></div>
-        <div style="font-size: 7pt; color: #999; margin-top: 1mm;">Unterschrift</div>
+
+      <!-- Mitte: QR-Code -->
+      <div style="flex: 1; text-align: center;">
+        ${enterpriseQRCode ? `<img src="${enterpriseQRCode}" style="width: 18mm; height: 18mm; display: inline-block;" alt="QR"/>` : '<div style="width: 18mm; height: 18mm; border: 1px dashed #ccc; display: inline-block;"></div>'}
+        <div style="font-size: 8pt; color: #888; margin-top: 1mm;">Digitale Verifizierung</div>
+        <div style="font-size: 7pt; font-family: monospace; color: #666;">${documentHash}</div>
       </div>
-      <div style="font-size: 7pt; color: #666; text-align: center; border-top: 1px dotted #ccc; padding-top: 2mm;">${companyProfile?.legalForm ? 'Geschäftsführung' : 'Vertragspartei'}</div>
+
+      <!-- Rechts: Rechtliche Hinweise -->
+      <div style="text-align: right; font-size: 8pt; color: #666; line-height: 1.4;">
+        <div style="font-weight: bold;">Rechtlicher Hinweis:</div>
+        <div>Dieses Dokument ist rechtlich bindend.</div>
+        <div>Alle Rechte vorbehalten.</div>
+        <div>Gerichtsstand: ${companyProfile?.city || 'Deutschland'}</div>
+      </div>
+
     </div>
 
-    <!-- Partei B -->
-    <div style="flex: 1; border: 1px solid #ddd; padding: 4mm;">
-      <div style="font-size: 8pt; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2mm;">${partyLabels.partyB}</div>
-      <div style="font-size: 10pt; font-weight: bold; margin-bottom: 4mm; padding-bottom: 2mm; border-bottom: 1px solid #eee;">${parties?.buyer || parties?.buyerName || partyLabels.partyB}</div>
-      <div style="margin-bottom: 5mm;">
-        <div style="border-bottom: 1px solid #999; height: 5mm;"></div>
-        <div style="font-size: 7pt; color: #999; margin-top: 1mm;">Ort, Datum</div>
-      </div>
-      <div style="margin-bottom: 3mm;">
-        <div style="border-bottom: 2px solid #333; height: 12mm;"></div>
-        <div style="font-size: 7pt; color: #999; margin-top: 1mm;">Unterschrift</div>
-      </div>
-      <div>
-        <div style="border-bottom: 1px solid #ccc; height: 4mm;"></div>
-        <div style="font-size: 7pt; color: #999; margin-top: 1mm;">Name in Druckschrift</div>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- Footer mit QR-Code und Verifizierung -->
-  <div style="position: absolute; bottom: 0; left: 0; right: 0; border-top: 1px solid #ddd; padding-top: 4mm; display: flex; gap: 5mm; align-items: flex-start;">
-
-    <!-- QR-Code -->
-    ${enterpriseQRCode ? `<img src="${enterpriseQRCode}" style="width: 16mm; height: 16mm; border: 1px solid #eee;" alt="QR"/>` : '<div style="width: 16mm; height: 16mm; border: 1px dashed #ccc;"></div>'}
-
-    <!-- Verifizierungs-Infos -->
-    <div style="flex: 1; font-size: 7pt; color: #666; line-height: 1.3;">
-      <div style="font-size: 8pt; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1mm;">Dokumentverifizierung</div>
-      <div>ID: <span style="font-family: monospace;">${documentId.substring(0, 20)}</span></div>
-      <div>Hash: <span style="font-family: monospace;">${documentHash}</span></div>
-      <div>Erstellt: ${currentDate}</div>
-    </div>
-
-    <!-- Rechtliche Infos -->
-    <div style="text-align: right; font-size: 7pt; color: #666; line-height: 1.4;">
-      <div><strong>Gerichtsstand:</strong> ${companyProfile?.city || 'Deutschland'}</div>
-      <div><strong>Recht:</strong> Bundesrepublik Deutschland</div>
-      ${companyProfile?.companyName ? `<div style="color: #999; margin-top: 1mm;">© ${new Date().getFullYear()} ${companyProfile.companyName}</div>` : ''}
+    <!-- Footer-Zeile -->
+    <div style="margin-top: 4mm; padding-top: 3mm; border-top: 1px solid #ddd;">
+      <table style="width: 100%; font-size: 8pt; color: #666;">
+        <tr>
+          <td style="text-align: left;">DOK-ID: ${documentId.substring(0, 20)}...</td>
+          <td style="text-align: center;">Seite ${totalPages} | ${totalPages}</td>
+          <td style="text-align: right;">${new Date().toLocaleDateString('de-DE')}</td>
+        </tr>
+      </table>
     </div>
 
   </div>
