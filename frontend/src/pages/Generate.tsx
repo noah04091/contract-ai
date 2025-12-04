@@ -577,8 +577,9 @@ export default function Generate() {
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
   const [useCompanyProfile, setUseCompanyProfile] = useState<boolean>(false);
   
-  // Design Variant State 
+  // Design Variant State
   const [selectedDesignVariant, setSelectedDesignVariant] = useState<string>('executive');
+  const [isChangingDesign, setIsChangingDesign] = useState<boolean>(false);
 
   // Contract Data State
   const [contractData, setContractData] = useState<any>({
@@ -640,10 +641,10 @@ export default function Generate() {
   useEffect(() => {
     if (currentStep === 3 && contractText && !pdfPreviewUrl && !isGeneratingPreview) {
       console.log('✅ Step 3 reached - auto-loading PDF preview');
-      // ⏳ Warte 5 Sekunden damit Auto-PDF im Backend fertig wird
+      // ⏳ Warte 8 Sekunden damit Auto-PDF im Backend sicher fertig wird
       const timer = setTimeout(() => {
         generatePDFPreview();
-      }, 5000);
+      }, 8000);
       return () => clearTimeout(timer);
     }
   }, [currentStep, contractText]);
@@ -1043,6 +1044,98 @@ export default function Generate() {
     } catch (error) {
       console.error("❌ Fehler beim Speichern:", error);
       toast.error(`❌ Fehler beim Speichern: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
+    }
+  };
+
+  // 🎨 NEUE FUNKTION: Design-Variante ändern (nach Vertragserstellung)
+  const handleDesignChange = async (newDesign: string) => {
+    // Verhindere Mehrfachklicks oder gleiche Design-Auswahl
+    if (isChangingDesign || newDesign === selectedDesignVariant) return;
+
+    // Prüfe ob Vertrag gespeichert ist
+    if (!savedContractId) {
+      toast.warning("Bitte speichern Sie den Vertrag zuerst, um das Design zu ändern.", {
+        position: 'top-center',
+        autoClose: 3000
+      });
+      return;
+    }
+
+    setIsChangingDesign(true);
+
+    const loadingToast = toast.loading(`Design wird auf "${newDesign}" geändert...`, {
+      position: 'top-center'
+    });
+
+    try {
+      console.log("🎨 Design-Änderung gestartet:", { contractId: savedContractId, newDesign });
+
+      // Backend API aufrufen
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/generate/change-design`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contractId: savedContractId,
+          newDesignVariant: newDesign
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Design-Änderung fehlgeschlagen');
+      }
+
+      console.log("✅ Design erfolgreich geändert:", data);
+
+      // State aktualisieren
+      setSelectedDesignVariant(newDesign);
+
+      // PDF-Vorschau neu laden
+      if (pdfPreviewUrl) {
+        window.URL.revokeObjectURL(pdfPreviewUrl);
+        setPdfPreviewUrl(null);
+      }
+
+      toast.update(loadingToast, {
+        render: `✅ Design "${newDesign}" erfolgreich angewendet! PDF wird neu generiert...`,
+        type: "success",
+        isLoading: false,
+        autoClose: 2000
+      });
+
+      // Warte kurz und lade PDF-Vorschau neu
+      setTimeout(async () => {
+        try {
+          const pdfResponse = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/generate/pdf`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contractId: savedContractId })
+          });
+
+          if (pdfResponse.ok) {
+            const blob = await pdfResponse.blob();
+            const url = window.URL.createObjectURL(blob);
+            setPdfPreviewUrl(url);
+            console.log("✅ PDF-Vorschau mit neuem Design geladen");
+          }
+        } catch (pdfError) {
+          console.error("⚠️ PDF-Vorschau konnte nicht geladen werden:", pdfError);
+        }
+      }, 1000);
+
+    } catch (error) {
+      console.error("❌ Design-Änderung fehlgeschlagen:", error);
+      toast.update(loadingToast, {
+        render: `❌ Fehler: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
+        type: "error",
+        isLoading: false,
+        autoClose: 4000
+      });
+    } finally {
+      setIsChangingDesign(false);
     }
   };
 
@@ -1705,10 +1798,10 @@ export default function Generate() {
             console.log(isUpdate ? "✅ Vertrag aktualisiert" : "✅ Vertrag gespeichert:", contractId);
 
             // ⏳ Bei neuem Vertrag: Warte auf Auto-PDF Generierung im Backend
-            // Auto-PDF braucht ca. 5-8 Sekunden für Puppeteer + S3 Upload
+            // Auto-PDF braucht ca. 6-10 Sekunden für Puppeteer + S3 Upload
             if (!isUpdate) {
-              console.log("⏳ Warte auf Auto-PDF Generierung (6 Sekunden)...");
-              await new Promise(resolve => setTimeout(resolve, 6000));
+              console.log("⏳ Warte auf Auto-PDF Generierung (8 Sekunden)...");
+              await new Promise(resolve => setTimeout(resolve, 8000));
             } else {
               await new Promise(resolve => setTimeout(resolve, 500));
             }
@@ -2117,63 +2210,7 @@ export default function Generate() {
                         </motion.div>
                       )}
 
-                      {/* Design Variant Selector */}
-                      {isPremium && (
-                        <motion.div 
-                          className={styles.designVariantSelector}
-                          initial={{ opacity: 0, y: -10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.3, delay: 0.1 }}
-                        >
-                          <div className={styles.selectorHeader}>
-                            <div className={styles.selectorInfo}>
-                              <Sparkles size={20} />
-                              <div>
-                                <h4>Design-Variante wählen</h4>
-                                <p>Wählen Sie das perfekte Design für Ihre Verträge</p>
-                              </div>
-                            </div>
-                          </div>
-                          <div className={styles.designOptions}>
-                            <div 
-                              className={`${styles.designOption} ${selectedDesignVariant === 'executive' ? styles.active : ''}`}
-                              onClick={() => setSelectedDesignVariant('executive')}
-                            >
-                              <div className={styles.designPreview}>
-                                <div className={styles.executivePreview}></div>
-                              </div>
-                              <div className={styles.designDetails}>
-                                <strong>Executive</strong>
-                                <span>Elegant & Kraftvoll - Perfekt für wichtige Geschäftsverträge</span>
-                              </div>
-                            </div>
-                            <div 
-                              className={`${styles.designOption} ${selectedDesignVariant === 'modern' ? styles.active : ''}`}
-                              onClick={() => setSelectedDesignVariant('modern')}
-                            >
-                              <div className={styles.designPreview}>
-                                <div className={styles.modernPreview}></div>
-                              </div>
-                              <div className={styles.designDetails}>
-                                <strong>Modern</strong>
-                                <span>Frisch & Dynamisch - Ideal für innovative Unternehmen</span>
-                              </div>
-                            </div>
-                            <div 
-                              className={`${styles.designOption} ${selectedDesignVariant === 'minimal' ? styles.active : ''}`}
-                              onClick={() => setSelectedDesignVariant('minimal')}
-                            >
-                              <div className={styles.designPreview}>
-                                <div className={styles.minimalPreview}></div>
-                              </div>
-                              <div className={styles.designDetails}>
-                                <strong>Minimal</strong>
-                                <span>Klar & Fokussiert - Für maximale Lesbarkeit und Klarheit</span>
-                              </div>
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
+                      {/* Design Variant Selector - MOVED TO STEP 3 */}
 
                       <div className={styles.formGrid}>
                         {/* Title Field */}
@@ -2522,6 +2559,199 @@ export default function Generate() {
                         </motion.div>
                       )}
                     </motion.div>
+
+                    {/* 🎨 DESIGN VARIANT SELECTOR - Premium Feature */}
+                    {isPremium && (
+                      <motion.div
+                        className={styles.step3DesignSelector}
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: 0.2 }}
+                      >
+                        <div className={styles.designSelectorHeader}>
+                          <div className={styles.designSelectorTitle}>
+                            <Sparkles size={20} />
+                            <div>
+                              <h4>Design-Variante</h4>
+                              <p>Wählen Sie das perfekte Design für Ihren Vertrag</p>
+                            </div>
+                          </div>
+                          {!saved && (
+                            <span className={styles.designSaveHint}>
+                              Speichern Sie den Vertrag, um das Design zu ändern
+                            </span>
+                          )}
+                        </div>
+
+                        <div className={styles.designOptionsGrid}>
+                          {/* Executive Design */}
+                          <motion.div
+                            className={`${styles.designCard} ${selectedDesignVariant === 'executive' ? styles.designCardActive : ''} ${isChangingDesign ? styles.designCardDisabled : ''}`}
+                            onClick={() => handleDesignChange('executive')}
+                            whileHover={!isChangingDesign && saved ? { scale: 1.02, y: -2 } : {}}
+                            whileTap={!isChangingDesign && saved ? { scale: 0.98 } : {}}
+                          >
+                            <div className={styles.designCardPreview}>
+                              <div className={styles.designPreviewExecutive}>
+                                <div className={styles.previewHeader}></div>
+                                <div className={styles.previewLine}></div>
+                                <div className={styles.previewLine} style={{ width: '80%' }}></div>
+                                <div className={styles.previewLine} style={{ width: '60%' }}></div>
+                                <div className={styles.previewAccent}></div>
+                              </div>
+                            </div>
+                            <div className={styles.designCardInfo}>
+                              <strong>Executive</strong>
+                              <span>Elegant & Kraftvoll</span>
+                              <p>Perfekt für wichtige Geschäftsverträge mit klassischem, professionellem Look</p>
+                            </div>
+                            {selectedDesignVariant === 'executive' && (
+                              <div className={styles.designCardBadge}>
+                                <CheckCircle size={16} />
+                                Aktiv
+                              </div>
+                            )}
+                            {isChangingDesign && selectedDesignVariant !== 'executive' && (
+                              <div className={styles.designCardLoading}>
+                                <div className={styles.smallSpinner}></div>
+                              </div>
+                            )}
+                          </motion.div>
+
+                          {/* Modern Design */}
+                          <motion.div
+                            className={`${styles.designCard} ${selectedDesignVariant === 'modern' ? styles.designCardActive : ''} ${isChangingDesign ? styles.designCardDisabled : ''}`}
+                            onClick={() => handleDesignChange('modern')}
+                            whileHover={!isChangingDesign && saved ? { scale: 1.02, y: -2 } : {}}
+                            whileTap={!isChangingDesign && saved ? { scale: 0.98 } : {}}
+                          >
+                            <div className={styles.designCardPreview}>
+                              <div className={styles.designPreviewModern}>
+                                <div className={styles.previewHeaderModern}></div>
+                                <div className={styles.previewLineModern}></div>
+                                <div className={styles.previewLineModern} style={{ width: '70%' }}></div>
+                                <div className={styles.previewAccentModern}></div>
+                              </div>
+                            </div>
+                            <div className={styles.designCardInfo}>
+                              <strong>Modern</strong>
+                              <span>Frisch & Dynamisch</span>
+                              <p>Ideal für innovative Unternehmen mit zeitgemäßem, modernem Erscheinungsbild</p>
+                            </div>
+                            {selectedDesignVariant === 'modern' && (
+                              <div className={styles.designCardBadge}>
+                                <CheckCircle size={16} />
+                                Aktiv
+                              </div>
+                            )}
+                            {isChangingDesign && selectedDesignVariant !== 'modern' && (
+                              <div className={styles.designCardLoading}>
+                                <div className={styles.smallSpinner}></div>
+                              </div>
+                            )}
+                          </motion.div>
+
+                          {/* Minimal Design */}
+                          <motion.div
+                            className={`${styles.designCard} ${selectedDesignVariant === 'minimal' ? styles.designCardActive : ''} ${isChangingDesign ? styles.designCardDisabled : ''}`}
+                            onClick={() => handleDesignChange('minimal')}
+                            whileHover={!isChangingDesign && saved ? { scale: 1.02, y: -2 } : {}}
+                            whileTap={!isChangingDesign && saved ? { scale: 0.98 } : {}}
+                          >
+                            <div className={styles.designCardPreview}>
+                              <div className={styles.designPreviewMinimal}>
+                                <div className={styles.previewHeaderMinimal}></div>
+                                <div className={styles.previewLineMinimal}></div>
+                                <div className={styles.previewLineMinimal} style={{ width: '90%' }}></div>
+                                <div className={styles.previewLineMinimal} style={{ width: '75%' }}></div>
+                              </div>
+                            </div>
+                            <div className={styles.designCardInfo}>
+                              <strong>Minimal</strong>
+                              <span>Klar & Fokussiert</span>
+                              <p>Maximale Lesbarkeit und Klarheit für formelle Dokumente</p>
+                            </div>
+                            {selectedDesignVariant === 'minimal' && (
+                              <div className={styles.designCardBadge}>
+                                <CheckCircle size={16} />
+                                Aktiv
+                              </div>
+                            )}
+                            {isChangingDesign && selectedDesignVariant !== 'minimal' && (
+                              <div className={styles.designCardLoading}>
+                                <div className={styles.smallSpinner}></div>
+                              </div>
+                            )}
+                          </motion.div>
+
+                          {/* Elegant Design */}
+                          <motion.div
+                            className={`${styles.designCard} ${selectedDesignVariant === 'elegant' ? styles.designCardActive : ''} ${isChangingDesign ? styles.designCardDisabled : ''}`}
+                            onClick={() => handleDesignChange('elegant')}
+                            whileHover={!isChangingDesign && saved ? { scale: 1.02, y: -2 } : {}}
+                            whileTap={!isChangingDesign && saved ? { scale: 0.98 } : {}}
+                          >
+                            <div className={styles.designCardPreview}>
+                              <div className={styles.designPreviewElegant}>
+                                <div className={styles.previewHeaderElegant}></div>
+                                <div className={styles.previewLineElegant}></div>
+                                <div className={styles.previewLineElegant} style={{ width: '85%' }}></div>
+                                <div className={styles.previewAccentElegant}></div>
+                              </div>
+                            </div>
+                            <div className={styles.designCardInfo}>
+                              <strong>Elegant</strong>
+                              <span>Luxuriös & Raffiniert</span>
+                              <p>Boutique-Kanzlei Stil mit goldenen Akzenten und edler Typografie</p>
+                            </div>
+                            {selectedDesignVariant === 'elegant' && (
+                              <div className={styles.designCardBadge}>
+                                <CheckCircle size={16} />
+                                Aktiv
+                              </div>
+                            )}
+                            {isChangingDesign && selectedDesignVariant !== 'elegant' && (
+                              <div className={styles.designCardLoading}>
+                                <div className={styles.smallSpinner}></div>
+                              </div>
+                            )}
+                          </motion.div>
+
+                          {/* Corporate Design */}
+                          <motion.div
+                            className={`${styles.designCard} ${selectedDesignVariant === 'corporate' ? styles.designCardActive : ''} ${isChangingDesign ? styles.designCardDisabled : ''}`}
+                            onClick={() => handleDesignChange('corporate')}
+                            whileHover={!isChangingDesign && saved ? { scale: 1.02, y: -2 } : {}}
+                            whileTap={!isChangingDesign && saved ? { scale: 0.98 } : {}}
+                          >
+                            <div className={styles.designCardPreview}>
+                              <div className={styles.designPreviewCorporate}>
+                                <div className={styles.previewHeaderCorporate}></div>
+                                <div className={styles.previewLineCorporate}></div>
+                                <div className={styles.previewLineCorporate} style={{ width: '75%' }}></div>
+                                <div className={styles.previewAccentCorporate}></div>
+                              </div>
+                            </div>
+                            <div className={styles.designCardInfo}>
+                              <strong>Corporate</strong>
+                              <span>Struktur & Vertrauen</span>
+                              <p>DAX-Konzern Stil für maximale Seriosität und Professionalität</p>
+                            </div>
+                            {selectedDesignVariant === 'corporate' && (
+                              <div className={styles.designCardBadge}>
+                                <CheckCircle size={16} />
+                                Aktiv
+                              </div>
+                            )}
+                            {isChangingDesign && selectedDesignVariant !== 'corporate' && (
+                              <div className={styles.designCardLoading}>
+                                <div className={styles.smallSpinner}></div>
+                              </div>
+                            )}
+                          </motion.div>
+                        </div>
+                      </motion.div>
+                    )}
 
                     {/* Split View: Text Editor + PDF Preview */}
                     <div className={styles.step3SplitView}>

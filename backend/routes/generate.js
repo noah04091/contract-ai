@@ -477,120 +477,201 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
   // Generiere Inhaltsverzeichnis
   const tableOfContents = generateTableOfContents(contractText);
 
-  // 🎨 ENTERPRISE DESIGN-VARIANTEN - WELTKLASSE-KANZLEI-NIVEAU
+  // 🎨 PREMIUM DESIGN-VARIANTEN - WELTKLASSE-KANZLEI & DESIGN-AGENTUR NIVEAU
+  // Entwickelt wie von Freshfields, Clifford Chance, Hengeler Mueller mit Top-Designern
   const designVariants = {
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // 🏛️ EXECUTIVE - Klassische Großkanzlei (Freshfields/Clifford Chance Style)
+    // ═══════════════════════════════════════════════════════════════════════════
     executive: {
-      // 🆕 FRESHFIELDS/CLIFFORD CHANCE NIVEAU - WELTKLASSE-KANZLEI-STANDARD
-      primary: '#1a1a1a',              // TIEFSCHWARZ für maximale Seriosität
-      secondary: '#2c2c2c',             // Dunkelgrau für Akzente
-      accent: '#333333',                // SERIÖSES DUNKELGRAU (Kanzlei-Standard)
-      text: '#1a1a1a',                  // Tiefschwarz für Text
-      lightBg: '#fefefe',               // Nahezu reines Weiß
-      border: '#cccccc',                // Neutrales Grau für Abgrenzungen
-      headerBg: 'transparent', // Kanzlei-Standard: Kein Background
-      
-      // 🔥 EXAKTE KANZLEI-TYPOGRAFIE (PREMIUM LEGAL DESIGN)
-      fontFamily: '"Georgia", "Times New Roman", "Liberation Serif", serif',
-      headingFont: '"Georgia", "Times New Roman", serif',
-      fontSize: '11pt',                 // 11pt für optimale Lesbarkeit
-      lineHeight: '1.25',               // 1.25 für professionelle Lesbarkeit
-      letterSpacing: '0px',             // Kein Letter-Spacing bei Kanzleien
-      textAlign: 'justify',             // BLOCKSATZ - Kanzlei-Pflicht
-      hyphens: 'auto',                  // Automatische Silbentrennung
-      hyphenateCharacter: '"-"',        // Deutsche Silbentrennung
-      
-      // 🔥 MILLIMETER-BASIERTE ABSTÄNDE (PROFESSIONELL)
-      sectionMargin: 'margin: 10.58mm 0;',         // 30pt = 10.58mm (mehr Raum zwischen §§)
-      paragraphSpacing: 'margin-bottom: 4.23mm;',  // 12pt = 4.23mm
-      indentation: 'text-indent: 12.7mm;',         // 36pt = 12.7mm für Einrückungen
-      
-      // 🔥 SEITENUMBRUCH-KONTROLLE (WELTKLASSE)
-      orphans: '3',                     // Min. 3 Zeilen am Seitenende
-      widows: '3',                      // Min. 3 Zeilen am Seitenanfang
-      pageBreakInside: 'avoid',         // Blockelemente nicht trennen
-      
-      // DESIGN-ELEMENTE
-      sectionNumberStyle: 'color: #1a1a1a; margin-right: 10mm; font-weight: bold; font-size: 11pt; min-width: 12.7mm; display: inline-block; text-align: left;',
+      primary: '#1a1a1a',              // Tiefschwarz - maximale Autorität
+      secondary: '#2d2d2d',            // Anthrazit für Akzente
+      accent: '#8B7355',               // Warmes Bronze - subtiler Luxus
+      text: '#1a1a1a',                 // Perfektes Schwarz
+      lightBg: '#fdfcfb',              // Warmes Off-White (wie hochwertiges Papier)
+      border: '#d4d0c8',               // Elegantes Beige-Grau
+      headerBg: 'transparent',
+
+      // Premium Serif-Typografie
+      fontFamily: '"Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif',
+      headingFont: '"Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif',
+      fontSize: '11pt',
+      lineHeight: '1.6',
+      letterSpacing: '0.01em',
+      textAlign: 'justify',
+
+      // Elegante Abstände
+      sectionMargin: 'margin: 28px 0;',
+      paragraphSpacing: 'margin-bottom: 14px;',
+
+      // Klassische §-Nummerierung mit Bronze-Akzent
+      sectionNumberStyle: 'color: #8B7355; margin-right: 12px; font-weight: 600; font-size: 12pt; font-family: "Palatino Linotype", Georgia, serif;',
       pageMargins: 'margin: 0; padding: 0;',
-      headerHeight: '33.87mm',          // ~96pt in mm für professionellen Header
-      useGradients: false,              // Kanzleien verwenden keine Gradienten
-      useSerif: true,                   // Times New Roman ist Kanzlei-Standard
-      borderRadius: '0px',              // Keine abgerundeten Ecken
-      boxShadow: 'none'                 // Keine Schatten - Clean & Professional
-    },
-    
-    // 🔄 BEHALTE BESTEHENDE VARIANTEN FÜR KOMPATIBILITÄT
-    executive_legacy: {
-      // Alte Executive-Variante bleibt verfügbar
-      primary: '#1a2332',           
-      secondary: '#2c3e50',         
-      accent: '#c9a961',            
-      text: '#2c3e50',              
-      lightBg: '#f7f9fc',           
-      border: '#e1e8f0',            
-      headerBg: 'transparent', // Kanzlei-Standard: Neutral
-      fontFamily: '"Georgia", "Times New Roman", serif',
-      headingFont: '"Georgia", "Times New Roman", serif',
-      fontSize: '10.5pt',               // KOMPAKT für mehr Inhalt
-      lineHeight: '1.35',               // KOMPAKT für 5-6 Seiten
-      letterSpacing: '0.3px',
-      sectionNumberStyle: 'background: #c9a961; color: white; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-right: 18px; font-weight: bold; font-size: 14px;',
-      pageMargins: 'margin: 0; padding: 0;',
-      sectionMargin: 'margin: 8.8mm 0;',      // 25px = 8.8mm
-      paragraphSpacing: 'margin-bottom: 4.9mm;', // 14px = 4.9mm
       headerHeight: '100px',
-      useGradients: true,
+      useGradients: false,
       useSerif: true,
-      borderRadius: '8px',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+      borderRadius: '0',
+      boxShadow: 'none',
+
+      // Spezielle Executive-Elemente
+      headerStyle: 'border-bottom: 2px solid #8B7355; padding-bottom: 20px;',
+      sectionDivider: 'border-top: 1px solid #d4d0c8; margin: 30px 0; padding-top: 25px;'
     },
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // 🌊 MODERN - Premium Tech & Startup (Silicon Valley / Berlin Style)
+    // ═══════════════════════════════════════════════════════════════════════════
     modern: {
-      // Tech-Style: Blau-Grün, Sans-Serif, Clean
-      primary: '#0ea5e9',           // Himmelblau
-      secondary: '#0284c7',         // Dunkleres Blau
-      accent: '#06b6d4',            // Cyan
-      text: '#1e293b',              // Dunkles Grau
-      lightBg: '#f0f9ff',           // Sehr helles Blau
-      border: '#e0f2fe',            // Blau Border
-      headerBg: 'transparent', // Kanzlei-Standard: Neutral
-      fontFamily: '"Arial", "Helvetica", sans-serif',
-      headingFont: '"Arial", "Helvetica", sans-serif',
+      primary: '#0F172A',              // Tiefes Slate - Tech-Eleganz
+      secondary: '#334155',            // Slate für Hierarchie
+      accent: '#3B82F6',               // Brillantes Blau - Vertrauen & Innovation
+      accentLight: '#DBEAFE',          // Helles Blau für Hintergründe
+      text: '#1E293B',                 // Dunkles Slate - optimal lesbar
+      lightBg: '#F8FAFC',              // Kühles Off-White
+      border: '#E2E8F0',               // Zartes Slate-Grau
+      headerBg: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+
+      // Moderne Sans-Serif
+      fontFamily: '"Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      headingFont: '"Inter", "SF Pro Display", -apple-system, sans-serif',
       fontSize: '10.5pt',
-      lineHeight: '1.35',               // KOMPAKT für mehr Inhalt
-      letterSpacing: '0px',
-      sectionNumberStyle: 'background: white; color: #0ea5e9; border: 2px solid #0ea5e9; width: 30px; height: 30px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; margin-right: 15px; font-weight: 600; font-size: 13px;',
+      lineHeight: '1.65',
+      letterSpacing: '-0.01em',
+      textAlign: 'left',
+
+      // Luftige Abstände
+      sectionMargin: 'margin: 32px 0;',
+      paragraphSpacing: 'margin-bottom: 16px;',
+
+      // Moderne Pill-Badge Nummerierung
+      sectionNumberStyle: 'background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); color: white; padding: 6px 14px; border-radius: 20px; font-weight: 600; font-size: 11px; margin-right: 14px; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px;',
       pageMargins: 'margin: 0; padding: 0;',
-      sectionMargin: 'margin: 7.1mm 0;',      // 20px = 7.1mm  
-      paragraphSpacing: 'margin-bottom: 4.2mm;', // 12px = 4.2mm
       headerHeight: '90px',
       useGradients: true,
       useSerif: false,
       borderRadius: '12px',
-      boxShadow: '0 4px 12px rgba(14,165,233,0.1)'
+      boxShadow: '0 4px 20px rgba(15, 23, 42, 0.08)',
+
+      // Moderne Elemente
+      headerStyle: 'background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); color: white; padding: 25px; border-radius: 12px 12px 0 0;',
+      cardStyle: 'background: white; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); padding: 24px;'
     },
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // ⬛ MINIMAL - Swiss Design / Bauhaus (Zurückhaltende Eleganz)
+    // ═══════════════════════════════════════════════════════════════════════════
     minimal: {
-      // Schweizer Style: Nur Schwarz-Weiß, Ultra-Clean
-      primary: '#000000',           // Schwarz
-      secondary: '#4b5563',         // Mittelgrau
-      accent: '#9ca3af',            // Hellgrau
-      text: '#111827',              // Fast Schwarz
-      lightBg: '#fafafa',           // Fast Weiß
-      border: '#e5e7eb',            // Grau Border
+      primary: '#000000',              // Reines Schwarz
+      secondary: '#525252',            // Neutrales Grau
+      accent: '#000000',               // Schwarz als Akzent
+      text: '#171717',                 // Fast-Schwarz
+      lightBg: '#FAFAFA',              // Minimales Off-White
+      border: '#E5E5E5',               // Zartes Grau
       headerBg: '#000000',
-      fontFamily: '"Helvetica Neue", "Arial", sans-serif',
-      headingFont: '"Helvetica Neue", "Arial", sans-serif',
-      fontSize: '10.5pt',               // KOMPAKT aber lesbar
-      lineHeight: '1.35',               // KOMPAKT für 5-6 Seiten
-      letterSpacing: '-0.2px',
-      sectionNumberStyle: 'color: #000; margin-right: 20px; font-weight: 400; font-size: 14px; min-width: 25px; display: inline-block;',
+
+      // Helvetica - Die Ikone des Swiss Design
+      fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
+      headingFont: '"Helvetica Neue", Helvetica, Arial, sans-serif',
+      fontSize: '10.5pt',
+      lineHeight: '1.55',
+      letterSpacing: '0',
+      textAlign: 'left',
+
+      // Strenge Abstände
+      sectionMargin: 'margin: 24px 0;',
+      paragraphSpacing: 'margin-bottom: 12px;',
+
+      // Puristische Nummerierung
+      sectionNumberStyle: 'color: #000; font-weight: 700; font-size: 11pt; margin-right: 16px; min-width: 30px; display: inline-block;',
       pageMargins: 'margin: 0; padding: 0;',
-      sectionMargin: 'margin: 6.4mm 0;',      // 18px = 6.4mm
-      paragraphSpacing: 'margin-bottom: 3.5mm;', // 10px = 3.5mm
       headerHeight: '70px',
       useGradients: false,
       useSerif: false,
-      borderRadius: '0px',
-      boxShadow: 'none'
+      borderRadius: '0',
+      boxShadow: 'none',
+
+      // Minimale Elemente
+      headerStyle: 'border-bottom: 3px solid #000; padding-bottom: 15px;',
+      sectionDivider: 'border-top: 1px solid #000; margin: 20px 0; padding-top: 20px;'
+    },
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // 🌿 ELEGANT - Boutique-Kanzlei / Luxus-Marken (Hermès/Bottega Style)
+    // ═══════════════════════════════════════════════════════════════════════════
+    elegant: {
+      primary: '#2C2416',              // Dunkles Espresso-Braun
+      secondary: '#4A3F2F',            // Warmes Mokka
+      accent: '#B8860B',               // Dunkles Gold - Luxus pur
+      accentLight: '#F5E6C8',          // Champagner
+      text: '#2C2416',                 // Warmes Dunkelbraun
+      lightBg: '#FAF8F5',              // Cremiges Off-White
+      border: '#E8E2D9',               // Warmes Beige
+      headerBg: 'linear-gradient(135deg, #2C2416 0%, #4A3F2F 100%)',
+
+      // Elegante Garamond-Typografie
+      fontFamily: '"EB Garamond", "Cormorant Garamond", Garamond, "Times New Roman", serif',
+      headingFont: '"EB Garamond", "Cormorant Garamond", Garamond, serif',
+      fontSize: '11.5pt',
+      lineHeight: '1.7',
+      letterSpacing: '0.02em',
+      textAlign: 'justify',
+
+      // Großzügige Abstände
+      sectionMargin: 'margin: 30px 0;',
+      paragraphSpacing: 'margin-bottom: 16px;',
+
+      // Gold-Akzent Nummerierung
+      sectionNumberStyle: 'color: #B8860B; font-weight: 600; font-size: 13pt; margin-right: 10px; font-family: "EB Garamond", Garamond, serif; font-style: italic;',
+      pageMargins: 'margin: 0; padding: 0;',
+      headerHeight: '95px',
+      useGradients: true,
+      useSerif: true,
+      borderRadius: '4px',
+      boxShadow: '0 2px 15px rgba(44, 36, 22, 0.06)',
+
+      // Luxuriöse Elemente
+      headerStyle: 'border-bottom: 1px solid #B8860B; padding-bottom: 20px;',
+      decorativeElement: 'background: linear-gradient(90deg, transparent 0%, #B8860B 50%, transparent 100%); height: 1px; margin: 30px 0;'
+    },
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // 🏢 CORPORATE - DAX-Konzern / Enterprise (Siemens/SAP/Allianz Style)
+    // ═══════════════════════════════════════════════════════════════════════════
+    corporate: {
+      primary: '#003366',              // Corporate Navy - Vertrauen & Stabilität
+      secondary: '#004D99',            // Helleres Navy
+      accent: '#0066CC',               // Corporate Blue
+      accentLight: '#E6F0FF',          // Sehr helles Blau
+      text: '#1A1A1A',                 // Neutrales Schwarz
+      lightBg: '#F5F7FA',              // Kühles Grau-Weiß
+      border: '#D1D9E6',               // Business-Grau
+      headerBg: '#003366',
+
+      // Corporate Sans-Serif
+      fontFamily: '"Source Sans Pro", "Segoe UI", Roboto, "Helvetica Neue", sans-serif',
+      headingFont: '"Source Sans Pro", "Segoe UI", Roboto, sans-serif',
+      fontSize: '10.5pt',
+      lineHeight: '1.6',
+      letterSpacing: '0',
+      textAlign: 'left',
+
+      // Strukturierte Abstände
+      sectionMargin: 'margin: 26px 0;',
+      paragraphSpacing: 'margin-bottom: 14px;',
+
+      // Corporate Badge-Nummerierung
+      sectionNumberStyle: 'background: #003366; color: white; width: 28px; height: 28px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; margin-right: 14px; font-weight: 600; font-size: 12px;',
+      pageMargins: 'margin: 0; padding: 0;',
+      headerHeight: '85px',
+      useGradients: false,
+      useSerif: false,
+      borderRadius: '6px',
+      boxShadow: '0 2px 8px rgba(0, 51, 102, 0.08)',
+
+      // Corporate Elemente
+      headerStyle: 'background: #003366; color: white; padding: 20px 25px;',
+      accentBar: 'background: #0066CC; height: 4px; margin-bottom: 20px;'
     }
   };
 
@@ -3718,7 +3799,7 @@ router.post("/change-design", verifyToken, async (req, res) => {
     }
 
     // Validiere Design-Variante
-    const validDesigns = ['executive', 'modern', 'minimal'];
+    const validDesigns = ['executive', 'modern', 'minimal', 'elegant', 'corporate'];
     if (!validDesigns.includes(newDesignVariant)) {
       return res.status(400).json({ message: "Ungültige Design-Variante" });
     }
