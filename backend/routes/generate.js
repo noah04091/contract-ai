@@ -2399,10 +2399,14 @@ ${isDraft ? '<div class="watermark">ENTWURF</div>' : ''}
   </div>
 
   <!-- Footer mit Meta-Informationen -->
-  <div style="position: absolute; bottom: 0; left: 0; right: 0; border-top: 1px solid #ddd; padding-top: 4mm; display: flex; justify-content: space-between; font-size: 8pt; color: #666;">
-    <div><span style="color: #999;">Datum:</span> ${currentDate}</div>
-    <div><span style="color: #999;">Ort:</span> ${companyProfile?.city || 'Deutschland'}</div>
-    <div><span style="color: #999;">ID:</span> <span style="font-family: monospace;">${documentId.substring(0, 16)}</span></div>
+  <div style="position: absolute; bottom: 0; left: 0; right: 0; border-top: 1px solid #ddd; padding-top: 4mm;">
+    <table style="width: 100%; font-size: 8pt; color: #666;">
+      <tr>
+        <td style="text-align: left; width: 33%;"><span style="color: #999;">Datum:</span> ${currentDate}</td>
+        <td style="text-align: center; width: 34%;"><span style="color: #999;">Ort:</span> ${companyProfile?.city || 'Deutschland'}</td>
+        <td style="text-align: right; width: 33%;"><span style="color: #999;">ID:</span> <span style="font-family: monospace;">${documentId.substring(0, 16)}</span></td>
+      </tr>
+    </table>
   </div>
 
 </div>
@@ -2417,7 +2421,7 @@ ${isDraft ? '<div class="watermark">ENTWURF</div>' : ''}
 <!-- ══════════════════════════════════════════════════════════════════════════════════ -->
 <!-- LETZTE SEITE: UNTERSCHRIFTEN -->
 <!-- ══════════════════════════════════════════════════════════════════════════════════ -->
-<div class="page" style="position: relative;">
+<div class="page" style="position: relative; page-break-before: always;">
 
   <!-- Header -->
   <div style="border-bottom: 1px solid #333; padding-bottom: 3mm; margin-bottom: 6mm; display: flex; justify-content: space-between; align-items: center;">
