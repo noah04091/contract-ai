@@ -3192,9 +3192,7 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
     const contractId = req.params.id;
     console.log('🎨 [V2] PDF-Anfrage für Vertrag:', contractId);
 
-    const db = getDB();
-    const contractsCollection = db.collection("contracts");
-
+    // Verwende die bereits initialisierte contractsCollection
     const contract = await contractsCollection.findOne({
       _id: new ObjectId(contractId),
       userId: req.user.userId
@@ -3204,8 +3202,10 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
       return res.status(404).json({ message: "Vertrag nicht gefunden" });
     }
 
+    // Company Profile laden
     let companyProfile = null;
     if (contract.hasCompanyProfile) {
+      const db = client.db("contractai");
       companyProfile = await db.collection("company_profiles").findOne({
         userId: new ObjectId(req.user.userId)
       });
@@ -3255,9 +3255,7 @@ router.post('/:id/pdf-v3', verifyToken, async (req, res) => {
     const contractId = req.params.id;
     console.log('🎨 [V3] PDF-Anfrage für Vertrag:', contractId);
 
-    const db = getDB();
-    const contractsCollection = db.collection("contracts");
-
+    // Verwende die bereits initialisierte contractsCollection
     const contract = await contractsCollection.findOne({
       _id: new ObjectId(contractId),
       userId: req.user.userId
@@ -3267,8 +3265,10 @@ router.post('/:id/pdf-v3', verifyToken, async (req, res) => {
       return res.status(404).json({ message: "Vertrag nicht gefunden" });
     }
 
+    // Company Profile laden
     let companyProfile = null;
     if (contract.hasCompanyProfile) {
+      const db = client.db("contractai");
       companyProfile = await db.collection("company_profiles").findOne({
         userId: new ObjectId(req.user.userId)
       });
