@@ -2398,13 +2398,13 @@ ${isDraft ? '<div class="watermark">ENTWURF</div>' : ''}
 
   </div>
 
-  <!-- Footer mit Meta-Informationen -->
-  <div style="position: absolute; bottom: 0; left: 0; right: 0; border-top: 1px solid #ddd; padding-top: 4mm;">
-    <table style="width: 100%; font-size: 8pt; color: #666;">
+  <!-- Footer mit Meta-Informationen - FIXIERT am unteren Rand mit klarer Trennung -->
+  <div style="position: absolute; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #ddd; padding: 4mm 0 0 0;">
+    <table style="width: 100%; font-size: 8pt; color: #666; border-collapse: collapse;">
       <tr>
-        <td style="text-align: left; width: 33%;"><span style="color: #999;">Datum:</span> ${currentDate}</td>
-        <td style="text-align: center; width: 34%;"><span style="color: #999;">Ort:</span> ${companyProfile?.city || 'Deutschland'}</td>
-        <td style="text-align: right; width: 33%;"><span style="color: #999;">ID:</span> <span style="font-family: monospace;">${documentId.substring(0, 16)}</span></td>
+        <td style="text-align: left; width: 33%; padding: 0;"><span style="color: #999;">Datum:</span>&nbsp;${currentDate}</td>
+        <td style="text-align: center; width: 34%; padding: 0;"><span style="color: #999;">Ort:</span>&nbsp;${companyProfile?.city || 'Deutschland'}</td>
+        <td style="text-align: right; width: 33%; padding: 0;"><span style="color: #999;">ID:</span>&nbsp;<span style="font-family: monospace;">${documentId.substring(0, 16)}</span></td>
       </tr>
     </table>
   </div>
