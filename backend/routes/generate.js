@@ -2216,12 +2216,12 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
         continue;
       }
 
-      // PRÄAMBEL - MITTIG mit dezenten Linien
+      // PRÄAMBEL - V1-Style mit dekorativen Linien
       if (trimmedLine === 'PRÄAMBEL' || trimmedLine === 'Präambel') {
         html += `
-          <div style="margin: 10mm 0 6mm 0; page-break-after: avoid; text-align: center;">
-            <div style="display: inline-flex; align-items: center; gap: 5mm;">
-              <div style="width: 20mm; height: 1px; background: #999;"></div>
+          <div style="margin: 10mm 0 6mm 0; page-break-after: avoid;">
+            <div style="display: flex; align-items: center; gap: 4mm;">
+              <div style="flex: 0 0 15mm; height: 1px; background: #8B7355;"></div>
               <h2 style="
                 font-family: 'Times New Roman', serif;
                 font-size: 13pt;
@@ -2232,7 +2232,7 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
                 margin: 0;
                 white-space: nowrap;
               ">PRÄAMBEL</h2>
-              <div style="width: 20mm; height: 1px; background: #999;"></div>
+              <div style="flex: 0 0 15mm; height: 1px; background: #8B7355;"></div>
             </div>
           </div>
         `;
@@ -2260,7 +2260,7 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
         continue;
       }
 
-      // NUMMERIERTE ABSÄTZE (1), (2), (3) etc. - Klassisch mit schwarzem Nummernkreis
+      // NUMMERIERTE ABSÄTZE (1), (2), (3) etc. - V1-Style mit Nummernkreis
       if (/^\(?\d+\)?\.?\s/.test(trimmedLine)) {
         currentParagraphNum++;
         const cleanText = trimmedLine.replace(/^\(?\d+\)?\.?\s*/, '').replace(/\*\*/g, '');
@@ -2271,14 +2271,14 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
               flex: 0 0 auto;
               min-width: 7mm;
               height: 7mm;
-              border: 1.5px solid #333;
+              border: 1.5px solid #8B7355;
               border-radius: 50%;
               display: flex;
               align-items: center;
               justify-content: center;
               font-size: 9pt;
               font-weight: bold;
-              color: #333;
+              color: #8B7355;
               margin-top: 1mm;
             ">${currentParagraphNum}</div>
             <p style="
@@ -2295,7 +2295,7 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
         continue;
       }
 
-      // AUFZÄHLUNGEN mit Buchstaben a), b), c) - Klassisch mit schwarzem umkreisten Buchstaben
+      // AUFZÄHLUNGEN mit Buchstaben a), b), c) - V1-Style mit umkreisten Buchstaben
       if (/^[a-z]\)/.test(trimmedLine)) {
         const letter = trimmedLine.charAt(0);
         const cleanText = trimmedLine.substring(2).trim().replace(/\*\*/g, '');
@@ -2306,13 +2306,13 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
               flex: 0 0 auto;
               min-width: 5.5mm;
               height: 5.5mm;
-              border: 1px solid #555;
+              border: 1px solid #999;
               border-radius: 50%;
               display: flex;
               align-items: center;
               justify-content: center;
               font-size: 8pt;
-              color: #333;
+              color: #666;
               margin-top: 1.5mm;
             ">${letter}</div>
             <p style="
@@ -2329,12 +2329,12 @@ const formatContractToHTMLv2 = async (contractText, companyProfile, contractType
         continue;
       }
 
-      // Spiegelstriche - Klassisch schwarz
+      // Spiegelstriche
       if (trimmedLine.startsWith('-') || trimmedLine.startsWith('•')) {
         const cleanText = trimmedLine.substring(1).trim().replace(/\*\*/g, '');
         html += `
           <div style="display: flex; align-items: flex-start; gap: 3mm; margin: 0 0 2mm 12mm;">
-            <span style="color: #333; font-size: 12pt;">•</span>
+            <span style="color: #8B7355; font-size: 12pt;">•</span>
             <p style="
               font-family: 'Times New Roman', serif;
               font-size: 10.5pt;
@@ -2576,7 +2576,7 @@ ${isDraft ? '<div class="watermark">ENTWURF</div>' : ''}
 
     <!-- Anlagen-Bereich wie V1 -->
     <div style="background: #faf8f5; border: 1px solid #e5e0d5; padding: 4mm 5mm; margin-bottom: 15mm;">
-      <h4 style="font-size: 11pt; font-weight: bold; color: #333; margin: 0 0 2mm 0; font-style: italic;">ANLAGEN</h4>
+      <h4 style="font-size: 11pt; font-weight: bold; color: #8B7355; margin: 0 0 2mm 0; font-style: italic;">ANLAGEN</h4>
       <p style="font-size: 10pt; color: #666; margin: 0;">Diesem Vertrag sind keine Anlagen beigefügt.</p>
     </div>
 
