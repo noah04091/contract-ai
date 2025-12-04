@@ -13,6 +13,7 @@
     "@aws-sdk/client-s3": "^3.837.0",
     "@aws-sdk/lib-storage": "^3.837.0",
     "@aws-sdk/s3-request-presigner": "^3.837.0",
+    "@react-pdf/renderer": "^4.3.1",
     "@sparticuz/chromium": "^138.0.2",
     "@tensorflow/tfjs-node": "^4.22.0",
     "archiver": "^7.0.1",
@@ -44,6 +45,7 @@
     "qrcode": "^1.5.4",
     "rss-parser": "^3.13.0",
     "stripe": "^18.0.0",
+    "typst": "^0.10.0-8",
     "xlsx": "^0.18.5",
     "xml2js": "^0.6.2"
   }

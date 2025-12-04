@@ -4078,69 +4078,79 @@ export default function Generate() {
     }
   };
 
-  // 🆕 NEU: PDF V2 Download - Neue saubere Struktur (Deckblatt + Inhalt + Unterschriften)
+  // 🆕 NEU: PDF V2 Download - React-PDF basiert (professionelle Typografie)
   const [isGeneratingPDFv2, setIsGeneratingPDFv2] = useState(false);
+  // 🆕 NEU: PDF V3 Download - Typst basiert (LaTeX-Alternative)
+  const [isGeneratingPDFv3, setIsGeneratingPDFv3] = useState(false);
 
+  // Helper: Vertrag speichern wenn nötig
+  const ensureContractSaved = async (loadingToast: ReturnType<typeof toast.loading>): Promise<string | null> => {
+    let contractId = savedContractId;
+
+    if (!contractId && contractText) {
+      toast.update(loadingToast, {
+        render: "Speichere Vertrag...",
+        type: "info",
+        isLoading: true
+      });
+
+      const saveRes = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: `${contractData.contractType || 'Vertrag'} - ${new Date().toLocaleDateString('de-DE')}`,
+          content: contractText,
+          isGenerated: true,
+          contractType: contractData.contractType,
+          formData: contractData.parties,
+          metadata: {
+            contractType: contractData.contractType,
+            parties: contractData.parties,
+            contractDetails: contractData.contractDetails
+          }
+        })
+      });
+
+      const saveData = await saveRes.json();
+      if (saveRes.ok && saveData.contractId) {
+        contractId = saveData.contractId;
+        setSavedContractId(saveData.contractId);
+        setSaved(true);
+      }
+    }
+
+    return contractId;
+  };
+
+  // 🆕 PDF V2 - React-PDF basiert
   const handleDownloadPDFv2 = async () => {
     if (isGeneratingPDFv2) return;
 
     setIsGeneratingPDFv2(true);
 
-    const loadingToast = toast.loading("PDF V2 wird generiert... (neue Struktur)", {
+    const loadingToast = toast.loading("PDF V2 (React-PDF) wird generiert...", {
       position: 'top-center'
     });
 
     try {
-      let contractId = savedContractId;
-
-      // Wenn noch nicht gespeichert, automatisch speichern
-      if (!contractId && contractText) {
-        toast.update(loadingToast, {
-          render: "Speichere Vertrag...",
-          type: "info",
-          isLoading: true
-        });
-
-        const saveRes = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: `${contractData.contractType || 'Vertrag'} - ${new Date().toLocaleDateString('de-DE')}`,
-            content: contractText,
-            isGenerated: true,
-            metadata: {
-              contractType: contractData.contractType,
-              parties: contractData.parties,
-              contractDetails: contractData.contractDetails
-            }
-          })
-        });
-
-        const saveData = await saveRes.json();
-        if (saveRes.ok && saveData.contractId) {
-          contractId = saveData.contractId;
-          setSavedContractId(saveData.contractId);
-          setSaved(true);
-        }
-      }
+      const contractId = await ensureContractSaved(loadingToast);
 
       if (!contractId) {
         throw new Error("Vertrag konnte nicht gespeichert werden");
       }
 
       toast.update(loadingToast, {
-        render: "PDF V2 wird generiert...",
+        render: "PDF V2 (React-PDF) wird generiert...",
         type: "info",
         isLoading: true
       });
 
-      // 🆕 Rufe die neue V2-Route auf (unter /api/contracts/generate gemountet)
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/generate/pdf-v2`, {
+      // 🆕 Neue V2-Route: /api/contracts/:id/pdf-v2
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/${contractId}/pdf-v2`, {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contractId })
+        headers: { 'Content-Type': 'application/json' }
       });
 
       if (!response.ok) {
@@ -4157,14 +4167,14 @@ export default function Generate() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${contractData.contractType || 'vertrag'}_V2_${new Date().toLocaleDateString('de-DE').replace(/\./g, '-')}.pdf`;
+      a.download = `${contractData.contractType || 'vertrag'}_V2-ReactPDF_${new Date().toLocaleDateString('de-DE').replace(/\./g, '-')}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
       toast.update(loadingToast, {
-        render: "✅ PDF V2 erfolgreich generiert!",
+        render: "✅ PDF V2 (React-PDF) erfolgreich generiert!",
         type: "success",
         isLoading: false,
         autoClose: 3000
@@ -4180,6 +4190,76 @@ export default function Generate() {
       });
     } finally {
       setIsGeneratingPDFv2(false);
+    }
+  };
+
+  // 🆕 PDF V3 - Typst basiert (LaTeX-Alternative)
+  const handleDownloadPDFv3 = async () => {
+    if (isGeneratingPDFv3) return;
+
+    setIsGeneratingPDFv3(true);
+
+    const loadingToast = toast.loading("PDF V3 (Typst) wird generiert...", {
+      position: 'top-center'
+    });
+
+    try {
+      const contractId = await ensureContractSaved(loadingToast);
+
+      if (!contractId) {
+        throw new Error("Vertrag konnte nicht gespeichert werden");
+      }
+
+      toast.update(loadingToast, {
+        render: "PDF V3 (Typst) wird generiert...",
+        type: "info",
+        isLoading: true
+      });
+
+      // 🆕 Neue V3-Route: /api/contracts/:id/pdf-v3
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/${contractId}/pdf-v3`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Fehler: ${response.status}`);
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('application/pdf')) {
+        throw new Error("Ungültige Antwort vom Server");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${contractData.contractType || 'vertrag'}_V3-Typst_${new Date().toLocaleDateString('de-DE').replace(/\./g, '-')}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.update(loadingToast, {
+        render: "✅ PDF V3 (Typst) erfolgreich generiert!",
+        type: "success",
+        isLoading: false,
+        autoClose: 3000
+      });
+
+    } catch (error) {
+      console.error("❌ PDF V3 Fehler:", error);
+      toast.update(loadingToast, {
+        render: `❌ ${error instanceof Error ? error.message : 'PDF V3 fehlgeschlagen'}`,
+        type: "error",
+        isLoading: false,
+        autoClose: 5000
+      });
+    } finally {
+      setIsGeneratingPDFv3(false);
     }
   };
 
@@ -5346,7 +5426,7 @@ export default function Generate() {
                         )}
                       </motion.button>
 
-                      {/* 🆕 PDF V2 herunterladen - Neue Struktur zum Testen */}
+                      {/* 🆕 PDF V2 herunterladen - React-PDF basiert */}
                       <motion.button
                         onClick={handleDownloadPDFv2}
                         disabled={isGeneratingPDFv2 || !contractText}
@@ -5354,7 +5434,7 @@ export default function Generate() {
                         whileHover={!isGeneratingPDFv2 ? { scale: 1.02 } : {}}
                         whileTap={!isGeneratingPDFv2 ? { scale: 0.98 } : {}}
                         style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white' }}
-                        title="Neue PDF-Struktur: Deckblatt + Inhalt + Unterschriften-Seite"
+                        title="React-PDF: Pixel-perfekte PDF-Generierung mit professioneller Typografie"
                       >
                         {isGeneratingPDFv2 ? (
                           <>
@@ -5364,7 +5444,30 @@ export default function Generate() {
                         ) : (
                           <>
                             <Download size={18} />
-                            <span>PDF V2 (Neu)</span>
+                            <span>PDF V2 (React-PDF)</span>
+                          </>
+                        )}
+                      </motion.button>
+
+                      {/* 🆕 PDF V3 herunterladen - Typst basiert (LaTeX-Alternative) */}
+                      <motion.button
+                        onClick={handleDownloadPDFv3}
+                        disabled={isGeneratingPDFv3 || !contractText}
+                        className={`${styles.step3ActionButton} ${isGeneratingPDFv3 ? styles.loading : ''}`}
+                        whileHover={!isGeneratingPDFv3 ? { scale: 1.02 } : {}}
+                        whileTap={!isGeneratingPDFv3 ? { scale: 0.98 } : {}}
+                        style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)', color: 'white' }}
+                        title="Typst: LaTeX-Alternative mit wissenschaftlicher Typografie"
+                      >
+                        {isGeneratingPDFv3 ? (
+                          <>
+                            <div className={`${styles.loadingSpinner} ${styles.small}`}></div>
+                            <span>PDF V3 wird generiert...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Download size={18} />
+                            <span>PDF V3 (Typst)</span>
                           </>
                         )}
                       </motion.button>

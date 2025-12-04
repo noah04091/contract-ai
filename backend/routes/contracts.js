@@ -3145,4 +3145,159 @@ router.post("/bulk-move", verifyToken, async (req, res) => {
   }
 });
 
+// ═══════════════════════════════════════════════════════════════════════════
+// 🆕 PDF V2 & V3 - Alternative PDF-Generierungsmethoden
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Lazy-load der PDF-Generatoren (vermeidet Startup-Probleme)
+let generatePDFv2 = null;
+let generatePDFv3 = null;
+
+const loadPDFGenerators = async () => {
+  if (!generatePDFv2) {
+    try {
+      const v2Module = require('../services/pdfGeneratorV2');
+      generatePDFv2 = v2Module.generatePDFv2;
+      console.log('✅ PDF V2 Generator (React-PDF) geladen');
+    } catch (err) {
+      console.error('⚠️ PDF V2 Generator konnte nicht geladen werden:', err.message);
+    }
+  }
+  if (!generatePDFv3) {
+    try {
+      const v3Module = require('../services/pdfGeneratorV3');
+      generatePDFv3 = v3Module.generatePDFv3;
+      console.log('✅ PDF V3 Generator (Typst) geladen');
+    } catch (err) {
+      console.error('⚠️ PDF V3 Generator konnte nicht geladen werden:', err.message);
+    }
+  }
+};
+
+/**
+ * POST /api/contracts/:id/pdf-v2
+ * Generiert PDF mit React-PDF (V2)
+ */
+router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
+  try {
+    await loadPDFGenerators();
+
+    if (!generatePDFv2) {
+      return res.status(503).json({
+        message: 'PDF V2 Generator nicht verfügbar',
+        error: 'React-PDF Modul konnte nicht geladen werden'
+      });
+    }
+
+    const contractId = req.params.id;
+    console.log('🎨 [V2] PDF-Anfrage für Vertrag:', contractId);
+
+    const db = getDB();
+    const contractsCollection = db.collection("contracts");
+
+    const contract = await contractsCollection.findOne({
+      _id: new ObjectId(contractId),
+      userId: req.user.userId
+    });
+
+    if (!contract) {
+      return res.status(404).json({ message: "Vertrag nicht gefunden" });
+    }
+
+    let companyProfile = null;
+    if (contract.hasCompanyProfile) {
+      companyProfile = await db.collection("company_profiles").findOne({
+        userId: new ObjectId(req.user.userId)
+      });
+    }
+
+    const parties = contract.formData || contract.parties || {};
+
+    const pdfBuffer = await generatePDFv2(
+      contract.content,
+      companyProfile,
+      contract.contractType || 'Vertrag',
+      parties,
+      contract.status === 'Entwurf'
+    );
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${contract.name || 'Vertrag'}_v2.pdf"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.send(pdfBuffer);
+
+    console.log('✅ [V2] PDF erfolgreich gesendet');
+
+  } catch (error) {
+    console.error('❌ [V2] PDF-Generierung fehlgeschlagen:', error);
+    res.status(500).json({
+      message: 'PDF-Generierung (V2/React-PDF) fehlgeschlagen',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/contracts/:id/pdf-v3
+ * Generiert PDF mit Typst (V3)
+ */
+router.post('/:id/pdf-v3', verifyToken, async (req, res) => {
+  try {
+    await loadPDFGenerators();
+
+    if (!generatePDFv3) {
+      return res.status(503).json({
+        message: 'PDF V3 Generator nicht verfügbar',
+        error: 'Typst Modul konnte nicht geladen werden'
+      });
+    }
+
+    const contractId = req.params.id;
+    console.log('🎨 [V3] PDF-Anfrage für Vertrag:', contractId);
+
+    const db = getDB();
+    const contractsCollection = db.collection("contracts");
+
+    const contract = await contractsCollection.findOne({
+      _id: new ObjectId(contractId),
+      userId: req.user.userId
+    });
+
+    if (!contract) {
+      return res.status(404).json({ message: "Vertrag nicht gefunden" });
+    }
+
+    let companyProfile = null;
+    if (contract.hasCompanyProfile) {
+      companyProfile = await db.collection("company_profiles").findOne({
+        userId: new ObjectId(req.user.userId)
+      });
+    }
+
+    const parties = contract.formData || contract.parties || {};
+
+    const pdfBuffer = await generatePDFv3(
+      contract.content,
+      companyProfile,
+      contract.contractType || 'Vertrag',
+      parties,
+      contract.status === 'Entwurf'
+    );
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${contract.name || 'Vertrag'}_v3.pdf"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.send(pdfBuffer);
+
+    console.log('✅ [V3] PDF erfolgreich gesendet');
+
+  } catch (error) {
+    console.error('❌ [V3] PDF-Generierung fehlgeschlagen:', error);
+    res.status(500).json({
+      message: 'PDF-Generierung (V3/Typst) fehlgeschlagen',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
