@@ -1703,14 +1703,22 @@ export default function Generate() {
             }
             setSaved(true);
             console.log(isUpdate ? "✅ Vertrag aktualisiert" : "✅ Vertrag gespeichert:", contractId);
-            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // ⏳ Bei neuem Vertrag: Warte auf Auto-PDF Generierung im Backend
+            // Auto-PDF braucht ca. 5-8 Sekunden für Puppeteer + S3 Upload
+            if (!isUpdate) {
+              console.log("⏳ Warte auf Auto-PDF Generierung (6 Sekunden)...");
+              await new Promise(resolve => setTimeout(resolve, 6000));
+            } else {
+              await new Promise(resolve => setTimeout(resolve, 500));
+            }
           }
         } catch (saveError) {
           console.error("❌ Fehler beim Speichern/Aktualisieren:", saveError);
         }
       }
 
-      // PDF generieren mit Puppeteer
+      // PDF generieren mit Puppeteer (oder von S3 laden wenn Auto-PDF fertig)
       if (contractId) {
         const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/generate/pdf`, {
           method: 'POST',
