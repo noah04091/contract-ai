@@ -957,10 +957,11 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType }) 
 
   if (designName === 'Corporate') {
     // WICHTIG: Explizit weißer Hintergrund auf JEDER Ebene!
-    console.log('🔴🔴🔴 CORPORATE CONTENT PAGE RENDERING - VERSION 2024-12-05-v2 🔴🔴🔴');
+    console.log('🔴🔴🔴 CORPORATE CONTENT PAGE RENDERING - VERSION 2024-12-05-v3-WHITE 🔴🔴🔴');
 
     // ============================================================
     // CORPORATE: Komplett eigene inline Styles für ALLES
+    // FIX: Weißer Hintergrund mit absolutem Overlay-View
     // ============================================================
     const corpStyles = {
       page: {
@@ -968,14 +969,24 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType }) 
         fontSize: 10,
         padding: 0,
         lineHeight: 1.5,
-        color: '#000000',
+        color: '#000000'
+        // KEIN backgroundColor hier - wird durch View gesetzt
+      },
+      // Absoluter weißer Hintergrund-Layer
+      whiteBg: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
         backgroundColor: '#ffffff'
       },
       content: {
         flex: 1,
         backgroundColor: '#ffffff',
         padding: 40,
-        paddingTop: 30
+        paddingTop: 30,
+        zIndex: 1
       },
       preambleContainer: {
         marginBottom: 25,
@@ -1119,6 +1130,9 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType }) 
     };
 
     return e(Page, { size: 'A4', style: corpStyles.page },
+      // Absoluter weißer Hintergrund-Layer
+      e(View, { style: corpStyles.whiteBg }),
+      // Content mit weißem Hintergrund
       e(View, { style: corpStyles.content },
         ...sections.map(renderCorpSection)
       ),
