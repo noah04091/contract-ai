@@ -250,7 +250,6 @@ export default function Contracts() {
   const {
     folders,
     activeFolder,
-    isLoading: _foldersLoading, // Reserved for future loading state
     unassignedOrder,
     fetchFolders,
     createFolder,
