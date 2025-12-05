@@ -3743,26 +3743,27 @@ export default function Generate() {
         autoClose: 2000
       });
 
-      // Warte kurz und lade PDF-Vorschau neu
+      // Warte kurz und lade PDF-Vorschau neu mit V2 und neuem Design
       setTimeout(async () => {
         try {
-          const pdfResponse = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/generate/pdf`, {
+          console.log("🎨 Lade V2 PDF-Vorschau mit neuem Design:", newDesign);
+          const pdfResponse = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/${savedContractId}/pdf-v2?design=${newDesign}`, {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contractId: savedContractId })
+            body: JSON.stringify({ design: newDesign })
           });
 
           if (pdfResponse.ok) {
             const blob = await pdfResponse.blob();
             const url = window.URL.createObjectURL(blob);
             setPdfPreviewUrl(url);
-            console.log("✅ PDF-Vorschau mit neuem Design geladen");
+            console.log("✅ V2 PDF-Vorschau mit Design", newDesign, "geladen");
           }
         } catch (pdfError) {
           console.error("⚠️ PDF-Vorschau konnte nicht geladen werden:", pdfError);
         }
-      }, 1000);
+      }, 500);
 
     } catch (error) {
       console.error("❌ Design-Änderung fehlgeschlagen:", error);
@@ -4634,20 +4635,21 @@ export default function Generate() {
         }
       }
 
-      // PDF generieren mit Puppeteer (oder von S3 laden wenn Auto-PDF fertig)
+      // PDF generieren mit V2 (React-PDF) für konsistente Vorschau
       if (contractId) {
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/generate/pdf`, {
+        console.log("🎨 Generiere V2 PDF-Vorschau mit Design:", selectedDesignVariant);
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/${contractId}/pdf-v2?design=${selectedDesignVariant}`, {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contractId: contractId })
+          body: JSON.stringify({ design: selectedDesignVariant })
         });
 
         if (response.ok) {
           const blob = await response.blob();
           const url = window.URL.createObjectURL(blob);
           setPdfPreviewUrl(url);
-          console.log("✅ PDF-Vorschau erstellt");
+          console.log("✅ V2 PDF-Vorschau erstellt mit Design:", selectedDesignVariant);
         } else {
           throw new Error('PDF-Vorschau konnte nicht erstellt werden');
         }

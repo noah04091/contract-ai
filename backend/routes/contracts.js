@@ -3305,6 +3305,12 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
       companyProfile = await db.collection("company_profiles").findOne({
         userId: new ObjectId(req.user.userId)
       });
+      console.log('🏢 [V2] Company Profile geladen:', companyProfile ? {
+        companyName: companyProfile.companyName,
+        street: companyProfile.street,
+        city: companyProfile.city,
+        hasLogo: !!companyProfile.logoUrl
+      } : 'Kein Profil gefunden');
     } catch (profileError) {
       console.log('⚠️ Company Profile konnte nicht geladen werden:', profileError.message);
     }

@@ -3715,16 +3715,22 @@ router.post("/change-design", verifyToken, async (req, res) => {
       return res.status(400).json({ message: "Contract ID oder Design-Variante fehlt" });
     }
     
-    // Validiere Design-Variante
-    const validDesigns = ['executive', 'modern', 'minimal'];
+    // Validiere Design-Variante - ALLE 5 Varianten!
+    const validDesigns = ['executive', 'modern', 'minimal', 'elegant', 'corporate'];
     if (!validDesigns.includes(newDesignVariant)) {
+      console.log("❌ Ungültige Design-Variante:", newDesignVariant, "Erlaubt:", validDesigns);
       return res.status(400).json({ message: "Ungültige Design-Variante" });
     }
-    
-    // Vertrag laden
-    const contract = await contractsCollection.findOne({ 
+
+    // Vertrag laden - userId kann String oder ObjectId sein
+    const userIdQuery = typeof req.user.userId === 'string' ? req.user.userId : new ObjectId(req.user.userId);
+    const contract = await contractsCollection.findOne({
       _id: new ObjectId(contractId),
-      userId: req.user.userId
+      $or: [
+        { userId: userIdQuery },
+        { userId: new ObjectId(req.user.userId) },
+        { userId: req.user.userId }
+      ]
     });
     
     if (!contract) {
