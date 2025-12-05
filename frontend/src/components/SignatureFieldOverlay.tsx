@@ -2,15 +2,14 @@
 // Shows clickable field boxes with status (pending/active/completed)
 
 import { motion } from "framer-motion";
-import { PenTool, Calendar, Type, FileSignature, CheckCircle } from "lucide-react";
+import { PenTool, Calendar, Type, FileSignature, CheckCircle, MapPin } from "lucide-react";
 import styles from "../styles/SignatureFieldOverlay.module.css";
-import { fromNormalized } from "../utils/fieldCoords";
 
 // ===== TYPES =====
 
 interface SignatureField {
   _id: string;
-  type: "signature" | "initials" | "date" | "text";
+  type: "signature" | "initials" | "date" | "text" | "location";
   page: number;
 
   // Legacy pixel coordinates (deprecated)
@@ -70,7 +69,8 @@ const FIELD_ICONS = {
   signature: PenTool,
   initials: FileSignature,
   date: Calendar,
-  text: Type
+  text: Type,
+  location: MapPin
 };
 
 // Field type labels
@@ -78,7 +78,8 @@ const FIELD_LABELS = {
   signature: "Signatur",
   initials: "Initialen",
   date: "Datum",
-  text: "Text"
+  text: "Text",
+  location: "Ort"
 };
 
 /**
@@ -122,28 +123,37 @@ export default function SignatureFieldOverlay({
         const IconComponent = FIELD_ICONS[field.type];
         const fieldLabel = field.label || FIELD_LABELS[field.type];
 
-        // Calculate pixel positions from normalized coordinates (if available)
+        // 🔥 FIXED: Calculate field dimensions
+        // The rendered PDF size is pageWidth * scale
+        const renderedWidth = pageWidth * scale;
+        const renderedHeight = pageHeight * scale;
+
         let scaledX: number, scaledY: number, scaledWidth: number, scaledHeight: number;
 
-        if (field.nx !== undefined && field.ny !== undefined &&
-            field.nwidth !== undefined && field.nheight !== undefined) {
-          // ✅ Use normalized coordinates (stable across viewports)
-          const pixelCoords = fromNormalized(
-            { page: field.page, nx: field.nx, ny: field.ny, nwidth: field.nwidth, nheight: field.nheight },
-            pageWidth,
-            pageHeight
-          );
-          scaledX = pixelCoords.x * scale;
-          scaledY = pixelCoords.y * scale;
-          scaledWidth = pixelCoords.width * scale;
-          scaledHeight = pixelCoords.height * scale;
+        // Check if we have normalized coordinates (preferred)
+        const hasNormalized = field.nx !== undefined && field.ny !== undefined &&
+                              field.nwidth !== undefined && field.nheight !== undefined;
+
+        if (hasNormalized) {
+          // ✅ Use normalized coordinates (0-1 range) directly with rendered size
+          scaledX = field.nx! * renderedWidth;
+          scaledY = field.ny! * renderedHeight;
+          scaledWidth = field.nwidth! * renderedWidth;
+          scaledHeight = field.nheight! * renderedHeight;
         } else if (field.x !== undefined && field.y !== undefined &&
                    field.width !== undefined && field.height !== undefined) {
-          // 🔄 Fallback to legacy pixel coordinates (deprecated)
-          scaledX = field.x * scale;
-          scaledY = field.y * scale;
-          scaledWidth = field.width * scale;
-          scaledHeight = field.height * scale;
+          // 🔄 Fallback: Convert legacy coordinates to normalized on-the-fly
+          // Legacy coords are in original PDF points (e.g., 612x792 for A4)
+          // We need to convert them to normalized (0-1) then apply to rendered size
+          const nx = field.x / pageWidth;
+          const ny = field.y / pageHeight;
+          const nwidth = field.width / pageWidth;
+          const nheight = field.height / pageHeight;
+
+          scaledX = nx * renderedWidth;
+          scaledY = ny * renderedHeight;
+          scaledWidth = nwidth * renderedWidth;
+          scaledHeight = nheight * renderedHeight;
         } else {
           // ⚠️ Invalid field data - skip rendering
           console.error(`Field ${field._id} has invalid coordinate data`);
@@ -161,6 +171,7 @@ export default function SignatureFieldOverlay({
               height: `${scaledHeight}px`,
               borderColor: signerColor
             }}
+            title={`${fieldLabel}: ${Math.round(scaledWidth)}x${Math.round(scaledHeight)}`}
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.2 }}

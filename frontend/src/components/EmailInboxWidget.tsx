@@ -2,7 +2,7 @@
 // Kompaktes Widget für E-Mail-Inbox Feature in Contracts-Seite
 
 import { useState } from "react";
-import { Mail, Copy, HelpCircle, RefreshCw, Power, Check } from "lucide-react";
+import { Copy, HelpCircle, RefreshCw, Power, Check } from "lucide-react";
 import { motion } from "framer-motion";
 import styles from "./EmailInboxWidget.module.css";
 import EmailTutorialModal from "./EmailTutorialModal";
@@ -88,59 +88,59 @@ export default function EmailInboxWidget({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <div className={styles.header}>
-          <div className={styles.headerLeft}>
-            <Mail size={20} className={styles.icon} />
-            <span className={styles.title}>E-Mail-Upload</span>
-            {!emailInboxEnabled && <span className={styles.disabledBadge}>Deaktiviert</span>}
+        {/* Status Badge wenn deaktiviert */}
+        {!emailInboxEnabled && (
+          <div className={styles.statusBar}>
+            <span className={styles.disabledBadge}>Deaktiviert</span>
           </div>
-          <button
-            onClick={() => setShowTutorial(true)}
-            className={styles.helpButton}
-            title="Anleitung anzeigen"
-            disabled={loading}
-          >
-            <HelpCircle size={16} />
-          </button>
+        )}
+
+        {/* Haupt-Content: E-Mail Adresse mit Controls */}
+        <div className={styles.addressContainer}>
+          <div className={styles.addressLabel}>Deine persönliche Upload-Adresse:</div>
+          <div className={styles.addressBox}>
+            <code className={styles.address}>{emailInboxAddress}</code>
+            <div className={styles.controls}>
+              <button
+                onClick={handleCopy}
+                className={`${styles.controlButton} ${copied ? styles.success : ''}`}
+                title="Adresse kopieren"
+                disabled={loading || !emailInboxEnabled}
+              >
+                {copied ? <Check size={18} /> : <Copy size={18} />}
+              </button>
+              <button
+                onClick={handleRegenerate}
+                className={styles.controlButton}
+                title="Neue Adresse generieren"
+                disabled={loading}
+              >
+                <RefreshCw size={18} className={loading ? styles.spinning : ''} />
+              </button>
+              <button
+                onClick={() => handleToggle(!emailInboxEnabled)}
+                className={`${styles.controlButton} ${emailInboxEnabled ? styles.active : styles.inactive}`}
+                title={emailInboxEnabled ? "Deaktivieren" : "Aktivieren"}
+                disabled={loading}
+              >
+                <Power size={18} />
+              </button>
+              <button
+                onClick={() => setShowTutorial(true)}
+                className={styles.controlButton}
+                title="Anleitung anzeigen"
+                disabled={loading}
+              >
+                <HelpCircle size={18} />
+              </button>
+            </div>
+          </div>
         </div>
 
-        <p className={styles.description}>
-          Leite E-Mails mit Verträgen an deine persönliche Adresse weiter:
-        </p>
-
-        <div className={styles.addressBox}>
-          <code className={styles.address}>{emailInboxAddress}</code>
-          <div className={styles.controls}>
-            <button
-              onClick={handleCopy}
-              className={`${styles.controlButton} ${copied ? styles.success : ''}`}
-              title="Adresse kopieren"
-              disabled={loading || !emailInboxEnabled}
-            >
-              {copied ? <Check size={16} /> : <Copy size={16} />}
-            </button>
-            <button
-              onClick={handleRegenerate}
-              className={styles.controlButton}
-              title="Neue Adresse generieren"
-              disabled={loading}
-            >
-              <RefreshCw size={16} className={loading ? styles.spinning : ''} />
-            </button>
-            <button
-              onClick={() => handleToggle(!emailInboxEnabled)}
-              className={`${styles.controlButton} ${emailInboxEnabled ? styles.active : styles.inactive}`}
-              title={emailInboxEnabled ? "Deaktivieren" : "Aktivieren"}
-              disabled={loading}
-            >
-              <Power size={16} />
-            </button>
-          </div>
-        </div>
-
+        {/* Warning wenn deaktiviert */}
         {!emailInboxEnabled && (
           <p className={styles.warningText}>
-            ⚠️ E-Mail-Upload ist deaktiviert. Klicke auf <Power size={12} style={{display: 'inline', verticalAlign: 'middle'}} /> zum Aktivieren.
+            E-Mail-Upload ist deaktiviert. Klicke auf den Power-Button zum Aktivieren.
           </p>
         )}
       </motion.div>

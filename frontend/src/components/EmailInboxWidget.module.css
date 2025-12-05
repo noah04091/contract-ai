@@ -1,130 +1,111 @@
 /* 📁 frontend/src/components/EmailInboxWidget.module.css */
+/* Email Inbox Widget - Clean, Minimal Design (keine doppelten Headers) */
 
 .widget {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 12px;
-  padding: 20px;
-  color: white;
-  margin-bottom: 24px;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-  transition: all 0.3s ease;
-}
-
-.widget:hover {
-  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+  background: transparent;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .widget.disabled {
-  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
   opacity: 0.85;
 }
 
-/* Header */
-.header {
+/* Status Bar für Disabled Badge */
+.statusBar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   margin-bottom: 12px;
-}
-
-.headerLeft {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.icon {
-  flex-shrink: 0;
-}
-
-.title {
-  font-weight: 600;
-  font-size: 16px;
 }
 
 .disabledBadge {
-  background: rgba(239, 68, 68, 0.3);
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 11px;
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  color: #dc2626;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(220, 38, 38, 0.2);
 }
 
-.helpButton {
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  border-radius: 6px;
-  padding: 6px 8px;
-  color: white;
-  cursor: pointer;
-  transition: all 0.2s;
+/* Address Container */
+.addressContainer {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.helpButton:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.3);
+.addressLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
 }
 
-.helpButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Description */
-.description {
-  font-size: 14px;
-  opacity: 0.9;
-  margin-bottom: 12px;
-  line-height: 1.4;
-}
-
-/* Address Box */
+/* Address Box - Der Hauptbereich */
 .addressBox {
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  border-radius: 8px;
-  padding: 12px;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
   flex-wrap: wrap;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.addressBox:hover {
+  border-color: rgba(99, 102, 241, 0.3);
+  background: linear-gradient(180deg, #f5f3ff 0%, #ede9fe 100%);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08);
 }
 
 .address {
-  font-family: 'Courier New', Monaco, monospace;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Courier New', monospace;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   flex: 1;
   word-break: break-all;
   min-width: 200px;
+  color: #334155;
+  background: white;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
+/* Controls */
 .controls {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-shrink: 0;
 }
 
 .controlButton {
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  border-radius: 6px;
-  padding: 8px;
-  color: white;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px;
+  color: #64748b;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: center;
+  min-width: 42px;
+  min-height: 42px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .controlButton:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.3);
-  transform: scale(1.05);
+  background: linear-gradient(180deg, #f5f3ff 0%, #ede9fe 100%);
+  border-color: rgba(99, 102, 241, 0.4);
+  color: #6366f1;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
 }
 
 .controlButton:disabled {
@@ -133,17 +114,23 @@
 }
 
 .controlButton.success {
-  background: rgba(16, 185, 129, 0.4);
+  background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #059669;
 }
 
 .controlButton.active {
-  background: rgba(16, 185, 129, 0.3);
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.5);
+  background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #059669;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.12);
 }
 
 .controlButton.inactive {
-  background: rgba(239, 68, 68, 0.3);
-  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.5);
+  background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #dc2626;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1);
 }
 
 .spinning {
@@ -157,42 +144,71 @@
 
 /* Warning */
 .warningText {
-  margin-top: 12px;
+  margin-top: 14px;
   font-size: 13px;
-  padding: 8px 12px;
-  background: rgba(245, 158, 11, 0.2);
-  border-radius: 6px;
+  padding: 12px 16px;
+  background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  border-radius: 10px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
+  color: #92400e;
+  font-weight: 500;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .widget {
-    padding: 16px;
-  }
-
   .addressBox {
     flex-direction: column;
     align-items: stretch;
+    padding: 14px;
+    gap: 12px;
+    border-radius: 12px;
   }
 
   .address {
     font-size: 11px;
     text-align: center;
     min-width: unset;
+    padding: 12px 14px;
   }
 
   .controls {
     justify-content: center;
   }
 
-  .title {
-    font-size: 14px;
+  .controlButton {
+    min-width: 46px;
+    min-height: 46px;
   }
 
-  .description {
-    font-size: 13px;
+  .warningText {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .addressBox {
+    padding: 12px;
+    border-radius: 10px;
+  }
+
+  .address {
+    font-size: 10px;
+    padding: 10px 12px;
+  }
+
+  .controlButton {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 8px;
+    border-radius: 8px;
+  }
+
+  .warningText {
+    padding: 10px 12px;
+    font-size: 11px;
+    border-radius: 8px;
   }
 }

@@ -355,6 +355,37 @@
   }
 }
 
+/* 📱 MOBILE NAVBAR FIX - Overlay und Modal unter der Navbar */
+@media (max-width: 768px) {
+  .overlay {
+    position: fixed !important;
+    top: 60px !important; /* 🔥 Beginnt unter der Navbar */
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    height: calc(100% - 60px) !important;
+    padding: 0.5rem !important;
+  }
+
+  .modal {
+    max-width: 100% !important;
+    max-height: calc(100dvh - 60px - 1rem) !important;
+    border-radius: 16px 16px 0 0 !important;
+    animation: slideUpEditModal 0.3s ease-out;
+  }
+
+  @keyframes slideUpEditModal {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
 @media (max-width: 480px) {
   .modal {
     max-width: 100vw;

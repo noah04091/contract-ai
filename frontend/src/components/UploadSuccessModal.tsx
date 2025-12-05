@@ -72,88 +72,91 @@ export default function UploadSuccessModal({
               </p>
             </div>
 
-            {/* Uploaded Files List */}
-            <div className={styles.filesList}>
-              {uploadedContracts.map((contract, index) => (
+            {/* Content Area */}
+            <div className={styles.content}>
+              {/* Uploaded Files List */}
+              <div className={styles.filesList}>
+                {uploadedContracts.map((contract, index) => (
+                  <motion.div
+                    key={contract._id}
+                    className={styles.fileItem}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 * index }}
+                  >
+                    <FileText size={16} />
+                    <span>{contract.name}</span>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Action Cards */}
+              <div className={styles.actionsGrid}>
+                {/* Analyze Card */}
                 <motion.div
-                  key={contract._id}
-                  className={styles.fileItem}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.1 * index }}
+                  className={`${styles.actionCard} ${styles.analyzeCard} ${!hasEnoughAnalyses ? styles.disabled : ''}`}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
                 >
-                  <FileText size={16} />
-                  <span>{contract.name}</span>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Action Cards */}
-            <div className={styles.actionsGrid}>
-              {/* Analyze Card */}
-              <motion.div
-                className={`${styles.actionCard} ${styles.analyzeCard} ${!hasEnoughAnalyses ? styles.disabled : ''}`}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                <div className={styles.cardIcon}>
-                  <Zap size={32} />
-                </div>
-                <h3 className={styles.cardTitle}>🔍 Analysieren</h3>
-                <p className={styles.cardDescription}>
-                  KI-gestützte Analyse starten
-                </p>
-                <div className={styles.cardInfo}>
-                  <span className={styles.analysisCount}>
-                    {contractCount} Analyse{contractCount > 1 ? 'n' : ''} verbraucht
-                  </span>
-                  {analysisLimit > 0 && (
-                    <span className={styles.analysisRemaining}>
-                      ({remainingAnalyses} übrig)
-                    </span>
-                  )}
-                </div>
-                <button
-                  className={`${styles.cardButton} ${styles.primaryButton}`}
-                  onClick={onAnalyze}
-                  disabled={!hasEnoughAnalyses}
-                >
-                  {hasEnoughAnalyses ? 'Jetzt analysieren' : 'Limit erreicht'}
-                </button>
-                {!hasEnoughAnalyses && (
-                  <p className={styles.upgradeHint}>
-                    <Link to="/pricing" onClick={onClose}>Upgrade für mehr Analysen</Link>
+                  <div className={styles.cardIcon}>
+                    <Zap size={32} />
+                  </div>
+                  <h3 className={styles.cardTitle}>Analysieren</h3>
+                  <p className={styles.cardDescription}>
+                    KI-gestützte Analyse starten
                   </p>
-                )}
-              </motion.div>
+                  <div className={styles.cardInfo}>
+                    <span className={styles.analysisCount}>
+                      {contractCount} Analyse{contractCount > 1 ? 'n' : ''} verbraucht
+                    </span>
+                    {analysisLimit > 0 && (
+                      <span className={styles.analysisRemaining}>
+                        ({remainingAnalyses} übrig)
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    className={`${styles.cardButton} ${styles.primaryButton}`}
+                    onClick={onAnalyze}
+                    disabled={!hasEnoughAnalyses}
+                  >
+                    {hasEnoughAnalyses ? 'Jetzt analysieren' : 'Limit erreicht'}
+                  </button>
+                  {!hasEnoughAnalyses && (
+                    <p className={styles.upgradeHint}>
+                      <Link to="/pricing" onClick={onClose}>Upgrade für mehr Analysen</Link>
+                    </p>
+                  )}
+                </motion.div>
 
-              {/* Skip Card */}
-              <motion.div
-                className={`${styles.actionCard} ${styles.skipCard}`}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-              >
-                <div className={styles.cardIcon}>
-                  <CheckCircle size={32} />
-                </div>
-                <h3 className={styles.cardTitle}>✓ Fertig</h3>
-                <p className={styles.cardDescription}>
-                  Nur verwalten
-                </p>
-                <div className={styles.cardInfo}>
-                  <span className={styles.analysisCount}>
-                    0 Analysen verbraucht
-                  </span>
-                </div>
-                <button
-                  className={`${styles.cardButton} ${styles.secondaryButton}`}
-                  onClick={onSkip}
+                {/* Skip Card */}
+                <motion.div
+                  className={`${styles.actionCard} ${styles.skipCard}`}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
                 >
-                  Speichern
-                </button>
-              </motion.div>
+                  <div className={styles.cardIcon}>
+                    <CheckCircle size={32} />
+                  </div>
+                  <h3 className={styles.cardTitle}>Fertig</h3>
+                  <p className={styles.cardDescription}>
+                    Nur verwalten
+                  </p>
+                  <div className={styles.cardInfo}>
+                    <span className={styles.analysisCount}>
+                      0 Analysen verbraucht
+                    </span>
+                  </div>
+                  <button
+                    className={`${styles.cardButton} ${styles.secondaryButton}`}
+                    onClick={onSkip}
+                  >
+                    Speichern
+                  </button>
+                </motion.div>
+              </div>
             </div>
 
             {/* Info Footer */}

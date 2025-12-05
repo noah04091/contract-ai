@@ -1,14 +1,19 @@
 // 📁 src/pages/Contracts.tsx - JSX FIXED: Motion Button closing tag korrigiert + ANALYSE-ANZEIGE GEFIXT + RESPONSIVE + DUPLIKATSERKENNUNG + S3-INTEGRATION + BATCH-ANALYSE-ANZEIGE + PDF-SCHNELLAKTION MOBILE-FIX + EDIT-SCHNELLAKTION REPARIERT
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import {
   FileText, RefreshCw, Upload, CheckCircle, AlertCircle,
-  Plus, Calendar, Clock, Trash2, Eye, Edit,
+  Plus, Calendar, Clock, Trash2, Eye, Edit, Edit3,
   Search, X, Crown, Users, Loader,
   Lock, Zap, BarChart3, ExternalLink, ArrowRight, Folder,
-  CheckSquare, Square, Mail, Bell, Download
+  CheckSquare, Square, Mail, Bell, Download,
+  LayoutGrid, List, FolderPlus,
+  FileUp, AlertTriangle, Sparkles, RotateCcw, CreditCard,
+  MoreVertical, ChevronUp, ChevronDown,
+  SlidersHorizontal // 📱 Mobile Filter Icon
 } from "lucide-react";
 import styles from "../styles/Contracts.module.css";
 import ContractAnalysis from "../components/ContractAnalysis";
@@ -16,11 +21,12 @@ import BatchAnalysisResults from "../components/BatchAnalysisResults"; // ✅ NE
 import NewContractDetailsModal from "../components/NewContractDetailsModal"; // 🎨 NEW: Professional Contract Details Modal
 import UploadSuccessModal from "../components/UploadSuccessModal"; // ✅ NEU: Two-Step Upload Modal
 import ContractDetailModal from "../components/ContractDetailModal"; // 🎨 Contract Detail Modal (Signatures)
-import FolderBar from "../components/FolderBar"; // 📁 Folder Bar (Horizontal)
+// FolderBar removed - functionality moved to Enterprise Sidebar
 import FolderModal from "../components/FolderModal"; // 📁 Folder Modal
 import SmartFoldersModal from "../components/SmartFoldersModal"; // 🤖 Smart Folders Modal
 import EmailInboxWidget from "../components/EmailInboxWidget"; // 📧 E-Mail-Upload Feature
 import ReminderSettingsModal from "../components/ReminderSettingsModal"; // 🔔 Reminder Settings Modal
+import ContractEditModal from "../components/ContractEditModal"; // ✏️ Quick Edit Modal
 import { apiCall, uploadAndAnalyze, uploadOnly } from "../utils/api"; // ✅ NEU: uploadOnly hinzugefügt
 import { useFolders } from "../hooks/useFolders"; // 📁 Folder Hook
 import type { FolderType } from "../components/FolderBar"; // 📁 Folder Type
@@ -138,7 +144,7 @@ interface UserInfo {
 
 // ✅ Erweiterte Filter-Typen
 type StatusFilter = 'alle' | 'aktiv' | 'bald_ablaufend' | 'abgelaufen' | 'gekündigt';
-type DateFilter = 'alle' | 'letzte_7_tage' | 'letzte_30_tage' | 'letztes_jahr';
+type DateFilter = 'alle' | 'heute' | 'woche' | 'monat' | 'quartal' | 'jahr';
 type SortOrder = 'neueste' | 'älteste' | 'name_az' | 'name_za';
 
 // ✅ NEU: S3-Integration - Utility-Funktionen direkt in der Komponente
@@ -156,12 +162,16 @@ export default function Contracts() {
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setError] = useState<string | null>(null);
+  const [premiumHint, setPremiumHint] = useState<string | null>(null); // 🔔 Premium Upgrade Hint
   const [dragActive, setDragActive] = useState(false);
   const [activeSection, setActiveSection] = useState<'upload' | 'contracts' | 'email-upload'>('contracts');
   const [refreshing, setRefreshing] = useState(false);
   
   // ✅ BUG FIX 1: Neuer State für Edit-Modal direkt öffnen
   const [openEditModalDirectly, setOpenEditModalDirectly] = useState(false);
+
+  // ✏️ NEU: Quick Edit Modal State (öffnet direkt ohne Detail-Ansicht)
+  const [quickEditContract, setQuickEditContract] = useState<Contract | null>(null);
   
   // ✅ KORRIGIERT: User-Plan States - Free = 3 Analysen!
   const [userInfo, setUserInfo] = useState<UserInfo>({
@@ -196,6 +206,12 @@ export default function Contracts() {
   const [dateFilter, setDateFilter] = useState<DateFilter>('alle');
   const [sortOrder, setSortOrder] = useState<SortOrder>('neueste');
   const [sourceFilter, setSourceFilter] = useState<'alle' | 'generated' | 'optimized'>('alle'); // 🆕 Quelle-Filter
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list'); // 🆕 Enterprise View Mode
+  const [previewContract, setPreviewContract] = useState<Contract | null>(null); // 🆕 Preview Panel State
+
+  // 📱 MOBILE UX: Filter-Bottom-Sheet und Upload-Tabs
+  const [showMobileFilterSheet, setShowMobileFilterSheet] = useState(false);
+  const [uploadTab, setUploadTab] = useState<'file' | 'email'>('file');
 
   // ✅ NEU: Infinite Scroll Pagination State
   const [paginationInfo, setPaginationInfo] = useState({
@@ -225,6 +241,8 @@ export default function Contracts() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null); // ✅ Ref für Infinite Scroll Sentinel
+  const contentAreaRef = useRef<HTMLDivElement>(null); // ✅ Ref für scrollbaren Content-Bereich
+  const hasScrolledRef = useRef(false); // ✅ Flag um initiales Auto-Loading zu verhindern
   const userInfoCacheRef = useRef<{ data: UserInfo | null; timestamp: number }>({ data: null, timestamp: 0 }); // ✅ Cache für User-Info
   const isFirstMountRef = useRef(true); // ✅ Flag um First Mount zu erkennen (verhindert doppelten API-Call)
 
@@ -232,7 +250,7 @@ export default function Contracts() {
   const {
     folders,
     activeFolder,
-    isLoading: foldersLoading,
+    isLoading: _foldersLoading, // Reserved for future loading state
     unassignedOrder,
     fetchFolders,
     createFolder,
@@ -247,6 +265,16 @@ export default function Contracts() {
   const [folderModalOpen, setFolderModalOpen] = useState(false);
   const [editingFolder, setEditingFolder] = useState<FolderType | null>(null);
   const [folderDropdownOpen, setFolderDropdownOpen] = useState<string | null>(null); // Track which contract's dropdown is open
+  const [folderDropdownPosition, setFolderDropdownPosition] = useState<{ top: number; right: number } | null>(null); // Position für fixed Dropdown
+  const [folderDropdownContractId, setFolderDropdownContractId] = useState<string | null>(null); // Contract ID für Portal
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null); // 🆕 Selected folder in sidebar
+
+  // 📁 Folder Context Menu State
+  const [folderContextMenu, setFolderContextMenu] = useState<{
+    folderId: string;
+    x: number;
+    y: number;
+  } | null>(null);
 
   // 📋 Bulk Selection State
   const [bulkSelectMode, setBulkSelectMode] = useState(false); // Toggle für Checkbox-Sichtbarkeit
@@ -292,22 +320,98 @@ export default function Contracts() {
     const handleClickOutside = () => {
       if (folderDropdownOpen) {
         setFolderDropdownOpen(null);
+        setFolderDropdownPosition(null);
+        setFolderDropdownContractId(null);
+      }
+      if (folderContextMenu) {
+        setFolderContextMenu(null);
       }
     };
 
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
+  }, [folderDropdownOpen, folderContextMenu]);
+
+  // 📱 MOBILE: Body-Scroll blockieren wenn Bottom Sheet offen ist
+  useEffect(() => {
+    if (folderDropdownOpen) {
+      // Speichere aktuelle Scroll-Position
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+
+      return () => {
+        // Stelle Scroll-Position wieder her
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
   }, [folderDropdownOpen]);
 
+  // 📁 Handle folder reorder (move up/down)
+  const handleMoveFolderUp = async (folderId: string) => {
+    const currentIndex = folders.findIndex(f => f._id === folderId);
+    if (currentIndex <= 0) return; // Already at top
+
+    // Reorder API call (PATCH)
+    try {
+      const newFolders = [...folders];
+      [newFolders[currentIndex - 1], newFolders[currentIndex]] = [newFolders[currentIndex], newFolders[currentIndex - 1]];
+
+      // Backend erwartet Array von { _id, order }
+      const foldersWithOrder = newFolders.map((f, index) => ({
+        _id: f._id,
+        order: index
+      }));
+
+      await apiCall('/folders/reorder', {
+        method: 'PATCH',
+        body: JSON.stringify({ folders: foldersWithOrder })
+      });
+      await fetchFolders(true);
+    } catch (err) {
+      console.error('Error reordering folders:', err);
+    }
+    setFolderContextMenu(null);
+  };
+
+  const handleMoveFolderDown = async (folderId: string) => {
+    const currentIndex = folders.findIndex(f => f._id === folderId);
+    if (currentIndex >= folders.length - 1) return; // Already at bottom
+
+    // Reorder API call (PATCH)
+    try {
+      const newFolders = [...folders];
+      [newFolders[currentIndex], newFolders[currentIndex + 1]] = [newFolders[currentIndex + 1], newFolders[currentIndex]];
+
+      // Backend erwartet Array von { _id, order }
+      const foldersWithOrder = newFolders.map((f, index) => ({
+        _id: f._id,
+        order: index
+      }));
+
+      await apiCall('/folders/reorder', {
+        method: 'PATCH',
+        body: JSON.stringify({ folders: foldersWithOrder })
+      });
+      await fetchFolders(true);
+    } catch (err) {
+      console.error('Error reordering folders:', err);
+    }
+    setFolderContextMenu(null);
+  };
+
   // ✅ BUG FIX 1: NEUE Edit-Schnellaktion Handler-Funktion
+  // ✏️ MOBILE FIX: Öffnet jetzt direkt das Quick-Edit-Modal statt Detail-Ansicht
   const handleEditContract = (contract: Contract) => {
     console.log('✏️ Edit-Schnellaktion für Contract:', contract._id, contract.name);
-    setSelectedContract(contract);
-    setShowDetails(true);
-    setOpenEditModalDirectly(true); // ⭐ Das ist der neue State!
-
-    // ✅ UPDATE URL für Assistant-Context mit Query Parameter (triggert useLocation Hook!)
-    navigate(`/contracts?view=${contract._id}`, { replace: true });
+    // Direkt Quick-Edit-Modal öffnen (ohne Detail-Ansicht!)
+    setQuickEditContract(contract);
   };
 
   // 🆕 Smart PDF Opener - Opens signed PDF if available, otherwise original
@@ -318,7 +422,8 @@ export default function Contracts() {
     let tempWindow: Window | null = null;
 
     try {
-      const token = localStorage.getItem('token');
+      // ✅ FIX: Beide Token-Keys prüfen (authToken wird bei Login gesetzt, token bei manchen anderen Flows)
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
 
       // Check if we should try to open signed PDF
       const hasSignedPDF = contract.envelope?.s3KeySealed && contract.envelope?.signatureStatus === 'COMPLETED';
@@ -407,7 +512,8 @@ export default function Contracts() {
     setFolderModalOpen(true);
   };
 
-  const handleEditFolder = (folderId: string) => {
+  // Reserved for future context menu on folder items
+  const _handleEditFolder = (folderId: string) => {
     const folder = folders.find(f => f._id === folderId);
     if (folder) {
       setEditingFolder(folder);
@@ -415,6 +521,7 @@ export default function Contracts() {
     }
   };
 
+  // Handle folder deletion
   const handleDeleteFolder = async (folderId: string) => {
     const folder = folders.find(f => f._id === folderId);
     if (!folder) return;
@@ -432,7 +539,8 @@ export default function Contracts() {
     }
   };
 
-  const handleReorderFolders = async (reorderedFolders: FolderType[]) => {
+  // Reserved for future drag-and-drop reordering
+  const _handleReorderFolders = async (reorderedFolders: FolderType[]) => {
     try {
       // Separate real folders from "unassigned" virtual folder
       const realFolders = reorderedFolders.filter(f => f._id !== 'unassigned');
@@ -458,6 +566,10 @@ export default function Contracts() {
       await fetchFolders(true); // ✅ Force revert auf Server-State
     }
   };
+
+  // Suppress unused variable warnings for reserved functions
+  void _handleEditFolder;
+  void _handleReorderFolders;
 
   const handleFolderSave = async (data: { name: string; color: string; icon: string }) => {
     if (editingFolder) {
@@ -561,7 +673,7 @@ export default function Contracts() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('token')}`
         },
         body: JSON.stringify({
           contractIds: selectedContracts
@@ -612,7 +724,7 @@ export default function Contracts() {
       const response = await fetch('/api/contracts/export-excel', {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('token')}`
         },
         credentials: 'include'
       });
@@ -686,7 +798,7 @@ export default function Contracts() {
       const response = await fetch('/api/contracts/bulk-download', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
         },
         credentials: 'include',
@@ -1210,9 +1322,12 @@ export default function Contracts() {
       return;
     }
 
+    // ✅ FIX: Reset hasScrolledRef bei Filter-Änderung für Infinite Scroll
+    hasScrolledRef.current = false;
+
     // Debounce für Search-Query (nicht bei jedem Tastendruck neu laden)
     const debounceTimer = setTimeout(() => {
-      console.log('🔄 Filter geändert, lade Contracts neu...');
+      console.log('🔄 Filter geändert, lade Contracts neu mit Filter:', { searchQuery, statusFilter, dateFilter, sortOrder, sourceFilter });
       fetchContracts();
     }, searchQuery ? 500 : 0); // 500ms Debounce für Search, sofort für andere Filter
 
@@ -1228,33 +1343,67 @@ export default function Contracts() {
 
   // ✅ NEU: Infinite Scroll - IntersectionObserver für automatisches Nachladen
   useEffect(() => {
-    // Nur aktivieren wenn noch mehr Verträge verfügbar sind
-    if (!loadMoreRef.current || !paginationInfo.hasMore || loadingMore) {
+    const loadMoreElement = loadMoreRef.current;
+    const scrollContainer = contentAreaRef.current;
+
+    // Nur aktivieren wenn Element existiert
+    if (!loadMoreElement) {
       return;
     }
 
+    // ✅ FIX: Scroll-Event-Listener auf Container UND Window (für Mobile)
+    const handleContainerScroll = () => {
+      if (!hasScrolledRef.current && scrollContainer && scrollContainer.scrollTop > 50) {
+        hasScrolledRef.current = true;
+        console.log('📜 Infinite Scroll: Aktiviert nach Container-Scroll');
+      }
+    };
+
+    const handleWindowScroll = () => {
+      if (!hasScrolledRef.current && window.scrollY > 50) {
+        hasScrolledRef.current = true;
+        console.log('📜 Infinite Scroll: Aktiviert nach Window-Scroll (Mobile)');
+      }
+    };
+
+    // Event-Listener auf beide Scroll-Quellen
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', handleContainerScroll);
+    }
+    window.addEventListener('scroll', handleWindowScroll, { passive: true });
+
+    // ✅ MOBILE FIX: IntersectionObserver ohne root (nutzt Viewport)
+    // Das funktioniert besser auf Mobile, wo der gesamte Body scrollt
+    const isMobile = window.innerWidth <= 768;
+
     const observer = new IntersectionObserver(
       (entries) => {
-        // Wenn Sentinel Element sichtbar wird -> Nachladen triggern
-        if (entries[0].isIntersecting && paginationInfo.hasMore && !loadingMore) {
+        const entry = entries[0];
+        // ✅ FIX: Nur triggern wenn User gescrollt hat UND noch mehr vorhanden UND nicht bereits ladend
+        if (entry.isIntersecting && paginationInfo.hasMore && !loadingMore && hasScrolledRef.current) {
           console.log('📜 Infinite Scroll: Bottom erreicht, lade weitere Contracts...');
           loadMoreContracts();
         }
       },
       {
-        root: null, // viewport
-        rootMargin: '200px', // 200px vor Ende triggern (smooth loading)
-        threshold: 0.1 // Mindestens 10% sichtbar
+        // ✅ Auf Mobile: Viewport als root (null), auf Desktop: Container
+        root: isMobile ? null : scrollContainer,
+        rootMargin: '300px', // ✅ Noch früher triggern (300px vor Ende)
+        threshold: 0.01 // ✅ Schon bei 1% Sichtbarkeit triggern
       }
     );
 
-    observer.observe(loadMoreRef.current);
+    observer.observe(loadMoreElement);
 
     // Cleanup
     return () => {
       observer.disconnect();
+      if (scrollContainer) {
+        scrollContainer.removeEventListener('scroll', handleContainerScroll);
+      }
+      window.removeEventListener('scroll', handleWindowScroll);
     };
-  }, [paginationInfo.hasMore, loadingMore]); // Re-run wenn sich hasMore oder loadingMore ändern
+  }, [paginationInfo.hasMore, loadingMore, contracts.length]); // Re-run wenn sich contracts ändern
 
   // ✅ FIX: Wenn contracts sich ändern und ein Contract ausgewählt ist, aktualisiere selectedContract
   useEffect(() => {
@@ -1649,7 +1798,7 @@ export default function Contracts() {
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/contracts/${contract._id}/analyze`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
         }
       });
@@ -1976,12 +2125,20 @@ export default function Contracts() {
     fetchContracts();
   };
 
+  // 🆕 Single Click: Open Preview Panel | Double Click: Open Modal
   const handleRowClick = (contract: Contract) => {
+    // Single click opens preview panel
+    setPreviewContract(contract);
+  };
+
+  const handleRowDoubleClick = (contract: Contract) => {
+    // Double click opens full modal
     setSelectedContract(contract);
     setShowDetails(true);
-    setOpenEditModalDirectly(false); // ✅ Normal Details öffnen, nicht Edit-Modal
+    setOpenEditModalDirectly(false);
+    setPreviewContract(null); // Close preview when modal opens
 
-    // ✅ UPDATE URL für Assistant-Context mit Query Parameter (triggert useLocation Hook!)
+    // ✅ UPDATE URL für Assistant-Context mit Query Parameter
     navigate(`/contracts?view=${contract._id}`, { replace: true });
   };
 
@@ -2255,7 +2412,7 @@ export default function Contracts() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        onClick={() => handleRowClick(contract)}
+        onClick={() => handleRowDoubleClick(contract)}
       >
         {/* Card Header */}
         <div className={styles.cardHeader}>
@@ -2458,6 +2615,236 @@ export default function Contracts() {
     );
   };
 
+  // ✅ PROFESSIONAL: Mobile List Row Component (kompakte Zeile wie Desktop)
+  // Inspiriert von Microsoft Outlook, Apple Mail, Google Drive Mobile
+  const MobileListRow = ({ contract }: { contract: Contract }) => {
+    const isSelected = selectedContracts.includes(contract._id);
+    const daysUntilExpiry = contract.expiryDate
+      ? Math.ceil((new Date(contract.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+      : null;
+
+    // Status-Farbe für den linken Rand
+    const getStatusIndicatorColor = () => {
+      if (contract.status === 'Gekündigt') return '#ef4444';
+      if (contract.status === 'Abgelaufen') return '#f97316';
+      if (daysUntilExpiry !== null && daysUntilExpiry <= 30 && daysUntilExpiry > 0) return '#eab308';
+      if (contract.status === 'Aktiv') return '#22c55e';
+      return '#94a3b8';
+    };
+
+    return (
+      <motion.div
+        className={`${styles.mobileListRow} ${isSelected ? styles.selected : ''}`}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.15 }}
+        onClick={() => handleRowDoubleClick(contract)}
+        style={{ '--status-color': getStatusIndicatorColor() } as React.CSSProperties}
+      >
+        {/* Linker Bereich: Checkbox (wenn aktiv) + Status-Indikator */}
+        <div className={styles.listRowLeft}>
+          {bulkSelectMode && (
+            <div
+              className={styles.listRowCheckbox}
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleSelectContract(contract._id);
+              }}
+            >
+              {isSelected ? (
+                <CheckSquare size={14} className={styles.checkboxChecked} />
+              ) : (
+                <Square size={14} className={styles.checkboxUnchecked} />
+              )}
+            </div>
+          )}
+          <div className={styles.listRowStatusIndicator} />
+        </div>
+
+        {/* Hauptinhalt: Name + Meta-Info */}
+        <div className={styles.listRowContent}>
+          <div className={styles.listRowMain}>
+            <span className={styles.listRowName}>{contract.name}</span>
+            {/* Badges inline */}
+            <div className={styles.listRowBadges}>
+              {contract.isGenerated && <span className={styles.listRowBadge} data-type="generated">Gen</span>}
+              {contract.isOptimized && <span className={styles.listRowBadge} data-type="optimized">Opt</span>}
+              {contract.uploadType === 'EMAIL_IMPORT' && <span className={styles.listRowBadge} data-type="email">✉</span>}
+              {contract.analyzed === false && <span className={styles.listRowBadge} data-type="unanalyzed">!</span>}
+            </div>
+          </div>
+          <div className={styles.listRowMeta}>
+            <span className={styles.listRowStatus}>{contract.status}</span>
+            <span className={styles.listRowDivider}>•</span>
+            <span className={styles.listRowDate}>
+              {contract.expiryDate ? formatDate(contract.expiryDate) : 'Kein Ablauf'}
+            </span>
+            {daysUntilExpiry !== null && daysUntilExpiry <= 30 && daysUntilExpiry > 0 && (
+              <>
+                <span className={styles.listRowDivider}>•</span>
+                <span className={styles.listRowUrgent}>{daysUntilExpiry}T</span>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Rechter Bereich: Quick Actions - Ultra-kompakt */}
+        <div className={styles.listRowActions}>
+          <button
+            className={styles.listRowAction}
+            onClick={(e) => {
+              e.stopPropagation();
+              openSmartPDF(contract, true);
+            }}
+            disabled={pdfLoading[contract._id]}
+            title="PDF öffnen"
+          >
+            {pdfLoading[contract._id] ? (
+              <Loader size={14} className={styles.loadingIcon} />
+            ) : (
+              <ExternalLink size={14} />
+            )}
+          </button>
+          <button
+            className={styles.listRowAction}
+            onClick={(e) => {
+              e.stopPropagation();
+              setFolderDropdownOpen(folderDropdownOpen === contract._id ? null : contract._id);
+            }}
+            title="Mehr"
+          >
+            <MoreVertical size={14} />
+          </button>
+        </div>
+
+        {/* Dropdown wird als Portal gerendert - siehe unten am Ende der Datei */}
+      </motion.div>
+    );
+  };
+
+  // 🆕 Enterprise Grid Card Component (für Grid-Ansicht)
+  const EnterpriseGridCard = ({ contract }: { contract: Contract }) => {
+    const isSelected = selectedContracts.includes(contract._id);
+    const daysUntilExpiry = contract.expiryDate
+      ? Math.ceil((new Date(contract.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+      : null;
+
+    return (
+      <motion.div
+        className={`${styles.enterpriseGridCard} ${isSelected ? styles.selected : ''} ${previewContract?._id === contract._id ? styles.previewActive : ''}`}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.2 }}
+        onClick={() => handleRowClick(contract)}
+        onDoubleClick={() => handleRowDoubleClick(contract)}
+        whileHover={{ y: -2, boxShadow: '0 8px 25px rgba(0,0,0,0.1)' }}
+      >
+        {/* Selection Checkbox */}
+        {bulkSelectMode && (
+          <div
+            className={styles.gridCardCheckbox}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleSelectContract(contract._id);
+            }}
+          >
+            {isSelected ? (
+              <CheckSquare size={20} className={styles.checkboxChecked} />
+            ) : (
+              <Square size={20} className={styles.checkboxUnchecked} />
+            )}
+          </div>
+        )}
+
+        {/* Card Header with Icon & Status */}
+        <div className={styles.gridCardHeader}>
+          <div className={styles.gridCardIcon}>
+            <FileText size={24} />
+          </div>
+          <div className={styles.gridCardBadges}>
+            <span className={`${styles.gridStatusBadge} ${getStatusColor(contract.status)}`}>
+              {contract.status}
+            </span>
+            {contract.isGenerated && (
+              <span className={styles.gridBadge} style={{ background: '#dbeafe', color: '#1d4ed8' }}>Generiert</span>
+            )}
+            {contract.isOptimized && (
+              <span className={styles.gridBadge} style={{ background: '#dcfce7', color: '#15803d' }}>Optimiert</span>
+            )}
+          </div>
+        </div>
+
+        {/* Contract Name */}
+        <h3 className={styles.gridCardTitle}>{contract.name}</h3>
+
+        {/* Quick Info */}
+        <div className={styles.gridCardInfo}>
+          {contract.kuendigung && (
+            <div className={styles.gridCardInfoRow}>
+              <Clock size={14} />
+              <span>{contract.kuendigung}</span>
+            </div>
+          )}
+          {contract.expiryDate && (
+            <div className={`${styles.gridCardInfoRow} ${daysUntilExpiry !== null && daysUntilExpiry <= 30 && daysUntilExpiry > 0 ? styles.warning : ''}`}>
+              <Calendar size={14} />
+              <span>{formatDate(contract.expiryDate)}</span>
+              {daysUntilExpiry !== null && daysUntilExpiry <= 30 && daysUntilExpiry > 0 && (
+                <span className={styles.daysLeft}>({daysUntilExpiry}d)</span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Signature Status */}
+        {renderSignatureBadge(contract)}
+
+        {/* Quick Actions */}
+        <div className={styles.gridCardActions}>
+          <button
+            className={styles.gridActionBtn}
+            onClick={(e) => {
+              e.stopPropagation();
+              openSmartPDF(contract, true);
+            }}
+            disabled={pdfLoading[contract._id]}
+            title="PDF öffnen"
+          >
+            {pdfLoading[contract._id] ? <Loader size={14} className={styles.spinning} /> : <Eye size={14} />}
+          </button>
+          <button
+            className={styles.gridActionBtn}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleEditContract(contract);
+            }}
+            title="Bearbeiten"
+          >
+            <Edit size={14} />
+          </button>
+          <button
+            className={`${styles.gridActionBtn} ${styles.deleteBtn}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDeleteContract(contract._id, contract.name);
+            }}
+            title="Löschen"
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
+
+        {/* Not Analyzed Badge */}
+        {contract.analyzed === false && (
+          <div className={styles.gridNotAnalyzed}>
+            <Zap size={12} />
+            <span>Nicht analysiert</span>
+          </div>
+        )}
+      </motion.div>
+    );
+  };
+
   return (
     <>
       <Helmet>
@@ -2481,93 +2868,493 @@ export default function Contracts() {
       </Helmet>
 
       <div className={styles.pageContainer}>
-        <motion.div
-          className={styles.container}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          {/* Header */}
-          <div className={styles.header}>
-            <motion.h1 
-              className={styles.title}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1, duration: 0.5 }}
-            >
-              <FileText size={28} className={styles.titleIcon} />
-              Vertragsanalyse & Verwaltung
-              {getPlanBadge()}
-            </motion.h1>
-            <motion.p 
-              className={styles.subtitle}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-            >
-              {userInfo.subscriptionPlan === 'free' && 
-                "Upgrade auf Business oder Premium für KI-Vertragsanalyse"
-              }
-              {userInfo.subscriptionPlan === 'business' && 
-                `Verträge analysieren und verwalten (${userInfo.analysisCount}/${userInfo.analysisLimit} Analysen)`
-              }
-              {userInfo.subscriptionPlan === 'premium' && 
-                "Verträge einzeln oder gleichzeitig analysieren und verwalten"
-              }
-            </motion.p>
+        {/* ========== ENTERPRISE LAYOUT ========== */}
+        <div className={styles.enterpriseLayout}>
 
-          </div>
+          {/* ===== SIDEBAR ===== */}
+          <aside className={styles.sidebar}>
+            <div className={styles.sidebarNav}>
+              <p className={styles.sidebarTitle}>Navigation</p>
 
-          {/* Tabs */}
-          <div className={styles.tabsContainer}>
-            <button 
-              className={`${styles.tabButton} ${activeSection === 'contracts' ? styles.activeTab : ''}`}
-              onClick={() => setActiveSection('contracts')}
-            >
-              <FileText size={18} />
-              <span>Verträge</span>
-              {contracts.length > 0 && (
-                <span className={styles.tabBadge}>{contracts.length}</span>
-              )}
-            </button>
-            <button
-              className={`${styles.tabButton} ${activeSection === 'upload' ? styles.activeTab : ''}`}
-              onClick={() => setActiveSection('upload')}
-              data-section="upload"
-            >
-              <Upload size={18} />
-              <span>Hochladen</span>
-              {canMultiUpload && (
-                <span className={styles.premiumTabBadge}>
-                  <Crown size={12} />
-                  Multi
-                </span>
-              )}
-            </button>
-
-            {/* 📧 NEU: Email-Upload Tab */}
-            {userInfo.emailInboxAddress && (
+              {/* Main Nav Items */}
               <button
-                className={`${styles.tabButton} ${activeSection === 'email-upload' ? styles.activeTab : ''}`}
-                onClick={() => setActiveSection('email-upload')}
+                className={`${styles.sidebarNavItem} ${activeSection === 'contracts' && !selectedFolderId ? styles.active : ''}`}
+                onClick={() => { setActiveSection('contracts'); setSelectedFolderId(null); }}
               >
-                <Mail size={18} />
-                <span>Email-Upload</span>
+                <FileText size={18} className={styles.sidebarNavIcon} />
+                <span>Alle Verträge</span>
+                <span className={styles.sidebarNavBadge}>{paginationInfo.total}</span>
               </button>
-            )}
-          </div>
 
-          <AnimatePresence mode="wait" initial={false}>
-            {activeSection === 'upload' && (
-              <motion.div 
-                key="upload-section"
-                className={styles.section}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
+              <button
+                className={`${styles.sidebarNavItem} ${activeSection === 'upload' ? styles.active : ''}`}
+                onClick={() => setActiveSection('upload')}
               >
-                {/* ✅ KORRIGIERT: Free-User Upgrade-Bereich */}
+                <Upload size={18} className={styles.sidebarNavIcon} />
+                <span>Hochladen</span>
+                {canMultiUpload && <Crown size={14} className={styles.sidebarNavIcon} style={{ color: '#fbbf24' }} />}
+              </button>
+
+              {userInfo.emailInboxAddress && (
+                <button
+                  className={`${styles.sidebarNavItem} ${activeSection === 'email-upload' ? styles.active : ''}`}
+                  onClick={() => setActiveSection('email-upload')}
+                >
+                  <Mail size={18} className={styles.sidebarNavIcon} />
+                  <span>Email-Upload</span>
+                </button>
+              )}
+
+              <div className={styles.sidebarDivider} />
+
+              {/* Quick Filters */}
+              <p className={styles.sidebarTitle}>Schnellfilter</p>
+
+              <button
+                className={`${styles.sidebarNavItem} ${statusFilter === 'bald_ablaufend' ? styles.active : ''}`}
+                onClick={() => { setActiveSection('contracts'); setStatusFilter(statusFilter === 'bald_ablaufend' ? 'alle' : 'bald_ablaufend'); }}
+              >
+                <AlertTriangle size={18} className={styles.sidebarNavIcon} style={{ color: '#f59e0b' }} />
+                <span>Bald ablaufend</span>
+                <span className={styles.sidebarNavBadge}>
+                  {contracts.filter(c => {
+                    if (!c.expiryDate) return false;
+                    const days = Math.ceil((new Date(c.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                    return days > 0 && days <= 30;
+                  }).length}
+                </span>
+              </button>
+
+              <button
+                className={`${styles.sidebarNavItem} ${statusFilter === 'aktiv' ? styles.active : ''}`}
+                onClick={() => { setActiveSection('contracts'); setStatusFilter(statusFilter === 'aktiv' ? 'alle' : 'aktiv'); }}
+              >
+                <CheckCircle size={18} className={styles.sidebarNavIcon} style={{ color: '#22c55e' }} />
+                <span>Aktive Verträge</span>
+                <span className={styles.sidebarNavBadge}>{contracts.filter(c => c.status === 'aktiv').length}</span>
+              </button>
+
+              <div className={styles.sidebarDivider} />
+
+              {/* Folders */}
+              <p className={styles.sidebarTitle}>Ordner</p>
+              <div className={styles.sidebarFolderList}>
+                {/* Alle Verträge */}
+                <button
+                  className={`${styles.sidebarFolderItem} ${activeFolder === null ? styles.active : ''}`}
+                  onClick={() => { setActiveSection('contracts'); setActiveFolder(null); }}
+                >
+                  <FileText size={16} className={styles.sidebarFolderIcon} style={{ color: '#3b82f6' }} />
+                  <span>Alle Verträge</span>
+                  <span className={styles.sidebarNavBadge}>{paginationInfo.total}</span>
+                </button>
+                {/* Ohne Ordner */}
+                <button
+                  className={`${styles.sidebarFolderItem} ${activeFolder === 'unassigned' ? styles.active : ''}`}
+                  onClick={() => { setActiveSection('contracts'); setActiveFolder('unassigned'); }}
+                >
+                  <Folder size={16} className={styles.sidebarFolderIcon} style={{ color: '#94a3b8' }} />
+                  <span>Ohne Ordner</span>
+                  <span className={styles.sidebarNavBadge}>
+                    {contracts.filter(c => !c.folderId).length}
+                  </span>
+                </button>
+                {/* User Folders */}
+                {folders.map((folder: FolderType) => (
+                  <button
+                    key={folder._id}
+                    className={`${styles.sidebarFolderItem} ${styles.userFolder} ${activeFolder === folder._id ? styles.active : ''}`}
+                    onClick={() => { setActiveSection('contracts'); setActiveFolder(folder._id); }}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      setFolderContextMenu({
+                        folderId: folder._id,
+                        x: e.clientX,
+                        y: e.clientY
+                      });
+                    }}
+                  >
+                    <Folder size={16} className={styles.sidebarFolderIcon} style={{ color: folder.color || '#fbbf24' }} />
+                    <span className={styles.sidebarFolderName}>{folder.name}</span>
+                    <span className={styles.sidebarNavBadge}>
+                      {folder.contractCount ?? 0}
+                    </span>
+                    <span
+                      className={styles.sidebarFolderMenuBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setFolderContextMenu({
+                          folderId: folder._id,
+                          x: rect.right,
+                          y: rect.top
+                        });
+                      }}
+                      title="Ordner-Optionen"
+                    >
+                      <MoreVertical size={14} />
+                    </span>
+                  </button>
+                ))}
+                {/* Add Folder */}
+                <button
+                  className={styles.sidebarAddFolder}
+                  onClick={handleCreateFolder}
+                >
+                  <FolderPlus size={16} />
+                  <span>Neuer Ordner</span>
+                </button>
+                {/* Smart Folders - Premium Feature */}
+                <button
+                  className={styles.sidebarAddFolder}
+                  onClick={() => {
+                    if (userInfo.isPremium) {
+                      setSmartFoldersModalOpen(true);
+                    } else {
+                      setPremiumHint('Smart Folders ist ein Premium-Feature. Upgrade jetzt, um KI-basierte Ordnervorschläge zu nutzen!');
+                    }
+                  }}
+                  style={{ color: userInfo.isPremium ? '#a78bfa' : '#64748b' }}
+                  title={userInfo.isPremium ? 'KI-basierte Ordnervorschläge' : 'Premium-Feature – Jetzt upgraden'}
+                >
+                  {userInfo.isPremium ? <Zap size={16} /> : <Lock size={16} />}
+                  <span>Smart Folders</span>
+                  {!userInfo.isPremium && (
+                    <Crown size={12} style={{ color: '#fbbf24', marginLeft: 'auto' }} />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Plan Info at Bottom */}
+            <div className={styles.sidebarHeader}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {getPlanBadge()}
+                {(userInfo.subscriptionPlan === 'free' || userInfo.subscriptionPlan === 'business') && (
+                  <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)' }}>
+                    {Math.max(0, userInfo.analysisLimit - userInfo.analysisCount)}/{userInfo.analysisLimit} Analysen
+                  </span>
+                )}
+              </div>
+            </div>
+          </aside>
+
+          {/* ===== MAIN CONTENT ===== */}
+          <main className={styles.mainContent}>
+            {/* Premium Upgrade Hint Toast */}
+            <AnimatePresence>
+              {premiumHint && (
+                <motion.div
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className={styles.premiumHintBanner}
+                >
+                  <Crown size={18} />
+                  <span>{premiumHint}</span>
+                  <button
+                    className={styles.premiumHintUpgrade}
+                    onClick={() => {
+                      setPremiumHint(null);
+                      navigate('/subscribe');
+                    }}
+                  >
+                    Jetzt upgraden
+                  </button>
+                  <button
+                    className={styles.premiumHintClose}
+                    onClick={() => setPremiumHint(null)}
+                  >
+                    <X size={16} />
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* 📱 MOBILE: Suchleiste oben - immer sichtbar */}
+            <div className={styles.mobileSearchBar}>
+              <Search size={16} className={styles.mobileSearchIcon} />
+              <input
+                type="text"
+                className={styles.mobileSearchInput}
+                placeholder="Verträge durchsuchen..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              {searchQuery && (
+                <button
+                  className={styles.mobileSearchClear}
+                  onClick={() => setSearchQuery('')}
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+
+            {/* Enterprise Toolbar */}
+            <div className={styles.enterpriseToolbar}>
+              <div className={styles.toolbarSection}>
+                <button
+                  className={`${styles.toolbarButton} ${styles.primary}`}
+                  onClick={() => setActiveSection('upload')}
+                >
+                  <FileUp size={16} />
+                  <span>Hochladen</span>
+                </button>
+                <button
+                  className={styles.toolbarButton}
+                  onClick={() => fetchContracts()}
+                  disabled={refreshing}
+                >
+                  <RefreshCw size={16} className={refreshing ? styles.spinning : ''} />
+                </button>
+                {/* Auswählen Button */}
+                <button
+                  className={`${styles.toolbarButton} ${bulkSelectMode ? styles.active : ''}`}
+                  onClick={toggleBulkSelectMode}
+                  title={bulkSelectMode ? "Auswahl beenden" : "Verträge auswählen"}
+                >
+                  {bulkSelectMode ? <CheckSquare size={16} /> : <Square size={16} />}
+                  <span>{bulkSelectMode ? "Beenden" : "Auswählen"}</span>
+                </button>
+                {/* Excel Export */}
+                <button
+                  className={styles.toolbarButton}
+                  onClick={handleExportExcel}
+                  disabled={contracts.length === 0}
+                  title="Als Excel exportieren"
+                >
+                  <Download size={16} />
+                  <span>Export</span>
+                </button>
+
+                {/* 📱 MOBILE: Filter-Button - öffnet Bottom-Sheet */}
+                <button
+                  className={`${styles.toolbarButton} ${styles.mobileFilterButton} ${(statusFilter !== 'alle' || dateFilter !== 'alle' || sourceFilter !== 'alle' || sortOrder !== 'neueste') ? styles.hasActiveFilters : ''}`}
+                  onClick={() => setShowMobileFilterSheet(true)}
+                  title="Filter"
+                >
+                  <SlidersHorizontal size={16} />
+                  <span>Filter</span>
+                  {(statusFilter !== 'alle' || dateFilter !== 'alle' || sourceFilter !== 'alle' || sortOrder !== 'neueste') && (
+                    <span className={styles.filterBadge}>!</span>
+                  )}
+                </button>
+              </div>
+
+              <div className={styles.toolbarDivider} />
+
+              {/* Desktop: Suchleiste bleibt hier */}
+              <div className={styles.toolbarSearch}>
+                <Search size={16} className={styles.toolbarSearchIcon} />
+                <input
+                  type="text"
+                  className={styles.toolbarSearchInput}
+                  placeholder="Verträge durchsuchen..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+
+              <div className={styles.toolbarDivider} />
+
+              {/* Desktop: Filter-Selects */}
+              <div className={`${styles.toolbarSection} ${styles.desktopFilters}`}>
+                {/* Quelle Filter (Alle/Generiert/Optimiert) */}
+                <select
+                  className={styles.toolbarButton}
+                  value={sourceFilter}
+                  onChange={(e) => setSourceFilter(e.target.value as 'alle' | 'generated' | 'optimized')}
+                  style={{ minWidth: '110px' }}
+                >
+                  <option value="alle">Alle</option>
+                  <option value="generated">Generiert</option>
+                  <option value="optimized">Optimiert</option>
+                </select>
+
+                {/* Status Filter */}
+                <select
+                  className={styles.toolbarButton}
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+                  style={{ minWidth: '120px' }}
+                >
+                  <option value="alle">Alle Status</option>
+                  <option value="aktiv">Aktiv</option>
+                  <option value="bald_ablaufend">Bald ablaufend</option>
+                  <option value="abgelaufen">Abgelaufen</option>
+                  <option value="gekündigt">Gekündigt</option>
+                </select>
+
+                {/* Zeitraum Filter */}
+                <select
+                  className={styles.toolbarButton}
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value as DateFilter)}
+                  style={{ minWidth: '130px' }}
+                >
+                  <option value="alle">Alle Zeiträume</option>
+                  <option value="heute">Heute</option>
+                  <option value="woche">Diese Woche</option>
+                  <option value="monat">Dieser Monat</option>
+                  <option value="quartal">Dieses Quartal</option>
+                  <option value="jahr">Dieses Jahr</option>
+                </select>
+
+                {/* Sortierung */}
+                <select
+                  className={styles.toolbarButton}
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value as SortOrder)}
+                  style={{ minWidth: '130px' }}
+                >
+                  <option value="neueste">Neueste zuerst</option>
+                  <option value="älteste">Älteste zuerst</option>
+                  <option value="name_az">Name A-Z</option>
+                  <option value="name_za">Name Z-A</option>
+                </select>
+              </div>
+
+              <div className={styles.toolbarViewButtons}>
+                <button
+                  className={`${styles.viewButton} ${viewMode === 'list' ? styles.active : ''}`}
+                  onClick={() => setViewMode('list')}
+                  title="Listenansicht"
+                >
+                  <List size={16} />
+                </button>
+                <button
+                  className={`${styles.viewButton} ${viewMode === 'grid' ? styles.active : ''}`}
+                  onClick={() => setViewMode('grid')}
+                  title="Rasteransicht"
+                >
+                  <LayoutGrid size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* 📱 MOBILE: Filter Bottom-Sheet */}
+            <AnimatePresence>
+              {showMobileFilterSheet && (
+                <>
+                  <motion.div
+                    className={styles.mobileFilterOverlay}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => setShowMobileFilterSheet(false)}
+                  />
+                  <motion.div
+                    className={styles.mobileFilterSheet}
+                    initial={{ y: '100%' }}
+                    animate={{ y: 0 }}
+                    exit={{ y: '100%' }}
+                    transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                  >
+                    <div className={styles.mobileFilterHandle} />
+                    <div className={styles.mobileFilterHeader}>
+                      <h3>Filter & Sortierung</h3>
+                      <button
+                        className={styles.mobileFilterClose}
+                        onClick={() => setShowMobileFilterSheet(false)}
+                      >
+                        <X size={20} />
+                      </button>
+                    </div>
+
+                    <div className={styles.mobileFilterContent}>
+                      <div className={styles.mobileFilterGroup}>
+                        <label>Quelle</label>
+                        <select
+                          value={sourceFilter}
+                          onChange={(e) => setSourceFilter(e.target.value as 'alle' | 'generated' | 'optimized')}
+                        >
+                          <option value="alle">Alle Quellen</option>
+                          <option value="generated">Generiert</option>
+                          <option value="optimized">Optimiert</option>
+                        </select>
+                      </div>
+
+                      <div className={styles.mobileFilterGroup}>
+                        <label>Status</label>
+                        <select
+                          value={statusFilter}
+                          onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+                        >
+                          <option value="alle">Alle Status</option>
+                          <option value="aktiv">Aktiv</option>
+                          <option value="bald_ablaufend">Bald ablaufend</option>
+                          <option value="abgelaufen">Abgelaufen</option>
+                          <option value="gekündigt">Gekündigt</option>
+                        </select>
+                      </div>
+
+                      <div className={styles.mobileFilterGroup}>
+                        <label>Zeitraum</label>
+                        <select
+                          value={dateFilter}
+                          onChange={(e) => setDateFilter(e.target.value as DateFilter)}
+                        >
+                          <option value="alle">Alle Zeiträume</option>
+                          <option value="heute">Heute</option>
+                          <option value="woche">Diese Woche</option>
+                          <option value="monat">Dieser Monat</option>
+                          <option value="quartal">Dieses Quartal</option>
+                          <option value="jahr">Dieses Jahr</option>
+                        </select>
+                      </div>
+
+                      <div className={styles.mobileFilterGroup}>
+                        <label>Sortierung</label>
+                        <select
+                          value={sortOrder}
+                          onChange={(e) => setSortOrder(e.target.value as SortOrder)}
+                        >
+                          <option value="neueste">Neueste zuerst</option>
+                          <option value="älteste">Älteste zuerst</option>
+                          <option value="name_az">Name A-Z</option>
+                          <option value="name_za">Name Z-A</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className={styles.mobileFilterActions}>
+                      <button
+                        className={styles.mobileFilterReset}
+                        onClick={() => {
+                          setSourceFilter('alle');
+                          setStatusFilter('alle');
+                          setDateFilter('alle');
+                          setSortOrder('neueste');
+                        }}
+                      >
+                        Zurücksetzen
+                      </button>
+                      <button
+                        className={styles.mobileFilterApply}
+                        onClick={() => setShowMobileFilterSheet(false)}
+                      >
+                        Anwenden
+                      </button>
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+
+            {/* Content Area - nur dieser Bereich scrollt */}
+            <div className={styles.contentArea} ref={contentAreaRef}>
+              <AnimatePresence mode="wait" initial={false}>
+                {activeSection === 'upload' && (
+                  <motion.div
+                    key="upload-section"
+                    className={styles.section}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {/* ✅ KORRIGIERT: Free-User Upgrade-Bereich */}
                 {!canUpload ? (
                   <div className={styles.upgradeSection}>
                     <div className={styles.upgradeIcon}>
@@ -2638,7 +3425,55 @@ export default function Contracts() {
                       </div>
                     )}
 
-                    {/* ✅ KORRIGIERT: Upload-Bereich für Business/Premium */}
+                    {/* 📱 MOBILE UX: Upload-Header mit Schließen-Button */}
+                    <div className={styles.uploadHeader}>
+                      <div className={styles.uploadHeaderTitle}>
+                        <h2>Verträge hochladen</h2>
+                        <p className={styles.sectionDescription}>
+                          Lade Verträge hoch oder nutze den E-Mail-Upload
+                        </p>
+                      </div>
+                      <button
+                        className={styles.uploadCloseButton}
+                        onClick={() => setActiveSection('contracts')}
+                        title="Zurück zu Verträgen"
+                      >
+                        <X size={20} />
+                      </button>
+                    </div>
+
+                    {/* 📱 UPLOAD TABS: Datei-Upload / E-Mail-Upload */}
+                    <div className={styles.uploadTabs}>
+                      <button
+                        className={`${styles.uploadTab} ${uploadTab === 'file' ? styles.active : ''}`}
+                        onClick={() => setUploadTab('file')}
+                      >
+                        <FileUp size={18} />
+                        <span>Datei-Upload</span>
+                      </button>
+                      {userInfo.emailInboxAddress && (
+                        <button
+                          className={`${styles.uploadTab} ${uploadTab === 'email' ? styles.active : ''}`}
+                          onClick={() => setUploadTab('email')}
+                        >
+                          <Mail size={18} />
+                          <span>E-Mail-Upload</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* TAB CONTENT: E-Mail-Upload */}
+                    {uploadTab === 'email' && userInfo.emailInboxAddress ? (
+                      <div className={styles.emailUploadSection}>
+                        <EmailInboxWidget
+                          emailInboxAddress={userInfo.emailInboxAddress}
+                          emailInboxEnabled={userInfo.emailInboxEnabled || false}
+                          onUpdate={() => fetchUserInfo(true)}
+                        />
+                      </div>
+                    ) : (
+                    <>
+                    {/* TAB CONTENT: Datei-Upload (bestehender Code) */}
                     <div className={styles.sectionHeader}>
                       <h2>
                         {canMultiUpload ? "Verträge hochladen" : "Vertrag hochladen"}
@@ -2893,10 +3728,12 @@ export default function Contracts() {
 
                     {/* ✅ NEU: Zusätzliche Batch-Analyse für Multi-Upload (nur 4 Zeilen hinzugefügt!) */}
                     {uploadFiles.length > 1 && uploadFiles.filter(f => f.status === 'completed').length > 0 && (
-                      <BatchAnalysisResults 
+                      <BatchAnalysisResults
                         uploadFiles={uploadFiles}
                         onReset={handleReset}
                       />
+                    )}
+                    </>
                     )}
                   </>
                 )}
@@ -2916,7 +3753,7 @@ export default function Contracts() {
                 <div className={styles.sectionHeader}>
                   <div>
                     <h2 className={styles.sectionTitle}>
-                      <Mail size={24} />
+                      <Mail size={32} strokeWidth={2} />
                       Email-Upload
                     </h2>
                     <p className={styles.sectionDescription}>
@@ -2934,7 +3771,7 @@ export default function Contracts() {
             )}
 
             {activeSection === 'contracts' && (
-              <motion.div 
+              <motion.div
                 key="contracts-section"
                 className={styles.section}
                 initial={{ opacity: 0, x: 20 }}
@@ -2942,170 +3779,7 @@ export default function Contracts() {
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
               >
-                <div className={styles.sectionHeader}>
-                  <div>
-                    <h2>Deine Verträge</h2>
-                    <p className={styles.contractsCount}>
-                      {loading ? "Lade..." : `${contracts.length} von ${paginationInfo.total} Verträgen`}
-                    </p>
-                  </div>
-                  <div className={styles.sectionActions}>
-                    <motion.button
-                      className={styles.refreshButton}
-                      onClick={fetchContracts}
-                      aria-label="Aktualisieren"
-                      disabled={refreshing}
-                      animate={{ rotate: refreshing ? 360 : 0 }}
-                      transition={{ duration: 1, ease: "linear", repeat: refreshing ? Infinity : 0 }}
-                    >
-                      <RefreshCw size={16} />
-                    </motion.button>
-                    <motion.button
-                      className={`${styles.newContractButton} ${!canUpload ? styles.disabledButton : ''}`}
-                      onClick={() => canUpload && setActiveSection('upload')}
-                      whileHover={canUpload ? { scale: 1.02 } : {}}
-                      whileTap={canUpload ? { scale: 0.98 } : {}}
-                      disabled={!canUpload}
-                    >
-                      <Plus size={16} />
-                      <span>{canUpload ? 'Neuer Vertrag' : 'Upgrade erforderlich'}</span>
-                      {!canUpload && <Lock size={14} />}
-                    </motion.button>
-                    <motion.button
-                      className={styles.exportButton}
-                      onClick={handleExportExcel}
-                      aria-label="Als Excel exportieren"
-                      disabled={contracts.length === 0}
-                      whileHover={contracts.length > 0 ? { scale: 1.02 } : {}}
-                      whileTap={contracts.length > 0 ? { scale: 0.98 } : {}}
-                      title="Portfolio als Excel-Tabelle exportieren"
-                    >
-                      <Download size={16} />
-                      <span>Excel Export</span>
-                    </motion.button>
-                  </div>
-                </div>
-
-                {/* 📁 Folder Bar - Horizontal Navigation */}
-                <FolderBar
-                  folders={foldersWithUnassigned}
-                  activeFolder={activeFolder}
-                  totalContracts={contracts.length}
-                  unassignedCount={0}
-                  onFolderClick={setActiveFolder}
-                  onCreateFolder={handleCreateFolder}
-                  onEditFolder={handleEditFolder}
-                  onDeleteFolder={handleDeleteFolder}
-                  onReorderFolders={handleReorderFolders}
-                  onSmartFolders={() => setSmartFoldersModalOpen(true)}
-                  isLoading={foldersLoading}
-                />
-
-                <div className={styles.filtersToolbar}>
-                  <div className={styles.searchSection}>
-                    {/* 📋 Bulk Select Toggle Button */}
-                    <motion.button
-                      className={`${styles.bulkSelectToggle} ${bulkSelectMode ? styles.active : ''}`}
-                      onClick={toggleBulkSelectMode}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      title={bulkSelectMode ? "Auswahl beenden" : "Verträge auswählen"}
-                    >
-                      {bulkSelectMode ? <CheckSquare size={18} /> : <Square size={18} />}
-                      <span>{bulkSelectMode ? "Auswahl beenden" : "Auswählen"}</span>
-                    </motion.button>
-
-                    <div className={styles.searchInputWrapper}>
-                      <Search size={18} className={styles.searchIcon} />
-                      <input
-                        type="text"
-                        placeholder="Verträge durchsuchen..."
-                        className={styles.searchInput}
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                      />
-                      {searchQuery && (
-                        <button
-                          className={styles.clearSearchButton}
-                          onClick={() => setSearchQuery("")}
-                        >
-                          <X size={16} />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* 🆕 Source Filter Tabs */}
-                  <div className={styles.sourceFilterTabs}>
-                    <button
-                      className={`${styles.sourceTab} ${sourceFilter === 'alle' ? styles.activeTab : ''}`}
-                      onClick={() => setSourceFilter('alle')}
-                    >
-                      Alle
-                    </button>
-                    <button
-                      className={`${styles.sourceTab} ${sourceFilter === 'generated' ? styles.activeTab : ''}`}
-                      onClick={() => setSourceFilter('generated')}
-                    >
-                      Generiert
-                    </button>
-                    <button
-                      className={`${styles.sourceTab} ${sourceFilter === 'optimized' ? styles.activeTab : ''}`}
-                      onClick={() => setSourceFilter('optimized')}
-                    >
-                      Optimiert
-                    </button>
-                  </div>
-
-                  <div className={styles.filtersSection}>
-                    <div className={styles.quickFilters}>
-                      <select 
-                        value={statusFilter} 
-                        onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                        className={styles.quickFilter}
-                      >
-                        <option value="alle">Alle Status</option>
-                        <option value="aktiv">✅ Aktiv</option>
-                        <option value="bald_ablaufend">⚠️ Bald ablaufend</option>
-                        <option value="abgelaufen">❌ Abgelaufen</option>
-                        <option value="gekündigt">🚫 Gekündigt</option>
-                      </select>
-
-                      <select 
-                        value={dateFilter} 
-                        onChange={(e) => setDateFilter(e.target.value as DateFilter)}
-                        className={styles.quickFilter}
-                      >
-                        <option value="alle">Alle Zeiträume</option>
-                        <option value="letzte_7_tage">📅 Letzte 7 Tage</option>
-                        <option value="letzte_30_tage">📅 Letzte 30 Tage</option>
-                        <option value="letztes_jahr">📅 Letztes Jahr</option>
-                      </select>
-
-                      <select
-                        value={sortOrder}
-                        onChange={(e) => setSortOrder(e.target.value as SortOrder)}
-                        className={styles.quickFilter}
-                      >
-                        <option value="neueste">🕐 Neueste zuerst</option>
-                        <option value="älteste">🕐 Älteste zuerst</option>
-                        <option value="name_az">🔤 Name A-Z</option>
-                        <option value="name_za">🔤 Name Z-A</option>
-                      </select>
-                    </div>
-
-                    {activeFiltersCount() > 0 && (
-                      <button 
-                        className={styles.clearAllFilters}
-                        onClick={clearAllFilters}
-                      >
-                        <X size={14} />
-                        <span>Zurücksetzen</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-
+                {/* Results info when filters active */}
                 {(searchQuery || activeFiltersCount() > 0) && (
                   <div className={styles.resultsInfo}>
                     <div className={styles.resultsText}>
@@ -3116,14 +3790,13 @@ export default function Contracts() {
                       )}
                     </div>
                     {activeFiltersCount() > 0 && (
-                      <div className={styles.activeFilters}>
-                        {statusFilter !== 'alle' && (
-                          <span className={styles.activeFilter}>Status: {statusFilter}</span>
-                        )}
-                        {dateFilter !== 'alle' && (
-                          <span className={styles.activeFilter}>Zeitraum: {dateFilter.replace('_', ' ')}</span>
-                        )}
-                      </div>
+                      <button
+                        className={styles.clearAllFilters}
+                        onClick={clearAllFilters}
+                      >
+                        <X size={14} />
+                        <span>Filter zurücksetzen</span>
+                      </button>
                     )}
                   </div>
                 )}
@@ -3189,9 +3862,19 @@ export default function Contracts() {
                     )}
                   </div>
                 ) : (
-                  // ✅ RESPONSIVE CONTAINER - Zeigt Tabelle UND Mobile Cards
+                  // ✅ VIEW MODE CONTAINER - Grid oder Liste
                   <>
-                    {/* ✅ DESKTOP/TABLET TABLE */}
+                    {/* 🆕 ENTERPRISE GRID VIEW */}
+                    {viewMode === 'grid' && (
+                      <div className={styles.enterpriseGrid}>
+                        {filteredContracts.map((contract) => (
+                          <EnterpriseGridCard key={contract._id} contract={contract} />
+                        ))}
+                      </div>
+                    )}
+
+                    {/* ✅ ENTERPRISE LIST VIEW (Tabelle) */}
+                    {viewMode === 'list' && (
                     <div className={styles.tableContainer}>
                       <table className={`${styles.contractsTable} ${bulkSelectMode ? styles.withCheckboxes : ''}`}>
                         <thead>
@@ -3272,11 +3955,12 @@ export default function Contracts() {
                           ) : displayedContracts.map((contract) => (
                             <motion.tr
                               key={contract._id}
-                              className={`${styles.tableRow} ${selectedContracts.includes(contract._id) ? styles.selectedRow : ''}`}
+                              className={`${styles.tableRow} ${selectedContracts.includes(contract._id) ? styles.selectedRow : ''} ${previewContract?._id === contract._id ? styles.previewActive : ''}`}
                               initial={{ opacity: 0, y: 10 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ duration: 0.3 }}
                               onClick={() => handleRowClick(contract)}
+                              onDoubleClick={() => handleRowDoubleClick(contract)}
                             >
                               {/* 📋 Checkbox Cell - only visible in bulk select mode */}
                               {bulkSelectMode && (
@@ -3393,69 +4077,46 @@ export default function Contracts() {
                                   >
                                     <Bell size={16} />
                                   </button>
-                                  {/* 📁 Folder Dropdown */}
-                                  <div
-                                    className={styles.folderDropdownWrapper}
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    <button
-                                      className={`${styles.actionButton} ${folderDropdownOpen === contract._id ? styles.active : ''}`}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setFolderDropdownOpen(
-                                          folderDropdownOpen === contract._id ? null : contract._id
-                                        );
-                                      }}
-                                      title="In Ordner verschieben"
-                                    >
-                                      <Folder size={16} />
-                                    </button>
-                                    {folderDropdownOpen === contract._id && (
-                                      <div className={styles.folderDropdown}>
-                                        <div className={styles.folderDropdownHeader}>
-                                          In Ordner verschieben
-                                        </div>
-                                        <div className={styles.folderDropdownList}>
-                                          {/* Ohne Ordner Option */}
-                                          <button
-                                            className={`${styles.folderDropdownItem} ${!contract.folderId ? styles.selected : ''}`}
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              handleMoveToFolder(contract._id, null);
-                                              setFolderDropdownOpen(null);
-                                            }}
-                                          >
-                                            <span className={styles.folderIcon}>📂</span>
-                                            <span className={styles.folderName}>Ohne Ordner</span>
-                                          </button>
+                                  {/* 📁 Folder Dropdown Button */}
+                                  <button
+                                    className={`${styles.actionButton} ${folderDropdownOpen === contract._id ? styles.active : ''}`}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (folderDropdownOpen === contract._id) {
+                                        setFolderDropdownOpen(null);
+                                        setFolderDropdownPosition(null);
+                                        setFolderDropdownContractId(null);
+                                      } else {
+                                        // Berechne Position basierend auf Button
+                                        const button = e.currentTarget;
+                                        const rect = button.getBoundingClientRect();
+                                        const dropdownHeight = 300; // Geschätzte Höhe
+                                        const viewportHeight = window.innerHeight;
+                                        const spaceBelow = viewportHeight - rect.bottom;
+                                        const spaceAbove = rect.top;
 
-                                          {/* Folder List */}
-                                          {folders.map((folder) => (
-                                            <button
-                                              key={folder._id}
-                                              className={`${styles.folderDropdownItem} ${contract.folderId === folder._id ? styles.selected : ''}`}
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleMoveToFolder(contract._id, folder._id);
-                                                setFolderDropdownOpen(null);
-                                              }}
-                                            >
-                                              <span
-                                                className={styles.folderIcon}
-                                                style={{ color: folder.color }}
-                                              >
-                                                {folder.icon}
-                                              </span>
-                                              <span className={styles.folderName}>{folder.name}</span>
-                                              {contract.folderId === folder._id && (
-                                                <CheckCircle size={14} className={styles.checkIcon} />
-                                              )}
-                                            </button>
-                                          ))}
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
+                                        // Entscheide ob nach oben oder unten öffnen
+                                        if (spaceBelow >= dropdownHeight || spaceBelow >= spaceAbove) {
+                                          // Nach unten öffnen
+                                          setFolderDropdownPosition({
+                                            top: rect.bottom + 8,
+                                            right: window.innerWidth - rect.right
+                                          });
+                                        } else {
+                                          // Nach oben öffnen - berechne von unten
+                                          setFolderDropdownPosition({
+                                            top: rect.top - dropdownHeight - 8,
+                                            right: window.innerWidth - rect.right
+                                          });
+                                        }
+                                        setFolderDropdownOpen(contract._id);
+                                        setFolderDropdownContractId(contract._id);
+                                      }
+                                    }}
+                                    title="In Ordner verschieben"
+                                  >
+                                    <Folder size={16} />
+                                  </button>
                                   <button
                                     className={`${styles.actionButton} ${styles.deleteButton}`}
                                     onClick={(e) => {
@@ -3473,15 +4134,33 @@ export default function Contracts() {
                         </tbody>
                       </table>
                     </div>
+                    )}
+                    {/* End of viewMode === 'list' */}
 
-                    {/* ✅ MOBILE CARDS - Automatically shown on mobile via CSS */}
+                    {/* ✅ MOBILE VIEWS - Automatically shown on mobile via CSS */}
+                    {/* Liste = kompakte Zeilen, Raster = Cards */}
                     <div className={styles.mobileCardsContainer}>
-                      {displayedContracts.map((contract) => (
-                        <MobileContractCard
-                          key={`mobile-${contract._id}`}
-                          contract={contract}
-                        />
-                      ))}
+                      {viewMode === 'list' ? (
+                        // 📋 LISTE: Kompakte Zeilen (wie Desktop/Outlook)
+                        <div className={styles.mobileListContainer}>
+                          {displayedContracts.map((contract) => (
+                            <MobileListRow
+                              key={`list-${contract._id}`}
+                              contract={contract}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        // 🔲 RASTER: Cards (wie bisher)
+                        <div className={styles.mobileGridContainer}>
+                          {displayedContracts.map((contract) => (
+                            <MobileContractCard
+                              key={`grid-${contract._id}`}
+                              contract={contract}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     {/* ✅ NEU: Infinite Scroll Loading Indicator & Sentinel */}
@@ -3609,8 +4288,260 @@ export default function Contracts() {
               </motion.div>
             )}
           </AnimatePresence>
+            </div>
+            {/* End of contentArea */}
+          </main>
+          {/* End of mainContent */}
 
-          {/* 🎨 NEW: Professional Contract Details Modal */}
+          {/* 🆕 REDESIGNED PREVIEW PANEL - Right Side */}
+          {previewContract && activeSection === 'contracts' && (
+            <aside className={styles.previewPanel}>
+              {/* Dark Gradient Header mit Vertragsname */}
+              <div className={styles.previewHeader}>
+                <div className={styles.previewHeaderInfo}>
+                  <div className={styles.previewHeaderIcon}>
+                    <FileText size={20} />
+                  </div>
+                  <div className={styles.previewHeaderText}>
+                    <span className={styles.previewHeaderLabel}>Vertragsvorschau</span>
+                    <h3 className={styles.previewHeaderTitle}>{previewContract.name}</h3>
+                  </div>
+                </div>
+                <button
+                  className={styles.previewCloseBtn}
+                  onClick={() => setPreviewContract(null)}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className={styles.previewContent}>
+                {/* Status Badge - kompakt unter Header */}
+                <div className={styles.previewStatusRow}>
+                  <span className={`${styles.previewStatusBadge} ${getStatusColor(previewContract.status)}`}>
+                    {previewContract.status}
+                  </span>
+                  {previewContract.analyzed && (
+                    <span className={styles.previewAnalyzedBadge}>
+                      <CheckCircle size={12} />
+                      Analysiert
+                    </span>
+                  )}
+                </div>
+
+                {/* Score Ring - wenn Score vorhanden */}
+                {previewContract.contractScore !== undefined && previewContract.contractScore !== null && (
+                  <div className={styles.previewScoreRing}>
+                    <div className={styles.scoreCircle}>
+                      <svg viewBox="0 0 80 80" style={{ width: '100%', height: '100%' }}>
+                        <defs>
+                          <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#3b82f6" />
+                            <stop offset="100%" stopColor="#8b5cf6" />
+                          </linearGradient>
+                        </defs>
+                        <circle cx="40" cy="40" r="32" className={styles.scoreCircleBg} />
+                        <circle
+                          cx="40"
+                          cy="40"
+                          r="32"
+                          className={styles.scoreCircleProgress}
+                          strokeDasharray={`${(previewContract.contractScore / 100) * 201} 201`}
+                          style={{ stroke: 'url(#scoreGradient)' }}
+                        />
+                      </svg>
+                      <div className={styles.scoreValue}>
+                        <span className={styles.scoreNumber}>{previewContract.contractScore}</span>
+                        <span className={styles.scoreLabel}>Score</span>
+                      </div>
+                    </div>
+                    <div className={styles.scoreDetails}>
+                      <div className={styles.scoreDetailItem}>
+                        {previewContract.contractScore >= 70 ? (
+                          <CheckCircle size={14} style={{ color: '#10b981' }} />
+                        ) : previewContract.contractScore >= 40 ? (
+                          <AlertTriangle size={14} style={{ color: '#f59e0b' }} />
+                        ) : (
+                          <AlertTriangle size={14} style={{ color: '#ef4444' }} />
+                        )}
+                        <span>
+                          {previewContract.contractScore >= 70 ? 'Guter Vertrag' : previewContract.contractScore >= 40 ? 'Verbesserungspotenzial' : 'Kritische Punkte'}
+                        </span>
+                      </div>
+                      {previewContract.risiken && (
+                        <div className={styles.scoreDetailItem}>
+                          <AlertTriangle size={14} style={{ color: '#ef4444' }} />
+                          <span>{previewContract.risiken.length} Risiken erkannt</span>
+                        </div>
+                      )}
+                      {previewContract.analyzed && (
+                        <div className={styles.scoreDetailItem}>
+                          <CheckCircle size={14} style={{ color: '#10b981' }} />
+                          <span>KI-analysiert</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Badges */}
+                {(previewContract.isGenerated || previewContract.isOptimized || previewContract.analyzed === false) && (
+                  <div className={styles.previewBadges}>
+                    {previewContract.isGenerated && (
+                      <span className={styles.previewBadge} style={{ background: '#dbeafe', color: '#1d4ed8' }}>
+                        <Sparkles size={12} />
+                        Generiert
+                      </span>
+                    )}
+                    {previewContract.isOptimized && (
+                      <span className={styles.previewBadge} style={{ background: '#dcfce7', color: '#15803d' }}>
+                        <CheckCircle size={12} />
+                        Optimiert
+                      </span>
+                    )}
+                    {previewContract.analyzed === false && (
+                      <span className={styles.previewBadge} style={{ background: '#fef3c7', color: '#b45309' }}>
+                        <Clock size={12} />
+                        Nicht analysiert
+                      </span>
+                    )}
+                    {renderSignatureBadge(previewContract)}
+                  </div>
+                )}
+
+                {/* Info Grid - 2 Spalten */}
+                <div className={styles.previewInfo}>
+                  <div className={styles.previewInfoItem}>
+                    <span className={styles.previewLabel}>Kündigungsfrist</span>
+                    <span className={styles.previewValue}>
+                      <Calendar size={14} style={{ color: '#6366f1' }} />
+                      {previewContract.kuendigung || '—'}
+                    </span>
+                  </div>
+                  <div className={styles.previewInfoItem}>
+                    <span className={styles.previewLabel}>Ablaufdatum</span>
+                    <span className={`${styles.previewValue} ${
+                      previewContract.expiryDate && new Date(previewContract.expiryDate) < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                        ? styles.warning : ''
+                    }`}>
+                      <Clock size={14} style={{ color: '#f59e0b' }} />
+                      {formatDate(previewContract.expiryDate)}
+                    </span>
+                  </div>
+                  <div className={styles.previewInfoItem}>
+                    <span className={styles.previewLabel}>Laufzeit</span>
+                    <span className={styles.previewValue}>
+                      <RotateCcw size={14} style={{ color: '#10b981' }} />
+                      {previewContract.laufzeit || '—'}
+                    </span>
+                  </div>
+                  <div className={styles.previewInfoItem}>
+                    <span className={styles.previewLabel}>Hochgeladen</span>
+                    <span className={styles.previewValue}>
+                      <Upload size={14} style={{ color: '#64748b' }} />
+                      {formatDate(previewContract.createdAt)}
+                    </span>
+                  </div>
+                  {/* Zahlungsinfo wenn vorhanden */}
+                  {previewContract.paymentAmount && (
+                    <div className={`${styles.previewInfoItem} ${styles.fullWidth}`}>
+                      <span className={styles.previewLabel}>Zahlung</span>
+                      <span className={`${styles.previewValue} ${styles.success}`}>
+                        <CreditCard size={14} />
+                        {previewContract.paymentAmount}€ {previewContract.paymentFrequency && `/ ${previewContract.paymentFrequency}`}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Summary Section */}
+                {previewContract.summary && (
+                  <div className={styles.previewSection}>
+                    <div className={styles.previewSectionHeader}>
+                      <div className={`${styles.previewSectionIcon} ${styles.summary}`}>
+                        <FileText size={14} />
+                      </div>
+                      <h5>Zusammenfassung</h5>
+                    </div>
+                    <p className={styles.previewSummary}>
+                      {previewContract.summary.length > 200
+                        ? previewContract.summary.slice(0, 200) + '...'
+                        : previewContract.summary}
+                    </p>
+                  </div>
+                )}
+
+                {/* Risks Section */}
+                {previewContract.risiken && previewContract.risiken.length > 0 && (
+                  <div className={styles.previewSection}>
+                    <div className={styles.previewSectionHeader}>
+                      <div className={`${styles.previewSectionIcon} ${styles.risks}`}>
+                        <AlertTriangle size={14} />
+                      </div>
+                      <h5>Erkannte Risiken ({previewContract.risiken.length})</h5>
+                    </div>
+                    <ul className={styles.previewList}>
+                      {previewContract.risiken.slice(0, 3).map((risk, i) => (
+                        <li key={i} className={styles.previewRisk}>{risk}</li>
+                      ))}
+                      {previewContract.risiken.length > 3 && (
+                        <li className={styles.previewMore}>+{previewContract.risiken.length - 3} weitere Risiken</li>
+                      )}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {/* Preview Actions - Redesigned */}
+              <div className={styles.previewActions}>
+                <button
+                  className={`${styles.previewActionBtn} ${styles.primary}`}
+                  onClick={() => {
+                    setSelectedContract(previewContract);
+                    setShowDetails(true);
+                  }}
+                >
+                  <Eye size={18} />
+                  Vollständige Details öffnen
+                </button>
+                <div className={styles.previewQuickActions}>
+                  <button
+                    className={styles.previewQuickAction}
+                    onClick={() => openSmartPDF(previewContract, true)}
+                    disabled={pdfLoading[previewContract._id]}
+                  >
+                    {pdfLoading[previewContract._id] ? <Loader size={14} className={styles.spinning} /> : <ExternalLink size={14} />}
+                    PDF
+                  </button>
+                  <button
+                    className={styles.previewQuickAction}
+                    onClick={() => {
+                      setSelectedContract(previewContract);
+                      setOpenEditModalDirectly(true);
+                      setShowDetails(true);
+                    }}
+                  >
+                    <Edit3 size={14} />
+                    Bearbeiten
+                  </button>
+                  <button
+                    className={`${styles.previewQuickAction} ${styles.delete}`}
+                    onClick={() => {
+                      handleDeleteContract(previewContract._id, previewContract.name);
+                      setPreviewContract(null);
+                    }}
+                  >
+                    <Trash2 size={14} />
+                    Löschen
+                  </button>
+                </div>
+              </div>
+            </aside>
+          )}
+        </div>
+        {/* End of enterpriseLayout */}
+
+        {/* 🎨 NEW: Professional Contract Details Modal */}
           {selectedContract && showDetails && (
             <NewContractDetailsModal
               contract={selectedContract}
@@ -3669,8 +4600,8 @@ export default function Contracts() {
             analysisCount={userInfo.analysisCount}
             analysisLimit={userInfo.analysisLimit}
           />
-        </motion.div>
       </div>
+      {/* End of pageContainer */}
 
       {/* 📁 Folder Modal */}
       <FolderModal
@@ -3712,6 +4643,272 @@ export default function Contracts() {
             fetchContracts(); // Refresh contracts
           }}
         />
+      )}
+
+      {/* 📁 Folder Dropdown Portal - Rendert außerhalb der Tabellen-Hierarchie */}
+      {folderDropdownOpen && folderDropdownPosition && folderDropdownContractId && createPortal(
+        <div
+          className={styles.folderDropdown}
+          style={{
+            top: `${folderDropdownPosition.top}px`,
+            right: `${folderDropdownPosition.right}px`,
+            left: 'auto',
+            bottom: 'auto'
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className={styles.folderDropdownHeader}>
+            In Ordner verschieben
+          </div>
+          <div className={styles.folderDropdownList}>
+            {/* Ohne Ordner Option */}
+            <button
+              className={`${styles.folderDropdownItem} ${!contracts.find(c => c._id === folderDropdownContractId)?.folderId ? styles.selected : ''}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleMoveToFolder(folderDropdownContractId, null);
+                setFolderDropdownOpen(null);
+                setFolderDropdownPosition(null);
+                setFolderDropdownContractId(null);
+              }}
+            >
+              <span className={styles.folderIcon}>📂</span>
+              <span className={styles.folderName}>Ohne Ordner</span>
+            </button>
+
+            {/* Folder List */}
+            {folders.map((folder) => (
+              <button
+                key={folder._id}
+                className={`${styles.folderDropdownItem} ${contracts.find(c => c._id === folderDropdownContractId)?.folderId === folder._id ? styles.selected : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleMoveToFolder(folderDropdownContractId, folder._id);
+                  setFolderDropdownOpen(null);
+                  setFolderDropdownPosition(null);
+                  setFolderDropdownContractId(null);
+                }}
+              >
+                <span
+                  className={styles.folderIcon}
+                  style={{ color: folder.color }}
+                >
+                  {folder.icon}
+                </span>
+                <span className={styles.folderName}>{folder.name}</span>
+                {contracts.find(c => c._id === folderDropdownContractId)?.folderId === folder._id && (
+                  <CheckCircle size={14} className={styles.checkIcon} />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* 📁 Folder Context Menu Portal */}
+      {folderContextMenu && createPortal(
+        <div
+          className={styles.folderContextMenu}
+          style={{
+            top: `${folderContextMenu.y}px`,
+            left: `${folderContextMenu.x}px`
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {(() => {
+            const folder = folders.find(f => f._id === folderContextMenu.folderId);
+            const folderIndex = folders.findIndex(f => f._id === folderContextMenu.folderId);
+            if (!folder) return null;
+            return (
+              <>
+                <button
+                  className={styles.folderContextMenuItem}
+                  onClick={() => {
+                    setEditingFolder(folder);
+                    setFolderModalOpen(true);
+                    setFolderContextMenu(null);
+                  }}
+                >
+                  <Edit3 size={14} />
+                  <span>Bearbeiten</span>
+                </button>
+                <button
+                  className={styles.folderContextMenuItem}
+                  onClick={() => handleMoveFolderUp(folder._id)}
+                  disabled={folderIndex === 0}
+                >
+                  <ChevronUp size={14} />
+                  <span>Nach oben</span>
+                </button>
+                <button
+                  className={styles.folderContextMenuItem}
+                  onClick={() => handleMoveFolderDown(folder._id)}
+                  disabled={folderIndex === folders.length - 1}
+                >
+                  <ChevronDown size={14} />
+                  <span>Nach unten</span>
+                </button>
+                <div className={styles.folderContextMenuDivider} />
+                <button
+                  className={`${styles.folderContextMenuItem} ${styles.danger}`}
+                  onClick={() => {
+                    handleDeleteFolder(folder._id);
+                    setFolderContextMenu(null);
+                  }}
+                >
+                  <Trash2 size={14} />
+                  <span>Löschen</span>
+                </button>
+              </>
+            );
+          })()}
+        </div>,
+        document.body
+      )}
+
+      {/* ✏️ Quick Edit Modal - Öffnet direkt ohne Detail-Ansicht */}
+      {quickEditContract && (
+        <ContractEditModal
+          contract={quickEditContract}
+          show={!!quickEditContract}
+          onClose={() => setQuickEditContract(null)}
+          onUpdate={(updatedContract) => {
+            // Aktualisiere Contract in der Liste
+            setContracts(prev => prev.map(c =>
+              c._id === updatedContract._id ? { ...c, ...updatedContract } : c
+            ));
+            setQuickEditContract(null);
+          }}
+        />
+      )}
+
+      {/* 📱 MOBILE: Bottom Sheet Dropdown Portal - Komplett isoliert von der Scroll-Hierarchie */}
+      {folderDropdownOpen && createPortal(
+        (() => {
+          const dropdownContract = contracts.find(c => c._id === folderDropdownOpen);
+          if (!dropdownContract) return null;
+
+          return (
+            <>
+              {/* Overlay zum Schließen - stoppt Touch-Events */}
+              <div
+                className={styles.listRowDropdownOverlay}
+                onClick={() => setFolderDropdownOpen(null)}
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  setFolderDropdownOpen(null);
+                }}
+              />
+              {/* Bottom Sheet - Komplett isoliertes Scroll-Container */}
+              <div
+                className={styles.listRowDropdown}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Drag Handle */}
+                <div className={styles.listRowDropdownHandle}>
+                  <div className={styles.listRowDropdownHandleBar} />
+                </div>
+
+                {/* Header mit Vertragsname */}
+                <div className={styles.listRowDropdownHeader}>
+                  <span className={styles.listRowDropdownTitle}>{dropdownContract.name}</span>
+                  <button
+                    className={styles.listRowDropdownClose}
+                    onClick={() => setFolderDropdownOpen(null)}
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {/* Actions */}
+                <div className={styles.listRowDropdownActions}>
+                  <button
+                    className={styles.listRowDropdownItem}
+                    onClick={() => {
+                      handleEditContract(dropdownContract);
+                      setFolderDropdownOpen(null);
+                    }}
+                  >
+                    <Edit size={18} />
+                    <span>Bearbeiten</span>
+                  </button>
+
+                  {dropdownContract.analyzed === false && (
+                    <button
+                      className={`${styles.listRowDropdownItem} ${styles.highlight}`}
+                      onClick={() => {
+                        handleAnalyzeExistingContract(dropdownContract);
+                        setFolderDropdownOpen(null);
+                      }}
+                    >
+                      <Zap size={18} />
+                      <span>Analysieren</span>
+                    </button>
+                  )}
+
+                  <button
+                    className={styles.listRowDropdownItem}
+                    onClick={() => {
+                      openSmartPDF(dropdownContract, true);
+                      setFolderDropdownOpen(null);
+                    }}
+                  >
+                    <ExternalLink size={18} />
+                    <span>PDF öffnen</span>
+                  </button>
+                </div>
+
+                <div className={styles.listRowDropdownDivider} />
+                <div className={styles.listRowDropdownLabel}>In Ordner verschieben</div>
+
+                {/* Scrollbarer Ordner-Bereich - isoliert */}
+                <div
+                  className={styles.listRowDropdownScroll}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  onTouchMove={(e) => e.stopPropagation()}
+                >
+                  <button
+                    className={`${styles.listRowDropdownItem} ${!dropdownContract.folderId ? styles.selected : ''}`}
+                    onClick={() => {
+                      handleMoveToFolder(dropdownContract._id, null);
+                      setFolderDropdownOpen(null);
+                    }}
+                  >
+                    <Folder size={18} />
+                    <span>Ohne Ordner</span>
+                  </button>
+                  {folders.map((folder) => (
+                    <button
+                      key={folder._id}
+                      className={`${styles.listRowDropdownItem} ${dropdownContract.folderId === folder._id ? styles.selected : ''}`}
+                      onClick={() => {
+                        handleMoveToFolder(dropdownContract._id, folder._id);
+                        setFolderDropdownOpen(null);
+                      }}
+                    >
+                      <span style={{ color: folder.color, fontSize: '18px' }}>{folder.icon}</span>
+                      <span>{folder.name}</span>
+                    </button>
+                  ))}
+                </div>
+
+                <div className={styles.listRowDropdownDivider} />
+                <button
+                  className={`${styles.listRowDropdownItem} ${styles.danger}`}
+                  onClick={() => {
+                    handleDeleteContract(dropdownContract._id, dropdownContract.name);
+                    setFolderDropdownOpen(null);
+                  }}
+                >
+                  <Trash2 size={18} />
+                  <span>Löschen</span>
+                </button>
+              </div>
+            </>
+          );
+        })(),
+        document.body
       )}
     </>
   );

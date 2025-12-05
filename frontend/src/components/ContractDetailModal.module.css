@@ -6,16 +6,15 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
-  padding: 20px;
   animation: fadeIn 0.2s ease-out;
-  /* Safe-Area für iPhone X+ */
-  padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+  /* Mehr Abstand oben für Navbar (80px) und Safe-Area */
+  padding: max(80px, calc(64px + env(safe-area-inset-top))) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
 }
 
 @keyframes fadeIn {
@@ -29,15 +28,18 @@
 
 .modal {
   background: white;
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  max-width: 1200px;
+  border-radius: 20px;
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+  max-width: 1100px;
   width: 100%;
-  max-height: 90vh;
-  max-height: 90dvh; /* Dynamic viewport height für iOS Safari */
+  max-height: calc(100vh - 120px); /* Mehr Platz für Navbar */
+  max-height: calc(100dvh - 120px); /* Dynamic viewport height für iOS Safari */
   display: flex;
   flex-direction: column;
   animation: slideUp 0.3s ease-out;
+  overflow: hidden;
 }
 
 @keyframes slideUp {
@@ -51,20 +53,22 @@
   }
 }
 
-/* Header */
+/* Header - Modernisiert */
 .modalHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24px 32px;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 1.25rem 1.75rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid #e2e8f0;
   gap: 16px;
+  flex-shrink: 0;
 }
 
 .headerLeft {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
   flex: 1;
   min-width: 0;
 }
@@ -72,16 +76,19 @@
 .headerLeft svg {
   flex-shrink: 0;
   color: #3b82f6;
+  width: 24px;
+  height: 24px;
 }
 
 .headerLeft h2 {
   margin: 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #111827;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  letter-spacing: -0.01em;
 }
 
 .contractName {
@@ -683,71 +690,85 @@
 
 /* ====================================
    📱 RESPONSIVE - TABLET/MOBILE (max-width: 768px)
-   🍎 APPLE-STYLE FULLSCREEN MODAL
+   🍎 APPLE-STYLE FULLSCREEN MODAL - OPTIMIERT
    ==================================== */
 @media (max-width: 768px) {
-  /* 🔥 OVERLAY: Position fixed, deckt ALLES ab */
+  /* 🔥 OVERLAY: Position fixed, UNTER der Navbar */
   .modalOverlay {
     position: fixed !important;
-    top: 0 !important;
+    top: 60px !important; /* 🔥 Beginnt unter der Navbar */
     left: 0 !important;
     right: 0 !important;
     bottom: 0 !important;
     width: 100% !important;
-    height: 100% !important;
+    height: calc(100% - 60px) !important;
     padding: 0 !important;
     margin: 0 !important;
-    background: #ffffff !important;
-    backdrop-filter: none !important;
+    background: rgba(0, 0, 0, 0.4) !important; /* 🔥 Semi-transparenter Hintergrund */
+    backdrop-filter: blur(4px) !important;
     display: block !important;
     overflow: hidden !important;
-    z-index: 99999 !important;
+    z-index: 9999 !important; /* 🔥 Unter der Navbar (die hat höheren z-index) */
   }
 
-  /* 🔥 MODAL: Absolute Positionierung, volle Größe */
+  /* 🔥 MODAL: Absolute Positionierung, volle Größe - MIT NAVBAR OFFSET */
   .modal {
     position: absolute !important;
-    top: 0 !important;
+    top: 60px !important; /* 🔥 Navbar Höhe berücksichtigen */
     left: 0 !important;
     right: 0 !important;
     bottom: 0 !important;
     width: 100% !important;
-    height: 100% !important;
+    height: calc(100% - 60px) !important; /* 🔥 Navbar Höhe abziehen */
     max-width: 100% !important;
-    max-height: 100% !important;
+    max-height: calc(100% - 60px) !important;
     margin: 0 !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    animation: none !important;
+    border-radius: 16px 16px 0 0 !important; /* 🔥 Abgerundete Ecken oben */
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1) !important;
+    animation: slideUpModal 0.3s ease-out !important;
     display: flex !important;
     flex-direction: column !important;
     overflow: hidden !important;
+    background: #f8fafc !important;
     /* Safe-Area für iPhone X+ Notch */
-    padding-top: env(safe-area-inset-top, 0px);
     padding-left: env(safe-area-inset-left, 0px);
     padding-right: env(safe-area-inset-right, 0px);
   }
 
-  /* 🔥 HEADER: Zweizeilig wenn nötig, keine Überlappung */
+  @keyframes slideUpModal {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  /* 🔥 HEADER: Kompakt, eine Zeile mit Flex */
   .modalHeader {
     display: flex !important;
-    flex-direction: column !important; /* VERTIKAL statt horizontal */
-    align-items: stretch !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
     padding: 12px 16px !important;
-    gap: 10px !important;
+    gap: 12px !important;
     flex-shrink: 0 !important;
     background: white !important;
     border-bottom: 1px solid #e5e7eb !important;
     z-index: 10 !important;
+    min-height: 56px !important;
   }
 
-  /* Header Top Row: Icon + Title + Close Button */
+  /* Header Left: Icon + Title */
   .headerLeft {
     display: flex !important;
     align-items: center !important;
     gap: 10px !important;
-    width: 100% !important;
+    flex: 1 !important;
     min-width: 0 !important;
+    overflow: hidden !important;
   }
 
   .headerLeft > div {
@@ -757,19 +778,19 @@
   }
 
   .headerLeft h2 {
-    font-size: 0.9375rem !important;
+    font-size: 1rem !important;
     font-weight: 600 !important;
     line-height: 1.3 !important;
     margin: 0 !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     white-space: nowrap !important;
-    max-width: calc(100vw - 80px) !important; /* Platz für Close Button */
+    color: #1e293b !important;
   }
 
   .headerLeft svg {
-    width: 20px !important;
-    height: 20px !important;
+    width: 22px !important;
+    height: 22px !important;
     flex-shrink: 0 !important;
     color: #3b82f6 !important;
   }
@@ -778,23 +799,27 @@
     display: none !important;
   }
 
-  /* Header Bottom Row: Action Buttons */
+  /* Header Actions: Horizontal, kompakt */
   .headerActions {
     display: flex !important;
-    gap: 8px !important;
-    width: 100% !important;
-    justify-content: flex-start !important;
-    flex-wrap: wrap !important;
-    padding-top: 4px !important;
-    border-top: 1px solid #f3f4f6 !important;
+    gap: 6px !important;
+    flex-shrink: 0 !important;
+    align-items: center !important;
+    padding: 0 !important;
+    border: none !important;
   }
 
-  /* Action Buttons: Kompakt mit Label */
+  /* Action Buttons: Farbcodiert, kompakt */
   .actionBtn {
-    min-width: 40px !important;
-    min-height: 40px !important;
-    padding: 8px !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+    padding: 0 !important;
     border-radius: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     flex-shrink: 0 !important;
   }
 
@@ -804,11 +829,14 @@
   }
 
   .closeBtn {
-    min-width: 40px !important;
-    min-height: 40px !important;
-    padding: 8px !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+    padding: 0 !important;
     border-radius: 10px !important;
-    margin-left: auto !important; /* Push to right */
+    margin-left: 4px !important;
+    background: #f1f5f9 !important;
   }
 
   .closeBtn svg {
@@ -816,31 +844,49 @@
     height: 20px !important;
   }
 
-  /* 🔥 TAB NAVIGATION: Horizontal scrollbar */
+  /* 🔥 TAB NAVIGATION: Pill-Style horizontal */
   .tabNav {
     display: flex !important;
-    padding: 0 12px !important;
+    padding: 8px 12px !important;
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch !important;
     scrollbar-width: none !important;
     flex-shrink: 0 !important;
-    background: #f9fafb !important;
+    background: white !important;
     border-bottom: 1px solid #e5e7eb !important;
-    gap: 4px !important;
+    gap: 6px !important;
   }
 
   .tabNav::-webkit-scrollbar {
     display: none !important;
   }
 
+  .tabNavLeft {
+    display: flex !important;
+    gap: 6px !important;
+    flex: 1 !important;
+  }
+
   .tabButton {
-    padding: 10px 14px !important;
+    padding: 8px 14px !important;
     font-size: 0.8125rem !important;
     white-space: nowrap !important;
-    min-height: 44px !important;
+    min-height: 40px !important;
     gap: 6px !important;
     flex-shrink: 0 !important;
-    border-radius: 8px 8px 0 0 !important;
+    border-radius: 20px !important;
+    border: none !important;
+    border-bottom: none !important;
+    background: #f1f5f9 !important;
+    color: #64748b !important;
+    font-weight: 500 !important;
+    transition: all 0.2s !important;
+  }
+
+  .tabButton.tabActive {
+    background: #3b82f6 !important;
+    color: white !important;
+    border-bottom: none !important;
   }
 
   .tabButton svg {
@@ -848,19 +894,20 @@
     height: 16px !important;
   }
 
+  .tabButton span {
+    display: inline !important;
+  }
+
   .tabDisabled {
     display: none !important;
   }
 
-  .tabActionButton {
-    padding: 8px 12px !important;
-    font-size: 0.75rem !important;
-    min-height: 44px !important;
-    min-width: 44px !important;
-    border-radius: 8px !important;
+  /* Tab Nav Right: Versteckt auf Mobile */
+  .tabNavRight {
+    display: none !important;
   }
 
-  .tabActionButton span {
+  .tabActionButton {
     display: none !important;
   }
 
@@ -871,10 +918,10 @@
     overflow-y: auto !important;
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch !important;
-    min-height: 0 !important; /* Wichtig für flex overflow */
+    min-height: 0 !important;
     display: flex !important;
     flex-direction: column !important;
-    background: white !important;
+    background: #f8fafc !important;
   }
 
   /* ✅ Tab Content: Füllt gesamten modalBody */
@@ -886,50 +933,70 @@
     min-height: 0 !important;
   }
 
+  /* 📋 Section: Karten-Style */
   .section {
-    padding: 14px !important;
-    border-radius: 12px !important;
+    padding: 16px !important;
+    border-radius: 16px !important;
     margin-bottom: 0 !important;
     flex-shrink: 0 !important;
+    background: white !important;
+    border: none !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
   }
 
   .section h3 {
     font-size: 0.9375rem !important;
-    margin-bottom: 14px !important;
+    margin-bottom: 12px !important;
     display: flex !important;
     align-items: center !important;
     gap: 8px !important;
+    color: #1e293b !important;
+    font-weight: 600 !important;
   }
 
+  /* 📊 Details Grid: Kompakt, 2 Spalten */
   .detailsGrid {
-    grid-template-columns: 1fr !important;
-    gap: 10px !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
   }
 
   .detailItem {
-    padding: 10px 12px !important;
-    background: white !important;
-    border-radius: 8px !important;
-    border: 1px solid #f3f4f6 !important;
+    padding: 12px !important;
+    background: #f8fafc !important;
+    border-radius: 12px !important;
+    border: none !important;
     display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    align-items: flex-start !important;
   }
 
   .detailItem:last-child {
     border-bottom: none !important;
-    padding-bottom: 10px !important;
+    padding-bottom: 12px !important;
   }
 
   .label {
-    font-size: 0.8125rem !important;
-    color: #6b7280 !important;
+    font-size: 0.75rem !important;
+    color: #94a3b8 !important;
+    font-weight: 500 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.02em !important;
   }
 
   .value {
     font-size: 0.875rem !important;
     font-weight: 600 !important;
-    text-align: right !important;
+    text-align: left !important;
+    color: #1e293b !important;
+  }
+
+  /* Status Badge angepasst */
+  .statusBadge {
+    padding: 4px 10px !important;
+    font-size: 0.75rem !important;
+    border-radius: 6px !important;
   }
 
   .signersGrid {
@@ -939,26 +1006,32 @@
 
   .signerCard {
     padding: 12px !important;
-    border-radius: 10px !important;
+    border-radius: 12px !important;
+    background: #f8fafc !important;
+    border: none !important;
   }
 
-  /* 🔥 PDF-Viewer: FULLSCREEN - Füllt gesamten verfügbaren Raum */
+  /* 🔥 PDF-Viewer: Kompakte Vorschau für Mobile */
   .pdfViewerContainer {
-    flex: 1 !important;
     display: flex !important;
     flex-direction: column !important;
-    gap: 8px !important;
-    min-height: 0 !important;
-    height: auto !important;
-    max-height: none !important;
+    gap: 12px !important;
+    background: white !important;
+    border-radius: 16px !important;
+    padding: 12px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+    /* NICHT flex: 1, damit es nicht den ganzen Platz füllt */
   }
 
   .pdfViewer {
-    flex: 1 !important;
-    border-radius: 8px !important;
-    min-height: 200px !important;
     width: 100% !important;
-    border: none !important;
+    height: 50vh !important; /* 🔥 Kompakte Höhe - halber Viewport */
+    max-height: 400px !important; /* 🔥 Maximal 400px */
+    min-height: 250px !important;
+    border-radius: 12px !important;
+    border: 1px solid #e2e8f0 !important;
+    overflow: hidden !important;
+    background: #f8fafc !important;
   }
 
   .pdfViewer iframe,
@@ -967,6 +1040,9 @@
     width: 100% !important;
     height: 100% !important;
     border: none !important;
+    border-radius: 12px !important;
+    /* 🔥 Zoom out für bessere Übersicht */
+    transform-origin: top left !important;
   }
 
   .pdfActions {
@@ -981,8 +1057,9 @@
     justify-content: center !important;
     min-height: 48px !important;
     padding: 14px 20px !important;
-    border-radius: 10px !important;
+    border-radius: 12px !important;
     font-size: 0.9375rem !important;
+    font-weight: 600 !important;
   }
 
   /* Timeline */
@@ -1026,6 +1103,10 @@
   /* Optimization Cards */
   .optimizationCard {
     padding: 16px;
+    border-radius: 16px !important;
+    background: white !important;
+    border: none !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
   }
 
   .optimizationHeader {
@@ -1041,6 +1122,8 @@
   /* Empty States */
   .emptyState {
     padding: 40px 16px;
+    background: white !important;
+    border-radius: 16px !important;
   }
 
   .emptyState svg {
@@ -1056,6 +1139,8 @@
   .loadingContainer,
   .errorContainer {
     padding: 40px 16px;
+    background: white !important;
+    border-radius: 16px !important;
   }
 
   .closeButton {
@@ -1066,6 +1151,7 @@
   /* Progress Bar */
   .progressBar {
     height: 10px;
+    border-radius: 5px !important;
   }
 
   .progressStats {
@@ -1075,16 +1161,38 @@
   /* Message Box */
   .messageBox {
     padding: 14px;
+    border-radius: 12px !important;
+    background: #f8fafc !important;
+    border-left: 3px solid #3b82f6 !important;
   }
 
   /* Stats Grid - 3 columns still OK on tablet */
   .statsGrid {
-    gap: 12px;
-    padding: 14px;
+    gap: 8px;
+    padding: 0;
+    background: transparent !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+
+  .statItem {
+    background: #f8fafc !important;
+    border-radius: 12px !important;
+    padding: 12px !important;
+    text-align: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    border: none !important;
+  }
+
+  .statLabel {
+    font-size: 0.6875rem !important;
+    margin-bottom: 4px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.03em !important;
   }
 
   .statValue {
-    font-size: 1.125rem;
+    font-size: 1rem;
   }
 
   /* Legal Pulse Grid - Stack on tablet */
@@ -1095,6 +1203,7 @@
 
   .legalPulseSection {
     padding: 16px;
+    border-radius: 16px !important;
   }
 
   .legalPulseTitle {
@@ -1106,14 +1215,20 @@
   }
 
   .legalPulseButton {
-    padding: 10px 20px;
+    padding: 12px 20px;
     font-size: 15px;
+    border-radius: 12px !important;
   }
 
   /* Legal Opinion */
+  .legalOpinionSection {
+    border-radius: 16px !important;
+  }
+
   .legalOpinionHeader {
     padding: 14px 16px;
     flex-wrap: wrap;
+    border-radius: 16px 16px 0 0 !important;
   }
 
   .legalOpinionIcon {
@@ -1139,15 +1254,16 @@
   .contentSectionHeader {
     flex-direction: column;
     align-items: flex-start;
+    gap: 12px;
   }
 
   .contentSectionHeader .downloadButton {
     width: 100%;
   }
 
-  /* Tab Nav */
-  .tabNavRight {
-    display: none; /* Hide tab actions on tablet, show in header instead */
+  /* Optimizations List */
+  .optimizationsList {
+    gap: 12px !important;
   }
 }
 
@@ -1155,741 +1271,443 @@
    📱 RESPONSIVE - SMALL MOBILE (max-width: 480px)
    ==================================== */
 @media (max-width: 480px) {
-  /* Overlay bleibt fullscreen weiß */
-  .modalOverlay {
-    padding: 0 !important;
-  }
-
+  /* Header noch kompakter */
   .modalHeader {
-    padding: 10px 12px;
-    gap: 8px;
+    padding: 10px 12px !important;
+    gap: 8px !important;
+    min-height: 52px !important;
   }
 
   .headerLeft {
-    gap: 8px;
+    gap: 8px !important;
   }
 
   .headerLeft h2 {
-    font-size: 0.9375rem;
+    font-size: 0.9375rem !important;
   }
 
   .headerLeft svg {
-    width: 18px;
-    height: 18px;
-  }
-
-  .contractName {
-    display: none;
-  }
-
-  /* Header Actions - Kompakter */
-  .headerActions {
-    gap: 4px;
-  }
-
-  .actionBtn {
-    min-width: 40px;
-    min-height: 40px;
-    padding: 8px;
-  }
-
-  .actionBtn svg {
-    width: 16px;
-    height: 16px;
-  }
-
-  .closeBtn {
-    min-width: 40px;
-    min-height: 40px;
-    padding: 8px;
-  }
-
-  .closeBtn svg {
-    width: 20px;
-    height: 20px;
-  }
-
-  /* Tab Navigation */
-  .tabNav {
-    padding: 0 12px;
-    gap: 2px;
-  }
-
-  .tabButton {
-    padding: 10px 10px;
-    font-size: 0.75rem;
-    gap: 4px;
-    min-height: 40px;
-  }
-
-  .tabButton span {
-    display: none; /* Only show icon on small mobile */
-  }
-
-  .tabButton svg {
-    width: 18px;
-    height: 18px;
-  }
-
-  .tabActionButton {
-    padding: 6px 10px;
-    min-height: 40px;
-    min-width: 40px;
-  }
-
-  .modalBody {
-    padding: 12px;
-  }
-
-  .tabContent {
-    gap: 16px;
-  }
-
-  .section {
-    padding: 14px;
-    border-radius: 8px;
-  }
-
-  .section h3 {
-    font-size: 0.9375rem;
-    margin-bottom: 14px;
-  }
-
-  .detailsGrid {
-    gap: 10px;
-  }
-
-  .detailItem {
-    padding: 6px 0;
-  }
-
-  .label {
-    font-size: 0.8125rem;
-  }
-
-  .value {
-    font-size: 0.875rem;
-  }
-
-  /* 🔥 PDF Viewer: FULLSCREEN auch auf 480px */
-  .pdfViewerContainer {
-    flex: 1 !important;
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-  }
-
-  .pdfViewer {
-    flex: 1 !important;
-    min-height: 150px !important;
-  }
-
-  .downloadButton {
-    padding: 12px 16px;
-    font-size: 0.875rem;
-  }
-
-  /* Signers */
-  .signerCard {
-    padding: 12px;
-  }
-
-  .signerHeader {
-    gap: 8px;
-  }
-
-  .signerInfo strong {
-    font-size: 0.875rem;
-  }
-
-  .signerEmail {
-    font-size: 0.75rem;
-  }
-
-  .signerStatus {
-    padding: 3px 8px;
-    font-size: 0.6875rem;
-  }
-
-  .signerDetails {
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-
-  .signerRole,
-  .signerOrder {
-    padding: 3px 6px;
-    font-size: 0.75rem;
-  }
-
-  /* Timeline */
-  .timeline {
-    gap: 12px;
-  }
-
-  .timeline::before {
-    left: 14px;
-  }
-
-  .timelineItem {
-    gap: 10px;
-  }
-
-  .timelineIcon {
-    width: 28px;
-    height: 28px;
-    font-size: 0.75rem;
-  }
-
-  .timelineContent {
-    padding: 10px;
-  }
-
-  .timelineDetails {
-    font-size: 0.8125rem;
-  }
-
-  /* Optimization Cards */
-  .optimizationsList {
-    gap: 14px;
-  }
-
-  .optimizationCard {
-    padding: 14px;
-    border-radius: 10px;
-  }
-
-  .categoryBadge {
-    font-size: 0.6875rem;
-    padding: 3px 10px;
-  }
-
-  .optimizationNumber {
-    font-size: 0.8125rem;
-  }
-
-  .optimizationSummary {
-    font-size: 0.875rem;
-    margin-bottom: 12px;
-  }
-
-  .optimizationSection {
-    margin-top: 12px;
-    padding-top: 12px;
-  }
-
-  .optimizationLabel {
-    font-size: 0.8125rem;
-    gap: 6px;
-  }
-
-  .optimizationOriginal,
-  .optimizationImproved,
-  .optimizationReasoning {
-    padding: 10px;
-    font-size: 0.8125rem;
-    border-radius: 6px;
-  }
-
-  /* Status Badge */
-  .statusBadge {
-    padding: 4px 10px;
-    font-size: 0.8125rem;
-    gap: 4px;
-  }
-
-  .statusBadge svg {
-    width: 14px;
-    height: 14px;
-  }
-
-  /* Progress */
-  .progressBar {
-    height: 8px;
-  }
-
-  .progressStats {
-    font-size: 0.75rem;
-  }
-
-  /* Message Box */
-  .messageBox {
-    padding: 12px;
-    font-size: 0.875rem;
-  }
-
-  .messageBox strong {
-    font-size: 0.8125rem;
-  }
-
-  /* Empty State */
-  .emptyState {
-    padding: 32px 12px;
-  }
-
-  .emptyState svg {
-    width: 40px;
-    height: 40px;
-  }
-
-  .emptyState p {
-    font-size: 0.9375rem;
-  }
-
-  .hint {
-    font-size: 0.8125rem;
-  }
-
-  /* Loading */
-  .spinner {
-    width: 32px;
-    height: 32px;
-  }
-
-  .closeButton {
-    width: 100%;
-    min-height: 44px;
-  }
-
-  /* Stats Grid - Stack on mobile */
-  .statsGrid {
-    grid-template-columns: 1fr;
-    gap: 10px;
-    padding: 12px;
-  }
-
-  .statItem {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    text-align: left;
-    padding: 8px 0;
-    border-bottom: 1px solid #f3f4f6;
-  }
-
-  .statItem:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-  }
-
-  .statLabel {
-    font-size: 0.8125rem;
-    margin-bottom: 0;
-  }
-
-  .statValue {
-    font-size: 1rem;
-  }
-
-  /* Legal Pulse */
-  .legalPulseSection {
-    margin-top: 20px;
-    padding: 14px;
-    border-radius: 10px;
-  }
-
-  .legalPulseTitle {
-    font-size: 16px;
-    margin-bottom: 12px;
-  }
-
-  .legalPulseScoreContainer {
-    margin-bottom: 14px;
-  }
-
-  .legalPulseScoreLabel {
-    font-size: 13px;
-  }
-
-  .legalPulseScoreValue {
-    font-size: 16px;
-  }
-
-  .legalPulseGrid {
-    gap: 10px;
-    margin-bottom: 14px;
-  }
-
-  .legalPulseCardTitle {
-    font-size: 14px;
-    margin-bottom: 8px;
-  }
-
-  .legalPulseCardContent {
-    padding: 10px;
-    font-size: 13px;
-    border-radius: 6px;
-  }
-
-  .legalPulseCardContent ul {
-    padding-left: 16px;
-  }
-
-  .legalPulseButton {
-    padding: 10px 16px;
-    font-size: 14px;
-    border-radius: 6px;
-  }
-
-  /* Legal Opinion */
-  .legalOpinionSection {
-    margin-top: 16px;
-    border-radius: 10px;
-  }
-
-  .legalOpinionHeader {
-    padding: 12px 14px;
-    gap: 10px;
-  }
-
-  .legalOpinionIcon {
-    width: 36px;
-    height: 36px;
-    font-size: 18px;
-    border-radius: 8px;
-  }
-
-  .legalOpinionTitle {
-    font-size: 14px;
-  }
-
-  .legalOpinionBadge {
-    padding: 4px 8px;
-    font-size: 10px;
-    border-radius: 8px;
-  }
-
-  .legalOpinionContent {
-    padding: 14px;
-  }
-
-  .legalOpinionText {
-    font-size: 13px;
-    line-height: 1.6;
-  }
-
-  /* Legal Pulse Loading */
-  .legalPulseLoading {
-    margin-top: 20px;
-    padding: 24px 16px;
-    border-radius: 10px;
-  }
-
-  .legalPulseLoadingSpinner {
-    width: 32px;
-    height: 32px;
-    margin-bottom: 12px;
-  }
-
-  .legalPulseLoadingTitle {
-    font-size: 16px;
-  }
-
-  .legalPulseLoadingText {
-    font-size: 13px;
-  }
-}
-
-/* ====================================
-   📱 RESPONSIVE - EXTRA SMALL (max-width: 375px)
-   ==================================== */
-@media (max-width: 375px) {
-  .modalHeader {
-    padding: 10px 12px;
-    gap: 8px;
-  }
-
-  .headerLeft {
-    gap: 8px;
-  }
-
-  .headerLeft h2 {
-    font-size: 0.9375rem;
-  }
-
-  .headerLeft svg {
-    width: 16px;
-    height: 16px;
-    display: none; /* Hide icon on very small screens */
+    width: 20px !important;
+    height: 20px !important;
   }
 
   /* Header Actions - Noch kompakter */
   .headerActions {
-    gap: 3px;
+    gap: 4px !important;
   }
 
   .actionBtn {
-    min-width: 36px;
-    min-height: 36px;
-    padding: 6px;
-    border-radius: 6px;
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+    border-radius: 8px !important;
+  }
+
+  .actionBtn svg {
+    width: 16px !important;
+    height: 16px !important;
   }
 
   .closeBtn {
-    min-width: 36px;
-    min-height: 36px;
-    padding: 6px;
-    border-radius: 6px;
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+    border-radius: 8px !important;
   }
 
-  /* Tab Navigation */
+  .closeBtn svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  /* Tab Navigation - Icon-only auf kleinen Screens */
   .tabNav {
-    padding: 0 10px;
+    padding: 6px 10px !important;
+    gap: 4px !important;
   }
 
   .tabButton {
-    padding: 8px 8px;
-    min-height: 36px;
-    border-radius: 6px;
+    padding: 8px 12px !important;
+    min-height: 36px !important;
+    border-radius: 18px !important;
+  }
+
+  .tabButton span {
+    display: none !important; /* Only show icon on small mobile */
   }
 
   .tabButton svg {
-    width: 16px;
-    height: 16px;
-  }
-
-  .tabActionButton {
-    min-width: 36px;
-    min-height: 36px;
-    padding: 4px 8px;
+    width: 18px !important;
+    height: 18px !important;
   }
 
   .modalBody {
-    padding: 10px;
+    padding: 10px !important;
   }
 
   .tabContent {
-    gap: 14px;
+    gap: 10px !important;
   }
 
+  /* Section: Kompakter */
   .section {
-    padding: 12px;
-    border-radius: 8px;
+    padding: 14px !important;
+    border-radius: 14px !important;
   }
 
   .section h3 {
-    font-size: 0.875rem;
-    margin-bottom: 12px;
+    font-size: 0.875rem !important;
+    margin-bottom: 10px !important;
   }
 
+  /* Details Grid: 2 Spalten beibehalten, aber kompakter */
   .detailsGrid {
-    gap: 8px;
+    gap: 6px !important;
   }
 
   .detailItem {
-    padding: 4px 0;
+    padding: 10px !important;
+    border-radius: 10px !important;
   }
 
   .label {
-    font-size: 0.75rem;
+    font-size: 0.6875rem !important;
   }
 
   .value {
-    font-size: 0.8125rem;
-  }
-
-  /* 🔥 PDF Viewer: FULLSCREEN auch auf 375px */
-  .pdfViewerContainer {
-    flex: 1 !important;
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-  }
-
-  .pdfViewer {
-    flex: 1 !important;
-    min-height: 120px !important;
-  }
-
-  .downloadButton {
-    padding: 10px 14px;
-    font-size: 0.8125rem;
-    border-radius: 6px;
-  }
-
-  /* Signers */
-  .signerCard {
-    padding: 10px;
-    border-radius: 8px;
-  }
-
-  .signerInfo strong {
-    font-size: 0.8125rem;
-  }
-
-  .signerEmail {
-    font-size: 0.6875rem;
-  }
-
-  .signerStatus {
-    padding: 2px 6px;
-    font-size: 0.625rem;
-  }
-
-  /* Timeline */
-  .timeline::before {
-    left: 12px;
-    width: 1px;
-  }
-
-  .timelineIcon {
-    width: 24px;
-    height: 24px;
-    font-size: 0.6875rem;
-    border-width: 1px;
-  }
-
-  .timelineContent {
-    padding: 8px;
-    border-radius: 6px;
-  }
-
-  .timelineHeader strong {
-    font-size: 0.8125rem;
-  }
-
-  .timelineTimestamp {
-    font-size: 0.6875rem;
-  }
-
-  .timelineDetails {
-    font-size: 0.75rem;
-    gap: 2px;
-  }
-
-  /* Optimization Cards */
-  .optimizationCard {
-    padding: 12px;
-    border-radius: 8px;
-  }
-
-  .categoryBadge {
-    font-size: 0.625rem;
-    padding: 2px 8px;
-  }
-
-  .optimizationSummary {
-    font-size: 0.8125rem;
-    line-height: 1.4;
-  }
-
-  .optimizationOriginal,
-  .optimizationImproved,
-  .optimizationReasoning {
-    padding: 8px;
-    font-size: 0.75rem;
-    line-height: 1.5;
-  }
-
-  /* Progress */
-  .progressContainer {
-    gap: 8px;
-  }
-
-  .progressBar {
-    height: 6px;
-    border-radius: 3px;
-  }
-
-  .progressFill {
-    border-radius: 3px;
+    font-size: 0.8125rem !important;
   }
 
   /* Status Badge */
   .statusBadge {
-    padding: 3px 8px;
-    font-size: 0.75rem;
-    border-radius: 4px;
+    padding: 3px 8px !important;
+    font-size: 0.6875rem !important;
+    border-radius: 4px !important;
   }
 
   .statusBadge svg {
-    width: 12px;
-    height: 12px;
+    width: 12px !important;
+    height: 12px !important;
+  }
+
+  /* 🔥 PDF Viewer - Kompakt auf kleinen Screens */
+  .pdfViewerContainer {
+    padding: 10px !important;
+    border-radius: 14px !important;
+  }
+
+  .pdfViewer {
+    height: 45vh !important;
+    max-height: 350px !important;
+    min-height: 200px !important;
+    border-radius: 10px !important;
+  }
+
+  .downloadButton {
+    padding: 12px 16px !important;
+    font-size: 0.875rem !important;
+    min-height: 44px !important;
+    border-radius: 10px !important;
+  }
+
+  /* Signers */
+  .signerCard {
+    padding: 10px !important;
+    border-radius: 10px !important;
+  }
+
+  .signerInfo strong {
+    font-size: 0.8125rem !important;
+  }
+
+  .signerEmail {
+    font-size: 0.6875rem !important;
+  }
+
+  .signerStatus {
+    padding: 2px 6px !important;
+    font-size: 0.625rem !important;
+  }
+
+  /* Timeline */
+  .timeline {
+    gap: 10px !important;
+  }
+
+  .timelineIcon {
+    width: 24px !important;
+    height: 24px !important;
+    font-size: 0.6875rem !important;
+  }
+
+  .timelineContent {
+    padding: 8px !important;
+    border-radius: 8px !important;
+  }
+
+  .timelineHeader strong {
+    font-size: 0.8125rem !important;
+  }
+
+  .timelineTimestamp {
+    font-size: 0.6875rem !important;
+  }
+
+  /* Stats Grid - Horizontal beibehalten */
+  .statsGrid {
+    gap: 6px !important;
+  }
+
+  .statItem {
+    padding: 10px !important;
+    border-radius: 10px !important;
+  }
+
+  .statLabel {
+    font-size: 0.625rem !important;
+  }
+
+  .statValue {
+    font-size: 0.9375rem !important;
+  }
+
+  /* Progress */
+  .progressBar {
+    height: 8px !important;
+    border-radius: 4px !important;
+  }
+
+  .progressStats {
+    font-size: 0.75rem !important;
   }
 
   /* Message Box */
   .messageBox {
-    padding: 10px;
-    font-size: 0.8125rem;
-    border-radius: 6px;
-    border-left-width: 3px;
+    padding: 12px !important;
+    font-size: 0.8125rem !important;
+    border-radius: 10px !important;
   }
 
   /* Empty State */
   .emptyState {
-    padding: 24px 10px;
+    padding: 32px 12px !important;
+    border-radius: 14px !important;
   }
 
   .emptyState svg {
-    width: 36px;
-    height: 36px;
+    width: 40px !important;
+    height: 40px !important;
   }
 
   .emptyState p {
-    font-size: 0.875rem;
+    font-size: 0.9375rem !important;
   }
 
   .hint {
-    font-size: 0.75rem;
+    font-size: 0.75rem !important;
   }
 
   /* Loading */
   .loadingContainer,
   .errorContainer {
-    padding: 24px 10px;
+    padding: 32px 12px !important;
+    border-radius: 14px !important;
   }
 
   .spinner {
-    width: 28px;
-    height: 28px;
-    border-width: 2px;
+    width: 28px !important;
+    height: 28px !important;
   }
 
-  /* Stats Grid - Even more compact */
-  .statsGrid {
-    padding: 10px;
-    gap: 8px;
+  /* Optimization Cards */
+  .optimizationCard {
+    padding: 12px !important;
+    border-radius: 14px !important;
   }
 
-  .statItem {
-    padding: 6px 0;
+  .categoryBadge {
+    font-size: 0.625rem !important;
+    padding: 2px 8px !important;
   }
 
-  .statLabel {
-    font-size: 0.75rem;
+  .optimizationSummary {
+    font-size: 0.8125rem !important;
   }
 
-  .statValue {
-    font-size: 0.9375rem;
+  .optimizationOriginal,
+  .optimizationImproved,
+  .optimizationReasoning {
+    padding: 8px !important;
+    font-size: 0.75rem !important;
+    border-radius: 8px !important;
   }
 
   /* Legal Pulse */
   .legalPulseSection {
-    margin-top: 14px;
-    padding: 12px;
-    border-radius: 8px;
+    padding: 14px !important;
+    border-radius: 14px !important;
+    margin-top: 0 !important;
   }
 
   .legalPulseTitle {
-    font-size: 14px;
-    margin-bottom: 10px;
+    font-size: 15px !important;
+    margin-bottom: 10px !important;
   }
 
   .legalPulseScoreLabel {
-    font-size: 12px;
+    font-size: 12px !important;
   }
 
   .legalPulseScoreTrack {
-    height: 6px;
+    height: 6px !important;
   }
 
   .legalPulseScoreValue {
-    font-size: 14px;
+    font-size: 14px !important;
   }
 
   .legalPulseCardTitle {
-    font-size: 13px;
-    margin-bottom: 6px;
+    font-size: 13px !important;
+  }
+
+  .legalPulseCardContent {
+    padding: 8px !important;
+    font-size: 12px !important;
+    border-radius: 8px !important;
+  }
+
+  .legalPulseButton {
+    padding: 10px 16px !important;
+    font-size: 13px !important;
+    border-radius: 10px !important;
+  }
+
+  /* Legal Opinion */
+  .legalOpinionSection {
+    border-radius: 14px !important;
+  }
+
+  .legalOpinionHeader {
+    padding: 10px 12px !important;
+    border-radius: 14px 14px 0 0 !important;
+  }
+
+  .legalOpinionIcon {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 16px !important;
+    border-radius: 8px !important;
+  }
+
+  .legalOpinionTitle {
+    font-size: 13px !important;
+  }
+
+  .legalOpinionBadge {
+    padding: 3px 6px !important;
+    font-size: 9px !important;
+    border-radius: 6px !important;
+  }
+
+  .legalOpinionContent {
+    padding: 12px !important;
+  }
+
+  .legalOpinionText {
+    font-size: 12px !important;
+    line-height: 1.5 !important;
+  }
+
+  /* Legal Pulse Loading */
+  .legalPulseLoading {
+    padding: 20px 12px !important;
+    border-radius: 14px !important;
+  }
+
+  .legalPulseLoadingSpinner {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  .legalPulseLoadingTitle {
+    font-size: 14px !important;
+  }
+
+  .legalPulseLoadingText {
+    font-size: 12px !important;
+  }
+}
+
+/* ====================================
+   📱 RESPONSIVE - EXTRA SMALL (max-width: 375px)
+   Nur minimale Anpassungen - 480px Media Query macht das meiste
+   ==================================== */
+@media (max-width: 375px) {
+  /* Header: Titel noch kürzer */
+  .headerLeft h2 {
+    font-size: 0.875rem !important;
+  }
+
+  .headerLeft svg {
+    display: none !important; /* Hide icon on very small screens */
+  }
+
+  /* Action Buttons: Minimal kleiner */
+  .actionBtn {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
+  }
+
+  .closeBtn {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
+  }
+
+  /* Tab Buttons: Kompakter */
+  .tabButton {
+    padding: 6px 10px !important;
+    min-height: 34px !important;
+    border-radius: 17px !important;
+  }
+
+  .tabButton svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  /* Details: 1 Spalte auf sehr kleinen Screens */
+  .detailsGrid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .detailItem {
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+  }
+
+  .label {
+    font-size: 0.6875rem !important;
+  }
+
+  .value {
+    font-size: 0.75rem !important;
+    text-align: right !important;
+  }
+
+  /* Stats Grid - 2 Spalten statt 3 */
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .statLabel {
+    font-size: 0.5625rem !important;
   }
 
   .legalPulseCardContent {

@@ -1,12 +1,12 @@
 // 📋 FieldSidebar.tsx - Field List with Progress & Navigation
 // Shows all fields grouped by page, with status and smart navigation
 
-import { PenTool, Calendar, Type, FileSignature, CheckCircle, AlertCircle, ChevronRight } from "lucide-react";
+import { PenTool, Calendar, Type, FileSignature, CheckCircle, AlertCircle, ChevronRight, MapPin } from "lucide-react";
 import styles from "../styles/FieldSidebar.module.css";
 
 // ===== TYPES =====
 
-export type FieldType = "signature" | "initials" | "date" | "text";
+export type FieldType = "signature" | "initials" | "date" | "text" | "location";
 export type FieldStatus = "pending" | "active" | "completed" | "invalid";
 
 export interface SignatureField {
@@ -46,14 +46,16 @@ const FIELD_ICONS: Record<FieldType, typeof PenTool> = {
   signature: PenTool,
   initials: FileSignature,
   date: Calendar,
-  text: Type
+  text: Type,
+  location: MapPin
 };
 
 const FIELD_LABELS: Record<FieldType, string> = {
   signature: "Signatur",
   initials: "Initialen",
   date: "Datum",
-  text: "Text"
+  text: "Text",
+  location: "Ort"
 };
 
 const STATUS_LABELS: Record<FieldStatus, string> = {

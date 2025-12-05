@@ -11,14 +11,15 @@ import {
   FileSignature,
   Trash2,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  MapPin
 } from "lucide-react";
 import SignatureCanvas from "react-signature-canvas";
 import styles from "../styles/FieldInputModal.module.css";
 
 // ===== TYPES =====
 
-export type FieldType = "signature" | "initials" | "date" | "text";
+export type FieldType = "signature" | "initials" | "date" | "text" | "location";
 
 export interface SignatureField {
   _id: string;
@@ -55,14 +56,16 @@ const FIELD_ICONS: Record<FieldType, typeof PenTool> = {
   signature: PenTool,
   initials: FileSignature,
   date: Calendar,
-  text: Type
+  text: Type,
+  location: MapPin
 };
 
 const FIELD_LABELS: Record<FieldType, string> = {
   signature: "Signatur",
   initials: "Initialen",
   date: "Datum",
-  text: "Text"
+  text: "Text",
+  location: "Ort"
 };
 
 // ===== VALIDATION FUNCTIONS =====
@@ -159,7 +162,7 @@ export default function FieldInputModal({
 
       // Auto-focus first input
       setTimeout(() => {
-        if (field.type === "text") {
+        if (field.type === "text" || field.type === "location") {
           firstInputRef.current?.focus();
         } else if (field.type === "date") {
           firstInputRef.current?.focus();
@@ -466,6 +469,27 @@ export default function FieldInputModal({
         );
       }
 
+      case "location":
+        return (
+          <div className={styles.textContainer}>
+            <input
+              ref={firstInputRef}
+              type="text"
+              className={styles.textInput}
+              value={value}
+              onChange={handleTextChange}
+              placeholder="z.B. München, Berlin, Hamburg..."
+              maxLength={100}
+            />
+
+            {value.length > 0 && (
+              <div className={styles.charCounter}>
+                {value.length} / 100 Zeichen
+              </div>
+            )}
+          </div>
+        );
+
       default:
         return null;
     }
@@ -476,7 +500,7 @@ export default function FieldInputModal({
       handleConfirmSignature();
     } else if (field.type === "date") {
       handleConfirmDate();
-    } else if (field.type === "text") {
+    } else if (field.type === "text" || field.type === "location") {
       handleConfirmText();
     }
   };

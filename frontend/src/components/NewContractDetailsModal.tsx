@@ -1,6 +1,6 @@
 // 🎨 New Contract Details Modal - Professional contract viewer
 import React, { useState, useEffect, useRef } from 'react';
-import { X, FileText, BarChart3, Share2, Edit, Trash2, PenTool, Eye, Download, AlertCircle, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { X, FileText, BarChart3, Share2, Edit, Trash2, PenTool, Eye, Download, AlertCircle, CheckCircle, Clock, XCircle, ExternalLink } from 'lucide-react';
 import styles from './ContractDetailModal.module.css'; // Reuse signature modal styles
 import SmartContractInfo from './SmartContractInfo';
 import ContractShareModal from './ContractShareModal';
@@ -199,6 +199,13 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   useEffect(() => {
     setContract(initialContract);
   }, [initialContract]);
+
+  // ✅ BUG FIX: Update showEditModal when openEditModalDirectly prop changes
+  useEffect(() => {
+    if (openEditModalDirectly) {
+      setShowEditModal(true);
+    }
+  }, [openEditModalDirectly]);
 
   // ESC key to close
   useEffect(() => {
@@ -695,14 +702,27 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
 
     return (
       <div className={styles.tabContent}>
-        {/* PDF Preview */}
+        {/* PDF Preview - Mit FitH für bessere Übersicht */}
         <div className={styles.pdfViewerContainer}>
           <iframe
-            src={pdfUrl}
+            src={`${pdfUrl}#view=FitH&toolbar=0&navpanes=0`}
             className={styles.pdfViewer}
             title="Contract PDF"
             style={{ border: '1px solid #e5e7eb', borderRadius: '8px' }}
           />
+          {/* Download und Öffnen Buttons */}
+          <div className={styles.pdfActions}>
+            <a
+              href={pdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.downloadButton}
+              style={{ textDecoration: 'none' }}
+            >
+              <ExternalLink size={18} />
+              PDF in neuem Tab öffnen
+            </a>
+          </div>
         </div>
       </div>
     );

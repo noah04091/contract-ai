@@ -1137,13 +1137,52 @@ export default function Envelopes() {
     });
   };
 
-  // Loading state
+  // Loading state - Skeleton Loading
   if (loading) {
     return (
       <div className={styles.pageContainer}>
-        <div className={styles.loader}>
-          <div className={styles.spinner}></div>
-          <p>Lade Signaturanfragen...</p>
+        <div className={styles.container}>
+          {/* Skeleton Header */}
+          <div className={styles.skeletonHeader}>
+            <div className={styles.skeletonIcon}></div>
+            <div className={styles.skeletonTextGroup}>
+              <div className={styles.skeletonTitle}></div>
+              <div className={styles.skeletonSubtitle}></div>
+            </div>
+          </div>
+
+          {/* Skeleton Tabs */}
+          <div className={styles.skeletonTabs}>
+            <div className={styles.skeletonTab}></div>
+            <div className={styles.skeletonTab}></div>
+            <div className={styles.skeletonTab}></div>
+            <div className={styles.skeletonTab}></div>
+          </div>
+
+          {/* Skeleton Search */}
+          <div className={styles.skeletonSearch}></div>
+
+          {/* Skeleton Cards */}
+          <div className={styles.skeletonSection}>
+            {[1, 2, 3].map((i) => (
+              <div key={i} className={styles.skeletonCard}>
+                <div className={styles.skeletonCardHeader}>
+                  <div className={styles.skeletonCardTitle}></div>
+                  <div className={styles.skeletonBadge}></div>
+                </div>
+                <div className={styles.skeletonCardBody}>
+                  <div className={styles.skeletonLine}></div>
+                  <div className={styles.skeletonLine}></div>
+                  <div className={styles.skeletonLineShort}></div>
+                </div>
+                <div className={styles.skeletonCardActions}>
+                  <div className={styles.skeletonButton}></div>
+                  <div className={styles.skeletonButton}></div>
+                  <div className={styles.skeletonButton}></div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -1205,39 +1244,61 @@ export default function Envelopes() {
 
         {/* Filter Row - Tabs + Search + Filter Dropdown */}
         <div className={styles.filterRow}>
-          {/* Filter Tabs */}
-          <div className={styles.filterTabs}>
-            <button
-              className={`${styles.filterTab} ${activeFilter === "all" ? styles.filterTabActive : ""}`}
-              onClick={() => { setActiveFilter("all"); setSelectedEnvelopeIds([]); }}
-            >
-              <FileText size={16} />
-              Alle
-            </button>
-            <button
-              className={`${styles.filterTab} ${activeFilter === "open" ? styles.filterTabActive : ""}`}
-              onClick={() => { setActiveFilter("open"); setSelectedEnvelopeIds([]); }}
-            >
-              <Clock size={16} />
-              Offen
-            </button>
-            <button
-              className={`${styles.filterTab} ${activeFilter === "completed" ? styles.filterTabActive : ""}`}
-              onClick={() => { setActiveFilter("completed"); setSelectedEnvelopeIds([]); }}
-            >
-              <CheckCircle size={16} />
-              Abgeschlossen
-            </button>
-            {/* Archive Tab - nur anzeigen wenn archivierte Envelopes existieren */}
-            {archivedCount > 0 && (
+          {/* Filter Tabs - Scrollable Container */}
+          <div className={styles.filterTabsWrapper}>
+            <div className={styles.filterTabs}>
               <button
-                className={`${styles.filterTab} ${activeFilter === "archived" ? styles.filterTabActive : ""}`}
-                onClick={() => { setActiveFilter("archived"); setSelectedEnvelopeIds([]); }}
+                className={`${styles.filterTab} ${activeFilter === "all" ? styles.filterTabActive : ""}`}
+                onClick={() => { setActiveFilter("all"); setSelectedEnvelopeIds([]); }}
               >
-                <Archive size={16} />
-                Archiv ({archivedCount})
+                <FileText size={16} />
+                <span>Alle</span>
               </button>
-            )}
+              <button
+                className={`${styles.filterTab} ${activeFilter === "open" ? styles.filterTabActive : ""}`}
+                onClick={() => { setActiveFilter("open"); setSelectedEnvelopeIds([]); }}
+              >
+                <Clock size={16} />
+                <span>Offen</span>
+              </button>
+              <button
+                className={`${styles.filterTab} ${activeFilter === "completed" ? styles.filterTabActive : ""}`}
+                onClick={() => { setActiveFilter("completed"); setSelectedEnvelopeIds([]); }}
+              >
+                <CheckCircle size={16} />
+                <span>Abgeschlossen</span>
+              </button>
+              {/* Archive Tab - nur anzeigen wenn archivierte Envelopes existieren */}
+              {archivedCount > 0 && (
+                <button
+                  className={`${styles.filterTab} ${activeFilter === "archived" ? styles.filterTabActive : ""}`}
+                  onClick={() => { setActiveFilter("archived"); setSelectedEnvelopeIds([]); }}
+                >
+                  <Archive size={16} />
+                  <span>Archiv ({archivedCount})</span>
+                </button>
+              )}
+
+              {/* Select All Button - Mobile: in der Tab-Zeile */}
+              {isMobile && filteredEnvelopes.length > 0 && (
+                <button
+                  className={styles.selectAllTabBtn}
+                  onClick={selectedEnvelopeIds.length === filteredEnvelopes.length ? handleDeselectAll : handleSelectAll}
+                >
+                  {selectedEnvelopeIds.length === filteredEnvelopes.length ? (
+                    <>
+                      <CheckSquare size={16} />
+                      <span>Abwählen</span>
+                    </>
+                  ) : (
+                    <>
+                      <Square size={16} />
+                      <span>Auswählen</span>
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Search + Filter */}
@@ -1263,101 +1324,110 @@ export default function Envelopes() {
               )}
             </div>
 
-            {/* Status Filter Dropdown */}
-            <div className={styles.filterDropdownWrapper}>
-              <button
-                className={styles.filterDropdownBtn}
-                onClick={() => { setShowFilterDropdown(!showFilterDropdown); setShowSortDropdown(false); }}
-              >
-                <Filter size={16} />
-                <span>{statusFilter === "all" ? "Status" : statusFilter}</span>
-                <ChevronDown size={14} className={showFilterDropdown ? styles.chevronUp : ""} />
-              </button>
-              {showFilterDropdown && (
-                <div className={styles.filterDropdown}>
-                  <button
-                    className={`${styles.filterDropdownItem} ${statusFilter === "all" ? styles.filterDropdownItemActive : ""}`}
-                    onClick={() => { setStatusFilter("all"); setShowFilterDropdown(false); }}
-                  >
-                    Alle Status
-                  </button>
-                  <button
-                    className={`${styles.filterDropdownItem} ${statusFilter === "DRAFT" ? styles.filterDropdownItemActive : ""}`}
-                    onClick={() => { setStatusFilter("DRAFT"); setShowFilterDropdown(false); }}
-                  >
-                    Entwurf
-                  </button>
-                  <button
-                    className={`${styles.filterDropdownItem} ${statusFilter === "SENT" ? styles.filterDropdownItemActive : ""}`}
-                    onClick={() => { setStatusFilter("SENT"); setShowFilterDropdown(false); }}
-                  >
-                    Versendet
-                  </button>
-                  <button
-                    className={`${styles.filterDropdownItem} ${statusFilter === "COMPLETED" ? styles.filterDropdownItemActive : ""}`}
-                    onClick={() => { setStatusFilter("COMPLETED"); setShowFilterDropdown(false); }}
-                  >
-                    Abgeschlossen
-                  </button>
-                  <button
-                    className={`${styles.filterDropdownItem} ${statusFilter === "EXPIRED" ? styles.filterDropdownItemActive : ""}`}
-                    onClick={() => { setStatusFilter("EXPIRED"); setShowFilterDropdown(false); }}
-                  >
-                    Abgelaufen
-                  </button>
-                  <button
-                    className={`${styles.filterDropdownItem} ${statusFilter === "VOIDED" ? styles.filterDropdownItemActive : ""}`}
-                    onClick={() => { setStatusFilter("VOIDED"); setShowFilterDropdown(false); }}
-                  >
-                    Storniert
-                  </button>
-                </div>
-              )}
-            </div>
+            {/* Filter Dropdowns - Side by side on mobile */}
+            <div className={styles.filterDropdownRow}>
+              {/* Status Filter Dropdown */}
+              <div className={styles.filterDropdownWrapper}>
+                <button
+                  className={styles.filterDropdownBtn}
+                  onClick={() => { setShowFilterDropdown(!showFilterDropdown); setShowSortDropdown(false); }}
+                >
+                  <Filter size={16} />
+                  <span>{statusFilter === "all" ? "Status" :
+                    statusFilter === "DRAFT" ? "Entwurf" :
+                    statusFilter === "SENT" ? "Gesendet" :
+                    statusFilter === "COMPLETED" ? "Fertig" :
+                    statusFilter === "EXPIRED" ? "Abgelaufen" :
+                    statusFilter === "VOIDED" ? "Storniert" : statusFilter
+                  }</span>
+                  <ChevronDown size={14} className={showFilterDropdown ? styles.chevronUp : ""} />
+                </button>
+                {showFilterDropdown && (
+                  <div className={styles.filterDropdown}>
+                    <button
+                      className={`${styles.filterDropdownItem} ${statusFilter === "all" ? styles.filterDropdownItemActive : ""}`}
+                      onClick={() => { setStatusFilter("all"); setShowFilterDropdown(false); }}
+                    >
+                      Alle Status
+                    </button>
+                    <button
+                      className={`${styles.filterDropdownItem} ${statusFilter === "DRAFT" ? styles.filterDropdownItemActive : ""}`}
+                      onClick={() => { setStatusFilter("DRAFT"); setShowFilterDropdown(false); }}
+                    >
+                      Entwurf
+                    </button>
+                    <button
+                      className={`${styles.filterDropdownItem} ${statusFilter === "SENT" ? styles.filterDropdownItemActive : ""}`}
+                      onClick={() => { setStatusFilter("SENT"); setShowFilterDropdown(false); }}
+                    >
+                      Versendet
+                    </button>
+                    <button
+                      className={`${styles.filterDropdownItem} ${statusFilter === "COMPLETED" ? styles.filterDropdownItemActive : ""}`}
+                      onClick={() => { setStatusFilter("COMPLETED"); setShowFilterDropdown(false); }}
+                    >
+                      Abgeschlossen
+                    </button>
+                    <button
+                      className={`${styles.filterDropdownItem} ${statusFilter === "EXPIRED" ? styles.filterDropdownItemActive : ""}`}
+                      onClick={() => { setStatusFilter("EXPIRED"); setShowFilterDropdown(false); }}
+                    >
+                      Abgelaufen
+                    </button>
+                    <button
+                      className={`${styles.filterDropdownItem} ${statusFilter === "VOIDED" ? styles.filterDropdownItemActive : ""}`}
+                      onClick={() => { setStatusFilter("VOIDED"); setShowFilterDropdown(false); }}
+                    >
+                      Storniert
+                    </button>
+                  </div>
+                )}
+              </div>
 
-            {/* Sort Dropdown */}
-            <div className={styles.filterDropdownWrapper}>
-              <button
-                className={styles.filterDropdownBtn}
-                onClick={() => { setShowSortDropdown(!showSortDropdown); setShowFilterDropdown(false); }}
-              >
-                <ArrowUpDown size={16} />
-                <span>
-                  {sortBy === "newest" && "Neueste"}
-                  {sortBy === "oldest" && "Älteste"}
-                  {sortBy === "a-z" && "A-Z"}
-                  {sortBy === "z-a" && "Z-A"}
-                </span>
-                <ChevronDown size={14} className={showSortDropdown ? styles.chevronUp : ""} />
-              </button>
-              {showSortDropdown && (
-                <div className={styles.filterDropdown}>
-                  <button
-                    className={`${styles.filterDropdownItem} ${sortBy === "newest" ? styles.filterDropdownItemActive : ""}`}
-                    onClick={() => { setSortBy("newest"); setShowSortDropdown(false); }}
-                  >
-                    Neueste zuerst
-                  </button>
-                  <button
-                    className={`${styles.filterDropdownItem} ${sortBy === "oldest" ? styles.filterDropdownItemActive : ""}`}
-                    onClick={() => { setSortBy("oldest"); setShowSortDropdown(false); }}
-                  >
-                    Älteste zuerst
-                  </button>
-                  <button
-                    className={`${styles.filterDropdownItem} ${sortBy === "a-z" ? styles.filterDropdownItemActive : ""}`}
-                    onClick={() => { setSortBy("a-z"); setShowSortDropdown(false); }}
-                  >
-                    Titel A-Z
-                  </button>
-                  <button
-                    className={`${styles.filterDropdownItem} ${sortBy === "z-a" ? styles.filterDropdownItemActive : ""}`}
-                    onClick={() => { setSortBy("z-a"); setShowSortDropdown(false); }}
-                  >
-                    Titel Z-A
-                  </button>
-                </div>
-              )}
+              {/* Sort Dropdown */}
+              <div className={styles.filterDropdownWrapper}>
+                <button
+                  className={styles.filterDropdownBtn}
+                  onClick={() => { setShowSortDropdown(!showSortDropdown); setShowFilterDropdown(false); }}
+                >
+                  <ArrowUpDown size={16} />
+                  <span>
+                    {sortBy === "newest" && "Neueste"}
+                    {sortBy === "oldest" && "Älteste"}
+                    {sortBy === "a-z" && "A-Z"}
+                    {sortBy === "z-a" && "Z-A"}
+                  </span>
+                  <ChevronDown size={14} className={showSortDropdown ? styles.chevronUp : ""} />
+                </button>
+                {showSortDropdown && (
+                  <div className={styles.filterDropdown}>
+                    <button
+                      className={`${styles.filterDropdownItem} ${sortBy === "newest" ? styles.filterDropdownItemActive : ""}`}
+                      onClick={() => { setSortBy("newest"); setShowSortDropdown(false); }}
+                    >
+                      Neueste zuerst
+                    </button>
+                    <button
+                      className={`${styles.filterDropdownItem} ${sortBy === "oldest" ? styles.filterDropdownItemActive : ""}`}
+                      onClick={() => { setSortBy("oldest"); setShowSortDropdown(false); }}
+                    >
+                      Älteste zuerst
+                    </button>
+                    <button
+                      className={`${styles.filterDropdownItem} ${sortBy === "a-z" ? styles.filterDropdownItemActive : ""}`}
+                      onClick={() => { setSortBy("a-z"); setShowSortDropdown(false); }}
+                    >
+                      Titel A-Z
+                    </button>
+                    <button
+                      className={`${styles.filterDropdownItem} ${sortBy === "z-a" ? styles.filterDropdownItemActive : ""}`}
+                      onClick={() => { setSortBy("z-a"); setShowSortDropdown(false); }}
+                    >
+                      Titel Z-A
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -1367,10 +1437,10 @@ export default function Envelopes() {
           {selectedEnvelopeIds.length > 0 && (
             <motion.div
               className={styles.batchActionsBar}
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
             >
               <div className={styles.batchActionsContent}>
                 <div className={styles.batchSelectionInfo}>
@@ -1394,40 +1464,40 @@ export default function Envelopes() {
                         onClick={handleBatchRemind}
                         title="Erinnerungen versenden"
                       >
-                        <Send size={16} />
-                        Erinnern
+                        <Send size={18} />
+                        <span>Erinnern</span>
                       </button>
                       <button
                         className={styles.batchActionBtn}
                         onClick={handleBatchDownload}
                         title="Alle herunterladen"
                       >
-                        <Download size={16} />
-                        Download
+                        <Download size={18} />
+                        <span>Download</span>
                       </button>
                       <button
                         className={styles.batchActionBtn}
                         onClick={handleBatchExport}
                         title="Als CSV exportieren"
                       >
-                        <FileSpreadsheet size={16} />
-                        Export CSV
+                        <FileSpreadsheet size={18} />
+                        <span>CSV</span>
                       </button>
                       <button
                         className={styles.batchActionBtn}
                         onClick={handleBatchArchive}
                         title="Ausgewählte archivieren"
                       >
-                        <Archive size={16} />
-                        Archivieren
+                        <Archive size={18} />
+                        <span>Archiv</span>
                       </button>
                       <button
                         className={`${styles.batchActionBtn} ${styles.batchActionBtnDanger}`}
                         onClick={handleBatchDelete}
                         title="Ausgewählte stornieren"
                       >
-                        <Trash2 size={16} />
-                        Stornieren
+                        <Trash2 size={18} />
+                        <span>Stornieren</span>
                       </button>
                     </>
                   ) : (
@@ -1437,16 +1507,16 @@ export default function Envelopes() {
                         onClick={handleBatchUnarchive}
                         title="Wiederherstellen"
                       >
-                        <RotateCcw size={16} />
-                        Wiederherstellen
+                        <RotateCcw size={18} />
+                        <span>Wiederherstellen</span>
                       </button>
                       <button
                         className={`${styles.batchActionBtn} ${styles.batchActionBtnDanger}`}
                         onClick={handleBatchPermanentDelete}
                         title="Endgültig löschen"
                       >
-                        <Trash2 size={16} />
-                        Endgültig löschen
+                        <Trash2 size={18} />
+                        <span>Löschen</span>
                       </button>
                     </>
                   )}
@@ -1553,26 +1623,7 @@ export default function Envelopes() {
             <>
               {/* Mobile View - Cards */}
               {isMobile && (
-                <div className={styles.cardsContainer}>
-                  {/* Select All Button for Mobile */}
-                  <div className={styles.mobileSelectAll}>
-                    <button
-                      className={styles.selectAllBtn}
-                      onClick={selectedEnvelopeIds.length === filteredEnvelopes.length ? handleDeselectAll : handleSelectAll}
-                    >
-                      {selectedEnvelopeIds.length === filteredEnvelopes.length ? (
-                        <>
-                          <CheckSquare size={18} />
-                          Alle abwählen
-                        </>
-                      ) : (
-                        <>
-                          <Square size={18} />
-                          Alle auswählen
-                        </>
-                      )}
-                    </button>
-                  </div>
+                <div className={`${styles.cardsContainer} ${selectedEnvelopeIds.length > 0 ? styles.cardsContainerWithBatchBar : ''}`}>
                   <AnimatePresence>
                     {filteredEnvelopes.map((envelope) => (
                       <motion.div

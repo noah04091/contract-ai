@@ -492,6 +492,15 @@ const connectDB = async () => {
       console.error("❌ Fehler beim Laden der Organizations-Routen:", err);
     }
 
+    // ✅ 6.5 CRM/ERP/CPQ INTEGRATIONS - Salesforce, HubSpot, SAP
+    try {
+      const integrationsRoutes = require("./routes/integrations");
+      app.use("/api/integrations", integrationsRoutes);
+      console.log("✅ CRM/ERP/CPQ Integrations geladen unter /api/integrations (Salesforce, HubSpot, SAP)");
+    } catch (err) {
+      console.error("❌ Fehler beim Laden der Integrations-Routen:", err);
+    }
+
     // ✅ 7. KI ANALYSIS & OPTIMIZATION - MIT /api PREFIX
     // ✅ NEU: Upload-Route (ohne Analyse, kein Subscription-Check nötig)
     try {
