@@ -577,9 +577,9 @@ const createElegantStyles = (theme) => {
 const createCorporateStyles = (theme) => {
   const c = theme.colors;
   return StyleSheet.create({
-    page: { fontFamily: theme.fontFamily, fontSize: 10, padding: 0, lineHeight: 1.5, color: c.text },
+    page: { fontFamily: theme.fontFamily, fontSize: 10, padding: 0, lineHeight: 1.5, color: c.text, backgroundColor: '#ffffff' },
     // Deckblatt - Mit Header-Bar
-    coverPage: { flex: 1 },
+    coverPage: { flex: 1, backgroundColor: '#ffffff' },
     headerBar: { backgroundColor: c.primary, padding: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     logo: { width: 50, height: 50, objectFit: 'contain' },
     headerInfo: { color: '#ffffff', textAlign: 'right', fontSize: 8 },
@@ -599,8 +599,8 @@ const createCorporateStyles = (theme) => {
     partyRole: { fontSize: 8, color: c.accent, fontWeight: 'bold' },
     footer: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#f0f4f8', padding: 15, flexDirection: 'row', justifyContent: 'space-between', fontSize: 7, color: c.textMuted },
     // Content Styles
-    contentPage: { flex: 1 },
-    contentMain: { padding: 40, paddingTop: 30 },
+    contentPage: { flex: 1, backgroundColor: '#ffffff' },
+    contentMain: { padding: 40, paddingTop: 30, backgroundColor: '#ffffff', minHeight: '100%' },
     preambleContainer: { marginBottom: 25, backgroundColor: '#f8fafc', padding: 15, borderLeftWidth: 3, borderLeftColor: c.primary },
     preambleTitle: { fontSize: 10, fontWeight: 'bold', color: c.primary, textTransform: 'uppercase', marginBottom: 8 },
     preambleText: { fontSize: 9, color: c.textLight },
@@ -617,7 +617,7 @@ const createCorporateStyles = (theme) => {
     paragraph: { fontSize: 9, marginBottom: 8, textAlign: 'justify', paddingLeft: 10 },
     pageFooter: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#f0f4f8', padding: 10, flexDirection: 'row', justifyContent: 'space-between', fontSize: 7, color: c.textMuted },
     // Signature Styles
-    signaturePage: { flex: 1 },
+    signaturePage: { flex: 1, backgroundColor: '#ffffff' },
     signatureHeader: { backgroundColor: c.primary, padding: 15 },
     signatureTitle: { fontSize: 14, fontWeight: 'bold', color: '#ffffff', textAlign: 'center' },
     signatureMain: { padding: 40 },
@@ -1139,6 +1139,14 @@ const generatePDFv2 = async (contractText, companyProfile, contractType, parties
   console.log('🎨 [V2 React-PDF] Starte PDF-Generierung...');
   console.log('📄 Vertragstyp:', contractType);
   console.log('🏢 Firma:', companyProfile?.companyName);
+  console.log('🏢 Firmen-Details:', JSON.stringify({
+    name: companyProfile?.companyName,
+    street: companyProfile?.street,
+    zip: companyProfile?.zip,
+    city: companyProfile?.city,
+    hasLogo: !!companyProfile?.logoUrl,
+    logoUrlStart: companyProfile?.logoUrl?.substring(0, 50)
+  }));
   console.log('🎭 Design:', designVariant);
   console.log('👥 Parteien:', JSON.stringify(parties).substring(0, 100));
 

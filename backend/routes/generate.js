@@ -2075,14 +2075,56 @@ router.post("/", verifyToken, async (req, res) => {
       let companyProfile = null;
       if (db && useCompanyProfile) {
         try {
-          companyProfile = await db.collection("company_profiles").findOne({
-            userId: new ObjectId(req.user.userId)
+          // Versuche sowohl ObjectId als auch String für userId
+          const rawProfile = await db.collection("company_profiles").findOne({
+            $or: [
+              { userId: new ObjectId(req.user.userId) },
+              { userId: req.user.userId }
+            ]
           });
+
+          if (rawProfile) {
+            // Normalisiere Feld-Namen für den PDF-Generator
+            companyProfile = {
+              ...rawProfile,
+              zip: rawProfile.postalCode || rawProfile.zip || '',
+              companyName: rawProfile.companyName || '',
+              street: rawProfile.street || '',
+              city: rawProfile.city || '',
+              contactPhone: rawProfile.contactPhone || '',
+              contactEmail: rawProfile.contactEmail || ''
+            };
+
+            // Logo-URL aus S3-Key generieren (wenn nur logoKey vorhanden)
+            if (rawProfile.logoKey && !rawProfile.logoUrl) {
+              try {
+                const aws = require('aws-sdk');
+                const s3 = new aws.S3({
+                  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+                  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+                  region: process.env.AWS_REGION
+                });
+                companyProfile.logoUrl = s3.getSignedUrl('getObject', {
+                  Bucket: process.env.S3_BUCKET_NAME,
+                  Key: rawProfile.logoKey,
+                  Expires: 3600
+                });
+                console.log('🖼️ [V2] Logo-URL aus S3-Key generiert');
+              } catch (s3Error) {
+                console.log('⚠️ [V2] Logo-URL konnte nicht generiert werden:', s3Error.message);
+              }
+            }
+          }
+
           console.log("🏢 [V2] Company Profile geladen:", !!companyProfile);
           if (companyProfile) {
             console.log("📊 [V2] Company Profile Details:", {
               name: companyProfile.companyName,
-              hasLogo: !!companyProfile.logoUrl
+              street: companyProfile.street,
+              zip: companyProfile.zip,
+              city: companyProfile.city,
+              hasLogo: !!companyProfile.logoUrl,
+              hasLogoKey: !!rawProfile?.logoKey
             });
           }
         } catch (profileError) {
@@ -2164,21 +2206,57 @@ router.post("/", verifyToken, async (req, res) => {
   console.log("📜 V1 Legacy System wird verwendet");
 
   try {
-    // Company Profile laden - KRITISCHER FIX
+    // Company Profile laden - KRITISCHER FIX mit $or für userId-Typen
     let companyProfile = null;
     if (db && useCompanyProfile) {
       try {
         console.log("🔍 Suche Company Profile für User:", req.user.userId);
-        const profileData = await db.collection("company_profiles").findOne({ 
-          userId: new ObjectId(req.user.userId) 
+        const rawProfile = await db.collection("company_profiles").findOne({
+          $or: [
+            { userId: new ObjectId(req.user.userId) },
+            { userId: req.user.userId }
+          ]
         });
-        
-        if (profileData) {
-          companyProfile = profileData;
+
+        if (rawProfile) {
+          // Normalisiere Feld-Namen für den PDF-Generator
+          companyProfile = {
+            ...rawProfile,
+            zip: rawProfile.postalCode || rawProfile.zip || '',
+            companyName: rawProfile.companyName || '',
+            street: rawProfile.street || '',
+            city: rawProfile.city || '',
+            contactPhone: rawProfile.contactPhone || '',
+            contactEmail: rawProfile.contactEmail || ''
+          };
+
+          // Logo-URL aus S3-Key generieren (wenn nur logoKey vorhanden)
+          if (rawProfile.logoKey && !rawProfile.logoUrl) {
+            try {
+              const aws = require('aws-sdk');
+              const s3 = new aws.S3({
+                accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+                region: process.env.AWS_REGION
+              });
+              companyProfile.logoUrl = s3.getSignedUrl('getObject', {
+                Bucket: process.env.S3_BUCKET_NAME,
+                Key: rawProfile.logoKey,
+                Expires: 3600
+              });
+              console.log('🖼️ [V1] Logo-URL aus S3-Key generiert');
+            } catch (s3Error) {
+              console.log('⚠️ [V1] Logo-URL konnte nicht generiert werden:', s3Error.message);
+            }
+          }
+
           console.log("✅ Company Profile gefunden:", {
             name: companyProfile.companyName,
+            street: companyProfile.street,
+            zip: companyProfile.zip,
+            city: companyProfile.city,
             hasLogo: !!companyProfile.logoUrl,
-            logoType: companyProfile.logoUrl ? (companyProfile.logoUrl.startsWith('data:') ? 'base64' : 'url') : 'none'
+            hasLogoKey: !!rawProfile?.logoKey
           });
         } else {
           console.log("⚠️ Kein Company Profile gefunden für User:", req.user.userId);
