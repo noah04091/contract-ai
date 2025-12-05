@@ -767,6 +767,76 @@ router.get("/", verifyToken, async (req, res) => {
   }
 });
 
+/**
+ * GET /api/contracts/debug-company-profile
+ * Debug-Route um Company Profile Daten zu prüfen
+ * WICHTIG: Muss VOR /:id Route stehen!
+ */
+router.get('/debug-company-profile', verifyToken, async (req, res) => {
+  try {
+    const db = client.db("contractai");
+    const userId = req.user.userId;
+
+    // 1. Alle möglichen userId-Formate prüfen
+    const queries = [
+      { userId: new ObjectId(userId) },
+      { userId: userId },
+      { userId: userId.toString() }
+    ];
+
+    let foundProfile = null;
+    let matchedQuery = null;
+
+    for (const query of queries) {
+      const profile = await db.collection("company_profiles").findOne(query);
+      if (profile) {
+        foundProfile = profile;
+        matchedQuery = JSON.stringify(query);
+        break;
+      }
+    }
+
+    // 2. Alle Profile in der Collection zählen
+    const totalProfiles = await db.collection("company_profiles").countDocuments();
+
+    // 3. Alle userIds in der Collection auflisten (nur die ersten 10)
+    const allProfiles = await db.collection("company_profiles").find({}, { projection: { userId: 1, companyName: 1 } }).limit(10).toArray();
+
+    res.json({
+      debug: true,
+      currentUserId: userId,
+      currentUserIdType: typeof userId,
+      totalProfilesInDB: totalProfiles,
+      foundProfile: foundProfile ? {
+        _id: foundProfile._id,
+        odUserId: foundProfile.userId,
+        userIdType: typeof foundProfile.userId,
+        userIdIsObjectId: foundProfile.userId instanceof ObjectId,
+        companyName: foundProfile.companyName,
+        street: foundProfile.street,
+        postalCode: foundProfile.postalCode,
+        city: foundProfile.city,
+        hasLogoKey: !!foundProfile.logoKey,
+        hasLogoUrl: !!foundProfile.logoUrl,
+        logoKeyValue: foundProfile.logoKey || null,
+        allFields: Object.keys(foundProfile)
+      } : null,
+      matchedQuery: matchedQuery,
+      sampleProfiles: allProfiles.map(p => ({
+        odId: p._id?.toString(),
+        odUserId: p.userId?.toString(),
+        userIdType: typeof p.userId,
+        companyName: p.companyName
+      }))
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message,
+      stack: error.stack
+    });
+  }
+});
+
 // GET /contracts/:id – Einzelvertrag mit Events
 router.get("/:id", verifyToken, async (req, res) => {
   try {
@@ -3262,73 +3332,6 @@ router.post('/:id/pdf', verifyToken, async (req, res) => {
     res.status(500).json({
       message: 'PDF-Generierung fehlgeschlagen',
       error: error.message
-    });
-  }
-});
-
-/**
- * GET /api/contracts/debug-company-profile
- * Debug-Route um Company Profile Daten zu prüfen
- */
-router.get('/debug-company-profile', verifyToken, async (req, res) => {
-  try {
-    const db = client.db("contractai");
-    const userId = req.user.userId;
-
-    // 1. Alle möglichen userId-Formate prüfen
-    const queries = [
-      { userId: new ObjectId(userId) },
-      { userId: userId },
-      { userId: userId.toString() }
-    ];
-
-    let foundProfile = null;
-    let matchedQuery = null;
-
-    for (const query of queries) {
-      const profile = await db.collection("company_profiles").findOne(query);
-      if (profile) {
-        foundProfile = profile;
-        matchedQuery = JSON.stringify(query);
-        break;
-      }
-    }
-
-    // 2. Alle Profile in der Collection zählen
-    const totalProfiles = await db.collection("company_profiles").countDocuments();
-
-    // 3. Alle userIds in der Collection auflisten (nur die ersten 10)
-    const allProfiles = await db.collection("company_profiles").find({}, { projection: { userId: 1, companyName: 1 } }).limit(10).toArray();
-
-    res.json({
-      debug: true,
-      currentUserId: userId,
-      currentUserIdType: typeof userId,
-      totalProfilesInDB: totalProfiles,
-      foundProfile: foundProfile ? {
-        _id: foundProfile._id,
-        userId: foundProfile.userId,
-        userIdType: typeof foundProfile.userId,
-        companyName: foundProfile.companyName,
-        street: foundProfile.street,
-        postalCode: foundProfile.postalCode,
-        city: foundProfile.city,
-        hasLogoKey: !!foundProfile.logoKey,
-        hasLogoUrl: !!foundProfile.logoUrl,
-        allFields: Object.keys(foundProfile)
-      } : null,
-      matchedQuery: matchedQuery,
-      sampleProfiles: allProfiles.map(p => ({
-        odId: p._id,
-        odUserId: p.userId,
-        userIdType: typeof p.userId,
-        companyName: p.companyName
-      }))
-    });
-  } catch (error) {
-    res.status(500).json({
-      error: error.message,
-      stack: error.stack
     });
   }
 });
