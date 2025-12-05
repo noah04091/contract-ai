@@ -3736,41 +3736,25 @@ router.post("/change-design", verifyToken, async (req, res) => {
     if (!contract) {
       return res.status(404).json({ message: "Vertrag nicht gefunden" });
     }
-    
-    // Company Profile laden wenn vorhanden
-    let companyProfile = null;
-    if (contract.hasCompanyProfile) {
-      companyProfile = await db.collection("company_profiles").findOne({ 
-        userId: new ObjectId(req.user.userId) 
-      });
-    }
-    
-    // Neues HTML mit neuer Design-Variante generieren
-    const isDraft = contract.status === 'Entwurf';
-    const newHTML = await formatContractToHTML(
-      contract.content, 
-      companyProfile, 
-      contract.contractType,
-      newDesignVariant,
-      isDraft
-    );
-    
-    // Vertrag aktualisieren
+
+    // Nur die Design-Variante im Vertrag aktualisieren
+    // Die eigentliche PDF-Generierung erfolgt über /pdf-v2 Route im Frontend
     await contractsCollection.updateOne(
       { _id: new ObjectId(contractId) },
-      { 
-        $set: { 
+      {
+        $set: {
           designVariant: newDesignVariant,
-          contractHTML: newHTML,
           lastModified: new Date()
-        } 
+        }
       }
     );
-    
+
+    console.log("✅ Design-Variante aktualisiert:", { contractId, newDesignVariant });
+
     res.json({
       message: "✅ Design-Variante erfolgreich geändert",
       newDesignVariant: newDesignVariant,
-      htmlLength: newHTML.length
+      contractId: contractId
     });
     
   } catch (error) {

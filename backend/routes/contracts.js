@@ -3299,18 +3299,23 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
     }
 
     // Company Profile laden (immer versuchen, falls vorhanden)
+    // userId kann als String oder ObjectId gespeichert sein
     let companyProfile = null;
     try {
       const db = client.db("contractai");
+      // Versuche zuerst mit ObjectId, dann mit String
       companyProfile = await db.collection("company_profiles").findOne({
-        userId: new ObjectId(req.user.userId)
+        $or: [
+          { userId: new ObjectId(req.user.userId) },
+          { userId: req.user.userId }
+        ]
       });
       console.log('🏢 [V2] Company Profile geladen:', companyProfile ? {
         companyName: companyProfile.companyName,
         street: companyProfile.street,
         city: companyProfile.city,
         hasLogo: !!companyProfile.logoUrl
-      } : 'Kein Profil gefunden');
+      } : 'Kein Profil gefunden für userId: ' + req.user.userId);
     } catch (profileError) {
       console.log('⚠️ Company Profile konnte nicht geladen werden:', profileError.message);
     }
