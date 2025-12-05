@@ -131,7 +131,7 @@ export default function Integrations() {
       } else {
         showNotification("Fehler beim Starten der Verbindung", "error");
       }
-    } catch (error) {
+    } catch {
       showNotification("Verbindungsfehler", "error");
     } finally {
       setIsConnecting(false);
@@ -153,10 +153,10 @@ export default function Integrations() {
         setShowSAPModal(false);
         loadIntegrations();
       } else {
-        const error = await res.json();
-        showNotification(error.message || "SAP Verbindung fehlgeschlagen", "error");
+        const errorData = await res.json();
+        showNotification(errorData.message || "SAP Verbindung fehlgeschlagen", "error");
       }
-    } catch (error) {
+    } catch {
       showNotification("Verbindungsfehler", "error");
     } finally {
       setIsConnecting(false);
@@ -179,7 +179,7 @@ export default function Integrations() {
       } else {
         showNotification("Fehler beim Trennen", "error");
       }
-    } catch (error) {
+    } catch {
       showNotification("Fehler beim Trennen", "error");
     }
   };
@@ -197,7 +197,7 @@ export default function Integrations() {
       } else {
         showNotification(`Verbindungsfehler: ${data.message}`, "error");
       }
-    } catch (error) {
+    } catch {
       showNotification("Verbindungstest fehlgeschlagen", "error");
     }
   };
