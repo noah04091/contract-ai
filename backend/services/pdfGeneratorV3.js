@@ -202,22 +202,11 @@ const generateTypstDocument = (contractText, companyProfile, contractType, parti
 #set page(
   paper: "a4",
   margin: (top: 2.5cm, bottom: 2cm, left: 2.5cm, right: 2cm),
-  numbering: "1",
+  numbering: "1 / 1",
   number-align: center,
-  footer: context [
-    #set text(8pt, fill: gray)
-    #grid(
-      columns: (1fr, 1fr, 1fr),
-      align: (left, center, right),
-      [${escapeTypst((contractType || 'Vertrag').toUpperCase())}],
-      [Seite #counter(page).display()],
-      [© ${new Date().getFullYear()} ${escapeTypst(companyProfile?.companyName || 'Contract AI')}]
-    )
-  ]
 )
 
 #set text(
-  font: "New Computer Modern",
   size: 11pt,
   lang: "de"
 )
