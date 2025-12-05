@@ -957,11 +957,28 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType }) 
 
   if (designName === 'Corporate') {
     // WICHTIG: Explizit weißer Hintergrund auf JEDER Ebene!
-    return e(Page, { size: 'A4', style: { ...styles.page, backgroundColor: '#ffffff' } },
-      e(View, { style: { ...styles.contentPage, backgroundColor: '#ffffff', minHeight: '100%' } },
-        e(View, { style: { ...styles.contentMain, backgroundColor: '#ffffff' } },
-          ...sections.map(renderSection)
-        )
+    console.log('🔴🔴🔴 CORPORATE CONTENT PAGE RENDERING - VERSION 2024-12-05-FIX 🔴🔴🔴');
+
+    // Komplett neuer Style ohne StyleSheet - direkt inline
+    const whitePageStyle = {
+      fontFamily: 'Helvetica',
+      fontSize: 10,
+      padding: 0,
+      lineHeight: 1.5,
+      color: '#000000',
+      backgroundColor: '#ffffff'
+    };
+
+    const whiteContentStyle = {
+      flex: 1,
+      backgroundColor: '#ffffff',
+      padding: 40,
+      paddingTop: 30
+    };
+
+    return e(Page, { size: 'A4', style: whitePageStyle },
+      e(View, { style: whiteContentStyle },
+        ...sections.map(renderSection)
       ),
       e(View, { style: styles.pageFooter, fixed: true },
         e(Text, null, companyProfile?.companyName || ''),
