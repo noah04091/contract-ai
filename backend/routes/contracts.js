@@ -3304,17 +3304,53 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
     try {
       const db = client.db("contractai");
       // Versuche zuerst mit ObjectId, dann mit String
-      companyProfile = await db.collection("company_profiles").findOne({
+      const rawProfile = await db.collection("company_profiles").findOne({
         $or: [
           { userId: new ObjectId(req.user.userId) },
           { userId: req.user.userId }
         ]
       });
+
+      if (rawProfile) {
+        // Normalisiere Feld-Namen für den PDF-Generator
+        companyProfile = {
+          ...rawProfile,
+          zip: rawProfile.postalCode || rawProfile.zip || '', // postalCode -> zip
+          companyName: rawProfile.companyName || '',
+          street: rawProfile.street || '',
+          city: rawProfile.city || '',
+          contactPhone: rawProfile.contactPhone || '',
+          contactEmail: rawProfile.contactEmail || ''
+        };
+
+        // Logo-URL aus S3-Key generieren (wenn vorhanden)
+        if (rawProfile.logoKey && !rawProfile.logoUrl) {
+          try {
+            const aws = require('aws-sdk');
+            const s3 = new aws.S3({
+              accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+              secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+              region: process.env.AWS_REGION
+            });
+            companyProfile.logoUrl = s3.getSignedUrl('getObject', {
+              Bucket: process.env.S3_BUCKET_NAME,
+              Key: rawProfile.logoKey,
+              Expires: 3600 // 1 Stunde gültig
+            });
+            console.log('🖼️ Logo-URL generiert aus S3-Key');
+          } catch (s3Error) {
+            console.log('⚠️ Logo-URL konnte nicht generiert werden:', s3Error.message);
+          }
+        }
+      }
+
       console.log('🏢 [V2] Company Profile geladen:', companyProfile ? {
         companyName: companyProfile.companyName,
         street: companyProfile.street,
+        zip: companyProfile.zip,
         city: companyProfile.city,
-        hasLogo: !!companyProfile.logoUrl
+        hasLogo: !!companyProfile.logoUrl,
+        hasLogoKey: !!rawProfile?.logoKey
       } : 'Kein Profil gefunden für userId: ' + req.user.userId);
     } catch (profileError) {
       console.log('⚠️ Company Profile konnte nicht geladen werden:', profileError.message);
