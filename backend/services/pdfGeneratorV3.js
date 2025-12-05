@@ -65,7 +65,7 @@ const escapeTypst = (text) => {
 };
 
 /**
- * Parst den Vertragstext und formatiert ihn für Typst
+ * Parst den Vertragstext und formatiert ihn für Typst (vereinfachte kompatible Syntax)
  */
 const parseContractForTypst = (text) => {
   const lines = text.split('\n');
@@ -97,13 +97,7 @@ const parseContractForTypst = (text) => {
     if (trimmed === 'PRÄAMBEL' || trimmed === 'Präambel') {
       typstContent += `
 #v(1em)
-#align(center)[
-  #line(length: 3cm, stroke: 0.5pt + gray)
-  #h(1em)
-  #smallcaps[*Präambel*]
-  #h(1em)
-  #line(length: 3cm, stroke: 0.5pt + gray)
-]
+#align(center)[*--- Präambel ---*]
 #v(0.5em)
 `;
       continue;
@@ -115,7 +109,7 @@ const parseContractForTypst = (text) => {
       const cleanTitle = trimmed.replace(/\*\*/g, '');
       typstContent += `
 #v(1.5em)
-#text(weight: "bold", size: 12pt)[${escapeTypst(cleanTitle)}]
+*${escapeTypst(cleanTitle)}*
 #v(0.5em)
 `;
       continue;
@@ -126,38 +120,18 @@ const parseContractForTypst = (text) => {
       paragraphNum++;
       const cleanText = trimmed.replace(/^\(?\d+\)?\.?\s*/, '').replace(/\*\*/g, '');
       typstContent += `
-#grid(
-  columns: (auto, 1fr),
-  gutter: 0.8em,
-  align(center + top)[
-    #circle(radius: 0.45em, stroke: 1pt + rgb("#333"))[
-      #text(size: 8pt, weight: "bold")[${paragraphNum}]
-    ]
-  ],
-  [${escapeTypst(cleanText)}]
-)
-#v(0.3em)
+(${paragraphNum}) ${escapeTypst(cleanText)}
+
 `;
       continue;
     }
 
     // Buchstaben-Aufzählung
     if (/^[a-z]\)/.test(trimmed)) {
-      const letter = trimmed.charAt(0);
-      const cleanText = trimmed.substring(2).trim().replace(/\*\*/g, '');
+      const cleanText = trimmed.replace(/\*\*/g, '');
       typstContent += `
-#h(2em)
-#grid(
-  columns: (auto, 1fr),
-  gutter: 0.5em,
-  align(center + top)[
-    #circle(radius: 0.35em, stroke: 0.5pt + rgb("#666"))[
-      #text(size: 7pt)[${letter}]
-    ]
-  ],
-  text(size: 10pt)[${escapeTypst(cleanText)}]
-)
-#v(0.2em)
+#h(2em)${escapeTypst(cleanText)}
+
 `;
       continue;
     }
@@ -166,14 +140,15 @@ const parseContractForTypst = (text) => {
     if (trimmed.startsWith('-') || trimmed.startsWith('•')) {
       const cleanText = trimmed.substring(1).trim().replace(/\*\*/g, '');
       typstContent += `
-#h(2em) • #text(size: 10pt)[${escapeTypst(cleanText)}]
-#v(0.15em)
+- ${escapeTypst(cleanText)}
 `;
       continue;
     }
 
     // Normaler Text
-    typstContent += `${escapeTypst(trimmed.replace(/\*\*/g, ''))}\n#v(0.3em)\n`;
+    typstContent += `${escapeTypst(trimmed.replace(/\*\*/g, ''))}
+
+`;
   }
 
   return typstContent;
@@ -184,222 +159,127 @@ const parseContractForTypst = (text) => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
- * Generiert das vollständige Typst-Dokument
+ * Generiert das vollständige Typst-Dokument (vereinfachte kompatible Syntax)
  */
 const generateTypstDocument = (contractText, companyProfile, contractType, parties, partyLabels, documentId, isDraft, currentDate) => {
   const contentSections = parseContractForTypst(contractText);
 
   return `
-// ═══════════════════════════════════════════════════════════════════════════
 // VERTRAGSDOKUMENT - Generiert mit Typst
-// ═══════════════════════════════════════════════════════════════════════════
-
-#set document(
-  title: "${escapeTypst(contractType || 'Vertrag')}",
-  author: "${escapeTypst(companyProfile?.companyName || 'Contract AI')}"
-)
 
 #set page(
   paper: "a4",
   margin: (top: 2.5cm, bottom: 2cm, left: 2.5cm, right: 2cm),
-  numbering: "1 / 1",
-  number-align: center,
+  numbering: "1",
 )
 
-#set text(
-  size: 11pt,
-  lang: "de"
-)
+#set text(size: 11pt)
 
-#set par(
-  justify: true,
-  leading: 0.65em
-)
+#set par(justify: true)
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SEITE 1: DECKBLATT
-// ═══════════════════════════════════════════════════════════════════════════
+// DECKBLATT
 
-// Briefkopf
-#grid(
-  columns: (1fr, auto),
-  align: (left, right),
-  [],
-  [
-    #set text(9pt, fill: rgb("#666"))
-    #strong[${escapeTypst(companyProfile?.companyName || 'Unternehmen')}]
+#align(right)[
+  #text(size: 9pt)[
+    *${escapeTypst(companyProfile?.companyName || 'Unternehmen')}*
     ${companyProfile?.street ? `\\\\ ${escapeTypst(companyProfile.street)}` : ''}
     ${companyProfile?.zip ? `\\\\ ${escapeTypst(companyProfile.zip)} ${escapeTypst(companyProfile?.city || '')}` : ''}
-    ${companyProfile?.phone ? `\\\\ Tel: ${escapeTypst(companyProfile.phone)}` : ''}
-    ${companyProfile?.email ? `\\\\ ${escapeTypst(companyProfile.email)}` : ''}
   ]
-)
-
-#line(length: 100%, stroke: 0.5pt + rgb("#ddd"))
+]
 
 #v(4cm)
 
-// Vertragstyp
 #align(center)[
-  #line(length: 6cm, stroke: 1.5pt + rgb("#333"))
-  #v(0.8em)
-  #text(size: 24pt, weight: "bold", tracking: 3pt)[
-    #upper[${escapeTypst(contractType || 'VERTRAG')}]
-  ]
-  #v(0.8em)
-  #line(length: 6cm, stroke: 1.5pt + rgb("#333"))
+  #text(size: 24pt)[*${escapeTypst((contractType || 'VERTRAG').toUpperCase())}*]
+
   #v(1em)
-  #text(size: 11pt, fill: rgb("#666"), style: "italic")[
-    geschlossen am ${escapeTypst(currentDate)}
-  ]
+
+  #text(size: 11pt)[_geschlossen am ${escapeTypst(currentDate)}_]
 ]
 
 #v(3cm)
 
-// Parteien
-#text(weight: "bold")[zwischen]
+*zwischen*
+
 #v(0.5em)
 
-#pad(left: 1.5em)[
-  #block(
-    stroke: (left: 2pt + rgb("#ddd")),
-    inset: (left: 1em, y: 0.5em)
-  )[
-    #strong[${escapeTypst(companyProfile?.companyName || 'Vertragspartei A')}]
-    ${companyProfile?.street ? `\\\\ ${escapeTypst(companyProfile.street)}` : ''}
-    ${companyProfile?.zip ? `\\\\ ${escapeTypst(companyProfile.zip)} ${escapeTypst(companyProfile?.city || '')}` : ''}
-    \\\\ #text(style: "italic", fill: rgb("#666"))[– nachfolgend "${escapeTypst(partyLabels.partyA)}" genannt –]
-  ]
+#box(inset: (left: 1em))[
+  *${escapeTypst(companyProfile?.companyName || 'Vertragspartei A')}*
+  ${companyProfile?.street ? `\\\\ ${escapeTypst(companyProfile.street)}` : ''}
+  ${companyProfile?.zip ? `\\\\ ${escapeTypst(companyProfile.zip)} ${escapeTypst(companyProfile?.city || '')}` : ''}
+  \\\\ _– nachfolgend "${escapeTypst(partyLabels.partyA)}" genannt –_
 ]
 
 #v(0.5em)
-#text(weight: "bold")[und]
+
+*und*
+
 #v(0.5em)
 
-#pad(left: 1.5em)[
-  #block(
-    stroke: (left: 2pt + rgb("#ddd")),
-    inset: (left: 1em, y: 0.5em)
-  )[
-    #strong[${escapeTypst(parties?.buyer || parties?.partyB || 'Vertragspartei B')}]
-    ${parties?.buyerAddress ? `\\\\ ${escapeTypst(parties.buyerAddress)}` : ''}
-    ${parties?.buyerCity ? `\\\\ ${escapeTypst(parties.buyerCity)}` : ''}
-    \\\\ #text(style: "italic", fill: rgb("#666"))[– nachfolgend "${escapeTypst(partyLabels.partyB)}" genannt –]
-  ]
+#box(inset: (left: 1em))[
+  *${escapeTypst(parties?.buyer || parties?.partyB || 'Vertragspartei B')}*
+  ${parties?.buyerAddress ? `\\\\ ${escapeTypst(parties.buyerAddress)}` : ''}
+  ${parties?.buyerCity ? `\\\\ ${escapeTypst(parties.buyerCity)}` : ''}
+  \\\\ _– nachfolgend "${escapeTypst(partyLabels.partyB)}" genannt –_
 ]
-
-#v(1fr)
-
-// Footer Seite 1
-#set text(8pt, fill: rgb("#999"))
-#grid(
-  columns: (1fr, 1fr, 1fr),
-  align: (left, center, right),
-  [DOK-ID: ${escapeTypst(documentId?.substring(0, 20) || 'N/A')}],
-  [Seite 1],
-  [${new Date().toLocaleDateString('de-DE')}]
-)
 
 #pagebreak()
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SEITEN 2-N: VERTRAGSINHALT
-// ═══════════════════════════════════════════════════════════════════════════
+// VERTRAGSINHALT
 
 ${contentSections}
 
 #pagebreak()
 
-// ═══════════════════════════════════════════════════════════════════════════
-// LETZTE SEITE: UNTERSCHRIFTEN
-// ═══════════════════════════════════════════════════════════════════════════
+// UNTERSCHRIFTEN
 
-#block(
-  width: 100% + 4.5cm,
-  inset: (x: -2.25cm, y: 1.5cm),
-  fill: rgb("#f5f0e6")
-)[
-  #align(center)[
-    #text(size: 16pt, weight: "bold", tracking: 1pt)[
-      #upper[Unterschriften der Vertragsparteien]
-    ]
-  ]
+#align(center)[
+  #text(size: 16pt)[*UNTERSCHRIFTEN DER VERTRAGSPARTEIEN*]
 ]
 
-#v(1.5cm)
+#v(2cm)
 
-#grid(
+#table(
   columns: (1fr, 1fr),
-  gutter: 2cm,
+  stroke: none,
   [
-    #text(weight: "bold", size: 10pt)[#upper[${escapeTypst(partyLabels.partyA)} / Partei A]]
+    *${escapeTypst(partyLabels.partyA.toUpperCase())} / PARTEI A*
     #v(1cm)
-
-    #line(length: 100%, stroke: 0.5pt + rgb("#666"))
-    #text(size: 8pt, fill: rgb("#666"))[Ort, Datum]
+    #line(length: 100%)
+    Ort, Datum
     #v(1cm)
-
-    #line(length: 100%, stroke: 1.5pt + rgb("#333"))
-    #text(size: 8pt, fill: rgb("#666"))[(Unterschrift / Stempel)]
-    #v(1cm)
-
-    #line(length: 100%, stroke: (dash: "dotted") + rgb("#ccc"))
-    #v(0.3em)
-    #strong[${escapeTypst(companyProfile?.companyName || partyLabels.partyA)}]
-    \\\\ #text(size: 8pt, fill: rgb("#666"))[(Geschäftsführung)]
+    #line(length: 100%)
+    (Unterschrift / Stempel)
+    #v(0.5cm)
+    *${escapeTypst(companyProfile?.companyName || partyLabels.partyA)}*
   ],
   [
-    #text(weight: "bold", size: 10pt)[#upper[${escapeTypst(partyLabels.partyB)} / Partei B]]
+    *${escapeTypst(partyLabels.partyB.toUpperCase())} / PARTEI B*
     #v(1cm)
-
-    #line(length: 100%, stroke: 0.5pt + rgb("#666"))
-    #text(size: 8pt, fill: rgb("#666"))[Ort, Datum]
+    #line(length: 100%)
+    Ort, Datum
     #v(1cm)
-
-    #line(length: 100%, stroke: 1.5pt + rgb("#333"))
-    #text(size: 8pt, fill: rgb("#666"))[(Unterschrift)]
-    #v(1cm)
-
-    #line(length: 100%, stroke: (dash: "dotted") + rgb("#ccc"))
-    #v(0.3em)
-    #strong[${escapeTypst(parties?.buyer || parties?.partyB || partyLabels.partyB)}]
-    \\\\ #text(size: 8pt, fill: rgb("#666"))[(Name in Druckschrift)]
+    #line(length: 100%)
+    (Unterschrift)
+    #v(0.5cm)
+    *${escapeTypst(parties?.buyer || parties?.partyB || partyLabels.partyB)}*
   ]
 )
 
 #v(2cm)
 
-// Anlagen-Box
-#block(
-  width: 100%,
-  fill: rgb("#faf8f5"),
-  stroke: 1pt + rgb("#e5e0d5"),
-  inset: 1em
-)[
-  #text(weight: "bold", style: "italic")[ANLAGEN]
-  \\\\ #text(fill: rgb("#666"))[Diesem Vertrag sind keine Anlagen beigefügt.]
+#box(stroke: 1pt, inset: 1em, width: 100%)[
+  *_ANLAGEN_*
+  \\\\ Diesem Vertrag sind keine Anlagen beigefügt.
 ]
 
 #v(1cm)
 
-// QR-Code Bereich
 #align(center)[
-  #line(length: 100%, stroke: 0.5pt + rgb("#ddd"))
+  #line(length: 100%)
   #v(0.5cm)
-  #text(size: 8pt, fill: rgb("#888"))[Digitale Verifizierung]
-  \\\\ #text(size: 8pt, fill: rgb("#888"))[ID: ${escapeTypst(documentId?.substring(0, 20) || 'N/A')}]
+  #text(size: 8pt)[Digitale Verifizierung - ID: ${escapeTypst(documentId?.substring(0, 20) || 'N/A')}]
 ]
-
-${isDraft ? `
-// Wasserzeichen (Entwurf)
-#place(
-  center + horizon,
-  rotate(
-    -45deg,
-    text(size: 60pt, fill: rgb("#f0f0f0").transparentize(50%))[ENTWURF]
-  )
-)
-` : ''}
 `;
 };
 
