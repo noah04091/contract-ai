@@ -3305,24 +3305,56 @@ router.post('/:id/pdf', verifyToken, async (req, res) => {
     const finalDesign = contract.designVariant || designVariant;
     let pdfBuffer;
 
+    // ✅ WICHTIG: Fallback für Vertragstext - wenn content leer ist, aus contractHTML extrahieren
+    let contractText = contract.content;
+    console.log('📄 [PDF] Content-Check:', {
+      contentLength: contract.content?.length || 0,
+      hasContractHTML: !!contract.contractHTML,
+      contractHTMLLength: contract.contractHTML?.length || 0
+    });
+
+    if (!contractText || contractText.length < 100) {
+      console.log('⚠️ [PDF] content ist leer oder sehr kurz, prüfe Alternativen...');
+      if (contract.contractHTML && contract.contractHTML.length > 100) {
+        console.log('🔄 [PDF] Extrahiere Text aus contractHTML...');
+        // Einfache HTML-Tag Entfernung
+        contractText = contract.contractHTML
+          .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+          .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+          .replace(/<[^>]+>/g, '\n')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'")
+          .replace(/\n{3,}/g, '\n\n')
+          .trim();
+        console.log('📝 [PDF] Extrahierter Text-Länge:', contractText.length);
+      } else {
+        console.log('❌ [PDF] KEIN VERTRAGSTEXT GEFUNDEN!');
+      }
+    }
+
     if (version === 'v3' && generatePDFv3) {
       // V3: Typst
       pdfBuffer = await generatePDFv3(
-        contract.content,
+        contractText,
         companyProfile,
         contract.contractType || 'Vertrag',
         parties,
         contract.status === 'Entwurf'
       );
     } else if (generatePDFv2) {
-      // V2: React-PDF (Standard) - mit Design-Variante
+      // V2: React-PDF (Standard) - mit Design-Variante und Contract-ID für QR-Code
       pdfBuffer = await generatePDFv2(
-        contract.content,
+        contractText,
         companyProfile,
         contract.contractType || 'Vertrag',
         parties,
         contract.status === 'Entwurf',
-        finalDesign
+        finalDesign,
+        contractId  // ✅ Contract-ID für QR-Code Verifizierung
       );
     } else {
       return res.status(503).json({
