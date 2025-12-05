@@ -729,15 +729,21 @@ router.get("/", verifyToken, async (req, res) => {
     }
 
     // ✅ MongoDB Query mit Filtern, Sortierung & Pagination
-    let query = contractsCollection
-      .find(mongoFilter)
-      .sort(sortOptions);
+    // 🔧 FIX: Verwende aggregate() mit allowDiskUse für große Datensätze
+    const pipeline = [
+      { $match: mongoFilter },
+      { $sort: sortOptions },
+    ];
 
+    // Skip und Limit hinzufügen
+    if (skip > 0) {
+      pipeline.push({ $skip: skip });
+    }
     if (limit > 0) {
-      query = query.skip(skip).limit(limit);
+      pipeline.push({ $limit: limit });
     }
 
-    const contracts = await query.toArray();
+    const contracts = await contractsCollection.aggregate(pipeline, { allowDiskUse: true }).toArray();
 
     const enrichedContracts = await Promise.all(
       contracts.map(contract => enrichContractWithAnalysis(contract))
