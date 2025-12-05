@@ -1,0 +1,752 @@
+// 📁 frontend/src/pages/Integrations.tsx
+// CRM/ERP/CPQ Integration Settings Page
+
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Helmet } from "react-helmet-async";
+import {
+  Link2,
+  Unlink,
+  RefreshCw,
+  Settings,
+  CheckCircle,
+  AlertCircle,
+  Clock,
+  Activity,
+  ChevronRight,
+  Building2,
+  Zap,
+  Shield,
+  ArrowLeftRight
+} from "lucide-react";
+import styles from "../styles/Integrations.module.css";
+
+interface Integration {
+  type: string;
+  name: string;
+  category: string;
+  description: string;
+  features: string[];
+  icon: string;
+  connected: boolean;
+  status: string;
+  connectedAt?: string;
+  lastSyncAt?: string;
+  comingSoon?: boolean;
+}
+
+interface IntegrationCredential {
+  integrationType: string;
+  displayName: string;
+  status: string;
+  settings: {
+    syncDirection: string;
+    autoSync: boolean;
+    syncInterval: number;
+    triggers: {
+      onContractCreate: boolean;
+      onContractUpdate: boolean;
+      onContractSign: boolean;
+      onDealStageChange: boolean;
+    };
+  };
+  metadata: {
+    connectedAt: string;
+    lastSyncAt: string;
+    totalSyncs: number;
+  };
+}
+
+export default function Integrations() {
+  const [integrations, setIntegrations] = useState<Integration[]>([]);
+  const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
+  const [integrationDetails, setIntegrationDetails] = useState<IntegrationCredential | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [showSAPModal, setShowSAPModal] = useState(false);
+  const [sapCredentials, setSapCredentials] = useState({
+    username: "",
+    password: "",
+    baseUrl: "",
+    companyDB: "",
+    sapType: "sap_business_one"
+  });
+
+  // Lade Integrationen
+  useEffect(() => {
+    loadIntegrations();
+  }, []);
+
+  const loadIntegrations = async () => {
+    try {
+      const res = await fetch("/api/integrations", { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json();
+        setIntegrations(data.integrations);
+      }
+    } catch (error) {
+      console.error("Error loading integrations:", error);
+      showNotification("Fehler beim Laden der Integrationen", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadIntegrationDetails = async (type: string) => {
+    try {
+      const res = await fetch(`/api/integrations/${type}`, { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json();
+        setIntegrationDetails(data.credential);
+      }
+    } catch (error) {
+      console.error("Error loading integration details:", error);
+    }
+  };
+
+  const handleConnect = async (integration: Integration) => {
+    if (integration.comingSoon) {
+      showNotification(`${integration.name} kommt bald!`, "error");
+      return;
+    }
+
+    // SAP benötigt Modal für Credentials
+    if (integration.type.includes("sap")) {
+      setSapCredentials(prev => ({ ...prev, sapType: integration.type }));
+      setShowSAPModal(true);
+      return;
+    }
+
+    setIsConnecting(true);
+    try {
+      const res = await fetch(`/api/integrations/${integration.type}/auth`, {
+        credentials: "include"
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        // Redirect zu OAuth
+        window.location.href = data.authUrl;
+      } else {
+        showNotification("Fehler beim Starten der Verbindung", "error");
+      }
+    } catch (error) {
+      showNotification("Verbindungsfehler", "error");
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const handleSAPConnect = async () => {
+    setIsConnecting(true);
+    try {
+      const res = await fetch(`/api/integrations/${sapCredentials.sapType}/connect`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(sapCredentials)
+      });
+
+      if (res.ok) {
+        showNotification("SAP erfolgreich verbunden!", "success");
+        setShowSAPModal(false);
+        loadIntegrations();
+      } else {
+        const error = await res.json();
+        showNotification(error.message || "SAP Verbindung fehlgeschlagen", "error");
+      }
+    } catch (error) {
+      showNotification("Verbindungsfehler", "error");
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const handleDisconnect = async (type: string) => {
+    if (!confirm("Integration wirklich trennen? Alle Sync-Daten gehen verloren.")) return;
+
+    try {
+      const res = await fetch(`/api/integrations/${type}`, {
+        method: "DELETE",
+        credentials: "include"
+      });
+
+      if (res.ok) {
+        showNotification("Integration getrennt", "success");
+        loadIntegrations();
+        setSelectedIntegration(null);
+      } else {
+        showNotification("Fehler beim Trennen", "error");
+      }
+    } catch (error) {
+      showNotification("Fehler beim Trennen", "error");
+    }
+  };
+
+  const handleTestConnection = async (type: string) => {
+    try {
+      const res = await fetch(`/api/integrations/${type}/test`, {
+        method: "POST",
+        credentials: "include"
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        showNotification("Verbindung erfolgreich!", "success");
+      } else {
+        showNotification(`Verbindungsfehler: ${data.message}`, "error");
+      }
+    } catch (error) {
+      showNotification("Verbindungstest fehlgeschlagen", "error");
+    }
+  };
+
+  const showNotification = (message: string, type: "success" | "error") => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 5000);
+  };
+
+  const getIntegrationIcon = (icon: string) => {
+    switch (icon) {
+      case "salesforce":
+        return (
+          <svg viewBox="0 0 48 48" className={styles.integrationIcon}>
+            <path fill="#00A1E0" d="M20 8c-3.3 0-6.2 1.4-8.2 3.7-1.6-1.2-3.5-1.9-5.6-1.9C2.8 9.8 0 12.6 0 16.2c0 .4 0 .8.1 1.2C0 17.6 0 17.8 0 18c0 4.4 3.6 8 8 8h12c4.4 0 8-3.6 8-8 0-4.4-3.6-8-8-8zm18 4c-1.5 0-2.9.4-4.1 1.1.3 1 .5 2 .5 3.1 0 1.6-.4 3.1-1.1 4.5 1 .6 2.2 1 3.5 1 3.3 0 6-2.7 6-6s-2.7-6-6-6h-.8z"/>
+          </svg>
+        );
+      case "hubspot":
+        return (
+          <svg viewBox="0 0 48 48" className={styles.integrationIcon}>
+            <path fill="#FF7A59" d="M36 18v-4.5c0-1.9-1.6-3.5-3.5-3.5h-3.3c-.6-1.7-2.3-3-4.2-3s-3.6 1.3-4.2 3h-3.3c-1.9 0-3.5 1.6-3.5 3.5V18c-2.8.9-5 3.5-5 6.5 0 3.9 3.1 7 7 7h4v6.5c0 1.9 1.6 3.5 3.5 3.5h5c1.9 0 3.5-1.6 3.5-3.5V31.5h4c3.9 0 7-3.1 7-7 0-3-2.2-5.6-5-6.5zM25 10c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2z"/>
+          </svg>
+        );
+      case "sap":
+        return (
+          <svg viewBox="0 0 48 48" className={styles.integrationIcon}>
+            <rect fill="#0063D3" width="48" height="48" rx="8"/>
+            <text x="24" y="30" fill="white" fontSize="14" fontWeight="bold" textAnchor="middle">SAP</text>
+          </svg>
+        );
+      default:
+        return <Building2 className={styles.integrationIcon} />;
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("de-DE", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  };
+
+  // Check URL für OAuth Success/Error
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const success = params.get("success");
+    const error = params.get("error");
+
+    if (success) {
+      showNotification(`${success} erfolgreich verbunden!`, "success");
+      loadIntegrations();
+      window.history.replaceState({}, "", "/integrations");
+    }
+    if (error) {
+      showNotification(`Fehler: ${decodeURIComponent(error)}`, "error");
+      window.history.replaceState({}, "", "/integrations");
+    }
+  }, []);
+
+  return (
+    <>
+      <Helmet>
+        <title>Integrationen | Contract AI</title>
+      </Helmet>
+
+      <div className={styles.container}>
+        {/* Header */}
+        <motion.div
+          className={styles.header}
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className={styles.headerContent}>
+            <Link2 className={styles.headerIcon} />
+            <div>
+              <h1>CRM/ERP Integrationen</h1>
+              <p>Verbinde Contract AI mit deinen Business-Systemen</p>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Notification */}
+        <AnimatePresence>
+          {notification && (
+            <motion.div
+              className={`${styles.notification} ${styles[notification.type]}`}
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+            >
+              {notification.type === "success" ? (
+                <CheckCircle size={18} />
+              ) : (
+                <AlertCircle size={18} />
+              )}
+              {notification.message}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Main Content */}
+        <div className={styles.content}>
+          {/* Integration Categories */}
+          {["CRM", "ERP", "CPQ"].map((category) => {
+            const categoryIntegrations = integrations.filter(
+              (i) => i.category === category
+            );
+            if (categoryIntegrations.length === 0) return null;
+
+            return (
+              <motion.section
+                key={category}
+                className={styles.category}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <h2 className={styles.categoryTitle}>
+                  {category === "CRM" && "Customer Relationship Management"}
+                  {category === "ERP" && "Enterprise Resource Planning"}
+                  {category === "CPQ" && "Configure, Price, Quote"}
+                </h2>
+
+                <div className={styles.integrationGrid}>
+                  {categoryIntegrations.map((integration) => (
+                    <motion.div
+                      key={integration.type}
+                      className={`${styles.integrationCard} ${
+                        integration.connected ? styles.connected : ""
+                      } ${integration.comingSoon ? styles.comingSoon : ""}`}
+                      whileHover={{ scale: integration.comingSoon ? 1 : 1.02 }}
+                      onClick={() => {
+                        if (!integration.comingSoon) {
+                          setSelectedIntegration(integration);
+                          if (integration.connected) {
+                            loadIntegrationDetails(integration.type);
+                          }
+                        }
+                      }}
+                    >
+                      {/* Coming Soon Badge */}
+                      {integration.comingSoon && (
+                        <div className={styles.comingSoonBadge}>Bald verfügbar</div>
+                      )}
+
+                      {/* Status Badge */}
+                      {integration.connected && (
+                        <div className={styles.statusBadge}>
+                          <CheckCircle size={14} />
+                          Verbunden
+                        </div>
+                      )}
+
+                      {/* Icon */}
+                      <div className={styles.iconWrapper}>
+                        {getIntegrationIcon(integration.icon)}
+                      </div>
+
+                      {/* Name & Description */}
+                      <h3>{integration.name}</h3>
+                      <p>{integration.description}</p>
+
+                      {/* Features */}
+                      <div className={styles.features}>
+                        {integration.features.slice(0, 3).map((feature, i) => (
+                          <span key={i} className={styles.feature}>
+                            {feature}
+                          </span>
+                        ))}
+                      </div>
+
+                      {/* Last Sync */}
+                      {integration.lastSyncAt && (
+                        <div className={styles.lastSync}>
+                          <Clock size={12} />
+                          Letzter Sync: {formatDate(integration.lastSyncAt)}
+                        </div>
+                      )}
+
+                      {/* Action */}
+                      <div className={styles.cardAction}>
+                        {integration.comingSoon ? (
+                          <span>Bald verfügbar</span>
+                        ) : integration.connected ? (
+                          <>
+                            Einstellungen <ChevronRight size={16} />
+                          </>
+                        ) : (
+                          <>
+                            Verbinden <ChevronRight size={16} />
+                          </>
+                        )}
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.section>
+            );
+          })}
+        </div>
+
+        {/* Integration Detail Modal */}
+        <AnimatePresence>
+          {selectedIntegration && (
+            <motion.div
+              className={styles.modalOverlay}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedIntegration(null)}
+            >
+              <motion.div
+                className={styles.modal}
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Modal Header */}
+                <div className={styles.modalHeader}>
+                  <div className={styles.modalTitle}>
+                    {getIntegrationIcon(selectedIntegration.icon)}
+                    <div>
+                      <h2>{selectedIntegration.name}</h2>
+                      <span className={styles.modalCategory}>
+                        {selectedIntegration.category}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    className={styles.closeButton}
+                    onClick={() => setSelectedIntegration(null)}
+                  >
+                    ×
+                  </button>
+                </div>
+
+                {/* Modal Content */}
+                <div className={styles.modalContent}>
+                  {selectedIntegration.connected ? (
+                    <>
+                      {/* Connected View */}
+                      <div className={styles.statusSection}>
+                        <div className={styles.statusItem}>
+                          <CheckCircle className={styles.statusIconSuccess} />
+                          <div>
+                            <strong>Verbunden</strong>
+                            <span>
+                              seit{" "}
+                              {integrationDetails?.metadata?.connectedAt &&
+                                formatDate(integrationDetails.metadata.connectedAt)}
+                            </span>
+                          </div>
+                        </div>
+
+                        {integrationDetails?.metadata?.lastSyncAt && (
+                          <div className={styles.statusItem}>
+                            <Activity className={styles.statusIconInfo} />
+                            <div>
+                              <strong>Letzter Sync</strong>
+                              <span>
+                                {formatDate(integrationDetails.metadata.lastSyncAt)}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Settings Preview */}
+                      <div className={styles.settingsPreview}>
+                        <h3>
+                          <Settings size={16} /> Sync-Einstellungen
+                        </h3>
+                        <div className={styles.settingItem}>
+                          <ArrowLeftRight size={14} />
+                          <span>
+                            {integrationDetails?.settings?.syncDirection ===
+                            "bidirectional"
+                              ? "Bidirektionale Synchronisation"
+                              : integrationDetails?.settings?.syncDirection ===
+                                "outbound"
+                              ? "Nur zu " + selectedIntegration.name
+                              : "Nur von " + selectedIntegration.name}
+                          </span>
+                        </div>
+                        <div className={styles.settingItem}>
+                          <Zap size={14} />
+                          <span>
+                            Auto-Sync:{" "}
+                            {integrationDetails?.settings?.autoSync ? "An" : "Aus"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className={styles.modalActions}>
+                        <button
+                          className={styles.primaryButton}
+                          onClick={() => handleTestConnection(selectedIntegration.type)}
+                        >
+                          <RefreshCw size={16} />
+                          Verbindung testen
+                        </button>
+                        <button
+                          className={styles.dangerButton}
+                          onClick={() =>
+                            handleDisconnect(selectedIntegration.type)
+                          }
+                        >
+                          <Unlink size={16} />
+                          Trennen
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {/* Not Connected View */}
+                      <p className={styles.integrationDescription}>
+                        {selectedIntegration.description}
+                      </p>
+
+                      <div className={styles.benefitsList}>
+                        <h3>Vorteile der Integration:</h3>
+                        <ul>
+                          <li>
+                            <CheckCircle size={14} />
+                            Automatische Vertragserstellung aus{" "}
+                            {selectedIntegration.category === "CRM"
+                              ? "Opportunities"
+                              : "Aufträgen"}
+                          </li>
+                          <li>
+                            <CheckCircle size={14} />
+                            Bidirektionale Synchronisation von Vertragsdaten
+                          </li>
+                          <li>
+                            <CheckCircle size={14} />
+                            Real-time Updates via Webhooks
+                          </li>
+                          <li>
+                            <CheckCircle size={14} />
+                            Signatur-Status direkt in {selectedIntegration.name}
+                          </li>
+                        </ul>
+                      </div>
+
+                      <div className={styles.featuresSection}>
+                        <h3>Features:</h3>
+                        <div className={styles.featuresList}>
+                          {selectedIntegration.features.map((feature, i) => (
+                            <span key={i} className={styles.featureTag}>
+                              {feature}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className={styles.modalActions}>
+                        <button
+                          className={styles.primaryButton}
+                          onClick={() => handleConnect(selectedIntegration)}
+                          disabled={isConnecting}
+                        >
+                          {isConnecting ? (
+                            <>
+                              <RefreshCw size={16} className={styles.spinning} />
+                              Verbinde...
+                            </>
+                          ) : (
+                            <>
+                              <Link2 size={16} />
+                              Jetzt verbinden
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* SAP Credentials Modal */}
+        <AnimatePresence>
+          {showSAPModal && (
+            <motion.div
+              className={styles.modalOverlay}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowSAPModal(false)}
+            >
+              <motion.div
+                className={styles.modal}
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className={styles.modalHeader}>
+                  <div className={styles.modalTitle}>
+                    {getIntegrationIcon("sap")}
+                    <div>
+                      <h2>SAP Verbindung</h2>
+                      <span className={styles.modalCategory}>ERP</span>
+                    </div>
+                  </div>
+                  <button
+                    className={styles.closeButton}
+                    onClick={() => setShowSAPModal(false)}
+                  >
+                    ×
+                  </button>
+                </div>
+
+                <div className={styles.modalContent}>
+                  <p className={styles.integrationDescription}>
+                    Gib deine SAP Service Layer Zugangsdaten ein:
+                  </p>
+
+                  <div className={styles.formGroup}>
+                    <label>SAP System</label>
+                    <select
+                      value={sapCredentials.sapType}
+                      onChange={(e) =>
+                        setSapCredentials((prev) => ({
+                          ...prev,
+                          sapType: e.target.value
+                        }))
+                      }
+                    >
+                      <option value="sap_business_one">SAP Business One</option>
+                      <option value="sap_s4hana">SAP S/4HANA</option>
+                    </select>
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label>Service Layer URL</label>
+                    <input
+                      type="text"
+                      placeholder="https://your-sap-server:50000"
+                      value={sapCredentials.baseUrl}
+                      onChange={(e) =>
+                        setSapCredentials((prev) => ({
+                          ...prev,
+                          baseUrl: e.target.value
+                        }))
+                      }
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label>Company Database</label>
+                    <input
+                      type="text"
+                      placeholder="SBODemoDE"
+                      value={sapCredentials.companyDB}
+                      onChange={(e) =>
+                        setSapCredentials((prev) => ({
+                          ...prev,
+                          companyDB: e.target.value
+                        }))
+                      }
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label>Benutzername</label>
+                    <input
+                      type="text"
+                      placeholder="manager"
+                      value={sapCredentials.username}
+                      onChange={(e) =>
+                        setSapCredentials((prev) => ({
+                          ...prev,
+                          username: e.target.value
+                        }))
+                      }
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label>Passwort</label>
+                    <input
+                      type="password"
+                      placeholder="••••••••"
+                      value={sapCredentials.password}
+                      onChange={(e) =>
+                        setSapCredentials((prev) => ({
+                          ...prev,
+                          password: e.target.value
+                        }))
+                      }
+                    />
+                  </div>
+
+                  <div className={styles.securityNote}>
+                    <Shield size={16} />
+                    Deine Zugangsdaten werden verschlüsselt gespeichert.
+                  </div>
+
+                  <div className={styles.modalActions}>
+                    <button
+                      className={styles.secondaryButton}
+                      onClick={() => setShowSAPModal(false)}
+                    >
+                      Abbrechen
+                    </button>
+                    <button
+                      className={styles.primaryButton}
+                      onClick={handleSAPConnect}
+                      disabled={
+                        isConnecting ||
+                        !sapCredentials.baseUrl ||
+                        !sapCredentials.username ||
+                        !sapCredentials.password
+                      }
+                    >
+                      {isConnecting ? (
+                        <>
+                          <RefreshCw size={16} className={styles.spinning} />
+                          Verbinde...
+                        </>
+                      ) : (
+                        <>
+                          <Link2 size={16} />
+                          Verbinden
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Loading State */}
+        {isLoading && (
+          <div className={styles.loadingState}>
+            <RefreshCw className={styles.spinning} size={32} />
+            <p>Lade Integrationen...</p>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}

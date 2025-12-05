@@ -6,7 +6,8 @@ import { Helmet } from "react-helmet-async";
 import {
   CheckCircle, Clipboard, Save, FileText, Check, Download,
   ArrowRight, ArrowLeft, Sparkles, Edit3, Building,
-  TrendingUp, Send
+  TrendingUp, Send, RefreshCw, Paperclip, Upload, Archive,
+  Image, File, X
 } from "lucide-react";
 import styles from "../styles/Generate.module.css";
 import { toast } from 'react-toastify';
@@ -81,6 +82,16 @@ export interface ContractTemplate {
   prefilled: FormDataType;
   tags: string[];
   isPremium?: boolean;
+}
+
+// 📎 Attachment Interface für Anlagen
+interface Attachment {
+  id: string;
+  file: File;
+  displayName: string;
+  originalName: string;
+  size: number;
+  type: string;
 }
 
 // CONTRACT TYPES - Vollständige Definition
@@ -2813,6 +2824,11 @@ export default function Generate() {
   const [buyerAddress, setBuyerAddress] = useState<string>('');
   const [buyerCity, setBuyerCity] = useState<string>('');
 
+  // 📎 Attachment States für Anlagen
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [isDraggingAttachment, setIsDraggingAttachment] = useState<boolean>(false);
+  const [isDownloadingAttachments, setIsDownloadingAttachments] = useState<boolean>(false);
+
   // Refs
   // const contractRef = useRef<HTMLDivElement>(null); // ❌ Not used anymore (replaced with textarea)
 
@@ -4078,6 +4094,151 @@ export default function Generate() {
       
     } finally {
       setIsGeneratingPDF(false);
+    }
+  };
+
+  // 📎 ATTACHMENT HANDLERS
+  // Handler für Drag & Drop
+  const handleAttachmentDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDraggingAttachment(false);
+
+    const files = Array.from(e.dataTransfer.files);
+    addAttachments(files);
+  };
+
+  // Handler für File Input
+  const handleAttachmentSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      addAttachments(files);
+      // Input zurücksetzen, damit dieselbe Datei erneut ausgewählt werden kann
+      e.target.value = '';
+    }
+  };
+
+  // Attachments hinzufügen (mit Validierung)
+  const addAttachments = (files: File[]) => {
+    const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'image/png', 'image/jpeg', 'image/jpg'];
+    const maxSize = 10 * 1024 * 1024; // 10 MB
+
+    const validFiles: Attachment[] = [];
+    const errors: string[] = [];
+
+    files.forEach(file => {
+      if (!validTypes.includes(file.type)) {
+        errors.push(`"${file.name}" hat ein ungültiges Format`);
+        return;
+      }
+      if (file.size > maxSize) {
+        errors.push(`"${file.name}" ist zu groß (max. 10 MB)`);
+        return;
+      }
+
+      // Dateiname ohne Extension für displayName
+      const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
+
+      validFiles.push({
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        file,
+        displayName: nameWithoutExt,
+        originalName: file.name,
+        size: file.size,
+        type: file.type
+      });
+    });
+
+    if (errors.length > 0) {
+      toast.error(errors.join(', '), { position: "top-right", autoClose: 5000 });
+    }
+
+    if (validFiles.length > 0) {
+      setAttachments(prev => [...prev, ...validFiles]);
+      toast.success(`${validFiles.length} Anlage(n) hinzugefügt`, { position: "top-right", autoClose: 2000 });
+    }
+  };
+
+  // Attachment Namen aktualisieren
+  const updateAttachmentName = (id: string, newName: string) => {
+    setAttachments(prev => prev.map(att =>
+      att.id === id ? { ...att, displayName: newName } : att
+    ));
+  };
+
+  // Attachment entfernen
+  const removeAttachment = (id: string) => {
+    setAttachments(prev => prev.filter(att => att.id !== id));
+  };
+
+  // Download mit Anlagen (ZIP oder kombinierte PDF)
+  const handleDownloadWithAttachments = async (format: 'zip' | 'combined') => {
+    if (attachments.length === 0) {
+      toast.error("Keine Anlagen vorhanden", { position: "top-right" });
+      return;
+    }
+
+    setIsDownloadingAttachments(true);
+
+    try {
+      if (format === 'zip') {
+        // ZIP-Archiv erstellen mit JSZip
+        const JSZip = (await import('jszip')).default;
+        const zip = new JSZip();
+
+        // Haupt-PDF hinzufügen (wenn gespeichert)
+        if (savedContractId && contractS3Key) {
+          try {
+            const token = localStorage.getItem("token");
+            const pdfResponse = await fetch(
+              `${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/${savedContractId}/download-pdf?design=${selectedDesignVariant}`,
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            if (pdfResponse.ok) {
+              const pdfBlob = await pdfResponse.blob();
+              zip.file(`${contractData.contractType || 'vertrag'}.pdf`, pdfBlob);
+            }
+          } catch (err) {
+            console.error("Fehler beim Laden des Haupt-PDFs:", err);
+          }
+        }
+
+        // Anlagen-Ordner erstellen
+        const anlagenFolder = zip.folder("Anlagen");
+
+        // Anlagen hinzufügen
+        for (const attachment of attachments) {
+          const extension = attachment.originalName.split('.').pop();
+          const fileName = `${attachment.displayName}.${extension}`;
+          anlagenFolder?.file(fileName, attachment.file);
+        }
+
+        // ZIP generieren und herunterladen
+        const content = await zip.generateAsync({ type: "blob" });
+        const url = window.URL.createObjectURL(content);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${contractData.contractType || 'vertrag'}_mit_anlagen.zip`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        toast.success("ZIP-Archiv heruntergeladen!", { position: "top-right" });
+
+      } else {
+        // Kombinierte PDF - TODO: Backend-Endpoint erstellen
+        toast.info("Kombinierte PDF wird noch implementiert. Nutzen Sie vorerst das ZIP-Archiv.", {
+          position: "top-right",
+          autoClose: 4000
+        });
+      }
+    } catch (error) {
+      console.error("Download-Fehler:", error);
+      toast.error("Fehler beim Erstellen des Downloads", { position: "top-right" });
+    } finally {
+      setIsDownloadingAttachments(false);
     }
   };
 
@@ -5561,6 +5722,27 @@ export default function Generate() {
                         <div className={styles.step3PanelHeader}>
                           <Edit3 size={18} />
                           <span>Text bearbeiten</span>
+                          {/* Text aktualisieren Button */}
+                          <motion.button
+                            className={styles.updateTextButton}
+                            onClick={generatePDFPreview}
+                            disabled={isGeneratingPreview || !contractText}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            title="PDF mit aktuellem Text neu generieren"
+                          >
+                            {isGeneratingPreview ? (
+                              <>
+                                <div className={styles.tinySpinner}></div>
+                                <span>Aktualisiere...</span>
+                              </>
+                            ) : (
+                              <>
+                                <RefreshCw size={14} />
+                                <span>PDF aktualisieren</span>
+                              </>
+                            )}
+                          </motion.button>
                         </div>
                         <div className={styles.step3PanelContent}>
                           <textarea
@@ -5600,15 +5782,127 @@ export default function Generate() {
                             />
                           ) : (
                             <div className={styles.step3PdfError}>
-                              <p>❌ PDF konnte nicht geladen werden</p>
+                              <p>Klicken Sie auf "PDF aktualisieren" um die Vorschau zu laden</p>
                               <button onClick={generatePDFPreview} className={styles.retryButton}>
-                                Erneut versuchen
+                                <RefreshCw size={16} />
+                                PDF generieren
                               </button>
                             </div>
                           )}
                         </div>
                       </div>
                     </div>
+
+                    {/* Anlagen-Bereich */}
+                    <motion.div
+                      className={styles.attachmentsSection}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 }}
+                    >
+                      <div className={styles.attachmentsSectionHeader}>
+                        <div className={styles.attachmentsTitleRow}>
+                          <Paperclip size={20} />
+                          <h3>Anlagen</h3>
+                          <span className={styles.attachmentsBadge}>
+                            {attachments.length} {attachments.length === 1 ? 'Datei' : 'Dateien'}
+                          </span>
+                        </div>
+                        <p className={styles.attachmentsSubtitle}>
+                          Fügen Sie Dokumente hinzu, die diesem Vertrag beigefügt werden sollen
+                        </p>
+                      </div>
+
+                      {/* Upload-Bereich */}
+                      <div
+                        className={`${styles.attachmentsDropzone} ${isDraggingAttachment ? styles.dragging : ''}`}
+                        onDragOver={(e) => { e.preventDefault(); setIsDraggingAttachment(true); }}
+                        onDragLeave={() => setIsDraggingAttachment(false)}
+                        onDrop={handleAttachmentDrop}
+                      >
+                        <input
+                          type="file"
+                          multiple
+                          accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                          onChange={handleAttachmentSelect}
+                          className={styles.attachmentInput}
+                          id="attachment-upload"
+                        />
+                        <label htmlFor="attachment-upload" className={styles.attachmentLabel}>
+                          <Upload size={24} />
+                          <span className={styles.dropzoneText}>
+                            Dateien hierher ziehen oder <strong>klicken zum Auswählen</strong>
+                          </span>
+                          <span className={styles.dropzoneHint}>
+                            PDF, Word, Excel, Bilder (max. 10 MB pro Datei)
+                          </span>
+                        </label>
+                      </div>
+
+                      {/* Anlagen-Liste */}
+                      {attachments.length > 0 && (
+                        <div className={styles.attachmentsList}>
+                          {attachments.map((attachment, index) => (
+                            <motion.div
+                              key={attachment.id}
+                              className={styles.attachmentItem}
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: 20 }}
+                              transition={{ delay: index * 0.1 }}
+                            >
+                              <div className={styles.attachmentIcon}>
+                                {attachment.type.includes('pdf') ? <FileText size={20} /> :
+                                 attachment.type.includes('image') ? <Image size={20} /> :
+                                 <File size={20} />}
+                              </div>
+                              <div className={styles.attachmentInfo}>
+                                <input
+                                  type="text"
+                                  value={attachment.displayName}
+                                  onChange={(e) => updateAttachmentName(attachment.id, e.target.value)}
+                                  className={styles.attachmentNameInput}
+                                  placeholder="Anlage benennen..."
+                                />
+                                <span className={styles.attachmentSize}>
+                                  {(attachment.size / 1024 / 1024).toFixed(2)} MB
+                                </span>
+                              </div>
+                              <button
+                                className={styles.attachmentRemove}
+                                onClick={() => removeAttachment(attachment.id)}
+                                title="Anlage entfernen"
+                              >
+                                <X size={16} />
+                              </button>
+                            </motion.div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Download-Optionen wenn Anlagen vorhanden */}
+                      {attachments.length > 0 && saved && (
+                        <div className={styles.attachmentDownloadOptions}>
+                          <span className={styles.downloadLabel}>Herunterladen als:</span>
+                          <button
+                            className={styles.downloadOptionButton}
+                            onClick={() => handleDownloadWithAttachments('zip')}
+                            disabled={isDownloadingAttachments}
+                          >
+                            <Archive size={16} />
+                            ZIP-Archiv
+                          </button>
+                          <button
+                            className={styles.downloadOptionButton}
+                            onClick={() => handleDownloadWithAttachments('combined')}
+                            disabled={isDownloadingAttachments}
+                          >
+                            <FileText size={16} />
+                            Kombinierte PDF
+                          </button>
+                        </div>
+                      )}
+                    </motion.div>
 
                     {/* Back to Start Button */}
                     <motion.button
@@ -5626,6 +5920,7 @@ export default function Generate() {
                         setDownloadError(null);
                         setPdfPreviewUrl(null);
                         setIsGeneratingPreview(false);
+                        setAttachments([]); // Reset attachments
                       }}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}

@@ -440,6 +440,215 @@
 }
 
 /* =================================
+   5b. ACCORDION FIELD GROUPS
+   Professional Collapsible Sections
+   ================================= */
+
+.accordionGroup {
+  margin-bottom: 1rem;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  background: #FFFFFF;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
+}
+
+.accordionGroup:hover {
+  border-color: #D1D5DB;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.accordionExpanded {
+  border-color: #2E6CF6;
+  box-shadow: 0 4px 16px rgba(46, 108, 246, 0.1);
+}
+
+.accordionComplete {
+  border-color: #22C55E;
+}
+
+.accordionComplete .accordionHeader {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, rgba(34, 197, 94, 0.02) 100%);
+}
+
+/* Accordion Header Button */
+.accordionHeader {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  background: #FAFBFC;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  text-align: left;
+}
+
+.accordionHeader:hover {
+  background: #F5F6F8;
+}
+
+.accordionExpanded .accordionHeader {
+  background: linear-gradient(135deg, rgba(46, 108, 246, 0.05) 0%, rgba(46, 108, 246, 0.02) 100%);
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.accordionHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.accordionNumber {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: #E5E7EB;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #667085;
+  transition: all 0.2s ease;
+}
+
+.accordionExpanded .accordionNumber {
+  background: #2E6CF6;
+  color: #FFFFFF;
+}
+
+.accordionComplete .accordionNumber {
+  background: #22C55E;
+  color: #FFFFFF;
+}
+
+.accordionTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0B1324;
+  letter-spacing: -0.01em;
+}
+
+.accordionCheckmark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: #22C55E;
+  border-radius: 50%;
+  font-size: 12px;
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.accordionHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.accordionProgress {
+  font-size: 13px;
+  font-weight: 500;
+  color: #667085;
+  white-space: nowrap;
+}
+
+.accordionChevron {
+  font-size: 12px;
+  color: #667085;
+  transition: transform 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
+}
+
+.accordionChevronOpen {
+  transform: rotate(180deg);
+}
+
+/* Accordion Content */
+.accordionContent {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.28, 0.44, 0.49, 1);
+}
+
+.accordionContentOpen {
+  max-height: 3000px; /* Large enough for any content */
+  padding: 1.5rem;
+}
+
+/* Override groupFields inside accordion */
+.accordionContent .groupFields {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+/* 🎯 Textareas und große Felder über volle Breite */
+.accordionContent .groupFields .formGroupFullWidth {
+  grid-column: 1 / -1;
+}
+
+/* Felder mit textarea immer volle Breite */
+.accordionContent .groupFields .formGroup:has(textarea) {
+  grid-column: 1 / -1;
+}
+
+/* Fallback für Browser ohne :has() - via data-attribute */
+.accordionContent .groupFields .formGroup[data-fullwidth="true"] {
+  grid-column: 1 / -1;
+}
+
+/* Mobile: Single column */
+@media (max-width: 768px) {
+  .accordionHeader {
+    padding: 1rem 1.25rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .accordionHeaderLeft {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .accordionTitle {
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .accordionHeaderRight {
+    width: 100%;
+    justify-content: space-between;
+    padding-left: 36px; /* Align with title */
+  }
+
+  .accordionProgress {
+    font-size: 12px;
+  }
+
+  .accordionContentOpen {
+    padding: 1rem 1.25rem;
+  }
+
+  .accordionContent .groupFields {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .accordionNumber {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+  }
+}
+
+/* =================================
    6. GRID & INPUTS - CORE
    ================================= */
 
@@ -467,6 +676,17 @@
   margin-bottom: 0;
   letter-spacing: -0.01em;
   line-height: 1.4;
+}
+
+/* Help Text - Unter dem Label */
+.helpText {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  color: #9CA3AF;
+  line-height: 1.4;
+  margin-top: -0.25rem;
+  margin-bottom: 0.25rem;
 }
 
 /* Optional Badge */
@@ -631,6 +851,165 @@
 .formGroup select.inputSuccess:focus {
   background: white;
   outline: 2px solid #34c759;
+}
+
+/* =================================
+   6.5 INPUT PREVIEW & AUTOSAVE
+   ================================= */
+
+/* Input Preview Section */
+.inputPreviewSection {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.inputPreviewHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.inputPreviewHeader h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.inputPreviewClose {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.inputPreviewClose:hover {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.inputPreviewContent {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.inputPreviewGroup {
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid #e2e8f0;
+}
+
+.inputPreviewGroup h5 {
+  margin: 0 0 0.75rem 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2E6CF6;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.inputPreviewItems {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.inputPreviewItem {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.inputPreviewLabel {
+  color: #64748b;
+  min-width: 140px;
+  flex-shrink: 0;
+}
+
+.inputPreviewValue {
+  color: #1e293b;
+  font-weight: 500;
+  word-break: break-word;
+}
+
+/* Step 2 Button Row */
+.step2ButtonRow {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.previewButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.previewButton:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+/* Autosave Indicator */
+.autosaveIndicator {
+  text-align: center;
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 1rem;
+  padding: 0.5rem;
+  background: rgba(52, 199, 89, 0.08);
+  border-radius: 6px;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .inputPreviewSection {
+    padding: 1rem;
+  }
+
+  .inputPreviewItem {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .inputPreviewLabel {
+    min-width: unset;
+  }
+
+  .step2ButtonRow {
+    flex-direction: column;
+  }
+
+  .previewButton {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 /* =================================
@@ -846,6 +1225,21 @@
 .contractTypeCard.locked:hover {
   transform: none;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+/* Direkte h3/p Styles für contractTypeCard */
+.contractTypeCard h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0B1324;
+}
+
+.contractTypeCard p {
+  margin: 0;
+  font-size: 13px;
+  color: #667085;
+  line-height: 1.5;
 }
 
 .cardHeader {
@@ -3430,10 +3824,13 @@
 @media (max-width: 768px) {
   .contractGenerator {
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    background: #FFFFFF; /* Weiß statt grau - weniger Container-Look */
   }
 
   .generatorHeader {
     padding: 1rem 0;
+    background: #FFFFFF;
+    box-shadow: none;
   }
 
   .headerContent {
@@ -3443,6 +3840,11 @@
   .headerText h1 {
     font-size: 1.75rem;
     gap: 0.5rem;
+    /* 🎯 Mobile: Schwarze Schrift statt blauer Gradient */
+    background: none;
+    -webkit-background-clip: unset;
+    -webkit-text-fill-color: #0B1324;
+    color: #0B1324;
   }
 
   .headerText p {
@@ -3495,13 +3897,49 @@
     display: none;
   }
 
-  /* Form Sections */
+  /* 🎯 MOBILE FIX: Flaches Design - keine verschachtelten Karten */
   .formGrid {
-    padding: 1.5rem;
+    padding: 1rem;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
   }
 
   .contractForm {
+    padding: 0;
+    background: transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* Vertragstitel als einzige Karte - volle Breite */
+  .formGroup.spanning {
+    background: #F9FAFB;
     padding: 1.25rem;
+    border-radius: 12px;
+    margin: 0 0 1rem 0;
+    border-bottom: none;
+  }
+
+  .formGroup.spanning input {
+    background: #FFFFFF;
+    border: 1px solid #E5E7EB;
+  }
+
+  /* Accordion Groups - volle Breite nutzen */
+  .accordionGroup {
+    margin: 0 0 0.75rem 0;
+    border-radius: 12px;
+  }
+
+  .accordionHeader {
+    padding: 1rem 1.25rem;
+  }
+
+  .accordionContentOpen {
+    padding: 1rem 1.25rem;
+    background: #FFFFFF;
   }
 
   .formFieldsGrid {
@@ -3579,13 +4017,29 @@
     gap: 0.75rem;
   }
 
+  /* 🎯 Weiterhin flaches Design für kleine Screens */
   .formGrid {
-    padding: 1rem;
+    padding: 0.5rem;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
   }
 
   .contractForm {
+    padding: 0;
+    background: transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* Accordion Groups - volle Breite */
+  .accordionGroup {
+    margin: 0 0 0.5rem 0;
+  }
+
+  .formGroup.spanning {
+    margin: 0 0 1rem 0;
     padding: 1rem;
-    border-radius: 8px;
   }
 
   .actionButton,
@@ -3667,12 +4121,27 @@
     gap: 0.5rem;
   }
 
+  /* 🎯 Extra-Small: Weiterhin flaches Design */
   .formGrid {
-    padding: 0.75rem;
+    padding: 0.25rem;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
   }
 
   .contractForm {
-    padding: 0.75rem;
+    padding: 0;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .accordionGroup {
+    margin: 0 0 0.5rem 0;
+  }
+
+  .formGroup.spanning {
+    margin: 0 0 1rem 0;
+    padding: 0.875rem;
   }
 
   .formFieldsGrid {
@@ -4148,5 +4617,970 @@
     top: 50%;
     transform: translateY(-50%);
     right: 10px;
+  }
+}
+
+/* =================================
+   STEP 2: SIDEBAR LAYOUT (FLOATING)
+   ================================= */
+
+/* Step 2 Header - Zentriert */
+.step2Header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 1.5rem;
+  padding: 0 1rem;
+}
+
+.step2HeaderCenter {
+  text-align: center;
+}
+
+.step2HeaderCenter h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #0B1324;
+  margin: 0 0 0.25rem 0;
+}
+
+.step2HeaderCenter p {
+  font-size: 0.95rem;
+  color: #6B7280;
+  margin: 0;
+}
+
+/* Zurück-Button links absolut */
+.backButtonAbsolute {
+  position: absolute;
+  left: 0;
+}
+
+/* Sidebar Toggle Button rechts absolut - Firmenblau */
+.sidebarToggleBtn {
+  position: absolute;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #2E6CF6;
+  border: 1px solid #2E6CF6;
+  border-radius: 980px;
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
+}
+
+.sidebarToggleBtn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.sidebarToggleBtn:hover {
+  background: #1E5AD8;
+  border-color: #1E5AD8;
+  color: #FFFFFF;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(46, 108, 246, 0.3);
+}
+
+/* Aktiver Zustand wenn Sidebar offen */
+.sidebarToggleBtn.sidebarToggleActive {
+  background: #1E5AD8;
+  border-color: #1E5AD8;
+  color: #FFFFFF;
+}
+
+/* Layout Wrapper */
+.step2LayoutWrapper {
+  position: relative;
+}
+
+/* Floating Sidebar - Fixed Position rechts am Rand */
+.step2Sidebar {
+  position: fixed;
+  top: 140px;
+  right: 0;
+  width: 300px;
+  background: #FFFFFF;
+  border-radius: 16px 0 0 16px; /* Links rund, rechts eckig am Rand */
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-right: none; /* Kein Border am rechten Rand */
+  box-shadow: -4px 4px 24px rgba(0, 0, 0, 0.08);
+  padding: 0;
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
+  z-index: 50;
+  opacity: 0;
+  transform: translateX(20px);
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+.step2Sidebar.sidebarOpen {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.step2Sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.step2Sidebar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+}
+
+/* Sidebar Header */
+.sidebarHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  position: sticky;
+  top: 0;
+  background: #FFFFFF;
+  z-index: 5;
+}
+
+.sidebarHeader h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #0B1324;
+  margin: 0;
+}
+
+.sidebarCloseBtn {
+  display: none; /* Show only on mobile */
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: #6B7280;
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+}
+
+/* Sidebar Section */
+.sidebarSection {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.sidebarSection:last-of-type {
+  border-bottom: none;
+}
+
+.sidebarSectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #6B7280;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.75rem;
+}
+
+.sidebarSectionHeader svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Sidebar Profile Create */
+.sidebarProfileCreate {
+  text-align: center;
+  padding: 0.75rem;
+  background: rgba(99, 102, 241, 0.04);
+  border-radius: 10px;
+}
+
+.sidebarProfileCreate p {
+  font-size: 0.8rem;
+  color: #6B7280;
+  margin: 0 0 0.75rem 0;
+}
+
+.sidebarCreateBtn {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #6366F1, #4F46E5);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebarCreateBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+/* Sidebar Profile Toggle */
+.sidebarProfileToggle {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.sidebarToggle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.sidebarToggle input {
+  display: none;
+}
+
+.toggleSlider {
+  width: 40px;
+  height: 22px;
+  background: #E5E7EB;
+  border-radius: 11px;
+  position: relative;
+  transition: background 0.2s ease;
+}
+
+.toggleSlider::after {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  background: #FFFFFF;
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.sidebarToggle input:checked + .toggleSlider {
+  background: linear-gradient(135deg, #6366F1, #4F46E5);
+}
+
+.sidebarToggle input:checked + .toggleSlider::after {
+  transform: translateX(18px);
+}
+
+.toggleLabel {
+  font-size: 0.85rem;
+  color: #0B1324;
+  font-weight: 500;
+}
+
+/* Sidebar Profile Preview */
+.sidebarProfilePreview {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(99, 102, 241, 0.04);
+  border-radius: 10px;
+  border: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+.sidebarLogo {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #FFFFFF;
+}
+
+.sidebarProfileInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.sidebarProfileInfo strong {
+  font-size: 0.85rem;
+  color: #0B1324;
+  font-weight: 600;
+}
+
+.sidebarProfileInfo small {
+  font-size: 0.75rem;
+  color: #6B7280;
+}
+
+/* Sidebar Footer mit Ausblenden-Button */
+.sidebarFooter {
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  background: #FAFBFC;
+  position: sticky;
+  bottom: 0;
+}
+
+.sidebarHideBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  background: rgba(107, 114, 128, 0.08);
+  border: 1px solid rgba(107, 114, 128, 0.15);
+  border-radius: 8px;
+  color: #6B7280;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebarHideBtn:hover {
+  background: rgba(107, 114, 128, 0.12);
+  color: #4B5563;
+}
+
+.sidebarHideBtn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Sidebar Overlay (Mobile) */
+.sidebarOverlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 49;
+}
+
+/* Compact Template Library for Sidebar */
+.templateLibraryCompact {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.templateGridCompact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem !important;
+}
+
+.templateCardCompact {
+  flex-direction: row !important;
+  padding: 0.6rem 0.75rem !important;
+  gap: 0.6rem !important;
+  border-radius: 8px !important;
+}
+
+.templateCardCompact .templateIcon {
+  width: 28px !important;
+  height: 28px !important;
+  font-size: 1rem !important;
+}
+
+.templateCardCompact .templateInfo h4 {
+  font-size: 0.8rem !important;
+  margin: 0 !important;
+}
+
+.templateCardCompact .premiumBadge {
+  padding: 0.15rem 0.35rem !important;
+  font-size: 0.65rem !important;
+}
+
+/* Create Template Button Compact */
+.createTemplateButtonCompact {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem;
+  background: rgba(99, 102, 241, 0.06);
+  border: 1px dashed rgba(99, 102, 241, 0.3);
+  border-radius: 8px;
+  color: #6366F1;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.createTemplateButtonCompact:hover {
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.5);
+}
+
+/* =================================
+   RESPONSIVE: SIDEBAR
+   ================================= */
+
+/* Large screens: Sidebar am rechten Rand fixiert */
+@media (min-width: 1400px) {
+  .step2Sidebar {
+    right: 0; /* Immer am rechten Rand */
+  }
+}
+
+/* Tablet & smaller desktop */
+@media (max-width: 1024px) {
+  .step2Header {
+    padding: 0;
+  }
+
+  .step2Sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 320px;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+    z-index: 100;
+    /* Geschlossen: unsichtbar und nicht klickbar */
+    opacity: 0;
+    transform: translateX(100%);
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  .step2Sidebar.sidebarOpen {
+    /* Offen: sichtbar und von rechts reinschieben */
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+
+  .sidebarCloseBtn {
+    display: block;
+  }
+
+  .sidebarOverlay {
+    display: block;
+  }
+}
+
+@media (max-width: 640px) {
+  .step2Sidebar {
+    width: 100%;
+  }
+
+  /* Mobile: Header mit Buttons nebeneinander */
+  .step2Header {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0 1rem;
+  }
+
+  /* Button-Reihe: Zurück links, Vorlagen rechts */
+  .step2Header::before {
+    content: '';
+    display: flex;
+    order: 1;
+  }
+
+  .backButtonAbsolute {
+    position: relative;
+    order: 1;
+    flex: 1;
+  }
+
+  .sidebarToggleBtn {
+    position: relative;
+    order: 2;
+    flex: 1;
+  }
+
+  /* Beide Buttons in einer Zeile */
+  .step2Header {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 0.75rem;
+  }
+
+  .backButtonAbsolute {
+    grid-column: 1;
+    grid-row: 1;
+    justify-content: center;
+  }
+
+  .sidebarToggleBtn {
+    grid-column: 2;
+    grid-row: 1;
+    justify-content: center;
+  }
+
+  .sidebarToggleBtn span {
+    display: inline; /* Text wieder anzeigen */
+  }
+
+  .step2HeaderCenter {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+}
+
+/* =================================
+   DRAFT DIALOG - Entwurf weiter bearbeiten
+   ================================= */
+
+.draftDialogOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.draftDialog {
+  background: #FFFFFF;
+  border-radius: 20px;
+  padding: 2rem;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.draftDialogIcon {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #2E6CF6 0%, #6366F1 100%);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.25rem;
+  color: #FFFFFF;
+}
+
+.draftDialog h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0B1324;
+  margin: 0 0 0.75rem 0;
+}
+
+.draftDialog p {
+  font-size: 1rem;
+  color: #667085;
+  line-height: 1.6;
+  margin: 0 0 1.5rem 0;
+}
+
+.draftDialog p strong {
+  color: #0B1324;
+}
+
+.draftDialogButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.draftDialogBtnPrimary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: #2E6CF6;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.draftDialogBtnPrimary:hover {
+  background: #1E5AD8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(46, 108, 246, 0.3);
+}
+
+.draftDialogBtnSecondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: #F5F5F7;
+  color: #667085;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.draftDialogBtnSecondary:hover {
+  background: #EAEAEC;
+  color: #0B1324;
+  border-color: #D1D5DB;
+}
+
+@media (max-width: 480px) {
+  .draftDialog {
+    padding: 1.5rem;
+    border-radius: 16px;
+  }
+
+  .draftDialogIcon {
+    width: 56px;
+    height: 56px;
+  }
+
+  .draftDialog h3 {
+    font-size: 1.25rem;
+  }
+
+  .draftDialog p {
+    font-size: 0.9rem;
+  }
+
+  .draftDialogBtnPrimary,
+  .draftDialogBtnSecondary {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* ============================================
+   📎 ANLAGEN / ATTACHMENTS SECTION
+   ============================================ */
+
+/* Update Text Button im Header */
+.updateTextButton {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  margin-left: auto;
+  background: linear-gradient(135deg, #0B1324 0%, #1A2540 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.updateTextButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(11, 19, 36, 0.3);
+}
+
+.updateTextButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.tinySpinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Anlagen Section Container */
+.attachmentsSection {
+  margin-top: 2rem;
+  background: linear-gradient(135deg, #FAFBFC 0%, #F3F4F6 100%);
+  border: 1.5px solid #E5E7EB;
+  border-radius: 16px;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.attachmentsSectionHeader {
+  margin-bottom: 1.25rem;
+}
+
+.attachmentsTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.attachmentsTitleRow h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #0B1324;
+  margin: 0;
+}
+
+.attachmentsTitleRow svg {
+  color: #0B1324;
+}
+
+.attachmentsBadge {
+  background: #0B1324;
+  color: white;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.attachmentsSubtitle {
+  font-size: 13px;
+  color: #667085;
+  margin: 0;
+}
+
+/* Dropzone */
+.attachmentsDropzone {
+  position: relative;
+  border: 2px dashed #D1D5DB;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.2s ease;
+  background: white;
+  margin-bottom: 1rem;
+}
+
+.attachmentsDropzone:hover {
+  border-color: #0B1324;
+  background: #F9FAFB;
+}
+
+.attachmentsDropzone.dragging {
+  border-color: #0B1324;
+  background: rgba(11, 19, 36, 0.05);
+  transform: scale(1.01);
+}
+
+.attachmentInput {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.attachmentLabel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  pointer-events: none;
+}
+
+.attachmentLabel svg {
+  color: #667085;
+}
+
+.dropzoneText {
+  font-size: 14px;
+  color: #374151;
+}
+
+.dropzoneText strong {
+  color: #0B1324;
+  text-decoration: underline;
+}
+
+.dropzoneHint {
+  font-size: 12px;
+  color: #9CA3AF;
+}
+
+/* Attachments List */
+.attachmentsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.attachmentItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.attachmentItem:hover {
+  border-color: #0B1324;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.attachmentIcon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #F3F4F6;
+  border-radius: 8px;
+  color: #667085;
+  flex-shrink: 0;
+}
+
+.attachmentInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.attachmentNameInput {
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  color: #0B1324;
+  padding: 0;
+  width: 100%;
+  outline: none;
+}
+
+.attachmentNameInput:focus {
+  background: #F9FAFB;
+  padding: 0.25rem 0.5rem;
+  margin: -0.25rem -0.5rem;
+  border-radius: 4px;
+}
+
+.attachmentSize {
+  font-size: 12px;
+  color: #9CA3AF;
+}
+
+.attachmentRemove {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #9CA3AF;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.attachmentRemove:hover {
+  background: #FEE2E2;
+  color: #DC2626;
+}
+
+/* Download Options */
+.attachmentDownloadOptions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid #E5E7EB;
+}
+
+.downloadLabel {
+  font-size: 13px;
+  color: #667085;
+  font-weight: 500;
+}
+
+.downloadOptionButton {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  background: white;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.downloadOptionButton:hover:not(:disabled) {
+  border-color: #0B1324;
+  color: #0B1324;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.downloadOptionButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive für Attachments */
+@media (max-width: 768px) {
+  .attachmentsSection {
+    padding: 1rem;
+    margin-top: 1.5rem;
+  }
+
+  .attachmentsDropzone {
+    padding: 1.5rem 1rem;
+  }
+
+  .attachmentItem {
+    padding: 0.6rem 0.75rem;
+    gap: 0.75rem;
+  }
+
+  .attachmentIcon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .attachmentDownloadOptions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .downloadLabel {
+    text-align: center;
+    margin-bottom: 0.25rem;
+  }
+
+  .downloadOptionButton {
+    justify-content: center;
   }
 }
