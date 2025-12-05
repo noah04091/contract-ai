@@ -1,7 +1,7 @@
 // 📄 pdfGeneratorV3.js - Typst basierter Vertragsgenerator
 // Verwendet Typst für professionelle Typografie (LaTeX-Alternative)
 
-const { $typst } = require('typst');
+const typst = require('typst');
 const QRCode = require('qrcode');
 const fs = require('fs').promises;
 const path = require('path');
@@ -460,14 +460,43 @@ const generatePDFv3 = async (contractText, companyProfile, contractType, parties
 
   console.log('📝 Typst-Dokument erstellt, kompiliere zu PDF...');
 
+  // Temporäre Dateien erstellen
+  const tempDir = os.tmpdir();
+  const timestamp = Date.now();
+  const typFile = path.join(tempDir, `contract-${timestamp}.typ`);
+  const pdfFile = path.join(tempDir, `contract-${timestamp}.pdf`);
+
   try {
+    // Typst-Quellcode in temporäre Datei schreiben
+    await fs.writeFile(typFile, typstSource, 'utf8');
+    console.log('📄 Typst-Datei geschrieben:', typFile);
+
     // Typst zu PDF kompilieren
-    const pdfBuffer = await $typst.pdf({ mainFileContent: typstSource });
+    await typst.compile(typFile, pdfFile);
+    console.log('📄 PDF-Datei erstellt:', pdfFile);
+
+    // PDF-Datei lesen
+    const pdfBuffer = await fs.readFile(pdfFile);
+
+    // Temporäre Dateien aufräumen
+    try {
+      await fs.unlink(typFile);
+      await fs.unlink(pdfFile);
+    } catch (cleanupError) {
+      console.log('⚠️ Cleanup-Fehler (nicht kritisch):', cleanupError.message);
+    }
 
     console.log(`✅ [V3 Typst] PDF generiert: ${(pdfBuffer.length / 1024).toFixed(1)} KB`);
-    return Buffer.from(pdfBuffer);
+    return pdfBuffer;
   } catch (error) {
     console.error('❌ [V3 Typst] Kompilierung fehlgeschlagen:', error);
+
+    // Cleanup bei Fehler
+    try {
+      await fs.unlink(typFile).catch(() => {});
+      await fs.unlink(pdfFile).catch(() => {});
+    } catch (e) {}
+
     throw new Error(`Typst-Kompilierung fehlgeschlagen: ${error.message}`);
   }
 };
