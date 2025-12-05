@@ -957,30 +957,172 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType }) 
 
   if (designName === 'Corporate') {
     // WICHTIG: Explizit weißer Hintergrund auf JEDER Ebene!
-    console.log('🔴🔴🔴 CORPORATE CONTENT PAGE RENDERING - VERSION 2024-12-05-FIX 🔴🔴🔴');
+    console.log('🔴🔴🔴 CORPORATE CONTENT PAGE RENDERING - VERSION 2024-12-05-v2 🔴🔴🔴');
 
-    // Komplett neuer Style ohne StyleSheet - direkt inline
-    const whitePageStyle = {
-      fontFamily: 'Helvetica',
-      fontSize: 10,
-      padding: 0,
-      lineHeight: 1.5,
-      color: '#000000',
-      backgroundColor: '#ffffff'
+    // ============================================================
+    // CORPORATE: Komplett eigene inline Styles für ALLES
+    // ============================================================
+    const corpStyles = {
+      page: {
+        fontFamily: 'Helvetica',
+        fontSize: 10,
+        padding: 0,
+        lineHeight: 1.5,
+        color: '#000000',
+        backgroundColor: '#ffffff'
+      },
+      content: {
+        flex: 1,
+        backgroundColor: '#ffffff',
+        padding: 40,
+        paddingTop: 30
+      },
+      preambleContainer: {
+        marginBottom: 25,
+        backgroundColor: '#f0f4f8',
+        padding: 15,
+        borderLeftWidth: 3,
+        borderLeftColor: '#003366'
+      },
+      preambleTitle: {
+        fontSize: 10,
+        fontWeight: 'bold',
+        color: '#003366',
+        textTransform: 'uppercase',
+        marginBottom: 8
+      },
+      preambleText: {
+        fontSize: 9,
+        color: '#333333'
+      },
+      sectionHeader: {
+        fontSize: 11,
+        fontWeight: 'bold',
+        color: '#ffffff',
+        backgroundColor: '#003366',
+        padding: 8,
+        marginTop: 20,
+        marginBottom: 12
+      },
+      numberedParagraph: {
+        flexDirection: 'row',
+        marginBottom: 8,
+        paddingLeft: 10
+      },
+      paragraphNumber: {
+        width: 25,
+        fontSize: 9,
+        fontWeight: 'bold',
+        color: '#003366'
+      },
+      paragraphText: {
+        flex: 1,
+        fontSize: 9,
+        textAlign: 'justify',
+        color: '#000000'
+      },
+      letterItem: {
+        flexDirection: 'row',
+        marginLeft: 35,
+        marginBottom: 5
+      },
+      letterLabel: {
+        width: 18,
+        fontSize: 9,
+        color: '#0066cc',
+        fontWeight: 'bold'
+      },
+      letterContent: {
+        flex: 1,
+        fontSize: 9,
+        color: '#000000'
+      },
+      bulletItem: {
+        flexDirection: 'row',
+        marginLeft: 35,
+        marginBottom: 5
+      },
+      bulletPoint: {
+        width: 12,
+        fontSize: 9,
+        color: '#0066cc'
+      },
+      bulletText: {
+        flex: 1,
+        fontSize: 9,
+        color: '#000000'
+      },
+      paragraph: {
+        fontSize: 9,
+        marginBottom: 8,
+        textAlign: 'justify',
+        paddingLeft: 10,
+        color: '#000000'
+      },
+      pageFooter: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: '#f0f4f8',
+        padding: 10,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        fontSize: 7,
+        color: '#666666'
+      }
     };
 
-    const whiteContentStyle = {
-      flex: 1,
-      backgroundColor: '#ffffff',
-      padding: 40,
-      paddingTop: 30
+    // Corporate-spezifische Render-Funktion für Inhalte
+    const renderCorpContent = (item, index, numberedCounter) => {
+      switch (item.type) {
+        case 'numbered':
+          return e(View, { key: index, style: corpStyles.numberedParagraph },
+            e(Text, { style: corpStyles.paragraphNumber }, `(${numberedCounter})`),
+            e(Text, { style: corpStyles.paragraphText }, item.text)
+          );
+        case 'letter':
+          return e(View, { key: index, style: corpStyles.letterItem },
+            e(Text, { style: corpStyles.letterLabel }, `${item.letter})`),
+            e(Text, { style: corpStyles.letterContent }, item.text)
+          );
+        case 'bullet':
+          return e(View, { key: index, style: corpStyles.bulletItem },
+            e(Text, { style: corpStyles.bulletPoint }, '–'),
+            e(Text, { style: corpStyles.bulletText }, item.text)
+          );
+        default:
+          return e(Text, { key: index, style: corpStyles.paragraph }, item.text);
+      }
     };
 
-    return e(Page, { size: 'A4', style: whitePageStyle },
-      e(View, { style: whiteContentStyle },
-        ...sections.map(renderSection)
+    // Corporate-spezifische Render-Funktion für Sektionen
+    const renderCorpSection = (section, sectionIndex) => {
+      let numberedCounter = 0;
+
+      if (section.type === 'preamble') {
+        return e(View, { key: sectionIndex, style: corpStyles.preambleContainer },
+          e(Text, { style: corpStyles.preambleTitle }, 'Präambel'),
+          ...section.content.map((item, i) =>
+            e(Text, { key: i, style: corpStyles.preambleText }, item.text)
+          )
+        );
+      }
+
+      return e(View, { key: sectionIndex, wrap: false },
+        e(Text, { style: corpStyles.sectionHeader }, section.title),
+        ...section.content.map((item, i) => {
+          if (item.type === 'numbered') numberedCounter++;
+          return renderCorpContent(item, i, numberedCounter);
+        })
+      );
+    };
+
+    return e(Page, { size: 'A4', style: corpStyles.page },
+      e(View, { style: corpStyles.content },
+        ...sections.map(renderCorpSection)
       ),
-      e(View, { style: styles.pageFooter, fixed: true },
+      e(View, { style: corpStyles.pageFooter, fixed: true },
         e(Text, null, companyProfile?.companyName || ''),
         e(Text, null, (contractType || 'Vertrag').toUpperCase()),
         e(Text, { render: ({ pageNumber }) => `Seite ${pageNumber}` })
