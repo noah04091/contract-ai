@@ -541,6 +541,81 @@ const connectDB = async () => {
       console.error("❌ Fehler beim Laden der Optimized-Contract-Route:", error);
     }
 
+    // ✅ 🔓 ÖFFENTLICHE VERIFY-ROUTE (OHNE AUTH!) - MUSS GANZ ZUERST KOMMEN!
+    // Diese Route MUSS VOR allen anderen /api/contracts Routen registriert werden,
+    // da Express Routen in der Reihenfolge matched wie sie registriert werden.
+    app.get("/api/contracts/verify/:id", async (req, res) => {
+      try {
+        const contractId = req.params.id;
+        console.log('🔍 [PUBLIC] Vertragsverifizierung angefragt für ID:', contractId);
+
+        const { ObjectId } = require("mongodb");
+
+        // Validiere ObjectId Format
+        if (!ObjectId.isValid(contractId)) {
+          return res.status(400).json({
+            verified: false,
+            message: 'Ungültige Vertrags-ID',
+            error: 'INVALID_ID'
+          });
+        }
+
+        // Vertrag suchen (nur nicht-sensible Felder)
+        const contract = await db.collection("contracts").findOne(
+          { _id: new ObjectId(contractId) },
+          {
+            projection: {
+              name: 1,
+              contractType: 1,
+              status: 1,
+              createdAt: 1,
+              updatedAt: 1,
+              uploadedAt: 1,
+              designVariant: 1
+            }
+          }
+        );
+
+        if (!contract) {
+          return res.status(404).json({
+            verified: false,
+            message: 'Vertrag nicht gefunden',
+            error: 'NOT_FOUND'
+          });
+        }
+
+        // Erfolgreiche Verifizierung - gib öffentliche Metadaten zurück
+        console.log('✅ [PUBLIC] Vertrag verifiziert:', contract.name);
+
+        res.json({
+          verified: true,
+          message: 'Vertrag erfolgreich verifiziert',
+          contract: {
+            id: contract._id,
+            name: contract.name || 'Unbenannter Vertrag',
+            type: contract.contractType || 'Vertrag',
+            status: contract.status || 'Aktiv',
+            createdAt: contract.createdAt || contract.uploadedAt,
+            designVariant: contract.designVariant || 'executive'
+          },
+          platform: {
+            name: 'Contract AI',
+            url: 'https://contract-ai.de',
+            verifiedAt: new Date().toISOString()
+          }
+        });
+
+      } catch (error) {
+        console.error('❌ [PUBLIC] Verifizierungsfehler:', error);
+        res.status(500).json({
+          verified: false,
+          message: 'Fehler bei der Verifizierung',
+          error: 'SERVER_ERROR'
+        });
+      }
+    });
+    console.log("✅ Öffentliche Verify-Route geladen unter /api/contracts/verify/:id (OHNE AUTH - VOR allen anderen contracts Routen!)");
+
     // ✅ 8. CONTRACT ROUTES - SPEZIFISCHE VOR ALLGEMEINEN!
     try {
       const generateRouter = require("./routes/generate");
@@ -697,80 +772,6 @@ const connectDB = async () => {
     } catch (err) {
       console.error("❌ Fehler bei S3 Migration Routes:", err);
     }
-
-    // ✅ 🔓 ÖFFENTLICHE VERIFY-ROUTE (OHNE AUTH!)
-    // Diese Route muss VOR dem geschützten /api/contracts Router registriert werden
-    app.get("/api/contracts/verify/:id", async (req, res) => {
-      try {
-        const contractId = req.params.id;
-        console.log('🔍 [PUBLIC] Vertragsverifizierung angefragt für ID:', contractId);
-
-        const { ObjectId } = require("mongodb");
-
-        // Validiere ObjectId Format
-        if (!ObjectId.isValid(contractId)) {
-          return res.status(400).json({
-            verified: false,
-            message: 'Ungültige Vertrags-ID',
-            error: 'INVALID_ID'
-          });
-        }
-
-        // Vertrag suchen (nur nicht-sensible Felder)
-        const contract = await db.collection("contracts").findOne(
-          { _id: new ObjectId(contractId) },
-          {
-            projection: {
-              name: 1,
-              contractType: 1,
-              status: 1,
-              createdAt: 1,
-              updatedAt: 1,
-              uploadedAt: 1,
-              designVariant: 1
-            }
-          }
-        );
-
-        if (!contract) {
-          return res.status(404).json({
-            verified: false,
-            message: 'Vertrag nicht gefunden',
-            error: 'NOT_FOUND'
-          });
-        }
-
-        // Erfolgreiche Verifizierung - gib öffentliche Metadaten zurück
-        console.log('✅ [PUBLIC] Vertrag verifiziert:', contract.name);
-
-        res.json({
-          verified: true,
-          message: 'Vertrag erfolgreich verifiziert',
-          contract: {
-            id: contract._id,
-            name: contract.name || 'Unbenannter Vertrag',
-            type: contract.contractType || 'Vertrag',
-            status: contract.status || 'Aktiv',
-            createdAt: contract.createdAt || contract.uploadedAt,
-            designVariant: contract.designVariant || 'executive'
-          },
-          platform: {
-            name: 'Contract AI',
-            url: 'https://contract-ai.de',
-            verifiedAt: new Date().toISOString()
-          }
-        });
-
-      } catch (error) {
-        console.error('❌ [PUBLIC] Verifizierungsfehler:', error);
-        res.status(500).json({
-          verified: false,
-          message: 'Fehler bei der Verifizierung',
-          error: 'SERVER_ERROR'
-        });
-      }
-    });
-    console.log("✅ Öffentliche Verify-Route geladen unter /api/contracts/verify/:id (OHNE AUTH)");
 
     // ✅ 11. ALLGEMEINE CONTRACT CRUD
     // ⚠️ verifyToken überspringt automatisch /email-import (siehe verifyToken.js)
