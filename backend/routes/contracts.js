@@ -778,6 +778,11 @@ router.get('/debug-company-profile', verifyToken, async (req, res) => {
     const db = req.db || client.db("contractai");
     const userId = req.user.userId;
 
+    // 0. DB-Name und alle Collections auflisten
+    const dbName = db.databaseName;
+    const collections = await db.listCollections().toArray();
+    const collectionNames = collections.map(c => c.name);
+
     // 1. Alle möglichen userId-Formate prüfen
     const queries = [
       { userId: new ObjectId(userId) },
@@ -803,11 +808,19 @@ router.get('/debug-company-profile', verifyToken, async (req, res) => {
     // 3. Alle userIds in der Collection auflisten (nur die ersten 10)
     const allProfiles = await db.collection("company_profiles").find({}, { projection: { userId: 1, companyName: 1 } }).limit(10).toArray();
 
+    // 4. User-Daten prüfen (hat der User companyProfile embedded?)
+    const user = await db.collection("users").findOne({ _id: new ObjectId(userId) });
+
     res.json({
       debug: true,
+      databaseName: dbName,
+      allCollections: collectionNames,
+      hasCompanyProfilesCollection: collectionNames.includes('company_profiles'),
       currentUserId: userId,
       currentUserIdType: typeof userId,
       totalProfilesInDB: totalProfiles,
+      userHasEmbeddedProfile: user?.companyProfile ? true : false,
+      userEmbeddedProfile: user?.companyProfile || null,
       foundProfile: foundProfile ? {
         _id: foundProfile._id,
         odUserId: foundProfile.userId,
