@@ -577,10 +577,10 @@ const createElegantStyles = (theme) => {
 const createCorporateStyles = (theme) => {
   const c = theme.colors;
   return StyleSheet.create({
-    // WICHTIG: Page mit hardcodierten Farben - weiß + schwarz
-    page: { fontFamily: theme.fontFamily, fontSize: 10, padding: 0, lineHeight: 1.5, color: '#1a1a1a', backgroundColor: '#ffffff' },
+    // v4-FIX: Page mit padding wie Executive (KEIN backgroundColor - das verursacht das Problem!)
+    page: { fontFamily: theme.fontFamily, fontSize: 10, padding: 50, lineHeight: 1.5, color: '#1a1a1a' },
     // Deckblatt - Mit Header-Bar (ALLE FARBEN HARDCODIERT!)
-    coverPage: { flex: 1, backgroundColor: '#ffffff' },
+    coverPage: { flex: 1 },
     headerBar: { backgroundColor: '#003366', padding: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     logo: { width: 50, height: 50, objectFit: 'contain' },
     headerInfo: { color: '#ffffff', textAlign: 'right', fontSize: 8 },
@@ -593,19 +593,19 @@ const createCorporateStyles = (theme) => {
     partiesContainer: { marginTop: 30 },
     partiesLabel: { fontSize: 9, color: '#003366', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 },
     partyBox: { borderWidth: 1, borderColor: '#003366', marginBottom: 15 },
-    partyBoxHeader: { backgroundColor: '#f0f4f8', padding: 8, borderBottomWidth: 1, borderBottomColor: '#003366' },
-    partyBoxContent: { padding: 12, backgroundColor: '#ffffff' },
+    partyBoxHeader: { padding: 8, borderBottomWidth: 1, borderBottomColor: '#003366' },
+    partyBoxContent: { padding: 12 },
     partyName: { fontSize: 11, fontWeight: 'bold', color: '#003366' },
     partyAddress: { fontSize: 9, color: '#333333' },
     partyRole: { fontSize: 8, color: '#0066cc', fontWeight: 'bold' },
-    footer: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#f0f4f8', padding: 15, flexDirection: 'row', justifyContent: 'space-between', fontSize: 7, color: '#666666' },
-    // Content Styles - WICHTIG: Weißer Hintergrund und dunkler Text!
-    contentPage: { flex: 1, backgroundColor: '#ffffff', color: '#1a1a1a' },
-    contentMain: { flex: 1, padding: 40, paddingTop: 30, backgroundColor: '#ffffff', color: '#1a1a1a' },
-    preambleContainer: { marginBottom: 25, backgroundColor: '#f0f4f8', padding: 15, borderLeftWidth: 3, borderLeftColor: '#003366' },
+    footer: { position: 'absolute', bottom: 30, left: 50, right: 50, flexDirection: 'row', justifyContent: 'space-between', fontSize: 8, color: '#666666', borderTopWidth: 1, borderTopColor: '#003366', paddingTop: 10 },
+    // Content Styles - v4-FIX: Wie Executive, ohne backgroundColor!
+    contentPage: { flex: 1 },
+    contentMain: { flex: 1 },
+    preambleContainer: { marginBottom: 20, paddingBottom: 15, borderBottomWidth: 1, borderBottomColor: '#003366' },
     preambleTitle: { fontSize: 10, fontWeight: 'bold', color: '#003366', textTransform: 'uppercase', marginBottom: 8 },
     preambleText: { fontSize: 9, color: '#333333' },
-    sectionHeader: { fontSize: 11, fontWeight: 'bold', color: '#ffffff', backgroundColor: '#003366', padding: 8, marginTop: 20, marginBottom: 12 },
+    sectionHeader: { fontSize: 12, fontWeight: 'bold', color: '#003366', marginTop: 20, marginBottom: 10, paddingBottom: 5, borderBottomWidth: 1, borderBottomColor: '#003366' },
     numberedParagraph: { flexDirection: 'row', marginBottom: 8, paddingLeft: 10 },
     paragraphNumber: { width: 25, fontSize: 9, fontWeight: 'bold', color: '#003366' },
     paragraphText: { flex: 1, fontSize: 9, textAlign: 'justify', color: '#1a1a1a' },
@@ -616,26 +616,26 @@ const createCorporateStyles = (theme) => {
     bulletPoint: { width: 12, fontSize: 9, color: '#0066cc' },
     bulletText: { flex: 1, fontSize: 9, color: '#1a1a1a' },
     paragraph: { fontSize: 9, marginBottom: 8, textAlign: 'justify', paddingLeft: 10, color: '#1a1a1a' },
-    pageFooter: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#f0f4f8', padding: 10, flexDirection: 'row', justifyContent: 'space-between', fontSize: 7, color: '#666666' },
-    // Signature Styles (ALLE FARBEN HARDCODIERT!)
-    signaturePage: { flex: 1, backgroundColor: '#ffffff' },
+    pageFooter: { position: 'absolute', bottom: 30, left: 50, right: 50, flexDirection: 'row', justifyContent: 'space-between', fontSize: 8, color: '#666666', borderTopWidth: 1, borderTopColor: '#003366', paddingTop: 8 },
+    // Signature Styles - v4-FIX: Ohne backgroundColor!
+    signaturePage: { flex: 1 },
     signatureHeader: { backgroundColor: '#003366', padding: 15 },
     signatureTitle: { fontSize: 14, fontWeight: 'bold', color: '#ffffff', textAlign: 'center' },
-    signatureMain: { padding: 40, backgroundColor: '#ffffff' },
+    signatureMain: { padding: 40 },
     signatureColumns: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 30 },
-    signatureColumn: { width: '45%', borderWidth: 1, borderColor: '#003366', padding: 15, backgroundColor: '#ffffff' },
+    signatureColumn: { width: '45%', borderWidth: 1, borderColor: '#003366', padding: 15 },
     signatureLabel: { fontSize: 9, fontWeight: 'bold', color: '#003366', textTransform: 'uppercase', marginBottom: 30, paddingBottom: 5, borderBottomWidth: 2, borderBottomColor: '#0066cc' },
     signatureLine: { borderBottomWidth: 1, borderBottomColor: '#333333', marginBottom: 5 },
     signatureHint: { fontSize: 7, color: '#666666' },
     signatureName: { fontSize: 9, fontWeight: 'bold', marginTop: 15, color: '#1a1a1a' },
     signatureRole: { fontSize: 7, color: '#666666' },
-    verificationContainer: { alignItems: 'center', marginTop: 40, padding: 15, backgroundColor: '#f8fafc' },
+    verificationContainer: { alignItems: 'center', marginTop: 50, padding: 15, borderTopWidth: 1, borderTopColor: '#003366' },
     qrCode: { width: 50, height: 50 },
     verificationText: { fontSize: 6, color: '#666666', marginTop: 5 },
     attachmentsBox: { marginTop: 30, borderWidth: 1, borderColor: '#003366' },
-    attachmentsHeader: { backgroundColor: '#f0f4f8', padding: 8, borderBottomWidth: 1, borderBottomColor: '#003366' },
+    attachmentsHeader: { padding: 8, borderBottomWidth: 1, borderBottomColor: '#003366' },
     attachmentsTitle: { fontSize: 8, fontWeight: 'bold', color: '#003366', textTransform: 'uppercase' },
-    attachmentsContent: { padding: 10, backgroundColor: '#ffffff' },
+    attachmentsContent: { padding: 10 },
     attachmentsText: { fontSize: 8, color: '#666666' },
     watermark: { position: 'absolute', top: '35%', left: '15%', fontSize: 65, color: '#e8eef4', transform: 'rotate(-45deg)', opacity: 0.25 },
     companyInfo: { display: 'none' },
@@ -956,187 +956,17 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType }) 
   }
 
   if (designName === 'Corporate') {
-    // WICHTIG: Explizit weißer Hintergrund auf JEDER Ebene!
-    console.log('🔴🔴🔴 CORPORATE CONTENT PAGE RENDERING - VERSION 2024-12-05-v3-WHITE 🔴🔴🔴');
+    // v4-SIMPLE: Corporate verwendet jetzt EXAKT das gleiche Layout wie andere Designs
+    // Nur mit Corporate-Farben (dunkelblau für Headers)
+    console.log('🔴🔴🔴 CORPORATE CONTENT PAGE RENDERING - VERSION 2024-12-05-v4-SIMPLE 🔴🔴🔴');
 
-    // ============================================================
-    // CORPORATE: Komplett eigene inline Styles für ALLES
-    // FIX: Weißer Hintergrund mit absolutem Overlay-View
-    // ============================================================
-    const corpStyles = {
-      page: {
-        fontFamily: 'Helvetica',
-        fontSize: 10,
-        padding: 0,
-        lineHeight: 1.5,
-        color: '#000000'
-        // KEIN backgroundColor hier - wird durch View gesetzt
-      },
-      // Absoluter weißer Hintergrund-Layer
-      whiteBg: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: '#ffffff'
-      },
-      content: {
-        flex: 1,
-        backgroundColor: '#ffffff',
-        padding: 40,
-        paddingTop: 30,
-        zIndex: 1
-      },
-      preambleContainer: {
-        marginBottom: 25,
-        backgroundColor: '#f0f4f8',
-        padding: 15,
-        borderLeftWidth: 3,
-        borderLeftColor: '#003366'
-      },
-      preambleTitle: {
-        fontSize: 10,
-        fontWeight: 'bold',
-        color: '#003366',
-        textTransform: 'uppercase',
-        marginBottom: 8
-      },
-      preambleText: {
-        fontSize: 9,
-        color: '#333333'
-      },
-      sectionHeader: {
-        fontSize: 11,
-        fontWeight: 'bold',
-        color: '#ffffff',
-        backgroundColor: '#003366',
-        padding: 8,
-        marginTop: 20,
-        marginBottom: 12
-      },
-      numberedParagraph: {
-        flexDirection: 'row',
-        marginBottom: 8,
-        paddingLeft: 10
-      },
-      paragraphNumber: {
-        width: 25,
-        fontSize: 9,
-        fontWeight: 'bold',
-        color: '#003366'
-      },
-      paragraphText: {
-        flex: 1,
-        fontSize: 9,
-        textAlign: 'justify',
-        color: '#000000'
-      },
-      letterItem: {
-        flexDirection: 'row',
-        marginLeft: 35,
-        marginBottom: 5
-      },
-      letterLabel: {
-        width: 18,
-        fontSize: 9,
-        color: '#0066cc',
-        fontWeight: 'bold'
-      },
-      letterContent: {
-        flex: 1,
-        fontSize: 9,
-        color: '#000000'
-      },
-      bulletItem: {
-        flexDirection: 'row',
-        marginLeft: 35,
-        marginBottom: 5
-      },
-      bulletPoint: {
-        width: 12,
-        fontSize: 9,
-        color: '#0066cc'
-      },
-      bulletText: {
-        flex: 1,
-        fontSize: 9,
-        color: '#000000'
-      },
-      paragraph: {
-        fontSize: 9,
-        marginBottom: 8,
-        textAlign: 'justify',
-        paddingLeft: 10,
-        color: '#000000'
-      },
-      pageFooter: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: '#f0f4f8',
-        padding: 10,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        fontSize: 7,
-        color: '#666666'
-      }
-    };
-
-    // Corporate-spezifische Render-Funktion für Inhalte
-    const renderCorpContent = (item, index, numberedCounter) => {
-      switch (item.type) {
-        case 'numbered':
-          return e(View, { key: index, style: corpStyles.numberedParagraph },
-            e(Text, { style: corpStyles.paragraphNumber }, `(${numberedCounter})`),
-            e(Text, { style: corpStyles.paragraphText }, item.text)
-          );
-        case 'letter':
-          return e(View, { key: index, style: corpStyles.letterItem },
-            e(Text, { style: corpStyles.letterLabel }, `${item.letter})`),
-            e(Text, { style: corpStyles.letterContent }, item.text)
-          );
-        case 'bullet':
-          return e(View, { key: index, style: corpStyles.bulletItem },
-            e(Text, { style: corpStyles.bulletPoint }, '–'),
-            e(Text, { style: corpStyles.bulletText }, item.text)
-          );
-        default:
-          return e(Text, { key: index, style: corpStyles.paragraph }, item.text);
-      }
-    };
-
-    // Corporate-spezifische Render-Funktion für Sektionen
-    const renderCorpSection = (section, sectionIndex) => {
-      let numberedCounter = 0;
-
-      if (section.type === 'preamble') {
-        return e(View, { key: sectionIndex, style: corpStyles.preambleContainer },
-          e(Text, { style: corpStyles.preambleTitle }, 'Präambel'),
-          ...section.content.map((item, i) =>
-            e(Text, { key: i, style: corpStyles.preambleText }, item.text)
-          )
-        );
-      }
-
-      return e(View, { key: sectionIndex, wrap: false },
-        e(Text, { style: corpStyles.sectionHeader }, section.title),
-        ...section.content.map((item, i) => {
-          if (item.type === 'numbered') numberedCounter++;
-          return renderCorpContent(item, i, numberedCounter);
-        })
-      );
-    };
-
-    return e(Page, { size: 'A4', style: corpStyles.page },
-      // Absoluter weißer Hintergrund-Layer
-      e(View, { style: corpStyles.whiteBg }),
-      // Content mit weißem Hintergrund
-      e(View, { style: corpStyles.content },
-        ...sections.map(renderCorpSection)
+    // Corporate verwendet das Standard-Layout (wie Executive), nur mit eigenen Farben
+    // Das funktioniert garantiert, da Executive funktioniert!
+    return e(Page, { size: 'A4', style: styles.page },
+      e(View, { style: styles.contentPage },
+        ...sections.map(renderSection)
       ),
-      e(View, { style: corpStyles.pageFooter, fixed: true },
+      e(View, { style: styles.pageFooter, fixed: true },
         e(Text, null, companyProfile?.companyName || ''),
         e(Text, null, (contractType || 'Vertrag').toUpperCase()),
         e(Text, { render: ({ pageNumber }) => `Seite ${pageNumber}` })
