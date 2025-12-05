@@ -774,7 +774,8 @@ router.get("/", verifyToken, async (req, res) => {
  */
 router.get('/debug-company-profile', verifyToken, async (req, res) => {
   try {
-    const db = client.db("contractai");
+    // WICHTIG: req.db verwenden (gleiche Connection wie companyProfile.js)
+    const db = req.db || client.db("contractai");
     const userId = req.user.userId;
 
     // 1. Alle möglichen userId-Formate prüfen
@@ -3369,12 +3370,18 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
     }
 
     // Company Profile laden (immer versuchen, falls vorhanden)
-    // userId kann als String oder ObjectId gespeichert sein
+    // WICHTIG: req.db verwenden (gleiche Connection wie companyProfile.js)
     let companyProfile = null;
     try {
-      const db = client.db("contractai");
+      // req.db ist die Middleware-injizierte DB-Verbindung
+      const db = req.db;
+      if (!db) {
+        console.log('⚠️ req.db nicht verfügbar, verwende client.db()');
+      }
+      const profileDb = db || client.db("contractai");
+
       // Versuche zuerst mit ObjectId, dann mit String
-      const rawProfile = await db.collection("company_profiles").findOne({
+      const rawProfile = await profileDb.collection("company_profiles").findOne({
         $or: [
           { userId: new ObjectId(req.user.userId) },
           { userId: req.user.userId }
