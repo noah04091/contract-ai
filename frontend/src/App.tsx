@@ -31,6 +31,7 @@ import AGB from "./pages/AGB";
 // 🔓 Öffentliche Seiten - Lazy Loading
 const Register = lazy(() => import("./pages/Register"));
 const VerifySuccess = lazy(() => import("./pages/VerifySuccess"));
+const VerifyContract = lazy(() => import("./pages/VerifyContract")); // 🔐 Vertragsverifizierung via QR-Code
 const AcceptInvite = lazy(() => import("./pages/AcceptInvite")); // 👥 Team-Einladung annehmen
 
 // Feature Flag: Enhanced Signature UI
@@ -130,7 +131,8 @@ function AppWithLoader() {
 
   // Seiten ohne Navbar (Auth-Seiten mit Split-Screen Design)
   const hideNavbarRoutes = ['/login', '/register', '/verify-success'];
-  const shouldHideNavbar = hideNavbarRoutes.includes(location.pathname);
+  // Auch /verify/:id soll keine Navbar haben
+  const shouldHideNavbar = hideNavbarRoutes.includes(location.pathname) || location.pathname.startsWith('/verify/');
 
   return (
     <ErrorBoundary>
@@ -147,6 +149,7 @@ function AppWithLoader() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/verify-success" element={<VerifySuccess />} /> {/* ✅ NEU: E-Mail bestätigt Seite */}
+            <Route path="/verify/:id" element={<VerifyContract />} /> {/* 🔐 Vertragsverifizierung via QR-Code */}
             <Route path="/accept-invite/:token" element={<AcceptInvite />} /> {/* 👥 Team-Einladung annehmen */}
             <Route path="/sign/:token" element={<SignaturePageComponent />} /> {/* ✉️ Signature Page (Feature-Flag controlled) */}
             <Route path="/pricing" element={<Pricing />} />

@@ -3454,21 +3454,52 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
     // Design-Variante: aus Vertrag oder Query-Parameter
     const finalDesign = contract.designVariant || designVariant;
 
+    // DEBUG: Alle verfügbaren Felder anzeigen
     console.log('📄 Vertragsdaten:', {
       name: contract.name,
       type: contract.contractType,
       design: finalDesign,
       hasCompanyProfile: !!companyProfile,
-      partiesKeys: Object.keys(parties)
+      partiesKeys: Object.keys(parties),
+      contentLength: contract.content?.length || 0,
+      contentPreview: contract.content?.substring(0, 300) || 'KEIN CONTENT!',
+      hasContractHTML: !!contract.contractHTML,
+      contractHTMLLength: contract.contractHTML?.length || 0,
+      allFields: Object.keys(contract)
     });
 
+    // Fallback: Wenn content leer ist, versuche aus contractHTML den Text zu extrahieren
+    let contractText = contract.content;
+    if (!contractText || contractText.length < 100) {
+      console.log('⚠️ content ist leer oder sehr kurz, prüfe Alternativen...');
+      if (contract.contractHTML && contract.contractHTML.length > 100) {
+        console.log('🔄 Extrahiere Text aus contractHTML...');
+        // Einfache HTML-Tag Entfernung
+        contractText = contract.contractHTML
+          .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+          .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+          .replace(/<[^>]+>/g, '\n')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'")
+          .replace(/\n{3,}/g, '\n\n')
+          .trim();
+        console.log('📝 Extrahierter Text-Länge:', contractText.length);
+        console.log('📝 Extrahierter Text-Anfang:', contractText.substring(0, 300));
+      }
+    }
+
     const pdfBuffer = await generatePDFv2(
-      contract.content,
+      contractText,
       companyProfile,
       contract.contractType || 'Vertrag',
       parties,
       contract.status === 'Entwurf',
-      finalDesign
+      finalDesign,
+      contractId  // Contract-ID für QR-Code Verifizierung
     );
 
     res.setHeader('Content-Type', 'application/pdf');
@@ -3547,6 +3578,80 @@ router.post('/:id/pdf-v3', verifyToken, async (req, res) => {
     res.status(500).json({
       message: 'PDF-Generierung (V3/Typst) fehlgeschlagen',
       error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/contracts/verify/:id
+ * Öffentliche Route zur Verifizierung eines Vertrags via QR-Code
+ * Keine Authentifizierung erforderlich - gibt nur öffentliche Metadaten zurück
+ */
+router.get('/verify/:id', async (req, res) => {
+  try {
+    const contractId = req.params.id;
+    console.log('🔍 Vertragsverifizierung angefragt für ID:', contractId);
+
+    // Validiere ObjectId Format
+    if (!ObjectId.isValid(contractId)) {
+      return res.status(400).json({
+        verified: false,
+        message: 'Ungültige Vertrags-ID',
+        error: 'INVALID_ID'
+      });
+    }
+
+    // Vertrag suchen (nur nicht-sensible Felder)
+    const contract = await contractsCollection.findOne(
+      { _id: new ObjectId(contractId) },
+      {
+        projection: {
+          name: 1,
+          contractType: 1,
+          status: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          designVariant: 1
+        }
+      }
+    );
+
+    if (!contract) {
+      return res.status(404).json({
+        verified: false,
+        message: 'Vertrag nicht gefunden',
+        error: 'NOT_FOUND'
+      });
+    }
+
+    // Erfolgreiche Verifizierung - gib öffentliche Metadaten zurück
+    console.log('✅ Vertrag verifiziert:', contract.name);
+
+    res.json({
+      verified: true,
+      message: 'Vertrag erfolgreich verifiziert',
+      contract: {
+        id: contract._id,
+        name: contract.name || 'Unbenannter Vertrag',
+        type: contract.contractType || 'Vertrag',
+        status: contract.status || 'Aktiv',
+        createdAt: contract.createdAt,
+        updatedAt: contract.updatedAt,
+        designVariant: contract.designVariant || 'executive'
+      },
+      platform: {
+        name: 'Contract AI',
+        url: 'https://contract-ai.de',
+        verifiedAt: new Date().toISOString()
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Verifizierungsfehler:', error);
+    res.status(500).json({
+      verified: false,
+      message: 'Fehler bei der Verifizierung',
+      error: 'SERVER_ERROR'
     });
   }
 });

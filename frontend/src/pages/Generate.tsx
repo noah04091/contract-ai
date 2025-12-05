@@ -3730,7 +3730,8 @@ export default function Generate() {
       // State aktualisieren
       setSelectedDesignVariant(newDesign);
 
-      // PDF-Vorschau neu laden
+      // PDF-Vorschau neu laden - WICHTIG: Zuerst Ladeindikator zeigen!
+      setIsGeneratingPreview(true);
       if (pdfPreviewUrl) {
         window.URL.revokeObjectURL(pdfPreviewUrl);
         setPdfPreviewUrl(null);
@@ -3762,6 +3763,8 @@ export default function Generate() {
           }
         } catch (pdfError) {
           console.error("⚠️ PDF-Vorschau konnte nicht geladen werden:", pdfError);
+        } finally {
+          setIsGeneratingPreview(false);
         }
       }, 500);
 

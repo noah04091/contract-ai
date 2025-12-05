@@ -252,7 +252,19 @@ const getPartyLabels = (contractType) => {
  * Parst den Vertragstext in strukturierte Abschnitte
  */
 const parseContractText = (text) => {
+  console.log('🔍 parseContractText aufgerufen');
+  console.log('📝 Text-Typ:', typeof text);
+  console.log('📝 Text-Länge:', text?.length || 0);
+  console.log('📝 Erste 500 Zeichen:', text?.substring(0, 500));
+
+  if (!text || typeof text !== 'string') {
+    console.log('⚠️ KEIN TEXT oder kein String übergeben!');
+    return [];
+  }
+
   const lines = text.split('\n');
+  console.log('📝 Anzahl Zeilen:', lines.length);
+
   const sections = [];
   let currentSection = null;
   let skipParties = false;
@@ -491,18 +503,18 @@ const createMinimalStyles = (theme) => {
     bulletText: { flex: 1, fontSize: 9 },
     paragraph: { fontSize: 9, marginBottom: 12, textAlign: 'justify', lineHeight: 1.8 },
     pageFooter: { position: 'absolute', bottom: 40, left: 60, right: 60, flexDirection: 'row', justifyContent: 'center', fontSize: 7, color: c.textMuted },
-    // Signature Styles
+    // Signature Styles - Minimal: klare, sichtbare Linien
     signaturePage: { flex: 1, justifyContent: 'center' },
     signatureTitle: { fontSize: 10, textAlign: 'center', color: c.textMuted, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 60 },
     signatureColumns: { flexDirection: 'row', justifyContent: 'space-around' },
-    signatureColumn: { width: '40%', alignItems: 'center' },
-    signatureLabel: { fontSize: 8, color: c.textMuted, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 50 },
-    signatureLine: { borderBottomWidth: 0.5, borderBottomColor: c.textMuted, marginBottom: 5, width: '100%' },
+    signatureColumn: { width: '40%' },
+    signatureLabel: { fontSize: 8, color: c.textMuted, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 40 },
+    signatureLine: { borderBottomWidth: 1, borderBottomColor: c.text, marginBottom: 8, height: 1 },
     signatureHint: { fontSize: 7, color: c.textMuted },
     signatureName: { fontSize: 9, marginTop: 20, color: c.textLight },
     signatureRole: { fontSize: 7, color: c.textMuted },
     verificationContainer: { alignItems: 'center', marginTop: 80 },
-    qrCode: { width: 40, height: 40, opacity: 0.6 },
+    qrCode: { width: 50, height: 50, opacity: 0.7 },
     verificationText: { fontSize: 6, color: c.textMuted, marginTop: 5 },
     attachmentsBox: { marginTop: 40, alignItems: 'center' },
     attachmentsTitle: { fontSize: 7, color: c.textMuted, letterSpacing: 2, textTransform: 'uppercase' },
@@ -554,13 +566,13 @@ const createElegantStyles = (theme) => {
     bulletText: { flex: 1, fontSize: 10 },
     paragraph: { fontSize: 10, marginBottom: 10, textAlign: 'justify' },
     pageFooter: { position: 'absolute', bottom: 30, left: 50, right: 50, alignItems: 'center' },
-    // Signature Styles
+    // Signature Styles - Elegant: klare, goldene Linien
     signaturePage: { flex: 1 },
     signatureTitle: { fontSize: 14, textAlign: 'center', color: c.primary, marginBottom: 50, borderBottomWidth: 1, borderBottomColor: c.accent, paddingBottom: 15 },
     signatureColumns: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 30 },
-    signatureColumn: { width: '42%', alignItems: 'center' },
-    signatureLabel: { fontSize: 10, color: c.accent, fontStyle: 'italic', marginBottom: 40 },
-    signatureLine: { borderBottomWidth: 1, borderBottomColor: c.primary, marginBottom: 5, width: '100%' },
+    signatureColumn: { width: '42%' },
+    signatureLabel: { fontSize: 10, color: c.accent, fontStyle: 'italic', marginBottom: 35 },
+    signatureLine: { borderBottomWidth: 1, borderBottomColor: c.accent, marginBottom: 8, height: 1 },
     signatureHint: { fontSize: 8, color: c.textMuted, fontStyle: 'italic' },
     signatureName: { fontSize: 10, marginTop: 15, color: c.primary },
     signatureRole: { fontSize: 8, color: c.textMuted },
@@ -579,7 +591,7 @@ const createCorporateStyles = (theme) => {
   return StyleSheet.create({
     page: { fontFamily: theme.fontFamily, fontSize: 10, padding: 0, lineHeight: 1.5, color: c.text, backgroundColor: '#ffffff' },
     // Deckblatt - Mit Header-Bar
-    coverPage: { flex: 1, backgroundColor: '#ffffff' },
+    coverPage: { flex: 1, backgroundColor: '#ffffff', minHeight: '100%' },
     headerBar: { backgroundColor: c.primary, padding: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     logo: { width: 50, height: 50, objectFit: 'contain' },
     headerInfo: { color: '#ffffff', textAlign: 'right', fontSize: 8 },
@@ -598,9 +610,9 @@ const createCorporateStyles = (theme) => {
     partyAddress: { fontSize: 9, color: c.textLight },
     partyRole: { fontSize: 8, color: c.accent, fontWeight: 'bold' },
     footer: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#f0f4f8', padding: 15, flexDirection: 'row', justifyContent: 'space-between', fontSize: 7, color: c.textMuted },
-    // Content Styles
+    // Content Styles - WICHTIG: minHeight entfernt da es Probleme verursachen kann
     contentPage: { flex: 1, backgroundColor: '#ffffff' },
-    contentMain: { padding: 40, paddingTop: 30, backgroundColor: '#ffffff', minHeight: '100%' },
+    contentMain: { padding: 40, paddingTop: 30, backgroundColor: '#ffffff' },
     preambleContainer: { marginBottom: 25, backgroundColor: '#f8fafc', padding: 15, borderLeftWidth: 3, borderLeftColor: c.primary },
     preambleTitle: { fontSize: 10, fontWeight: 'bold', color: c.primary, textTransform: 'uppercase', marginBottom: 8 },
     preambleText: { fontSize: 9, color: c.textLight },
@@ -955,6 +967,9 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType }) 
   }
 
   if (designName === 'Corporate') {
+    console.log('📊 Corporate ContentPage: Rendere', sections.length, 'Sections');
+    sections.forEach((s, i) => console.log(`  Section ${i}: ${s.type} - ${s.title || 'no title'} (${s.content?.length || 0} items)`));
+
     return e(Page, { size: 'A4', style: styles.page },
       e(View, { style: styles.contentPage },
         e(View, { style: styles.contentMain },
@@ -1135,10 +1150,11 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
 // HAUPT-EXPORT FUNKTION
 // ═══════════════════════════════════════════════════════════════════════════
 
-const generatePDFv2 = async (contractText, companyProfile, contractType, parties = {}, isDraft = false, designVariant = 'executive') => {
+const generatePDFv2 = async (contractText, companyProfile, contractType, parties = {}, isDraft = false, designVariant = 'executive', contractId = null) => {
   console.log('🎨 [V2 React-PDF] Starte PDF-Generierung...');
   console.log('📄 Vertragstyp:', contractType);
   console.log('🏢 Firma:', companyProfile?.companyName);
+  console.log('🔗 Contract-ID für QR:', contractId);
   console.log('🏢 Firmen-Details:', JSON.stringify({
     name: companyProfile?.companyName,
     street: companyProfile?.street,
@@ -1166,11 +1182,15 @@ const generatePDFv2 = async (contractText, companyProfile, contractType, parties
     logoBase64 = await urlToBase64(companyProfile.logoUrl);
   }
 
-  // Dokument-ID generieren
-  const documentId = `DOC-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+  // Dokument-ID: Verwende Contract-ID falls vorhanden, sonst generiere eine zufällige
+  const documentId = contractId || `DOC-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
-  // QR-Code generieren
-  const qrCode = await generateQRCode(`https://contract-ai.de/verify/${documentId}`);
+  // QR-Code generieren - Link zur Verifizierungsseite
+  const verifyUrl = contractId
+    ? `https://contract-ai.de/verify/${contractId}`
+    : `https://contract-ai.de/verify/${documentId}`;
+  const qrCode = await generateQRCode(verifyUrl);
+  console.log('🔗 QR-Code Verifizierungs-URL:', verifyUrl);
 
   // Parteien-Labels basierend auf Vertragstyp
   const partyLabels = getPartyLabels(contractType);
@@ -1178,6 +1198,15 @@ const generatePDFv2 = async (contractText, companyProfile, contractType, parties
   // Vertragstext parsen
   const sections = parseContractText(contractText);
   console.log(`📊 ${sections.length} Abschnitte gefunden`);
+  if (sections.length > 0) {
+    console.log('📝 Erste 3 Sections:', sections.slice(0, 3).map(s => ({
+      type: s.type,
+      title: s.title || 'no title',
+      contentCount: s.content?.length || 0
+    })));
+  } else {
+    console.log('⚠️ KEINE SECTIONS GEFUNDEN! Vertragstext-Anfang:', contractText?.substring(0, 200));
+  }
 
   // Datum formatieren
   const currentDate = new Date().toLocaleDateString('de-DE', {
