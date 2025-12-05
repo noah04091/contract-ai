@@ -108,6 +108,65 @@ const requireEnterprise = async (req, res, next) => {
   }
 };
 
+// GET /api/company-profile/debug-save - Debug: Testspeicherung
+router.get("/debug-save", verifyToken, async (req, res) => {
+  try {
+    const userId = new ObjectId(req.user.userId);
+    const db = req.db;
+
+    // Test-Daten speichern
+    const testProfile = {
+      userId,
+      companyName: 'TEST - Online Handel Noah Liebold',
+      legalForm: '',
+      street: 'Teststraße 123',
+      postalCode: '12345',
+      city: 'Teststadt',
+      country: 'Deutschland',
+      contactEmail: 'test@example.com',
+      contactPhone: '+49 123 456789',
+      updatedAt: new Date()
+    };
+
+    const result = await db.collection("company_profiles").updateOne(
+      { userId },
+      {
+        $set: testProfile,
+        $setOnInsert: { createdAt: new Date() }
+      },
+      { upsert: true }
+    );
+
+    // Verifiziere
+    const saved = await db.collection("company_profiles").findOne({ userId });
+    const count = await db.collection("company_profiles").countDocuments();
+
+    res.json({
+      success: true,
+      message: "Test-Profil gespeichert",
+      result: {
+        matchedCount: result.matchedCount,
+        modifiedCount: result.modifiedCount,
+        upsertedCount: result.upsertedCount,
+        upsertedId: result.upsertedId
+      },
+      savedProfile: saved ? {
+        _id: saved._id,
+        userId: saved.userId,
+        companyName: saved.companyName,
+        street: saved.street
+      } : null,
+      totalProfilesInDB: count
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      stack: error.stack
+    });
+  }
+});
+
 // GET /api/company-profile/me - Firmenprofil abrufen
 router.get("/me", verifyToken, async (req, res) => {
   try {
