@@ -956,9 +956,10 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType }) 
   }
 
   if (designName === 'Corporate') {
-    return e(Page, { size: 'A4', style: styles.page },
-      e(View, { style: styles.contentPage },
-        e(View, { style: styles.contentMain },
+    // WICHTIG: Explizit weißer Hintergrund auf JEDER Ebene!
+    return e(Page, { size: 'A4', style: { ...styles.page, backgroundColor: '#ffffff' } },
+      e(View, { style: { ...styles.contentPage, backgroundColor: '#ffffff', minHeight: '100%' } },
+        e(View, { style: { ...styles.contentMain, backgroundColor: '#ffffff' } },
           ...sections.map(renderSection)
         )
       ),
