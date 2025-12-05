@@ -252,19 +252,7 @@ const getPartyLabels = (contractType) => {
  * Parst den Vertragstext in strukturierte Abschnitte
  */
 const parseContractText = (text) => {
-  console.log('🔍 parseContractText aufgerufen');
-  console.log('📝 Text-Typ:', typeof text);
-  console.log('📝 Text-Länge:', text?.length || 0);
-  console.log('📝 Erste 500 Zeichen:', text?.substring(0, 500));
-
-  if (!text || typeof text !== 'string') {
-    console.log('⚠️ KEIN TEXT oder kein String übergeben!');
-    return [];
-  }
-
   const lines = text.split('\n');
-  console.log('📝 Anzahl Zeilen:', lines.length);
-
   const sections = [];
   let currentSection = null;
   let skipParties = false;
@@ -503,18 +491,18 @@ const createMinimalStyles = (theme) => {
     bulletText: { flex: 1, fontSize: 9 },
     paragraph: { fontSize: 9, marginBottom: 12, textAlign: 'justify', lineHeight: 1.8 },
     pageFooter: { position: 'absolute', bottom: 40, left: 60, right: 60, flexDirection: 'row', justifyContent: 'center', fontSize: 7, color: c.textMuted },
-    // Signature Styles - Minimal: klare, sichtbare Linien
+    // Signature Styles
     signaturePage: { flex: 1, justifyContent: 'center' },
     signatureTitle: { fontSize: 10, textAlign: 'center', color: c.textMuted, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 60 },
     signatureColumns: { flexDirection: 'row', justifyContent: 'space-around' },
-    signatureColumn: { width: '40%' },
-    signatureLabel: { fontSize: 8, color: c.textMuted, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 40 },
-    signatureLine: { borderBottomWidth: 1, borderBottomColor: c.text, marginBottom: 8, height: 1 },
+    signatureColumn: { width: '40%', alignItems: 'center' },
+    signatureLabel: { fontSize: 8, color: c.textMuted, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 50 },
+    signatureLine: { borderBottomWidth: 0.5, borderBottomColor: c.textMuted, marginBottom: 5, width: '100%' },
     signatureHint: { fontSize: 7, color: c.textMuted },
     signatureName: { fontSize: 9, marginTop: 20, color: c.textLight },
     signatureRole: { fontSize: 7, color: c.textMuted },
     verificationContainer: { alignItems: 'center', marginTop: 80 },
-    qrCode: { width: 50, height: 50, opacity: 0.7 },
+    qrCode: { width: 40, height: 40, opacity: 0.6 },
     verificationText: { fontSize: 6, color: c.textMuted, marginTop: 5 },
     attachmentsBox: { marginTop: 40, alignItems: 'center' },
     attachmentsTitle: { fontSize: 7, color: c.textMuted, letterSpacing: 2, textTransform: 'uppercase' },
@@ -566,13 +554,13 @@ const createElegantStyles = (theme) => {
     bulletText: { flex: 1, fontSize: 10 },
     paragraph: { fontSize: 10, marginBottom: 10, textAlign: 'justify' },
     pageFooter: { position: 'absolute', bottom: 30, left: 50, right: 50, alignItems: 'center' },
-    // Signature Styles - Elegant: klare, goldene Linien
+    // Signature Styles
     signaturePage: { flex: 1 },
     signatureTitle: { fontSize: 14, textAlign: 'center', color: c.primary, marginBottom: 50, borderBottomWidth: 1, borderBottomColor: c.accent, paddingBottom: 15 },
     signatureColumns: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 30 },
-    signatureColumn: { width: '42%' },
-    signatureLabel: { fontSize: 10, color: c.accent, fontStyle: 'italic', marginBottom: 35 },
-    signatureLine: { borderBottomWidth: 1, borderBottomColor: c.accent, marginBottom: 8, height: 1 },
+    signatureColumn: { width: '42%', alignItems: 'center' },
+    signatureLabel: { fontSize: 10, color: c.accent, fontStyle: 'italic', marginBottom: 40 },
+    signatureLine: { borderBottomWidth: 1, borderBottomColor: c.primary, marginBottom: 5, width: '100%' },
     signatureHint: { fontSize: 8, color: c.textMuted, fontStyle: 'italic' },
     signatureName: { fontSize: 10, marginTop: 15, color: c.primary },
     signatureRole: { fontSize: 8, color: c.textMuted },
@@ -587,69 +575,67 @@ const createElegantStyles = (theme) => {
 };
 
 const createCorporateStyles = (theme) => {
-  // WICHTIG: Corporate verwendet KEINE theme.colors für Text!
-  // Alle Farben sind hardcoded um sicherzustellen dass der Text IMMER sichtbar ist
+  const c = theme.colors;
   return StyleSheet.create({
-    // Page mit explizit schwarzem Text
-    page: { fontFamily: theme.fontFamily, fontSize: 10, padding: 0, lineHeight: 1.5, color: '#000000', backgroundColor: '#ffffff' },
+    page: { fontFamily: theme.fontFamily, fontSize: 10, padding: 0, lineHeight: 1.5, color: c.text, backgroundColor: '#ffffff' },
     // Deckblatt - Mit Header-Bar
     coverPage: { flex: 1, backgroundColor: '#ffffff' },
-    headerBar: { backgroundColor: '#003366', padding: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    headerBar: { backgroundColor: c.primary, padding: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     logo: { width: 50, height: 50, objectFit: 'contain' },
     headerInfo: { color: '#ffffff', textAlign: 'right', fontSize: 8 },
     headerCompanyName: { fontSize: 10, fontWeight: 'bold', color: '#ffffff' },
-    mainContent: { padding: 40, color: '#000000' },
-    titleContainer: { alignItems: 'center', marginTop: 50, marginBottom: 40, backgroundColor: '#003366', padding: 25 },
+    mainContent: { padding: 40 },
+    titleContainer: { alignItems: 'center', marginTop: 50, marginBottom: 40, backgroundColor: c.headerBg, padding: 25 },
     title: { fontSize: 22, fontWeight: 'bold', color: '#ffffff', textTransform: 'uppercase', letterSpacing: 2 },
     titleLine: { display: 'none' },
     subtitle: { fontSize: 10, color: '#ffffff', marginTop: 10, opacity: 0.9 },
     partiesContainer: { marginTop: 30 },
-    partiesLabel: { fontSize: 9, color: '#003366', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 },
-    partyBox: { borderWidth: 1, borderColor: '#003366', marginBottom: 15 },
-    partyBoxHeader: { backgroundColor: '#f0f4f8', padding: 8, borderBottomWidth: 1, borderBottomColor: '#003366' },
+    partiesLabel: { fontSize: 9, color: c.primary, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 },
+    partyBox: { borderWidth: 1, borderColor: c.border, marginBottom: 15 },
+    partyBoxHeader: { backgroundColor: '#f0f4f8', padding: 8, borderBottomWidth: 1, borderBottomColor: c.border },
     partyBoxContent: { padding: 12 },
-    partyName: { fontSize: 11, fontWeight: 'bold', color: '#003366' },
-    partyAddress: { fontSize: 9, color: '#333333' },
-    partyRole: { fontSize: 8, color: '#0066cc', fontWeight: 'bold' },
-    footer: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#f0f4f8', padding: 15, flexDirection: 'row', justifyContent: 'space-between', fontSize: 7, color: '#666666' },
-    // Content Styles - ALLES mit expliziten dunklen Farben!
-    contentPage: { flex: 1, backgroundColor: '#ffffff', color: '#000000' },
-    contentMain: { padding: 40, paddingTop: 30, backgroundColor: '#ffffff', color: '#000000' },
-    preambleContainer: { marginBottom: 25, backgroundColor: '#f0f4f8', padding: 15, borderLeftWidth: 3, borderLeftColor: '#003366' },
-    preambleTitle: { fontSize: 10, fontWeight: 'bold', color: '#003366', textTransform: 'uppercase', marginBottom: 8 },
-    preambleText: { fontSize: 9, color: '#000000' },
-    sectionHeader: { fontSize: 11, fontWeight: 'bold', color: '#ffffff', backgroundColor: '#003366', padding: 8, marginTop: 20, marginBottom: 12 },
+    partyName: { fontSize: 11, fontWeight: 'bold', color: c.primary },
+    partyAddress: { fontSize: 9, color: c.textLight },
+    partyRole: { fontSize: 8, color: c.accent, fontWeight: 'bold' },
+    footer: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#f0f4f8', padding: 15, flexDirection: 'row', justifyContent: 'space-between', fontSize: 7, color: c.textMuted },
+    // Content Styles
+    contentPage: { flex: 1, backgroundColor: '#ffffff' },
+    contentMain: { padding: 40, paddingTop: 30, backgroundColor: '#ffffff', minHeight: '100%' },
+    preambleContainer: { marginBottom: 25, backgroundColor: '#f8fafc', padding: 15, borderLeftWidth: 3, borderLeftColor: c.primary },
+    preambleTitle: { fontSize: 10, fontWeight: 'bold', color: c.primary, textTransform: 'uppercase', marginBottom: 8 },
+    preambleText: { fontSize: 9, color: c.textLight },
+    sectionHeader: { fontSize: 11, fontWeight: 'bold', color: '#ffffff', backgroundColor: c.primary, padding: 8, marginTop: 20, marginBottom: 12 },
     numberedParagraph: { flexDirection: 'row', marginBottom: 8, paddingLeft: 10 },
-    paragraphNumber: { width: 25, fontSize: 9, fontWeight: 'bold', color: '#003366' },
-    paragraphText: { flex: 1, fontSize: 9, textAlign: 'justify', color: '#000000' },
+    paragraphNumber: { width: 25, fontSize: 9, fontWeight: 'bold', color: c.primary },
+    paragraphText: { flex: 1, fontSize: 9, textAlign: 'justify', color: c.text },
     letterItem: { flexDirection: 'row', marginLeft: 35, marginBottom: 5 },
-    letterLabel: { width: 18, fontSize: 9, color: '#0066cc', fontWeight: 'bold' },
-    letterContent: { flex: 1, fontSize: 9, color: '#000000' },
+    letterLabel: { width: 18, fontSize: 9, color: c.accent, fontWeight: 'bold' },
+    letterContent: { flex: 1, fontSize: 9, color: c.text },
     bulletItem: { flexDirection: 'row', marginLeft: 35, marginBottom: 5 },
-    bulletPoint: { width: 12, fontSize: 9, color: '#0066cc' },
-    bulletText: { flex: 1, fontSize: 9, color: '#000000' },
-    paragraph: { fontSize: 9, marginBottom: 8, textAlign: 'justify', paddingLeft: 10, color: '#000000' },
-    pageFooter: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#f0f4f8', padding: 10, flexDirection: 'row', justifyContent: 'space-between', fontSize: 7, color: '#666666' },
-    // Signature Styles - ALLE Farben hardcoded!
+    bulletPoint: { width: 12, fontSize: 9, color: c.accent },
+    bulletText: { flex: 1, fontSize: 9, color: c.text },
+    paragraph: { fontSize: 9, marginBottom: 8, textAlign: 'justify', paddingLeft: 10, color: c.text },
+    pageFooter: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#f0f4f8', padding: 10, flexDirection: 'row', justifyContent: 'space-between', fontSize: 7, color: c.textMuted },
+    // Signature Styles
     signaturePage: { flex: 1, backgroundColor: '#ffffff' },
-    signatureHeader: { backgroundColor: '#003366', padding: 15 },
+    signatureHeader: { backgroundColor: c.primary, padding: 15 },
     signatureTitle: { fontSize: 14, fontWeight: 'bold', color: '#ffffff', textAlign: 'center' },
     signatureMain: { padding: 40 },
     signatureColumns: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 30 },
-    signatureColumn: { width: '45%', borderWidth: 1, borderColor: '#003366', padding: 15 },
-    signatureLabel: { fontSize: 9, fontWeight: 'bold', color: '#003366', textTransform: 'uppercase', marginBottom: 30, paddingBottom: 5, borderBottomWidth: 2, borderBottomColor: '#0066cc' },
-    signatureLine: { borderBottomWidth: 1, borderBottomColor: '#333333', marginBottom: 5 },
-    signatureHint: { fontSize: 7, color: '#666666' },
-    signatureName: { fontSize: 9, fontWeight: 'bold', marginTop: 15, color: '#000000' },
-    signatureRole: { fontSize: 7, color: '#666666' },
+    signatureColumn: { width: '45%', borderWidth: 1, borderColor: c.border, padding: 15 },
+    signatureLabel: { fontSize: 9, fontWeight: 'bold', color: c.primary, textTransform: 'uppercase', marginBottom: 30, paddingBottom: 5, borderBottomWidth: 2, borderBottomColor: c.accent },
+    signatureLine: { borderBottomWidth: 1, borderBottomColor: c.textLight, marginBottom: 5 },
+    signatureHint: { fontSize: 7, color: c.textMuted },
+    signatureName: { fontSize: 9, fontWeight: 'bold', marginTop: 15 },
+    signatureRole: { fontSize: 7, color: c.textMuted },
     verificationContainer: { alignItems: 'center', marginTop: 40, padding: 15, backgroundColor: '#f8fafc' },
     qrCode: { width: 50, height: 50 },
-    verificationText: { fontSize: 6, color: '#666666', marginTop: 5 },
-    attachmentsBox: { marginTop: 30, borderWidth: 1, borderColor: '#003366' },
-    attachmentsHeader: { backgroundColor: '#f0f4f8', padding: 8, borderBottomWidth: 1, borderBottomColor: '#003366' },
-    attachmentsTitle: { fontSize: 8, fontWeight: 'bold', color: '#003366', textTransform: 'uppercase' },
+    verificationText: { fontSize: 6, color: c.textMuted, marginTop: 5 },
+    attachmentsBox: { marginTop: 30, borderWidth: 1, borderColor: c.border },
+    attachmentsHeader: { backgroundColor: '#f0f4f8', padding: 8, borderBottomWidth: 1, borderBottomColor: c.border },
+    attachmentsTitle: { fontSize: 8, fontWeight: 'bold', color: c.primary, textTransform: 'uppercase' },
     attachmentsContent: { padding: 10 },
-    attachmentsText: { fontSize: 8, color: '#666666' },
+    attachmentsText: { fontSize: 8, color: c.textMuted },
     watermark: { position: 'absolute', top: '35%', left: '15%', fontSize: 65, color: '#e8eef4', transform: 'rotate(-45deg)', opacity: 0.25 },
     companyInfo: { display: 'none' },
     companyName: { display: 'none' },
@@ -969,9 +955,6 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType }) 
   }
 
   if (designName === 'Corporate') {
-    console.log('📊 Corporate ContentPage: Rendere', sections.length, 'Sections');
-    sections.forEach((s, i) => console.log(`  Section ${i}: ${s.type} - ${s.title || 'no title'} (${s.content?.length || 0} items)`));
-
     return e(Page, { size: 'A4', style: styles.page },
       e(View, { style: styles.contentPage },
         e(View, { style: styles.contentMain },
@@ -1152,11 +1135,10 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
 // HAUPT-EXPORT FUNKTION
 // ═══════════════════════════════════════════════════════════════════════════
 
-const generatePDFv2 = async (contractText, companyProfile, contractType, parties = {}, isDraft = false, designVariant = 'executive', contractId = null) => {
+const generatePDFv2 = async (contractText, companyProfile, contractType, parties = {}, isDraft = false, designVariant = 'executive') => {
   console.log('🎨 [V2 React-PDF] Starte PDF-Generierung...');
   console.log('📄 Vertragstyp:', contractType);
   console.log('🏢 Firma:', companyProfile?.companyName);
-  console.log('🔗 Contract-ID für QR:', contractId);
   console.log('🏢 Firmen-Details:', JSON.stringify({
     name: companyProfile?.companyName,
     street: companyProfile?.street,
@@ -1184,15 +1166,11 @@ const generatePDFv2 = async (contractText, companyProfile, contractType, parties
     logoBase64 = await urlToBase64(companyProfile.logoUrl);
   }
 
-  // Dokument-ID: Verwende Contract-ID falls vorhanden, sonst generiere eine zufällige
-  const documentId = contractId || `DOC-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+  // Dokument-ID generieren
+  const documentId = `DOC-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
-  // QR-Code generieren - Link zur Verifizierungsseite
-  const verifyUrl = contractId
-    ? `https://contract-ai.de/verify/${contractId}`
-    : `https://contract-ai.de/verify/${documentId}`;
-  const qrCode = await generateQRCode(verifyUrl);
-  console.log('🔗 QR-Code Verifizierungs-URL:', verifyUrl);
+  // QR-Code generieren
+  const qrCode = await generateQRCode(`https://contract-ai.de/verify/${documentId}`);
 
   // Parteien-Labels basierend auf Vertragstyp
   const partyLabels = getPartyLabels(contractType);
@@ -1200,15 +1178,6 @@ const generatePDFv2 = async (contractText, companyProfile, contractType, parties
   // Vertragstext parsen
   const sections = parseContractText(contractText);
   console.log(`📊 ${sections.length} Abschnitte gefunden`);
-  if (sections.length > 0) {
-    console.log('📝 Erste 3 Sections:', sections.slice(0, 3).map(s => ({
-      type: s.type,
-      title: s.title || 'no title',
-      contentCount: s.content?.length || 0
-    })));
-  } else {
-    console.log('⚠️ KEINE SECTIONS GEFUNDEN! Vertragstext-Anfang:', contractText?.substring(0, 200));
-  }
 
   // Datum formatieren
   const currentDate = new Date().toLocaleDateString('de-DE', {
