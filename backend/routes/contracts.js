@@ -3413,8 +3413,8 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
           contactEmail: rawProfile.contactEmail || ''
         };
 
-        // Logo-URL aus S3-Key generieren (wenn vorhanden)
-        if (rawProfile.logoKey && !rawProfile.logoUrl) {
+        // Logo-URL aus S3-Key generieren (IMMER frische signierte URL erstellen)
+        if (rawProfile.logoKey) {
           try {
             const aws = require('aws-sdk');
             const s3 = new aws.S3({
@@ -3427,10 +3427,12 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
               Key: rawProfile.logoKey,
               Expires: 3600 // 1 Stunde gültig
             });
-            console.log('🖼️ Logo-URL generiert aus S3-Key');
+            console.log('🖼️ Logo-URL generiert aus S3-Key:', rawProfile.logoKey);
           } catch (s3Error) {
             console.log('⚠️ Logo-URL konnte nicht generiert werden:', s3Error.message);
           }
+        } else {
+          console.log('⚠️ Kein logoKey im Profil vorhanden');
         }
       }
 
