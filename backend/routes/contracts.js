@@ -3191,25 +3191,15 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
 
     const contractId = req.params.id;
     console.log('🎨 [V2] PDF-Anfrage für Vertrag:', contractId);
-    console.log('🎨 [V2] User ID aus Token:', req.user.userId);
 
     // Verwende die bereits initialisierte contractsCollection
+    // WICHTIG: userId muss als ObjectId verglichen werden!
     const contract = await contractsCollection.findOne({
       _id: new ObjectId(contractId),
-      userId: req.user.userId
+      userId: new ObjectId(req.user.userId)
     });
 
-    console.log('🎨 [V2] Vertrag gefunden:', !!contract);
-
     if (!contract) {
-      // Debug: Versuche ohne userId zu finden
-      const contractAny = await contractsCollection.findOne({
-        _id: new ObjectId(contractId)
-      });
-      console.log('🎨 [V2] Vertrag ohne userId-Filter:', !!contractAny);
-      if (contractAny) {
-        console.log('🎨 [V2] Vertrag gehört zu userId:', contractAny.userId);
-      }
       return res.status(404).json({ message: "Vertrag nicht gefunden" });
     }
 
@@ -3265,25 +3255,15 @@ router.post('/:id/pdf-v3', verifyToken, async (req, res) => {
 
     const contractId = req.params.id;
     console.log('🎨 [V3] PDF-Anfrage für Vertrag:', contractId);
-    console.log('🎨 [V3] User ID aus Token:', req.user.userId);
 
     // Verwende die bereits initialisierte contractsCollection
+    // WICHTIG: userId muss als ObjectId verglichen werden!
     const contract = await contractsCollection.findOne({
       _id: new ObjectId(contractId),
-      userId: req.user.userId
+      userId: new ObjectId(req.user.userId)
     });
 
-    console.log('🎨 [V3] Vertrag gefunden:', !!contract);
-
     if (!contract) {
-      // Debug: Versuche ohne userId zu finden
-      const contractAny = await contractsCollection.findOne({
-        _id: new ObjectId(contractId)
-      });
-      console.log('🎨 [V3] Vertrag ohne userId-Filter:', !!contractAny);
-      if (contractAny) {
-        console.log('🎨 [V3] Vertrag gehört zu userId:', contractAny.userId);
-      }
       return res.status(404).json({ message: "Vertrag nicht gefunden" });
     }
 
