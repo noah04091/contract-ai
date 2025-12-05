@@ -3857,26 +3857,25 @@ export default function Generate() {
         isLoading: true
       });
       
-      // Versuche Puppeteer wenn Contract ID vorhanden
+      // Versuche V2 (React-PDF) wenn Contract ID vorhanden
       if (contractId) {
-        console.log("🚀 Versuche Puppeteer PDF-Generierung mit Contract ID:", contractId);
-        
+        console.log("🚀 Versuche V2 (React-PDF) PDF-Generierung mit Contract ID:", contractId, "| Design:", selectedDesignVariant);
+
         try {
-          const puppeteerUrl = `${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/generate/pdf`;
-          console.log("📊 Puppeteer URL:", puppeteerUrl);
-          
-          const response = await fetch(puppeteerUrl, {
+          // 🆕 V2-Route mit Design-Variante als Query-Parameter
+          const pdfUrl = `${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/${contractId}/pdf-v2?design=${selectedDesignVariant}`;
+          console.log("📊 V2 PDF URL:", pdfUrl);
+
+          const response = await fetch(pdfUrl, {
             method: 'POST',
             credentials: 'include',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ 
-              contractId: contractId 
-            })
+            body: JSON.stringify({ design: selectedDesignVariant })
           });
 
-          console.log("📊 Puppeteer Response:", {
+          console.log("📊 V2 Response:", {
             status: response.status,
             statusText: response.statusText,
             contentType: response.headers.get('content-type')
@@ -3906,17 +3905,17 @@ export default function Generate() {
                 autoClose: 3000
               });
               
-              console.log("✅ Puppeteer PDF erfolgreich heruntergeladen");
+              console.log("✅ V2 PDF erfolgreich heruntergeladen");
               return; // Erfolgreich - beende hier
             }
           }
-          
-          // Puppeteer fehlgeschlagen
+
+          // V2 fehlgeschlagen
           const errorText = await response.text();
-          console.error("❌ Puppeteer Fehler:", response.status, errorText);
-          
-        } catch (puppeteerError) {
-          console.error("❌ Netzwerkfehler bei Puppeteer:", puppeteerError);
+          console.error("❌ V2 Fehler:", response.status, errorText);
+
+        } catch (v2Error) {
+          console.error("❌ Netzwerkfehler bei V2:", v2Error);
         }
       }
 
@@ -4146,11 +4145,12 @@ export default function Generate() {
         isLoading: true
       });
 
-      // 🆕 Neue V2-Route: /api/contracts/:id/pdf-v2
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/${contractId}/pdf-v2`, {
+      // 🆕 V2-Route mit Design-Variante
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/${contractId}/pdf-v2?design=${selectedDesignVariant}`, {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ design: selectedDesignVariant })
       });
 
       if (!response.ok) {

@@ -3181,8 +3181,95 @@ const loadPDFGenerators = async () => {
 };
 
 /**
+ * POST /api/contracts/:id/pdf
+ * Generiert PDF - Standard ist V2 (React-PDF)
+ * Query-Parameter:
+ *   - ?version=v2|v3 (default: v2)
+ *   - ?design=executive|modern|minimal|elegant|corporate (default: executive)
+ */
+router.post('/:id/pdf', verifyToken, async (req, res) => {
+  try {
+    await loadPDFGenerators();
+
+    const version = req.query.version || 'v2';
+    const designVariant = req.query.design || req.body.design || 'executive';
+    const contractId = req.params.id;
+    console.log(`📄 [PDF] Anfrage für Vertrag ${contractId}, Version: ${version}, Design: ${designVariant}`);
+
+    // Vertrag laden
+    const contract = await contractsCollection.findOne({
+      _id: new ObjectId(contractId),
+      userId: new ObjectId(req.user.userId)
+    });
+
+    if (!contract) {
+      return res.status(404).json({ message: "Vertrag nicht gefunden" });
+    }
+
+    // Company Profile laden (immer versuchen)
+    let companyProfile = null;
+    try {
+      const db = client.db("contractai");
+      companyProfile = await db.collection("company_profiles").findOne({
+        userId: new ObjectId(req.user.userId)
+      });
+    } catch (profileError) {
+      console.log('⚠️ Company Profile konnte nicht geladen werden:', profileError.message);
+    }
+
+    const parties = contract.formData || contract.parties || contract.metadata?.parties || {};
+    const finalDesign = contract.designVariant || designVariant;
+    let pdfBuffer;
+
+    if (version === 'v3' && generatePDFv3) {
+      // V3: Typst
+      pdfBuffer = await generatePDFv3(
+        contract.content,
+        companyProfile,
+        contract.contractType || 'Vertrag',
+        parties,
+        contract.status === 'Entwurf'
+      );
+    } else if (generatePDFv2) {
+      // V2: React-PDF (Standard) - mit Design-Variante
+      pdfBuffer = await generatePDFv2(
+        contract.content,
+        companyProfile,
+        contract.contractType || 'Vertrag',
+        parties,
+        contract.status === 'Entwurf',
+        finalDesign
+      );
+    } else {
+      return res.status(503).json({
+        message: `PDF Generator nicht verfügbar`,
+        availableVersions: {
+          v2: !!generatePDFv2,
+          v3: !!generatePDFv3
+        }
+      });
+    }
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${contract.name || 'Vertrag'}.pdf"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.send(pdfBuffer);
+
+    console.log(`✅ [PDF ${version.toUpperCase()}] Erfolgreich gesendet`);
+
+  } catch (error) {
+    console.error('❌ [PDF] Generierung fehlgeschlagen:', error);
+    res.status(500).json({
+      message: 'PDF-Generierung fehlgeschlagen',
+      error: error.message
+    });
+  }
+});
+
+/**
  * POST /api/contracts/:id/pdf-v2
  * Generiert PDF mit React-PDF (V2)
+ * Query-Parameter: ?design=executive|modern|minimal|elegant|corporate (default: executive)
  */
 router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
   try {
@@ -3196,7 +3283,9 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
     }
 
     const contractId = req.params.id;
-    console.log('🎨 [V2] PDF-Anfrage für Vertrag:', contractId);
+    // Design aus Query-Parameter oder Request-Body
+    const designVariant = req.query.design || req.body.design || 'executive';
+    console.log('🎨 [V2] PDF-Anfrage für Vertrag:', contractId, '| Design:', designVariant);
 
     // Verwende die bereits initialisierte contractsCollection
     // WICHTIG: userId muss als ObjectId verglichen werden!
@@ -3209,27 +3298,42 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
       return res.status(404).json({ message: "Vertrag nicht gefunden" });
     }
 
-    // Company Profile laden
+    // Company Profile laden (immer versuchen, falls vorhanden)
     let companyProfile = null;
-    if (contract.hasCompanyProfile) {
+    try {
       const db = client.db("contractai");
       companyProfile = await db.collection("company_profiles").findOne({
         userId: new ObjectId(req.user.userId)
       });
+    } catch (profileError) {
+      console.log('⚠️ Company Profile konnte nicht geladen werden:', profileError.message);
     }
 
-    const parties = contract.formData || contract.parties || {};
+    // Parteien-Daten aus formData oder metadata extrahieren
+    const parties = contract.formData || contract.parties || contract.metadata?.parties || {};
+
+    // Design-Variante: aus Vertrag oder Query-Parameter
+    const finalDesign = contract.designVariant || designVariant;
+
+    console.log('📄 Vertragsdaten:', {
+      name: contract.name,
+      type: contract.contractType,
+      design: finalDesign,
+      hasCompanyProfile: !!companyProfile,
+      partiesKeys: Object.keys(parties)
+    });
 
     const pdfBuffer = await generatePDFv2(
       contract.content,
       companyProfile,
       contract.contractType || 'Vertrag',
       parties,
-      contract.status === 'Entwurf'
+      contract.status === 'Entwurf',
+      finalDesign
     );
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename="${contract.name || 'Vertrag'}_v2.pdf"`);
+    res.setHeader('Content-Disposition', `inline; filename="${contract.name || 'Vertrag'}.pdf"`);
     res.setHeader('Content-Length', pdfBuffer.length);
     res.send(pdfBuffer);
 

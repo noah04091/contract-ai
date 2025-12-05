@@ -1,17 +1,16 @@
 // 📄 pdfGeneratorV2.js - React-PDF basierter Vertragsgenerator
-// Verwendet @react-pdf/renderer für pixel-perfekte PDFs
+// Professioneller PDF-Generator mit 5 Design-Varianten
+// Version 2.0 - Marktreif
 
 const ReactPDF = require('@react-pdf/renderer');
 const { Document, Page, Text, View, StyleSheet, Font, Image } = ReactPDF;
 const React = require('react');
 const QRCode = require('qrcode');
-const path = require('path');
 
 // ═══════════════════════════════════════════════════════════════════════════
-// FONT REGISTRATION - Professionelle Schriftarten
+// FONT REGISTRATION
 // ═══════════════════════════════════════════════════════════════════════════
 
-// Standard-Fonts registrieren (React-PDF hat diese eingebaut)
 Font.register({
   family: 'Times-Roman',
   fonts: [
@@ -22,412 +21,136 @@ Font.register({
   ]
 });
 
-// ═══════════════════════════════════════════════════════════════════════════
-// STYLES - Professionelles Vertrags-Design
-// ═══════════════════════════════════════════════════════════════════════════
-
-const styles = StyleSheet.create({
-  // Seiten-Layout
-  page: {
-    fontFamily: 'Times-Roman',
-    fontSize: 11,
-    paddingTop: 25,
-    paddingBottom: 25,
-    paddingHorizontal: 25,
-    lineHeight: 1.5,
-    color: '#1a1a1a',
-  },
-
-  // ══════════════════════════════════════════════════════════════
-  // DECKBLATT STYLES
-  // ══════════════════════════════════════════════════════════════
-
-  coverPage: {
-    flex: 1,
-    position: 'relative',
-  },
-
-  // Briefkopf
-  letterhead: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 40,
-    paddingBottom: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-  },
-
-  logo: {
-    width: 60,
-    height: 60,
-    objectFit: 'contain',
-  },
-
-  companyInfo: {
-    textAlign: 'right',
-    fontSize: 9,
-    color: '#666',
-  },
-
-  companyName: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-    marginBottom: 3,
-  },
-
-  // Vertragstyp-Titel
-  contractTypeContainer: {
-    marginTop: 60,
-    marginBottom: 40,
-    alignItems: 'center',
-  },
-
-  contractType: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-    letterSpacing: 3,
-    color: '#1a1a1a',
-    marginBottom: 10,
-  },
-
-  decorativeLine: {
-    width: 80,
-    height: 2,
-    backgroundColor: '#333',
-    marginVertical: 10,
-  },
-
-  contractDate: {
-    fontSize: 11,
-    color: '#666',
-    fontStyle: 'italic',
-    marginTop: 5,
-  },
-
-  // Parteien-Block
-  partiesContainer: {
-    marginTop: 50,
-    marginBottom: 40,
-  },
-
-  partiesLabel: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    marginBottom: 15,
-  },
-
-  partyBlock: {
-    marginBottom: 20,
-    paddingLeft: 15,
-    borderLeftWidth: 2,
-    borderLeftColor: '#ddd',
-  },
-
-  partyName: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    marginBottom: 3,
-  },
-
-  partyAddress: {
-    fontSize: 10,
-    color: '#444',
-    marginBottom: 2,
-  },
-
-  partyRole: {
-    fontSize: 10,
-    fontStyle: 'italic',
-    color: '#666',
-    marginTop: 5,
-  },
-
-  // Footer für Deckblatt
-  coverFooter: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    fontSize: 8,
-    color: '#999',
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-  },
-
-  // ══════════════════════════════════════════════════════════════
-  // INHALTS-SEITEN STYLES
-  // ══════════════════════════════════════════════════════════════
-
-  contentPage: {
-    flex: 1,
-  },
-
-  // Präambel
-  preambleContainer: {
-    marginVertical: 20,
-    alignItems: 'center',
-  },
-
-  preambleTitle: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-    letterSpacing: 2,
-    marginBottom: 10,
-  },
-
-  preambleLine: {
-    width: 40,
-    height: 1,
-    backgroundColor: '#999',
-  },
-
-  preambleText: {
-    marginTop: 15,
-    fontSize: 10,
-    textAlign: 'center',
-    color: '#444',
-    fontStyle: 'italic',
-    maxWidth: '80%',
-  },
-
-  // Paragraph-Überschriften (§)
-  sectionHeader: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-    marginTop: 25,
-    marginBottom: 10,
-    letterSpacing: 0.5,
-  },
-
-  // Nummerierte Absätze
-  numberedParagraph: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 8,
-  },
-
-  paragraphNumber: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: '#333',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-    marginTop: 2,
-  },
-
-  paragraphNumberText: {
-    fontSize: 9,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-
-  paragraphText: {
-    flex: 1,
-    fontSize: 11,
-    textAlign: 'justify',
-    lineHeight: 1.55,
-  },
-
-  // Buchstaben-Aufzählung (a, b, c)
-  letterList: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 6,
-    marginLeft: 30,
-  },
-
-  letterCircle: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#666',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 8,
-    marginTop: 2,
-  },
-
-  letterText: {
-    fontSize: 8,
-    color: '#444',
-  },
-
-  letterContent: {
-    flex: 1,
-    fontSize: 10,
-    textAlign: 'justify',
-  },
-
-  // Normale Absätze
-  paragraph: {
-    fontSize: 11,
-    textAlign: 'justify',
-    marginBottom: 8,
-    lineHeight: 1.55,
-  },
-
-  // Spiegelstriche
-  bulletPoint: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 4,
-    marginLeft: 30,
-  },
-
-  bullet: {
-    fontSize: 12,
-    color: '#333',
-    marginRight: 8,
-  },
-
-  bulletText: {
-    flex: 1,
-    fontSize: 10,
-  },
-
-  // Seiten-Footer
-  pageFooter: {
-    position: 'absolute',
-    bottom: 15,
-    left: 25,
-    right: 25,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    fontSize: 8,
-    color: '#888',
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-  },
-
-  // ══════════════════════════════════════════════════════════════
-  // UNTERSCHRIFTEN-SEITE STYLES
-  // ══════════════════════════════════════════════════════════════
-
-  signaturePage: {
-    flex: 1,
-  },
-
-  signatureHeader: {
-    backgroundColor: '#f5f0e6',
-    marginHorizontal: -25,
-    marginTop: -25,
-    paddingVertical: 30,
-    paddingHorizontal: 25,
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-
-  signatureTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-
-  signatureColumns: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-
-  signatureColumn: {
-    width: '45%',
-  },
-
-  signatureLabel: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-    marginBottom: 15,
-  },
-
-  signatureField: {
-    marginBottom: 15,
-  },
-
-  signatureLine: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#666',
-    height: 25,
-    marginBottom: 5,
-  },
-
-  signatureLineThick: {
-    borderBottomWidth: 2,
-    borderBottomColor: '#333',
-    height: 30,
-    marginBottom: 5,
-  },
-
-  signatureHint: {
-    fontSize: 8,
-    color: '#666',
-  },
-
-  // QR-Code Bereich
-  qrContainer: {
-    marginTop: 40,
-    alignItems: 'center',
-    paddingTop: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#ddd',
-  },
-
-  qrCode: {
-    width: 60,
-    height: 60,
-    marginBottom: 8,
-  },
-
-  qrText: {
-    fontSize: 8,
-    color: '#888',
-  },
-
-  // Anlagen
-  attachmentsBox: {
-    marginTop: 30,
-    padding: 15,
-    backgroundColor: '#faf8f5',
-    borderWidth: 1,
-    borderColor: '#e5e0d5',
-  },
-
-  attachmentsTitle: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    fontStyle: 'italic',
-    marginBottom: 5,
-  },
-
-  attachmentsText: {
-    fontSize: 10,
-    color: '#666',
-  },
-
-  // Wasserzeichen (Entwurf)
-  watermark: {
-    position: 'absolute',
-    top: '40%',
-    left: '20%',
-    fontSize: 60,
-    color: '#f0f0f0',
-    transform: 'rotate(-45deg)',
-    opacity: 0.5,
-  },
+Font.register({
+  family: 'Helvetica',
+  fonts: [
+    { src: 'Helvetica' },
+    { src: 'Helvetica-Bold', fontWeight: 'bold' },
+    { src: 'Helvetica-Oblique', fontStyle: 'italic' },
+    { src: 'Helvetica-BoldOblique', fontWeight: 'bold', fontStyle: 'italic' }
+  ]
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DESIGN THEMES - 5 professionelle Varianten
+// ═══════════════════════════════════════════════════════════════════════════
+
+const DESIGN_THEMES = {
+  // EXECUTIVE - Elegant & Kraftvoll (Standard/Default)
+  executive: {
+    name: 'Executive',
+    fontFamily: 'Times-Roman',
+    colors: {
+      primary: '#1a1a1a',        // Fast Schwarz
+      secondary: '#333333',      // Dunkelgrau
+      accent: '#4a4a4a',         // Mittelgrau
+      text: '#1a1a1a',           // Haupttext
+      textLight: '#555555',      // Leichter Text
+      textMuted: '#777777',      // Gedämpfter Text
+      border: '#cccccc',         // Rahmen
+      borderDark: '#999999',     // Dunklere Rahmen
+      background: '#f5f5f5',     // Hintergrund
+      backgroundAlt: '#fafafa', // Alt Hintergrund
+      line: '#1a1a1a',           // Linien
+    },
+    spacing: {
+      headerLine: 2,
+      sectionLine: 1,
+    }
+  },
+
+  // MODERN - Frisch & Dynamisch
+  modern: {
+    name: 'Modern',
+    fontFamily: 'Helvetica',
+    colors: {
+      primary: '#0066cc',        // Blau
+      secondary: '#0052a3',      // Dunkleres Blau
+      accent: '#00a3cc',         // Türkis-Akzent
+      text: '#2d2d2d',           // Haupttext
+      textLight: '#5a5a5a',      // Leichter Text
+      textMuted: '#8a8a8a',      // Gedämpfter Text
+      border: '#e0e0e0',         // Rahmen
+      borderDark: '#c0c0c0',     // Dunklere Rahmen
+      background: '#f8f9fa',     // Hintergrund
+      backgroundAlt: '#e8f4f8', // Alt Hintergrund (leicht blau)
+      line: '#0066cc',           // Linien
+    },
+    spacing: {
+      headerLine: 3,
+      sectionLine: 2,
+    }
+  },
+
+  // MINIMAL - Klar & Fokussiert
+  minimal: {
+    name: 'Minimal',
+    fontFamily: 'Helvetica',
+    colors: {
+      primary: '#2d2d2d',        // Dunkelgrau
+      secondary: '#4a4a4a',      // Mittelgrau
+      accent: '#2d2d2d',         // Gleich wie Primary
+      text: '#2d2d2d',           // Haupttext
+      textLight: '#666666',      // Leichter Text
+      textMuted: '#999999',      // Gedämpfter Text
+      border: '#e5e5e5',         // Sehr heller Rahmen
+      borderDark: '#d0d0d0',     // Dunklere Rahmen
+      background: '#ffffff',     // Reines Weiß
+      backgroundAlt: '#fafafa', // Fast weiß
+      line: '#2d2d2d',           // Linien
+    },
+    spacing: {
+      headerLine: 1,
+      sectionLine: 0,
+    }
+  },
+
+  // ELEGANT - Luxuriös & Raffiniert
+  elegant: {
+    name: 'Elegant',
+    fontFamily: 'Times-Roman',
+    colors: {
+      primary: '#2c1810',        // Tiefes Braun
+      secondary: '#4a3728',      // Warmes Braun
+      accent: '#c9a227',         // Gold
+      text: '#2c1810',           // Haupttext
+      textLight: '#5a4a3a',      // Leichter Text
+      textMuted: '#8a7a6a',      // Gedämpfter Text
+      border: '#d4c4b0',         // Warmer Rahmen
+      borderDark: '#b4a490',     // Dunklere Rahmen
+      background: '#faf8f5',     // Cremiger Hintergrund
+      backgroundAlt: '#f5f0e8', // Alt Hintergrund
+      line: '#c9a227',           // Gold Linien
+    },
+    spacing: {
+      headerLine: 2,
+      sectionLine: 1,
+    }
+  },
+
+  // CORPORATE - Struktur & Vertrauen
+  corporate: {
+    name: 'Corporate',
+    fontFamily: 'Helvetica',
+    colors: {
+      primary: '#003366',        // Dunkelblau
+      secondary: '#004080',      // Mittelblau
+      accent: '#0066cc',         // Helles Blau
+      text: '#1a1a1a',           // Haupttext
+      textLight: '#4a4a4a',      // Leichter Text
+      textMuted: '#6a6a6a',      // Gedämpfter Text
+      border: '#d0d8e0',         // Bläulicher Rahmen
+      borderDark: '#a0b0c0',     // Dunklere Rahmen
+      background: '#f4f6f8',     // Kühler Hintergrund
+      backgroundAlt: '#e8eef4', // Alt Hintergrund
+      line: '#003366',           // Linien
+    },
+    spacing: {
+      headerLine: 3,
+      sectionLine: 1,
+    }
+  }
+};
 
 // ═══════════════════════════════════════════════════════════════════════════
 // HELPER FUNCTIONS
@@ -439,7 +162,7 @@ const styles = StyleSheet.create({
 const generateQRCode = async (text) => {
   try {
     return await QRCode.toDataURL(text, {
-      width: 120,
+      width: 100,
       margin: 1,
       color: { dark: '#333333', light: '#ffffff' }
     });
@@ -479,7 +202,7 @@ const parseContractText = (text) => {
     const trimmed = line.trim();
     if (!trimmed) continue;
 
-    // Überspringe Parteien-Bereich
+    // Überspringe Parteien-Bereich im Text (wird separat gerendert)
     if (trimmed.toLowerCase() === 'zwischen') {
       skipParties = true;
       continue;
@@ -489,7 +212,7 @@ const parseContractText = (text) => {
     }
     if (skipParties) continue;
 
-    // Hauptüberschrift überspringen
+    // Hauptüberschrift überspringen (wird als Deckblatt gerendert)
     if (trimmed === trimmed.toUpperCase() && trimmed.length > 5 &&
         !trimmed.startsWith('§') && !['PRÄAMBEL', 'ZWISCHEN', 'UND', 'ANLAGEN'].includes(trimmed)) {
       continue;
@@ -497,7 +220,7 @@ const parseContractText = (text) => {
 
     // Präambel
     if (trimmed === 'PRÄAMBEL' || trimmed === 'Präambel') {
-      currentSection = { type: 'preamble', title: 'PRÄAMBEL', content: [] };
+      currentSection = { type: 'preamble', title: 'Präambel', content: [] };
       sections.push(currentSection);
       continue;
     }
@@ -509,7 +232,7 @@ const parseContractText = (text) => {
       continue;
     }
 
-    // Nummerierte Absätze
+    // Nummerierte Absätze (1), (2), 1., 2. etc.
     if (/^\(?\d+\)?\.?\s/.test(trimmed)) {
       const text = trimmed.replace(/^\(?\d+\)?\.?\s*/, '').replace(/\*\*/g, '');
       if (currentSection) {
@@ -518,7 +241,7 @@ const parseContractText = (text) => {
       continue;
     }
 
-    // Buchstaben-Aufzählung
+    // Buchstaben-Aufzählung a), b), c)
     if (/^[a-z]\)/.test(trimmed)) {
       const letter = trimmed.charAt(0);
       const text = trimmed.substring(2).trim().replace(/\*\*/g, '');
@@ -528,8 +251,8 @@ const parseContractText = (text) => {
       continue;
     }
 
-    // Spiegelstriche
-    if (trimmed.startsWith('-') || trimmed.startsWith('•')) {
+    // Spiegelstriche/Bullets
+    if (trimmed.startsWith('-') || trimmed.startsWith('•') || trimmed.startsWith('–')) {
       const text = trimmed.substring(1).trim().replace(/\*\*/g, '');
       if (currentSection) {
         currentSection.content.push({ type: 'bullet', text });
@@ -546,6 +269,410 @@ const parseContractText = (text) => {
   return sections;
 };
 
+/**
+ * Erstellt dynamische Styles basierend auf dem gewählten Theme
+ */
+const createStyles = (theme) => {
+  const colors = theme.colors;
+
+  return StyleSheet.create({
+    // ══════════════════════════════════════════════════════════════
+    // SEITEN-LAYOUT
+    // ══════════════════════════════════════════════════════════════
+    page: {
+      fontFamily: theme.fontFamily,
+      fontSize: 11,
+      paddingTop: 50,
+      paddingBottom: 60,
+      paddingHorizontal: 55,
+      lineHeight: 1.5,
+      color: colors.text,
+    },
+
+    // ══════════════════════════════════════════════════════════════
+    // DECKBLATT
+    // ══════════════════════════════════════════════════════════════
+    coverPage: {
+      flex: 1,
+      position: 'relative',
+    },
+
+    // Briefkopf/Header
+    letterhead: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: 20,
+      paddingBottom: 15,
+      borderBottomWidth: theme.spacing.headerLine,
+      borderBottomColor: colors.line,
+    },
+
+    logo: {
+      width: 70,
+      height: 70,
+      objectFit: 'contain',
+    },
+
+    companyInfo: {
+      textAlign: 'right',
+      fontSize: 9,
+      color: colors.textLight,
+    },
+
+    companyName: {
+      fontSize: 12,
+      fontWeight: 'bold',
+      color: colors.primary,
+      marginBottom: 3,
+    },
+
+    // Vertragstyp-Titel Block
+    contractTypeContainer: {
+      marginTop: 60,
+      marginBottom: 40,
+      alignItems: 'center',
+    },
+
+    contractType: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      textTransform: 'uppercase',
+      letterSpacing: 3,
+      color: colors.primary,
+      textAlign: 'center',
+    },
+
+    contractTypeLine: {
+      width: 80,
+      height: theme.spacing.headerLine,
+      backgroundColor: colors.line,
+      marginTop: 12,
+      marginBottom: 12,
+    },
+
+    contractDate: {
+      fontSize: 11,
+      color: colors.textLight,
+      fontStyle: 'italic',
+      marginTop: 5,
+    },
+
+    // Parteien-Block
+    partiesContainer: {
+      marginTop: 40,
+    },
+
+    partiesLabel: {
+      fontSize: 11,
+      fontWeight: 'bold',
+      marginBottom: 12,
+      marginTop: 8,
+      color: colors.text,
+    },
+
+    partyBlock: {
+      marginBottom: 8,
+      paddingLeft: 15,
+      paddingVertical: 8,
+      borderLeftWidth: 2,
+      borderLeftColor: colors.border,
+    },
+
+    partyName: {
+      fontSize: 12,
+      fontWeight: 'bold',
+      marginBottom: 3,
+      color: colors.primary,
+    },
+
+    partyAddress: {
+      fontSize: 10,
+      color: colors.textLight,
+      marginBottom: 1,
+    },
+
+    partyRole: {
+      fontSize: 10,
+      fontStyle: 'italic',
+      color: colors.textMuted,
+      marginTop: 4,
+    },
+
+    // Cover Footer
+    coverFooter: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      fontSize: 8,
+      color: colors.textMuted,
+      paddingTop: 8,
+      borderTopWidth: 0.5,
+      borderTopColor: colors.border,
+    },
+
+    // ══════════════════════════════════════════════════════════════
+    // INHALTS-SEITEN
+    // ══════════════════════════════════════════════════════════════
+    contentPage: {
+      flex: 1,
+    },
+
+    // Präambel
+    preambleContainer: {
+      marginBottom: 20,
+      paddingBottom: 15,
+      borderBottomWidth: 0.5,
+      borderBottomColor: colors.border,
+    },
+
+    preambleTitle: {
+      fontSize: 11,
+      fontWeight: 'bold',
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+      marginBottom: 10,
+      color: colors.primary,
+      textAlign: 'center',
+    },
+
+    preambleText: {
+      fontSize: 10,
+      textAlign: 'justify',
+      color: colors.textLight,
+      fontStyle: 'italic',
+      lineHeight: 1.6,
+    },
+
+    // Paragraph-Überschriften (§)
+    sectionHeader: {
+      fontSize: 11,
+      fontWeight: 'bold',
+      marginTop: 20,
+      marginBottom: 8,
+      color: colors.primary,
+      paddingBottom: theme.spacing.sectionLine > 0 ? 3 : 0,
+      borderBottomWidth: theme.spacing.sectionLine,
+      borderBottomColor: colors.border,
+    },
+
+    // Nummerierte Absätze - OHNE Kreise, klassisch (1), (2)
+    numberedParagraph: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      marginBottom: 6,
+      marginTop: 2,
+    },
+
+    paragraphNumber: {
+      width: 28,
+      fontSize: 10,
+      color: colors.text,
+      fontWeight: 'bold',
+    },
+
+    paragraphText: {
+      flex: 1,
+      fontSize: 10,
+      textAlign: 'justify',
+      lineHeight: 1.55,
+      color: colors.text,
+    },
+
+    // Buchstaben-Aufzählung - klassisch a), b)
+    letterItem: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      marginBottom: 4,
+      marginLeft: 28,
+    },
+
+    letterLabel: {
+      width: 20,
+      fontSize: 10,
+      color: colors.textLight,
+    },
+
+    letterContent: {
+      flex: 1,
+      fontSize: 10,
+      textAlign: 'justify',
+      color: colors.text,
+    },
+
+    // Spiegelstriche/Bullets
+    bulletItem: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      marginBottom: 3,
+      marginLeft: 28,
+    },
+
+    bulletPoint: {
+      width: 15,
+      fontSize: 10,
+      color: colors.textLight,
+    },
+
+    bulletText: {
+      flex: 1,
+      fontSize: 10,
+      color: colors.text,
+    },
+
+    // Normaler Absatz
+    paragraph: {
+      fontSize: 10,
+      textAlign: 'justify',
+      marginBottom: 6,
+      lineHeight: 1.55,
+      color: colors.text,
+    },
+
+    // Seiten-Footer
+    pageFooter: {
+      position: 'absolute',
+      bottom: 25,
+      left: 55,
+      right: 55,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      fontSize: 8,
+      color: colors.textMuted,
+      paddingTop: 8,
+      borderTopWidth: 0.5,
+      borderTopColor: colors.border,
+    },
+
+    // ══════════════════════════════════════════════════════════════
+    // UNTERSCHRIFTEN-SEITE (schlicht gehalten)
+    // ══════════════════════════════════════════════════════════════
+    signaturePage: {
+      flex: 1,
+    },
+
+    signatureHeader: {
+      marginBottom: 30,
+      paddingBottom: 15,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+
+    signatureTitle: {
+      fontSize: 14,
+      fontWeight: 'bold',
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+      color: colors.primary,
+      textAlign: 'center',
+    },
+
+    signatureColumns: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 20,
+    },
+
+    signatureColumn: {
+      width: '45%',
+    },
+
+    signatureLabel: {
+      fontSize: 9,
+      fontWeight: 'bold',
+      textTransform: 'uppercase',
+      marginBottom: 20,
+      color: colors.textLight,
+    },
+
+    signatureField: {
+      marginBottom: 20,
+    },
+
+    signatureLine: {
+      borderBottomWidth: 1,
+      borderBottomColor: colors.borderDark,
+      height: 30,
+      marginBottom: 4,
+    },
+
+    signatureHint: {
+      fontSize: 8,
+      color: colors.textMuted,
+    },
+
+    signatureName: {
+      fontSize: 10,
+      fontWeight: 'bold',
+      marginTop: 8,
+      color: colors.text,
+    },
+
+    signatureRole: {
+      fontSize: 8,
+      color: colors.textMuted,
+    },
+
+    // QR-Code & Verifizierung
+    verificationContainer: {
+      marginTop: 40,
+      paddingTop: 15,
+      borderTopWidth: 0.5,
+      borderTopColor: colors.border,
+      alignItems: 'center',
+    },
+
+    qrCode: {
+      width: 50,
+      height: 50,
+      marginBottom: 5,
+    },
+
+    verificationText: {
+      fontSize: 7,
+      color: colors.textMuted,
+      textAlign: 'center',
+    },
+
+    // Anlagen-Box
+    attachmentsBox: {
+      marginTop: 25,
+      padding: 12,
+      backgroundColor: colors.backgroundAlt,
+      borderWidth: 0.5,
+      borderColor: colors.border,
+    },
+
+    attachmentsTitle: {
+      fontSize: 9,
+      fontWeight: 'bold',
+      marginBottom: 4,
+      color: colors.textLight,
+    },
+
+    attachmentsText: {
+      fontSize: 9,
+      color: colors.textMuted,
+    },
+
+    // Wasserzeichen
+    watermark: {
+      position: 'absolute',
+      top: '40%',
+      left: '20%',
+      fontSize: 60,
+      color: '#e0e0e0',
+      transform: 'rotate(-45deg)',
+      opacity: 0.3,
+      fontWeight: 'bold',
+    },
+  });
+};
+
 // ═══════════════════════════════════════════════════════════════════════════
 // REACT-PDF KOMPONENTEN
 // ═══════════════════════════════════════════════════════════════════════════
@@ -553,8 +680,9 @@ const parseContractText = (text) => {
 /**
  * Deckblatt-Komponente
  */
-const CoverPage = ({ companyProfile, contractType, parties, partyLabels, currentDate, documentId, isDraft }) => {
+const CoverPage = ({ styles, theme, companyProfile, contractType, parties, partyLabels, currentDate, documentId, isDraft }) => {
   const e = React.createElement;
+  const colors = theme.colors;
 
   return e(Page, { size: 'A4', style: styles.page },
     // Wasserzeichen wenn Entwurf
@@ -566,11 +694,11 @@ const CoverPage = ({ companyProfile, contractType, parties, partyLabels, current
         // Logo (falls vorhanden)
         companyProfile?.logoUrl
           ? e(Image, { src: companyProfile.logoUrl, style: styles.logo })
-          : e(View, { style: { width: 60 } }),
+          : e(View, { style: { width: 50 } }),
 
         // Firmeninfo rechts
         e(View, { style: styles.companyInfo },
-          e(Text, { style: styles.companyName }, companyProfile?.companyName || 'Unternehmen'),
+          e(Text, { style: styles.companyName }, companyProfile?.companyName || ''),
           companyProfile?.street && e(Text, null, companyProfile.street),
           companyProfile?.zip && e(Text, null, `${companyProfile.zip} ${companyProfile.city || ''}`),
           companyProfile?.phone && e(Text, null, `Tel: ${companyProfile.phone}`),
@@ -578,11 +706,11 @@ const CoverPage = ({ companyProfile, contractType, parties, partyLabels, current
         )
       ),
 
-      // Vertragstyp
+      // Vertragstyp-Titel
       e(View, { style: styles.contractTypeContainer },
-        e(View, { style: styles.decorativeLine }),
+        e(View, { style: styles.contractTypeLine }),
         e(Text, { style: styles.contractType }, contractType || 'VERTRAG'),
-        e(View, { style: styles.decorativeLine }),
+        e(View, { style: styles.contractTypeLine }),
         e(Text, { style: styles.contractDate }, `geschlossen am ${currentDate}`)
       ),
 
@@ -590,30 +718,34 @@ const CoverPage = ({ companyProfile, contractType, parties, partyLabels, current
       e(View, { style: styles.partiesContainer },
         e(Text, { style: styles.partiesLabel }, 'zwischen'),
 
-        // Partei A
+        // Partei A (Unternehmen/Verkäufer)
         e(View, { style: styles.partyBlock },
-          e(Text, { style: styles.partyName }, companyProfile?.companyName || 'Vertragspartei A'),
-          companyProfile?.street && e(Text, { style: styles.partyAddress }, companyProfile.street),
-          companyProfile?.zip && e(Text, { style: styles.partyAddress }, `${companyProfile.zip} ${companyProfile.city || ''}`),
-          e(Text, { style: styles.partyRole }, `– nachfolgend "${partyLabels.partyA}" genannt –`)
+          e(Text, { style: styles.partyName }, companyProfile?.companyName || parties?.seller || parties?.partyA || '[Vertragspartei A]'),
+          (companyProfile?.street || parties?.sellerAddress || parties?.partyAAddress) &&
+            e(Text, { style: styles.partyAddress }, companyProfile?.street || parties?.sellerAddress || parties?.partyAAddress || ''),
+          (companyProfile?.zip || parties?.sellerCity || parties?.partyACity) &&
+            e(Text, { style: styles.partyAddress }, companyProfile?.zip ? `${companyProfile.zip} ${companyProfile.city || ''}` : (parties?.sellerCity || parties?.partyACity || '')),
+          e(Text, { style: styles.partyRole }, `– nachfolgend „${partyLabels.partyA}" genannt –`)
         ),
 
         e(Text, { style: styles.partiesLabel }, 'und'),
 
-        // Partei B
+        // Partei B (Käufer/Mieter)
         e(View, { style: styles.partyBlock },
-          e(Text, { style: styles.partyName }, parties?.buyer || parties?.partyB || 'Vertragspartei B'),
-          e(Text, { style: styles.partyAddress }, parties?.buyerAddress || parties?.partyBAddress || ''),
-          e(Text, { style: styles.partyAddress }, parties?.buyerCity || parties?.partyBCity || ''),
-          e(Text, { style: styles.partyRole }, `– nachfolgend "${partyLabels.partyB}" genannt –`)
+          e(Text, { style: styles.partyName }, parties?.buyer || parties?.partyB || parties?.buyerName || '[Vertragspartei B]'),
+          (parties?.buyerAddress || parties?.partyBAddress) &&
+            e(Text, { style: styles.partyAddress }, parties?.buyerAddress || parties?.partyBAddress || ''),
+          (parties?.buyerCity || parties?.partyBCity) &&
+            e(Text, { style: styles.partyAddress }, parties?.buyerCity || parties?.partyBCity || ''),
+          e(Text, { style: styles.partyRole }, `– nachfolgend „${partyLabels.partyB}" genannt –`)
         )
       ),
 
       // Footer
       e(View, { style: styles.coverFooter },
-        e(Text, null, `DOK-ID: ${documentId?.substring(0, 20) || 'N/A'}`),
+        e(Text, null, `Dok-ID: ${documentId?.substring(0, 16) || 'N/A'}`),
         e(Text, null, 'Seite 1'),
-        e(Text, null, new Date().toLocaleDateString('de-DE'))
+        e(Text, null, currentDate)
       )
     )
   );
@@ -622,32 +754,26 @@ const CoverPage = ({ companyProfile, contractType, parties, partyLabels, current
 /**
  * Inhalts-Seite Komponente
  */
-const ContentPage = ({ sections, pageNumber, companyProfile, contractType }) => {
+const ContentPage = ({ styles, theme, sections, companyProfile, contractType }) => {
   const e = React.createElement;
-  let numberedCounter = 0;
 
-  const renderContent = (item, index) => {
+  const renderContent = (item, index, numberedCounter) => {
     switch (item.type) {
       case 'numbered':
-        numberedCounter++;
         return e(View, { key: index, style: styles.numberedParagraph },
-          e(View, { style: styles.paragraphNumber },
-            e(Text, { style: styles.paragraphNumberText }, numberedCounter.toString())
-          ),
+          e(Text, { style: styles.paragraphNumber }, `(${numberedCounter})`),
           e(Text, { style: styles.paragraphText }, item.text)
         );
 
       case 'letter':
-        return e(View, { key: index, style: styles.letterList },
-          e(View, { style: styles.letterCircle },
-            e(Text, { style: styles.letterText }, item.letter)
-          ),
+        return e(View, { key: index, style: styles.letterItem },
+          e(Text, { style: styles.letterLabel }, `${item.letter})`),
           e(Text, { style: styles.letterContent }, item.text)
         );
 
       case 'bullet':
-        return e(View, { key: index, style: styles.bulletPoint },
-          e(Text, { style: styles.bullet }, '•'),
+        return e(View, { key: index, style: styles.bulletItem },
+          e(Text, { style: styles.bulletPoint }, '–'),
           e(Text, { style: styles.bulletText }, item.text)
         );
 
@@ -656,25 +782,24 @@ const ContentPage = ({ sections, pageNumber, companyProfile, contractType }) => 
     }
   };
 
-  const renderSection = (section, index) => {
-    numberedCounter = 0; // Reset für jeden §
+  const renderSection = (section, sectionIndex) => {
+    let numberedCounter = 0;
 
     if (section.type === 'preamble') {
-      return e(View, { key: index, style: styles.preambleContainer },
-        e(View, { style: { flexDirection: 'row', alignItems: 'center' } },
-          e(View, { style: styles.preambleLine }),
-          e(Text, { style: [styles.preambleTitle, { marginHorizontal: 15 }] }, 'PRÄAMBEL'),
-          e(View, { style: styles.preambleLine })
-        ),
-        section.content.map((item, i) =>
+      return e(View, { key: sectionIndex, style: styles.preambleContainer },
+        e(Text, { style: styles.preambleTitle }, 'Präambel'),
+        ...section.content.map((item, i) =>
           e(Text, { key: i, style: styles.preambleText }, item.text)
         )
       );
     }
 
-    return e(View, { key: index, wrap: false },
+    return e(View, { key: sectionIndex, wrap: false },
       e(Text, { style: styles.sectionHeader }, section.title),
-      ...section.content.map(renderContent)
+      ...section.content.map((item, i) => {
+        if (item.type === 'numbered') numberedCounter++;
+        return renderContent(item, i, numberedCounter);
+      })
     );
   };
 
@@ -685,29 +810,29 @@ const ContentPage = ({ sections, pageNumber, companyProfile, contractType }) => 
     e(View, { style: styles.pageFooter, fixed: true },
       e(Text, null, (contractType || 'Vertrag').toUpperCase()),
       e(Text, { render: ({ pageNumber }) => `Seite ${pageNumber}` }),
-      e(Text, null, `© ${new Date().getFullYear()} ${companyProfile?.companyName || 'Contract AI'}`)
+      e(Text, null, companyProfile?.companyName || '')
     )
   );
 };
 
 /**
- * Unterschriften-Seite Komponente
+ * Unterschriften-Seite Komponente (schlicht gehalten)
  */
-const SignaturePage = ({ partyLabels, companyProfile, parties, qrCode, documentId }) => {
+const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qrCode, documentId, currentDate }) => {
   const e = React.createElement;
 
   return e(Page, { size: 'A4', style: styles.page },
     e(View, { style: styles.signaturePage },
       // Header
       e(View, { style: styles.signatureHeader },
-        e(Text, { style: styles.signatureTitle }, 'Unterschriften der Vertragsparteien')
+        e(Text, { style: styles.signatureTitle }, 'Unterschriften')
       ),
 
       // Zwei Spalten für Unterschriften
       e(View, { style: styles.signatureColumns },
         // Partei A
         e(View, { style: styles.signatureColumn },
-          e(Text, { style: styles.signatureLabel }, `${partyLabels.partyA} / Partei A`),
+          e(Text, { style: styles.signatureLabel }, partyLabels.partyA),
 
           e(View, { style: styles.signatureField },
             e(View, { style: styles.signatureLine }),
@@ -715,19 +840,19 @@ const SignaturePage = ({ partyLabels, companyProfile, parties, qrCode, documentI
           ),
 
           e(View, { style: styles.signatureField },
-            e(View, { style: styles.signatureLineThick }),
-            e(Text, { style: styles.signatureHint }, '(Unterschrift / Stempel)')
+            e(View, { style: styles.signatureLine }),
+            e(Text, { style: styles.signatureHint }, 'Unterschrift')
           ),
 
-          e(Text, { style: { fontSize: 10, fontWeight: 'bold', marginTop: 10 } },
-            companyProfile?.companyName || partyLabels.partyA
+          e(Text, { style: styles.signatureName },
+            companyProfile?.companyName || parties?.seller || parties?.partyA || partyLabels.partyA
           ),
-          e(Text, { style: styles.signatureHint }, '(Geschäftsführung)')
+          companyProfile?.companyName && e(Text, { style: styles.signatureRole }, '(Geschäftsführung)')
         ),
 
         // Partei B
         e(View, { style: styles.signatureColumn },
-          e(Text, { style: styles.signatureLabel }, `${partyLabels.partyB} / Partei B`),
+          e(Text, { style: styles.signatureLabel }, partyLabels.partyB),
 
           e(View, { style: styles.signatureField },
             e(View, { style: styles.signatureLine }),
@@ -735,27 +860,27 @@ const SignaturePage = ({ partyLabels, companyProfile, parties, qrCode, documentI
           ),
 
           e(View, { style: styles.signatureField },
-            e(View, { style: styles.signatureLineThick }),
-            e(Text, { style: styles.signatureHint }, '(Unterschrift)')
+            e(View, { style: styles.signatureLine }),
+            e(Text, { style: styles.signatureHint }, 'Unterschrift')
           ),
 
-          e(Text, { style: { fontSize: 10, fontWeight: 'bold', marginTop: 10 } },
-            parties?.buyer || parties?.partyB || partyLabels.partyB
+          e(Text, { style: styles.signatureName },
+            parties?.buyer || parties?.partyB || parties?.buyerName || partyLabels.partyB
           ),
-          e(Text, { style: styles.signatureHint }, '(Name in Druckschrift)')
+          e(Text, { style: styles.signatureRole }, '(Name in Druckschrift)')
         )
       ),
 
-      // QR-Code
-      e(View, { style: styles.qrContainer },
+      // Verifizierung & QR-Code
+      e(View, { style: styles.verificationContainer },
         qrCode && e(Image, { src: qrCode, style: styles.qrCode }),
-        e(Text, { style: styles.qrText }, 'Digitale Verifizierung'),
-        e(Text, { style: [styles.qrText, { marginTop: 3 }] }, `ID: ${documentId?.substring(0, 20) || 'N/A'}`)
+        e(Text, { style: styles.verificationText }, 'Digitale Verifizierung'),
+        e(Text, { style: styles.verificationText }, `ID: ${documentId?.substring(0, 20) || 'N/A'}`)
       ),
 
       // Anlagen
       e(View, { style: styles.attachmentsBox },
-        e(Text, { style: styles.attachmentsTitle }, 'ANLAGEN'),
+        e(Text, { style: styles.attachmentsTitle }, 'Anlagen'),
         e(Text, { style: styles.attachmentsText }, 'Diesem Vertrag sind keine Anlagen beigefügt.')
       )
     )
@@ -774,14 +899,24 @@ const SignaturePage = ({ partyLabels, companyProfile, parties, qrCode, documentI
  * @param {string} contractType - Typ des Vertrags (Kaufvertrag, Mietvertrag, etc.)
  * @param {Object} parties - Informationen zu den Vertragsparteien
  * @param {boolean} isDraft - Ob es ein Entwurf ist (zeigt Wasserzeichen)
+ * @param {string} designVariant - Design-Variante ('executive', 'modern', 'minimal', 'elegant', 'corporate')
  * @returns {Promise<Buffer>} - PDF als Buffer
  */
-const generatePDFv2 = async (contractText, companyProfile, contractType, parties = {}, isDraft = false) => {
+const generatePDFv2 = async (contractText, companyProfile, contractType, parties = {}, isDraft = false, designVariant = 'executive') => {
   console.log('🎨 [V2 React-PDF] Starte PDF-Generierung...');
   console.log('📄 Vertragstyp:', contractType);
   console.log('🏢 Firma:', companyProfile?.companyName);
+  console.log('🎭 Design:', designVariant);
+  console.log('👥 Parteien:', JSON.stringify(parties).substring(0, 100));
 
   const e = React.createElement;
+
+  // Theme auswählen (fallback zu executive)
+  const theme = DESIGN_THEMES[designVariant] || DESIGN_THEMES.executive;
+  console.log('🎨 Verwende Theme:', theme.name);
+
+  // Styles basierend auf Theme erstellen
+  const styles = createStyles(theme);
 
   // Dokument-ID generieren
   const documentId = `DOC-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
@@ -789,7 +924,7 @@ const generatePDFv2 = async (contractText, companyProfile, contractType, parties
   // QR-Code generieren
   const qrCode = await generateQRCode(`https://contract-ai.de/verify/${documentId}`);
 
-  // Parteien-Labels
+  // Parteien-Labels basierend auf Vertragstyp
   const partyLabels = getPartyLabels(contractType);
 
   // Vertragstext parsen
@@ -807,6 +942,8 @@ const generatePDFv2 = async (contractText, companyProfile, contractType, parties
   const ContractDocument = e(Document, null,
     // Seite 1: Deckblatt
     e(CoverPage, {
+      styles,
+      theme,
       companyProfile,
       contractType,
       parties,
@@ -818,6 +955,8 @@ const generatePDFv2 = async (contractText, companyProfile, contractType, parties
 
     // Seiten 2-N: Vertragsinhalt
     e(ContentPage, {
+      styles,
+      theme,
       sections,
       companyProfile,
       contractType
@@ -825,11 +964,14 @@ const generatePDFv2 = async (contractText, companyProfile, contractType, parties
 
     // Letzte Seite: Unterschriften
     e(SignaturePage, {
+      styles,
+      theme,
       partyLabels,
       companyProfile,
       parties,
       qrCode,
-      documentId
+      documentId,
+      currentDate
     })
   );
 
@@ -841,8 +983,13 @@ const generatePDFv2 = async (contractText, companyProfile, contractType, parties
   return pdfBuffer;
 };
 
+// ═══════════════════════════════════════════════════════════════════════════
+// EXPORTS
+// ═══════════════════════════════════════════════════════════════════════════
+
 module.exports = {
   generatePDFv2,
   getPartyLabels,
-  parseContractText
+  parseContractText,
+  DESIGN_THEMES
 };
