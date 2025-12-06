@@ -128,6 +128,35 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 console.log("✅ JSON-Limit erhöht auf 50MB für große Verträge mit Logos");
 
+// 🚀 AUTO-INDEX: Performance-Indexes beim Start sicherstellen (idempotent, non-blocking)
+async function ensurePerformanceIndexes(db) {
+  const indexes = [
+    // Contracts Collection
+    { collection: 'contracts', index: { userId: 1, 'legalPulse.riskScore': -1 }, name: 'idx_userId_riskScore' },
+    { collection: 'contracts', index: { userId: 1, createdAt: -1 }, name: 'idx_userId_createdAt' },
+    { collection: 'contracts', index: { organizationId: 1, createdAt: -1 }, name: 'idx_orgId_createdAt', options: { sparse: true } },
+    // Analysis Collection
+    { collection: 'analysis', index: { userId: 1, contractName: 1 }, name: 'idx_userId_contractName' },
+    { collection: 'analysis', index: { userId: 1, originalFileName: 1 }, name: 'idx_userId_originalFileName' },
+    // Contract Events Collection
+    { collection: 'contract_events', index: { contractId: 1, status: 1, date: 1 }, name: 'idx_contractId_status_date' },
+    { collection: 'contract_events', index: { userId: 1, status: 1, date: 1 }, name: 'idx_userId_status_date' },
+    // Envelopes Collection
+    { collection: 'envelopes', index: { contractId: 1, createdAt: -1 }, name: 'idx_contractId_createdAt' },
+  ];
+
+  for (const { collection, index, name, options = {} } of indexes) {
+    try {
+      await db.collection(collection).createIndex(index, { name, background: true, ...options });
+    } catch (err) {
+      // Index existiert bereits oder andere nicht-kritische Fehler - ignorieren
+      if (err.code !== 85 && err.code !== 86) {
+        console.warn(`⚠️ Index ${name}: ${err.message}`);
+      }
+    }
+  }
+}
+
 // ✅ Static File Serving (unchanged)
 app.use('/uploads', (req, res, next) => {
   const requestedFile = req.path.substring(1);
@@ -1757,6 +1786,14 @@ const connectDB = async () => {
       console.log(`🚀 Server läuft auf Port ${PORT}`);
       console.log(`📁 Static files serviert unter: ${API_BASE_URL}/uploads`);
       console.log(`📏 JSON-Limit: 50MB für große Verträge`);
+
+      // 🚀 AUTO-INDEX: Performance-Indexes beim Start erstellen (idempotent)
+      try {
+        await ensurePerformanceIndexes(db);
+        console.log("✅ Performance-Indexes verifiziert");
+      } catch (indexErr) {
+        console.warn("⚠️ Index-Erstellung übersprungen:", indexErr.message);
+      }
 
       // ✅ Initialize Legal Pulse Monitoring
       try {

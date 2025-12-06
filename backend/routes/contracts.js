@@ -439,17 +439,220 @@ function extractContractDetails(text) {
   }
 })();
 
-// Helper: Analyse-Daten laden
+// 🚀 OPTIMIERT: Batch-Enrichment mit $lookup statt N+1 Queries
+// Vorher: 394 Verträge = 1182 Queries (3 pro Vertrag)
+// Jetzt: 394 Verträge = 1 Query mit $lookup JOINs
+async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, limit) {
+  const Envelope = require("../models/Envelope");
+  const db = client.db("contractai");
+
+  const pipeline = [
+    { $match: mongoFilter },
+    { $sort: sortOptions },
+  ];
+
+  // Skip und Limit hinzufügen
+  if (skip > 0) {
+    pipeline.push({ $skip: skip });
+  }
+  if (limit > 0) {
+    pipeline.push({ $limit: limit });
+  }
+
+  // 🔗 $lookup für Analysen (mit analysisId)
+  pipeline.push({
+    $lookup: {
+      from: "analysis",
+      let: {
+        analysisId: "$analysisId",
+        contractName: "$name",
+        contractUserId: { $toString: "$userId" }
+      },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $or: [
+                // Primär: Match über analysisId
+                { $eq: ["$_id", "$$analysisId"] },
+                // Fallback: Match über contractName oder originalFileName
+                {
+                  $and: [
+                    { $eq: [{ $toString: "$userId" }, "$$contractUserId"] },
+                    {
+                      $or: [
+                        { $eq: ["$contractName", "$$contractName"] },
+                        { $eq: ["$originalFileName", "$$contractName"] }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        { $limit: 1 }
+      ],
+      as: "analysisData"
+    }
+  });
+
+  // 🔗 $lookup für Events
+  pipeline.push({
+    $lookup: {
+      from: "contract_events",
+      let: { contractId: "$_id" },
+      pipeline: [
+        {
+          $match: {
+            $expr: { $eq: ["$contractId", "$$contractId"] },
+            status: { $ne: "dismissed" }
+          }
+        },
+        { $sort: { date: 1 } },
+        { $limit: 5 },
+        {
+          $project: {
+            _id: 1,
+            type: 1,
+            title: 1,
+            date: 1,
+            severity: 1,
+            status: 1
+          }
+        }
+      ],
+      as: "upcomingEvents"
+    }
+  });
+
+  // 🔗 $lookup für Envelopes (Signatur-Status)
+  pipeline.push({
+    $lookup: {
+      from: "envelopes",
+      let: { contractId: "$_id" },
+      pipeline: [
+        {
+          $match: {
+            $expr: { $eq: ["$contractId", "$$contractId"] }
+          }
+        },
+        { $sort: { createdAt: -1 } },
+        { $limit: 1 },
+        {
+          $project: {
+            _id: 1,
+            status: 1,
+            signers: 1,
+            s3KeySealed: 1,
+            completedAt: 1,
+            expiresAt: 1
+          }
+        }
+      ],
+      as: "envelopeData"
+    }
+  });
+
+  // 🔄 Transformation der Ergebnisse
+  pipeline.push({
+    $addFields: {
+      // Analysis-Daten extrahieren
+      analysis: {
+        $cond: {
+          if: { $gt: [{ $size: "$analysisData" }, 0] },
+          then: {
+            summary: { $arrayElemAt: ["$analysisData.summary", 0] },
+            legalAssessment: { $arrayElemAt: ["$analysisData.legalAssessment", 0] },
+            suggestions: { $arrayElemAt: ["$analysisData.suggestions", 0] },
+            comparison: { $arrayElemAt: ["$analysisData.comparison", 0] },
+            contractScore: { $arrayElemAt: ["$analysisData.contractScore", 0] },
+            analysisId: { $arrayElemAt: ["$analysisData._id", 0] },
+            lastAnalyzed: { $arrayElemAt: ["$analysisData.createdAt", 0] }
+          },
+          else: null
+        }
+      },
+      // FullText ermitteln (Priorität: analysis.fullText > analysis.extractedText > contract.content > contract.extractedText)
+      fullText: {
+        $ifNull: [
+          { $arrayElemAt: ["$analysisData.fullText", 0] },
+          { $ifNull: [
+            { $arrayElemAt: ["$analysisData.extractedText", 0] },
+            { $ifNull: ["$content", "$extractedText"] }
+          ]}
+        ]
+      },
+      // Upcoming Events formatieren
+      upcomingEvents: {
+        $map: {
+          input: "$upcomingEvents",
+          as: "e",
+          in: {
+            id: "$$e._id",
+            type: "$$e.type",
+            title: "$$e.title",
+            date: "$$e.date",
+            severity: "$$e.severity",
+            status: "$$e.status"
+          }
+        }
+      },
+      // Envelope-Daten extrahieren
+      envelope: {
+        $cond: {
+          if: { $gt: [{ $size: "$envelopeData" }, 0] },
+          then: {
+            _id: { $arrayElemAt: ["$envelopeData._id", 0] },
+            signatureStatus: { $arrayElemAt: ["$envelopeData.status", 0] },
+            signersTotal: { $size: { $ifNull: [{ $arrayElemAt: ["$envelopeData.signers", 0] }, []] } },
+            signersSigned: {
+              $size: {
+                $filter: {
+                  input: { $ifNull: [{ $arrayElemAt: ["$envelopeData.signers", 0] }, []] },
+                  as: "s",
+                  cond: { $eq: ["$$s.status", "SIGNED"] }
+                }
+              }
+            },
+            s3KeySealed: { $arrayElemAt: ["$envelopeData.s3KeySealed", 0] },
+            completedAt: { $arrayElemAt: ["$envelopeData.completedAt", 0] },
+            expiresAt: { $arrayElemAt: ["$envelopeData.expiresAt", 0] }
+          },
+          else: null
+        }
+      },
+      // Legacy: signatureStatus am Root-Level
+      signatureStatus: { $arrayElemAt: ["$envelopeData.status", 0] },
+      signatureEnvelopeId: { $arrayElemAt: ["$envelopeData._id", 0] }
+    }
+  });
+
+  // Temporäre Felder entfernen
+  pipeline.push({
+    $project: {
+      analysisData: 0,
+      envelopeData: 0
+    }
+  });
+
+  // Query ausführen mit allowDiskUse für große Datensätze
+  const contracts = await contractsCollection.aggregate(pipeline, { allowDiskUse: true }).toArray();
+
+  return contracts;
+}
+
+// 🔄 Legacy-Funktion für Einzelverträge (z.B. GET /:id)
 async function enrichContractWithAnalysis(contract) {
   try {
     let analysis = null;
-    
+
     if (contract.analysisId) {
-      analysis = await analysisCollection.findOne({ 
-        _id: new ObjectId(contract.analysisId) 
+      analysis = await analysisCollection.findOne({
+        _id: new ObjectId(contract.analysisId)
       });
     }
-    
+
     if (!analysis && contract.name) {
       analysis = await analysisCollection.findOne({
         userId: contract.userId.toString(),
@@ -459,10 +662,8 @@ async function enrichContractWithAnalysis(contract) {
         ]
       });
     }
-    
+
     if (analysis) {
-      console.log(`✅ Analyse gefunden für Vertrag: ${contract.name}`);
-      
       contract.analysis = {
         summary: analysis.summary,
         legalAssessment: analysis.legalAssessment,
@@ -472,14 +673,14 @@ async function enrichContractWithAnalysis(contract) {
         analysisId: analysis._id,
         lastAnalyzed: analysis.createdAt
       };
-      
+
       if (analysis.fullText) {
         contract.fullText = analysis.fullText;
       } else if (analysis.extractedText) {
         contract.fullText = analysis.extractedText;
       }
     }
-    
+
     if (!contract.fullText) {
       if (contract.content) {
         contract.fullText = contract.content;
@@ -487,8 +688,8 @@ async function enrichContractWithAnalysis(contract) {
         contract.fullText = contract.extractedText;
       }
     }
-    
-    // ✅ NEU: Calendar Events hinzufügen
+
+    // Calendar Events
     const events = await eventsCollection
       .find({
         contractId: contract._id,
@@ -509,11 +710,11 @@ async function enrichContractWithAnalysis(contract) {
       }));
     }
 
-    // 🆕 Envelope/Signature Data enrichment
+    // Envelope/Signature Data
     try {
       const Envelope = require("../models/Envelope");
       const envelope = await Envelope.findOne({ contractId: contract._id })
-        .sort({ createdAt: -1 }) // Get latest envelope
+        .sort({ createdAt: -1 })
         .lean();
 
       if (envelope) {
@@ -522,7 +723,7 @@ async function enrichContractWithAnalysis(contract) {
 
         contract.envelope = {
           _id: envelope._id,
-          signatureStatus: envelope.status, // DRAFT, SENT, SIGNED, COMPLETED, etc.
+          signatureStatus: envelope.status,
           signersTotal,
           signersSigned,
           s3KeySealed: envelope.s3KeySealed || null,
@@ -530,13 +731,11 @@ async function enrichContractWithAnalysis(contract) {
           expiresAt: envelope.expiresAt || null
         };
 
-        // Legacy compatibility: keep signatureStatus at root level
         contract.signatureStatus = envelope.status;
         contract.signatureEnvelopeId = envelope._id;
       }
     } catch (envelopeErr) {
       console.warn("⚠️ Could not load envelope data:", envelopeErr.message);
-      // Don't fail the whole request if envelope loading fails
     }
 
     return contract;
@@ -728,28 +927,12 @@ router.get("/", verifyToken, async (req, res) => {
         sortOptions = { createdAt: -1 };
     }
 
-    // ✅ MongoDB Query mit Filtern, Sortierung & Pagination
-    // 🔧 FIX: Verwende aggregate() mit allowDiskUse für große Datensätze
-    const pipeline = [
-      { $match: mongoFilter },
-      { $sort: sortOptions },
-    ];
+    // 🚀 OPTIMIERT: Single Aggregation mit $lookup statt N+1 Queries
+    // Vorher: Bei 20 Verträgen = 60 Queries (3 pro Vertrag)
+    // Jetzt: Bei 20 Verträgen = 1 Query mit $lookup JOINs
+    const enrichedContracts = await enrichContractsWithAggregation(mongoFilter, sortOptions, skip, limit);
 
-    // Skip und Limit hinzufügen
-    if (skip > 0) {
-      pipeline.push({ $skip: skip });
-    }
-    if (limit > 0) {
-      pipeline.push({ $limit: limit });
-    }
-
-    const contracts = await contractsCollection.aggregate(pipeline, { allowDiskUse: true }).toArray();
-
-    const enrichedContracts = await Promise.all(
-      contracts.map(contract => enrichContractWithAnalysis(contract))
-    );
-
-    console.log(`📦 ${enrichedContracts.length} von ${totalCount} Verträgen geladen (skip: ${skip}, limit: ${limit || 'alle'}, Filter: ${searchQuery ? 'Search' : ''}${statusFilter !== 'alle' ? ' Status' : ''}${dateFilter !== 'alle' ? ' Date' : ''})`);
+    console.log(`📦 ${enrichedContracts.length} von ${totalCount} Verträgen geladen (skip: ${skip}, limit: ${limit || 'alle'}, Filter: ${searchQuery ? 'Search' : ''}${statusFilter !== 'alle' ? ' Status' : ''}${dateFilter !== 'alle' ? ' Date' : ''}) [OPTIMIERT: 1 Query]`);
 
     // ✅ Response mit Pagination-Info
     res.json({
