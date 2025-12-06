@@ -883,10 +883,14 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
           )
         )
       ),
-      e(View, { style: styles.footer, fixed: true },
-        e(Text, null, `ID: ${documentId?.substring(0, 12) || 'N/A'}`),
-        e(Text, null, currentDate)
-      )
+      // Fixed Footer mit dynamischer Seitenzahl
+      e(Text, { style: { position: 'absolute', bottom: 25, left: 58, fontSize: 8, color: '#666666' }, fixed: true }, `ID: ${documentId?.substring(0, 12) || 'N/A'}`),
+      e(Text, {
+        style: { position: 'absolute', bottom: 25, left: 0, right: 0, textAlign: 'center', fontSize: 8, color: '#666666' },
+        fixed: true,
+        render: (props) => `Seite ${props.pageNumber} von ${props.totalPages}`
+      }),
+      e(Text, { style: { position: 'absolute', bottom: 25, right: 50, fontSize: 8, color: '#666666', textAlign: 'right' }, fixed: true }, currentDate || '')
     );
   }
 
@@ -920,9 +924,14 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
           )
         )
       ),
-      e(View, { style: styles.footer, fixed: true },
-        e(Text, null, documentId?.substring(0, 16) || '')
-      )
+      // Fixed Footer mit dynamischer Seitenzahl
+      e(Text, { style: { position: 'absolute', bottom: 40, left: 60, fontSize: 7, color: '#999999' }, fixed: true }, `ID: ${documentId?.substring(0, 12) || 'N/A'}`),
+      e(Text, {
+        style: { position: 'absolute', bottom: 40, left: 0, right: 0, textAlign: 'center', fontSize: 7, color: '#999999' },
+        fixed: true,
+        render: (props) => `Seite ${props.pageNumber} von ${props.totalPages}`
+      }),
+      e(Text, { style: { position: 'absolute', bottom: 40, right: 60, fontSize: 7, color: '#999999', textAlign: 'right' }, fixed: true }, currentDate || '')
     );
   }
 
@@ -964,10 +973,14 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
           )
         )
       ),
-      e(View, { style: styles.footer, fixed: true },
-        e(View, { style: styles.footerOrnament }),
-        e(Text, { style: styles.footerText }, `${documentId?.substring(0, 16) || ''} • ${currentDate}`)
-      )
+      // Fixed Footer mit dynamischer Seitenzahl
+      e(Text, { style: { position: 'absolute', bottom: 25, left: 40, fontSize: 8, color: '#8a7a6a' }, fixed: true }, `ID: ${documentId?.substring(0, 12) || 'N/A'}`),
+      e(Text, {
+        style: { position: 'absolute', bottom: 25, left: 0, right: 0, textAlign: 'center', fontSize: 8, color: '#8a7a6a' },
+        fixed: true,
+        render: (props) => `Seite ${props.pageNumber} von ${props.totalPages}`
+      }),
+      e(Text, { style: { position: 'absolute', bottom: 25, right: 40, fontSize: 8, color: '#8a7a6a', textAlign: 'right' }, fixed: true }, currentDate || '')
     );
   }
 
@@ -1015,11 +1028,14 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
           )
         )
       ),
-      e(View, { style: styles.footer, fixed: true },
-        e(Text, null, `Dokument-ID: ${documentId?.substring(0, 16) || 'N/A'}`),
-        e(Text, null, 'Seite 1'),
-        e(Text, null, currentDate)
-      )
+      // Fixed Footer mit dynamischer Seitenzahl
+      e(Text, { style: { position: 'absolute', bottom: 25, left: 50, fontSize: 8, color: '#666666' }, fixed: true }, `ID: ${documentId?.substring(0, 12) || 'N/A'}`),
+      e(Text, {
+        style: { position: 'absolute', bottom: 25, left: 0, right: 0, textAlign: 'center', fontSize: 8, color: '#666666' },
+        fixed: true,
+        render: (props) => `Seite ${props.pageNumber} von ${props.totalPages}`
+      }),
+      e(Text, { style: { position: 'absolute', bottom: 25, right: 50, fontSize: 8, color: '#666666', textAlign: 'right' }, fixed: true }, currentDate || '')
     );
   }
 
@@ -1060,11 +1076,14 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
         )
       )
     ),
-    e(View, { style: styles.footer, fixed: true },
-      e(Text, null, `Dok-ID: ${documentId?.substring(0, 16) || 'N/A'}`),
-      e(Text, null, 'Seite 1'),
-      e(Text, null, currentDate)
-    )
+    // Fixed Footer mit dynamischer Seitenzahl
+    e(Text, { style: { position: 'absolute', bottom: 25, left: 50, fontSize: 8, color: '#666666' }, fixed: true }, `ID: ${documentId?.substring(0, 12) || 'N/A'}`),
+    e(Text, {
+      style: { position: 'absolute', bottom: 25, left: 0, right: 0, textAlign: 'center', fontSize: 8, color: '#666666' },
+      fixed: true,
+      render: (props) => `Seite ${props.pageNumber} von ${props.totalPages}`
+    }),
+    e(Text, { style: { position: 'absolute', bottom: 25, right: 50, fontSize: 8, color: '#666666', textAlign: 'right' }, fixed: true }, currentDate || '')
   );
 };
 
