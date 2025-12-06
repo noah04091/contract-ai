@@ -990,7 +990,7 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType }) 
 /**
  * Unterschriften-Seite Komponente
  */
-const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qrCode, documentId, currentDate, attachments = [] }) => {
+const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qrCode, documentId, currentDate, attachments = [], contractType = 'Vertrag' }) => {
   const e = React.createElement;
   const designName = theme.name;
 
@@ -999,6 +999,20 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
   const attachmentsList = hasAttachments
     ? attachments.map((att, index) => `${index + 1}. ${att.displayName || att.name || att.originalName || 'Anlage ' + (index + 1)}`).join('\n')
     : 'Diesem Vertrag sind keine Anlagen beigefügt.';
+
+  // Footer-Komponente für alle Designs
+  const renderFooter = () => {
+    if (designName === 'Elegant') {
+      return e(View, { style: styles.pageFooter, fixed: true },
+        e(Text, null, `${documentId?.substring(0, 12) || ''} • ${currentDate}`)
+      );
+    }
+    return e(View, { style: styles.pageFooter, fixed: true },
+      e(Text, null, `ID: ${documentId?.substring(0, 12) || 'N/A'}`),
+      e(Text, { render: ({ pageNumber, totalPages }) => `Seite ${pageNumber} von ${totalPages}` }),
+      e(Text, null, currentDate)
+    );
+  };
 
   // Corporate hat spezielle Struktur
   if (designName === 'Corporate') {
@@ -1047,7 +1061,8 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
             )
           )
         )
-      )
+      ),
+      renderFooter()
     );
   }
 
@@ -1093,7 +1108,8 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
             e(Text, { style: styles.attachmentsText }, attachmentsList)
           )
         )
-      )
+      ),
+      renderFooter()
     );
   }
 
@@ -1138,7 +1154,8 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
         e(Text, { style: styles.attachmentsTitle }, hasAttachments ? `Anlagen (${attachments.length})` : 'Anlagen'),
         e(Text, { style: styles.attachmentsText }, attachmentsList)
       )
-    )
+    ),
+    renderFooter()
   );
 };
 
@@ -1233,7 +1250,8 @@ const generatePDFv2 = async (contractText, companyProfile, contractType, parties
       qrCode,
       documentId,
       currentDate,
-      attachments
+      attachments,
+      contractType
     })
   );
 
