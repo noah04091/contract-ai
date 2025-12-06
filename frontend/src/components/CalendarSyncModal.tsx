@@ -269,42 +269,50 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
               <h3>Google Kalender verbinden</h3>
             </div>
 
-            <div className={styles.deviceOptions}>
-              <div className={styles.deviceOption}>
-                <div className={styles.deviceIcon}>
-                  <Monitor size={20} />
-                </div>
-                <div className={styles.deviceInfo}>
-                  <h4>Desktop / Web</h4>
-                  <p>Google Kalender im Browser</p>
-                </div>
-              </div>
-            </div>
-
             <div className={styles.steps}>
               <div className={styles.step}>
                 <div className={styles.stepNumber}>1</div>
                 <div className={styles.stepContent}>
-                  <h4>Klicken Sie auf den Button</h4>
-                  <p>Der Link öffnet Google Kalender und fügt Ihren Contract AI Kalender automatisch hinzu.</p>
-                  <motion.button
-                    className={styles.primaryBtn}
-                    onClick={() => openLink(syncLinks.google)}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <GoogleIcon />
-                    <span>In Google Kalender öffnen</span>
-                    <ExternalLink size={16} />
-                  </motion.button>
+                  <h4>URL kopieren</h4>
+                  <p>Kopieren Sie diese Kalender-URL:</p>
+                  <div className={styles.urlBox}>
+                    <code>{syncLinks.download}</code>
+                    <motion.button
+                      onClick={() => copyToClipboard(syncLinks.download, 'google-url')}
+                      className={styles.copyBtn}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      {copiedField === 'google-url' ? <Check size={16} /> : <Copy size={16} />}
+                    </motion.button>
+                  </div>
+                  {copiedField === 'google-url' && <span className={styles.copiedHint}>✓ URL kopiert!</span>}
                 </div>
               </div>
 
               <div className={styles.step}>
                 <div className={styles.stepNumber}>2</div>
                 <div className={styles.stepContent}>
-                  <h4>Kalender bestätigen</h4>
-                  <p>Klicken Sie auf "Hinzufügen", um den Contract AI Kalender zu abonnieren.</p>
+                  <h4>Google Kalender öffnen</h4>
+                  <p>Klicken Sie auf den Button unten, um Google Kalender zu öffnen:</p>
+                  <motion.button
+                    className={styles.primaryBtn}
+                    onClick={() => openLink('https://calendar.google.com/calendar/u/0/r/settings/addbyurl')}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <GoogleIcon />
+                    <span>Google Kalender Einstellungen öffnen</span>
+                    <ExternalLink size={16} />
+                  </motion.button>
+                </div>
+              </div>
+
+              <div className={styles.step}>
+                <div className={styles.stepNumber}>3</div>
+                <div className={styles.stepContent}>
+                  <h4>URL einfügen</h4>
+                  <p>Fügen Sie die kopierte URL in das Feld "URL des Kalenders" ein und klicken Sie auf "Kalender hinzufügen".</p>
                 </div>
               </div>
 
