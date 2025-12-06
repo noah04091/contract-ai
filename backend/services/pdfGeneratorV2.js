@@ -1118,17 +1118,19 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType, do
     );
   };
 
-  // Konsistenter Footer für alle Layouts
+  // Konsistenter Footer für alle Layouts - MUSS fixed sein für alle Seiten!
+  const footerStyle = { ...styles.pageFooter, position: 'absolute', bottom: 25, left: 50, right: 50 };
+
   const renderFooter = () => {
     if (layoutType === 'ornamental') {
-      return e(View, { style: styles.pageFooter, fixed: true },
-        e(Text, null, `${documentId?.substring(0, 12) || ''} • ${currentDate}`)
+      return e(View, { style: footerStyle, fixed: true },
+        e(Text, { fixed: true }, `${documentId?.substring(0, 12) || ''} • ${currentDate}`)
       );
     }
-    return e(View, { style: styles.pageFooter, fixed: true },
-      e(Text, null, `ID: ${documentId?.substring(0, 12) || 'N/A'}`),
-      e(Text, { render: ({ pageNumber, totalPages }) => `Seite ${pageNumber} von ${totalPages}` }),
-      e(Text, null, currentDate)
+    return e(View, { style: footerStyle, fixed: true },
+      e(Text, { fixed: true }, `ID: ${documentId?.substring(0, 12) || 'N/A'}`),
+      e(Text, { fixed: true, render: ({ pageNumber, totalPages }) => `Seite ${pageNumber} von ${totalPages}` }),
+      e(Text, { fixed: true }, currentDate)
     );
   };
 
