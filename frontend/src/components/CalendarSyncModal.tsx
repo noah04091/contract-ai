@@ -108,7 +108,7 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
     setError('');
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       if (!token) {
         setError('Bitte melden Sie sich an.');
         return;
@@ -134,7 +134,7 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
   const regenerateToken = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       const response = await axios.post<{ success: boolean; links: SyncLinks }>('/api/calendar/regenerate-sync-token', {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
