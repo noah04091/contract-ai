@@ -848,8 +848,8 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
 
   // Sidebar-Layout (Modern, Startup, Tech, Creative)
   if (layoutType === 'sidebar-accent') {
-    return e(Page, { size: 'A4', style: styles.page },
-      isDraft && e(Text, { style: styles.watermark }, 'ENTWURF'),
+    return e(Page, { size: 'A4', style: styles.page, wrap: true },
+      isDraft && e(Text, { style: styles.watermark, fixed: true }, 'ENTWURF'),
       e(View, { style: styles.coverPage },
         e(View, { style: styles.sidebar }),
         e(View, { style: styles.mainContent },
@@ -892,8 +892,8 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
 
   // Whitespace-Layout (Minimal)
   if (layoutType === 'whitespace-focus') {
-    return e(Page, { size: 'A4', style: styles.page },
-      isDraft && e(Text, { style: styles.watermark }, 'ENTWURF'),
+    return e(Page, { size: 'A4', style: styles.page, wrap: true },
+      isDraft && e(Text, { style: styles.watermark, fixed: true }, 'ENTWURF'),
       e(View, { style: styles.coverPage },
         e(View, { style: styles.header },
           logoBase64 && e(Image, { src: logoBase64, style: styles.logo }),
@@ -928,8 +928,8 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
 
   // Ornamental-Layout (Elegant, Legal, Finance)
   if (layoutType === 'ornamental') {
-    return e(Page, { size: 'A4', style: styles.page },
-      isDraft && e(Text, { style: styles.watermark }, 'ENTWURF'),
+    return e(Page, { size: 'A4', style: styles.page, wrap: true },
+      isDraft && e(Text, { style: styles.watermark, fixed: true }, 'ENTWURF'),
       e(View, { style: styles.coverPage },
         e(View, { style: styles.header },
           e(View, { style: styles.ornamentTop }),
@@ -973,8 +973,8 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
 
   // Structured-Boxes-Layout (Corporate)
   if (layoutType === 'structured-boxes') {
-    return e(Page, { size: 'A4', style: styles.page },
-      isDraft && e(Text, { style: styles.watermark }, 'ENTWURF'),
+    return e(Page, { size: 'A4', style: styles.page, wrap: true },
+      isDraft && e(Text, { style: styles.watermark, fixed: true }, 'ENTWURF'),
       e(View, { style: styles.coverPage },
         e(View, { style: styles.headerBar },
           logoBase64 ? e(Image, { src: logoBase64, style: styles.logo }) : e(View, { style: { width: 50 } }),
@@ -1024,8 +1024,8 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
   }
 
   // Executive Design (Default) - klassisch zentriert
-  return e(Page, { size: 'A4', style: styles.page },
-    isDraft && e(Text, { style: styles.watermark }, 'ENTWURF'),
+  return e(Page, { size: 'A4', style: styles.page, wrap: true },
+    isDraft && e(Text, { style: styles.watermark, fixed: true }, 'ENTWURF'),
     e(View, { style: styles.coverPage },
       e(View, { style: styles.header },
         logoBase64 ? e(Image, { src: logoBase64, style: styles.logo }) : e(View, { style: { width: 60 } }),
@@ -1141,16 +1141,17 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType, do
 
   // Sidebar-Layout (Modern, Startup, Tech, Creative)
   if (layoutType === 'sidebar-accent') {
-    return e(Page, { size: 'A4', style: styles.page },
-      // Fixed Footer - DIREKT als Kind der Page, nicht in einem Wrapper!
+    return e(Page, { size: 'A4', style: styles.page, wrap: true },
+      // Fixed Footer - erscheint auf ALLEN Seiten durch wrap={true} + fixed={true}
       e(View, { style: fixedFooterStyle, fixed: true },
         e(Text, null, `ID: ${docIdShort}`),
         e(Text, { render: ({ pageNumber, totalPages }) => `Seite ${pageNumber} von ${totalPages}` }),
         e(Text, null, currentDate || '')
       ),
+      // Fixed Sidebar - auch auf allen Seiten
+      e(View, { style: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 8, backgroundColor: theme.colors.primary }, fixed: true }),
       // Content
-      e(View, { style: styles.contentPage },
-        e(View, { style: styles.sidebar }),
+      e(View, { style: { ...styles.contentPage, marginLeft: 8 } },
         e(View, { style: styles.contentMain },
           ...sections.map(renderSection)
         )
@@ -1160,8 +1161,8 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType, do
 
   // Structured-Boxes-Layout (Corporate)
   if (layoutType === 'structured-boxes') {
-    return e(Page, { size: 'A4', style: styles.page },
-      // Fixed Footer - DIREKT als Kind der Page
+    return e(Page, { size: 'A4', style: styles.page, wrap: true },
+      // Fixed Footer - erscheint auf ALLEN Seiten
       e(View, { style: fixedFooterStyle, fixed: true },
         e(Text, null, `ID: ${docIdShort}`),
         e(Text, { render: ({ pageNumber, totalPages }) => `Seite ${pageNumber} von ${totalPages}` }),
@@ -1175,8 +1176,8 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType, do
   }
 
   // Standard Layout (Executive, Minimal, Elegant, etc.)
-  return e(Page, { size: 'A4', style: styles.page },
-    // Fixed Footer - DIREKT als Kind der Page für alle automatisch umgebrochenen Seiten
+  return e(Page, { size: 'A4', style: styles.page, wrap: true },
+    // Fixed Footer - erscheint auf ALLEN Seiten durch wrap={true} + fixed={true}
     e(View, { style: fixedFooterStyle, fixed: true },
       e(Text, null, `ID: ${docIdShort}`),
       e(Text, { render: ({ pageNumber, totalPages }) => `Seite ${pageNumber} von ${totalPages}` }),
@@ -1218,7 +1219,7 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
 
   // Structured-Boxes-Layout (Corporate)
   if (layoutType === 'structured-boxes') {
-    return e(Page, { size: 'A4', style: styles.page },
+    return e(Page, { size: 'A4', style: styles.page, wrap: true },
       e(View, { style: styles.signaturePage },
         e(View, { style: styles.signatureHeader },
           e(Text, { style: styles.signatureTitle }, 'UNTERSCHRIFTEN')
@@ -1270,7 +1271,7 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
 
   // Sidebar-Layout (Modern, Startup, Tech, Creative)
   if (layoutType === 'sidebar-accent') {
-    return e(Page, { size: 'A4', style: styles.page },
+    return e(Page, { size: 'A4', style: styles.page, wrap: true },
       e(View, { style: styles.signaturePage },
         e(View, { style: styles.sidebar }),
         e(View, { style: styles.signatureMain },
@@ -1316,7 +1317,7 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
   }
 
   // Standard Layout für Executive, Minimal, Elegant
-  return e(Page, { size: 'A4', style: styles.page },
+  return e(Page, { size: 'A4', style: styles.page, wrap: true },
     e(View, { style: styles.signaturePage },
       e(Text, { style: styles.signatureTitle }, 'Unterschriften'),
       e(View, { style: styles.signatureColumns },
