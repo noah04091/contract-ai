@@ -1071,7 +1071,7 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
 /**
  * Inhalts-Seite Komponente
  */
-const ContentPage = ({ styles, theme, sections, companyProfile, contractType }) => {
+const ContentPage = ({ styles, theme, sections, companyProfile, contractType, documentId, currentDate }) => {
   const e = React.createElement;
   const layoutType = theme.layout;
 
@@ -1118,6 +1118,20 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType }) 
     );
   };
 
+  // Konsistenter Footer für alle Layouts
+  const renderFooter = () => {
+    if (layoutType === 'ornamental') {
+      return e(View, { style: styles.pageFooter, fixed: true },
+        e(Text, null, `${documentId?.substring(0, 12) || ''} • ${currentDate}`)
+      );
+    }
+    return e(View, { style: styles.pageFooter, fixed: true },
+      e(Text, null, `ID: ${documentId?.substring(0, 12) || 'N/A'}`),
+      e(Text, { render: ({ pageNumber, totalPages }) => `Seite ${pageNumber} von ${totalPages}` }),
+      e(Text, null, currentDate)
+    );
+  };
+
   // Sidebar-Layout (Modern, Startup, Tech, Creative)
   if (layoutType === 'sidebar-accent') {
     return e(Page, { size: 'A4', style: styles.page },
@@ -1127,10 +1141,7 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType }) 
           ...sections.map(renderSection)
         )
       ),
-      e(View, { style: styles.pageFooter, fixed: true },
-        e(Text, null, (contractType || 'Vertrag').toUpperCase()),
-        e(Text, { render: ({ pageNumber }) => `Seite ${pageNumber}` })
-      )
+      renderFooter()
     );
   }
 
@@ -1140,11 +1151,7 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType }) 
       e(View, { style: styles.contentPage },
         ...sections.map(renderSection)
       ),
-      e(View, { style: styles.pageFooter, fixed: true },
-        e(Text, null, companyProfile?.companyName || ''),
-        e(Text, null, (contractType || 'Vertrag').toUpperCase()),
-        e(Text, { render: ({ pageNumber }) => `Seite ${pageNumber}` })
-      )
+      renderFooter()
     );
   }
 
@@ -1153,11 +1160,7 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType }) 
     e(View, { style: styles.contentPage },
       ...sections.map(renderSection)
     ),
-    e(View, { style: styles.pageFooter, fixed: true },
-      e(Text, null, (contractType || 'Vertrag').toUpperCase()),
-      e(Text, { render: ({ pageNumber }) => `Seite ${pageNumber}` }),
-      e(Text, null, companyProfile?.companyName || '')
-    )
+    renderFooter()
   );
 };
 
@@ -1443,7 +1446,9 @@ const generatePDFv2 = async (contractText, companyProfile, contractType, parties
       theme,
       sections,
       companyProfile,
-      contractType
+      contractType,
+      documentId,
+      currentDate
     }),
 
     // Letzte Seite: Unterschriften
