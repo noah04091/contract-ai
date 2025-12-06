@@ -238,7 +238,16 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
   const fetchDebugInfo = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      const response = await axios.get('/api/calendar/debug', {
+      const response = await axios.get<{
+        success: boolean;
+        debug: {
+          contractCount: number;
+          totalEvents: number;
+          futureEvents: number;
+          contracts: Array<{ name: string; expiryDate: string; hasExpiryDate: boolean }>;
+          hint: string;
+        };
+      }>('/api/calendar/debug', {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.data.success) {
@@ -254,7 +263,10 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
     setRegenerating(true);
     try {
       const token = localStorage.getItem('authToken');
-      const response = await axios.post('/api/calendar/regenerate-events', {}, {
+      const response = await axios.post<{
+        success: boolean;
+        eventsGenerated: number;
+      }>('/api/calendar/regenerate-events', {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.data.success) {
