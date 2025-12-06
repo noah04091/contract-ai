@@ -3524,6 +3524,10 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
       }
     }
 
+    // Anlagen aus Request-Body extrahieren (falls vorhanden)
+    const attachments = req.body.attachments || [];
+    console.log('📎 Anlagen empfangen:', attachments.length);
+
     const pdfBuffer = await generatePDFv2(
       contractText,
       companyProfile,
@@ -3531,7 +3535,8 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
       parties,
       contract.status === 'Entwurf',
       finalDesign,
-      contractId  // Contract-ID für QR-Code Verifizierung
+      contractId,  // Contract-ID für QR-Code Verifizierung
+      attachments  // Anlagen für letzte Seite
     );
 
     res.setHeader('Content-Type', 'application/pdf');
@@ -3545,6 +3550,204 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
     console.error('❌ [V2] PDF-Generierung fehlgeschlagen:', error);
     res.status(500).json({
       message: 'PDF-Generierung (V2/React-PDF) fehlgeschlagen',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/contracts/:id/pdf-combined
+ * Generiert PDF mit Anlagen (kombiniertes PDF)
+ * Anlagen werden als Base64 im Request-Body gesendet und ans Ende angehängt
+ */
+router.post('/:id/pdf-combined', verifyToken, async (req, res) => {
+  try {
+    const { PDFDocument } = require('pdf-lib');
+    await loadPDFGenerators();
+
+    if (!generatePDFv2) {
+      return res.status(503).json({
+        message: 'PDF V2 Generator nicht verfügbar',
+        error: 'React-PDF Modul konnte nicht geladen werden'
+      });
+    }
+
+    const contractId = req.params.id;
+    const designVariant = req.query.design || req.body.design || 'executive';
+    const attachmentInfos = req.body.attachments || [];
+    const attachmentFiles = req.body.attachmentFiles || []; // Base64-kodierte Dateien
+
+    console.log('🔗 [Combined] PDF-Anfrage für Vertrag:', contractId);
+    console.log('📎 Anlagen-Infos:', attachmentInfos.length);
+    console.log('📄 Anlagen-Dateien:', attachmentFiles.length);
+
+    // Vertrag laden
+    const contract = await contractsCollection.findOne({
+      _id: new ObjectId(contractId),
+      userId: new ObjectId(req.user.userId)
+    });
+
+    if (!contract) {
+      return res.status(404).json({ message: "Vertrag nicht gefunden" });
+    }
+
+    // Company Profile laden
+    let companyProfile = null;
+    try {
+      const db = req.db || client.db("contractai");
+      const rawProfile = await db.collection("company_profiles").findOne({
+        $or: [
+          { userId: new ObjectId(req.user.userId) },
+          { userId: req.user.userId }
+        ]
+      });
+
+      if (rawProfile) {
+        companyProfile = {
+          ...rawProfile,
+          zip: rawProfile.postalCode || rawProfile.zip || '',
+          companyName: rawProfile.companyName || '',
+          street: rawProfile.street || '',
+          city: rawProfile.city || '',
+          contactPhone: rawProfile.contactPhone || '',
+          contactEmail: rawProfile.contactEmail || ''
+        };
+
+        if (rawProfile.logoKey) {
+          try {
+            const aws = require('aws-sdk');
+            const s3 = new aws.S3({
+              accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+              secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+              region: process.env.AWS_REGION
+            });
+            companyProfile.logoUrl = s3.getSignedUrl('getObject', {
+              Bucket: process.env.S3_BUCKET_NAME,
+              Key: rawProfile.logoKey,
+              Expires: 3600
+            });
+          } catch (s3Error) {
+            console.log('⚠️ Logo-URL konnte nicht generiert werden');
+          }
+        }
+      }
+    } catch (profileError) {
+      console.log('⚠️ Company Profile konnte nicht geladen werden');
+    }
+
+    const parties = contract.formData || contract.parties || contract.metadata?.parties || {};
+    const finalDesign = contract.designVariant || designVariant;
+
+    // Fallback für content
+    let contractText = contract.content;
+    if (!contractText || contractText.length < 100) {
+      if (contract.contractHTML && contract.contractHTML.length > 100) {
+        contractText = contract.contractHTML
+          .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+          .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+          .replace(/<[^>]+>/g, '\n')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'")
+          .replace(/\n{3,}/g, '\n\n')
+          .trim();
+      }
+    }
+
+    // 1. Haupt-PDF generieren (mit Anlagen-Infos für die letzte Seite)
+    const mainPdfBuffer = await generatePDFv2(
+      contractText,
+      companyProfile,
+      contract.contractType || 'Vertrag',
+      parties,
+      contract.status === 'Entwurf',
+      finalDesign,
+      contractId,
+      attachmentInfos
+    );
+
+    // 2. Wenn keine Anlagen-Dateien, direkt zurückgeben
+    if (attachmentFiles.length === 0) {
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="${contract.name || 'Vertrag'}_mit_Anlagen.pdf"`);
+      res.setHeader('Content-Length', mainPdfBuffer.length);
+      return res.send(mainPdfBuffer);
+    }
+
+    // 3. PDFs zusammenführen
+    console.log('⏳ Führe PDFs zusammen...');
+    const mergedPdf = await PDFDocument.create();
+
+    // Haupt-PDF laden und Seiten kopieren
+    const mainDoc = await PDFDocument.load(mainPdfBuffer);
+    const mainPages = await mergedPdf.copyPages(mainDoc, mainDoc.getPageIndices());
+    mainPages.forEach(page => mergedPdf.addPage(page));
+
+    // Anlagen hinzufügen
+    for (const attachmentFile of attachmentFiles) {
+      try {
+        const { data, type, name } = attachmentFile;
+        const fileBuffer = Buffer.from(data, 'base64');
+
+        if (type === 'application/pdf' || name?.toLowerCase().endsWith('.pdf')) {
+          // PDF-Anlage
+          const attachmentDoc = await PDFDocument.load(fileBuffer);
+          const attachmentPages = await mergedPdf.copyPages(attachmentDoc, attachmentDoc.getPageIndices());
+          attachmentPages.forEach(page => mergedPdf.addPage(page));
+          console.log(`✅ PDF-Anlage hinzugefügt: ${name} (${attachmentPages.length} Seiten)`);
+        } else if (type?.startsWith('image/')) {
+          // Bild-Anlage - als neue Seite hinzufügen
+          const page = mergedPdf.addPage([595.28, 841.89]); // A4
+          let image;
+
+          if (type === 'image/png') {
+            image = await mergedPdf.embedPng(fileBuffer);
+          } else if (type === 'image/jpeg' || type === 'image/jpg') {
+            image = await mergedPdf.embedJpg(fileBuffer);
+          } else {
+            console.log(`⚠️ Bildformat nicht unterstützt: ${type}`);
+            continue;
+          }
+
+          // Bild skalieren, um auf die Seite zu passen
+          const { width, height } = image.scale(1);
+          const pageWidth = 595.28 - 60; // A4 width - margins
+          const pageHeight = 841.89 - 60; // A4 height - margins
+          const scale = Math.min(pageWidth / width, pageHeight / height);
+
+          const scaledWidth = width * scale;
+          const scaledHeight = height * scale;
+
+          page.drawImage(image, {
+            x: (595.28 - scaledWidth) / 2,
+            y: (841.89 - scaledHeight) / 2,
+            width: scaledWidth,
+            height: scaledHeight,
+          });
+          console.log(`✅ Bild-Anlage hinzugefügt: ${name}`);
+        } else {
+          console.log(`⚠️ Dateityp nicht unterstützt: ${type}`);
+        }
+      } catch (attachmentError) {
+        console.error(`❌ Fehler bei Anlage:`, attachmentError.message);
+      }
+    }
+
+    const mergedPdfBytes = await mergedPdf.save();
+    console.log(`✅ [Combined] PDF generiert: ${(mergedPdfBytes.length / 1024).toFixed(1)} KB`);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${contract.name || 'Vertrag'}_mit_Anlagen.pdf"`);
+    res.setHeader('Content-Length', mergedPdfBytes.length);
+    res.send(Buffer.from(mergedPdfBytes));
+
+  } catch (error) {
+    console.error('❌ [Combined] PDF-Generierung fehlgeschlagen:', error);
+    res.status(500).json({
+      message: 'Kombinierte PDF-Generierung fehlgeschlagen',
       error: error.message
     });
   }

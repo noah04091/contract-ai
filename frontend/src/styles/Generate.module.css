@@ -5584,3 +5584,891 @@
     justify-content: center;
   }
 }
+
+
+/* =================================
+   🆕 STEP 3 PROFESSIONAL REDESIGN
+   Two-Column Layout with Sticky PDF
+   ================================= */
+
+/* New Container for Step 3 */
+.step3ContainerNew {
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 0 24px;
+}
+
+/* Success Header - Compact with Actions - DARK like Mockup */
+.step3SuccessHeader {
+  background: linear-gradient(135deg, #0B1324 0%, #1A2540 100%);
+  border-radius: 16px;
+  padding: 20px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px rgba(11, 19, 36, 0.15);
+}
+
+.step3SuccessLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.step3SuccessIcon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.step3SuccessText h2 {
+  color: white;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+}
+
+.step3SuccessText p {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  margin: 0;
+}
+
+.step3SuccessActions {
+  display: flex;
+  gap: 12px;
+}
+
+.step3HeaderBtn {
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.step3HeaderBtn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.step3HeaderBtn.primary {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  border-color: transparent;
+  color: white;
+}
+
+.step3HeaderBtn.primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.step3HeaderBtn.accent {
+  background: linear-gradient(135deg, #2E6CF6 0%, #1E53D8 100%);
+  border-color: transparent;
+  color: white;
+}
+
+.step3HeaderBtn.accent:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(46, 108, 246, 0.4);
+}
+
+.step3HeaderBtn.accent:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.step3HeaderBtn.success {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  border-color: transparent;
+  color: white;
+}
+
+.step3Error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #DC2626;
+  font-size: 14px;
+}
+
+/* Two Column Layout */
+.step3TwoColumn {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 24px;
+  align-items: start;
+}
+
+/* Left Column */
+.step3LeftColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Design Selector - Compact */
+.step3DesignCompact {
+  background: white;
+  border-radius: 16px;
+  padding: 20px 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid #E5E7EB;
+}
+
+.step3DesignHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.step3DesignHeader span {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  color: #0B1324;
+  font-size: 15px;
+}
+
+.step3DesignOptions {
+  display: flex;
+  gap: 12px;
+}
+
+.step3DesignOption {
+  flex: 1;
+  padding: 12px;
+  border: 2px solid #E5E7EB;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+  background: white;
+  position: relative;
+}
+
+.step3DesignOption:hover {
+  border-color: #0B1324;
+}
+
+.step3DesignOption.active {
+  border-color: #10B981;
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.step3DesignPreview {
+  width: 100%;
+  height: 40px;
+  background: #F3F4F6;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  gap: 3px;
+}
+
+.previewLines {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+}
+
+.pLine {
+  height: 4px;
+  background: #D1D5DB;
+  border-radius: 2px;
+}
+
+.pLine:first-child {
+  width: 60%;
+}
+
+.pLine:nth-child(2) {
+  width: 80%;
+}
+
+.pLine:last-child {
+  width: 40%;
+}
+
+/* Design-specific previews */
+.step3DesignOption[data-design="executive"] .step3DesignPreview {
+  background: linear-gradient(135deg, #0B1324 0%, #1A2540 100%);
+}
+
+.step3DesignOption[data-design="executive"] .pLine {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.step3DesignOption[data-design="modern"] .pLine:first-child {
+  background: #3B82F6;
+}
+
+.step3DesignOption[data-design="elegant"] .pLine:first-child {
+  background: #D4AF37;
+}
+
+.step3DesignOption[data-design="corporate"] .pLine:first-child {
+  background: #003366;
+}
+
+.step3DesignOption span:last-child {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.step3DesignCheck {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  background: #10B981;
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step3DesignLoading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+/* Editor Panel */
+.step3EditorPanel {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid #E5E7EB;
+  overflow: hidden;
+}
+
+.step3EditorHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: #F9FAFB;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.step3EditorTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  color: #0B1324;
+  font-size: 15px;
+}
+
+.step3EditorActions {
+  display: flex;
+  gap: 8px;
+}
+
+.step3EditorBtn {
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+  border: 1px solid #E5E7EB;
+  background: white;
+  color: #374151;
+  font-weight: 500;
+}
+
+.step3EditorBtn:hover {
+  border-color: #0B1324;
+  color: #0B1324;
+}
+
+.step3EditorBtn.dark {
+  background: #0B1324;
+  color: white;
+  border-color: #0B1324;
+}
+
+.step3EditorBtn.dark:hover {
+  background: #1A2540;
+}
+
+.step3ImprovementBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, rgba(46, 108, 246, 0.08) 0%, rgba(46, 108, 246, 0.04) 100%);
+  border-bottom: 1px solid rgba(46, 108, 246, 0.15);
+}
+
+.step3ImprovementBar span {
+  font-size: 13px;
+  color: #2E6CF6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.step3ImprovementActions {
+  display: flex;
+  gap: 8px;
+}
+
+.step3EditorContent {
+  padding: 20px;
+  min-height: 300px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.step3EditorContent textarea {
+  width: 100%;
+  height: 100%;
+  min-height: 280px;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  line-height: 1.8;
+  color: #374151;
+  resize: none;
+  font-family: inherit;
+}
+
+/* Attachments Panel */
+.step3AttachmentsPanel {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid #E5E7EB;
+  overflow: hidden;
+}
+
+.step3AttachmentsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: #F9FAFB;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.step3AttachmentsTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  color: #0B1324;
+  font-size: 15px;
+}
+
+.step3AttachmentsBadge {
+  background: #0B1324;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.step3AddToContractBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: linear-gradient(135deg, #2E6CF6 0%, #1E53D8 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.step3AddToContractBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(46, 108, 246, 0.3);
+}
+
+.step3AttachmentsContent {
+  padding: 16px 20px;
+}
+
+.step3Dropzone {
+  border: 2px dashed #D1D5DB;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 12px;
+}
+
+.step3Dropzone:hover {
+  border-color: #0B1324;
+  background: #F9FAFB;
+}
+
+.step3Dropzone p {
+  margin: 0;
+  font-size: 13px;
+  color: #6B7280;
+}
+
+.step3Dropzone strong {
+  color: #0B1324;
+  text-decoration: underline;
+}
+
+.step3AttachmentsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.step3AttachmentItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #F9FAFB;
+  border-radius: 10px;
+}
+
+.step3AttachmentIcon {
+  width: 36px;
+  height: 36px;
+  background: white;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6B7280;
+  border: 1px solid #E5E7EB;
+}
+
+.step3AttachmentItem div:nth-child(2) {
+  flex: 1;
+}
+
+.step3AttachmentItem div:nth-child(2) span:first-child {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #0B1324;
+}
+
+.step3AttachmentSize {
+  display: block;
+  font-size: 11px;
+  color: #9CA3AF;
+}
+
+.step3AttachmentItem button {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: #9CA3AF;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step3AttachmentItem button:hover {
+  background: #FEE2E2;
+  color: #DC2626;
+}
+
+.step3DownloadRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #E5E7EB;
+  margin-top: 4px;
+}
+
+.step3DownloadRow span {
+  font-size: 12px;
+  color: #6B7280;
+}
+
+/* Right Column - PDF Preview */
+.step3RightColumn {
+  position: sticky;
+  top: 100px;
+}
+
+.step3PdfPanel {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid #E5E7EB;
+  overflow: hidden;
+}
+
+.step3PdfHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: #F9FAFB;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.step3PdfHeader span {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  color: #0B1324;
+  font-size: 15px;
+}
+
+.step3PdfContent {
+  background: #1A1A1A;
+  min-height: 500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 24px;
+}
+
+.step3PdfContent canvas {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.step3PdfEmpty {
+  text-align: center;
+  color: #6B7280;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.step3PdfEmpty p {
+  margin: 8px 0 0 0;
+  font-size: 14px;
+}
+
+.step3PdfEmpty button {
+  margin-top: 8px;
+  padding: 8px 16px;
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  color: #374151;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.step3PdfEmpty button:hover {
+  background: #F9FAFB;
+  border-color: #D1D5DB;
+}
+
+.step3PdfLoading {
+  text-align: center;
+  color: #6B7280;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.step3PdfLoading p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.step3PdfContent iframe {
+  width: 100%;
+  height: 500px;
+  border: none;
+  border-radius: 4px;
+  background: white;
+}
+
+/* Editor Button Primary Variant */
+.step3EditorBtn.primary {
+  background: #0B1324;
+  color: white;
+  border-color: #0B1324;
+}
+
+.step3EditorBtn.primary:hover {
+  background: #1A2540;
+}
+
+/* Improvement Bar Styling */
+.step3ImprovementBar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(46, 108, 246, 0.08) 0%, rgba(46, 108, 246, 0.04) 100%);
+  border-bottom: 1px solid rgba(46, 108, 246, 0.15);
+}
+
+.step3ImprovementBar textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid rgba(46, 108, 246, 0.2);
+  border-radius: 8px;
+  font-size: 14px;
+  resize: none;
+  font-family: inherit;
+  background: white;
+}
+
+.step3ImprovementBar textarea:focus {
+  outline: none;
+  border-color: #2E6CF6;
+}
+
+.step3ImprovementActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.step3ImprovementActions button {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+  border: 1px solid #E5E7EB;
+  background: white;
+  color: #374151;
+}
+
+.step3ImprovementActions button:hover {
+  border-color: #0B1324;
+}
+
+.step3ImprovementActions button.primary {
+  background: #2E6CF6;
+  color: white;
+  border-color: #2E6CF6;
+}
+
+.step3ImprovementActions button.primary:hover {
+  background: #1E53D8;
+}
+
+.step3ImprovementActions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Dropzone Styling */
+.step3Dropzone input {
+  display: none;
+}
+
+.step3Dropzone label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.step3Dropzone.dragging {
+  border-color: #2E6CF6;
+  background: rgba(46, 108, 246, 0.05);
+}
+
+/* Attachment Item Input */
+.step3AttachmentItem input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: #0B1324;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.step3AttachmentItem input:focus {
+  outline: none;
+  background: white;
+  box-shadow: 0 0 0 2px rgba(46, 108, 246, 0.2);
+}
+
+/* Download Row Buttons */
+.step3DownloadRow button {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+  border: 1px solid #E5E7EB;
+  background: white;
+  color: #374151;
+}
+
+.step3DownloadRow button:hover {
+  border-color: #0B1324;
+  color: #0B1324;
+}
+
+.step3DownloadRow button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Footer */
+.step3Footer {
+  margin-top: 24px;
+  text-align: center;
+}
+
+.step3BackBtn {
+  background: none;
+  border: none;
+  color: #6B7280;
+  font-size: 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 10px;
+  transition: all 0.2s;
+}
+
+.step3BackBtn:hover {
+  background: #F3F4F6;
+  color: #0B1324;
+}
+
+/* Step 3 Responsive - Mobile */
+@media (max-width: 1024px) {
+  .step3TwoColumn {
+    grid-template-columns: 1fr;
+  }
+
+  .step3RightColumn {
+    position: static;
+    order: -1;
+  }
+
+  .step3PdfContent {
+    min-height: 400px;
+  }
+
+  .step3SuccessHeader {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+    padding: 20px;
+  }
+
+  .step3SuccessLeft {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .step3SuccessActions {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .step3DesignOptions {
+    flex-wrap: wrap;
+  }
+
+  .step3DesignOption {
+    flex: 1 1 calc(50% - 6px);
+    min-width: 100px;
+  }
+}
+
+@media (max-width: 640px) {
+  .step3ContainerNew {
+    padding: 0 16px;
+  }
+
+  .step3HeaderBtn {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .step3HeaderBtn span:last-child {
+    display: none;
+  }
+
+  .step3DesignCompact,
+  .step3EditorPanel,
+  .step3AttachmentsPanel,
+  .step3PdfPanel {
+    border-radius: 12px;
+  }
+
+  .step3DesignOption {
+    flex: 1 1 100%;
+  }
+
+  .step3EditorContent {
+    max-height: 300px;
+  }
+}

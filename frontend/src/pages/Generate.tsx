@@ -3882,9 +3882,77 @@ export default function Generate() {
         console.log("🚀 Versuche V2 (React-PDF) PDF-Generierung mit Contract ID:", contractId, "| Design:", selectedDesignVariant);
 
         try {
-          // 🆕 V2-Route mit Design-Variante als Query-Parameter
-          const pdfUrl = `${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/${contractId}/pdf-v2?design=${selectedDesignVariant}`;
-          console.log("📊 V2 PDF URL:", pdfUrl);
+          // Anlagen-Infos für die letzte PDF-Seite vorbereiten
+          const attachmentInfos = attachments.map(att => ({
+            displayName: att.displayName || att.originalName,
+            originalName: att.originalName,
+            type: att.type
+          }));
+          console.log("📎 Anlagen-Infos:", attachmentInfos.length);
+
+          // Wenn Anlagen vorhanden, kombinierte Route verwenden
+          const hasPdfOrImageAttachments = attachments.some(att =>
+            att.type === 'application/pdf' ||
+            att.type?.startsWith('image/')
+          );
+
+          let pdfUrl: string;
+          let requestBody: { design: string; attachments: typeof attachmentInfos; attachmentFiles?: { data: string; type: string; name: string }[] };
+
+          if (hasPdfOrImageAttachments) {
+            // Kombinierte Route mit Anlagen-Dateien
+            pdfUrl = `${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/${contractId}/pdf-combined?design=${selectedDesignVariant}`;
+            console.log("📊 Combined PDF URL:", pdfUrl);
+
+            toast.update(loadingToast, {
+              render: "Lade Anlagen und erstelle kombiniertes PDF...",
+              type: "info",
+              isLoading: true
+            });
+
+            // Anlagen-Dateien als Base64 vorbereiten
+            const attachmentFiles: { data: string; type: string; name: string }[] = [];
+            for (const att of attachments) {
+              if (att.type === 'application/pdf' || att.type?.startsWith('image/')) {
+                try {
+                  // Datei als Base64 lesen
+                  const reader = new FileReader();
+                  const base64Data = await new Promise<string>((resolve, reject) => {
+                    reader.onload = () => {
+                      const result = reader.result as string;
+                      // Base64-Teil extrahieren (nach "data:...;base64,")
+                      const base64 = result.split(',')[1];
+                      resolve(base64);
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(att.file);
+                  });
+                  attachmentFiles.push({
+                    data: base64Data,
+                    type: att.type,
+                    name: att.displayName || att.originalName
+                  });
+                  console.log(`📄 Anlage geladen: ${att.originalName}`);
+                } catch (readError) {
+                  console.error(`❌ Fehler beim Lesen der Anlage: ${att.originalName}`, readError);
+                }
+              }
+            }
+
+            requestBody = {
+              design: selectedDesignVariant,
+              attachments: attachmentInfos,
+              attachmentFiles: attachmentFiles
+            };
+          } else {
+            // Standard V2-Route (ohne Datei-Anhänge)
+            pdfUrl = `${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/${contractId}/pdf-v2?design=${selectedDesignVariant}`;
+            console.log("📊 V2 PDF URL:", pdfUrl);
+            requestBody = {
+              design: selectedDesignVariant,
+              attachments: attachmentInfos
+            };
+          }
 
           const response = await fetch(pdfUrl, {
             method: 'POST',
@@ -3892,10 +3960,10 @@ export default function Generate() {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ design: selectedDesignVariant })
+            body: JSON.stringify(requestBody)
           });
 
-          console.log("📊 V2 Response:", {
+          console.log("📊 Response:", {
             status: response.status,
             statusText: response.statusText,
             contentType: response.headers.get('content-type')
@@ -3903,39 +3971,42 @@ export default function Generate() {
 
           if (response.ok) {
             const contentType = response.headers.get('content-type');
-            
+
             if (contentType && contentType.includes('application/pdf')) {
               const blob = await response.blob();
               console.log("✅ PDF Blob erhalten:", blob.size, "bytes");
-              
+
               const url = window.URL.createObjectURL(blob);
               const a = document.createElement('a');
               a.href = url;
-              a.download = `${contractData.contractType || 'vertrag'}_${new Date().toLocaleDateString('de-DE').replace(/\./g, '-')}_professional.pdf`;
+              const suffix = hasPdfOrImageAttachments ? '_mit_Anlagen' : '_professional';
+              a.download = `${contractData.contractType || 'vertrag'}_${new Date().toLocaleDateString('de-DE').replace(/\./g, '-')}${suffix}.pdf`;
               document.body.appendChild(a);
               a.click();
               window.URL.revokeObjectURL(url);
               document.body.removeChild(a);
-              
+
               // Erfolg!
               toast.update(loadingToast, {
-                render: "✅ Professionelles PDF mit Logo generiert!",
+                render: hasPdfOrImageAttachments
+                  ? `✅ PDF mit ${attachments.length} Anlage(n) generiert!`
+                  : "✅ Professionelles PDF mit Logo generiert!",
                 type: "success",
                 isLoading: false,
                 autoClose: 3000
               });
-              
-              console.log("✅ V2 PDF erfolgreich heruntergeladen");
+
+              console.log("✅ PDF erfolgreich heruntergeladen");
               return; // Erfolgreich - beende hier
             }
           }
 
           // V2 fehlgeschlagen
           const errorText = await response.text();
-          console.error("❌ V2 Fehler:", response.status, errorText);
+          console.error("❌ PDF-Generierung Fehler:", response.status, errorText);
 
         } catch (v2Error) {
-          console.error("❌ Netzwerkfehler bei V2:", v2Error);
+          console.error("❌ Netzwerkfehler bei PDF-Generierung:", v2Error);
         }
       }
 
@@ -4171,6 +4242,9 @@ export default function Generate() {
   const removeAttachment = (id: string) => {
     setAttachments(prev => prev.filter(att => att.id !== id));
   };
+
+  // Anlagen werden jetzt automatisch auf der letzten PDF-Seite angezeigt
+  // und beim Download als kombiniertes PDF erstellt (Vertrag + Anlagen-Dateien)
 
   // Download mit Anlagen (ZIP oder kombinierte PDF)
   const handleDownloadWithAttachments = async (format: 'zip' | 'combined') => {
@@ -5346,589 +5420,365 @@ export default function Generate() {
                   </motion.div>
                 )}
 
-                {/* Step 3: Generated Contract - NEW CENTERED LAYOUT */}
+                {/* Step 3: Generated Contract - PROFESSIONAL REDESIGN */}
                 {currentStep === 3 && (
                   <motion.div
                     key="step3"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
-                    className={styles.step3Container}
+                    className={styles.step3ContainerNew}
                   >
-                    {/* Centered Header */}
-                    <div className={styles.step3Header}>
-                      <h2>Ihr Vertrag ist fertig!</h2>
-                      <p>Überprüfen Sie den Inhalt, speichern oder versenden Sie den Vertrag zur digitalen Signatur</p>
+                    {/* Compact Success Header with Actions */}
+                    <div className={styles.step3SuccessHeader}>
+                      <div className={styles.step3SuccessLeft}>
+                        <div className={styles.step3SuccessIcon}>
+                          <CheckCircle size={24} />
+                        </div>
+                        <div className={styles.step3SuccessText}>
+                          <h2>Ihr Vertrag ist fertig!</h2>
+                          <p>Überprüfen, speichern oder zur Signatur versenden</p>
+                        </div>
+                      </div>
+                      <div className={styles.step3SuccessActions}>
+                        <motion.button
+                          onClick={handleCopy}
+                          className={`${styles.step3HeaderBtn} ${styles.secondary} ${copied ? styles.success : ''}`}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          {copied ? <Check size={16} /> : <Clipboard size={16} />}
+                          <span>{copied ? "Kopiert!" : "Kopieren"}</span>
+                        </motion.button>
+                        <motion.button
+                          onClick={handleDownloadPDF}
+                          disabled={isGeneratingPDF || !contractText}
+                          className={`${styles.step3HeaderBtn} ${styles.secondary}`}
+                          whileHover={!isGeneratingPDF ? { scale: 1.02 } : {}}
+                          whileTap={!isGeneratingPDF ? { scale: 0.98 } : {}}
+                        >
+                          {isGeneratingPDF ? (
+                            <div className={styles.tinySpinner}></div>
+                          ) : (
+                            <Download size={16} />
+                          )}
+                          <span>PDF</span>
+                        </motion.button>
+                        <motion.button
+                          onClick={handleSave}
+                          className={`${styles.step3HeaderBtn} ${saved ? styles.success : styles.primary}`}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          {saved ? <Check size={16} /> : <Save size={16} />}
+                          <span>{saved ? "Gespeichert" : "Speichern"}</span>
+                        </motion.button>
+                        <motion.button
+                          onClick={handleSendForSignature}
+                          disabled={!saved || !savedContractId}
+                          className={`${styles.step3HeaderBtn} ${styles.accent}`}
+                          whileHover={saved ? { scale: 1.02 } : {}}
+                          whileTap={saved ? { scale: 0.98 } : {}}
+                          title={!saved ? "Bitte speichern Sie den Vertrag zuerst" : "Zur Signatur versenden"}
+                        >
+                          <Send size={16} />
+                          <span>Zur Signatur</span>
+                        </motion.button>
+                      </div>
                     </div>
-
-                    {/* Horizontal Action Buttons */}
-                    <div className={styles.step3ActionButtons}>
-                      {/* Text kopieren - Secondary */}
-                      <motion.button
-                        onClick={handleCopy}
-                        className={`${styles.step3ActionButton} ${copied ? styles.success : ''}`}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        {copied ? <CheckCircle size={18} /> : <Clipboard size={18} />}
-                        <span>{copied ? "Kopiert!" : "Text kopieren"}</span>
-                      </motion.button>
-
-                      {/* Speichern - Primary */}
-                      <motion.button
-                        onClick={handleSave}
-                        className={`${styles.step3ActionButton} ${styles.primary} ${saved ? styles.success : ''}`}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        {saved ? <CheckCircle size={18} /> : <Save size={18} />}
-                        <span>{saved ? "Gespeichert!" : "Vertrag speichern"}</span>
-                      </motion.button>
-
-                      {/* PDF herunterladen - Secondary */}
-                      <motion.button
-                        onClick={handleDownloadPDF}
-                        disabled={isGeneratingPDF || !contractText}
-                        className={`${styles.step3ActionButton} ${isGeneratingPDF ? styles.loading : ''}`}
-                        whileHover={!isGeneratingPDF ? { scale: 1.02 } : {}}
-                        whileTap={!isGeneratingPDF ? { scale: 0.98 } : {}}
-                      >
-                        {isGeneratingPDF ? (
-                          <>
-                            <div className={`${styles.loadingSpinner} ${styles.small}`}></div>
-                            <span>PDF wird generiert...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Download size={18} />
-                            <span>Als PDF herunterladen</span>
-                          </>
-                        )}
-                      </motion.button>
-
-                      {/* Zur Signatur - Primary */}
-                      <motion.button
-                        onClick={handleSendForSignature}
-                        disabled={!saved || !savedContractId}
-                        className={`${styles.step3ActionButton} ${styles.primary}`}
-                        whileHover={saved ? { scale: 1.02 } : {}}
-                        whileTap={saved ? { scale: 0.98 } : {}}
-                        title={!saved ? "Bitte speichern Sie den Vertrag zuerst" : "Zur Signatur versenden"}
-                      >
-                        <Send size={18} />
-                        <span>Zur Signatur versenden</span>
-                      </motion.button>
-                    </div>
-
-                    {/* Help Text */}
-                    {!saved && (
-                      <motion.div
-                        className={styles.saveHint}
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                      >
-                        ⚡ Nächster Schritt: Speichern Sie den Vertrag, um ihn zur digitalen Signatur zu versenden
-                      </motion.div>
-                    )}
 
                     {/* Error Display */}
                     {downloadError && (
                       <motion.div
-                        className={styles.errorMessage}
+                        className={styles.step3Error}
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                       >
-                        <p>❌ {downloadError}</p>
+                        <span>❌ {downloadError}</span>
                       </motion.div>
                     )}
 
-                    {/* 🔄 Contract Improvement Section */}
-                    <motion.div
-                      className={styles.improvementSection}
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3 }}
-                    >
-                      {!showImprovementSection ? (
-                        <button
-                          className={styles.showImprovementButton}
-                          onClick={() => setShowImprovementSection(true)}
-                          disabled={isImproving}
-                        >
-                          <Edit3 size={18} />
-                          <span>Vertrag verbessern</span>
-                        </button>
-                      ) : (
-                        <motion.div
-                          className={styles.improvementForm}
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          exit={{ opacity: 0, height: 0 }}
-                        >
-                          <div className={styles.improvementFormHeader}>
-                            <Edit3 size={18} />
-                            <span>Vertrag verbessern</span>
-                            <button
-                              className={styles.closeImprovementButton}
-                              onClick={() => {
-                                setShowImprovementSection(false);
-                                setImprovements("");
-                              }}
-                              disabled={isImproving}
-                            >
-                              ✕
-                            </button>
+                    {/* Two Column Layout */}
+                    <div className={styles.step3TwoColumn}>
+                      {/* Left Column: Editor + Design + Attachments */}
+                      <div className={styles.step3LeftColumn}>
+                        {/* Compact Design Selector */}
+                        {isPremium && (
+                          <div className={styles.step3DesignCompact}>
+                            <div className={styles.step3DesignHeader}>
+                              <Sparkles size={16} />
+                              <span>Design</span>
+                            </div>
+                            <div className={styles.step3DesignOptions}>
+                              {[
+                                { id: 'executive', name: 'Executive', color: '#0B1324' },
+                                { id: 'modern', name: 'Modern', color: '#3B82F6' },
+                                { id: 'minimal', name: 'Minimal', color: '#6B7280' },
+                                { id: 'elegant', name: 'Elegant', color: '#D4AF37' },
+                                { id: 'corporate', name: 'Corporate', color: '#003366' }
+                              ].map((design) => (
+                                <motion.button
+                                  key={design.id}
+                                  className={`${styles.step3DesignOption} ${selectedDesignVariant === design.id ? styles.active : ''}`}
+                                  onClick={() => handleDesignChange(design.id)}
+                                  disabled={isChangingDesign || !saved}
+                                  whileHover={saved ? { scale: 1.03 } : {}}
+                                  whileTap={saved ? { scale: 0.97 } : {}}
+                                >
+                                  <div className={styles.step3DesignPreview} style={{ background: design.color }}>
+                                    <div className={styles.previewLines}>
+                                      <div className={styles.pLine}></div>
+                                      <div className={styles.pLine}></div>
+                                      <div className={styles.pLine}></div>
+                                    </div>
+                                  </div>
+                                  <span>{design.name}</span>
+                                  {selectedDesignVariant === design.id && (
+                                    <div className={styles.step3DesignCheck}>
+                                      <Check size={10} />
+                                    </div>
+                                  )}
+                                  {isChangingDesign && selectedDesignVariant !== design.id && (
+                                    <div className={styles.step3DesignLoading}>
+                                      <div className={styles.tinySpinner}></div>
+                                    </div>
+                                  )}
+                                </motion.button>
+                              ))}
+                            </div>
                           </div>
+                        )}
 
-                          <textarea
-                            className={styles.improvementTextarea}
-                            value={improvements}
-                            onChange={(e) => setImprovements(e.target.value)}
-                            placeholder="Geben Sie hier Ihre Verbesserungswünsche ein, z.B.:&#10;• Verkäufer sitzt in Berlin statt München&#10;• Käufer heißt Schmidt&#10;• Gewährleistung auf 2 Jahre erhöhen&#10;• Zahlungsfrist auf 30 Tage ändern"
-                            disabled={isImproving}
-                            rows={4}
-                          />
-
-                          <div className={styles.improvementActions}>
-                            <button
-                              className={styles.improvementCancelButton}
-                              onClick={() => {
-                                setShowImprovementSection(false);
-                                setImprovements("");
-                              }}
-                              disabled={isImproving}
-                            >
-                              Abbrechen
-                            </button>
-                            <button
-                              className={styles.improvementSubmitButton}
-                              onClick={handleImproveContract}
-                              disabled={isImproving || !improvements.trim()}
-                            >
-                              {isImproving ? (
-                                <>
-                                  <div className={styles.buttonSpinner}></div>
-                                  <span>Wird verbessert...</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Edit3 size={18} />
-                                  <span>Vertrag verbessern</span>
-                                </>
+                        {/* Text Editor Panel */}
+                        <div className={styles.step3EditorPanel}>
+                          <div className={styles.step3EditorHeader}>
+                            <div className={styles.step3EditorTitle}>
+                              <Edit3 size={16} />
+                              <span>Vertragstext bearbeiten</span>
+                            </div>
+                            <div className={styles.step3EditorActions}>
+                              {!showImprovementSection && (
+                                <button
+                                  className={styles.step3EditorBtn}
+                                  onClick={() => setShowImprovementSection(true)}
+                                  disabled={isImproving}
+                                >
+                                  <Sparkles size={14} />
+                                  KI verbessern
+                                </button>
                               )}
-                            </button>
-                          </div>
-                        </motion.div>
-                      )}
-                    </motion.div>
-
-                    {/* 🎨 DESIGN VARIANT SELECTOR - Premium Feature */}
-                    {isPremium && (
-                      <motion.div
-                        className={styles.step3DesignSelector}
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, delay: 0.2 }}
-                      >
-                        <div className={styles.designSelectorHeader}>
-                          <div className={styles.designSelectorTitle}>
-                            <Sparkles size={20} />
-                            <div>
-                              <h4>Design-Variante</h4>
-                              <p>Wählen Sie das perfekte Design für Ihren Vertrag</p>
+                              <motion.button
+                                className={`${styles.step3EditorBtn} ${styles.primary}`}
+                                onClick={generatePDFPreview}
+                                disabled={isGeneratingPreview || !contractText}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                              >
+                                {isGeneratingPreview ? (
+                                  <div className={styles.tinySpinner}></div>
+                                ) : (
+                                  <RefreshCw size={14} />
+                                )}
+                                PDF aktualisieren
+                              </motion.button>
                             </div>
                           </div>
-                          {!saved && (
-                            <span className={styles.designSaveHint}>
-                              Speichern Sie den Vertrag, um das Design zu ändern
-                            </span>
-                          )}
+
+                          {/* Improvement Section (collapsible) */}
+                          <AnimatePresence>
+                            {showImprovementSection && (
+                              <motion.div
+                                className={styles.step3ImprovementBar}
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                              >
+                                <textarea
+                                  value={improvements}
+                                  onChange={(e) => setImprovements(e.target.value)}
+                                  placeholder="Änderungswünsche eingeben, z.B.: Käufer heißt Schmidt, Zahlungsfrist auf 30 Tage ändern..."
+                                  disabled={isImproving}
+                                  rows={2}
+                                />
+                                <div className={styles.step3ImprovementActions}>
+                                  <button onClick={() => { setShowImprovementSection(false); setImprovements(""); }} disabled={isImproving}>
+                                    Abbrechen
+                                  </button>
+                                  <button
+                                    className={styles.primary}
+                                    onClick={handleImproveContract}
+                                    disabled={isImproving || !improvements.trim()}
+                                  >
+                                    {isImproving ? (
+                                      <>
+                                        <div className={styles.tinySpinner}></div>
+                                        Verbessere...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Sparkles size={14} />
+                                        Anwenden
+                                      </>
+                                    )}
+                                  </button>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+
+                          <div className={styles.step3EditorContent}>
+                            <textarea
+                              value={contractText}
+                              onChange={(e) => {
+                                setContractText(e.target.value);
+                                if (pdfPreviewUrl) setPdfPreviewUrl(null);
+                                setSaved(false);
+                              }}
+                              placeholder="Vertragstext..."
+                            />
+                          </div>
                         </div>
 
-                        <div className={styles.designOptionsGrid}>
-                          {/* Executive Design */}
-                          <motion.div
-                            className={`${styles.designCard} ${selectedDesignVariant === 'executive' ? styles.designCardActive : ''} ${isChangingDesign ? styles.designCardDisabled : ''}`}
-                            onClick={() => handleDesignChange('executive')}
-                            whileHover={!isChangingDesign && saved ? { scale: 1.02, y: -2 } : {}}
-                            whileTap={!isChangingDesign && saved ? { scale: 0.98 } : {}}
-                          >
-                            <div className={styles.designCardPreview}>
-                              <div className={styles.designPreviewExecutive}>
-                                <div className={styles.previewHeader}></div>
-                                <div className={styles.previewLine}></div>
-                                <div className={styles.previewLine} style={{ width: '80%' }}></div>
-                                <div className={styles.previewLine} style={{ width: '60%' }}></div>
-                                <div className={styles.previewAccent}></div>
-                              </div>
+                        {/* Attachments Panel */}
+                        <div className={styles.step3AttachmentsPanel}>
+                          <div className={styles.step3AttachmentsHeader}>
+                            <div className={styles.step3AttachmentsTitle}>
+                              <Paperclip size={16} />
+                              <span>Anlagen</span>
+                              {attachments.length > 0 && (
+                                <span className={styles.step3AttachmentsBadge}>
+                                  {attachments.length}
+                                </span>
+                              )}
                             </div>
-                            <div className={styles.designCardInfo}>
-                              <strong>Executive</strong>
-                              <span>Elegant & Kraftvoll</span>
-                              <p>Perfekt für wichtige Geschäftsverträge mit klassischem, professionellem Look</p>
+                          </div>
+                          <div className={styles.step3AttachmentsContent}>
+                            <div
+                              className={`${styles.step3Dropzone} ${isDraggingAttachment ? styles.dragging : ''}`}
+                              onDragOver={(e) => { e.preventDefault(); setIsDraggingAttachment(true); }}
+                              onDragLeave={() => setIsDraggingAttachment(false)}
+                              onDrop={handleAttachmentDrop}
+                            >
+                              <input
+                                type="file"
+                                multiple
+                                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                                onChange={handleAttachmentSelect}
+                                id="attachment-upload-new"
+                              />
+                              <label htmlFor="attachment-upload-new">
+                                <Upload size={20} />
+                                <span>Dateien hierher ziehen oder <strong>klicken</strong></span>
+                              </label>
                             </div>
-                            {selectedDesignVariant === 'executive' && (
-                              <div className={styles.designCardBadge}>
-                                <CheckCircle size={16} />
-                                Aktiv
-                              </div>
-                            )}
-                            {isChangingDesign && selectedDesignVariant !== 'executive' && (
-                              <div className={styles.designCardLoading}>
-                                <div className={styles.smallSpinner}></div>
-                              </div>
-                            )}
-                          </motion.div>
 
-                          {/* Modern Design */}
-                          <motion.div
-                            className={`${styles.designCard} ${selectedDesignVariant === 'modern' ? styles.designCardActive : ''} ${isChangingDesign ? styles.designCardDisabled : ''}`}
-                            onClick={() => handleDesignChange('modern')}
-                            whileHover={!isChangingDesign && saved ? { scale: 1.02, y: -2 } : {}}
-                            whileTap={!isChangingDesign && saved ? { scale: 0.98 } : {}}
-                          >
-                            <div className={styles.designCardPreview}>
-                              <div className={styles.designPreviewModern}>
-                                <div className={styles.previewHeaderModern}></div>
-                                <div className={styles.previewLineModern}></div>
-                                <div className={styles.previewLineModern} style={{ width: '70%' }}></div>
-                                <div className={styles.previewAccentModern}></div>
-                              </div>
-                            </div>
-                            <div className={styles.designCardInfo}>
-                              <strong>Modern</strong>
-                              <span>Frisch & Dynamisch</span>
-                              <p>Ideal für innovative Unternehmen mit zeitgemäßem, modernem Erscheinungsbild</p>
-                            </div>
-                            {selectedDesignVariant === 'modern' && (
-                              <div className={styles.designCardBadge}>
-                                <CheckCircle size={16} />
-                                Aktiv
-                              </div>
-                            )}
-                            {isChangingDesign && selectedDesignVariant !== 'modern' && (
-                              <div className={styles.designCardLoading}>
-                                <div className={styles.smallSpinner}></div>
-                              </div>
-                            )}
-                          </motion.div>
+                            {attachments.length > 0 && (
+                              <div className={styles.step3AttachmentsList}>
+                                {attachments.map((attachment, index) => (
+                                  <motion.div
+                                    key={attachment.id}
+                                    className={styles.step3AttachmentItem}
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: index * 0.05 }}
+                                  >
+                                    <div className={styles.step3AttachmentIcon}>
+                                      {attachment.type.includes('pdf') ? <FileText size={16} /> :
+                                       attachment.type.includes('image') ? <Image size={16} /> :
+                                       <File size={16} />}
+                                    </div>
+                                    <input
+                                      type="text"
+                                      value={attachment.displayName}
+                                      onChange={(e) => updateAttachmentName(attachment.id, e.target.value)}
+                                      placeholder="Benennen..."
+                                    />
+                                    <span className={styles.step3AttachmentSize}>
+                                      {(attachment.size / 1024 / 1024).toFixed(1)} MB
+                                    </span>
+                                    <button onClick={() => removeAttachment(attachment.id)}>
+                                      <X size={14} />
+                                    </button>
+                                  </motion.div>
+                                ))}
 
-                          {/* Minimal Design */}
-                          <motion.div
-                            className={`${styles.designCard} ${selectedDesignVariant === 'minimal' ? styles.designCardActive : ''} ${isChangingDesign ? styles.designCardDisabled : ''}`}
-                            onClick={() => handleDesignChange('minimal')}
-                            whileHover={!isChangingDesign && saved ? { scale: 1.02, y: -2 } : {}}
-                            whileTap={!isChangingDesign && saved ? { scale: 0.98 } : {}}
-                          >
-                            <div className={styles.designCardPreview}>
-                              <div className={styles.designPreviewMinimal}>
-                                <div className={styles.previewHeaderMinimal}></div>
-                                <div className={styles.previewLineMinimal}></div>
-                                <div className={styles.previewLineMinimal} style={{ width: '90%' }}></div>
-                                <div className={styles.previewLineMinimal} style={{ width: '75%' }}></div>
-                              </div>
-                            </div>
-                            <div className={styles.designCardInfo}>
-                              <strong>Minimal</strong>
-                              <span>Klar & Fokussiert</span>
-                              <p>Maximale Lesbarkeit und Klarheit für formelle Dokumente</p>
-                            </div>
-                            {selectedDesignVariant === 'minimal' && (
-                              <div className={styles.designCardBadge}>
-                                <CheckCircle size={16} />
-                                Aktiv
+                                {saved && (
+                                  <div className={styles.step3DownloadRow}>
+                                    <span>Download:</span>
+                                    <button onClick={() => handleDownloadWithAttachments('zip')} disabled={isDownloadingAttachments}>
+                                      <Archive size={14} /> ZIP
+                                    </button>
+                                    <button onClick={() => handleDownloadWithAttachments('combined')} disabled={isDownloadingAttachments}>
+                                      <FileText size={14} /> PDF
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                             )}
-                            {isChangingDesign && selectedDesignVariant !== 'minimal' && (
-                              <div className={styles.designCardLoading}>
-                                <div className={styles.smallSpinner}></div>
-                              </div>
-                            )}
-                          </motion.div>
-
-                          {/* Elegant Design */}
-                          <motion.div
-                            className={`${styles.designCard} ${selectedDesignVariant === 'elegant' ? styles.designCardActive : ''} ${isChangingDesign ? styles.designCardDisabled : ''}`}
-                            onClick={() => handleDesignChange('elegant')}
-                            whileHover={!isChangingDesign && saved ? { scale: 1.02, y: -2 } : {}}
-                            whileTap={!isChangingDesign && saved ? { scale: 0.98 } : {}}
-                          >
-                            <div className={styles.designCardPreview}>
-                              <div className={styles.designPreviewElegant}>
-                                <div className={styles.previewHeaderElegant}></div>
-                                <div className={styles.previewLineElegant}></div>
-                                <div className={styles.previewLineElegant} style={{ width: '85%' }}></div>
-                                <div className={styles.previewAccentElegant}></div>
-                              </div>
-                            </div>
-                            <div className={styles.designCardInfo}>
-                              <strong>Elegant</strong>
-                              <span>Luxuriös & Raffiniert</span>
-                              <p>Boutique-Kanzlei Stil mit goldenen Akzenten und edler Typografie</p>
-                            </div>
-                            {selectedDesignVariant === 'elegant' && (
-                              <div className={styles.designCardBadge}>
-                                <CheckCircle size={16} />
-                                Aktiv
-                              </div>
-                            )}
-                            {isChangingDesign && selectedDesignVariant !== 'elegant' && (
-                              <div className={styles.designCardLoading}>
-                                <div className={styles.smallSpinner}></div>
-                              </div>
-                            )}
-                          </motion.div>
-
-                          {/* Corporate Design */}
-                          <motion.div
-                            className={`${styles.designCard} ${selectedDesignVariant === 'corporate' ? styles.designCardActive : ''} ${isChangingDesign ? styles.designCardDisabled : ''}`}
-                            onClick={() => handleDesignChange('corporate')}
-                            whileHover={!isChangingDesign && saved ? { scale: 1.02, y: -2 } : {}}
-                            whileTap={!isChangingDesign && saved ? { scale: 0.98 } : {}}
-                          >
-                            <div className={styles.designCardPreview}>
-                              <div className={styles.designPreviewCorporate}>
-                                <div className={styles.previewHeaderCorporate}></div>
-                                <div className={styles.previewLineCorporate}></div>
-                                <div className={styles.previewLineCorporate} style={{ width: '75%' }}></div>
-                                <div className={styles.previewAccentCorporate}></div>
-                              </div>
-                            </div>
-                            <div className={styles.designCardInfo}>
-                              <strong>Corporate</strong>
-                              <span>Struktur & Vertrauen</span>
-                              <p>DAX-Konzern Stil für maximale Seriosität und Professionalität</p>
-                            </div>
-                            {selectedDesignVariant === 'corporate' && (
-                              <div className={styles.designCardBadge}>
-                                <CheckCircle size={16} />
-                                Aktiv
-                              </div>
-                            )}
-                            {isChangingDesign && selectedDesignVariant !== 'corporate' && (
-                              <div className={styles.designCardLoading}>
-                                <div className={styles.smallSpinner}></div>
-                              </div>
-                            )}
-                          </motion.div>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {/* Split View: Text Editor + PDF Preview */}
-                    <div className={styles.step3SplitView}>
-                      {/* Left: Text Editor */}
-                      <div className={styles.step3Panel}>
-                        <div className={styles.step3PanelHeader}>
-                          <Edit3 size={18} />
-                          <span>Text bearbeiten</span>
-                          {/* Text aktualisieren Button */}
-                          <motion.button
-                            className={styles.updateTextButton}
-                            onClick={generatePDFPreview}
-                            disabled={isGeneratingPreview || !contractText}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            title="PDF mit aktuellem Text neu generieren"
-                          >
-                            {isGeneratingPreview ? (
-                              <>
-                                <div className={styles.tinySpinner}></div>
-                                <span>Aktualisiere...</span>
-                              </>
-                            ) : (
-                              <>
-                                <RefreshCw size={14} />
-                                <span>PDF aktualisieren</span>
-                              </>
-                            )}
-                          </motion.button>
-                        </div>
-                        <div className={styles.step3PanelContent}>
-                          <textarea
-                            className={styles.step3TextEditor}
-                            value={contractText}
-                            onChange={(e) => {
-                              setContractText(e.target.value);
-                              // ✅ PDF-Vorschau zurücksetzen bei Text-Änderungen
-                              if (pdfPreviewUrl) {
-                                setPdfPreviewUrl(null);
-                              }
-                              setSaved(false); // Mark as unsaved
-                            }}
-                            placeholder="Vertragstext..."
-                          />
+                          </div>
                         </div>
                       </div>
 
-                      {/* Right: PDF Preview */}
-                      <div className={styles.step3Panel}>
-                        <div className={styles.step3PanelHeader}>
-                          <FileText size={18} />
-                          <span>PDF-Vorschau</span>
-                          {isGeneratingPreview && <div className={styles.smallSpinner}></div>}
-                        </div>
-                        <div className={styles.step3PanelContent}>
-                          {isGeneratingPreview ? (
-                            <div className={styles.step3PdfLoading}>
-                              <div className={styles.loadingSpinner}></div>
-                              <p>PDF wird generiert...</p>
-                            </div>
-                          ) : pdfPreviewUrl ? (
-                            <iframe
-                              src={pdfPreviewUrl}
-                              className={styles.step3PdfPreview}
-                              title="PDF Vorschau"
-                            />
-                          ) : (
-                            <div className={styles.step3PdfError}>
-                              <p>Klicken Sie auf "PDF aktualisieren" um die Vorschau zu laden</p>
-                              <button onClick={generatePDFPreview} className={styles.retryButton}>
-                                <RefreshCw size={16} />
-                                PDF generieren
-                              </button>
-                            </div>
-                          )}
+                      {/* Right Column: PDF Preview (Sticky) */}
+                      <div className={styles.step3RightColumn}>
+                        <div className={styles.step3PdfPanel}>
+                          <div className={styles.step3PdfHeader}>
+                            <FileText size={16} />
+                            <span>PDF-Vorschau</span>
+                            {isGeneratingPreview && <div className={styles.tinySpinner}></div>}
+                          </div>
+                          <div className={styles.step3PdfContent}>
+                            {isGeneratingPreview ? (
+                              <div className={styles.step3PdfLoading}>
+                                <div className={styles.loadingSpinner}></div>
+                                <p>PDF wird generiert...</p>
+                              </div>
+                            ) : pdfPreviewUrl ? (
+                              <iframe
+                                src={pdfPreviewUrl}
+                                title="PDF Vorschau"
+                              />
+                            ) : (
+                              <div className={styles.step3PdfEmpty}>
+                                <FileText size={32} />
+                                <p>Klicken Sie auf "PDF aktualisieren"</p>
+                                <button onClick={generatePDFPreview}>
+                                  <RefreshCw size={14} />
+                                  Vorschau laden
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Anlagen-Bereich */}
-                    <motion.div
-                      className={styles.attachmentsSection}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.4 }}
-                    >
-                      <div className={styles.attachmentsSectionHeader}>
-                        <div className={styles.attachmentsTitleRow}>
-                          <Paperclip size={20} />
-                          <h3>Anlagen</h3>
-                          <span className={styles.attachmentsBadge}>
-                            {attachments.length} {attachments.length === 1 ? 'Datei' : 'Dateien'}
-                          </span>
-                        </div>
-                        <p className={styles.attachmentsSubtitle}>
-                          Fügen Sie Dokumente hinzu, die diesem Vertrag beigefügt werden sollen
-                        </p>
-                      </div>
-
-                      {/* Upload-Bereich */}
-                      <div
-                        className={`${styles.attachmentsDropzone} ${isDraggingAttachment ? styles.dragging : ''}`}
-                        onDragOver={(e) => { e.preventDefault(); setIsDraggingAttachment(true); }}
-                        onDragLeave={() => setIsDraggingAttachment(false)}
-                        onDrop={handleAttachmentDrop}
+                    {/* Footer */}
+                    <div className={styles.step3Footer}>
+                      <motion.button
+                        className={styles.step3BackBtn}
+                        onClick={() => {
+                          setCurrentStep(1);
+                          setSelectedType(null);
+                          setFormData({});
+                          setContractText("");
+                          setGeneratedHTML("");
+                          setShowPreview(false);
+                          setSavedContractId(null);
+                          setSaved(false);
+                          setIsGeneratingPDF(false);
+                          setDownloadError(null);
+                          setPdfPreviewUrl(null);
+                          setIsGeneratingPreview(false);
+                          setAttachments([]);
+                        }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                       >
-                        <input
-                          type="file"
-                          multiple
-                          accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                          onChange={handleAttachmentSelect}
-                          className={styles.attachmentInput}
-                          id="attachment-upload"
-                        />
-                        <label htmlFor="attachment-upload" className={styles.attachmentLabel}>
-                          <Upload size={24} />
-                          <span className={styles.dropzoneText}>
-                            Dateien hierher ziehen oder <strong>klicken zum Auswählen</strong>
-                          </span>
-                          <span className={styles.dropzoneHint}>
-                            PDF, Word, Excel, Bilder (max. 10 MB pro Datei)
-                          </span>
-                        </label>
-                      </div>
-
-                      {/* Anlagen-Liste */}
-                      {attachments.length > 0 && (
-                        <div className={styles.attachmentsList}>
-                          {attachments.map((attachment, index) => (
-                            <motion.div
-                              key={attachment.id}
-                              className={styles.attachmentItem}
-                              initial={{ opacity: 0, x: -20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              exit={{ opacity: 0, x: 20 }}
-                              transition={{ delay: index * 0.1 }}
-                            >
-                              <div className={styles.attachmentIcon}>
-                                {attachment.type.includes('pdf') ? <FileText size={20} /> :
-                                 attachment.type.includes('image') ? <Image size={20} /> :
-                                 <File size={20} />}
-                              </div>
-                              <div className={styles.attachmentInfo}>
-                                <input
-                                  type="text"
-                                  value={attachment.displayName}
-                                  onChange={(e) => updateAttachmentName(attachment.id, e.target.value)}
-                                  className={styles.attachmentNameInput}
-                                  placeholder="Anlage benennen..."
-                                />
-                                <span className={styles.attachmentSize}>
-                                  {(attachment.size / 1024 / 1024).toFixed(2)} MB
-                                </span>
-                              </div>
-                              <button
-                                className={styles.attachmentRemove}
-                                onClick={() => removeAttachment(attachment.id)}
-                                title="Anlage entfernen"
-                              >
-                                <X size={16} />
-                              </button>
-                            </motion.div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Download-Optionen wenn Anlagen vorhanden */}
-                      {attachments.length > 0 && saved && (
-                        <div className={styles.attachmentDownloadOptions}>
-                          <span className={styles.downloadLabel}>Herunterladen als:</span>
-                          <button
-                            className={styles.downloadOptionButton}
-                            onClick={() => handleDownloadWithAttachments('zip')}
-                            disabled={isDownloadingAttachments}
-                          >
-                            <Archive size={16} />
-                            ZIP-Archiv
-                          </button>
-                          <button
-                            className={styles.downloadOptionButton}
-                            onClick={() => handleDownloadWithAttachments('combined')}
-                            disabled={isDownloadingAttachments}
-                          >
-                            <FileText size={16} />
-                            Kombinierte PDF
-                          </button>
-                        </div>
-                      )}
-                    </motion.div>
-
-                    {/* Back to Start Button */}
-                    <motion.button
-                      className={styles.backToStartButton}
-                      onClick={() => {
-                        setCurrentStep(1);
-                        setSelectedType(null);
-                        setFormData({});
-                        setContractText("");
-                        setGeneratedHTML("");
-                        setShowPreview(false);
-                        setSavedContractId(null);
-                        setSaved(false);
-                        setIsGeneratingPDF(false);
-                        setDownloadError(null);
-                        setPdfPreviewUrl(null);
-                        setIsGeneratingPreview(false);
-                        setAttachments([]); // Reset attachments
-                      }}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      style={{ marginTop: '2rem' }}
-                    >
-                      <ArrowLeft size={16} />
-                      <span>Neuen Vertrag erstellen</span>
-                    </motion.button>
+                        <ArrowLeft size={16} />
+                        <span>Neuen Vertrag erstellen</span>
+                      </motion.button>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>

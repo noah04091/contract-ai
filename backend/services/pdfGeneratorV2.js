@@ -990,9 +990,15 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType }) 
 /**
  * Unterschriften-Seite Komponente
  */
-const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qrCode, documentId, currentDate }) => {
+const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qrCode, documentId, currentDate, attachments = [] }) => {
   const e = React.createElement;
   const designName = theme.name;
+
+  // Anlagen-Liste erstellen
+  const hasAttachments = attachments && attachments.length > 0;
+  const attachmentsList = hasAttachments
+    ? attachments.map((att, index) => `${index + 1}. ${att.displayName || att.name || att.originalName || 'Anlage ' + (index + 1)}`).join('\n')
+    : 'Diesem Vertrag sind keine Anlagen beigefügt.';
 
   // Corporate hat spezielle Struktur
   if (designName === 'Corporate') {
@@ -1034,10 +1040,10 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
           ),
           e(View, { style: styles.attachmentsBox },
             e(View, { style: styles.attachmentsHeader },
-              e(Text, { style: styles.attachmentsTitle }, 'Anlagen')
+              e(Text, { style: styles.attachmentsTitle }, hasAttachments ? `Anlagen (${attachments.length})` : 'Anlagen')
             ),
             e(View, { style: styles.attachmentsContent },
-              e(Text, { style: styles.attachmentsText }, 'Diesem Vertrag sind keine Anlagen beigefügt.')
+              e(Text, { style: styles.attachmentsText }, attachmentsList)
             )
           )
         )
@@ -1083,8 +1089,8 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
             e(Text, { style: styles.verificationText }, `ID: ${documentId?.substring(0, 16) || 'N/A'}`)
           ),
           e(View, { style: styles.attachmentsBox },
-            e(Text, { style: styles.attachmentsTitle }, 'Anlagen'),
-            e(Text, { style: styles.attachmentsText }, 'Keine Anlagen beigefügt.')
+            e(Text, { style: styles.attachmentsTitle }, hasAttachments ? `Anlagen (${attachments.length})` : 'Anlagen'),
+            e(Text, { style: styles.attachmentsText }, attachmentsList)
           )
         )
       )
@@ -1129,8 +1135,8 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
         e(Text, { style: styles.verificationText }, `ID: ${documentId?.substring(0, 20) || 'N/A'}`)
       ),
       e(View, { style: styles.attachmentsBox },
-        e(Text, { style: styles.attachmentsTitle }, 'Anlagen'),
-        e(Text, { style: styles.attachmentsText }, 'Diesem Vertrag sind keine Anlagen beigefügt.')
+        e(Text, { style: styles.attachmentsTitle }, hasAttachments ? `Anlagen (${attachments.length})` : 'Anlagen'),
+        e(Text, { style: styles.attachmentsText }, attachmentsList)
       )
     )
   );
@@ -1140,7 +1146,7 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
 // HAUPT-EXPORT FUNKTION
 // ═══════════════════════════════════════════════════════════════════════════
 
-const generatePDFv2 = async (contractText, companyProfile, contractType, parties = {}, isDraft = false, designVariant = 'executive') => {
+const generatePDFv2 = async (contractText, companyProfile, contractType, parties = {}, isDraft = false, designVariant = 'executive', contractId = null, attachments = []) => {
   console.log('🎨 [V2 React-PDF] Starte PDF-Generierung...');
   console.log('📄 Vertragstyp:', contractType);
   console.log('🏢 Firma:', companyProfile?.companyName);
@@ -1154,6 +1160,7 @@ const generatePDFv2 = async (contractText, companyProfile, contractType, parties
   }));
   console.log('🎭 Design:', designVariant);
   console.log('👥 Parteien:', JSON.stringify(parties).substring(0, 100));
+  console.log('📎 Anlagen:', attachments?.length || 0);
 
   const e = React.createElement;
 
@@ -1225,7 +1232,8 @@ const generatePDFv2 = async (contractText, companyProfile, contractType, parties
       parties,
       qrCode,
       documentId,
-      currentDate
+      currentDate,
+      attachments
     })
   );
 
