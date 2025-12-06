@@ -268,16 +268,19 @@ function generateCalendarLinks(token) {
   const backendUrl = process.env.BACKEND_URL || 'https://api.contract-ai.de';
   const icsUrl = `${backendUrl}/api/calendar/ics?token=${token}`;
   const webcalUrl = icsUrl.replace('https://', 'webcal://').replace('http://', 'webcal://');
-  
+
+  // Google Calendar benötigt die URL als base64-encoded string
+  const googleCalUrl = Buffer.from(icsUrl).toString('base64');
+
   return {
     // Direct ICS download
     download: icsUrl,
-    
+
     // Webcal subscription
     webcal: webcalUrl,
-    
-    // Google Calendar
-    google: `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcalUrl)}`,
+
+    // Google Calendar - Nutze /calendar/u/0/r/settings/addbyurl für direkte URL-Eingabe
+    google: `https://calendar.google.com/calendar/u/0/r/settings/addbyurl?url=${encodeURIComponent(icsUrl)}`,
     
     // Outlook.com
     outlook: `https://outlook.live.com/calendar/0/addfromweb?url=${encodeURIComponent(icsUrl)}&name=Contract%20AI%20Kalender`,
