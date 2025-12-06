@@ -30,10 +30,12 @@ import {
   Save,
   FileEdit,
   RotateCw,
-  Trash2
+  Trash2,
+  Link2
 } from "lucide-react";
 import axios from "axios";
 import "../styles/AppleCalendar.css";
+import CalendarSyncModal from "../components/CalendarSyncModal";
 
 // Type for provider
 type ProviderType = string | {
@@ -1477,6 +1479,8 @@ export default function CalendarPage() {
   const [dayEvents, setDayEvents] = useState<CalendarEvent[]>([]);
   const [currentEventIndex, setCurrentEventIndex] = useState(0);
   const [showDayEventsModal, setShowDayEventsModal] = useState(false);
+  // 📅 Kalender-Synchronisation Modal
+  const [showSyncModal, setShowSyncModal] = useState(false);
   const [newEvent, setNewEvent] = useState({
     contractId: '',
     title: '',
@@ -2054,6 +2058,18 @@ export default function CalendarPage() {
           </div>
           <h1>Intelligenter Vertragskalender</h1>
           <p>Automatische Erinnerungen • 1-Klick-Kündigung • KI-Optimierung</p>
+
+          {/* Sync Calendar Button */}
+          <motion.button
+            className="sync-calendar-btn-premium"
+            onClick={() => setShowSyncModal(true)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            style={{ marginTop: '16px' }}
+          >
+            <Link2 size={16} />
+            <span>Kalender synchronisieren</span>
+          </motion.button>
         </motion.div>
 
         {/* Main Content Grid */}
@@ -3054,6 +3070,12 @@ export default function CalendarPage() {
             setShowQuickActions(true);
           }}
           filterType={selectedStatFilter}
+        />
+
+        {/* Calendar Sync Modal */}
+        <CalendarSyncModal
+          isOpen={showSyncModal}
+          onClose={() => setShowSyncModal(false)}
         />
       </div>
     </>
