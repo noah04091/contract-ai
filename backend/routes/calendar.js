@@ -401,21 +401,34 @@ router.get("/upcoming", verifyToken, async (req, res) => {
 });
 
 // GET /api/calendar/ics - ICS-Feed für externe Kalender
+// WICHTIG: Dieser Endpoint muss IMMER valides ICS zurückgeben, auch bei Fehlern!
 router.get("/ics", async (req, res) => {
+  // Setze ICS-Header immer zuerst - damit externe Kalender die Datei akzeptieren
+  res.setHeader("Content-Type", "text/calendar; charset=utf-8");
+  res.setHeader("Content-Disposition", 'inline; filename="contract-ai-calendar.ics"');
+  // CORS für externe Kalender-Apps erlauben
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+
   try {
     const { token } = req.query;
-    
+
     if (!token) {
-      return res.status(400).json({ 
-        success: false, 
-        error: "Token erforderlich" 
-      });
+      // Leerer Kalender bei fehlendem Token
+      return res.send(generateEmptyICS("Token fehlt - bitte neu synchronisieren"));
     }
-    
+
     // Decode and verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (jwtError) {
+      console.error("❌ JWT verification failed:", jwtError.message);
+      return res.send(generateEmptyICS("Token ungültig oder abgelaufen - bitte neu synchronisieren"));
+    }
+
     const userId = new ObjectId(decoded.userId);
-    
+
     // Get all future events
     const events = await req.db.collection("contract_events")
       .aggregate([
@@ -437,22 +450,45 @@ router.get("/ics", async (req, res) => {
         { $unwind: { path: "$contract", preserveNullAndEmptyArrays: true } }
       ])
       .toArray();
-    
+
+    console.log(`📅 ICS Feed: ${events.length} Events für User ${userId}`);
+
     // Generate ICS content
     const icsContent = generateICSFeed(events);
-    
-    res.setHeader("Content-Type", "text/calendar; charset=utf-8");
-    res.setHeader("Content-Disposition", 'attachment; filename="contract-ai-calendar.ics"');
     res.send(icsContent);
-    
+
   } catch (error) {
     console.error("❌ Error generating ICS feed:", error);
-    res.status(500).json({ 
-      success: false, 
-      error: "Fehler beim Generieren des Kalender-Feeds" 
-    });
+    // Bei Fehlern trotzdem gültiges ICS zurückgeben
+    res.send(generateEmptyICS("Fehler beim Laden - bitte später erneut versuchen"));
   }
 });
+
+// Helper: Generiert leeren ICS-Kalender mit Info-Event
+function generateEmptyICS(message) {
+  const now = new Date();
+  const dateStr = now.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Contract AI//Calendar Feed//DE',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'X-WR-CALNAME:Contract AI Kalender',
+    'X-WR-CALDESC:Vertragserinnerungen von Contract AI',
+    'BEGIN:VEVENT',
+    `UID:info-${Date.now()}@contract-ai.de`,
+    `DTSTAMP:${dateStr}`,
+    `DTSTART:${dateStr}`,
+    `DTEND:${dateStr}`,
+    `SUMMARY:Contract AI - ${message}`,
+    `DESCRIPTION:Bitte öffnen Sie contract-ai.de und synchronisieren Sie den Kalender erneut.`,
+    'STATUS:CONFIRMED',
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].join('\r\n');
+}
 
 // POST /api/calendar/quick-action - Quick Actions aus dem Kalender
 router.post("/quick-action", verifyToken, async (req, res) => {
