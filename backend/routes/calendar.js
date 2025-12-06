@@ -672,6 +672,91 @@ function generateSyncToken(userId) {
   return token;
 }
 
+// POST /api/calendar/regenerate-events - Events für alle Verträge neu generieren
+router.post("/regenerate-events", verifyToken, async (req, res) => {
+  try {
+    const userId = new ObjectId(req.user.userId);
+
+    // Import calendarEvents service
+    const { regenerateAllEvents } = require('../services/calendarEvents');
+
+    // Regenerate all events
+    const totalEvents = await regenerateAllEvents(req.db, userId);
+
+    res.json({
+      success: true,
+      message: `${totalEvents} Events für Ihre Verträge generiert`,
+      eventsGenerated: totalEvents
+    });
+
+  } catch (error) {
+    console.error("❌ Error regenerating events:", error);
+    res.status(500).json({
+      success: false,
+      error: "Fehler beim Regenerieren der Events"
+    });
+  }
+});
+
+// GET /api/calendar/debug - Debug-Info für ICS-Feed
+router.get("/debug", verifyToken, async (req, res) => {
+  try {
+    const userId = new ObjectId(req.user.userId);
+
+    // 1. Count contracts
+    const contractCount = await req.db.collection("contracts").countDocuments({ userId });
+
+    // 2. Get all events for this user
+    const allEvents = await req.db.collection("contract_events")
+      .find({ userId })
+      .sort({ date: 1 })
+      .toArray();
+
+    // 3. Get future events only (what ICS shows)
+    const now = new Date();
+    const futureEvents = allEvents.filter(e => new Date(e.date) >= now && e.status !== "dismissed");
+
+    // 4. Get contracts with their expiryDate
+    const contracts = await req.db.collection("contracts")
+      .find({ userId })
+      .project({ name: 1, expiryDate: 1, endDate: 1, provider: 1 })
+      .toArray();
+
+    res.json({
+      success: true,
+      debug: {
+        userId: userId.toString(),
+        contractCount,
+        totalEvents: allEvents.length,
+        futureEvents: futureEvents.length,
+        pastEvents: allEvents.length - futureEvents.length,
+        contracts: contracts.map(c => ({
+          name: c.name,
+          provider: c.provider,
+          expiryDate: c.expiryDate || c.endDate || "NICHT GESETZT",
+          hasExpiryDate: !!(c.expiryDate || c.endDate)
+        })),
+        futureEventsList: futureEvents.slice(0, 10).map(e => ({
+          title: e.title,
+          date: e.date,
+          type: e.type,
+          status: e.status
+        })),
+        hint: futureEvents.length === 0
+          ? "Keine zukünftigen Events vorhanden. Mögliche Gründe: 1) Verträge haben kein expiryDate, 2) Alle Events liegen in der Vergangenheit, 3) Events wurden noch nicht generiert - nutze POST /api/calendar/regenerate-events"
+          : "Events vorhanden - ICS-Feed sollte funktionieren"
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ Error in debug endpoint:", error);
+    res.status(500).json({
+      success: false,
+      error: "Fehler beim Abrufen der Debug-Infos"
+    });
+  }
+});
+
 // Helper function for cancellation
 async function triggerCancellation(db, contractId, userId) {
   try {

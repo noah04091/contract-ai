@@ -89,6 +89,14 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
     errorMessage: '',
     rawResponse: ''
   });
+  const [debugInfo, setDebugInfo] = useState<{
+    contractCount: number;
+    totalEvents: number;
+    futureEvents: number;
+    contracts: Array<{ name: string; expiryDate: string; hasExpiryDate: boolean }>;
+    hint: string;
+  } | null>(null);
+  const [regenerating, setRegenerating] = useState(false);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -223,6 +231,42 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
         icsContent: prev.icsContent === 'loading' ? 'error' : prev.icsContent,
         errorMessage
       }));
+    }
+  };
+
+  // Fetch debug info
+  const fetchDebugInfo = async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await axios.get('/api/calendar/debug', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        setDebugInfo(response.data.debug);
+      }
+    } catch (err) {
+      console.error('Error fetching debug info:', err);
+    }
+  };
+
+  // Regenerate events
+  const regenerateEvents = async () => {
+    setRegenerating(true);
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await axios.post('/api/calendar/regenerate-events', {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        alert(`${response.data.eventsGenerated} Events wurden generiert!`);
+        // Refresh debug info
+        await fetchDebugInfo();
+      }
+    } catch (err) {
+      console.error('Error regenerating events:', err);
+      alert('Fehler beim Regenerieren der Events');
+    } finally {
+      setRegenerating(false);
     }
   };
 
@@ -654,6 +698,74 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
                     </button>
                   </div>
                 </div>
+              </div>
+
+              {/* Debug & Regenerate */}
+              <div className={styles.debugSection}>
+                <h4>Events Diagnostik</h4>
+                <div className={styles.debugActions}>
+                  <motion.button
+                    className={styles.debugBtn}
+                    onClick={fetchDebugInfo}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <AlertCircle size={18} />
+                    <span>Debug-Info laden</span>
+                  </motion.button>
+
+                  <motion.button
+                    className={styles.regenerateBtn2}
+                    onClick={regenerateEvents}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    disabled={regenerating}
+                  >
+                    {regenerating ? (
+                      <>
+                        <Loader size={18} className={styles.spinner} />
+                        <span>Generiere...</span>
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw size={18} />
+                        <span>Events regenerieren</span>
+                      </>
+                    )}
+                  </motion.button>
+                </div>
+
+                {debugInfo && (
+                  <div className={styles.debugResults}>
+                    <div className={styles.debugStat}>
+                      <strong>Verträge:</strong> {debugInfo.contractCount}
+                    </div>
+                    <div className={styles.debugStat}>
+                      <strong>Gesamt Events:</strong> {debugInfo.totalEvents}
+                    </div>
+                    <div className={styles.debugStat}>
+                      <strong>Zukünftige Events (im ICS):</strong> {debugInfo.futureEvents}
+                    </div>
+
+                    {debugInfo.futureEvents === 0 && (
+                      <div className={styles.debugWarning}>
+                        <AlertCircle size={16} />
+                        <span>{debugInfo.hint}</span>
+                      </div>
+                    )}
+
+                    <div className={styles.debugContracts}>
+                      <strong>Verträge mit Ablaufdatum:</strong>
+                      <ul>
+                        {debugInfo.contracts.map((c, i) => (
+                          <li key={i} className={c.hasExpiryDate ? styles.hasDate : styles.noDate}>
+                            {c.name}: {c.hasExpiryDate ? new Date(c.expiryDate).toLocaleDateString('de-DE') : 'KEIN DATUM'}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Test Button */}
