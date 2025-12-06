@@ -1144,6 +1144,15 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType, do
   const footerCenter = { position: 'absolute', bottom: 25, left: 0, right: 0, textAlign: 'center', fontSize: 8, color: '#666666' };
   const footerRight = { position: 'absolute', bottom: 25, right: 50, fontSize: 8, color: '#666666', textAlign: 'right' };
 
+  // Hilfsfunktion für Seitenzahl-Text mit render prop
+  const PageNumberText = ({ style }) => {
+    return e(Text, {
+      style: style,
+      fixed: true,
+      render: ({ pageNumber, totalPages }) => `Seite ${pageNumber} von ${totalPages}`
+    });
+  };
+
   // Sidebar-Layout (Modern, Startup, Tech, Creative)
   if (layoutType === 'sidebar-accent') {
     return e(Page, { size: 'A4', style: styles.page, wrap: true },
@@ -1157,7 +1166,11 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType, do
       ),
       // Fixed Footer - NACH dem Content!
       e(Text, { style: { ...footerLeft, left: 58 }, fixed: true }, `ID: ${docIdShort}`),
-      e(Text, { style: footerCenter, fixed: true, render: ({ pageNumber, totalPages }) => `Seite ${pageNumber} von ${totalPages}` }),
+      e(Text, {
+        style: footerCenter,
+        fixed: true,
+        render: (props) => `Seite ${props.pageNumber} von ${props.totalPages}`
+      }),
       e(Text, { style: footerRight, fixed: true }, currentDate || '')
     );
   }
@@ -1171,7 +1184,11 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType, do
       ),
       // Fixed Footer - NACH dem Content!
       e(Text, { style: footerLeft, fixed: true }, `ID: ${docIdShort}`),
-      e(Text, { style: footerCenter, fixed: true, render: ({ pageNumber, totalPages }) => `Seite ${pageNumber} von ${totalPages}` }),
+      e(Text, {
+        style: footerCenter,
+        fixed: true,
+        render: (props) => `Seite ${props.pageNumber} von ${props.totalPages}`
+      }),
       e(Text, { style: footerRight, fixed: true }, currentDate || '')
     );
   }
@@ -1184,7 +1201,11 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType, do
     ),
     // Fixed Footer - NACH dem Content!
     e(Text, { style: footerLeft, fixed: true }, `ID: ${docIdShort}`),
-    e(Text, { style: footerCenter, fixed: true, render: ({ pageNumber, totalPages }) => `Seite ${pageNumber} von ${totalPages}` }),
+    e(Text, {
+      style: footerCenter,
+      fixed: true,
+      render: (props) => `Seite ${props.pageNumber} von ${props.totalPages}`
+    }),
     e(Text, { style: footerRight, fixed: true }, currentDate || '')
   );
 };
@@ -1258,7 +1279,11 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
       ),
       // Fixed Footer
       e(Text, { style: footerLeft, fixed: true }, `ID: ${docIdShort}`),
-      e(Text, { style: footerCenter, fixed: true, render: ({ pageNumber, totalPages }) => `Seite ${pageNumber} von ${totalPages}` }),
+      e(Text, {
+        style: footerCenter,
+        fixed: true,
+        render: (props) => `Seite ${props.pageNumber} von ${props.totalPages}`
+      }),
       e(Text, { style: footerRight, fixed: true }, currentDate || '')
     );
   }
@@ -1308,7 +1333,11 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
       ),
       // Fixed Footer
       e(Text, { style: { ...footerLeft, left: 58 }, fixed: true }, `ID: ${docIdShort}`),
-      e(Text, { style: footerCenter, fixed: true, render: ({ pageNumber, totalPages }) => `Seite ${pageNumber} von ${totalPages}` }),
+      e(Text, {
+        style: footerCenter,
+        fixed: true,
+        render: (props) => `Seite ${props.pageNumber} von ${props.totalPages}`
+      }),
       e(Text, { style: footerRight, fixed: true }, currentDate || '')
     );
   }
@@ -1357,7 +1386,11 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
     ),
     // Fixed Footer
     e(Text, { style: footerLeft, fixed: true }, `ID: ${docIdShort}`),
-    e(Text, { style: footerCenter, fixed: true, render: ({ pageNumber, totalPages }) => `Seite ${pageNumber} von ${totalPages}` }),
+    e(Text, {
+      style: footerCenter,
+      fixed: true,
+      render: (props) => `Seite ${props.pageNumber} von ${props.totalPages}`
+    }),
     e(Text, { style: footerRight, fixed: true }, currentDate || '')
   );
 };
