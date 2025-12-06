@@ -840,11 +840,27 @@ const createStyles = (theme) => {
 
 /**
  * Deckblatt-Komponente - passt sich dem Design an
+ * WICHTIG: Footer mit render prop für dynamische Seitenzahlen!
  */
 const CoverPage = ({ styles, theme, companyProfile, contractType, parties, partyLabels, currentDate, documentId, isDraft, logoBase64 }) => {
   const e = React.createElement;
   const c = theme.colors;
   const layoutType = theme.layout;
+  const docIdShort = documentId?.substring(0, 12) || 'N/A';
+
+  // Einheitlicher Footer-Style für dynamische Seitenzahlen
+  const footerStyle = {
+    position: 'absolute',
+    bottom: 25,
+    left: 50,
+    right: 50,
+    fontSize: 8,
+    color: '#666666',
+    borderTopWidth: 0.5,
+    borderTopColor: '#cccccc',
+    paddingTop: 8,
+    textAlign: 'center'
+  };
 
   // Sidebar-Layout (Modern, Startup, Tech, Creative)
   if (layoutType === 'sidebar-accent') {
@@ -883,10 +899,12 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
           )
         )
       ),
-      e(View, { style: styles.footer, fixed: true },
-        e(Text, null, `ID: ${documentId?.substring(0, 12) || 'N/A'}`),
-        e(Text, null, currentDate)
-      )
+      // Fixed Footer mit dynamischer Seitenzahl
+      e(Text, {
+        style: { ...footerStyle, left: 58 },
+        fixed: true,
+        render: ({ pageNumber, totalPages }) => `ID: ${docIdShort}          Seite ${pageNumber} von ${totalPages}          ${currentDate || ''}`
+      })
     );
   }
 
@@ -920,9 +938,12 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
           )
         )
       ),
-      e(View, { style: styles.footer, fixed: true },
-        e(Text, null, documentId?.substring(0, 16) || '')
-      )
+      // Fixed Footer mit dynamischer Seitenzahl
+      e(Text, {
+        style: footerStyle,
+        fixed: true,
+        render: ({ pageNumber, totalPages }) => `ID: ${docIdShort}          Seite ${pageNumber} von ${totalPages}          ${currentDate || ''}`
+      })
     );
   }
 
@@ -964,10 +985,12 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
           )
         )
       ),
-      e(View, { style: styles.footer, fixed: true },
-        e(View, { style: styles.footerOrnament }),
-        e(Text, { style: styles.footerText }, `${documentId?.substring(0, 16) || ''} • ${currentDate}`)
-      )
+      // Fixed Footer mit dynamischer Seitenzahl
+      e(Text, {
+        style: footerStyle,
+        fixed: true,
+        render: ({ pageNumber, totalPages }) => `ID: ${docIdShort}          Seite ${pageNumber} von ${totalPages}          ${currentDate || ''}`
+      })
     );
   }
 
@@ -1015,11 +1038,12 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
           )
         )
       ),
-      e(View, { style: styles.footer, fixed: true },
-        e(Text, null, `Dokument-ID: ${documentId?.substring(0, 16) || 'N/A'}`),
-        e(Text, null, 'Seite 1'),
-        e(Text, null, currentDate)
-      )
+      // Fixed Footer mit dynamischer Seitenzahl
+      e(Text, {
+        style: footerStyle,
+        fixed: true,
+        render: ({ pageNumber, totalPages }) => `ID: ${docIdShort}          Seite ${pageNumber} von ${totalPages}          ${currentDate || ''}`
+      })
     );
   }
 
@@ -1060,11 +1084,12 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
         )
       )
     ),
-    e(View, { style: styles.footer, fixed: true },
-      e(Text, null, `Dok-ID: ${documentId?.substring(0, 16) || 'N/A'}`),
-      e(Text, null, 'Seite 1'),
-      e(Text, null, currentDate)
-    )
+    // Fixed Footer mit dynamischer Seitenzahl
+    e(Text, {
+      style: footerStyle,
+      fixed: true,
+      render: ({ pageNumber, totalPages }) => `ID: ${docIdShort}          Seite ${pageNumber} von ${totalPages}          ${currentDate || ''}`
+    })
   );
 };
 
