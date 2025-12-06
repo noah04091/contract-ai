@@ -1070,6 +1070,8 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
 
 /**
  * Inhalts-Seite Komponente
+ * WICHTIG: Der Footer muss als direktes Kind der Page mit fixed={true} sein,
+ * damit er auf allen automatisch umgebrochenen Seiten erscheint!
  */
 const ContentPage = ({ styles, theme, sections, companyProfile, contractType, documentId, currentDate }) => {
   const e = React.createElement;
@@ -1118,51 +1120,72 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType, do
     );
   };
 
-  // Konsistenter Footer für alle Layouts - MUSS fixed sein für alle Seiten!
-  const footerStyle = { ...styles.pageFooter, position: 'absolute', bottom: 25, left: 50, right: 50 };
-
-  const renderFooter = () => {
-    if (layoutType === 'ornamental') {
-      return e(View, { style: footerStyle, fixed: true },
-        e(Text, { fixed: true }, `${documentId?.substring(0, 12) || ''} • ${currentDate}`)
-      );
-    }
-    return e(View, { style: footerStyle, fixed: true },
-      e(Text, { fixed: true }, `ID: ${documentId?.substring(0, 12) || 'N/A'}`),
-      e(Text, { fixed: true, render: ({ pageNumber, totalPages }) => `Seite ${pageNumber} von ${totalPages}` }),
-      e(Text, { fixed: true }, currentDate)
-    );
+  // FIXED Footer Style - position absolute am unteren Seitenrand
+  // Muss als direktes Kind der Page mit fixed={true} sein!
+  const fixedFooterStyle = {
+    position: 'absolute',
+    bottom: 25,
+    left: 50,
+    right: 50,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    fontSize: 8,
+    color: '#666666',
+    borderTopWidth: 0.5,
+    borderTopColor: '#cccccc',
+    paddingTop: 8
   };
+
+  const docIdShort = documentId?.substring(0, 12) || 'N/A';
 
   // Sidebar-Layout (Modern, Startup, Tech, Creative)
   if (layoutType === 'sidebar-accent') {
     return e(Page, { size: 'A4', style: styles.page },
+      // Fixed Footer - DIREKT als Kind der Page, nicht in einem Wrapper!
+      e(View, { style: fixedFooterStyle, fixed: true },
+        e(Text, null, `ID: ${docIdShort}`),
+        e(Text, { render: ({ pageNumber, totalPages }) => `Seite ${pageNumber} von ${totalPages}` }),
+        e(Text, null, currentDate || '')
+      ),
+      // Content
       e(View, { style: styles.contentPage },
         e(View, { style: styles.sidebar }),
         e(View, { style: styles.contentMain },
           ...sections.map(renderSection)
         )
-      ),
-      renderFooter()
+      )
     );
   }
 
   // Structured-Boxes-Layout (Corporate)
   if (layoutType === 'structured-boxes') {
     return e(Page, { size: 'A4', style: styles.page },
+      // Fixed Footer - DIREKT als Kind der Page
+      e(View, { style: fixedFooterStyle, fixed: true },
+        e(Text, null, `ID: ${docIdShort}`),
+        e(Text, { render: ({ pageNumber, totalPages }) => `Seite ${pageNumber} von ${totalPages}` }),
+        e(Text, null, currentDate || '')
+      ),
+      // Content
       e(View, { style: styles.contentPage },
         ...sections.map(renderSection)
-      ),
-      renderFooter()
+      )
     );
   }
 
-  // Standard Layout
+  // Standard Layout (Executive, Minimal, Elegant, etc.)
   return e(Page, { size: 'A4', style: styles.page },
+    // Fixed Footer - DIREKT als Kind der Page für alle automatisch umgebrochenen Seiten
+    e(View, { style: fixedFooterStyle, fixed: true },
+      e(Text, null, `ID: ${docIdShort}`),
+      e(Text, { render: ({ pageNumber, totalPages }) => `Seite ${pageNumber} von ${totalPages}` }),
+      e(Text, null, currentDate || '')
+    ),
+    // Content
     e(View, { style: styles.contentPage },
       ...sections.map(renderSection)
-    ),
-    renderFooter()
+    )
   );
 };
 
