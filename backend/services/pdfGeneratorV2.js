@@ -509,7 +509,7 @@ const createExecutiveStyles = (theme) => {
   return StyleSheet.create({
     page: { fontFamily: theme.fontFamily, fontSize: 11, padding: 50, lineHeight: 1.5, color: c.text },
     // Deckblatt - Klassisch zentriert
-    coverPage: { flex: 1 },
+    coverPage: { paddingBottom: 60 },
     header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', borderBottomWidth: 2, borderBottomColor: c.line, paddingBottom: 15, marginBottom: 30 },
     logo: { width: 60, height: 60, objectFit: 'contain' },
     companyInfo: { textAlign: 'right', fontSize: 9, color: c.textLight },
@@ -544,7 +544,7 @@ const createExecutiveStyles = (theme) => {
     paragraph: { fontSize: 10, marginBottom: 8, textAlign: 'justify', color: c.text },
     pageFooter: { position: 'absolute', bottom: 30, left: 50, right: 50, flexDirection: 'row', justifyContent: 'space-between', fontSize: 8, color: c.textMuted, borderTopWidth: 1, borderTopColor: c.border, paddingTop: 8 },
     // Signature Styles
-    signaturePage: { flex: 1 },
+    signaturePage: { paddingBottom: 60 },
     signatureTitle: { fontSize: 16, fontWeight: 'bold', textAlign: 'center', marginBottom: 40, color: c.primary, borderBottomWidth: 2, borderBottomColor: c.line, paddingBottom: 10 },
     signatureColumns: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 30 },
     signatureColumn: { width: '45%' },
@@ -568,7 +568,7 @@ const createModernStyles = (theme) => {
   return StyleSheet.create({
     page: { fontFamily: theme.fontFamily, fontSize: 11, padding: 0, lineHeight: 1.6, color: c.text },
     // Deckblatt - Mit Sidebar
-    coverPage: { flex: 1, flexDirection: 'row' },
+    coverPage: { flexDirection: 'row', paddingBottom: 60 },
     sidebar: { width: 8, backgroundColor: c.primary },
     mainContent: { flex: 1, padding: 40 },
     header: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 30 },
@@ -605,7 +605,7 @@ const createModernStyles = (theme) => {
     paragraph: { fontSize: 10, marginBottom: 10, textAlign: 'justify' },
     pageFooter: { position: 'absolute', bottom: 20, left: 48, right: 40, flexDirection: 'row', justifyContent: 'space-between', fontSize: 8, color: c.textMuted },
     // Signature Styles
-    signaturePage: { flex: 1, flexDirection: 'row' },
+    signaturePage: { flexDirection: 'row', paddingBottom: 60 },
     signatureMain: { flex: 1, paddingLeft: 40, paddingRight: 40, paddingTop: 40 },
     signatureTitle: { fontSize: 18, fontWeight: 'bold', color: c.primary, marginBottom: 50 },
     signatureColumns: { flexDirection: 'row', justifyContent: 'space-between' },
@@ -630,7 +630,7 @@ const createMinimalStyles = (theme) => {
   return StyleSheet.create({
     page: { fontFamily: theme.fontFamily, fontSize: 10, padding: 60, lineHeight: 1.7, color: c.text },
     // Deckblatt - Ultra clean
-    coverPage: { flex: 1, justifyContent: 'center' },
+    coverPage: { justifyContent: 'center', paddingBottom: 60 },
     header: { position: 'absolute', top: 0, left: 0, right: 0, alignItems: 'center', paddingTop: 40 },
     logo: { width: 50, height: 50, objectFit: 'contain', opacity: 0.8 },
     companyInfo: { textAlign: 'center', fontSize: 8, color: c.textMuted, marginTop: 10 },
@@ -664,7 +664,7 @@ const createMinimalStyles = (theme) => {
     paragraph: { fontSize: 9, marginBottom: 12, textAlign: 'justify', lineHeight: 1.8 },
     pageFooter: { position: 'absolute', bottom: 40, left: 60, right: 60, flexDirection: 'row', justifyContent: 'center', fontSize: 7, color: c.textMuted },
     // Signature Styles
-    signaturePage: { flex: 1, justifyContent: 'center' },
+    signaturePage: { justifyContent: 'center', paddingBottom: 60 },
     signatureTitle: { fontSize: 10, textAlign: 'center', color: c.textMuted, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 60 },
     signatureColumns: { flexDirection: 'row', justifyContent: 'space-around' },
     signatureColumn: { width: '40%', alignItems: 'center' },
@@ -688,7 +688,7 @@ const createElegantStyles = (theme) => {
   return StyleSheet.create({
     page: { fontFamily: theme.fontFamily, fontSize: 11, padding: 40, lineHeight: 1.6, color: c.text, backgroundColor: c.background },
     // Deckblatt - Ornamental (kompakter für eine Seite)
-    coverPage: { flex: 1 },
+    coverPage: { paddingBottom: 60 },
     header: { alignItems: 'center', marginBottom: 10 },
     ornamentTop: { width: 200, height: 2, backgroundColor: c.accent, marginBottom: 5 },
     ornamentTopInner: { width: 100, height: 1, backgroundColor: c.accent },
@@ -727,7 +727,7 @@ const createElegantStyles = (theme) => {
     paragraph: { fontSize: 10, marginBottom: 10, textAlign: 'justify' },
     pageFooter: { position: 'absolute', bottom: 30, left: 50, right: 50, alignItems: 'center' },
     // Signature Styles
-    signaturePage: { flex: 1 },
+    signaturePage: { paddingBottom: 60 },
     signatureTitle: { fontSize: 14, textAlign: 'center', color: c.primary, marginBottom: 50, borderBottomWidth: 1, borderBottomColor: c.accent, paddingBottom: 15 },
     signatureColumns: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 30 },
     signatureColumn: { width: '42%', alignItems: 'center' },
@@ -752,7 +752,7 @@ const createCorporateStyles = (theme) => {
     // v4-FIX: Page mit padding wie Executive (KEIN backgroundColor - das verursacht das Problem!)
     page: { fontFamily: theme.fontFamily, fontSize: 10, padding: 50, lineHeight: 1.5, color: '#1a1a1a' },
     // Deckblatt - Mit Header-Bar (ALLE FARBEN HARDCODIERT!)
-    coverPage: { flex: 1 },
+    coverPage: { paddingBottom: 60 },
     headerBar: { backgroundColor: '#003366', padding: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     logo: { width: 50, height: 50, objectFit: 'contain' },
     headerInfo: { color: '#ffffff', textAlign: 'right', fontSize: 8 },
@@ -789,8 +789,8 @@ const createCorporateStyles = (theme) => {
     bulletText: { flex: 1, fontSize: 9, color: '#1a1a1a' },
     paragraph: { fontSize: 9, marginBottom: 8, textAlign: 'justify', paddingLeft: 10, color: '#1a1a1a' },
     pageFooter: { position: 'absolute', bottom: 30, left: 50, right: 50, flexDirection: 'row', justifyContent: 'space-between', fontSize: 8, color: '#666666', borderTopWidth: 1, borderTopColor: '#003366', paddingTop: 8 },
-    // Signature Styles - v4-FIX: Ohne backgroundColor!
-    signaturePage: { flex: 1 },
+    // Signature Styles - v4-FIX: Ohne flex:1 für fixed footer!
+    signaturePage: { paddingBottom: 60 },
     signatureHeader: { backgroundColor: '#003366', padding: 15 },
     signatureTitle: { fontSize: 14, fontWeight: 'bold', color: '#ffffff', textAlign: 'center' },
     signatureMain: { padding: 40 },
