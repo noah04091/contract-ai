@@ -155,8 +155,18 @@ function formatICSDate(date) {
  */
 function escapeICS(text) {
   if (!text) return '';
-  
-  return text
+
+  // Sicherstellen, dass text ein String ist
+  let str = text;
+  if (typeof text === 'object') {
+    // Falls es ein Objekt ist (z.B. provider), versuche displayName oder name zu extrahieren
+    str = text.displayName || text.name || text.toString() || '';
+  }
+  if (typeof str !== 'string') {
+    str = String(str || '');
+  }
+
+  return str
     .replace(/\\/g, '\\\\')
     .replace(/;/g, '\\;')
     .replace(/,/g, '\\,')
