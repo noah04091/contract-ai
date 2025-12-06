@@ -3277,8 +3277,9 @@ router.post('/:id/pdf', verifyToken, async (req, res) => {
 
     const version = req.query.version || 'v2';
     const designVariant = req.query.design || req.body.design || 'executive';
+    const customDesign = req.body.customDesign || null;
     const contractId = req.params.id;
-    console.log(`📄 [PDF] Anfrage für Vertrag ${contractId}, Version: ${version}, Design: ${designVariant}`);
+    console.log(`📄 [PDF] Anfrage für Vertrag ${contractId}, Version: ${version}, Design: ${designVariant}, Custom: ${customDesign ? 'Ja' : 'Nein'}`);
 
     // Vertrag laden
     const contract = await contractsCollection.findOne({
@@ -3303,6 +3304,8 @@ router.post('/:id/pdf', verifyToken, async (req, res) => {
 
     const parties = contract.formData || contract.parties || contract.metadata?.parties || {};
     const finalDesign = contract.designVariant || designVariant;
+    // Custom Design: aus Request-Body ODER aus gespeichertem Vertrag
+    const finalCustomDesign = customDesign || contract.customDesign || null;
     let pdfBuffer;
 
     // ✅ WICHTIG: Fallback für Vertragstext - wenn content leer ist, aus contractHTML extrahieren
@@ -3346,7 +3349,7 @@ router.post('/:id/pdf', verifyToken, async (req, res) => {
         contract.status === 'Entwurf'
       );
     } else if (generatePDFv2) {
-      // V2: React-PDF (Standard) - mit Design-Variante und Contract-ID für QR-Code
+      // V2: React-PDF (Standard) - mit Design-Variante, Contract-ID und Custom Design
       pdfBuffer = await generatePDFv2(
         contractText,
         companyProfile,
@@ -3354,7 +3357,9 @@ router.post('/:id/pdf', verifyToken, async (req, res) => {
         parties,
         contract.status === 'Entwurf',
         finalDesign,
-        contractId  // ✅ Contract-ID für QR-Code Verifizierung
+        contractId,  // ✅ Contract-ID für QR-Code Verifizierung
+        [],          // Attachments (noch nicht in dieser Route)
+        finalCustomDesign  // ✅ Custom Design Konfiguration
       );
     } else {
       return res.status(503).json({
@@ -3486,6 +3491,9 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
     // Design-Variante: aus Vertrag oder Query-Parameter
     const finalDesign = contract.designVariant || designVariant;
 
+    // Custom Design: aus Request-Body oder aus gespeichertem Vertrag
+    const customDesign = req.body.customDesign || contract.customDesign || null;
+
     // DEBUG: Alle verfügbaren Felder anzeigen
     console.log('📄 Vertragsdaten:', {
       name: contract.name,
@@ -3527,6 +3535,7 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
     // Anlagen aus Request-Body extrahieren (falls vorhanden)
     const attachments = req.body.attachments || [];
     console.log('📎 Anlagen empfangen:', attachments.length);
+    console.log('🎨 Custom Design:', customDesign ? 'Ja' : 'Nein');
 
     const pdfBuffer = await generatePDFv2(
       contractText,
@@ -3536,7 +3545,8 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
       contract.status === 'Entwurf',
       finalDesign,
       contractId,  // Contract-ID für QR-Code Verifizierung
-      attachments  // Anlagen für letzte Seite
+      attachments, // Anlagen für letzte Seite
+      customDesign // Custom Design Konfiguration
     );
 
     res.setHeader('Content-Type', 'application/pdf');
@@ -3637,6 +3647,7 @@ router.post('/:id/pdf-combined', verifyToken, async (req, res) => {
 
     const parties = contract.formData || contract.parties || contract.metadata?.parties || {};
     const finalDesign = contract.designVariant || designVariant;
+    const customDesign = req.body.customDesign || contract.customDesign || null;
 
     // Fallback für content
     let contractText = contract.content;
@@ -3666,7 +3677,8 @@ router.post('/:id/pdf-combined', verifyToken, async (req, res) => {
       contract.status === 'Entwurf',
       finalDesign,
       contractId,
-      attachmentInfos
+      attachmentInfos,
+      customDesign
     );
 
     // 2. Wenn keine Anlagen-Dateien, direkt zurückgeben

@@ -3782,22 +3782,31 @@ router.post("/preview", verifyToken, async (req, res) => {
   }
 });
 
-// 🆕 NEUE ROUTE: Design-Variante ändern
+// 🆕 NEUE ROUTE: Design-Variante ändern (inkl. Custom Designs)
 router.post("/change-design", verifyToken, async (req, res) => {
-  const { contractId, newDesignVariant } = req.body;
-  
-  console.log("🎨 Design-Änderung angefordert:", { contractId, newDesignVariant });
-  
+  const { contractId, newDesignVariant, customDesign } = req.body;
+
+  console.log("🎨 Design-Änderung angefordert:", { contractId, newDesignVariant, customDesign });
+
   try {
     if (!contractId || !newDesignVariant) {
       return res.status(400).json({ message: "Contract ID oder Design-Variante fehlt" });
     }
-    
-    // Validiere Design-Variante - ALLE 5 Varianten!
-    const validDesigns = ['executive', 'modern', 'minimal', 'elegant', 'corporate'];
+
+    // Validiere Design-Variante - ALLE Varianten + custom!
+    const validDesigns = [
+      'executive', 'modern', 'minimal', 'elegant', 'corporate',
+      'professional', 'startup', 'legal', 'tech', 'finance', 'creative',
+      'custom'
+    ];
     if (!validDesigns.includes(newDesignVariant)) {
       console.log("❌ Ungültige Design-Variante:", newDesignVariant, "Erlaubt:", validDesigns);
       return res.status(400).json({ message: "Ungültige Design-Variante" });
+    }
+
+    // Bei custom: Validiere customDesign
+    if (newDesignVariant === 'custom' && !customDesign) {
+      return res.status(400).json({ message: "Custom Design Konfiguration fehlt" });
     }
 
     // Vertrag laden - userId kann String oder ObjectId sein
@@ -3810,34 +3819,46 @@ router.post("/change-design", verifyToken, async (req, res) => {
         { userId: req.user.userId }
       ]
     });
-    
+
     if (!contract) {
       return res.status(404).json({ message: "Vertrag nicht gefunden" });
     }
 
-    // Nur die Design-Variante im Vertrag aktualisieren
-    // Die eigentliche PDF-Generierung erfolgt über /pdf-v2 Route im Frontend
+    // Update-Objekt vorbereiten
+    const updateData = {
+      designVariant: newDesignVariant,
+      lastModified: new Date()
+    };
+
+    // Bei custom: Custom Design speichern
+    if (newDesignVariant === 'custom' && customDesign) {
+      updateData.customDesign = {
+        primaryColor: customDesign.primaryColor || '#0B1324',
+        secondaryColor: customDesign.secondaryColor || '#1A2540',
+        accentColor: customDesign.accentColor || '#3B82F6',
+        fontFamily: customDesign.fontFamily || 'Helvetica',
+        layout: customDesign.layout || 'classic-centered'
+      };
+    }
+
+    // Design-Variante im Vertrag aktualisieren
     await contractsCollection.updateOne(
       { _id: new ObjectId(contractId) },
-      {
-        $set: {
-          designVariant: newDesignVariant,
-          lastModified: new Date()
-        }
-      }
+      { $set: updateData }
     );
 
-    console.log("✅ Design-Variante aktualisiert:", { contractId, newDesignVariant });
+    console.log("✅ Design-Variante aktualisiert:", { contractId, newDesignVariant, customDesign: updateData.customDesign });
 
     res.json({
       message: "✅ Design-Variante erfolgreich geändert",
       newDesignVariant: newDesignVariant,
+      customDesign: updateData.customDesign || null,
       contractId: contractId
     });
-    
+
   } catch (error) {
     console.error("❌ Design Change Error:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: "Design-Änderung fehlgeschlagen",
       error: error.message
     });

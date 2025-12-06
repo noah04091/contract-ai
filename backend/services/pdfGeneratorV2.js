@@ -1337,7 +1337,7 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
 // HAUPT-EXPORT FUNKTION
 // ═══════════════════════════════════════════════════════════════════════════
 
-const generatePDFv2 = async (contractText, companyProfile, contractType, parties = {}, isDraft = false, designVariant = 'executive', contractId = null, attachments = []) => {
+const generatePDFv2 = async (contractText, companyProfile, contractType, parties = {}, isDraft = false, designVariant = 'executive', contractId = null, attachments = [], customDesign = null) => {
   console.log('🎨 [V2 React-PDF] Starte PDF-Generierung...');
   console.log('📄 Vertragstyp:', contractType);
   console.log('🏢 Firma:', companyProfile?.companyName);
@@ -1350,14 +1350,46 @@ const generatePDFv2 = async (contractText, companyProfile, contractType, parties
     logoUrlStart: companyProfile?.logoUrl?.substring(0, 50)
   }));
   console.log('🎭 Design:', designVariant);
+  console.log('🎨 Custom Design:', customDesign ? JSON.stringify(customDesign) : 'N/A');
   console.log('👥 Parteien:', JSON.stringify(parties).substring(0, 100));
   console.log('📎 Anlagen:', attachments?.length || 0);
 
   const e = React.createElement;
 
-  // Theme auswählen (fallback zu executive)
-  const theme = DESIGN_THEMES[designVariant] || DESIGN_THEMES.executive;
-  console.log('🎨 Verwende Theme:', theme.name);
+  // Theme auswählen - Custom Design oder vordefiniertes Theme
+  let theme;
+  if (designVariant === 'custom' && customDesign) {
+    // Custom Theme aus den User-Einstellungen erstellen
+    theme = {
+      name: 'Custom',
+      fontFamily: customDesign.fontFamily || 'Helvetica',
+      layout: customDesign.layout || 'classic-centered',
+      colors: {
+        primary: customDesign.primaryColor || '#0B1324',
+        secondary: customDesign.secondaryColor || '#1A2540',
+        accent: customDesign.accentColor || '#3B82F6',
+        text: customDesign.primaryColor || '#0B1324',
+        textLight: '#4B5563',
+        textMuted: '#6B7280',
+        border: '#E5E7EB',
+        background: '#ffffff',
+        headerBg: '#F9FAFB',
+        line: customDesign.primaryColor || '#0B1324',
+      },
+      features: {
+        showHeaderLine: true,
+        showFooterLine: true,
+        logoPosition: 'left',
+        titleStyle: 'underlined',
+        partyStyle: 'boxed',
+        sectionStyle: 'numbered-bold',
+      }
+    };
+    console.log('🎨 Verwende Custom Theme mit Farben:', theme.colors.primary, theme.colors.accent);
+  } else {
+    theme = DESIGN_THEMES[designVariant] || DESIGN_THEMES.executive;
+    console.log('🎨 Verwende Theme:', theme.name);
+  }
 
   // Styles basierend auf Theme erstellen
   const styles = createStyles(theme);
