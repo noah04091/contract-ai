@@ -524,8 +524,8 @@ const connectDB = async () => {
           res.send(icsContent);
 
         } catch (error) {
-          console.error("❌ ICS Error:", error);
-          res.send(generateEmptyICSHelper("Fehler beim Laden"));
+          console.error("❌ ICS Error:", error.message, error.stack);
+          res.send(generateEmptyICSHelper("Fehler: " + error.message));
         }
       });
 
