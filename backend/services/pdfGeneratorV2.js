@@ -1140,9 +1140,20 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType, do
   const docIdShort = documentId?.substring(0, 12) || 'N/A';
 
   // Footer-Styles für alle Layouts
-  const footerLeft = { position: 'absolute', bottom: 25, left: 50, fontSize: 8, color: '#666666' };
-  const footerCenter = { position: 'absolute', bottom: 25, left: 0, right: 0, textAlign: 'center', fontSize: 8, color: '#666666' };
-  const footerRight = { position: 'absolute', bottom: 25, right: 50, fontSize: 8, color: '#666666', textAlign: 'right' };
+  const footerStyle = {
+    position: 'absolute',
+    bottom: 25,
+    left: 50,
+    right: 50,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    fontSize: 8,
+    color: '#666666',
+    borderTopWidth: 0.5,
+    borderTopColor: '#cccccc',
+    paddingTop: 8
+  };
 
   // Sidebar-Layout (Modern, Startup, Tech, Creative)
   if (layoutType === 'sidebar-accent') {
@@ -1155,10 +1166,12 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType, do
           ...sections.map(renderSection)
         )
       ),
-      // Fixed Footer - NACH dem Content!
-      e(Text, { style: { ...footerLeft, left: 58 }, fixed: true }, `ID: ${docIdShort}`),
-      e(Text, { style: footerCenter, fixed: true, render: ({ pageNumber, totalPages }) => `Seite ${pageNumber} von ${totalPages}` }),
-      e(Text, { style: footerRight, fixed: true }, currentDate || '')
+      // Fixed Footer mit Seitenzahl
+      e(Text, {
+        style: { ...footerStyle, left: 58 },
+        fixed: true,
+        render: ({ pageNumber, totalPages }) => `ID: ${docIdShort}                    Seite ${pageNumber} von ${totalPages}                    ${currentDate || ''}`
+      })
     );
   }
 
@@ -1169,10 +1182,12 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType, do
       e(View, { style: styles.contentPage },
         ...sections.map(renderSection)
       ),
-      // Fixed Footer - NACH dem Content!
-      e(Text, { style: footerLeft, fixed: true }, `ID: ${docIdShort}`),
-      e(Text, { style: footerCenter, fixed: true, render: ({ pageNumber, totalPages }) => `Seite ${pageNumber} von ${totalPages}` }),
-      e(Text, { style: footerRight, fixed: true }, currentDate || '')
+      // Fixed Footer mit Seitenzahl
+      e(Text, {
+        style: footerStyle,
+        fixed: true,
+        render: ({ pageNumber, totalPages }) => `ID: ${docIdShort}                    Seite ${pageNumber} von ${totalPages}                    ${currentDate || ''}`
+      })
     );
   }
 
@@ -1182,10 +1197,12 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType, do
     e(View, { style: styles.contentPage },
       ...sections.map(renderSection)
     ),
-    // Fixed Footer - NACH dem Content!
-    e(Text, { style: footerLeft, fixed: true }, `ID: ${docIdShort}`),
-    e(Text, { style: footerCenter, fixed: true, render: ({ pageNumber, totalPages }) => `Seite ${pageNumber} von ${totalPages}` }),
-    e(Text, { style: footerRight, fixed: true }, currentDate || '')
+    // Fixed Footer mit Seitenzahl
+    e(Text, {
+      style: footerStyle,
+      fixed: true,
+      render: ({ pageNumber, totalPages }) => `ID: ${docIdShort}                    Seite ${pageNumber} von ${totalPages}                    ${currentDate || ''}`
+    })
   );
 };
 
@@ -1202,10 +1219,19 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
     ? attachments.map((att, index) => `${index + 1}. ${att.displayName || att.name || att.originalName || 'Anlage ' + (index + 1)}`).join('\n')
     : 'Diesem Vertrag sind keine Anlagen beigefügt.';
 
-  // Footer-Styles (gleich wie in ContentPage)
-  const footerLeft = { position: 'absolute', bottom: 25, left: 50, fontSize: 8, color: '#666666' };
-  const footerCenter = { position: 'absolute', bottom: 25, left: 0, right: 0, textAlign: 'center', fontSize: 8, color: '#666666' };
-  const footerRight = { position: 'absolute', bottom: 25, right: 50, fontSize: 8, color: '#666666', textAlign: 'right' };
+  // Footer-Style (gleich wie in ContentPage)
+  const footerStyle = {
+    position: 'absolute',
+    bottom: 25,
+    left: 50,
+    right: 50,
+    fontSize: 8,
+    color: '#666666',
+    borderTopWidth: 0.5,
+    borderTopColor: '#cccccc',
+    paddingTop: 8,
+    textAlign: 'center'
+  };
   const docIdShort = documentId?.substring(0, 12) || 'N/A';
 
   // Structured-Boxes-Layout (Corporate)
@@ -1256,10 +1282,12 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
           )
         )
       ),
-      // Fixed Footer
-      e(Text, { style: footerLeft, fixed: true }, `ID: ${docIdShort}`),
-      e(Text, { style: footerCenter, fixed: true, render: ({ pageNumber, totalPages }) => `Seite ${pageNumber} von ${totalPages}` }),
-      e(Text, { style: footerRight, fixed: true }, currentDate || '')
+      // Fixed Footer mit Seitenzahl (single Text element mit render prop)
+      e(Text, {
+        style: footerStyle,
+        fixed: true,
+        render: ({ pageNumber, totalPages }) => `ID: ${docIdShort}                    Seite ${pageNumber} von ${totalPages}                    ${currentDate || ''}`
+      })
     );
   }
 
@@ -1306,10 +1334,12 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
           )
         )
       ),
-      // Fixed Footer
-      e(Text, { style: { ...footerLeft, left: 58 }, fixed: true }, `ID: ${docIdShort}`),
-      e(Text, { style: footerCenter, fixed: true, render: ({ pageNumber, totalPages }) => `Seite ${pageNumber} von ${totalPages}` }),
-      e(Text, { style: footerRight, fixed: true }, currentDate || '')
+      // Fixed Footer mit Seitenzahl (single Text element mit render prop)
+      e(Text, {
+        style: { ...footerStyle, left: 58 },
+        fixed: true,
+        render: ({ pageNumber, totalPages }) => `ID: ${docIdShort}                    Seite ${pageNumber} von ${totalPages}                    ${currentDate || ''}`
+      })
     );
   }
 
@@ -1355,10 +1385,12 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
         e(Text, { style: styles.attachmentsText }, attachmentsList)
       )
     ),
-    // Fixed Footer
-    e(Text, { style: footerLeft, fixed: true }, `ID: ${docIdShort}`),
-    e(Text, { style: footerCenter, fixed: true, render: ({ pageNumber, totalPages }) => `Seite ${pageNumber} von ${totalPages}` }),
-    e(Text, { style: footerRight, fixed: true }, currentDate || '')
+    // Fixed Footer mit Seitenzahl (single Text element mit render prop)
+    e(Text, {
+      style: footerStyle,
+      fixed: true,
+      render: ({ pageNumber, totalPages }) => `ID: ${docIdShort}                    Seite ${pageNumber} von ${totalPages}                    ${currentDate || ''}`
+    })
   );
 };
 
