@@ -33,7 +33,7 @@ Font.register({
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// DESIGN THEMES - 5 EINZIGARTIGE Varianten mit unterschiedlichen LAYOUTS
+// DESIGN THEMES - 12 EINZIGARTIGE Varianten mit unterschiedlichen LAYOUTS
 // ═══════════════════════════════════════════════════════════════════════════
 
 const DESIGN_THEMES = {
@@ -177,6 +177,178 @@ const DESIGN_THEMES = {
       titleStyle: 'white-on-dark',
       partyStyle: 'structured-table',
       sectionStyle: 'boxed-header',
+    }
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PROFESSIONAL - Dunkelgrün, vertrauenswürdig, seriös
+  // ═══════════════════════════════════════════════════════════════════════════
+  professional: {
+    name: 'Professional',
+    fontFamily: 'Times-Roman',
+    layout: 'classic-centered',
+    colors: {
+      primary: '#1B4332',
+      secondary: '#2D6A4F',
+      accent: '#40916C',
+      text: '#1B4332',
+      textLight: '#3D5A4C',
+      textMuted: '#6B8F7A',
+      border: '#B7E4C7',
+      background: '#ffffff',
+      headerBg: '#F1F8F5',
+      line: '#1B4332',
+    },
+    features: {
+      showHeaderLine: true,
+      showFooterLine: true,
+      logoPosition: 'left',
+      titleStyle: 'underlined',
+      partyStyle: 'boxed',
+      sectionStyle: 'numbered-bold',
+    }
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // STARTUP - Orange/Coral, jung, dynamisch, modern
+  // ═══════════════════════════════════════════════════════════════════════════
+  startup: {
+    name: 'Startup',
+    fontFamily: 'Helvetica',
+    layout: 'sidebar-accent',
+    colors: {
+      primary: '#E63946',
+      secondary: '#D62839',
+      accent: '#FF6B6B',
+      text: '#2B2D42',
+      textLight: '#5C5F7A',
+      textMuted: '#8D90A8',
+      border: '#FFE5E5',
+      background: '#ffffff',
+      headerBg: '#E63946',
+      line: '#E63946',
+    },
+    features: {
+      showSidebar: true,
+      sidebarWidth: 8,
+      logoPosition: 'right',
+      titleStyle: 'modern-caps',
+      partyStyle: 'cards',
+      sectionStyle: 'colored-header',
+    }
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // LEGAL - Burgunderrot, juristisch, traditionell
+  // ═══════════════════════════════════════════════════════════════════════════
+  legal: {
+    name: 'Legal',
+    fontFamily: 'Times-Roman',
+    layout: 'ornamental',
+    colors: {
+      primary: '#800020',
+      secondary: '#A0002A',
+      accent: '#C41E3A',
+      text: '#3D0011',
+      textLight: '#5D2030',
+      textMuted: '#8D5060',
+      border: '#C41E3A',
+      background: '#FFFDF8',
+      headerBg: '#FFF5F7',
+      line: '#C41E3A',
+    },
+    features: {
+      showOrnaments: true,
+      logoPosition: 'center',
+      titleStyle: 'elegant-framed',
+      partyStyle: 'elegant-script',
+      sectionStyle: 'gold-accent',
+    }
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TECH - Cyan/Türkis, digital, innovativ
+  // ═══════════════════════════════════════════════════════════════════════════
+  tech: {
+    name: 'Tech',
+    fontFamily: 'Helvetica',
+    layout: 'sidebar-accent',
+    colors: {
+      primary: '#0891B2',
+      secondary: '#0E7490',
+      accent: '#22D3EE',
+      text: '#164E63',
+      textLight: '#3B8293',
+      textMuted: '#67A3B3',
+      border: '#CFFAFE',
+      background: '#ffffff',
+      headerBg: '#0891B2',
+      line: '#0891B2',
+    },
+    features: {
+      showSidebar: true,
+      sidebarWidth: 8,
+      logoPosition: 'right',
+      titleStyle: 'modern-caps',
+      partyStyle: 'cards',
+      sectionStyle: 'colored-header',
+    }
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // FINANCE - Navy/Gold, Premium, Banking
+  // ═══════════════════════════════════════════════════════════════════════════
+  finance: {
+    name: 'Finance',
+    fontFamily: 'Times-Roman',
+    layout: 'ornamental',
+    colors: {
+      primary: '#0F172A',
+      secondary: '#1E293B',
+      accent: '#D4AF37',
+      text: '#0F172A',
+      textLight: '#334155',
+      textMuted: '#64748B',
+      border: '#D4AF37',
+      background: '#FAFAF9',
+      headerBg: '#F5F5F4',
+      line: '#D4AF37',
+    },
+    features: {
+      showOrnaments: true,
+      logoPosition: 'center',
+      titleStyle: 'elegant-framed',
+      partyStyle: 'elegant-script',
+      sectionStyle: 'gold-accent',
+    }
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CREATIVE - Lila/Magenta, kreativ, auffällig
+  // ═══════════════════════════════════════════════════════════════════════════
+  creative: {
+    name: 'Creative',
+    fontFamily: 'Helvetica',
+    layout: 'sidebar-accent',
+    colors: {
+      primary: '#7C3AED',
+      secondary: '#6D28D9',
+      accent: '#A78BFA',
+      text: '#3B1D6E',
+      textLight: '#5B3D8E',
+      textMuted: '#8B6DBE',
+      border: '#EDE9FE',
+      background: '#ffffff',
+      headerBg: '#7C3AED',
+      line: '#7C3AED',
+    },
+    features: {
+      showSidebar: true,
+      sidebarWidth: 8,
+      logoPosition: 'right',
+      titleStyle: 'modern-caps',
+      partyStyle: 'cards',
+      sectionStyle: 'colored-header',
     }
   }
 };
@@ -644,14 +816,21 @@ const createCorporateStyles = (theme) => {
   });
 };
 
-// Style-Selector basierend auf Design
+// Style-Selector basierend auf Design-Layout
 const createStyles = (theme) => {
-  switch (theme.name) {
-    case 'Modern': return createModernStyles(theme);
-    case 'Minimal': return createMinimalStyles(theme);
-    case 'Elegant': return createElegantStyles(theme);
-    case 'Corporate': return createCorporateStyles(theme);
-    default: return createExecutiveStyles(theme);
+  // Zunächst nach Layout-Typ auswählen (für neue Designs)
+  switch (theme.layout) {
+    case 'sidebar-accent':
+      return createModernStyles(theme);
+    case 'whitespace-focus':
+      return createMinimalStyles(theme);
+    case 'ornamental':
+      return createElegantStyles(theme);
+    case 'structured-boxes':
+      return createCorporateStyles(theme);
+    case 'classic-centered':
+    default:
+      return createExecutiveStyles(theme);
   }
 };
 
@@ -665,10 +844,10 @@ const createStyles = (theme) => {
 const CoverPage = ({ styles, theme, companyProfile, contractType, parties, partyLabels, currentDate, documentId, isDraft, logoBase64 }) => {
   const e = React.createElement;
   const c = theme.colors;
-  const designName = theme.name;
+  const layoutType = theme.layout;
 
-  // Modern Design - mit Sidebar
-  if (designName === 'Modern') {
+  // Sidebar-Layout (Modern, Startup, Tech, Creative)
+  if (layoutType === 'sidebar-accent') {
     return e(Page, { size: 'A4', style: styles.page },
       isDraft && e(Text, { style: styles.watermark }, 'ENTWURF'),
       e(View, { style: styles.coverPage },
@@ -711,8 +890,8 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
     );
   }
 
-  // Minimal Design - ultra clean
-  if (designName === 'Minimal') {
+  // Whitespace-Layout (Minimal)
+  if (layoutType === 'whitespace-focus') {
     return e(Page, { size: 'A4', style: styles.page },
       isDraft && e(Text, { style: styles.watermark }, 'ENTWURF'),
       e(View, { style: styles.coverPage },
@@ -747,8 +926,8 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
     );
   }
 
-  // Elegant Design - mit Ornamenten
-  if (designName === 'Elegant') {
+  // Ornamental-Layout (Elegant, Legal, Finance)
+  if (layoutType === 'ornamental') {
     return e(Page, { size: 'A4', style: styles.page },
       isDraft && e(Text, { style: styles.watermark }, 'ENTWURF'),
       e(View, { style: styles.coverPage },
@@ -792,8 +971,8 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
     );
   }
 
-  // Corporate Design - mit Header-Bar
-  if (designName === 'Corporate') {
+  // Structured-Boxes-Layout (Corporate)
+  if (layoutType === 'structured-boxes') {
     return e(Page, { size: 'A4', style: styles.page },
       isDraft && e(Text, { style: styles.watermark }, 'ENTWURF'),
       e(View, { style: styles.coverPage },
@@ -894,7 +1073,7 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
  */
 const ContentPage = ({ styles, theme, sections, companyProfile, contractType }) => {
   const e = React.createElement;
-  const designName = theme.name;
+  const layoutType = theme.layout;
 
   const renderContent = (item, index, numberedCounter) => {
     switch (item.type) {
@@ -939,8 +1118,8 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType }) 
     );
   };
 
-  // Modern/Corporate haben Sidebar-Layout
-  if (designName === 'Modern') {
+  // Sidebar-Layout (Modern, Startup, Tech, Creative)
+  if (layoutType === 'sidebar-accent') {
     return e(Page, { size: 'A4', style: styles.page },
       e(View, { style: styles.contentPage },
         e(View, { style: styles.sidebar }),
@@ -955,13 +1134,8 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType }) 
     );
   }
 
-  if (designName === 'Corporate') {
-    // v4-SIMPLE: Corporate verwendet jetzt EXAKT das gleiche Layout wie andere Designs
-    // Nur mit Corporate-Farben (dunkelblau für Headers)
-    console.log('🔴🔴🔴 CORPORATE CONTENT PAGE RENDERING - VERSION 2024-12-05-v4-SIMPLE 🔴🔴🔴');
-
-    // Corporate verwendet das Standard-Layout (wie Executive), nur mit eigenen Farben
-    // Das funktioniert garantiert, da Executive funktioniert!
+  // Structured-Boxes-Layout (Corporate)
+  if (layoutType === 'structured-boxes') {
     return e(Page, { size: 'A4', style: styles.page },
       e(View, { style: styles.contentPage },
         ...sections.map(renderSection)
@@ -992,7 +1166,7 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType }) 
  */
 const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qrCode, documentId, currentDate, attachments = [], contractType = 'Vertrag' }) => {
   const e = React.createElement;
-  const designName = theme.name;
+  const layoutType = theme.layout;
 
   // Anlagen-Liste erstellen
   const hasAttachments = attachments && attachments.length > 0;
@@ -1002,7 +1176,7 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
 
   // Footer-Komponente für alle Designs
   const renderFooter = () => {
-    if (designName === 'Elegant') {
+    if (layoutType === 'ornamental') {
       return e(View, { style: styles.pageFooter, fixed: true },
         e(Text, null, `${documentId?.substring(0, 12) || ''} • ${currentDate}`)
       );
@@ -1014,8 +1188,8 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
     );
   };
 
-  // Corporate hat spezielle Struktur
-  if (designName === 'Corporate') {
+  // Structured-Boxes-Layout (Corporate)
+  if (layoutType === 'structured-boxes') {
     return e(Page, { size: 'A4', style: styles.page },
       e(View, { style: styles.signaturePage },
         e(View, { style: styles.signatureHeader },
@@ -1066,8 +1240,8 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
     );
   }
 
-  // Modern hat Sidebar
-  if (designName === 'Modern') {
+  // Sidebar-Layout (Modern, Startup, Tech, Creative)
+  if (layoutType === 'sidebar-accent') {
     return e(Page, { size: 'A4', style: styles.page },
       e(View, { style: styles.signaturePage },
         e(View, { style: styles.sidebar }),
