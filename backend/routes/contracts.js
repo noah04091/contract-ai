@@ -1100,7 +1100,14 @@ router.post("/", verifyToken, async (req, res) => {
     // 🆕 Verwende contractHTML oder htmlContent (Frontend-Kompatibilität)
     const finalHTML = contractHTML || htmlContent;
 
-    console.log("📁 Speichere Vertrag:", { name, isGenerated, hasHTML: !!(contractHTML || htmlContent), htmlLength: finalHTML?.length || 0 });
+    console.log("📁 Speichere Vertrag:", {
+  name,
+  isGenerated,
+  hasHTML: !!(contractHTML || htmlContent),
+  htmlLength: finalHTML?.length || 0,
+  contentLength: content?.length || 0,
+  contentPreview: content?.substring(0, 200) || 'KEIN CONTENT!'
+});
 
     // ✅ NEU: Provider Detection
     let detectedProvider = provider;
@@ -3678,18 +3685,26 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
     const customDesign = req.body.customDesign || contract.customDesign || null;
 
     // DEBUG: Alle verfügbaren Felder anzeigen
-    console.log('📄 Vertragsdaten:', {
+    console.log('📄 [PDF-V2] Vertragsdaten:', {
+      contractId: contractId,
       name: contract.name,
       type: contract.contractType,
       design: finalDesign,
       hasCompanyProfile: !!companyProfile,
       partiesKeys: Object.keys(parties),
       contentLength: contract.content?.length || 0,
-      contentPreview: contract.content?.substring(0, 300) || 'KEIN CONTENT!',
+      contentPreview: contract.content?.substring(0, 300) || '❌ KEIN CONTENT!',
       hasContractHTML: !!contract.contractHTML,
       contractHTMLLength: contract.contractHTML?.length || 0,
+      createdAt: contract.createdAt,
+      updatedAt: contract.updatedAt,
       allFields: Object.keys(contract)
     });
+
+    // WARNUNG wenn kein Content
+    if (!contract.content || contract.content.length < 100) {
+      console.warn('⚠️⚠️⚠️ [PDF-V2] WARNUNG: Vertrag hat keinen/wenig Content! Prüfe DB-Speicherung.');
+    }
 
     // Fallback: Wenn content leer ist, versuche aus contractHTML den Text zu extrahieren
     let contractText = contract.content;
