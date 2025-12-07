@@ -304,17 +304,34 @@ export default function Contracts() {
 
     console.log('📋 View Parameter Check:', { contractIdToView, contractsCount: contracts.length, loading });
 
-    if (contractIdToView && contracts.length > 0 && !loading) {
+    if (contractIdToView && !loading) {
+      // Erst in der aktuellen Liste suchen
       const contractToOpen = contracts.find(c => c._id === contractIdToView);
 
-      console.log('📋 Contract to open:', contractToOpen ? contractToOpen.name : 'NOT FOUND');
-
       if (contractToOpen) {
+        console.log('📋 Contract gefunden in Liste:', contractToOpen.name);
         setSelectedContract(contractToOpen);
         setShowDetails(true);
-        console.log('✅ Modal sollte jetzt öffnen für:', contractToOpen.name);
-      } else {
-        console.warn('⚠️ Vertrag nicht gefunden mit ID:', contractIdToView);
+      } else if (contracts.length > 0) {
+        // Vertrag nicht in der Liste (Pagination) → Direkt von API laden
+        console.log('📋 Contract nicht in Liste, lade von API...', contractIdToView);
+
+        const fetchSingleContract = async () => {
+          try {
+            const response = await apiCall(`/api/contracts/${contractIdToView}`);
+            if (response && response.contract) {
+              console.log('✅ Contract von API geladen:', response.contract.name);
+              setSelectedContract(response.contract as Contract);
+              setShowDetails(true);
+            } else {
+              console.warn('⚠️ Vertrag nicht gefunden:', contractIdToView);
+            }
+          } catch (error) {
+            console.error('❌ Fehler beim Laden des Vertrags:', error);
+          }
+        };
+
+        fetchSingleContract();
       }
     }
   }, [location.search, contracts, loading]);
