@@ -318,10 +318,10 @@ export default function Contracts() {
 
         const fetchSingleContract = async () => {
           try {
-            const response = await apiCall(`/api/contracts/${contractIdToView}`);
+            const response = await apiCall(`/api/contracts/${contractIdToView}`) as { contract?: Contract };
             if (response && response.contract) {
               console.log('✅ Contract von API geladen:', response.contract.name);
-              setSelectedContract(response.contract as Contract);
+              setSelectedContract(response.contract);
               setShowDetails(true);
             } else {
               console.warn('⚠️ Vertrag nicht gefunden:', contractIdToView);
