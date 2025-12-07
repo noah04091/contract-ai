@@ -2047,6 +2047,20 @@ export default function CalendarPage() {
       
       <div className="calendar-page-premium">
         {/* Page Title - Apple Style (outside box, centered) */}
+        {/* Sync Button - Dezent oben rechts */}
+        <motion.button
+          className="sync-calendar-btn-corner"
+          onClick={() => setShowSyncModal(true)}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          title="Mit externem Kalender synchronisieren"
+        >
+          <Link2 size={16} />
+          <span>Sync</span>
+        </motion.button>
+
         <motion.div
           className="calendar-page-title"
           initial={{ opacity: 0, y: -20 }}
@@ -2058,18 +2072,6 @@ export default function CalendarPage() {
           </div>
           <h1>Intelligenter Vertragskalender</h1>
           <p>Automatische Erinnerungen • 1-Klick-Kündigung • KI-Optimierung</p>
-
-          {/* Sync Calendar Button */}
-          <motion.button
-            className="sync-calendar-btn-premium"
-            onClick={() => setShowSyncModal(true)}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            style={{ marginTop: '16px' }}
-          >
-            <Link2 size={16} />
-            <span>Kalender synchronisieren</span>
-          </motion.button>
         </motion.div>
 
         {/* Main Content Grid */}
@@ -2375,67 +2377,52 @@ export default function CalendarPage() {
             )}
           </motion.div>
 
-          {/* Premium Features Section */}
-          <motion.div 
-            className="features-section-premium"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <div className="section-header-premium">
-              <div className="section-title">
-                <Sparkles size={20} className="section-icon" />
-                <h3>Premium Features</h3>
+        </div>
+
+        {/* Premium Features Footer Section - Außerhalb des Grid */}
+        <motion.div
+          className="features-footer-section"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          <div className="features-footer-content">
+            <div className="features-footer-header">
+              <Sparkles size={18} />
+              <span>Premium Features</span>
+            </div>
+
+            <div className="features-footer-grid">
+              <div className="feature-footer-item">
+                <div className="feature-footer-icon cancel">
+                  <Zap size={16} />
+                </div>
+                <span>1-Klick-Kündigung</span>
+              </div>
+
+              <div className="feature-footer-item">
+                <div className="feature-footer-icon notify">
+                  <Bell size={16} />
+                </div>
+                <span>Smart Notifications</span>
+              </div>
+
+              <div className="feature-footer-item">
+                <div className="feature-footer-icon compare">
+                  <TrendingUp size={16} />
+                </div>
+                <span>Marktvergleich</span>
+              </div>
+
+              <div className="feature-footer-item">
+                <div className="feature-footer-icon optimize">
+                  <RefreshCw size={16} />
+                </div>
+                <span>KI-Optimierung</span>
               </div>
             </div>
-            
-            <div className="features-grid-premium">
-              <motion.div 
-                className="feature-card-premium"
-                whileHover={{ scale: 1.05 }}
-              >
-                <div className="feature-icon-wrapper cancel">
-                  <Zap size={20} />
-                </div>
-                <h4>1-Klick-Kündigung</h4>
-                <p>Kündigen Sie direkt aus dem Kalender</p>
-              </motion.div>
-              
-              <motion.div 
-                className="feature-card-premium"
-                whileHover={{ scale: 1.05 }}
-              >
-                <div className="feature-icon-wrapper notify">
-                  <Bell size={20} />
-                </div>
-                <h4>Smart Notifications</h4>
-                <p>Intelligente Erinnerungen per E-Mail</p>
-              </motion.div>
-              
-              <motion.div 
-                className="feature-card-premium"
-                whileHover={{ scale: 1.05 }}
-              >
-                <div className="feature-icon-wrapper compare">
-                  <TrendingUp size={20} />
-                </div>
-                <h4>Marktvergleich</h4>
-                <p>Automatischer Preisvergleich</p>
-              </motion.div>
-              
-              <motion.div 
-                className="feature-card-premium"
-                whileHover={{ scale: 1.05 }}
-              >
-                <div className="feature-icon-wrapper optimize">
-                  <RefreshCw size={20} />
-                </div>
-                <h4>KI-Optimierung</h4>
-                <p>Personalisierte Empfehlungen</p>
-              </motion.div>
-            </div>
-          </motion.div>
-        </div>
+          </div>
+        </motion.div>
         
         <AnimatePresence>
           {showQuickActions && selectedEvent && (
