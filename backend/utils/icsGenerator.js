@@ -65,13 +65,18 @@ function generateICSFeed(events) {
       || event.contract?._id
       || event.metadata?.contractId
       || null;
-    const contractId = rawContractId ? String(rawContractId).trim() : null;
+    // Entferne sowohl echte Newlines als auch die Zeichenkette "\n" und "\\n"
+    const contractId = rawContractId
+      ? String(rawContractId).trim().replace(/\\n/g, '').replace(/\n/g, '')
+      : null;
 
     // Für Signatur-Events: envelopeId verwenden
     const rawEnvelopeId = event.envelopeId
       || event.metadata?.envelopeId
       || null;
-    const envelopeId = rawEnvelopeId ? String(rawEnvelopeId).trim() : null;
+    const envelopeId = rawEnvelopeId
+      ? String(rawEnvelopeId).trim().replace(/\\n/g, '').replace(/\n/g, '')
+      : null;
 
     // DESCRIPTION mit direktem Link
     const description = buildEventDescription(event, contractId, envelopeId);

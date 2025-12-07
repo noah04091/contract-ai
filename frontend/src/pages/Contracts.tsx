@@ -300,7 +300,11 @@ export default function Contracts() {
   // Wird getriggert wenn URL sich ändert ODER wenn contracts geladen wurden
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const contractIdToView = params.get('view');
+    const rawContractId = params.get('view');
+    // Säubere die ID von möglichen \n Zeichen (aus ICS-Feed)
+    const contractIdToView = rawContractId
+      ? rawContractId.trim().replace(/\\n/g, '').replace(/\n/g, '')
+      : null;
 
     console.log('📋 View Parameter Check:', { contractIdToView, contractsCount: contracts.length, loading });
 
