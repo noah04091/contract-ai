@@ -117,15 +117,19 @@ function generateICSFeed(events) {
 
     // URL - Link back to Contract AI
     // Nutze ?view= Parameter um das ContractDetailModal direkt zu öffnen
-    if (contractId) {
-      const contractUrl = `https://contract-ai.de/contracts?view=${contractId}`;
+    // WICHTIG: IDs nochmals bereinigen für saubere URLs
+    const cleanedContractId = contractId ? String(contractId).trim().replace(/\\n/g, '').replace(/\n/g, '').replace(/\s/g, '') : null;
+    const cleanedEnvelopeId = envelopeId ? String(envelopeId).trim().replace(/\\n/g, '').replace(/\n/g, '').replace(/\s/g, '') : null;
+
+    if (cleanedContractId) {
+      const contractUrl = `https://contract-ai.de/contracts?view=${cleanedContractId}`;
       lines.push(`URL:${contractUrl}`);
-      lines.push(`X-CONTRACT-ID:${contractId}`);
-    } else if (envelopeId) {
+      lines.push(`X-CONTRACT-ID:${cleanedContractId}`);
+    } else if (cleanedEnvelopeId) {
       // Für Signatur-Events: Link zur spezifischen Envelope
-      const envelopeUrl = `https://contract-ai.de/envelopes?id=${envelopeId}`;
+      const envelopeUrl = `https://contract-ai.de/envelopes?id=${cleanedEnvelopeId}`;
       lines.push(`URL:${envelopeUrl}`);
-      lines.push(`X-ENVELOPE-ID:${envelopeId}`);
+      lines.push(`X-ENVELOPE-ID:${cleanedEnvelopeId}`);
     } else {
       // Fallback: Link zur Vertragsübersicht
       lines.push(`URL:https://contract-ai.de/contracts`);
@@ -279,15 +283,20 @@ function buildEventDescription(event, contractId, envelopeId) {
   }
 
   // Direkter Link - öffnet das ContractDetailModal
+  // WICHTIG: URL muss sauber und ohne Zeilenumbrüche sein!
   lines.push('');
   lines.push('━━━━━━━━━━━━━━━━━━━━━━');
 
-  if (contractId) {
+  // Bereinige die Contract/Envelope ID nochmals explizit
+  const cleanContractId = contractId ? String(contractId).trim().replace(/\\n/g, '').replace(/\n/g, '').replace(/\s/g, '') : null;
+  const cleanEnvelopeId = envelopeId ? String(envelopeId).trim().replace(/\\n/g, '').replace(/\n/g, '').replace(/\s/g, '') : null;
+
+  if (cleanContractId) {
     lines.push('DIREKT ZUM VERTRAG:');
-    lines.push(`https://contract-ai.de/contracts?view=${contractId}`);
-  } else if (envelopeId) {
+    lines.push(`https://contract-ai.de/contracts?view=${cleanContractId}`);
+  } else if (cleanEnvelopeId) {
     lines.push('ZUR SIGNATURANFRAGE:');
-    lines.push(`https://contract-ai.de/envelopes?id=${envelopeId}`);
+    lines.push(`https://contract-ai.de/envelopes?id=${cleanEnvelopeId}`);
   } else {
     lines.push('ZU CONTRACT AI:');
     lines.push('https://contract-ai.de/contracts');
@@ -295,6 +304,7 @@ function buildEventDescription(event, contractId, envelopeId) {
 
   lines.push('━━━━━━━━━━━━━━━━━━━━━━');
 
+  // Join mit echtem Newline-Escape für ICS-Format
   return lines.join('\\n');
 }
 
