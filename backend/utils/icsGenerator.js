@@ -59,15 +59,19 @@ function generateICSFeed(events) {
     // SUMMARY - Event title
     lines.push(`SUMMARY:${escapeICS(event.title)}`);
 
-    // Ermittle die korrekte Contract-ID (kann an verschiedenen Stellen sein)
+    // Ermittle die korrekte ID (Contract oder Envelope)
     const contractId = event.contractId
       || event.contract?._id
       || event.metadata?.contractId
-      || event.envelopeId  // Für Signatur-Events
+      || null;
+
+    // Für Signatur-Events: envelopeId verwenden
+    const envelopeId = event.envelopeId
+      || event.metadata?.envelopeId
       || null;
 
     // DESCRIPTION mit direktem Link
-    const description = buildEventDescription(event, contractId);
+    const description = buildEventDescription(event, contractId, envelopeId);
     lines.push(`DESCRIPTION:${escapeICS(description)}`);
 
     // LOCATION
@@ -103,16 +107,19 @@ function generateICSFeed(events) {
       }
     }
 
-    // URL - Link back to Contract AI (nur wenn contractId vorhanden)
+    // URL - Link back to Contract AI
     if (contractId) {
       const contractUrl = `https://contract-ai.de/contracts/${contractId}`;
       lines.push(`URL:${contractUrl}`);
       lines.push(`X-CONTRACT-ID:${contractId}`);
-    } else if (event.envelopeId) {
-      // Für Signatur-Events: Link zur Envelope
-      const envelopeUrl = `https://contract-ai.de/envelopes`;
+    } else if (envelopeId) {
+      // Für Signatur-Events: Link zur spezifischen Envelope
+      const envelopeUrl = `https://contract-ai.de/envelopes?id=${envelopeId}`;
       lines.push(`URL:${envelopeUrl}`);
-      lines.push(`X-ENVELOPE-ID:${event.envelopeId}`);
+      lines.push(`X-ENVELOPE-ID:${envelopeId}`);
+    } else {
+      // Fallback: Link zur Vertragsübersicht
+      lines.push(`URL:https://contract-ai.de/contracts`);
     }
 
     // Custom properties
@@ -198,16 +205,16 @@ function escapeICS(text) {
 }
 
 /**
- * Baut die Event-Beschreibung mit direktem Link zum Vertrag
+ * Baut die Event-Beschreibung mit direktem Link zum Vertrag oder Envelope
  */
-function buildEventDescription(event, contractId) {
+function buildEventDescription(event, contractId, envelopeId) {
   const lines = [];
 
   lines.push(event.description || '');
   lines.push('');
 
   // Vertragsname (aus verschiedenen Quellen)
-  const contractName = event.contract?.name || event.metadata?.contractName || event.title || '';
+  const contractName = event.contract?.name || event.metadata?.contractName || event.metadata?.envelopeTitle || event.title || '';
 
   if (event.contract) {
     lines.push('VERTRAGSDETAILS:');
@@ -231,8 +238,11 @@ function buildEventDescription(event, contractId) {
     if (event.metadata.autoRenewMonths) {
       lines.push(`• Automatische Verlängerung: ${event.metadata.autoRenewMonths} Monate`);
     }
-    if (event.metadata.daysLeft) {
-      lines.push(`• Verbleibende Tage: ${event.metadata.daysLeft}`);
+    if (event.metadata.daysLeft || event.metadata.daysUntilExpiry) {
+      lines.push(`• Verbleibende Tage: ${event.metadata.daysLeft || event.metadata.daysUntilExpiry}`);
+    }
+    if (event.metadata.pendingSigners && event.metadata.totalSigners) {
+      lines.push(`• Ausstehende Signaturen: ${event.metadata.pendingSigners} von ${event.metadata.totalSigners}`);
     }
   }
 
@@ -259,17 +269,21 @@ function buildEventDescription(event, contractId) {
       lines.push('→ Im Contract AI Dashboard prüfen');
   }
 
-  // Direkter Link zum Vertrag
+  // Direkter Link
   lines.push('');
   lines.push('━━━━━━━━━━━━━━━━━━━━━━');
-  lines.push('DIREKT ZUM VERTRAG:');
+
   if (contractId) {
+    lines.push('DIREKT ZUM VERTRAG:');
     lines.push(`https://contract-ai.de/contracts/${contractId}`);
-  } else if (event.envelopeId) {
-    lines.push(`https://contract-ai.de/envelopes`);
+  } else if (envelopeId) {
+    lines.push('ZUR SIGNATURANFRAGE:');
+    lines.push(`https://contract-ai.de/envelopes?id=${envelopeId}`);
   } else {
+    lines.push('ZU CONTRACT AI:');
     lines.push('https://contract-ai.de/contracts');
   }
+
   lines.push('━━━━━━━━━━━━━━━━━━━━━━');
 
   return lines.join('\\n');
