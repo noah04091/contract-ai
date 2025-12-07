@@ -509,22 +509,23 @@ const createExecutiveStyles = (theme) => {
   return StyleSheet.create({
     page: { fontFamily: theme.fontFamily, fontSize: 11, padding: 50, color: c.text },
     // Deckblatt - Klassisch zentriert (lineHeight hier statt auf page wegen render prop Bug)
-    coverPage: { paddingBottom: 60, lineHeight: 1.5 },
-    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', borderBottomWidth: 2, borderBottomColor: c.line, paddingBottom: 15, marginBottom: 30 },
-    logo: { width: 60, height: 60, objectFit: 'contain' },
+    // KOMPAKTERE MARGINS um Overflow zu verhindern!
+    coverPage: { paddingBottom: 40, lineHeight: 1.4 },
+    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', borderBottomWidth: 2, borderBottomColor: c.line, paddingBottom: 12, marginBottom: 20 },
+    logo: { width: 55, height: 55, objectFit: 'contain' },
     companyInfo: { textAlign: 'right', fontSize: 9, color: c.textLight },
     companyName: { fontSize: 11, fontWeight: 'bold', color: c.primary, marginBottom: 2 },
-    titleContainer: { alignItems: 'center', marginTop: 80, marginBottom: 60 },
-    titleLine: { width: 100, height: 2, backgroundColor: c.line, marginBottom: 15 },
-    title: { fontSize: 26, fontWeight: 'bold', letterSpacing: 4, color: c.primary, textTransform: 'uppercase' },
-    titleLineBottom: { width: 100, height: 2, backgroundColor: c.line, marginTop: 15 },
-    subtitle: { fontSize: 11, color: c.textLight, marginTop: 20, fontStyle: 'italic' },
-    partiesContainer: { marginTop: 40 },
-    partiesLabel: { fontSize: 11, color: c.textLight, textAlign: 'center', marginVertical: 15 },
-    partyBox: { borderWidth: 1, borderColor: c.border, padding: 15, marginHorizontal: 40, marginBottom: 10, backgroundColor: c.headerBg },
-    partyName: { fontSize: 12, fontWeight: 'bold', color: c.primary, marginBottom: 3 },
-    partyAddress: { fontSize: 10, color: c.textLight },
-    partyRole: { fontSize: 9, fontStyle: 'italic', color: c.textMuted, marginTop: 8 },
+    titleContainer: { alignItems: 'center', marginTop: 50, marginBottom: 35 },
+    titleLine: { width: 100, height: 2, backgroundColor: c.line, marginBottom: 12 },
+    title: { fontSize: 24, fontWeight: 'bold', letterSpacing: 3, color: c.primary, textTransform: 'uppercase' },
+    titleLineBottom: { width: 100, height: 2, backgroundColor: c.line, marginTop: 12 },
+    subtitle: { fontSize: 10, color: c.textLight, marginTop: 15, fontStyle: 'italic' },
+    partiesContainer: { marginTop: 25 },
+    partiesLabel: { fontSize: 10, color: c.textLight, textAlign: 'center', marginVertical: 10 },
+    partyBox: { borderWidth: 1, borderColor: c.border, padding: 12, marginHorizontal: 35, marginBottom: 8, backgroundColor: c.headerBg },
+    partyName: { fontSize: 11, fontWeight: 'bold', color: c.primary, marginBottom: 2 },
+    partyAddress: { fontSize: 9, color: c.textLight },
+    partyRole: { fontSize: 8, fontStyle: 'italic', color: c.textMuted, marginTop: 6 },
     footer: { position: 'absolute', bottom: 30, left: 50, right: 50, flexDirection: 'row', justifyContent: 'space-between', fontSize: 8, color: c.textMuted, borderTopWidth: 1, borderTopColor: c.border, paddingTop: 10 },
     // Content Styles - KEIN flex: 1, das blockiert fixed elements! (lineHeight hier statt auf page)
     contentPage: { paddingBottom: 60, lineHeight: 1.5 },
@@ -568,23 +569,24 @@ const createModernStyles = (theme) => {
   return StyleSheet.create({
     page: { fontFamily: theme.fontFamily, fontSize: 11, padding: 0, color: c.text },
     // Deckblatt - Mit Sidebar (lineHeight hier statt auf page wegen render prop Bug)
-    coverPage: { flexDirection: 'row', paddingBottom: 60, lineHeight: 1.6 },
+    // KOMPAKTERE MARGINS um Overflow zu verhindern!
+    coverPage: { flexDirection: 'row', paddingBottom: 40, lineHeight: 1.4 },
     sidebar: { width: 8, backgroundColor: c.primary },
-    mainContent: { flex: 1, padding: 40 },
-    header: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 30 },
-    logo: { width: 80, height: 80, objectFit: 'contain' },
-    companyInfo: { textAlign: 'right', fontSize: 9, color: c.textLight, marginTop: 10 },
-    companyName: { fontSize: 12, fontWeight: 'bold', color: c.primary, marginBottom: 3 },
-    titleContainer: { marginTop: 60, marginBottom: 50 },
-    title: { fontSize: 32, fontWeight: 'bold', color: c.primary, textTransform: 'uppercase', letterSpacing: 2 },
-    titleLine: { width: 60, height: 4, backgroundColor: c.accent, marginTop: 15 },
-    subtitle: { fontSize: 12, color: c.textLight, marginTop: 15 },
-    partiesContainer: { marginTop: 40 },
-    partiesLabel: { fontSize: 10, color: c.accent, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 15 },
-    partyBox: { backgroundColor: c.background, borderLeftWidth: 3, borderLeftColor: c.primary, padding: 15, marginBottom: 20 },
-    partyName: { fontSize: 13, fontWeight: 'bold', color: c.primary },
-    partyAddress: { fontSize: 10, color: c.textLight, marginTop: 3 },
-    partyRole: { fontSize: 9, color: c.accent, marginTop: 10 },
+    mainContent: { flex: 1, padding: 35 },
+    header: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 20 },
+    logo: { width: 70, height: 70, objectFit: 'contain' },
+    companyInfo: { textAlign: 'right', fontSize: 8, color: c.textLight, marginTop: 8 },
+    companyName: { fontSize: 11, fontWeight: 'bold', color: c.primary, marginBottom: 2 },
+    titleContainer: { marginTop: 40, marginBottom: 30 },
+    title: { fontSize: 26, fontWeight: 'bold', color: c.primary, textTransform: 'uppercase', letterSpacing: 2 },
+    titleLine: { width: 50, height: 3, backgroundColor: c.accent, marginTop: 12 },
+    subtitle: { fontSize: 11, color: c.textLight, marginTop: 10 },
+    partiesContainer: { marginTop: 25 },
+    partiesLabel: { fontSize: 9, color: c.accent, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 10 },
+    partyBox: { backgroundColor: c.background, borderLeftWidth: 3, borderLeftColor: c.primary, padding: 12, marginBottom: 15 },
+    partyName: { fontSize: 11, fontWeight: 'bold', color: c.primary },
+    partyAddress: { fontSize: 9, color: c.textLight, marginTop: 2 },
+    partyRole: { fontSize: 8, color: c.accent, marginTop: 8 },
     footer: { position: 'absolute', bottom: 20, left: 48, right: 40, flexDirection: 'row', justifyContent: 'space-between', fontSize: 8, color: c.textMuted },
     // Content Styles - KEIN flex: 1 wegen fixed footer! (lineHeight hier statt auf page)
     contentPage: { flexDirection: 'row', paddingBottom: 60, lineHeight: 1.6 },
@@ -688,24 +690,25 @@ const createElegantStyles = (theme) => {
   return StyleSheet.create({
     page: { fontFamily: theme.fontFamily, fontSize: 11, padding: 40, color: c.text, backgroundColor: c.background },
     // Deckblatt - Ornamental (kompakter für eine Seite) (lineHeight hier statt auf page wegen render prop Bug)
-    coverPage: { paddingBottom: 60, lineHeight: 1.6 },
-    header: { alignItems: 'center', marginBottom: 10 },
-    ornamentTop: { width: 200, height: 2, backgroundColor: c.accent, marginBottom: 5 },
-    ornamentTopInner: { width: 100, height: 1, backgroundColor: c.accent },
-    logo: { width: 60, height: 60, objectFit: 'contain', marginTop: 15 },
-    companyInfo: { textAlign: 'center', fontSize: 9, color: c.textLight, marginTop: 10 },
-    companyName: { fontSize: 11, color: c.primary, letterSpacing: 2, marginBottom: 2 },
-    titleContainer: { alignItems: 'center', marginTop: 25, marginBottom: 20 },
-    titleOrnament: { width: 25, height: 25, borderWidth: 1, borderColor: c.accent, transform: 'rotate(45deg)', marginBottom: 12 },
-    title: { fontSize: 24, color: c.primary, letterSpacing: 3, textTransform: 'uppercase' },
-    titleLine: { width: 150, height: 1, backgroundColor: c.accent, marginTop: 10 },
-    subtitle: { fontSize: 10, color: c.accent, marginTop: 10, fontStyle: 'italic' },
-    partiesContainer: { marginTop: 15 },
-    partiesLabel: { fontSize: 10, color: c.accent, textAlign: 'center', marginVertical: 10, fontStyle: 'italic' },
-    partyBox: { borderWidth: 1, borderColor: c.border, padding: 12, marginHorizontal: 30, marginBottom: 8, backgroundColor: c.headerBg },
-    partyName: { fontSize: 12, color: c.primary, textAlign: 'center' },
-    partyAddress: { fontSize: 9, color: c.textLight, textAlign: 'center', marginTop: 3 },
-    partyRole: { fontSize: 8, color: c.accent, textAlign: 'center', marginTop: 6, fontStyle: 'italic' },
+    // KOMPAKTERE MARGINS um Overflow zu verhindern!
+    coverPage: { paddingBottom: 40, lineHeight: 1.4 },
+    header: { alignItems: 'center', marginBottom: 8 },
+    ornamentTop: { width: 160, height: 2, backgroundColor: c.accent, marginBottom: 4 },
+    ornamentTopInner: { width: 80, height: 1, backgroundColor: c.accent },
+    logo: { width: 50, height: 50, objectFit: 'contain', marginTop: 10 },
+    companyInfo: { textAlign: 'center', fontSize: 8, color: c.textLight, marginTop: 8 },
+    companyName: { fontSize: 10, color: c.primary, letterSpacing: 2, marginBottom: 2 },
+    titleContainer: { alignItems: 'center', marginTop: 18, marginBottom: 15 },
+    titleOrnament: { width: 20, height: 20, borderWidth: 1, borderColor: c.accent, transform: 'rotate(45deg)', marginBottom: 10 },
+    title: { fontSize: 22, color: c.primary, letterSpacing: 2, textTransform: 'uppercase' },
+    titleLine: { width: 120, height: 1, backgroundColor: c.accent, marginTop: 8 },
+    subtitle: { fontSize: 9, color: c.accent, marginTop: 8, fontStyle: 'italic' },
+    partiesContainer: { marginTop: 12 },
+    partiesLabel: { fontSize: 9, color: c.accent, textAlign: 'center', marginVertical: 8, fontStyle: 'italic' },
+    partyBox: { borderWidth: 1, borderColor: c.border, padding: 10, marginHorizontal: 25, marginBottom: 6, backgroundColor: c.headerBg },
+    partyName: { fontSize: 11, color: c.primary, textAlign: 'center' },
+    partyAddress: { fontSize: 8, color: c.textLight, textAlign: 'center', marginTop: 2 },
+    partyRole: { fontSize: 7, color: c.accent, textAlign: 'center', marginTop: 5, fontStyle: 'italic' },
     footer: { position: 'absolute', bottom: 25, left: 40, right: 40, alignItems: 'center' },
     footerOrnament: { width: 100, height: 1, backgroundColor: c.accent, marginBottom: 10 },
     footerText: { fontSize: 7, color: c.textMuted },
@@ -752,24 +755,25 @@ const createCorporateStyles = (theme) => {
     // v4-FIX: Page mit padding wie Executive (KEIN backgroundColor - das verursacht das Problem!)
     page: { fontFamily: theme.fontFamily, fontSize: 10, padding: 50, color: '#1a1a1a' },
     // Deckblatt - Mit Header-Bar (ALLE FARBEN HARDCODIERT!) (lineHeight hier statt auf page wegen render prop Bug)
-    coverPage: { paddingBottom: 60, lineHeight: 1.5 },
-    headerBar: { backgroundColor: '#003366', padding: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    logo: { width: 50, height: 50, objectFit: 'contain' },
-    headerInfo: { color: '#ffffff', textAlign: 'right', fontSize: 8 },
-    headerCompanyName: { fontSize: 10, fontWeight: 'bold', color: '#ffffff' },
-    mainContent: { padding: 40, backgroundColor: '#ffffff' },
-    titleContainer: { alignItems: 'center', marginTop: 50, marginBottom: 40, backgroundColor: '#003366', padding: 25 },
-    title: { fontSize: 22, fontWeight: 'bold', color: '#ffffff', textTransform: 'uppercase', letterSpacing: 2 },
+    // KOMPAKTERE MARGINS um Overflow zu verhindern!
+    coverPage: { paddingBottom: 40, lineHeight: 1.4 },
+    headerBar: { backgroundColor: '#003366', padding: 15, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    logo: { width: 45, height: 45, objectFit: 'contain' },
+    headerInfo: { color: '#ffffff', textAlign: 'right', fontSize: 7 },
+    headerCompanyName: { fontSize: 9, fontWeight: 'bold', color: '#ffffff' },
+    mainContent: { padding: 30, backgroundColor: '#ffffff' },
+    titleContainer: { alignItems: 'center', marginTop: 30, marginBottom: 25, backgroundColor: '#003366', padding: 20 },
+    title: { fontSize: 20, fontWeight: 'bold', color: '#ffffff', textTransform: 'uppercase', letterSpacing: 2 },
     titleLine: { display: 'none' },
-    subtitle: { fontSize: 10, color: '#ffffff', marginTop: 10, opacity: 0.9 },
-    partiesContainer: { marginTop: 30 },
-    partiesLabel: { fontSize: 9, color: '#003366', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 },
-    partyBox: { borderWidth: 1, borderColor: '#003366', marginBottom: 15 },
-    partyBoxHeader: { padding: 8, borderBottomWidth: 1, borderBottomColor: '#003366' },
-    partyBoxContent: { padding: 12 },
-    partyName: { fontSize: 11, fontWeight: 'bold', color: '#003366' },
-    partyAddress: { fontSize: 9, color: '#333333' },
-    partyRole: { fontSize: 8, color: '#0066cc', fontWeight: 'bold' },
+    subtitle: { fontSize: 9, color: '#ffffff', marginTop: 8, opacity: 0.9 },
+    partiesContainer: { marginTop: 20 },
+    partiesLabel: { fontSize: 8, color: '#003366', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 },
+    partyBox: { borderWidth: 1, borderColor: '#003366', marginBottom: 10 },
+    partyBoxHeader: { padding: 6, borderBottomWidth: 1, borderBottomColor: '#003366' },
+    partyBoxContent: { padding: 10 },
+    partyName: { fontSize: 10, fontWeight: 'bold', color: '#003366' },
+    partyAddress: { fontSize: 8, color: '#333333' },
+    partyRole: { fontSize: 7, color: '#0066cc', fontWeight: 'bold' },
     footer: { position: 'absolute', bottom: 30, left: 50, right: 50, flexDirection: 'row', justifyContent: 'space-between', fontSize: 8, color: '#666666', borderTopWidth: 1, borderTopColor: '#003366', paddingTop: 10 },
     // Content Styles - KEIN flex: 1 wegen fixed footer! (lineHeight hier statt auf page)
     contentPage: { paddingBottom: 60, lineHeight: 1.5 },
@@ -840,6 +844,8 @@ const createStyles = (theme) => {
 
 /**
  * Deckblatt-Komponente - passt sich dem Design an
+ * WICHTIG: Alle CoverPage Layouts verwenden wrap: false um leere Seiten zu verhindern!
+ * Das Deckblatt darf NIE umbrechen - lieber Content abschneiden als leere Seite erzeugen.
  */
 const CoverPage = ({ styles, theme, companyProfile, contractType, parties, partyLabels, currentDate, documentId, isDraft, logoBase64 }) => {
   const e = React.createElement;
@@ -847,8 +853,9 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
   const layoutType = theme.layout;
 
   // Sidebar-Layout (Modern, Startup, Tech, Creative)
+  // wrap: false verhindert leere Seiten!
   if (layoutType === 'sidebar-accent') {
-    return e(Page, { size: 'A4', style: styles.page, wrap: true },
+    return e(Page, { size: 'A4', style: styles.page, wrap: false },
       isDraft && e(Text, { style: styles.watermark, fixed: true }, 'ENTWURF'),
       e(View, { style: styles.coverPage },
         e(View, { style: styles.sidebar }),
@@ -895,8 +902,9 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
   }
 
   // Whitespace-Layout (Minimal)
+  // wrap: false verhindert leere Seiten!
   if (layoutType === 'whitespace-focus') {
-    return e(Page, { size: 'A4', style: styles.page, wrap: true },
+    return e(Page, { size: 'A4', style: styles.page, wrap: false },
       isDraft && e(Text, { style: styles.watermark, fixed: true }, 'ENTWURF'),
       e(View, { style: styles.coverPage },
         e(View, { style: styles.header },
@@ -936,8 +944,9 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
   }
 
   // Ornamental-Layout (Elegant, Legal, Finance)
+  // wrap: false verhindert leere Seiten!
   if (layoutType === 'ornamental') {
-    return e(Page, { size: 'A4', style: styles.page, wrap: true },
+    return e(Page, { size: 'A4', style: styles.page, wrap: false },
       isDraft && e(Text, { style: styles.watermark, fixed: true }, 'ENTWURF'),
       e(View, { style: styles.coverPage },
         e(View, { style: styles.header },
@@ -985,8 +994,9 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
   }
 
   // Structured-Boxes-Layout (Corporate)
+  // wrap: false verhindert leere Seiten!
   if (layoutType === 'structured-boxes') {
-    return e(Page, { size: 'A4', style: styles.page, wrap: true },
+    return e(Page, { size: 'A4', style: styles.page, wrap: false },
       isDraft && e(Text, { style: styles.watermark, fixed: true }, 'ENTWURF'),
       e(View, { style: styles.coverPage },
         e(View, { style: styles.headerBar },
@@ -1040,7 +1050,8 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
   }
 
   // Executive Design (Default) - klassisch zentriert
-  return e(Page, { size: 'A4', style: styles.page, wrap: true },
+  // wrap: false verhindert leere Seiten!
+  return e(Page, { size: 'A4', style: styles.page, wrap: false },
     isDraft && e(Text, { style: styles.watermark, fixed: true }, 'ENTWURF'),
     e(View, { style: styles.coverPage },
       e(View, { style: styles.header },
@@ -1252,8 +1263,9 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
   const docIdShort = documentId?.substring(0, 12) || 'N/A';
 
   // Structured-Boxes-Layout (Corporate)
+  // wrap: false - SignaturePage passt immer auf eine Seite
   if (layoutType === 'structured-boxes') {
-    return e(Page, { size: 'A4', style: styles.page, wrap: true },
+    return e(Page, { size: 'A4', style: styles.page, wrap: false },
       e(View, { style: styles.signaturePage },
         e(View, { style: styles.signatureHeader },
           e(Text, { style: styles.signatureTitle }, 'UNTERSCHRIFTEN')
@@ -1311,8 +1323,9 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
   }
 
   // Sidebar-Layout (Modern, Startup, Tech, Creative)
+  // wrap: false - SignaturePage passt immer auf eine Seite
   if (layoutType === 'sidebar-accent') {
-    return e(Page, { size: 'A4', style: styles.page, wrap: true },
+    return e(Page, { size: 'A4', style: styles.page, wrap: false },
       e(View, { style: styles.signaturePage },
         e(View, { style: styles.sidebar }),
         e(View, { style: styles.signatureMain },
@@ -1365,7 +1378,8 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
   }
 
   // Standard Layout für Executive, Minimal, Elegant
-  return e(Page, { size: 'A4', style: styles.page, wrap: true },
+  // wrap: false - SignaturePage passt immer auf eine Seite
+  return e(Page, { size: 'A4', style: styles.page, wrap: false },
     e(View, { style: styles.signaturePage },
       e(Text, { style: styles.signatureTitle }, 'Unterschriften'),
       e(View, { style: styles.signatureColumns },
