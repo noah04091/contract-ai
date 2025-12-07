@@ -7,7 +7,7 @@ import {
   CheckCircle, Clipboard, Save, FileText, Check, Download,
   ArrowRight, ArrowLeft, Sparkles, Edit3, Building,
   TrendingUp, Send, RefreshCw, Paperclip, Upload, Archive,
-  Image, File, X
+  Image, File, X, Info, Palette
 } from "lucide-react";
 import styles from "../styles/Generate.module.css";
 import { toast } from 'react-toastify';
@@ -2792,6 +2792,49 @@ export default function Generate() {
   // Design Variant State
   const [selectedDesignVariant, setSelectedDesignVariant] = useState<string>('executive');
   const [isChangingDesign, setIsChangingDesign] = useState<boolean>(false);
+  const [designCarouselIndex, setDesignCarouselIndex] = useState<number>(0);
+  const [showCustomDesignModal, setShowCustomDesignModal] = useState<boolean>(false);
+
+  // Custom Design State
+  const [customDesign, setCustomDesign] = useState({
+    primaryColor: '#0B1324',
+    secondaryColor: '#1A2540',
+    accentColor: '#3B82F6',
+    fontFamily: 'Helvetica',
+    layout: 'classic-centered'
+  });
+
+  // All available designs
+  const allDesigns = [
+    { id: 'executive', name: 'Executive', color: '#0B1324', desc: 'Klassisch' },
+    { id: 'modern', name: 'Modern', color: '#3B82F6', desc: 'Dynamisch' },
+    { id: 'minimal', name: 'Minimal', color: '#6B7280', desc: 'Schlicht' },
+    { id: 'elegant', name: 'Elegant', color: '#D4AF37', desc: 'Luxuriös' },
+    { id: 'corporate', name: 'Corporate', color: '#003366', desc: 'Formell' },
+    { id: 'professional', name: 'Professional', color: '#1B4332', desc: 'Seriös' },
+    { id: 'startup', name: 'Startup', color: '#E63946', desc: 'Jung' },
+    { id: 'legal', name: 'Legal', color: '#800020', desc: 'Juristisch' },
+    { id: 'tech', name: 'Tech', color: '#0891B2', desc: 'Digital' },
+    { id: 'finance', name: 'Finance', color: '#0F172A', desc: 'Premium' },
+    { id: 'creative', name: 'Creative', color: '#7C3AED', desc: 'Kreativ' }
+  ];
+  const VISIBLE_DESIGNS = 5;
+
+  // Font options for custom design
+  const fontOptions = [
+    { id: 'Helvetica', name: 'Helvetica', desc: 'Modern & Klar' },
+    { id: 'Times-Roman', name: 'Times Roman', desc: 'Klassisch' },
+    { id: 'Courier', name: 'Courier', desc: 'Mono / Tech' }
+  ];
+
+  // Layout options for custom design
+  const layoutOptions = [
+    { id: 'classic-centered', name: 'Klassisch', desc: 'Zentriert' },
+    { id: 'sidebar-accent', name: 'Modern', desc: 'Sidebar-Akzent' },
+    { id: 'whitespace-focus', name: 'Minimal', desc: 'Viel Weißraum' },
+    { id: 'structured-boxes', name: 'Corporate', desc: 'Strukturiert' },
+    { id: 'ornamental', name: 'Elegant', desc: 'Dekorativ' }
+  ];
 
   // 📂 Accordion State für Step 2 Feldgruppen
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
@@ -2807,6 +2850,11 @@ export default function Generate() {
     formData: FormDataType;
     currentStep: number;
     savedAt: string;
+    // 📄 NEU: Zusätzliche Felder für Step 3 Wiederherstellung
+    contractText?: string;
+    savedContractId?: string | null;
+    contractData?: any;
+    generatedHTML?: string;
   } | null>(null);
 
   // 📋 Vorschau State
@@ -2906,6 +2954,22 @@ export default function Generate() {
         setCurrentStep(pendingDraft.currentStep || 2);
         setIsRestored(true);
         setLastSaved(new Date(pendingDraft.savedAt));
+
+        // 📄 NEU: Vertragstext und ID für Step 3 Wiederherstellung
+        if (pendingDraft.contractText) {
+          setContractText(pendingDraft.contractText);
+        }
+        if (pendingDraft.savedContractId) {
+          setSavedContractId(pendingDraft.savedContractId);
+          setSaved(true);
+        }
+        if (pendingDraft.contractData) {
+          setContractData(pendingDraft.contractData);
+        }
+        if (pendingDraft.generatedHTML) {
+          setGeneratedHTML(pendingDraft.generatedHTML);
+        }
+
         toast.success('Entwurf wiederhergestellt');
       }
     }
@@ -2930,14 +2994,19 @@ export default function Generate() {
         selectedTypeId: selectedType.id,
         formData,
         currentStep,
-        savedAt: new Date().toISOString()
+        savedAt: new Date().toISOString(),
+        // 📄 NEU: Vertragstext und ID für Step 3 Wiederherstellung
+        contractText: contractText || '',
+        savedContractId: savedContractId || null,
+        contractData: contractData || null,
+        generatedHTML: generatedHTML || ''
       };
       localStorage.setItem('contract_generator_draft', JSON.stringify(dataToSave));
       setLastSaved(new Date());
     }, 1000); // Speichere nach 1 Sekunde Inaktivität
 
     return () => clearTimeout(saveTimer);
-  }, [formData, selectedType, currentStep]);
+  }, [formData, selectedType, currentStep, contractText, savedContractId, contractData, generatedHTML]);
 
   // 💾 Clear draft when contract is generated
   const clearDraft = () => {
@@ -2958,13 +3027,16 @@ export default function Generate() {
   useEffect(() => {
     if (currentStep === 3 && contractText && !pdfPreviewUrl && !isGeneratingPreview) {
       console.log('✅ Step 3 reached - auto-loading PDF preview');
-      // ⏳ Warte 8 Sekunden damit Auto-PDF im Backend sicher fertig wird
+      // ⏳ Bei wiederhergestelltem Draft mit savedContractId: PDF existiert bereits → sofort laden
+      // ⏳ Bei neuem Vertrag: Warte 8 Sekunden damit Auto-PDF im Backend sicher fertig wird
+      const waitTime = savedContractId ? 500 : 8000;
+      console.log(`⏳ Warte ${waitTime}ms auf PDF (${savedContractId ? 'Draft wiederhergestellt' : 'neuer Vertrag'})...`);
       const timer = setTimeout(() => {
         generatePDFPreview();
-      }, 8000);
+      }, waitTime);
       return () => clearTimeout(timer);
     }
-  }, [currentStep, contractText]);
+  }, [currentStep, contractText, savedContractId]);
 
   const loadCompanyProfile = async () => {
     try {
@@ -3702,9 +3774,9 @@ export default function Generate() {
   };
 
   // 🎨 NEUE FUNKTION: Design-Variante ändern (nach Vertragserstellung)
-  const handleDesignChange = async (newDesign: string) => {
-    // Verhindere Mehrfachklicks oder gleiche Design-Auswahl
-    if (isChangingDesign || newDesign === selectedDesignVariant) return;
+  const handleDesignChange = async (newDesign: string, customConfig?: typeof customDesign) => {
+    // Verhindere Mehrfachklicks oder gleiche Design-Auswahl (außer bei custom)
+    if (isChangingDesign || (newDesign === selectedDesignVariant && newDesign !== 'custom')) return;
 
     // Prüfe ob Vertrag gespeichert ist
     if (!savedContractId) {
@@ -3717,22 +3789,30 @@ export default function Generate() {
 
     setIsChangingDesign(true);
 
-    const loadingToast = toast.loading(`Design wird auf "${newDesign}" geändert...`, {
+    const designName = newDesign === 'custom' ? 'Eigenes Design' : newDesign;
+    const loadingToast = toast.loading(`Design wird auf "${designName}" geändert...`, {
       position: 'top-center'
     });
 
     try {
-      console.log("🎨 Design-Änderung gestartet:", { contractId: savedContractId, newDesign });
+      console.log("🎨 Design-Änderung gestartet:", { contractId: savedContractId, newDesign, customConfig });
 
-      // Backend API aufrufen
+      // Backend API aufrufen - mit optionaler Custom Config
+      const requestBody: Record<string, unknown> = {
+        contractId: savedContractId,
+        newDesignVariant: newDesign
+      };
+
+      // Wenn custom, füge die Custom-Konfiguration hinzu
+      if (newDesign === 'custom' && customConfig) {
+        requestBody.customDesign = customConfig;
+      }
+
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/generate/change-design`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contractId: savedContractId,
-          newDesignVariant: newDesign
-        })
+        body: JSON.stringify(requestBody)
       });
 
       const data = await response.json();
@@ -3754,7 +3834,7 @@ export default function Generate() {
       }
 
       toast.update(loadingToast, {
-        render: `✅ Design "${newDesign}" erfolgreich angewendet! PDF wird neu generiert...`,
+        render: `✅ Design "${designName}" erfolgreich angewendet! PDF wird neu generiert...`,
         type: "success",
         isLoading: false,
         autoClose: 2000
@@ -3763,19 +3843,25 @@ export default function Generate() {
       // Warte kurz und lade PDF-Vorschau neu mit V2 und neuem Design
       setTimeout(async () => {
         try {
-          console.log("🎨 Lade V2 PDF-Vorschau mit neuem Design:", newDesign);
+          console.log("🎨 Lade V2 PDF-Vorschau mit neuem Design:", newDesign, customConfig);
+
+          const pdfRequestBody: Record<string, unknown> = { design: newDesign };
+          if (newDesign === 'custom' && customConfig) {
+            pdfRequestBody.customDesign = customConfig;
+          }
+
           const pdfResponse = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/${savedContractId}/pdf-v2?design=${newDesign}`, {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ design: newDesign })
+            body: JSON.stringify(pdfRequestBody)
           });
 
           if (pdfResponse.ok) {
             const blob = await pdfResponse.blob();
             const url = window.URL.createObjectURL(blob);
             setPdfPreviewUrl(url);
-            console.log("✅ V2 PDF-Vorschau mit Design", newDesign, "geladen");
+            console.log("✅ V2 PDF-Vorschau mit Design", designName, "geladen");
           }
         } catch (pdfError) {
           console.error("⚠️ PDF-Vorschau konnte nicht geladen werden:", pdfError);
@@ -4227,7 +4313,15 @@ export default function Generate() {
 
     if (validFiles.length > 0) {
       setAttachments(prev => [...prev, ...validFiles]);
-      toast.success(`${validFiles.length} Anlage(n) hinzugefügt`, { position: "top-right", autoClose: 2000 });
+      toast.success(
+        <div>
+          <strong>{validFiles.length} Anlage(n) hinzugefügt</strong>
+          <div style={{ fontSize: '12px', marginTop: '4px', opacity: 0.9 }}>
+            📎 Wird beim PDF-Download automatisch angehängt
+          </div>
+        </div>,
+        { position: "top-right", autoClose: 3500 }
+      );
     }
   };
 
@@ -4807,7 +4901,7 @@ export default function Generate() {
           </div>
         </motion.header>
 
-        <div className={styles.generatorContent}>
+        <div className={`${styles.generatorContent} ${currentStep === 3 ? styles.step3Wide : ''}`}>
           {/* Premium Notice for Free Users */}
           {userPlan === 'free' && (
             <UnifiedPremiumNotice
@@ -5502,49 +5596,71 @@ export default function Generate() {
                     <div className={styles.step3TwoColumn}>
                       {/* Left Column: Editor + Design + Attachments */}
                       <div className={styles.step3LeftColumn}>
-                        {/* Compact Design Selector */}
+                        {/* Design Selector Carousel */}
                         {isPremium && (
                           <div className={styles.step3DesignCompact}>
                             <div className={styles.step3DesignHeader}>
-                              <Sparkles size={16} />
-                              <span>Design</span>
-                            </div>
-                            <div className={styles.step3DesignOptions}>
-                              {[
-                                { id: 'executive', name: 'Executive', color: '#0B1324' },
-                                { id: 'modern', name: 'Modern', color: '#3B82F6' },
-                                { id: 'minimal', name: 'Minimal', color: '#6B7280' },
-                                { id: 'elegant', name: 'Elegant', color: '#D4AF37' },
-                                { id: 'corporate', name: 'Corporate', color: '#003366' }
-                              ].map((design) => (
-                                <motion.button
-                                  key={design.id}
-                                  className={`${styles.step3DesignOption} ${selectedDesignVariant === design.id ? styles.active : ''}`}
-                                  onClick={() => handleDesignChange(design.id)}
+                              <span><Sparkles size={16} /> Design</span>
+                              <div className={styles.designHeaderRight}>
+                                <span className={styles.designCount}>{allDesigns.length} Varianten</span>
+                                <button
+                                  className={styles.customDesignBtn}
+                                  onClick={() => setShowCustomDesignModal(true)}
                                   disabled={isChangingDesign || !saved}
-                                  whileHover={saved ? { scale: 1.03 } : {}}
-                                  whileTap={saved ? { scale: 0.97 } : {}}
                                 >
-                                  <div className={styles.step3DesignPreview} style={{ background: design.color }}>
-                                    <div className={styles.previewLines}>
-                                      <div className={styles.pLine}></div>
-                                      <div className={styles.pLine}></div>
-                                      <div className={styles.pLine}></div>
+                                  <Palette size={14} />
+                                  Eigenes Design
+                                </button>
+                              </div>
+                            </div>
+                            <div className={styles.step3DesignCarousel}>
+                              <button
+                                className={styles.carouselArrow}
+                                onClick={() => setDesignCarouselIndex(Math.max(0, designCarouselIndex - 1))}
+                                disabled={designCarouselIndex === 0 || isChangingDesign || !saved}
+                              >
+                                <ArrowLeft size={16} />
+                              </button>
+                              <div className={styles.step3DesignOptions}>
+                                {allDesigns
+                                  .slice(designCarouselIndex, designCarouselIndex + VISIBLE_DESIGNS)
+                                  .map((design) => (
+                                  <motion.button
+                                    key={design.id}
+                                    className={`${styles.step3DesignOption} ${selectedDesignVariant === design.id ? styles.active : ''}`}
+                                    onClick={() => handleDesignChange(design.id)}
+                                    disabled={isChangingDesign || !saved}
+                                    whileHover={saved ? { scale: 1.03 } : {}}
+                                    whileTap={saved ? { scale: 0.97 } : {}}
+                                  >
+                                    <div className={styles.step3DesignPreview} style={{ background: design.color }}>
+                                      <div className={styles.previewLines}>
+                                        <div className={styles.pLine}></div>
+                                        <div className={styles.pLine}></div>
+                                        <div className={styles.pLine}></div>
+                                      </div>
                                     </div>
-                                  </div>
-                                  <span>{design.name}</span>
-                                  {selectedDesignVariant === design.id && (
-                                    <div className={styles.step3DesignCheck}>
-                                      <Check size={10} />
-                                    </div>
-                                  )}
-                                  {isChangingDesign && selectedDesignVariant !== design.id && (
-                                    <div className={styles.step3DesignLoading}>
-                                      <div className={styles.tinySpinner}></div>
-                                    </div>
-                                  )}
-                                </motion.button>
-                              ))}
+                                    <span>{design.name}</span>
+                                    {selectedDesignVariant === design.id && (
+                                      <div className={styles.step3DesignCheck}>
+                                        <Check size={10} />
+                                      </div>
+                                    )}
+                                    {isChangingDesign && selectedDesignVariant !== design.id && (
+                                      <div className={styles.step3DesignLoading}>
+                                        <div className={styles.tinySpinner}></div>
+                                      </div>
+                                    )}
+                                  </motion.button>
+                                ))}
+                              </div>
+                              <button
+                                className={styles.carouselArrow}
+                                onClick={() => setDesignCarouselIndex(Math.min(allDesigns.length - VISIBLE_DESIGNS, designCarouselIndex + 1))}
+                                disabled={designCarouselIndex >= allDesigns.length - VISIBLE_DESIGNS || isChangingDesign || !saved}
+                              >
+                                <ArrowRight size={16} />
+                              </button>
                             </div>
                           </div>
                         )}
@@ -5650,6 +5766,12 @@ export default function Generate() {
                                   {attachments.length}
                                 </span>
                               )}
+                              <span
+                                className={styles.step3AttachmentsInfo}
+                                title="Anlagen werden beim PDF-Download automatisch an das Dokument angehängt"
+                              >
+                                <Info size={14} />
+                              </span>
                             </div>
                           </div>
                           <div className={styles.step3AttachmentsContent}>
@@ -5877,6 +5999,167 @@ export default function Generate() {
             contractS3Key={contractS3Key}
           />
         )}
+
+        {/* Custom Design Modal */}
+        <AnimatePresence>
+          {showCustomDesignModal && (
+            <motion.div
+              className={styles.customDesignOverlay}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowCustomDesignModal(false)}
+            >
+              <motion.div
+                className={styles.customDesignModal}
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className={styles.customDesignHeader}>
+                  <h3><Palette size={20} /> Eigenes Design erstellen</h3>
+                  <button
+                    className={styles.customDesignClose}
+                    onClick={() => setShowCustomDesignModal(false)}
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+
+                <div className={styles.customDesignContent}>
+                  {/* Color Picker Section */}
+                  <div className={styles.customDesignSection}>
+                    <h4>Farben</h4>
+                    <div className={styles.colorPickerGrid}>
+                      <div className={styles.colorPickerItem}>
+                        <label>Primärfarbe</label>
+                        <div className={styles.colorInputWrapper}>
+                          <input
+                            type="color"
+                            value={customDesign.primaryColor}
+                            onChange={(e) => setCustomDesign({ ...customDesign, primaryColor: e.target.value })}
+                            className={styles.colorInput}
+                          />
+                          <span>{customDesign.primaryColor}</span>
+                        </div>
+                      </div>
+                      <div className={styles.colorPickerItem}>
+                        <label>Sekundärfarbe</label>
+                        <div className={styles.colorInputWrapper}>
+                          <input
+                            type="color"
+                            value={customDesign.secondaryColor}
+                            onChange={(e) => setCustomDesign({ ...customDesign, secondaryColor: e.target.value })}
+                            className={styles.colorInput}
+                          />
+                          <span>{customDesign.secondaryColor}</span>
+                        </div>
+                      </div>
+                      <div className={styles.colorPickerItem}>
+                        <label>Akzentfarbe</label>
+                        <div className={styles.colorInputWrapper}>
+                          <input
+                            type="color"
+                            value={customDesign.accentColor}
+                            onChange={(e) => setCustomDesign({ ...customDesign, accentColor: e.target.value })}
+                            className={styles.colorInput}
+                          />
+                          <span>{customDesign.accentColor}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Font Selection */}
+                  <div className={styles.customDesignSection}>
+                    <h4>Schriftart</h4>
+                    <div className={styles.fontGrid}>
+                      {fontOptions.map((font) => (
+                        <button
+                          key={font.id}
+                          className={`${styles.fontOption} ${customDesign.fontFamily === font.id ? styles.active : ''}`}
+                          onClick={() => setCustomDesign({ ...customDesign, fontFamily: font.id })}
+                        >
+                          <span className={styles.fontName} style={{ fontFamily: font.id === 'Courier' ? 'monospace' : font.id === 'Times-Roman' ? 'Times New Roman, serif' : 'Helvetica, sans-serif' }}>
+                            {font.name}
+                          </span>
+                          <span className={styles.fontDesc}>{font.desc}</span>
+                          {customDesign.fontFamily === font.id && <Check size={14} className={styles.fontCheck} />}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Layout Selection */}
+                  <div className={styles.customDesignSection}>
+                    <h4>Layout</h4>
+                    <div className={styles.layoutGrid}>
+                      {layoutOptions.map((layout) => (
+                        <button
+                          key={layout.id}
+                          className={`${styles.layoutOption} ${customDesign.layout === layout.id ? styles.active : ''}`}
+                          onClick={() => setCustomDesign({ ...customDesign, layout: layout.id })}
+                        >
+                          <div className={styles.layoutPreview} data-layout={layout.id}>
+                            <div className={styles.layoutLines}>
+                              <div></div>
+                              <div></div>
+                              <div></div>
+                            </div>
+                          </div>
+                          <span>{layout.name}</span>
+                          {customDesign.layout === layout.id && <Check size={14} className={styles.layoutCheck} />}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Preview */}
+                  <div className={styles.customDesignPreviewSection}>
+                    <h4>Vorschau</h4>
+                    <div
+                      className={styles.customDesignPreviewBox}
+                      style={{
+                        background: `linear-gradient(135deg, ${customDesign.primaryColor} 0%, ${customDesign.secondaryColor} 100%)`,
+                        borderColor: customDesign.accentColor
+                      }}
+                    >
+                      <div className={styles.previewHeader} style={{ borderColor: customDesign.accentColor }}>
+                        <div style={{ background: customDesign.accentColor }}></div>
+                      </div>
+                      <div className={styles.previewBody}>
+                        <div style={{ background: 'rgba(255,255,255,0.3)' }}></div>
+                        <div style={{ background: 'rgba(255,255,255,0.2)' }}></div>
+                        <div style={{ background: 'rgba(255,255,255,0.15)' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={styles.customDesignFooter}>
+                  <button
+                    className={styles.customDesignCancelBtn}
+                    onClick={() => setShowCustomDesignModal(false)}
+                  >
+                    Abbrechen
+                  </button>
+                  <button
+                    className={styles.customDesignApplyBtn}
+                    onClick={() => {
+                      handleDesignChange('custom', customDesign);
+                      setShowCustomDesignModal(false);
+                      toast.success('Eigenes Design angewendet!');
+                    }}
+                  >
+                    <Check size={16} />
+                    Design anwenden
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </>
   );
