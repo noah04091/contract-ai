@@ -886,7 +886,7 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
       // Fixed Footer mit dynamischer Seitenzahl
       e(Text, { style: { position: 'absolute', bottom: 25, left: 58, fontSize: 8, color: '#666666' }, fixed: true }, `ID: ${documentId?.substring(0, 12) || 'N/A'}`),
       e(Text, {
-        style: { position: 'absolute', bottom: 25, left: 0, right: 0, textAlign: 'center', fontSize: 8, color: '#666666' },
+        style: { position: 'absolute', bottom: 25, left: 0, right: 0, textAlign: 'center', fontSize: 8, color: '#666666', minHeight: 12 },
         fixed: true,
         render: (props) => `Seite ${props.pageNumber} von ${props.totalPages}`
       }),
@@ -927,7 +927,7 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
       // Fixed Footer mit dynamischer Seitenzahl
       e(Text, { style: { position: 'absolute', bottom: 40, left: 60, fontSize: 7, color: '#999999' }, fixed: true }, `ID: ${documentId?.substring(0, 12) || 'N/A'}`),
       e(Text, {
-        style: { position: 'absolute', bottom: 40, left: 0, right: 0, textAlign: 'center', fontSize: 7, color: '#999999' },
+        style: { position: 'absolute', bottom: 40, left: 0, right: 0, textAlign: 'center', fontSize: 7, color: '#999999', minHeight: 12 },
         fixed: true,
         render: (props) => `Seite ${props.pageNumber} von ${props.totalPages}`
       }),
@@ -976,7 +976,7 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
       // Fixed Footer mit dynamischer Seitenzahl
       e(Text, { style: { position: 'absolute', bottom: 25, left: 40, fontSize: 8, color: '#8a7a6a' }, fixed: true }, `ID: ${documentId?.substring(0, 12) || 'N/A'}`),
       e(Text, {
-        style: { position: 'absolute', bottom: 25, left: 0, right: 0, textAlign: 'center', fontSize: 8, color: '#8a7a6a' },
+        style: { position: 'absolute', bottom: 25, left: 0, right: 0, textAlign: 'center', fontSize: 8, color: '#8a7a6a', minHeight: 12 },
         fixed: true,
         render: (props) => `Seite ${props.pageNumber} von ${props.totalPages}`
       }),
@@ -1031,7 +1031,7 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
       // Fixed Footer mit dynamischer Seitenzahl
       e(Text, { style: { position: 'absolute', bottom: 25, left: 50, fontSize: 8, color: '#666666' }, fixed: true }, `ID: ${documentId?.substring(0, 12) || 'N/A'}`),
       e(Text, {
-        style: { position: 'absolute', bottom: 25, left: 0, right: 0, textAlign: 'center', fontSize: 8, color: '#666666' },
+        style: { position: 'absolute', bottom: 25, left: 0, right: 0, textAlign: 'center', fontSize: 8, color: '#666666', minHeight: 12 },
         fixed: true,
         render: (props) => `Seite ${props.pageNumber} von ${props.totalPages}`
       }),
@@ -1079,7 +1079,7 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
     // Fixed Footer mit dynamischer Seitenzahl
     e(Text, { style: { position: 'absolute', bottom: 25, left: 50, fontSize: 8, color: '#666666' }, fixed: true }, `ID: ${documentId?.substring(0, 12) || 'N/A'}`),
     e(Text, {
-      style: { position: 'absolute', bottom: 25, left: 0, right: 0, textAlign: 'center', fontSize: 8, color: '#666666' },
+      style: { position: 'absolute', bottom: 25, left: 0, right: 0, textAlign: 'center', fontSize: 8, color: '#666666', minHeight: 12 },
       fixed: true,
       render: (props) => `Seite ${props.pageNumber} von ${props.totalPages}`
     }),
@@ -1159,8 +1159,10 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType, do
   const docIdShort = documentId?.substring(0, 12) || 'N/A';
 
   // Footer-Styles für alle Layouts
+  // WICHTIG: minHeight ist ERFORDERLICH damit render prop mit totalPages funktioniert!
+  // Siehe: https://github.com/diegomura/react-pdf/issues/931
   const footerLeft = { position: 'absolute', bottom: 25, left: 50, fontSize: 8, color: '#666666' };
-  const footerCenter = { position: 'absolute', bottom: 25, left: 0, right: 0, textAlign: 'center', fontSize: 8, color: '#666666' };
+  const footerCenter = { position: 'absolute', bottom: 25, left: 0, right: 0, textAlign: 'center', fontSize: 8, color: '#666666', minHeight: 12 };
   const footerRight = { position: 'absolute', bottom: 25, right: 50, fontSize: 8, color: '#666666', textAlign: 'right' };
 
   // Hilfsfunktion für Seitenzahl-Text mit render prop
@@ -1243,8 +1245,9 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
     : 'Diesem Vertrag sind keine Anlagen beigefügt.';
 
   // Footer-Styles (gleich wie in ContentPage)
+  // WICHTIG: minHeight ist ERFORDERLICH damit render prop mit totalPages funktioniert!
   const footerLeft = { position: 'absolute', bottom: 25, left: 50, fontSize: 8, color: '#666666' };
-  const footerCenter = { position: 'absolute', bottom: 25, left: 0, right: 0, textAlign: 'center', fontSize: 8, color: '#666666' };
+  const footerCenter = { position: 'absolute', bottom: 25, left: 0, right: 0, textAlign: 'center', fontSize: 8, color: '#666666', minHeight: 12 };
   const footerRight = { position: 'absolute', bottom: 25, right: 50, fontSize: 8, color: '#666666', textAlign: 'right' };
   const docIdShort = documentId?.substring(0, 12) || 'N/A';
 
