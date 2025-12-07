@@ -39,45 +39,52 @@ function generateICSFeed(events) {
   // Events
   events.forEach(event => {
     lines.push('BEGIN:VEVENT');
-    
+
     // UID - Unique identifier
     const uid = generateUID(event._id);
     lines.push(`UID:${uid}@contract-ai.de`);
-    
+
     // DTSTAMP - Creation timestamp
     lines.push(`DTSTAMP:${formatICSDate(new Date())}`);
-    
+
     // DTSTART - Event date
     const eventDate = new Date(event.date);
     lines.push(`DTSTART;TZID=Europe/Berlin:${formatICSDate(eventDate)}`);
-    
+
     // DTEND - Same as start for all-day events
     const endDate = new Date(eventDate);
     endDate.setHours(endDate.getHours() + 1); // 1 hour duration
     lines.push(`DTEND;TZID=Europe/Berlin:${formatICSDate(endDate)}`);
-    
+
     // SUMMARY - Event title
     lines.push(`SUMMARY:${escapeICS(event.title)}`);
-    
-    // DESCRIPTION
-    const description = buildEventDescription(event);
+
+    // Ermittle die korrekte Contract-ID (kann an verschiedenen Stellen sein)
+    const contractId = event.contractId
+      || event.contract?._id
+      || event.metadata?.contractId
+      || event.envelopeId  // Für Signatur-Events
+      || null;
+
+    // DESCRIPTION mit direktem Link
+    const description = buildEventDescription(event, contractId);
     lines.push(`DESCRIPTION:${escapeICS(description)}`);
-    
+
     // LOCATION
     if (event.contract?.provider) {
       lines.push(`LOCATION:${escapeICS(event.contract.provider)}`);
     }
-    
+
     // CATEGORIES
     lines.push(`CATEGORIES:${event.type},${event.severity}`);
-    
+
     // PRIORITY
     const priority = getPriority(event.severity);
     lines.push(`PRIORITY:${priority}`);
-    
+
     // STATUS
     lines.push(`STATUS:CONFIRMED`);
-    
+
     // ALARM - Reminder
     if (event.severity === 'critical' || event.severity === 'warning') {
       lines.push('BEGIN:VALARM');
@@ -85,7 +92,7 @@ function generateICSFeed(events) {
       lines.push('ACTION:DISPLAY');
       lines.push(`DESCRIPTION:${escapeICS(event.title)}`);
       lines.push('END:VALARM');
-      
+
       // Second alarm for critical events
       if (event.severity === 'critical') {
         lines.push('BEGIN:VALARM');
@@ -95,21 +102,28 @@ function generateICSFeed(events) {
         lines.push('END:VALARM');
       }
     }
-    
-    // URL - Link back to Contract AI
-    const contractUrl = `https://contract-ai.de/contracts/${event.contractId}`;
-    lines.push(`URL:${contractUrl}`);
-    
+
+    // URL - Link back to Contract AI (nur wenn contractId vorhanden)
+    if (contractId) {
+      const contractUrl = `https://contract-ai.de/contracts/${contractId}`;
+      lines.push(`URL:${contractUrl}`);
+      lines.push(`X-CONTRACT-ID:${contractId}`);
+    } else if (event.envelopeId) {
+      // Für Signatur-Events: Link zur Envelope
+      const envelopeUrl = `https://contract-ai.de/envelopes`;
+      lines.push(`URL:${envelopeUrl}`);
+      lines.push(`X-ENVELOPE-ID:${event.envelopeId}`);
+    }
+
     // Custom properties
-    lines.push(`X-CONTRACT-ID:${event.contractId}`);
-    lines.push(`X-CONTRACT-NAME:${escapeICS(event.contract?.name || '')}`);
+    lines.push(`X-CONTRACT-NAME:${escapeICS(event.contract?.name || event.metadata?.contractName || '')}`);
     lines.push(`X-EVENT-TYPE:${event.type}`);
     lines.push(`X-SEVERITY:${event.severity}`);
-    
+
     if (event.metadata?.suggestedAction) {
       lines.push(`X-SUGGESTED-ACTION:${event.metadata.suggestedAction}`);
     }
-    
+
     lines.push('END:VEVENT');
   });
   
@@ -184,25 +198,31 @@ function escapeICS(text) {
 }
 
 /**
- * Baut die Event-Beschreibung
+ * Baut die Event-Beschreibung mit direktem Link zum Vertrag
  */
-function buildEventDescription(event) {
+function buildEventDescription(event, contractId) {
   const lines = [];
-  
+
   lines.push(event.description || '');
   lines.push('');
-  
+
+  // Vertragsname (aus verschiedenen Quellen)
+  const contractName = event.contract?.name || event.metadata?.contractName || event.title || '';
+
   if (event.contract) {
     lines.push('VERTRAGSDETAILS:');
-    lines.push(`• Vertrag: ${event.contract.name}`);
+    lines.push(`• Vertrag: ${contractName}`);
     if (event.contract.provider) {
-      lines.push(`• Anbieter: ${event.contract.provider}`);
+      const providerName = typeof event.contract.provider === 'object'
+        ? event.contract.provider.displayName || event.contract.provider.name
+        : event.contract.provider;
+      lines.push(`• Anbieter: ${providerName}`);
     }
     if (event.contract.amount) {
       lines.push(`• Betrag: ${event.contract.amount}€`);
     }
   }
-  
+
   if (event.metadata) {
     lines.push('');
     if (event.metadata.noticePeriodDays) {
@@ -215,10 +235,10 @@ function buildEventDescription(event) {
       lines.push(`• Verbleibende Tage: ${event.metadata.daysLeft}`);
     }
   }
-  
+
   lines.push('');
   lines.push('EMPFOHLENE AKTION:');
-  
+
   switch (event.metadata?.suggestedAction) {
     case 'cancel':
       lines.push('→ Jetzt kündigen');
@@ -232,14 +252,26 @@ function buildEventDescription(event) {
     case 'optimize':
       lines.push('→ Optimierungsmöglichkeiten prüfen');
       break;
+    case 'remind':
+      lines.push('→ Signaturanfrage prüfen');
+      break;
     default:
       lines.push('→ Im Contract AI Dashboard prüfen');
   }
-  
+
+  // Direkter Link zum Vertrag
   lines.push('');
-  lines.push('🔗 Direkt in Contract AI öffnen:');
-  lines.push(`https://contract-ai.de/contracts/${event.contractId}`);
-  
+  lines.push('━━━━━━━━━━━━━━━━━━━━━━');
+  lines.push('DIREKT ZUM VERTRAG:');
+  if (contractId) {
+    lines.push(`https://contract-ai.de/contracts/${contractId}`);
+  } else if (event.envelopeId) {
+    lines.push(`https://contract-ai.de/envelopes`);
+  } else {
+    lines.push('https://contract-ai.de/contracts');
+  }
+  lines.push('━━━━━━━━━━━━━━━━━━━━━━');
+
   return lines.join('\\n');
 }
 
