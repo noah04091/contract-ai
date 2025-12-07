@@ -297,22 +297,27 @@ export default function Contracts() {
   }, [location]);
 
   // ✅ NEW: Handle "view" URL parameter to open contract details
+  // Wird getriggert wenn URL sich ändert ODER wenn contracts geladen wurden
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const contractIdToView = params.get('view');
 
-    if (contractIdToView && contracts.length > 0) {
+    console.log('📋 View Parameter Check:', { contractIdToView, contractsCount: contracts.length, loading });
+
+    if (contractIdToView && contracts.length > 0 && !loading) {
       const contractToOpen = contracts.find(c => c._id === contractIdToView);
+
+      console.log('📋 Contract to open:', contractToOpen ? contractToOpen.name : 'NOT FOUND');
 
       if (contractToOpen) {
         setSelectedContract(contractToOpen);
         setShowDetails(true);
-
-        // ✅ KEEP the view parameter in URL so Assistant can see which contract is open
-        // Parameter wird erst beim Modal-Schließen entfernt (siehe onClose Handler)
+        console.log('✅ Modal sollte jetzt öffnen für:', contractToOpen.name);
+      } else {
+        console.warn('⚠️ Vertrag nicht gefunden mit ID:', contractIdToView);
       }
     }
-  }, [location.search, contracts]);
+  }, [location.search, contracts, loading]);
 
   // 📁 Close dropdown when clicking outside
   useEffect(() => {
