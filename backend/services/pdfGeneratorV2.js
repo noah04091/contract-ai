@@ -507,9 +507,9 @@ const parseContractText = (text) => {
 const createExecutiveStyles = (theme) => {
   const c = theme.colors;
   return StyleSheet.create({
-    page: { fontFamily: theme.fontFamily, fontSize: 11, padding: 50, lineHeight: 1.5, color: c.text },
-    // Deckblatt - Klassisch zentriert
-    coverPage: { paddingBottom: 60 },
+    page: { fontFamily: theme.fontFamily, fontSize: 11, padding: 50, color: c.text },
+    // Deckblatt - Klassisch zentriert (lineHeight hier statt auf page wegen render prop Bug)
+    coverPage: { paddingBottom: 60, lineHeight: 1.5 },
     header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', borderBottomWidth: 2, borderBottomColor: c.line, paddingBottom: 15, marginBottom: 30 },
     logo: { width: 60, height: 60, objectFit: 'contain' },
     companyInfo: { textAlign: 'right', fontSize: 9, color: c.textLight },
@@ -526,8 +526,8 @@ const createExecutiveStyles = (theme) => {
     partyAddress: { fontSize: 10, color: c.textLight },
     partyRole: { fontSize: 9, fontStyle: 'italic', color: c.textMuted, marginTop: 8 },
     footer: { position: 'absolute', bottom: 30, left: 50, right: 50, flexDirection: 'row', justifyContent: 'space-between', fontSize: 8, color: c.textMuted, borderTopWidth: 1, borderTopColor: c.border, paddingTop: 10 },
-    // Content Styles - KEIN flex: 1, das blockiert fixed elements!
-    contentPage: { paddingBottom: 60 },
+    // Content Styles - KEIN flex: 1, das blockiert fixed elements! (lineHeight hier statt auf page)
+    contentPage: { paddingBottom: 60, lineHeight: 1.5 },
     preambleContainer: { marginBottom: 20, paddingBottom: 15, borderBottomWidth: 1, borderBottomColor: c.border },
     preambleTitle: { fontSize: 12, fontWeight: 'bold', textAlign: 'center', marginBottom: 10, color: c.secondary },
     preambleText: { fontSize: 10, color: c.textLight, textAlign: 'justify', marginBottom: 5 },
@@ -543,8 +543,8 @@ const createExecutiveStyles = (theme) => {
     bulletText: { flex: 1, fontSize: 10, color: c.text },
     paragraph: { fontSize: 10, marginBottom: 8, textAlign: 'justify', color: c.text },
     pageFooter: { position: 'absolute', bottom: 30, left: 50, right: 50, flexDirection: 'row', justifyContent: 'space-between', fontSize: 8, color: c.textMuted, borderTopWidth: 1, borderTopColor: c.border, paddingTop: 8 },
-    // Signature Styles
-    signaturePage: { paddingBottom: 60 },
+    // Signature Styles (lineHeight hier statt auf page)
+    signaturePage: { paddingBottom: 60, lineHeight: 1.5 },
     signatureTitle: { fontSize: 16, fontWeight: 'bold', textAlign: 'center', marginBottom: 40, color: c.primary, borderBottomWidth: 2, borderBottomColor: c.line, paddingBottom: 10 },
     signatureColumns: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 30 },
     signatureColumn: { width: '45%' },
@@ -566,9 +566,9 @@ const createExecutiveStyles = (theme) => {
 const createModernStyles = (theme) => {
   const c = theme.colors;
   return StyleSheet.create({
-    page: { fontFamily: theme.fontFamily, fontSize: 11, padding: 0, lineHeight: 1.6, color: c.text },
-    // Deckblatt - Mit Sidebar
-    coverPage: { flexDirection: 'row', paddingBottom: 60 },
+    page: { fontFamily: theme.fontFamily, fontSize: 11, padding: 0, color: c.text },
+    // Deckblatt - Mit Sidebar (lineHeight hier statt auf page wegen render prop Bug)
+    coverPage: { flexDirection: 'row', paddingBottom: 60, lineHeight: 1.6 },
     sidebar: { width: 8, backgroundColor: c.primary },
     mainContent: { flex: 1, padding: 40 },
     header: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 30 },
@@ -586,8 +586,8 @@ const createModernStyles = (theme) => {
     partyAddress: { fontSize: 10, color: c.textLight, marginTop: 3 },
     partyRole: { fontSize: 9, color: c.accent, marginTop: 10 },
     footer: { position: 'absolute', bottom: 20, left: 48, right: 40, flexDirection: 'row', justifyContent: 'space-between', fontSize: 8, color: c.textMuted },
-    // Content Styles - KEIN flex: 1 wegen fixed footer!
-    contentPage: { flexDirection: 'row', paddingBottom: 60 },
+    // Content Styles - KEIN flex: 1 wegen fixed footer! (lineHeight hier statt auf page)
+    contentPage: { flexDirection: 'row', paddingBottom: 60, lineHeight: 1.6 },
     contentMain: { flex: 1, paddingLeft: 40, paddingRight: 40, paddingTop: 30, paddingBottom: 50 },
     preambleContainer: { marginBottom: 25, paddingLeft: 15, borderLeftWidth: 3, borderLeftColor: c.accent },
     preambleTitle: { fontSize: 11, fontWeight: 'bold', color: c.accent, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 },
@@ -604,8 +604,8 @@ const createModernStyles = (theme) => {
     bulletText: { flex: 1, fontSize: 10 },
     paragraph: { fontSize: 10, marginBottom: 10, textAlign: 'justify' },
     pageFooter: { position: 'absolute', bottom: 20, left: 48, right: 40, flexDirection: 'row', justifyContent: 'space-between', fontSize: 8, color: c.textMuted },
-    // Signature Styles
-    signaturePage: { flexDirection: 'row', paddingBottom: 60 },
+    // Signature Styles (lineHeight hier statt auf page)
+    signaturePage: { flexDirection: 'row', paddingBottom: 60, lineHeight: 1.6 },
     signatureMain: { flex: 1, paddingLeft: 40, paddingRight: 40, paddingTop: 40 },
     signatureTitle: { fontSize: 18, fontWeight: 'bold', color: c.primary, marginBottom: 50 },
     signatureColumns: { flexDirection: 'row', justifyContent: 'space-between' },
@@ -628,9 +628,9 @@ const createModernStyles = (theme) => {
 const createMinimalStyles = (theme) => {
   const c = theme.colors;
   return StyleSheet.create({
-    page: { fontFamily: theme.fontFamily, fontSize: 10, padding: 60, lineHeight: 1.7, color: c.text },
-    // Deckblatt - Ultra clean
-    coverPage: { justifyContent: 'center', paddingBottom: 60 },
+    page: { fontFamily: theme.fontFamily, fontSize: 10, padding: 60, color: c.text },
+    // Deckblatt - Ultra clean (lineHeight hier statt auf page wegen render prop Bug)
+    coverPage: { justifyContent: 'center', paddingBottom: 60, lineHeight: 1.7 },
     header: { position: 'absolute', top: 0, left: 0, right: 0, alignItems: 'center', paddingTop: 40 },
     logo: { width: 50, height: 50, objectFit: 'contain', opacity: 0.8 },
     companyInfo: { textAlign: 'center', fontSize: 8, color: c.textMuted, marginTop: 10 },
@@ -646,8 +646,8 @@ const createMinimalStyles = (theme) => {
     partyAddress: { fontSize: 9, color: c.textMuted, marginTop: 3 },
     partyRole: { fontSize: 8, color: c.textMuted, marginTop: 10, fontStyle: 'italic' },
     footer: { position: 'absolute', bottom: 40, left: 60, right: 60, flexDirection: 'row', justifyContent: 'center', fontSize: 7, color: c.textMuted },
-    // Content Styles - KEIN flex: 1, das blockiert fixed elements!
-    contentPage: { paddingBottom: 60 },
+    // Content Styles - KEIN flex: 1, das blockiert fixed elements! (lineHeight hier statt auf page)
+    contentPage: { paddingBottom: 60, lineHeight: 1.7 },
     preambleContainer: { marginBottom: 30, textAlign: 'center' },
     preambleTitle: { fontSize: 9, color: c.textMuted, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 15 },
     preambleText: { fontSize: 9, color: c.textLight, textAlign: 'center', lineHeight: 2 },
@@ -663,8 +663,8 @@ const createMinimalStyles = (theme) => {
     bulletText: { flex: 1, fontSize: 9 },
     paragraph: { fontSize: 9, marginBottom: 12, textAlign: 'justify', lineHeight: 1.8 },
     pageFooter: { position: 'absolute', bottom: 40, left: 60, right: 60, flexDirection: 'row', justifyContent: 'center', fontSize: 7, color: c.textMuted },
-    // Signature Styles
-    signaturePage: { justifyContent: 'center', paddingBottom: 60 },
+    // Signature Styles (lineHeight hier statt auf page)
+    signaturePage: { justifyContent: 'center', paddingBottom: 60, lineHeight: 1.7 },
     signatureTitle: { fontSize: 10, textAlign: 'center', color: c.textMuted, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 60 },
     signatureColumns: { flexDirection: 'row', justifyContent: 'space-around' },
     signatureColumn: { width: '40%', alignItems: 'center' },
@@ -686,9 +686,9 @@ const createMinimalStyles = (theme) => {
 const createElegantStyles = (theme) => {
   const c = theme.colors;
   return StyleSheet.create({
-    page: { fontFamily: theme.fontFamily, fontSize: 11, padding: 40, lineHeight: 1.6, color: c.text, backgroundColor: c.background },
-    // Deckblatt - Ornamental (kompakter für eine Seite)
-    coverPage: { paddingBottom: 60 },
+    page: { fontFamily: theme.fontFamily, fontSize: 11, padding: 40, color: c.text, backgroundColor: c.background },
+    // Deckblatt - Ornamental (kompakter für eine Seite) (lineHeight hier statt auf page wegen render prop Bug)
+    coverPage: { paddingBottom: 60, lineHeight: 1.6 },
     header: { alignItems: 'center', marginBottom: 10 },
     ornamentTop: { width: 200, height: 2, backgroundColor: c.accent, marginBottom: 5 },
     ornamentTopInner: { width: 100, height: 1, backgroundColor: c.accent },
@@ -709,8 +709,8 @@ const createElegantStyles = (theme) => {
     footer: { position: 'absolute', bottom: 25, left: 40, right: 40, alignItems: 'center' },
     footerOrnament: { width: 100, height: 1, backgroundColor: c.accent, marginBottom: 10 },
     footerText: { fontSize: 7, color: c.textMuted },
-    // Content Styles - KEIN flex: 1, das blockiert fixed elements!
-    contentPage: { paddingBottom: 60 },
+    // Content Styles - KEIN flex: 1, das blockiert fixed elements! (lineHeight hier statt auf page)
+    contentPage: { paddingBottom: 60, lineHeight: 1.6 },
     preambleContainer: { marginBottom: 25, borderTopWidth: 1, borderBottomWidth: 1, borderColor: c.accent, paddingVertical: 15 },
     preambleTitle: { fontSize: 11, color: c.accent, textAlign: 'center', fontStyle: 'italic', marginBottom: 10 },
     preambleText: { fontSize: 10, color: c.textLight, textAlign: 'center' },
@@ -726,8 +726,8 @@ const createElegantStyles = (theme) => {
     bulletText: { flex: 1, fontSize: 10 },
     paragraph: { fontSize: 10, marginBottom: 10, textAlign: 'justify' },
     pageFooter: { position: 'absolute', bottom: 30, left: 50, right: 50, alignItems: 'center' },
-    // Signature Styles
-    signaturePage: { paddingBottom: 60 },
+    // Signature Styles (lineHeight hier statt auf page)
+    signaturePage: { paddingBottom: 60, lineHeight: 1.6 },
     signatureTitle: { fontSize: 14, textAlign: 'center', color: c.primary, marginBottom: 50, borderBottomWidth: 1, borderBottomColor: c.accent, paddingBottom: 15 },
     signatureColumns: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 30 },
     signatureColumn: { width: '42%', alignItems: 'center' },
@@ -750,9 +750,9 @@ const createCorporateStyles = (theme) => {
   const c = theme.colors;
   return StyleSheet.create({
     // v4-FIX: Page mit padding wie Executive (KEIN backgroundColor - das verursacht das Problem!)
-    page: { fontFamily: theme.fontFamily, fontSize: 10, padding: 50, lineHeight: 1.5, color: '#1a1a1a' },
-    // Deckblatt - Mit Header-Bar (ALLE FARBEN HARDCODIERT!)
-    coverPage: { paddingBottom: 60 },
+    page: { fontFamily: theme.fontFamily, fontSize: 10, padding: 50, color: '#1a1a1a' },
+    // Deckblatt - Mit Header-Bar (ALLE FARBEN HARDCODIERT!) (lineHeight hier statt auf page wegen render prop Bug)
+    coverPage: { paddingBottom: 60, lineHeight: 1.5 },
     headerBar: { backgroundColor: '#003366', padding: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     logo: { width: 50, height: 50, objectFit: 'contain' },
     headerInfo: { color: '#ffffff', textAlign: 'right', fontSize: 8 },
@@ -771,8 +771,8 @@ const createCorporateStyles = (theme) => {
     partyAddress: { fontSize: 9, color: '#333333' },
     partyRole: { fontSize: 8, color: '#0066cc', fontWeight: 'bold' },
     footer: { position: 'absolute', bottom: 30, left: 50, right: 50, flexDirection: 'row', justifyContent: 'space-between', fontSize: 8, color: '#666666', borderTopWidth: 1, borderTopColor: '#003366', paddingTop: 10 },
-    // Content Styles - KEIN flex: 1 wegen fixed footer!
-    contentPage: { paddingBottom: 60 },
+    // Content Styles - KEIN flex: 1 wegen fixed footer! (lineHeight hier statt auf page)
+    contentPage: { paddingBottom: 60, lineHeight: 1.5 },
     contentMain: { flex: 1 },
     preambleContainer: { marginBottom: 20, paddingBottom: 15, borderBottomWidth: 1, borderBottomColor: '#003366' },
     preambleTitle: { fontSize: 10, fontWeight: 'bold', color: '#003366', textTransform: 'uppercase', marginBottom: 8 },
@@ -789,8 +789,8 @@ const createCorporateStyles = (theme) => {
     bulletText: { flex: 1, fontSize: 9, color: '#1a1a1a' },
     paragraph: { fontSize: 9, marginBottom: 8, textAlign: 'justify', paddingLeft: 10, color: '#1a1a1a' },
     pageFooter: { position: 'absolute', bottom: 30, left: 50, right: 50, flexDirection: 'row', justifyContent: 'space-between', fontSize: 8, color: '#666666', borderTopWidth: 1, borderTopColor: '#003366', paddingTop: 8 },
-    // Signature Styles - v4-FIX: Ohne flex:1 für fixed footer!
-    signaturePage: { paddingBottom: 60 },
+    // Signature Styles - v4-FIX: Ohne flex:1 für fixed footer! (lineHeight hier statt auf page)
+    signaturePage: { paddingBottom: 60, lineHeight: 1.5 },
     signatureHeader: { backgroundColor: '#003366', padding: 15 },
     signatureTitle: { fontSize: 14, fontWeight: 'bold', color: '#ffffff', textAlign: 'center' },
     signatureMain: { padding: 40 },
