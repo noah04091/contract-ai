@@ -60,15 +60,18 @@ function generateICSFeed(events) {
     lines.push(`SUMMARY:${escapeICS(event.title)}`);
 
     // Ermittle die korrekte ID (Contract oder Envelope)
-    const contractId = event.contractId
+    // WICHTIG: Sicherstellen dass es ein sauberer String ist (keine ObjectId, kein \n)
+    const rawContractId = event.contractId
       || event.contract?._id
       || event.metadata?.contractId
       || null;
+    const contractId = rawContractId ? String(rawContractId).trim() : null;
 
     // Für Signatur-Events: envelopeId verwenden
-    const envelopeId = event.envelopeId
+    const rawEnvelopeId = event.envelopeId
       || event.metadata?.envelopeId
       || null;
+    const envelopeId = rawEnvelopeId ? String(rawEnvelopeId).trim() : null;
 
     // DESCRIPTION mit direktem Link
     const description = buildEventDescription(event, contractId, envelopeId);
