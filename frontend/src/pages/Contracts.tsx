@@ -302,8 +302,15 @@ export default function Contracts() {
     const params = new URLSearchParams(location.search);
     const rawContractId = params.get('view');
     // Säubere die ID von möglichen \n Zeichen (aus ICS-Feed)
+    // Auch URL-encodierte Varianten: %5Cn, %0A, sowie Whitespace
     const contractIdToView = rawContractId
-      ? rawContractId.trim().replace(/\\n/g, '').replace(/\n/g, '')
+      ? rawContractId
+          .trim()
+          .replace(/%5C[nN]/g, '')  // URL-encoded \n
+          .replace(/%0[aA]/g, '')    // URL-encoded newline
+          .replace(/\\n/g, '')       // Literal \n
+          .replace(/\n/g, '')        // Actual newline
+          .replace(/\s/g, '')        // Any whitespace
       : null;
 
     console.log('📋 View Parameter Check:', { contractIdToView, contractsCount: contracts.length, loading });
@@ -322,10 +329,14 @@ export default function Contracts() {
 
         const fetchSingleContract = async () => {
           try {
-            const response = await apiCall(`/api/contracts/${contractIdToView}`) as { contract?: Contract };
-            if (response && response.contract) {
-              console.log('✅ Contract von API geladen:', response.contract.name);
-              setSelectedContract(response.contract);
+            const response = await apiCall(`/contracts/${contractIdToView}`);
+            // Backend gibt den Vertrag direkt zurück (nicht eingepackt in { contract: ... })
+            // Prüfe beide Formate für Kompatibilität
+            const contract = (response as { contract?: Contract })?.contract || (response as Contract);
+
+            if (contract && contract._id) {
+              console.log('✅ Contract von API geladen:', contract.name);
+              setSelectedContract(contract);
               setShowDetails(true);
             } else {
               console.warn('⚠️ Vertrag nicht gefunden:', contractIdToView);
