@@ -108,8 +108,9 @@ function generateICSFeed(events) {
     }
 
     // URL - Link back to Contract AI
+    // Nutze ?view= Parameter um das ContractDetailModal direkt zu öffnen
     if (contractId) {
-      const contractUrl = `https://contract-ai.de/contracts/${contractId}`;
+      const contractUrl = `https://contract-ai.de/contracts?view=${contractId}`;
       lines.push(`URL:${contractUrl}`);
       lines.push(`X-CONTRACT-ID:${contractId}`);
     } else if (envelopeId) {
@@ -269,13 +270,13 @@ function buildEventDescription(event, contractId, envelopeId) {
       lines.push('→ Im Contract AI Dashboard prüfen');
   }
 
-  // Direkter Link
+  // Direkter Link - öffnet das ContractDetailModal
   lines.push('');
   lines.push('━━━━━━━━━━━━━━━━━━━━━━');
 
   if (contractId) {
     lines.push('DIREKT ZUM VERTRAG:');
-    lines.push(`https://contract-ai.de/contracts/${contractId}`);
+    lines.push(`https://contract-ai.de/contracts?view=${contractId}`);
   } else if (envelopeId) {
     lines.push('ZUR SIGNATURANFRAGE:');
     lines.push(`https://contract-ai.de/envelopes?id=${envelopeId}`);
