@@ -570,7 +570,7 @@ export default function AdminDashboard() {
       } else {
         setError(data.message);
       }
-    } catch (err) {
+    } catch {
       setError('Fehler beim Löschen des Benutzers');
     } finally {
       setIsDeleting(false);
@@ -603,7 +603,7 @@ export default function AdminDashboard() {
       } else {
         setError(data.message);
       }
-    } catch (err) {
+    } catch {
       setError('Fehler beim Löschen der Benutzer');
     } finally {
       setIsDeleting(false);
@@ -671,7 +671,7 @@ export default function AdminDashboard() {
           break;
       }
 
-      response = await fetch(endpoint, {
+      const response = await fetch(endpoint, {
         method,
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -719,7 +719,7 @@ export default function AdminDashboard() {
       } else {
         setError(data.message);
       }
-    } catch (err) {
+    } catch {
       setError(`Fehler bei Aktion für ${userEmail}`);
     } finally {
       setActionLoading(false);

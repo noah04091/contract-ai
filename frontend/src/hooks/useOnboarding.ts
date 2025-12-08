@@ -40,7 +40,7 @@ export function useOnboarding() {
       if (savedToursJson) {
         completedTours = JSON.parse(savedToursJson);
       }
-    } catch (e) {
+    } catch {
       // Bei korrupten Daten: nichts tun, Tour wird angezeigt
       console.warn('Onboarding localStorage corrupt, resetting');
     }
@@ -70,7 +70,7 @@ export function useOnboarding() {
           setRunTour(false);
           return;
         }
-      } catch (e) {
+      } catch {
         // Ignorieren
       }
       setRunTour(true);
@@ -94,7 +94,7 @@ export function useOnboarding() {
       if (savedToursJson) {
         completedTours = JSON.parse(savedToursJson);
       }
-    } catch (e) {
+    } catch {
       // Bei Fehler: neues Objekt
     }
 
@@ -141,7 +141,7 @@ export function useOnboarding() {
         setIsFirstVisit(true);
         setRunTour(true);
       }
-    } catch (e) {
+    } catch {
       // Ignorieren
     }
   };
