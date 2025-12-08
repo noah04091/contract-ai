@@ -57,6 +57,9 @@ import {
 } from 'recharts';
 import styles from './AdminDashboard.module.css';
 
+// API URL für Backend-Calls
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
+
 // USD to EUR conversion rate (approximate)
 const USD_TO_EUR = 0.92;
 
