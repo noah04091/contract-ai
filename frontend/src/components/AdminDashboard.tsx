@@ -398,7 +398,7 @@ export default function AdminDashboard() {
       setError(null);
 
       // Fetch comprehensive admin stats
-      const statsResponse = await fetch('/api/admin/stats', {
+      const statsResponse = await fetch(`${API_URL}/api/admin/stats`, {
         credentials: 'include'
       });
 
@@ -410,7 +410,7 @@ export default function AdminDashboard() {
       setAdminStats(statsData);
 
       // Fetch users separately for the users tab
-      const usersResponse = await fetch('/api/auth/users', {
+      const usersResponse = await fetch(`${API_URL}/api/auth/users`, {
         credentials: 'include'
       });
 
@@ -420,7 +420,7 @@ export default function AdminDashboard() {
       }
 
       // Fetch beta stats
-      const betaResponse = await fetch('/api/admin/beta-stats', {
+      const betaResponse = await fetch(`${API_URL}/api/admin/beta-stats`, {
         credentials: 'include'
       });
 
@@ -430,7 +430,7 @@ export default function AdminDashboard() {
       }
 
       // Fetch deleted accounts
-      const deletedResponse = await fetch('/api/admin/deleted-accounts', {
+      const deletedResponse = await fetch(`${API_URL}/api/admin/deleted-accounts`, {
         credentials: 'include'
       });
 
@@ -440,7 +440,7 @@ export default function AdminDashboard() {
       }
 
       // Fetch activity log
-      const activityResponse = await fetch('/api/admin/activity-log?limit=100', {
+      const activityResponse = await fetch(`${API_URL}/api/admin/activity-log?limit=100`, {
         credentials: 'include'
       });
 
@@ -556,7 +556,7 @@ export default function AdminDashboard() {
   const deleteUser = async (userId: string) => {
     setIsDeleting(true);
     try {
-      const response = await fetch(`/api/admin/users/${userId}`, {
+      const response = await fetch(`${API_URL}/api/admin/users/${userId}`, {
         method: 'DELETE',
         credentials: 'include'
       });
@@ -584,7 +584,7 @@ export default function AdminDashboard() {
 
     setIsDeleting(true);
     try {
-      const response = await fetch('/api/admin/users/bulk-delete', {
+      const response = await fetch(`${API_URL}/api/admin/users/bulk-delete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -670,7 +670,7 @@ export default function AdminDashboard() {
           break;
       }
 
-      const response = await fetch(endpoint, {
+      const response = await fetch(`${API_URL}${endpoint}`, {
         method,
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -891,7 +891,7 @@ export default function AdminDashboard() {
     setUserDetailModal({ show: true, user: null, loading: true });
 
     try {
-      const response = await fetch(`/api/admin/users/${userId}`, {
+      const response = await fetch(`${API_URL}/api/admin/users/${userId}`, {
         credentials: 'include'
       });
 
@@ -2586,7 +2586,7 @@ export default function AdminDashboard() {
                       className={styles.settingsButton}
                       onClick={async () => {
                         try {
-                          const res = await fetch('/api/admin/send-daily-summary', {
+                          const res = await fetch(`${API_URL}/api/admin/send-daily-summary`, {
                             method: 'POST',
                             credentials: 'include'
                           });
@@ -2605,7 +2605,7 @@ export default function AdminDashboard() {
                       className={styles.settingsButton}
                       onClick={async () => {
                         try {
-                          const res = await fetch('/api/admin/send-weekly-summary', {
+                          const res = await fetch(`${API_URL}/api/admin/send-weekly-summary`, {
                             method: 'POST',
                             credentials: 'include'
                           });
