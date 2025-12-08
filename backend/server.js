@@ -1767,7 +1767,19 @@ const connectDB = async () => {
         }
       });
 
-      console.log("✅ Alle Cron Jobs aktiviert (inkl. Calendar Events, Beta Reminder & Admin Notifications)");
+      // 📧 VERIFICATION REMINDER: Erinnerung für nicht verifizierte Accounts (täglich um 10 Uhr)
+      cron.schedule("0 10 * * *", async () => {
+        console.log("📧 [VERIFICATION] Starte Erinnerungs-E-Mails für nicht verifizierte Accounts...");
+        try {
+          const { sendVerificationReminders } = require("./services/verificationReminderService");
+          const result = await sendVerificationReminders(2); // 2 Tage nach Registrierung
+          console.log(`📧 [VERIFICATION] Ergebnis: ${result.sent} Erinnerungen gesendet`);
+        } catch (error) {
+          console.error("❌ [VERIFICATION] Reminder Cron Error:", error);
+        }
+      });
+
+      console.log("✅ Alle Cron Jobs aktiviert (inkl. Calendar Events, Beta Reminder, Admin Notifications & Verification Reminder)");
     } catch (err) {
       console.error("❌ Cron Jobs konnten nicht gestartet werden:", err);
     }
