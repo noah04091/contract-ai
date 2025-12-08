@@ -964,7 +964,7 @@ const HomeRedesign = () => {
 
               {/* HubSpot */}
               <div className="logo-marquee-item">
-                <img src="https://img.icons8.com/color/96/hubspot.png" alt="HubSpot" className="integration-logo-img" />
+                <img src="https://www.hubspot.com/hubfs/HubSpot_Logos/HubSpot-Inversed-Favicon.png" alt="HubSpot" className="integration-logo-img" />
                 <span>HubSpot</span>
               </div>
 
@@ -1008,7 +1008,7 @@ const HomeRedesign = () => {
 
               {/* HubSpot - Duplikat */}
               <div className="logo-marquee-item">
-                <img src="https://img.icons8.com/color/96/hubspot.png" alt="HubSpot" className="integration-logo-img" />
+                <img src="https://www.hubspot.com/hubfs/HubSpot_Logos/HubSpot-Inversed-Favicon.png" alt="HubSpot" className="integration-logo-img" />
                 <span>HubSpot</span>
               </div>
 
