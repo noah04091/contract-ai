@@ -6943,6 +6943,14 @@ main,
   flex-shrink: 0;
 }
 
+/* Image Logos */
+.logo-marquee-item img.integration-logo-img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
 /* Logo-Text */
 .logo-marquee-item span {
   font-size: 13px;

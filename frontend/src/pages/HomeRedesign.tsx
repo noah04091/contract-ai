@@ -938,66 +938,45 @@ const HomeRedesign = () => {
             <div className="logo-marquee-track">
               {/* Erste Reihe - Original */}
 
-              {/* Google Calendar - Offizielles Logo */}
+              {/* Google Calendar */}
               <div className="logo-marquee-item">
-                <svg viewBox="0 0 48 48" className="integration-logo">
-                  <rect fill="#FFFFFF" x="10" y="8" width="28" height="32" rx="2"/>
-                  <rect fill="#4285F4" x="10" y="8" width="28" height="8"/>
-                  <text x="24" y="32" textAnchor="middle" fill="#4285F4" fontSize="16" fontWeight="bold" fontFamily="Arial">31</text>
-                  <rect fill="#EA4335" x="14" y="12" width="4" height="0" rx="1"/>
-                  <rect fill="#EA4335" x="30" y="12" width="4" height="0" rx="1"/>
-                </svg>
+                <img src="https://www.gstatic.com/images/branding/product/2x/calendar_2020q4_48dp.png" alt="Google Calendar" className="integration-logo-img" />
                 <span>Google Calendar</span>
               </div>
 
-              {/* Microsoft 365 - Offizielles Logo */}
+              {/* Microsoft Outlook */}
               <div className="logo-marquee-item">
-                <svg viewBox="0 0 23 23" className="integration-logo">
-                  <rect fill="#F25022" width="11" height="11"/>
-                  <rect fill="#7FBA00" x="12" width="11" height="11"/>
-                  <rect fill="#00A4EF" y="12" width="11" height="11"/>
-                  <rect fill="#FFB900" x="12" y="12" width="11" height="11"/>
-                </svg>
-                <span>Microsoft 365</span>
+                <img src="https://img.icons8.com/color/96/microsoft-outlook-2019.png" alt="Microsoft Outlook" className="integration-logo-img" />
+                <span>Microsoft Outlook</span>
               </div>
 
-              {/* Apple - Offizielles Logo */}
+              {/* Apple iCloud */}
               <div className="logo-marquee-item">
-                <svg viewBox="0 0 384 512" className="integration-logo">
-                  <path fill="#000000" d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/>
-                </svg>
+                <img src="https://img.icons8.com/ios-filled/100/000000/mac-os.png" alt="Apple" className="integration-logo-img" />
                 <span>Apple Calendar</span>
               </div>
 
-              {/* Salesforce - Offizielles Logo */}
+              {/* Salesforce */}
               <div className="logo-marquee-item">
-                <svg viewBox="0 0 48 48" className="integration-logo">
-                  <path fill="#00A1E0" d="M20.037 9.693c1.7-1.785 4.063-2.893 6.682-2.893 3.393 0 6.343 1.851 7.94 4.596a10.197 10.197 0 0 1 4.209-.906c5.655 0 10.238 4.583 10.238 10.238s-4.583 10.238-10.238 10.238a10.2 10.2 0 0 1-2.479-.303 8.18 8.18 0 0 1-7.223 4.369c-1.39 0-2.697-.346-3.844-.955a9.461 9.461 0 0 1-8.6 5.523c-4.333 0-8.024-2.897-9.17-6.863a9.104 9.104 0 0 1-1.53.13c-5.033 0-9.114-4.081-9.114-9.114 0-3.445 1.914-6.441 4.736-7.991a9.457 9.457 0 0 1-.376-2.656c0-5.233 4.241-9.474 9.474-9.474 3.013 0 5.696 1.409 7.425 3.6"/>
-                </svg>
+                <img src="https://img.icons8.com/color/96/salesforce.png" alt="Salesforce" className="integration-logo-img" />
                 <span>Salesforce</span>
               </div>
 
-              {/* HubSpot - Offizielles Logo */}
+              {/* HubSpot */}
               <div className="logo-marquee-item">
-                <svg viewBox="0 0 24 24" className="integration-logo">
-                  <path fill="#FF7A59" d="M18.164 7.93V5.084a2.198 2.198 0 0 0 1.267-1.984v-.066a2.21 2.21 0 0 0-2.212-2.212h-.066a2.21 2.21 0 0 0-2.212 2.212v.066c0 .873.509 1.627 1.248 1.984V7.93a5.052 5.052 0 0 0-2.319 1.152L6.398 3.71a2.62 2.62 0 0 0 .072-.594v-.066A2.611 2.611 0 0 0 3.86.439h-.066A2.611 2.611 0 0 0 1.183 3.05v.066a2.611 2.611 0 0 0 2.611 2.611h.066c.481 0 .928-.131 1.313-.357l7.448 5.335a5.066 5.066 0 0 0-.397 1.96c0 .725.152 1.416.425 2.041l-2.27 2.27a2.1 2.1 0 0 0-.639-.103h-.066a2.136 2.136 0 0 0-2.136 2.136v.066a2.136 2.136 0 0 0 2.136 2.136h.066a2.136 2.136 0 0 0 2.136-2.136v-.066c0-.234-.038-.46-.108-.671l2.237-2.237a5.084 5.084 0 0 0 3.196 1.122h.066a5.1 5.1 0 0 0 5.097-5.097v-.066a5.1 5.1 0 0 0-4.199-5.02zm-1.012 7.787h-.066a2.707 2.707 0 0 1-2.704-2.704v-.066a2.707 2.707 0 0 1 2.704-2.704h.066a2.707 2.707 0 0 1 2.704 2.704v.066a2.707 2.707 0 0 1-2.704 2.704z"/>
-                </svg>
+                <img src="https://img.icons8.com/color/96/hubspot.png" alt="HubSpot" className="integration-logo-img" />
                 <span>HubSpot</span>
               </div>
 
-              {/* SAP - Offizielles Logo */}
+              {/* SAP */}
               <div className="logo-marquee-item">
-                <svg viewBox="0 0 100 50" className="integration-logo">
-                  <text x="50" y="35" textAnchor="middle" fill="#0070AD" fontSize="32" fontWeight="bold" fontFamily="Arial, sans-serif">SAP</text>
-                </svg>
+                <img src="https://img.icons8.com/color/96/sap.png" alt="SAP" className="integration-logo-img" />
                 <span>SAP</span>
               </div>
 
-              {/* OpenAI - Offizielles Logo */}
+              {/* OpenAI */}
               <div className="logo-marquee-item">
-                <svg viewBox="0 0 24 24" className="integration-logo">
-                  <path fill="#000000" d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.771.771 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.033.062L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 7.896a4.485 4.485 0 0 1 2.366-1.973V11.6a.766.766 0 0 0 .388.676l5.815 3.355-2.02 1.168a.076.076 0 0 1-.071 0l-4.83-2.786A4.504 4.504 0 0 1 2.34 7.872zm16.597 3.855l-5.833-3.387L15.119 7.2a.076.076 0 0 1 .071 0l4.83 2.791a4.494 4.494 0 0 1-.676 8.105v-5.678a.79.79 0 0 0-.407-.667zm2.01-3.023l-.141-.085-4.774-2.782a.776.776 0 0 0-.785 0L9.409 9.23V6.897a.066.066 0 0 1 .028-.061l4.83-2.787a4.5 4.5 0 0 1 6.68 4.66zm-12.64 4.135l-2.02-1.164a.08.08 0 0 1-.038-.057V6.075a4.5 4.5 0 0 1 7.375-3.453l-.142.08L8.704 5.46a.795.795 0 0 0-.393.681zm1.097-2.365l2.602-1.5 2.607 1.5v2.999l-2.597 1.5-2.607-1.5z"/>
-                </svg>
+                <img src="https://img.icons8.com/ios-filled/100/000000/chatgpt.png" alt="OpenAI" className="integration-logo-img" />
                 <span>OpenAI</span>
               </div>
 
@@ -1005,64 +984,43 @@ const HomeRedesign = () => {
 
               {/* Google Calendar - Duplikat */}
               <div className="logo-marquee-item">
-                <svg viewBox="0 0 48 48" className="integration-logo">
-                  <rect fill="#FFFFFF" x="10" y="8" width="28" height="32" rx="2"/>
-                  <rect fill="#4285F4" x="10" y="8" width="28" height="8"/>
-                  <text x="24" y="32" textAnchor="middle" fill="#4285F4" fontSize="16" fontWeight="bold" fontFamily="Arial">31</text>
-                  <rect fill="#EA4335" x="14" y="12" width="4" height="0" rx="1"/>
-                  <rect fill="#EA4335" x="30" y="12" width="4" height="0" rx="1"/>
-                </svg>
+                <img src="https://www.gstatic.com/images/branding/product/2x/calendar_2020q4_48dp.png" alt="Google Calendar" className="integration-logo-img" />
                 <span>Google Calendar</span>
               </div>
 
-              {/* Microsoft 365 - Duplikat */}
+              {/* Microsoft Outlook - Duplikat */}
               <div className="logo-marquee-item">
-                <svg viewBox="0 0 23 23" className="integration-logo">
-                  <rect fill="#F25022" width="11" height="11"/>
-                  <rect fill="#7FBA00" x="12" width="11" height="11"/>
-                  <rect fill="#00A4EF" y="12" width="11" height="11"/>
-                  <rect fill="#FFB900" x="12" y="12" width="11" height="11"/>
-                </svg>
-                <span>Microsoft 365</span>
+                <img src="https://img.icons8.com/color/96/microsoft-outlook-2019.png" alt="Microsoft Outlook" className="integration-logo-img" />
+                <span>Microsoft Outlook</span>
               </div>
 
               {/* Apple - Duplikat */}
               <div className="logo-marquee-item">
-                <svg viewBox="0 0 384 512" className="integration-logo">
-                  <path fill="#000000" d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/>
-                </svg>
+                <img src="https://img.icons8.com/ios-filled/100/000000/mac-os.png" alt="Apple" className="integration-logo-img" />
                 <span>Apple Calendar</span>
               </div>
 
               {/* Salesforce - Duplikat */}
               <div className="logo-marquee-item">
-                <svg viewBox="0 0 48 48" className="integration-logo">
-                  <path fill="#00A1E0" d="M20.037 9.693c1.7-1.785 4.063-2.893 6.682-2.893 3.393 0 6.343 1.851 7.94 4.596a10.197 10.197 0 0 1 4.209-.906c5.655 0 10.238 4.583 10.238 10.238s-4.583 10.238-10.238 10.238a10.2 10.2 0 0 1-2.479-.303 8.18 8.18 0 0 1-7.223 4.369c-1.39 0-2.697-.346-3.844-.955a9.461 9.461 0 0 1-8.6 5.523c-4.333 0-8.024-2.897-9.17-6.863a9.104 9.104 0 0 1-1.53.13c-5.033 0-9.114-4.081-9.114-9.114 0-3.445 1.914-6.441 4.736-7.991a9.457 9.457 0 0 1-.376-2.656c0-5.233 4.241-9.474 9.474-9.474 3.013 0 5.696 1.409 7.425 3.6"/>
-                </svg>
+                <img src="https://img.icons8.com/color/96/salesforce.png" alt="Salesforce" className="integration-logo-img" />
                 <span>Salesforce</span>
               </div>
 
               {/* HubSpot - Duplikat */}
               <div className="logo-marquee-item">
-                <svg viewBox="0 0 24 24" className="integration-logo">
-                  <path fill="#FF7A59" d="M18.164 7.93V5.084a2.198 2.198 0 0 0 1.267-1.984v-.066a2.21 2.21 0 0 0-2.212-2.212h-.066a2.21 2.21 0 0 0-2.212 2.212v.066c0 .873.509 1.627 1.248 1.984V7.93a5.052 5.052 0 0 0-2.319 1.152L6.398 3.71a2.62 2.62 0 0 0 .072-.594v-.066A2.611 2.611 0 0 0 3.86.439h-.066A2.611 2.611 0 0 0 1.183 3.05v.066a2.611 2.611 0 0 0 2.611 2.611h.066c.481 0 .928-.131 1.313-.357l7.448 5.335a5.066 5.066 0 0 0-.397 1.96c0 .725.152 1.416.425 2.041l-2.27 2.27a2.1 2.1 0 0 0-.639-.103h-.066a2.136 2.136 0 0 0-2.136 2.136v.066a2.136 2.136 0 0 0 2.136 2.136h.066a2.136 2.136 0 0 0 2.136-2.136v-.066c0-.234-.038-.46-.108-.671l2.237-2.237a5.084 5.084 0 0 0 3.196 1.122h.066a5.1 5.1 0 0 0 5.097-5.097v-.066a5.1 5.1 0 0 0-4.199-5.02zm-1.012 7.787h-.066a2.707 2.707 0 0 1-2.704-2.704v-.066a2.707 2.707 0 0 1 2.704-2.704h.066a2.707 2.707 0 0 1 2.704 2.704v.066a2.707 2.707 0 0 1-2.704 2.704z"/>
-                </svg>
+                <img src="https://img.icons8.com/color/96/hubspot.png" alt="HubSpot" className="integration-logo-img" />
                 <span>HubSpot</span>
               </div>
 
               {/* SAP - Duplikat */}
               <div className="logo-marquee-item">
-                <svg viewBox="0 0 100 50" className="integration-logo">
-                  <text x="50" y="35" textAnchor="middle" fill="#0070AD" fontSize="32" fontWeight="bold" fontFamily="Arial, sans-serif">SAP</text>
-                </svg>
+                <img src="https://img.icons8.com/color/96/sap.png" alt="SAP" className="integration-logo-img" />
                 <span>SAP</span>
               </div>
 
               {/* OpenAI - Duplikat */}
               <div className="logo-marquee-item">
-                <svg viewBox="0 0 24 24" className="integration-logo">
-                  <path fill="#000000" d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.771.771 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.033.062L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 7.896a4.485 4.485 0 0 1 2.366-1.973V11.6a.766.766 0 0 0 .388.676l5.815 3.355-2.02 1.168a.076.076 0 0 1-.071 0l-4.83-2.786A4.504 4.504 0 0 1 2.34 7.872zm16.597 3.855l-5.833-3.387L15.119 7.2a.076.076 0 0 1 .071 0l4.83 2.791a4.494 4.494 0 0 1-.676 8.105v-5.678a.79.79 0 0 0-.407-.667zm2.01-3.023l-.141-.085-4.774-2.782a.776.776 0 0 0-.785 0L9.409 9.23V6.897a.066.066 0 0 1 .028-.061l4.83-2.787a4.5 4.5 0 0 1 6.68 4.66zm-12.64 4.135l-2.02-1.164a.08.08 0 0 1-.038-.057V6.075a4.5 4.5 0 0 1 7.375-3.453l-.142.08L8.704 5.46a.795.795 0 0 0-.393.681zm1.097-2.365l2.602-1.5 2.607 1.5v2.999l-2.597 1.5-2.607-1.5z"/>
-                </svg>
+                <img src="https://img.icons8.com/ios-filled/100/000000/chatgpt.png" alt="OpenAI" className="integration-logo-img" />
                 <span>OpenAI</span>
               </div>
             </div>
