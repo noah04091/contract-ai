@@ -219,3 +219,56 @@ body {
     transition-duration: 0.2s !important;
   }
 }
+
+/* ============================================
+   🎯 REACT-JOYRIDE ONBOARDING TOUR FIXES
+   Garantiert klare, lesbare Tour-Popups ohne Blur
+   ============================================ */
+
+/* Overlay: Solider dunkler Hintergrund, KEIN Blur */
+.react-joyride__overlay {
+  background-color: rgba(0, 0, 0, 0.75) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+}
+
+/* Spotlight ausblenden bei center placement */
+.react-joyride__spotlight {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Tooltip: Solider weißer Hintergrund */
+.react-joyride__tooltip {
+  background-color: #ffffff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+  color: #111827 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Tooltip Content: Klare, lesbare Schrift */
+.react-joyride__tooltip * {
+  color: inherit !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}
+
+/* Floater: Keine Filter-Effekte */
+.__floater {
+  filter: none !important;
+}
+
+/* Buttons: Klare Darstellung */
+.react-joyride__tooltip button[data-action="primary"] {
+  background-color: #0066ff !important;
+  color: #ffffff !important;
+}
+
+.react-joyride__tooltip button[data-action="skip"] {
+  color: #6b7280 !important;
+  background-color: transparent !important;
+}

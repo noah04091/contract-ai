@@ -18,6 +18,44 @@ const PASSWORD_SALT_ROUNDS = 10;
 const RESET_TOKEN_EXPIRES_IN_MS = 1000 * 60 * 15;
 const COOKIE_NAME = "token";
 
+// 📱 Geräteerkennung aus User-Agent
+function parseDeviceInfo(userAgent) {
+  if (!userAgent) return { device: 'Unbekannt', browser: 'Unbekannt', os: 'Unbekannt' };
+
+  const ua = userAgent.toLowerCase();
+
+  // Gerät erkennen
+  let device = 'Desktop';
+  if (ua.includes('iphone')) device = 'iPhone';
+  else if (ua.includes('ipad')) device = 'iPad';
+  else if (ua.includes('android') && ua.includes('mobile')) device = 'Android Handy';
+  else if (ua.includes('android')) device = 'Android Tablet';
+  else if (ua.includes('mobile')) device = 'Handy';
+  else if (ua.includes('tablet')) device = 'Tablet';
+  else if (ua.includes('macintosh') || ua.includes('mac os')) device = 'Mac';
+  else if (ua.includes('windows')) device = 'Windows PC';
+  else if (ua.includes('linux')) device = 'Linux PC';
+
+  // Browser erkennen
+  let browser = 'Unbekannt';
+  if (ua.includes('edg/')) browser = 'Edge';
+  else if (ua.includes('chrome') && !ua.includes('edg')) browser = 'Chrome';
+  else if (ua.includes('firefox')) browser = 'Firefox';
+  else if (ua.includes('safari') && !ua.includes('chrome')) browser = 'Safari';
+  else if (ua.includes('opera') || ua.includes('opr')) browser = 'Opera';
+
+  // OS erkennen
+  let os = 'Unbekannt';
+  if (ua.includes('windows nt 10')) os = 'Windows 10/11';
+  else if (ua.includes('windows')) os = 'Windows';
+  else if (ua.includes('mac os x')) os = 'macOS';
+  else if (ua.includes('iphone os') || ua.includes('ios')) os = 'iOS';
+  else if (ua.includes('android')) os = 'Android';
+  else if (ua.includes('linux')) os = 'Linux';
+
+  return { device, browser, os };
+}
+
 // ✅ FIXED: Cookie-Einstellungen gelockert für bessere Kompatibilität
 const COOKIE_OPTIONS = {
   httpOnly: true,
@@ -39,13 +77,18 @@ module.exports = (db) => {
   return router;
 };
 
-// ✅ Registrierung - ERWEITERT mit Double-Opt-In + Beta-Tester Support
+// ✅ Registrierung - ERWEITERT mit Double-Opt-In + Beta-Tester Support + Geräteerkennung
 router.post("/register", async (req, res) => {
   const { email: rawEmail, password, isBetaTester } = req.body;
   if (!rawEmail || !password)
     return res.status(400).json({ message: "❌ E-Mail und Passwort erforderlich" });
 
   const email = normalizeEmail(rawEmail);
+
+  // 📱 Geräteinformationen erfassen
+  const userAgent = req.headers['user-agent'] || '';
+  const deviceInfo = parseDeviceInfo(userAgent);
+  const ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'Unbekannt';
 
   try {
     const existing = await usersCollection.findOne({ email });
@@ -89,7 +132,17 @@ router.post("/register", async (req, res) => {
       // 📧 E-MAIL INBOX für Contract-Import
       emailInboxAddress: emailInboxAddress,
       emailInboxEnabled: true, // User kann Feature aktivieren/deaktivieren
-      emailInboxAddressCreatedAt: new Date()
+      emailInboxAddressCreatedAt: new Date(),
+      // 📱 GERÄTE-TRACKING
+      registrationDevice: {
+        device: deviceInfo.device,
+        browser: deviceInfo.browser,
+        os: deviceInfo.os,
+        userAgent: userAgent.substring(0, 500), // Begrenzen
+        ip: ipAddress,
+        timestamp: new Date()
+      },
+      lastLoginDevice: null // Wird beim ersten Login gesetzt
     };
 
     await usersCollection.insertOne(newUser);
@@ -112,7 +165,63 @@ router.post("/register", async (req, res) => {
       });
     }
 
+    // 📧 ADMIN-BENACHRICHTIGUNG: Bei neuer Registrierung
+    const ADMIN_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || 'info@contract-ai.de';
+    try {
+      const adminNotificationHtml = generateEmailTemplate({
+        title: "Neue Registrierung",
+        preheader: `Neuer User: ${newUser.email}`,
+        body: `
+          <p style="text-align: center; margin-bottom: 25px;">
+            <strong>Ein neuer Benutzer hat sich registriert!</strong>
+          </p>
+
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa; border-radius: 12px; margin-bottom: 25px;">
+            <tr><td style="padding: 20px;">
+              <p style="margin: 0 0 10px 0;"><strong>E-Mail:</strong> ${newUser.email}</p>
+              <p style="margin: 0 0 10px 0;"><strong>Plan:</strong> ${newUser.subscriptionPlan}</p>
+              <p style="margin: 0 0 10px 0;"><strong>Beta-Tester:</strong> ${isBetaTester ? 'Ja ✅' : 'Nein'}</p>
+              <p style="margin: 0;"><strong>Registriert am:</strong> ${new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' })}</p>
+            </td></tr>
+          </table>
+        `
+      });
+
+      await sendEmail({
+        to: ADMIN_EMAIL,
+        subject: `🆕 Neue Registrierung: ${newUser.email}`,
+        html: adminNotificationHtml
+      });
+      console.log(`📧 Admin-Benachrichtigung gesendet an: ${ADMIN_EMAIL}`);
+    } catch (emailErr) {
+      // Fehler beim E-Mail-Versand nicht blocken - nur loggen
+      console.error("⚠️ Admin-Benachrichtigung konnte nicht gesendet werden:", emailErr.message);
+    }
+
     // ⭐ NEU: Keine automatische Anmeldung - User muss E-Mail bestätigen
+
+    // 📋 Activity Log: Neue Registrierung
+    try {
+      const { logActivity, ActivityTypes } = require('../services/activityLogger');
+      await logActivity(db, {
+        type: ActivityTypes.USER_REGISTERED,
+        userId: result.insertedId.toString(),
+        userEmail: newUser.email,
+        description: `Neuer User registriert: ${newUser.email}`,
+        details: {
+          plan: newUser.subscriptionPlan,
+          isBetaTester: isBetaTester || false,
+          device: deviceInfo?.device || 'Unbekannt'
+        },
+        ip: ipAddress,
+        userAgent: userAgent,
+        severity: 'info',
+        source: 'registration'
+      });
+    } catch (logError) {
+      console.error("Activity Log Error:", logError);
+    }
+
     res.status(201).json({
       message: isBetaTester
         ? "✅ Beta-Registrierung erfolgreich! Bitte bestätigen Sie Ihre E-Mail-Adresse."
@@ -127,13 +236,18 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// ✅ Login - ERWEITERT mit Double-Opt-In Check
+// ✅ Login - ERWEITERT mit Double-Opt-In Check + Geräte-Tracking
 router.post("/login", async (req, res) => {
   const { email: rawEmail, password } = req.body;
   if (!rawEmail || !password)
     return res.status(400).json({ message: "❌ E-Mail und Passwort erforderlich" });
 
   const email = normalizeEmail(rawEmail);
+
+  // 📱 Geräteinformationen erfassen
+  const userAgent = req.headers['user-agent'] || '';
+  const deviceInfo = parseDeviceInfo(userAgent);
+  const ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'Unbekannt';
 
   try {
     const user = await usersCollection.findOne({ email });
@@ -144,12 +258,40 @@ router.post("/login", async (req, res) => {
 
     // ⭐ NEU: Double-Opt-In Verification Check
     if (user.verified === false) {
-      return res.status(403).json({ 
+      return res.status(403).json({
         message: "Bitte bestätigen Sie zuerst Ihre E-Mail-Adresse",
         requiresVerification: true,
         email: user.email
       });
     }
+
+    // 🔒 Gesperrte User blockieren
+    if (user.suspended === true) {
+      console.log(`🔒 Gesperrter User versuchte Login: ${user.email}`);
+      return res.status(403).json({
+        message: "Ihr Konto wurde gesperrt. Bitte kontaktieren Sie den Support.",
+        suspended: true,
+        reason: user.suspendReason || null
+      });
+    }
+
+    // 📱 Last Login Device aktualisieren
+    await usersCollection.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          lastLoginDevice: {
+            device: deviceInfo.device,
+            browser: deviceInfo.browser,
+            os: deviceInfo.os,
+            userAgent: userAgent.substring(0, 500),
+            ip: ipAddress,
+            timestamp: new Date()
+          },
+          lastLoginAt: new Date()
+        }
+      }
+    );
 
     const token = jwt.sign(
       { email: user.email, userId: user._id },
@@ -350,11 +492,72 @@ router.put("/change-password", verifyToken, async (req, res) => {
   }
 });
 
-// 🗑️ Account löschen
+// 🗑️ Account löschen (mit Archivierung für Admin-Übersicht)
 router.delete("/delete", verifyToken, async (req, res) => {
+  // 📱 Geräteinformationen beim Löschen erfassen
+  const userAgent = req.headers['user-agent'] || '';
+  const deviceInfo = parseDeviceInfo(userAgent);
+  const ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'Unbekannt';
+
   try {
+    // User-Daten holen bevor gelöscht wird
+    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
+    if (!user) {
+      return res.status(404).json({ message: "❌ Benutzer nicht gefunden" });
+    }
+
+    // Anzahl der Verträge zählen
+    const contractCount = await contractsCollection.countDocuments({ userId: req.user.userId });
+
+    // 📦 Gelöschten Account archivieren (ohne Passwort!)
+    const { MongoClient } = require("mongodb");
+    const client = new MongoClient(process.env.MONGO_URI);
+    await client.connect();
+    const deletedAccountsCollection = client.db("contract_ai").collection("deleted_accounts");
+
+    const deletedAccountRecord = {
+      originalUserId: user._id.toString(),
+      email: user.email,
+      subscriptionPlan: user.subscriptionPlan || 'free',
+      subscriptionStatus: user.subscriptionStatus || 'inactive',
+      betaTester: user.betaTester || false,
+      // 📊 Nutzungsstatistiken
+      analysisCount: user.analysisCount || 0,
+      optimizationCount: user.optimizationCount || 0,
+      contractsDeleted: contractCount,
+      // 📅 Zeitstempel
+      accountCreatedAt: user.createdAt,
+      accountDeletedAt: new Date(),
+      accountAgeInDays: user.createdAt
+        ? Math.floor((Date.now() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60 * 24))
+        : null,
+      // 📱 Registrierungsgerät
+      registrationDevice: user.registrationDevice || null,
+      // 📱 Letztes Login-Gerät
+      lastLoginDevice: user.lastLoginDevice || null,
+      lastLoginAt: user.lastLoginAt || null,
+      // 📱 Löschungsgerät (aktuell)
+      deletionDevice: {
+        device: deviceInfo.device,
+        browser: deviceInfo.browser,
+        os: deviceInfo.os,
+        ip: ipAddress,
+        timestamp: new Date()
+      },
+      // 🏷️ Löschgrund
+      deletedBy: 'user', // 'user' = selbst gelöscht, 'admin' = Admin hat gelöscht
+      verified: user.verified || false
+    };
+
+    await deletedAccountsCollection.insertOne(deletedAccountRecord);
+    console.log(`📦 Gelöschter Account archiviert: ${user.email}`);
+
+    await client.close();
+
+    // Jetzt tatsächlich löschen
     await contractsCollection.deleteMany({ userId: req.user.userId });
     await usersCollection.deleteOne({ _id: new ObjectId(req.user.userId) });
+
     res.clearCookie(COOKIE_NAME, COOKIE_OPTIONS);
     res.json({ message: "✅ Account & Verträge gelöscht" });
   } catch (err) {

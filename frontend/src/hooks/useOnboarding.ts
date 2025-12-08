@@ -1,103 +1,148 @@
 // 📁 frontend/src/hooks/useOnboarding.ts
 // Hook für Onboarding-Tour State Management (Pro-Seite)
+// WICHTIG: Tour erscheint NUR EINMAL pro Seite - danach NIE wieder!
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 
-const ONBOARDING_KEY = 'contractai_onboarding_tours';
-const ONBOARDING_VERSION = '2.0'; // V2: Modern Design Update
+const ONBOARDING_KEY = 'contractai_onboarding_completed';
 
 interface CompletedTours {
-  [path: string]: string; // path -> version
+  [path: string]: boolean; // path -> true (gesehen) - PERMANENT!
 }
+
+// Helper: Normalisiert Pfade für konsistente Speicherung
+const normalizePath = (path: string): string => {
+  // Entferne trailing slashes und lowercase
+  return path.replace(/\/+$/, '').toLowerCase() || '/';
+};
 
 export function useOnboarding() {
   const location = useLocation();
   const [runTour, setRunTour] = useState(false);
   const [isFirstVisit, setIsFirstVisit] = useState(false);
+  const hasCheckedRef = useRef<string | null>(null);
 
   // Prüfe ob User die Tour für diese Seite bereits gesehen hat
   useEffect(() => {
-    const currentPath = location.pathname;
+    const currentPath = normalizePath(location.pathname);
+
+    // Verhindere doppelte Checks für den gleichen Pfad
+    if (hasCheckedRef.current === currentPath) {
+      return;
+    }
+    hasCheckedRef.current = currentPath;
 
     // Lade gespeicherte Tours
-    const savedToursJson = localStorage.getItem(ONBOARDING_KEY);
-    const completedTours: CompletedTours = savedToursJson ? JSON.parse(savedToursJson) : {};
+    let completedTours: CompletedTours = {};
+    try {
+      const savedToursJson = localStorage.getItem(ONBOARDING_KEY);
+      if (savedToursJson) {
+        completedTours = JSON.parse(savedToursJson);
+      }
+    } catch (e) {
+      // Bei korrupten Daten: nichts tun, Tour wird angezeigt
+      console.warn('Onboarding localStorage corrupt, resetting');
+    }
 
-    // Prüfe ob Tour für diese Seite bereits abgeschlossen
-    const tourVersion = completedTours[currentPath];
+    // STRIKTE REGEL: Einmal gesehen = FÜR IMMER gesehen
+    const alreadySeen = completedTours[currentPath] === true;
 
-    // Noch nie gesehen oder veraltete Version für diese Seite
-    if (!tourVersion || tourVersion !== ONBOARDING_VERSION) {
-      setIsFirstVisit(true);
-
-      // Dashboard braucht länger (Charts laden), andere Seiten schneller
-      const delay = currentPath === '/dashboard' ? 3000 : 1000;
-
-      const timer = setTimeout(() => {
-        setRunTour(true);
-      }, delay);
-      return () => clearTimeout(timer);
-    } else {
+    if (alreadySeen) {
+      // Tour wurde bereits gesehen - NIEMALS wieder anzeigen
       setIsFirstVisit(false);
       setRunTour(false);
+      return;
     }
+
+    // Erster Besuch dieser Seite
+    setIsFirstVisit(true);
+
+    // Dashboard braucht länger (Charts laden), andere Seiten schneller
+    const delay = currentPath === '/dashboard' ? 3000 : 1000;
+
+    const timer = setTimeout(() => {
+      // Nochmal prüfen ob nicht zwischenzeitlich gespeichert wurde
+      try {
+        const freshData = localStorage.getItem(ONBOARDING_KEY);
+        const freshTours: CompletedTours = freshData ? JSON.parse(freshData) : {};
+        if (freshTours[currentPath] === true) {
+          setRunTour(false);
+          return;
+        }
+      } catch (e) {
+        // Ignorieren
+      }
+      setRunTour(true);
+    }, delay);
+
+    return () => clearTimeout(timer);
   }, [location.pathname]);
 
-  // Tour manuell starten
+  // Tour manuell starten (nur für Debug/Testing)
   const startTour = () => {
     setRunTour(true);
   };
 
-  // Tour beenden und als abgeschlossen markieren (nur für aktuelle Seite!)
+  // PERMANENT speichern: Diese Seite wurde gesehen
+  const markAsCompleted = (path: string) => {
+    const normalizedPath = normalizePath(path);
+    let completedTours: CompletedTours = {};
+
+    try {
+      const savedToursJson = localStorage.getItem(ONBOARDING_KEY);
+      if (savedToursJson) {
+        completedTours = JSON.parse(savedToursJson);
+      }
+    } catch (e) {
+      // Bei Fehler: neues Objekt
+    }
+
+    // PERMANENT markieren - wird NIE wieder angezeigt
+    completedTours[normalizedPath] = true;
+    localStorage.setItem(ONBOARDING_KEY, JSON.stringify(completedTours));
+  };
+
+  // Tour beenden und als PERMANENT abgeschlossen markieren
   const finishTour = () => {
     setRunTour(false);
-
-    const currentPath = location.pathname;
-    const savedToursJson = localStorage.getItem(ONBOARDING_KEY);
-    const completedTours: CompletedTours = savedToursJson ? JSON.parse(savedToursJson) : {};
-
-    // Markiere nur diese Seite als abgeschlossen
-    completedTours[currentPath] = ONBOARDING_VERSION;
-    localStorage.setItem(ONBOARDING_KEY, JSON.stringify(completedTours));
-
     setIsFirstVisit(false);
+    markAsCompleted(location.pathname);
   };
 
-  // Tour überspringen (nur für aktuelle Seite)
+  // Tour überspringen = auch PERMANENT abgeschlossen
   const skipTour = () => {
     setRunTour(false);
-
-    const currentPath = location.pathname;
-    const savedToursJson = localStorage.getItem(ONBOARDING_KEY);
-    const completedTours: CompletedTours = savedToursJson ? JSON.parse(savedToursJson) : {};
-
-    // Markiere nur diese Seite als abgeschlossen
-    completedTours[currentPath] = ONBOARDING_VERSION;
-    localStorage.setItem(ONBOARDING_KEY, JSON.stringify(completedTours));
-
     setIsFirstVisit(false);
+    markAsCompleted(location.pathname);
   };
 
-  // Tour zurücksetzen (für Testing oder "Tour erneut anzeigen")
+  // Tour zurücksetzen (NUR für Development/Testing!)
   const resetTour = () => {
     localStorage.removeItem(ONBOARDING_KEY);
+    hasCheckedRef.current = null;
     setIsFirstVisit(true);
     setRunTour(true);
   };
 
-  // Einzelne Seite zurücksetzen
+  // Einzelne Seite zurücksetzen (NUR für Development/Testing!)
   const resetPageTour = (path?: string) => {
-    const targetPath = path || location.pathname;
-    const savedToursJson = localStorage.getItem(ONBOARDING_KEY);
-    const completedTours: CompletedTours = savedToursJson ? JSON.parse(savedToursJson) : {};
+    const targetPath = normalizePath(path || location.pathname);
 
-    delete completedTours[targetPath];
-    localStorage.setItem(ONBOARDING_KEY, JSON.stringify(completedTours));
+    try {
+      const savedToursJson = localStorage.getItem(ONBOARDING_KEY);
+      const completedTours: CompletedTours = savedToursJson ? JSON.parse(savedToursJson) : {};
 
-    if (targetPath === location.pathname) {
-      setIsFirstVisit(true);
-      setRunTour(true);
+      delete completedTours[targetPath];
+      localStorage.setItem(ONBOARDING_KEY, JSON.stringify(completedTours));
+
+      if (normalizePath(location.pathname) === targetPath) {
+        hasCheckedRef.current = null;
+        setIsFirstVisit(true);
+        setRunTour(true);
+      }
+    } catch (e) {
+      // Ignorieren
     }
   };
 

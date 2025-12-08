@@ -412,32 +412,57 @@ export default function OnboardingTour({ run, onFinish }: OnboardingTourProps) {
       showSkipButton
       hideBackButton
       disableOverlayClose={true}
+      disableScrolling={true}
+      spotlightClicks={false}
       callback={handleJoyrideCallback}
       styles={{
         options: {
           primaryColor: '#0066ff',
           textColor: '#111827',
           backgroundColor: '#ffffff',
-          overlayColor: 'rgba(0, 0, 0, 0.6)',
+          // Dunklerer, solider Overlay - KEIN Blur
+          overlayColor: 'rgba(0, 0, 0, 0.75)',
           arrowColor: '#ffffff',
           zIndex: 10000
+        },
+        // Solider weißer Hintergrund - KEIN Blur, KEINE Transparenz
+        overlay: {
+          backgroundColor: 'rgba(0, 0, 0, 0.75)',
+          // Entferne alle Filter/Blur-Effekte
+          backdropFilter: 'none',
+          WebkitBackdropFilter: 'none',
+          filter: 'none'
+        },
+        spotlight: {
+          // Kein Spotlight bei center placement - komplett ausblenden
+          backgroundColor: 'transparent',
+          borderRadius: 0
         },
         tooltip: {
           borderRadius: '16px',
           padding: '28px 32px',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          // Solider weißer Hintergrund
+          backgroundColor: '#ffffff',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)',
           maxWidth: '520px',
-          width: 'auto'
+          width: 'auto',
+          // Stelle sicher, dass kein Blur durchkommt
+          backdropFilter: 'none',
+          WebkitBackdropFilter: 'none',
+          isolation: 'isolate'
         },
         tooltipContainer: {
-          textAlign: 'left'
+          textAlign: 'left',
+          backgroundColor: '#ffffff'
         },
         tooltipContent: {
           padding: '0 0 20px 0',
-          textAlign: 'left'
+          textAlign: 'left',
+          backgroundColor: '#ffffff'
         },
         tooltipFooter: {
-          marginTop: '0'
+          marginTop: '0',
+          backgroundColor: '#ffffff'
         },
         buttonNext: {
           backgroundColor: '#0066ff',
@@ -445,14 +470,20 @@ export default function OnboardingTour({ run, onFinish }: OnboardingTourProps) {
           padding: '14px 28px',
           fontSize: '15px',
           fontWeight: 600,
+          color: '#ffffff',
           boxShadow: '0 4px 14px rgba(0, 102, 255, 0.35)',
-          transition: 'all 0.2s ease'
+          transition: 'all 0.2s ease',
+          border: 'none',
+          cursor: 'pointer'
         },
         buttonSkip: {
-          color: '#9ca3af',
+          color: '#6b7280',
           fontSize: '14px',
           fontWeight: 500,
-          padding: '14px 16px'
+          padding: '14px 16px',
+          backgroundColor: 'transparent',
+          border: 'none',
+          cursor: 'pointer'
         },
         buttonClose: {
           display: 'none'
@@ -468,7 +499,8 @@ export default function OnboardingTour({ run, onFinish }: OnboardingTourProps) {
         disableAnimation: false,
         styles: {
           floater: {
-            filter: 'drop-shadow(0 20px 40px rgba(0, 0, 0, 0.15))'
+            // Entferne filter - kann Blur verursachen
+            filter: 'none'
           }
         }
       }}

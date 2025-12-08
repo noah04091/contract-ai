@@ -6832,3 +6832,246 @@ main,
             drop-shadow(0 0 30px rgba(0, 191, 255, 0.2));
   }
 }
+
+/* ============================================
+   🔗 INTEGRATIONS LOGO BANNER
+   Fließender Banner mit Partner-Logos
+   ============================================ */
+
+.integrations-banner-section {
+  padding: 80px 0;
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 50%, #f8fafc 100%);
+  overflow: hidden;
+  position: relative;
+}
+
+.integrations-banner-section .section-title {
+  margin-bottom: 50px;
+}
+
+.integrations-banner-section .section-title h2 {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--text-color, #1a1a2e);
+  margin-bottom: 12px;
+}
+
+.integrations-banner-section .section-title p {
+  font-size: 18px;
+  color: var(--text-light, #64748b);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Full-Width Marquee Wrapper */
+.logo-marquee-wrapper {
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  overflow: hidden;
+  position: relative;
+  padding: 30px 0;
+}
+
+/* Fade-Effekte an den Rändern für "rein/raus" Look */
+.logo-marquee-fade {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 150px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.logo-marquee-fade-left {
+  left: 0;
+  background: linear-gradient(90deg, #ffffff 0%, rgba(255, 255, 255, 0) 100%);
+}
+
+.logo-marquee-fade-right {
+  right: 0;
+  background: linear-gradient(270deg, #ffffff 0%, rgba(255, 255, 255, 0) 100%);
+}
+
+/* Animierte Logo-Track */
+.logo-marquee-track {
+  display: flex;
+  gap: 60px;
+  animation: logoMarquee 35s linear infinite;
+  width: max-content;
+}
+
+/* Pause Animation on Hover */
+.logo-marquee-wrapper:hover .logo-marquee-track {
+  animation-play-state: paused;
+}
+
+@keyframes logoMarquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Einzelne Logo-Items */
+.logo-marquee-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  padding: 20px 30px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+  min-width: 140px;
+}
+
+.logo-marquee-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 102, 255, 0.15);
+}
+
+/* SVG Logos */
+.logo-marquee-item svg.integration-logo {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+}
+
+/* Logo-Text */
+.logo-marquee-item span {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* ============================================
+   🔗 INTEGRATIONS BANNER - RESPONSIVE
+   ============================================ */
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .integrations-banner-section {
+    padding: 60px 0;
+  }
+
+  .integrations-banner-section .section-title h2 {
+    font-size: 32px;
+  }
+
+  .integrations-banner-section .section-title p {
+    font-size: 16px;
+  }
+
+  .logo-marquee-track {
+    gap: 40px;
+  }
+
+  .logo-marquee-item {
+    padding: 16px 24px;
+    min-width: 120px;
+  }
+
+  .logo-marquee-item svg.integration-logo {
+    width: 40px;
+    height: 40px;
+  }
+
+  .logo-marquee-fade {
+    width: 100px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .integrations-banner-section {
+    padding: 50px 0;
+  }
+
+  .integrations-banner-section .section-title {
+    margin-bottom: 30px;
+  }
+
+  .integrations-banner-section .section-title h2 {
+    font-size: 26px;
+  }
+
+  .integrations-banner-section .section-title p {
+    font-size: 15px;
+    padding: 0 20px;
+  }
+
+  .logo-marquee-wrapper {
+    padding: 20px 0;
+  }
+
+  .logo-marquee-track {
+    gap: 30px;
+    animation-duration: 25s;
+  }
+
+  .logo-marquee-item {
+    padding: 14px 20px;
+    min-width: 110px;
+    border-radius: 12px;
+  }
+
+  .logo-marquee-item svg.integration-logo {
+    width: 36px;
+    height: 36px;
+  }
+
+  .logo-marquee-item span {
+    font-size: 12px;
+  }
+
+  .logo-marquee-fade {
+    width: 60px;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .integrations-banner-section {
+    padding: 40px 0;
+  }
+
+  .integrations-banner-section .section-title h2 {
+    font-size: 22px;
+  }
+
+  .integrations-banner-section .section-title p {
+    font-size: 14px;
+  }
+
+  .logo-marquee-track {
+    gap: 20px;
+    animation-duration: 20s;
+  }
+
+  .logo-marquee-item {
+    padding: 12px 16px;
+    min-width: 100px;
+    border-radius: 10px;
+  }
+
+  .logo-marquee-item svg.integration-logo {
+    width: 32px;
+    height: 32px;
+  }
+
+  .logo-marquee-item span {
+    font-size: 11px;
+  }
+
+  .logo-marquee-fade {
+    width: 40px;
+  }
+}

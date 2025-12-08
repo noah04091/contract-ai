@@ -1745,7 +1745,29 @@ const connectDB = async () => {
         }
       });
 
-      console.log("✅ Alle Cron Jobs aktiviert (inkl. Calendar Events & Beta Reminder)");
+      // 📊 ADMIN NOTIFICATIONS: Daily Summary (täglich um 18 Uhr)
+      cron.schedule("0 18 * * *", async () => {
+        console.log("📊 [ADMIN] Starte Daily Summary E-Mail...");
+        try {
+          const { sendDailyAdminSummary } = require("./services/adminNotificationService");
+          await sendDailyAdminSummary();
+        } catch (error) {
+          console.error("❌ [ADMIN] Daily Summary Cron Error:", error);
+        }
+      });
+
+      // 📊 ADMIN NOTIFICATIONS: Weekly Summary (jeden Sonntag um 20 Uhr)
+      cron.schedule("0 20 * * 0", async () => {
+        console.log("📊 [ADMIN] Starte Weekly Summary E-Mail...");
+        try {
+          const { sendWeeklyAdminSummary } = require("./services/adminNotificationService");
+          await sendWeeklyAdminSummary();
+        } catch (error) {
+          console.error("❌ [ADMIN] Weekly Summary Cron Error:", error);
+        }
+      });
+
+      console.log("✅ Alle Cron Jobs aktiviert (inkl. Calendar Events, Beta Reminder & Admin Notifications)");
     } catch (err) {
       console.error("❌ Cron Jobs konnten nicht gestartet werden:", err);
     }
