@@ -324,6 +324,147 @@ const TestimonialsSlider = () => {
   );
 };
 
+// Animated Counter Component with Intersection Observer
+const AnimatedCounter = ({ end, suffix = '', prefix = '', duration = 2000 }: {
+  end: number;
+  suffix?: string;
+  prefix?: string;
+  duration?: number;
+}) => {
+  const [count, setCount] = useState(0);
+  const [hasAnimated, setHasAnimated] = useState(false);
+  const counterRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !hasAnimated) {
+            setHasAnimated(true);
+
+            // Animate the counter
+            const startTime = performance.now();
+            const animate = (currentTime: number) => {
+              const elapsed = currentTime - startTime;
+              const progress = Math.min(elapsed / duration, 1);
+
+              // Easing function for smooth animation
+              const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+              const currentCount = Math.floor(easeOutQuart * end);
+
+              setCount(currentCount);
+
+              if (progress < 1) {
+                requestAnimationFrame(animate);
+              } else {
+                setCount(end);
+              }
+            };
+
+            requestAnimationFrame(animate);
+          }
+        });
+      },
+      { threshold: 0.3 }
+    );
+
+    if (counterRef.current) {
+      observer.observe(counterRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [end, duration, hasAnimated]);
+
+  return (
+    <span ref={counterRef} className="counter-number">
+      {prefix}{count.toLocaleString('de-DE')}{suffix}
+    </span>
+  );
+};
+
+// Stats Counter Section Component
+const StatsSection = () => {
+  const stats = [
+    {
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+      ),
+      number: 200,
+      suffix: '+',
+      label: 'Zufriedene Kunden',
+      color: '#3b82f6'
+    },
+    {
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+      ),
+      number: 1500,
+      suffix: '+',
+      label: 'Verträge analysiert',
+      color: '#10b981'
+    },
+    {
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="12" y1="1" x2="12" y2="23"></line>
+          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+        </svg>
+      ),
+      number: 75000,
+      suffix: '€+',
+      label: 'Eingespart durch Optimierung',
+      color: '#f59e0b'
+    },
+    {
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          <path d="m9 12 2 2 4-4"></path>
+        </svg>
+      ),
+      number: 99,
+      suffix: '%',
+      label: 'Kundenzufriedenheit',
+      color: '#8b5cf6'
+    }
+  ];
+
+  return (
+    <section className="stats-counter-section">
+      <div className="section-container">
+        <div className="stats-grid">
+          {stats.map((stat, index) => (
+            <div
+              key={index}
+              className="stat-card reveal-card"
+              style={{"--animation-order": index, "--stat-color": stat.color} as React.CSSProperties}
+            >
+              <div className="stat-icon" style={{ color: stat.color }}>
+                {stat.icon}
+              </div>
+              <div className="stat-content">
+                <AnimatedCounter end={stat.number} suffix={stat.suffix} duration={2500} />
+                <span className="stat-label">{stat.label}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
 const HomeRedesign = () => {
   const { user } = useAuth();
   const heroRef = useRef<HTMLDivElement>(null);
@@ -726,6 +867,9 @@ const HomeRedesign = () => {
             </div>
           </div>
         </section>
+
+        {/* Stats Counter Section - Animated Numbers */}
+        <StatsSection />
 
         {/* Features Section - Erweitert auf 6 Cards */}
         <section className="features-section" ref={(el) => registerSection('features', el)}>
