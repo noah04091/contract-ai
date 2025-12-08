@@ -1374,7 +1374,7 @@ router.get("/users/:userId", verifyToken, verifyAdmin, async (req, res) => {
 // ==================================
 
 // GET /api/admin/activity-log - Get recent activities
-router.get('/activity-log', adminAuth, async (req, res) => {
+router.get('/activity-log', verifyToken, verifyAdmin, async (req, res) => {
   try {
     const { limit = 50, type, severity, userId, startDate, endDate } = req.query;
 
@@ -1418,7 +1418,7 @@ router.get('/activity-log', adminAuth, async (req, res) => {
 // ==================================
 
 // POST /api/admin/send-daily-summary - Manuell Daily Summary senden
-router.post('/send-daily-summary', adminAuth, async (req, res) => {
+router.post('/send-daily-summary', verifyToken, verifyAdmin, async (req, res) => {
   try {
     console.log('📊 [ADMIN] Manueller Daily Summary Request...');
 
@@ -1442,7 +1442,7 @@ router.post('/send-daily-summary', adminAuth, async (req, res) => {
 });
 
 // POST /api/admin/send-weekly-summary - Manuell Weekly Summary senden
-router.post('/send-weekly-summary', adminAuth, async (req, res) => {
+router.post('/send-weekly-summary', verifyToken, verifyAdmin, async (req, res) => {
   try {
     console.log('📊 [ADMIN] Manueller Weekly Summary Request...');
 
