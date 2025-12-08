@@ -642,7 +642,6 @@ export default function AdminDashboard() {
     const userEmail = userActionModal.user.email;
 
     try {
-      let response;
       let endpoint = '';
       let method = 'PUT';
       let body: Record<string, unknown> = {};
