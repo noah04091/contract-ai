@@ -23,8 +23,8 @@ import styles from "../styles/Generate.module.css";
 // API URL
 const API_URL = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
 
-// Token aus localStorage holen
-const getToken = () => localStorage.getItem("token");
+// Token aus localStorage holen (Login speichert als "authToken", andere als "token")
+const getToken = () => localStorage.getItem("authToken") || localStorage.getItem("token");
 
 // Design-Varianten (wie in Generate.tsx)
 const DESIGN_VARIANTS = [
