@@ -243,7 +243,7 @@ export default function Integrations() {
       case "pipedrive":
         return (
           <img
-            src="https://img.icons8.com/color/96/pipedrive.png"
+            src="https://cdn.brandfetch.io/idOobI6dnv/w/400/h/400/theme/dark/icon.png?c=1dxbfHSJFAPEGdCLU4o5B"
             alt="Pipedrive"
             className={styles.integrationIcon}
           />
@@ -251,8 +251,8 @@ export default function Integrations() {
       case "zoho":
         return (
           <img
-            src="https://img.icons8.com/color/96/zoho.png"
-            alt="Zoho"
+            src="https://cdn.brandfetch.io/idkFiBpWmq/w/400/h/400/theme/dark/icon.jpeg?c=1dxbfHSJFAPEGdCLU4o5B"
+            alt="Zoho CRM"
             className={styles.integrationIcon}
           />
         );
