@@ -14,10 +14,16 @@ import {
   Clock,
   Activity,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Building2,
   Zap,
   Shield,
-  ArrowLeftRight
+  ArrowLeftRight,
+  HelpCircle,
+  BookOpen,
+  ExternalLink,
+  Lock
 } from "lucide-react";
 import styles from "../styles/Integrations.module.css";
 
@@ -72,6 +78,7 @@ export default function Integrations() {
     companyDB: "",
     sapType: "sap_business_one"
   });
+  const [showGuide, setShowGuide] = useState(false);
 
   // Lade Integrationen
   useEffect(() => {
@@ -301,6 +308,141 @@ export default function Integrations() {
               <p>Verbinde Contract AI mit deinen Business-Systemen</p>
             </div>
           </div>
+        </motion.div>
+
+        {/* Enterprise Badge */}
+        <motion.div
+          className={styles.enterpriseBadge}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          <Lock size={16} />
+          <span>Premium-Feature</span>
+        </motion.div>
+
+        {/* Info/Guide Toggle Box */}
+        <motion.div
+          className={styles.guideContainer}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <button
+            className={styles.guideToggle}
+            onClick={() => setShowGuide(!showGuide)}
+          >
+            <div className={styles.guideToggleLeft}>
+              <HelpCircle size={20} />
+              <span>Anleitung & Dokumentation</span>
+            </div>
+            {showGuide ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          </button>
+
+          <AnimatePresence>
+            {showGuide && (
+              <motion.div
+                className={styles.guideContent}
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className={styles.guideInner}>
+                  {/* Quick Start */}
+                  <div className={styles.guideSection}>
+                    <h3><Zap size={18} /> Schnellstart</h3>
+                    <ol className={styles.guideSteps}>
+                      <li>Wähle eine Integration (Salesforce, HubSpot oder SAP)</li>
+                      <li>Klicke auf "Verbinden" und autorisiere den Zugriff</li>
+                      <li>Konfiguriere die Sync-Einstellungen nach deinen Bedürfnissen</li>
+                      <li>Fertig! Deine Verträge werden automatisch synchronisiert</li>
+                    </ol>
+                  </div>
+
+                  {/* Salesforce Setup */}
+                  <div className={styles.guideSection}>
+                    <h3><img src="https://img.icons8.com/color/24/salesforce.png" alt="" /> Salesforce Setup</h3>
+                    <p>Für die Salesforce-Integration benötigst du:</p>
+                    <ul className={styles.guideList}>
+                      <li>Einen Salesforce Account (Production oder Sandbox)</li>
+                      <li>Admin-Rechte oder die Berechtigung, Connected Apps zu autorisieren</li>
+                    </ul>
+                    <p className={styles.guideNote}>
+                      Die OAuth-Verbindung wird automatisch hergestellt. Du wirst zu Salesforce
+                      weitergeleitet, um Contract AI den Zugriff zu erlauben.
+                    </p>
+                  </div>
+
+                  {/* HubSpot Setup */}
+                  <div className={styles.guideSection}>
+                    <h3><img src="https://www.hubspot.com/hubfs/HubSpot_Logos/HubSpot-Inversed-Favicon.png" alt="" style={{ width: 24, height: 24 }} /> HubSpot Setup</h3>
+                    <p>Für die HubSpot-Integration benötigst du:</p>
+                    <ul className={styles.guideList}>
+                      <li>Einen HubSpot Account (Free, Starter, Professional oder Enterprise)</li>
+                      <li>Zugriff auf CRM Deals, Companies und Contacts</li>
+                    </ul>
+                    <p className={styles.guideNote}>
+                      Contract AI synchronisiert Deals bidirektional - neue Verträge erscheinen
+                      als Deals und umgekehrt.
+                    </p>
+                  </div>
+
+                  {/* SAP Setup */}
+                  <div className={styles.guideSection}>
+                    <h3><img src="https://img.icons8.com/color/24/sap.png" alt="" /> SAP Setup</h3>
+                    <p>Für SAP Business One oder S/4HANA benötigst du:</p>
+                    <ul className={styles.guideList}>
+                      <li>SAP Service Layer URL (z.B. https://your-server:50000)</li>
+                      <li>Company Database Name</li>
+                      <li>Benutzername und Passwort mit API-Zugriff</li>
+                    </ul>
+                    <p className={styles.guideNote}>
+                      Die Credentials werden verschlüsselt gespeichert (AES-256).
+                      Contract AI synchronisiert Sales Orders mit Verträgen.
+                    </p>
+                  </div>
+
+                  {/* Features */}
+                  <div className={styles.guideSection}>
+                    <h3><BookOpen size={18} /> Was wird synchronisiert?</h3>
+                    <div className={styles.syncTable}>
+                      <div className={styles.syncRow}>
+                        <span className={styles.syncSystem}>Salesforce</span>
+                        <span className={styles.syncArrow}>↔</span>
+                        <span className={styles.syncData}>Opportunities, Accounts, Contacts, Quotes</span>
+                      </div>
+                      <div className={styles.syncRow}>
+                        <span className={styles.syncSystem}>HubSpot</span>
+                        <span className={styles.syncArrow}>↔</span>
+                        <span className={styles.syncData}>Deals, Companies, Contacts</span>
+                      </div>
+                      <div className={styles.syncRow}>
+                        <span className={styles.syncSystem}>SAP</span>
+                        <span className={styles.syncArrow}>↔</span>
+                        <span className={styles.syncData}>Sales Orders, Business Partners, Invoices</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Support */}
+                  <div className={styles.guideSection}>
+                    <h3><Shield size={18} /> Sicherheit & Support</h3>
+                    <ul className={styles.guideList}>
+                      <li>Alle Verbindungen nutzen OAuth 2.0 oder verschlüsselte Credentials</li>
+                      <li>Tokens werden mit AES-256-CBC verschlüsselt gespeichert</li>
+                      <li>Webhook-Signaturen werden verifiziert (HMAC-SHA256)</li>
+                    </ul>
+                    <p className={styles.guideNote}>
+                      Bei Fragen: <a href="mailto:integration@contract-ai.de" className={styles.guideLink}>
+                        integration@contract-ai.de <ExternalLink size={12} />
+                      </a>
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
 
         {/* Notification */}
