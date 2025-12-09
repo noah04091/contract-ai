@@ -700,19 +700,13 @@ export default function Optimizer() {
   const [selectedDesignVariant, setSelectedDesignVariant] = useState<string>('executive');
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
-  // 🎨 Design-Optionen (identisch mit Generate-Seite)
+  // 🎨 Design-Optionen (Top 5 relevanteste Designs)
   const designOptions = [
-    { id: 'executive', name: 'Executive', color: '#0B1324', desc: 'Klassisch' },
-    { id: 'modern', name: 'Modern', color: '#3B82F6', desc: 'Dynamisch' },
-    { id: 'minimal', name: 'Minimal', color: '#6B7280', desc: 'Schlicht' },
-    { id: 'elegant', name: 'Elegant', color: '#D4AF37', desc: 'Luxuriös' },
-    { id: 'corporate', name: 'Corporate', color: '#003366', desc: 'Formell' },
-    { id: 'professional', name: 'Professional', color: '#1B4332', desc: 'Seriös' },
-    { id: 'startup', name: 'Startup', color: '#E63946', desc: 'Jung' },
-    { id: 'legal', name: 'Legal', color: '#800020', desc: 'Juristisch' },
-    { id: 'tech', name: 'Tech', color: '#0891B2', desc: 'Digital' },
-    { id: 'finance', name: 'Finance', color: '#0F172A', desc: 'Premium' },
-    { id: 'creative', name: 'Creative', color: '#7C3AED', desc: 'Kreativ' }
+    { id: 'executive', name: 'Executive', color: '#0B1324', desc: 'Klassisch & Seriös' },
+    { id: 'modern', name: 'Modern', color: '#3B82F6', desc: 'Frisch & Dynamisch' },
+    { id: 'elegant', name: 'Elegant', color: '#D4AF37', desc: 'Premium & Luxuriös' },
+    { id: 'corporate', name: 'Corporate', color: '#003366', desc: 'Business & Formell' },
+    { id: 'minimal', name: 'Minimal', color: '#6B7280', desc: 'Clean & Schlicht' }
   ];
 
   // ✅ ORIGINAL: Refs
@@ -1326,6 +1320,7 @@ export default function Optimizer() {
   ]);
 
   // 🎨 SCHRITT 2: PDF mit gewähltem Design generieren und herunterladen
+  // (Kopiert von Generate-Seite: verwendet /api/contracts/${id}/pdf-v2 mit Design-Parameter)
   const handleDownloadWithDesign = useCallback(async () => {
     if (!generatedContractId || !file) {
       showToast("❌ Kein Vertrag zum Herunterladen", 'error');
@@ -1337,48 +1332,41 @@ export default function Optimizer() {
     }
 
     setIsDownloadingPdf(true);
-    showToast(`🎨 Generiere PDF mit Design "${designOptions.find(d => d.id === selectedDesignVariant)?.name}"...`, 'info');
+    const designName = designOptions.find(d => d.id === selectedDesignVariant)?.name || selectedDesignVariant;
+    showToast(`🎨 Generiere PDF mit Design "${designName}"...`, 'info');
 
     try {
-      // 1. Design-Variante im Backend aktualisieren
-      const updateResponse = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/generate/change-design`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contractId: generatedContractId,
-          newDesignVariant: selectedDesignVariant
-        })
-      });
+      console.log('🎨 Generiere PDF mit Design:', selectedDesignVariant, 'für Contract:', generatedContractId);
 
-      if (!updateResponse.ok) {
-        console.warn('⚠️ Design-Update fehlgeschlagen, verwende Fallback');
-      }
-
-      // 2. Generiere PDF mit Puppeteer
-      const pdfResponse = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/generate/pdf`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contractId: generatedContractId
-        })
-      });
+      // 1. Generiere PDF mit V2-Endpoint (wie in Generate-Seite)
+      // Dieser Endpoint akzeptiert das Design direkt als Parameter
+      const pdfResponse = await fetch(
+        `${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/${generatedContractId}/pdf-v2?design=${selectedDesignVariant}`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ design: selectedDesignVariant })
+        }
+      );
 
       if (!pdfResponse.ok) {
+        const errorText = await pdfResponse.text();
+        console.error('❌ PDF-Generierung fehlgeschlagen:', errorText);
         throw new Error('PDF-Generierung fehlgeschlagen');
       }
 
-      // 3. Lade das generierte PDF herunter
+      // 2. Lade das generierte PDF herunter
       const blob = await pdfResponse.blob();
+      console.log('✅ PDF erfolgreich generiert, Größe:', blob.size, 'bytes');
 
-      // 4. Speichere optimiertes PDF in S3 für spätere Ansicht
+      // 3. Speichere optimiertes PDF in S3 für spätere Ansicht
       try {
         console.log('📤 Uploading optimized PDF to S3...');
         const optimizedFileName = `Optimiert_${file.name.replace('.pdf', '')}_${new Date().toISOString().split('T')[0]}.pdf`;
         const optimizedFile = new File([blob], optimizedFileName, { type: 'application/pdf' });
 
-        const uploadUrlResponse = await fetch('/api/s3/upload-url', {
+        const uploadUrlResponse = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/s3/upload-url`, {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
@@ -1397,14 +1385,15 @@ export default function Optimizer() {
             headers: { 'Content-Type': 'application/pdf' }
           });
 
-          await fetch(`/api/contracts/${generatedContractId}`, {
+          await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/${generatedContractId}`, {
             method: 'PATCH',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               optimizedPdfS3Key: s3Key,
               optimizedPdfS3Location: s3Location,
-              optimizedPdfGeneratedAt: new Date().toISOString()
+              optimizedPdfGeneratedAt: new Date().toISOString(),
+              designVariant: selectedDesignVariant
             })
           });
 
@@ -1414,7 +1403,7 @@ export default function Optimizer() {
         console.warn('⚠️ Failed to upload optimized PDF to S3 (continuing with download):', s3Error);
       }
 
-      // 5. Download starten
+      // 4. Download starten
       const downloadUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
@@ -1424,9 +1413,9 @@ export default function Optimizer() {
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
 
-      showToast(`✅ Professioneller Vertrag erfolgreich erstellt & heruntergeladen!`, 'success');
+      showToast(`✅ Vertrag mit "${designName}" Design erfolgreich heruntergeladen!`, 'success');
 
-      // 6. Modal schließen und State zurücksetzen
+      // 5. Modal schließen und State zurücksetzen
       setShowDesignModal(false);
       setGeneratedContractText('');
       setGeneratedContractId(null);
