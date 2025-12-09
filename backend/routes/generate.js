@@ -3103,8 +3103,9 @@ DAS IST KEIN "Vertrag neu schreiben" - DAS IST "Vertrag gezielt verbessern"!`;
     );
 
     // Vertrag in DB speichern
+    // 🔧 FIX: userId als ObjectId speichern (für Konsistenz mit contracts.js GET /:id)
     const contract = {
-      userId: req.user.userId,
+      userId: new ObjectId(req.user.userId),
       name: formData.title,
       content: contractText,
       contractHTML: formattedHTML,  // Enterprise HTML
