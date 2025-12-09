@@ -659,37 +659,11 @@ export default function EnhancedSignaturePage() {
     }
   }
 
-  // 🔍 DEBUG HELPER - Always visible at top
-  const calcScale = renderedPageWidth && pdfPageDimensions.width ? renderedPageWidth / pdfPageDimensions.width : 0;
-  const calcRenderedW = pdfPageDimensions.width * calcScale;
-  const firstField = signatureFields[0];
-  const calcFieldW = firstField?.nwidth ? firstField.nwidth * calcRenderedW : 0;
-
-  const debugBanner = (
-    <div style={{
-      background: signatureFields.some(f => f.nx !== undefined) ? '#10B981' : '#EF4444',
-      color: 'white',
-      padding: '8px 12px',
-      fontSize: '11px',
-      textAlign: 'left',
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      zIndex: 99999,
-      lineHeight: 1.4
-    }}>
-      <div>🔍 Felder: {signatureFields.length} | PDF: {pdfPageDimensions.width}x{pdfPageDimensions.height} | Rendered: {renderedPageWidth}px</div>
-      <div>Scale: {calcScale.toFixed(3)} | nw={firstField?.nwidth?.toFixed(3)} | Feld-Breite: {calcFieldW.toFixed(0)}px</div>
-    </div>
-  );
-
   // ===== RENDER: LOADING STATE =====
 
   if (loading) {
     return (
       <div className={styles.container}>
-        {debugBanner}
         <div className={styles.loader} style={{ marginTop: '50px' }}>
           <div className={styles.spinner}></div>
           <p>Lade Signaturanfrage...</p>
@@ -703,7 +677,6 @@ export default function EnhancedSignaturePage() {
   if (error || !envelope) {
     return (
       <div className={styles.container}>
-        {debugBanner}
         <div className={styles.errorCard} style={{ marginTop: '50px' }}>
           <AlertCircle size={48} className={styles.errorIcon} />
           <h2>Fehler beim Laden</h2>
@@ -797,8 +770,6 @@ export default function EnhancedSignaturePage() {
 
   return (
     <div className={styles.container}>
-      {debugBanner}
-
       {/* Sticky Header */}
       <header className={styles.header} role="banner" style={{ marginTop: '40px' }}>
         <div className={styles.headerLeft}>
