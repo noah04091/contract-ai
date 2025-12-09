@@ -13,6 +13,8 @@ import {
   Mail,
   DollarSign,
   CheckCircle2,
+  CheckCircle,
+  Check,
   Lock,
   Wand2,
   Copy,
@@ -691,6 +693,28 @@ export default function Optimizer() {
   const [selectedProfile, setSelectedProfile] = useState<string | null>(null);
   const [loadingProfiles, setLoadingProfiles] = useState(false);
 
+  // 🎨 NEU: Zwei-Schritt-Flow - Textvorschau + Design-Auswahl Modal
+  const [showDesignModal, setShowDesignModal] = useState(false);
+  const [generatedContractText, setGeneratedContractText] = useState<string>('');
+  const [generatedContractId, setGeneratedContractId] = useState<string | null>(null);
+  const [selectedDesignVariant, setSelectedDesignVariant] = useState<string>('executive');
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+
+  // 🎨 Design-Optionen (identisch mit Generate-Seite)
+  const designOptions = [
+    { id: 'executive', name: 'Executive', color: '#0B1324', desc: 'Klassisch' },
+    { id: 'modern', name: 'Modern', color: '#3B82F6', desc: 'Dynamisch' },
+    { id: 'minimal', name: 'Minimal', color: '#6B7280', desc: 'Schlicht' },
+    { id: 'elegant', name: 'Elegant', color: '#D4AF37', desc: 'Luxuriös' },
+    { id: 'corporate', name: 'Corporate', color: '#003366', desc: 'Formell' },
+    { id: 'professional', name: 'Professional', color: '#1B4332', desc: 'Seriös' },
+    { id: 'startup', name: 'Startup', color: '#E63946', desc: 'Jung' },
+    { id: 'legal', name: 'Legal', color: '#800020', desc: 'Juristisch' },
+    { id: 'tech', name: 'Tech', color: '#0891B2', desc: 'Digital' },
+    { id: 'finance', name: 'Finance', color: '#0F172A', desc: 'Premium' },
+    { id: 'creative', name: 'Creative', color: '#7C3AED', desc: 'Kreativ' }
+  ];
+
   // ✅ ORIGINAL: Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pitchButtonRef = useRef<HTMLButtonElement>(null);
@@ -1181,7 +1205,7 @@ export default function Optimizer() {
     loadCompanyProfiles();
   }, [loadCompanyProfiles]);
 
-  // 🚀 NEUE FUNKTION: Professionellen Vertrag aus Optimizer-Daten erstellen
+  // 🚀 SCHRITT 1: Vertragstext generieren und Design-Modal öffnen
   const handleCreateOptimizedContract = useCallback(async () => {
     if (!file || !analysisData) {
       showToast("❌ Keine Vertragsdaten verfügbar", 'error');
@@ -1193,18 +1217,17 @@ export default function Optimizer() {
     }
 
     setIsGeneratingContract(true);
-    showToast("🚀 Erstelle professionellen Vertrag mit Optimierungen...", 'info');
+    showToast("🚀 Erstelle optimierten Vertragstext...", 'info');
 
     try {
       // 1. Sammle Original-Daten basierend auf Checkboxen
       const formData: GenerateFormData = {
         title: file.name.replace(/\.pdf$/i, ''),
-        type: 'custom', // oder basierend auf analysisData
+        type: 'custom',
       };
 
       // 2. Parteien hinzufügen (wenn checkbox aktiv)
       if (generateOptions.includeParties && analysisData) {
-        // Extrahiere Parteien aus analysisData
         if (analysisData.parties) {
           formData.parties = analysisData.parties;
         }
@@ -1229,7 +1252,6 @@ export default function Optimizer() {
 
       // 5. Klauseln hinzufügen (wenn checkbox aktiv)
       if (generateOptions.includeClauses) {
-        // Sammle alle Optimierungen
         const selectedOpts = showAdvancedView
           ? optimizations.filter(opt => selectedOptimizations.has(opt.id))
           : optimizations.filter(opt => opt.priority === 'high' || opt.priority === 'critical');
@@ -1243,13 +1265,12 @@ export default function Optimizer() {
           }));
         }
 
-        // Füge auch Original-Vertragstext hinzu für Kontext
         if (originalContractText) {
           formData.originalContent = originalContractText;
         }
       }
 
-      // 6. Erstelle neuen Vertrag über /api/contracts/generate
+      // 6. Erstelle neuen Vertrag über /api/contracts/generate (mit temporärem Design)
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/generate`, {
         method: 'POST',
         credentials: 'include',
@@ -1258,7 +1279,7 @@ export default function Optimizer() {
           type: formData.type,
           formData: formData,
           useCompanyProfile: !!selectedProfile,
-          designVariant: 'executive'
+          designVariant: 'executive' // Temporär, wird später geändert
         })
       });
 
@@ -1267,88 +1288,22 @@ export default function Optimizer() {
         throw new Error(errorData.message || 'Fehler beim Generieren');
       }
 
-      // 7. Parse JSON Response um contractId zu bekommen
+      // 7. Parse JSON Response
       const data = await response.json();
       if (!data.contractId) {
         throw new Error('Keine Contract ID erhalten');
       }
 
-      console.log('✅ Vertrag erstellt, generiere PDF mit ID:', data.contractId);
+      console.log('✅ Vertragstext erstellt, öffne Design-Auswahl:', data.contractId);
 
-      // 8. Generiere PDF mit Puppeteer
-      const pdfResponse = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/generate/pdf`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contractId: data.contractId
-        })
-      });
+      // 8. Speichere generierte Daten und öffne Design-Modal
+      setGeneratedContractText(data.contractText || '');
+      setGeneratedContractId(data.contractId);
+      setSelectedDesignVariant('executive'); // Reset auf Standard
+      setShowGenerateModal(false); // Schließe erstes Modal
+      setShowDesignModal(true); // Öffne Design-Auswahl Modal
 
-      if (!pdfResponse.ok) {
-        throw new Error('PDF-Generierung fehlgeschlagen');
-      }
-
-      // 9. Lade das generierte PDF herunter
-      const blob = await pdfResponse.blob();
-
-      // 🆕 10. Speichere optimiertes PDF in S3 für spätere Ansicht
-      try {
-        console.log('📤 Uploading optimized PDF to S3...');
-        const optimizedFileName = `Optimiert_${file.name.replace('.pdf', '')}_${new Date().toISOString().split('T')[0]}.pdf`;
-        const optimizedFile = new File([blob], optimizedFileName, { type: 'application/pdf' });
-
-        // Get presigned upload URL
-        const uploadUrlResponse = await fetch('/api/s3/upload-url', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            fileName: optimizedFileName,
-            fileType: 'application/pdf'
-          })
-        });
-
-        if (uploadUrlResponse.ok) {
-          const { uploadUrl, s3Key, s3Location } = await uploadUrlResponse.json();
-
-          // Upload to S3
-          await fetch(uploadUrl, {
-            method: 'PUT',
-            body: optimizedFile,
-            headers: { 'Content-Type': 'application/pdf' }
-          });
-
-          // Update contract with optimized PDF S3 key
-          await fetch(`/api/contracts/${data.contractId}`, {
-            method: 'PATCH',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              optimizedPdfS3Key: s3Key,
-              optimizedPdfS3Location: s3Location,
-              optimizedPdfGeneratedAt: new Date().toISOString()
-            })
-          });
-
-          console.log('✅ Optimized PDF saved to S3:', s3Key);
-        }
-      } catch (s3Error) {
-        console.warn('⚠️ Failed to upload optimized PDF to S3 (continuing with download):', s3Error);
-        // Continue with download even if S3 upload fails
-      }
-
-      // 11. Download starten
-      const downloadUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = `Optimiert_${file.name.replace('.pdf', '')}_${new Date().toISOString().split('T')[0]}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(downloadUrl);
-
-      showToast(`✅ Professioneller Vertrag erfolgreich erstellt & gespeichert!`, 'success');
+      showToast("✅ Vertragstext erstellt! Wähle jetzt dein Design.", 'success');
 
     } catch (error) {
       const err = error as Error;
@@ -1368,6 +1323,128 @@ export default function Optimizer() {
     originalContractText,
     isGeneratingContract,
     showToast
+  ]);
+
+  // 🎨 SCHRITT 2: PDF mit gewähltem Design generieren und herunterladen
+  const handleDownloadWithDesign = useCallback(async () => {
+    if (!generatedContractId || !file) {
+      showToast("❌ Kein Vertrag zum Herunterladen", 'error');
+      return;
+    }
+
+    if (isDownloadingPdf) {
+      return;
+    }
+
+    setIsDownloadingPdf(true);
+    showToast(`🎨 Generiere PDF mit Design "${designOptions.find(d => d.id === selectedDesignVariant)?.name}"...`, 'info');
+
+    try {
+      // 1. Design-Variante im Backend aktualisieren
+      const updateResponse = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/generate/change-design`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contractId: generatedContractId,
+          newDesignVariant: selectedDesignVariant
+        })
+      });
+
+      if (!updateResponse.ok) {
+        console.warn('⚠️ Design-Update fehlgeschlagen, verwende Fallback');
+      }
+
+      // 2. Generiere PDF mit Puppeteer
+      const pdfResponse = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/generate/pdf`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contractId: generatedContractId
+        })
+      });
+
+      if (!pdfResponse.ok) {
+        throw new Error('PDF-Generierung fehlgeschlagen');
+      }
+
+      // 3. Lade das generierte PDF herunter
+      const blob = await pdfResponse.blob();
+
+      // 4. Speichere optimiertes PDF in S3 für spätere Ansicht
+      try {
+        console.log('📤 Uploading optimized PDF to S3...');
+        const optimizedFileName = `Optimiert_${file.name.replace('.pdf', '')}_${new Date().toISOString().split('T')[0]}.pdf`;
+        const optimizedFile = new File([blob], optimizedFileName, { type: 'application/pdf' });
+
+        const uploadUrlResponse = await fetch('/api/s3/upload-url', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fileName: optimizedFileName,
+            fileType: 'application/pdf'
+          })
+        });
+
+        if (uploadUrlResponse.ok) {
+          const { uploadUrl, s3Key, s3Location } = await uploadUrlResponse.json();
+
+          await fetch(uploadUrl, {
+            method: 'PUT',
+            body: optimizedFile,
+            headers: { 'Content-Type': 'application/pdf' }
+          });
+
+          await fetch(`/api/contracts/${generatedContractId}`, {
+            method: 'PATCH',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              optimizedPdfS3Key: s3Key,
+              optimizedPdfS3Location: s3Location,
+              optimizedPdfGeneratedAt: new Date().toISOString()
+            })
+          });
+
+          console.log('✅ Optimized PDF saved to S3:', s3Key);
+        }
+      } catch (s3Error) {
+        console.warn('⚠️ Failed to upload optimized PDF to S3 (continuing with download):', s3Error);
+      }
+
+      // 5. Download starten
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `Optimiert_${file.name.replace('.pdf', '')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+
+      showToast(`✅ Professioneller Vertrag erfolgreich erstellt & heruntergeladen!`, 'success');
+
+      // 6. Modal schließen und State zurücksetzen
+      setShowDesignModal(false);
+      setGeneratedContractText('');
+      setGeneratedContractId(null);
+
+    } catch (error) {
+      const err = error as Error;
+      console.error("❌ Fehler beim PDF-Download:", err);
+      showToast(err.message || 'Fehler beim Herunterladen des PDFs', 'error');
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  }, [
+    generatedContractId,
+    file,
+    selectedDesignVariant,
+    isDownloadingPdf,
+    showToast,
+    designOptions
   ]);
 
   // 🚀 SIMPLIFIED: Toggle optimization selection (for advanced mode)
@@ -3839,6 +3916,285 @@ Konfidenz: ${opt.confidence}%\n`
                     <>
                       <Sparkles size={18} />
                       Vertrag erstellen
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 🎨 NEU: Design-Auswahl Modal (Schritt 2) */}
+      <AnimatePresence>
+        {showDesignModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0, 0, 0, 0.6)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10001,
+              padding: '20px'
+            }}
+            onClick={() => {
+              if (!isDownloadingPdf) {
+                setShowDesignModal(false);
+                setGeneratedContractText('');
+                setGeneratedContractId(null);
+              }
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: '#FFFFFF',
+                borderRadius: '20px',
+                padding: '32px',
+                maxWidth: '800px',
+                width: '100%',
+                boxShadow: '0 25px 80px rgba(0, 0, 0, 0.35)',
+                maxHeight: '90vh',
+                overflowY: 'auto'
+              }}
+            >
+              {/* Header */}
+              <div style={{ marginBottom: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                  <div style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #34C759 0%, #30D158 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <CheckCircle size={24} color="#FFFFFF" />
+                  </div>
+                  <div>
+                    <h2 style={{
+                      fontSize: '24px',
+                      fontWeight: 700,
+                      color: '#1D1D1F',
+                      margin: 0,
+                      letterSpacing: '-0.02em'
+                    }}>
+                      Vertragstext erstellt!
+                    </h2>
+                    <p style={{
+                      fontSize: '14px',
+                      color: '#86868B',
+                      margin: 0
+                    }}>
+                      Wähle jetzt dein gewünschtes Design
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Vertragstext Vorschau */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  color: '#86868B',
+                  margin: '0 0 12px 0',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}>
+                  Vertragstext-Vorschau
+                </h3>
+                <div style={{
+                  background: '#F5F5F7',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  border: '1px solid #E5E5E7'
+                }}>
+                  <pre style={{
+                    margin: 0,
+                    fontSize: '12px',
+                    lineHeight: '1.6',
+                    color: '#1D1D1F',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                    fontFamily: 'SF Mono, Monaco, Consolas, monospace'
+                  }}>
+                    {generatedContractText.substring(0, 1500)}
+                    {generatedContractText.length > 1500 && '...'}
+                  </pre>
+                </div>
+                <p style={{
+                  fontSize: '12px',
+                  color: '#86868B',
+                  margin: '8px 0 0 0',
+                  textAlign: 'right'
+                }}>
+                  {generatedContractText.length.toLocaleString('de-DE')} Zeichen
+                </p>
+              </div>
+
+              {/* Design-Auswahl */}
+              <div style={{ marginBottom: '32px' }}>
+                <h3 style={{
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  color: '#86868B',
+                  margin: '0 0 16px 0',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}>
+                  Design wählen
+                </h3>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
+                  gap: '12px'
+                }}>
+                  {designOptions.map((design) => (
+                    <button
+                      key={design.id}
+                      onClick={() => setSelectedDesignVariant(design.id)}
+                      disabled={isDownloadingPdf}
+                      style={{
+                        position: 'relative',
+                        padding: '12px 8px',
+                        borderRadius: '12px',
+                        border: selectedDesignVariant === design.id
+                          ? '2px solid #007AFF'
+                          : '2px solid #E5E5E7',
+                        background: selectedDesignVariant === design.id
+                          ? 'rgba(0, 122, 255, 0.08)'
+                          : '#FFFFFF',
+                        cursor: isDownloadingPdf ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.2s',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}
+                    >
+                      {/* Design-Farbe Vorschau */}
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '8px',
+                        background: design.color,
+                        boxShadow: selectedDesignVariant === design.id
+                          ? `0 4px 12px ${design.color}40`
+                          : 'none',
+                        transition: 'all 0.2s'
+                      }} />
+                      <div style={{ textAlign: 'center' }}>
+                        <p style={{
+                          margin: 0,
+                          fontSize: '13px',
+                          fontWeight: 600,
+                          color: '#1D1D1F'
+                        }}>
+                          {design.name}
+                        </p>
+                        <p style={{
+                          margin: '2px 0 0 0',
+                          fontSize: '11px',
+                          color: '#86868B'
+                        }}>
+                          {design.desc}
+                        </p>
+                      </div>
+                      {selectedDesignVariant === design.id && (
+                        <div style={{
+                          position: 'absolute',
+                          top: '8px',
+                          right: '8px',
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: '50%',
+                          background: '#007AFF',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}>
+                          <Check size={12} color="#FFFFFF" />
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Buttons */}
+              <div style={{
+                display: 'flex',
+                gap: '12px',
+                justifyContent: 'flex-end'
+              }}>
+                <button
+                  onClick={() => {
+                    if (!isDownloadingPdf) {
+                      setShowDesignModal(false);
+                      setGeneratedContractText('');
+                      setGeneratedContractId(null);
+                    }
+                  }}
+                  disabled={isDownloadingPdf}
+                  style={{
+                    padding: '14px 24px',
+                    borderRadius: '10px',
+                    border: '2px solid #E5E5E7',
+                    background: '#FFFFFF',
+                    color: '#1D1D1F',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    cursor: isDownloadingPdf ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s',
+                    opacity: isDownloadingPdf ? 0.5 : 1
+                  }}
+                >
+                  Abbrechen
+                </button>
+                <button
+                  onClick={handleDownloadWithDesign}
+                  disabled={isDownloadingPdf}
+                  style={{
+                    padding: '14px 28px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: isDownloadingPdf
+                      ? '#C7C7CC'
+                      : 'linear-gradient(135deg, #34C759 0%, #30D158 100%)',
+                    color: '#FFFFFF',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    cursor: isDownloadingPdf ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    boxShadow: isDownloadingPdf ? 'none' : '0 4px 15px rgba(52, 199, 89, 0.3)'
+                  }}
+                >
+                  {isDownloadingPdf ? (
+                    <>
+                      <div className={styles.spinner}></div>
+                      Generiere PDF...
+                    </>
+                  ) : (
+                    <>
+                      <Download size={18} />
+                      PDF herunterladen
                     </>
                   )}
                 </button>
