@@ -8,15 +8,17 @@
  * - PDF-Vorschau
  * - Download (Seite bleibt offen)
  */
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import {
   CheckCircle, Download, FileText, Edit3, Sparkles,
-  ArrowLeft, ArrowRight, Check, RefreshCw, X, ArrowLeftCircle
+  ArrowLeft, ArrowRight, Check, RefreshCw, X, ArrowLeftCircle,
+  Loader2, Wand2, FileCheck
 } from "lucide-react";
-import styles from "../styles/Generate.module.css"; // Nutze gleiche Styles wie Generate
+import styles from "../styles/Generate.module.css";
+
 // API URL
 const API_URL = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
 
@@ -34,15 +36,27 @@ const DESIGN_VARIANTS = [
 
 const VISIBLE_DESIGNS = 5;
 
+// Lade-Nachrichten für Animation
+const LOADING_MESSAGES = [
+  "Vertrag wird geladen...",
+  "Analysiere Vertragsstruktur...",
+  "Bereite Editor vor...",
+  "Generiere PDF-Vorschau...",
+  "Fast fertig..."
+];
+
 export default function OptimizerFinalize() {
   const { contractId } = useParams<{ contractId: string }>();
   const navigate = useNavigate();
+  const hasFetched = useRef(false);
 
   // Contract State
   const [contractText, setContractText] = useState<string>("");
   const [contractTitle, setContractTitle] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [loadingMessage, setLoadingMessage] = useState<string>(LOADING_MESSAGES[0]);
+  const [loadingProgress, setLoadingProgress] = useState<number>(0);
 
   // Design State
   const [selectedDesign, setSelectedDesign] = useState<string>("executive");
@@ -62,12 +76,45 @@ export default function OptimizerFinalize() {
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [downloadSuccess, setDownloadSuccess] = useState<boolean>(false);
 
-  // 📄 Vertrag laden
+  // 🎬 Lade-Animation mit Fortschritt
   useEffect(() => {
+    if (!isLoading) return;
+
+    let messageIndex = 0;
+    let progress = 0;
+
+    const messageInterval = setInterval(() => {
+      messageIndex = (messageIndex + 1) % LOADING_MESSAGES.length;
+      setLoadingMessage(LOADING_MESSAGES[messageIndex]);
+    }, 2000);
+
+    const progressInterval = setInterval(() => {
+      progress += Math.random() * 15;
+      if (progress > 90) progress = 90; // Max 90% bis wirklich fertig
+      setLoadingProgress(progress);
+    }, 500);
+
+    return () => {
+      clearInterval(messageInterval);
+      clearInterval(progressInterval);
+    };
+  }, [isLoading]);
+
+  // 📄 Vertrag laden - nur einmal!
+  useEffect(() => {
+    if (hasFetched.current) return;
+
     const token = getToken();
-    if (!contractId || !token) return;
+    if (!contractId || !token) {
+      setError("Kein Token oder Contract-ID gefunden");
+      setIsLoading(false);
+      return;
+    }
+
+    hasFetched.current = true;
 
     const fetchContract = async () => {
+      console.log('📄 Lade Vertrag:', contractId);
       setIsLoading(true);
       setError(null);
 
@@ -78,20 +125,29 @@ export default function OptimizerFinalize() {
           },
         });
 
+        console.log('📄 Response Status:', response.status);
+
         if (!response.ok) {
-          throw new Error("Vertrag konnte nicht geladen werden");
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || `HTTP ${response.status}: Vertrag konnte nicht geladen werden`);
         }
 
         const data = await response.json();
+        console.log('📄 Vertrag geladen:', data.title || 'Ohne Titel');
+
         setContractText(data.content || "");
         setContractTitle(data.title || "Optimierter Vertrag");
         setSelectedDesign(data.designVariant || "executive");
+        setLoadingProgress(100);
 
-        // Nach dem Laden: PDF-Vorschau generieren
-        setTimeout(() => generatePdfPreview(), 500);
+        // PDF-Vorschau nach kurzer Verzögerung generieren
+        setTimeout(() => {
+          loadPdfPreview(contractId, data.designVariant || "executive", token);
+        }, 300);
+
       } catch (err) {
-        console.error("Fehler beim Laden:", err);
-        setError("Vertrag konnte nicht geladen werden");
+        console.error("❌ Fehler beim Laden:", err);
+        setError(err instanceof Error ? err.message : "Vertrag konnte nicht geladen werden");
       } finally {
         setIsLoading(false);
       }
@@ -100,15 +156,58 @@ export default function OptimizerFinalize() {
     fetchContract();
   }, [contractId]);
 
-  // 📄 PDF-Vorschau generieren
-  const generatePdfPreview = useCallback(async () => {
+  // 📄 PDF-Vorschau laden (separate Funktion, kein useCallback)
+  const loadPdfPreview = async (id: string, design: string, token: string) => {
+    if (isGeneratingPreview) return;
+
+    console.log('🖼️ Generiere PDF-Vorschau für:', id, 'Design:', design);
+    setIsGeneratingPreview(true);
+
+    try {
+      const pdfResponse = await fetch(
+        `${API_URL}/api/contracts/${id}/pdf-v2?design=${design}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ design }),
+        }
+      );
+
+      if (!pdfResponse.ok) {
+        console.error('❌ PDF-Generierung fehlgeschlagen:', pdfResponse.status);
+        return;
+      }
+
+      const pdfBlob = await pdfResponse.blob();
+      const url = window.URL.createObjectURL(pdfBlob);
+
+      console.log('✅ PDF-Vorschau erstellt');
+      setPdfPreviewUrl(url);
+    } catch (err) {
+      console.error("❌ Fehler bei PDF-Generierung:", err);
+    } finally {
+      setIsGeneratingPreview(false);
+    }
+  };
+
+  // 📄 PDF-Vorschau aktualisieren (für Button-Klick)
+  const refreshPdfPreview = useCallback(async () => {
     const token = getToken();
     if (!contractId || !token || isGeneratingPreview) return;
+
+    // Alte URL freigeben
+    if (pdfPreviewUrl) {
+      window.URL.revokeObjectURL(pdfPreviewUrl);
+      setPdfPreviewUrl(null);
+    }
 
     setIsGeneratingPreview(true);
 
     try {
-      // Zuerst den Text speichern falls geändert
+      // Zuerst den Text speichern
       await fetch(`${API_URL}/api/contracts/${contractId}`, {
         method: "PUT",
         headers: {
@@ -121,7 +220,7 @@ export default function OptimizerFinalize() {
         }),
       });
 
-      // PDF generieren via React-PDF V2
+      // PDF generieren
       const pdfResponse = await fetch(
         `${API_URL}/api/contracts/${contractId}/pdf-v2?design=${selectedDesign}`,
         {
@@ -134,21 +233,13 @@ export default function OptimizerFinalize() {
         }
       );
 
-      if (!pdfResponse.ok) {
-        throw new Error("PDF konnte nicht generiert werden");
+      if (pdfResponse.ok) {
+        const pdfBlob = await pdfResponse.blob();
+        const url = window.URL.createObjectURL(pdfBlob);
+        setPdfPreviewUrl(url);
       }
-
-      const pdfBlob = await pdfResponse.blob();
-      const url = window.URL.createObjectURL(pdfBlob);
-
-      // Alte URL freigeben
-      if (pdfPreviewUrl) {
-        window.URL.revokeObjectURL(pdfPreviewUrl);
-      }
-
-      setPdfPreviewUrl(url);
     } catch (err) {
-      console.error("Fehler bei PDF-Generierung:", err);
+      console.error("Fehler bei PDF-Aktualisierung:", err);
     } finally {
       setIsGeneratingPreview(false);
     }
@@ -157,34 +248,31 @@ export default function OptimizerFinalize() {
   // 🎨 Design wechseln
   const handleDesignChange = useCallback(async (designId: string) => {
     const token = getToken();
-    if (isChangingDesign || designId === selectedDesign || !token) return;
+    if (isChangingDesign || designId === selectedDesign || !token || !contractId) return;
 
     setIsChangingDesign(true);
     setSelectedDesign(designId);
 
-    // Alte Preview-URL löschen für visuelles Feedback
+    // Alte Preview-URL löschen
     if (pdfPreviewUrl) {
       window.URL.revokeObjectURL(pdfPreviewUrl);
       setPdfPreviewUrl(null);
     }
 
-    // Neue PDF-Vorschau generieren
     setIsGeneratingPreview(true);
 
     try {
-      // Design im Backend speichern
+      // Design speichern
       await fetch(`${API_URL}/api/contracts/${contractId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          designVariant: designId,
-        }),
+        body: JSON.stringify({ designVariant: designId }),
       });
 
-      // PDF mit neuem Design generieren
+      // PDF mit neuem Design
       const pdfResponse = await fetch(
         `${API_URL}/api/contracts/${contractId}/pdf-v2?design=${designId}`,
         {
@@ -213,7 +301,7 @@ export default function OptimizerFinalize() {
   // ✨ KI-Nachbesserung
   const handleImproveContract = useCallback(async () => {
     const token = getToken();
-    if (!improvements.trim() || isImproving || !token) return;
+    if (!improvements.trim() || isImproving || !token || !contractId) return;
 
     setIsImproving(true);
 
@@ -247,7 +335,7 @@ export default function OptimizerFinalize() {
           window.URL.revokeObjectURL(pdfPreviewUrl);
           setPdfPreviewUrl(null);
         }
-        setTimeout(() => generatePdfPreview(), 500);
+        setTimeout(() => refreshPdfPreview(), 500);
       }
     } catch (err) {
       console.error("Fehler bei KI-Verbesserung:", err);
@@ -255,7 +343,7 @@ export default function OptimizerFinalize() {
     } finally {
       setIsImproving(false);
     }
-  }, [contractId, contractText, improvements, pdfPreviewUrl, isImproving, generatePdfPreview]);
+  }, [contractId, contractText, improvements, pdfPreviewUrl, isImproving, refreshPdfPreview]);
 
   // 📥 PDF Download
   const handleDownload = useCallback(async () => {
@@ -266,7 +354,7 @@ export default function OptimizerFinalize() {
     setDownloadSuccess(false);
 
     try {
-      // Zuerst Text speichern
+      // Text speichern
       await fetch(`${API_URL}/api/contracts/${contractId}`, {
         method: "PUT",
         headers: {
@@ -306,8 +394,6 @@ export default function OptimizerFinalize() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
-      // URL freigeben
       window.URL.revokeObjectURL(url);
 
       setDownloadSuccess(true);
@@ -320,12 +406,10 @@ export default function OptimizerFinalize() {
     }
   }, [contractId, contractText, selectedDesign, contractTitle, isDownloading]);
 
-  // 🔙 Zurück zur Übersicht
-  const handleBack = () => {
-    navigate("/contracts");
-  };
+  // 🔙 Zurück
+  const handleBack = () => navigate("/contracts");
 
-  // Cleanup bei Unmount
+  // Cleanup
   useEffect(() => {
     return () => {
       if (pdfPreviewUrl) {
@@ -334,17 +418,129 @@ export default function OptimizerFinalize() {
     };
   }, [pdfPreviewUrl]);
 
-  // Loading State
+  // 🎬 SCHÖNE LADE-ANIMATION
   if (isLoading) {
     return (
-      <div className={styles.contractGenerator}>
-        <div className={styles.step3ContainerNew}>
-          <div className={styles.step3PdfLoading}>
-            <div className={styles.loadingSpinner}></div>
-            <p>Vertrag wird geladen...</p>
+      <>
+        <Helmet>
+          <title>Vertrag wird geladen... | Contract AI</title>
+        </Helmet>
+        <div className={styles.contractGenerator}>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '70vh',
+            gap: '2rem',
+            padding: '2rem'
+          }}>
+            {/* Animiertes Icon */}
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              style={{
+                width: '120px',
+                height: '120px',
+                borderRadius: '24px',
+                background: 'linear-gradient(135deg, #2E6CF6 0%, #1E53D8 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 20px 60px rgba(46, 108, 246, 0.3)'
+              }}
+            >
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              >
+                <Wand2 size={48} color="white" />
+              </motion.div>
+            </motion.div>
+
+            {/* Text */}
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              style={{ textAlign: 'center' }}
+            >
+              <h2 style={{
+                fontSize: '1.75rem',
+                fontWeight: 600,
+                color: '#0B1324',
+                marginBottom: '0.5rem'
+              }}>
+                Dein Vertrag wird vorbereitet
+              </h2>
+              <motion.p
+                key={loadingMessage}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                style={{
+                  fontSize: '1rem',
+                  color: '#667085',
+                  marginTop: '0.5rem'
+                }}
+              >
+                {loadingMessage}
+              </motion.p>
+            </motion.div>
+
+            {/* Progress Bar */}
+            <motion.div
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: '300px', opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              style={{
+                height: '6px',
+                background: '#E5E7EB',
+                borderRadius: '3px',
+                overflow: 'hidden'
+              }}
+            >
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${loadingProgress}%` }}
+                transition={{ duration: 0.3 }}
+                style={{
+                  height: '100%',
+                  background: 'linear-gradient(90deg, #2E6CF6 0%, #1E53D8 100%)',
+                  borderRadius: '3px'
+                }}
+              />
+            </motion.div>
+
+            {/* Floating Icons Animation */}
+            <div style={{ position: 'relative', width: '200px', height: '60px' }}>
+              {[FileText, FileCheck, Sparkles].map((Icon, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ y: 0, opacity: 0.3 }}
+                  animate={{
+                    y: [-5, 5, -5],
+                    opacity: [0.3, 0.7, 0.3]
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    delay: i * 0.3
+                  }}
+                  style={{
+                    position: 'absolute',
+                    left: `${i * 80 + 20}px`,
+                    top: '20px'
+                  }}
+                >
+                  <Icon size={24} color="#2E6CF6" />
+                </motion.div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -353,10 +549,35 @@ export default function OptimizerFinalize() {
     return (
       <div className={styles.contractGenerator}>
         <div className={styles.step3ContainerNew}>
-          <div className={styles.step3Error}>
-            <span>{error}</span>
-            <button onClick={handleBack}>Zurück zur Übersicht</button>
-          </div>
+          <motion.div
+            className={styles.step3Error}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{
+              flexDirection: 'column',
+              alignItems: 'center',
+              padding: '3rem',
+              textAlign: 'center'
+            }}
+          >
+            <X size={48} style={{ marginBottom: '1rem', color: '#DC2626' }} />
+            <h3 style={{ marginBottom: '0.5rem', fontSize: '1.25rem' }}>Fehler beim Laden</h3>
+            <p style={{ marginBottom: '1.5rem', color: '#667085' }}>{error}</p>
+            <button
+              onClick={handleBack}
+              style={{
+                padding: '0.75rem 1.5rem',
+                background: '#0B1324',
+                color: 'white',
+                border: 'none',
+                borderRadius: '10px',
+                cursor: 'pointer',
+                fontWeight: 500
+              }}
+            >
+              Zurück zur Übersicht
+            </button>
+          </motion.div>
         </div>
       </div>
     );
@@ -366,7 +587,7 @@ export default function OptimizerFinalize() {
     <>
       <Helmet>
         <title>Vertrag finalisieren | Contract AI</title>
-        <meta name="description" content="Finalisieren Sie Ihren optimierten Vertrag mit verschiedenen Designs und KI-Nachbesserungen." />
+        <meta name="description" content="Finalisieren Sie Ihren optimierten Vertrag." />
       </Helmet>
 
       <div className={styles.contractGenerator}>
@@ -385,7 +606,7 @@ export default function OptimizerFinalize() {
             <div className={styles.step3SuccessActions}>
               <motion.button
                 onClick={handleBack}
-                className={`${styles.step3HeaderBtn}`}
+                className={styles.step3HeaderBtn}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -400,7 +621,7 @@ export default function OptimizerFinalize() {
                 whileTap={!isDownloading ? { scale: 0.98 } : {}}
               >
                 {isDownloading ? (
-                  <div className={styles.tinySpinner}></div>
+                  <Loader2 size={16} className="animate-spin" />
                 ) : downloadSuccess ? (
                   <Check size={16} />
                 ) : (
@@ -412,24 +633,27 @@ export default function OptimizerFinalize() {
           </div>
 
           {/* Error Display */}
-          {error && (
-            <motion.div
-              className={styles.step3Error}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <span>{error}</span>
-              <button onClick={() => setError(null)}>
-                <X size={14} />
-              </button>
-            </motion.div>
-          )}
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                className={styles.step3Error}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <span>{error}</span>
+                <button onClick={() => setError(null)}>
+                  <X size={14} />
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Two Column Layout */}
           <div className={styles.step3TwoColumn}>
-            {/* Left Column: Design + Editor + KI */}
+            {/* Left Column */}
             <div className={styles.step3LeftColumn}>
-              {/* Design Selector Carousel */}
+              {/* Design Carousel */}
               <div className={styles.step3DesignCompact}>
                 <div className={styles.step3DesignHeader}>
                   <span><Sparkles size={16} /> Design</span>
@@ -471,11 +695,6 @@ export default function OptimizerFinalize() {
                               <Check size={10} />
                             </div>
                           )}
-                          {isChangingDesign && selectedDesign !== design.id && (
-                            <div className={styles.step3DesignLoading}>
-                              <div className={styles.tinySpinner}></div>
-                            </div>
-                          )}
                         </motion.button>
                       ))}
                   </div>
@@ -489,7 +708,7 @@ export default function OptimizerFinalize() {
                 </div>
               </div>
 
-              {/* Text Editor Panel */}
+              {/* Text Editor */}
               <div className={styles.step3EditorPanel}>
                 <div className={styles.step3EditorHeader}>
                   <div className={styles.step3EditorTitle}>
@@ -509,13 +728,13 @@ export default function OptimizerFinalize() {
                     )}
                     <motion.button
                       className={`${styles.step3EditorBtn} ${styles.primary}`}
-                      onClick={generatePdfPreview}
+                      onClick={refreshPdfPreview}
                       disabled={isGeneratingPreview || !contractText}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
                       {isGeneratingPreview ? (
-                        <div className={styles.tinySpinner}></div>
+                        <Loader2 size={14} className="animate-spin" />
                       ) : (
                         <RefreshCw size={14} />
                       )}
@@ -524,7 +743,7 @@ export default function OptimizerFinalize() {
                   </div>
                 </div>
 
-                {/* KI Improvement Section */}
+                {/* KI Improvement */}
                 <AnimatePresence>
                   {showImprovementSection && (
                     <motion.div
@@ -536,7 +755,7 @@ export default function OptimizerFinalize() {
                       <textarea
                         value={improvements}
                         onChange={(e) => setImprovements(e.target.value)}
-                        placeholder="Änderungswünsche eingeben, z.B.: Zahlungsfrist auf 30 Tage ändern, Kündigungsfrist hinzufügen..."
+                        placeholder="Änderungswünsche eingeben, z.B.: Zahlungsfrist auf 30 Tage ändern..."
                         disabled={isImproving}
                         rows={2}
                       />
@@ -551,7 +770,7 @@ export default function OptimizerFinalize() {
                         >
                           {isImproving ? (
                             <>
-                              <div className={styles.tinySpinner}></div>
+                              <Loader2 size={14} className="animate-spin" />
                               Verbessere...
                             </>
                           ) : (
@@ -566,13 +785,11 @@ export default function OptimizerFinalize() {
                   )}
                 </AnimatePresence>
 
-                {/* Text Editor */}
                 <div className={styles.step3EditorContent}>
                   <textarea
                     value={contractText}
                     onChange={(e) => {
                       setContractText(e.target.value);
-                      // PDF-Preview invalidieren bei Textänderung
                       if (pdfPreviewUrl) {
                         window.URL.revokeObjectURL(pdfPreviewUrl);
                         setPdfPreviewUrl(null);
@@ -584,7 +801,7 @@ export default function OptimizerFinalize() {
               </div>
             </div>
 
-            {/* Right Column: PDF Preview (Sticky) */}
+            {/* Right Column: PDF Preview */}
             <div className={styles.step3RightColumn}>
               <div className={styles.step3PdfPanel}>
                 <div className={styles.step3PdfHeader}>
@@ -596,7 +813,7 @@ export default function OptimizerFinalize() {
                 <div className={styles.step3PdfContent}>
                   {isGeneratingPreview ? (
                     <div className={styles.step3PdfLoading}>
-                      <div className={styles.loadingSpinner}></div>
+                      <Loader2 size={32} className="animate-spin" style={{ color: '#2E6CF6' }} />
                       <p>PDF wird generiert...</p>
                     </div>
                   ) : pdfPreviewUrl ? (
@@ -608,7 +825,7 @@ export default function OptimizerFinalize() {
                     <div className={styles.step3PdfEmpty}>
                       <FileText size={32} />
                       <p>Keine Vorschau verfügbar</p>
-                      <button onClick={generatePdfPreview}>
+                      <button onClick={refreshPdfPreview}>
                         <RefreshCw size={14} />
                         Vorschau laden
                       </button>
