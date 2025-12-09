@@ -1288,16 +1288,17 @@ export default function Optimizer() {
         throw new Error('Keine Contract ID erhalten');
       }
 
-      console.log('✅ Vertragstext erstellt, öffne Design-Auswahl:', data.contractId);
+      console.log('✅ Vertragstext erstellt, navigiere zur Finalize-Seite:', data.contractId);
 
-      // 8. Speichere generierte Daten und öffne Design-Modal
+      // 8. Schließe Modal und navigiere zur Finalize-Seite
       setGeneratedContractText(data.contractText || '');
       setGeneratedContractId(data.contractId);
-      setSelectedDesignVariant('executive'); // Reset auf Standard
-      setShowGenerateModal(false); // Schließe erstes Modal
-      setShowDesignModal(true); // Öffne Design-Auswahl Modal
+      setShowGenerateModal(false); // Schließe Modal
 
-      showToast("✅ Vertragstext erstellt! Wähle jetzt dein Design.", 'success');
+      showToast("✅ Vertragstext erstellt! Du kannst jetzt das Design wählen.", 'success');
+
+      // 🎯 Navigiere zur OptimizerFinalize Seite für vollständige Bearbeitung
+      navigate(`/optimizer/finalize/${data.contractId}`);
 
     } catch (error) {
       const err = error as Error;
@@ -1316,7 +1317,8 @@ export default function Optimizer() {
     selectedOptimizations,
     originalContractText,
     isGeneratingContract,
-    showToast
+    showToast,
+    navigate
   ]);
 
   // 🎨 SCHRITT 2: PDF mit gewähltem Design generieren und herunterladen

@@ -74,6 +74,7 @@ const EditContract = lazy(() => import("./pages/EditContract"));
 const CalendarView = lazy(() => import("./pages/CalendarView"));
 const Cancel = lazy(() => import("./pages/Cancel"));
 const Optimizer = lazy(() => import("./pages/Optimizer"));
+const OptimizerFinalize = lazy(() => import("./pages/OptimizerFinalize")); // 🎯 Optimizer Post-Generation Seite
 const Compare = lazy(() => import("./pages/Compare"));
 const Chat = lazy(() => import("./pages/Chat"));
 const Generate = lazy(() => import("./pages/Generate"));
@@ -210,6 +211,7 @@ function AppWithLoader() {
             {/* ✨ KI-Vertragsoptimierung - Legendary Feature */}
             <Route path="/optimizer" element={<RequireAuth><Optimizer /></RequireAuth>} />
             <Route path="/optimizer/:jobId" element={<RequireAuth><Optimizer /></RequireAuth>} />
+            <Route path="/optimizer/finalize/:contractId" element={<RequireAuth><OptimizerFinalize /></RequireAuth>} />
             <Route path="/optimize/:contractId" element={<RequireAuth><Optimizer /></RequireAuth>} />
 
             {/* 🔍 Legal Pulse - Rechtliche Risikoanalyse */}
