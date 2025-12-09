@@ -5,6 +5,9 @@ import { Helmet } from "react-helmet-async";
 import { Key, Lock, CheckCircle, AlertCircle, ChevronLeft } from "lucide-react";
 import styles from "./ResetPassword.module.css";
 
+// API URL für Backend-Calls
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
+
 interface NotificationProps {
   message: string;
   type?: "success" | "error";
@@ -60,7 +63,7 @@ export default function ResetPassword() {
 
   const validateToken = async (token: string) => {
     try {
-      const res = await fetch(`/api/auth/validate-reset-token?token=${token}`, {
+      const res = await fetch(`${API_URL}/api/auth/validate-reset-token?token=${token}`, {
         method: "GET",
       });
 
@@ -106,7 +109,7 @@ export default function ResetPassword() {
     setNotification(null);
 
     try {
-      const res = await fetch("/api/auth/reset-password", {
+      const res = await fetch(`${API_URL}/api/auth/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, newPassword }),

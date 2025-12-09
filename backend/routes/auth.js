@@ -622,6 +622,33 @@ router.post("/forgot-password", async (req, res) => {
   }
 });
 
+// 🔍 Token validieren (für Frontend-Vorab-Check)
+router.get("/validate-reset-token", async (req, res) => {
+  const { token } = req.query;
+
+  if (!token) {
+    return res.status(400).json({ valid: false, message: "Token fehlt" });
+  }
+
+  try {
+    const user = await usersCollection.findOne({ resetToken: token });
+
+    if (!user) {
+      return res.status(400).json({ valid: false, message: "Token ungültig" });
+    }
+
+    if (user.resetTokenExpires < Date.now()) {
+      return res.status(400).json({ valid: false, message: "Token abgelaufen" });
+    }
+
+    // Token ist gültig
+    res.json({ valid: true, message: "Token gültig" });
+  } catch (err) {
+    console.error("❌ Fehler bei validate-reset-token:", err);
+    res.status(500).json({ valid: false, message: "Serverfehler" });
+  }
+});
+
 // 🔁 Passwort zurücksetzen
 router.post("/reset-password", async (req, res) => {
   const { token, newPassword } = req.body;

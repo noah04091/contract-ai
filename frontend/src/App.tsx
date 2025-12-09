@@ -27,8 +27,9 @@ import Profile from "./pages/Profile"; // 🔧 FIX: Direct import verhindert CSS
 import Impressum from "./pages/Impressum";
 import Datenschutz from "./pages/Datenschutz";
 import AGB from "./pages/AGB";
-// 🔧 FIX: Direct import für ForgotPassword - verhindert CSS-Preload-Fehler
+// 🔧 FIX: Direct import für ForgotPassword & ResetPassword - verhindert CSS-Preload-Fehler
 import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 // 🔓 Öffentliche Seiten - Lazy Loading
 const Register = lazy(() => import("./pages/Register"));
@@ -43,8 +44,7 @@ const SignaturePageComponent = useEnhancedSignUI
   : lazy(() => import("./pages/SignaturePage"));        // 🔙 Fallback to old UI
 
 const Pricing = lazy(() => import("./pages/Pricing"));
-// ForgotPassword wird jetzt direkt importiert (siehe oben)
-const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+// ForgotPassword und ResetPassword werden jetzt direkt importiert (siehe oben)
 // Impressum, Datenschutz, AGB werden direkt importiert (siehe oben)
 const About = lazy(() => import("./pages/About"));
 const Press = lazy(() => import("./pages/Press"));
