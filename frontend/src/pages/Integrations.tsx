@@ -211,22 +211,43 @@ export default function Integrations() {
     switch (icon) {
       case "salesforce":
         return (
-          <svg viewBox="0 0 48 48" className={styles.integrationIcon}>
-            <path fill="#00A1E0" d="M20 8c-3.3 0-6.2 1.4-8.2 3.7-1.6-1.2-3.5-1.9-5.6-1.9C2.8 9.8 0 12.6 0 16.2c0 .4 0 .8.1 1.2C0 17.6 0 17.8 0 18c0 4.4 3.6 8 8 8h12c4.4 0 8-3.6 8-8 0-4.4-3.6-8-8-8zm18 4c-1.5 0-2.9.4-4.1 1.1.3 1 .5 2 .5 3.1 0 1.6-.4 3.1-1.1 4.5 1 .6 2.2 1 3.5 1 3.3 0 6-2.7 6-6s-2.7-6-6-6h-.8z"/>
-          </svg>
+          <img
+            src="https://img.icons8.com/color/96/salesforce.png"
+            alt="Salesforce"
+            className={styles.integrationIcon}
+          />
         );
       case "hubspot":
         return (
-          <svg viewBox="0 0 48 48" className={styles.integrationIcon}>
-            <path fill="#FF7A59" d="M36 18v-4.5c0-1.9-1.6-3.5-3.5-3.5h-3.3c-.6-1.7-2.3-3-4.2-3s-3.6 1.3-4.2 3h-3.3c-1.9 0-3.5 1.6-3.5 3.5V18c-2.8.9-5 3.5-5 6.5 0 3.9 3.1 7 7 7h4v6.5c0 1.9 1.6 3.5 3.5 3.5h5c1.9 0 3.5-1.6 3.5-3.5V31.5h4c3.9 0 7-3.1 7-7 0-3-2.2-5.6-5-6.5zM25 10c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2z"/>
-          </svg>
+          <img
+            src="https://www.hubspot.com/hubfs/HubSpot_Logos/HubSpot-Inversed-Favicon.png"
+            alt="HubSpot"
+            className={styles.integrationIcon}
+          />
         );
       case "sap":
         return (
-          <svg viewBox="0 0 48 48" className={styles.integrationIcon}>
-            <rect fill="#0063D3" width="48" height="48" rx="8"/>
-            <text x="24" y="30" fill="white" fontSize="14" fontWeight="bold" textAnchor="middle">SAP</text>
-          </svg>
+          <img
+            src="https://img.icons8.com/color/96/sap.png"
+            alt="SAP"
+            className={styles.integrationIcon}
+          />
+        );
+      case "pipedrive":
+        return (
+          <img
+            src="https://img.icons8.com/color/96/pipedrive.png"
+            alt="Pipedrive"
+            className={styles.integrationIcon}
+          />
+        );
+      case "zoho":
+        return (
+          <img
+            src="https://img.icons8.com/color/96/zoho.png"
+            alt="Zoho"
+            className={styles.integrationIcon}
+          />
         );
       default:
         return <Building2 className={styles.integrationIcon} />;
