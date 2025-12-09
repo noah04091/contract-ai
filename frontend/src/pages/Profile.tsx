@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
-import { User, Key, CreditCard, Trash2, AlertCircle, CheckCircle, LogOut, FileText, Download, MessageSquare, Users } from "lucide-react";
+import { User, Key, CreditCard, Trash2, AlertCircle, CheckCircle, LogOut, FileText, Download, MessageSquare, Users, Link2 } from "lucide-react";
 import styles from "../styles/Profile.module.css";
 import { useAuth } from "../hooks/useAuth";;
 
@@ -416,6 +416,36 @@ export default function Profile() {
                   >
                     <span className={styles.companyProfileButtonIcon}>👥</span>
                     <span>Team verwalten</span>
+                  </motion.button>
+                </motion.div>
+              )}
+
+              {/* CRM/ERP Integrations Section for Premium/Business users */}
+              {user?.subscriptionActive && (user.subscriptionPlan === 'premium' || user.subscriptionPlan === 'business') && (
+                <motion.div
+                  className={styles.companyProfileSection}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.75 }}
+                >
+                  <div className={styles.companyProfileContent}>
+                    <Link2 size={24} className={styles.companyProfileIcon} />
+                    <div>
+                      <h3 className={styles.companyProfileTitle}>CRM/ERP Integrationen</h3>
+                      <p className={styles.companyProfileDescription}>
+                        Verbinde Contract AI mit Salesforce, HubSpot oder SAP. Synchronisiere Verträge automatisch mit deinen Geschäftssystemen.
+                      </p>
+                    </div>
+                  </div>
+                  <motion.button
+                    className={styles.companyProfileButton}
+                    onClick={() => window.location.href = '/integrations'}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  >
+                    <span className={styles.companyProfileButtonIcon}>🔗</span>
+                    <span>Integrationen verwalten</span>
                   </motion.button>
                 </motion.div>
               )}
