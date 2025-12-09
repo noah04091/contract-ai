@@ -17,6 +17,7 @@ import {
   ArrowLeft, ArrowRight, Check, RefreshCw, X, ArrowLeftCircle,
   Loader2, Wand2, FileCheck
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 import styles from "../styles/Generate.module.css";
 
 // API URL
@@ -49,6 +50,7 @@ export default function OptimizerFinalize() {
   const { contractId } = useParams<{ contractId: string }>();
   const navigate = useNavigate();
   const hasFetched = useRef(false);
+  const { isLoading: authLoading } = useAuth();
 
   // Contract State
   const [contractText, setContractText] = useState<string>("");
@@ -100,14 +102,28 @@ export default function OptimizerFinalize() {
     };
   }, [isLoading]);
 
-  // 📄 Vertrag laden - nur einmal!
+  // 📄 Vertrag laden - nur einmal! Warten bis AuthContext fertig ist
   useEffect(() => {
+    // ⏳ Warten bis AuthContext geladen hat
+    if (authLoading) {
+      console.log('⏳ Warte auf AuthContext...');
+      return;
+    }
+
     if (hasFetched.current) return;
 
     const token = getToken();
-    if (!contractId || !token) {
-      setError("Kein Token oder Contract-ID gefunden");
+    console.log('🔑 Token Check:', token ? 'vorhanden' : 'FEHLT', 'contractId:', contractId);
+
+    if (!contractId) {
+      setError("Keine Contract-ID gefunden");
       setIsLoading(false);
+      return;
+    }
+
+    if (!token) {
+      console.log('⚠️ Kein Token - Redirect zu Login');
+      navigate('/login', { state: { from: `/optimizer/finalize/${contractId}` } });
       return;
     }
 
@@ -154,7 +170,7 @@ export default function OptimizerFinalize() {
     };
 
     fetchContract();
-  }, [contractId]);
+  }, [contractId, authLoading, navigate]);
 
   // 📄 PDF-Vorschau laden (separate Funktion, kein useCallback)
   const loadPdfPreview = async (id: string, design: string, token: string) => {
