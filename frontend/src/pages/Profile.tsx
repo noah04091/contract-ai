@@ -330,23 +330,23 @@ export default function Profile() {
                 </div>
               </div>
 
-              {/* Company Profile Section for Business/Premium users */}
-              {user?.subscriptionActive && (user.subscriptionPlan === 'business' || user.subscriptionPlan === 'premium') && (
-                <motion.div
-                  className={styles.companyProfileSection}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.5 }}
-                >
-                  <div className={styles.companyProfileContent}>
-                    <FileText size={24} className={styles.companyProfileIcon} />
-                    <div>
-                      <h3 className={styles.companyProfileTitle}>Firmenprofil</h3>
-                      <p className={styles.companyProfileDescription}>
-                        Richten Sie Ihr Firmenprofil ein für automatische Daten in generierten Verträgen.
-                      </p>
-                    </div>
+              {/* Company Profile Section - visible for all, functional for Business/Premium */}
+              <motion.div
+                className={styles.companyProfileSection}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.5 }}
+              >
+                <div className={styles.companyProfileContent}>
+                  <FileText size={24} className={styles.companyProfileIcon} />
+                  <div>
+                    <h3 className={styles.companyProfileTitle}>Firmenprofil</h3>
+                    <p className={styles.companyProfileDescription}>
+                      Richten Sie Ihr Firmenprofil ein für automatische Daten in generierten Verträgen.
+                    </p>
                   </div>
+                </div>
+                {user?.subscriptionActive && (user.subscriptionPlan === 'business' || user.subscriptionPlan === 'premium') ? (
                   <motion.button
                     className={styles.companyProfileButton}
                     onClick={() => window.location.href = '/company-profile'}
@@ -357,26 +357,37 @@ export default function Profile() {
                     <span className={styles.companyProfileButtonIcon}>🏢</span>
                     <span>Firmenprofil anlegen</span>
                   </motion.button>
-                </motion.div>
-              )}
+                ) : (
+                  <motion.button
+                    className={styles.upgradeFeatureButton}
+                    onClick={() => window.location.href = '/pricing'}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  >
+                    <span className={styles.companyProfileButtonIcon}>⭐</span>
+                    <span>Upgrade auf Premium</span>
+                  </motion.button>
+                )}
+              </motion.div>
 
-              {/* REST API Access Section for Enterprise users */}
-              {user?.subscriptionActive && user.subscriptionPlan === 'premium' && (
-                <motion.div
-                  className={styles.companyProfileSection}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.6 }}
-                >
-                  <div className={styles.companyProfileContent}>
-                    <Key size={24} className={styles.companyProfileIcon} />
-                    <div>
-                      <h3 className={styles.companyProfileTitle}>REST API-Zugang</h3>
-                      <p className={styles.companyProfileDescription}>
-                        Verwalte deine API-Keys für programmatischen Zugriff auf Contract AI. Automatisiere Workflows und integriere mit eigenen Systemen.
-                      </p>
-                    </div>
+              {/* REST API Access Section - visible for all, functional for Premium */}
+              <motion.div
+                className={styles.companyProfileSection}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.6 }}
+              >
+                <div className={styles.companyProfileContent}>
+                  <Key size={24} className={styles.companyProfileIcon} />
+                  <div>
+                    <h3 className={styles.companyProfileTitle}>REST API-Zugang</h3>
+                    <p className={styles.companyProfileDescription}>
+                      Verwalte deine API-Keys für programmatischen Zugriff auf Contract AI. Automatisiere Workflows und integriere mit eigenen Systemen.
+                    </p>
                   </div>
+                </div>
+                {user?.subscriptionActive && user.subscriptionPlan === 'premium' ? (
                   <motion.button
                     className={styles.companyProfileButton}
                     onClick={() => window.location.href = '/api-keys'}
@@ -387,26 +398,37 @@ export default function Profile() {
                     <span className={styles.companyProfileButtonIcon}>🔑</span>
                     <span>API-Keys verwalten</span>
                   </motion.button>
-                </motion.div>
-              )}
+                ) : (
+                  <motion.button
+                    className={styles.upgradeFeatureButton}
+                    onClick={() => window.location.href = '/pricing'}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  >
+                    <span className={styles.companyProfileButtonIcon}>⭐</span>
+                    <span>Upgrade auf Premium</span>
+                  </motion.button>
+                )}
+              </motion.div>
 
-              {/* Team Management Section for Enterprise users */}
-              {user?.subscriptionActive && user.subscriptionPlan === 'premium' && (
-                <motion.div
-                  className={styles.companyProfileSection}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.7 }}
-                >
-                  <div className={styles.companyProfileContent}>
-                    <Users size={24} className={styles.companyProfileIcon} />
-                    <div>
-                      <h3 className={styles.companyProfileTitle}>Team-Management</h3>
-                      <p className={styles.companyProfileDescription}>
-                        Erstelle eine Organisation, lade Team-Mitglieder ein und arbeite gemeinsam an Verträgen. Bis zu 10 User pro Team.
-                      </p>
-                    </div>
+              {/* Team Management Section - visible for all, functional for Premium */}
+              <motion.div
+                className={styles.companyProfileSection}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.7 }}
+              >
+                <div className={styles.companyProfileContent}>
+                  <Users size={24} className={styles.companyProfileIcon} />
+                  <div>
+                    <h3 className={styles.companyProfileTitle}>Team-Management</h3>
+                    <p className={styles.companyProfileDescription}>
+                      Erstelle eine Organisation, lade Team-Mitglieder ein und arbeite gemeinsam an Verträgen. Bis zu 10 User pro Team.
+                    </p>
                   </div>
+                </div>
+                {user?.subscriptionActive && user.subscriptionPlan === 'premium' ? (
                   <motion.button
                     className={styles.companyProfileButton}
                     onClick={() => window.location.href = '/team'}
@@ -417,26 +439,37 @@ export default function Profile() {
                     <span className={styles.companyProfileButtonIcon}>👥</span>
                     <span>Team verwalten</span>
                   </motion.button>
-                </motion.div>
-              )}
+                ) : (
+                  <motion.button
+                    className={styles.upgradeFeatureButton}
+                    onClick={() => window.location.href = '/pricing'}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  >
+                    <span className={styles.companyProfileButtonIcon}>⭐</span>
+                    <span>Upgrade auf Premium</span>
+                  </motion.button>
+                )}
+              </motion.div>
 
-              {/* CRM/ERP Integrations Section for Premium/Business users */}
-              {user?.subscriptionActive && (user.subscriptionPlan === 'premium' || user.subscriptionPlan === 'business') && (
-                <motion.div
-                  className={styles.companyProfileSection}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.75 }}
-                >
-                  <div className={styles.companyProfileContent}>
-                    <Link2 size={24} className={styles.companyProfileIcon} />
-                    <div>
-                      <h3 className={styles.companyProfileTitle}>CRM/ERP Integrationen</h3>
-                      <p className={styles.companyProfileDescription}>
-                        Verbinde Contract AI mit Salesforce, HubSpot oder SAP. Synchronisiere Verträge automatisch mit deinen Geschäftssystemen.
-                      </p>
-                    </div>
+              {/* CRM/ERP Integrations Section - visible for all, functional for Premium/Business */}
+              <motion.div
+                className={styles.companyProfileSection}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.75 }}
+              >
+                <div className={styles.companyProfileContent}>
+                  <Link2 size={24} className={styles.companyProfileIcon} />
+                  <div>
+                    <h3 className={styles.companyProfileTitle}>CRM/ERP Integrationen</h3>
+                    <p className={styles.companyProfileDescription}>
+                      Verbinde Contract AI mit Salesforce, HubSpot oder SAP. Synchronisiere Verträge automatisch mit deinen Geschäftssystemen.
+                    </p>
                   </div>
+                </div>
+                {user?.subscriptionActive && (user.subscriptionPlan === 'premium' || user.subscriptionPlan === 'business') ? (
                   <motion.button
                     className={styles.companyProfileButton}
                     onClick={() => window.location.href = '/integrations'}
@@ -447,8 +480,19 @@ export default function Profile() {
                     <span className={styles.companyProfileButtonIcon}>🔗</span>
                     <span>Integrationen verwalten</span>
                   </motion.button>
-                </motion.div>
-              )}
+                ) : (
+                  <motion.button
+                    className={styles.upgradeFeatureButton}
+                    onClick={() => window.location.href = '/pricing'}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  >
+                    <span className={styles.companyProfileButtonIcon}>⭐</span>
+                    <span>Upgrade auf Premium</span>
+                  </motion.button>
+                )}
+              </motion.div>
 
               {!user.subscriptionActive && (
                 <motion.div 
