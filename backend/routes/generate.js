@@ -3841,19 +3841,55 @@ router.post("/change-design", verifyToken, async (req, res) => {
       };
     }
 
-    // Design-Variante im Vertrag aktualisieren
+    // 🔧 KRITISCHER FIX: HTML mit neuem Design NEU GENERIEREN
+    // Ohne dies wird das alte gecachte HTML verwendet!
+    console.log("🎨 Generiere HTML neu mit Design:", newDesignVariant);
+
+    // Company Profile laden wenn vorhanden
+    let companyProfile = null;
+    if (contract.hasCompanyProfile) {
+      try {
+        companyProfile = await db.collection("company_profiles").findOne({
+          $or: [
+            { userId: new ObjectId(req.user.userId) },
+            { userId: req.user.userId }
+          ]
+        });
+        console.log("🏢 Company Profile für Design-Change geladen:", !!companyProfile);
+      } catch (profileError) {
+        console.warn("⚠️ Company Profile nicht geladen:", profileError.message);
+      }
+    }
+
+    // HTML mit neuem Design regenerieren
+    const isDraft = contract.status === 'Entwurf' || contract.formData?.isDraft;
+    const newHTML = await formatContractToHTML(
+      contract.content,
+      companyProfile,
+      contract.contractType || 'vertrag',
+      newDesignVariant,
+      isDraft,
+      contract.formData || null
+    );
+
+    // HTML in Update-Daten hinzufügen
+    updateData.contractHTML = newHTML;
+    console.log("✅ Neues HTML generiert, Länge:", newHTML.length);
+
+    // Design-Variante und HTML im Vertrag aktualisieren
     await contractsCollection.updateOne(
       { _id: new ObjectId(contractId) },
       { $set: updateData }
     );
 
-    console.log("✅ Design-Variante aktualisiert:", { contractId, newDesignVariant, customDesign: updateData.customDesign });
+    console.log("✅ Design-Variante + HTML aktualisiert:", { contractId, newDesignVariant, htmlLength: newHTML.length });
 
     res.json({
       message: "✅ Design-Variante erfolgreich geändert",
       newDesignVariant: newDesignVariant,
       customDesign: updateData.customDesign || null,
-      contractId: contractId
+      contractId: contractId,
+      htmlRegenerated: true
     });
 
   } catch (error) {
