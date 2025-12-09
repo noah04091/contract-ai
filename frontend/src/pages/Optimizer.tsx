@@ -1320,8 +1320,8 @@ export default function Optimizer() {
   ]);
 
   // 🎨 SCHRITT 2: PDF mit gewähltem Design generieren und herunterladen
-  // Verwendet /api/contracts/generate/change-design + /api/contracts/generate/pdf
-  // Diese Routes haben flexible userId-Handhabung (String oder ObjectId)
+  // Verwendet /api/contracts/:id/pdf-v2 - React-PDF Generator (bessere Qualität!)
+  // Diese Route hat flexible userId-Handhabung (String oder ObjectId)
   const handleDownloadWithDesign = useCallback(async () => {
     if (!generatedContractId || !file) {
       showToast("❌ Kein Vertrag zum Herunterladen", 'error');
@@ -1337,38 +1337,17 @@ export default function Optimizer() {
     showToast(`🎨 Generiere PDF mit Design "${designName}"...`, 'info');
 
     try {
-      console.log('🎨 Generiere PDF mit Design:', selectedDesignVariant, 'für Contract:', generatedContractId);
+      console.log('🎨 Generiere PDF mit React-PDF V2, Design:', selectedDesignVariant, 'für Contract:', generatedContractId);
 
-      // 1. Design im Vertrag speichern via /change-design
-      console.log('📝 Setze Design-Variante:', selectedDesignVariant);
-      const designResponse = await fetch(
-        `${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/generate/change-design`,
-        {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contractId: generatedContractId,
-            newDesignVariant: selectedDesignVariant
-          })
-        }
-      );
-
-      if (!designResponse.ok) {
-        const errorData = await designResponse.json();
-        console.error('❌ Design-Änderung fehlgeschlagen:', errorData);
-        throw new Error(errorData.message || 'Design-Änderung fehlgeschlagen');
-      }
-      console.log('✅ Design erfolgreich gesetzt');
-
-      // 2. PDF generieren via /pdf (hat flexible userId-Handhabung)
+      // 🆕 Direkt /pdf-v2 verwenden (React-PDF Generator) mit Design als Parameter
+      // Dieser Endpoint verwendet den programmatischen PDF-Generator, nicht HTML-zu-PDF
       const pdfResponse = await fetch(
-        `${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/generate/pdf`,
+        `${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/${generatedContractId}/pdf-v2?design=${selectedDesignVariant}`,
         {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contractId: generatedContractId })
+          body: JSON.stringify({ design: selectedDesignVariant })
         }
       );
 
@@ -1378,11 +1357,11 @@ export default function Optimizer() {
         throw new Error('PDF-Generierung fehlgeschlagen');
       }
 
-      // 3. Lade das generierte PDF herunter
+      // 2. Lade das generierte PDF herunter
       const blob = await pdfResponse.blob();
       console.log('✅ PDF erfolgreich generiert, Größe:', blob.size, 'bytes');
 
-      // 4. Speichere optimiertes PDF in S3 für spätere Ansicht
+      // 3. Speichere optimiertes PDF in S3 für spätere Ansicht
       try {
         console.log('📤 Uploading optimized PDF to S3...');
         const optimizedFileName = `Optimiert_${file.name.replace('.pdf', '')}_${new Date().toISOString().split('T')[0]}.pdf`;
@@ -1425,7 +1404,7 @@ export default function Optimizer() {
         console.warn('⚠️ Failed to upload optimized PDF to S3 (continuing with download):', s3Error);
       }
 
-      // 5. Download starten
+      // 4. Download starten
       const downloadUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
@@ -1437,7 +1416,7 @@ export default function Optimizer() {
 
       showToast(`✅ Vertrag mit "${designName}" Design erfolgreich heruntergeladen!`, 'success');
 
-      // 6. Modal schließen und State zurücksetzen
+      // 5. Modal schließen und State zurücksetzen
       setShowDesignModal(false);
       setGeneratedContractText('');
       setGeneratedContractId(null);

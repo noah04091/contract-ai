@@ -3598,16 +3598,21 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
     const designVariant = req.query.design || req.body.design || 'executive';
     console.log('🎨 [V2] PDF-Anfrage für Vertrag:', contractId, '| Design:', designVariant);
 
-    // Verwende die bereits initialisierte contractsCollection
-    // WICHTIG: userId muss als ObjectId verglichen werden!
+    // 🔧 KRITISCHER FIX: Flexible userId-Suche (String ODER ObjectId)
+    // Verträge vom Optimizer werden mit userId als String gespeichert!
     const contract = await contractsCollection.findOne({
       _id: new ObjectId(contractId),
-      userId: new ObjectId(req.user.userId)
+      $or: [
+        { userId: new ObjectId(req.user.userId) },
+        { userId: req.user.userId }
+      ]
     });
 
     if (!contract) {
+      console.log('❌ [V2] Vertrag nicht gefunden für:', { contractId, userId: req.user.userId });
       return res.status(404).json({ message: "Vertrag nicht gefunden" });
     }
+    console.log('✅ [V2] Vertrag gefunden:', { name: contract.name, userIdType: typeof contract.userId });
 
     // Company Profile laden (immer versuchen, falls vorhanden)
     // WICHTIG: req.db verwenden (gleiche Connection wie companyProfile.js)
