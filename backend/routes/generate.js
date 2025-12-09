@@ -3021,7 +3021,7 @@ DAS IST KEIN "Vertrag neu schreiben" - DAS IST "Vertrag gezielt verbessern"!`;
     }
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-4o", // 🔧 FIX: gpt-4o hat 128k Tokens statt nur 8k bei gpt-4
       messages: [
         { role: "system", content: finalSystemPrompt },
         { role: "user", content: userPrompt }
@@ -3037,7 +3037,7 @@ DAS IST KEIN "Vertrag neu schreiben" - DAS IST "Vertrag gezielt verbessern"!`;
       console.warn("⚠️ Vertrag zu kurz (" + contractText.length + " Zeichen), fordere längere Version an...");
       
       const retryCompletion = await openai.chat.completions.create({
-        model: "gpt-4",
+        model: "gpt-4o", // 🔧 FIX: gpt-4o hat 128k Tokens statt nur 8k bei gpt-4
         messages: [
           { 
             role: "system", 
