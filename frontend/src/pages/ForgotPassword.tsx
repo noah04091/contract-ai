@@ -5,6 +5,9 @@ import { Mail } from "lucide-react";
 import styles from "./ForgotPassword.module.css";
 import { Link } from "react-router-dom";
 
+// API URL für Backend-Calls
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
+
 interface NotificationProps {
   message: string;
   type?: "success" | "error";
@@ -40,7 +43,7 @@ export default function ForgotPassword() {
     setNotification(null);
 
     try {
-      const res = await fetch("/api/auth/forgot-password", {
+      const res = await fetch(`${API_URL}/api/auth/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
