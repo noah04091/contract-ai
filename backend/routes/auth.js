@@ -397,7 +397,9 @@ router.get("/me", verifyToken, async (req, res) => {
       // 📧 E-MAIL INBOX INFO (NEU)
       emailInboxAddress: user.emailInboxAddress || null,
       emailInboxEnabled: user.emailInboxEnabled ?? true,
-      emailInboxAddressCreatedAt: user.emailInboxAddressCreatedAt || null
+      emailInboxAddressCreatedAt: user.emailInboxAddressCreatedAt || null,
+      // 🎓 ONBOARDING TOURS (serverseitig gespeichert)
+      completedTours: user.completedTours || []
     };
 
     console.log("✅ User-Info erfolgreich geladen:", {
@@ -459,6 +461,59 @@ router.post("/reset-my-analysis-count", verifyToken, async (req, res) => {
   } catch (err) {
     console.error("❌ Reset error:", err);
     res.status(500).json({ message: "Fehler beim Zurücksetzen" });
+  }
+});
+
+// 🎓 ONBOARDING TOUR: Tour als abgeschlossen markieren (serverseitig)
+router.post("/complete-tour", verifyToken, async (req, res) => {
+  try {
+    const { path } = req.body;
+
+    if (!path || typeof path !== 'string') {
+      return res.status(400).json({ message: "Pfad erforderlich" });
+    }
+
+    // Pfad normalisieren (lowercase, trailing slashes entfernen)
+    const normalizedPath = path.replace(/\/+$/, '').toLowerCase() || '/';
+
+    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
+    if (!user) {
+      return res.status(404).json({ message: "User nicht gefunden" });
+    }
+
+    // Prüfen ob Tour bereits abgeschlossen
+    const completedTours = user.completedTours || [];
+    if (completedTours.includes(normalizedPath)) {
+      return res.json({
+        success: true,
+        message: "Tour bereits abgeschlossen",
+        completedTours
+      });
+    }
+
+    // Tour als abgeschlossen markieren
+    const updatedTours = [...completedTours, normalizedPath];
+
+    await usersCollection.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          completedTours: updatedTours,
+          updatedAt: new Date()
+        }
+      }
+    );
+
+    console.log(`🎓 Tour abgeschlossen für ${user.email}: ${normalizedPath}`);
+
+    res.json({
+      success: true,
+      message: "Tour als abgeschlossen gespeichert",
+      completedTours: updatedTours
+    });
+  } catch (err) {
+    console.error("❌ Fehler bei /complete-tour:", err);
+    res.status(500).json({ message: "Serverfehler beim Speichern der Tour" });
   }
 });
 
