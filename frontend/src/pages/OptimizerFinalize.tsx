@@ -320,6 +320,7 @@ export default function OptimizerFinalize() {
     if (!improvements.trim() || isImproving || !token || !contractId) return;
 
     setIsImproving(true);
+    console.log('🔄 KI-Verbesserung gestartet:', improvements.trim());
 
     try {
       const response = await fetch(`${API_URL}/api/contracts/improve`, {
@@ -340,26 +341,77 @@ export default function OptimizerFinalize() {
       }
 
       const data = await response.json();
+      console.log('✅ KI-Verbesserung Response:', {
+        success: data.success,
+        hasImprovedContract: !!data.improvedContract,
+        improvedLength: data.improvedContract?.length
+      });
 
       if (data.improvedContract) {
-        setContractText(data.improvedContract);
+        const newContractText = data.improvedContract;
+
+        // 1. State aktualisieren
+        setContractText(newContractText);
         setImprovements("");
         setShowImprovementSection(false);
 
-        // PDF neu generieren
+        // 2. Alte Preview-URL freigeben
         if (pdfPreviewUrl) {
           window.URL.revokeObjectURL(pdfPreviewUrl);
           setPdfPreviewUrl(null);
         }
-        setTimeout(() => refreshPdfPreview(), 500);
+
+        // 3. WICHTIG: Vertrag in DB speichern UND PDF direkt mit dem neuen Text generieren
+        //    (Nicht refreshPdfPreview() aufrufen, da der State noch nicht aktualisiert ist!)
+        setIsGeneratingPreview(true);
+
+        try {
+          // Erst den neuen Text in der Datenbank speichern
+          await fetch(`${API_URL}/api/contracts/${contractId}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              content: newContractText, // NEUER Text direkt verwenden!
+              designVariant: selectedDesign,
+            }),
+          });
+          console.log('💾 Neuer Vertragstext gespeichert');
+
+          // Dann PDF mit dem neuen Text generieren
+          const pdfResponse = await fetch(
+            `${API_URL}/api/contracts/${contractId}/pdf-v2?design=${selectedDesign}`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ design: selectedDesign }),
+            }
+          );
+
+          if (pdfResponse.ok) {
+            const pdfBlob = await pdfResponse.blob();
+            const url = window.URL.createObjectURL(pdfBlob);
+            setPdfPreviewUrl(url);
+            console.log('✅ PDF-Vorschau mit verbessertem Text erstellt');
+          }
+        } catch (pdfErr) {
+          console.error("Fehler bei PDF nach Verbesserung:", pdfErr);
+        } finally {
+          setIsGeneratingPreview(false);
+        }
       }
     } catch (err) {
-      console.error("Fehler bei KI-Verbesserung:", err);
+      console.error("❌ Fehler bei KI-Verbesserung:", err);
       setError("KI-Verbesserung fehlgeschlagen");
     } finally {
       setIsImproving(false);
     }
-  }, [contractId, contractText, improvements, pdfPreviewUrl, isImproving, refreshPdfPreview]);
+  }, [contractId, contractText, improvements, pdfPreviewUrl, isImproving, selectedDesign]);
 
   // 📥 PDF Download
   const handleDownload = useCallback(async () => {
