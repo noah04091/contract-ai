@@ -1320,7 +1320,8 @@ export default function Optimizer() {
   ]);
 
   // 🎨 SCHRITT 2: PDF mit gewähltem Design generieren und herunterladen
-  // (Kopiert von Generate-Seite: verwendet /api/contracts/${id}/pdf-v2 mit Design-Parameter)
+  // Verwendet /api/contracts/generate/change-design + /api/contracts/generate/pdf
+  // Diese Routes haben flexible userId-Handhabung (String oder ObjectId)
   const handleDownloadWithDesign = useCallback(async () => {
     if (!generatedContractId || !file) {
       showToast("❌ Kein Vertrag zum Herunterladen", 'error');
@@ -1338,15 +1339,36 @@ export default function Optimizer() {
     try {
       console.log('🎨 Generiere PDF mit Design:', selectedDesignVariant, 'für Contract:', generatedContractId);
 
-      // 1. Generiere PDF mit V2-Endpoint (wie in Generate-Seite)
-      // Dieser Endpoint akzeptiert das Design direkt als Parameter
-      const pdfResponse = await fetch(
-        `${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/${generatedContractId}/pdf-v2?design=${selectedDesignVariant}`,
+      // 1. Design im Vertrag speichern via /change-design
+      console.log('📝 Setze Design-Variante:', selectedDesignVariant);
+      const designResponse = await fetch(
+        `${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/generate/change-design`,
         {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ design: selectedDesignVariant })
+          body: JSON.stringify({
+            contractId: generatedContractId,
+            newDesignVariant: selectedDesignVariant
+          })
+        }
+      );
+
+      if (!designResponse.ok) {
+        const errorData = await designResponse.json();
+        console.error('❌ Design-Änderung fehlgeschlagen:', errorData);
+        throw new Error(errorData.message || 'Design-Änderung fehlgeschlagen');
+      }
+      console.log('✅ Design erfolgreich gesetzt');
+
+      // 2. PDF generieren via /pdf (hat flexible userId-Handhabung)
+      const pdfResponse = await fetch(
+        `${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/generate/pdf`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contractId: generatedContractId })
         }
       );
 
@@ -1356,11 +1378,11 @@ export default function Optimizer() {
         throw new Error('PDF-Generierung fehlgeschlagen');
       }
 
-      // 2. Lade das generierte PDF herunter
+      // 3. Lade das generierte PDF herunter
       const blob = await pdfResponse.blob();
       console.log('✅ PDF erfolgreich generiert, Größe:', blob.size, 'bytes');
 
-      // 3. Speichere optimiertes PDF in S3 für spätere Ansicht
+      // 4. Speichere optimiertes PDF in S3 für spätere Ansicht
       try {
         console.log('📤 Uploading optimized PDF to S3...');
         const optimizedFileName = `Optimiert_${file.name.replace('.pdf', '')}_${new Date().toISOString().split('T')[0]}.pdf`;
@@ -1403,7 +1425,7 @@ export default function Optimizer() {
         console.warn('⚠️ Failed to upload optimized PDF to S3 (continuing with download):', s3Error);
       }
 
-      // 4. Download starten
+      // 5. Download starten
       const downloadUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
@@ -1415,7 +1437,7 @@ export default function Optimizer() {
 
       showToast(`✅ Vertrag mit "${designName}" Design erfolgreich heruntergeladen!`, 'success');
 
-      // 5. Modal schließen und State zurücksetzen
+      // 6. Modal schließen und State zurücksetzen
       setShowDesignModal(false);
       setGeneratedContractText('');
       setGeneratedContractId(null);
@@ -4008,7 +4030,7 @@ Konfidenz: ${opt.confidence}%\n`
                   background: '#F5F5F7',
                   borderRadius: '12px',
                   padding: '16px',
-                  maxHeight: '200px',
+                  maxHeight: '300px',
                   overflowY: 'auto',
                   border: '1px solid #E5E5E7'
                 }}>
@@ -4021,8 +4043,7 @@ Konfidenz: ${opt.confidence}%\n`
                     wordBreak: 'break-word',
                     fontFamily: 'SF Mono, Monaco, Consolas, monospace'
                   }}>
-                    {generatedContractText.substring(0, 1500)}
-                    {generatedContractText.length > 1500 && '...'}
+                    {generatedContractText}
                   </pre>
                 </div>
                 <p style={{
