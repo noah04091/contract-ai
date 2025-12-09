@@ -322,27 +322,27 @@ export default function OptimizerFinalize() {
     setIsImproving(true);
 
     try {
-      const response = await fetch(`${API_URL}/api/generate/improve`, {
+      const response = await fetch(`${API_URL}/api/contracts/improve`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          contractId,
-          contractText,
+          originalContract: contractText,
           improvements: improvements.trim(),
         }),
       });
 
       if (!response.ok) {
-        throw new Error("Verbesserung fehlgeschlagen");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Verbesserung fehlgeschlagen");
       }
 
       const data = await response.json();
 
-      if (data.improvedText) {
-        setContractText(data.improvedText);
+      if (data.improvedContract) {
+        setContractText(data.improvedContract);
         setImprovements("");
         setShowImprovementSection(false);
 
