@@ -478,12 +478,32 @@
   pointer-events: none;
 }
 
+/* Label mit Toggle Button Layout */
+.formLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #1d1d1f;
+  margin-bottom: 0.25rem;
+}
+
+/* 🎯 Field Actions Container - rechts im Label */
+.fieldActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
 /* 📋 Mode Toggle Button (Dropdown <-> Custom) */
 .modeToggle {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 8px;
+  padding: 4px 10px;
   border: 1px solid #e5e5e7;
   border-radius: 6px;
   background: #f9f9fb;
@@ -492,7 +512,7 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  margin-left: auto;
+  white-space: nowrap;
 }
 
 .modeToggle:hover:not(:disabled) {
@@ -510,36 +530,24 @@
   color: inherit !important;
 }
 
-/* Label mit Toggle Button Layout */
-.formLabel {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: #1d1d1f;
-  margin-bottom: 0.25rem;
-}
-
 /* 🗑️ Remove Field Button */
 .removeFieldBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-  border: 1px solid #ffccd5;
+  width: 26px;
+  height: 26px;
+  border: 1px solid #e5e5e7;
   border-radius: 6px;
-  background: #fff5f5;
-  color: #d70015;
+  background: #f9f9fb;
+  color: #86868b;
   cursor: pointer;
   transition: all 0.2s ease;
-  margin-left: auto;
   flex-shrink: 0;
 }
 
 .removeFieldBtn:hover:not(:disabled) {
-  background: #ffecec;
+  background: #fff0f0;
   border-color: #ff453a;
   color: #ff453a;
 }
@@ -691,22 +699,50 @@
 
 /* Mobile anpassen */
 @media (max-width: 480px) {
+  .fieldActions {
+    gap: 8px;
+  }
+
   .modeToggle {
-    padding: 6px 10px;
+    padding: 6px 12px;
     font-size: 0.8rem;
+    min-height: 32px;
   }
 
   .formSelect {
     padding: 0.75rem 2.25rem 0.75rem 0.875rem;
     font-size: 0.9rem;
+    min-height: 48px;
   }
 
   .removeFieldBtn {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
   }
 
   .addFieldOption {
     padding: 0.875rem 1rem;
+    min-height: 48px;
+  }
+
+  .addFieldBtn {
+    min-height: 48px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Tablet */
+@media (max-width: 768px) {
+  .fieldActions {
+    gap: 8px;
+  }
+
+  .modeToggle {
+    padding: 5px 10px;
+  }
+
+  .removeFieldBtn {
+    width: 30px;
+    height: 30px;
   }
 }

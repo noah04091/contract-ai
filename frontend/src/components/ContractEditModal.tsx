@@ -506,33 +506,36 @@ export default function ContractEditModal({
                     <IconComponent size={16} />
                     <span>{fieldConfig.label}</span>
 
-                    {/* Toggle für Dropdown-Felder */}
-                    {fieldConfig.type === 'dropdown' && (
+                    {/* Aktions-Buttons Container (rechts) */}
+                    <div className={styles.fieldActions}>
+                      {/* Toggle für Dropdown-Felder */}
+                      {fieldConfig.type === 'dropdown' && (
+                        <button
+                          type="button"
+                          className={styles.modeToggle}
+                          onClick={() => toggleCustomInput(fieldId)}
+                          disabled={loading}
+                          title={isCustomMode ? 'Aus Liste wählen' : 'Eigene Eingabe'}
+                        >
+                          {isCustomMode ? (
+                            <><ChevronDown size={12} /> Liste</>
+                          ) : (
+                            <><Edit size={12} /> Eigene</>
+                          )}
+                        </button>
+                      )}
+
+                      {/* Entfernen-Button */}
                       <button
                         type="button"
-                        className={styles.modeToggle}
-                        onClick={() => toggleCustomInput(fieldId)}
+                        className={styles.removeFieldBtn}
+                        onClick={() => removeField(fieldId)}
                         disabled={loading}
-                        title={isCustomMode ? 'Aus Liste wählen' : 'Eigene Eingabe'}
+                        title="Feld entfernen"
                       >
-                        {isCustomMode ? (
-                          <><ChevronDown size={12} /> Liste</>
-                        ) : (
-                          <><Edit size={12} /> Eigene</>
-                        )}
+                        <Minus size={14} />
                       </button>
-                    )}
-
-                    {/* Entfernen-Button */}
-                    <button
-                      type="button"
-                      className={styles.removeFieldBtn}
-                      onClick={() => removeField(fieldId)}
-                      disabled={loading}
-                      title="Feld entfernen"
-                    >
-                      <Minus size={14} />
-                    </button>
+                    </div>
                   </label>
 
                   {/* Dropdown-Feld */}
