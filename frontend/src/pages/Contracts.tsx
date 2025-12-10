@@ -2507,7 +2507,7 @@ export default function Contracts() {
   const getUploadStatusText = (item: UploadFileItem) => {
     switch (item.status) {
       case 'pending':
-        return 'Bereit zum Hochladen';
+        return null; // Kein Text bei "wartend" - cleaner Look
       case 'uploading':
         return `Wird hochgeladen... ${item.progress}%`;
       case 'analyzing':
