@@ -409,7 +409,264 @@ async function generateEventsForContract(db, contract) {
       events.push(...recurringEvents);
     }
 
-    if (!expiryDate && !contract.paymentFrequency) {
+    // 🆕 9. DYNAMISCHE QUICKFACTS-FELDER Events
+
+    // 9a. Gekündigt zum - Event für bestätigte Kündigung
+    if (contract.gekuendigtZum) {
+      const gekuendigtDate = createLocalDate(contract.gekuendigtZum);
+
+      if (gekuendigtDate > now) {
+        events.push({
+          userId: contract.userId,
+          contractId: contract._id,
+          type: "CANCELLATION_DATE",
+          title: `✅ Kündigung wirksam: ${contract.name}`,
+          description: `Die Kündigung für "${contract.name}" wird heute wirksam. Der Vertrag endet.`,
+          date: gekuendigtDate,
+          severity: "info",
+          status: "scheduled",
+          confidence: confidence,
+          dataSource: dataSource,
+          isEstimated: isEstimated,
+          metadata: {
+            provider: contract.provider,
+            contractName: contract.name,
+            suggestedAction: "archive",
+            isCancelled: true
+          },
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+
+        // Reminder 7 Tage vorher
+        const tempReminderDate = new Date(gekuendigtDate);
+        tempReminderDate.setDate(tempReminderDate.getDate() - 7);
+        const reminderDate = createLocalDate(tempReminderDate);
+
+        if (reminderDate > now) {
+          events.push({
+            userId: contract.userId,
+            contractId: contract._id,
+            type: "CANCELLATION_REMINDER",
+            title: `📅 Kündigung in 7 Tagen wirksam: ${contract.name}`,
+            description: `In 7 Tagen endet "${contract.name}" durch die bestätigte Kündigung. Ggf. nach Alternativen suchen!`,
+            date: reminderDate,
+            severity: "info",
+            status: "scheduled",
+            confidence: confidence,
+            dataSource: dataSource,
+            isEstimated: isEstimated,
+            metadata: {
+              provider: contract.provider,
+              contractName: contract.name,
+              daysUntil: 7,
+              suggestedAction: "prepare"
+            },
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+        }
+      }
+    }
+
+    // 9b. Probezeit-Ende (bei Arbeitsverträgen mit startDate)
+    if (contract.startDate && contract.documentCategory === 'arbeitsvertrag') {
+      const startDate = new Date(contract.startDate);
+      const probezeitEnde = new Date(startDate);
+      probezeitEnde.setMonth(probezeitEnde.getMonth() + 6); // Standard: 6 Monate
+      const probezeitDate = createLocalDate(probezeitEnde);
+
+      if (probezeitDate > now) {
+        events.push({
+          userId: contract.userId,
+          contractId: contract._id,
+          type: "PROBATION_END",
+          title: `👔 Probezeit endet: ${contract.name}`,
+          description: `Die Probezeit für "${contract.name}" endet heute. Ab jetzt gelten die normalen Kündigungsfristen.`,
+          date: probezeitDate,
+          severity: "info",
+          status: "scheduled",
+          confidence: confidence,
+          dataSource: dataSource,
+          isEstimated: isEstimated,
+          metadata: {
+            provider: contract.provider,
+            contractName: contract.name,
+            startDate: startDate,
+            suggestedAction: "review"
+          },
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+
+        // Reminder 14 Tage vorher
+        const tempReminderDate = new Date(probezeitDate);
+        tempReminderDate.setDate(tempReminderDate.getDate() - 14);
+        const reminderDate = createLocalDate(tempReminderDate);
+
+        if (reminderDate > now) {
+          events.push({
+            userId: contract.userId,
+            contractId: contract._id,
+            type: "PROBATION_REMINDER",
+            title: `📅 Probezeit endet in 2 Wochen: ${contract.name}`,
+            description: `In 2 Wochen endet die Probezeit für "${contract.name}". Zeit für ein Gespräch!`,
+            date: reminderDate,
+            severity: "info",
+            status: "scheduled",
+            confidence: confidence,
+            dataSource: dataSource,
+            isEstimated: isEstimated,
+            metadata: {
+              provider: contract.provider,
+              contractName: contract.name,
+              daysUntil: 14,
+              suggestedAction: "prepare"
+            },
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+        }
+      }
+    }
+
+    // 9c. Gewährleistung-Ende (bei Kaufverträgen)
+    if (contract.kaufdatum || (contract.startDate && contract.documentCategory === 'kaufvertrag')) {
+      const kaufDate = new Date(contract.kaufdatum || contract.startDate);
+      const gewaehrleistungEnde = new Date(kaufDate);
+      gewaehrleistungEnde.setFullYear(gewaehrleistungEnde.getFullYear() + 2); // 2 Jahre Gewährleistung
+      const gewaehrleistungDate = createLocalDate(gewaehrleistungEnde);
+
+      if (gewaehrleistungDate > now) {
+        events.push({
+          userId: contract.userId,
+          contractId: contract._id,
+          type: "WARRANTY_END",
+          title: `🛡️ Gewährleistung endet: ${contract.name}`,
+          description: `Die gesetzliche Gewährleistung für "${contract.name}" endet heute (2 Jahre nach Kauf).`,
+          date: gewaehrleistungDate,
+          severity: "warning",
+          status: "scheduled",
+          confidence: confidence,
+          dataSource: dataSource,
+          isEstimated: isEstimated,
+          metadata: {
+            provider: contract.provider,
+            contractName: contract.name,
+            purchaseDate: kaufDate,
+            suggestedAction: "check"
+          },
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+
+        // Reminder 30 Tage vorher
+        const tempReminderDate = new Date(gewaehrleistungDate);
+        tempReminderDate.setDate(tempReminderDate.getDate() - 30);
+        const reminderDate = createLocalDate(tempReminderDate);
+
+        if (reminderDate > now) {
+          events.push({
+            userId: contract.userId,
+            contractId: contract._id,
+            type: "WARRANTY_REMINDER",
+            title: `📅 Gewährleistung endet in 30 Tagen: ${contract.name}`,
+            description: `In 30 Tagen endet die Gewährleistung für "${contract.name}". Prüfen Sie, ob alles in Ordnung ist!`,
+            date: reminderDate,
+            severity: "info",
+            status: "scheduled",
+            confidence: confidence,
+            dataSource: dataSource,
+            isEstimated: isEstimated,
+            metadata: {
+              provider: contract.provider,
+              contractName: contract.name,
+              daysUntil: 30,
+              suggestedAction: "check"
+            },
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+        }
+      }
+    }
+
+    // 9d. Mietvertrag-Jubiläum (bei Mietverträgen)
+    if (contract.mietbeginn || (contract.startDate && contract.documentCategory === 'mietvertrag')) {
+      const mietbeginnDate = new Date(contract.mietbeginn || contract.startDate);
+
+      // Jährliches Jubiläum für die nächsten 2 Jahre
+      for (let i = 1; i <= 2; i++) {
+        const jubilaeumDate = new Date(mietbeginnDate);
+        jubilaeumDate.setFullYear(now.getFullYear() + i);
+
+        // Nur wenn das Jubiläum in der Zukunft liegt
+        if (jubilaeumDate > now) {
+          const yearsRented = now.getFullYear() + i - mietbeginnDate.getFullYear();
+          const jubiDate = createLocalDate(jubilaeumDate);
+
+          events.push({
+            userId: contract.userId,
+            contractId: contract._id,
+            type: "RENT_ANNIVERSARY",
+            title: `🏠 ${yearsRented} Jahre Mietverhältnis: ${contract.name}`,
+            description: `Heute vor ${yearsRented} Jahren begann das Mietverhältnis für "${contract.name}". Zeit für eine Bestandsaufnahme!`,
+            date: jubiDate,
+            severity: "info",
+            status: "scheduled",
+            confidence: confidence,
+            dataSource: dataSource,
+            isEstimated: isEstimated,
+            metadata: {
+              provider: contract.provider,
+              contractName: contract.name,
+              yearsRented: yearsRented,
+              mietbeginn: mietbeginnDate,
+              suggestedAction: "review"
+            },
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+          break; // Nur das nächste Jubiläum
+        }
+      }
+    }
+
+    // 9e. Restlaufzeit-Erinnerung (bei Verträgen mit Restlaufzeit)
+    if (contract.restlaufzeit) {
+      // Parse Restlaufzeit (z.B. "3 Monate", "45 Tage")
+      const restTage = parseRestlaufzeit(contract.restlaufzeit);
+
+      if (restTage > 0) {
+        const restlaufzeitEnde = new Date(now);
+        restlaufzeitEnde.setDate(restlaufzeitEnde.getDate() + restTage);
+        const restlaufzeitDate = createLocalDate(restlaufzeitEnde);
+
+        events.push({
+          userId: contract.userId,
+          contractId: contract._id,
+          type: "REMAINING_TIME_END",
+          title: `⏰ Restlaufzeit endet: ${contract.name}`,
+          description: `Die Restlaufzeit von "${contract.name}" (${contract.restlaufzeit}) endet heute.`,
+          date: restlaufzeitDate,
+          severity: "warning",
+          status: "scheduled",
+          confidence: confidence,
+          dataSource: dataSource,
+          isEstimated: isEstimated,
+          metadata: {
+            provider: contract.provider,
+            contractName: contract.name,
+            restlaufzeit: contract.restlaufzeit,
+            suggestedAction: "review"
+          },
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+      }
+    }
+
+    if (!expiryDate && !contract.paymentFrequency && !contract.gekuendigtZum && !contract.startDate && !contract.kaufdatum && !contract.mietbeginn) {
       // 🔧 FIX: Log wenn keine Daten vorhanden
       console.log(`⚠️ Keine Ablaufdaten für "${contract.name}" gefunden. Events können nicht generiert werden.`);
     }
@@ -497,6 +754,39 @@ function calculateNewExpiryDate(currentExpiry, renewMonths) {
   const newDate = new Date(currentExpiry);
   newDate.setMonth(newDate.getMonth() + renewMonths);
   return newDate;
+}
+
+/**
+ * Parst Restlaufzeit-Strings und gibt die Anzahl der Tage zurück
+ * z.B. "3 Monate" → 90, "45 Tage" → 45, "1 Jahr" → 365
+ */
+function parseRestlaufzeit(restlaufzeit) {
+  if (!restlaufzeit || typeof restlaufzeit !== 'string') return 0;
+
+  const text = restlaufzeit.toLowerCase().trim();
+
+  // Suche nach Mustern
+  const patterns = [
+    { regex: /(\d+)\s*jahr/i, multiplier: 365 },
+    { regex: /(\d+)\s*monat/i, multiplier: 30 },
+    { regex: /(\d+)\s*woche/i, multiplier: 7 },
+    { regex: /(\d+)\s*tag/i, multiplier: 1 }
+  ];
+
+  for (const pattern of patterns) {
+    const match = text.match(pattern.regex);
+    if (match) {
+      return parseInt(match[1]) * pattern.multiplier;
+    }
+  }
+
+  // Versuche direkte Zahl zu parsen
+  const directNumber = parseInt(text);
+  if (!isNaN(directNumber)) {
+    return directNumber; // Annahme: Tage
+  }
+
+  return 0;
 }
 
 /**
