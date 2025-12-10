@@ -2799,53 +2799,13 @@ a {
 
 /* === FEATURES SECTION === */
 .features-section {
-  padding: 140px 20px 120px;
-  background: linear-gradient(to bottom, #ffffff 0%, #f8f9fa 80px, #f8f9fa 100%);
+  padding: 100px 20px 100px;
+  background: #f8f9fa;
   position: relative;
   overflow: hidden;
   width: 100%;
   box-sizing: border-box;
   margin-top: 0;
-}
-
-/* Section Divider - Sanfte Welle oben */
-.features-section::before {
-  content: '';
-  position: absolute;
-  top: -1px;
-  left: 0;
-  right: 0;
-  height: 60px;
-  background: #ffffff;
-  clip-path: polygon(
-    0% 0%,
-    100% 0%,
-    100% 70%,
-    75% 85%,
-    50% 100%,
-    25% 85%,
-    0% 70%
-  );
-}
-
-/* Welle unten (Übergang zu nächster weißer Sektion) */
-.features-section::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  right: 0;
-  height: 60px;
-  background: #ffffff;
-  clip-path: polygon(
-    0% 30%,
-    25% 15%,
-    50% 0%,
-    75% 15%,
-    100% 30%,
-    100% 100%,
-    0% 100%
-  );
 }
 
 /* Feature Grid: 4 Spalten für 8 Cards (4-4 Layout auf Desktop) */
@@ -3576,55 +3536,13 @@ a {
 
 /* === SHOWCASE SECTION === */
 .showcase-section {
-  background: linear-gradient(to bottom, #ffffff 0%, #f8f9fa 80px, #f8f9fa calc(100% - 80px), #ffffff 100%);
-  padding: 140px 20px 120px;
+  background: #f8f9fa;
+  padding: 100px 20px 100px;
   position: relative;
   overflow: hidden;
   width: 100%;
   box-sizing: border-box;
   margin-top: 0;
-}
-
-/* Sanfte Welle oben */
-.showcase-section::before {
-  content: '';
-  position: absolute;
-  top: -1px;
-  left: 0;
-  right: 0;
-  height: 60px;
-  background: #ffffff;
-  clip-path: polygon(
-    0% 0%,
-    100% 0%,
-    100% 70%,
-    75% 85%,
-    50% 100%,
-    25% 85%,
-    0% 70%
-  );
-  z-index: 1;
-}
-
-/* Sanfte Welle unten */
-.showcase-section::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  right: 0;
-  height: 60px;
-  background: #ffffff;
-  clip-path: polygon(
-    0% 30%,
-    25% 15%,
-    50% 0%,
-    75% 15%,
-    100% 30%,
-    100% 100%,
-    0% 100%
-  );
-  z-index: 1;
 }
 
 .showcase-bg {
@@ -3928,7 +3846,7 @@ a {
 /* === TESTIMONIALS SECTION === */
 .testimonials-section {
   background: #ffffff;
-  padding: 120px 20px 150px 20px;
+  padding: 100px 20px 120px 20px;
   position: relative;
   width: 100%;
   box-sizing: border-box;
@@ -5049,7 +4967,7 @@ a[href*="kontakt"]:hover,
 .cta-section {
   background: #ffffff;
   color: #1a1a1a;
-  padding: 140px 20px 120px;
+  padding: 100px 20px 100px;
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -6840,32 +6758,9 @@ main,
 
 .stats-counter-section {
   padding: 80px 0;
-  background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 50%, #f8fafc 100%);
+  background: #f8fafc;
   position: relative;
   overflow: hidden;
-}
-
-/* Decorative background elements */
-.stats-counter-section::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -10%;
-  width: 40%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.05) 0%, transparent 70%);
-  pointer-events: none;
-}
-
-.stats-counter-section::after {
-  content: '';
-  position: absolute;
-  bottom: -50%;
-  right: -10%;
-  width: 40%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.05) 0%, transparent 70%);
-  pointer-events: none;
 }
 
 .stats-grid {
@@ -7035,7 +6930,7 @@ main,
 
 .integrations-banner-section {
   padding: 80px 0;
-  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 50%, #f8fafc 100%);
+  background: #ffffff;
   overflow: hidden;
   position: relative;
 }

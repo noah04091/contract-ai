@@ -222,53 +222,90 @@ body {
 
 /* ============================================
    🎯 REACT-JOYRIDE ONBOARDING TOUR FIXES
-   Garantiert klare, lesbare Tour-Popups ohne Blur
+   Garantiert konsistentes Styling auf ALLEN Seiten
    ============================================ */
 
-/* Overlay: Solider dunkler Hintergrund, KEIN Blur */
-.react-joyride__overlay {
-  background-color: rgba(0, 0, 0, 0.75) !important;
+/* Overlay: Fester dunkler Hintergrund auf ALLEN Seiten */
+.react-joyride__overlay,
+div[class*="react-joyride"][class*="overlay"] {
+  background-color: rgba(0, 0, 0, 0.8) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   filter: none !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 9998 !important;
 }
 
-/* Spotlight ausblenden bei center placement */
-.react-joyride__spotlight {
+/* Spotlight komplett ausblenden (wir nutzen center placement) */
+.react-joyride__spotlight,
+div[class*="react-joyride"][class*="spotlight"] {
   background-color: transparent !important;
   box-shadow: none !important;
+  border: none !important;
+  display: none !important;
 }
 
-/* Tooltip: Solider weißer Hintergrund */
-.react-joyride__tooltip {
+/* Tooltip Container: Immer zentriert und sichtbar */
+.react-joyride__tooltip,
+div[class*="react-joyride"][class*="tooltip"] {
   background-color: #ffffff !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   filter: none !important;
   color: #111827 !important;
   border-radius: 16px !important;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+  padding: 28px 32px !important;
+  max-width: 520px !important;
+  z-index: 10000 !important;
+  position: relative !important;
 }
 
-/* Tooltip Content: Klare, lesbare Schrift */
-.react-joyride__tooltip * {
-  color: inherit !important;
+/* Tooltip Text: Klare, lesbare Schrift */
+.react-joyride__tooltip *,
+div[class*="react-joyride"][class*="tooltip"] * {
   -webkit-font-smoothing: antialiased !important;
   -moz-osx-font-smoothing: grayscale !important;
 }
 
-/* Floater: Keine Filter-Effekte */
-.__floater {
+/* Floater Container: Höchste Priorität */
+.__floater,
+div[class*="__floater"] {
   filter: none !important;
+  z-index: 10000 !important;
 }
 
-/* Buttons: Klare Darstellung */
-.react-joyride__tooltip button[data-action="primary"] {
+/* Primary Button (Verstanden) */
+.react-joyride__tooltip button[data-action="primary"],
+div[class*="react-joyride"] button[data-action="primary"] {
   background-color: #0066ff !important;
   color: #ffffff !important;
+  border-radius: 10px !important;
+  padding: 14px 28px !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  border: none !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 14px rgba(0, 102, 255, 0.35) !important;
 }
 
-.react-joyride__tooltip button[data-action="skip"] {
+/* Skip Button (Überspringen) */
+.react-joyride__tooltip button[data-action="skip"],
+div[class*="react-joyride"] button[data-action="skip"] {
   color: #6b7280 !important;
   background-color: transparent !important;
+  border: none !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+}
+
+/* Close Button verstecken */
+.react-joyride__tooltip button[data-action="close"],
+div[class*="react-joyride"] button[data-action="close"] {
+  display: none !important;
 }
