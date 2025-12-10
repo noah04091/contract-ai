@@ -221,6 +221,7 @@ export default function Contracts() {
   });
   const [loadingMore, setLoadingMore] = useState(false); // Loading für "Weitere laden"
   const [analyzingContract, setAnalyzingContract] = useState<{ [contractId: string]: boolean }>({}); // Loading für "Jetzt analysieren"
+  const [analyzingOverlay, setAnalyzingOverlay] = useState<{ show: boolean; contractName: string }>({ show: false, contractName: '' }); // ✅ Full-Screen Analyse-Overlay
 
   // ✅ NEU: Upload Success Modal State (für Two-Step Upload Flow)
   const [uploadSuccessModal, setUploadSuccessModal] = useState<{
@@ -1292,6 +1293,47 @@ export default function Contracts() {
     }
   };
 
+  // ✅ NEU: Silent Refresh - aktualisiert Contracts ohne Loading-Skeleton (für nach Analyse)
+  const silentRefreshContracts = async (): Promise<Contract[] | null> => {
+    try {
+      const params = new URLSearchParams({
+        limit: '50',
+        skip: '0',
+        search: searchQuery,
+        status: statusFilter,
+        dateFilter: dateFilter,
+        sort: sortOrder,
+        source: sourceFilter
+      });
+
+      if (activeFolder !== null) {
+        params.append('folderId', activeFolder);
+      }
+
+      const response = await apiCall(`/contracts?${params.toString()}`) as {
+        contracts: Contract[];
+        pagination: {
+          total: number;
+          limit: number;
+          skip: number;
+          hasMore: boolean;
+        };
+      };
+
+      setContracts(response.contracts);
+      setFilteredContracts(response.contracts);
+      setPaginationInfo({
+        total: response.pagination.total,
+        hasMore: response.pagination.hasMore,
+        currentSkip: response.pagination.skip
+      });
+
+      return response.contracts;
+    } catch {
+      return null;
+    }
+  };
+
   // ✅ NEU: Load More Contracts für Infinite Scroll (mit Filtern)
   const loadMoreContracts = async () => {
     // Verhindere doppeltes Laden oder Laden wenn keine weiteren verfügbar
@@ -1834,8 +1876,9 @@ export default function Contracts() {
       return;
     }
 
-    // Setze Loading State
+    // Setze Loading States - Button UND Full-Screen Overlay
     setAnalyzingContract(prev => ({ ...prev, [contract._id]: true }));
+    setAnalyzingOverlay({ show: true, contractName: contract.name });
 
     try {
       setError(null);
@@ -1869,11 +1912,21 @@ export default function Contracts() {
 
       if (data.success) {
         console.log("✅ Analysis successful for existing contract");
-        alert("✅ Analyse erfolgreich abgeschlossen!\n\nDie Vertragsdaten wurden aktualisiert.");
 
-        // Refresh contracts list und User-Info (für aktualisiertes analysisCount)
-        await fetchContracts();
+        // ✅ Silent Refresh - ohne Loading-Skeleton (damit UI nicht springt)
+        await silentRefreshContracts();
         await fetchUserInfo();
+
+        // ✅ Automatisch die Analyseergebnisse öffnen
+        // Nutze den vom Backend zurückgegebenen vollständigen Contract
+        const updatedContract = data.contract || { ...contract, analyzed: true };
+        setSelectedContract(updatedContract);
+        setShowDetails(true);
+
+        // Update URL für bessere Navigation
+        navigate(`/contracts?view=${contract._id}`, { replace: true });
+
+        console.log("📊 Opening analysis results for contract:", contract._id);
       } else {
         throw new Error(data.message || 'Analyse fehlgeschlagen');
       }
@@ -1884,8 +1937,9 @@ export default function Contracts() {
       setError(errorMsg);
       alert(`❌ Analyse fehlgeschlagen\n\n${errorMsg}`);
     } finally {
-      // Loading State zurücksetzen
+      // Loading States zurücksetzen
       setAnalyzingContract(prev => ({ ...prev, [contract._id]: false }));
+      setAnalyzingOverlay({ show: false, contractName: '' });
     }
   };
 
@@ -5049,6 +5103,21 @@ export default function Contracts() {
             </>
           );
         })(),
+        document.body
+      )}
+
+      {/* ✅ Full-Screen Analyse-Overlay (für besseres Mobile-Feedback) */}
+      {analyzingOverlay.show && createPortal(
+        <div className={styles.analyzingOverlay}>
+          <div className={styles.analyzingContent}>
+            <Loader size={48} className={styles.spinning} />
+            <h3>Vertrag wird analysiert...</h3>
+            <p>{analyzingOverlay.contractName}</p>
+            <span className={styles.analyzingHint}>
+              Die KI analysiert Ihren Vertrag. Dies kann bis zu 30 Sekunden dauern.
+            </span>
+          </div>
+        </div>,
         document.body
       )}
     </>

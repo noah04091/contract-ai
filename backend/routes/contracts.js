@@ -2160,11 +2160,15 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
       }
     })();
 
+    // ✅ NEU: Hole den vollständig aktualisierten Contract für Frontend
+    const finalContract = await contractsCollection.findOne({ _id: new ObjectId(id) });
+
     res.json({
       success: true,
       message: 'Analyse erfolgreich abgeschlossen',
       contractId: id,
-      analysis: analysisResult
+      analysis: analysisResult,
+      contract: finalContract // ✅ Für automatisches Öffnen der Detail-Ansicht
     });
 
   } catch (error) {
