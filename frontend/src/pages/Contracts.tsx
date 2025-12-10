@@ -4148,16 +4148,6 @@ export default function Contracts() {
                                     className={styles.actionButton}
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      handleRowClick(contract);
-                                    }}
-                                    title="Details anzeigen"
-                                  >
-                                    <Eye size={16} />
-                                  </button>
-                                  <button
-                                    className={styles.actionButton}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
                                       openSmartPDF(contract, true);
                                     }}
                                     title={contract.envelope?.s3KeySealed ? 'Signiertes PDF öffnen' : 'PDF öffnen'}
