@@ -1196,10 +1196,37 @@ ${awareness.commonTraps}
    → 30-49: Problematisch, kritische Risiken
    → 1-29: Inakzeptabel, nicht unterschreiben
 
-10. **quickFacts** (Object[], 4-8 Objekte - OPTIONAL aber EMPFOHLEN):
+10. **quickFacts** (Object[], GENAU 3 Objekte - PFLICHTFELD):
+   → Wähle die 3 WICHTIGSTEN Eckdaten basierend auf DOKUMENTTYP:
+
+   📄 Bei KÜNDIGUNGSBESTÄTIGUNG:
+      - Label 1: "Gekündigt zum" (Datum der Wirksamkeit)
+      - Label 2: "Anbieter" (Firmenname)
+      - Label 3: "Restlaufzeit" (bis zur Wirksamkeit)
+
+   📋 Bei LAUFENDEM VERTRAG (Abo, Versicherung, Telekom, etc.):
+      - Label 1: "Kündigungsfrist" (z.B. "3 Monate")
+      - Label 2: "Ablaufdatum" / "Nächste Verlängerung"
+      - Label 3: "Monatliche Kosten" oder "Laufzeit"
+
+   🛒 Bei EINMALIGEM KAUFVERTRAG:
+      - Label 1: "Kaufdatum"
+      - Label 2: "Kaufpreis"
+      - Label 3: "Gewährleistung bis"
+
+   👔 Bei ARBEITSVERTRAG:
+      - Label 1: "Arbeitsbeginn"
+      - Label 2: "Kündigungsfrist"
+      - Label 3: "Befristung" oder "Unbefristet"
+
+   🏠 Bei MIETVERTRAG:
+      - Label 1: "Mietbeginn"
+      - Label 2: "Kündigungsfrist"
+      - Label 3: "Monatliche Miete"
+
    Schema: {
-     "label": "Kündigungsfrist" | "Laufzeit" | "Kosten" | etc.,
-     "value": "Konkreter Wert aus Vertrag",
+     "label": "Passender Label-Text (siehe oben)",
+     "value": "Konkreter Wert aus Dokument",
      "rating": "good" | "neutral" | "bad"
    }
    → Für schnelle Übersicht der wichtigsten Eckdaten

@@ -90,6 +90,19 @@ interface Contract {
   };
   // 🔔 Reminder Settings (NEU)
   reminderDays?: number[];
+  // 📊 Dynamic Quick Facts (NEU - kontextabhängige Eckdaten)
+  quickFacts?: Array<{
+    label: string;
+    value: string;
+    rating: 'good' | 'neutral' | 'bad';
+  }>;
+  // 📄 Document Category (NEU - für dynamische Anzeige)
+  documentCategory?: 'cancellation_confirmation' | 'invoice' | 'active_contract';
+  contractType?: string;
+  provider?: {
+    displayName: string;
+    category?: string;
+  };
 }
 
 // ✅ KORRIGIERT: Interface für Mehrfach-Upload
@@ -2330,6 +2343,44 @@ export default function Contracts() {
     }
   };
 
+  // 📊 QuickFacts Helper: Gibt dynamische oder Legacy-Daten zurück
+  const getQuickFacts = (contract: Contract): Array<{ label: string; value: string; rating: 'good' | 'neutral' | 'bad' }> => {
+    // Wenn dynamische quickFacts vorhanden sind, diese verwenden
+    if (contract.quickFacts && contract.quickFacts.length > 0) {
+      return contract.quickFacts;
+    }
+
+    // Fallback auf Legacy-Daten für alte Verträge
+    return [
+      {
+        label: 'Kündigungsfrist',
+        value: contract.kuendigung || '—',
+        rating: 'neutral' as const
+      },
+      {
+        label: 'Ablaufdatum',
+        value: formatDate(contract.expiryDate),
+        rating: contract.expiryDate && new Date(contract.expiryDate) < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+          ? 'bad' as const
+          : 'neutral' as const
+      },
+      {
+        label: 'Laufzeit',
+        value: contract.laufzeit || '—',
+        rating: 'neutral' as const
+      }
+    ];
+  };
+
+  // 📊 Rating zu CSS-Klasse Mapping
+  const getRatingClass = (rating: 'good' | 'neutral' | 'bad'): string => {
+    switch (rating) {
+      case 'good': return styles.ratingGood || '';
+      case 'bad': return styles.ratingBad || styles.warning || '';
+      default: return '';
+    }
+  };
+
   // 🆕 Smart Signature Badge Renderer
   const renderSignatureBadge = (contract: Contract) => {
     if (!contract.envelope && !contract.signatureStatus) return null;
@@ -2585,24 +2636,18 @@ export default function Contracts() {
           </div>
         </div>
 
-      {/* Card Details Grid */}
+      {/* Card Details Grid - 📊 Dynamische QuickFacts */}
       <div className={styles.cardDetails}>
-        <div className={styles.cardDetailItem}>
-          <span className={styles.cardDetailLabel}>Kündigungsfrist</span>
-          <div className={styles.cardDetailValue}>
-            <Clock size={14} />
-            <span>{contract.kuendigung || "—"}</span>
+        {getQuickFacts(contract).slice(0, 2).map((fact, index) => (
+          <div key={index} className={styles.cardDetailItem}>
+            <span className={styles.cardDetailLabel}>{fact.label}</span>
+            <div className={`${styles.cardDetailValue} ${getRatingClass(fact.rating)}`}>
+              {index === 0 ? <Clock size={14} /> : <Calendar size={14} />}
+              <span>{fact.value}</span>
+            </div>
           </div>
-        </div>
-        
-        <div className={styles.cardDetailItem}>
-          <span className={styles.cardDetailLabel}>Ablaufdatum</span>
-          <div className={styles.cardDetailValue}>
-            <Calendar size={14} />
-            <span>{formatDate(contract.expiryDate)}</span>
-          </div>
-        </div>
-        
+        ))}
+
         <div className={`${styles.cardDetailItem} ${styles.fullWidth}`}>
           <span className={styles.cardDetailLabel}>Upload-Datum</span>
           <div className={styles.cardDetailValue}>
@@ -4058,8 +4103,8 @@ export default function Contracts() {
                               </th>
                             )}
                             <th>Vertragsname</th>
-                            <th>Kündigungsfrist</th>
-                            <th>Ablaufdatum</th>
+                            <th>Eckdaten 1</th>
+                            <th>Eckdaten 2</th>
                             <th>Status</th>
                             <th>Upload-Datum</th>
                             <th>Aktionen</th>
@@ -4172,18 +4217,19 @@ export default function Contracts() {
                                   </div>
                                 </div>
                               </td>
-                              <td>
-                                <div className={styles.contractDetail}>
-                                  <Clock size={14} className={styles.detailIcon} />
-                                  <span>{contract.kuendigung || "—"}</span>
-                                </div>
-                              </td>
-                              <td>
-                                <div className={styles.contractDetail}>
-                                  <Calendar size={14} className={styles.detailIcon} />
-                                  <span>{formatDate(contract.expiryDate)}</span>
-                                </div>
-                              </td>
+                              {/* 📊 Dynamische QuickFacts Spalten */}
+                              {getQuickFacts(contract).slice(0, 2).map((fact, factIndex) => (
+                                <td key={factIndex} title={fact.label}>
+                                  <div className={`${styles.contractDetail} ${getRatingClass(fact.rating)}`}>
+                                    {factIndex === 0 ? (
+                                      <Clock size={14} className={styles.detailIcon} />
+                                    ) : (
+                                      <Calendar size={14} className={styles.detailIcon} />
+                                    )}
+                                    <span>{fact.value}</span>
+                                  </div>
+                                </td>
+                              ))}
                               <td>
                                 <span className={`${styles.statusBadge} ${getStatusColor(contract.status)}`}>
                                   {contract.status}
@@ -4584,32 +4630,24 @@ export default function Contracts() {
                   </div>
                 )}
 
-                {/* Info Grid - 2 Spalten */}
+                {/* Info Grid - 2 Spalten - 📊 Dynamische QuickFacts */}
                 <div className={styles.previewInfo}>
-                  <div className={styles.previewInfoItem}>
-                    <span className={styles.previewLabel}>Kündigungsfrist</span>
-                    <span className={styles.previewValue}>
-                      <Calendar size={14} style={{ color: '#6366f1' }} />
-                      {previewContract.kuendigung || '—'}
-                    </span>
-                  </div>
-                  <div className={styles.previewInfoItem}>
-                    <span className={styles.previewLabel}>Ablaufdatum</span>
-                    <span className={`${styles.previewValue} ${
-                      previewContract.expiryDate && new Date(previewContract.expiryDate) < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-                        ? styles.warning : ''
-                    }`}>
-                      <Clock size={14} style={{ color: '#f59e0b' }} />
-                      {formatDate(previewContract.expiryDate)}
-                    </span>
-                  </div>
-                  <div className={styles.previewInfoItem}>
-                    <span className={styles.previewLabel}>Laufzeit</span>
-                    <span className={styles.previewValue}>
-                      <RotateCcw size={14} style={{ color: '#10b981' }} />
-                      {previewContract.laufzeit || '—'}
-                    </span>
-                  </div>
+                  {getQuickFacts(previewContract).map((fact, index) => {
+                    // Icons basierend auf Index oder Label
+                    const iconColors = ['#6366f1', '#f59e0b', '#10b981'];
+                    const icons = [Calendar, Clock, RotateCcw];
+                    const IconComponent = icons[index] || Calendar;
+
+                    return (
+                      <div key={index} className={styles.previewInfoItem}>
+                        <span className={styles.previewLabel}>{fact.label}</span>
+                        <span className={`${styles.previewValue} ${getRatingClass(fact.rating)}`}>
+                          <IconComponent size={14} style={{ color: iconColors[index] || '#64748b' }} />
+                          {fact.value}
+                        </span>
+                      </div>
+                    );
+                  })}
                   <div className={styles.previewInfoItem}>
                     <span className={styles.previewLabel}>Hochgeladen</span>
                     <span className={styles.previewValue}>

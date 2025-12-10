@@ -7068,3 +7068,20 @@
 .analyzingContent svg {
   color: #f59e0b;
 }
+
+/* 📊 QuickFacts Rating Styles */
+.ratingGood {
+  color: #10b981 !important;
+}
+
+.ratingGood svg {
+  color: #10b981 !important;
+}
+
+.ratingBad {
+  color: #ef4444 !important;
+}
+
+.ratingBad svg {
+  color: #ef4444 !important;
+}

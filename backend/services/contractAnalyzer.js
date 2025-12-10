@@ -87,12 +87,17 @@ class ContractAnalyzer {
 
       // ENHANCED Date patterns with priorities
       datesPriority1: [
+        // 🆕 Kündigungsbestätigung patterns - HÖCHSTE Priorität
+        /(?:Kündigung\s+wirksam\s+zum|wirksam\s+zum|gekündigt\s+zum|endet\s+zum)[\s:]*(\d{1,2})[.\s/]+(\d{1,2})[.\s/]+(\d{2,4})/gi,
         // Explicit markers - highest confidence
         /(?:ABLAUF|Vertragsende|Ablauf|Laufzeit\s+bis|Gültig\s+bis|Befristet\s+bis|endet\s+am|läuft\s+ab\s+am)[\s:]*(\d{1,2})[.\s]+(\d{1,2})[.\s]+(\d{2,4})/gi,
         /(?:Ende|Enddatum|Ablaufdatum|bis\s+zum)[\s:]*(\d{1,2})[.\s]+(\d{1,2})[.\s]+(\d{2,4})/gi,
         /(?:BEGINN|Vertragsbeginn|Beginn|Versicherungsbeginn|Gültig\s+ab|ab\s+dem)[\s:]*(\d{1,2})[.\s]+(\d{1,2})[.\s]+(\d{2,4})/gi,
         /(?:Start|Anfang|Startdatum|Vertragsdatum)[\s:]*(\d{1,2})[.\s]+(\d{1,2})[.\s]+(\d{2,4})/gi,
       ],
+
+      // 🆕 Briefdatum-Pattern (zum AUSSCHLIESSEN von Ablaufdatum-Erkennung)
+      letterDatePattern: /^[A-ZÄÖÜa-zäöüß]+,?\s*(?:den\s+)?(\d{1,2})[.\s]+(\d{1,2})[.\s]+(\d{2,4})/gm,
 
       datesPriority2: [
         // Insurance-specific patterns
@@ -462,10 +467,56 @@ class ContractAnalyzer {
   }
 
   /**
+   * 🆕 Erkennt Briefdatum (z.B. "Berlin, 10.12.2025") und gibt es zurück
+   * Wird verwendet um diese Daten von der Ablaufdatum-Erkennung auszuschließen
+   */
+  extractLetterDate(text) {
+    // Pattern: Stadt, Datum oder Stadt, den Datum
+    const letterDatePatterns = [
+      /^([A-ZÄÖÜa-zäöüß]+),?\s*(?:den\s+)?(\d{1,2})[.\s]+(\d{1,2})[.\s]+(\d{2,4})/gm,
+      /([A-ZÄÖÜa-zäöüß]+),\s*(\d{1,2})[.\s]+(\d{1,2})[.\s]+(\d{2,4})/g
+    ];
+
+    const letterDates = [];
+
+    for (const pattern of letterDatePatterns) {
+      const matches = Array.from(text.matchAll(pattern));
+      for (const match of matches) {
+        // Prüfe ob es eine Stadt ist (häufige deutsche Städte)
+        const possibleCity = match[1]?.toLowerCase();
+        const commonCities = ['berlin', 'münchen', 'hamburg', 'köln', 'frankfurt', 'stuttgart', 'düsseldorf', 'dortmund', 'essen', 'leipzig', 'bremen', 'dresden', 'hannover', 'nürnberg', 'duisburg', 'bochum', 'wuppertal', 'bielefeld', 'bonn', 'mannheim', 'karlsruhe', 'augsburg', 'wiesbaden', 'gelsenkirchen', 'mönchengladbach', 'braunschweig', 'chemnitz', 'kiel', 'aachen', 'halle', 'magdeburg', 'freiburg', 'krefeld', 'lübeck', 'oberhausen', 'erfurt', 'mainz', 'rostock', 'kassel', 'hagen', 'hamm', 'saarbrücken', 'mülheim', 'potsdam', 'ludwigshafen', 'oldenburg', 'leverkusen', 'osnabrück', 'solingen', 'heidelberg', 'herne', 'neuss', 'darmstadt', 'paderborn', 'regensburg', 'ingolstadt', 'würzburg', 'wolfsburg', 'ulm', 'heilbronn', 'göttingen', 'pforzheim', 'offenbach', 'bottrop', 'reutlingen', 'durmersheim'];
+
+        if (commonCities.includes(possibleCity)) {
+          const day = parseInt(match[2]);
+          const month = parseInt(match[3]);
+          let year = parseInt(match[4]);
+          if (year < 100) year += 2000;
+
+          const date = new Date(year, month - 1, day);
+          if (!isNaN(date.getTime())) {
+            letterDates.push({
+              date: date,
+              city: match[1],
+              dateString: `${day}.${month}.${year}`
+            });
+            console.log(`📮 Briefdatum erkannt: ${match[1]}, ${day}.${month}.${year}`);
+          }
+        }
+      }
+    }
+
+    return letterDates;
+  }
+
+  /**
    * 🆕 ENHANCED: Multi-Pass Datumsextraktion mit Konfidenz-Scoring
    */
   extractDates(text, contractType) {
     console.log('📅 Multi-Pass Datumsextraktion gestartet...');
+
+    // 🆕 Extrahiere Briefdaten zum Ausschließen
+    const letterDates = this.extractLetterDate(text);
+    const letterDateStrings = letterDates.map(ld => ld.dateString);
 
     let startDate = null;
     let endDate = null;
@@ -495,14 +546,29 @@ class ContractAnalyzer {
         const date = this.parseGermanDate(dateStr);
         if (!date || isNaN(date.getTime())) continue;
 
+        // 🆕 Prüfe ob es ein Briefdatum ist - wenn ja, ÜBERSPRINGEN (außer bei expliziten Kündigungs-Markern)
+        const isLetterDate = letterDateStrings.some(lds => {
+          const d = date.getDate();
+          const m = date.getMonth() + 1;
+          const y = date.getFullYear();
+          return lds === `${d}.${m}.${y}`;
+        });
+
         // Get context
         const contextStart = Math.max(0, match.index - 150);
         const contextEnd = Math.min(text.length, match.index + 150);
         const context = text.substring(contextStart, contextEnd).toLowerCase();
 
+        // 🆕 Wenn Briefdatum und KEIN expliziter Kündigungs-Marker → überspringen
+        const isCancellationMarker = context.match(/(?:kündigung\s+wirksam|wirksam\s+zum|gekündigt\s+zum)/i);
+        if (isLetterDate && !isCancellationMarker) {
+          console.log(`📮 Briefdatum übersprungen: ${dateStr}`);
+          continue;
+        }
+
         // Determine role
         const isStartMarker = context.match(/(?:beginn|start|anfang|ab\s+dem|versicherungsbeginn|vertragsbeginn)/i);
-        const isEndMarker = context.match(/(?:ablauf|ende|enddatum|bis|läuft|endet|befristet|gültig\s+bis|hauptfälligkeit)/i);
+        const isEndMarker = context.match(/(?:ablauf|ende|enddatum|bis|läuft|endet|befristet|gültig\s+bis|hauptfälligkeit|kündigung\s+wirksam|wirksam\s+zum)/i);
 
         if (isStartMarker && !startDate) {
           const confidence = this.scoreDateExtraction(date, context, match.index, textLength, 'start', contractType);
@@ -886,6 +952,195 @@ class ContractAnalyzer {
   }
 
   /**
+   * 🆕 GENERIERT DYNAMISCHE QUICKFACTS basierend auf Dokument-Kategorie
+   * Returns: Array mit 3 quickFact-Objekten { label, value, rating }
+   */
+  generateQuickFacts(data) {
+    const {
+      documentCategory,
+      contractType,
+      provider,
+      contractNumber,
+      finalEndDate,
+      remainingMonths,
+      remainingDays,
+      cancellationPeriod,
+      contractDuration,
+      monthlyCost,
+      annualCost,
+      startDate
+    } = data;
+
+    // Hilfsfunktion: Datum formatieren
+    const formatDate = (date) => {
+      if (!date) return null;
+      const d = new Date(date);
+      return `${d.getDate().toString().padStart(2, '0')}.${(d.getMonth() + 1).toString().padStart(2, '0')}.${d.getFullYear()}`;
+    };
+
+    // Hilfsfunktion: Kündigungsfrist formatieren
+    const formatCancellationPeriod = (cp) => {
+      if (!cp) return null;
+      if (cp.type === 'daily') return 'Täglich kündbar';
+      if (cp.type === 'end_of_period') return 'Zum Laufzeitende';
+      return `${cp.value} ${cp.unit === 'months' ? 'Monate' : cp.unit === 'weeks' ? 'Wochen' : 'Tage'}`;
+    };
+
+    // Hilfsfunktion: Laufzeit formatieren
+    const formatDuration = (dur) => {
+      if (!dur) return null;
+      return `${dur.value} ${dur.unit === 'years' ? 'Jahr(e)' : dur.unit === 'months' ? 'Monat(e)' : 'Tag(e)'}`;
+    };
+
+    // Hilfsfunktion: Restlaufzeit formatieren
+    const formatRemaining = (months, days) => {
+      if (months === null || days === null) return null;
+      if (days < 0) return 'Abgelaufen';
+      if (months === 0) return `${days} Tag(e)`;
+      return `${months} Monat(e)`;
+    };
+
+    // Hilfsfunktion: Rating basierend auf Restzeit
+    const getRemainingRating = (days) => {
+      if (days === null) return 'neutral';
+      if (days < 0) return 'bad';
+      if (days < 30) return 'bad';
+      if (days < 90) return 'neutral';
+      return 'good';
+    };
+
+    // 📄 KÜNDIGUNGSBESTÄTIGUNG
+    if (documentCategory === 'cancellation_confirmation') {
+      console.log('📊 Generiere QuickFacts für: KÜNDIGUNGSBESTÄTIGUNG');
+      return [
+        {
+          label: 'Gekündigt zum',
+          value: formatDate(finalEndDate) || 'Unbekannt',
+          rating: finalEndDate ? 'neutral' : 'bad'
+        },
+        {
+          label: 'Anbieter',
+          value: provider?.displayName || provider?.name || 'Unbekannt',
+          rating: 'neutral'
+        },
+        {
+          label: 'Restlaufzeit',
+          value: formatRemaining(remainingMonths, remainingDays) || 'Unbekannt',
+          rating: getRemainingRating(remainingDays)
+        }
+      ];
+    }
+
+    // 🧾 RECHNUNG
+    if (documentCategory === 'invoice') {
+      console.log('📊 Generiere QuickFacts für: RECHNUNG');
+      return [
+        {
+          label: 'Fällig am',
+          value: formatDate(finalEndDate) || 'Unbekannt',
+          rating: remainingDays !== null && remainingDays < 7 ? 'bad' : 'neutral'
+        },
+        {
+          label: 'Betrag',
+          value: monthlyCost ? `${monthlyCost.toFixed(2)} €` : (annualCost ? `${annualCost.toFixed(2)} €` : 'Unbekannt'),
+          rating: 'neutral'
+        },
+        {
+          label: 'Anbieter',
+          value: provider?.displayName || provider?.name || 'Unbekannt',
+          rating: 'neutral'
+        }
+      ];
+    }
+
+    // 👔 ARBEITSVERTRAG
+    if (contractType === 'employment') {
+      console.log('📊 Generiere QuickFacts für: ARBEITSVERTRAG');
+      return [
+        {
+          label: 'Arbeitsbeginn',
+          value: formatDate(startDate) || 'Unbekannt',
+          rating: 'neutral'
+        },
+        {
+          label: 'Kündigungsfrist',
+          value: formatCancellationPeriod(cancellationPeriod) || 'Unbekannt',
+          rating: cancellationPeriod ? 'neutral' : 'bad'
+        },
+        {
+          label: 'Befristung',
+          value: finalEndDate ? `Bis ${formatDate(finalEndDate)}` : 'Unbefristet',
+          rating: finalEndDate ? 'neutral' : 'good'
+        }
+      ];
+    }
+
+    // 🏠 MIETVERTRAG
+    if (contractType === 'rental') {
+      console.log('📊 Generiere QuickFacts für: MIETVERTRAG');
+      return [
+        {
+          label: 'Mietbeginn',
+          value: formatDate(startDate) || 'Unbekannt',
+          rating: 'neutral'
+        },
+        {
+          label: 'Kündigungsfrist',
+          value: formatCancellationPeriod(cancellationPeriod) || '3 Monate (gesetzlich)',
+          rating: 'neutral'
+        },
+        {
+          label: 'Monatliche Miete',
+          value: monthlyCost ? `${monthlyCost.toFixed(2)} €` : 'Unbekannt',
+          rating: 'neutral'
+        }
+      ];
+    }
+
+    // 🛒 EINMALIGER KAUFVERTRAG
+    if (contractType === 'purchase') {
+      console.log('📊 Generiere QuickFacts für: KAUFVERTRAG');
+      return [
+        {
+          label: 'Kaufdatum',
+          value: formatDate(startDate) || formatDate(finalEndDate) || 'Unbekannt',
+          rating: 'neutral'
+        },
+        {
+          label: 'Kaufpreis',
+          value: monthlyCost ? `${monthlyCost.toFixed(2)} €` : (annualCost ? `${annualCost.toFixed(2)} €` : 'Unbekannt'),
+          rating: 'neutral'
+        },
+        {
+          label: 'Gewährleistung',
+          value: finalEndDate ? `Bis ${formatDate(finalEndDate)}` : '2 Jahre (gesetzlich)',
+          rating: 'neutral'
+        }
+      ];
+    }
+
+    // 📋 STANDARD: Laufender Vertrag (Abo, Versicherung, Telekom, etc.)
+    console.log('📊 Generiere QuickFacts für: STANDARD VERTRAG');
+    return [
+      {
+        label: 'Kündigungsfrist',
+        value: formatCancellationPeriod(cancellationPeriod) || 'Unbekannt',
+        rating: cancellationPeriod?.inDays > 90 ? 'bad' : (cancellationPeriod ? 'neutral' : 'bad')
+      },
+      {
+        label: 'Ablaufdatum',
+        value: formatDate(finalEndDate) || 'Unbekannt',
+        rating: remainingDays !== null && remainingDays < 30 ? 'bad' : 'neutral'
+      },
+      {
+        label: 'Laufzeit',
+        value: formatDuration(contractDuration) || 'Unbekannt',
+        rating: contractDuration?.inMonths > 24 ? 'bad' : 'neutral'
+      }
+    ];
+  }
+
+  /**
    * 🆕 ENHANCED: Auto-Renewal Detection mit Negation-Check
    */
   detectAutoRenewal(text) {
@@ -936,6 +1191,107 @@ class ContractAnalyzer {
 
     const value = parseFloat(normalized);
     return isNaN(value) ? null : value;
+  }
+
+  /**
+   * 🆕 DOKUMENT-KATEGORIE ERKENNUNG - V1
+   * Erkennt ZUERST die Dokument-Kategorie (Kündigungsbestätigung, Rechnung, etc.)
+   * BEVOR der Vertragstyp analysiert wird
+   * Returns: { category: string, isActiveContract: boolean, effectiveDate?: Date }
+   */
+  detectDocumentCategory(text) {
+    const lowerText = text.toLowerCase();
+
+    // 📄 KÜNDIGUNGSBESTÄTIGUNG - Höchste Priorität
+    const cancellationPatterns = [
+      'kündigungsbestätigung',
+      'kündigung bestätigen',
+      'kündigung erhalten',
+      'ihre kündigung',
+      'kündigung wirksam zum',
+      'kündigung wirksam ab',
+      'wir bestätigen ihre kündigung',
+      'hiermit bestätigen wir die kündigung'
+    ];
+
+    let cancellationScore = 0;
+    cancellationPatterns.forEach(pattern => {
+      if (lowerText.includes(pattern)) {
+        cancellationScore += pattern.includes('kündigungsbestätigung') ? 20 : 10;
+      }
+    });
+
+    if (cancellationScore >= 10) {
+      console.log('📄 Dokument-Kategorie: KÜNDIGUNGSBESTÄTIGUNG (Score:', cancellationScore, ')');
+
+      // Extrahiere "Kündigung wirksam zum" Datum
+      const effectiveDateMatch = text.match(/(?:kündigung\s+wirksam\s+zum|wirksam\s+zum|gekündigt\s+zum|endet\s+zum)\s*:?\s*(\d{1,2})[.\s/]+(\d{1,2})[.\s/]+(\d{2,4})/i);
+      let effectiveDate = null;
+
+      if (effectiveDateMatch) {
+        const day = parseInt(effectiveDateMatch[1]);
+        const month = parseInt(effectiveDateMatch[2]);
+        let year = parseInt(effectiveDateMatch[3]);
+        if (year < 100) year += 2000;
+        effectiveDate = new Date(year, month - 1, day);
+        console.log('📅 Kündigungsdatum erkannt:', effectiveDate.toISOString());
+      }
+
+      return {
+        category: 'cancellation_confirmation',
+        isActiveContract: false,
+        effectiveDate: effectiveDate,
+        displayLabels: {
+          field1: 'Gekündigt zum',
+          field2: 'Anbieter',
+          field3: 'Restlaufzeit'
+        }
+      };
+    }
+
+    // 🧾 RECHNUNG
+    const invoicePatterns = [
+      'rechnung',
+      'rechnungsnummer',
+      'rechnungsbetrag',
+      'zahlbar bis',
+      'fällig am',
+      'zahlungsziel',
+      'rechnungsdatum'
+    ];
+
+    let invoiceScore = 0;
+    invoicePatterns.forEach(pattern => {
+      if (lowerText.includes(pattern)) {
+        invoiceScore += pattern === 'rechnung' ? 15 : 5;
+      }
+    });
+
+    // Rechnung muss Score >= 15 haben UND darf kein "vertrag" enthalten
+    if (invoiceScore >= 15 && !lowerText.includes('vertrag')) {
+      console.log('🧾 Dokument-Kategorie: RECHNUNG (Score:', invoiceScore, ')');
+      return {
+        category: 'invoice',
+        isActiveContract: false,
+        displayLabels: {
+          field1: 'Fällig am',
+          field2: 'Betrag',
+          field3: 'Zahlungsziel'
+        }
+      };
+    }
+
+    // 📋 Standard: Aktiver Vertrag (wird weiter analysiert)
+    console.log('📋 Dokument-Kategorie: AKTIVER VERTRAG');
+    return {
+      category: 'active_contract',
+      isActiveContract: true,
+      displayLabels: {
+        field1: 'Kündigungsfrist',
+        field2: 'Ablaufdatum',
+        field3: 'Laufzeit'
+      }
+    };
   }
 
   /**
@@ -1065,7 +1421,11 @@ class ContractAnalyzer {
       // 🆕 STEP 1: OCR-Fehlerkorrektur
       text = this.preprocessOCRText(text);
 
-      // Detect contract type FIRST (needed for intelligent estimation)
+      // 🆕 STEP 1.5: Dokument-Kategorie erkennen (Kündigungsbestätigung, Rechnung, etc.)
+      const documentCategory = this.detectDocumentCategory(text);
+      console.log('📂 Dokument-Kategorie:', documentCategory.category);
+
+      // Detect contract type (needed for intelligent estimation)
       const contractType = this.detectContractType(text);
       console.log('📋 Vertragstyp erkannt:', contractType);
 
@@ -1193,9 +1553,52 @@ class ContractAnalyzer {
         contractType
       });
 
+      // 🆕 Bei Kündigungsbestätigungen: Verwende das effectiveDate als endDate
+      let finalEndDate = adjustedEndDate;
+      let finalEndDateConfidence = adjustedEndDateConfidence;
+      let finalDataSource = dataSource;
+
+      if (documentCategory.category === 'cancellation_confirmation' && documentCategory.effectiveDate) {
+        finalEndDate = documentCategory.effectiveDate;
+        finalEndDateConfidence = 95; // Hohes Vertrauen bei explizitem Kündigungsdatum
+        finalDataSource = 'extracted';
+        console.log('📄 Kündigungsbestätigung: Verwende Kündigungsdatum als Ablaufdatum:', finalEndDate.toISOString());
+      }
+
+      // 🆕 Berechne Restlaufzeit für Kündigungsbestätigungen
+      let remainingDays = null;
+      let remainingMonths = null;
+      if (finalEndDate) {
+        const now = new Date();
+        const diffTime = finalEndDate.getTime() - now.getTime();
+        remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        remainingMonths = Math.ceil(remainingDays / 30);
+      }
+
+      // 🆕 GENERIERE DYNAMISCHE QUICKFACTS basierend auf Dokument-Kategorie
+      const quickFacts = this.generateQuickFacts({
+        documentCategory: documentCategory.category,
+        contractType,
+        provider,
+        contractNumber,
+        finalEndDate,
+        remainingMonths,
+        remainingDays,
+        cancellationPeriod,
+        contractDuration,
+        monthlyCost,
+        annualCost,
+        startDate
+      });
+
       return {
         success: true,
         data: {
+          // 🆕 Dokument-Kategorie Information
+          documentCategory: documentCategory.category,
+          isActiveContract: documentCategory.isActiveContract,
+          displayLabels: documentCategory.displayLabels,
+
           // Provider information
           provider: provider,
 
@@ -1204,15 +1607,19 @@ class ContractAnalyzer {
           customerNumber: customerNumber,
           contractType,
 
-          // 🆕 Dates with CONFIDENCE SCORES
+          // 🆕 Dates with CONFIDENCE SCORES (mit Kündigungsbestätigung-Logik)
           startDate: startDate?.toISOString() || null,
           startDateConfidence: startDateConfidence,
-          endDate: adjustedEndDate?.toISOString() || null,
-          endDateConfidence: adjustedEndDateConfidence,
+          endDate: finalEndDate?.toISOString() || null,
+          endDateConfidence: finalEndDateConfidence,
           originalEndDate: endDate?.toISOString() || null,
           nextCancellationDate: nextCancellationDate?.toISOString() || null,
           autoRenewalDate: autoRenewalDate?.toISOString() || null,
-          dataSource: dataSource, // 'extracted', 'calculated', 'estimated'
+          dataSource: finalDataSource, // 'extracted', 'calculated', 'estimated'
+
+          // 🆕 Restlaufzeit (für Kündigungsbestätigungen)
+          remainingDays: remainingDays,
+          remainingMonths: remainingMonths,
 
           // Contract duration
           contractDuration: contractDuration,
@@ -1231,6 +1638,9 @@ class ContractAnalyzer {
           // Risk assessment
           riskLevel,
           riskFactors,
+
+          // 🆕 Dynamische QuickFacts (basierend auf Dokument-Kategorie)
+          quickFacts: quickFacts,
 
           // Metadata
           analyzedAt: new Date().toISOString(),
