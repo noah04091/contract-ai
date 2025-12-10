@@ -220,6 +220,7 @@ export default function Contracts() {
     currentSkip: 0
   });
   const [loadingMore, setLoadingMore] = useState(false); // Loading für "Weitere laden"
+  const [analyzingContract, setAnalyzingContract] = useState<{ [contractId: string]: boolean }>({}); // Loading für "Jetzt analysieren"
 
   // ✅ NEU: Upload Success Modal State (für Two-Step Upload Flow)
   const [uploadSuccessModal, setUploadSuccessModal] = useState<{
@@ -1821,32 +1822,58 @@ export default function Contracts() {
   const handleAnalyzeExistingContract = async (contract: Contract) => {
     console.log("🔍 Analyzing existing contract:", contract._id, contract.name);
 
+    // Prüfe ob bereits am Analysieren
+    if (analyzingContract[contract._id]) {
+      console.log("⏳ Already analyzing this contract");
+      return;
+    }
+
     // Check subscription & limits - Free hat 3 Analysen, nicht 0!
     if (userInfo.analysisCount >= userInfo.analysisLimit && userInfo.analysisLimit !== Infinity) {
       alert(`📊 Analyse-Limit erreicht (${userInfo.analysisCount}/${userInfo.analysisLimit}).\n\n🚀 Upgrade für mehr Analysen!`);
       return;
     }
 
+    // Setze Loading State
+    setAnalyzingContract(prev => ({ ...prev, [contract._id]: true }));
+
     try {
       setError(null);
 
+      // API URL - nutze die korrekte Produktions-URL
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+
+      if (!token) {
+        throw new Error('Nicht eingeloggt. Bitte melden Sie sich erneut an.');
+      }
+
+      console.log(`📡 Calling API: ${apiUrl}/api/contracts/${contract._id}/analyze`);
+
       // Trigger Re-Analyse via Backend
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/contracts/${contract._id}/analyze`, {
+      const response = await fetch(`${apiUrl}/api/contracts/${contract._id}/analyze`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
 
+      // Prüfe auf Netzwerkfehler
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: `HTTP ${response.status}` }));
+        throw new Error(errorData.message || `Server-Fehler: ${response.status}`);
+      }
+
       const data = await response.json();
 
-      if (response.ok && data.success) {
+      if (data.success) {
         console.log("✅ Analysis successful for existing contract");
-        alert("✅ Analyse erfolgreich abgeschlossen!");
+        alert("✅ Analyse erfolgreich abgeschlossen!\n\nDie Vertragsdaten wurden aktualisiert.");
 
-        // Refresh contracts list
-        fetchContracts();
+        // Refresh contracts list und User-Info (für aktualisiertes analysisCount)
+        await fetchContracts();
+        await fetchUserInfo();
       } else {
         throw new Error(data.message || 'Analyse fehlgeschlagen');
       }
@@ -1855,7 +1882,10 @@ export default function Contracts() {
       console.error("❌ Error analyzing existing contract:", error);
       const errorMsg = error instanceof Error ? error.message : 'Analyse fehlgeschlagen';
       setError(errorMsg);
-      alert(`❌ ${errorMsg}`);
+      alert(`❌ Analyse fehlgeschlagen\n\n${errorMsg}`);
+    } finally {
+      // Loading State zurücksetzen
+      setAnalyzingContract(prev => ({ ...prev, [contract._id]: false }));
     }
   };
 
@@ -2537,9 +2567,19 @@ export default function Contracts() {
               e.stopPropagation();
               handleAnalyzeExistingContract(contract);
             }}
+            disabled={analyzingContract[contract._id]}
           >
-            <Zap size={14} />
-            <span>Jetzt analysieren</span>
+            {analyzingContract[contract._id] ? (
+              <>
+                <Loader size={14} className={styles.spinning} />
+                <span>Analysiert...</span>
+              </>
+            ) : (
+              <>
+                <Zap size={14} />
+                <span>Jetzt analysieren</span>
+              </>
+            )}
           </button>
         )}
 
@@ -2858,6 +2898,24 @@ export default function Contracts() {
           >
             <Edit size={14} />
           </button>
+          {/* ⚡ Analyze Button - nur für nicht-analysierte Verträge */}
+          {contract.analyzed === false && (
+            <button
+              className={`${styles.gridActionBtn} ${styles.analyzeBtn}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleAnalyzeExistingContract(contract);
+              }}
+              disabled={analyzingContract[contract._id]}
+              title="Jetzt analysieren"
+            >
+              {analyzingContract[contract._id] ? (
+                <Loader size={14} className={styles.spinning} />
+              ) : (
+                <Zap size={14} />
+              )}
+            </button>
+          )}
           <button
             className={`${styles.gridActionBtn} ${styles.deleteBtn}`}
             onClick={(e) => {
@@ -2870,11 +2928,30 @@ export default function Contracts() {
           </button>
         </div>
 
-        {/* Not Analyzed Badge */}
+        {/* Not Analyzed Badge - jetzt mit klickbarem Text */}
         {contract.analyzed === false && (
-          <div className={styles.gridNotAnalyzed}>
-            <Zap size={12} />
-            <span>Nicht analysiert</span>
+          <div
+            className={styles.gridNotAnalyzed}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!analyzingContract[contract._id]) {
+                handleAnalyzeExistingContract(contract);
+              }
+            }}
+            style={{ cursor: analyzingContract[contract._id] ? 'wait' : 'pointer' }}
+            title="Klicken zum Analysieren"
+          >
+            {analyzingContract[contract._id] ? (
+              <>
+                <Loader size={12} className={styles.spinning} />
+                <span>Analysiert...</span>
+              </>
+            ) : (
+              <>
+                <Zap size={12} />
+                <span>Jetzt analysieren</span>
+              </>
+            )}
           </div>
         )}
       </motion.div>
@@ -4102,6 +4179,24 @@ export default function Contracts() {
                                   >
                                     <Edit size={16} />
                                   </button>
+                                  {/* ⚡ Analyze Button - nur für nicht-analysierte Verträge */}
+                                  {contract.analyzed === false && (
+                                    <button
+                                      className={`${styles.actionButton} ${styles.analyzeButton}`}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleAnalyzeExistingContract(contract);
+                                      }}
+                                      disabled={analyzingContract[contract._id]}
+                                      title="Jetzt analysieren"
+                                    >
+                                      {analyzingContract[contract._id] ? (
+                                        <Loader size={16} className={styles.spinning} />
+                                      ) : (
+                                        <Zap size={16} />
+                                      )}
+                                    </button>
+                                  )}
                                   {/* 🔔 Reminder Settings Button */}
                                   <button
                                     className={styles.actionButton}
@@ -4530,6 +4625,26 @@ export default function Contracts() {
 
               {/* Preview Actions - Redesigned */}
               <div className={styles.previewActions}>
+                {/* ⚡ Prominenter Analyse-Button wenn nicht analysiert */}
+                {previewContract.analyzed === false && (
+                  <button
+                    className={`${styles.previewActionBtn} ${styles.analyze}`}
+                    onClick={() => handleAnalyzeExistingContract(previewContract)}
+                    disabled={analyzingContract[previewContract._id]}
+                  >
+                    {analyzingContract[previewContract._id] ? (
+                      <>
+                        <Loader size={18} className={styles.spinning} />
+                        Analysiert...
+                      </>
+                    ) : (
+                      <>
+                        <Zap size={18} />
+                        Jetzt analysieren
+                      </>
+                    )}
+                  </button>
+                )}
                 <button
                   className={`${styles.previewActionBtn} ${styles.primary}`}
                   onClick={() => {
