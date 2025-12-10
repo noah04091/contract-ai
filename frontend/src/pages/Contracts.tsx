@@ -3637,23 +3637,6 @@ export default function Contracts() {
                       </div>
                     )}
 
-                    {/* 📱 MOBILE UX: Upload-Header mit Schließen-Button */}
-                    <div className={styles.uploadHeader}>
-                      <div className={styles.uploadHeaderTitle}>
-                        <h2>Verträge hochladen</h2>
-                        <p className={styles.sectionDescription}>
-                          Lade Verträge hoch oder nutze den E-Mail-Upload
-                        </p>
-                      </div>
-                      <button
-                        className={styles.uploadCloseButton}
-                        onClick={() => setActiveSection('contracts')}
-                        title="Zurück zu Verträgen"
-                      >
-                        <X size={20} />
-                      </button>
-                    </div>
-
                     {/* 📱 UPLOAD TABS: Datei-Upload / E-Mail-Upload */}
                     <div className={styles.uploadTabs}>
                       <button
