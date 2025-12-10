@@ -3,47 +3,106 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   X, Save, AlertCircle, CheckCircle, Edit,
   FileText, Clock, Calendar, StickyNote,
-  Loader2, ChevronDown, RotateCcw
+  Loader2, ChevronDown, RotateCcw, Plus, Minus, Tag
 } from "lucide-react";
 import styles from "../styles/ContractEditModal.module.css";
 import { apiCall } from "../utils/api";
 
-// 📋 Vordefinierte Optionen für Dropdowns
-const KUENDIGUNG_OPTIONS = [
-  { value: "", label: "Bitte auswählen..." },
-  { value: "Keine Kündigungsfrist", label: "Keine Kündigungsfrist" },
-  { value: "2 Wochen", label: "2 Wochen" },
-  { value: "1 Monat", label: "1 Monat" },
-  { value: "4 Wochen", label: "4 Wochen" },
-  { value: "6 Wochen", label: "6 Wochen" },
-  { value: "2 Monate", label: "2 Monate" },
-  { value: "3 Monate", label: "3 Monate" },
-  { value: "3 Monate zum Quartalsende", label: "3 Monate zum Quartalsende" },
-  { value: "3 Monate zum Monatsende", label: "3 Monate zum Monatsende" },
-  { value: "6 Monate", label: "6 Monate" },
-  { value: "6 Monate zum Jahresende", label: "6 Monate zum Jahresende" },
-  { value: "12 Monate", label: "12 Monate" },
-  { value: "Unbefristet", label: "Unbefristet" },
-  { value: "Gekündigt", label: "Bereits gekündigt" },
-  { value: "custom", label: "Eigene Eingabe..." }
+// 📋 Alle verfügbaren Feldtypen mit ihren Optionen
+type FieldType = 'kuendigung' | 'laufzeit' | 'expiryDate' | 'gekuendigtZum' | 'anbieter' | 'kosten' | 'vertragsnummer';
+
+interface FieldConfig {
+  id: FieldType;
+  label: string;
+  icon: React.ComponentType<{ size?: number }>;
+  type: 'dropdown' | 'date' | 'text' | 'number';
+  options?: { value: string; label: string }[];
+  placeholder?: string;
+  prefix?: string;
+  suffix?: string;
+}
+
+// 📋 Alle verfügbaren Felder
+const AVAILABLE_FIELDS: FieldConfig[] = [
+  {
+    id: 'kuendigung',
+    label: 'Kündigungsfrist',
+    icon: Clock,
+    type: 'dropdown',
+    options: [
+      { value: "Keine Kündigungsfrist", label: "Keine Kündigungsfrist" },
+      { value: "2 Wochen", label: "2 Wochen" },
+      { value: "1 Monat", label: "1 Monat" },
+      { value: "4 Wochen", label: "4 Wochen" },
+      { value: "6 Wochen", label: "6 Wochen" },
+      { value: "2 Monate", label: "2 Monate" },
+      { value: "3 Monate", label: "3 Monate" },
+      { value: "3 Monate zum Quartalsende", label: "3 Monate zum Quartalsende" },
+      { value: "3 Monate zum Monatsende", label: "3 Monate zum Monatsende" },
+      { value: "6 Monate", label: "6 Monate" },
+      { value: "6 Monate zum Jahresende", label: "6 Monate zum Jahresende" },
+      { value: "12 Monate", label: "12 Monate" },
+      { value: "Unbefristet", label: "Unbefristet" },
+    ]
+  },
+  {
+    id: 'laufzeit',
+    label: 'Laufzeit',
+    icon: RotateCcw,
+    type: 'dropdown',
+    options: [
+      { value: "Unbefristet", label: "Unbefristet" },
+      { value: "1 Monat", label: "1 Monat" },
+      { value: "3 Monate", label: "3 Monate" },
+      { value: "6 Monate", label: "6 Monate" },
+      { value: "1 Jahr", label: "1 Jahr" },
+      { value: "2 Jahre", label: "2 Jahre" },
+      { value: "3 Jahre", label: "3 Jahre" },
+      { value: "5 Jahre", label: "5 Jahre" },
+      { value: "10 Jahre", label: "10 Jahre" },
+      { value: "24 Monate mit Verlängerung", label: "24 Monate + auto. Verlängerung" },
+      { value: "12 Monate mit Verlängerung", label: "12 Monate + auto. Verlängerung" },
+      { value: "Einmalig", label: "Einmalig (kein Abo)" },
+    ]
+  },
+  {
+    id: 'expiryDate',
+    label: 'Ablaufdatum',
+    icon: Calendar,
+    type: 'date'
+  },
+  {
+    id: 'gekuendigtZum',
+    label: 'Gekündigt zum',
+    icon: Calendar,
+    type: 'date'
+  },
+  {
+    id: 'anbieter',
+    label: 'Anbieter',
+    icon: Tag,
+    type: 'text',
+    placeholder: 'z.B. Telekom, Vodafone...'
+  },
+  {
+    id: 'kosten',
+    label: 'Monatliche Kosten',
+    icon: Tag,
+    type: 'number',
+    placeholder: '0.00',
+    suffix: '€'
+  },
+  {
+    id: 'vertragsnummer',
+    label: 'Vertragsnummer',
+    icon: FileText,
+    type: 'text',
+    placeholder: 'z.B. VN-123456'
+  }
 ];
 
-const LAUFZEIT_OPTIONS = [
-  { value: "", label: "Bitte auswählen..." },
-  { value: "Unbefristet", label: "Unbefristet" },
-  { value: "1 Monat", label: "1 Monat" },
-  { value: "3 Monate", label: "3 Monate" },
-  { value: "6 Monate", label: "6 Monate" },
-  { value: "1 Jahr", label: "1 Jahr" },
-  { value: "2 Jahre", label: "2 Jahre" },
-  { value: "3 Jahre", label: "3 Jahre" },
-  { value: "5 Jahre", label: "5 Jahre" },
-  { value: "10 Jahre", label: "10 Jahre" },
-  { value: "24 Monate mit Verlängerung", label: "24 Monate mit automatischer Verlängerung" },
-  { value: "12 Monate mit Verlängerung", label: "12 Monate mit automatischer Verlängerung" },
-  { value: "Einmalig", label: "Einmalig (kein Abo)" },
-  { value: "custom", label: "Eigene Eingabe..." }
-];
+// Standard-Felder die initial angezeigt werden
+const DEFAULT_FIELDS: FieldType[] = ['kuendigung', 'laufzeit', 'expiryDate'];
 
 interface Contract {
   _id: string;
@@ -51,10 +110,14 @@ interface Contract {
   kuendigung: string;
   laufzeit?: string;
   expiryDate?: string;
+  gekuendigtZum?: string;
+  anbieter?: string;
+  kosten?: number;
+  vertragsnummer?: string;
   status: string;
-  createdAt: string; // ✅ HINZUGEFÜGT: Für Kompatibilität mit ContractDetailsView
-  updatedAt?: string; // ✅ HINZUGEFÜGT: Für Update-Timestamps
-  notes?: string; // Für eigene Notizen
+  createdAt: string;
+  updatedAt?: string;
+  notes?: string;
 }
 
 interface ContractEditModalProps {
@@ -64,41 +127,69 @@ interface ContractEditModalProps {
   show: boolean;
 }
 
-interface FormData {
-  name: string;
-  kuendigung: string;
-  laufzeit: string;
-  expiryDate: string;
-  notes: string;
+// Dynamische Feldwerte
+interface FieldValues {
+  [key: string]: string;
 }
 
-export default function ContractEditModal({ 
-  contract, 
-  onClose, 
+export default function ContractEditModal({
+  contract,
+  onClose,
   onUpdate,
-  show 
+  show
 }: ContractEditModalProps) {
-  const [formData, setFormData] = useState<FormData>({
-    name: '',
-    kuendigung: '',
-    laufzeit: '',
-    expiryDate: '',
-    notes: ''
-  });
-  
+  // Basis-Felder
+  const [name, setName] = useState('');
+  const [notes, setNotes] = useState('');
+
+  // Dynamische Felder (können hinzugefügt/entfernt werden)
+  const [activeFields, setActiveFields] = useState<FieldType[]>(DEFAULT_FIELDS);
+  const [fieldValues, setFieldValues] = useState<FieldValues>({});
+  const [customInputMode, setCustomInputMode] = useState<{ [key: string]: boolean }>({});
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
-
-  // 📋 States für Dropdown/Custom-Eingabe Toggle
-  const [kuendigungMode, setKuendigungMode] = useState<'dropdown' | 'custom'>('dropdown');
-  const [laufzeitMode, setLaufzeitMode] = useState<'dropdown' | 'custom'>('dropdown');
+  const [showAddField, setShowAddField] = useState(false);
 
   // Helper: Prüft ob Wert in vordefinierten Optionen existiert
-  const isInOptions = (value: string, options: { value: string }[]) => {
-    return options.some(opt => opt.value === value && opt.value !== '' && opt.value !== 'custom');
+  const isInOptions = (value: string, options?: { value: string }[]) => {
+    if (!options) return false;
+    return options.some(opt => opt.value === value);
   };
+
+  // Feld hinzufügen
+  const addField = (fieldId: FieldType) => {
+    if (!activeFields.includes(fieldId)) {
+      setActiveFields([...activeFields, fieldId]);
+      setFieldValues({ ...fieldValues, [fieldId]: '' });
+      setHasChanges(true);
+    }
+    setShowAddField(false);
+  };
+
+  // Feld entfernen
+  const removeField = (fieldId: FieldType) => {
+    setActiveFields(activeFields.filter(f => f !== fieldId));
+    const newValues = { ...fieldValues };
+    delete newValues[fieldId];
+    setFieldValues(newValues);
+    setHasChanges(true);
+  };
+
+  // Feldwert ändern
+  const updateFieldValue = (fieldId: string, value: string) => {
+    setFieldValues({ ...fieldValues, [fieldId]: value });
+  };
+
+  // Toggle zwischen Dropdown und Custom Input
+  const toggleCustomInput = (fieldId: string) => {
+    setCustomInputMode({ ...customInputMode, [fieldId]: !customInputMode[fieldId] });
+  };
+
+  // Verfügbare Felder (die noch nicht aktiv sind)
+  const availableFieldsToAdd = AVAILABLE_FIELDS.filter(f => !activeFields.includes(f.id));
 
   // ✅ Escape-Key-Handler für Accessibility
   useEffect(() => {
@@ -120,92 +211,145 @@ export default function ContractEditModal({
   // Formular mit Contract-Daten initialisieren
   useEffect(() => {
     if (contract && show) {
-      const newFormData = {
-        name: contract.name || '',
-        kuendigung: contract.kuendigung || '',
-        laufzeit: contract.laufzeit || '',
-        expiryDate: contract.expiryDate ?
-          new Date(contract.expiryDate).toISOString().split('T')[0] : '',
-        notes: contract.notes || ''
-      };
+      // Basis-Felder setzen
+      setName(contract.name || '');
+      setNotes(contract.notes || '');
 
-      setFormData(newFormData);
+      // Dynamische Felder aus Contract-Daten laden
+      const initialValues: FieldValues = {};
+      const initialActiveFields: FieldType[] = [];
+      const initialCustomMode: { [key: string]: boolean } = {};
+
+      // Prüfe welche Felder im Contract vorhanden sind
+      if (contract.kuendigung && contract.kuendigung !== 'Unbekannt' && contract.kuendigung !== 'Nicht analysiert') {
+        initialActiveFields.push('kuendigung');
+        initialValues.kuendigung = contract.kuendigung;
+        const fieldConfig = AVAILABLE_FIELDS.find(f => f.id === 'kuendigung');
+        if (!isInOptions(contract.kuendigung, fieldConfig?.options)) {
+          initialCustomMode.kuendigung = true;
+        }
+      }
+
+      if (contract.laufzeit && contract.laufzeit !== 'Unbekannt' && contract.laufzeit !== 'Nicht analysiert') {
+        initialActiveFields.push('laufzeit');
+        initialValues.laufzeit = contract.laufzeit;
+        const fieldConfig = AVAILABLE_FIELDS.find(f => f.id === 'laufzeit');
+        if (!isInOptions(contract.laufzeit, fieldConfig?.options)) {
+          initialCustomMode.laufzeit = true;
+        }
+      }
+
+      if (contract.expiryDate) {
+        initialActiveFields.push('expiryDate');
+        initialValues.expiryDate = new Date(contract.expiryDate).toISOString().split('T')[0];
+      }
+
+      if (contract.gekuendigtZum) {
+        initialActiveFields.push('gekuendigtZum');
+        initialValues.gekuendigtZum = new Date(contract.gekuendigtZum).toISOString().split('T')[0];
+      }
+
+      if (contract.anbieter) {
+        initialActiveFields.push('anbieter');
+        initialValues.anbieter = contract.anbieter;
+      }
+
+      if (contract.kosten) {
+        initialActiveFields.push('kosten');
+        initialValues.kosten = String(contract.kosten);
+      }
+
+      if (contract.vertragsnummer) {
+        initialActiveFields.push('vertragsnummer');
+        initialValues.vertragsnummer = contract.vertragsnummer;
+      }
+
+      // Wenn keine Felder vorhanden, nutze Default-Felder
+      if (initialActiveFields.length === 0) {
+        setActiveFields(DEFAULT_FIELDS);
+        setFieldValues({});
+      } else {
+        setActiveFields(initialActiveFields);
+        setFieldValues(initialValues);
+      }
+
+      setCustomInputMode(initialCustomMode);
       setHasChanges(false);
-
-      // 📋 Bestimme ob Dropdown oder Custom-Modus für vorhandene Werte
-      const kuendigungValue = contract.kuendigung || '';
-      const laufzeitValue = contract.laufzeit || '';
-
-      // Wenn Wert nicht in Optionen, dann Custom-Modus
-      if (kuendigungValue && !isInOptions(kuendigungValue, KUENDIGUNG_OPTIONS)) {
-        setKuendigungMode('custom');
-      } else {
-        setKuendigungMode('dropdown');
-      }
-
-      if (laufzeitValue && !isInOptions(laufzeitValue, LAUFZEIT_OPTIONS)) {
-        setLaufzeitMode('custom');
-      } else {
-        setLaufzeitMode('dropdown');
-      }
       setError(null);
       setSuccess(false);
+      setShowAddField(false);
     }
   }, [contract, show]);
 
   // Änderungen tracken
   useEffect(() => {
     if (!contract) return;
-    
-    const hasChanged = (
-      formData.name !== (contract.name || '') ||
-      formData.kuendigung !== (contract.kuendigung || '') ||
-      formData.laufzeit !== (contract.laufzeit || '') ||
-      formData.expiryDate !== (contract.expiryDate ? 
-        new Date(contract.expiryDate).toISOString().split('T')[0] : '') ||
-      formData.notes !== (contract.notes || '')
-    );
-    
-    setHasChanges(hasChanged);
-  }, [formData, contract]);
 
-  const handleInputChange = (field: keyof FormData, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-    setError(null);
-  };
+    // Prüfe ob sich etwas geändert hat
+    const nameChanged = name !== (contract.name || '');
+    const notesChanged = notes !== (contract.notes || '');
+
+    // Felder-Änderungen prüfen (vereinfacht)
+    const fieldsChanged = Object.keys(fieldValues).some(key => {
+      const originalValue = (contract as unknown as Record<string, unknown>)[key];
+      return fieldValues[key] !== (originalValue || '');
+    });
+
+    setHasChanges(nameChanged || notesChanged || fieldsChanged);
+  }, [name, notes, fieldValues, activeFields, contract]);
 
   const validateForm = (): boolean => {
-    if (!formData.name.trim()) {
+    if (!name.trim()) {
       setError("Vertragsname ist erforderlich");
       return false;
     }
-    
-    if (formData.name.trim().length < 3) {
+
+    if (name.trim().length < 3) {
       setError("Vertragsname muss mindestens 3 Zeichen lang sein");
       return false;
     }
-    
+
     return true;
   };
 
   const handleSave = async () => {
     if (!validateForm()) return;
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       // Bereite Update-Daten vor
-      const updateData = {
-        name: formData.name.trim(),
-        kuendigung: formData.kuendigung.trim() || "Unbekannt",
-        laufzeit: formData.laufzeit.trim() || "Unbekannt",
-        expiryDate: formData.expiryDate || undefined, // ✅ FIX: Konsistente undefined Behandlung
-        notes: formData.notes.trim()
+      const updateData: Record<string, unknown> = {
+        name: name.trim(),
+        notes: notes.trim()
       };
+
+      // Dynamische Felder hinzufügen
+      activeFields.forEach(fieldId => {
+        const value = fieldValues[fieldId];
+        if (value !== undefined && value !== '') {
+          // Spezielle Behandlung für bestimmte Felder
+          if (fieldId === 'kosten') {
+            updateData[fieldId] = parseFloat(value) || 0;
+          } else if (fieldId === 'expiryDate' || fieldId === 'gekuendigtZum') {
+            updateData[fieldId] = value || null;
+          } else {
+            updateData[fieldId] = value;
+          }
+        } else {
+          // Leere Werte als null setzen
+          updateData[fieldId] = null;
+        }
+      });
+
+      // Felder die nicht mehr aktiv sind, auf null setzen
+      const allFieldIds: FieldType[] = ['kuendigung', 'laufzeit', 'expiryDate', 'gekuendigtZum', 'anbieter', 'kosten', 'vertragsnummer'];
+      allFieldIds.forEach(fieldId => {
+        if (!activeFields.includes(fieldId)) {
+          updateData[fieldId] = null;
+        }
+      });
 
       console.log('Updating contract:', contract._id, updateData);
 
@@ -218,30 +362,30 @@ export default function ContractEditModal({
       if (response.success) {
         setSuccess(true);
         setHasChanges(false);
-        
-        // ✅ VERBESSERUNG: Verwende Server-Response wenn verfügbar, sonst lokale Daten
+
+        // Verwende Server-Response wenn verfügbar, sonst lokale Daten
         const updatedContract: Contract = response.contract ? {
           ...contract,
-          ...response.contract  // ✅ Server-Daten haben Priorität
+          ...response.contract
         } : {
           ...contract,
-          ...updateData,        // ✅ Fallback zu lokalen Daten
-          updatedAt: new Date().toISOString() // ✅ Timestamp hinzufügen
+          ...updateData as Partial<Contract>,
+          updatedAt: new Date().toISOString()
         };
-        
+
         // Parent Component über Update informieren
         onUpdate(updatedContract);
-        
+
         // Success-Anzeige kurz zeigen, dann schließen
         setTimeout(() => {
           onClose();
         }, 1500);
-        
+
         console.log('Contract updated successfully');
       } else {
         throw new Error(response.message || 'Update fehlgeschlagen');
       }
-      
+
     } catch (err) {
       console.error('Update error:', err);
       setError(err instanceof Error ? err.message : 'Fehler beim Speichern');
@@ -327,7 +471,7 @@ export default function ContractEditModal({
 
           {/* Form */}
           <div className={styles.form}>
-            {/* Vertragsname */}
+            {/* Vertragsname (immer sichtbar) */}
             <div className={styles.formGroup}>
               <label className={styles.formLabel}>
                 <FileText size={16} />
@@ -335,175 +479,189 @@ export default function ContractEditModal({
               </label>
               <input
                 type="text"
-                value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 className={styles.formInput}
                 placeholder="z.B. Mietvertrag Hauptstraße 123"
                 disabled={loading}
                 maxLength={100}
               />
               <div className={styles.charCount}>
-                {formData.name.length}/100
+                {name.length}/100
               </div>
             </div>
 
-            {/* Kündigungsfrist - Dropdown + Custom Toggle */}
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>
-                <Clock size={16} />
-                <span>Kündigungsfrist</span>
-                <button
-                  type="button"
-                  className={styles.modeToggle}
-                  onClick={() => {
-                    if (kuendigungMode === 'dropdown') {
-                      setKuendigungMode('custom');
-                    } else {
-                      setKuendigungMode('dropdown');
-                      // Reset zu leerem Wert wenn zurück zu Dropdown
-                      if (!isInOptions(formData.kuendigung, KUENDIGUNG_OPTIONS)) {
-                        handleInputChange('kuendigung', '');
-                      }
-                    }
-                  }}
-                  disabled={loading}
-                  title={kuendigungMode === 'dropdown' ? 'Eigene Eingabe' : 'Aus Liste wählen'}
-                >
-                  {kuendigungMode === 'dropdown' ? (
-                    <><Edit size={12} /> Eigene</>
-                  ) : (
-                    <><ChevronDown size={12} /> Liste</>
+            {/* Dynamische Felder */}
+            {activeFields.map((fieldId) => {
+              const fieldConfig = AVAILABLE_FIELDS.find(f => f.id === fieldId);
+              if (!fieldConfig) return null;
+
+              const IconComponent = fieldConfig.icon;
+              const isCustomMode = customInputMode[fieldId];
+              const currentValue = fieldValues[fieldId] || '';
+
+              return (
+                <div key={fieldId} className={styles.formGroup}>
+                  <label className={styles.formLabel}>
+                    <IconComponent size={16} />
+                    <span>{fieldConfig.label}</span>
+
+                    {/* Toggle für Dropdown-Felder */}
+                    {fieldConfig.type === 'dropdown' && (
+                      <button
+                        type="button"
+                        className={styles.modeToggle}
+                        onClick={() => toggleCustomInput(fieldId)}
+                        disabled={loading}
+                        title={isCustomMode ? 'Aus Liste wählen' : 'Eigene Eingabe'}
+                      >
+                        {isCustomMode ? (
+                          <><ChevronDown size={12} /> Liste</>
+                        ) : (
+                          <><Edit size={12} /> Eigene</>
+                        )}
+                      </button>
+                    )}
+
+                    {/* Entfernen-Button */}
+                    <button
+                      type="button"
+                      className={styles.removeFieldBtn}
+                      onClick={() => removeField(fieldId)}
+                      disabled={loading}
+                      title="Feld entfernen"
+                    >
+                      <Minus size={14} />
+                    </button>
+                  </label>
+
+                  {/* Dropdown-Feld */}
+                  {fieldConfig.type === 'dropdown' && !isCustomMode && (
+                    <div className={styles.selectWrapper}>
+                      <select
+                        value={isInOptions(currentValue, fieldConfig.options) ? currentValue : ''}
+                        onChange={(e) => updateFieldValue(fieldId, e.target.value)}
+                        className={styles.formSelect}
+                        disabled={loading}
+                      >
+                        <option value="">-- Auswählen --</option>
+                        {fieldConfig.options?.map(opt => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                      <ChevronDown size={16} className={styles.selectIcon} />
+                    </div>
                   )}
-                </button>
-              </label>
-              {kuendigungMode === 'dropdown' ? (
-                <div className={styles.selectWrapper}>
-                  <select
-                    value={isInOptions(formData.kuendigung, KUENDIGUNG_OPTIONS) ? formData.kuendigung : ''}
-                    onChange={(e) => {
-                      if (e.target.value === 'custom') {
-                        setKuendigungMode('custom');
-                        handleInputChange('kuendigung', '');
-                      } else {
-                        handleInputChange('kuendigung', e.target.value);
-                      }
-                    }}
-                    className={styles.formSelect}
+
+                  {/* Text-Input (für Custom-Dropdown oder Text-Felder) */}
+                  {(fieldConfig.type === 'text' || (fieldConfig.type === 'dropdown' && isCustomMode)) && (
+                    <input
+                      type="text"
+                      value={currentValue}
+                      onChange={(e) => updateFieldValue(fieldId, e.target.value)}
+                      className={styles.formInput}
+                      placeholder={fieldConfig.placeholder || `${fieldConfig.label} eingeben...`}
+                      disabled={loading}
+                      maxLength={100}
+                    />
+                  )}
+
+                  {/* Datum-Input */}
+                  {fieldConfig.type === 'date' && (
+                    <input
+                      type="date"
+                      value={currentValue}
+                      onChange={(e) => updateFieldValue(fieldId, e.target.value)}
+                      className={styles.formInput}
+                      disabled={loading}
+                    />
+                  )}
+
+                  {/* Number-Input */}
+                  {fieldConfig.type === 'number' && (
+                    <div className={styles.numberInputWrapper}>
+                      <input
+                        type="number"
+                        value={currentValue}
+                        onChange={(e) => updateFieldValue(fieldId, e.target.value)}
+                        className={styles.formInput}
+                        placeholder={fieldConfig.placeholder}
+                        disabled={loading}
+                        step="0.01"
+                        min="0"
+                      />
+                      {fieldConfig.suffix && (
+                        <span className={styles.inputSuffix}>{fieldConfig.suffix}</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Feld hinzufügen Button */}
+            {availableFieldsToAdd.length > 0 && (
+              <div className={styles.addFieldSection}>
+                {!showAddField ? (
+                  <button
+                    type="button"
+                    className={styles.addFieldBtn}
+                    onClick={() => setShowAddField(true)}
                     disabled={loading}
                   >
-                    {KUENDIGUNG_OPTIONS.map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                  <ChevronDown size={16} className={styles.selectIcon} />
-                </div>
-              ) : (
-                <input
-                  type="text"
-                  value={formData.kuendigung}
-                  onChange={(e) => handleInputChange('kuendigung', e.target.value)}
-                  className={styles.formInput}
-                  placeholder="z.B. 3 Monate zum Monatsende"
-                  disabled={loading}
-                  maxLength={50}
-                />
-              )}
-            </div>
+                    <Plus size={16} />
+                    <span>Feld hinzufügen</span>
+                  </button>
+                ) : (
+                  <div className={styles.addFieldDropdown}>
+                    <div className={styles.addFieldHeader}>
+                      <span>Feld auswählen:</span>
+                      <button
+                        type="button"
+                        className={styles.closeAddField}
+                        onClick={() => setShowAddField(false)}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                    <div className={styles.addFieldOptions}>
+                      {availableFieldsToAdd.map(field => {
+                        const IconComponent = field.icon;
+                        return (
+                          <button
+                            key={field.id}
+                            type="button"
+                            className={styles.addFieldOption}
+                            onClick={() => addField(field.id)}
+                          >
+                            <IconComponent size={14} />
+                            <span>{field.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
-            {/* Laufzeit - Dropdown + Custom Toggle */}
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>
-                <RotateCcw size={16} />
-                <span>Laufzeit</span>
-                <button
-                  type="button"
-                  className={styles.modeToggle}
-                  onClick={() => {
-                    if (laufzeitMode === 'dropdown') {
-                      setLaufzeitMode('custom');
-                    } else {
-                      setLaufzeitMode('dropdown');
-                      if (!isInOptions(formData.laufzeit, LAUFZEIT_OPTIONS)) {
-                        handleInputChange('laufzeit', '');
-                      }
-                    }
-                  }}
-                  disabled={loading}
-                  title={laufzeitMode === 'dropdown' ? 'Eigene Eingabe' : 'Aus Liste wählen'}
-                >
-                  {laufzeitMode === 'dropdown' ? (
-                    <><Edit size={12} /> Eigene</>
-                  ) : (
-                    <><ChevronDown size={12} /> Liste</>
-                  )}
-                </button>
-              </label>
-              {laufzeitMode === 'dropdown' ? (
-                <div className={styles.selectWrapper}>
-                  <select
-                    value={isInOptions(formData.laufzeit, LAUFZEIT_OPTIONS) ? formData.laufzeit : ''}
-                    onChange={(e) => {
-                      if (e.target.value === 'custom') {
-                        setLaufzeitMode('custom');
-                        handleInputChange('laufzeit', '');
-                      } else {
-                        handleInputChange('laufzeit', e.target.value);
-                      }
-                    }}
-                    className={styles.formSelect}
-                    disabled={loading}
-                  >
-                    {LAUFZEIT_OPTIONS.map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                  <ChevronDown size={16} className={styles.selectIcon} />
-                </div>
-              ) : (
-                <input
-                  type="text"
-                  value={formData.laufzeit}
-                  onChange={(e) => handleInputChange('laufzeit', e.target.value)}
-                  className={styles.formInput}
-                  placeholder="z.B. Unbefristet oder 2 Jahre"
-                  disabled={loading}
-                  maxLength={50}
-                />
-              )}
-            </div>
-
-            {/* Ablaufdatum */}
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>
-                <Calendar size={16} />
-                <span>Ablaufdatum</span>
-              </label>
-              <input
-                type="date"
-                value={formData.expiryDate}
-                onChange={(e) => handleInputChange('expiryDate', e.target.value)}
-                className={styles.formInput}
-                disabled={loading}
-              />
-            </div>
-
-            {/* Notizen */}
+            {/* Notizen (immer sichtbar) */}
             <div className={styles.formGroup}>
               <label className={styles.formLabel}>
                 <StickyNote size={16} />
                 <span>Eigene Notizen</span>
               </label>
               <textarea
-                value={formData.notes}
-                onChange={(e) => handleInputChange('notes', e.target.value)}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
                 className={styles.formTextarea}
                 placeholder="Hier können Sie eigene Notizen zu diesem Vertrag hinzufügen..."
                 disabled={loading}
-                rows={4}
+                rows={3}
                 maxLength={500}
               />
               <div className={styles.charCount}>
-                {formData.notes.length}/500
+                {notes.length}/500
               </div>
             </div>
           </div>

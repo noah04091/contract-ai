@@ -521,6 +521,174 @@
   margin-bottom: 0.25rem;
 }
 
+/* 🗑️ Remove Field Button */
+.removeFieldBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid #ffccd5;
+  border-radius: 6px;
+  background: #fff5f5;
+  color: #d70015;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.removeFieldBtn:hover:not(:disabled) {
+  background: #ffecec;
+  border-color: #ff453a;
+  color: #ff453a;
+}
+
+.removeFieldBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ➕ Add Field Section */
+.addFieldSection {
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed #e5e5e7;
+}
+
+.addFieldBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  border: 1.5px dashed #007AFF;
+  border-radius: 10px;
+  background: rgba(0, 122, 255, 0.04);
+  color: #007AFF;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  justify-content: center;
+}
+
+.addFieldBtn:hover:not(:disabled) {
+  background: rgba(0, 122, 255, 0.08);
+  border-color: #0056b3;
+}
+
+.addFieldBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.addFieldDropdown {
+  background: white;
+  border: 1.5px solid #e5e5e7;
+  border-radius: 12px;
+  overflow: hidden;
+  animation: fadeInUp 0.2s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.addFieldHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: #f9f9fb;
+  border-bottom: 1px solid #e5e5e7;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #6e6e73;
+}
+
+.closeAddField {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #6e6e73;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.closeAddField:hover {
+  background: #e8e8ed;
+  color: #1d1d1f;
+}
+
+.addFieldOptions {
+  display: flex;
+  flex-direction: column;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.addFieldOption {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: white;
+  color: #1d1d1f;
+  font-size: 0.9rem;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.addFieldOption:hover {
+  background: #f5f5f7;
+  color: #007AFF;
+}
+
+.addFieldOption svg {
+  color: #6e6e73;
+  flex-shrink: 0;
+}
+
+.addFieldOption:hover svg {
+  color: #007AFF;
+}
+
+/* 💰 Number Input with Suffix */
+.numberInputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.numberInputWrapper .formInput {
+  padding-right: 2.5rem;
+}
+
+.inputSuffix {
+  position: absolute;
+  right: 1rem;
+  color: #6e6e73;
+  font-size: 0.95rem;
+  font-weight: 500;
+  pointer-events: none;
+}
+
 /* Mobile anpassen */
 @media (max-width: 480px) {
   .modeToggle {
@@ -531,5 +699,14 @@
   .formSelect {
     padding: 0.75rem 2.25rem 0.75rem 0.875rem;
     font-size: 0.9rem;
+  }
+
+  .removeFieldBtn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .addFieldOption {
+    padding: 0.875rem 1rem;
   }
 }
