@@ -1980,12 +1980,24 @@ export default function Contracts() {
         console.log("✅ Analysis successful for existing contract");
 
         // ✅ Silent Refresh - ohne Loading-Skeleton (damit UI nicht springt)
-        await silentRefreshContracts();
+        const refreshedContracts = await silentRefreshContracts();
         await fetchUserInfo();
 
-        // ✅ Automatisch die Analyseergebnisse öffnen
-        // Nutze den vom Backend zurückgegebenen vollständigen Contract
-        const updatedContract = data.contract || { ...contract, analyzed: true };
+        // ✅ WICHTIG: Hole den aktualisierten Contract aus der frisch geladenen Liste
+        // Das stellt sicher, dass alle Analysedaten (risiken, summary, etc.) vorhanden sind
+        const foundContract = refreshedContracts?.find((c: Contract) => c._id === contract._id);
+
+        // Fallback: Backend-Response oder alten Contract mit analyzed: true
+        const updatedContract: Contract = foundContract || data.contract || { ...contract, analyzed: true };
+
+        console.log("📊 Updated contract data:", {
+          id: updatedContract._id,
+          hasRisiken: !!updatedContract.risiken,
+          hasSummary: !!updatedContract.summary,
+          hasContractScore: !!updatedContract.contractScore,
+          source: foundContract ? 'refreshedList' : 'backendResponse'
+        });
+
         setSelectedContract(updatedContract);
         setShowDetails(true);
 
