@@ -866,21 +866,42 @@ async function generateEventsForContract(db, contract) {
             updatedAt: new Date()
           });
 
-          // Reminder für kritische Datums
-          if (mapping.severity === 'critical' || mapping.severity === 'warning') {
-            // 7-Tage Reminder
-            const reminder7 = new Date(dateObj);
-            reminder7.setDate(reminder7.getDate() - 7);
+          // 🏛️ KANZLEI-NIVEAU: Professionelle Reminder-Staffelung
+          // Kritische Termine: 30, 14, 7, 3 Tage vorher
+          // Wichtige Termine: 14, 7 Tage vorher
+          // Normale Termine: 7 Tage vorher
 
-            if (reminder7 > now) {
+          const reminderConfig = {
+            critical: [
+              { days: 30, emoji: '📅', urgency: 'info', label: 'In 30 Tagen' },
+              { days: 14, emoji: '⚠️', urgency: 'warning', label: 'In 2 Wochen' },
+              { days: 7, emoji: '🚨', urgency: 'warning', label: 'In 7 Tagen' },
+              { days: 3, emoji: '🔴', urgency: 'critical', label: 'In 3 Tagen - DRINGEND' }
+            ],
+            warning: [
+              { days: 14, emoji: '📅', urgency: 'info', label: 'In 2 Wochen' },
+              { days: 7, emoji: '⚠️', urgency: 'warning', label: 'In 7 Tagen' }
+            ],
+            info: [
+              { days: 7, emoji: '📅', urgency: 'info', label: 'In 7 Tagen' }
+            ]
+          };
+
+          const reminders = reminderConfig[mapping.severity] || reminderConfig.info;
+
+          for (const reminder of reminders) {
+            const reminderDate = new Date(dateObj);
+            reminderDate.setDate(reminderDate.getDate() - reminder.days);
+
+            if (reminderDate > now) {
               events.push({
                 userId: contract.userId,
                 contractId: contract._id,
-                type: `${mapping.eventType}_REMINDER`,
-                title: `⏰ In 7 Tagen: ${importantDate.label}`,
-                description: `"${contract.name}": ${importantDate.description || importantDate.label} - Noch 7 Tage!`,
-                date: createLocalDate(reminder7),
-                severity: "warning",
+                type: `${mapping.eventType}_REMINDER_${reminder.days}D`,
+                title: `${reminder.emoji} ${reminder.label}: ${importantDate.label}`,
+                description: `"${contract.name}": ${importantDate.description || importantDate.label} - Noch ${reminder.days} Tage!`,
+                date: createLocalDate(reminderDate),
+                severity: reminder.urgency,
                 status: "scheduled",
                 confidence: importantDate.calculated ? 70 : 90,
                 dataSource: 'ai_reminder',
@@ -888,8 +909,9 @@ async function generateEventsForContract(db, contract) {
                 metadata: {
                   provider: contract.provider,
                   contractName: contract.name,
-                  daysUntil: 7,
-                  originalEvent: mapping.eventType
+                  daysUntil: reminder.days,
+                  originalEvent: mapping.eventType,
+                  reminderType: `${reminder.days}_days`
                 },
                 createdAt: new Date(),
                 updatedAt: new Date()
