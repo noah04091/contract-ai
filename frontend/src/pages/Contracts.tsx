@@ -162,6 +162,36 @@ type SortOrder = 'neueste' | 'älteste' | 'name_az' | 'name_za';
 
 // ✅ NEU: S3-Integration - Utility-Funktionen direkt in der Komponente
 
+/**
+ * ✅ FIX: Robuste Prüfung ob ein Vertrag NICHT analysiert wurde
+ * - Prüft sowohl das `analyzed` Flag als auch das Vorhandensein von Analysedaten
+ * - Ein Vertrag gilt als "nicht analysiert" wenn:
+ *   1. analyzed === false (explizit nicht analysiert)
+ *   2. KEINE Analysedaten vorhanden sind (keine summary, kein contractScore, keine risiken)
+ */
+function isContractNotAnalyzed(contract: Contract): boolean {
+  // Explizit als nicht analysiert markiert
+  if (isContractNotAnalyzed(contract)) {
+    // Aber prüfe zusätzlich, ob wirklich keine Analysedaten da sind
+    // (könnte ein alter Vertrag sein, der vor dem Flag existierte)
+    const hasAnalysisData = Boolean(
+      contract.summary ||
+      contract.contractScore ||
+      (contract.risiken && contract.risiken.length > 0) ||
+      contract.legalAssessment ||
+      contract.suggestions
+    );
+
+    // Wenn Analysedaten vorhanden sind, wurde der Vertrag analysiert
+    // (Flag ist evtl. falsch/veraltet)
+    return !hasAnalysisData;
+  }
+
+  // Wenn analyzed === true oder undefined, ist der Vertrag analysiert
+  // (oder es ist ein alter Vertrag ohne Flag - dann auch als analysiert betrachten)
+  return false;
+}
+
 // ✅ MOBILE-FIX: PDF-Schnellaktion mit "Temporäres Tab sofort öffnen" Methode (Mobile-freundlich)
 export default function Contracts() {
   // ✅ Navigation state handling
@@ -2629,7 +2659,7 @@ export default function Contracts() {
                   Per Email
                 </span>
               )}
-              {contract.analyzed === false && (
+              {isContractNotAnalyzed(contract) && (
                 <span className={styles.notAnalyzedBadge}>Nicht analysiert</span>
               )}
             </div>
@@ -2659,7 +2689,7 @@ export default function Contracts() {
       {/* Card Actions - ✅ 2x2 Grid: Alle Buttons gleich groß */}
       <div className={styles.cardActions}>
         {/* ✅ Sonderfall: "Jetzt analysieren" für nicht-analysierte Verträge (volle Breite) */}
-        {contract.analyzed === false && (
+        {isContractNotAnalyzed(contract) && (
           <button
             className={`${styles.cardActionButton} ${styles.analyzeNow} ${styles.fullWidthAction}`}
             onClick={(e) => {
@@ -2845,7 +2875,7 @@ export default function Contracts() {
               {contract.isGenerated && <span className={styles.listRowBadge} data-type="generated">Gen</span>}
               {contract.isOptimized && <span className={styles.listRowBadge} data-type="optimized">Opt</span>}
               {contract.uploadType === 'EMAIL_IMPORT' && <span className={styles.listRowBadge} data-type="email">✉</span>}
-              {contract.analyzed === false && <span className={styles.listRowBadge} data-type="unanalyzed">!</span>}
+              {isContractNotAnalyzed(contract) && <span className={styles.listRowBadge} data-type="unanalyzed">!</span>}
             </div>
           </div>
           <div className={styles.listRowMeta}>
@@ -2998,7 +3028,7 @@ export default function Contracts() {
             <Edit size={14} />
           </button>
           {/* ⚡ Analyze Button - nur für nicht-analysierte Verträge */}
-          {contract.analyzed === false && (
+          {isContractNotAnalyzed(contract) && (
             <button
               className={`${styles.gridActionBtn} ${styles.analyzeBtn}`}
               onClick={(e) => {
@@ -3028,7 +3058,7 @@ export default function Contracts() {
         </div>
 
         {/* Not Analyzed Badge - jetzt mit klickbarem Text */}
-        {contract.analyzed === false && (
+        {isContractNotAnalyzed(contract) && (
           <div
             className={styles.gridNotAnalyzed}
             onClick={(e) => {
@@ -4253,7 +4283,7 @@ export default function Contracts() {
                                     <Edit size={16} />
                                   </button>
                                   {/* ⚡ Analyze Button - nur für nicht-analysierte Verträge */}
-                                  {contract.analyzed === false && (
+                                  {isContractNotAnalyzed(contract) && (
                                     <button
                                       className={`${styles.actionButton} ${styles.analyzeButton}`}
                                       onClick={(e) => {

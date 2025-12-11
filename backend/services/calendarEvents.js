@@ -412,33 +412,42 @@ async function generateEventsForContract(db, contract) {
     // 🆕 9. DYNAMISCHE QUICKFACTS-FELDER Events
 
     // 9a. Gekündigt zum - Event für bestätigte Kündigung
+    // ✅ FIX: Kündigungsdaten werden IMMER im Kalender angezeigt (auch vergangene)
+    // Bei Kündigungsbestätigungen ist es wichtig, das Datum als Referenz zu haben
     if (contract.gekuendigtZum) {
       const gekuendigtDate = createLocalDate(contract.gekuendigtZum);
+      const isPastDate = gekuendigtDate <= now;
 
-      if (gekuendigtDate > now) {
-        events.push({
-          userId: contract.userId,
-          contractId: contract._id,
-          type: "CANCELLATION_DATE",
-          title: `✅ Kündigung wirksam: ${contract.name}`,
-          description: `Die Kündigung für "${contract.name}" wird heute wirksam. Der Vertrag endet.`,
-          date: gekuendigtDate,
-          severity: "info",
-          status: "scheduled",
-          confidence: confidence,
-          dataSource: dataSource,
-          isEstimated: isEstimated,
-          metadata: {
-            provider: contract.provider,
-            contractName: contract.name,
-            suggestedAction: "archive",
-            isCancelled: true
-          },
-          createdAt: new Date(),
-          updatedAt: new Date()
-        });
+      // Event immer erstellen - auch für vergangene Daten
+      events.push({
+        userId: contract.userId,
+        contractId: contract._id,
+        type: isPastDate ? "CANCELLATION_COMPLETED" : "CANCELLATION_DATE",
+        title: isPastDate
+          ? `✅ Gekündigt: ${contract.name}`
+          : `✅ Kündigung wirksam: ${contract.name}`,
+        description: isPastDate
+          ? `"${contract.name}" wurde zum ${gekuendigtDate.toLocaleDateString('de-DE')} gekündigt.`
+          : `Die Kündigung für "${contract.name}" wird heute wirksam. Der Vertrag endet.`,
+        date: gekuendigtDate,
+        severity: "info",
+        status: isPastDate ? "completed" : "scheduled",
+        confidence: confidence,
+        dataSource: dataSource,
+        isEstimated: isEstimated,
+        metadata: {
+          provider: contract.provider,
+          contractName: contract.name,
+          suggestedAction: "archive",
+          isCancelled: true,
+          isPastDate: isPastDate
+        },
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
 
-        // Reminder 7 Tage vorher
+      // Reminder nur für zukünftige Daten
+      if (!isPastDate) {
         const tempReminderDate = new Date(gekuendigtDate);
         tempReminderDate.setDate(tempReminderDate.getDate() - 7);
         const reminderDate = createLocalDate(tempReminderDate);
