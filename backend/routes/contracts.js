@@ -706,6 +706,20 @@ async function enrichContractWithAnalysis(contract) {
       }
     }
 
+    // ✅ NEU: Analysedaten auf Root-Level mappen (für Frontend-Kompatibilität)
+    // Priorität: Direktes Feld auf Contract > Analysis Collection
+    contract.summary = contract.summary || analysis?.summary || null;
+    contract.contractScore = contract.contractScore || analysis?.contractScore || null;
+    contract.legalAssessment = contract.legalAssessment || analysis?.legalAssessment || null;
+    contract.suggestions = contract.suggestions || analysis?.suggestions || null;
+    contract.risiken = contract.risiken || contract.criticalIssues || analysis?.criticalIssues || null;
+    contract.quickFacts = contract.quickFacts || analysis?.quickFacts || null;
+    contract.detailedLegalOpinion = contract.detailedLegalOpinion || analysis?.detailedLegalOpinion || null;
+    contract.importantDates = contract.importantDates || analysis?.importantDates || null;
+    contract.positiveAspects = contract.positiveAspects || analysis?.positiveAspects || null;
+    contract.recommendations = contract.recommendations || analysis?.recommendations || null;
+    contract.laymanSummary = contract.laymanSummary || analysis?.laymanSummary || null;
+
     if (!contract.fullText) {
       if (contract.content) {
         contract.fullText = contract.content;
