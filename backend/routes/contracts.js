@@ -557,7 +557,7 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
   // 🔄 Transformation der Ergebnisse
   pipeline.push({
     $addFields: {
-      // Analysis-Daten extrahieren
+      // Analysis-Daten extrahieren (Fallback: aus Analysis Collection wenn nicht direkt auf Contract)
       analysis: {
         $cond: {
           if: { $gt: [{ $size: "$analysisData" }, 0] },
@@ -573,6 +573,31 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
           else: null
         }
       },
+      // ✅ NEU: Analysedaten direkt auf Root-Level (für Frontend Kompatibilität)
+      // Priorität: Direktes Feld > Analysis Collection
+      summary: { $ifNull: ["$summary", { $arrayElemAt: ["$analysisData.summary", 0] }] },
+      contractScore: { $ifNull: ["$contractScore", { $arrayElemAt: ["$analysisData.contractScore", 0] }] },
+      legalAssessment: { $ifNull: ["$legalAssessment", { $arrayElemAt: ["$analysisData.legalAssessment", 0] }] },
+      suggestions: { $ifNull: ["$suggestions", { $arrayElemAt: ["$analysisData.suggestions", 0] }] },
+      // ✅ Risiken: criticalIssues als Fallback
+      risiken: {
+        $ifNull: [
+          "$risiken",
+          { $ifNull: ["$criticalIssues", { $arrayElemAt: ["$analysisData.criticalIssues", 0] }] }
+        ]
+      },
+      // ✅ QuickFacts für dynamische Anzeige
+      quickFacts: { $ifNull: ["$quickFacts", { $arrayElemAt: ["$analysisData.quickFacts", 0] }] },
+      // ✅ Rechtsgutachten
+      detailedLegalOpinion: { $ifNull: ["$detailedLegalOpinion", { $arrayElemAt: ["$analysisData.detailedLegalOpinion", 0] }] },
+      // ✅ Wichtige Datums für Kalender
+      importantDates: { $ifNull: ["$importantDates", { $arrayElemAt: ["$analysisData.importantDates", 0] }] },
+      // ✅ Positive Aspekte
+      positiveAspects: { $ifNull: ["$positiveAspects", { $arrayElemAt: ["$analysisData.positiveAspects", 0] }] },
+      // ✅ Empfehlungen
+      recommendations: { $ifNull: ["$recommendations", { $arrayElemAt: ["$analysisData.recommendations", 0] }] },
+      // ✅ Laien-Zusammenfassung
+      laymanSummary: { $ifNull: ["$laymanSummary", { $arrayElemAt: ["$analysisData.laymanSummary", 0] }] },
       // FullText ermitteln (Priorität: analysis.fullText > analysis.extractedText > contract.content > contract.extractedText)
       fullText: {
         $ifNull: [

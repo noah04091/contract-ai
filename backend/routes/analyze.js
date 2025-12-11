@@ -2678,6 +2678,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           comparison: result.comparison || [],
           positiveAspects: result.positiveAspects || [],
           criticalIssues: result.criticalIssues || [],
+          risiken: result.criticalIssues || [], // ✅ Alias für Frontend-Kompatibilität
           recommendations: result.recommendations || [],
           quickFacts: result.quickFacts || [],
           legalPulseHooks: result.legalPulseHooks || [],
@@ -2852,6 +2853,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
               comparison: result.comparison || [],
               positiveAspects: result.positiveAspects || [],
               criticalIssues: result.criticalIssues || [],
+              risiken: result.criticalIssues || [], // ✅ Alias für Frontend-Kompatibilität
               recommendations: result.recommendations || [],
               quickFacts: result.quickFacts || [],
               legalPulseHooks: result.legalPulseHooks || [],
