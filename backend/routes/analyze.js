@@ -1345,6 +1345,17 @@ ${awareness.commonTraps}
 
    ⚠️ WICHTIG: Auch wenn Datum nicht explizit steht, aber BERECHENBAR ist → berechnen und "calculated": true setzen!
 
+   🚫 NIEMALS DATUMS ERFINDEN:
+   - Nur Datums eintragen, die EXPLIZIT im Vertrag stehen ODER sicher BERECHENBAR sind!
+   - Wenn ein Kaufvertrag nur das Kaufdatum hat → NUR das Kaufdatum eintragen!
+   - Wenn keine Kündigungsfrist erwähnt wird → KEINE Kündigungsfrist eintragen!
+   - Wenn keine Laufzeit steht → KEIN Enddatum erfinden!
+   - Bei Unsicherheit: Datum WEGLASSEN statt raten!
+   - Leeres Array [] ist OK wenn es keine relevanten Datums gibt!
+
+   ✅ RICHTIG: Kaufvertrag vom 11.12.2024 ohne weitere Fristen → [{"type": "contract_signed", "date": "2024-12-11", "label": "Kaufdatum", ...}]
+   ❌ FALSCH: Kaufvertrag vom 11.12.2024 → "Gewährleistung endet 2026" (wenn nicht explizit im Vertrag!)
+
    Beispiel Output:
    [
      {"type": "start_date", "date": "2024-01-15", "label": "Vertragsbeginn", "description": "Fitnessstudio-Mitgliedschaft startet", "calculated": false, "source": "Seite 1"},
