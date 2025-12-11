@@ -470,7 +470,12 @@ async function generateEventsForContract(db, contract) {
     }
 
     // 9b. Probezeit-Ende (bei Arbeitsverträgen mit startDate)
-    if (contract.startDate && contract.documentCategory === 'arbeitsvertrag') {
+    // Fallback: Wenn probezeit oder arbeitsbeginn gesetzt ist, ist es ein Arbeitsvertrag
+    const isArbeitsvertrag = contract.documentCategory === 'arbeitsvertrag' ||
+                             contract.probezeit ||
+                             contract.arbeitsbeginn ||
+                             (contract.name && contract.name.toLowerCase().includes('arbeitsvertrag'));
+    if (contract.startDate && isArbeitsvertrag) {
       const startDate = new Date(contract.startDate);
       const probezeitEnde = new Date(startDate);
       probezeitEnde.setMonth(probezeitEnde.getMonth() + 6); // Standard: 6 Monate
@@ -531,7 +536,12 @@ async function generateEventsForContract(db, contract) {
     }
 
     // 9c. Gewährleistung-Ende (bei Kaufverträgen)
-    if (contract.kaufdatum || (contract.startDate && contract.documentCategory === 'kaufvertrag')) {
+    // Fallback: Wenn kaufdatum oder kaufpreis gesetzt ist, oder Name "Kaufvertrag" enthält
+    const isKaufvertrag = contract.documentCategory === 'kaufvertrag' ||
+                          contract.kaufdatum ||
+                          contract.kaufpreis ||
+                          (contract.name && contract.name.toLowerCase().includes('kaufvertrag'));
+    if (contract.kaufdatum || (contract.startDate && isKaufvertrag)) {
       const kaufDate = new Date(contract.kaufdatum || contract.startDate);
       const gewaehrleistungEnde = new Date(kaufDate);
       gewaehrleistungEnde.setFullYear(gewaehrleistungEnde.getFullYear() + 2); // 2 Jahre Gewährleistung
@@ -592,7 +602,12 @@ async function generateEventsForContract(db, contract) {
     }
 
     // 9d. Mietvertrag-Jubiläum (bei Mietverträgen)
-    if (contract.mietbeginn || (contract.startDate && contract.documentCategory === 'mietvertrag')) {
+    // Fallback: Wenn mietbeginn, miete oder Name "Mietvertrag" enthält
+    const isMietvertrag = contract.documentCategory === 'mietvertrag' ||
+                          contract.mietbeginn ||
+                          contract.monatlicheMiete ||
+                          (contract.name && contract.name.toLowerCase().includes('mietvertrag'));
+    if (contract.mietbeginn || (contract.startDate && isMietvertrag)) {
       const mietbeginnDate = new Date(contract.mietbeginn || contract.startDate);
 
       // Jährliches Jubiläum für die nächsten 2 Jahre
