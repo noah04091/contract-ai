@@ -2260,6 +2260,8 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     let extractedContractType = null; // 🆕 CONTRACT TYPE (telecom, purchase, rental, etc.)
     let extractedDocumentCategory = null; // 🆕 DOCUMENT CATEGORY (cancellation_confirmation, invoice, active_contract)
     let extractedGekuendigtZum = null; // 🆕 Kündigungsdatum für Kündigungsbestätigungen
+    let extractedMinimumTerm = null; // 🆕 Mindestlaufzeit (z.B. 6 Monate)
+    let extractedCanCancelAfterDate = null; // 🆕 Datum ab wann kündbar
 
     try {
       const providerAnalysis = await contractAnalyzer.analyzeContract(
@@ -2278,11 +2280,18 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         extractedCancellationPeriod = providerAnalysis.data.cancellationPeriod;
         extractedIsAutoRenewal = providerAnalysis.data.isAutoRenewal || false; // 🆕 AUTO-RENEWAL
         extractedDocumentCategory = providerAnalysis.data.documentCategory; // 🆕 DOCUMENT CATEGORY
+        extractedMinimumTerm = providerAnalysis.data.minimumTerm; // 🆕 MINDESTLAUFZEIT
+        extractedCanCancelAfterDate = providerAnalysis.data.canCancelAfterDate; // 🆕 KÜNDBAR AB
 
         // 🆕 Für Kündigungsbestätigungen: gekuendigtZum = endDate (das ist das Datum wann Vertrag endet)
         if (extractedDocumentCategory === 'cancellation_confirmation' && extractedEndDate) {
           extractedGekuendigtZum = extractedEndDate;
           console.log(`📄 [${requestId}] Kündigungsbestätigung erkannt - gekuendigtZum: ${extractedGekuendigtZum}`);
+        }
+
+        // 🆕 Log Mindestlaufzeit wenn gefunden
+        if (extractedMinimumTerm) {
+          console.log(`📅 [${requestId}] Mindestlaufzeit erkannt: ${extractedMinimumTerm.months} Monate - Kündbar ab: ${extractedCanCancelAfterDate || 'wird berechnet'}`);
         }
 
         // Debug-Log hinzufügen
@@ -2291,9 +2300,11 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           endDate: extractedEndDate,
           contractDuration: extractedContractDuration,
           cancellationPeriod: extractedCancellationPeriod,
-          isAutoRenewal: extractedIsAutoRenewal, // 🆕 AUTO-RENEWAL
-          documentCategory: extractedDocumentCategory, // 🆕 DOCUMENT CATEGORY
-          gekuendigtZum: extractedGekuendigtZum, // 🆕 Kündigungsdatum
+          isAutoRenewal: extractedIsAutoRenewal,
+          documentCategory: extractedDocumentCategory,
+          gekuendigtZum: extractedGekuendigtZum,
+          minimumTerm: extractedMinimumTerm,
+          canCancelAfterDate: extractedCanCancelAfterDate,
           originalData: providerAnalysis.data
         });
 
@@ -2310,7 +2321,9 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           gekuendigtZum: extractedGekuendigtZum,
           contractDuration: extractedContractDuration,
           cancellationPeriod: extractedCancellationPeriod,
-          isAutoRenewal: extractedIsAutoRenewal // 🆕 AUTO-RENEWAL
+          isAutoRenewal: extractedIsAutoRenewal,
+          minimumTerm: extractedMinimumTerm,
+          canCancelAfterDate: extractedCanCancelAfterDate
         });
       } else {
         console.log(`⚠️ [${requestId}] No provider or contract details extracted`);
@@ -2660,7 +2673,11 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
           // 🆕 DOCUMENT CATEGORY & KÜNDIGUNGSDATUM
           documentCategory: extractedDocumentCategory || 'active_contract',
-          gekuendigtZum: extractedGekuendigtZum || null // 🆕 Für Kalender-Events
+          gekuendigtZum: extractedGekuendigtZum || null, // 🆕 Für Kalender-Events
+
+          // 🆕 MINDESTLAUFZEIT (z.B. "Kündigung ab 6. Monat möglich")
+          minimumTerm: extractedMinimumTerm || null,
+          canCancelAfterDate: extractedCanCancelAfterDate || null // 🆕 Datum ab wann kündbar - Für Kalender-Events
         };
 
         const savedContract = await saveContractWithUpload(

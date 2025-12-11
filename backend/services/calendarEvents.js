@@ -504,7 +504,101 @@ async function generateEventsForContract(db, contract) {
       }
     }
 
-    // 9b. Probezeit-Ende (bei Arbeitsverträgen mit startDate)
+    // 🆕 9b. MINDESTLAUFZEIT ENDE - "Jetzt kündbar!" Event
+    // Wenn canCancelAfterDate gesetzt ist (z.B. "Kündigung ab 6. Monat möglich")
+    if (contract.canCancelAfterDate) {
+      const canCancelDate = createLocalDate(contract.canCancelAfterDate);
+
+      if (canCancelDate > now) {
+        console.log(`📅 Mindestlaufzeit: Kündbar ab ${canCancelDate.toLocaleDateString('de-DE')}`);
+
+        // Haupt-Event: Jetzt kündbar!
+        events.push({
+          userId: contract.userId,
+          contractId: contract._id,
+          type: "MINIMUM_TERM_END",
+          title: `🔓 Jetzt kündbar: ${contract.name}`,
+          description: `"${contract.name}" kann ab heute gekündigt werden! Die Mindestlaufzeit ist abgelaufen.`,
+          date: canCancelDate,
+          severity: "info",
+          status: "scheduled",
+          confidence: confidence,
+          dataSource: dataSource,
+          isEstimated: isEstimated,
+          metadata: {
+            provider: contract.provider,
+            contractName: contract.name,
+            minimumTermMonths: contract.minimumTerm?.months || null,
+            suggestedAction: "review_cancel"
+          },
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+
+        // Reminder 14 Tage vorher
+        const tempReminder14 = new Date(canCancelDate);
+        tempReminder14.setDate(tempReminder14.getDate() - 14);
+        const reminder14Date = createLocalDate(tempReminder14);
+
+        if (reminder14Date > now) {
+          events.push({
+            userId: contract.userId,
+            contractId: contract._id,
+            type: "MINIMUM_TERM_REMINDER",
+            title: `📅 In 2 Wochen kündbar: ${contract.name}`,
+            description: `"${contract.name}" kann in 2 Wochen gekündigt werden. Die Mindestlaufzeit endet am ${canCancelDate.toLocaleDateString('de-DE')}.`,
+            date: reminder14Date,
+            severity: "info",
+            status: "scheduled",
+            confidence: confidence,
+            dataSource: dataSource,
+            isEstimated: isEstimated,
+            metadata: {
+              provider: contract.provider,
+              contractName: contract.name,
+              daysUntil: 14,
+              suggestedAction: "prepare"
+            },
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+        }
+
+        // Reminder 7 Tage vorher
+        const tempReminder7 = new Date(canCancelDate);
+        tempReminder7.setDate(tempReminder7.getDate() - 7);
+        const reminder7Date = createLocalDate(tempReminder7);
+
+        if (reminder7Date > now) {
+          events.push({
+            userId: contract.userId,
+            contractId: contract._id,
+            type: "MINIMUM_TERM_REMINDER",
+            title: `⏰ In 7 Tagen kündbar: ${contract.name}`,
+            description: `"${contract.name}" kann in 7 Tagen gekündigt werden. Überlege ob du kündigen möchtest!`,
+            date: reminder7Date,
+            severity: "warning",
+            status: "scheduled",
+            confidence: confidence,
+            dataSource: dataSource,
+            isEstimated: isEstimated,
+            metadata: {
+              provider: contract.provider,
+              contractName: contract.name,
+              daysUntil: 7,
+              suggestedAction: "decide"
+            },
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+        }
+      } else {
+        // Mindestlaufzeit bereits abgelaufen - noch keinen "jetzt kündbar" Status setzen?
+        console.log(`ℹ️ Mindestlaufzeit bereits abgelaufen: ${canCancelDate.toLocaleDateString('de-DE')} - Vertrag ist jetzt kündbar`);
+      }
+    }
+
+    // 9c. Probezeit-Ende (bei Arbeitsverträgen mit startDate)
     // Fallback: Wenn probezeit oder arbeitsbeginn gesetzt ist, ist es ein Arbeitsvertrag
     const isArbeitsvertrag = contract.documentCategory === 'arbeitsvertrag' ||
                              contract.probezeit ||

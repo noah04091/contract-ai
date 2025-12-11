@@ -154,6 +154,30 @@ class ContractAnalyzer {
         /zum\s+ablauf\s+der\s+(?:vertrags)?laufzeit/gi
       ],
 
+      // 🆕 Mindestlaufzeit / Erstlaufzeit patterns - "Kündigung ab X Monat möglich"
+      minimumTerm: [
+        // "Kündigung ab dem 6. Monat möglich"
+        /kündigung\s+(?:erst\s+)?ab\s+(?:dem\s+)?(\d+)\.?\s*monat/gi,
+        // "nach 6 Monaten kündbar"
+        /nach\s+(\d+)\s*monat(?:en)?\s+kündbar/gi,
+        // "frühestens nach 6 Monaten"
+        /frühestens\s+(?:nach\s+)?(\d+)\s*monat/gi,
+        // "Mindestlaufzeit 6 Monate"
+        /mindestlaufzeit[\s:]*(\d+)\s*monat/gi,
+        // "Erstlaufzeit 12 Monate"
+        /erstlaufzeit[\s:]*(\d+)\s*monat/gi,
+        // "Mindestvertragslaufzeit"
+        /mindest(?:vertrags)?laufzeit[\s:]*(\d+)\s*monat/gi,
+        // "erst nach Ablauf von 6 Monaten"
+        /erst\s+nach\s+(?:ablauf\s+von\s+)?(\d+)\s*monat/gi,
+        // "Vertrag kann ab 6 Monaten gekündigt werden"
+        /(?:vertrag\s+)?kann\s+ab\s+(\d+)\s*monat(?:en)?\s+(?:ge)?kündigt/gi,
+        // "bindungsfrist 6 monate"
+        /bindungsfrist[\s:]*(\d+)\s*monat/gi,
+        // "Mindestbindung 12 Monate"
+        /mindestbindung[\s:]*(\d+)\s*monat/gi
+      ],
+
       // Auto-renewal patterns (with negation checks)
       autoRenewal: [
         /verlängert\s*sich\s*(?:automatisch|stillschweigend)/gi,
@@ -952,6 +976,83 @@ class ContractAnalyzer {
   }
 
   /**
+   * 🆕 EXTRAHIERT MINDESTLAUFZEIT / ERSTLAUFZEIT
+   * Erkennt Klauseln wie "Kündigung ab dem 6. Monat möglich", "Mindestlaufzeit 12 Monate"
+   * Returns: { months: number, canCancelAfterDate: Date | null } oder null
+   */
+  extractMinimumTerm(text, startDate = null) {
+    const lowerText = text.toLowerCase();
+
+    console.log('🔍 Suche nach Mindestlaufzeit/Erstlaufzeit...');
+
+    for (const pattern of this.patterns.minimumTerm) {
+      // Reset lastIndex für globale Regex
+      pattern.lastIndex = 0;
+      const match = pattern.exec(lowerText);
+
+      if (match) {
+        const months = parseInt(match[1]);
+
+        if (months > 0 && months <= 120) { // Max 10 Jahre sinnvoll
+          console.log(`✅ Mindestlaufzeit gefunden: ${months} Monate - Pattern: ${pattern.source.substring(0, 40)}...`);
+
+          // Berechne das Datum ab wann gekündigt werden kann
+          let canCancelAfterDate = null;
+          if (startDate) {
+            const startDateObj = new Date(startDate);
+            canCancelAfterDate = new Date(startDateObj);
+            canCancelAfterDate.setMonth(canCancelAfterDate.getMonth() + months);
+            console.log(`📅 Kündigung möglich ab: ${canCancelAfterDate.toLocaleDateString('de-DE')}`);
+          }
+
+          return {
+            months: months,
+            inDays: months * 30,
+            canCancelAfterDate: canCancelAfterDate,
+            source: 'extracted',
+            confidence: 85
+          };
+        }
+      }
+    }
+
+    // Fallback: Suche nach generischen Mustern
+    const genericPatterns = [
+      /(\d+)\s*monat(?:e|en)?\s*(?:mindest)?(?:laufzeit|bindung)/gi,
+      /(?:mindest|erst)(?:laufzeit|bindung)\s*(?:von|:)?\s*(\d+)\s*monat/gi
+    ];
+
+    for (const pattern of genericPatterns) {
+      pattern.lastIndex = 0;
+      const match = pattern.exec(lowerText);
+      if (match) {
+        const months = parseInt(match[1] || match[2]);
+        if (months > 0 && months <= 120) {
+          console.log(`✅ Mindestlaufzeit gefunden (generic): ${months} Monate`);
+
+          let canCancelAfterDate = null;
+          if (startDate) {
+            const startDateObj = new Date(startDate);
+            canCancelAfterDate = new Date(startDateObj);
+            canCancelAfterDate.setMonth(canCancelAfterDate.getMonth() + months);
+          }
+
+          return {
+            months: months,
+            inDays: months * 30,
+            canCancelAfterDate: canCancelAfterDate,
+            source: 'generic',
+            confidence: 70
+          };
+        }
+      }
+    }
+
+    console.log('⚠️ Keine Mindestlaufzeit gefunden');
+    return null;
+  }
+
+  /**
    * 🆕 GENERIERT DYNAMISCHE QUICKFACTS basierend auf Dokument-Kategorie
    * Returns: Array mit 3 quickFact-Objekten { label, value, rating }
    */
@@ -1524,6 +1625,9 @@ class ContractAnalyzer {
       // Cancellation period (Kündigungsfrist)
       const cancellationPeriod = this.extractCancellationPeriod(text);
 
+      // 🆕 Mindestlaufzeit / Erstlaufzeit extrahieren (z.B. "Kündigung ab 6. Monat möglich")
+      const minimumTerm = this.extractMinimumTerm(text, startDate);
+
       // 🆕 STEP 3: Auto-renewal detection mit Negation-Check
       const autoRenewalResult = this.detectAutoRenewal(text);
       const isAutoRenewal = autoRenewalResult.isAutoRenewal;
@@ -1699,6 +1803,10 @@ class ContractAnalyzer {
 
           // Cancellation terms
           cancellationPeriod: cancellationPeriod,
+
+          // 🆕 Mindestlaufzeit (z.B. "Kündigung ab 6. Monat möglich")
+          minimumTerm: minimumTerm,
+          canCancelAfterDate: minimumTerm?.canCancelAfterDate?.toISOString() || null,
 
           // 🆕 Auto-renewal with CONFIDENCE
           isAutoRenewal,
