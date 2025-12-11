@@ -820,18 +820,44 @@ async function generateEventsForContract(db, contract) {
     if (contract.importantDates && Array.isArray(contract.importantDates)) {
       console.log(`🤖 ${contract.importantDates.length} KI-erkannte Datums für "${contract.name}" gefunden`);
 
-      // Mapping von KI-Typen zu Event-Typen
+      // Mapping von KI-Typen zu Event-Typen (VOLLSTÄNDIG für alle Vertragsarten)
       const typeMapping = {
+        // 📋 STANDARD-DATUMS
         'start_date': { eventType: 'CONTRACT_START', emoji: '📝', severity: 'info' },
         'end_date': { eventType: 'CONTRACT_END', emoji: '📅', severity: 'warning' },
         'cancellation_deadline': { eventType: 'CANCEL_DEADLINE', emoji: '⚠️', severity: 'critical' },
         'minimum_term_end': { eventType: 'MINIMUM_TERM_END', emoji: '🔓', severity: 'info' },
-        'probation_end': { eventType: 'PROBATION_END', emoji: '👔', severity: 'info' },
+        'probation_end': { eventType: 'PROBATION_END', emoji: '👔', severity: 'warning' },
         'warranty_end': { eventType: 'WARRANTY_END', emoji: '🛡️', severity: 'warning' },
         'renewal_date': { eventType: 'AUTO_RENEWAL', emoji: '🔄', severity: 'warning' },
         'payment_due': { eventType: 'PAYMENT_DUE', emoji: '💰', severity: 'warning' },
         'notice_period_start': { eventType: 'NOTICE_PERIOD', emoji: '📬', severity: 'critical' },
+        'contract_signed': { eventType: 'CONTRACT_SIGNED', emoji: '✍️', severity: 'info' },
+        'service_start': { eventType: 'SERVICE_START', emoji: '▶️', severity: 'info' },
+
+        // 🛡️ VERSICHERUNGEN
+        'insurance_coverage_end': { eventType: 'INSURANCE_END', emoji: '🛡️', severity: 'critical' },
+
+        // 📦 ABOS/SOFTWARE
+        'trial_end': { eventType: 'TRIAL_END', emoji: '⏳', severity: 'critical' },
+        'license_expiry': { eventType: 'LICENSE_EXPIRY', emoji: '🔑', severity: 'critical' },
+
+        // ⚡ ENERGIE/TELEKOM
+        'price_guarantee_end': { eventType: 'PRICE_GUARANTEE_END', emoji: '💶', severity: 'warning' },
+
+        // 🚗 KFZ/LEASING
+        'inspection_due': { eventType: 'INSPECTION_DUE', emoji: '🔧', severity: 'warning' },
+        'lease_end': { eventType: 'LEASE_END', emoji: '🚗', severity: 'critical' },
+        'option_deadline': { eventType: 'OPTION_DEADLINE', emoji: '⏰', severity: 'critical' },
+
+        // 🏦 KREDITE/FINANZIERUNG
+        'loan_end': { eventType: 'LOAN_END', emoji: '🏦', severity: 'info' },
+        'interest_rate_change': { eventType: 'INTEREST_RATE_CHANGE', emoji: '📈', severity: 'critical' },
+
+        // 📦 LIEFERUNGEN
         'delivery_date': { eventType: 'DELIVERY', emoji: '📦', severity: 'info' },
+
+        // 🔄 SONSTIGE
         'other': { eventType: 'CUSTOM_DATE', emoji: '📌', severity: 'info' }
       };
 

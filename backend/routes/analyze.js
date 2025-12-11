@@ -1253,22 +1253,95 @@ ${awareness.commonTraps}
    }
 
    📅 WICHTIGE DATUMS-TYPEN (alle extrahieren wenn vorhanden!):
-   - start_date: Vertragsbeginn, Mietbeginn, Arbeitsbeginn, Kaufdatum
-   - end_date: Vertragsende, Ablaufdatum, Laufzeitende
+   - start_date: Vertragsbeginn, Mietbeginn, Arbeitsbeginn, Kaufdatum, Anmeldedatum, Beitrittsdatum
+   - end_date: Vertragsende, Ablaufdatum, Laufzeitende, Mietende, befristet bis
    - cancellation_deadline: NÄCHSTER Kündigungstermin (berechnet aus Kündigungsfrist!)
-   - minimum_term_end: Ende der Mindestlaufzeit ("Kündigung ab 6. Monat möglich")
+   - minimum_term_end: Ende der Mindestlaufzeit ("Kündigung ab 6. Monat möglich", "Erstlaufzeit", "Bindungsfrist")
    - probation_end: Probezeitende (bei Arbeitsverträgen)
-   - warranty_end: Gewährleistungsende (bei Kaufverträgen)
-   - renewal_date: Automatische Verlängerung (wenn Auto-Renewal)
-   - payment_due: Zahlungsfrist, Fälligkeit
+   - warranty_end: Gewährleistungsende, Garantieende (bei Kaufverträgen, Handwerkerverträgen)
+   - renewal_date: Automatische Verlängerung (wenn Auto-Renewal), Verlängerungsdatum
+   - payment_due: Zahlungsfrist, Fälligkeit, Ratenzahlung, nächste Rate
    - notice_period_start: Ab wann muss Kündigung eingereicht werden
+   - insurance_coverage_end: Versicherungsschutz endet (bei Versicherungen)
+   - trial_end: Testphase/Probemonat endet (bei Abos, Software)
+   - price_guarantee_end: Preisgarantie endet (bei Strom/Gas/Telekom)
+   - contract_signed: Unterschriftsdatum, Vertragsabschluss
+   - service_start: Leistungsbeginn (wenn anders als Vertragsbeginn)
+   - inspection_due: Nächste Inspektion/TÜV/Wartung fällig
+   - license_expiry: Lizenz läuft ab (Software, Zertifikate)
+   - lease_end: Leasing endet, Rückgabetermin
+   - loan_end: Kredit/Darlehen vollständig getilgt
+   - interest_rate_change: Zinsbindung endet (bei Krediten)
+   - option_deadline: Optionsfrist (z.B. Kaufoption bei Leasing)
    - other: Sonstige wichtige Datums
 
-   🧮 BERECHNUNGEN (wenn möglich!):
+   🏢 VERTRAGSTYP-SPEZIFISCHE DATUMS:
+
+   📱 MOBILFUNK/INTERNET/TELEKOM:
+   - Mindestvertragslaufzeit (meist 24 Monate)
+   - Kündigungsfrist (meist 3 Monate zum Laufzeitende)
+   - Preisgarantie endet
+   - Hardware-Ratenzahlung endet
+
+   🏋️ FITNESS/MITGLIEDSCHAFTEN:
+   - Anmeldedatum = Vertragsbeginn
+   - "Kündigung ab X. Monat möglich" → minimum_term_end berechnen!
+   - "wöchentlich/monatlich kündbar nach Mindestlaufzeit"
+   - Kündigungsfrist (oft 4 Wochen zum Monatsende)
+
+   🏠 MIETVERTRÄGE:
+   - Mietbeginn
+   - Befristung endet (wenn befristet)
+   - Staffelmiete: nächste Erhöhung
+   - Kündigungsfrist (gesetzlich 3 Monate, kann länger sein)
+
+   💼 ARBEITSVERTRÄGE:
+   - Arbeitsbeginn
+   - Probezeit endet (meist 6 Monate)
+   - Befristung endet
+   - Kündigungsfristen (gestaffelt nach Betriebszugehörigkeit)
+
+   🚗 KFZ/LEASING:
+   - Leasingbeginn
+   - Leasingende / Rückgabetermin
+   - Nächste TÜV-Prüfung
+   - Kaufoption-Frist
+
+   🏦 KREDITE/FINANZIERUNG:
+   - Auszahlungsdatum
+   - Erste Rate fällig
+   - Zinsbindung endet
+   - Kredit vollständig getilgt
+   - Sondertilgung möglich ab
+
+   🛡️ VERSICHERUNGEN:
+   - Versicherungsbeginn
+   - Hauptfälligkeit (jährliche Verlängerung)
+   - Kündigungsfrist (meist 3 Monate zur Hauptfälligkeit)
+   - Beitragsanpassung
+
+   📦 ABONNEMENTS/STREAMING:
+   - Abo-Start
+   - Testphase endet (Trial)
+   - Monatlich/jährlich kündbar
+   - Preiserhöhung ab
+
+   ⚡ STROM/GAS/ENERGIE:
+   - Lieferbeginn
+   - Erstlaufzeit endet
+   - Preisgarantie endet
+   - Kündigungsfrist (oft 4-6 Wochen)
+
+   🧮 BERECHNUNGEN (IMMER wenn möglich!):
    - "Kündigungsfrist 3 Monate zum Jahresende" + heute → berechne nächsten Kündigungstermin!
    - "Mindestlaufzeit 6 Monate" + Vertragsbeginn → berechne wann kündbar!
    - "Probezeit 6 Monate" + Arbeitsbeginn → berechne Probezeitende!
    - "Gewährleistung 2 Jahre" + Kaufdatum → berechne Gewährleistungsende!
+   - "24 Monate Laufzeit" + Vertragsbeginn → berechne Vertragsende!
+   - "monatlich kündbar" → nächstes Monatsende als cancellation_deadline!
+   - "zum Quartalsende kündbar" → nächstes Quartalsende berechnen!
+   - "14 Tage Widerrufsrecht" + Vertragsabschluss → Widerrufsfrist berechnen!
+   - Zinsbindung X Jahre + Kreditbeginn → Ende Zinsbindung berechnen!
 
    ⚠️ WICHTIG: Auch wenn Datum nicht explizit steht, aber BERECHENBAR ist → berechnen und "calculated": true setzen!
 
