@@ -6,6 +6,17 @@ import { generateICS } from "../utils/icsGenerator";
 import Notification from "../components/Notification";
 import ContractContentViewer from "../components/ContractContentViewer";
 import ReminderSettingsModal from "../components/ReminderSettingsModal";
+import ImportantDatesSection from "../components/ImportantDatesSection";
+
+// Interface für wichtige Datums aus der KI-Analyse
+interface ImportantDate {
+  type: string;
+  date: string;
+  label: string;
+  description?: string;
+  calculated?: boolean;
+  source?: string;
+}
 
 interface Contract {
   _id: string;
@@ -25,6 +36,7 @@ interface Contract {
   optimizedPdfS3Key?: string;        // 🆕 S3-Key für optimiertes PDF
   optimizedPdfS3Location?: string;   // 🆕 S3-Location für optimiertes PDF
   optimizedPdfGeneratedAt?: string;  // 🆕 Zeitpunkt der PDF-Generierung
+  importantDates?: ImportantDate[];  // 🆕 KI-extrahierte wichtige Datums
   analysis?: {
     summary?: string;
     contractType?: string;
@@ -418,6 +430,14 @@ export default function ContractDetails() {
               </div>
             </div>
           </div>
+
+          {/* 📅 Wichtige Termine - KI-extrahierte Datums */}
+          {contract.importantDates && contract.importantDates.length > 0 && (
+            <ImportantDatesSection
+              importantDates={contract.importantDates}
+              contractName={contract.name}
+            />
+          )}
 
           {/* ✅ NEU: Contract Content Viewer - Zeigt den vollständigen Vertragsinhalt */}
           <ContractContentViewer contract={contract} />
