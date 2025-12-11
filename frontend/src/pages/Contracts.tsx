@@ -103,6 +103,8 @@ interface Contract {
     displayName: string;
     category?: string;
   };
+  // 📝 Ausführliches Rechtsgutachten
+  detailedLegalOpinion?: string;
 }
 
 // ✅ KORRIGIERT: Interface für Mehrfach-Upload
@@ -163,33 +165,54 @@ type SortOrder = 'neueste' | 'älteste' | 'name_az' | 'name_za';
 // ✅ NEU: S3-Integration - Utility-Funktionen direkt in der Komponente
 
 /**
- * ✅ FIX: Robuste Prüfung ob ein Vertrag NICHT analysiert wurde
- * - Prüft sowohl das `analyzed` Flag als auch das Vorhandensein von Analysedaten
- * - Ein Vertrag gilt als "nicht analysiert" wenn:
- *   1. analyzed === false (explizit nicht analysiert)
- *   2. KEINE Analysedaten vorhanden sind (keine summary, kein contractScore, keine risiken)
+ * ✅ ROBUST: Prüft ob der "Jetzt analysieren" Button gezeigt werden soll
+ *
+ * REGELN:
+ * 1. Generierte Verträge (isGenerated) → NIEMALS analysieren (sind bereits optimal)
+ * 2. Optimierte Verträge (isOptimized) → NIEMALS analysieren (sind bereits optimal)
+ * 3. Verträge MIT Analysedaten → NICHT zeigen (bereits analysiert)
+ * 4. Verträge mit analyzed === true → NICHT zeigen
+ * 5. Hochgeladene Verträge OHNE Analyse → ZEIGEN
  */
-function isContractNotAnalyzed(contract: Contract): boolean {
-  // Explizit als nicht analysiert markiert
-  if (contract.analyzed === false) {
-    // Aber prüfe zusätzlich, ob wirklich keine Analysedaten da sind
-    // (könnte ein alter Vertrag sein, der vor dem Flag existierte)
-    const hasAnalysisData = Boolean(
-      contract.summary ||
-      contract.contractScore ||
-      (contract.risiken && contract.risiken.length > 0) ||
-      contract.legalAssessment ||
-      contract.suggestions
-    );
-
-    // Wenn Analysedaten vorhanden sind, wurde der Vertrag analysiert
-    // (Flag ist evtl. falsch/veraltet)
-    return !hasAnalysisData;
+function shouldShowAnalyzeButton(contract: Contract): boolean {
+  // 1. Generierte Verträge NIEMALS analysieren
+  if (contract.isGenerated === true) {
+    return false;
   }
 
-  // Wenn analyzed === true oder undefined, ist der Vertrag analysiert
-  // (oder es ist ein alter Vertrag ohne Flag - dann auch als analysiert betrachten)
-  return false;
+  // 2. Optimierte Verträge NIEMALS analysieren
+  if (contract.isOptimized === true) {
+    return false;
+  }
+
+  // 3. Prüfe ob bereits Analysedaten vorhanden sind (zuverlässigste Methode)
+  const hasAnalysisData = Boolean(
+    contract.summary ||
+    (contract.contractScore && contract.contractScore > 0) ||
+    (contract.risiken && contract.risiken.length > 0) ||
+    contract.legalAssessment ||
+    contract.suggestions ||
+    (contract.quickFacts && contract.quickFacts.length > 0) ||
+    contract.detailedLegalOpinion
+  );
+
+  // Wenn Analysedaten vorhanden → bereits analysiert → Button nicht zeigen
+  if (hasAnalysisData) {
+    return false;
+  }
+
+  // 4. Wenn explizit als analysiert markiert → Button nicht zeigen
+  if (contract.analyzed === true) {
+    return false;
+  }
+
+  // 5. Alle anderen Fälle: Hochgeladener Vertrag ohne Analyse → Button zeigen
+  return true;
+}
+
+// Alias für Abwärtskompatibilität (falls irgendwo noch verwendet)
+function isContractNotAnalyzed(contract: Contract): boolean {
+  return shouldShowAnalyzeButton(contract);
 }
 
 // ✅ MOBILE-FIX: PDF-Schnellaktion mit "Temporäres Tab sofort öffnen" Methode (Mobile-freundlich)
@@ -4619,7 +4642,7 @@ export default function Contracts() {
                 )}
 
                 {/* Badges */}
-                {(previewContract.isGenerated || previewContract.isOptimized || previewContract.analyzed === false) && (
+                {(previewContract.isGenerated || previewContract.isOptimized || shouldShowAnalyzeButton(previewContract)) && (
                   <div className={styles.previewBadges}>
                     {previewContract.isGenerated && (
                       <span className={styles.previewBadge} style={{ background: '#dbeafe', color: '#1d4ed8' }}>
@@ -4633,7 +4656,7 @@ export default function Contracts() {
                         Optimiert
                       </span>
                     )}
-                    {previewContract.analyzed === false && (
+                    {shouldShowAnalyzeButton(previewContract) && (
                       <span className={styles.previewBadge} style={{ background: '#fef3c7', color: '#b45309' }}>
                         <Clock size={12} />
                         Nicht analysiert
@@ -4721,7 +4744,7 @@ export default function Contracts() {
               {/* Preview Actions - Redesigned */}
               <div className={styles.previewActions}>
                 {/* ⚡ Prominenter Analyse-Button wenn nicht analysiert */}
-                {previewContract.analyzed === false && (
+                {shouldShowAnalyzeButton(previewContract) && (
                   <button
                     className={`${styles.previewActionBtn} ${styles.analyze}`}
                     onClick={() => handleAnalyzeExistingContract(previewContract)}
@@ -5080,7 +5103,7 @@ export default function Contracts() {
                     <span>Bearbeiten</span>
                   </button>
 
-                  {dropdownContract.analyzed === false && (
+                  {shouldShowAnalyzeButton(dropdownContract) && (
                     <button
                       className={`${styles.listRowDropdownItem} ${styles.highlight}`}
                       onClick={() => {
