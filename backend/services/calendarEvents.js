@@ -814,7 +814,96 @@ async function generateEventsForContract(db, contract) {
       // 🔧 FIX: Log wenn keine Daten vorhanden
       console.log(`⚠️ Keine Ablaufdaten für "${contract.name}" gefunden. Events können nicht generiert werden.`);
     }
-    
+
+    // 🆕 10. KI-ERKANNTE WICHTIGE DATUMS (importantDates von GPT-4)
+    // Diese Datums wurden von der KI aus dem Vertragstext extrahiert oder berechnet
+    if (contract.importantDates && Array.isArray(contract.importantDates)) {
+      console.log(`🤖 ${contract.importantDates.length} KI-erkannte Datums für "${contract.name}" gefunden`);
+
+      // Mapping von KI-Typen zu Event-Typen
+      const typeMapping = {
+        'start_date': { eventType: 'CONTRACT_START', emoji: '📝', severity: 'info' },
+        'end_date': { eventType: 'CONTRACT_END', emoji: '📅', severity: 'warning' },
+        'cancellation_deadline': { eventType: 'CANCEL_DEADLINE', emoji: '⚠️', severity: 'critical' },
+        'minimum_term_end': { eventType: 'MINIMUM_TERM_END', emoji: '🔓', severity: 'info' },
+        'probation_end': { eventType: 'PROBATION_END', emoji: '👔', severity: 'info' },
+        'warranty_end': { eventType: 'WARRANTY_END', emoji: '🛡️', severity: 'warning' },
+        'renewal_date': { eventType: 'AUTO_RENEWAL', emoji: '🔄', severity: 'warning' },
+        'payment_due': { eventType: 'PAYMENT_DUE', emoji: '💰', severity: 'warning' },
+        'notice_period_start': { eventType: 'NOTICE_PERIOD', emoji: '📬', severity: 'critical' },
+        'delivery_date': { eventType: 'DELIVERY', emoji: '📦', severity: 'info' },
+        'other': { eventType: 'CUSTOM_DATE', emoji: '📌', severity: 'info' }
+      };
+
+      for (const importantDate of contract.importantDates) {
+        if (!importantDate.date) continue;
+
+        const dateObj = createLocalDate(importantDate.date);
+        const mapping = typeMapping[importantDate.type] || typeMapping['other'];
+
+        // Nur zukünftige Datums als Events
+        if (dateObj > now) {
+          events.push({
+            userId: contract.userId,
+            contractId: contract._id,
+            type: mapping.eventType,
+            title: `${mapping.emoji} ${importantDate.label}: ${contract.name}`,
+            description: importantDate.description || `KI-erkanntes Datum für "${contract.name}"`,
+            date: dateObj,
+            severity: mapping.severity,
+            status: "scheduled",
+            confidence: importantDate.calculated ? 75 : 95,
+            dataSource: importantDate.calculated ? 'ai_calculated' : 'ai_extracted',
+            isEstimated: importantDate.calculated || false,
+            metadata: {
+              provider: contract.provider,
+              contractName: contract.name,
+              aiExtracted: true,
+              source: importantDate.source || 'KI-Analyse',
+              originalType: importantDate.type
+            },
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+
+          // Reminder für kritische Datums
+          if (mapping.severity === 'critical' || mapping.severity === 'warning') {
+            // 7-Tage Reminder
+            const reminder7 = new Date(dateObj);
+            reminder7.setDate(reminder7.getDate() - 7);
+
+            if (reminder7 > now) {
+              events.push({
+                userId: contract.userId,
+                contractId: contract._id,
+                type: `${mapping.eventType}_REMINDER`,
+                title: `⏰ In 7 Tagen: ${importantDate.label}`,
+                description: `"${contract.name}": ${importantDate.description || importantDate.label} - Noch 7 Tage!`,
+                date: createLocalDate(reminder7),
+                severity: "warning",
+                status: "scheduled",
+                confidence: importantDate.calculated ? 70 : 90,
+                dataSource: 'ai_reminder',
+                isEstimated: true,
+                metadata: {
+                  provider: contract.provider,
+                  contractName: contract.name,
+                  daysUntil: 7,
+                  originalEvent: mapping.eventType
+                },
+                createdAt: new Date(),
+                updatedAt: new Date()
+              });
+            }
+          }
+
+          console.log(`  ✅ KI-Datum: ${importantDate.type} → ${dateObj.toLocaleDateString('de-DE')} (${importantDate.label})`);
+        } else {
+          console.log(`  ⚠️ KI-Datum in Vergangenheit übersprungen: ${importantDate.type} → ${dateObj.toLocaleDateString('de-DE')}`);
+        }
+      }
+    }
+
     // Speichere Events in DB (update or insert)
     if (events.length > 0) {
       // 🔍 DEBUG: Log event data BEFORE saving to DB

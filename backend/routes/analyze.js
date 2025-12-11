@@ -1237,7 +1237,49 @@ ${awareness.commonTraps}
    → Max. 3-5 relevante Themen
    → Wird später mit Legal Pulse Feature verbunden
 
-12. **detailedLegalOpinion** (String - PFLICHTFELD):
+12. **importantDates** (Object[] - KRITISCH für Kalender-Integration):
+   → Extrahiere ALLE vertragsrelevanten Datums aus dem Vertrag!
+   → Diese werden automatisch in den Vertragskalender übertragen!
+
+   Schema: {
+     "type": "start_date" | "end_date" | "cancellation_deadline" | "minimum_term_end" |
+             "probation_end" | "warranty_end" | "renewal_date" | "payment_due" |
+             "notice_period_start" | "contract_signed" | "delivery_date" | "other",
+     "date": "YYYY-MM-DD" (ISO Format!),
+     "label": "Beschreibung (z.B. 'Vertragsbeginn', 'Kündigungsfrist endet', 'Probezeit endet')",
+     "description": "Kurze Erklärung warum dieses Datum wichtig ist",
+     "calculated": true | false,  // true wenn berechnet, false wenn explizit im Vertrag
+     "source": "Wo im Vertrag gefunden (z.B. '§ 5 Abs. 2', 'Seite 1', 'Kleingedrucktes')"
+   }
+
+   📅 WICHTIGE DATUMS-TYPEN (alle extrahieren wenn vorhanden!):
+   - start_date: Vertragsbeginn, Mietbeginn, Arbeitsbeginn, Kaufdatum
+   - end_date: Vertragsende, Ablaufdatum, Laufzeitende
+   - cancellation_deadline: NÄCHSTER Kündigungstermin (berechnet aus Kündigungsfrist!)
+   - minimum_term_end: Ende der Mindestlaufzeit ("Kündigung ab 6. Monat möglich")
+   - probation_end: Probezeitende (bei Arbeitsverträgen)
+   - warranty_end: Gewährleistungsende (bei Kaufverträgen)
+   - renewal_date: Automatische Verlängerung (wenn Auto-Renewal)
+   - payment_due: Zahlungsfrist, Fälligkeit
+   - notice_period_start: Ab wann muss Kündigung eingereicht werden
+   - other: Sonstige wichtige Datums
+
+   🧮 BERECHNUNGEN (wenn möglich!):
+   - "Kündigungsfrist 3 Monate zum Jahresende" + heute → berechne nächsten Kündigungstermin!
+   - "Mindestlaufzeit 6 Monate" + Vertragsbeginn → berechne wann kündbar!
+   - "Probezeit 6 Monate" + Arbeitsbeginn → berechne Probezeitende!
+   - "Gewährleistung 2 Jahre" + Kaufdatum → berechne Gewährleistungsende!
+
+   ⚠️ WICHTIG: Auch wenn Datum nicht explizit steht, aber BERECHENBAR ist → berechnen und "calculated": true setzen!
+
+   Beispiel Output:
+   [
+     {"type": "start_date", "date": "2024-01-15", "label": "Vertragsbeginn", "description": "Fitnessstudio-Mitgliedschaft startet", "calculated": false, "source": "Seite 1"},
+     {"type": "minimum_term_end", "date": "2024-07-15", "label": "Kündbar ab", "description": "6 Monate Mindestlaufzeit enden - ab jetzt kündbar!", "calculated": true, "source": "§ 4 Abs. 2: Mindestlaufzeit 6 Monate"},
+     {"type": "cancellation_deadline", "date": "2024-06-15", "label": "Kündigungsfrist", "description": "Kündigung muss bis hier eingereicht werden für Vertragsende Juli", "calculated": true, "source": "§ 4 Abs. 3: 1 Monat Kündigungsfrist"}
+   ]
+
+13. **detailedLegalOpinion** (String - PFLICHTFELD):
    → Ausführliches, sachliches Rechtsgutachten als Fließtext (KEIN Brief-Stil!)
    → Fasst alle Aspekte zusammen wie ein professionelles Anwalts-Memo auf FACHANWALTSNIVEAU
    → KEINE Anrede ("Sehr geehrter..."), KEINE direkten Anweisungen ("Unterschreiben Sie...")
@@ -1305,6 +1347,11 @@ Antworte AUSSCHLIESSLICH mit folgendem JSON (keine Markdown-Blöcke, kein Text d
   "recommendations": [{"title": "Maßnahme (max. 8 Wörter)", "description": "Max. 2 Sätze", "priority": "urgent", "timeframe": "Sofort", "effort": "low"}],
   "contractScore": 75,
   "quickFacts": [{"label": "Kündigungsfrist", "value": "3 Monate", "rating": "bad"}],
+  "importantDates": [
+    {"type": "start_date", "date": "2024-01-15", "label": "Vertragsbeginn", "description": "Mitgliedschaft startet", "calculated": false, "source": "Seite 1"},
+    {"type": "minimum_term_end", "date": "2024-07-15", "label": "Kündbar ab", "description": "Mindestlaufzeit endet", "calculated": true, "source": "§ 4: 6 Monate Mindestlaufzeit"},
+    {"type": "cancellation_deadline", "date": "2024-12-15", "label": "Kündigungsfrist", "description": "Nächster Termin für Kündigung", "calculated": true, "source": "§ 5: 1 Monat zum Jahresende"}
+  ],
   "legalPulseHooks": ["Mietpreisbremse", "TKG-Reform 2022", "..."],
   "detailedLegalOpinion": "Ausführliches Rechtsgutachten als Fließtext auf Fachanwaltsniveau: Dieser Vertrag ist grundsätzlich... [FLEXIBLE Länge je nach INHALT: 300-500 Wörter wenn wenig zu sagen, 500-800 Wörter bei moderater Analyse, 800-1500 Wörter wenn viel zu besprechen. Seitenzahl IRRELEVANT! Nur tatsächlicher Analyse-Bedarf zählt!]"
 }`;
@@ -2550,7 +2597,8 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           recommendations: result.recommendations || [],
           quickFacts: result.quickFacts || [],
           legalPulseHooks: result.legalPulseHooks || [],
-          detailedLegalOpinion: result.detailedLegalOpinion || '' // ✅ NEU: Ausführliches Rechtsgutachten
+          detailedLegalOpinion: result.detailedLegalOpinion || '', // ✅ NEU: Ausführliches Rechtsgutachten
+          importantDates: result.importantDates || [] // ✅ NEU: KI-extrahierte Datums für Kalender
         };
 
         // Add s3Key at top level if S3 upload
@@ -2724,6 +2772,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
               quickFacts: result.quickFacts || [],
               legalPulseHooks: result.legalPulseHooks || [],
               detailedLegalOpinion: result.detailedLegalOpinion || '', // ✅ NEU: Ausführliches Rechtsgutachten
+              importantDates: result.importantDates || [], // ✅ NEU: KI-extrahierte Datums für Kalender
 
               'extraRefs.analysisId': inserted.insertedId,
               'extraRefs.documentType': validationResult.documentType,
