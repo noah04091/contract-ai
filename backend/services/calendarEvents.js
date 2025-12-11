@@ -412,54 +412,49 @@ async function generateEventsForContract(db, contract) {
     // 🆕 9. DYNAMISCHE QUICKFACTS-FELDER Events
 
     // 9a. Gekündigt zum - Event für bestätigte Kündigung
-    // ✅ FIX: Kündigungsdaten werden IMMER im Kalender angezeigt (auch vergangene)
-    // Bei Kündigungsbestätigungen ist es wichtig, das Datum als Referenz zu haben
+    // Das gekuendigtZum ist das ZUKÜNFTIGE Datum wann der Vertrag endet (nach erfolgter Kündigung)
     if (contract.gekuendigtZum) {
       const gekuendigtDate = createLocalDate(contract.gekuendigtZum);
-      const isPastDate = gekuendigtDate <= now;
 
-      // Event immer erstellen - auch für vergangene Daten
-      events.push({
-        userId: contract.userId,
-        contractId: contract._id,
-        type: isPastDate ? "CANCELLATION_COMPLETED" : "CANCELLATION_DATE",
-        title: isPastDate
-          ? `✅ Gekündigt: ${contract.name}`
-          : `✅ Kündigung wirksam: ${contract.name}`,
-        description: isPastDate
-          ? `"${contract.name}" wurde zum ${gekuendigtDate.toLocaleDateString('de-DE')} gekündigt.`
-          : `Die Kündigung für "${contract.name}" wird heute wirksam. Der Vertrag endet.`,
-        date: gekuendigtDate,
-        severity: "info",
-        status: isPastDate ? "completed" : "scheduled",
-        confidence: confidence,
-        dataSource: dataSource,
-        isEstimated: isEstimated,
-        metadata: {
-          provider: contract.provider,
-          contractName: contract.name,
-          suggestedAction: "archive",
-          isCancelled: true,
-          isPastDate: isPastDate
-        },
-        createdAt: new Date(),
-        updatedAt: new Date()
-      });
+      // Nur für zukünftige Kündigungsdaten Events erstellen
+      if (gekuendigtDate > now) {
+        console.log(`📅 Kündigungsbestätigung: Vertragsende am ${gekuendigtDate.toLocaleDateString('de-DE')}`);
 
-      // Reminder nur für zukünftige Daten
-      if (!isPastDate) {
-        const tempReminderDate = new Date(gekuendigtDate);
-        tempReminderDate.setDate(tempReminderDate.getDate() - 7);
-        const reminderDate = createLocalDate(tempReminderDate);
+        events.push({
+          userId: contract.userId,
+          contractId: contract._id,
+          type: "CANCELLATION_DATE",
+          title: `✅ Vertragsende: ${contract.name}`,
+          description: `"${contract.name}" endet heute wie bestätigt. Der Vertrag wurde erfolgreich gekündigt.`,
+          date: gekuendigtDate,
+          severity: "info",
+          status: "scheduled",
+          confidence: confidence,
+          dataSource: dataSource,
+          isEstimated: isEstimated,
+          metadata: {
+            provider: contract.provider,
+            contractName: contract.name,
+            suggestedAction: "archive",
+            isCancelled: true
+          },
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
 
-        if (reminderDate > now) {
+        // Reminder 30 Tage vorher
+        const tempReminder30 = new Date(gekuendigtDate);
+        tempReminder30.setDate(tempReminder30.getDate() - 30);
+        const reminder30Date = createLocalDate(tempReminder30);
+
+        if (reminder30Date > now) {
           events.push({
             userId: contract.userId,
             contractId: contract._id,
             type: "CANCELLATION_REMINDER",
-            title: `📅 Kündigung in 7 Tagen wirksam: ${contract.name}`,
-            description: `In 7 Tagen endet "${contract.name}" durch die bestätigte Kündigung. Ggf. nach Alternativen suchen!`,
-            date: reminderDate,
+            title: `📅 Vertrag endet in 30 Tagen: ${contract.name}`,
+            description: `"${contract.name}" endet in 30 Tagen (am ${gekuendigtDate.toLocaleDateString('de-DE')}). Ggf. nach Alternativen suchen!`,
+            date: reminder30Date,
             severity: "info",
             status: "scheduled",
             confidence: confidence,
@@ -468,13 +463,44 @@ async function generateEventsForContract(db, contract) {
             metadata: {
               provider: contract.provider,
               contractName: contract.name,
-              daysUntil: 7,
+              daysUntil: 30,
               suggestedAction: "prepare"
             },
             createdAt: new Date(),
             updatedAt: new Date()
           });
         }
+
+        // Reminder 7 Tage vorher
+        const tempReminder7 = new Date(gekuendigtDate);
+        tempReminder7.setDate(tempReminder7.getDate() - 7);
+        const reminder7Date = createLocalDate(tempReminder7);
+
+        if (reminder7Date > now) {
+          events.push({
+            userId: contract.userId,
+            contractId: contract._id,
+            type: "CANCELLATION_REMINDER",
+            title: `⏰ Vertrag endet in 7 Tagen: ${contract.name}`,
+            description: `"${contract.name}" endet in 7 Tagen! Zeit für letzte Vorbereitungen.`,
+            date: reminder7Date,
+            severity: "warning",
+            status: "scheduled",
+            confidence: confidence,
+            dataSource: dataSource,
+            isEstimated: isEstimated,
+            metadata: {
+              provider: contract.provider,
+              contractName: contract.name,
+              daysUntil: 7,
+              suggestedAction: "finalize"
+            },
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+        }
+      } else {
+        console.log(`⚠️ gekuendigtZum in der Vergangenheit - kein Event erstellt: ${gekuendigtDate.toLocaleDateString('de-DE')}`);
       }
     }
 

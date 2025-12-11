@@ -1224,23 +1224,96 @@ class ContractAnalyzer {
     if (cancellationScore >= 10) {
       console.log('📄 Dokument-Kategorie: KÜNDIGUNGSBESTÄTIGUNG (Score:', cancellationScore, ')');
 
-      // Extrahiere "Kündigung wirksam zum" Datum
-      const effectiveDateMatch = text.match(/(?:kündigung\s+wirksam\s+zum|wirksam\s+zum|gekündigt\s+zum|endet\s+zum)\s*:?\s*(\d{1,2})[.\s/]+(\d{1,2})[.\s/]+(\d{2,4})/i);
+      // 🚀 ULTRA-ROBUSTE Datumsextraktion für Kündigungsbestätigungen
+      // Extrahiere das ZUKÜNFTIGE Datum wann der Vertrag endet, NICHT das Ausstellungsdatum
       let effectiveDate = null;
+      let dateSource = 'none';
 
-      if (effectiveDateMatch) {
-        const day = parseInt(effectiveDateMatch[1]);
-        const month = parseInt(effectiveDateMatch[2]);
-        let year = parseInt(effectiveDateMatch[3]);
-        if (year < 100) year += 2000;
-        effectiveDate = new Date(year, month - 1, day);
-        console.log('📅 Kündigungsdatum erkannt:', effectiveDate.toISOString());
+      // PRIORITY 1: Explizite Kündigungs-/Enddatum-Muster (höchste Priorität)
+      const explicitPatterns = [
+        // "zum 10.05.2026" / "zum 10. Mai 2026"
+        /(?:zum|ab|per|bis)\s+(\d{1,2})[.\s/]+(\d{1,2})[.\s/]+(\d{2,4})/gi,
+        // "wirksam zum 10.05.2026"
+        /wirksam\s+(?:zum|ab)\s+(\d{1,2})[.\s/]+(\d{1,2})[.\s/]+(\d{2,4})/gi,
+        // "endet am 10.05.2026" / "endet zum 10.05.2026"
+        /endet\s+(?:am|zum|per)\s+(\d{1,2})[.\s/]+(\d{1,2})[.\s/]+(\d{2,4})/gi,
+        // "gekündigt zum 10.05.2026"
+        /gekündigt\s+(?:zum|per|ab)\s+(\d{1,2})[.\s/]+(\d{1,2})[.\s/]+(\d{2,4})/gi,
+        // "Vertrag endet: 10.05.2026"
+        /vertrag\s+endet[\s:]+(\d{1,2})[.\s/]+(\d{1,2})[.\s/]+(\d{2,4})/gi,
+        // "Vertragsende: 10.05.2026"
+        /vertragsende[\s:]+(\d{1,2})[.\s/]+(\d{1,2})[.\s/]+(\d{2,4})/gi,
+        // "läuft aus zum 10.05.2026"
+        /läuft\s+aus\s+(?:zum|am|per)\s+(\d{1,2})[.\s/]+(\d{1,2})[.\s/]+(\d{2,4})/gi,
+        // "Kündigung wird wirksam am 10.05.2026"
+        /kündigung\s+wird\s+wirksam\s+(?:am|zum)\s+(\d{1,2})[.\s/]+(\d{1,2})[.\s/]+(\d{2,4})/gi,
+        // "Ihr Vertrag endet am 10.05.2026"
+        /ihr\s+vertrag\s+endet\s+(?:am|zum)\s+(\d{1,2})[.\s/]+(\d{1,2})[.\s/]+(\d{2,4})/gi
+      ];
+
+      // Sammle ALLE gefundenen Daten
+      const foundDates = [];
+      const now = new Date();
+
+      for (const pattern of explicitPatterns) {
+        let match;
+        while ((match = pattern.exec(text)) !== null) {
+          const day = parseInt(match[1]);
+          const month = parseInt(match[2]);
+          let year = parseInt(match[3]);
+          if (year < 100) year += 2000;
+
+          if (day >= 1 && day <= 31 && month >= 1 && month <= 12) {
+            const date = new Date(year, month - 1, day);
+            foundDates.push({ date, source: 'explicit', pattern: pattern.source });
+            console.log(`📅 Datum gefunden (explicit): ${date.toLocaleDateString('de-DE')} - Pattern: ${pattern.source.substring(0, 30)}...`);
+          }
+        }
+      }
+
+      // PRIORITY 2: Falls keine expliziten Muster, suche nach allen Datums im Text
+      if (foundDates.length === 0) {
+        const allDatesPattern = /(\d{1,2})[.\s/]+(\d{1,2})[.\s/]+(\d{2,4})/g;
+        let match;
+        while ((match = allDatesPattern.exec(text)) !== null) {
+          const day = parseInt(match[1]);
+          const month = parseInt(match[2]);
+          let year = parseInt(match[3]);
+          if (year < 100) year += 2000;
+
+          if (day >= 1 && day <= 31 && month >= 1 && month <= 12 && year >= 2020) {
+            const date = new Date(year, month - 1, day);
+            foundDates.push({ date, source: 'generic', pattern: 'all_dates' });
+          }
+        }
+      }
+
+      // Wähle das ZUKÜNFTIGE Datum das am weitesten in der Zukunft liegt
+      // (Bei Kündigungsbestätigungen ist das Vertragsende-Datum meist das späteste)
+      const futureDates = foundDates.filter(d => d.date > now);
+
+      if (futureDates.length > 0) {
+        // Sortiere nach Datum aufsteigend - nehme das ERSTE zukünftige Datum
+        // (das ist meist das Vertragsende, nicht irgendwann in 10 Jahren)
+        futureDates.sort((a, b) => a.date - b.date);
+        effectiveDate = futureDates[0].date;
+        dateSource = futureDates[0].source;
+        console.log(`✅ Kündigungsdatum gewählt (${dateSource}): ${effectiveDate.toLocaleDateString('de-DE')}`);
+      } else if (foundDates.length > 0) {
+        // Falls keine zukünftigen Daten, nimm das letzte vergangene (könnte ein kürzlich abgelaufener Vertrag sein)
+        foundDates.sort((a, b) => b.date - a.date);
+        effectiveDate = foundDates[0].date;
+        dateSource = foundDates[0].source + '_past';
+        console.log(`⚠️ Nur vergangene Daten gefunden, verwende: ${effectiveDate.toLocaleDateString('de-DE')}`);
+      } else {
+        console.log('❌ Kein Kündigungsdatum in der Bestätigung gefunden');
       }
 
       return {
         category: 'cancellation_confirmation',
         isActiveContract: false,
         effectiveDate: effectiveDate,
+        dateSource: dateSource,
         displayLabels: {
           field1: 'Gekündigt zum',
           field2: 'Anbieter',

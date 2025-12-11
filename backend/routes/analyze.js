@@ -2258,13 +2258,15 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     let extractedContractDuration = null; // 🆕 CONTRACT DURATION (Laufzeit)
     let extractedStartDate = null; // 🆕 START DATE
     let extractedContractType = null; // 🆕 CONTRACT TYPE (telecom, purchase, rental, etc.)
-    
+    let extractedDocumentCategory = null; // 🆕 DOCUMENT CATEGORY (cancellation_confirmation, invoice, active_contract)
+    let extractedGekuendigtZum = null; // 🆕 Kündigungsdatum für Kündigungsbestätigungen
+
     try {
       const providerAnalysis = await contractAnalyzer.analyzeContract(
         fullTextContent,
         req.file.originalname
       );
-      
+
       if (providerAnalysis.success && providerAnalysis.data) {
         extractedProvider = providerAnalysis.data.provider;
         extractedContractNumber = providerAnalysis.data.contractNumber;
@@ -2275,6 +2277,13 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         extractedContractDuration = providerAnalysis.data.contractDuration; // 🆕 CONTRACT DURATION
         extractedCancellationPeriod = providerAnalysis.data.cancellationPeriod;
         extractedIsAutoRenewal = providerAnalysis.data.isAutoRenewal || false; // 🆕 AUTO-RENEWAL
+        extractedDocumentCategory = providerAnalysis.data.documentCategory; // 🆕 DOCUMENT CATEGORY
+
+        // 🆕 Für Kündigungsbestätigungen: gekuendigtZum = endDate (das ist das Datum wann Vertrag endet)
+        if (extractedDocumentCategory === 'cancellation_confirmation' && extractedEndDate) {
+          extractedGekuendigtZum = extractedEndDate;
+          console.log(`📄 [${requestId}] Kündigungsbestätigung erkannt - gekuendigtZum: ${extractedGekuendigtZum}`);
+        }
 
         // Debug-Log hinzufügen
         console.log(`📅 [${requestId}] Date extraction:`, {
@@ -2283,17 +2292,22 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           contractDuration: extractedContractDuration,
           cancellationPeriod: extractedCancellationPeriod,
           isAutoRenewal: extractedIsAutoRenewal, // 🆕 AUTO-RENEWAL
+          documentCategory: extractedDocumentCategory, // 🆕 DOCUMENT CATEGORY
+          gekuendigtZum: extractedGekuendigtZum, // 🆕 Kündigungsdatum
           originalData: providerAnalysis.data
         });
-        
+
         console.log(`✅ [${requestId}] Provider detected:`, extractedProvider?.displayName || 'None');
         console.log(`📋 [${requestId}] Contract type detected:`, extractedContractType || 'None');
+        console.log(`📋 [${requestId}] Document category:`, extractedDocumentCategory || 'None');
         console.log(`📋 [${requestId}] Contract details:`, {
           contractNumber: extractedContractNumber,
           customerNumber: extractedCustomerNumber,
           contractType: extractedContractType,
+          documentCategory: extractedDocumentCategory,
           startDate: extractedStartDate,
           endDate: extractedEndDate,
+          gekuendigtZum: extractedGekuendigtZum,
           contractDuration: extractedContractDuration,
           cancellationPeriod: extractedCancellationPeriod,
           isAutoRenewal: extractedIsAutoRenewal // 🆕 AUTO-RENEWAL
@@ -2617,23 +2631,23 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         // 📋 ÄNDERUNG 4: UPDATE contractAnalysisData WITH AUTO-RENEWAL & DURATION
         const contractAnalysisData = {
           name: Array.isArray(result.summary) ? req.file.originalname : req.file.originalname,
-          
+
           // Laufzeit (contract duration) - NULL if not found
-          laufzeit: extractedContractDuration ? 
-            `${extractedContractDuration.value} ${extractedContractDuration.unit}` : 
+          laufzeit: extractedContractDuration ?
+            `${extractedContractDuration.value} ${extractedContractDuration.unit}` :
             null,
-          
-          // Kündigungsfrist (cancellation period) - NULL if not found  
-          kuendigung: extractedCancellationPeriod ? 
+
+          // Kündigungsfrist (cancellation period) - NULL if not found
+          kuendigung: extractedCancellationPeriod ?
             (extractedCancellationPeriod.type === 'daily' ? 'Täglich kündbar' :
              extractedCancellationPeriod.type === 'end_of_period' ? 'Zum Ende der Laufzeit' :
-             `${extractedCancellationPeriod.value} ${extractedCancellationPeriod.unit}`) : 
+             `${extractedCancellationPeriod.value} ${extractedCancellationPeriod.unit}`) :
             null,
-          
+
           startDate: extractedStartDate || null, // 🆕 START DATE
           expiryDate: extractedEndDate || null,  // null statt "" für Datums-Checks!
-          status: "Active",
-          
+          status: extractedDocumentCategory === 'cancellation_confirmation' ? 'Gekündigt' : 'Active',
+
           // 📋 NEUE FELDER:
           provider: extractedProvider,
           contractNumber: extractedContractNumber,
@@ -2642,7 +2656,11 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           providerConfidence: extractedProvider?.confidence || 0,
           contractDuration: extractedContractDuration, // 🆕 CONTRACT DURATION object
           cancellationPeriod: extractedCancellationPeriod,
-          isAutoRenewal: extractedIsAutoRenewal || false // 🆕 AUTO-RENEWAL
+          isAutoRenewal: extractedIsAutoRenewal || false, // 🆕 AUTO-RENEWAL
+
+          // 🆕 DOCUMENT CATEGORY & KÜNDIGUNGSDATUM
+          documentCategory: extractedDocumentCategory || 'active_contract',
+          gekuendigtZum: extractedGekuendigtZum || null // 🆕 Für Kalender-Events
         };
 
         const savedContract = await saveContractWithUpload(
