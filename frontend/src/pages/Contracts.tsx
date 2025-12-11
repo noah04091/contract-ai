@@ -171,7 +171,7 @@ type SortOrder = 'neueste' | 'älteste' | 'name_az' | 'name_za';
  */
 function isContractNotAnalyzed(contract: Contract): boolean {
   // Explizit als nicht analysiert markiert
-  if (isContractNotAnalyzed(contract)) {
+  if (contract.analyzed === false) {
     // Aber prüfe zusätzlich, ob wirklich keine Analysedaten da sind
     // (könnte ein alter Vertrag sein, der vor dem Flag existierte)
     const hasAnalysisData = Boolean(
