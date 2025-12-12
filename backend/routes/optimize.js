@@ -3921,11 +3921,10 @@ router.post("/stream", verifyToken, uploadLimiter, smartRateLimiter, upload.sing
       }
     }
 
-    // 🆕 Extract existing contract ID if provided (to update instead of create duplicate)
-    let existingContractId = null;
+    // 🔧 FIX: existingContractId wird im Streaming-Endpoint nicht mehr benötigt
+    // Streaming erstellt KEINE Verträge - nur der Fallback/Generate macht das
     if (req.body.existingContractId) {
-      existingContractId = req.body.existingContractId;
-      console.log(`🔄 [${requestId}] Existing contract ID provided - will UPDATE instead of CREATE:`, existingContractId);
+      console.log(`ℹ️ [${requestId}] existingContractId übergeben (wird vom Fallback verwendet):`, req.body.existingContractId);
     }
 
     sendProgress(8, "🔐 Prüfe Benutzer-Limits...");
@@ -4324,108 +4323,20 @@ router.post("/stream", verifyToken, uploadLimiter, smartRateLimiter, upload.sing
       { $inc: { optimizationCount: 1 } }
     );
 
-    sendProgress(99, "💾 Speichere Ergebnisse...");
+    sendProgress(99, "💾 Bereite Ergebnisse vor...");
 
-    // 🔥 NEU: Speichere Contract automatisch in Contracts-Verwaltung
-    let savedContractId = null;
-    if (contractsCollection && db && s3Instance) {
-      try {
-        // 🆕 Upload PDF to S3 first
-        let s3Data = null;
-        try {
-          s3Data = await uploadToS3(tempFilePath, req.file.originalname, req.user.userId);
-          console.log(`✅ [${requestId}] PDF uploaded to S3:`, s3Data.s3Key);
-        } catch (s3Error) {
-          console.error(`⚠️ [${requestId}] S3 Upload failed (continuing without PDF):`, s3Error.message);
-        }
-
-        // 🆕 Prepare optimization data
-        const optimizationData = {
-          updatedAt: new Date(),
-          isOptimized: true, // 🎯 Badge-Flag für "Optimiert"
-          // 🆕 S3 Fields (only if new upload)
-          ...(s3Data && {
-            s3Key: s3Data.s3Key,
-            s3Location: s3Data.s3Location,
-            s3Bucket: s3Data.s3Bucket
-          }),
-          analysisData: {
-            healthScore: normalizedResult.meta?.healthScore || normalizedResult.summary?.healthScore || 0,
-            totalIssues: normalizedResult.summary.totalIssues,
-            criticalRisks: normalizedResult.summary.criticalRisks || 0,
-            contractType: normalizedResult.meta?.type || "unbekannt",
-            categories: normalizedResult.categories.map(cat => ({
-              tag: cat.tag,
-              label: cat.label,
-              issueCount: cat.issues.length
-            }))
-          },
-          optimizations: normalizedResult.categories.flatMap(cat =>
-            cat.issues.map(issue => ({
-              category: cat.tag,
-              summary: issue.summary,
-              original: issue.originalText || issue.original, // ✅ Frontend-kompatibel
-              improved: issue.improvedText || issue.improved, // ✅ Frontend-kompatibel
-              severity: issue.severity,
-              reasoning: issue.reasoning
-            }))
-          )
-        };
-
-        // 🔄 Check if we should UPDATE existing contract or CREATE new one
-        if (existingContractId) {
-          // UPDATE existing contract with optimizations
-          const updateResult = await contractsCollection.updateOne(
-            { _id: new ObjectId(existingContractId) },
-            { $set: optimizationData }
-          );
-
-          savedContractId = existingContractId;
-          console.log(`🔄 [${requestId}] Contract UPDATED in Contracts-Verwaltung:`, {
-            contractId: savedContractId,
-            matched: updateResult.matchedCount,
-            modified: updateResult.modifiedCount,
-            isOptimized: true,
-            hasS3Pdf: !!s3Data
-          });
-        } else {
-          // CREATE new contract
-          const contractToSave = {
-            userId: new ObjectId(req.user.userId), // ✅ FIX: ObjectId für MongoDB-Query-Kompatibilität
-            name: req.file.originalname || "Analysierter Vertrag",
-            content: contractText,
-            kuendigung: "Unbekannt", // ✅ Basis-Felder für Contracts-Kompatibilität
-            laufzeit: "Unbekannt",
-            expiryDate: null,
-            uploadedAt: new Date(),
-            createdAt: new Date(), // ✅ FIX: Für Sortierung in GET /contracts
-            status: "Aktiv",
-            analyzed: true,
-            sourceType: "optimizer", // Wo kam es her
-            ...optimizationData
-          };
-
-          const result = await contractsCollection.insertOne(contractToSave);
-          savedContractId = result.insertedId;
-          console.log(`📁 [${requestId}] Contract CREATED in Contracts-Verwaltung:`, {
-            contractId: savedContractId,
-            name: contractToSave.name,
-            isOptimized: true,
-            hasS3Pdf: !!s3Data
-          });
-        }
-      } catch (saveError) {
-        console.error(`⚠️ [${requestId}] Fehler beim Speichern in Contracts (nicht kritisch):`, saveError.message);
-        // Nicht kritisch - Optimierung war trotzdem erfolgreich
-      }
-    }
+    // 🔧 FIX: KEINE Vertragserstellung im Streaming-Endpoint!
+    // Der Fallback-Endpoint oder Generate-Endpoint erstellt den Vertrag.
+    // Streaming ist NUR für die Fortschrittsanzeige.
+    // Dies verhindert Duplikate wenn Streaming wegen CORS fehlschlägt.
+    console.log(`ℹ️ [${requestId}] Streaming-Endpoint erstellt KEINEN Vertrag - überlasse das dem Fallback/Generate`);
 
     // Prepare final result
     const finalResult = {
       success: true,
       message: "✅ ULTIMATIVE Anwaltskanzlei-Niveau Vertragsoptimierung erfolgreich",
       requestId,
-      contractId: savedContractId, // 🆕 Für Frontend-Navigation
+      contractId: null, // ⚠️ Kein Vertrag erstellt - Fallback macht das
       ...normalizedResult,
       originalText: contractText.substring(0, 1500),
       usage: {
