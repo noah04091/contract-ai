@@ -3610,9 +3610,10 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
             s3Bucket: s3Data.s3Bucket
           }),
           analysisData: {
-            healthScore: normalizedResult.meta?.healthScore || normalizedResult.summary?.healthScore || 0,
+            // 🔧 FIX: healthScore ist in normalizedResult.score.health, nicht in meta
+            healthScore: normalizedResult.score?.health || normalizedResult.meta?.healthScore || normalizedResult.summary?.healthScore || 0,
             totalIssues: normalizedResult.summary.totalIssues,
-            criticalRisks: normalizedResult.summary.criticalRisks || 0,
+            criticalRisks: normalizedResult.summary.criticalRisks || normalizedResult.summary.criticalLegalRisks || 0,
             contractType: normalizedResult.meta?.type || "unbekannt",
             categories: normalizedResult.categories.map(cat => ({
               tag: cat.tag,
