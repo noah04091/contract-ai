@@ -1266,8 +1266,17 @@ export default function Optimizer() {
           hasMeta: !!finalResult.meta,
           contractType: finalResult.meta?.type,
           totalIssues: finalResult.summary?.totalIssues,
-          usedStreaming: useStreamingEndpoint
+          usedStreaming: useStreamingEndpoint,
+          contractId: finalResult.contractId
         });
+
+        // 🆕 WICHTIG: contractId aus Response speichern um Duplikate zu vermeiden!
+        // Wenn der Optimize-Endpoint einen neuen Vertrag erstellt hat, brauchen wir diese ID
+        // damit generate.js den Vertrag AKTUALISIERT statt neu zu erstellen
+        if (finalResult.contractId && !existingContractId) {
+          console.log('[OPTIMIZER] Setting existingContractId from optimize response:', finalResult.contractId);
+          setExistingContractId(finalResult.contractId);
+        }
 
         // Store all data
         setAnalysisData(finalResult as AnalysisData);
