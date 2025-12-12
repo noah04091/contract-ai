@@ -1004,27 +1004,49 @@ export default function Optimizer() {
             // Still load the PDF for preview
           }
 
-          // Step 2: Get presigned URL to download PDF
-          const viewRes = await fetch(`/api/s3/view?contractId=${contractId}`, {
-            credentials: "include"
-          });
-
-          if (!viewRes.ok) throw new Error("PDF konnte nicht abgerufen werden");
-
-          const viewData = await viewRes.json();
-          const pdfUrl = viewData.url;
-
-          // Step 3: Download PDF as blob
-          const pdfRes = await fetch(pdfUrl);
-          if (!pdfRes.ok) throw new Error("PDF-Download fehlgeschlagen");
-
-          const blob = await pdfRes.blob();
-
-          // Step 4: Convert blob to File object
+          // Step 2: Get PDF - either from S3 (uploaded) or generate (isGenerated)
+          let blob: Blob;
           const fileName = contract.fileName || contract.name || "vertrag.pdf";
+
+          if (contract.isGenerated) {
+            // Generierter Vertrag: PDF über Backend generieren
+            console.log('[OPTIMIZER] Generierter Vertrag - erstelle PDF über Backend...');
+            const pdfRes = await fetch(`/api/contracts/${contractId}/pdf-v2?design=${contract.designVariant || 'executive'}`, {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ design: contract.designVariant || 'executive' })
+            });
+
+            if (!pdfRes.ok) {
+              console.warn('[OPTIMIZER] PDF-Generierung fehlgeschlagen, verwende Fallback...');
+              // Fallback: Leere Datei erstellen und Optimierungen trotzdem anzeigen
+              blob = new Blob([''], { type: 'application/pdf' });
+            } else {
+              blob = await pdfRes.blob();
+            }
+          } else {
+            // Hochgeladener Vertrag: PDF von S3 laden
+            const viewRes = await fetch(`/api/s3/view?contractId=${contractId}`, {
+              credentials: "include"
+            });
+
+            if (!viewRes.ok) throw new Error("PDF konnte nicht abgerufen werden");
+
+            const viewData = await viewRes.json();
+            const pdfUrl = viewData.url;
+
+            // Download PDF as blob
+            const pdfRes = await fetch(pdfUrl);
+            if (!pdfRes.ok) throw new Error("PDF-Download fehlgeschlagen");
+
+            blob = await pdfRes.blob();
+          }
+
+          // Convert blob to File object
           const fileObj = new File([blob], fileName, { type: "application/pdf" });
 
-          // Step 5: Set as file
+          // Set as file
           setFile(fileObj);
 
           // Only show "loaded" toast if we didn't already show optimizations toast
@@ -1373,10 +1395,15 @@ export default function Optimizer() {
             reasoning: opt.reasoning
           }));
         }
+      }
 
-        if (originalContractText) {
-          formData.originalContent = originalContractText;
-        }
+      // 🔧 WICHTIG: originalContent IMMER senden (nicht nur bei includeClauses)
+      // Das Backend braucht den Originaltext um den Vertrag zu optimieren!
+      if (originalContractText) {
+        formData.originalContent = originalContractText;
+        console.log('[OPTIMIZER] Sende originalContent:', originalContractText.length, 'Zeichen');
+      } else {
+        console.warn('[OPTIMIZER] WARNUNG: Kein originalContractText verfügbar!');
       }
 
       // 6. Erstelle/Aktualisiere Vertrag über /api/contracts/generate
