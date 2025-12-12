@@ -15,7 +15,7 @@ import { Helmet } from "react-helmet-async";
 import {
   CheckCircle, Download, FileText, Edit3, Sparkles,
   ArrowLeft, ArrowRight, Check, RefreshCw, X, ArrowLeftCircle,
-  Loader2, Wand2, FileCheck
+  Loader2, Wand2, FileCheck, Paperclip, Trash2, Plus, File
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import styles from "../styles/Generate.module.css";
@@ -89,6 +89,19 @@ export default function OptimizerFinalize() {
   // Download State
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [downloadSuccess, setDownloadSuccess] = useState<boolean>(false);
+
+  // 📎 Anlagen State
+  interface Attachment {
+    id: string;
+    name: string;
+    size: number;
+    type: string;
+    base64: string;
+    previewUrl?: string;
+  }
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [isUploadingAttachment, setIsUploadingAttachment] = useState<boolean>(false);
+  const attachmentInputRef = useRef<HTMLInputElement>(null);
 
   // 🎬 Lade-Animation mit Fortschritt
   useEffect(() => {
@@ -459,7 +472,85 @@ export default function OptimizerFinalize() {
     }
   }, [contractId, contractText, improvements, pdfPreviewUrl, isImproving, selectedDesign, formData]);
 
-  // 📥 PDF Download
+  // 📎 Anlage hinzufügen
+  const handleAttachmentUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploadingAttachment(true);
+
+    try {
+      const newAttachments: Attachment[] = [];
+
+      for (const file of Array.from(files)) {
+        // Nur PDFs und Bilder erlauben
+        if (!file.type.startsWith('application/pdf') && !file.type.startsWith('image/')) {
+          console.warn(`Nicht unterstütztes Format: ${file.type}`);
+          continue;
+        }
+
+        // Max 10MB pro Datei
+        if (file.size > 10 * 1024 * 1024) {
+          setError(`${file.name} ist zu groß (max. 10MB)`);
+          continue;
+        }
+
+        // Zu Base64 konvertieren
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+
+        newAttachments.push({
+          id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          base64,
+          previewUrl: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined,
+        });
+      }
+
+      setAttachments(prev => [...prev, ...newAttachments]);
+      console.log(`📎 ${newAttachments.length} Anlage(n) hinzugefügt`);
+
+      // PDF-Vorschau aktualisieren mit Anlagen-Info
+      if (newAttachments.length > 0) {
+        await refreshPdfPreview();
+      }
+    } catch (err) {
+      console.error('Fehler beim Hochladen:', err);
+      setError('Anlage konnte nicht hochgeladen werden');
+    } finally {
+      setIsUploadingAttachment(false);
+      // Input zurücksetzen
+      if (attachmentInputRef.current) {
+        attachmentInputRef.current.value = '';
+      }
+    }
+  }, [refreshPdfPreview]);
+
+  // 📎 Anlage entfernen
+  const handleRemoveAttachment = useCallback((attachmentId: string) => {
+    setAttachments(prev => {
+      const attachment = prev.find(a => a.id === attachmentId);
+      if (attachment?.previewUrl) {
+        URL.revokeObjectURL(attachment.previewUrl);
+      }
+      return prev.filter(a => a.id !== attachmentId);
+    });
+  }, []);
+
+  // 📎 Dateigröße formatieren
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  // 📥 PDF Download (mit Anlagen!)
   const handleDownload = useCallback(async () => {
     const token = getToken();
     if (!contractId || !token || isDownloading) return;
@@ -481,18 +572,35 @@ export default function OptimizerFinalize() {
         }),
       });
 
-      // PDF generieren
-      const pdfResponse = await fetch(
-        `${API_URL}/api/contracts/${contractId}/pdf-v2?design=${selectedDesign}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ design: selectedDesign }),
-        }
-      );
+      // PDF generieren - MIT ANLAGEN wenn vorhanden!
+      const endpoint = attachments.length > 0
+        ? `${API_URL}/api/contracts/${contractId}/pdf-combined?design=${selectedDesign}`
+        : `${API_URL}/api/contracts/${contractId}/pdf-v2?design=${selectedDesign}`;
+
+      const body = attachments.length > 0
+        ? {
+            design: selectedDesign,
+            attachments: attachments.map(a => ({ name: a.name, type: a.type })),
+            // Backend erwartet Objekte mit data (ohne data: prefix), type, name
+            attachmentFiles: attachments.map(a => ({
+              name: a.name,
+              type: a.type,
+              // Base64 ohne data:...;base64, Prefix extrahieren
+              data: a.base64.includes(',') ? a.base64.split(',')[1] : a.base64
+            })),
+          }
+        : { design: selectedDesign };
+
+      console.log(`📥 PDF Download mit ${attachments.length} Anlage(n)...`);
+
+      const pdfResponse = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      });
 
       if (!pdfResponse.ok) {
         throw new Error("PDF konnte nicht erstellt werden");
@@ -504,7 +612,8 @@ export default function OptimizerFinalize() {
       // Download triggern
       const link = document.createElement("a");
       link.href = url;
-      link.download = `${contractTitle.replace(/[^a-zA-Z0-9äöüÄÖÜß\s-]/g, "")}_${selectedDesign}.pdf`;
+      const suffix = attachments.length > 0 ? '_mit_anlagen' : '';
+      link.download = `${contractTitle.replace(/[^a-zA-Z0-9äöüÄÖÜß\s-]/g, "")}_${selectedDesign}${suffix}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -518,10 +627,10 @@ export default function OptimizerFinalize() {
     } finally {
       setIsDownloading(false);
     }
-  }, [contractId, contractText, selectedDesign, contractTitle, isDownloading]);
+  }, [contractId, contractText, selectedDesign, contractTitle, isDownloading, attachments]);
 
-  // 🔙 Zurück
-  const handleBack = () => navigate("/contracts");
+  // 🔙 Zurück zum Optimizer (mit gespeicherten Optimierungen)
+  const handleBack = () => navigate(`/optimize/${contractId}`);
 
   // Cleanup
   useEffect(() => {
@@ -911,6 +1020,174 @@ export default function OptimizerFinalize() {
                     }}
                     placeholder="Vertragstext..."
                   />
+                </div>
+              </div>
+
+              {/* 📎 Anlagen-Bereich */}
+              <div className={styles.step3EditorPanel} style={{ marginTop: '1rem' }}>
+                <div className={styles.step3EditorHeader}>
+                  <div className={styles.step3EditorTitle}>
+                    <Paperclip size={16} />
+                    <span>Anlagen ({attachments.length})</span>
+                  </div>
+                  <div className={styles.step3EditorActions}>
+                    <input
+                      type="file"
+                      ref={attachmentInputRef}
+                      onChange={handleAttachmentUpload}
+                      accept=".pdf,image/*"
+                      multiple
+                      style={{ display: 'none' }}
+                    />
+                    <motion.button
+                      className={`${styles.step3EditorBtn} ${styles.primary}`}
+                      onClick={() => attachmentInputRef.current?.click()}
+                      disabled={isUploadingAttachment}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      {isUploadingAttachment ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <Plus size={14} />
+                      )}
+                      Anlage hinzufügen
+                    </motion.button>
+                  </div>
+                </div>
+
+                {/* Anlagen-Liste */}
+                <div style={{
+                  padding: '1rem',
+                  background: '#F9FAFB',
+                  borderRadius: '0 0 12px 12px',
+                  minHeight: '80px'
+                }}>
+                  {attachments.length === 0 ? (
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '1.5rem',
+                      color: '#9CA3AF',
+                      textAlign: 'center'
+                    }}>
+                      <Paperclip size={24} style={{ marginBottom: '0.5rem', opacity: 0.5 }} />
+                      <span style={{ fontSize: '0.875rem' }}>
+                        Keine Anlagen hinzugefügt
+                      </span>
+                      <span style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                        PDF & Bilder werden nahtlos an den Vertrag angehängt
+                      </span>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {attachments.map((attachment) => (
+                        <motion.div
+                          key={attachment.id}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 10 }}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '0.75rem',
+                            background: 'white',
+                            borderRadius: '8px',
+                            border: '1px solid #E5E7EB',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            {/* Icon oder Vorschau */}
+                            {attachment.previewUrl ? (
+                              <img
+                                src={attachment.previewUrl}
+                                alt={attachment.name}
+                                style={{
+                                  width: '36px',
+                                  height: '36px',
+                                  objectFit: 'cover',
+                                  borderRadius: '4px',
+                                  border: '1px solid #E5E7EB'
+                                }}
+                              />
+                            ) : (
+                              <div style={{
+                                width: '36px',
+                                height: '36px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                background: '#EEF2FF',
+                                borderRadius: '4px',
+                                color: '#6366F1'
+                              }}>
+                                <File size={18} />
+                              </div>
+                            )}
+                            <div>
+                              <div style={{
+                                fontSize: '0.875rem',
+                                fontWeight: 500,
+                                color: '#1F2937',
+                                maxWidth: '200px',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                              }}>
+                                {attachment.name}
+                              </div>
+                              <div style={{ fontSize: '0.75rem', color: '#9CA3AF' }}>
+                                {formatFileSize(attachment.size)}
+                              </div>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => handleRemoveAttachment(attachment.id)}
+                            style={{
+                              padding: '0.5rem',
+                              background: 'transparent',
+                              border: 'none',
+                              borderRadius: '6px',
+                              color: '#9CA3AF',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = '#FEE2E2';
+                              e.currentTarget.style.color = '#DC2626';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'transparent';
+                              e.currentTarget.style.color = '#9CA3AF';
+                            }}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </motion.div>
+                      ))}
+
+                      {/* Info-Box wenn Anlagen vorhanden */}
+                      <div style={{
+                        marginTop: '0.5rem',
+                        padding: '0.75rem',
+                        background: '#EEF2FF',
+                        borderRadius: '8px',
+                        fontSize: '0.75rem',
+                        color: '#4F46E5',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem'
+                      }}>
+                        <FileCheck size={14} />
+                        <span>
+                          {attachments.length} Anlage{attachments.length !== 1 ? 'n' : ''} werden beim Download an das PDF angehängt
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

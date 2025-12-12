@@ -529,48 +529,125 @@ const calculateContractScore = (optimizations: OptimizationSuggestion[]): Contra
     };
   }
 
+  // 🆕 VERBESSERTES SCORING: Motivierend-realistisch
+  // Philosophie: Ein durchschnittlicher Vertrag ist "solide" (65-75 Punkte)
+  // Optimierungen = Verbesserungspotenzial, nicht Fehler
+  // User sollen motiviert werden, nicht frustriert
+
+  const totalOptimizations = optimizations.length;
   const criticalCount = optimizations.filter(opt => opt.priority === 'critical' && !opt.implemented).length;
   const highCount = optimizations.filter(opt => opt.priority === 'high' && !opt.implemented).length;
   const mediumCount = optimizations.filter(opt => opt.priority === 'medium' && !opt.implemented).length;
-  
-  let baseScore = 92;
-  baseScore -= criticalCount * 18;
-  baseScore -= highCount * 10;
-  baseScore -= mediumCount * 4;
-  baseScore = Math.max(25, baseScore);
-
+  const lowCount = optimizations.filter(opt => opt.priority === 'low' && !opt.implemented).length;
   const implementedCount = optimizations.filter(opt => opt.implemented).length;
-  const improvementBonus = implementedCount * 5;
-  const finalScore = Math.min(100, Math.round(baseScore + improvementBonus));
 
-  const categoryScores = {
-    termination: Math.round(baseScore),
-    liability: Math.round(baseScore),
-    payment: Math.round(baseScore),
-    clarity: Math.round(baseScore),
-    compliance: Math.round(baseScore)
+  // Basis-Score: 82 (ein Vertrag der analysiert wird ist grundsätzlich "gut")
+  let baseScore = 82;
+
+  // Kritische Issues: Spürbar, aber fair
+  // Erste: -6, weitere: -4, -3, -2, -2...
+  for (let i = 0; i < criticalCount; i++) {
+    baseScore -= Math.max(2, 6 - i);
+  }
+
+  // Hohe Issues: Moderat
+  // Erste: -3, weitere: -2, -2, -1...
+  for (let i = 0; i < highCount; i++) {
+    baseScore -= Math.max(1, 3 - Math.floor(i / 2));
+  }
+
+  // Mittlere Issues: Gering
+  // Jede: -1 (max -8 insgesamt)
+  baseScore -= Math.min(8, mediumCount * 1);
+
+  // Niedrige Issues: Minimal
+  // Jede: -0.5 (max -2 insgesamt)
+  baseScore -= Math.min(2, lowCount * 0.5);
+
+  // Minimum bei 45 - selbst ein problematischer Vertrag hat Substanz
+  baseScore = Math.max(45, baseScore);
+
+  // Bonus für implementierte Optimierungen: +3 pro Optimierung
+  const improvementBonus = implementedCount * 3;
+
+  // Kleiner Bonus für gründliche Analyse (viele gefundene Optimierungen)
+  const analysisBonus = totalOptimizations > 8 ? 3 : totalOptimizations > 5 ? 2 : 0;
+
+  const finalScore = Math.min(100, Math.round(baseScore + improvementBonus + analysisBonus));
+
+  // 🆕 KATEGORIE-SCORES: Fairer berechnet
+  // Basis für jede Kategorie ist der Overall-Score
+  const categoryScores: Record<string, number> = {
+    termination: finalScore,
+    liability: finalScore,
+    payment: finalScore,
+    clarity: finalScore,
+    compliance: finalScore
+  };
+
+  // Zähle Issues pro Kategorie
+  const categoryIssueCounts: Record<string, { critical: number; high: number; medium: number; low: number; implemented: number }> = {
+    termination: { critical: 0, high: 0, medium: 0, low: 0, implemented: 0 },
+    liability: { critical: 0, high: 0, medium: 0, low: 0, implemented: 0 },
+    payment: { critical: 0, high: 0, medium: 0, low: 0, implemented: 0 },
+    clarity: { critical: 0, high: 0, medium: 0, low: 0, implemented: 0 },
+    compliance: { critical: 0, high: 0, medium: 0, low: 0, implemented: 0 }
   };
 
   optimizations.forEach(opt => {
-    if (!opt.implemented) {
-      const reduction = opt.priority === 'critical' ? 15 : opt.priority === 'high' ? 8 : 4;
-      categoryScores[opt.category] = Math.max(15, Math.round(categoryScores[opt.category] - reduction));
-    } else {
-      categoryScores[opt.category] = Math.min(100, Math.round(categoryScores[opt.category] + 3));
+    const cat = opt.category as keyof typeof categoryIssueCounts;
+    if (categoryIssueCounts[cat]) {
+      if (opt.implemented) {
+        categoryIssueCounts[cat].implemented++;
+      } else {
+        categoryIssueCounts[cat][opt.priority as 'critical' | 'high' | 'medium' | 'low']++;
+      }
     }
   });
+
+  // Berechne Kategorie-Scores basierend auf spezifischen Issues
+  Object.keys(categoryScores).forEach(cat => {
+    const counts = categoryIssueCounts[cat as keyof typeof categoryIssueCounts];
+    if (!counts) return;
+
+    // Keine Issues in dieser Kategorie = +8 Bonus (gut!)
+    if (counts.critical + counts.high + counts.medium + counts.low === 0) {
+      categoryScores[cat] = Math.min(100, finalScore + 8);
+    } else {
+      // Abzüge pro Kategorie (fair und motivierend)
+      let catScore = finalScore;
+      catScore -= counts.critical * 5;
+      catScore -= counts.high * 2.5;
+      catScore -= counts.medium * 1;
+      catScore -= counts.low * 0.5;
+
+      // Bonus für implementierte Optimierungen in dieser Kategorie
+      catScore += counts.implemented * 4;
+
+      categoryScores[cat] = Math.max(40, Math.min(100, Math.round(catScore)));
+    }
+  });
+
+  // Trend basierend auf implementierten Optimierungen
+  const getTrend = (cat: string): 'up' | 'down' | 'stable' => {
+    const counts = categoryIssueCounts[cat as keyof typeof categoryIssueCounts];
+    if (!counts) return 'stable';
+    if (counts.implemented > 0) return 'up';
+    if (counts.critical > 0) return 'down';
+    return 'stable';
+  };
 
   return {
     overall: Math.round(finalScore),
     categories: {
-      termination: { score: Math.round(categoryScores.termination), trend: 'stable' },
-      liability: { score: Math.round(categoryScores.liability), trend: 'stable' },
-      payment: { score: Math.round(categoryScores.payment), trend: 'stable' },
-      clarity: { score: Math.round(categoryScores.clarity), trend: 'stable' },
-      compliance: { score: Math.round(categoryScores.compliance), trend: 'stable' }
+      termination: { score: Math.round(categoryScores.termination), trend: getTrend('termination') },
+      liability: { score: Math.round(categoryScores.liability), trend: getTrend('liability') },
+      payment: { score: Math.round(categoryScores.payment), trend: getTrend('payment') },
+      clarity: { score: Math.round(categoryScores.clarity), trend: getTrend('clarity') },
+      compliance: { score: Math.round(categoryScores.compliance), trend: getTrend('compliance') }
     },
-    industryPercentile: Math.max(10, Math.round(finalScore - 20)),
-    riskLevel: finalScore < 40 ? 'critical' : finalScore < 60 ? 'high' : finalScore < 80 ? 'medium' : 'low'
+    industryPercentile: Math.max(20, Math.round(finalScore - 10)),
+    riskLevel: finalScore < 45 ? 'critical' : finalScore < 60 ? 'high' : finalScore < 75 ? 'medium' : 'low'
   };
 };
 
@@ -869,7 +946,7 @@ export default function Optimizer() {
     }
   }, [jobId, isPremium, file]);
 
-  // ✅ NEW: Load contract from URL parameter
+  // ✅ NEW: Load contract from URL parameter (with saved optimizations!)
   useEffect(() => {
     if (contractId && isPremium && !file) {
       const loadContractFromUrl = async () => {
@@ -889,6 +966,34 @@ export default function Optimizer() {
           // 🆕 Set existing contract ID to prevent duplicates
           setExistingContractId(contractId);
           console.log('[OPTIMIZER] Set existingContractId from URL param:', contractId);
+
+          // 🆕 Step 1.5: Restore saved optimizations if available
+          if (contract.formData?.optimizations && contract.formData.optimizations.length > 0) {
+            console.log('[OPTIMIZER] Restoring saved optimizations:', contract.formData.optimizations.length);
+
+            // Convert saved optimizations back to OptimizationSuggestion format
+            const restoredOptimizations: OptimizationSuggestion[] = contract.formData.optimizations.map((opt: any, index: number) => ({
+              id: opt.id || `restored-${index}`,
+              original: opt.original || '',
+              improved: opt.improved || '',
+              type: opt.type || 'Verbesserung',
+              priority: opt.priority || 'medium',
+              explanation: opt.explanation || '',
+              implemented: opt.implemented ?? true, // Already implemented since contract was generated
+              expanded: false,
+            }));
+
+            setOptimizations(restoredOptimizations);
+            // No step state needed - view is controlled by optimizations.length > 0
+
+            setToast({
+              message: `${restoredOptimizations.length} gespeicherte Optimierungen geladen`,
+              type: "success"
+            });
+            setTimeout(() => setToast(null), 3000);
+
+            // Still load the PDF for preview
+          }
 
           // Step 2: Get presigned URL to download PDF
           const viewRes = await fetch(`/api/s3/view?contractId=${contractId}`, {
@@ -913,13 +1018,14 @@ export default function Optimizer() {
           // Step 5: Set as file
           setFile(fileObj);
 
-          setToast({
-            message: `Vertrag "${contract.name || contract.fileName}" wurde geladen`,
-            type: "success"
-          });
-
-          // Auto-dismiss toast after 3 seconds
-          setTimeout(() => setToast(null), 3000);
+          // Only show "loaded" toast if we didn't already show optimizations toast
+          if (!contract.formData?.optimizations || contract.formData.optimizations.length === 0) {
+            setToast({
+              message: `Vertrag "${contract.name || contract.fileName}" wurde geladen`,
+              type: "success"
+            });
+            setTimeout(() => setToast(null), 3000);
+          }
         } catch (error) {
           console.error("❌ Error loading contract from URL:", error);
           setToast({
@@ -1264,17 +1370,26 @@ export default function Optimizer() {
         }
       }
 
-      // 6. Erstelle neuen Vertrag über /api/contracts/generate (mit temporärem Design)
+      // 6. Erstelle/Aktualisiere Vertrag über /api/contracts/generate
+      // 🆕 Wenn existingContractId vorhanden, wird der bestehende Vertrag aktualisiert statt neu erstellt
+      const requestBody: Record<string, unknown> = {
+        type: formData.type,
+        formData: formData,
+        useCompanyProfile: !!selectedProfile,
+        designVariant: 'executive' // Temporär, wird später geändert
+      };
+
+      // Füge existingContractId hinzu, um Duplikate zu vermeiden
+      if (existingContractId) {
+        requestBody.existingContractId = existingContractId;
+        console.log('[OPTIMIZER] Using existingContractId for generate:', existingContractId);
+      }
+
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/generate`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: formData.type,
-          formData: formData,
-          useCompanyProfile: !!selectedProfile,
-          designVariant: 'executive' // Temporär, wird später geändert
-        })
+        body: JSON.stringify(requestBody)
       });
 
       if (!response.ok) {
@@ -1317,6 +1432,7 @@ export default function Optimizer() {
     selectedOptimizations,
     originalContractText,
     isGeneratingContract,
+    existingContractId,
     showToast,
     navigate
   ]);
@@ -1578,27 +1694,193 @@ Freundliche Grüße`
     setShowPitchMenu(false);
   }, [optimizations, optimizationResult, selectedPitchStyle, showToast]);
 
-  // ✅ ORIGINAL: Export Functions
-  const handleExport = useCallback(async () => {
+  // ✅ FIXED: Export Functions with format support
+  const handleExport = useCallback(async (format: string = 'txt') => {
     setShowExportMenu(false);
-    
-    const content = optimizations.map((opt, index) => 
-      `${index + 1}. ${opt.category.toUpperCase()}
+
+    const fileName = file?.name?.replace('.pdf', '') || 'Vertragsanalyse';
+    const dateStr = new Date().toISOString().split('T')[0];
+
+    // TXT Export (E-Mail-Vorlage)
+    if (format === 'txt' || format === 'TXT') {
+      const content = optimizations.map((opt, index) =>
+        `${index + 1}. ${opt.category.toUpperCase()}
 Original: ${opt.original}
 Verbessert: ${opt.improved}
 Begründung: ${opt.reasoning}
 Benchmark: ${opt.marketBenchmark}
 Impact: ${opt.estimatedSavings}
 Konfidenz: ${opt.confidence}%\n`
-    ).join('\n');
+      ).join('\n');
 
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `Vertragsanalyse_${file?.name?.replace('.pdf', '')}_${new Date().toISOString().split('T')[0]}.txt`;
-    link.click();
-    
-    showToast(`✅ Export erfolgreich!`, 'success');
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `${fileName}_${dateStr}.txt`;
+      link.click();
+      showToast(`✅ TXT Export erfolgreich!`, 'success');
+      return;
+    }
+
+    // PDF Export mit Markierungen
+    if (format === 'pdf' || format === 'PDF') {
+      try {
+        // Erstelle HTML für PDF
+        const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Vertragsanalyse - ${fileName}</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
+    h1 { color: #1D1D1F; border-bottom: 2px solid #007AFF; padding-bottom: 10px; }
+    h2 { color: #333; margin-top: 30px; }
+    .opt-card { background: #f5f5f7; border-radius: 12px; padding: 20px; margin: 15px 0; }
+    .opt-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+    .opt-category { font-weight: bold; color: #007AFF; text-transform: uppercase; font-size: 12px; }
+    .opt-priority { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+    .critical { background: #FFE5E5; color: #D00; }
+    .high { background: #FFF3E5; color: #E65100; }
+    .medium { background: #E5F3FF; color: #0066CC; }
+    .low { background: #E5FFE5; color: #006600; }
+    .original { background: #FFE5E5; padding: 10px; border-radius: 6px; margin: 10px 0; border-left: 4px solid #D00; }
+    .improved { background: #E5FFE5; padding: 10px; border-radius: 6px; margin: 10px 0; border-left: 4px solid #0A0; }
+    .label { font-weight: bold; font-size: 12px; color: #666; margin-bottom: 5px; }
+    .reasoning { color: #555; font-style: italic; margin-top: 10px; }
+    .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; color: #999; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h1>🔍 Vertragsanalyse</h1>
+  <p><strong>Dokument:</strong> ${fileName}</p>
+  <p><strong>Datum:</strong> ${new Date().toLocaleDateString('de-DE')}</p>
+  <p><strong>Gefundene Optimierungen:</strong> ${optimizations.length}</p>
+
+  <h2>Optimierungsvorschläge</h2>
+  ${optimizations.map((opt) => `
+    <div class="opt-card">
+      <div class="opt-header">
+        <span class="opt-category">${opt.category}</span>
+        <span class="opt-priority ${opt.priority}">${opt.priority.toUpperCase()}</span>
+      </div>
+      <div class="label">❌ Original (Problematisch):</div>
+      <div class="original">${opt.original}</div>
+      <div class="label">✅ Verbessert:</div>
+      <div class="improved">${opt.improved}</div>
+      <div class="reasoning">💡 ${opt.reasoning}</div>
+    </div>
+  `).join('')}
+
+  <div class="footer">
+    Erstellt mit Contract AI - KI-gestützte Vertragsoptimierung
+  </div>
+</body>
+</html>`;
+
+        // Öffne in neuem Tab zum Drucken als PDF
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          printWindow.document.write(htmlContent);
+          printWindow.document.close();
+          printWindow.print();
+          showToast(`✅ PDF wird erstellt - bitte als PDF speichern`, 'success');
+        }
+      } catch (err) {
+        console.error('PDF Export Fehler:', err);
+        showToast(`❌ PDF Export fehlgeschlagen`, 'error');
+      }
+      return;
+    }
+
+    // DOCX Export (Word mit Kommentaren)
+    if (format === 'docx' || format === 'DOCX') {
+      try {
+        // Erstelle RTF (wird von Word geöffnet)
+        let rtfContent = `{\\rtf1\\ansi\\deff0
+{\\fonttbl{\\f0 Arial;}}
+{\\colortbl;\\red0\\green0\\blue0;\\red255\\green0\\blue0;\\red0\\green128\\blue0;\\red0\\green102\\blue204;}
+\\f0\\fs24
+
+{\\b\\fs32 Vertragsanalyse - ${fileName}}\\par
+\\par
+{\\b Datum:} ${new Date().toLocaleDateString('de-DE')}\\par
+{\\b Optimierungen:} ${optimizations.length}\\par
+\\par
+{\\b\\fs28 Optimierungsvorschl\\u228ge}\\par
+\\par
+`;
+
+        optimizations.forEach((opt, index) => {
+          rtfContent += `{\\b ${index + 1}. ${opt.category.toUpperCase()}} [${opt.priority}]\\par
+\\par
+{\\cf2\\b Original (Problematisch):}\\par
+${opt.original.replace(/\n/g, '\\par ')}\\par
+\\par
+{\\cf3\\b Verbesserung:}\\par
+${opt.improved.replace(/\n/g, '\\par ')}\\par
+\\par
+{\\i ${opt.reasoning}}\\par
+\\par
+\\line
+\\par
+`;
+        });
+
+        rtfContent += `}`;
+
+        const blob = new Blob([rtfContent], { type: 'application/rtf' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `${fileName}_${dateStr}.rtf`;
+        link.click();
+        showToast(`✅ Word-Dokument exportiert (RTF Format)`, 'success');
+      } catch (err) {
+        console.error('DOCX Export Fehler:', err);
+        showToast(`❌ Word Export fehlgeschlagen`, 'error');
+      }
+      return;
+    }
+
+    // XLSX Export (Excel Vergleichstabelle)
+    if (format === 'xlsx' || format === 'XLSX') {
+      try {
+        // Erstelle CSV (Excel-kompatibel)
+        const headers = ['Nr.', 'Kategorie', 'Priorität', 'Original', 'Verbessert', 'Begründung', 'Risiko', 'Impact'];
+        const rows = optimizations.map((opt, index) => [
+          index + 1,
+          opt.category,
+          opt.priority,
+          `"${opt.original.replace(/"/g, '""')}"`,
+          `"${opt.improved.replace(/"/g, '""')}"`,
+          `"${opt.reasoning.replace(/"/g, '""')}"`,
+          opt.legalRisk,
+          opt.businessImpact
+        ]);
+
+        const csvContent = [
+          headers.join(';'),
+          ...rows.map(row => row.join(';'))
+        ].join('\n');
+
+        // BOM für Excel UTF-8 Erkennung
+        const BOM = '\uFEFF';
+        const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `${fileName}_${dateStr}.csv`;
+        link.click();
+        showToast(`✅ Excel-Tabelle exportiert (CSV Format)`, 'success');
+      } catch (err) {
+        console.error('XLSX Export Fehler:', err);
+        showToast(`❌ Excel Export fehlgeschlagen`, 'error');
+      }
+      return;
+    }
+
+    // Fallback: TXT
+    showToast(`⚠️ Format nicht unterstützt, exportiere als TXT`, 'info');
+    handleExport('txt');
   }, [optimizations, file, showToast]);
 
   // 🚀 REVOLUTIONARY: Dynamic Categories with Performance Optimization
@@ -2781,57 +3063,63 @@ Konfidenz: ${opt.confidence}%\n`
                     }}>
                       Export-Format:
                     </h5>
-                    {exportOptions.map(option => (
-                      <motion.button
-                        key={option.id}
-                        onClick={() => handleExport()}
-                        disabled={option.premium && !isPremium}
-                        whileHover={!option.premium || isPremium ? { x: 4 } : undefined}
-                        style={{
-                          width: '100%',
-                          padding: '12px',
-                          marginBottom: '8px',
-                          borderRadius: '10px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '12px',
-                          background: '#F5F5F7',
-                          border: '1px solid transparent',
-                          cursor: option.premium && !isPremium ? 'not-allowed' : 'pointer',
-                          opacity: option.premium && !isPremium ? 0.5 : 1,
-                          transition: 'all 0.2s ease'
-                        }}
-                      >
-                        <span style={{ fontSize: '20px' }}>{option.icon}</span>
-                        <div style={{ textAlign: 'left', flex: 1 }}>
-                          <div style={{
-                            fontWeight: 600,
-                            fontSize: '14px',
-                            color: '#1D1D1F',
-                            marginBottom: '2px',
+                    {exportOptions.map(option => {
+                      // Premium-Check: Nur sperren wenn Premium-Option UND User nicht Premium
+                      const isLocked = option.premium && !isPremium;
+
+                      return (
+                        <motion.button
+                          key={option.id}
+                          onClick={() => !isLocked && handleExport(option.format)}
+                          disabled={isLocked}
+                          whileHover={!isLocked ? { x: 4 } : undefined}
+                          style={{
+                            width: '100%',
+                            padding: '12px',
+                            marginBottom: '8px',
+                            borderRadius: '10px',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '6px'
+                            gap: '12px',
+                            background: '#F5F5F7',
+                            border: '1px solid transparent',
+                            cursor: isLocked ? 'not-allowed' : 'pointer',
+                            opacity: isLocked ? 0.5 : 1,
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <span style={{ fontSize: '20px' }}>{option.icon}</span>
+                          <div style={{ textAlign: 'left', flex: 1 }}>
+                            <div style={{
+                              fontWeight: 600,
+                              fontSize: '14px',
+                              color: '#1D1D1F',
+                              marginBottom: '2px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px'
+                            }}>
+                              {option.name}
+                              {/* Lock nur anzeigen wenn gesperrt (Premium-Option UND User nicht Premium) */}
+                              {isLocked && <Lock size={12} style={{ color: '#86868B' }} />}
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#86868B' }}>
+                              {option.description}
+                            </div>
+                          </div>
+                          <span style={{
+                            fontSize: '11px',
+                            background: isLocked ? '#E5E5E7' : '#007AFF',
+                            padding: '4px 8px',
+                            borderRadius: '6px',
+                            fontWeight: 600,
+                            color: isLocked ? '#86868B' : '#FFFFFF'
                           }}>
-                            {option.name}
-                            {option.premium && <Lock size={12} style={{ color: '#86868B' }} />}
-                          </div>
-                          <div style={{ fontSize: '12px', color: '#86868B' }}>
-                            {option.description}
-                          </div>
-                        </div>
-                        <span style={{
-                          fontSize: '11px',
-                          background: '#E5E5E7',
-                          padding: '4px 8px',
-                          borderRadius: '6px',
-                          fontWeight: 600,
-                          color: '#1D1D1F'
-                        }}>
-                          {option.format}
-                        </span>
-                      </motion.button>
-                    ))}
+                            {option.format}
+                          </span>
+                        </motion.button>
+                      );
+                    })}
                   </motion.div>
                 </DropdownPortal>
 

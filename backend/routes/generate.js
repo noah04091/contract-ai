@@ -2041,7 +2041,12 @@ router.post("/", verifyToken, async (req, res) => {
     formDataKeys: Object.keys(req.body.formData || {})
   });
 
-  const { type, formData, useCompanyProfile = false, designVariant = 'executive' } = req.body;
+  const { type, formData, useCompanyProfile = false, designVariant = 'executive', existingContractId } = req.body;
+
+  // 🆕 Log wenn existingContractId vorhanden (Update statt Insert)
+  if (existingContractId) {
+    console.log("🔄 existingContractId vorhanden - Vertrag wird aktualisiert statt neu erstellt:", existingContractId);
+  }
 
   if (!type || !formData || !formData.title) {
     return res.status(400).json({ message: "❌ Fehlende Felder für Vertragserstellung." });
@@ -2168,11 +2173,51 @@ router.post("/", verifyToken, async (req, res) => {
         }
       };
 
-      const insertResult = await contractsCollection.insertOne(contract);
+      // 🆕 Update oder Insert basierend auf existingContractId
+      let finalContractId;
+
+      if (existingContractId) {
+        // UPDATE: Bestehenden Vertrag aktualisieren (keine Duplikate!)
+        console.log("🔄 [V2] Aktualisiere bestehenden Vertrag:", existingContractId);
+
+        await contractsCollection.updateOne(
+          { _id: new ObjectId(existingContractId) },
+          {
+            $set: {
+              content: result.contractText,
+              contractHTML: formattedHTML,
+              formData: formData,
+              contractType: type,
+              designVariant: designVariant,
+              isGenerated: true,
+              hasCompanyProfile: !!companyProfile,
+              updatedAt: new Date(),
+              metadata: {
+                version: 'v2_meta_prompt',
+                generationId: result.generationDoc._id,
+                selfCheckScore: result.artifacts.selfCheck.score,
+                validatorPassed: result.artifacts.validator.passed,
+                generatedBy: 'GPT-4',
+                templateVersion: '2024.2',
+                updatedFromOptimizer: true
+              }
+            }
+          }
+        );
+
+        finalContractId = existingContractId;
+        console.log("✅ [V2] Vertrag aktualisiert:", finalContractId);
+      } else {
+        // INSERT: Neuen Vertrag erstellen
+        const insertResult = await contractsCollection.insertOne(contract);
+        finalContractId = insertResult.insertedId;
+        console.log("✅ [V2] Neuer Vertrag erstellt:", finalContractId);
+      }
 
       console.log("✅ V2 Generierung abgeschlossen:", {
-        contractId: insertResult.insertedId,
-        selfCheckScore: result.artifacts.selfCheck.score
+        contractId: finalContractId,
+        selfCheckScore: result.artifacts.selfCheck.score,
+        wasUpdate: !!existingContractId
       });
 
       // ℹ️ AUTO-PDF wird jetzt in contracts.js generiert (wenn Frontend den Vertrag speichert)
@@ -2180,8 +2225,10 @@ router.post("/", verifyToken, async (req, res) => {
 
       return res.json({
         success: true,
-        message: "✅ Vertrag erfolgreich generiert & gespeichert (V2).",
-        contractId: insertResult.insertedId,
+        message: existingContractId
+          ? "✅ Vertrag erfolgreich aktualisiert (V2)."
+          : "✅ Vertrag erfolgreich generiert & gespeichert (V2).",
+        contractId: finalContractId,
         contractText: result.contractText,
         contractHTML: formattedHTML,
         artifacts: result.artifacts,
@@ -2189,7 +2236,8 @@ router.post("/", verifyToken, async (req, res) => {
           contractType: type,
           hasCompanyProfile: !!companyProfile,
           version: 'v2_meta_prompt',
-          selfCheckScore: result.artifacts.selfCheck.score
+          selfCheckScore: result.artifacts.selfCheck.score,
+          wasUpdate: !!existingContractId
         }
       });
 
@@ -3127,8 +3175,45 @@ DAS IST KEIN "Vertrag neu schreiben" - DAS IST "Vertrag gezielt verbessern"!`;
       }
     };
 
-    const result = await contractsCollection.insertOne(contract);
-    
+    // 🆕 Update oder Insert basierend auf existingContractId
+    let finalContractId;
+
+    if (existingContractId) {
+      // UPDATE: Bestehenden Vertrag aktualisieren (keine Duplikate!)
+      console.log("🔄 [V1] Aktualisiere bestehenden Vertrag:", existingContractId);
+
+      await contractsCollection.updateOne(
+        { _id: new ObjectId(existingContractId) },
+        {
+          $set: {
+            content: contractText,
+            contractHTML: formattedHTML,
+            formData: formData,
+            contractType: type,
+            designVariant: designVariant,
+            isGenerated: true,
+            hasCompanyProfile: !!companyProfile,
+            updatedAt: new Date(),
+            metadata: {
+              version: 'v5_enterprise',
+              features: ['table_of_contents', 'qr_code', 'document_hash', 'initial_fields'],
+              generatedBy: 'GPT-4',
+              templateVersion: '2024.1',
+              updatedFromOptimizer: true
+            }
+          }
+        }
+      );
+
+      finalContractId = existingContractId;
+      console.log("✅ [V1] Vertrag aktualisiert:", finalContractId);
+    } else {
+      // INSERT: Neuen Vertrag erstellen
+      const result = await contractsCollection.insertOne(contract);
+      finalContractId = result.insertedId;
+      console.log("✅ [V1] Neuer Vertrag erstellt:", finalContractId);
+    }
+
     // Contract Analytics
     const logContractGeneration = (contract, user, companyProfile) => {
       const analytics = {
@@ -3142,9 +3227,10 @@ DAS IST KEIN "Vertrag neu schreiben" - DAS IST "Vertrag gezielt verbessern"!`;
         generationSource: 'ai_generation_v5_enterprise',
         userId: user._id.toString(),
         designVariant: contract.designVariant,
-        success: true
+        success: true,
+        wasUpdate: !!existingContractId
       };
-      
+
       console.log("📊 Contract Generated Analytics:", analytics);
     };
 
@@ -3156,8 +3242,10 @@ DAS IST KEIN "Vertrag neu schreiben" - DAS IST "Vertrag gezielt verbessern"!`;
 
     // Response mit allen Daten
     res.json({
-      message: "✅ Vertrag erfolgreich generiert & gespeichert.",
-      contractId: result.insertedId,
+      message: existingContractId
+        ? "✅ Vertrag erfolgreich aktualisiert."
+        : "✅ Vertrag erfolgreich generiert & gespeichert.",
+      contractId: finalContractId,
       contractText: contractText,
       contractHTML: formattedHTML,
       metadata: {
