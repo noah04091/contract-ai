@@ -3812,9 +3812,41 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
       console.warn('⚠️⚠️⚠️ [PDF-V2] WARNUNG: Vertrag hat keinen/wenig Content! Prüfe DB-Speicherung.');
     }
 
-    // Fallback: Wenn content leer ist, versuche aus contractHTML den Text zu extrahieren
+    // 🔧 FIX: Für optimierte Verträge den Text aus formData.optimizations generieren
     let contractText = contract.content;
-    if (!contractText || contractText.length < 100) {
+    const hasOptimizations = contract.formData?.optimizations && contract.formData.optimizations.length > 0;
+
+    if (hasOptimizations) {
+      console.log('🎯 [PDF-V2] Optimierter Vertrag erkannt - generiere Text aus Optimierungen...');
+      const optimizations = contract.formData.optimizations;
+
+      // Strukturierten Vertragstext aus den Optimierungen aufbauen
+      let generatedText = 'PRÄAMBEL\n\n';
+      generatedText += 'Dieser Vertrag wurde professionell optimiert und enthält die folgenden rechtssicheren Klauseln:\n\n';
+
+      // Paragraphen aus Optimierungen generieren
+      optimizations.forEach((opt, index) => {
+        const paragraphNum = index + 1;
+        // Extrahiere den Titel aus der improved-Klausel (erste Zeile)
+        const improvedText = opt.improved || '';
+        const lines = improvedText.split('\n').filter(line => line.trim());
+        const title = lines[0] || `Klausel ${paragraphNum}`;
+        const content = lines.slice(1).join('\n') || improvedText;
+
+        generatedText += `§ ${paragraphNum} ${title.toUpperCase()}\n\n`;
+        generatedText += content + '\n\n';
+      });
+
+      // Schlussbestimmungen hinzufügen
+      generatedText += `§ ${optimizations.length + 1} SCHLUSSBESTIMMUNGEN\n\n`;
+      generatedText += '(1) Änderungen und Ergänzungen dieses Vertrages bedürfen der Schriftform.\n\n';
+      generatedText += '(2) Sollten einzelne Bestimmungen unwirksam sein, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt.\n\n';
+      generatedText += '(3) Es gilt deutsches Recht.\n\n';
+
+      contractText = generatedText;
+      console.log('📝 [PDF-V2] Generierter Text aus Optimierungen:', contractText.length, 'Zeichen');
+      console.log('📝 [PDF-V2] Erste 300 Zeichen:', contractText.substring(0, 300));
+    } else if (!contractText || contractText.length < 100) {
       console.log('⚠️ content ist leer oder sehr kurz, prüfe Alternativen...');
       if (contract.contractHTML && contract.contractHTML.length > 100) {
         console.log('🔄 Extrahiere Text aus contractHTML...');

@@ -852,6 +852,12 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
   const c = theme.colors;
   const layoutType = theme.layout;
 
+  // 🔧 FIX: Verwende parties.title als Vertragstitel wenn vorhanden, sonst contractType
+  // Dies ermöglicht KI-Verbesserungen wie "Ändere den Titel zu X"
+  const displayTitle = (parties?.title && parties.title !== contractType)
+    ? parties.title.toUpperCase()
+    : (contractType || 'VERTRAG').toUpperCase();
+
   // Sidebar-Layout (Modern, Startup, Tech, Creative)
   // wrap: false verhindert leere Seiten!
   if (layoutType === 'sidebar-accent') {
@@ -869,7 +875,7 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
             companyProfile?.zip && e(Text, null, `${companyProfile.zip} ${companyProfile.city || ''}`)
           ),
           e(View, { style: styles.titleContainer },
-            e(Text, { style: styles.title }, contractType || 'VERTRAG'),
+            e(Text, { style: styles.title }, displayTitle),
             e(View, { style: styles.titleLine }),
             e(Text, { style: styles.subtitle }, `geschlossen am ${currentDate}`)
           ),
@@ -914,7 +920,7 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
           )
         ),
         e(View, { style: styles.titleContainer },
-          e(Text, { style: styles.title }, contractType || 'VERTRAG'),
+          e(Text, { style: styles.title }, displayTitle),
           e(Text, { style: styles.subtitle }, currentDate)
         ),
         e(View, { style: styles.partiesContainer },
@@ -961,7 +967,7 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
         ),
         e(View, { style: styles.titleContainer },
           e(View, { style: styles.titleOrnament }),
-          e(Text, { style: styles.title }, contractType || 'VERTRAG'),
+          e(Text, { style: styles.title }, displayTitle),
           e(View, { style: styles.titleLine }),
           e(Text, { style: styles.subtitle }, `geschlossen am ${currentDate}`)
         ),
@@ -1009,7 +1015,7 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
         ),
         e(View, { style: styles.mainContent },
           e(View, { style: styles.titleContainer },
-            e(Text, { style: styles.title }, contractType || 'VERTRAG'),
+            e(Text, { style: styles.title }, displayTitle),
             e(Text, { style: styles.subtitle }, `Datum: ${currentDate}`)
           ),
           e(View, { style: styles.partiesContainer },
@@ -1066,7 +1072,7 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
       ),
       e(View, { style: styles.titleContainer },
         e(View, { style: styles.titleLine }),
-        e(Text, { style: styles.title }, contractType || 'VERTRAG'),
+        e(Text, { style: styles.title }, displayTitle),
         e(View, { style: styles.titleLineBottom }),
         e(Text, { style: styles.subtitle }, `geschlossen am ${currentDate}`)
       ),
