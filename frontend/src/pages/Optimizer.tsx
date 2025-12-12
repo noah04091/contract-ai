@@ -995,6 +995,33 @@ export default function Optimizer() {
             setOptimizations(restoredOptimizations);
             // No step state needed - view is controlled by optimizations.length > 0
 
+            // 🔧 FIX: Score aus Backend laden ODER berechnen
+            // Der healthScore aus analysisData ist der ORIGINALE Score (vor Optimierung)
+            const backendHealthScore = contract.analysisData?.healthScore;
+            if (backendHealthScore && typeof backendHealthScore === 'number') {
+              // Verwende den originalen Score aus dem Backend
+              const restoredScore: ContractHealthScore = {
+                overall: backendHealthScore,
+                categories: {
+                  termination: { score: backendHealthScore, trend: 'up' as const },
+                  liability: { score: backendHealthScore, trend: 'up' as const },
+                  payment: { score: backendHealthScore, trend: 'stable' as const },
+                  clarity: { score: backendHealthScore, trend: 'up' as const },
+                  compliance: { score: backendHealthScore, trend: 'stable' as const }
+                },
+                industryPercentile: Math.min(95, Math.round(backendHealthScore * 0.9)),
+                riskLevel: backendHealthScore >= 70 ? 'low' : backendHealthScore >= 50 ? 'medium' : 'high'
+              };
+              setContractScore(restoredScore);
+              console.log('[OPTIMIZER] Restored score from backend:', backendHealthScore);
+            } else {
+              // Fallback: Berechne Score aus nicht-implementierten Optimierungen
+              const unimplementedOpts = restoredOptimizations.map(opt => ({ ...opt, implemented: false }));
+              const restoredScore = calculateContractScore(unimplementedOpts);
+              setContractScore(restoredScore);
+              console.log('[OPTIMIZER] Calculated score (fallback):', restoredScore.overall);
+            }
+
             setToast({
               message: `${restoredOptimizations.length} gespeicherte Optimierungen geladen`,
               type: "success"

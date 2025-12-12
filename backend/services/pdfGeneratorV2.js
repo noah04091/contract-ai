@@ -1147,7 +1147,9 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType, do
       );
     }
 
-    return e(View, { key: sectionIndex, wrap: false },
+    // 🔧 FIX: wrap: true erlaubt Seitenumbrüche innerhalb langer Sektionen
+    // Das verhindert Text-Überlappungen wenn ein Abschnitt zu groß für eine Seite ist
+    return e(View, { key: sectionIndex, wrap: true },
       e(Text, { style: styles.sectionHeader }, section.title),
       ...section.content.map((item, i) => {
         if (item.type === 'numbered') numberedCounter++;
