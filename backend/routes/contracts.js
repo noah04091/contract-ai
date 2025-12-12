@@ -833,20 +833,78 @@ router.get("/", verifyToken, async (req, res) => {
       ];
     }
 
-    // 📊 Status-Filter
+    // 📊 Status-Filter - basierend auf berechneten Werten (wie Frontend calculateSmartStatus)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const in30Days = new Date(today);
+    in30Days.setDate(in30Days.getDate() + 30);
+
     if (statusFilter !== 'alle') {
       switch (statusFilter) {
         case 'aktiv':
-          mongoFilter.status = { $in: ['aktiv', 'Aktiv', 'gültig', 'Gültig'] };
+          // Aktiv = hat Ablaufdatum > 30 Tage in der Zukunft ODER kein Ablaufdatum (und nicht gekündigt)
+          mongoFilter.$and = mongoFilter.$and || [];
+          mongoFilter.$and.push({
+            $or: [
+              // Ablaufdatum > 30 Tage in der Zukunft
+              { expiryDate: { $gt: in30Days } },
+              // Kein Ablaufdatum gesetzt (und nicht gekündigt/beendet)
+              {
+                expiryDate: { $exists: false },
+                gekuendigtZum: { $exists: false },
+                documentCategory: { $nin: ['cancellation_confirmation'] }
+              },
+              {
+                expiryDate: null,
+                gekuendigtZum: { $exists: false },
+                documentCategory: { $nin: ['cancellation_confirmation'] }
+              }
+            ]
+          });
+          // Nicht gekündigt
+          mongoFilter.$and.push({
+            $or: [
+              { gekuendigtZum: { $exists: false } },
+              { gekuendigtZum: null }
+            ]
+          });
+          mongoFilter.$and.push({
+            $or: [
+              { documentCategory: { $exists: false } },
+              { documentCategory: { $nin: ['cancellation_confirmation'] } }
+            ]
+          });
           break;
         case 'bald_ablaufend':
-          mongoFilter.status = { $in: ['läuft ab', 'Läuft ab', 'bald fällig', 'Bald fällig'] };
+          // Bald ablaufend = Ablaufdatum in den nächsten 30 Tagen (und > heute)
+          mongoFilter.expiryDate = {
+            $gt: today,
+            $lte: in30Days
+          };
+          // Nicht bereits gekündigt
+          mongoFilter.$and = mongoFilter.$and || [];
+          mongoFilter.$and.push({
+            $or: [
+              { gekuendigtZum: { $exists: false } },
+              { gekuendigtZum: null }
+            ]
+          });
           break;
         case 'abgelaufen':
-          mongoFilter.status = { $in: ['abgelaufen', 'Abgelaufen', 'beendet', 'Beendet'] };
+          // Abgelaufen/Beendet = Ablaufdatum in der Vergangenheit ODER gekuendigtZum in der Vergangenheit
+          mongoFilter.$or = [
+            { expiryDate: { $lt: today } },
+            { gekuendigtZum: { $lt: today } }
+          ];
           break;
         case 'gekündigt':
-          mongoFilter.status = { $in: ['gekündigt', 'Gekündigt'] };
+          // Gekündigt = documentCategory ist cancellation_confirmation ODER gekuendigtZum gesetzt (aber noch nicht vorbei)
+          mongoFilter.$or = [
+            { documentCategory: 'cancellation_confirmation' },
+            {
+              gekuendigtZum: { $exists: true, $ne: null, $gte: today }
+            }
+          ];
           break;
       }
     }
