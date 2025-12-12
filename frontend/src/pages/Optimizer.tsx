@@ -972,15 +972,24 @@ export default function Optimizer() {
             console.log('[OPTIMIZER] Restoring saved optimizations:', contract.formData.optimizations.length);
 
             // Convert saved optimizations back to OptimizationSuggestion format
-            const restoredOptimizations: OptimizationSuggestion[] = contract.formData.optimizations.map((opt: any, index: number) => ({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const restoredOptimizations: OptimizationSuggestion[] = contract.formData.optimizations.map((opt: Record<string, any>, index: number) => ({
               id: opt.id || `restored-${index}`,
+              category: opt.category || 'clarity',
+              priority: opt.priority || 'medium',
+              confidence: opt.confidence || 80,
+              summary: opt.summary || '',
               original: opt.original || '',
               improved: opt.improved || '',
-              type: opt.type || 'Verbesserung',
-              priority: opt.priority || 'medium',
-              explanation: opt.explanation || '',
+              reasoning: opt.reasoning || opt.explanation || '',
+              legalRisk: opt.legalRisk || 5,
+              businessImpact: opt.businessImpact || 5,
+              implementationDifficulty: opt.implementationDifficulty || 'medium',
+              estimatedSavings: opt.estimatedSavings,
+              marketBenchmark: opt.marketBenchmark,
               implemented: opt.implemented ?? true, // Already implemented since contract was generated
-              expanded: false,
+              aiInsight: opt.aiInsight || '',
+              relatedClauses: opt.relatedClauses,
             }));
 
             setOptimizations(restoredOptimizations);
