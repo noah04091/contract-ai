@@ -60,6 +60,18 @@ export default function OptimizerFinalize() {
   const [loadingMessage, setLoadingMessage] = useState<string>(LOADING_MESSAGES[0]);
   const [loadingProgress, setLoadingProgress] = useState<number>(0);
 
+  // 🆕 FormData für Deckblatt-Felder (Titel, Parteien, etc.)
+  interface FormData {
+    title?: string;
+    partyA?: string;
+    partyB?: string;
+    partyAAddress?: string;
+    partyBAddress?: string;
+    contractDate?: string;
+    contractType?: string;
+  }
+  const [formData, setFormData] = useState<FormData>({});
+
   // Design State
   const [selectedDesign, setSelectedDesign] = useState<string>("executive");
   const [designCarouselIndex, setDesignCarouselIndex] = useState<number>(0);
@@ -150,11 +162,25 @@ export default function OptimizerFinalize() {
 
         const data = await response.json();
         console.log('📄 Vertrag geladen:', data.title || 'Ohne Titel');
+        console.log('📄 FormData vorhanden:', !!data.formData, data.formData);
 
         setContractText(data.content || "");
         setContractTitle(data.title || "Optimierter Vertrag");
         setSelectedDesign(data.designVariant || "executive");
         setLoadingProgress(100);
+
+        // 🆕 FormData für Deckblatt speichern (falls vorhanden)
+        if (data.formData) {
+          setFormData(data.formData);
+        } else {
+          // Fallback: Aus anderen Feldern zusammenbauen
+          setFormData({
+            title: data.name || data.title,
+            contractType: data.contractType,
+            partyA: data.parties?.partyA,
+            partyB: data.parties?.partyB,
+          });
+        }
 
         // PDF-Vorschau nach kurzer Verzögerung generieren
         setTimeout(() => {
@@ -314,13 +340,14 @@ export default function OptimizerFinalize() {
     }
   }, [contractId, selectedDesign, pdfPreviewUrl, isChangingDesign]);
 
-  // ✨ KI-Nachbesserung
+  // ✨ KI-Nachbesserung (mit Deckblatt-Unterstützung!)
   const handleImproveContract = useCallback(async () => {
     const token = getToken();
     if (!improvements.trim() || isImproving || !token || !contractId) return;
 
     setIsImproving(true);
     console.log('🔄 KI-Verbesserung gestartet:', improvements.trim());
+    console.log('📋 Aktuelle FormData:', formData);
 
     try {
       const response = await fetch(`${API_URL}/api/contracts/improve`, {
@@ -332,6 +359,7 @@ export default function OptimizerFinalize() {
         body: JSON.stringify({
           originalContract: contractText,
           improvements: improvements.trim(),
+          currentFormData: formData, // 🆕 Deckblatt-Daten mitsenden
         }),
       });
 
@@ -344,7 +372,9 @@ export default function OptimizerFinalize() {
       console.log('✅ KI-Verbesserung Response:', {
         success: data.success,
         hasImprovedContract: !!data.improvedContract,
-        improvedLength: data.improvedContract?.length
+        improvedLength: data.improvedContract?.length,
+        hasFormDataChanges: !!data.formDataChanges, // 🆕
+        formDataChanges: data.formDataChanges // 🆕
       });
 
       if (data.improvedContract) {
@@ -355,18 +385,31 @@ export default function OptimizerFinalize() {
         setImprovements("");
         setShowImprovementSection(false);
 
-        // 2. Alte Preview-URL freigeben
+        // 🆕 2. Deckblatt-Änderungen verarbeiten (falls vorhanden)
+        let updatedFormData = { ...formData };
+        if (data.formDataChanges) {
+          updatedFormData = { ...formData, ...data.formDataChanges };
+          setFormData(updatedFormData);
+          console.log('🎯 Deckblatt-Änderungen angewendet:', data.formDataChanges);
+
+          // Auch Titel aktualisieren wenn geändert
+          if (data.formDataChanges.title) {
+            setContractTitle(data.formDataChanges.title);
+          }
+        }
+
+        // 3. Alte Preview-URL freigeben
         if (pdfPreviewUrl) {
           window.URL.revokeObjectURL(pdfPreviewUrl);
           setPdfPreviewUrl(null);
         }
 
-        // 3. WICHTIG: Vertrag in DB speichern UND PDF direkt mit dem neuen Text generieren
+        // 4. WICHTIG: Vertrag in DB speichern UND PDF direkt mit dem neuen Text generieren
         //    (Nicht refreshPdfPreview() aufrufen, da der State noch nicht aktualisiert ist!)
         setIsGeneratingPreview(true);
 
         try {
-          // Erst den neuen Text in der Datenbank speichern
+          // Erst den neuen Text + FormData in der Datenbank speichern
           await fetch(`${API_URL}/api/contracts/${contractId}`, {
             method: "PUT",
             headers: {
@@ -376,9 +419,12 @@ export default function OptimizerFinalize() {
             body: JSON.stringify({
               content: newContractText, // NEUER Text direkt verwenden!
               designVariant: selectedDesign,
+              formData: updatedFormData, // 🆕 Deckblatt-Daten mit speichern!
+              // Auch Name/Titel aktualisieren wenn geändert
+              ...(data.formDataChanges?.title && { name: data.formDataChanges.title }),
             }),
           });
-          console.log('💾 Neuer Vertragstext gespeichert');
+          console.log('💾 Neuer Vertragstext + FormData gespeichert');
 
           // Dann PDF mit dem neuen Text generieren
           const pdfResponse = await fetch(
@@ -397,7 +443,7 @@ export default function OptimizerFinalize() {
             const pdfBlob = await pdfResponse.blob();
             const url = window.URL.createObjectURL(pdfBlob);
             setPdfPreviewUrl(url);
-            console.log('✅ PDF-Vorschau mit verbessertem Text erstellt');
+            console.log('✅ PDF-Vorschau mit verbessertem Text + Deckblatt erstellt');
           }
         } catch (pdfErr) {
           console.error("Fehler bei PDF nach Verbesserung:", pdfErr);
@@ -411,7 +457,7 @@ export default function OptimizerFinalize() {
     } finally {
       setIsImproving(false);
     }
-  }, [contractId, contractText, improvements, pdfPreviewUrl, isImproving, selectedDesign]);
+  }, [contractId, contractText, improvements, pdfPreviewUrl, isImproving, selectedDesign, formData]);
 
   // 📥 PDF Download
   const handleDownload = useCallback(async () => {
