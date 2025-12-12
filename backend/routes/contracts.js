@@ -3985,9 +3985,41 @@ router.post('/:id/pdf-combined', verifyToken, async (req, res) => {
     const finalDesign = contract.designVariant || designVariant;
     const customDesign = req.body.customDesign || contract.customDesign || null;
 
-    // Fallback für content
+    // 🔧 FIX: Für optimierte Verträge den Text aus formData.optimizations generieren
+    // (gleiche Logik wie in pdf-v2!)
     let contractText = contract.content;
-    if (!contractText || contractText.length < 100) {
+    const hasOptimizations = contract.formData?.optimizations && contract.formData.optimizations.length > 0;
+
+    if (hasOptimizations) {
+      console.log('🎯 [Combined] Optimierter Vertrag erkannt - generiere Text aus Optimierungen...');
+      const optimizations = contract.formData.optimizations;
+
+      // Strukturierten Vertragstext aus den Optimierungen aufbauen
+      let generatedText = 'PRÄAMBEL\n\n';
+      generatedText += 'Dieser Vertrag wurde professionell optimiert und enthält die folgenden rechtssicheren Klauseln:\n\n';
+
+      // Paragraphen aus Optimierungen generieren
+      optimizations.forEach((opt, index) => {
+        const paragraphNum = index + 1;
+        const improvedText = opt.improved || '';
+        const lines = improvedText.split('\n').filter(line => line.trim());
+        const title = lines[0] || `Klausel ${paragraphNum}`;
+        const content = lines.slice(1).join('\n') || improvedText;
+
+        generatedText += `§ ${paragraphNum} ${title.toUpperCase()}\n\n`;
+        generatedText += content + '\n\n';
+      });
+
+      // Schlussbestimmungen hinzufügen
+      generatedText += `§ ${optimizations.length + 1} SCHLUSSBESTIMMUNGEN\n\n`;
+      generatedText += '(1) Änderungen und Ergänzungen dieses Vertrages bedürfen der Schriftform.\n\n';
+      generatedText += '(2) Sollten einzelne Bestimmungen unwirksam sein, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt.\n\n';
+      generatedText += '(3) Es gilt deutsches Recht.\n\n';
+
+      contractText = generatedText;
+      console.log('📝 [Combined] Generierter Text aus Optimierungen:', contractText.length, 'Zeichen');
+    } else if (!contractText || contractText.length < 100) {
+      // Fallback für content
       if (contract.contractHTML && contract.contractHTML.length > 100) {
         contractText = contract.contractHTML
           .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
