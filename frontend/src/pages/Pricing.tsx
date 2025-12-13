@@ -4,7 +4,6 @@ import { Check, X, Zap, Star, Shield, Clock, ChevronDown, TrendingUp, Users, Cal
 import { useNavigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import Footer from "../components/Footer";
-import Aurora from "../components/Aurora";
 import styles from "../styles/Pricing.module.css";
 import "../styles/landing.css";
 
@@ -556,17 +555,8 @@ export default function Pricing() {
           </div>
         </section>
 
-        {/* FINAL CTA SECTION - Exakt wie HomeRedesign */}
+        {/* FINAL CTA SECTION */}
         <section className="final-cta-section">
-          {/* Aurora WebGL Background */}
-          <div className="final-cta-aurora-bg">
-            <Aurora
-              colorStops={["#0066FF", "#3399FF", "#0052CC"]}
-              amplitude={1.0}
-              blend={0.5}
-              speed={0.4}
-            />
-          </div>
           <div className="final-cta-content">
             {/* Social Proof with Avatar Stack */}
             <div className="final-cta-social-proof">

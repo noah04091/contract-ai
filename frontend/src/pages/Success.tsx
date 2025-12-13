@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { Helmet } from "react-helmet-async";
 import styles from "../styles/Success.module.css";
 import { fetchUserData } from '../utils/fetchUserData';
-import Galaxy from '../components/Galaxy';
 
 const Success: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -100,20 +99,6 @@ const Success: React.FC = () => {
       </Helmet>
       
       <div className={styles.successContainer}>
-        {/* Galaxy Background */}
-        <div className={styles.galaxyBackground}>
-          <Galaxy
-            density={1.5}
-            glowIntensity={0.5}
-            saturation={0.8}
-            hueShift={240}
-            speed={0.5}
-            mouseInteraction={false}
-            mouseRepulsion={false}
-            transparent={false}
-          />
-        </div>
-
         <div className={styles.successCard}>
           <div className={styles.successIconContainer}>
             <div className={styles.successIcon}>✓</div>

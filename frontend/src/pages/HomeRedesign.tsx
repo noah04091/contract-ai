@@ -4,7 +4,6 @@ import { Helmet } from "react-helmet-async";
 import { useAuth } from "../hooks/useAuth";;
 import HomePricingCards from "../components/HomePricingCards";
 import AutoPlayVideo from "../components/AutoPlayVideo";
-import Aurora from "../components/Aurora";
 import "../styles/landing.css";
 
 // Importiere Bilder
@@ -1780,17 +1779,8 @@ const HomeRedesign = () => {
           </div>
         </section>
 
-        {/* CTA Section - Premium Redesign with Aurora Background */}
+        {/* CTA Section - Premium Redesign */}
         <section className="final-cta-section" ref={(el) => registerSection('cta', el)}>
-          {/* Aurora WebGL Background */}
-          <div className="final-cta-aurora-bg">
-            <Aurora
-              colorStops={["#0066FF", "#3399FF", "#0052CC"]}
-              amplitude={1.0}
-              blend={0.5}
-              speed={0.4}
-            />
-          </div>
           <div className="final-cta-content reveal-text">
             {/* Social Proof with Avatar Stack */}
             <div className="final-cta-social-proof">
