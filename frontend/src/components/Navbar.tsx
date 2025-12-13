@@ -263,6 +263,12 @@ export default function Navbar() {
                       <span className={styles.navLinkText}>Legal Pulse</span>
                     </Link>
                   </motion.div>
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <Link to="/legal-lens" className={`${styles.navLink} ${location.pathname.startsWith("/legal-lens") ? styles.activeNavLink : ""}`}>
+                      <span className={styles.navLinkIcon}>🔍</span>
+                      <span className={styles.navLinkText}>Legal Lens</span>
+                    </Link>
+                  </motion.div>
                 </motion.div>
               </div>
             )}
@@ -862,10 +868,16 @@ export default function Navbar() {
                       <span>Preise</span>
                     </Link>
                   ) : (
-                    <Link to="/legalpulse" className={`${styles.mobileNavLink} ${location.pathname === "/legalpulse" ? styles.activeMobileNavLink : ""}`}>
-                      <span className={styles.mobileNavIcon}>⚖️</span>
-                      <span>Legal Pulse</span>
-                    </Link>
+                    <>
+                      <Link to="/legalpulse" className={`${styles.mobileNavLink} ${location.pathname === "/legalpulse" ? styles.activeMobileNavLink : ""}`}>
+                        <span className={styles.mobileNavIcon}>⚖️</span>
+                        <span>Legal Pulse</span>
+                      </Link>
+                      <Link to="/legal-lens" className={`${styles.mobileNavLink} ${location.pathname.startsWith("/legal-lens") ? styles.activeMobileNavLink : ""}`}>
+                        <span className={styles.mobileNavIcon}>🔍</span>
+                        <span>Legal Lens</span>
+                      </Link>
+                    </>
                   )}
                   {user && (
                     <>
@@ -1174,6 +1186,12 @@ export default function Navbar() {
                       <Link to="/legalpulse" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
                         <span className={styles.sidebarIcon}>⚖️</span>
                         Legal Pulse
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/legal-lens" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
+                        <span className={styles.sidebarIcon}>🔍</span>
+                        Legal Lens
                       </Link>
                     </li>
                     <li>

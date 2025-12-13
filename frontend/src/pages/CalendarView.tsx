@@ -1,6 +1,6 @@
 // src/pages/CalendarView.tsx
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
@@ -1449,6 +1449,7 @@ const getEventTypeIcon = (type: string) => {
 
 export default function CalendarPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<CalendarEvent[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -1590,6 +1591,48 @@ export default function CalendarPage() {
     fetchEvents();
     fetchContracts();
   }, [fetchEvents, fetchContracts]);
+
+  // 📅 URL-Parameter verarbeiten (für Deep-Links von ImportantDatesSection)
+  useEffect(() => {
+    const highlightDate = searchParams.get('highlight');
+    const yearParam = searchParams.get('year');
+    const monthParam = searchParams.get('month');
+
+    if (highlightDate) {
+      // Parse das Datum und setze den Kalender darauf
+      const targetDate = new Date(highlightDate);
+      if (!isNaN(targetDate.getTime())) {
+        console.log('📅 Navigiere zum Datum:', targetDate);
+        setSelectedDate(targetDate);
+
+        // Warte kurz bis Events geladen sind, dann suche nach dem Event
+        setTimeout(() => {
+          const dateString = highlightDate.split('T')[0];
+          const matchingEvents = events.filter(e =>
+            e.date && e.date.split('T')[0] === dateString
+          );
+
+          if (matchingEvents.length > 0) {
+            // Zeige das Event-Modal
+            if (matchingEvents.length === 1) {
+              setSelectedEvent(matchingEvents[0]);
+            } else {
+              // Mehrere Events an diesem Tag - zeige Day Events Modal
+              setDayEvents(matchingEvents);
+              setCurrentEventIndex(0);
+              setShowDayEventsModal(true);
+            }
+          }
+        }, 500);
+      }
+    } else if (yearParam && monthParam) {
+      // Navigiere nur zu Jahr/Monat ohne spezifisches Datum
+      const targetDate = new Date(parseInt(yearParam), parseInt(monthParam), 1);
+      if (!isNaN(targetDate.getTime())) {
+        setSelectedDate(targetDate);
+      }
+    }
+  }, [searchParams, events]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -2224,6 +2267,7 @@ export default function CalendarPage() {
                 <Calendar
                   onChange={handleDateClick}
                   value={selectedDate || new Date()}
+                  activeStartDate={selectedDate || undefined}
                   tileClassName={tileClassName}
                   tileContent={tileContent}
                   view={view}

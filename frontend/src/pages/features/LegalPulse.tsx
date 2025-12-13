@@ -52,7 +52,8 @@ const LegalPulse: React.FC = () => {
 
   return (
     <>
-      <div className={styles.featureContainer}>
+      <div className={styles.pageBackground}>
+        <div className={styles.featureContainer}>
         
         {/* HERO */}
         <section className={styles.heroSection}>
@@ -236,8 +237,8 @@ const LegalPulse: React.FC = () => {
           {/* SECURITY */}
           <section className={styles.statsSection}>
             <div className={styles.contentContainer}>
-              <h2 className={styles.sectionTitle} style={{ color: 'white' }}>Sicherheit & Datenschutz</h2>
-              <p style={{ color: '#ccc', textAlign: 'center', marginBottom: '40px', fontSize: '17px' }}>
+              <h2 className={styles.sectionTitle}>Sicherheit & Datenschutz</h2>
+              <p style={{ color: '#666', textAlign: 'center', marginBottom: '40px', fontSize: '17px' }}>
                 Legal Pulse arbeitet ausschließlich mit öffentlich zugänglichen Rechtsquellen und offiziellen Publikationen. 
                 Ihre Vertragsdaten werden verschlüsselt auf EU-Servern verarbeitet, keine Weitergabe an Dritte.
               </p>
@@ -310,8 +311,9 @@ const LegalPulse: React.FC = () => {
             </div>
           </section>
         </div>
+        </div>
       </div>
-      
+
       <Footer />
     </>
   );

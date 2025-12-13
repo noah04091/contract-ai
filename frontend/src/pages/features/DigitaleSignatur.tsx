@@ -68,7 +68,8 @@ const DigitaleSignatur: React.FC = () => {
         </script>
       </Helmet>
 
-      <div className={styles.featureContainer}>
+      <div className={styles.pageBackground}>
+        <div className={styles.featureContainer}>
 
         {/* HERO */}
         <section className={styles.heroSection}>
@@ -268,8 +269,8 @@ const DigitaleSignatur: React.FC = () => {
           {/* SECURITY */}
           <section className={styles.statsSection}>
             <div className={styles.contentContainer}>
-              <h2 className={styles.sectionTitle} style={{ color: 'white' }}>Sicherheit & Rechtssicherheit</h2>
-              <p style={{ color: '#ccc', textAlign: 'center', marginBottom: '40px', fontSize: '17px' }}>
+              <h2 className={styles.sectionTitle}>Sicherheit & Rechtssicherheit</h2>
+              <p style={{ color: '#666', textAlign: 'center', marginBottom: '40px', fontSize: '17px' }}>
                 Digitale Signaturen mit Contract AI entsprechen der eIDAS-Verordnung und sind rechtlich bindend.
                 Jeder Signiervorgang wird mit vollständigem Audit Trail dokumentiert – beweiskräftig vor Gericht.
               </p>
@@ -341,6 +342,7 @@ const DigitaleSignatur: React.FC = () => {
               </div>
             </div>
           </section>
+        </div>
         </div>
       </div>
 

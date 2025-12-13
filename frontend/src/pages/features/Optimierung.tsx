@@ -67,8 +67,9 @@ const Optimierung: React.FC = () => {
           {JSON.stringify(faqSchema)}
         </script>
       </Helmet>
-      
-      <div className={styles.featureContainer}>
+
+      <div className={styles.pageBackground}>
+        <div className={styles.featureContainer}>
         
         {/* HERO */}
         <section className={styles.heroSection}>
@@ -269,8 +270,8 @@ const Optimierung: React.FC = () => {
           {/* SECURITY */}
           <section className={styles.statsSection}>
             <div className={styles.contentContainer}>
-              <h2 className={styles.sectionTitle} style={{ color: 'white' }}>Sicherheit & Datenschutz</h2>
-              <p style={{ color: '#ccc', textAlign: 'center', marginBottom: '40px', fontSize: '17px' }}>
+              <h2 className={styles.sectionTitle}>Sicherheit & Datenschutz</h2>
+              <p style={{ color: '#666', textAlign: 'center', marginBottom: '40px', fontSize: '17px' }}>
                 Ihre Verträge bleiben Ihre Daten. Verschlüsselung bei Übertragung und Speicherung, Verarbeitung ausschließlich auf EU-Servern in Frankfurt. 
                 Löschung auf Wunsch jederzeit möglich. Keine Weitergabe an Dritte, nur zweckgebundene KI-Analyse zur Optimierung.
               </p>
@@ -343,8 +344,9 @@ const Optimierung: React.FC = () => {
             </div>
           </section>
         </div>
+        </div>
       </div>
-      
+
       <Footer />
     </>
   );

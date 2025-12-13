@@ -1023,6 +1023,15 @@ const connectDB = async () => {
       console.error("❌ Fehler bei Legal Pulse Notifications:", err);
     }
 
+    // 🔍 LEGAL LENS - Interaktive Vertragsanalyse
+    try {
+      const legalLensRoutes = require("./routes/legalLens");
+      app.use("/api/legal-lens", verifyToken, legalLensRoutes);
+      console.log("✅ Legal Lens API geladen unter /api/legal-lens");
+    } catch (err) {
+      console.error("❌ Fehler bei Legal Lens API:", err);
+    }
+
     // 💰 COST TRACKING API (OpenAI Usage & Budget Monitoring)
     try {
       const costTrackingRoutes = require("./routes/costTracking");

@@ -51,6 +51,7 @@ import ContractHealthDashboard from "../components/ContractHealthDashboard";
 import SimpleExplanationPopup from "../components/SimpleExplanationPopup";
 import AnalysisProgressComponent from "../components/AnalysisProgress";
 import PDFDocumentViewer from "../components/PDFDocumentViewer";
+import { ResultsDashboard } from "../components/optimizer";
 
 // Types für revolutionäre Features
 import {
@@ -740,6 +741,7 @@ export default function Optimizer() {
   const [showAdvancedView, setShowAdvancedView] = useState(false);
   const [showStatistics, setShowStatistics] = useState(true);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showSuccessCelebration, setShowSuccessCelebration] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [selectedOptimizations, setSelectedOptimizations] = useState<Set<string>>(new Set());
 
@@ -777,6 +779,9 @@ export default function Optimizer() {
   const [selectedDesignVariant, setSelectedDesignVariant] = useState<string>('executive');
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
+  // 🚀 NEW: Modern Dashboard Toggle (Enterprise Design v2.0 - jetzt Standard)
+  const [useModernDashboard] = useState<boolean>(true);
+
   // 🎨 Design-Optionen (Top 5 relevanteste Designs)
   const designOptions = [
     { id: 'executive', name: 'Executive', color: '#0B1324', desc: 'Klassisch & Seriös' },
@@ -807,6 +812,52 @@ export default function Optimizer() {
     };
     fetchPremiumStatus();
   }, []);
+
+  // 💾 AUTO-SAVE: Speichere Optimierungen in localStorage
+  useEffect(() => {
+    if (optimizations.length > 0 && contractScore) {
+      const saveData = {
+        optimizations,
+        contractScore,
+        fileName: file?.name || preloadedContractName || 'Vertrag',
+        savedAt: new Date().toISOString()
+      };
+      localStorage.setItem('optimizer_autosave', JSON.stringify(saveData));
+      console.log('💾 Auto-Save: Optimierungen gespeichert');
+    }
+  }, [optimizations, contractScore, file?.name, preloadedContractName]);
+
+  // 💾 AUTO-RESTORE: Beim Laden prüfen, ob gespeicherte Daten vorhanden sind
+  useEffect(() => {
+    const saved = localStorage.getItem('optimizer_autosave');
+    if (saved && optimizations.length === 0 && !file) {
+      try {
+        const data = JSON.parse(saved);
+        const savedTime = new Date(data.savedAt);
+        const now = new Date();
+        const hoursSinceSave = (now.getTime() - savedTime.getTime()) / (1000 * 60 * 60);
+
+        // Nur wiederherstellen, wenn < 24 Stunden alt
+        if (hoursSinceSave < 24 && data.optimizations?.length > 0) {
+          console.log('💾 Auto-Restore: Gefundene Daten von', data.savedAt);
+          setToast({
+            message: `Letzte Sitzung wiederhergestellt (${data.optimizations.length} Optimierungen)`,
+            type: 'success'
+          });
+          setOptimizations(data.optimizations);
+          setContractScore(data.contractScore);
+          setPreloadedContractName(data.fileName);
+          setTimeout(() => setToast(null), 4000);
+        } else if (hoursSinceSave >= 24) {
+          // Alte Daten löschen
+          localStorage.removeItem('optimizer_autosave');
+        }
+      } catch (e) {
+        console.error('💾 Auto-Restore fehlgeschlagen:', e);
+        localStorage.removeItem('optimizer_autosave');
+      }
+    }
+  }, []); // Nur beim ersten Laden
 
   // 🆕 NEW: Handle incoming state from ContractAnalysis
   useEffect(() => {
@@ -1320,6 +1371,12 @@ export default function Optimizer() {
         setOptimizations(parsedOptimizations);
         setContractScore(calculatedScore);
 
+        // Show success celebration
+        setShowSuccessCelebration(true);
+        setTimeout(() => {
+          setShowSuccessCelebration(false);
+        }, 2500); // Show for 2.5 seconds
+
         showToast(`✅ ${parsedOptimizations.length} Optimierungen gefunden!`, 'success');
       }
     } catch (error) {
@@ -1654,6 +1711,8 @@ export default function Optimizer() {
     setAnalysisData(null);
     setOptimizationResult(null);
     setSelectedOptimizations(new Set());
+    // 💾 Auto-Save leeren bei Reset
+    localStorage.removeItem('optimizer_autosave');
   }, []);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
@@ -1670,21 +1729,46 @@ export default function Optimizer() {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files[0] && isPremium) {
       const droppedFile = e.dataTransfer.files[0];
-      if (droppedFile.type === "application/pdf") {
-        setFile(droppedFile);
-        setError(null);
-      } else {
-        setError("Nur PDF-Dateien werden unterstützt");
+      const maxSize = 10 * 1024 * 1024; // 10 MB
+
+      if (droppedFile.type !== "application/pdf") {
+        setError("Nur PDF-Dateien werden unterstützt. Bitte wähle eine .pdf Datei.");
+        setFile(null);
+        return;
       }
+
+      if (droppedFile.size > maxSize) {
+        setError(`Die Datei ist zu groß (${(droppedFile.size / 1024 / 1024).toFixed(1)} MB). Maximal 10 MB erlaubt.`);
+        setFile(null);
+        return;
+      }
+
+      setFile(droppedFile);
+      setError(null);
     }
   }, [isPremium]);
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+      const selectedFile = e.target.files[0];
+      const maxSize = 10 * 1024 * 1024; // 10 MB
+
+      if (selectedFile.type !== "application/pdf") {
+        setError("Nur PDF-Dateien werden unterstützt. Bitte wähle eine .pdf Datei.");
+        setFile(null);
+        return;
+      }
+
+      if (selectedFile.size > maxSize) {
+        setError(`Die Datei ist zu groß (${(selectedFile.size / 1024 / 1024).toFixed(1)} MB). Maximal 10 MB erlaubt.`);
+        setFile(null);
+        return;
+      }
+
+      setFile(selectedFile);
       setError(null);
     }
   }, []);
@@ -2145,6 +2229,21 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
             <motion.p className={styles.subtitle}>
               Lade deinen Vertrag hoch und wir machen ihn besser - einfach und automatisch.
             </motion.p>
+
+            {/* Neue Analyse Button - nur sichtbar wenn Ergebnisse vorhanden */}
+            {optimizations.length > 0 && (
+              <motion.button
+                className={styles.newAnalysisBtn}
+                onClick={handleReset}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <RefreshCw size={16} />
+                <span>Neue Analyse starten</span>
+              </motion.button>
+            )}
           </motion.div>
 
           {/* Premium Notice */}
@@ -2379,17 +2478,19 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
             </motion.div>
           )}
 
-          {/* Upload Area */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <motion.div 
-              className={`${styles.uploadArea} ${dragActive ? styles.dragActive : ''} ${!isPremium ? styles.disabled : ''} ${file ? styles.uploadAreaWithFile : ''}`}
+          {/* Upload Area - Enterprise Design v2.0 */}
+          <motion.div
+            className={styles.uploadContainer}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <motion.div
+              className={`${styles.uploadAreaEnhanced} ${dragActive ? styles.dragActive : ''} ${!isPremium ? styles.disabled : ''} ${file ? styles.hasFile : ''} ${error ? styles.hasError : ''}`}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
               onDrop={handleDrop}
-              onClick={isPremium ? () => fileInputRef.current?.click() : undefined}
-              whileHover={isPremium ? { scale: 1.01 } : undefined}
-              whileTap={isPremium ? { scale: 0.99 } : undefined}
+              onClick={isPremium && !file ? () => fileInputRef.current?.click() : undefined}
             >
               <input
                 type="file"
@@ -2399,74 +2500,123 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                 disabled={!isPremium}
                 onChange={handleFileChange}
               />
-              
+
               {file ? (
-                <motion.div 
-                  className={styles.fileInfo}
-                  initial={{ opacity: 0, scale: 0.9 }}
+                <motion.div
+                  className={styles.fileInfoEnhanced}
+                  initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ type: "spring", stiffness: 300 }}
                 >
-                  <div className={styles.fileIcon}>
-                    <FileText size={32} />
+                  <div className={styles.fileIconEnhanced}>
+                    <FileText />
                   </div>
-                  <div className={styles.fileDetails}>
-                    <div className={styles.fileName}>{file.name}</div>
-                    <div className={styles.fileSize}>
-                      <CheckCircle2 size={16} style={{ color: '#34C759' }} />
-                      {(file.size / 1024 / 1024).toFixed(2)} MB • Bereit für Analyse
+                  <div className={styles.fileDetailsEnhanced}>
+                    <div className={styles.fileNameEnhanced}>
+                      {file.name}
+                      <span className={styles.successBadge}>
+                        <CheckCircle size={10} />
+                        Bereit
+                      </span>
                     </div>
+                    <div className={styles.fileMetaEnhanced}>
+                      <span>{(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                      <span>•</span>
+                      <span>PDF-Dokument</span>
+                    </div>
+                  </div>
+                  <div className={styles.fileActionsEnhanced}>
+                    <button
+                      className={`${styles.fileActionBtn} ${styles.danger}`}
+                      onClick={(e) => { e.stopPropagation(); handleReset(); }}
+                      title="Datei entfernen"
+                    >
+                      <RefreshCw size={16} />
+                    </button>
                   </div>
                 </motion.div>
               ) : (
-                <motion.div className={styles.uploadPrompt}>
-                  <motion.div 
-                    className={styles.uploadIcon}
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                <motion.div className={styles.uploadPromptEnhanced}>
+                  <motion.div
+                    className={styles.uploadIconEnhanced}
+                    animate={{ y: [0, -8, 0] }}
+                    transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
                   >
-                    <Upload size={48} />
+                    <Upload />
                   </motion.div>
-                  <h3>Vertrag hochladen</h3>
-                  <p>PDF hierher ziehen oder klicken</p>
+                  <h3 className={styles.uploadTitleEnhanced}>Vertrag hochladen</h3>
+                  <p className={styles.uploadSubtitleEnhanced}>
+                    Ziehe deine PDF-Datei hierher oder klicke zum Auswählen
+                  </p>
+                  <div className={styles.uploadHint}>
+                    <Lock size={14} />
+                    <span>Sichere Übertragung • Max. 10 MB</span>
+                  </div>
                 </motion.div>
               )}
             </motion.div>
 
-            {/* Action Buttons */}
-            <motion.div className={styles.actionButtons}>
-              <motion.button 
-                onClick={handleUpload}
-                disabled={!file || loading || !isPremium}
-                className={styles.primaryButton}
-                whileHover={file && isPremium && !loading ? { scale: 1.02 } : undefined}
-                whileTap={file && isPremium && !loading ? { scale: 0.98 } : undefined}
-              >
-                {loading ? (
-                  <>
-                    <div className={styles.spinner}></div>
-                    <span>Analyse läuft...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles size={20} />
-                    <span>Vertrag analysieren</span>
-                  </>
-                )}
-              </motion.button>
-              
-              {file && (
-                <motion.button 
-                  onClick={handleReset} 
-                  className={styles.secondaryButton}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+            {/* Validation Message */}
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  className={`${styles.validationMessage} ${styles.error}`}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
                 >
-                  <RefreshCw size={18} />
-                  <span>Zurücksetzen</span>
-                </motion.button>
+                  <AlertCircle size={16} />
+                  <span>{error}</span>
+                </motion.div>
               )}
-            </motion.div>
+            </AnimatePresence>
+
+            {/* File Size Indicator */}
+            {file && (
+              <motion.div
+                className={`${styles.fileSizeIndicator} ${
+                  file.size > 8 * 1024 * 1024 ? styles.warning : ''
+                } ${file.size > 10 * 1024 * 1024 ? styles.error : ''}`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                <span>{(file.size / 1024 / 1024).toFixed(2)} / 10 MB</span>
+                <div className={styles.fileSizeBar}>
+                  <div
+                    className={`${styles.fileSizeBarFill} ${
+                      file.size > 8 * 1024 * 1024 ? styles.warning : ''
+                    } ${file.size > 10 * 1024 * 1024 ? styles.error : ''}`}
+                    style={{ width: `${Math.min((file.size / (10 * 1024 * 1024)) * 100, 100)}%` }}
+                  />
+                </div>
+              </motion.div>
+            )}
+
+            {/* Action Buttons - Enhanced - NUR anzeigen wenn noch keine Ergebnisse */}
+            {optimizations.length === 0 && (
+              <motion.div className={styles.actionButtonsEnhanced}>
+                <motion.button
+                  onClick={handleUpload}
+                  disabled={!file || loading || !isPremium}
+                  className={`${styles.analyzeBtn} ${loading ? styles.loading : ''}`}
+                  whileHover={file && isPremium && !loading ? { scale: 1.02 } : undefined}
+                  whileTap={file && isPremium && !loading ? { scale: 0.98 } : undefined}
+                >
+                  {loading ? (
+                    <>
+                      <div className={styles.spinnerEnhanced}></div>
+                      <span>Analysiere...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={20} />
+                      <span>Jetzt analysieren</span>
+                    </>
+                  )}
+                </motion.button>
+              </motion.div>
+            )}
 
             {/* 🆕 CTA: View Optimized Contracts */}
             {!file && !isAnalyzing && optimizations.length === 0 && isPremium && (
@@ -2520,36 +2670,77 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
             )}
           </AnimatePresence>
 
-          {/* Toast - Enhanced Apple Style */}
+          {/* Success Celebration - Enterprise v2.0 */}
+          <AnimatePresence>
+            {showSuccessCelebration && (
+              <motion.div
+                className={styles.successCelebration}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className={styles.successContent}>
+                  <div className={styles.successIconWrapper}>
+                    <div className={styles.successCircle}>
+                      <CheckCircle size={56} />
+                    </div>
+                    <div className={styles.successRing} />
+                    <div className={styles.successParticles}>
+                      {[...Array(8)].map((_, i) => (
+                        <div key={i} className={styles.successParticle} />
+                      ))}
+                    </div>
+                  </div>
+                  <h2 className={styles.successTitle}>Analyse abgeschlossen!</h2>
+                  <p className={styles.successSubtitle}>
+                    {optimizations.length} Optimierungsmöglichkeiten gefunden
+                  </p>
+                  <div className={styles.successStats}>
+                    <div className={styles.successStat}>
+                      <div className={styles.successStatValue}>{contractScore?.overall || 0}</div>
+                      <div className={styles.successStatLabel}>Gesamt-Score</div>
+                    </div>
+                    <div className={styles.successStat}>
+                      <div className={styles.successStatValue}>{optimizations.filter(o => o.priority === 'critical').length}</div>
+                      <div className={styles.successStatLabel}>Kritische Punkte</div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Toast - Bottom Right Corner */}
           <AnimatePresence>
             {toast && (
               <motion.div
-                initial={{ opacity: 0, y: 50, scale: 0.9 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -50, scale: 0.9 }}
+                initial={{ opacity: 0, x: 100, scale: 0.9 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                exit={{ opacity: 0, x: 100, scale: 0.9 }}
                 style={{
                   position: 'fixed',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
+                  bottom: '24px',
+                  right: '24px',
                   zIndex: 1000000,
-                  background: toast.type === 'success' 
+                  background: toast.type === 'success'
                     ? 'linear-gradient(135deg, rgba(52, 199, 89, 0.95) 0%, rgba(46, 177, 80, 0.95) 100%)'
                     : toast.type === 'error'
                     ? 'linear-gradient(135deg, rgba(255, 59, 48, 0.95) 0%, rgba(229, 48, 42, 0.95) 100%)'
                     : 'linear-gradient(135deg, rgba(0, 122, 255, 0.95) 0%, rgba(0, 81, 213, 0.95) 100%)',
                   color: 'white',
-                  padding: '1.25rem 2.5rem',
-                  borderRadius: '20px',
-                  boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
-                  fontSize: '1rem',
+                  padding: '1rem 1.5rem',
+                  borderRadius: '14px',
+                  boxShadow: '0 10px 40px rgba(0, 0, 0, 0.25)',
+                  fontSize: '0.9375rem',
                   fontWeight: 600,
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.75rem',
+                  gap: '0.5rem',
                   backdropFilter: 'blur(20px)',
                   WebkitBackdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)'
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  maxWidth: '400px'
                 }}
               >
                 {toast.type === 'success' ? '✅' : toast.type === 'error' ? '❌' : 'ℹ️'} {toast.message}
@@ -2620,17 +2811,35 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                   </motion.div>
                 )}
 
-                {/* Contract Health Dashboard */}
-                {contractScore && (
-                  <ContractHealthDashboard 
-                    score={contractScore}
-                    showSimulation={false}
-                    newScore={contractScore.overall}
+                {/* 🚀 NEW: Modern Results Dashboard v2.0 */}
+                {useModernDashboard && contractScore && optimizations.length > 0 ? (
+                  <ResultsDashboard
+                    optimizations={optimizations}
+                    contractScore={contractScore}
+                    fileName={file?.name || preloadedContractName || 'Vertrag'}
+                    onGenerateContract={openGenerateModal}
+                    onExplainClick={(opt) => setExplanationPopup({ show: true, optimization: opt })}
+                    onShowInContract={(text) => setHighlightedText(text)}
+                    onGeneratePitch={(style) => generatePitch(style)}
+                    onExport={(format) => handleExport(format)}
+                    isGenerating={isGeneratingContract}
+                    isPremium={isPremium}
                   />
+                ) : (
+                  <>
+                    {/* Contract Health Dashboard (Legacy) */}
+                    {contractScore && (
+                      <ContractHealthDashboard
+                        score={contractScore}
+                        showSimulation={false}
+                        newScore={contractScore.overall}
+                      />
+                    )}
+                  </>
                 )}
 
-                {/* Statistics Dashboard - Premium Design */}
-                {statistics && showStatistics && (
+                {/* Statistics Dashboard - Premium Design (Legacy - nur wenn nicht Modern Dashboard) */}
+                {!useModernDashboard && statistics && showStatistics && (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -2735,7 +2944,8 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                   </motion.div>
                 )}
 
-                {/* MAIN ACTION - Premium CTA */}
+                {/* MAIN ACTION - Premium CTA (Legacy) */}
+                {!useModernDashboard && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -2842,8 +3052,10 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                     </p>
                   )}
                 </motion.div>
+                )}
 
-                {/* Category Filter - Premium Design */}
+                {/* Category Filter - Premium Design (Legacy) */}
+                {!useModernDashboard && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -2927,8 +3139,10 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                     })}
                   </div>
                 </motion.div>
+                )}
 
-                {/* Control Panel - Premium Design */}
+                {/* Control Panel - Premium Design (Legacy) */}
+                {!useModernDashboard && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -3053,8 +3267,9 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                     </motion.button>
                   </div>
                 </motion.div>
+                )}
 
-                {/* Portal Dropdowns */}
+                {/* Portal Dropdowns (Legacy - werden auch im Modern Mode benötigt für Export/Pitch) */}
                 <DropdownPortal isOpen={showPitchMenu} targetRef={pitchButtonRef}>
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
@@ -3195,7 +3410,8 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                   </motion.div>
                 </DropdownPortal>
 
-                {/* Optimization Cards - Premium Design */}
+                {/* Optimization Cards - Premium Design (Legacy) */}
+                {!useModernDashboard && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <h3 style={{
                     fontSize: '19px',
@@ -3931,6 +4147,7 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                     </motion.div>
                   ))}
                 </div>
+                )}
 
               </motion.div>
             )}

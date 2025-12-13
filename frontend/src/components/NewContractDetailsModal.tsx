@@ -6,6 +6,7 @@ import SmartContractInfo from './SmartContractInfo';
 import ContractShareModal from './ContractShareModal';
 import ContractEditModal from './ContractEditModal';
 import SignatureModal from './SignatureModal';
+import ImportantDatesSection from './ImportantDatesSection';
 
 // Signature-related interfaces
 interface Signer {
@@ -152,6 +153,28 @@ interface Contract {
   paymentStatus?: 'paid' | 'unpaid';
   paymentAmount?: number;
   paymentDate?: string;
+  // 📅 KI-extrahierte Eckdaten & Termine
+  gekuendigtZum?: string;
+  documentCategory?: 'cancellation_confirmation' | 'invoice' | 'active_contract';
+  contractType?: string;
+  provider?: {
+    displayName?: string;
+    name?: string;
+    category?: string;
+  };
+  quickFacts?: Array<{
+    label: string;
+    value: string;
+    rating?: 'good' | 'neutral' | 'bad';
+  }>;
+  importantDates?: Array<{
+    type: string;
+    date: string;
+    label: string;
+    description?: string;
+    calculated?: boolean;
+    source?: string;
+  }>;
 }
 
 interface NewContractDetailsModalProps {
@@ -484,6 +507,27 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     URL.revokeObjectURL(url);
   };
 
+  // Berechne Restlaufzeit
+  const calculateRemainingTime = (endDate: string): string => {
+    const end = new Date(endDate);
+    const today = new Date();
+    const diffTime = end.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) return 'Abgelaufen';
+    if (diffDays === 0) return 'Heute';
+    if (diffDays === 1) return '1 Tag';
+    if (diffDays < 30) return `${diffDays} Tage`;
+    if (diffDays < 365) {
+      const months = Math.ceil(diffDays / 30);
+      return `${months} ${months === 1 ? 'Monat' : 'Monate'}`;
+    }
+    const years = Math.floor(diffDays / 365);
+    const remainingMonths = Math.ceil((diffDays % 365) / 30);
+    if (remainingMonths === 0) return `${years} ${years === 1 ? 'Jahr' : 'Jahre'}`;
+    return `${years} ${years === 1 ? 'Jahr' : 'Jahre'}, ${remainingMonths} ${remainingMonths === 1 ? 'Monat' : 'Monate'}`;
+  };
+
   // Render Overview Tab
   const renderOverviewTab = () => (
     <div className={styles.tabContent}>
@@ -498,6 +542,27 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             <span className={styles.label}>Status:</span>
             <span className={styles.value}>{renderStatusBadge()}</span>
           </div>
+          {/* 🆕 Anbieter/Provider */}
+          {(contract.provider?.displayName || contract.provider?.name) && (
+            <div className={styles.detailItem}>
+              <span className={styles.label}>Anbieter:</span>
+              <span className={styles.value}>{contract.provider?.displayName || contract.provider?.name}</span>
+            </div>
+          )}
+          {/* 🆕 Vertragstyp */}
+          {contract.contractType && (
+            <div className={styles.detailItem}>
+              <span className={styles.label}>Vertragstyp:</span>
+              <span className={styles.value} style={{ textTransform: 'capitalize' }}>{contract.contractType}</span>
+            </div>
+          )}
+          {/* 🆕 Gekündigt zum (für Kündigungsbestätigungen) */}
+          {contract.gekuendigtZum && (
+            <div className={styles.detailItem}>
+              <span className={styles.label}>Gekündigt zum:</span>
+              <span className={styles.value} style={{ color: '#dc2626', fontWeight: 600 }}>{formatDate(contract.gekuendigtZum)}</span>
+            </div>
+          )}
           {contract.kuendigung && (
             <div className={styles.detailItem}>
               <span className={styles.label}>Kündigungsfrist:</span>
@@ -516,6 +581,18 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
               <span className={styles.value}>{formatDate(contract.expiryDate)}</span>
             </div>
           )}
+          {/* 🆕 Restlaufzeit */}
+          {(contract.expiryDate || contract.gekuendigtZum) && (
+            <div className={styles.detailItem}>
+              <span className={styles.label}>Restlaufzeit:</span>
+              <span className={styles.value} style={{
+                color: calculateRemainingTime(contract.gekuendigtZum || contract.expiryDate || '') === 'Abgelaufen' ? '#dc2626' : '#059669',
+                fontWeight: 500
+              }}>
+                {calculateRemainingTime(contract.gekuendigtZum || contract.expiryDate || '')}
+              </span>
+            </div>
+          )}
           <div className={styles.detailItem}>
             <span className={styles.label}>Hochgeladen am:</span>
             <span className={styles.value}>{formatDate(contract.uploadDate || contract.createdAt)}</span>
@@ -529,10 +606,40 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         </div>
       </div>
 
+      {/* 📅 Wichtige Termine - KI-extrahierte Datums */}
+      {contract.importantDates && contract.importantDates.length > 0 && (
+        <div className={styles.section}>
+          <ImportantDatesSection
+            importantDates={contract.importantDates}
+            contractName={contract.name}
+          />
+        </div>
+      )}
+
+      {/* 📊 QuickFacts - Dynamische Eckdaten */}
+      {contract.quickFacts && contract.quickFacts.length > 0 && (
+        <div className={styles.section}>
+          <h3>📊 Eckdaten auf einen Blick</h3>
+          <div className={styles.detailsGrid}>
+            {contract.quickFacts.map((fact, index) => (
+              <div key={index} className={styles.detailItem}>
+                <span className={styles.label}>{fact.label}:</span>
+                <span className={styles.value} style={{
+                  color: fact.rating === 'good' ? '#059669' : fact.rating === 'bad' ? '#dc2626' : '#6b7280',
+                  fontWeight: fact.rating ? 500 : 400
+                }}>
+                  {fact.value}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Smart Contract Info (Payment/Cost Tracking) */}
       {(contract.paymentMethod || contract.paymentAmount || contract.paymentStatus) && (
         <div className={styles.section}>
-          <SmartContractInfo contract={contract} />
+          <SmartContractInfo contract={contract as Parameters<typeof SmartContractInfo>[0]['contract']} />
         </div>
       )}
 

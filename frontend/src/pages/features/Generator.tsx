@@ -52,7 +52,8 @@ const Generator: React.FC = () => {
 
   return (
     <>
-      <div className={styles.featureContainer}>
+      <div className={styles.pageBackground}>
+        <div className={styles.featureContainer}>
         
         {/* HERO */}
         <section className={styles.heroSection}>
@@ -244,8 +245,8 @@ const Generator: React.FC = () => {
           {/* SECURITY */}
           <section className={styles.statsSection}>
             <div className={styles.contentContainer}>
-              <h2 className={styles.sectionTitle} style={{ color: 'white' }}>Sicherheit & Rechtssicherheit</h2>
-              <p style={{ color: '#ccc', textAlign: 'center', marginBottom: '40px', fontSize: '17px' }}>
+              <h2 className={styles.sectionTitle}>Sicherheit & Rechtssicherheit</h2>
+              <p style={{ color: '#666', textAlign: 'center', marginBottom: '40px', fontSize: '17px' }}>
                 Alle Klauseln werden von Juristen geprüft und regelmäßig aktualisiert. 
                 Ihre Vertragsdaten sind verschlüsselt und werden ausschließlich auf EU-Servern verarbeitet.
               </p>
@@ -318,8 +319,9 @@ const Generator: React.FC = () => {
             </div>
           </section>
         </div>
+        </div>
       </div>
-      
+
       <Footer />
     </>
   );

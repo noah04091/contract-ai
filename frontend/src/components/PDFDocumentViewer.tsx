@@ -45,17 +45,17 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
     }
   }, [highlightText]);
 
-  // Apply yellow highlighting to text spans in TextLayer (mit Keyword-Support)
+  // Apply yellow highlighting to text spans in TextLayer - PRECISE MATCHING
   useEffect(() => {
-    if (!highlightText || !foundOnPage) return;
+    if (!highlightText) return;
 
-    // Warte bis TextLayer gerendert ist
-    const timeoutId = setTimeout(() => {
+    // Funktion zum Anwenden der Highlights
+    const applyHighlights = () => {
       try {
         const textLayer = document.querySelector('.react-pdf__Page__textContent');
         if (!textLayer) {
           console.log('⚠️ TextLayer nicht gefunden im DOM');
-          return;
+          return false;
         }
 
         // Entferne alte Highlights
@@ -64,37 +64,121 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
 
         // Finde alle spans im TextLayer
         const spans = textLayer.querySelectorAll('span');
+        if (spans.length === 0) {
+          console.log('⚠️ Keine Spans im TextLayer gefunden');
+          return false;
+        }
+
         const searchLower = highlightText.toLowerCase().trim();
 
-        // Extrahiere Keywords für Highlighting
-        const stopwords = ['der', 'die', 'das', 'den', 'dem', 'des', 'ein', 'eine', 'einer', 'eines', 'und', 'oder', 'aber', 'ist', 'wird', 'werden', 'sich', 'am', 'im', 'zum', 'zur', 'bis', 'von', 'mit', 'für', 'als'];
-        const keywords = searchLower
-          .split(/[\s,.:;!?()]+/)
-          .filter(word => word.length > 3 && !stopwords.includes(word));
+        // STRIKTE Stopwords-Liste (inkl. generische Vertragsbezeichnungen)
+        const stopwords = new Set([
+          // Artikel & Pronomen
+          'der', 'die', 'das', 'den', 'dem', 'des', 'ein', 'eine', 'einer', 'eines',
+          'und', 'oder', 'aber', 'wenn', 'dann', 'weil', 'dass', 'daß',
+          // Verben
+          'ist', 'sind', 'war', 'wird', 'werden', 'wurde', 'wurden', 'sein', 'haben', 'hat', 'hatte',
+          'kann', 'können', 'soll', 'sollen', 'muss', 'müssen', 'darf', 'dürfen',
+          // Präpositionen
+          'am', 'im', 'an', 'in', 'um', 'zum', 'zur', 'auf', 'bei', 'nach', 'vor', 'aus',
+          'über', 'unter', 'durch', 'gegen', 'ohne', 'mit', 'für', 'als', 'bis', 'von',
+          // Sonstige
+          'sich', 'nicht', 'auch', 'noch', 'nur', 'schon', 'sehr', 'mehr', 'bereits',
+          'sowie', 'soweit', 'sofern', 'jedoch', 'daher', 'dabei', 'hierzu', 'hierbei',
+          // Generische Vertragsbezeichnungen (NICHT highlighten)
+          'vertrag', 'vertrags', 'verträge', 'kaufvertrag', 'mietvertrag', 'arbeitsvertrag',
+          'dienstvertrag', 'werkvertrag', 'vereinbarung', 'abkommen', 'anlage', 'anlagen',
+          'paragraph', 'paragraf', 'absatz', 'satz', 'ziffer', 'nummer', 'punkt',
+          'artikel', 'seite', 'datum', 'unterschrift', 'parteien', 'partei'
+        ]);
+
+        // Extrahiere NUR signifikante Keywords (Wörter >= 5 Buchstaben)
+        const significantKeywords = searchLower
+          .split(/[\s,.:;!?()\[\]"'„"°§€%\d]+/)
+          .filter(word => word.length >= 5 && !stopwords.has(word))
+          .slice(0, 8); // Maximal 8 Keywords
+
+        console.log(`📋 Signifikante Keywords:`, significantKeywords);
+
+        if (significantKeywords.length === 0) {
+          console.log('ℹ️ Keine signifikanten Keywords - Vertrag wird ohne Highlighting angezeigt');
+          return true; // Trotzdem erfolgreich - zeige PDF ohne Highlighting
+        }
 
         let highlightedCount = 0;
+        const highlightedSpans: Element[] = [];
+
+        // Schritt 1: Sammle alle Span-Texte und ihre Positionen
+        const spanData: { span: Element; text: string; matchScore: number }[] = [];
 
         spans.forEach((span) => {
-          const spanText = span.textContent?.toLowerCase() || '';
+          const spanText = span.textContent?.toLowerCase().trim() || '';
+          if (spanText.length < 3) return; // Ignoriere sehr kurze Spans
 
-          // Highlighte wenn exakter Text oder Keywords gefunden
-          const shouldHighlight = spanText.includes(searchLower) ||
-                                 keywords.some(keyword => spanText.includes(keyword));
+          // Berechne Match-Score: Wie viele Keywords matchen?
+          let matchScore = 0;
+          significantKeywords.forEach(keyword => {
+            if (spanText.includes(keyword)) {
+              matchScore += keyword.length; // Längere Matches zählen mehr
+            }
+          });
 
-          if (shouldHighlight) {
-            span.classList.add('pdf-highlight');
-            highlightedCount++;
+          if (matchScore > 0) {
+            spanData.push({ span, text: spanText, matchScore });
           }
         });
 
-        console.log(`✨ ${highlightedCount} Text-Spans hervorgehoben`);
+        // Sortiere nach Match-Score (beste Matches zuerst)
+        spanData.sort((a, b) => b.matchScore - a.matchScore);
+
+        // Schritt 2: Highlighte nur die besten Matches (max. 15 Spans)
+        const maxHighlights = 15;
+        const minScore = significantKeywords[0]?.length || 5; // Mindestens ein volles Keyword
+
+        spanData.forEach(({ span, matchScore }) => {
+          if (highlightedCount >= maxHighlights) return;
+          if (matchScore < minScore) return; // Nur wenn mindestens ein ganzes Keyword matched
+
+          span.classList.add('pdf-highlight');
+          highlightedSpans.push(span);
+          highlightedCount++;
+        });
+
+        console.log(`✨ ${highlightedCount} präzise Matches hervorgehoben`);
+
+        // Schritt 3: Scrolle zum ersten Highlight
+        if (highlightedSpans.length > 0) {
+          setTimeout(() => {
+            highlightedSpans[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 100);
+        }
+
+        return highlightedCount > 0;
       } catch (error) {
         console.error('❌ Fehler beim Highlighting:', error);
+        return false;
       }
-    }, 500); // 500ms warten
+    };
 
-    return () => clearTimeout(timeoutId);
-  }, [highlightText, foundOnPage]);
+    // Mehrere Versuche mit steigenden Delays
+    const delays = [200, 500, 800, 1200];
+    const timeouts: NodeJS.Timeout[] = [];
+
+    delays.forEach((delay) => {
+      const timeoutId = setTimeout(() => {
+        const success = applyHighlights();
+        if (success) {
+          // Wenn erfolgreich, restliche Timeouts abbrechen
+          timeouts.forEach(t => clearTimeout(t));
+        }
+      }, delay);
+      timeouts.push(timeoutId);
+    });
+
+    return () => {
+      timeouts.forEach(t => clearTimeout(t));
+    };
+  }, [highlightText, foundOnPage, pageNumber]);
 
   const onDocumentLoadSuccess = (pdf: PDFDocumentProxy) => {
     setNumPages(pdf.numPages);
@@ -106,7 +190,7 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
     console.error('❌ PDF Lade-Fehler:', error);
   };
 
-  // 🔍 Fuzzy Search: Suche Text im PDF mit Keyword-Matching
+  // 🔍 Präzise Suche: Suche Text im PDF mit signifikanten Keywords
   const searchAndHighlight = async (searchText: string) => {
     if (!searchText || !pdfDocumentRef.current) {
       console.log('⚠️ Kein PDF oder kein Suchtext');
@@ -121,15 +205,40 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
       const pdf = pdfDocumentRef.current;
       const searchLower = searchText.toLowerCase().trim();
 
-      // Stopwords die ignoriert werden (deutsche Füllwörter)
-      const stopwords = ['der', 'die', 'das', 'den', 'dem', 'des', 'ein', 'eine', 'einer', 'eines', 'und', 'oder', 'aber', 'ist', 'wird', 'werden', 'sich', 'am', 'im', 'zum', 'zur', 'bis', 'von', 'mit', 'für', 'als'];
+      // STRIKTE Stopwords-Liste (gleich wie beim Highlighting)
+      const stopwords = new Set([
+        'der', 'die', 'das', 'den', 'dem', 'des', 'ein', 'eine', 'einer', 'eines',
+        'und', 'oder', 'aber', 'wenn', 'dann', 'weil', 'dass', 'daß',
+        'ist', 'sind', 'war', 'wird', 'werden', 'wurde', 'wurden', 'sein', 'haben', 'hat', 'hatte',
+        'kann', 'können', 'soll', 'sollen', 'muss', 'müssen', 'darf', 'dürfen',
+        'am', 'im', 'an', 'in', 'um', 'zum', 'zur', 'auf', 'bei', 'nach', 'vor', 'aus',
+        'über', 'unter', 'durch', 'gegen', 'ohne', 'mit', 'für', 'als', 'bis', 'von',
+        'sich', 'nicht', 'auch', 'noch', 'nur', 'schon', 'sehr', 'mehr', 'bereits',
+        'sowie', 'soweit', 'sofern', 'jedoch', 'daher', 'dabei', 'hierzu', 'hierbei',
+        'vertrag', 'vertrags', 'verträge', 'kaufvertrag', 'mietvertrag', 'arbeitsvertrag',
+        'vereinbarung', 'anlage', 'anlagen', 'paragraph', 'absatz', 'satz', 'ziffer',
+        'artikel', 'seite', 'datum', 'unterschrift', 'parteien', 'partei'
+      ]);
 
-      // Extrahiere Keywords aus Suchtext (Wörter > 3 Buchstaben, keine Stopwords)
+      // Extrahiere NUR signifikante Keywords (Wörter >= 5 Buchstaben)
       const keywords = searchLower
-        .split(/[\s,.:;!?()]+/)
-        .filter(word => word.length > 3 && !stopwords.includes(word));
+        .split(/[\s,.:;!?()\[\]"'„"°§€%\d]+/)
+        .filter(word => word.length >= 5 && !stopwords.has(word))
+        .slice(0, 8);
 
-      console.log(`📋 Keywords für Suche:`, keywords);
+      console.log(`📋 Signifikante Keywords für Suche:`, keywords);
+
+      // Wenn keine Keywords gefunden, zeige einfach Seite 1
+      if (keywords.length === 0) {
+        console.log('ℹ️ Keine Keywords - zeige Vertrag auf Seite 1');
+        setFoundOnPage(1);
+        setPageNumber(1);
+        setIsSearching(false);
+        if (containerRef.current) {
+          containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        return;
+      }
 
       // Erster Versuch: Exakte Suche
       for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
@@ -191,11 +300,19 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
         return;
       }
 
-      // Nichts gefunden
-      console.log('❌ Text nicht gefunden im PDF (auch nicht mit Fuzzy Search)');
+      // Nichts gefunden - zeige trotzdem Seite 1 für Orientierung
+      console.log('ℹ️ Kein spezifischer Text gefunden - zeige Vertrag auf Seite 1');
+      setFoundOnPage(1);
+      setPageNumber(1);
       setIsSearching(false);
+      if (containerRef.current) {
+        containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     } catch (error) {
       console.error('❌ Fehler beim Suchen:', error);
+      // Bei Fehler trotzdem Seite 1 zeigen
+      setFoundOnPage(1);
+      setPageNumber(1);
       setIsSearching(false);
     }
   };
@@ -530,19 +647,25 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
           100% { transform: rotate(360deg); }
         }
 
-        /* TextLayer: Text unsichtbar machen (react-pdf CSS übernimmt Positionierung) */
+        @keyframes highlightPulse {
+          0%, 100% { box-shadow: 0 0 0 3px rgba(255, 204, 0, 0.6); }
+          50% { box-shadow: 0 0 0 6px rgba(255, 204, 0, 0.3); }
+        }
+
+        /* TextLayer: Text IMMER unsichtbar (Canvas rendert den sichtbaren Text) */
         .react-pdf__Page__textContent span {
           color: transparent !important;
           background: transparent !important;
         }
 
-        /* Text-Highlighting: Gelber Hintergrund mit schwarzem Text */
+        /* Text-Highlighting: NUR gelber Hintergrund, Text bleibt unsichtbar
+           Der Original-Canvas-Text bleibt unverändert sichtbar */
         .react-pdf__Page__textContent span.pdf-highlight {
-          color: #000000 !important; /* NUR gehighlighteter Text ist sichtbar */
-          background-color: #FFEB3B !important;
+          color: transparent !important; /* Text bleibt unsichtbar! */
+          background: rgba(255, 235, 59, 0.5) !important; /* Halbtransparentes Gelb */
           border-radius: 2px !important;
-          padding: 2px 0 !important;
-          box-shadow: 0 0 0 2px #FFEB3B !important;
+          box-shadow: 0 0 0 2px rgba(255, 204, 0, 0.3) !important;
+          mix-blend-mode: multiply !important; /* Verschmilzt mit dem Text darunter */
         }
       `}</style>
     </motion.div>

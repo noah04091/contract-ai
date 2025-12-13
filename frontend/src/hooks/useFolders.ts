@@ -2,9 +2,13 @@
 import { useState, useCallback, useRef } from 'react';
 import type { FolderType } from '../components/FolderBar';
 
+// LocalStorage Key für Favoriten-Ordner
+const FAVORITE_FOLDER_KEY = 'contract-ai-favorite-folder';
+
 interface UseFoldersReturn {
   folders: FolderType[];
   activeFolder: string | null;
+  favoriteFolder: string | null;
   isLoading: boolean;
   error: string | null;
   unassignedOrder: number;
@@ -13,16 +17,48 @@ interface UseFoldersReturn {
   updateFolder: (id: string, data: { name: string; color: string; icon: string }) => Promise<void>;
   deleteFolder: (id: string) => Promise<void>;
   setActiveFolder: (folderId: string | null) => void;
+  setFavoriteFolder: (folderId: string | null) => void;
   moveContractToFolder: (contractId: string, folderId: string | null) => Promise<void>;
   bulkMoveToFolder: (contractIds: string[], folderId: string | null) => Promise<void>;
 }
 
 export function useFolders(): UseFoldersReturn {
   const [folders, setFolders] = useState<FolderType[]>([]);
-  const [activeFolder, setActiveFolder] = useState<string | null>(null);
+  // ⭐ Favoriten-Ordner aus localStorage laden beim Start
+  const [favoriteFolder, setFavoriteFolderState] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(FAVORITE_FOLDER_KEY);
+    } catch {
+      return null;
+    }
+  });
+  // ⭐ activeFolder startet mit Favorit (wenn vorhanden)
+  const [activeFolder, setActiveFolder] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(FAVORITE_FOLDER_KEY);
+    } catch {
+      return null;
+    }
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [unassignedOrder, setUnassignedOrder] = useState<number>(9999);
+
+  // ⭐ Favoriten-Ordner setzen/entfernen
+  const setFavoriteFolder = useCallback((folderId: string | null) => {
+    setFavoriteFolderState(folderId);
+    try {
+      if (folderId) {
+        localStorage.setItem(FAVORITE_FOLDER_KEY, folderId);
+        console.log('⭐ Ordner als Favorit gesetzt:', folderId);
+      } else {
+        localStorage.removeItem(FAVORITE_FOLDER_KEY);
+        console.log('⭐ Favorit entfernt');
+      }
+    } catch (err) {
+      console.warn('⚠️ Konnte Favorit nicht speichern:', err);
+    }
+  }, []);
 
   // ✅ Cache für Folder-Daten (30 Sekunden)
   const folderCacheRef = useRef<{
@@ -268,6 +304,7 @@ export function useFolders(): UseFoldersReturn {
   return {
     folders,
     activeFolder,
+    favoriteFolder,
     isLoading,
     error,
     unassignedOrder,
@@ -276,6 +313,7 @@ export function useFolders(): UseFoldersReturn {
     updateFolder,
     deleteFolder,
     setActiveFolder,
+    setFavoriteFolder,
     moveContractToFolder,
     bulkMoveToFolder
   };

@@ -68,7 +68,8 @@ const Vertragsverwaltung: React.FC = () => {
         </script>
       </Helmet>
 
-      <div className={styles.featureContainer}>
+      <div className={styles.pageBackground}>
+        <div className={styles.featureContainer}>
 
         {/* HERO */}
         <section className={styles.heroSection}>
@@ -268,8 +269,8 @@ const Vertragsverwaltung: React.FC = () => {
           {/* SECURITY */}
           <section className={styles.statsSection}>
             <div className={styles.contentContainer}>
-              <h2 className={styles.sectionTitle} style={{ color: 'white' }}>Sicherheit & Datenschutz</h2>
-              <p style={{ color: '#ccc', textAlign: 'center', marginBottom: '40px', fontSize: '17px' }}>
+              <h2 className={styles.sectionTitle}>Sicherheit & Datenschutz</h2>
+              <p style={{ color: '#666', textAlign: 'center', marginBottom: '40px', fontSize: '17px' }}>
                 Ihre Verträge sind bei uns sicherer als auf Ihrem eigenen Rechner. Verschlüsselte Übertragung und Speicherung auf zertifizierten Servern in Frankfurt (Deutschland).
                 Keine Weitergabe an Dritte. Löschung jederzeit auf Knopfdruck möglich.
               </p>
@@ -341,6 +342,7 @@ const Vertragsverwaltung: React.FC = () => {
               </div>
             </div>
           </section>
+        </div>
         </div>
       </div>
 

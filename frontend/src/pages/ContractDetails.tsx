@@ -118,6 +118,7 @@ export default function ContractDetails() {
         }
 
         const data = await res.json();
+        console.log('📅 Contract loaded - importantDates:', data.importantDates);
         setContract(data);
         setFormData({
           name: data.name || "",
@@ -595,7 +596,9 @@ export default function ContractDetails() {
                     <h4>💡 Empfehlungen</h4>
                     <ul className={styles.pulseList}>
                       {contract.analysis.recommendations.map((rec, index) => (
-                        <li key={index} className={styles.recommendationItem}>{rec}</li>
+                        <li key={index} className={styles.recommendationItem}>
+                          {typeof rec === 'string' ? rec : (rec as { title?: string; description?: string }).title || (rec as { title?: string; description?: string }).description || JSON.stringify(rec)}
+                        </li>
                       ))}
                     </ul>
                   </div>
@@ -678,7 +681,9 @@ export default function ContractDetails() {
                     <h4>💡 Empfehlungen</h4>
                     <ul className={styles.pulseList}>
                       {contract.legalPulse.recommendations.map((rec, index) => (
-                        <li key={index} className={styles.recommendationItem}>{rec}</li>
+                        <li key={index} className={styles.recommendationItem}>
+                          {typeof rec === 'string' ? rec : (rec as { title?: string; description?: string }).title || (rec as { title?: string; description?: string }).description || JSON.stringify(rec)}
+                        </li>
                       ))}
                     </ul>
                   </div>
@@ -871,7 +876,25 @@ export default function ContractDetails() {
                   Optimiertes PDF öffnen
                 </button>
               )}
-              
+
+              {/* 🔍 Legal Lens - Interaktive Vertragsanalyse */}
+              <button
+                onClick={() => navigate(`/legal-lens/${contract._id}`)}
+                className={styles.actionButton}
+                style={{
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                  color: 'white',
+                  border: 'none'
+                }}
+                title="Vertrag interaktiv analysieren - Klauseln verstehen, Risiken erkennen"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z"
+                    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Legal Lens
+              </button>
+
               <button
                 className={styles.dangerButton}
                 onClick={handleDelete}

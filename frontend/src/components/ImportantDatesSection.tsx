@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styles from '../styles/ImportantDatesSection.module.css';
 
 // Interface für wichtige Datums aus der KI-Analyse
@@ -62,11 +63,21 @@ const getSeverity = (type: string): 'critical' | 'warning' | 'info' => {
 
 export default function ImportantDatesSection({ importantDates, contractName }: ImportantDatesSectionProps) {
   const [selectedDate, setSelectedDate] = useState<ImportantDate | null>(null);
+  const navigate = useNavigate();
 
   // Keine Anzeige wenn keine Datums vorhanden
   if (!importantDates || importantDates.length === 0) {
     return null;
   }
+
+  // Navigiere zum Kalender mit dem ausgewählten Datum
+  const handleOpenInCalendar = (date: string) => {
+    // Formatiere das Datum für die Kalender-URL (YYYY-MM-DD)
+    const dateObj = new Date(date);
+    const year = dateObj.getFullYear();
+    const month = dateObj.getMonth(); // 0-indexed für Kalender
+    navigate(`/calendar?year=${year}&month=${month}&highlight=${date}`);
+  };
 
   // Sortiere nach Priorität (kritische zuerst) und dann nach Datum
   const sortedDates = [...importantDates].sort((a, b) => {
@@ -251,6 +262,21 @@ export default function ImportantDatesSection({ importantDates, contractName }: 
                   <span>Dieses Datum wurde von der KI aus den Vertragsangaben berechnet</span>
                 </div>
               )}
+
+              {/* 📅 Kalender-Link Button */}
+              <button
+                className={styles.calendarLinkButton}
+                onClick={() => handleOpenInCalendar(selectedDate.date)}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M8 7V3M16 7V3M7 11H17M5 21H19C20.1046 21 21 20.1046 21 19V7C21 5.89543 20.1046 5 19 5H5C3.89543 5 3 5.89543 3 7V19C3 20.1046 3.89543 21 5 21Z"
+                    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span>Im Vertragskalender anzeigen</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
 
               <div className={styles.modalFooter}>
                 <span className={styles.contractName}>

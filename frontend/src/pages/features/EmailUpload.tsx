@@ -68,7 +68,8 @@ const EmailUpload: React.FC = () => {
         </script>
       </Helmet>
 
-      <div className={styles.featureContainer}>
+      <div className={styles.pageBackground}>
+        <div className={styles.featureContainer}>
 
         {/* HERO */}
         <section className={styles.heroSection}>
@@ -276,8 +277,8 @@ const EmailUpload: React.FC = () => {
           {/* SECURITY */}
           <section className={styles.statsSection}>
             <div className={styles.contentContainer}>
-              <h2 className={styles.sectionTitle} style={{ color: 'white' }}>Sicherheit & Datenschutz</h2>
-              <p style={{ color: '#ccc', textAlign: 'center', marginBottom: '40px', fontSize: '17px' }}>
+              <h2 className={styles.sectionTitle}>Sicherheit & Datenschutz</h2>
+              <p style={{ color: '#666', textAlign: 'center', marginBottom: '40px', fontSize: '17px' }}>
                 Datenschutz hat höchste Priorität. E-Mails werden NICHT gespeichert – nur PDF-Anhänge und der Betreff. Verschlüsselte Übertragung und Speicherung auf deutschen Servern in Frankfurt.
                 Vollständig DSGVO-konform. Löschung jederzeit möglich.
               </p>
@@ -353,6 +354,7 @@ const EmailUpload: React.FC = () => {
               </div>
             </div>
           </section>
+        </div>
         </div>
       </div>
 

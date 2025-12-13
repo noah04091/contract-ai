@@ -13,7 +13,8 @@ import {
   LayoutGrid, List, FolderPlus,
   FileUp, AlertTriangle, Sparkles, RotateCcw, CreditCard,
   MoreVertical, ChevronUp, ChevronDown,
-  SlidersHorizontal // 📱 Mobile Filter Icon
+  SlidersHorizontal, // 📱 Mobile Filter Icon
+  Star // ⭐ Favoriten-Icon
 } from "lucide-react";
 import styles from "../styles/Contracts.module.css";
 import ContractAnalysis from "../components/ContractAnalysis";
@@ -27,6 +28,7 @@ import SmartFoldersModal from "../components/SmartFoldersModal"; // 🤖 Smart F
 import EmailInboxWidget from "../components/EmailInboxWidget"; // 📧 E-Mail-Upload Feature
 import ReminderSettingsModal from "../components/ReminderSettingsModal"; // 🔔 Reminder Settings Modal
 import ContractEditModal from "../components/ContractEditModal"; // ✏️ Quick Edit Modal
+import ImportantDatesSection from "../components/ImportantDatesSection"; // 📅 KI-extrahierte wichtige Termine
 import { apiCall, uploadAndAnalyze, uploadOnly } from "../utils/api"; // ✅ NEU: uploadOnly hinzugefügt
 import { useFolders } from "../hooks/useFolders"; // 📁 Folder Hook
 import type { FolderType } from "../components/FolderBar"; // 📁 Folder Type
@@ -105,6 +107,17 @@ interface Contract {
   };
   // 📝 Ausführliches Rechtsgutachten
   detailedLegalOpinion?: string;
+  // 📅 Gekündigt zum (für Kündigungsbestätigungen)
+  gekuendigtZum?: string;
+  // 📅 KI-extrahierte wichtige Termine
+  importantDates?: Array<{
+    type: string;
+    date: string;
+    label: string;
+    description?: string;
+    calculated?: boolean;
+    source?: string;
+  }>;
 }
 
 // ✅ KORRIGIERT: Interface für Mehrfach-Upload
@@ -318,12 +331,14 @@ export default function Contracts() {
   const {
     folders,
     activeFolder,
+    favoriteFolder,
     unassignedOrder,
     fetchFolders,
     createFolder,
     updateFolder,
     deleteFolder,
     setActiveFolder,
+    setFavoriteFolder,
     moveContractToFolder,
     bulkMoveToFolder
   } = useFolders();
@@ -1624,9 +1639,7 @@ export default function Contracts() {
     setActiveSection('upload');
 
     console.log(`✅ ${files.length} Dateien für Upload vorbereitet (${userInfo.subscriptionPlan})`);
-
-    // ✅ WICHTIG: Input resetten damit onChange beim nächsten Mal wieder feuert
-    e.target.value = '';
+    // ✅ Input-Reset erfolgt jetzt in activateFileInput() VOR dem Klick
   };
 
   // ✅ KORRIGIERT: Normale Funktionen OHNE Event-Parameter
@@ -2380,14 +2393,91 @@ export default function Contracts() {
     setActiveFolder(null); // ✅ Folder zurücksetzen
   };
 
+  // 🎯 Intelligente Status-Berechnung basierend auf Vertragsdaten
+  const calculateSmartStatus = (contract: Contract): string => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // 1. Kündigungsbestätigung = "Gekündigt"
+    if (contract.documentCategory === 'cancellation_confirmation' || contract.gekuendigtZum) {
+      const gekuendigtDate = contract.gekuendigtZum ? new Date(contract.gekuendigtZum) : null;
+      if (gekuendigtDate) {
+        gekuendigtDate.setHours(0, 0, 0, 0);
+        if (gekuendigtDate < today) {
+          return 'Beendet';
+        }
+        return 'Gekündigt';
+      }
+      return 'Gekündigt';
+    }
+
+    // 2. Rechnung = "Bezahlt" oder "Offen"
+    if (contract.documentCategory === 'invoice') {
+      return contract.paymentStatus === 'paid' ? 'Bezahlt' : 'Offen';
+    }
+
+    // 3. Prüfe Ablaufdatum
+    const expiryDate = contract.expiryDate ? new Date(contract.expiryDate) : null;
+    if (expiryDate) {
+      expiryDate.setHours(0, 0, 0, 0);
+      const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+      // Bereits abgelaufen
+      if (daysUntilExpiry < 0) {
+        return 'Beendet';
+      }
+
+      // Läuft bald ab (innerhalb 30 Tage)
+      if (daysUntilExpiry <= 30) {
+        return 'Läuft ab';
+      }
+
+      // Noch aktiv
+      return 'Aktiv';
+    }
+
+    // 4. Prüfe ob manuell gesetzter Status vorhanden
+    if (contract.status) {
+      const status = contract.status.toLowerCase();
+      if (status === 'aktiv' || status === 'gültig' || status === 'laufend') return 'Aktiv';
+      if (status === 'gekündigt') return 'Gekündigt';
+      if (status === 'beendet' || status === 'abgelaufen' || status === 'expired') return 'Beendet';
+      if (status === 'läuft ab' || status === 'bald fällig') return 'Läuft ab';
+      if (status === 'pausiert') return 'Pausiert';
+      if (status === 'entwurf' || status === 'draft') return 'Entwurf';
+    }
+
+    // 5. Generierte oder optimierte Verträge
+    if (contract.isGenerated) return 'Entwurf';
+    if (contract.isOptimized) return 'Optimiert';
+
+    // 6. Default: Unbekannt/Offen für nicht analysierte Verträge
+    if (!contract.analyzed && !contract.contractScore) {
+      return 'Neu';
+    }
+
+    // 7. Fallback: Aktiv (wenn analysiert aber kein Ablaufdatum)
+    return 'Aktiv';
+  };
+
   const getStatusColor = (status: string): string => {
     status = (status?.toLowerCase() || '');
-    if (status === "aktiv" || status === "gültig") {
+    if (status === "aktiv" || status === "gültig" || status === "laufend") {
       return styles.statusActive;
     } else if (status === "läuft ab" || status === "bald fällig") {
       return styles.statusWarning;
-    } else if (status === "gekündigt" || status === "beendet") {
+    } else if (status === "gekündigt") {
       return styles.statusCancelled;
+    } else if (status === "beendet" || status === "abgelaufen") {
+      return styles.statusExpired || styles.statusCancelled;
+    } else if (status === "entwurf" || status === "neu" || status === "optimiert") {
+      return styles.statusNeutral;
+    } else if (status === "bezahlt") {
+      return styles.statusActive;
+    } else if (status === "offen") {
+      return styles.statusWarning;
+    } else if (status === "pausiert") {
+      return styles.statusNeutral;
     } else {
       return styles.statusNeutral;
     }
@@ -2545,7 +2635,11 @@ export default function Contracts() {
   };
 
   const activateFileInput = () => {
-    fileInputRef.current?.click();
+    // ✅ FIX: Reset value vor dem Klick, damit onChange auch bei gleicher Datei feuert
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      fileInputRef.current.click();
+    }
   };
 
   // ✅ NEU: Upload-Status Icons
@@ -2674,8 +2768,8 @@ export default function Contracts() {
           <div className={styles.cardTitle}>
             <h3 className={styles.cardFileName}>{contract.name}</h3>
             <div className={styles.cardStatus}>
-              <span className={`${styles.statusBadge} ${getStatusColor(contract.status)}`}>
-                {contract.status}
+              <span className={`${styles.statusBadge} ${getStatusColor(calculateSmartStatus(contract))}`}>
+                {calculateSmartStatus(contract)}
               </span>
               {/* 🆕 Smart Signature Status Badge */}
               {renderSignatureBadge(contract)}
@@ -2781,6 +2875,24 @@ export default function Contracts() {
           <span>Bearbeiten</span>
         </button>
 
+        {/* 🔍 Legal Lens - Interaktive Vertragsanalyse */}
+        <button
+          className={styles.cardActionButton}
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/legal-lens/${contract._id}`);
+          }}
+          title="Vertrag interaktiv analysieren"
+          style={{
+            background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+            color: 'white',
+            border: 'none'
+          }}
+        >
+          <Search size={14} />
+          <span>Legal Lens</span>
+        </button>
+
         {/* 📁 Mobile Folder Dropdown */}
         <div
           className={styles.mobileFolderWrapper}
@@ -2864,11 +2976,12 @@ export default function Contracts() {
       : null;
 
     // Status-Farbe für den linken Rand
+    const smartStatus = calculateSmartStatus(contract);
     const getStatusIndicatorColor = () => {
-      if (contract.status === 'Gekündigt') return '#ef4444';
-      if (contract.status === 'Abgelaufen') return '#f97316';
+      if (smartStatus === 'Gekündigt') return '#ef4444';
+      if (smartStatus === 'Beendet' || smartStatus === 'Abgelaufen') return '#f97316';
       if (daysUntilExpiry !== null && daysUntilExpiry <= 30 && daysUntilExpiry > 0) return '#eab308';
-      if (contract.status === 'Aktiv') return '#22c55e';
+      if (smartStatus === 'Aktiv') return '#22c55e';
       return '#94a3b8';
     };
 
@@ -2914,7 +3027,7 @@ export default function Contracts() {
             </div>
           </div>
           <div className={styles.listRowMeta}>
-            <span className={styles.listRowStatus}>{contract.status}</span>
+            <span className={styles.listRowStatus}>{calculateSmartStatus(contract)}</span>
             <span className={styles.listRowDivider}>•</span>
             <span className={styles.listRowDate}>
               {contract.expiryDate ? formatDate(contract.expiryDate) : 'Kein Ablauf'}
@@ -3002,8 +3115,8 @@ export default function Contracts() {
             <FileText size={24} />
           </div>
           <div className={styles.gridCardBadges}>
-            <span className={`${styles.gridStatusBadge} ${getStatusColor(contract.status)}`}>
-              {contract.status}
+            <span className={`${styles.gridStatusBadge} ${getStatusColor(calculateSmartStatus(contract))}`}>
+              {calculateSmartStatus(contract)}
             </span>
             {contract.isGenerated && (
               <span className={styles.gridBadge} style={{ background: '#dbeafe', color: '#1d4ed8' }}>Generiert</span>
@@ -3194,11 +3307,7 @@ export default function Contracts() {
                 <AlertTriangle size={18} className={styles.sidebarNavIcon} style={{ color: '#f59e0b' }} />
                 <span>Bald ablaufend</span>
                 <span className={styles.sidebarNavBadge}>
-                  {contracts.filter(c => {
-                    if (!c.expiryDate) return false;
-                    const days = Math.ceil((new Date(c.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-                    return days > 0 && days <= 30;
-                  }).length}
+                  {contracts.filter(c => calculateSmartStatus(c) === 'Läuft ab').length}
                 </span>
               </button>
 
@@ -3208,7 +3317,7 @@ export default function Contracts() {
               >
                 <CheckCircle size={18} className={styles.sidebarNavIcon} style={{ color: '#22c55e' }} />
                 <span>Aktive Verträge</span>
-                <span className={styles.sidebarNavBadge}>{contracts.filter(c => c.status === 'aktiv').length}</span>
+                <span className={styles.sidebarNavBadge}>{contracts.filter(c => calculateSmartStatus(c) === 'Aktiv').length}</span>
               </button>
 
               <div className={styles.sidebarDivider} />
@@ -3253,6 +3362,10 @@ export default function Contracts() {
                   >
                     <Folder size={16} className={styles.sidebarFolderIcon} style={{ color: folder.color || '#fbbf24' }} />
                     <span className={styles.sidebarFolderName}>{folder.name}</span>
+                    {/* ⭐ Favoriten-Stern */}
+                    {favoriteFolder === folder._id && (
+                      <Star size={12} className={styles.favoriteStar} fill="currentColor" />
+                    )}
                     <span className={styles.sidebarNavBadge}>
                       {folder.contractCount ?? 0}
                     </span>
@@ -3780,25 +3893,21 @@ export default function Contracts() {
                       onDrop={handleDrop}
                       onClick={uploadFiles.length === 0 && hasAnalysesLeft ? activateFileInput : undefined}
                     >
-                      {/* ✅ Input-Element nur rendern wenn keine Dateien ausgewählt */}
-                      {uploadFiles.length === 0 && (
-                        <input
-                          type="file"
-                          onChange={handleMultipleFileChange}
-                          onClick={(e) => {
-                            // ✅ CRITICAL FIX: Reset value VOR Dialog-Öffnung
-                            // Verhindert Browser-Cache-Probleme beim erneuten Klick
-                            const target = e.target as HTMLInputElement;
-                            target.value = '';
-                          }}
-                          className={styles.fileInput}
-                          accept=".pdf,.doc,.docx"
-                          multiple={canMultiUpload}
-                          id="contractFile"
-                          ref={fileInputRef}
-                          disabled={!hasAnalysesLeft}
-                        />
-                      )}
+                      {/* ✅ Input-Element - IMMER rendern, aber versteckt */}
+                      <input
+                        type="file"
+                        onChange={handleMultipleFileChange}
+                        onClick={(e) => {
+                          // ✅ CRITICAL FIX: Verhindere Event-Bubbling zum Parent-Div
+                          e.stopPropagation();
+                        }}
+                        className={styles.fileInput}
+                        accept=".pdf,.doc,.docx"
+                        multiple={canMultiUpload}
+                        id="contractFile"
+                        ref={fileInputRef}
+                        disabled={!hasAnalysesLeft}
+                      />
                       
                       {uploadFiles.length > 0 ? (
                         <div 
@@ -4279,8 +4388,8 @@ export default function Contracts() {
                                 </td>
                               ))}
                               <td>
-                                <span className={`${styles.statusBadge} ${getStatusColor(contract.status)}`}>
-                                  {contract.status}
+                                <span className={`${styles.statusBadge} ${getStatusColor(calculateSmartStatus(contract))}`}>
+                                  {calculateSmartStatus(contract)}
                                 </span>
                                 {/* 🆕 Smart Signature Status Badge */}
                                 {renderSignatureBadge(contract)}
@@ -4715,6 +4824,14 @@ export default function Contracts() {
                   )}
                 </div>
 
+                {/* 📅 Wichtige Termine - KI-extrahierte Datums (VOR Zusammenfassung) */}
+                {previewContract.importantDates && previewContract.importantDates.length > 0 && (
+                  <ImportantDatesSection
+                    importantDates={previewContract.importantDates}
+                    contractName={previewContract.name}
+                  />
+                )}
+
                 {/* Summary Section */}
                 {previewContract.summary && (
                   <div className={styles.previewSection}>
@@ -5003,6 +5120,22 @@ export default function Contracts() {
             if (!folder) return null;
             return (
               <>
+                {/* ⭐ Favorit setzen/entfernen */}
+                <button
+                  className={`${styles.folderContextMenuItem} ${favoriteFolder === folder._id ? styles.favorite : ''}`}
+                  onClick={() => {
+                    if (favoriteFolder === folder._id) {
+                      setFavoriteFolder(null);
+                    } else {
+                      setFavoriteFolder(folder._id);
+                    }
+                    setFolderContextMenu(null);
+                  }}
+                >
+                  <Star size={14} fill={favoriteFolder === folder._id ? 'currentColor' : 'none'} />
+                  <span>{favoriteFolder === folder._id ? 'Favorit entfernen' : 'Als Favorit'}</span>
+                </button>
+                <div className={styles.folderContextMenuDivider} />
                 <button
                   className={styles.folderContextMenuItem}
                   onClick={() => {

@@ -52,7 +52,8 @@ const Fristen: React.FC = () => {
 
   return (
     <>
-      <div className={styles.featureContainer}>
+      <div className={styles.pageBackground}>
+        <div className={styles.featureContainer}>
         
         {/* HERO */}
         <section className={styles.heroSection}>
@@ -236,8 +237,8 @@ const Fristen: React.FC = () => {
           {/* SECURITY */}
           <section className={styles.statsSection}>
             <div className={styles.contentContainer}>
-              <h2 className={styles.sectionTitle} style={{ color: 'white' }}>Sicherheit & Datenschutz</h2>
-              <p style={{ color: '#ccc', textAlign: 'center', marginBottom: '40px', fontSize: '17px' }}>
+              <h2 className={styles.sectionTitle}>Sicherheit & Datenschutz</h2>
+              <p style={{ color: '#666', textAlign: 'center', marginBottom: '40px', fontSize: '17px' }}>
                 Ihre Vertragsdaten werden verschlüsselt übertragen und ausschließlich auf EU-Servern in Frankfurt verarbeitet. 
                 Fristen-Extraktion erfolgt datenschutzkonform, keine Weitergabe an Dritte. Löschung jederzeit auf Wunsch möglich.
               </p>
@@ -310,8 +311,9 @@ const Fristen: React.FC = () => {
             </div>
           </section>
         </div>
+        </div>
       </div>
-      
+
       <Footer />
     </>
   );

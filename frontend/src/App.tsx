@@ -87,6 +87,8 @@ const Subscribe = lazy(() => import("./pages/Subscribe"));
 const Upgrade = lazy(() => import("./pages/Upgrade"));
 const BetterContracts = lazy(() => import("./pages/BetterContracts"));
 const LegalPulse = lazy(() => import("./pages/LegalPulse"));
+const LegalLens = lazy(() => import("./pages/LegalLens")); // 🔍 NEU: Interaktive Vertragsanalyse
+const LegalLensStart = lazy(() => import("./pages/LegalLensStart")); // 🔍 NEU: Legal Lens Startseite
 const Envelopes = lazy(() => import("./pages/Envelopes")); // ✉️ NEU: Digital Signature Dashboard
 const PlaceSignatureFields = lazy(() => import("./pages/PlaceSignatureFields")); // ✉️ NEU: Field Placement Editor
 const NewSignatureRequest = lazy(() => import("./pages/NewSignatureRequest")); // ✉️ NEU: Neue Signaturanfrage
@@ -217,6 +219,10 @@ function AppWithLoader() {
             {/* 🔍 Legal Pulse - Rechtliche Risikoanalyse */}
             <Route path="/legalpulse" element={<RequireAuth><LegalPulse /></RequireAuth>} />
             <Route path="/legalpulse/:contractId" element={<RequireAuth><LegalPulse /></RequireAuth>} />
+
+            {/* 🔍 Legal Lens - Interaktive Vertragsanalyse */}
+            <Route path="/legal-lens" element={<RequireAuth><LegalLensStart /></RequireAuth>} />
+            <Route path="/legal-lens/:contractId" element={<RequireAuth><LegalLens /></RequireAuth>} />
 
             <Route path="/compare" element={<RequireAuth><Compare /></RequireAuth>} />
             <Route path="/chat" element={<RequireAuth><Chat /></RequireAuth>} />

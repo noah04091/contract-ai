@@ -1419,6 +1419,23 @@
   color: #fca5a5;
 }
 
+/* ⭐ Favoriten-Style */
+.folderContextMenuItem.favorite {
+  color: #fbbf24;
+}
+
+.folderContextMenuItem.favorite:hover {
+  background: rgba(251, 191, 36, 0.2);
+}
+
+/* ⭐ Favoriten-Stern in Sidebar */
+.favoriteStar {
+  color: #fbbf24;
+  flex-shrink: 0;
+  margin-left: auto;
+  margin-right: 0.25rem;
+}
+
 .folderContextMenuDivider {
   height: 1px;
   background: rgba(255, 255, 255, 0.1);

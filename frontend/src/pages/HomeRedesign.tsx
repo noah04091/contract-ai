@@ -4,6 +4,7 @@ import { Helmet } from "react-helmet-async";
 import { useAuth } from "../hooks/useAuth";;
 import HomePricingCards from "../components/HomePricingCards";
 import AutoPlayVideo from "../components/AutoPlayVideo";
+import Aurora from "../components/Aurora";
 import "../styles/landing.css";
 
 // Importiere Bilder
@@ -38,287 +39,198 @@ declare global {
   }
 }
 
-// Testimonials Slider Component
-const TestimonialsSlider = () => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
-  const sliderRef = useRef<HTMLDivElement>(null);
-  const isProgrammaticScroll = useRef(false); // Flag to prevent handleScroll conflicts
+// Testimonials Marquee Component - Modern 2-Row Design
+const TestimonialsMarquee = () => {
+  const [isPaused, setIsPaused] = useState(false);
 
+  // Testimonial-Daten - Mix aus Fotos und Initialen für Authentizität
   const testimonials = [
     {
       id: 1,
+      name: "Lisa Kramer",
+      location: "Frankfurt",
+      role: "Freelancerin",
+      image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=face",
+      rating: 5,
       text: "Habe bei meinem Werkvertrag einen Passus übersehen, der mich 280€ extra gekostet hätte. Contract AI hat das sofort erkannt!",
-      author: "Lisa K.",
-      role: "Freelancerin, Grafikdesign",
-      avatar: "LK"
+      verified: true
     },
     {
       id: 2,
+      name: "Marcus T.",
+      location: "München",
+      role: "IT-Berater",
+      image: null, // Kein Bild - zeigt Initialen
+      rating: 5,
       text: "Endlich verstehe ich meine Mietverträge ohne Anwalt. Die KI erklärt alles verständlich — spart Zeit und Geld.",
-      author: "Marcus T.",
-      role: "Geschäftsführer, IT-Beratung",
-      avatar: "MT"
+      verified: true
     },
     {
       id: 3,
-      text: "Dachte, mein Handyvertrag läuft noch 6 Monate. War tatsächlich schon kündbar — 180€ gespart dank der Fristenerkennung!",
-      author: "Sarah M.",
-      role: "Alleinerziehende Mutter",
-      avatar: "SM"
+      name: "Sarah Müller",
+      location: "Berlin",
+      role: "Projektmanagerin",
+      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face",
+      rating: 5,
+      text: "Dachte, mein Handyvertrag läuft noch 6 Monate. War tatsächlich schon kündbar — 180€ gespart!",
+      verified: true
     },
     {
       id: 4,
-      text: "Für NDA-Verträge mit Investoren nutze ich nur noch Contract AI. Kein Rechtsanwalt nötig für Standardverträge.",
-      author: "Daniel R.",
+      name: "Daniel Richter",
+      location: "Hamburg",
       role: "Startup-Gründer",
-      avatar: "DR"
+      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face",
+      rating: 5,
+      text: "Für NDA-Verträge mit Investoren nutze ich nur noch Contract AI. Kein Rechtsanwalt nötig für Standardverträge.",
+      verified: true
     },
     {
       id: 5,
-      text: "Hab mit Contract AI meinen Lieferantenvertrag gecheckt und dabei ne versteckte Preisklausel gefunden. Hätte mich locker 2.400€ mehr pro Jahr gekostet. Krass!",
-      author: "Thomas W.",
-      role: "Inhaber, Malerbetrieb Würzburg",
-      avatar: "TW"
+      name: "Thomas W.",
+      location: "Würzburg",
+      role: "Handwerksmeister",
+      image: null, // Kein Bild - zeigt Initialen
+      rating: 5,
+      text: "Hab meinen Lieferantenvertrag gecheckt und eine versteckte Preisklausel gefunden. Hätte mich 2.400€ mehr pro Jahr gekostet!",
+      verified: true
     },
     {
       id: 6,
-      text: "Bei uns im Team nutzen jetzt alle Contract AI für Freelancer-Verträge. Spart uns echt Zeit und die Rechtsabteilung freut sich auch.",
-      author: "Julia S.",
-      role: "Projektmanagerin, Digital Agency Hamburg",
-      avatar: "JS"
+      name: "Julia Schmidt",
+      location: "Köln",
+      role: "Marketing Managerin",
+      image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&crop=face",
+      rating: 5,
+      text: "Bei uns im Team nutzen jetzt alle Contract AI für Freelancer-Verträge. Spart uns echt Zeit!",
+      verified: true
     },
     {
       id: 7,
-      text: "Mein Fitnessstudio-Abo lief automatisch weiter, obwohl ich umgezogen bin. Contract AI hat mein Sonderkündigungsrecht erkannt — 360€ zurückbekommen!",
-      author: "Kevin B.",
-      role: "Student, BWL",
-      avatar: "KB"
+      name: "Kevin B.",
+      location: "Stuttgart",
+      role: "BWL-Student",
+      image: null, // Kein Bild - zeigt Initialen
+      rating: 4,
+      text: "Mein Fitnessstudio-Abo lief automatisch weiter. Contract AI hat mein Sonderkündigungsrecht erkannt — 360€ zurück!",
+      verified: true
     },
     {
       id: 8,
-      text: "Als Steuerberaterin muss ich oft Verträge prüfen. Contract AI ist mittlerweile fester Teil meines Workflows. Die Risiko-Analyse ist top.",
-      author: "Dr. Anna P.",
-      role: "Steuerberaterin, Kanzlei München",
-      avatar: "AP"
+      name: "Dr. Anna Peters",
+      location: "München",
+      role: "Steuerberaterin",
+      image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&h=200&fit=crop&crop=face",
+      rating: 5,
+      text: "Als Steuerberaterin muss ich oft Verträge prüfen. Contract AI ist fester Teil meines Workflows. Die Risiko-Analyse ist top.",
+      verified: true
     }
   ];
 
-  const getItemsPerView = () => {
-    if (typeof window === 'undefined') return 1;
-    const width = window.innerWidth;
-    if (width <= 768) return 1;  // Mobile: 1 Testimonial
-    if (width <= 1024) return 2; // Tablet: 2 Testimonials
-    return 3; // Desktop: 3 Testimonials
-  };
+  // Erste Reihe: Testimonials 1-4
+  const row1 = testimonials.slice(0, 4);
+  // Zweite Reihe: Testimonials 5-8
+  const row2 = testimonials.slice(4, 8);
 
-  const [itemsPerView, setItemsPerView] = useState(getItemsPerView());
+  // Star Rating Component
+  const StarRating = ({ rating }: { rating: number }) => (
+    <div className="testimonial-stars">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <svg
+          key={star}
+          className={`star-icon ${star <= rating ? 'filled' : ''}`}
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill={star <= rating ? "#FBBF24" : "none"}
+          stroke={star <= rating ? "#FBBF24" : "#D1D5DB"}
+          strokeWidth="2"
+        >
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+        </svg>
+      ))}
+    </div>
+  );
 
-  useEffect(() => {
-    const handleResize = () => {
-      const newItemsPerView = getItemsPerView();
-      setItemsPerView(newItemsPerView);
-
-      // Reset current index if out of bounds
-      const maxIndex = Math.max(0, testimonials.length - newItemsPerView);
-      if (currentIndex > maxIndex) {
-        setCurrentIndex(maxIndex);
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [currentIndex, testimonials.length]);
-
-  // Auto-advance slider (pause on hover) - Mobile langsamer als Desktop
-  useEffect(() => {
-    console.log('🔄 Auto-advance effect running. isHovered:', isHovered, 'itemsPerView:', itemsPerView);
-
-    if (isHovered) {
-      console.log('⏸️ Auto-advance paused (hovered)');
-      return;
+  // Initialen aus Name extrahieren
+  const getInitials = (name: string) => {
+    const parts = name.replace('Dr. ', '').split(' ');
+    if (parts.length >= 2) {
+      return parts[0][0] + parts[parts.length - 1][0];
     }
-
-    // Mobile (1 Karte): 5 Sekunden | Desktop (3+ Karten): 2 Sekunden
-    const intervalDuration = itemsPerView === 1 ? 5000 : 2000;
-
-    const interval = setInterval(() => {
-      const maxIdx = Math.max(0, testimonials.length - itemsPerView);
-      console.log('⏱️ Interval fired! currentIndex will change. maxIdx:', maxIdx);
-
-      setCurrentIndex((prev) => {
-        const next = prev + 1;
-        const newIndex = next > maxIdx ? 0 : next;
-        console.log('📊 Index change:', prev, '->', newIndex);
-        return newIndex;
-      });
-    }, intervalDuration);
-
-    return () => {
-      console.log('🧹 Cleaning up interval');
-      clearInterval(interval);
-    };
-  }, [isHovered, itemsPerView, testimonials.length]);
-
-  // Sync slider position when currentIndex changes
-  useEffect(() => {
-    console.log('🎯 Sync effect triggered. currentIndex:', currentIndex, 'sliderRef exists:', !!sliderRef.current);
-
-    if (!sliderRef.current) {
-      console.log('❌ sliderRef.current is null!');
-      return;
-    }
-
-    const slideWidth = sliderRef.current.offsetWidth / itemsPerView;
-    const scrollLeft = currentIndex * slideWidth;
-
-    console.log('📏 Calculated scroll:', {
-      containerWidth: sliderRef.current.offsetWidth,
-      itemsPerView,
-      slideWidth,
-      currentIndex,
-      scrollLeft
-    });
-
-    // Set flag to prevent handleScroll from interfering
-    isProgrammaticScroll.current = true;
-
-    sliderRef.current.scrollTo({
-      left: scrollLeft,
-      behavior: 'smooth'
-    });
-
-    console.log('✅ Scroll command sent!');
-
-    // Reset flag after scroll animation completes (smooth scroll takes ~300-500ms)
-    setTimeout(() => {
-      isProgrammaticScroll.current = false;
-      console.log('🏁 Programmatic scroll complete, handleScroll re-enabled');
-    }, 600);
-  }, [currentIndex, itemsPerView]);
-
-  const scrollToSlide = (index: number) => {
-    if (!sliderRef.current) return;
-    
-    const slideWidth = sliderRef.current.offsetWidth / itemsPerView;
-    const scrollLeft = index * slideWidth;
-    
-    sliderRef.current.scrollTo({
-      left: scrollLeft,
-      behavior: 'smooth'
-    });
-    
-    setCurrentIndex(index);
+    return parts[0].substring(0, 2).toUpperCase();
   };
 
-  const nextSlide = () => {
-    const maxIndex = Math.max(0, testimonials.length - itemsPerView);
-    // Loop: Bei letzter Slide → springe zu erster Slide
-    const newIndex = currentIndex >= maxIndex ? 0 : currentIndex + 1;
-    scrollToSlide(newIndex);
-  };
-
-  const prevSlide = () => {
-    const maxIndex = Math.max(0, testimonials.length - itemsPerView);
-    // Loop: Bei erster Slide → springe zu letzter Slide
-    const newIndex = currentIndex <= 0 ? maxIndex : currentIndex - 1;
-    scrollToSlide(newIndex);
-  };
-
-  // Sync dots when user swipes manually
-  const handleScroll = () => {
-    // Ignore scroll events during programmatic scrolling
-    if (isProgrammaticScroll.current) {
-      console.log('🚫 handleScroll ignored (programmatic scroll in progress)');
-      return;
-    }
-
-    if (!sliderRef.current) return;
-
-    const slideWidth = sliderRef.current.offsetWidth / itemsPerView;
-    const scrollLeft = sliderRef.current.scrollLeft;
-    const calculatedIndex = Math.round(scrollLeft / slideWidth);
-
-    console.log('👆 Manual scroll detected. Calculated index:', calculatedIndex);
-
-    // Only update if index actually changed to avoid unnecessary re-renders
-    if (calculatedIndex !== currentIndex) {
-      setCurrentIndex(calculatedIndex);
-    }
-  };
-
-  const maxIndex = Math.max(0, testimonials.length - itemsPerView);
+  // Testimonial Card Component
+  const TestimonialCard = ({ testimonial }: { testimonial: typeof testimonials[0] }) => (
+    <div className="testimonial-card-new">
+      <div className="testimonial-header">
+        {testimonial.image ? (
+          <img
+            src={testimonial.image}
+            alt={testimonial.name}
+            className="testimonial-avatar"
+            loading="lazy"
+          />
+        ) : (
+          <div className="testimonial-avatar-initials">
+            {getInitials(testimonial.name)}
+          </div>
+        )}
+        <div className="testimonial-info">
+          <div className="testimonial-name-row">
+            <span className="testimonial-name">{testimonial.name}</span>
+            {testimonial.verified && (
+              <svg className="verified-badge" width="16" height="16" viewBox="0 0 24 24" fill="#3B82F6">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#fff" strokeWidth="2" fill="#3B82F6"/>
+                <path d="M9 12l2 2 4-4" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+              </svg>
+            )}
+          </div>
+          <span className="testimonial-location">{testimonial.location} • {testimonial.role}</span>
+        </div>
+      </div>
+      <StarRating rating={testimonial.rating} />
+      <p className="testimonial-text-new">"{testimonial.text}"</p>
+      {testimonial.verified && (
+        <div className="testimonial-verified-tag">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span>Verifizierter Nutzer</span>
+        </div>
+      )}
+    </div>
+  );
 
   return (
-    <div className="testimonials-slider">
-      <div
-        className="slider-container"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        onTouchStart={() => setIsHovered(true)}
-        onTouchEnd={() => setIsHovered(false)}
-      >
-        <button
-          className="slider-nav slider-prev"
-          onClick={prevSlide}
-          aria-label="Vorheriges Testimonial"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m15 18-6-6 6-6"/>
-          </svg>
-        </button>
-
-        <div
-          ref={sliderRef}
-          className="slider-track"
-          onScroll={handleScroll}
-        >
-          {testimonials.map((testimonial) => (
-            <div key={testimonial.id} className="testimonial-slide">
-              <div className="testimonial-card">
-                <div className="testimonial-content">
-                  <div className="testimonial-quote">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="quote-icon">
-                      <path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"></path>
-                      <path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"></path>
-                    </svg>
-                  </div>
-                  <p className="testimonial-text">"{testimonial.text}"</p>
-                  <div className="testimonial-author">
-                    <div className="author-avatar">
-                      <span>{testimonial.avatar}</span>
-                    </div>
-                    <div className="author-info">
-                      <div className="author-name">{testimonial.author}</div>
-                      <div className="author-role">{testimonial.role}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+    <div
+      className="testimonials-marquee"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
+      {/* Row 1 - Scrolls Left */}
+      <div className="marquee-row">
+        <div className="marquee-fade marquee-fade-left"></div>
+        <div className={`marquee-track ${isPaused ? 'paused' : ''}`}>
+          {/* Duplicate cards for seamless loop */}
+          {[...row1, ...row1].map((testimonial, index) => (
+            <TestimonialCard key={`row1-${testimonial.id}-${index}`} testimonial={testimonial} />
           ))}
         </div>
-
-        <button
-          className="slider-nav slider-next"
-          onClick={nextSlide}
-          aria-label="Nächstes Testimonial"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m9 18 6-6-6-6"/>
-          </svg>
-        </button>
+        <div className="marquee-fade marquee-fade-right"></div>
       </div>
 
-      <div className="slider-dots">
-        {Array.from({ length: maxIndex + 1 }).map((_, index) => (
-          <button
-            key={index}
-            className={`slider-dot ${index === currentIndex ? 'active' : ''}`}
-            onClick={() => scrollToSlide(index)}
-            aria-label={`Gehe zu Testimonial ${index + 1}`}
-          />
-        ))}
+      {/* Row 2 - Scrolls Right (reverse) */}
+      <div className="marquee-row">
+        <div className="marquee-fade marquee-fade-left"></div>
+        <div className={`marquee-track marquee-reverse ${isPaused ? 'paused' : ''}`}>
+          {/* Duplicate cards for seamless loop */}
+          {[...row2, ...row2].map((testimonial, index) => (
+            <TestimonialCard key={`row2-${testimonial.id}-${index}`} testimonial={testimonial} />
+          ))}
+        </div>
+        <div className="marquee-fade marquee-fade-right"></div>
       </div>
     </div>
   );
@@ -1800,7 +1712,7 @@ const HomeRedesign = () => {
               <p className="reveal-text">Echte Erfahrungen von Menschen, die Contract AI bereits nutzen.</p>
             </div>
             
-            <TestimonialsSlider />
+            <TestimonialsMarquee />
           </div>
         </section>
 
@@ -1868,92 +1780,113 @@ const HomeRedesign = () => {
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section className="cta-section" ref={(el) => registerSection('cta', el)}>
-          {/* Contract Theme: Signature Animation with Pen */}
-          <div className="cta-signature-wrapper">
-            <svg className="cta-signature-svg" viewBox="0 0 200 50" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path
-                className="cta-signature-line"
-                d="M10,35 Q30,5 50,30 T90,25 T130,32 T170,20 T190,28"
-                stroke="rgba(255,255,255,0.3)"
-                strokeWidth="2"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <div className="cta-pen-icon">
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 19l7-7 3 3-7 7-3-3z" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" fill="none"/>
-                <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" fill="none"/>
-              </svg>
-            </div>
+        {/* CTA Section - Premium Redesign with Aurora Background */}
+        <section className="final-cta-section" ref={(el) => registerSection('cta', el)}>
+          {/* Aurora WebGL Background */}
+          <div className="final-cta-aurora-bg">
+            <Aurora
+              colorStops={["#0066FF", "#3399FF", "#0052CC"]}
+              amplitude={1.0}
+              blend={0.5}
+              speed={0.4}
+            />
           </div>
-          <div className="section-container">
-            <h2 className="reveal-text">Bereit, Ihre Verträge zu optimieren?</h2>
-            <p className="reveal-text">Starten Sie jetzt mit Contract AI und erleben Sie die Zukunft des Vertragsmanagements.</p>
-            <div className="cta-buttons reveal-text">
+          <div className="final-cta-content reveal-text">
+            {/* Social Proof with Avatar Stack */}
+            <div className="final-cta-social-proof">
+              <div className="final-cta-avatar-stack">
+                <img
+                  src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face"
+                  alt="Nutzerin"
+                  className="final-cta-avatar"
+                />
+                <img
+                  src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face"
+                  alt="Nutzer"
+                  className="final-cta-avatar"
+                />
+                <img
+                  src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face"
+                  alt="Nutzerin"
+                  className="final-cta-avatar"
+                />
+                <img
+                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face"
+                  alt="Nutzerin"
+                  className="final-cta-avatar"
+                />
+                <div className="final-cta-avatar-placeholder">+</div>
+              </div>
+              <div className="final-cta-social-text">
+                <div className="final-cta-stars-row">
+                  {[...Array(5)].map((_, i) => (
+                    <svg key={i} width="16" height="16" viewBox="0 0 24 24" fill="#fbbf24" stroke="#fbbf24" strokeWidth="1">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                  ))}
+                </div>
+                <span className="final-cta-rating-text">von 500+ zufriedenen Nutzern</span>
+              </div>
+            </div>
+
+            <h2 className="final-cta-title">
+              <span className="final-cta-title-gradient">Starte jetzt risikofrei</span>
+            </h2>
+            <p className="final-cta-subtitle">
+              Schließe dich über 500 Unternehmen an, die ihre Verträge bereits smarter verwalten.
+              <br />14 Tage Geld-zurück-Garantie – ohne Wenn und Aber.
+            </p>
+
+            <div className="final-cta-buttons">
               {user ? (
-                <Link to="/dashboard" className="cta-button-hero">
-                  <span className="cta-button-hero-bg"></span>
-                  <span className="cta-button-hero-content">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                      <line x1="8" y1="12" x2="16" y2="12"></line>
-                      <line x1="8" y1="16" x2="16" y2="16"></line>
-                      <line x1="8" y1="8" x2="10" y2="8"></line>
-                    </svg>
-                    <span>Zum Dashboard</span>
-                    <svg className="cta-arrow" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="5" y1="12" x2="19" y2="12"></line>
-                      <polyline points="12 5 19 12 12 19"></polyline>
-                    </svg>
-                  </span>
+                <Link to="/dashboard" className="final-cta-primary">
+                  Zum Dashboard
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                  </svg>
                 </Link>
               ) : (
-                <Link to="/register" className="cta-button-hero">
-                  <span className="cta-button-hero-bg"></span>
-                  <span className="cta-button-hero-content">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                <>
+                  <Link to="/register" className="final-cta-primary">
+                    Kostenlos starten
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M5 12h14M12 5l7 7-7 7"/>
                     </svg>
-                    <span>Jetzt kostenlos starten</span>
-                    <svg className="cta-arrow" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="5" y1="12" x2="19" y2="12"></line>
-                      <polyline points="12 5 19 12 12 19"></polyline>
-                    </svg>
-                  </span>
-                </Link>
+                  </Link>
+                  <Link to="/pricing" className="final-cta-secondary">
+                    Alle Preise ansehen
+                  </Link>
+                </>
               )}
             </div>
 
-            {/* Trust Line */}
-            <div className="cta-trust-line reveal-text">
-              <span className="trust-item">
+            <div className="final-cta-trust-badges">
+              <div className="final-cta-trust-badge">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M9 12l2 2 4-4"></path>
-                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                 </svg>
-                DSGVO-konform
-              </span>
-              <span className="trust-separator">·</span>
-              <span className="trust-item">
+                <span>DSGVO-konform</span>
+              </div>
+              <div className="final-cta-trust-badge">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                  <circle cx="12" cy="16" r="1"></circle>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  <polyline points="20 6 9 17 4 12"/>
                 </svg>
-                TÜV-zertifiziert
-              </span>
-              <span className="trust-separator">·</span>
-              <span className="trust-item">
+                <span>14-Tage-Garantie</span>
+              </div>
+              <div className="final-cta-trust-badge">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <polyline points="12,6 12,12 16,14"></polyline>
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
                 </svg>
-                99,9% Uptime
-              </span>
+                <span>Jederzeit kündbar</span>
+              </div>
+              <div className="final-cta-trust-badge">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                <span>Deutsche Server</span>
+              </div>
             </div>
           </div>
         </section>

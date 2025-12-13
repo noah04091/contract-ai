@@ -1,0 +1,370 @@
+/* 📁 LegalLensStart.module.css - Styles für Legal Lens Startseite */
+
+.container {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  padding-bottom: 2rem;
+}
+
+/* ===== HEADER ===== */
+.header {
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 2rem;
+}
+
+.headerContent {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.headerIcon {
+  font-size: 2.5rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3));
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 0.25rem;
+}
+
+.subtitle {
+  font-size: 0.95rem;
+  color: #64748b;
+  margin: 0;
+}
+
+/* ===== MAIN ===== */
+.main {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* ===== SECTION TITLE ===== */
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 1rem;
+}
+
+/* ===== UPLOAD SECTION ===== */
+.uploadSection {
+  margin-bottom: 1.5rem;
+}
+
+.dropzone {
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 2.5rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.dropzone:hover {
+  border-color: #3b82f6;
+  background: #f8fafc;
+}
+
+.dropzone.dragActive {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  border-style: solid;
+}
+
+.dropzone.uploading {
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.fileInput {
+  display: none;
+}
+
+.dropzoneIcon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.dropzoneText {
+  font-size: 1rem;
+  color: #374151;
+  margin: 0 0 0.5rem;
+}
+
+.browseLink {
+  color: #3b82f6;
+  font-weight: 500;
+  text-decoration: underline;
+}
+
+.dropzoneHint {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.uploadingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  color: #3b82f6;
+  font-weight: 500;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.errorMessage {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #dc2626;
+  font-size: 0.875rem;
+}
+
+/* ===== DIVIDER ===== */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e2e8f0;
+}
+
+.divider span {
+  font-size: 0.875rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ===== CONTRACTS SECTION ===== */
+.contractsSection {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.searchContainer {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 2.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.searchInput::placeholder {
+  color: #94a3b8;
+}
+
+/* ===== CONTRACT LIST ===== */
+.contractList {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.contractItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #f1f5f9;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.contractItem:last-child {
+  border-bottom: none;
+}
+
+.contractItem:hover {
+  background: #f8fafc;
+}
+
+.contractIcon {
+  width: 40px;
+  height: 40px;
+  background: #f1f5f9;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.contractInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.contractName {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.contractMeta {
+  display: block;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-top: 0.125rem;
+}
+
+.contractArrow {
+  color: #cbd5e1;
+  flex-shrink: 0;
+  transition: transform 0.2s, color 0.2s;
+}
+
+.contractItem:hover .contractArrow {
+  color: #3b82f6;
+  transform: translateX(4px);
+}
+
+/* ===== LOADING & EMPTY STATES ===== */
+.loadingState,
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  color: #64748b;
+  text-align: center;
+}
+
+.loadingState {
+  gap: 1rem;
+}
+
+.emptyState p {
+  margin: 0.75rem 0 0.25rem;
+  font-weight: 500;
+  color: #475569;
+}
+
+.emptyState span {
+  font-size: 0.875rem;
+  color: #94a3b8;
+}
+
+/* ===== FEATURES FOOTER ===== */
+.features {
+  max-width: 800px;
+  margin: 2rem auto 0;
+  padding: 0 2rem;
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.featureItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.featureIcon {
+  font-size: 1.25rem;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 640px) {
+  .header {
+    padding: 1.5rem 1rem;
+  }
+
+  .headerContent {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .main {
+    padding: 1.5rem 1rem;
+  }
+
+  .dropzone {
+    padding: 2rem 1.5rem;
+  }
+
+  .features {
+    gap: 1rem;
+  }
+
+  .featureItem {
+    font-size: 0.8rem;
+  }
+}

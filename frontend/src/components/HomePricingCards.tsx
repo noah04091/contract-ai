@@ -1,236 +1,279 @@
-import { Link } from 'react-router-dom';
-import { CheckCircle, X, Users, Zap, Star } from "lucide-react";
-import { useEffect, useRef } from 'react';
-import styles from "../styles/Pricing.module.css";
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Check, X, Users, Zap, Crown, Shield, Clock, TrendingUp } from "lucide-react";
 
 export default function HomePricingCards() {
-  const plansRef = useRef<HTMLDivElement>(null);
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
+  const [loading, setLoading] = useState(false);
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-  // Auf Mobile zur Business-Karte (mittlere Karte) scrollen
-  useEffect(() => {
-    const scrollToBusinessCard = () => {
-      if (plansRef.current && window.innerWidth <= 767) {
-        const cards = plansRef.current.querySelectorAll(`.${styles.cardWrapper}`);
-        if (cards.length >= 2) {
-          const businessCard = cards[1] as HTMLElement; // Index 1 = Business (mittlere Karte)
-          const scrollLeft = businessCard.offsetLeft - (plansRef.current.offsetWidth - businessCard.offsetWidth) / 2;
-          plansRef.current.scrollLeft = scrollLeft;
-        }
+  // Stripe Checkout
+  const startCheckout = async (plan: string) => {
+    setLoading(true);
+    setLoadingPlan(plan);
+    let res: Response | undefined;
+
+    try {
+      res = await fetch("/api/stripe/create-checkout-session", {
+        method: "POST",
+        credentials: "include",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan, billing: billingPeriod })
+      });
+
+      const data: { url?: string; message?: string } = await res.json();
+
+      if (!res.ok || !data.url) {
+        throw new Error(data.message || "Fehler beim Stripe-Checkout");
       }
-    };
 
-    // Kurze Verzögerung damit das Layout fertig ist
-    const timer = setTimeout(scrollToBusinessCard, 100);
-    return () => clearTimeout(timer);
-  }, []);
+      window.location.href = data.url;
+    } catch (error) {
+      const err = error as Error;
+      if (res && (res.status === 401 || res.status === 403)) {
+        alert("Um ein Abo zu kaufen, müssen Sie sich zuerst registrieren.");
+        navigate("/register?from=pricing&plan=" + plan);
+      } else {
+        alert("Fehler beim Checkout: " + err.message);
+      }
+    } finally {
+      setLoading(false);
+      setLoadingPlan(null);
+    }
+  };
+
   const plans = [
     {
+      id: "free",
       title: "Starter",
+      subtitle: "Perfekt zum Testen",
       icon: <Users size={22} />,
-      description: "Zum Testen & Reinschnuppern",
-      price: "0€",
-      originalPrice: null,
-      discount: null,
-      period: "",
-      billing: "für immer kostenlos",
+      pricing: {
+        monthly: { price: "0", currency: "€", original: null, discount: null, note: "Für immer kostenlos" },
+        yearly: { price: "0", currency: "€", original: null, discount: null, note: "Für immer kostenlos" }
+      },
       features: [
-        "3 KI-Vertragsanalysen (einmalig)",
-        "Verträge hochladen & ansehen",
-        "Kalender & Fristen (nur Ansicht)",
-        "Legal Pulse Feed (nur Ansicht)",
+        "3 KI-Vertragsanalysen",
+        "Verträge hochladen & speichern",
+        "Kalender & Fristen (Ansicht)",
+        "Legal Pulse Feed",
         "Community Support",
       ],
       limitations: [
-        "Keine Optimierung oder Vergleich",
-        "Keine digitalen Signaturen",
-        "Keine Email-Erinnerungen",
-        "Keine KI-Vertragserstellung",
+        "Keine Optimierung",
+        "Keine Signaturen",
       ],
-      color: "#0080FF",
       buttonText: "Kostenlos starten",
-      buttonLink: "/register",
-      buttonVariant: "outline" as const,
-      popular: false
+      checkoutPlan: null, // Link to register
+      popular: false,
+      highlight: false
     },
     {
+      id: "business",
       title: "Business",
+      subtitle: "Für Profis & Teams",
       icon: <Zap size={22} />,
-      description: "Vollwertig mit Limits - für Freelancer",
-      price: "19€",
-      originalPrice: "29€",
-      discount: "33%",
-      period: "pro Monat",
-      billing: "",
+      pricing: {
+        monthly: { price: "19", currency: "€", original: "29", discount: "33%", note: "/Monat" },
+        yearly: { price: "15", currency: "€", original: "29", discount: "45%", note: "/Monat", yearlyTotal: "190€/Jahr", saving: "Sie sparen 158€" }
+      },
       features: [
         "25 KI-Analysen pro Monat",
         "15 Optimierungen & 20 Vergleiche",
-        "50 KI-Chat Fragen pro Monat",
-        "10 KI-Vertragserstellungen",
         "Unbegrenzte digitale Signaturen",
-        "Email-Erinnerungen & Smart Folders",
-        "Legal Pulse mit Benachrichtigungen",
+        "Email-Erinnerungen & Alerts",
         "Priority Support (24h)",
       ],
       limitations: null,
-      color: "#2D7FF9",
-      buttonText: "Zum Angebot",
-      buttonLink: "/pricing",
-      buttonVariant: "filled" as const,
-      popular: true
+      buttonText: "Jetzt upgraden",
+      checkoutPlan: "business", // Stripe checkout
+      popular: false,
+      highlight: false
     },
     {
+      id: "enterprise",
       title: "Enterprise",
-      icon: <Star size={22} />,
-      description: "Unbegrenzt + Profi-Features",
-      price: "29€",
-      originalPrice: "39€",
-      discount: "25%",
-      period: "pro Monat",
-      billing: "",
+      subtitle: "Für Unternehmen",
+      icon: <Crown size={22} />,
+      pricing: {
+        monthly: { price: "29", currency: "€", original: "39", discount: "25%", note: "/Monat" },
+        yearly: { price: "24", currency: "€", original: "39", discount: "38%", note: "/Monat", yearlyTotal: "290€/Jahr", saving: "Sie sparen 178€" }
+      },
       features: [
         "Unbegrenzte Analysen & Optimierungen",
-        "Unbegrenzter KI-Chat & Erstellung",
+        "Kalender-Synchronisierung (Google/Outlook)",
+        "Automatische Fristenwarnungen",
         "White-Label PDF-Export",
-        "Team-Management (bis 10 User)",
-        "Bulk-Operationen & Excel-Export",
-        "Custom Templates & API-Zugang",
-        "Priority Processing",
-        "Persönliches Onboarding",
+        "API-Zugang & Custom Templates",
       ],
       limitations: null,
-      color: "#0062E0",
-      buttonText: "Zum Angebot",
-      buttonLink: "/pricing",
-      buttonVariant: "gradient" as const,
-      popular: false
+      buttonText: "Enterprise wählen",
+      checkoutPlan: "premium", // Stripe checkout (premium = enterprise)
+      popular: true,
+      highlight: true,
+      badge: "Meist gewählt"
     },
   ];
 
-  return (
-    <div className={styles.plansContainer}>
-      <div className={styles.plans} ref={plansRef}>
-        {plans.map((plan, index) => (
-          <div key={index} className={styles.cardWrapper}>
-            <div className={`${styles.card} ${plan.popular ? styles.popularCard : ''}`}>
-              {plan.popular && (
-                <div className={styles.popularBadge} style={{ background: plan.color }}>
-                  Beliebt
-                </div>
-              )}
+  const currentPricing = (plan: typeof plans[0]) => plan.pricing[billingPeriod];
 
-              <div className={styles.cardHeader}>
-                <div
-                  className={styles.iconWrapper}
-                  style={{
-                    color: plan.color,
-                    background: `${plan.color}12`
-                  }}
-                >
+  return (
+    <div className="hp-section">
+      {/* Billing Toggle - Pill Style */}
+      <div className="hp-toggle-wrapper">
+        <div className="hp-toggle">
+          <button
+            className={`hp-toggle-btn ${billingPeriod === 'monthly' ? 'active' : ''}`}
+            onClick={() => setBillingPeriod('monthly')}
+          >
+            Monatlich
+          </button>
+          <button
+            className={`hp-toggle-btn ${billingPeriod === 'yearly' ? 'active' : ''}`}
+            onClick={() => setBillingPeriod('yearly')}
+          >
+            Jährlich
+            <span className="hp-save-badge">-45%</span>
+          </button>
+          <div className={`hp-toggle-slider ${billingPeriod === 'yearly' ? 'yearly' : ''}`}></div>
+        </div>
+        {billingPeriod === 'yearly' && (
+          <p className="hp-yearly-hint">
+            <TrendingUp size={14} />
+            10 Monate zahlen, 12 nutzen
+          </p>
+        )}
+      </div>
+
+      {/* Pricing Cards */}
+      <div className="hp-cards">
+        {plans.map((plan) => (
+          <div
+            key={plan.id}
+            className={`hp-card ${plan.highlight ? 'hp-card-highlight' : ''}`}
+          >
+            {/* Badge for Popular */}
+            {plan.badge && (
+              <div className="hp-badge">
+                <span className="hp-badge-dot"></span>
+                {plan.badge}
+              </div>
+            )}
+
+            {/* Card Content */}
+            <div className="hp-card-inner">
+              {/* Header */}
+              <div className="hp-header">
+                <div className={`hp-icon ${plan.highlight ? 'hp-icon-light' : ''}`}>
                   {plan.icon}
                 </div>
-                <h2 className={styles.planTitle}>{plan.title}</h2>
-                <p className={styles.planDescription}>{plan.description}</p>
-
-                <div className={styles.priceContainer}>
-                  {plan.discount && (
-                    <div className={styles.saleBadge}>
-                      {plan.discount} RABATT
-                    </div>
-                  )}
-
-                  {plan.originalPrice && (
-                    <span className={styles.originalPrice}>
-                      {plan.originalPrice}
-                    </span>
-                  )}
-
-                  <p className={styles.price} style={{ color: plan.popular ? plan.color : undefined }}>
-                    {plan.price}
-                  </p>
-
-                  {plan.period && (
-                    <div className={styles.period}>
-                      <span>{plan.period}</span>
-                    </div>
-                  )}
-
-                  {plan.billing && (
-                    <div className={styles.period}>
-                      <span>{plan.billing}</span>
-                    </div>
-                  )}
+                <div className="hp-titles">
+                  <h3 className="hp-title">{plan.title}</h3>
+                  <p className="hp-subtitle">{plan.subtitle}</p>
                 </div>
               </div>
 
-              <div className={styles.divider}></div>
+              {/* Price Block */}
+              <div className="hp-price-block">
+                {currentPricing(plan).discount && (
+                  <div className="hp-discount">
+                    <span className="hp-discount-tag">{currentPricing(plan).discount} RABATT</span>
+                  </div>
+                )}
 
-              <div className={styles.cardContent}>
-                <ul className={styles.features}>
-                  {plan.features.map((feature, i) => (
-                    <li key={i}>
-                      <CheckCircle
-                        size={16}
-                        className={styles.featureIcon}
-                        style={{ color: plan.color }}
-                      />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
+                <div className="hp-price-row">
+                  {currentPricing(plan).original && (
+                    <span className="hp-price-original">{currentPricing(plan).original}€</span>
+                  )}
+                  <span className="hp-price-current">
+                    {currentPricing(plan).price}
+                    <span className="hp-price-currency">{currentPricing(plan).currency}</span>
+                  </span>
+                  <span className="hp-price-period">{currentPricing(plan).note}</span>
+                </div>
 
-                {plan.limitations && (
-                  <ul className={styles.limitations}>
-                    {plan.limitations.map((limitation, i) => (
-                      <li key={i}>
-                        <X size={16} className={styles.limitationIcon} />
-                        <span>{limitation}</span>
-                      </li>
-                    ))}
-                  </ul>
+                {billingPeriod === 'yearly' && (currentPricing(plan) as any).saving && (
+                  <div className="hp-saving-info">
+                    <span className="hp-saving-text">{(currentPricing(plan) as any).saving}</span>
+                  </div>
                 )}
               </div>
 
-              <div className={styles.buttonBox}>
-                {plan.buttonVariant === 'outline' && (
-                  <Link
-                    to={plan.buttonLink}
-                    className={styles.btnOutline}
-                    style={{
-                      borderColor: plan.color,
-                      color: plan.color
-                    }}
-                  >
-                    {plan.buttonText}
-                  </Link>
-                )}
-                {plan.buttonVariant === 'filled' && (
-                  <Link
-                    to={plan.buttonLink}
-                    className={styles.btnFilled}
-                    style={{
-                      backgroundColor: plan.color,
-                      boxShadow: `0 8px 20px ${plan.color}40`
-                    }}
-                  >
-                    {plan.buttonText}
-                  </Link>
-                )}
-                {plan.buttonVariant === 'gradient' && (
-                  <Link
-                    to={plan.buttonLink}
-                    className={styles.btnGradient}
-                    style={{
-                      background: `linear-gradient(135deg, ${plan.color} 0%, ${plan.color}BB 100%)`,
-                      boxShadow: `0 8px 25px ${plan.color}50`
-                    }}
-                  >
-                    {plan.buttonText}
-                  </Link>
-                )}
-              </div>
+              {/* Divider */}
+              <div className="hp-divider"></div>
+
+              {/* Features */}
+              <ul className="hp-features">
+                {plan.features.map((feature, i) => (
+                  <li key={i} className="hp-feature">
+                    <Check size={18} className="hp-check" />
+                    <span>{feature}</span>
+                  </li>
+                ))}
+                {plan.limitations?.map((limitation, i) => (
+                  <li key={`lim-${i}`} className="hp-limitation">
+                    <X size={18} className="hp-x" />
+                    <span>{limitation}</span>
+                  </li>
+                ))}
+              </ul>
+
+              {/* Button - Link for free, Checkout for paid plans */}
+              {plan.checkoutPlan ? (
+                <button
+                  onClick={() => startCheckout(plan.checkoutPlan!)}
+                  disabled={loading}
+                  className="hp-button hp-btn-primary"
+                >
+                  {loadingPlan === plan.checkoutPlan ? (
+                    <>
+                      <span className="hp-spinner"></span>
+                      Lade...
+                    </>
+                  ) : (
+                    <>
+                      {plan.buttonText}
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                      </svg>
+                    </>
+                  )}
+                </button>
+              ) : (
+                <Link
+                  to="/register"
+                  className="hp-button hp-btn-primary"
+                >
+                  {plan.buttonText}
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                  </svg>
+                </Link>
+              )}
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Trust Bar */}
+      <div className="hp-trust">
+        <div className="hp-trust-items">
+          <div className="hp-trust-item">
+            <Shield size={18} />
+            <span>14-Tage-Geld-zurück-Garantie</span>
+          </div>
+          <div className="hp-trust-divider"></div>
+          <div className="hp-trust-item">
+            <Check size={18} />
+            <span>Jederzeit kündbar</span>
+          </div>
+          <div className="hp-trust-divider"></div>
+          <div className="hp-trust-item">
+            <Clock size={18} />
+            <span>Sofort einsatzbereit</span>
+          </div>
+        </div>
       </div>
     </div>
   );
