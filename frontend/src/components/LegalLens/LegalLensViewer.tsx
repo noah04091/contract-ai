@@ -158,9 +158,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   // Highlight vom vorherigen Element entfernen
   const clearHighlight = useCallback(() => {
     if (highlightedElementRef.current) {
-      highlightedElementRef.current.style.backgroundColor = '';
-      highlightedElementRef.current.style.borderRadius = '';
-      highlightedElementRef.current.style.boxShadow = '';
+      highlightedElementRef.current.classList.remove('legal-lens-highlight');
       highlightedElementRef.current = null;
     }
   }, []);
@@ -181,10 +179,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       // Vorherige Markierung entfernen
       clearHighlight();
 
-      // Neues Element gelb markieren (Textmarker-Effekt)
-      target.style.backgroundColor = 'rgba(253, 224, 71, 0.7)'; // yellow-300 mit Transparenz
-      target.style.borderRadius = '2px';
-      target.style.boxShadow = '0 0 0 2px rgba(253, 224, 71, 0.5)';
+      // Neues Element gelb markieren mit CSS-Klasse (überschreibt react-pdf Styles)
+      target.classList.add('legal-lens-highlight');
       highlightedElementRef.current = target;
 
       // Finde Klausel die diesen Text enthält
@@ -517,6 +513,33 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
           )}
         </div>
       </main>
+
+      {/* CSS für PDF Text-Highlighting - überschreibt react-pdf Styles */}
+      <style>{`
+        .legal-lens-highlight {
+          background-color: rgba(253, 224, 71, 0.8) !important;
+          border-radius: 3px !important;
+          box-shadow: 0 0 0 3px rgba(253, 224, 71, 0.5) !important;
+          padding: 2px 4px !important;
+          margin: -2px -4px !important;
+          mix-blend-mode: normal !important;
+          color: #000 !important;
+          position: relative !important;
+          z-index: 10 !important;
+        }
+
+        /* Hover-Effekt für PDF-Text */
+        .react-pdf__Page__textContent span:hover {
+          background-color: rgba(59, 130, 246, 0.15) !important;
+          cursor: pointer !important;
+          border-radius: 2px !important;
+        }
+
+        /* Aktiver Text-Klick */
+        .react-pdf__Page__textContent span:active {
+          background-color: rgba(59, 130, 246, 0.3) !important;
+        }
+      `}</style>
     </div>
   );
 };

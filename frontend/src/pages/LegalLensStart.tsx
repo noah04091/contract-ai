@@ -1,11 +1,11 @@
 // 📁 pages/LegalLensStart.tsx
 // Legal Lens Startseite - Vertragsauswahl oder Upload
+// KOMPLETT mit inline Styles - keine CSS Module
 
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Search, Upload, FileText, ChevronRight, Loader, AlertCircle } from 'lucide-react';
-import styles from './LegalLensStart.module.css';
 
 interface Contract {
   _id: string;
@@ -56,7 +56,6 @@ const LegalLensStart = () => {
         }
 
         const data = await response.json();
-        // API gibt { success: true, contracts: [...] } zurück
         const contractsList = Array.isArray(data) ? data : (data.contracts || []);
         setContracts(contractsList);
         setFilteredContracts(contractsList);
@@ -114,7 +113,6 @@ const LegalLensStart = () => {
 
       const data = await response.json();
 
-      // Direkt zu Legal Lens navigieren
       if (data.contractId || data._id) {
         navigate(`/legal-lens/${data.contractId || data._id}`);
       } else {
@@ -163,40 +161,6 @@ const LegalLensStart = () => {
     });
   };
 
-  // Wrapper-Styles für garantierte Zentrierung
-  const pageStyles: React.CSSProperties = {
-    minHeight: '100vh',
-    width: '100%',
-    background: 'linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)',
-    paddingBottom: '2rem',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center'
-  };
-
-  const headerStyles: React.CSSProperties = {
-    width: '100%',
-    background: 'white',
-    borderBottom: '1px solid #e2e8f0',
-    padding: '2rem 1rem',
-    display: 'flex',
-    justifyContent: 'center'
-  };
-
-  const headerContentStyles: React.CSSProperties = {
-    width: '100%',
-    maxWidth: '800px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1.25rem'
-  };
-
-  const mainStyles: React.CSSProperties = {
-    width: '100%',
-    maxWidth: '800px',
-    padding: '2rem 1rem'
-  };
-
   return (
     <>
       <Helmet>
@@ -204,41 +168,64 @@ const LegalLensStart = () => {
         <meta name="description" content="Analysieren Sie Ihre Verträge interaktiv mit KI - Klauseln verstehen, Risiken erkennen, Verhandlungstipps erhalten." />
       </Helmet>
 
-      <div style={pageStyles}>
-        {/* Header */}
-        <header style={headerStyles}>
-          <div style={headerContentStyles}>
+      {/* Page Container - volle Breite, zentrierter Content */}
+      <div style={{
+        minHeight: '100vh',
+        width: '100vw',
+        marginLeft: 'calc(-50vw + 50%)',
+        background: 'linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)',
+        paddingBottom: '2rem',
+        boxSizing: 'border-box'
+      }}>
+        {/* Header - volle Breite mit zentriertem Content */}
+        <header style={{
+          width: '100%',
+          background: 'white',
+          borderBottom: '1px solid #e2e8f0',
+          padding: '2rem 1rem',
+          boxSizing: 'border-box'
+        }}>
+          <div style={{
+            maxWidth: '800px',
+            margin: '0 auto',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1.25rem'
+          }}>
             <div style={{ fontSize: '2.5rem' }}>🔍</div>
             <div>
-              <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b', margin: '0 0 0.25rem' }}>Legal Lens</h1>
-              <p style={{ fontSize: '0.95rem', color: '#64748b', margin: 0 }}>
+              <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b', margin: '0 0 0.25rem', textAlign: 'left' }}>Legal Lens</h1>
+              <p style={{ fontSize: '0.95rem', color: '#64748b', margin: 0, textAlign: 'left' }}>
                 Interaktive Vertragsanalyse mit KI - Klauseln verstehen, Risiken erkennen
               </p>
             </div>
           </div>
         </header>
 
-        <main style={mainStyles}>
+        {/* Main Content - zentriert */}
+        <main style={{
+          maxWidth: '800px',
+          margin: '0 auto',
+          padding: '2rem 1rem',
+          boxSizing: 'border-box'
+        }}>
           {/* Upload Section */}
-          <section className={styles.uploadSection} style={{ marginBottom: '1.5rem' }}>
-            <h2
-              className={styles.sectionTitle}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.625rem',
-                fontSize: '1rem',
-                fontWeight: 600,
-                color: '#1e293b',
-                margin: '0 0 1rem'
-              }}
-            >
+          <section style={{ marginBottom: '1.5rem' }}>
+            <h2 style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.625rem',
+              fontSize: '1rem',
+              fontWeight: 600,
+              color: '#1e293b',
+              margin: '0 0 1rem',
+              textAlign: 'left'
+            }}>
               <Upload size={20} />
               Neuen Vertrag analysieren
             </h2>
 
             <div
-              className={`${styles.dropzone} ${dragActive ? styles.dragActive : ''} ${isUploading ? styles.uploading : ''}`}
               style={{
                 border: dragActive ? '2px solid #3b82f6' : '2px dashed #cbd5e1',
                 borderRadius: '12px',
@@ -246,7 +233,8 @@ const LegalLensStart = () => {
                 textAlign: 'center',
                 cursor: isUploading ? 'not-allowed' : 'pointer',
                 background: dragActive ? '#eff6ff' : 'white',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                opacity: isUploading ? 0.8 : 1
               }}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
@@ -265,24 +253,22 @@ const LegalLensStart = () => {
 
               {isUploading ? (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', color: '#3b82f6', fontWeight: 500 }}>
-                  <Loader size={32} className={styles.spinner} />
+                  <Loader size={32} style={{ animation: 'spin 1s linear infinite' }} />
                   <span>Vertrag wird hochgeladen...</span>
                 </div>
               ) : (
                 <>
-                  <div
-                    style={{
-                      width: '64px',
-                      height: '64px',
-                      margin: '0 auto 1rem',
-                      background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-                      borderRadius: '16px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'white'
-                    }}
-                  >
+                  <div style={{
+                    width: '64px',
+                    height: '64px',
+                    margin: '0 auto 1rem',
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                    borderRadius: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white'
+                  }}>
                     <Upload size={32} />
                   </div>
                   <p style={{ fontSize: '1rem', color: '#374151', margin: '0 0 0.5rem' }}>
@@ -296,7 +282,18 @@ const LegalLensStart = () => {
             </div>
 
             {error && (
-              <div className={styles.errorMessage}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                marginTop: '1rem',
+                padding: '0.75rem 1rem',
+                background: '#fef2f2',
+                border: '1px solid #fecaca',
+                borderRadius: '8px',
+                color: '#dc2626',
+                fontSize: '0.875rem'
+              }}>
                 <AlertCircle size={16} />
                 {error}
               </div>
@@ -304,48 +301,40 @@ const LegalLensStart = () => {
           </section>
 
           {/* Divider */}
-          <div
-            className={styles.divider}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '1rem',
-              margin: '2rem 0'
-            }}
-          >
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1rem',
+            margin: '2rem 0'
+          }}>
             <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
             <span style={{ fontSize: '0.875rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>oder</span>
             <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
           </div>
 
           {/* Contract Selection */}
-          <section
-            className={styles.contractsSection}
-            style={{
-              background: 'white',
-              borderRadius: '12px',
-              padding: '1.5rem',
-              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)'
-            }}
-          >
-            <h2
-              className={styles.sectionTitle}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.625rem',
-                fontSize: '1rem',
-                fontWeight: 600,
-                color: '#1e293b',
-                margin: '0 0 1rem'
-              }}
-            >
+          <section style={{
+            background: 'white',
+            borderRadius: '12px',
+            padding: '1.5rem',
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)'
+          }}>
+            <h2 style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.625rem',
+              fontSize: '1rem',
+              fontWeight: 600,
+              color: '#1e293b',
+              margin: '0 0 1rem',
+              textAlign: 'left'
+            }}>
               <FileText size={20} />
               Bestehenden Vertrag auswählen
             </h2>
 
             {/* Search */}
-            <div className={styles.searchContainer} style={{ position: 'relative', marginBottom: '1rem' }}>
+            <div style={{ position: 'relative', marginBottom: '1rem' }}>
               <Search
                 size={18}
                 style={{
@@ -367,16 +356,17 @@ const LegalLensStart = () => {
                   border: '1px solid #e2e8f0',
                   borderRadius: '8px',
                   fontSize: '0.9rem',
-                  boxSizing: 'border-box'
+                  boxSizing: 'border-box',
+                  outline: 'none'
                 }}
               />
             </div>
 
             {/* Contract List */}
-            <div className={styles.contractList} style={{ maxHeight: '400px', overflowY: 'auto' }}>
+            <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
               {isLoading ? (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem 2rem', color: '#64748b', gap: '1rem' }}>
-                  <Loader size={24} className={styles.spinner} />
+                  <Loader size={24} style={{ animation: 'spin 1s linear infinite' }} />
                   <span>Verträge werden geladen...</span>
                 </div>
               ) : filteredContracts.length === 0 ? (
@@ -398,7 +388,6 @@ const LegalLensStart = () => {
                 filteredContracts.map((contract) => (
                   <button
                     key={contract._id}
-                    className={styles.contractItem}
                     style={{
                       width: '100%',
                       display: 'flex',
@@ -409,23 +398,24 @@ const LegalLensStart = () => {
                       border: 'none',
                       borderBottom: '1px solid #f1f5f9',
                       cursor: 'pointer',
-                      textAlign: 'left'
+                      textAlign: 'left',
+                      transition: 'background 0.2s'
                     }}
                     onClick={() => navigate(`/legal-lens/${contract._id}`)}
+                    onMouseEnter={(e) => e.currentTarget.style.background = '#f8fafc'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                   >
-                    <div
-                      style={{
-                        width: '40px',
-                        height: '40px',
-                        background: '#f1f5f9',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#64748b',
-                        flexShrink: 0
-                      }}
-                    >
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      background: '#f1f5f9',
+                      borderRadius: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#64748b',
+                      flexShrink: 0
+                    }}>
                       <FileText size={20} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -442,19 +432,17 @@ const LegalLensStart = () => {
           </section>
         </main>
 
-        {/* Feature Highlights */}
-        <footer
-          className={styles.features}
-          style={{
-            maxWidth: '800px',
-            margin: '2rem auto 0',
-            padding: '0 2rem',
-            display: 'flex',
-            justifyContent: 'center',
-            gap: '2rem',
-            flexWrap: 'wrap'
-          }}
-        >
+        {/* Feature Highlights - zentriert */}
+        <footer style={{
+          maxWidth: '800px',
+          margin: '2rem auto 0',
+          padding: '0 2rem',
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '2rem',
+          flexWrap: 'wrap',
+          boxSizing: 'border-box'
+        }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: '#64748b' }}>
             <span style={{ fontSize: '1.25rem' }}>👔</span>
             <span>4 Perspektiven</span>
@@ -473,6 +461,13 @@ const LegalLensStart = () => {
           </div>
         </footer>
       </div>
+
+      {/* Spinner Animation */}
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </>
   );
 };
