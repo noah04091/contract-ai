@@ -56,8 +56,10 @@ const LegalLensStart = () => {
         }
 
         const data = await response.json();
-        setContracts(data);
-        setFilteredContracts(data);
+        // API gibt { success: true, contracts: [...] } zurück
+        const contractsList = Array.isArray(data) ? data : (data.contracts || []);
+        setContracts(contractsList);
+        setFilteredContracts(contractsList);
       } catch (err) {
         console.error('[Legal Lens Start] Error:', err);
         setError(err instanceof Error ? err.message : 'Unbekannter Fehler');
