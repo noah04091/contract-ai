@@ -527,6 +527,126 @@ WICHTIG: Antworte IMMER auf Deutsch. Strukturiere deine Antwort so:
   }
 
   /**
+   * BATCH-VORANALYSE: Analysiert ALLE Klauseln in EINEM API-Call
+   * Verwendet GPT-3.5-turbo für Kosteneffizienz (~10x günstiger als GPT-4)
+   *
+   * @param {Array} clauses - Array von Klausel-Objekten mit {id, text}
+   * @param {string} contractContext - Optionaler Kontext (Vertragsname, Typ)
+   * @returns {Promise<Object>} Risiko-Klassifizierung für alle Klauseln
+   */
+  async batchPreAnalyze(clauses, contractContext = '') {
+    console.log(`⚡ Legal Lens: Batch-Voranalyse für ${clauses.length} Klauseln...`);
+
+    if (!clauses || clauses.length === 0) {
+      return { success: true, analyses: [], tokensUsed: 0 };
+    }
+
+    // Klauseln für den Prompt vorbereiten (max 20 auf einmal)
+    const maxClauses = Math.min(clauses.length, 20);
+    const clausesToAnalyze = clauses.slice(0, maxClauses);
+
+    const clauseList = clausesToAnalyze
+      .map((c, i) => `[${i + 1}] ID: ${c.id}\n"${c.text.substring(0, 500)}"`)
+      .join('\n\n');
+
+    const systemPrompt = `Du bist ein erfahrener Vertragsanalyst. Analysiere die folgenden ${clausesToAnalyze.length} Vertragsklauseln SCHNELL und EFFIZIENT.
+
+Für JEDE Klausel gib zurück:
+- riskLevel: "low" | "medium" | "high"
+- riskScore: 0-100
+- summary: Eine KURZE Zusammenfassung (max 15 Wörter)
+- mainRisk: Das HAUPTRISIKO in einem Satz (oder "Kein besonderes Risiko")
+
+Antworte NUR mit diesem JSON-Format:
+{
+  "analyses": [
+    {
+      "clauseId": "ID der Klausel",
+      "riskLevel": "low|medium|high",
+      "riskScore": 0-100,
+      "summary": "Kurze Zusammenfassung",
+      "mainRisk": "Hauptrisiko oder 'Kein besonderes Risiko'"
+    }
+  ],
+  "overallRisk": "low|medium|high",
+  "highRiskCount": 0
+}`;
+
+    try {
+      const startTime = Date.now();
+
+      const response = await this.openai.chat.completions.create({
+        model: 'gpt-3.5-turbo', // 10x günstiger als GPT-4!
+        messages: [
+          { role: 'system', content: systemPrompt },
+          {
+            role: 'user',
+            content: contractContext
+              ? `Vertragskontext: ${contractContext}\n\nKlauseln:\n${clauseList}`
+              : `Klauseln:\n${clauseList}`
+          }
+        ],
+        response_format: { type: 'json_object' },
+        temperature: 0.2,
+        max_tokens: 2000
+      });
+
+      const processingTime = Date.now() - startTime;
+      const result = JSON.parse(response.choices[0].message.content);
+      const tokensUsed = response.usage?.total_tokens || 0;
+
+      console.log(`✅ Batch-Voranalyse abgeschlossen in ${processingTime}ms (${tokensUsed} tokens)`);
+
+      // Für Klauseln die nicht analysiert wurden (> 20), Standard-Werte setzen
+      if (clauses.length > maxClauses) {
+        const remainingClauses = clauses.slice(maxClauses);
+        for (const clause of remainingClauses) {
+          result.analyses.push({
+            clauseId: clause.id,
+            riskLevel: 'medium',
+            riskScore: 50,
+            summary: 'Noch nicht voranalysiert',
+            mainRisk: 'Klicken für Detail-Analyse'
+          });
+        }
+      }
+
+      return {
+        success: true,
+        analyses: result.analyses || [],
+        overallRisk: result.overallRisk || 'medium',
+        highRiskCount: result.highRiskCount || 0,
+        metadata: {
+          model: 'gpt-3.5-turbo',
+          tokensUsed,
+          processingTimeMs: processingTime,
+          analyzedAt: new Date().toISOString(),
+          clausesAnalyzed: clausesToAnalyze.length,
+          totalClauses: clauses.length
+        }
+      };
+
+    } catch (error) {
+      console.error('❌ Batch-Voranalyse Fehler:', error.message);
+
+      // Fallback: Setze Standard-Werte für alle Klauseln
+      return {
+        success: false,
+        error: error.message,
+        analyses: clauses.map(c => ({
+          clauseId: c.id,
+          riskLevel: 'medium',
+          riskScore: 50,
+          summary: 'Analyse fehlgeschlagen',
+          mainRisk: 'Klicken für Detail-Analyse'
+        })),
+        overallRisk: 'medium',
+        highRiskCount: 0
+      };
+    }
+  }
+
+  /**
    * Prüft ob API-Key konfiguriert ist
    */
   isConfigured() {

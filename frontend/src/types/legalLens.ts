@@ -44,6 +44,13 @@ export interface ParsedClause {
     hasDates: boolean;
     hasMoneyReferences: boolean;
   };
+  /** Voranalyse von GPT-3.5 (kosteneffizient beim Laden) */
+  preAnalysis?: {
+    riskLevel: RiskLevel;
+    riskScore: number;
+    summary: string;
+    mainRisk: string;
+  };
 }
 
 /**

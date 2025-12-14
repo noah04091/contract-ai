@@ -93,12 +93,54 @@ router.post('/parse', verifyToken, async (req, res) => {
       });
     }
 
+    // ⚡ BATCH-VORANALYSE: Alle Klauseln mit GPT-3.5 voranalysieren (kosteneffizient!)
+    console.log(`⚡ [Legal Lens] Starte Batch-Voranalyse für ${parseResult.totalClauses} Klauseln...`);
+
+    let preAnalysis = null;
+    try {
+      preAnalysis = await clauseAnalyzer.batchPreAnalyze(
+        parseResult.clauses.map(c => ({ id: c.id, text: c.text })),
+        contract.name || contract.title || ''
+      );
+
+      // Voranalyse-Ergebnisse in Klauseln einmergen
+      if (preAnalysis.success && preAnalysis.analyses) {
+        const analysisMap = new Map(
+          preAnalysis.analyses.map(a => [a.clauseId, a])
+        );
+
+        parseResult.clauses = parseResult.clauses.map(clause => {
+          const analysis = analysisMap.get(clause.id);
+          if (analysis) {
+            return {
+              ...clause,
+              preAnalysis: {
+                riskLevel: analysis.riskLevel,
+                riskScore: analysis.riskScore,
+                summary: analysis.summary,
+                mainRisk: analysis.mainRisk
+              }
+            };
+          }
+          return clause;
+        });
+
+        console.log(`✅ [Legal Lens] Voranalyse abgeschlossen: ${preAnalysis.highRiskCount} High-Risk Klauseln`);
+      }
+    } catch (preAnalysisError) {
+      console.error('⚠️ [Legal Lens] Voranalyse fehlgeschlagen (nicht kritisch):', preAnalysisError.message);
+      // Fortfahren ohne Voranalyse - nicht kritisch
+    }
+
     // Progress erstellen/aktualisieren
     await LegalLensProgress.findOneAndUpdate(
       { userId: new ObjectId(userId), contractId: new ObjectId(contractId) },
       {
         $set: {
           totalClauses: parseResult.totalClauses,
+          overallRisk: preAnalysis?.overallRisk || 'medium',
+          highRiskCount: preAnalysis?.highRiskCount || 0,
+          preAnalyzedAt: preAnalysis?.success ? new Date() : null,
           updatedAt: new Date()
         },
         $setOnInsert: {
@@ -118,7 +160,14 @@ router.post('/parse', verifyToken, async (req, res) => {
       totalClauses: parseResult.totalClauses,
       sections: parseResult.sections,
       riskSummary: parseResult.riskSummary,
-      contractName: contract.name || contract.title || 'Vertrag'
+      contractName: contract.name || contract.title || 'Vertrag',
+      // Neue Felder für Voranalyse
+      preAnalysis: preAnalysis ? {
+        success: preAnalysis.success,
+        overallRisk: preAnalysis.overallRisk,
+        highRiskCount: preAnalysis.highRiskCount,
+        metadata: preAnalysis.metadata
+      } : null
     });
 
   } catch (error) {

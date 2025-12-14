@@ -57,6 +57,9 @@ const ClauseList: React.FC<ClauseListProps> = ({
           const notesCount = getClauseNotes(clause.id);
           const riskLevel = clause.riskIndicators?.level || 'low';
 
+          // Verwende preAnalysis wenn verfügbar, sonst riskIndicators
+          const effectiveRiskLevel = clause.preAnalysis?.riskLevel || riskLevel;
+
           return (
             <div
               key={clause.id}
@@ -71,14 +74,28 @@ const ClauseList: React.FC<ClauseListProps> = ({
                   {clause.number || `#${clause.id.slice(-4)}`}
                   {clause.title && ` - ${clause.title}`}
                 </span>
-                <span className={`${styles.clauseRisk} ${styles[riskLevel]}`}>
-                  {getRiskEmoji(riskLevel)} {RISK_LABELS[riskLevel]}
+                <span className={`${styles.clauseRisk} ${styles[effectiveRiskLevel]}`}>
+                  {getRiskEmoji(effectiveRiskLevel)} {RISK_LABELS[effectiveRiskLevel]}
                 </span>
               </div>
 
               <p className={styles.clauseText}>
                 {clause.text}
               </p>
+
+              {/* Voranalyse-Info anzeigen wenn verfügbar */}
+              {clause.preAnalysis && (
+                <div className={styles.preAnalysisInfo}>
+                  <span className={styles.preAnalysisSummary}>
+                    {clause.preAnalysis.summary}
+                  </span>
+                  {clause.preAnalysis.mainRisk && clause.preAnalysis.mainRisk !== 'Kein besonderes Risiko' && (
+                    <span className={styles.preAnalysisRisk}>
+                      ⚠️ {clause.preAnalysis.mainRisk}
+                    </span>
+                  )}
+                </div>
+              )}
 
               {(isBookmarked || notesCount > 0 || isReviewed) && (
                 <div className={styles.clauseIcons}>

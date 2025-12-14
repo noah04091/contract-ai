@@ -215,6 +215,35 @@
   color: #94a3b8;
 }
 
+/* ===== PRE-ANALYSIS INFO ===== */
+.preAnalysisInfo {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.preAnalysisSummary {
+  font-size: 0.75rem;
+  color: #64748b;
+  line-height: 1.4;
+  font-style: italic;
+}
+
+.preAnalysisRisk {
+  font-size: 0.7rem;
+  color: #dc2626;
+  background: #fef2f2;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  width: fit-content;
+}
+
 /* ===== ANALYSIS PANEL (Right) ===== */
 .analysisPanel {
   width: 480px;
