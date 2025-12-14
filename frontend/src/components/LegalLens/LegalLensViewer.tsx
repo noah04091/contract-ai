@@ -170,7 +170,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     }
   }, [viewMode, clearHighlight]);
 
-  // PDF Text Click Handler - Findet passende Klausel und markiert ganze Zeile gelb
+  // PDF Text Click Handler - Findet passende Klausel und markiert ganzen SATZ gelb
   const handlePdfTextClick = (event: React.MouseEvent) => {
     const target = event.target as HTMLElement;
     const textContent = target.closest('.react-pdf__Page__textContent');
@@ -179,38 +179,69 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       // Vorherige Markierung entfernen
       clearHighlight();
 
-      // Finde alle Spans in der gleichen Zeile (ähnliche Y-Position)
-      const targetRect = target.getBoundingClientRect();
-      const targetY = targetRect.top;
-      const tolerance = 5; // Pixel Toleranz für gleiche Zeile
+      // Alle Spans in Dokumentreihenfolge sammeln
+      const allSpans = Array.from(textContent.querySelectorAll('span')) as HTMLElement[];
 
-      const allSpans = textContent.querySelectorAll('span');
-      const lineSpans: HTMLElement[] = [];
-      let lineText = '';
+      // Index des angeklickten Spans finden
+      const clickedIndex = allSpans.indexOf(target);
+      if (clickedIndex === -1) return;
 
-      allSpans.forEach(span => {
-        const spanRect = span.getBoundingClientRect();
-        // Prüfe ob Span in der gleichen Zeile ist (ähnliche Y-Position)
-        if (Math.abs(spanRect.top - targetY) <= tolerance) {
-          lineSpans.push(span as HTMLElement);
-          lineText += (span.textContent || '') + ' ';
+      // Satzgrenzen finden (. ! ? gefolgt von Leerzeichen oder Ende)
+      const sentenceEndRegex = /[.!?](\s|$)/;
+
+      // Rückwärts suchen: Satzanfang finden
+      let startIndex = clickedIndex;
+      for (let i = clickedIndex; i >= 0; i--) {
+
+        // Prüfe ob wir einen Satzanfang gefunden haben
+        if (i === 0) {
+          startIndex = 0;
+          break;
         }
-      });
 
-      // Alle Spans dieser Zeile gelb markieren
-      lineSpans.forEach(span => {
-        span.classList.add('legal-lens-highlight');
-      });
-      highlightedElementsRef.current = lineSpans;
+        // Prüfe ob der vorherige Span mit Satzende endet
+        const prevText = allSpans[i - 1].textContent || '';
+        if (sentenceEndRegex.test(prevText)) {
+          startIndex = i;
+          break;
+        }
+      }
+
+      // Vorwärts suchen: Satzende finden
+      let endIndex = clickedIndex;
+      for (let i = clickedIndex; i < allSpans.length; i++) {
+        const spanText = allSpans[i].textContent || '';
+        endIndex = i;
+
+        // Prüfe ob dieser Span ein Satzende enthält
+        if (sentenceEndRegex.test(spanText)) {
+          break;
+        }
+
+        // Wenn wir am Ende sind
+        if (i === allSpans.length - 1) {
+          break;
+        }
+      }
+
+      // Alle Spans des Satzes markieren
+      const sentenceSpans: HTMLElement[] = [];
+      let sentenceText = '';
+      for (let i = startIndex; i <= endIndex; i++) {
+        sentenceSpans.push(allSpans[i]);
+        allSpans[i].classList.add('legal-lens-highlight');
+        sentenceText += (allSpans[i].textContent || '') + ' ';
+      }
+      highlightedElementsRef.current = sentenceSpans;
 
       // Finde Klausel die diesen Text enthält
       const matchingClause = clauses.find(clause => {
         const clauseTextLower = clause.text.toLowerCase();
-        const lineTextLower = lineText.toLowerCase().trim();
-        return clauseTextLower.includes(lineTextLower) ||
-               lineTextLower.includes(clauseTextLower.substring(0, 50)) ||
+        const sentenceTextLower = sentenceText.toLowerCase().trim();
+        return clauseTextLower.includes(sentenceTextLower) ||
+               sentenceTextLower.includes(clauseTextLower.substring(0, 50)) ||
                clause.text.toLowerCase().split(' ').some(word =>
-                 word.length > 4 && lineTextLower.includes(word)
+                 word.length > 4 && sentenceTextLower.includes(word)
                );
       });
 
