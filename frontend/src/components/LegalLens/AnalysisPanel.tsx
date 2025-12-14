@@ -149,15 +149,18 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
     return null;
   }
 
-  const perspectiveData = analysis.perspectives?.[currentPerspective];
+  // Die Analyse kann in zwei Formaten kommen:
+  // 1. Direkt von der API: analysis enthält die Perspektive-Daten direkt
+  // 2. Aus dem Cache: analysis.perspectives[currentPerspective]
+  const perspectiveData = analysis.perspectives?.[currentPerspective] || analysis;
 
   // Extrahiere die wichtigsten Felder (können auf verschiedenen Ebenen sein)
   const actionLevel: ActionLevel = perspectiveData?.actionLevel || analysis.actionLevel || 'negotiate';
   const actionReason = perspectiveData?.actionReason || analysis.actionReason || '';
   const worstCase = perspectiveData?.worstCase || analysis.worstCase;
   const betterAlternative = perspectiveData?.betterAlternative || analysis.betterAlternative;
-  const marketComparison = perspectiveData?.marketComparison;
-  const riskAssessment = perspectiveData?.riskAssessment;
+  const marketComparison = perspectiveData?.marketComparison || (analysis as any).marketComparison;
+  const riskAssessment = perspectiveData?.riskAssessment || (analysis as any).riskAssessment;
 
   const actionInfo = ACTION_LABELS[actionLevel] || ACTION_LABELS.negotiate;
 
@@ -421,7 +424,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
           </div>
           {expandedSections.has('risks') && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {riskAssessment.reasons.map((reason, idx) => (
+              {riskAssessment.reasons.map((reason: string, idx: number) => (
                 <div
                   key={idx}
                   style={{

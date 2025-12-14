@@ -1,11 +1,110 @@
 const mongoose = require("mongoose");
 
 /**
- * ClauseAnalysis Model
+ * ClauseAnalysis Model - UPDATED für Legal Lens v2
  *
  * Speichert die KI-Analyse einzelner Vertragsklauseln für Legal Lens.
  * Jede Klausel kann aus verschiedenen Perspektiven analysiert werden.
  */
+
+// Sub-Schema für Konsequenzen (jetzt als Objekte statt Strings)
+const consequenceSchema = new mongoose.Schema({
+  scenario: String,
+  probability: {
+    type: String,
+    enum: ["low", "medium", "high", "unlikely", "possible", "likely"]
+  },
+  impact: String
+}, { _id: false });
+
+// Sub-Schema für Worst-Case Szenario
+const worstCaseSchema = new mongoose.Schema({
+  scenario: String,
+  financialRisk: String,
+  timeRisk: String,
+  probability: {
+    type: String,
+    enum: ["unlikely", "possible", "likely", "low", "medium", "high"]
+  }
+}, { _id: false });
+
+// Sub-Schema für bessere Alternative
+const betterAlternativeSchema = new mongoose.Schema({
+  text: String,
+  whyBetter: String,
+  howToAsk: String
+}, { _id: false });
+
+// Sub-Schema für Marktvergleich
+const marketComparisonSchema = new mongoose.Schema({
+  isStandard: Boolean,
+  marketRange: String,
+  deviation: String,
+  industryNorm: String
+}, { _id: false });
+
+// Sub-Schema für Perspektive-Analyse
+const perspectiveAnalysisSchema = new mongoose.Schema({
+  // NEU: Action Level (accept/negotiate/reject)
+  actionLevel: {
+    type: String,
+    enum: ["accept", "negotiate", "reject"]
+  },
+  actionReason: String,
+
+  // Erklärung (erweitert)
+  explanation: {
+    simple: String,
+    detailed: String,
+    whatItMeansForYou: String  // NEU
+  },
+
+  // Risiko-Bewertung mit Gründen
+  riskAssessment: {
+    level: {
+      type: String,
+      enum: ["low", "medium", "high"]
+    },
+    score: {
+      type: Number,
+      min: 0,
+      max: 100
+    },
+    reasons: [String]
+  },
+
+  // NEU: Worst-Case Szenario
+  worstCase: worstCaseSchema,
+
+  // Impact (erweitert)
+  impact: {
+    financial: String,
+    legal: String,
+    operational: String,
+    negotiationPower: {
+      type: Number,
+      min: 0,
+      max: 100
+    }
+  },
+
+  // Konsequenzen (jetzt als Objekte)
+  consequences: [consequenceSchema],
+
+  // Empfehlung
+  recommendation: String,
+
+  // NEU: Bessere Alternative
+  betterAlternative: betterAlternativeSchema,
+
+  // Marktvergleich
+  marketComparison: marketComparisonSchema,
+
+  // Wann analysiert
+  analyzedAt: Date
+}, { _id: false });
+
+// Hauptschema
 const clauseAnalysisSchema = new mongoose.Schema({
   // Referenzen
   contractId: {
@@ -45,7 +144,7 @@ const clauseAnalysisSchema = new mongoose.Schema({
     paragraph: Number
   },
 
-  // Risiko-Bewertung (Basis)
+  // Risiko-Bewertung (Basis - Top-Level)
   riskLevel: {
     type: String,
     enum: ["low", "medium", "high"],
@@ -59,79 +158,18 @@ const clauseAnalysisSchema = new mongoose.Schema({
   },
   riskKeywords: [String],
 
-  // Analysen pro Perspektive
+  // NEU: Top-Level Action für schnellen Zugriff
+  actionLevel: {
+    type: String,
+    enum: ["accept", "negotiate", "reject"]
+  },
+
+  // Analysen pro Perspektive (alle mit gleichem Schema)
   perspectives: {
-    // Aus Sicht des Auftraggebers (Kunde)
-    contractor: {
-      explanation: {
-        simple: String,
-        detailed: String
-      },
-      impact: {
-        financial: String,
-        legal: String,
-        operational: String
-      },
-      consequences: [String],
-      recommendation: String,
-      analyzedAt: Date
-    },
-
-    // Aus Sicht des Auftragnehmers (Anbieter)
-    client: {
-      explanation: {
-        simple: String,
-        detailed: String
-      },
-      impact: {
-        financial: String,
-        legal: String,
-        operational: String
-      },
-      consequences: [String],
-      recommendation: String,
-      analyzedAt: Date
-    },
-
-    // Marktübliche/Neutrale Sicht
-    neutral: {
-      explanation: {
-        simple: String,
-        detailed: String
-      },
-      impact: {
-        financial: String,
-        legal: String,
-        operational: String
-      },
-      consequences: [String],
-      recommendation: String,
-      marketComparison: {
-        isStandard: Boolean,
-        marketRange: String,
-        deviation: String,
-        industryNorm: String
-      },
-      analyzedAt: Date
-    },
-
-    // Worst-Case Auslegung
-    worstCase: {
-      explanation: {
-        simple: String,
-        detailed: String
-      },
-      impact: {
-        financial: String,
-        legal: String,
-        operational: String
-      },
-      consequences: [String],
-      recommendation: String,
-      worstCaseScenario: String,
-      probabilityAssessment: String,
-      analyzedAt: Date
-    }
+    contractor: perspectiveAnalysisSchema,
+    client: perspectiveAnalysisSchema,
+    neutral: perspectiveAnalysisSchema,
+    worstCase: perspectiveAnalysisSchema
   },
 
   // Alternative Formulierungen
@@ -162,14 +200,8 @@ const clauseAnalysisSchema = new mongoose.Schema({
     }
   },
 
-  // Marktvergleich
-  marketComparison: {
-    isStandard: Boolean,
-    marketRange: String,
-    deviation: String,
-    percentile: Number,
-    industrySpecific: String
-  },
+  // Marktvergleich (Top-Level)
+  marketComparison: marketComparisonSchema,
 
   // Chat-Verlauf für diese Klausel
   chatHistory: [{
@@ -191,7 +223,7 @@ const clauseAnalysisSchema = new mongoose.Schema({
   // Meta-Informationen
   version: {
     type: Number,
-    default: 1
+    default: 2  // Version 2 für neues Schema
   },
   aiModel: {
     type: String,
@@ -209,12 +241,16 @@ const clauseAnalysisSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
+}, {
+  // Mongoose-Optionen: Erlaube flexible Schemas
+  strict: false  // Erlaubt zusätzliche Felder die nicht im Schema sind
 });
 
 // Compound Index für schnelle Lookups
 clauseAnalysisSchema.index({ contractId: 1, clauseId: 1 }, { unique: true });
 clauseAnalysisSchema.index({ contractId: 1, riskLevel: 1 });
 clauseAnalysisSchema.index({ clauseTextHash: 1 });
+clauseAnalysisSchema.index({ contractId: 1, actionLevel: 1 });
 
 // Pre-save Hook für updatedAt
 clauseAnalysisSchema.pre("save", function(next) {
@@ -254,6 +290,13 @@ clauseAnalysisSchema.statics.findHighRiskClauses = function(contractId) {
     contractId,
     riskLevel: "high"
   }).sort({ riskScore: -1 });
+};
+
+clauseAnalysisSchema.statics.findDealbreakers = function(contractId) {
+  return this.find({
+    contractId,
+    actionLevel: "reject"
+  });
 };
 
 clauseAnalysisSchema.statics.getOrCreate = async function(contractId, userId, clauseId, clauseText) {

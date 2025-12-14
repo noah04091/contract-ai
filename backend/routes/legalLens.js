@@ -262,31 +262,129 @@ router.post(
         });
       }
 
-      // In Datenbank speichern
-      await ClauseAnalysis.findOneAndUpdate(
-        { contractId: new ObjectId(contractId), clauseId },
-        {
-          $set: {
-            userId: new ObjectId(userId),
-            clauseText,
-            [`perspectives.${perspective}`]: {
-              ...result.analysis,
-              analyzedAt: new Date()
-            },
-            updatedAt: new Date()
-          },
-          $setOnInsert: {
-            createdAt: new Date()
+      // GPT-Antwort transformieren für MongoDB-Kompatibilität
+      const transformAnalysis = (analysis) => {
+        const transformed = { ...analysis };
+
+        // Konsequenzen: Stelle sicher, dass es ein Array von Objekten ist
+        if (transformed.consequences) {
+          if (typeof transformed.consequences === 'string') {
+            try {
+              transformed.consequences = JSON.parse(transformed.consequences);
+            } catch {
+              transformed.consequences = [{ scenario: transformed.consequences, probability: 'medium', impact: '' }];
+            }
           }
-        },
-        { upsert: true }
-      );
+          // Stelle sicher, dass jedes Element ein Objekt ist
+          transformed.consequences = transformed.consequences.map(c => {
+            if (typeof c === 'string') {
+              return { scenario: c, probability: 'medium', impact: '' };
+            }
+            return {
+              scenario: c.scenario || c.text || String(c),
+              probability: c.probability || 'medium',
+              impact: c.impact || ''
+            };
+          });
+        }
+
+        // Explanation: Mapping von GPT-Feldern
+        if (transformed.explanation) {
+          transformed.explanation = {
+            simple: transformed.explanation.simple || transformed.explanation.summary || '',
+            detailed: transformed.explanation.detailed || '',
+            whatItMeansForYou: transformed.explanation.whatItMeansForYou || ''
+          };
+        }
+
+        // RiskAssessment: Aus GPT-Format
+        if (transformed.riskAssessment) {
+          transformed.riskAssessment = {
+            level: transformed.riskAssessment.level || 'medium',
+            score: typeof transformed.riskAssessment.score === 'number' ? transformed.riskAssessment.score : 50,
+            reasons: Array.isArray(transformed.riskAssessment.reasons) ? transformed.riskAssessment.reasons : []
+          };
+        }
+
+        // WorstCase: Sicherstellen dass alle Felder da sind
+        if (transformed.worstCase) {
+          transformed.worstCase = {
+            scenario: transformed.worstCase.scenario || '',
+            financialRisk: transformed.worstCase.financialRisk || 'Nicht bezifferbar',
+            timeRisk: transformed.worstCase.timeRisk || 'Keine Angabe',
+            probability: transformed.worstCase.probability || 'possible'
+          };
+        }
+
+        // Impact: Sicherstellen dass negotiationPower eine Zahl ist
+        if (transformed.impact) {
+          transformed.impact = {
+            financial: transformed.impact.financial || '',
+            legal: transformed.impact.legal || '',
+            operational: transformed.impact.operational || '',
+            negotiationPower: typeof transformed.impact.negotiationPower === 'number'
+              ? transformed.impact.negotiationPower
+              : 50
+          };
+        }
+
+        // BetterAlternative
+        if (transformed.betterAlternative) {
+          transformed.betterAlternative = {
+            text: transformed.betterAlternative.text || '',
+            whyBetter: transformed.betterAlternative.whyBetter || '',
+            howToAsk: transformed.betterAlternative.howToAsk || ''
+          };
+        }
+
+        // MarketComparison
+        if (transformed.marketComparison) {
+          transformed.marketComparison = {
+            isStandard: Boolean(transformed.marketComparison.isStandard),
+            marketRange: transformed.marketComparison.marketRange || '',
+            deviation: transformed.marketComparison.deviation || ''
+          };
+        }
+
+        return transformed;
+      };
+
+      const transformedAnalysis = transformAnalysis(result.analysis);
+
+      // In Datenbank speichern
+      try {
+        await ClauseAnalysis.findOneAndUpdate(
+          { contractId: new ObjectId(contractId), clauseId },
+          {
+            $set: {
+              userId: new ObjectId(userId),
+              clauseText,
+              riskLevel: transformedAnalysis.riskAssessment?.level || 'medium',
+              riskScore: transformedAnalysis.riskAssessment?.score || 50,
+              actionLevel: transformedAnalysis.actionLevel || 'negotiate',
+              [`perspectives.${perspective}`]: {
+                ...transformedAnalysis,
+                analyzedAt: new Date()
+              },
+              updatedAt: new Date()
+            },
+            $setOnInsert: {
+              createdAt: new Date()
+            }
+          },
+          { upsert: true, new: true }
+        );
+        console.log(`✅ [Legal Lens] Analysis saved for ${clauseId}`);
+      } catch (dbError) {
+        console.error('⚠️ [Legal Lens] DB save error (non-critical):', dbError.message);
+        // Nicht abbrechen - Analyse trotzdem zurückgeben
+      }
 
       console.log(`✅ [Legal Lens] Analysis complete for ${clauseId}`);
 
       res.json({
         success: true,
-        analysis: result.analysis,
+        analysis: transformedAnalysis,
         cached: false,
         clauseId,
         perspective,
