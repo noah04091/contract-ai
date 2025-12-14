@@ -170,30 +170,81 @@ const LegalLensStart = () => {
         <meta name="description" content="Analysieren Sie Ihre Verträge interaktiv mit KI - Klauseln verstehen, Risiken erkennen, Verhandlungstipps erhalten." />
       </Helmet>
 
-      <div className={styles.container}>
+      <div
+        className={styles.container}
+        style={{
+          minHeight: '100vh',
+          width: '100%',
+          background: 'linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)',
+          paddingBottom: '2rem'
+        }}
+      >
         {/* Header */}
-        <header className={styles.header}>
-          <div className={styles.headerContent}>
-            <div className={styles.headerIcon}>🔍</div>
+        <header
+          className={styles.header}
+          style={{
+            background: 'white',
+            borderBottom: '1px solid #e2e8f0',
+            padding: '2rem'
+          }}
+        >
+          <div
+            className={styles.headerContent}
+            style={{
+              maxWidth: '800px',
+              margin: '0 auto',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1.25rem'
+            }}
+          >
+            <div className={styles.headerIcon} style={{ fontSize: '2.5rem' }}>🔍</div>
             <div>
-              <h1 className={styles.title}>Legal Lens</h1>
-              <p className={styles.subtitle}>
+              <h1 className={styles.title} style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b', margin: '0 0 0.25rem' }}>Legal Lens</h1>
+              <p className={styles.subtitle} style={{ fontSize: '0.95rem', color: '#64748b', margin: 0 }}>
                 Interaktive Vertragsanalyse mit KI - Klauseln verstehen, Risiken erkennen
               </p>
             </div>
           </div>
         </header>
 
-        <main className={styles.main}>
+        <main
+          className={styles.main}
+          style={{
+            maxWidth: '800px',
+            margin: '0 auto',
+            padding: '2rem'
+          }}
+        >
           {/* Upload Section */}
-          <section className={styles.uploadSection}>
-            <h2 className={styles.sectionTitle}>
+          <section className={styles.uploadSection} style={{ marginBottom: '1.5rem' }}>
+            <h2
+              className={styles.sectionTitle}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.625rem',
+                fontSize: '1rem',
+                fontWeight: 600,
+                color: '#1e293b',
+                margin: '0 0 1rem'
+              }}
+            >
               <Upload size={20} />
               Neuen Vertrag analysieren
             </h2>
 
             <div
               className={`${styles.dropzone} ${dragActive ? styles.dragActive : ''} ${isUploading ? styles.uploading : ''}`}
+              style={{
+                border: dragActive ? '2px solid #3b82f6' : '2px dashed #cbd5e1',
+                borderRadius: '12px',
+                padding: '2.5rem 2rem',
+                textAlign: 'center',
+                cursor: isUploading ? 'not-allowed' : 'pointer',
+                background: dragActive ? '#eff6ff' : 'white',
+                transition: 'all 0.2s ease'
+              }}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
@@ -205,24 +256,36 @@ const LegalLensStart = () => {
                 type="file"
                 accept=".pdf"
                 onChange={handleFileInput}
-                className={styles.fileInput}
+                style={{ display: 'none' }}
                 disabled={isUploading}
               />
 
               {isUploading ? (
-                <div className={styles.uploadingState}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', color: '#3b82f6', fontWeight: 500 }}>
                   <Loader size={32} className={styles.spinner} />
                   <span>Vertrag wird hochgeladen...</span>
                 </div>
               ) : (
                 <>
-                  <div className={styles.dropzoneIcon}>
+                  <div
+                    style={{
+                      width: '64px',
+                      height: '64px',
+                      margin: '0 auto 1rem',
+                      background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                      borderRadius: '16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'white'
+                    }}
+                  >
                     <Upload size={32} />
                   </div>
-                  <p className={styles.dropzoneText}>
-                    PDF hier ablegen oder <span className={styles.browseLink}>durchsuchen</span>
+                  <p style={{ fontSize: '1rem', color: '#374151', margin: '0 0 0.5rem' }}>
+                    PDF hier ablegen oder <span style={{ color: '#3b82f6', fontWeight: 500, textDecoration: 'underline' }}>durchsuchen</span>
                   </p>
-                  <p className={styles.dropzoneHint}>
+                  <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: 0 }}>
                     Der Vertrag wird automatisch analysiert
                   </p>
                 </>
@@ -238,48 +301,93 @@ const LegalLensStart = () => {
           </section>
 
           {/* Divider */}
-          <div className={styles.divider}>
-            <span>oder</span>
+          <div
+            className={styles.divider}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem',
+              margin: '2rem 0'
+            }}
+          >
+            <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
+            <span style={{ fontSize: '0.875rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>oder</span>
+            <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
           </div>
 
           {/* Contract Selection */}
-          <section className={styles.contractsSection}>
-            <h2 className={styles.sectionTitle}>
+          <section
+            className={styles.contractsSection}
+            style={{
+              background: 'white',
+              borderRadius: '12px',
+              padding: '1.5rem',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)'
+            }}
+          >
+            <h2
+              className={styles.sectionTitle}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.625rem',
+                fontSize: '1rem',
+                fontWeight: 600,
+                color: '#1e293b',
+                margin: '0 0 1rem'
+              }}
+            >
               <FileText size={20} />
               Bestehenden Vertrag auswählen
             </h2>
 
             {/* Search */}
-            <div className={styles.searchContainer}>
-              <Search size={18} className={styles.searchIcon} />
+            <div className={styles.searchContainer} style={{ position: 'relative', marginBottom: '1rem' }}>
+              <Search
+                size={18}
+                style={{
+                  position: 'absolute',
+                  left: '1rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#94a3b8'
+                }}
+              />
               <input
                 type="text"
                 placeholder="Vertrag suchen..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={styles.searchInput}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem 1rem 0.75rem 2.75rem',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  fontSize: '0.9rem',
+                  boxSizing: 'border-box'
+                }}
               />
             </div>
 
             {/* Contract List */}
-            <div className={styles.contractList}>
+            <div className={styles.contractList} style={{ maxHeight: '400px', overflowY: 'auto' }}>
               {isLoading ? (
-                <div className={styles.loadingState}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem 2rem', color: '#64748b', gap: '1rem' }}>
                   <Loader size={24} className={styles.spinner} />
                   <span>Verträge werden geladen...</span>
                 </div>
               ) : filteredContracts.length === 0 ? (
-                <div className={styles.emptyState}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem 2rem', color: '#64748b', textAlign: 'center' }}>
                   {contracts.length === 0 ? (
                     <>
                       <FileText size={32} />
-                      <p>Noch keine Verträge vorhanden</p>
-                      <span>Laden Sie oben einen Vertrag hoch</span>
+                      <p style={{ margin: '0.75rem 0 0.25rem', fontWeight: 500, color: '#475569' }}>Noch keine Verträge vorhanden</p>
+                      <span style={{ fontSize: '0.875rem', color: '#94a3b8' }}>Laden Sie oben einen Vertrag hoch</span>
                     </>
                   ) : (
                     <>
                       <Search size={32} />
-                      <p>Keine Treffer für "{searchQuery}"</p>
+                      <p style={{ margin: '0.75rem 0 0.25rem', fontWeight: 500, color: '#475569' }}>Keine Treffer für "{searchQuery}"</p>
                     </>
                   )}
                 </div>
@@ -288,18 +396,42 @@ const LegalLensStart = () => {
                   <button
                     key={contract._id}
                     className={styles.contractItem}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '1rem',
+                      padding: '1rem',
+                      background: 'transparent',
+                      border: 'none',
+                      borderBottom: '1px solid #f1f5f9',
+                      cursor: 'pointer',
+                      textAlign: 'left'
+                    }}
                     onClick={() => navigate(`/legal-lens/${contract._id}`)}
                   >
-                    <div className={styles.contractIcon}>
+                    <div
+                      style={{
+                        width: '40px',
+                        height: '40px',
+                        background: '#f1f5f9',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#64748b',
+                        flexShrink: 0
+                      }}
+                    >
                       <FileText size={20} />
                     </div>
-                    <div className={styles.contractInfo}>
-                      <span className={styles.contractName}>{contract.name}</span>
-                      <span className={styles.contractMeta}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ display: 'block', fontSize: '0.9rem', fontWeight: 500, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{contract.name}</span>
+                      <span style={{ display: 'block', fontSize: '0.8rem', color: '#94a3b8', marginTop: '0.125rem' }}>
                         {contract.analysis?.contractType || 'Vertrag'} • {formatDate(contract.uploadedAt || contract.createdAt)}
                       </span>
                     </div>
-                    <ChevronRight size={18} className={styles.contractArrow} />
+                    <ChevronRight size={18} style={{ color: '#cbd5e1', flexShrink: 0 }} />
                   </button>
                 ))
               )}
@@ -308,21 +440,32 @@ const LegalLensStart = () => {
         </main>
 
         {/* Feature Highlights */}
-        <footer className={styles.features}>
-          <div className={styles.featureItem}>
-            <span className={styles.featureIcon}>👔</span>
+        <footer
+          className={styles.features}
+          style={{
+            maxWidth: '800px',
+            margin: '2rem auto 0',
+            padding: '0 2rem',
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '2rem',
+            flexWrap: 'wrap'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: '#64748b' }}>
+            <span style={{ fontSize: '1.25rem' }}>👔</span>
             <span>4 Perspektiven</span>
           </div>
-          <div className={styles.featureItem}>
-            <span className={styles.featureIcon}>⚖️</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: '#64748b' }}>
+            <span style={{ fontSize: '1.25rem' }}>⚖️</span>
             <span>Risikobewertung</span>
           </div>
-          <div className={styles.featureItem}>
-            <span className={styles.featureIcon}>💡</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: '#64748b' }}>
+            <span style={{ fontSize: '1.25rem' }}>💡</span>
             <span>Alternativen</span>
           </div>
-          <div className={styles.featureItem}>
-            <span className={styles.featureIcon}>🤝</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: '#64748b' }}>
+            <span style={{ fontSize: '1.25rem' }}>🤝</span>
             <span>Verhandlungstipps</span>
           </div>
         </footer>
