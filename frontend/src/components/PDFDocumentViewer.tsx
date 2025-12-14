@@ -94,7 +94,7 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
 
         // Extrahiere NUR signifikante Keywords (Wörter >= 5 Buchstaben)
         const significantKeywords = searchLower
-          .split(/[\s,.:;!?()\[\]"'„"°§€%\d]+/)
+          .split(/[\s,.:;!?()"'„"°§€%\d]+/)
           .filter(word => word.length >= 5 && !stopwords.has(word))
           .slice(0, 8); // Maximal 8 Keywords
 
@@ -222,7 +222,7 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
 
       // Extrahiere NUR signifikante Keywords (Wörter >= 5 Buchstaben)
       const keywords = searchLower
-        .split(/[\s,.:;!?()\[\]"'„"°§€%\d]+/)
+        .split(/[\s,.:;!?()"'„"°§€%\d]+/)
         .filter(word => word.length >= 5 && !stopwords.has(word))
         .slice(0, 8);
 

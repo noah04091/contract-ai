@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { FolderOpen, CheckCircle, Clock } from "lucide-react";
+import { FolderOpen, CheckCircle, Clock, FileText, Shield, Zap, Target } from "lucide-react";
 
 const Vertragsverwaltung: React.FC = () => {
   const { user } = useAuth();
@@ -69,6 +69,21 @@ const Vertragsverwaltung: React.FC = () => {
       </Helmet>
 
       <div className={styles.pageBackground}>
+        {/* Dots Pattern */}
+        <div className={styles.dotsPattern} />
+
+        {/* Floating Decorative Elements */}
+        <div className={styles.floatingElements}>
+          <FolderOpen className={styles.floatingIcon} size={28} />
+          <Shield className={styles.floatingIcon} size={24} />
+          <FileText className={styles.floatingIcon} size={22} />
+          <CheckCircle className={styles.floatingIcon} size={26} />
+          <Target className={styles.floatingIcon} size={20} />
+          <Clock className={styles.floatingIcon} size={24} />
+          <Zap className={styles.floatingIcon} size={22} />
+          <FolderOpen className={styles.floatingIcon} size={20} />
+        </div>
+
         <div className={styles.featureContainer}>
 
         {/* HERO */}
@@ -91,26 +106,20 @@ const Vertragsverwaltung: React.FC = () => {
             </a>
           </div>
 
-          {/* Trust Signals */}
-          <div style={{
-            marginTop: '24px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '24px',
-            flexWrap: 'wrap',
-            fontSize: '14px',
-            color: '#666'
-          }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              🔒 DSGVO-konform
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              🇩🇪 Server in Frankfurt
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              ⚡ Sofort verfügbar
-            </span>
+          {/* Trust Badges */}
+          <div className={styles.trustBadges}>
+            <div className={styles.trustBadge}>
+              <Shield size={16} className={styles.trustBadgeIcon} />
+              <span>DSGVO-konform</span>
+            </div>
+            <div className={styles.trustBadge}>
+              <Target size={16} className={styles.trustBadgeIcon} />
+              <span>Server in Frankfurt</span>
+            </div>
+            <div className={styles.trustBadge}>
+              <Zap size={16} className={styles.trustBadgeIcon} />
+              <span>Sofort verfügbar</span>
+            </div>
           </div>
         </section>
         <div className={styles.contentContainer}>

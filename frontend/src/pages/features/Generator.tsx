@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { FileText, Zap, Shield, PenTool } from "lucide-react";
+import { FileText, Zap, Shield, PenTool, Target, CheckCircle } from "lucide-react";
 
 const Generator: React.FC = () => {
   const { user } = useAuth();
@@ -53,8 +53,23 @@ const Generator: React.FC = () => {
   return (
     <>
       <div className={styles.pageBackground}>
+        {/* Dots Pattern */}
+        <div className={styles.dotsPattern} />
+
+        {/* Floating Decorative Elements */}
+        <div className={styles.floatingElements}>
+          <FileText className={styles.floatingIcon} size={28} />
+          <Shield className={styles.floatingIcon} size={24} />
+          <PenTool className={styles.floatingIcon} size={22} />
+          <CheckCircle className={styles.floatingIcon} size={26} />
+          <Target className={styles.floatingIcon} size={20} />
+          <Zap className={styles.floatingIcon} size={24} />
+          <FileText className={styles.floatingIcon} size={22} />
+          <PenTool className={styles.floatingIcon} size={20} />
+        </div>
+
         <div className={styles.featureContainer}>
-        
+
         {/* HERO */}
         <section className={styles.heroSection}>
           <div className={styles.heroIcon}>
@@ -74,10 +89,20 @@ const Generator: React.FC = () => {
               Wie der Generator arbeitet
             </a>
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginTop: '24px', justifyContent: 'center', fontSize: '14px', color: '#666' }}>
-            <span>📋 Vorgefertigte Templates</span>
-            <span>🎯 Individuell konfigurierbar</span>
-            <span>📄 Sofort einsatzbereit</span>
+          {/* Trust Badges */}
+          <div className={styles.trustBadges}>
+            <div className={styles.trustBadge}>
+              <FileText size={16} className={styles.trustBadgeIcon} />
+              <span>Vorgefertigte Templates</span>
+            </div>
+            <div className={styles.trustBadge}>
+              <Target size={16} className={styles.trustBadgeIcon} />
+              <span>Individuell konfigurierbar</span>
+            </div>
+            <div className={styles.trustBadge}>
+              <Zap size={16} className={styles.trustBadgeIcon} />
+              <span>Sofort einsatzbereit</span>
+            </div>
           </div>
         </section>
 

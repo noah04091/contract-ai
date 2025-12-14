@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { Calendar, Clock, AlertCircle, Mail } from "lucide-react";
+import { Calendar, Clock, AlertCircle, Mail, Shield, CheckCircle } from "lucide-react";
 
 const Fristen: React.FC = () => {
   const { user } = useAuth();
@@ -53,8 +53,23 @@ const Fristen: React.FC = () => {
   return (
     <>
       <div className={styles.pageBackground}>
+        {/* Dots Pattern */}
+        <div className={styles.dotsPattern} />
+
+        {/* Floating Decorative Elements */}
+        <div className={styles.floatingElements}>
+          <Calendar className={styles.floatingIcon} size={28} />
+          <Shield className={styles.floatingIcon} size={24} />
+          <Clock className={styles.floatingIcon} size={22} />
+          <CheckCircle className={styles.floatingIcon} size={26} />
+          <Mail className={styles.floatingIcon} size={20} />
+          <AlertCircle className={styles.floatingIcon} size={24} />
+          <Calendar className={styles.floatingIcon} size={22} />
+          <Clock className={styles.floatingIcon} size={20} />
+        </div>
+
         <div className={styles.featureContainer}>
-        
+
         {/* HERO */}
         <section className={styles.heroSection}>
           <div className={styles.heroIcon}>
@@ -74,10 +89,20 @@ const Fristen: React.FC = () => {
               Mehr über Erinnerungen
             </a>
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginTop: '24px', justifyContent: 'center', fontSize: '14px', color: '#666' }}>
-            <span>📅 Automatische Erkennung</span>
-            <span>📧 E-Mail-Reminder</span>
-            <span>📱 Google/Outlook/iCal</span>
+          {/* Trust Badges */}
+          <div className={styles.trustBadges}>
+            <div className={styles.trustBadge}>
+              <Calendar size={16} className={styles.trustBadgeIcon} />
+              <span>Automatische Erkennung</span>
+            </div>
+            <div className={styles.trustBadge}>
+              <Mail size={16} className={styles.trustBadgeIcon} />
+              <span>E-Mail-Reminder</span>
+            </div>
+            <div className={styles.trustBadge}>
+              <CheckCircle size={16} className={styles.trustBadgeIcon} />
+              <span>Google/Outlook/iCal</span>
+            </div>
           </div>
         </section>
 

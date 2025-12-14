@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { Wrench, Target, CheckCircle, AlertTriangle } from "lucide-react";
+import { Wrench, Target, CheckCircle, AlertTriangle, FileText, Shield, Zap } from "lucide-react";
 
 const Optimierung: React.FC = () => {
   const { user } = useAuth();
@@ -69,8 +69,23 @@ const Optimierung: React.FC = () => {
       </Helmet>
 
       <div className={styles.pageBackground}>
+        {/* Dots Pattern */}
+        <div className={styles.dotsPattern} />
+
+        {/* Floating Decorative Elements */}
+        <div className={styles.floatingElements}>
+          <Wrench className={styles.floatingIcon} size={28} />
+          <Shield className={styles.floatingIcon} size={24} />
+          <FileText className={styles.floatingIcon} size={22} />
+          <CheckCircle className={styles.floatingIcon} size={26} />
+          <Target className={styles.floatingIcon} size={20} />
+          <AlertTriangle className={styles.floatingIcon} size={24} />
+          <Zap className={styles.floatingIcon} size={22} />
+          <Wrench className={styles.floatingIcon} size={20} />
+        </div>
+
         <div className={styles.featureContainer}>
-        
+
         {/* HERO */}
         <section className={styles.heroSection}>
           <div className={styles.heroIcon}>
@@ -91,26 +106,20 @@ const Optimierung: React.FC = () => {
             </a>
           </div>
           
-          {/* Trust Signals */}
-          <div style={{ 
-            marginTop: '24px', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            gap: '24px', 
-            flexWrap: 'wrap',
-            fontSize: '14px',
-            color: '#666'
-          }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              ⚡ Sofortige Verbesserungen
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              🎯 Verhandlungsfertig
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              🇪🇺 DSGVO-konform
-            </span>
+          {/* Trust Badges */}
+          <div className={styles.trustBadges}>
+            <div className={styles.trustBadge}>
+              <Zap size={16} className={styles.trustBadgeIcon} />
+              <span>Sofortige Verbesserungen</span>
+            </div>
+            <div className={styles.trustBadge}>
+              <Target size={16} className={styles.trustBadgeIcon} />
+              <span>Verhandlungsfertig</span>
+            </div>
+            <div className={styles.trustBadge}>
+              <Shield size={16} className={styles.trustBadgeIcon} />
+              <span>DSGVO-konform</span>
+            </div>
           </div>
         </section>
 

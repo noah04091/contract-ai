@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { PenTool, CheckCircle, Mail } from "lucide-react";
+import { PenTool, CheckCircle, Mail, FileText, Shield, Zap } from "lucide-react";
 
 const DigitaleSignatur: React.FC = () => {
   const { user } = useAuth();
@@ -69,6 +69,21 @@ const DigitaleSignatur: React.FC = () => {
       </Helmet>
 
       <div className={styles.pageBackground}>
+        {/* Dots Pattern */}
+        <div className={styles.dotsPattern} />
+
+        {/* Floating Decorative Elements */}
+        <div className={styles.floatingElements}>
+          <PenTool className={styles.floatingIcon} size={28} />
+          <Shield className={styles.floatingIcon} size={24} />
+          <FileText className={styles.floatingIcon} size={22} />
+          <CheckCircle className={styles.floatingIcon} size={26} />
+          <Mail className={styles.floatingIcon} size={20} />
+          <Zap className={styles.floatingIcon} size={24} />
+          <PenTool className={styles.floatingIcon} size={22} />
+          <FileText className={styles.floatingIcon} size={20} />
+        </div>
+
         <div className={styles.featureContainer}>
 
         {/* HERO */}
@@ -91,26 +106,20 @@ const DigitaleSignatur: React.FC = () => {
             </a>
           </div>
 
-          {/* Trust Signals */}
-          <div style={{
-            marginTop: '24px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '24px',
-            flexWrap: 'wrap',
-            fontSize: '14px',
-            color: '#666'
-          }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              🔒 eIDAS-konform
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              📋 Vollständiger Audit Trail
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              ⚡ In Minuten fertig
-            </span>
+          {/* Trust Badges */}
+          <div className={styles.trustBadges}>
+            <div className={styles.trustBadge}>
+              <Shield size={16} className={styles.trustBadgeIcon} />
+              <span>eIDAS-konform</span>
+            </div>
+            <div className={styles.trustBadge}>
+              <FileText size={16} className={styles.trustBadgeIcon} />
+              <span>Vollständiger Audit Trail</span>
+            </div>
+            <div className={styles.trustBadge}>
+              <Zap size={16} className={styles.trustBadgeIcon} />
+              <span>In Minuten fertig</span>
+            </div>
           </div>
         </section>
         <div className={styles.contentContainer}>

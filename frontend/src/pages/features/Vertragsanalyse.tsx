@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { Search, Target, CheckCircle, AlertTriangle } from "lucide-react";
+import { Search, Target, CheckCircle, AlertTriangle, FileText, Shield, Zap, Briefcase, ChevronDown } from "lucide-react";
 
 const Vertragsanalyse: React.FC = () => {
   const { user } = useAuth();
@@ -69,8 +69,23 @@ const Vertragsanalyse: React.FC = () => {
       </Helmet>
 
       <div className={styles.pageBackground}>
+        {/* Dots Pattern */}
+        <div className={styles.dotsPattern} />
+
+        {/* Floating Decorative Elements */}
+        <div className={styles.floatingElements}>
+          <FileText className={styles.floatingIcon} size={28} />
+          <Shield className={styles.floatingIcon} size={24} />
+          <Search className={styles.floatingIcon} size={22} />
+          <CheckCircle className={styles.floatingIcon} size={26} />
+          <Target className={styles.floatingIcon} size={20} />
+          <AlertTriangle className={styles.floatingIcon} size={24} />
+          <Zap className={styles.floatingIcon} size={22} />
+          <Briefcase className={styles.floatingIcon} size={26} />
+        </div>
+
         <div className={styles.featureContainer}>
-        
+
         {/* HERO */}
         <section className={styles.heroSection}>
           <div className={styles.heroIcon}>
@@ -91,26 +106,20 @@ const Vertragsanalyse: React.FC = () => {
             </a>
           </div>
           
-          {/* Trust Signals */}
-          <div style={{ 
-            marginTop: '24px', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            gap: '24px', 
-            flexWrap: 'wrap',
-            fontSize: '14px',
-            color: '#666'
-          }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              ⚡ In 60 Sekunden fertig
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              🎯 98% Genauigkeit
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              🇪🇺 DSGVO-konform
-            </span>
+          {/* Trust Badges */}
+          <div className={styles.trustBadges}>
+            <div className={styles.trustBadge}>
+              <Zap size={16} className={styles.trustBadgeIcon} />
+              <span>In 60 Sekunden</span>
+            </div>
+            <div className={styles.trustBadge}>
+              <Target size={16} className={styles.trustBadgeIcon} />
+              <span>98% Genauigkeit</span>
+            </div>
+            <div className={styles.trustBadge}>
+              <Shield size={16} className={styles.trustBadgeIcon} />
+              <span>DSGVO-konform</span>
+            </div>
           </div>
         </section>
         <div className={styles.contentContainer}>
@@ -219,26 +228,38 @@ const Vertragsanalyse: React.FC = () => {
           {/* USE CASES */}
           <section className={styles.beispielSection}>
             <h2 className={styles.sectionTitle}>Typische Vertragsrisiken – die wir automatisch erkennen</h2>
-            <div style={{ display: 'grid', gap: '20px', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', marginBottom: '40px' }}>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Überlange Kündigungsfristen</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}><strong>Risiko:</strong> 12 Monate Kündigungsfrist als Mieter</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>Analyse:</strong> "Ungewöhnlich lang – schränkt Ihre Flexibilität stark ein."</p>
+            <div className={styles.useCaseGrid}>
+              <div className={styles.useCaseCard}>
+                <div className={styles.useCaseIcon}>
+                  <AlertTriangle size={24} />
+                </div>
+                <h3 className={styles.useCaseTitle}>Überlange Kündigungsfristen</h3>
+                <p className={styles.useCaseChallenge}><strong>Risiko:</strong> 12 Monate Kündigungsfrist als Mieter</p>
+                <p className={styles.useCaseSolution}>→ "Ungewöhnlich lang – schränkt Ihre Flexibilität stark ein."</p>
               </div>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Versteckte Kostenfallen</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}><strong>Risiko:</strong> "Zusätzliche Gebühren nach Ermessen"</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>Analyse:</strong> "Gefahr unbegrenzter Zusatzkosten – verlangen Sie Obergrenze."</p>
+              <div className={styles.useCaseCard}>
+                <div className={styles.useCaseIcon}>
+                  <Briefcase size={24} />
+                </div>
+                <h3 className={styles.useCaseTitle}>Versteckte Kostenfallen</h3>
+                <p className={styles.useCaseChallenge}><strong>Risiko:</strong> "Zusätzliche Gebühren nach Ermessen"</p>
+                <p className={styles.useCaseSolution}>→ "Gefahr unbegrenzter Zusatzkosten – verlangen Sie Obergrenze."</p>
               </div>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Einseitige Haftungsklauseln</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}><strong>Risiko:</strong> "Vollständige Haftung beim Auftragnehmer"</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>Analyse:</strong> "Extrem einseitig – fordern Sie Haftungsbegrenzung."</p>
+              <div className={styles.useCaseCard}>
+                <div className={styles.useCaseIcon}>
+                  <Shield size={24} />
+                </div>
+                <h3 className={styles.useCaseTitle}>Einseitige Haftungsklauseln</h3>
+                <p className={styles.useCaseChallenge}><strong>Risiko:</strong> "Vollständige Haftung beim Auftragnehmer"</p>
+                <p className={styles.useCaseSolution}>→ "Extrem einseitig – fordern Sie Haftungsbegrenzung."</p>
               </div>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Unklare Leistungsbeschreibung</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}><strong>Risiko:</strong> Vage definierte Arbeitszeiten</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>Analyse:</strong> "Streitpotential hoch – konkretisieren Sie die Leistung."</p>
+              <div className={styles.useCaseCard}>
+                <div className={styles.useCaseIcon}>
+                  <FileText size={24} />
+                </div>
+                <h3 className={styles.useCaseTitle}>Unklare Leistungsbeschreibung</h3>
+                <p className={styles.useCaseChallenge}><strong>Risiko:</strong> Vage definierte Arbeitszeiten</p>
+                <p className={styles.useCaseSolution}>→ "Streitpotential hoch – konkretisieren Sie die Leistung."</p>
               </div>
             </div>
             <div className={styles.beispielBox}>
@@ -294,30 +315,48 @@ const Vertragsanalyse: React.FC = () => {
           {/* FAQ */}
           <section className={styles.funktionSection}>
             <h2 className={styles.sectionTitle}>Häufige Fragen</h2>
-            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Ersetzt die Analyse eine Rechtsberatung?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Nein, Contract AI liefert strukturierte Risikoanalysen und Bewertungen. Für komplexe rechtliche Fragen sollten Sie weiterhin einen Anwalt konsultieren.</p>
+            <div className={styles.faqContainer}>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Ersetzt die Analyse eine Rechtsberatung?
+                  <span className={styles.faqIcon}><ChevronDown size={14} /></span>
+                </summary>
+                <p className={styles.faqAnswer}>Nein, Contract AI liefert strukturierte Risikoanalysen und Bewertungen. Für komplexe rechtliche Fragen sollten Sie weiterhin einen Anwalt konsultieren.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Welche Vertragsarten können analysiert werden?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Die meisten Standardverträge: Arbeitsverträge, Mietverträge, Kaufverträge, NDAs, Freelancer-Agreements, SaaS-Verträge, Dienstleistungsverträge und mehr.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Welche Vertragsarten können analysiert werden?
+                  <span className={styles.faqIcon}><ChevronDown size={14} /></span>
+                </summary>
+                <p className={styles.faqAnswer}>Die meisten Standardverträge: Arbeitsverträge, Mietverträge, Kaufverträge, NDAs, Freelancer-Agreements, SaaS-Verträge, Dienstleistungsverträge und mehr.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Wie genau ist die KI-Analyse?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Die KI erreicht eine Erkennungsgenauigkeit von 98% bei der Identifikation problematischer Klauseln. Sie basiert auf tausenden analysierten Verträgen und aktueller Rechtsprechung.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Wie genau ist die KI-Analyse?
+                  <span className={styles.faqIcon}><ChevronDown size={14} /></span>
+                </summary>
+                <p className={styles.faqAnswer}>Die KI erreicht eine Erkennungsgenauigkeit von 98% bei der Identifikation problematischer Klauseln. Sie basiert auf tausenden analysierten Verträgen und aktueller Rechtsprechung.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Werden meine Vertragsdaten gespeichert?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Optional zur Verlaufsanzeige. Sie können Dokumente jederzeit löschen lassen. Verarbeitung erfolgt ausschließlich zur Analyse, keine Weitergabe an Dritte.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Werden meine Vertragsdaten gespeichert?
+                  <span className={styles.faqIcon}><ChevronDown size={14} /></span>
+                </summary>
+                <p className={styles.faqAnswer}>Optional zur Verlaufsanzeige. Sie können Dokumente jederzeit löschen lassen. Verarbeitung erfolgt ausschließlich zur Analyse, keine Weitergabe an Dritte.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Was kostet die Vertragsanalyse?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Im Free-Tier: 3 Analysen pro Monat kostenlos. Premium-Pläne ab 19€/Monat mit unbegrenzten Analysen und erweiterten Features.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Was kostet die Vertragsanalyse?
+                  <span className={styles.faqIcon}><ChevronDown size={14} /></span>
+                </summary>
+                <p className={styles.faqAnswer}>Im Free-Tier: 3 Analysen pro Monat kostenlos. Premium-Pläne ab 19€/Monat mit unbegrenzten Analysen und erweiterten Features.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Wie schnell erhalte ich das Ergebnis?</summary>
-                <p style={{ margin: '0', color: '#666' }}>In der Regel unter 60 Sekunden nach dem Upload. Bei sehr umfangreichen Verträgen kann es bis zu 2 Minuten dauern.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Wie schnell erhalte ich das Ergebnis?
+                  <span className={styles.faqIcon}><ChevronDown size={14} /></span>
+                </summary>
+                <p className={styles.faqAnswer}>In der Regel unter 60 Sekunden nach dem Upload. Bei sehr umfangreichen Verträgen kann es bis zu 2 Minuten dauern.</p>
               </details>
             </div>
           </section>

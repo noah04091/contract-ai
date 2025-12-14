@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { Activity, TrendingUp, AlertTriangle, Bell } from "lucide-react";
+import { Activity, TrendingUp, AlertTriangle, Bell, Shield, CheckCircle } from "lucide-react";
 
 const LegalPulse: React.FC = () => {
   const { user } = useAuth();
@@ -53,8 +53,23 @@ const LegalPulse: React.FC = () => {
   return (
     <>
       <div className={styles.pageBackground}>
+        {/* Dots Pattern */}
+        <div className={styles.dotsPattern} />
+
+        {/* Floating Decorative Elements */}
+        <div className={styles.floatingElements}>
+          <Activity className={styles.floatingIcon} size={28} />
+          <Shield className={styles.floatingIcon} size={24} />
+          <Bell className={styles.floatingIcon} size={22} />
+          <CheckCircle className={styles.floatingIcon} size={26} />
+          <TrendingUp className={styles.floatingIcon} size={20} />
+          <AlertTriangle className={styles.floatingIcon} size={24} />
+          <Activity className={styles.floatingIcon} size={22} />
+          <Bell className={styles.floatingIcon} size={20} />
+        </div>
+
         <div className={styles.featureContainer}>
-        
+
         {/* HERO */}
         <section className={styles.heroSection}>
           <div className={styles.heroIcon}>
@@ -74,10 +89,20 @@ const LegalPulse: React.FC = () => {
               Wie Legal Pulse arbeitet
             </a>
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginTop: '24px', justifyContent: 'center', fontSize: '14px', color: '#666' }}>
-            <span>📊 Regelmäßige Checks</span>
-            <span>🚨 Risiko-Alerts</span>
-            <span>💡 Empfehlungen</span>
+          {/* Trust Badges */}
+          <div className={styles.trustBadges}>
+            <div className={styles.trustBadge}>
+              <Activity size={16} className={styles.trustBadgeIcon} />
+              <span>Regelmäßige Checks</span>
+            </div>
+            <div className={styles.trustBadge}>
+              <AlertTriangle size={16} className={styles.trustBadgeIcon} />
+              <span>Risiko-Alerts</span>
+            </div>
+            <div className={styles.trustBadge}>
+              <TrendingUp size={16} className={styles.trustBadgeIcon} />
+              <span>Empfehlungen</span>
+            </div>
           </div>
         </section>
 

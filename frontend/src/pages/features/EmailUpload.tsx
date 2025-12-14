@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { Mail, CheckCircle } from "lucide-react";
+import { Mail, CheckCircle, FileText, Shield, Zap } from "lucide-react";
 
 const EmailUpload: React.FC = () => {
   const { user } = useAuth();
@@ -69,6 +69,21 @@ const EmailUpload: React.FC = () => {
       </Helmet>
 
       <div className={styles.pageBackground}>
+        {/* Dots Pattern */}
+        <div className={styles.dotsPattern} />
+
+        {/* Floating Decorative Elements */}
+        <div className={styles.floatingElements}>
+          <Mail className={styles.floatingIcon} size={28} />
+          <Shield className={styles.floatingIcon} size={24} />
+          <FileText className={styles.floatingIcon} size={22} />
+          <CheckCircle className={styles.floatingIcon} size={26} />
+          <Zap className={styles.floatingIcon} size={20} />
+          <Mail className={styles.floatingIcon} size={24} />
+          <FileText className={styles.floatingIcon} size={22} />
+          <Shield className={styles.floatingIcon} size={20} />
+        </div>
+
         <div className={styles.featureContainer}>
 
         {/* HERO */}
@@ -91,26 +106,20 @@ const EmailUpload: React.FC = () => {
             </a>
           </div>
 
-          {/* Trust Signals */}
-          <div style={{
-            marginTop: '24px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '24px',
-            flexWrap: 'wrap',
-            fontSize: '14px',
-            color: '#666'
-          }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              🔒 DSGVO-konform
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              🇩🇪 E-Mails werden nicht gespeichert
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              ⚡ Automatische Verarbeitung
-            </span>
+          {/* Trust Badges */}
+          <div className={styles.trustBadges}>
+            <div className={styles.trustBadge}>
+              <Shield size={16} className={styles.trustBadgeIcon} />
+              <span>DSGVO-konform</span>
+            </div>
+            <div className={styles.trustBadge}>
+              <Mail size={16} className={styles.trustBadgeIcon} />
+              <span>E-Mails nicht gespeichert</span>
+            </div>
+            <div className={styles.trustBadge}>
+              <Zap size={16} className={styles.trustBadgeIcon} />
+              <span>Automatische Verarbeitung</span>
+            </div>
           </div>
         </section>
         <div className={styles.contentContainer}>

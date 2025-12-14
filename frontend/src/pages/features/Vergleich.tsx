@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { GitCompare, Target, BarChart3, AlertTriangle } from "lucide-react";
+import { GitCompare, Target, BarChart3, AlertTriangle, FileText, Shield, CheckCircle } from "lucide-react";
 
 const Vergleich: React.FC = () => {
   const { user } = useAuth();
@@ -53,8 +53,23 @@ const Vergleich: React.FC = () => {
   return (
     <>
       <div className={styles.pageBackground}>
+        {/* Dots Pattern */}
+        <div className={styles.dotsPattern} />
+
+        {/* Floating Decorative Elements */}
+        <div className={styles.floatingElements}>
+          <GitCompare className={styles.floatingIcon} size={28} />
+          <Shield className={styles.floatingIcon} size={24} />
+          <FileText className={styles.floatingIcon} size={22} />
+          <CheckCircle className={styles.floatingIcon} size={26} />
+          <Target className={styles.floatingIcon} size={20} />
+          <BarChart3 className={styles.floatingIcon} size={24} />
+          <AlertTriangle className={styles.floatingIcon} size={22} />
+          <GitCompare className={styles.floatingIcon} size={20} />
+        </div>
+
         <div className={styles.featureContainer}>
-        
+
         {/* HERO */}
         <section className={styles.heroSection}>
           <div className={styles.heroIcon}>
@@ -74,10 +89,20 @@ const Vergleich: React.FC = () => {
               Wie der Vergleich arbeitet
             </a>
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginTop: '24px', justifyContent: 'center', fontSize: '14px', color: '#666' }}>
-            <span>📊 Diff-Ansicht</span>
-            <span>⚖️ Fairness-Score</span>
-            <span>✅ Empfehlung</span>
+          {/* Trust Badges */}
+          <div className={styles.trustBadges}>
+            <div className={styles.trustBadge}>
+              <BarChart3 size={16} className={styles.trustBadgeIcon} />
+              <span>Diff-Ansicht</span>
+            </div>
+            <div className={styles.trustBadge}>
+              <Target size={16} className={styles.trustBadgeIcon} />
+              <span>Fairness-Score</span>
+            </div>
+            <div className={styles.trustBadge}>
+              <CheckCircle size={16} className={styles.trustBadgeIcon} />
+              <span>Empfehlung</span>
+            </div>
           </div>
         </section>
 

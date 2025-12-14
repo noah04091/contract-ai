@@ -193,9 +193,9 @@ export default function HomePricingCards() {
                   <span className="hp-price-period">{currentPricing(plan).note}</span>
                 </div>
 
-                {billingPeriod === 'yearly' && (currentPricing(plan) as any).saving && (
+                {billingPeriod === 'yearly' && 'saving' in currentPricing(plan) && (
                   <div className="hp-saving-info">
-                    <span className="hp-saving-text">{(currentPricing(plan) as any).saving}</span>
+                    <span className="hp-saving-text">{(currentPricing(plan) as { saving?: string }).saving}</span>
                   </div>
                 )}
               </div>
