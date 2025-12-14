@@ -159,8 +159,13 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   const actionReason = perspectiveData?.actionReason || analysis.actionReason || '';
   const worstCase = perspectiveData?.worstCase || analysis.worstCase;
   const betterAlternative = perspectiveData?.betterAlternative || analysis.betterAlternative;
-  const marketComparison = perspectiveData?.marketComparison || (analysis as any).marketComparison;
-  const riskAssessment = perspectiveData?.riskAssessment || (analysis as any).riskAssessment;
+  // Type-safe access to potentially direct analysis fields
+  const analysisWithExtras = analysis as ClauseAnalysis & {
+    marketComparison?: { isStandard: boolean; marketRange: string; deviation: string };
+    riskAssessment?: { level: string; score: number; reasons: string[] };
+  };
+  const marketComparison = perspectiveData?.marketComparison || analysisWithExtras.marketComparison;
+  const riskAssessment = perspectiveData?.riskAssessment || analysisWithExtras.riskAssessment;
 
   const actionInfo = ACTION_LABELS[actionLevel] || ACTION_LABELS.negotiate;
 
