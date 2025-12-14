@@ -137,11 +137,23 @@ const Fristen: React.FC = () => {
             <p className={styles.funktionText} style={{ fontSize: '18px', lineHeight: '1.6', marginBottom: '24px' }}>
               Contract AI scannt Ihre Verträge nach allen relevanten Fristen und Stichtagen. Die KI erkennt nicht nur offensichtliche Termine, sondern findet auch versteckte Kündigungsfristen, Mindestlaufzeiten und Verlängerungsregeln – selbst wenn sie in kompliziertem Juristendeutsch formuliert sind.
             </p>
-            <ul style={{ fontSize: '16px', lineHeight: '1.7', maxWidth: '800px', margin: '0 auto' }}>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>📋 <strong>Erkennung von Fristen & Laufzeiten:</strong> KI extrahiert Kündigungsfristen, Mindestlaufzeiten, Verlängerungsregeln und relevante Stichtage</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>⏰ <strong>Erinnerungen nach Wunsch:</strong> Legen Sie fest, wann Sie erinnert werden möchten (90/60/30/14 Tage vorher)</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>📱 <strong>Kalenderintegration:</strong> Ein Klick übernimmt Fristen in Google, Outlook oder iCal – automatisch synchronisiert</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>👥 <strong>Teilen & Verantwortlichkeiten:</strong> Weisen Sie Fristen Teammitgliedern zu – ideal für Unternehmen mit vielen Verträgen</li>
+            <ul className={styles.featureList}>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>📋</span>
+                <span className={styles.featureListContent}><strong>Erkennung von Fristen & Laufzeiten:</strong> KI extrahiert Kündigungsfristen, Mindestlaufzeiten, Verlängerungsregeln und relevante Stichtage</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>⏰</span>
+                <span className={styles.featureListContent}><strong>Erinnerungen nach Wunsch:</strong> Legen Sie fest, wann Sie erinnert werden möchten (90/60/30/14 Tage vorher)</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>📱</span>
+                <span className={styles.featureListContent}><strong>Kalenderintegration:</strong> Ein Klick übernimmt Fristen in Google, Outlook oder iCal – automatisch synchronisiert</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>👥</span>
+                <span className={styles.featureListContent}><strong>Teilen & Verantwortlichkeiten:</strong> Weisen Sie Fristen Teammitgliedern zu – ideal für Unternehmen mit vielen Verträgen</span>
+              </li>
             </ul>
           </section>
 
@@ -212,26 +224,26 @@ const Fristen: React.FC = () => {
           {/* USE CASES */}
           <section className={styles.beispielSection}>
             <h2 className={styles.sectionTitle}>Typische Szenarien</h2>
-            <div style={{ display: 'grid', gap: '20px', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', marginBottom: '40px' }}>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Versicherung</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}>Laufzeit bis 31.12., Kündigungsfrist 3 Monate</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>→ Erinnerung am 30.09.</strong></p>
+            <div className={styles.useCaseGrid}>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>Versicherung</h3>
+                <p className={styles.useCaseChallenge}>Laufzeit bis 31.12., Kündigungsfrist 3 Monate</p>
+                <p className={styles.useCaseSolution}><strong>→ Erinnerung am 30.09.</strong></p>
               </div>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>SaaS-Abo</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}>Verlängerung jährlich am 15.05.</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>→ Hinweis 14 Tage vorher.</strong></p>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>SaaS-Abo</h3>
+                <p className={styles.useCaseChallenge}>Verlängerung jährlich am 15.05.</p>
+                <p className={styles.useCaseSolution}><strong>→ Hinweis 14 Tage vorher.</strong></p>
               </div>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Mietvertrag</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}>Kündigung mind. 3 Monate zum Monatsende</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>→ Automatische Berechnung des Stichtags.</strong></p>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>Mietvertrag</h3>
+                <p className={styles.useCaseChallenge}>Kündigung mind. 3 Monate zum Monatsende</p>
+                <p className={styles.useCaseSolution}><strong>→ Automatische Berechnung des Stichtags.</strong></p>
               </div>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Wartungsvertrag</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}>Mindestlaufzeit 24 Monate</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>→ Erinnerung zur Verhandlung 60 Tage vorher.</strong></p>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>Wartungsvertrag</h3>
+                <p className={styles.useCaseChallenge}>Mindestlaufzeit 24 Monate</p>
+                <p className={styles.useCaseSolution}><strong>→ Erinnerung zur Verhandlung 60 Tage vorher.</strong></p>
               </div>
             </div>
             <div className={styles.beispielBox}>
@@ -250,12 +262,27 @@ const Fristen: React.FC = () => {
           {/* DIFFERENTIATION */}
           <section className={styles.funktionSection}>
             <h2 className={styles.sectionTitle}>Warum Contract AI?</h2>
-            <ul style={{ fontSize: '16px', lineHeight: '1.7', maxWidth: '800px', margin: '0 auto' }}>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🤖 <strong>Intelligente KI-Erkennung</strong> statt manueller Eingabe – auch komplexe Fristen werden automatisch gefunden</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🇪🇺 <strong>Server in Deutschland (Frankfurt)</strong>, volle DSGVO-Konformität und EU-Datenschutz</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>📱 <strong>Nahtlose Kalenderintegration</strong> mit Google, Outlook und iCal – keine Doppeleingaben nötig</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>⚡ <strong>Mehrfach-Erinnerungen</strong> mit flexiblen Vorlaufzeiten – nie wieder einen Termin verpassen</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>👥 <strong>Team-Features für Unternehmen</strong> – Zuweisungen, Verantwortlichkeiten, gemeinsame Verwaltung</li>
+            <ul className={styles.featureList}>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🤖</span>
+                <span className={styles.featureListContent}><strong>Intelligente KI-Erkennung</strong> statt manueller Eingabe – auch komplexe Fristen werden automatisch gefunden</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🇪🇺</span>
+                <span className={styles.featureListContent}><strong>Server in Deutschland (Frankfurt)</strong>, volle DSGVO-Konformität und EU-Datenschutz</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>📱</span>
+                <span className={styles.featureListContent}><strong>Nahtlose Kalenderintegration</strong> mit Google, Outlook und iCal – keine Doppeleingaben nötig</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>⚡</span>
+                <span className={styles.featureListContent}><strong>Mehrfach-Erinnerungen</strong> mit flexiblen Vorlaufzeiten – nie wieder einen Termin verpassen</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>👥</span>
+                <span className={styles.featureListContent}><strong>Team-Features für Unternehmen</strong> – Zuweisungen, Verantwortlichkeiten, gemeinsame Verwaltung</span>
+              </li>
             </ul>
           </section>
 
@@ -285,32 +312,50 @@ const Fristen: React.FC = () => {
           </section>
 
           {/* FAQ */}
-          <section className={styles.funktionSection}>
-            <h2 className={styles.sectionTitle}>Häufige Fragen</h2>
-            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Welche Arten von Fristen erkennt die KI?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Kündigungsfristen, Mindestlaufzeiten, automatische Verlängerungen, Zahlungsfristen, Gewährleistungszeiten und andere vertraglich relevante Stichtage. Auch komplexe Berechnungen wie "3 Monate zum Monatsende".</p>
+          <section className={styles.funktionSection} aria-labelledby="faq-heading">
+            <h2 id="faq-heading" className={styles.sectionTitle}>Häufige Fragen</h2>
+            <div className={styles.faqContainer}>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Welche Arten von Fristen erkennt die KI?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Kündigungsfristen, Mindestlaufzeiten, automatische Verlängerungen, Zahlungsfristen, Gewährleistungszeiten und andere vertraglich relevante Stichtage. Auch komplexe Berechnungen wie "3 Monate zum Monatsende".</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Wie genau ist die automatische Erkennung?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Die KI erreicht eine Genauigkeit von über 95% bei Standardverträgen. Bei unklaren Formulierungen markiert sie potentielle Fristen zur manuellen Überprüfung.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Wie genau ist die automatische Erkennung?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Die KI erreicht eine Genauigkeit von über 95% bei Standardverträgen. Bei unklaren Formulierungen markiert sie potentielle Fristen zur manuellen Überprüfung.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Kann ich eigene Erinnerungszeiten festlegen?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Ja, Sie können für jeden Vertragstyp individuelle Vorlaufzeiten definieren. Standard sind 90, 60, 30 und 14 Tage, aber Sie können beliebige Zeiträume wählen.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Kann ich eigene Erinnerungszeiten festlegen?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Ja, Sie können für jeden Vertragstyp individuelle Vorlaufzeiten definieren. Standard sind 90, 60, 30 und 14 Tage, aber Sie können beliebige Zeiträume wählen.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Funktioniert die Kalenderintegration mit allen Anbietern?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Ja, wir unterstützen Google Kalender, Outlook, Apple Kalender und alle iCal-kompatiblen Apps. Die Synchronisation erfolgt bidirektional.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Funktioniert die Kalenderintegration mit allen Anbietern?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Ja, wir unterstützen Google Kalender, Outlook, Apple Kalender und alle iCal-kompatiblen Apps. Die Synchronisation erfolgt bidirektional.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Was passiert bei Vertragsänderungen?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Bei Upload einer neuen Version erkennt die KI Änderungen an Fristen und aktualisiert automatisch alle Erinnerungen und Kalendereinträge.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Was passiert bei Vertragsänderungen?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Bei Upload einer neuen Version erkennt die KI Änderungen an Fristen und aktualisiert automatisch alle Erinnerungen und Kalendereinträge.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Können Teams gemeinsam Fristen verwalten?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Ja, Sie können Fristen an Teammitglieder zuweisen, Verantwortlichkeiten definieren und gemeinsame Kalender erstellen. Ideal für Unternehmen mit vielen Verträgen.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Können Teams gemeinsam Fristen verwalten?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Ja, Sie können Fristen an Teammitglieder zuweisen, Verantwortlichkeiten definieren und gemeinsame Kalender erstellen. Ideal für Unternehmen mit vielen Verträgen.</p>
               </details>
             </div>
           </section>

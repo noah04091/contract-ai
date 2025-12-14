@@ -153,11 +153,23 @@ const Vertragsverwaltung: React.FC = () => {
             <p className={styles.funktionText} style={{ fontSize: '18px', lineHeight: '1.6', marginBottom: '24px' }}>
               Speichern Sie alle Verträge zentral in der Contract AI Cloud. Organisieren Sie mit Ordnern, Tags und Farben. Die intelligente Suche findet jede Klausel in Sekunden – egal ob im Dateinamen oder tief im Vertragstext. Automatische Erinnerungen sorgen dafür, dass Sie keine Frist mehr verpassen.
             </p>
-            <ul style={{ fontSize: '16px', lineHeight: '1.7', maxWidth: '800px', margin: '0 auto' }}>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>📁 <strong>Ordner & Unterordner:</strong> Strukturieren Sie Verträge nach Projekten, Kunden oder Kategorien</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🔍 <strong>Volltextsuche:</strong> Durchsuchen Sie alle Verträge gleichzeitig – selbst im Vertragsinhalt</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🔔 <strong>Automatische Erinnerungen:</strong> Werden Sie per E-Mail an Kündigungsfristen erinnert</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🔒 <strong>Maximale Sicherheit:</strong> Verschlüsselte Speicherung auf deutschen Servern (Frankfurt)</li>
+            <ul className={styles.featureList}>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>📁</span>
+                <span className={styles.featureListContent}><strong>Ordner & Unterordner:</strong> Strukturieren Sie Verträge nach Projekten, Kunden oder Kategorien</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🔍</span>
+                <span className={styles.featureListContent}><strong>Volltextsuche:</strong> Durchsuchen Sie alle Verträge gleichzeitig – selbst im Vertragsinhalt</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🔔</span>
+                <span className={styles.featureListContent}><strong>Automatische Erinnerungen:</strong> Werden Sie per E-Mail an Kündigungsfristen erinnert</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🔒</span>
+                <span className={styles.featureListContent}><strong>Maximale Sicherheit:</strong> Verschlüsselte Speicherung auf deutschen Servern (Frankfurt)</span>
+              </li>
             </ul>
           </section>
 
@@ -228,26 +240,26 @@ const Vertragsverwaltung: React.FC = () => {
           {/* USE CASES */}
           <section className={styles.beispielSection}>
             <h2 className={styles.sectionTitle}>Typische Anwendungsfälle</h2>
-            <div style={{ display: 'grid', gap: '20px', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', marginBottom: '40px' }}>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Freiberufler & Freelancer</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}><strong>Herausforderung:</strong> Dutzende Kundenverträge verwalten</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>Lösung:</strong> Ordner pro Kunde, automatische Erinnerungen an Zahlungsfristen</p>
+            <div className={styles.useCaseGrid}>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>Freiberufler & Freelancer</h3>
+                <p className={styles.useCaseChallenge}><strong>Herausforderung:</strong> Dutzende Kundenverträge verwalten</p>
+                <p className={styles.useCaseSolution}><strong>Lösung:</strong> Ordner pro Kunde, automatische Erinnerungen an Zahlungsfristen</p>
               </div>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Unternehmen & Agenturen</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}><strong>Herausforderung:</strong> Lieferanten-, Kunden- und Mitarbeiterverträge im Blick</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>Lösung:</strong> Kategorisierung nach Typ, Team-Zugriff, zentrale Ablage</p>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>Unternehmen & Agenturen</h3>
+                <p className={styles.useCaseChallenge}><strong>Herausforderung:</strong> Lieferanten-, Kunden- und Mitarbeiterverträge im Blick</p>
+                <p className={styles.useCaseSolution}><strong>Lösung:</strong> Kategorisierung nach Typ, Team-Zugriff, zentrale Ablage</p>
               </div>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Privatpersonen</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}><strong>Herausforderung:</strong> Mietvertrag, Versicherungen, Handyvertrag – alles verstreut</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>Lösung:</strong> Alle privaten Verträge an einem Ort mit Kündigungserinnerungen</p>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>Privatpersonen</h3>
+                <p className={styles.useCaseChallenge}><strong>Herausforderung:</strong> Mietvertrag, Versicherungen, Handyvertrag – alles verstreut</p>
+                <p className={styles.useCaseSolution}><strong>Lösung:</strong> Alle privaten Verträge an einem Ort mit Kündigungserinnerungen</p>
               </div>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Startups & Gründer</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}><strong>Herausforderung:</strong> Schnell wachsende Vertragszahl, oft remote</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>Lösung:</strong> Cloud-basiert, von überall abrufbar, skalierbar</p>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>Startups & Gründer</h3>
+                <p className={styles.useCaseChallenge}><strong>Herausforderung:</strong> Schnell wachsende Vertragszahl, oft remote</p>
+                <p className={styles.useCaseSolution}><strong>Lösung:</strong> Cloud-basiert, von überall abrufbar, skalierbar</p>
               </div>
             </div>
             <div className={styles.beispielBox}>
@@ -266,12 +278,27 @@ const Vertragsverwaltung: React.FC = () => {
           {/* DIFFERENTIATION */}
           <section className={styles.funktionSection}>
             <h2 className={styles.sectionTitle}>Warum Contract AI?</h2>
-            <ul style={{ fontSize: '16px', lineHeight: '1.7', maxWidth: '800px', margin: '0 auto' }}>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🔒 <strong>Maximale Sicherheit:</strong> Deutsche Server (Frankfurt), SSL-Verschlüsselung, DSGVO-konform</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>⚡ <strong>Blitzschnelle Suche:</strong> Volltextsuche durchsucht alle Verträge gleichzeitig</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🔔 <strong>Nie wieder Fristen verpassen:</strong> Automatische E-Mail-Erinnerungen</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>📱 <strong>Von überall zugreifen:</strong> Web, Desktop, Tablet, Smartphone – voll synchronisiert</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🎨 <strong>Flexibel organisierbar:</strong> Ordner, Tags, Farben – wie Sie es brauchen</li>
+            <ul className={styles.featureList}>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🔒</span>
+                <span className={styles.featureListContent}><strong>Maximale Sicherheit:</strong> Deutsche Server (Frankfurt), SSL-Verschlüsselung, DSGVO-konform</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>⚡</span>
+                <span className={styles.featureListContent}><strong>Blitzschnelle Suche:</strong> Volltextsuche durchsucht alle Verträge gleichzeitig</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🔔</span>
+                <span className={styles.featureListContent}><strong>Nie wieder Fristen verpassen:</strong> Automatische E-Mail-Erinnerungen</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>📱</span>
+                <span className={styles.featureListContent}><strong>Von überall zugreifen:</strong> Web, Desktop, Tablet, Smartphone – voll synchronisiert</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🎨</span>
+                <span className={styles.featureListContent}><strong>Flexibel organisierbar:</strong> Ordner, Tags, Farben – wie Sie es brauchen</span>
+              </li>
             </ul>
           </section>
 
@@ -301,32 +328,50 @@ const Vertragsverwaltung: React.FC = () => {
           </section>
 
           {/* FAQ */}
-          <section className={styles.funktionSection}>
-            <h2 className={styles.sectionTitle}>Häufige Fragen</h2>
-            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Wie sicher ist die Vertragsverwaltung?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Sehr sicher. Alle Verträge werden verschlüsselt übertragen und auf deutschen Servern in Frankfurt gespeichert. Vollständige DSGVO-Konformität, keine Weitergabe an Dritte.</p>
+          <section className={styles.funktionSection} aria-labelledby="faq-heading">
+            <h2 id="faq-heading" className={styles.sectionTitle}>Häufige Fragen</h2>
+            <div className={styles.faqContainer}>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Wie sicher ist die Vertragsverwaltung?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Sehr sicher. Alle Verträge werden verschlüsselt übertragen und auf deutschen Servern in Frankfurt gespeichert. Vollständige DSGVO-Konformität, keine Weitergabe an Dritte.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Kann ich meine Verträge in Ordnern organisieren?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Ja, Sie können beliebig viele Ordner und Unterordner erstellen. Zusätzlich stehen Tags, Farben und Filter zur Verfügung.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Kann ich meine Verträge in Ordnern organisieren?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Ja, Sie können beliebig viele Ordner und Unterordner erstellen. Zusätzlich stehen Tags, Farben und Filter zur Verfügung.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Funktioniert die Suche auch im Vertragsinhalt?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Ja, die Volltextsuche durchsucht nicht nur Dateinamen, sondern auch den kompletten Vertragsinhalt. Sie finden Klauseln, Begriffe oder Daten in Sekundenschnelle.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Funktioniert die Suche auch im Vertragsinhalt?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Ja, die Volltextsuche durchsucht nicht nur Dateinamen, sondern auch den kompletten Vertragsinhalt. Sie finden Klauseln, Begriffe oder Daten in Sekundenschnelle.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Kann ich Verträge von mehreren Geräten verwalten?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Ja, Contract AI ist vollständig Cloud-basiert. Sie können von PC, Tablet oder Smartphone auf Ihre Verträge zugreifen – alles automatisch synchronisiert.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Kann ich Verträge von mehreren Geräten verwalten?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Ja, Contract AI ist vollständig Cloud-basiert. Sie können von PC, Tablet oder Smartphone auf Ihre Verträge zugreifen – alles automatisch synchronisiert.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Wie funktionieren die automatischen Erinnerungen?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Die KI erkennt Kündigungsfristen automatisch. Sie erhalten rechtzeitig E-Mail-Erinnerungen, damit Sie keine Frist verpassen.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Wie funktionieren die automatischen Erinnerungen?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Die KI erkennt Kündigungsfristen automatisch. Sie erhalten rechtzeitig E-Mail-Erinnerungen, damit Sie keine Frist verpassen.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Kann ich Verträge wieder löschen?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Ja, Sie können Verträge jederzeit dauerhaft löschen – inklusive aller Backups. Sie behalten volle Kontrolle über Ihre Daten.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Kann ich Verträge wieder löschen?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Ja, Sie können Verträge jederzeit dauerhaft löschen – inklusive aller Backups. Sie behalten volle Kontrolle über Ihre Daten.</p>
               </details>
             </div>
           </section>

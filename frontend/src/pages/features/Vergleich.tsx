@@ -137,11 +137,23 @@ const Vergleich: React.FC = () => {
             <p className={styles.funktionText} style={{ fontSize: '18px', lineHeight: '1.6', marginBottom: '24px' }}>
               Contract AI stellt beide Verträge nebeneinander dar und markiert automatisch alle relevanten Unterschiede. Die KI bewertet nicht nur die offensichtlichen Abweichungen, sondern analysiert auch die Auswirkungen auf Fairness, Risiko und Kosten – über mehrere Dimensionen hinweg.
             </p>
-            <ul style={{ fontSize: '16px', lineHeight: '1.7', maxWidth: '800px', margin: '0 auto' }}>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>📊 <strong>Visualisierte Unterschiede:</strong> Abschnitte werden nebeneinander dargestellt und Abweichungen hervorgehoben</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>⚖️ <strong>Fairness-Score:</strong> KI bewertet, wie ausgewogen die Verträge sind – über Kündigung, Zahlung, Haftung, Klarheit</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🎯 <strong>Präferenz-basierte Empfehlung:</strong> Basierend auf Ihren Prioritäten (Flexibilität vs. Preis) mit Begründung</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🔧 <strong>What-if-Analyse:</strong> Ändern Sie Parameter um zu sehen, wie sich die Bewertung verschiebt</li>
+            <ul className={styles.featureList}>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>📊</span>
+                <span className={styles.featureListContent}><strong>Visualisierte Unterschiede:</strong> Abschnitte werden nebeneinander dargestellt und Abweichungen hervorgehoben</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>⚖️</span>
+                <span className={styles.featureListContent}><strong>Fairness-Score:</strong> KI bewertet, wie ausgewogen die Verträge sind – über Kündigung, Zahlung, Haftung, Klarheit</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🎯</span>
+                <span className={styles.featureListContent}><strong>Präferenz-basierte Empfehlung:</strong> Basierend auf Ihren Prioritäten (Flexibilität vs. Preis) mit Begründung</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🔧</span>
+                <span className={styles.featureListContent}><strong>What-if-Analyse:</strong> Ändern Sie Parameter um zu sehen, wie sich die Bewertung verschiebt</span>
+              </li>
             </ul>
           </section>
 
@@ -212,26 +224,26 @@ const Vergleich: React.FC = () => {
           {/* USE CASES */}
           <section className={styles.beispielSection}>
             <h2 className={styles.sectionTitle}>Typische Entscheidungen</h2>
-            <div style={{ display: 'grid', gap: '20px', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', marginBottom: '40px' }}>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Mietvertrag A vs. B</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}>B hat niedrigere Nebenkosten und kürzere Fristen</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>→ Empfehlung: B</strong></p>
+            <div className={styles.useCaseGrid}>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>Mietvertrag A vs. B</h3>
+                <p className={styles.useCaseChallenge}>B hat niedrigere Nebenkosten und kürzere Fristen</p>
+                <p className={styles.useCaseSolution}><strong>→ Empfehlung: B</strong></p>
               </div>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Jobangebot</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}>A: 28 Urlaubstage, B: 24 + Remote-Option</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>→ Abhängig von Präferenzprofil</strong></p>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>Jobangebot</h3>
+                <p className={styles.useCaseChallenge}>A: 28 Urlaubstage, B: 24 + Remote-Option</p>
+                <p className={styles.useCaseSolution}><strong>→ Abhängig von Präferenzprofil</strong></p>
               </div>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Lieferantenvertrag</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}>A: bessere Preise, B: bessere SLA</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>→ A + SLA-Klausel aus B übernehmen</strong></p>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>Lieferantenvertrag</h3>
+                <p className={styles.useCaseChallenge}>A: bessere Preise, B: bessere SLA</p>
+                <p className={styles.useCaseSolution}><strong>→ A + SLA-Klausel aus B übernehmen</strong></p>
               </div>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>SaaS-Angebote</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}>A: günstiger, B: flexible Kündigung</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>→ B bei hoher Planungsunsicherheit</strong></p>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>SaaS-Angebote</h3>
+                <p className={styles.useCaseChallenge}>A: günstiger, B: flexible Kündigung</p>
+                <p className={styles.useCaseSolution}><strong>→ B bei hoher Planungsunsicherheit</strong></p>
               </div>
             </div>
             <div className={styles.beispielBox}>
@@ -250,12 +262,27 @@ const Vergleich: React.FC = () => {
           {/* DIFFERENTIATION */}
           <section className={styles.funktionSection}>
             <h2 className={styles.sectionTitle}>Warum Contract AI?</h2>
-            <ul style={{ fontSize: '16px', lineHeight: '1.7', maxWidth: '800px', margin: '0 auto' }}>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🔍 <strong>Detailgenaue Diff-Ansicht</strong> statt oberflächlicher Checklisten – jede relevante Abweichung wird erfasst</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🇪🇺 <strong>Server in Deutschland (Frankfurt)</strong>, volle DSGVO-Konformität und EU-Datenschutz</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🎯 <strong>Präferenz-basierte Bewertung:</strong> Empfehlungen passend zu Ihren individuellen Prioritäten</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>📊 <strong>Multi-Dimensionaler Score</strong> – nicht nur Preis, sondern Fairness, Flexibilität, Risiko und Klarheit</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>💡 <strong>Verhandlungsoptimierte Insights:</strong> Zeigt konkret, welche Klauseln übernommen werden sollten</li>
+            <ul className={styles.featureList}>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🔍</span>
+                <span className={styles.featureListContent}><strong>Detailgenaue Diff-Ansicht</strong> statt oberflächlicher Checklisten – jede relevante Abweichung wird erfasst</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🇪🇺</span>
+                <span className={styles.featureListContent}><strong>Server in Deutschland (Frankfurt)</strong>, volle DSGVO-Konformität und EU-Datenschutz</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🎯</span>
+                <span className={styles.featureListContent}><strong>Präferenz-basierte Bewertung:</strong> Empfehlungen passend zu Ihren individuellen Prioritäten</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>📊</span>
+                <span className={styles.featureListContent}><strong>Multi-Dimensionaler Score</strong> – nicht nur Preis, sondern Fairness, Flexibilität, Risiko und Klarheit</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>💡</span>
+                <span className={styles.featureListContent}><strong>Verhandlungsoptimierte Insights:</strong> Zeigt konkret, welche Klauseln übernommen werden sollten</span>
+              </li>
             </ul>
           </section>
 
@@ -285,32 +312,50 @@ const Vergleich: React.FC = () => {
           </section>
 
           {/* FAQ */}
-          <section className={styles.funktionSection}>
-            <h2 className={styles.sectionTitle}>Häufige Fragen</h2>
-            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Welche Vertragsarten kann ich vergleichen?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Alle Standardverträge: Mietverträge, Arbeitsverträge, Dienstleistungsverträge, Kaufverträge, Versicherungen, SaaS-Abos. Beide Verträge sollten ähnlichen Zweck haben für optimale Ergebnisse.</p>
+          <section className={styles.funktionSection} aria-labelledby="faq-heading">
+            <h2 id="faq-heading" className={styles.sectionTitle}>Häufige Fragen</h2>
+            <div className={styles.faqContainer}>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Welche Vertragsarten kann ich vergleichen?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Alle Standardverträge: Mietverträge, Arbeitsverträge, Dienstleistungsverträge, Kaufverträge, Versicherungen, SaaS-Abos. Beide Verträge sollten ähnlichen Zweck haben für optimale Ergebnisse.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Wie objektiv ist die KI-Bewertung?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Die KI nutzt bewährte Rechtsmuster und Marktstandards als Basis. Sie ist objektiver als das Bauchgefühl, aber Sie definieren die Gewichtung der Kriterien (Preis vs. Flexibilität).</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Wie objektiv ist die KI-Bewertung?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Die KI nutzt bewährte Rechtsmuster und Marktstandards als Basis. Sie ist objektiver als das Bauchgefühl, aber Sie definieren die Gewichtung der Kriterien (Preis vs. Flexibilität).</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Kann ich die Bewertungskriterien anpassen?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Ja, Sie können Prioritäten setzen: Ist Ihnen Kostenklarheit wichtiger als Flexibilität? Kurze Fristen wichtiger als niedrige Preise? Die Empfehlung passt sich entsprechend an.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Kann ich die Bewertungskriterien anpassen?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Ja, Sie können Prioritäten setzen: Ist Ihnen Kostenklarheit wichtiger als Flexibilität? Kurze Fristen wichtiger als niedrige Preise? Die Empfehlung passt sich entsprechend an.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Werden beide Verträge gleich behandelt?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Ja, die Analyse ist symmetrisch. Beide Verträge werden nach denselben Kriterien bewertet. Es gibt keine Bevorzugung für "Vertrag A" oder "Vertrag B".</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Werden beide Verträge gleich behandelt?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Ja, die Analyse ist symmetrisch. Beide Verträge werden nach denselben Kriterien bewertet. Es gibt keine Bevorzugung für "Vertrag A" oder "Vertrag B".</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Kann ich das Ergebnis exportieren?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Ja, der komplette Vergleichsreport kann als PDF exportiert werden – inklusive Diff-View, Scores, Empfehlung und Begründung. Ideal für Team-Entscheidungen.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Kann ich das Ergebnis exportieren?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Ja, der komplette Vergleichsreport kann als PDF exportiert werden – inklusive Diff-View, Scores, Empfehlung und Begründung. Ideal für Team-Entscheidungen.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Was passiert mit meinen Vertragsdaten?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Verschlüsselte Übertragung und Verarbeitung ausschließlich auf EU-Servern. Speicherung nur für Verlaufsanzeige, jederzeit löschbar. Keine Weitergabe an Dritte.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Was passiert mit meinen Vertragsdaten?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Verschlüsselte Übertragung und Verarbeitung ausschließlich auf EU-Servern. Speicherung nur für Verlaufsanzeige, jederzeit löschbar. Keine Weitergabe an Dritte.</p>
               </details>
             </div>
           </section>

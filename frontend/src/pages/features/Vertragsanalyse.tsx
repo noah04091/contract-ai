@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { Search, Target, CheckCircle, AlertTriangle, FileText, Shield, Zap, Briefcase, ChevronDown } from "lucide-react";
+import { Search, Target, CheckCircle, AlertTriangle, FileText, Shield, Zap, Briefcase } from "lucide-react";
 
 const Vertragsanalyse: React.FC = () => {
   const { user } = useAuth();
@@ -153,11 +153,23 @@ const Vertragsanalyse: React.FC = () => {
             <p className={styles.funktionText} style={{ fontSize: '18px', lineHeight: '1.6', marginBottom: '24px' }}>
               Contract AI liest Ihren Vertrag wie ein erfahrener Jurist – nur viel schneller. Die KI erkennt automatisch den Vertragstyp, analysiert alle Klauseln systematisch und bewertet Risiken nach objektiven Kriterien. Das Ergebnis: Ein klarer Überblick über Chancen und Gefahren.
             </p>
-            <ul style={{ fontSize: '16px', lineHeight: '1.7', maxWidth: '800px', margin: '0 auto' }}>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🎯 <strong>Automatische Risikobewertung:</strong> Jede Klausel wird auf Fairness und mögliche Nachteile geprüft</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>📊 <strong>Verständliche Scores:</strong> Chancen-Risiken-Bewertung mit Ampelsystem für schnelle Entscheidungen</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>💡 <strong>Konkrete Handlungsempfehlungen:</strong> Was Sie tun können, um Ihre Position zu verbessern</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>⚡ <strong>In Sekunden fertig:</strong> Upload, Analyse, Ergebnis – alles in unter einer Minute</li>
+            <ul className={styles.featureList}>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🎯</span>
+                <span className={styles.featureListContent}><strong>Automatische Risikobewertung:</strong> Jede Klausel wird auf Fairness und mögliche Nachteile geprüft</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>📊</span>
+                <span className={styles.featureListContent}><strong>Verständliche Scores:</strong> Chancen-Risiken-Bewertung mit Ampelsystem für schnelle Entscheidungen</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>💡</span>
+                <span className={styles.featureListContent}><strong>Konkrete Handlungsempfehlungen:</strong> Was Sie tun können, um Ihre Position zu verbessern</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>⚡</span>
+                <span className={styles.featureListContent}><strong>In Sekunden fertig:</strong> Upload, Analyse, Ergebnis – alles in unter einer Minute</span>
+              </li>
             </ul>
           </section>
 
@@ -230,33 +242,21 @@ const Vertragsanalyse: React.FC = () => {
             <h2 className={styles.sectionTitle}>Typische Vertragsrisiken – die wir automatisch erkennen</h2>
             <div className={styles.useCaseGrid}>
               <div className={styles.useCaseCard}>
-                <div className={styles.useCaseIcon}>
-                  <AlertTriangle size={24} />
-                </div>
                 <h3 className={styles.useCaseTitle}>Überlange Kündigungsfristen</h3>
                 <p className={styles.useCaseChallenge}><strong>Risiko:</strong> 12 Monate Kündigungsfrist als Mieter</p>
                 <p className={styles.useCaseSolution}>→ "Ungewöhnlich lang – schränkt Ihre Flexibilität stark ein."</p>
               </div>
               <div className={styles.useCaseCard}>
-                <div className={styles.useCaseIcon}>
-                  <Briefcase size={24} />
-                </div>
                 <h3 className={styles.useCaseTitle}>Versteckte Kostenfallen</h3>
                 <p className={styles.useCaseChallenge}><strong>Risiko:</strong> "Zusätzliche Gebühren nach Ermessen"</p>
                 <p className={styles.useCaseSolution}>→ "Gefahr unbegrenzter Zusatzkosten – verlangen Sie Obergrenze."</p>
               </div>
               <div className={styles.useCaseCard}>
-                <div className={styles.useCaseIcon}>
-                  <Shield size={24} />
-                </div>
                 <h3 className={styles.useCaseTitle}>Einseitige Haftungsklauseln</h3>
                 <p className={styles.useCaseChallenge}><strong>Risiko:</strong> "Vollständige Haftung beim Auftragnehmer"</p>
                 <p className={styles.useCaseSolution}>→ "Extrem einseitig – fordern Sie Haftungsbegrenzung."</p>
               </div>
               <div className={styles.useCaseCard}>
-                <div className={styles.useCaseIcon}>
-                  <FileText size={24} />
-                </div>
                 <h3 className={styles.useCaseTitle}>Unklare Leistungsbeschreibung</h3>
                 <p className={styles.useCaseChallenge}><strong>Risiko:</strong> Vage definierte Arbeitszeiten</p>
                 <p className={styles.useCaseSolution}>→ "Streitpotential hoch – konkretisieren Sie die Leistung."</p>
@@ -278,12 +278,27 @@ const Vertragsanalyse: React.FC = () => {
           {/* DIFFERENTIATION */}
           <section className={styles.funktionSection}>
             <h2 className={styles.sectionTitle}>Warum Contract AI?</h2>
-            <ul style={{ fontSize: '16px', lineHeight: '1.7', maxWidth: '800px', margin: '0 auto' }}>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🎯 <strong>Objektive Bewertung</strong> ohne kommerzielle Interessen – nur die Fakten für Sie</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🇪🇺 <strong>Server in Deutschland (Frankfurt)</strong>, volle DSGVO-Konformität und EU-Datenschutz</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>📋 <strong>Verständliche Ergebnisse:</strong> Ampelsystem und klare Sprache statt Juristendeutsch</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>👤 <strong>Für jeden geeignet:</strong> Ob Laie oder Profi – die Analyse passt sich Ihrem Niveau an</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>⚡ <strong>Sofort verfügbar:</strong> Keine Termine, keine Wartezeiten – Analyse in unter 60 Sekunden</li>
+            <ul className={styles.featureList}>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🎯</span>
+                <span className={styles.featureListContent}><strong>Objektive Bewertung</strong> ohne kommerzielle Interessen – nur die Fakten für Sie</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🇪🇺</span>
+                <span className={styles.featureListContent}><strong>Server in Deutschland (Frankfurt)</strong>, volle DSGVO-Konformität und EU-Datenschutz</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>📋</span>
+                <span className={styles.featureListContent}><strong>Verständliche Ergebnisse:</strong> Ampelsystem und klare Sprache statt Juristendeutsch</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>👤</span>
+                <span className={styles.featureListContent}><strong>Für jeden geeignet:</strong> Ob Laie oder Profi – die Analyse passt sich Ihrem Niveau an</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>⚡</span>
+                <span className={styles.featureListContent}><strong>Sofort verfügbar:</strong> Keine Termine, keine Wartezeiten – Analyse in unter 60 Sekunden</span>
+              </li>
             </ul>
           </section>
 
@@ -313,48 +328,48 @@ const Vertragsanalyse: React.FC = () => {
           </section>
 
           {/* FAQ */}
-          <section className={styles.funktionSection}>
-            <h2 className={styles.sectionTitle}>Häufige Fragen</h2>
+          <section className={styles.funktionSection} aria-labelledby="faq-heading">
+            <h2 id="faq-heading" className={styles.sectionTitle}>Häufige Fragen</h2>
             <div className={styles.faqContainer}>
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
                   Ersetzt die Analyse eine Rechtsberatung?
-                  <span className={styles.faqIcon}><ChevronDown size={14} /></span>
+                  <span className={styles.faqIcon}>▼</span>
                 </summary>
                 <p className={styles.faqAnswer}>Nein, Contract AI liefert strukturierte Risikoanalysen und Bewertungen. Für komplexe rechtliche Fragen sollten Sie weiterhin einen Anwalt konsultieren.</p>
               </details>
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
                   Welche Vertragsarten können analysiert werden?
-                  <span className={styles.faqIcon}><ChevronDown size={14} /></span>
+                  <span className={styles.faqIcon}>▼</span>
                 </summary>
                 <p className={styles.faqAnswer}>Die meisten Standardverträge: Arbeitsverträge, Mietverträge, Kaufverträge, NDAs, Freelancer-Agreements, SaaS-Verträge, Dienstleistungsverträge und mehr.</p>
               </details>
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
                   Wie genau ist die KI-Analyse?
-                  <span className={styles.faqIcon}><ChevronDown size={14} /></span>
+                  <span className={styles.faqIcon}>▼</span>
                 </summary>
                 <p className={styles.faqAnswer}>Die KI erreicht eine Erkennungsgenauigkeit von 98% bei der Identifikation problematischer Klauseln. Sie basiert auf tausenden analysierten Verträgen und aktueller Rechtsprechung.</p>
               </details>
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
                   Werden meine Vertragsdaten gespeichert?
-                  <span className={styles.faqIcon}><ChevronDown size={14} /></span>
+                  <span className={styles.faqIcon}>▼</span>
                 </summary>
                 <p className={styles.faqAnswer}>Optional zur Verlaufsanzeige. Sie können Dokumente jederzeit löschen lassen. Verarbeitung erfolgt ausschließlich zur Analyse, keine Weitergabe an Dritte.</p>
               </details>
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
                   Was kostet die Vertragsanalyse?
-                  <span className={styles.faqIcon}><ChevronDown size={14} /></span>
+                  <span className={styles.faqIcon}>▼</span>
                 </summary>
                 <p className={styles.faqAnswer}>Im Free-Tier: 3 Analysen pro Monat kostenlos. Premium-Pläne ab 19€/Monat mit unbegrenzten Analysen und erweiterten Features.</p>
               </details>
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
                   Wie schnell erhalte ich das Ergebnis?
-                  <span className={styles.faqIcon}><ChevronDown size={14} /></span>
+                  <span className={styles.faqIcon}>▼</span>
                 </summary>
                 <p className={styles.faqAnswer}>In der Regel unter 60 Sekunden nach dem Upload. Bei sehr umfangreichen Verträgen kann es bis zu 2 Minuten dauern.</p>
               </details>

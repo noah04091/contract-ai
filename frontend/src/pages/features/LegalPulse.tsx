@@ -137,11 +137,23 @@ const LegalPulse: React.FC = () => {
             <p className={styles.funktionText} style={{ fontSize: '18px', lineHeight: '1.6', marginBottom: '24px' }}>
               Legal Pulse überwacht kontinuierlich relevante Rechtsquellen und gleicht sie mit Ihren Verträgen ab. Relevante Änderungen werden thematisch klassifiziert (Datenschutz, Arbeitsrecht, Verbraucherschutz) und den betroffenen Klauseln zugeordnet. Sie erhalten nicht nur Warnungen, sondern konkrete Handlungsempfehlungen.
             </p>
-            <ul style={{ fontSize: '16px', lineHeight: '1.7', maxWidth: '800px', margin: '0 auto' }}>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>📊 <strong>Monitoring & Klassifikation:</strong> Relevante Änderungen werden thematisch zugeordnet und nach Auswirkung bewertet</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🎯 <strong>Risikobewertung:</strong> Auswirkung auf Ihre Verträge wird bewertet (niedrig/mittel/hoch) mit Priorisierung</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>💡 <strong>Konkrete Empfehlungen:</strong> Klare Textvorschläge und To-Dos, die Sie direkt übernehmen oder dem Optimierer übergeben können</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>📋 <strong>Audit-Protokoll:</strong> Alle Anpassungen werden dokumentiert – für interne Audits und Compliance-Nachweise</li>
+            <ul className={styles.featureList}>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>📊</span>
+                <span className={styles.featureListContent}><strong>Monitoring & Klassifikation:</strong> Relevante Änderungen werden thematisch zugeordnet und nach Auswirkung bewertet</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🎯</span>
+                <span className={styles.featureListContent}><strong>Risikobewertung:</strong> Auswirkung auf Ihre Verträge wird bewertet (niedrig/mittel/hoch) mit Priorisierung</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>💡</span>
+                <span className={styles.featureListContent}><strong>Konkrete Empfehlungen:</strong> Klare Textvorschläge und To-Dos, die Sie direkt übernehmen oder dem Optimierer übergeben können</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>📋</span>
+                <span className={styles.featureListContent}><strong>Audit-Protokoll:</strong> Alle Anpassungen werden dokumentiert – für interne Audits und Compliance-Nachweise</span>
+              </li>
             </ul>
           </section>
 
@@ -212,26 +224,26 @@ const LegalPulse: React.FC = () => {
           {/* USE CASES */}
           <section className={styles.beispielSection}>
             <h2 className={styles.sectionTitle}>Wenn sich die Welt ändert – bleibt Ihr Vertrag aktuell</h2>
-            <div style={{ display: 'grid', gap: '20px', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', marginBottom: '40px' }}>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Datenschutz</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}>Neue EU-Vorgaben zur Datenverarbeitung</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>→ Aktualisierung der AV-Verträge & Informationspflichten</strong></p>
+            <div className={styles.useCaseGrid}>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>Datenschutz</h3>
+                <p className={styles.useCaseChallenge}>Neue EU-Vorgaben zur Datenverarbeitung</p>
+                <p className={styles.useCaseSolution}><strong>→ Aktualisierung der AV-Verträge & Informationspflichten</strong></p>
               </div>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Arbeitsrecht</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}>Neue Homeoffice-Regelungen</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>→ Ergänzungen zu Arbeitszeiten, Datenschutz, Equipment</strong></p>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>Arbeitsrecht</h3>
+                <p className={styles.useCaseChallenge}>Neue Homeoffice-Regelungen</p>
+                <p className={styles.useCaseSolution}><strong>→ Ergänzungen zu Arbeitszeiten, Datenschutz, Equipment</strong></p>
               </div>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Verbraucherschutz</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}>Einfachere Kündigungen bei Abos</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>→ Anpassung von Kündigungswegen & Fristen</strong></p>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>Verbraucherschutz</h3>
+                <p className={styles.useCaseChallenge}>Einfachere Kündigungen bei Abos</p>
+                <p className={styles.useCaseSolution}><strong>→ Anpassung von Kündigungswegen & Fristen</strong></p>
               </div>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Lieferketten</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}>Neue Nachweispflichten</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>→ Klarere Dokumentations- und Prüfpflichten im Vertrag</strong></p>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>Lieferketten</h3>
+                <p className={styles.useCaseChallenge}>Neue Nachweispflichten</p>
+                <p className={styles.useCaseSolution}><strong>→ Klarere Dokumentations- und Prüfpflichten im Vertrag</strong></p>
               </div>
             </div>
             <div className={styles.beispielBox}>
@@ -250,12 +262,27 @@ const LegalPulse: React.FC = () => {
           {/* DIFFERENTIATION */}
           <section className={styles.funktionSection}>
             <h2 className={styles.sectionTitle}>Warum Contract AI?</h2>
-            <ul style={{ fontSize: '16px', lineHeight: '1.7', maxWidth: '800px', margin: '0 auto' }}>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🤖 <strong>KI-basiertes Monitoring</strong> statt manueller Newsletter – nur relevante Änderungen werden erfasst und bewertet</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🇪🇺 <strong>Server in Deutschland (Frankfurt)</strong>, volle DSGVO-Konformität und EU-Datenschutz</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🎯 <strong>Vertragskontext-spezifisch:</strong> Warnungen nur für Bereiche, die Ihre Verträge tatsächlich betreffen</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>📝 <strong>Umsetzbare Empfehlungen</strong> – nicht nur "Achtung", sondern konkrete Formulierungsvorschläge</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🔄 <strong>Nahtlose Workflow-Integration:</strong> Empfehlungen direkt in Optimierer oder Generator übernehmen</li>
+            <ul className={styles.featureList}>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🤖</span>
+                <span className={styles.featureListContent}><strong>KI-basiertes Monitoring</strong> statt manueller Newsletter – nur relevante Änderungen werden erfasst und bewertet</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🇪🇺</span>
+                <span className={styles.featureListContent}><strong>Server in Deutschland (Frankfurt)</strong>, volle DSGVO-Konformität und EU-Datenschutz</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🎯</span>
+                <span className={styles.featureListContent}><strong>Vertragskontext-spezifisch:</strong> Warnungen nur für Bereiche, die Ihre Verträge tatsächlich betreffen</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>📝</span>
+                <span className={styles.featureListContent}><strong>Umsetzbare Empfehlungen</strong> – nicht nur "Achtung", sondern konkrete Formulierungsvorschläge</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🔄</span>
+                <span className={styles.featureListContent}><strong>Nahtlose Workflow-Integration:</strong> Empfehlungen direkt in Optimierer oder Generator übernehmen</span>
+              </li>
             </ul>
           </section>
 
@@ -285,32 +312,50 @@ const LegalPulse: React.FC = () => {
           </section>
 
           {/* FAQ */}
-          <section className={styles.funktionSection}>
-            <h2 className={styles.sectionTitle}>Häufige Fragen</h2>
-            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Welche Rechtsquellen überwacht Legal Pulse?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Offizielle EU- und deutsche Rechtsquellen: Bundesanzeiger, EU-Amtsblätter, BGH/BVerfG-Entscheidungen, Ministerialblätter, Branchenverbände. Keine Blogs oder ungeprüfte Quellen.</p>
+          <section className={styles.funktionSection} aria-labelledby="faq-heading">
+            <h2 id="faq-heading" className={styles.sectionTitle}>Häufige Fragen</h2>
+            <div className={styles.faqContainer}>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Welche Rechtsquellen überwacht Legal Pulse?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Offizielle EU- und deutsche Rechtsquellen: Bundesanzeiger, EU-Amtsblätter, BGH/BVerfG-Entscheidungen, Ministerialblätter, Branchenverbände. Keine Blogs oder ungeprüfte Quellen.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Wie aktuell sind die Informationen?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Legal Pulse prüft kontinuierlich und reagiert binnen 48 Stunden auf relevante Änderungen. Bei kritischen Updates (z.B. sofortige Compliance-Anforderungen) erfolgen Eilmeldungen.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Wie aktuell sind die Informationen?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Legal Pulse prüft kontinuierlich und reagiert binnen 48 Stunden auf relevante Änderungen. Bei kritischen Updates (z.B. sofortige Compliance-Anforderungen) erfolgen Eilmeldungen.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Kann ich die Alerts anpassen?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Ja, Sie können Themenbereiche und Risikostufen filtern. Wollen Sie nur kritische DSGVO-Updates? Oder alle arbeitsrechtlichen Änderungen? Vollständig konfigurierbar.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Kann ich die Alerts anpassen?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Ja, Sie können Themenbereiche und Risikostufen filtern. Wollen Sie nur kritische DSGVO-Updates? Oder alle arbeitsrechtlichen Änderungen? Vollständig konfigurierbar.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Gibt es auch branchenspezifische Überwachung?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Ja, Legal Pulse erkennt Ihren Geschäftsbereich und fokussiert auf relevante Regelungen: FinTech, SaaS, E-Commerce, Immobilien, Handwerk, Gesundheitswesen etc.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Gibt es auch branchenspezifische Überwachung?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Ja, Legal Pulse erkennt Ihren Geschäftsbereich und fokussiert auf relevante Regelungen: FinTech, SaaS, E-Commerce, Immobilien, Handwerk, Gesundheitswesen etc.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Wie werden die Empfehlungen umgesetzt?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Per Klick übertragen Sie Empfehlungen direkt in den Optimierer oder Generator. Alternativ Export als Checklist für Ihren Anwalt oder interne Prüfung.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Wie werden die Empfehlungen umgesetzt?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Per Klick übertragen Sie Empfehlungen direkt in den Optimierer oder Generator. Alternativ Export als Checklist für Ihren Anwalt oder interne Prüfung.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Was kostet Legal Pulse?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Legal Pulse ist ab dem Business-Plan (49€/Monat) enthalten. Free- und Premium-Nutzer erhalten monatliche Zusammenfassungen der wichtigsten Änderungen.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Was kostet Legal Pulse?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Legal Pulse ist ab dem Business-Plan (49€/Monat) enthalten. Free- und Premium-Nutzer erhalten monatliche Zusammenfassungen der wichtigsten Änderungen.</p>
               </details>
             </div>
           </section>

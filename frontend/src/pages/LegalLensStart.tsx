@@ -163,6 +163,40 @@ const LegalLensStart = () => {
     });
   };
 
+  // Wrapper-Styles für garantierte Zentrierung
+  const pageStyles: React.CSSProperties = {
+    minHeight: '100vh',
+    width: '100%',
+    background: 'linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)',
+    paddingBottom: '2rem',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center'
+  };
+
+  const headerStyles: React.CSSProperties = {
+    width: '100%',
+    background: 'white',
+    borderBottom: '1px solid #e2e8f0',
+    padding: '2rem 1rem',
+    display: 'flex',
+    justifyContent: 'center'
+  };
+
+  const headerContentStyles: React.CSSProperties = {
+    width: '100%',
+    maxWidth: '800px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1.25rem'
+  };
+
+  const mainStyles: React.CSSProperties = {
+    width: '100%',
+    maxWidth: '800px',
+    padding: '2rem 1rem'
+  };
+
   return (
     <>
       <Helmet>
@@ -170,52 +204,21 @@ const LegalLensStart = () => {
         <meta name="description" content="Analysieren Sie Ihre Verträge interaktiv mit KI - Klauseln verstehen, Risiken erkennen, Verhandlungstipps erhalten." />
       </Helmet>
 
-      <div
-        className={styles.container}
-        style={{
-          minHeight: '100vh',
-          width: '100%',
-          background: 'linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)',
-          paddingBottom: '2rem'
-        }}
-      >
+      <div style={pageStyles}>
         {/* Header */}
-        <header
-          className={styles.header}
-          style={{
-            background: 'white',
-            borderBottom: '1px solid #e2e8f0',
-            padding: '2rem'
-          }}
-        >
-          <div
-            className={styles.headerContent}
-            style={{
-              maxWidth: '800px',
-              margin: '0 auto',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '1.25rem'
-            }}
-          >
-            <div className={styles.headerIcon} style={{ fontSize: '2.5rem' }}>🔍</div>
+        <header style={headerStyles}>
+          <div style={headerContentStyles}>
+            <div style={{ fontSize: '2.5rem' }}>🔍</div>
             <div>
-              <h1 className={styles.title} style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b', margin: '0 0 0.25rem' }}>Legal Lens</h1>
-              <p className={styles.subtitle} style={{ fontSize: '0.95rem', color: '#64748b', margin: 0 }}>
+              <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b', margin: '0 0 0.25rem' }}>Legal Lens</h1>
+              <p style={{ fontSize: '0.95rem', color: '#64748b', margin: 0 }}>
                 Interaktive Vertragsanalyse mit KI - Klauseln verstehen, Risiken erkennen
               </p>
             </div>
           </div>
         </header>
 
-        <main
-          className={styles.main}
-          style={{
-            maxWidth: '800px',
-            margin: '0 auto',
-            padding: '2rem'
-          }}
-        >
+        <main style={mainStyles}>
           {/* Upload Section */}
           <section className={styles.uploadSection} style={{ marginBottom: '1.5rem' }}>
             <h2

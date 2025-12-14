@@ -153,11 +153,23 @@ const DigitaleSignatur: React.FC = () => {
             <p className={styles.funktionText} style={{ fontSize: '18px', lineHeight: '1.6', marginBottom: '24px' }}>
               Laden Sie Ihren Vertrag hoch, definieren Sie Signaturfelder, und versenden Sie eine E-Mail an die Unterzeichner. Diese erhalten einen Link, öffnen das Dokument im Browser und signieren per Mausklick – ohne Login, ohne Software-Installation. Sie erhalten eine Benachrichtigung, sobald alle signiert haben, und bekommen ein versiegeltes PDF mit vollständigem Audit Trail.
             </p>
-            <ul style={{ fontSize: '16px', lineHeight: '1.7', maxWidth: '800px', margin: '0 auto' }}>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>📧 <strong>E-Mail-Benachrichtigung:</strong> Unterzeichner erhalten automatisch einen Link zum Signieren</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>📊 <strong>Echtzeit-Tracking:</strong> Sehen Sie, wer bereits signiert hat und wer noch aussteht</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>📋 <strong>Audit Trail:</strong> Vollständige Dokumentation jedes Schritts (Zeitstempel, IP, Gerät)</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🔒 <strong>Versiegeltes PDF:</strong> Rechtssicheres, unveränderliches Dokument nach Abschluss</li>
+            <ul className={styles.featureList}>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>📧</span>
+                <span className={styles.featureListContent}><strong>E-Mail-Benachrichtigung:</strong> Unterzeichner erhalten automatisch einen Link zum Signieren</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>📊</span>
+                <span className={styles.featureListContent}><strong>Echtzeit-Tracking:</strong> Sehen Sie, wer bereits signiert hat und wer noch aussteht</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>📋</span>
+                <span className={styles.featureListContent}><strong>Audit Trail:</strong> Vollständige Dokumentation jedes Schritts (Zeitstempel, IP, Gerät)</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🔒</span>
+                <span className={styles.featureListContent}><strong>Versiegeltes PDF:</strong> Rechtssicheres, unveränderliches Dokument nach Abschluss</span>
+              </li>
             </ul>
           </section>
 
@@ -228,26 +240,26 @@ const DigitaleSignatur: React.FC = () => {
           {/* USE CASES */}
           <section className={styles.beispielSection}>
             <h2 className={styles.sectionTitle}>Typische Anwendungsfälle</h2>
-            <div style={{ display: 'grid', gap: '20px', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', marginBottom: '40px' }}>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Arbeitsverträge</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}><strong>Szenario:</strong> Neuer Mitarbeiter soll schnell starten</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>Lösung:</strong> Arbeitsvertrag digital signieren lassen – in Minuten statt Tagen</p>
+            <div className={styles.useCaseGrid}>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>Arbeitsverträge</h3>
+                <p className={styles.useCaseChallenge}><strong>Szenario:</strong> Neuer Mitarbeiter soll schnell starten</p>
+                <p className={styles.useCaseSolution}><strong>Lösung:</strong> Arbeitsvertrag digital signieren lassen – in Minuten statt Tagen</p>
               </div>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Kaufverträge & NDAs</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}><strong>Szenario:</strong> Geschäftspartner sind remote oder im Ausland</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>Lösung:</strong> Signatur per E-Mail – ohne Postweg oder Scan</p>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>Kaufverträge & NDAs</h3>
+                <p className={styles.useCaseChallenge}><strong>Szenario:</strong> Geschäftspartner sind remote oder im Ausland</p>
+                <p className={styles.useCaseSolution}><strong>Lösung:</strong> Signatur per E-Mail – ohne Postweg oder Scan</p>
               </div>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Freelancer-Verträge</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}><strong>Szenario:</strong> Projekt soll sofort starten</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>Lösung:</strong> Vertrag digital versenden und in Echtzeit verfolgen</p>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>Freelancer-Verträge</h3>
+                <p className={styles.useCaseChallenge}><strong>Szenario:</strong> Projekt soll sofort starten</p>
+                <p className={styles.useCaseSolution}><strong>Lösung:</strong> Vertrag digital versenden und in Echtzeit verfolgen</p>
               </div>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Mehrparteien-Verträge</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}><strong>Szenario:</strong> 3+ Unterzeichner an verschiedenen Orten</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>Lösung:</strong> Signierreihenfolge definieren, Tracking in Echtzeit</p>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>Mehrparteien-Verträge</h3>
+                <p className={styles.useCaseChallenge}><strong>Szenario:</strong> 3+ Unterzeichner an verschiedenen Orten</p>
+                <p className={styles.useCaseSolution}><strong>Lösung:</strong> Signierreihenfolge definieren, Tracking in Echtzeit</p>
               </div>
             </div>
             <div className={styles.beispielBox}>
@@ -266,12 +278,27 @@ const DigitaleSignatur: React.FC = () => {
           {/* DIFFERENTIATION */}
           <section className={styles.funktionSection}>
             <h2 className={styles.sectionTitle}>Warum Contract AI?</h2>
-            <ul style={{ fontSize: '16px', lineHeight: '1.7', maxWidth: '800px', margin: '0 auto' }}>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🔒 <strong>Rechtssicher:</strong> eIDAS-konform, rechtlich bindend in Deutschland und EU</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>📋 <strong>Vollständiger Audit Trail:</strong> Jeder Schritt dokumentiert (Zeitstempel, IP, Gerät)</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>⚡ <strong>Blitzschnell:</strong> In Minuten statt Tagen – kein Postweg mehr nötig</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>📧 <strong>Einfacher Versand:</strong> Per E-Mail – Unterzeichner brauchen keinen Account</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🇩🇪 <strong>Deutsche Server:</strong> DSGVO-konform, Speicherung in Frankfurt</li>
+            <ul className={styles.featureList}>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🔒</span>
+                <span className={styles.featureListContent}><strong>Rechtssicher:</strong> eIDAS-konform, rechtlich bindend in Deutschland und EU</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>📋</span>
+                <span className={styles.featureListContent}><strong>Vollständiger Audit Trail:</strong> Jeder Schritt dokumentiert (Zeitstempel, IP, Gerät)</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>⚡</span>
+                <span className={styles.featureListContent}><strong>Blitzschnell:</strong> In Minuten statt Tagen – kein Postweg mehr nötig</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>📧</span>
+                <span className={styles.featureListContent}><strong>Einfacher Versand:</strong> Per E-Mail – Unterzeichner brauchen keinen Account</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🇩🇪</span>
+                <span className={styles.featureListContent}><strong>Deutsche Server:</strong> DSGVO-konform, Speicherung in Frankfurt</span>
+              </li>
             </ul>
           </section>
 
@@ -301,32 +328,50 @@ const DigitaleSignatur: React.FC = () => {
           </section>
 
           {/* FAQ */}
-          <section className={styles.funktionSection}>
-            <h2 className={styles.sectionTitle}>Häufige Fragen</h2>
-            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Ist die digitale Signatur rechtssicher?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Ja, digitale Signaturen mit Contract AI entsprechen der eIDAS-Verordnung und sind in Deutschland und der gesamten EU rechtlich bindend. Jeder Signiervorgang wird mit vollständigem Audit Trail dokumentiert.</p>
+          <section className={styles.funktionSection} aria-labelledby="faq-heading">
+            <h2 id="faq-heading" className={styles.sectionTitle}>Häufige Fragen</h2>
+            <div className={styles.faqContainer}>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Ist die digitale Signatur rechtssicher?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Ja, digitale Signaturen mit Contract AI entsprechen der eIDAS-Verordnung und sind in Deutschland und der gesamten EU rechtlich bindend. Jeder Signiervorgang wird mit vollständigem Audit Trail dokumentiert.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Wie funktioniert der Signaturprozess?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Sie laden Ihren Vertrag hoch, definieren Signaturfelder, und senden eine E-Mail an die Unterzeichner. Diese erhalten einen Link, öffnen das Dokument im Browser und signieren per Mausklick – ohne Login oder Software-Installation.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Wie funktioniert der Signaturprozess?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Sie laden Ihren Vertrag hoch, definieren Signaturfelder, und senden eine E-Mail an die Unterzeichner. Diese erhalten einen Link, öffnen das Dokument im Browser und signieren per Mausklick – ohne Login oder Software-Installation.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Was ist ein Audit Trail?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Der Audit Trail protokolliert jeden Schritt des Signierprozesses: Wer hat wann, wo und wie signiert (IP-Adresse, Zeitstempel, Gerät, Standort). Das versiegelte PDF mit Audit Trail ist rechtlich beweiskräftig.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Was ist ein Audit Trail?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Der Audit Trail protokolliert jeden Schritt des Signierprozesses: Wer hat wann, wo und wie signiert (IP-Adresse, Zeitstempel, Gerät, Standort). Das versiegelte PDF mit Audit Trail ist rechtlich beweiskräftig.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Können mehrere Personen gleichzeitig signieren?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Ja, Sie können entweder eine Signierreihenfolge definieren oder alle Unterzeichner gleichzeitig einladen. Sie sehen in Echtzeit, wer bereits signiert hat.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Können mehrere Personen gleichzeitig signieren?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Ja, Sie können entweder eine Signierreihenfolge definieren oder alle Unterzeichner gleichzeitig einladen. Sie sehen in Echtzeit, wer bereits signiert hat.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Brauchen Unterzeichner einen Account?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Nein, Unterzeichner erhalten einen Link per E-Mail und können direkt im Browser signieren – ohne Registrierung oder Software-Installation.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Brauchen Unterzeichner einen Account?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Nein, Unterzeichner erhalten einen Link per E-Mail und können direkt im Browser signieren – ohne Registrierung oder Software-Installation.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Wie sieht das versiegelte PDF aus?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Das versiegelte PDF enthält alle Signaturen, einen vollständigen Audit Trail auf der letzten Seite und ein digitales Siegel. Es ist rechtlich beweiskräftig und kann nicht nachträglich verändert werden.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Wie sieht das versiegelte PDF aus?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Das versiegelte PDF enthält alle Signaturen, einen vollständigen Audit Trail auf der letzten Seite und ein digitales Siegel. Es ist rechtlich beweiskräftig und kann nicht nachträglich verändert werden.</p>
               </details>
             </div>
           </section>

@@ -1,7 +1,7 @@
 // 📁 components/LegalLens/LegalLensViewer.tsx
 // Haupt-Komponente für Legal Lens Feature
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { FileText, Eye, ZoomIn, ZoomOut, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -37,6 +37,9 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [scale, setScale] = useState<number>(1.0);
+
+  // Ref für das aktuell gelb markierte Text-Element
+  const highlightedElementRef = useRef<HTMLElement | null>(null);
 
   const {
     clauses,
@@ -152,11 +155,37 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     setPageNumber(1);
   };
 
-  // PDF Text Click Handler - Findet passende Klausel
+  // Highlight vom vorherigen Element entfernen
+  const clearHighlight = useCallback(() => {
+    if (highlightedElementRef.current) {
+      highlightedElementRef.current.style.backgroundColor = '';
+      highlightedElementRef.current.style.borderRadius = '';
+      highlightedElementRef.current.style.boxShadow = '';
+      highlightedElementRef.current = null;
+    }
+  }, []);
+
+  // Highlight bei View-Mode Wechsel entfernen
+  useEffect(() => {
+    if (viewMode === 'text') {
+      clearHighlight();
+    }
+  }, [viewMode, clearHighlight]);
+
+  // PDF Text Click Handler - Findet passende Klausel und markiert gelb
   const handlePdfTextClick = (event: React.MouseEvent) => {
     const target = event.target as HTMLElement;
     if (target.tagName === 'SPAN' && target.closest('.react-pdf__Page__textContent')) {
       const clickedText = target.textContent || '';
+
+      // Vorherige Markierung entfernen
+      clearHighlight();
+
+      // Neues Element gelb markieren (Textmarker-Effekt)
+      target.style.backgroundColor = 'rgba(253, 224, 71, 0.7)'; // yellow-300 mit Transparenz
+      target.style.borderRadius = '2px';
+      target.style.boxShadow = '0 0 0 2px rgba(253, 224, 71, 0.5)';
+      highlightedElementRef.current = target;
 
       // Finde Klausel die diesen Text enthält
       const matchingClause = clauses.find(clause =>

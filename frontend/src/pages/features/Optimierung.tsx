@@ -154,11 +154,23 @@ const Optimierung: React.FC = () => {
             <p className={styles.funktionText} style={{ fontSize: '18px', lineHeight: '1.6', marginBottom: '24px' }}>
               Contract AI analysiert Ihren Vertrag systematisch auf Schwachstellen und generiert sofort bessere Formulierungen. Die KI berücksichtigt den Zweck des Vertrags, die Branchenpraxis und die Interessen beider Seiten, um ausgewogene Lösungen vorzuschlagen – nicht einfach nur "pro Contra-Seite".
             </p>
-            <ul style={{ fontSize: '16px', lineHeight: '1.7', maxWidth: '800px', margin: '0 auto' }}>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>📝 <strong>Automatische Klausel-Optimierung:</strong> Jede riskante Klausel erhält eine konkret formulierte Verbesserung – inklusive Begründung</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🔍 <strong>Verständliche Sprache:</strong> Schluss mit Juristendeutsch – die Vorschläge sind laienverständlich und gleichzeitig präzise</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>⚖️ <strong>Kontext & Fairness:</strong> Berücksichtigt Branchenpraxis und Interessensausgleich für ausgewogene Formulierungen</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>✅ <strong>Direkt einsatzbereit:</strong> Änderungen sind so strukturiert, dass Sie sie Abschnitt für Abschnitt übernehmen können</li>
+            <ul className={styles.featureList}>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>📝</span>
+                <span className={styles.featureListContent}><strong>Automatische Klausel-Optimierung:</strong> Jede riskante Klausel erhält eine konkret formulierte Verbesserung – inklusive Begründung</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🔍</span>
+                <span className={styles.featureListContent}><strong>Verständliche Sprache:</strong> Schluss mit Juristendeutsch – die Vorschläge sind laienverständlich und gleichzeitig präzise</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>⚖️</span>
+                <span className={styles.featureListContent}><strong>Kontext & Fairness:</strong> Berücksichtigt Branchenpraxis und Interessensausgleich für ausgewogene Formulierungen</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>✅</span>
+                <span className={styles.featureListContent}><strong>Direkt einsatzbereit:</strong> Änderungen sind so strukturiert, dass Sie sie Abschnitt für Abschnitt übernehmen können</span>
+              </li>
             </ul>
           </section>
 
@@ -229,26 +241,26 @@ const Optimierung: React.FC = () => {
           {/* USE CASES */}
           <section className={styles.beispielSection}>
             <h2 className={styles.sectionTitle}>Typische Schwachstellen – und bessere Vorschläge</h2>
-            <div style={{ display: 'grid', gap: '20px', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', marginBottom: '40px' }}>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Haftungsklausel</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}><strong>Original:</strong> "Haftung liegt vollständig beim Auftragnehmer"</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>Empfehlung:</strong> Haftungsgrenzen je Schadensart + beidseitige Pflicht zur Schadensminderung.</p>
+            <div className={styles.useCaseGrid}>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>Haftungsklausel</h3>
+                <p className={styles.useCaseChallenge}><strong>Original:</strong> "Haftung liegt vollständig beim Auftragnehmer"</p>
+                <p className={styles.useCaseSolution}><strong>Empfehlung:</strong> Haftungsgrenzen je Schadensart + beidseitige Pflicht zur Schadensminderung.</p>
               </div>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Zahlungskonditionen</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}><strong>Original:</strong> "Zahlungsziel 60 Tage"</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>Empfehlung:</strong> 14 Tage, Skonto bei schneller Zahlung, Verzugszinsen geregelt.</p>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>Zahlungskonditionen</h3>
+                <p className={styles.useCaseChallenge}><strong>Original:</strong> "Zahlungsziel 60 Tage"</p>
+                <p className={styles.useCaseSolution}><strong>Empfehlung:</strong> 14 Tage, Skonto bei schneller Zahlung, Verzugszinsen geregelt.</p>
               </div>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Leistungsbeschreibung</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}><strong>Original:</strong> "Unklare Leistungsbeschreibung"</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>Empfehlung:</strong> Messbare Kriterien, Abnahmeprozess, Änderungsmanagement.</p>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>Leistungsbeschreibung</h3>
+                <p className={styles.useCaseChallenge}><strong>Original:</strong> "Unklare Leistungsbeschreibung"</p>
+                <p className={styles.useCaseSolution}><strong>Empfehlung:</strong> Messbare Kriterien, Abnahmeprozess, Änderungsmanagement.</p>
               </div>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Vertraulichkeit</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}><strong>Original:</strong> "Allgemeine NDA-Klausel"</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>Empfehlung:</strong> Präzise Definitionen, Laufzeit, Ausnahmen, Vertragsstrafen.</p>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>Vertraulichkeit</h3>
+                <p className={styles.useCaseChallenge}><strong>Original:</strong> "Allgemeine NDA-Klausel"</p>
+                <p className={styles.useCaseSolution}><strong>Empfehlung:</strong> Präzise Definitionen, Laufzeit, Ausnahmen, Vertragsstrafen.</p>
               </div>
             </div>
             <div className={styles.beispielBox}>
@@ -267,12 +279,27 @@ const Optimierung: React.FC = () => {
           {/* DIFFERENTIATION */}
           <section className={styles.funktionSection}>
             <h2 className={styles.sectionTitle}>Warum Contract AI?</h2>
-            <ul style={{ fontSize: '16px', lineHeight: '1.7', maxWidth: '800px', margin: '0 auto' }}>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🎯 <strong>Echte Individualoptimierung</strong> statt starrer Textbausteine – jeder Vertrag wird kontextspezifisch verbessert</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🇪🇺 <strong>Server in Deutschland (Frankfurt)</strong>, volle DSGVO-Konformität und EU-Datenschutz</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>📋 <strong>Transparente Optimierungen:</strong> Jede Änderung wird begründet und ist nachvollziehbar dokumentiert</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>👤 <strong>Für Laien verständlich, für Profis präzise</strong> – sowohl Klartext als auch rechtssichere Formulierungen</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>⚡ <strong>Sofort einsatzbereit:</strong> Optimierungen sind so formuliert, dass Sie sie direkt verwenden können</li>
+            <ul className={styles.featureList}>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🎯</span>
+                <span className={styles.featureListContent}><strong>Echte Individualoptimierung</strong> statt starrer Textbausteine – jeder Vertrag wird kontextspezifisch verbessert</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🇪🇺</span>
+                <span className={styles.featureListContent}><strong>Server in Deutschland (Frankfurt)</strong>, volle DSGVO-Konformität und EU-Datenschutz</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>📋</span>
+                <span className={styles.featureListContent}><strong>Transparente Optimierungen:</strong> Jede Änderung wird begründet und ist nachvollziehbar dokumentiert</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>👤</span>
+                <span className={styles.featureListContent}><strong>Für Laien verständlich, für Profis präzise</strong> – sowohl Klartext als auch rechtssichere Formulierungen</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>⚡</span>
+                <span className={styles.featureListContent}><strong>Sofort einsatzbereit:</strong> Optimierungen sind so formuliert, dass Sie sie direkt verwenden können</span>
+              </li>
             </ul>
           </section>
 
@@ -302,32 +329,50 @@ const Optimierung: React.FC = () => {
           </section>
 
           {/* FAQ */}
-          <section className={styles.funktionSection}>
-            <h2 className={styles.sectionTitle}>Häufige Fragen</h2>
-            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Ersetzt die Optimierung eine Rechtsberatung?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Nein, Contract AI liefert strukturierte Optimierungsvorschläge und Formulierungsalternativen. Für komplexe rechtliche Fragen sollten Sie weiterhin einen Anwalt konsultieren.</p>
+          <section className={styles.funktionSection} aria-labelledby="faq-heading">
+            <h2 id="faq-heading" className={styles.sectionTitle}>Häufige Fragen</h2>
+            <div className={styles.faqContainer}>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Ersetzt die Optimierung eine Rechtsberatung?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Nein, Contract AI liefert strukturierte Optimierungsvorschläge und Formulierungsalternativen. Für komplexe rechtliche Fragen sollten Sie weiterhin einen Anwalt konsultieren.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Welche Vertragsarten können optimiert werden?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Die meisten Standardverträge: Arbeitsverträge, Dienstleistungsverträge, Mietverträge, NDAs, Lizenzverträge, Kaufverträge. Sehr spezifische Branchen-Verträge können eingeschränkt funktionieren.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Welche Vertragsarten können optimiert werden?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Die meisten Standardverträge: Arbeitsverträge, Dienstleistungsverträge, Mietverträge, NDAs, Lizenzverträge, Kaufverträge. Sehr spezifische Branchen-Verträge können eingeschränkt funktionieren.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Wie genau sind die Optimierungsvorschläge?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Die KI arbeitet mit bewährten Rechtsmustern und Branchenstandards. Rund 90% der Vorschläge sind direkt umsetzbar, bei speziellen Fällen empfehlen wir zusätzliche Prüfung.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Wie genau sind die Optimierungsvorschläge?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Die KI arbeitet mit bewährten Rechtsmustern und Branchenstandards. Rund 90% der Vorschläge sind direkt umsetzbar, bei speziellen Fällen empfehlen wir zusätzliche Prüfung.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Werden meine Vertragsdaten gespeichert?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Optional zur Verlaufsanzeige. Sie können Dokumente jederzeit löschen lassen. Verarbeitung erfolgt ausschließlich zur Optimierung, keine Weitergabe an Dritte.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Werden meine Vertragsdaten gespeichert?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Optional zur Verlaufsanzeige. Sie können Dokumente jederzeit löschen lassen. Verarbeitung erfolgt ausschließlich zur Optimierung, keine Weitergabe an Dritte.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Was kostet die Vertragsoptimierung?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Im Free-Tier: 3 Optimierungen pro Monat. Premium-Pläne ab 19€/Monat mit unbegrenzten Optimierungen und erweiterten Features.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Was kostet die Vertragsoptimierung?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Im Free-Tier: 3 Optimierungen pro Monat. Premium-Pläne ab 19€/Monat mit unbegrenzten Optimierungen und erweiterten Features.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Kann ich die Optimierungen direkt übernehmen?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Ja, alle Vorschläge sind so formuliert, dass Sie sie Abschnitt für Abschnitt in Ihren Vertrag übernehmen können. Mit Änderungsmarkierungen und Export-Funktion.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Kann ich die Optimierungen direkt übernehmen?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Ja, alle Vorschläge sind so formuliert, dass Sie sie Abschnitt für Abschnitt in Ihren Vertrag übernehmen können. Mit Änderungsmarkierungen und Export-Funktion.</p>
               </details>
             </div>
           </section>

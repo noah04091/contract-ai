@@ -137,11 +137,23 @@ const Generator: React.FC = () => {
             <p className={styles.funktionText} style={{ fontSize: '18px', lineHeight: '1.6', marginBottom: '24px' }}>
               Der Generator führt Sie Schritt für Schritt durch die Vertragsgestaltung. Basierend auf bewährten Klausel-Bibliotheken wählen Sie die Module, die Sie brauchen. Das Ergebnis: Ein rechtssicherer, individueller Vertrag – ohne die Kosten und Wartezeit eines Anwalts.
             </p>
-            <ul style={{ fontSize: '16px', lineHeight: '1.7', maxWidth: '800px', margin: '0 auto' }}>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>📋 <strong>Klausel-Bibliothek:</strong> Hunderte bewährte Bausteine für alle Vertragstypen – von Standard bis spezifisch</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🎯 <strong>Geführte Auswahl:</strong> Intelligente Fragen führen zu den passenden Klauseln für Ihren Fall</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>⚖️ <strong>Rechtssicherheit:</strong> Alle Klauseln sind geprüft und aktuell – keine veralteten Formulierungen</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>📝 <strong>Sofort einsatzbereit:</strong> PDF zum Signieren oder DOCX zur weiteren Anpassung – je nach Bedarf</li>
+            <ul className={styles.featureList}>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>📋</span>
+                <span className={styles.featureListContent}><strong>Klausel-Bibliothek:</strong> Hunderte bewährte Bausteine für alle Vertragstypen – von Standard bis spezifisch</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🎯</span>
+                <span className={styles.featureListContent}><strong>Geführte Auswahl:</strong> Intelligente Fragen führen zu den passenden Klauseln für Ihren Fall</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>⚖️</span>
+                <span className={styles.featureListContent}><strong>Rechtssicherheit:</strong> Alle Klauseln sind geprüft und aktuell – keine veralteten Formulierungen</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>📝</span>
+                <span className={styles.featureListContent}><strong>Sofort einsatzbereit:</strong> PDF zum Signieren oder DOCX zur weiteren Anpassung – je nach Bedarf</span>
+              </li>
             </ul>
           </section>
 
@@ -220,26 +232,26 @@ const Generator: React.FC = () => {
           {/* USE CASES */}
           <section className={styles.beispielSection}>
             <h2 className={styles.sectionTitle}>Beispiele, die täglich vorkommen</h2>
-            <div style={{ display: 'grid', gap: '20px', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', marginBottom: '40px' }}>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Freelancer-Vertrag</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}>Umfang, Abnahme, Zahlungsplan, Nutzungsrechte</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>→ Alles sauber geregelt, sofort einsatzbereit</strong></p>
+            <div className={styles.useCaseGrid}>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>Freelancer-Vertrag</h3>
+                <p className={styles.useCaseChallenge}>Umfang, Abnahme, Zahlungsplan, Nutzungsrechte</p>
+                <p className={styles.useCaseSolution}><strong>→ Alles sauber geregelt, sofort einsatzbereit</strong></p>
               </div>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>NDA</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}>Vertraulichkeit präzise definiert</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>→ Ausnahmen, Laufzeit, Vertragsstrafe geregelt</strong></p>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>NDA</h3>
+                <p className={styles.useCaseChallenge}>Vertraulichkeit präzise definiert</p>
+                <p className={styles.useCaseSolution}><strong>→ Ausnahmen, Laufzeit, Vertragsstrafe geregelt</strong></p>
               </div>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Mietvertrag</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}>Individuelle Klauseln zu Nebenkosten, Renovierung</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>→ Haustiere, Untermiete – ohne Grauzonen</strong></p>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>Mietvertrag</h3>
+                <p className={styles.useCaseChallenge}>Individuelle Klauseln zu Nebenkosten, Renovierung</p>
+                <p className={styles.useCaseSolution}><strong>→ Haustiere, Untermiete – ohne Grauzonen</strong></p>
               </div>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Kooperationsvertrag</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}>Ziele, IP, Haftung, Exit-Regelungen</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>→ Modular wählbar je nach Partnerschaft</strong></p>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>Kooperationsvertrag</h3>
+                <p className={styles.useCaseChallenge}>Ziele, IP, Haftung, Exit-Regelungen</p>
+                <p className={styles.useCaseSolution}><strong>→ Modular wählbar je nach Partnerschaft</strong></p>
               </div>
             </div>
             <div className={styles.beispielBox}>
@@ -258,12 +270,27 @@ const Generator: React.FC = () => {
           {/* DIFFERENTIATION */}
           <section className={styles.funktionSection}>
             <h2 className={styles.sectionTitle}>Warum Contract AI?</h2>
-            <ul style={{ fontSize: '16px', lineHeight: '1.7', maxWidth: '800px', margin: '0 auto' }}>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>⚖️ <strong>Rechtssicher & aktuell</strong> – alle Klauseln sind geprüft und entsprechen aktuellem Recht</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🇪🇺 <strong>Server in Deutschland (Frankfurt)</strong>, volle DSGVO-Konformität und EU-Datenschutz</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🎯 <strong>Modularer Aufbau:</strong> Nur die Klauseln, die Sie wirklich brauchen – kein unnötiger Ballast</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>⚡ <strong>Zeit & Kostenersparnis:</strong> In Minuten statt Wochen zum fertigen Vertrag</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🔄 <strong>Nahtlose Integration:</strong> Direkter Übergang zu Analyse, Optimierung oder Fristenverwaltung</li>
+            <ul className={styles.featureList}>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>⚖️</span>
+                <span className={styles.featureListContent}><strong>Rechtssicher & aktuell</strong> – alle Klauseln sind geprüft und entsprechen aktuellem Recht</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🇪🇺</span>
+                <span className={styles.featureListContent}><strong>Server in Deutschland (Frankfurt)</strong>, volle DSGVO-Konformität und EU-Datenschutz</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🎯</span>
+                <span className={styles.featureListContent}><strong>Modularer Aufbau:</strong> Nur die Klauseln, die Sie wirklich brauchen – kein unnötiger Ballast</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>⚡</span>
+                <span className={styles.featureListContent}><strong>Zeit & Kostenersparnis:</strong> In Minuten statt Wochen zum fertigen Vertrag</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🔄</span>
+                <span className={styles.featureListContent}><strong>Nahtlose Integration:</strong> Direkter Übergang zu Analyse, Optimierung oder Fristenverwaltung</span>
+              </li>
             </ul>
           </section>
 
@@ -293,32 +320,50 @@ const Generator: React.FC = () => {
           </section>
 
           {/* FAQ */}
-          <section className={styles.funktionSection}>
-            <h2 className={styles.sectionTitle}>Häufige Fragen</h2>
-            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Welche Vertragstypen kann der Generator erstellen?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Freelancer-Verträge, NDAs, Mietverträge, Kooperationsverträge, Lizenzverträge, Service-Agreements und individuelle Zusammenstellungen aus unserer Klausel-Bibliothek.</p>
+          <section className={styles.funktionSection} aria-labelledby="faq-heading">
+            <h2 id="faq-heading" className={styles.sectionTitle}>Häufige Fragen</h2>
+            <div className={styles.faqContainer}>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Welche Vertragstypen kann der Generator erstellen?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Freelancer-Verträge, NDAs, Mietverträge, Kooperationsverträge, Lizenzverträge, Service-Agreements und individuelle Zusammenstellungen aus unserer Klausel-Bibliothek.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Sind die generierten Verträge rechtssicher?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Ja, alle Klauseln sind von Juristen geprüft und entsprechen aktuellem deutschen/EU-Recht. Für hochspezifische Fälle empfehlen wir zusätzliche Anwaltsberatung.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Sind die generierten Verträge rechtssicher?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Ja, alle Klauseln sind von Juristen geprüft und entsprechen aktuellem deutschen/EU-Recht. Für hochspezifische Fälle empfehlen wir zusätzliche Anwaltsberatung.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Kann ich die Verträge nachträglich ändern?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Ja, Sie erhalten sowohl PDF als auch DOCX-Format. Im Dashboard können Sie Verträge erneut öffnen und anpassen.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Kann ich die Verträge nachträglich ändern?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Ja, Sie erhalten sowohl PDF als auch DOCX-Format. Im Dashboard können Sie Verträge erneut öffnen und anpassen.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Funktioniert die digitale Signatur rechtsgültig?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Ja, unsere eIDAS-konforme elektronische Signatur ist in der EU voll rechtsgültig. Mit Zeitstempel und Versand per E-Mail.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Funktioniert die digitale Signatur rechtsgültig?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Ja, unsere eIDAS-konforme elektronische Signatur ist in der EU voll rechtsgültig. Mit Zeitstempel und Versand per E-Mail.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Wie viele Verträge kann ich generieren?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Je nach Plan: Premium 5/Monat, Business 20/Monat, Legendary unbegrenzt. Alle mit Export-Funktion und digitaler Signatur.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Wie viele Verträge kann ich generieren?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Je nach Plan: Premium 5/Monat, Business 20/Monat, Legendary unbegrenzt. Alle mit Export-Funktion und digitaler Signatur.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Was unterscheidet das von Standard-Vorlagen?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Individuelle Konfiguration statt starrer Vorlagen, immer aktuelle Klauseln, Konsistenz-Checks und nahtlose Integration in Ihren Workflow.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Was unterscheidet das von Standard-Vorlagen?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Individuelle Konfiguration statt starrer Vorlagen, immer aktuelle Klauseln, Konsistenz-Checks und nahtlose Integration in Ihren Workflow.</p>
               </details>
             </div>
           </section>

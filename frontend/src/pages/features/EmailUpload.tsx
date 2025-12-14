@@ -153,11 +153,23 @@ const EmailUpload: React.FC = () => {
             <p className={styles.funktionText} style={{ fontSize: '18px', lineHeight: '1.6', marginBottom: '24px' }}>
               Jeder Contract AI Nutzer erhält eine persönliche, einzigartige E-Mail-Adresse. Leiten Sie E-Mails mit Vertragsanhängen einfach dorthin weiter. Das System erkennt PDF-Dateien automatisch, lädt sie verschlüsselt hoch und analysiert sie mit KI. Der E-Mail-Betreff wird als Notiz gespeichert. Alles passiert im Hintergrund – Sie müssen nichts tun.
             </p>
-            <ul style={{ fontSize: '16px', lineHeight: '1.7', maxWidth: '800px', margin: '0 auto' }}>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>📧 <strong>Einfach weiterleiten:</strong> Kein manuelles Herunterladen oder Hochladen nötig</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🤖 <strong>Automatische Erkennung:</strong> PDFs werden sofort erkannt und verarbeitet</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>📱 <strong>Funktioniert überall:</strong> Von jedem E-Mail-Postfach – Gmail, Outlook, Apple Mail, etc.</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🔒 <strong>Sicher & DSGVO-konform:</strong> E-Mails werden nicht gespeichert, nur die PDFs (verschlüsselt)</li>
+            <ul className={styles.featureList}>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>📧</span>
+                <span className={styles.featureListContent}><strong>Einfach weiterleiten:</strong> Kein manuelles Herunterladen oder Hochladen nötig</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🤖</span>
+                <span className={styles.featureListContent}><strong>Automatische Erkennung:</strong> PDFs werden sofort erkannt und verarbeitet</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>📱</span>
+                <span className={styles.featureListContent}><strong>Funktioniert überall:</strong> Von jedem E-Mail-Postfach – Gmail, Outlook, Apple Mail, etc.</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🔒</span>
+                <span className={styles.featureListContent}><strong>Sicher & DSGVO-konform:</strong> E-Mails werden nicht gespeichert, nur die PDFs (verschlüsselt)</span>
+              </li>
             </ul>
           </section>
 
@@ -274,12 +286,27 @@ const EmailUpload: React.FC = () => {
           {/* DIFFERENTIATION */}
           <section className={styles.funktionSection}>
             <h2 className={styles.sectionTitle}>Warum Contract AI?</h2>
-            <ul style={{ fontSize: '16px', lineHeight: '1.7', maxWidth: '800px', margin: '0 auto' }}>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🔒 <strong>Maximale Sicherheit:</strong> E-Mails werden NICHT gespeichert – nur PDFs (verschlüsselt)</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>⚡ <strong>Blitzschnell:</strong> PDFs werden in Sekunden erkannt und hochgeladen</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🤖 <strong>Vollautomatisch:</strong> Kein manuelles Eingreifen nötig – einfach weiterleiten</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>📱 <strong>Überall nutzbar:</strong> Funktioniert von jedem E-Mail-Client, auf jedem Gerät</li>
-              <li style={{ margin: '12px 0', color: '#2a3440' }}>🎯 <strong>Intelligente Verarbeitung:</strong> KI-Analyse + Kündigungserinnerungen inklusive</li>
+            <ul className={styles.featureList}>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🔒</span>
+                <span className={styles.featureListContent}><strong>Maximale Sicherheit:</strong> E-Mails werden NICHT gespeichert – nur PDFs (verschlüsselt)</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>⚡</span>
+                <span className={styles.featureListContent}><strong>Blitzschnell:</strong> PDFs werden in Sekunden erkannt und hochgeladen</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🤖</span>
+                <span className={styles.featureListContent}><strong>Vollautomatisch:</strong> Kein manuelles Eingreifen nötig – einfach weiterleiten</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>📱</span>
+                <span className={styles.featureListContent}><strong>Überall nutzbar:</strong> Funktioniert von jedem E-Mail-Client, auf jedem Gerät</span>
+              </li>
+              <li className={styles.featureListItem}>
+                <span className={styles.featureListIcon}>🎯</span>
+                <span className={styles.featureListContent}><strong>Intelligente Verarbeitung:</strong> KI-Analyse + Kündigungserinnerungen inklusive</span>
+              </li>
             </ul>
           </section>
 
