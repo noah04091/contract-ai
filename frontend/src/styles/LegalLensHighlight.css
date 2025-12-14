@@ -7,6 +7,7 @@
    We need very high specificity selectors + !important to override them. */
 
 /* Primary highlight class - used when user clicks on text */
+/* WICHTIG: Keine position-Änderung! React-PDF nutzt absolute positioning. */
 .react-pdf__Page__textContent span.legal-lens-highlight,
 .react-pdf__Page__textContent > span.legal-lens-highlight,
 div.react-pdf__Page__textContent span.legal-lens-highlight,
@@ -16,10 +17,6 @@ span.legal-lens-highlight {
   background: #fde047 !important;
   color: #000000 !important;
   border-radius: 2px !important;
-  box-shadow: 0 2px 8px rgba(253, 224, 71, 0.6) !important;
-  position: relative !important;
-  z-index: 100 !important;
-  mix-blend-mode: multiply !important;
 }
 
 /* Alternative selector using attribute */
