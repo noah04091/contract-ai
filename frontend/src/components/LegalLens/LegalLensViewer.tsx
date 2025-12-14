@@ -38,8 +38,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [scale, setScale] = useState<number>(1.0);
 
-  // Ref für das aktuell gelb markierte Text-Element
-  const highlightedElementRef = useRef<HTMLElement | null>(null);
+  // Ref für alle aktuell gelb markierten Text-Elemente
+  const highlightedElementsRef = useRef<HTMLElement[]>([]);
 
   const {
     clauses,
@@ -155,12 +155,12 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     setPageNumber(1);
   };
 
-  // Highlight vom vorherigen Element entfernen
+  // Highlight von allen markierten Elementen entfernen
   const clearHighlight = useCallback(() => {
-    if (highlightedElementRef.current) {
-      highlightedElementRef.current.classList.remove('legal-lens-highlight');
-      highlightedElementRef.current = null;
-    }
+    highlightedElementsRef.current.forEach(el => {
+      el.classList.remove('legal-lens-highlight');
+    });
+    highlightedElementsRef.current = [];
   }, []);
 
   // Highlight bei View-Mode Wechsel entfernen
@@ -170,24 +170,49 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     }
   }, [viewMode, clearHighlight]);
 
-  // PDF Text Click Handler - Findet passende Klausel und markiert gelb
+  // PDF Text Click Handler - Findet passende Klausel und markiert ganze Zeile gelb
   const handlePdfTextClick = (event: React.MouseEvent) => {
     const target = event.target as HTMLElement;
-    if (target.tagName === 'SPAN' && target.closest('.react-pdf__Page__textContent')) {
-      const clickedText = target.textContent || '';
+    const textContent = target.closest('.react-pdf__Page__textContent');
 
+    if (target.tagName === 'SPAN' && textContent) {
       // Vorherige Markierung entfernen
       clearHighlight();
 
-      // Neues Element gelb markieren mit CSS-Klasse (überschreibt react-pdf Styles)
-      target.classList.add('legal-lens-highlight');
-      highlightedElementRef.current = target;
+      // Finde alle Spans in der gleichen Zeile (ähnliche Y-Position)
+      const targetRect = target.getBoundingClientRect();
+      const targetY = targetRect.top;
+      const tolerance = 5; // Pixel Toleranz für gleiche Zeile
+
+      const allSpans = textContent.querySelectorAll('span');
+      const lineSpans: HTMLElement[] = [];
+      let lineText = '';
+
+      allSpans.forEach(span => {
+        const spanRect = span.getBoundingClientRect();
+        // Prüfe ob Span in der gleichen Zeile ist (ähnliche Y-Position)
+        if (Math.abs(spanRect.top - targetY) <= tolerance) {
+          lineSpans.push(span as HTMLElement);
+          lineText += (span.textContent || '') + ' ';
+        }
+      });
+
+      // Alle Spans dieser Zeile gelb markieren
+      lineSpans.forEach(span => {
+        span.classList.add('legal-lens-highlight');
+      });
+      highlightedElementsRef.current = lineSpans;
 
       // Finde Klausel die diesen Text enthält
-      const matchingClause = clauses.find(clause =>
-        clause.text.toLowerCase().includes(clickedText.toLowerCase().trim()) ||
-        clickedText.toLowerCase().includes(clause.text.toLowerCase().substring(0, 50))
-      );
+      const matchingClause = clauses.find(clause => {
+        const clauseTextLower = clause.text.toLowerCase();
+        const lineTextLower = lineText.toLowerCase().trim();
+        return clauseTextLower.includes(lineTextLower) ||
+               lineTextLower.includes(clauseTextLower.substring(0, 50)) ||
+               clause.text.toLowerCase().split(' ').some(word =>
+                 word.length > 4 && lineTextLower.includes(word)
+               );
+      });
 
       if (matchingClause) {
         selectClause(matchingClause);
@@ -400,7 +425,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                 background: '#f8fafc',
                 padding: '1rem'
               }}
-              onClick={handlePdfTextClick}
+              onClickCapture={handlePdfTextClick}
             >
               {pdfLoading ? (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem' }}>
@@ -514,32 +539,6 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         </div>
       </main>
 
-      {/* CSS für PDF Text-Highlighting - überschreibt react-pdf Styles */}
-      <style>{`
-        .legal-lens-highlight {
-          background-color: rgba(253, 224, 71, 0.8) !important;
-          border-radius: 3px !important;
-          box-shadow: 0 0 0 3px rgba(253, 224, 71, 0.5) !important;
-          padding: 2px 4px !important;
-          margin: -2px -4px !important;
-          mix-blend-mode: normal !important;
-          color: #000 !important;
-          position: relative !important;
-          z-index: 10 !important;
-        }
-
-        /* Hover-Effekt für PDF-Text */
-        .react-pdf__Page__textContent span:hover {
-          background-color: rgba(59, 130, 246, 0.15) !important;
-          cursor: pointer !important;
-          border-radius: 2px !important;
-        }
-
-        /* Aktiver Text-Klick */
-        .react-pdf__Page__textContent span:active {
-          background-color: rgba(59, 130, 246, 0.3) !important;
-        }
-      `}</style>
     </div>
   );
 };

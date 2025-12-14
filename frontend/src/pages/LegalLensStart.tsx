@@ -162,43 +162,67 @@ const LegalLensStart = () => {
         <meta name="description" content="Analysieren Sie Ihre Verträge interaktiv mit KI" />
       </Helmet>
 
-      {/* Globale Styles für diese Seite */}
+      {/* Globale Styles für diese Seite - ÜBERSCHREIBT #root! */}
       <style>{`
+        /* KRITISCH: #root Einschränkungen für diese Seite aufheben */
+        #root:has(.legal-lens-page) {
+          max-width: 100% !important;
+          padding: 0 !important;
+          margin: 0 !important;
+        }
+
+        /* Fallback für Browser ohne :has() Support */
         .legal-lens-page {
+          width: 100%;
           min-height: calc(100vh - 64px);
           background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
-          margin: -2rem;
           padding: 0 0 2rem 0;
+          box-sizing: border-box;
         }
+
         .legal-lens-header {
+          width: 100%;
           background: white;
           border-bottom: 1px solid #e2e8f0;
           padding: 2rem 1rem;
           margin-bottom: 2rem;
+          box-sizing: border-box;
+          display: flex;
+          justify-content: center;
         }
+
         .legal-lens-header-content {
           max-width: 800px;
-          margin: 0 auto;
+          width: 100%;
           display: flex;
           align-items: center;
           gap: 1.25rem;
           text-align: left;
+          padding: 0 1rem;
+          box-sizing: border-box;
         }
+
         .legal-lens-main {
           max-width: 800px;
+          width: 100%;
           margin: 0 auto;
           padding: 0 1rem;
           text-align: left;
+          box-sizing: border-box;
         }
+
         .legal-lens-footer {
           max-width: 800px;
+          width: 100%;
           margin: 2rem auto 0;
           padding: 0 1rem;
           display: flex;
           justify-content: center;
           gap: 2rem;
           flex-wrap: wrap;
+          box-sizing: border-box;
         }
+
         @keyframes spin {
           to { transform: rotate(360deg); }
         }

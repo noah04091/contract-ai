@@ -7,6 +7,7 @@ import App from "./App";
 import "./styles/index.css";
 import "./styles/theme.css";
 import "./styles/accessibility.css";
+import "./styles/LegalLensHighlight.css";
 import { HelmetProvider } from "react-helmet-async";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";

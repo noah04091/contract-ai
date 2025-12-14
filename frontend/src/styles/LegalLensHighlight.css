@@ -1,0 +1,48 @@
+/* ==============================================
+   LEGAL LENS - PDF TEXT HIGHLIGHTING STYLES
+   High specificity selectors to override react-pdf inline styles
+   ============================================== */
+
+/* React-PDF text layer spans have inline styles with ~1000 specificity.
+   We need very high specificity selectors + !important to override them. */
+
+/* Primary highlight class - used when user clicks on text */
+.react-pdf__Page__textContent span.legal-lens-highlight,
+.react-pdf__Page__textContent > span.legal-lens-highlight,
+div.react-pdf__Page__textContent span.legal-lens-highlight,
+.react-pdf__Document .react-pdf__Page .react-pdf__Page__textContent span.legal-lens-highlight,
+span.legal-lens-highlight {
+  background-color: #fde047 !important;
+  background: #fde047 !important;
+  color: #000000 !important;
+  border-radius: 2px !important;
+  box-shadow: 0 2px 8px rgba(253, 224, 71, 0.6) !important;
+  position: relative !important;
+  z-index: 100 !important;
+  mix-blend-mode: multiply !important;
+}
+
+/* Alternative selector using attribute */
+[class*="react-pdf__Page__textContent"] span.legal-lens-highlight {
+  background-color: #fde047 !important;
+  background: #fde047 !important;
+  color: #000000 !important;
+}
+
+/* Hover state for clickable text - subtle blue highlight */
+.react-pdf__Page__textContent span:hover:not(.legal-lens-highlight) {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+  cursor: pointer !important;
+  border-radius: 1px !important;
+}
+
+/* Ensure text layer is interactive */
+.react-pdf__Page__textContent {
+  pointer-events: auto !important;
+  z-index: 2 !important;
+}
+
+.react-pdf__Page__textContent span {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
