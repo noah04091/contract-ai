@@ -196,25 +196,14 @@ body {
   }
 }
 
-/* Reduced Motion: Deaktiviere Animationen auf Mobile für Performance */
-@media (prefers-reduced-motion: reduce), (max-width: 768px) and (prefers-reduced-motion: no-preference) {
+/* Reduced Motion: Nur deaktivieren wenn User es explizit wünscht */
+@media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-  }
-}
-
-/* Re-enable transitions für wichtige UI-Elemente auf Mobile */
-@media (max-width: 768px) {
-  button,
-  a,
-  input,
-  .modal,
-  .sidebar {
-    transition-duration: 0.2s !important;
   }
 }
 
