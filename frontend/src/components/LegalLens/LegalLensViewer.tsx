@@ -41,6 +41,10 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   // Ref für alle aktuell gelb markierten Text-Elemente
   const highlightedElementsRef = useRef<HTMLElement[]>([]);
 
+  // Ref um doppelte Analyse-Aufrufe zu verhindern
+  const lastAnalyzedClauseRef = useRef<string | null>(null);
+  const analysisAttemptedRef = useRef<boolean>(false);
+
   const {
     clauses,
     selectedClause,
@@ -117,27 +121,48 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     }
   }, [contractId, parseContract]);
 
-  // Analyse starten wenn Klausel ausgewählt
+  // Analyse starten wenn Klausel ausgewählt - MIT Loop-Protection
   useEffect(() => {
-    if (selectedClause && !currentAnalysis && !isAnalyzing) {
-      analyzeClause(true);
+    // Verhindere doppelte Analyse der gleichen Klausel
+    if (!selectedClause) {
+      lastAnalyzedClauseRef.current = null;
+      analysisAttemptedRef.current = false;
+      return;
     }
-  }, [selectedClause, currentAnalysis, isAnalyzing, analyzeClause]);
 
-  // Re-Analyse bei Perspektiv-Wechsel
-  useEffect(() => {
-    if (selectedClause && currentAnalysis) {
-      analyzeClause(true);
+    const clauseKey = `${selectedClause.id}-${currentPerspective}`;
+
+    // Wenn diese Klausel+Perspektive bereits analysiert wird/wurde, nichts tun
+    if (lastAnalyzedClauseRef.current === clauseKey) {
+      return;
     }
+
+    // Wenn bereits eine Analyse läuft, nicht erneut starten
+    if (isAnalyzing) {
+      return;
+    }
+
+    // Wenn bereits eine Analyse-Versuch für diese Klausel gemacht wurde, nicht wiederholen
+    if (analysisAttemptedRef.current && lastAnalyzedClauseRef.current === clauseKey) {
+      return;
+    }
+
+    // Markiere dass wir diese Klausel analysieren
+    lastAnalyzedClauseRef.current = clauseKey;
+    analysisAttemptedRef.current = true;
+
+    console.log('[Legal Lens] Starting analysis for:', clauseKey);
+    analyzeClause(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPerspective]);
+  }, [selectedClause?.id, currentPerspective, isAnalyzing]);
 
   // Klausel als gelesen markieren
   useEffect(() => {
     if (selectedClause && currentAnalysis) {
       markClauseReviewed(selectedClause.id);
     }
-  }, [selectedClause, currentAnalysis, markClauseReviewed]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedClause?.id, currentAnalysis]);
 
   const handleBack = () => {
     navigate(-1);
@@ -235,9 +260,10 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       highlightedElementsRef.current = sentenceSpans;
 
       // Finde Klausel die diesen Text enthält
-      const matchingClause = clauses.find(clause => {
+      const cleanSentenceText = sentenceText.trim();
+      let matchingClause = clauses.find(clause => {
         const clauseTextLower = clause.text.toLowerCase();
-        const sentenceTextLower = sentenceText.toLowerCase().trim();
+        const sentenceTextLower = cleanSentenceText.toLowerCase();
         return clauseTextLower.includes(sentenceTextLower) ||
                sentenceTextLower.includes(clauseTextLower.substring(0, 50)) ||
                clause.text.toLowerCase().split(' ').some(word =>
@@ -245,7 +271,32 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                );
       });
 
+      // Falls keine passende Klausel gefunden, erstelle eine temporäre
+      if (!matchingClause && cleanSentenceText.length > 10) {
+        matchingClause = {
+          id: `pdf-selection-${Date.now()}`,
+          text: cleanSentenceText,
+          type: 'sentence' as const,
+          startIndex: 0,
+          endIndex: cleanSentenceText.length,
+          riskIndicators: {
+            level: 'medium' as const,
+            keywords: [],
+            score: 50
+          },
+          metadata: {
+            wordCount: cleanSentenceText.split(/\s+/).length,
+            hasNumbers: /\d/.test(cleanSentenceText),
+            hasDates: /\d{1,2}\.\d{1,2}\.\d{2,4}/.test(cleanSentenceText),
+            hasMoneyReferences: /€|\$|EUR|USD/.test(cleanSentenceText)
+          }
+        };
+        console.log('[Legal Lens] Created temporary clause for text:', cleanSentenceText.substring(0, 50));
+      }
+
       if (matchingClause) {
+        // Reset die Analyse-Refs für neue Klausel
+        analysisAttemptedRef.current = false;
         selectClause(matchingClause);
       }
     }
