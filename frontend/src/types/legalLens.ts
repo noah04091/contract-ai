@@ -54,13 +54,43 @@ export interface ParsedClause {
 }
 
 /**
- * Auswirkung einer Klausel
+ * Action Level für Handlungsempfehlung
+ */
+export type ActionLevel = 'accept' | 'negotiate' | 'reject';
+
+/**
+ * Wahrscheinlichkeit
+ */
+export type Probability = 'unlikely' | 'possible' | 'likely' | 'low' | 'medium' | 'high';
+
+/**
+ * Worst-Case Szenario
+ */
+export interface WorstCaseScenario {
+  scenario: string;
+  financialRisk: string;
+  timeRisk: string;
+  probability: Probability;
+}
+
+/**
+ * Bessere Alternative
+ */
+export interface BetterAlternative {
+  text: string;
+  whyBetter: string;
+  howToAsk: string;
+}
+
+/**
+ * Auswirkung einer Klausel - ERWEITERT
  */
 export interface ClauseImpact {
-  financial: RiskLevel;
-  legal: RiskLevel;
-  operational: RiskLevel;
-  reputation: RiskLevel;
+  financial: string | RiskLevel;
+  legal: string | RiskLevel;
+  operational: string | RiskLevel;
+  reputation?: RiskLevel;
+  negotiationPower?: number; // 0-100
 }
 
 /**
@@ -73,23 +103,51 @@ export interface ClauseConsequence {
 }
 
 /**
- * Erklärung aus einer Perspektive
+ * Erklärung aus einer Perspektive - ERWEITERT
  */
 export interface PerspectiveExplanation {
   summary: string;
+  simple?: string;
   detailed: string;
+  whatItMeansForYou?: string;
   keyPoints: string[];
 }
 
 /**
- * Analyse aus einer bestimmten Perspektive
+ * Analyse aus einer bestimmten Perspektive - ERWEITERT
  */
 export interface PerspectiveAnalysis {
+  // NEU: Primäre Handlungsempfehlung
+  actionLevel?: ActionLevel;
+  actionReason?: string;
+
   explanation: PerspectiveExplanation;
+
+  // NEU: Risiko-Bewertung mit Gründen
+  riskAssessment?: {
+    level: RiskLevel;
+    score: number;
+    reasons: string[];
+  };
+
+  // NEU: Worst-Case Szenario
+  worstCase?: WorstCaseScenario;
+
   impact: ClauseImpact;
   consequences: ClauseConsequence[];
   recommendations: string[];
+  recommendation?: string;
   negotiationPower: number;
+
+  // NEU: Bessere Alternative
+  betterAlternative?: BetterAlternative;
+
+  // NEU: Marktvergleich
+  marketComparison?: {
+    isStandard: boolean;
+    marketRange: string;
+    deviation: string;
+  };
 }
 
 /**
@@ -121,7 +179,7 @@ export interface ChatMessage {
 }
 
 /**
- * Vollständige Klausel-Analyse
+ * Vollständige Klausel-Analyse - ERWEITERT
  */
 export interface ClauseAnalysis {
   _id: string;
@@ -132,6 +190,13 @@ export interface ClauseAnalysis {
   clauseText: string;
   riskLevel: RiskLevel;
   riskScore: number;
+
+  // NEU: Top-Level Felder (aus der aktuellen Perspektive)
+  actionLevel?: ActionLevel;
+  actionReason?: string;
+  worstCase?: WorstCaseScenario;
+  betterAlternative?: BetterAlternative;
+
   perspectives: {
     contractor: PerspectiveAnalysis;
     client: PerspectiveAnalysis;
@@ -382,4 +447,40 @@ export const RISK_LABELS: Record<RiskLevel, string> = {
   low: 'Niedriges Risiko',
   medium: 'Mittleres Risiko',
   high: 'Hohes Risiko'
+};
+
+/**
+ * Action Level Labels - NEU für Dealbreaker/Verhandelbar/Akzeptieren
+ */
+export const ACTION_LABELS: Record<ActionLevel, { text: string; emoji: string; color: string; bgColor: string }> = {
+  accept: {
+    text: 'Unkritisch',
+    emoji: '🟢',
+    color: '#16a34a',
+    bgColor: '#f0fdf4'
+  },
+  negotiate: {
+    text: 'Verhandeln',
+    emoji: '🟡',
+    color: '#d97706',
+    bgColor: '#fffbeb'
+  },
+  reject: {
+    text: 'Dealbreaker',
+    emoji: '🔴',
+    color: '#dc2626',
+    bgColor: '#fef2f2'
+  }
+};
+
+/**
+ * Probability Labels
+ */
+export const PROBABILITY_LABELS: Record<Probability, string> = {
+  unlikely: 'Unwahrscheinlich',
+  possible: 'Möglich',
+  likely: 'Wahrscheinlich',
+  low: 'Gering',
+  medium: 'Mittel',
+  high: 'Hoch'
 };

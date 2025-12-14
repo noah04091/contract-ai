@@ -1,5 +1,5 @@
 // 📁 components/LegalLens/AnalysisPanel.tsx
-// Komponente für das Analyse-Panel (rechte Seite)
+// Komponente für das Analyse-Panel (rechte Seite) - KOMPLETT ÜBERARBEITET
 
 import React, { useState } from 'react';
 import type {
@@ -8,9 +8,9 @@ import type {
   ClauseAlternative,
   NegotiationInfo,
   ChatMessage,
-  RiskLevel
+  ActionLevel
 } from '../../types/legalLens';
-import { RISK_LABELS, PERSPECTIVES } from '../../types/legalLens';
+import { PERSPECTIVES, ACTION_LABELS, PROBABILITY_LABELS } from '../../types/legalLens';
 import styles from '../../styles/LegalLens.module.css';
 
 interface AnalysisPanelProps {
@@ -50,6 +50,19 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
 }) => {
   const [chatInput, setChatInput] = useState('');
   const [copiedTemplate, setCopiedTemplate] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['action', 'explanation', 'worstCase']));
+
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(section)) {
+        newSet.delete(section);
+      } else {
+        newSet.add(section);
+      }
+      return newSet;
+    });
+  };
 
   const handleSendMessage = () => {
     if (chatInput.trim() && !isChatting) {
@@ -73,22 +86,8 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
     }
   };
 
-  const getRiskEmoji = (level: RiskLevel): string => {
-    switch (level) {
-      case 'high': return '🔴';
-      case 'medium': return '🟡';
-      case 'low': return '🟢';
-      default: return '⚪';
-    }
-  };
-
-  const getImpactLabel = (level: RiskLevel): string => {
-    switch (level) {
-      case 'high': return 'Hoch';
-      case 'medium': return 'Mittel';
-      case 'low': return 'Niedrig';
-      default: return '-';
-    }
+  const copyText = (text: string) => {
+    navigator.clipboard.writeText(text);
   };
 
   const getCurrentPerspectiveInfo = () => {
@@ -122,10 +121,16 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
             </h4>
           </div>
           {streamingText ? (
-            <p className={styles.streamingText}>
+            <div style={{
+              fontFamily: 'system-ui, -apple-system, sans-serif',
+              fontSize: '0.9rem',
+              lineHeight: 1.7,
+              color: '#374151',
+              whiteSpace: 'pre-wrap'
+            }}>
               {streamingText}
               <span className={styles.streamingCursor} />
-            </p>
+            </div>
           ) : (
             <div className={styles.loadingOverlay}>
               <div className={styles.loadingSpinner} />
@@ -146,114 +151,454 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
 
   const perspectiveData = analysis.perspectives?.[currentPerspective];
 
+  // Extrahiere die wichtigsten Felder (können auf verschiedenen Ebenen sein)
+  const actionLevel: ActionLevel = perspectiveData?.actionLevel || analysis.actionLevel || 'negotiate';
+  const actionReason = perspectiveData?.actionReason || analysis.actionReason || '';
+  const worstCase = perspectiveData?.worstCase || analysis.worstCase;
+  const betterAlternative = perspectiveData?.betterAlternative || analysis.betterAlternative;
+  const marketComparison = perspectiveData?.marketComparison;
+  const riskAssessment = perspectiveData?.riskAssessment;
+
+  const actionInfo = ACTION_LABELS[actionLevel] || ACTION_LABELS.negotiate;
+
   return (
     <div className={styles.analysisContent}>
-      {/* Risk Overview */}
-      <div className={styles.analysisSection}>
-        <div className={styles.sectionHeader}>
-          <h4 className={styles.sectionTitle}>
-            <span className={styles.sectionIcon}>⚖️</span>
-            Risikobewertung
-          </h4>
-          <span className={`${styles.riskBadge} ${styles[analysis.riskLevel || 'low']}`}>
-            <span className={`${styles.riskIndicator} ${styles[analysis.riskLevel || 'low']}`} />
-            {getRiskEmoji(analysis.riskLevel || 'low')} {RISK_LABELS[analysis.riskLevel || 'low']}
-          </span>
+      {/* 🎯 ACTION BADGE - DAS WICHTIGSTE ZUERST */}
+      <div
+        className={styles.analysisSection}
+        style={{
+          background: actionInfo.bgColor,
+          border: `2px solid ${actionInfo.color}`,
+          borderRadius: '12px'
+        }}
+      >
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: actionReason ? '0.75rem' : 0
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <span style={{ fontSize: '2rem' }}>{actionInfo.emoji}</span>
+            <div>
+              <h3 style={{
+                margin: 0,
+                fontSize: '1.25rem',
+                fontWeight: 700,
+                color: actionInfo.color
+              }}>
+                {actionInfo.text}
+              </h3>
+              <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                Handlungsempfehlung
+              </span>
+            </div>
+          </div>
+          {riskAssessment && (
+            <div style={{
+              textAlign: 'right',
+              padding: '0.5rem 1rem',
+              background: 'white',
+              borderRadius: '8px'
+            }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: actionInfo.color }}>
+                {riskAssessment.score}/100
+              </div>
+              <div style={{ fontSize: '0.7rem', color: '#64748b' }}>Risiko-Score</div>
+            </div>
+          )}
         </div>
+        {actionReason && (
+          <p style={{
+            margin: 0,
+            fontSize: '0.95rem',
+            color: '#374151',
+            fontWeight: 500
+          }}>
+            {actionReason}
+          </p>
+        )}
       </div>
 
-      {/* Explanation */}
+      {/* 📖 Einfache Erklärung */}
       {perspectiveData?.explanation && (
         <div className={styles.analysisSection}>
-          <div className={styles.sectionHeader}>
+          <div
+            className={styles.sectionHeader}
+            onClick={() => toggleSection('explanation')}
+            style={{ cursor: 'pointer' }}
+          >
             <h4 className={styles.sectionTitle}>
               <span className={styles.sectionIcon}>{getCurrentPerspectiveInfo().icon}</span>
-              Erklärung ({getCurrentPerspectiveInfo().name})
+              Was bedeutet das?
             </h4>
+            <span style={{ fontSize: '0.875rem', color: '#64748b' }}>
+              {expandedSections.has('explanation') ? '▼' : '▶'}
+            </span>
           </div>
-          <p className={styles.explanationText}>
-            {perspectiveData.explanation.summary}
-          </p>
-          {perspectiveData.explanation.keyPoints?.length > 0 && (
-            <ul className={styles.keyPoints}>
-              {perspectiveData.explanation.keyPoints.map((point, idx) => (
-                <li key={idx} className={styles.keyPoint}>
-                  <span className={styles.keyPointBullet}>•</span>
-                  {point}
-                </li>
-              ))}
-            </ul>
+          {expandedSections.has('explanation') && (
+            <>
+              <p style={{
+                fontSize: '1rem',
+                lineHeight: 1.7,
+                color: '#1e293b',
+                margin: '0 0 1rem 0',
+                fontWeight: 500
+              }}>
+                {perspectiveData.explanation.simple || perspectiveData.explanation.summary}
+              </p>
+
+              {/* Was das für DICH bedeutet - HIGHLIGHT */}
+              {perspectiveData.explanation.whatItMeansForYou && (
+                <div style={{
+                  background: '#eff6ff',
+                  border: '1px solid #bfdbfe',
+                  borderRadius: '8px',
+                  padding: '1rem',
+                  marginBottom: '1rem'
+                }}>
+                  <div style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    color: '#3b82f6',
+                    marginBottom: '0.5rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em'
+                  }}>
+                    💡 Was das für dich bedeutet
+                  </div>
+                  <p style={{
+                    margin: 0,
+                    fontSize: '0.95rem',
+                    color: '#1e40af',
+                    lineHeight: 1.6
+                  }}>
+                    {perspectiveData.explanation.whatItMeansForYou}
+                  </p>
+                </div>
+              )}
+
+              {perspectiveData.explanation.keyPoints?.length > 0 && (
+                <ul className={styles.keyPoints}>
+                  {perspectiveData.explanation.keyPoints.map((point, idx) => (
+                    <li key={idx} className={styles.keyPoint}>
+                      <span className={styles.keyPointBullet}>•</span>
+                      {point}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
           )}
         </div>
       )}
 
-      {/* Impact */}
-      {perspectiveData?.impact && (
+      {/* ⚠️ Worst-Case Szenario - MIT KONKRETEN ZAHLEN */}
+      {worstCase && (
         <div className={styles.analysisSection}>
-          <div className={styles.sectionHeader}>
-            <h4 className={styles.sectionTitle}>
-              <span className={styles.sectionIcon}>📊</span>
-              Auswirkungen
-            </h4>
-          </div>
-          <div className={styles.impactGrid}>
-            <div className={styles.impactItem}>
-              <span className={styles.impactLabel}>Finanziell</span>
-              <span className={`${styles.impactValue} ${styles[perspectiveData.impact.financial || 'low']}`}>
-                {getImpactLabel(perspectiveData.impact.financial)}
-              </span>
-            </div>
-            <div className={styles.impactItem}>
-              <span className={styles.impactLabel}>Rechtlich</span>
-              <span className={`${styles.impactValue} ${styles[perspectiveData.impact.legal || 'low']}`}>
-                {getImpactLabel(perspectiveData.impact.legal)}
-              </span>
-            </div>
-            <div className={styles.impactItem}>
-              <span className={styles.impactLabel}>Operativ</span>
-              <span className={`${styles.impactValue} ${styles[perspectiveData.impact.operational || 'low']}`}>
-                {getImpactLabel(perspectiveData.impact.operational)}
-              </span>
-            </div>
-            <div className={styles.impactItem}>
-              <span className={styles.impactLabel}>Reputation</span>
-              <span className={`${styles.impactValue} ${styles[perspectiveData.impact.reputation || 'low']}`}>
-                {getImpactLabel(perspectiveData.impact.reputation)}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Consequences */}
-      {perspectiveData?.consequences?.length > 0 && (
-        <div className={styles.analysisSection}>
-          <div className={styles.sectionHeader}>
+          <div
+            className={styles.sectionHeader}
+            onClick={() => toggleSection('worstCase')}
+            style={{ cursor: 'pointer' }}
+          >
             <h4 className={styles.sectionTitle}>
               <span className={styles.sectionIcon}>⚠️</span>
-              Mögliche Konsequenzen
+              Worst-Case Szenario
             </h4>
+            <span style={{ fontSize: '0.875rem', color: '#64748b' }}>
+              {expandedSections.has('worstCase') ? '▼' : '▶'}
+            </span>
           </div>
-          <div className={styles.consequenceList}>
-            {perspectiveData.consequences.map((consequence, idx) => (
-              <div
-                key={idx}
-                className={`${styles.consequenceItem} ${styles[consequence.probability || 'low']}`}
-              >
-                <p className={styles.consequenceScenario}>{consequence.scenario}</p>
-                <p className={styles.consequenceImpact}>{consequence.impact}</p>
+          {expandedSections.has('worstCase') && (
+            <div style={{ display: 'grid', gap: '0.75rem' }}>
+              <p style={{
+                margin: 0,
+                fontSize: '0.95rem',
+                color: '#374151',
+                lineHeight: 1.6
+              }}>
+                {worstCase.scenario}
+              </p>
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '0.75rem'
+              }}>
+                {/* Finanzielles Risiko */}
+                <div style={{
+                  background: '#fef2f2',
+                  border: '1px solid #fecaca',
+                  borderRadius: '8px',
+                  padding: '0.875rem'
+                }}>
+                  <div style={{
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    color: '#dc2626',
+                    marginBottom: '0.375rem',
+                    textTransform: 'uppercase'
+                  }}>
+                    💰 Finanzielles Risiko
+                  </div>
+                  <div style={{
+                    fontSize: '1.1rem',
+                    fontWeight: 700,
+                    color: '#991b1b'
+                  }}>
+                    {worstCase.financialRisk || 'Nicht bezifferbar'}
+                  </div>
+                </div>
+
+                {/* Zeitliches Risiko */}
+                <div style={{
+                  background: '#fefce8',
+                  border: '1px solid #fde047',
+                  borderRadius: '8px',
+                  padding: '0.875rem'
+                }}>
+                  <div style={{
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    color: '#ca8a04',
+                    marginBottom: '0.375rem',
+                    textTransform: 'uppercase'
+                  }}>
+                    ⏰ Zeitliche Bindung
+                  </div>
+                  <div style={{
+                    fontSize: '1.1rem',
+                    fontWeight: 700,
+                    color: '#854d0e'
+                  }}>
+                    {worstCase.timeRisk || 'Keine Angabe'}
+                  </div>
+                </div>
               </div>
-            ))}
-          </div>
+
+              {worstCase.probability && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  fontSize: '0.8rem',
+                  color: '#64748b'
+                }}>
+                  <span>Wahrscheinlichkeit:</span>
+                  <span style={{
+                    padding: '0.2rem 0.5rem',
+                    borderRadius: '4px',
+                    fontWeight: 600,
+                    background: worstCase.probability === 'likely' ? '#fef2f2' :
+                               worstCase.probability === 'possible' ? '#fffbeb' : '#f0fdf4',
+                    color: worstCase.probability === 'likely' ? '#dc2626' :
+                           worstCase.probability === 'possible' ? '#d97706' : '#16a34a'
+                  }}>
+                    {PROBABILITY_LABELS[worstCase.probability] || worstCase.probability}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Alternatives */}
+      {/* 📊 Risiko-Gründe */}
+      {riskAssessment?.reasons && riskAssessment.reasons.length > 0 && (
+        <div className={styles.analysisSection}>
+          <div
+            className={styles.sectionHeader}
+            onClick={() => toggleSection('risks')}
+            style={{ cursor: 'pointer' }}
+          >
+            <h4 className={styles.sectionTitle}>
+              <span className={styles.sectionIcon}>📊</span>
+              Risiko-Faktoren
+            </h4>
+            <span style={{ fontSize: '0.875rem', color: '#64748b' }}>
+              {expandedSections.has('risks') ? '▼' : '▶'}
+            </span>
+          </div>
+          {expandedSections.has('risks') && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {riskAssessment.reasons.map((reason, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '0.5rem',
+                    padding: '0.5rem 0.75rem',
+                    background: '#f8fafc',
+                    borderRadius: '6px',
+                    fontSize: '0.875rem',
+                    color: '#374151'
+                  }}
+                >
+                  <span style={{ color: '#ef4444' }}>●</span>
+                  {reason}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 💼 Bessere Alternative */}
+      {betterAlternative && (
+        <div className={styles.analysisSection}>
+          <div
+            className={styles.sectionHeader}
+            onClick={() => toggleSection('alternative')}
+            style={{ cursor: 'pointer' }}
+          >
+            <h4 className={styles.sectionTitle}>
+              <span className={styles.sectionIcon}>💼</span>
+              Bessere Alternative
+            </h4>
+            <span style={{ fontSize: '0.875rem', color: '#64748b' }}>
+              {expandedSections.has('alternative') ? '▼' : '▶'}
+            </span>
+          </div>
+          {expandedSections.has('alternative') && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {/* Vorgeschlagene Formulierung */}
+              <div style={{
+                background: '#f0fdf4',
+                border: '1px solid #86efac',
+                borderRadius: '8px',
+                padding: '1rem'
+              }}>
+                <div style={{
+                  fontSize: '0.7rem',
+                  fontWeight: 600,
+                  color: '#16a34a',
+                  marginBottom: '0.5rem',
+                  textTransform: 'uppercase'
+                }}>
+                  Vorgeschlagene Formulierung
+                </div>
+                <p style={{
+                  margin: 0,
+                  fontSize: '0.9rem',
+                  color: '#166534',
+                  fontStyle: 'italic',
+                  lineHeight: 1.6
+                }}>
+                  "{betterAlternative.text}"
+                </p>
+                <button
+                  onClick={() => copyText(betterAlternative.text)}
+                  style={{
+                    marginTop: '0.75rem',
+                    padding: '0.375rem 0.75rem',
+                    background: '#16a34a',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  📋 Kopieren
+                </button>
+              </div>
+
+              {betterAlternative.whyBetter && (
+                <p style={{
+                  margin: 0,
+                  fontSize: '0.875rem',
+                  color: '#374151',
+                  lineHeight: 1.6
+                }}>
+                  <strong>Warum besser:</strong> {betterAlternative.whyBetter}
+                </p>
+              )}
+
+              {betterAlternative.howToAsk && (
+                <div style={{
+                  background: '#eff6ff',
+                  borderRadius: '8px',
+                  padding: '0.875rem'
+                }}>
+                  <div style={{
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    color: '#3b82f6',
+                    marginBottom: '0.375rem'
+                  }}>
+                    🗣️ So fragst du danach:
+                  </div>
+                  <p style={{
+                    margin: 0,
+                    fontSize: '0.875rem',
+                    color: '#1e40af',
+                    fontStyle: 'italic'
+                  }}>
+                    "{betterAlternative.howToAsk}"
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 📈 Marktvergleich */}
+      {marketComparison && (
+        <div className={styles.analysisSection}>
+          <div
+            className={styles.sectionHeader}
+            onClick={() => toggleSection('market')}
+            style={{ cursor: 'pointer' }}
+          >
+            <h4 className={styles.sectionTitle}>
+              <span className={styles.sectionIcon}>📈</span>
+              Marktvergleich
+            </h4>
+            <span style={{ fontSize: '0.875rem', color: '#64748b' }}>
+              {expandedSections.has('market') ? '▼' : '▶'}
+            </span>
+          </div>
+          {expandedSections.has('market') && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem'
+              }}>
+                <span style={{
+                  padding: '0.375rem 0.75rem',
+                  borderRadius: '6px',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  background: marketComparison.isStandard ? '#f0fdf4' : '#fef2f2',
+                  color: marketComparison.isStandard ? '#16a34a' : '#dc2626'
+                }}>
+                  {marketComparison.isStandard ? '✓ Marktüblich' : '✗ Nicht marktüblich'}
+                </span>
+              </div>
+              {marketComparison.marketRange && (
+                <p style={{ margin: 0, fontSize: '0.875rem', color: '#374151' }}>
+                  <strong>Üblicher Standard:</strong> {marketComparison.marketRange}
+                </p>
+              )}
+              {marketComparison.deviation && (
+                <p style={{ margin: 0, fontSize: '0.875rem', color: '#374151' }}>
+                  <strong>Abweichung:</strong> {marketComparison.deviation}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 💡 Weitere Alternativen (generiert) */}
       <div className={styles.analysisSection}>
         <div className={styles.sectionHeader}>
           <h4 className={styles.sectionTitle}>
             <span className={styles.sectionIcon}>💡</span>
-            Alternative Formulierungen
+            Weitere Alternativen
           </h4>
           {alternatives.length === 0 && !isGeneratingAlternatives && (
             <button
@@ -270,34 +615,67 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
             <span className={styles.loadingText}>Generiere Alternativen...</span>
           </div>
         ) : alternatives.length > 0 ? (
-          <div className={styles.alternativesList}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {alternatives.map((alt, idx) => (
-              <div key={idx} className={styles.alternativeItem}>
-                <p className={styles.alternativeText}>"{alt.text}"</p>
-                <div className={styles.alternativeBenefits}>
-                  {alt.benefits?.map((benefit, bIdx) => (
-                    <span key={bIdx} className={styles.benefitTag}>{benefit}</span>
-                  ))}
-                </div>
-                <div className={styles.alternativeDifficulty}>
-                  <span className={`${styles.difficultyDot} ${styles[alt.difficulty || 'medium']}`} />
+              <div
+                key={idx}
+                style={{
+                  padding: '1rem',
+                  background: '#f8fafc',
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0'
+                }}
+              >
+                <p style={{
+                  margin: '0 0 0.75rem 0',
+                  fontSize: '0.9rem',
+                  color: '#1e293b',
+                  fontStyle: 'italic',
+                  lineHeight: 1.6
+                }}>
+                  "{alt.text}"
+                </p>
+                {alt.benefits && alt.benefits.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginBottom: '0.5rem' }}>
+                    {alt.benefits.map((benefit, bIdx) => (
+                      <span
+                        key={bIdx}
+                        style={{
+                          fontSize: '0.7rem',
+                          padding: '0.2rem 0.5rem',
+                          background: '#dbeafe',
+                          color: '#1d4ed8',
+                          borderRadius: '4px'
+                        }}
+                      >
+                        {benefit}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.75rem', color: '#64748b' }}>
+                  <span style={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    background: alt.difficulty === 'easy' ? '#16a34a' : alt.difficulty === 'hard' ? '#dc2626' : '#d97706'
+                  }} />
                   <span>
                     {alt.difficulty === 'easy' ? 'Einfach umzusetzen' :
-                     alt.difficulty === 'hard' ? 'Schwierig umzusetzen' :
-                     'Mittlerer Aufwand'}
+                     alt.difficulty === 'hard' ? 'Schwierig umzusetzen' : 'Mittlerer Aufwand'}
                   </span>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <p className={styles.explanationText}>
-            Klicken Sie auf "Generieren", um alternative Formulierungen zu erhalten.
+          <p style={{ margin: 0, fontSize: '0.875rem', color: '#64748b' }}>
+            Klicken Sie auf "Generieren", um weitere alternative Formulierungen zu erhalten.
           </p>
         )}
       </div>
 
-      {/* Negotiation Tips */}
+      {/* 🤝 Verhandlungstipps */}
       <div className={styles.analysisSection}>
         <div className={styles.sectionHeader}>
           <h4 className={styles.sectionTitle}>
@@ -347,7 +725,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
         )}
       </div>
 
-      {/* Chat Section */}
+      {/* 💬 Chat Section */}
       <div className={styles.chatSection}>
         <div className={styles.chatHeader}>
           <span>💬</span>

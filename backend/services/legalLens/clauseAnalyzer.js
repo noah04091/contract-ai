@@ -76,17 +76,28 @@ Sei PESSIMISTISCH und zeige MAXIMALE RISIKEN auf - aber bleibe realistisch.`
       }
     };
 
-    // Analyse-Struktur für GPT
+    // Analyse-Struktur für GPT - ERWEITERT für actionable insights
     this.analysisSchema = {
       type: 'object',
       properties: {
+        // NEU: Primäre Handlungsempfehlung
+        actionLevel: {
+          type: 'string',
+          enum: ['accept', 'negotiate', 'reject'],
+          description: 'accept=unkritisch, negotiate=verhandelbar, reject=Dealbreaker'
+        },
+        actionReason: {
+          type: 'string',
+          description: 'Kurze Begründung für die Handlungsempfehlung (1 Satz)'
+        },
         explanation: {
           type: 'object',
           properties: {
-            simple: { type: 'string', description: 'Erklärung in 2-3 einfachen Sätzen' },
-            detailed: { type: 'string', description: 'Ausführliche rechtliche Bedeutung' }
+            simple: { type: 'string', description: 'Erklärung in 2-3 einfachen Sätzen für Laien' },
+            detailed: { type: 'string', description: 'Ausführliche rechtliche Bedeutung' },
+            whatItMeansForYou: { type: 'string', description: 'Konkret: Was bedeutet das für DICH als Unterzeichner?' }
           },
-          required: ['simple', 'detailed']
+          required: ['simple', 'detailed', 'whatItMeansForYou']
         },
         riskAssessment: {
           type: 'object',
@@ -97,34 +108,62 @@ Sei PESSIMISTISCH und zeige MAXIMALE RISIKEN auf - aber bleibe realistisch.`
           },
           required: ['level', 'score', 'reasons']
         },
+        // NEU: Konkrete finanzielle/zeitliche Auswirkungen
+        worstCase: {
+          type: 'object',
+          properties: {
+            scenario: { type: 'string', description: 'Was ist das schlimmste was passieren kann?' },
+            financialRisk: { type: 'string', description: 'Maximaler finanzieller Schaden in € (z.B. "bis zu 50.000€")' },
+            timeRisk: { type: 'string', description: 'Zeitliche Bindung/Frist (z.B. "24 Monate Kündigungsfrist")' },
+            probability: { type: 'string', enum: ['unlikely', 'possible', 'likely'] }
+          },
+          required: ['scenario', 'financialRisk', 'timeRisk', 'probability']
+        },
         impact: {
           type: 'object',
           properties: {
-            financial: { type: 'string', description: 'Finanzielle Auswirkungen' },
-            legal: { type: 'string', description: 'Rechtliche Konsequenzen' },
-            operational: { type: 'string', description: 'Praktische Auswirkungen im Alltag' }
+            financial: { type: 'string', description: 'Konkrete finanzielle Auswirkungen mit Zahlen' },
+            legal: { type: 'string', description: 'Rechtliche Konsequenzen bei Verletzung' },
+            operational: { type: 'string', description: 'Praktische Auswirkungen im Geschäftsalltag' },
+            negotiationPower: { type: 'number', minimum: 0, maximum: 100, description: 'Wie viel Verhandlungsspielraum hast du? 0=kein, 100=viel' }
           },
-          required: ['financial', 'legal', 'operational']
+          required: ['financial', 'legal', 'operational', 'negotiationPower']
         },
         consequences: {
           type: 'array',
-          items: { type: 'string' },
-          description: '3-5 konkrete Konsequenzen'
+          items: {
+            type: 'object',
+            properties: {
+              scenario: { type: 'string' },
+              probability: { type: 'string', enum: ['low', 'medium', 'high'] },
+              impact: { type: 'string' }
+            }
+          },
+          description: '3-5 konkrete Konsequenz-Szenarien'
         },
         recommendation: {
           type: 'string',
-          description: 'Klare Handlungsempfehlung'
+          description: 'Klare Handlungsempfehlung in einem Satz'
+        },
+        // NEU: Konkreter Verbesserungsvorschlag
+        betterAlternative: {
+          type: 'object',
+          properties: {
+            text: { type: 'string', description: 'Bessere Formulierung der Klausel' },
+            whyBetter: { type: 'string', description: 'Warum ist diese Formulierung besser?' },
+            howToAsk: { type: 'string', description: 'Wie frage ich nach dieser Änderung?' }
+          }
         },
         marketComparison: {
           type: 'object',
           properties: {
             isStandard: { type: 'boolean' },
-            marketRange: { type: 'string', description: 'Was ist marktüblich?' },
-            deviation: { type: 'string', description: 'Wie weicht diese Klausel ab?' }
+            marketRange: { type: 'string', description: 'Was ist marktüblich? Mit konkreten Zahlen.' },
+            deviation: { type: 'string', description: 'Wie weicht diese Klausel vom Markt ab?' }
           }
         }
       },
-      required: ['explanation', 'riskAssessment', 'impact', 'consequences', 'recommendation']
+      required: ['actionLevel', 'actionReason', 'explanation', 'riskAssessment', 'worstCase', 'impact', 'consequences', 'recommendation']
     };
   }
 
@@ -148,40 +187,66 @@ Sei PESSIMISTISCH und zeige MAXIMALE RISIKEN auf - aber bleibe realistisch.`
     const {
       model = 'gpt-4-turbo-preview',
       temperature = 0.3,
-      maxTokens = 1500,
+      maxTokens = 2000, // Erhöht für ausführlichere Analysen
       language = 'de'
     } = options;
 
     const systemPrompt = `${perspectiveConfig.systemPrompt}
 
-WICHTIG: Antworte IMMER auf Deutsch in diesem exakten JSON-Format:
+WICHTIG: Du bist ein erfahrener Vertragsanwalt der für Laien und Gründer berät.
+Gib KONKRETE, ACTIONABLE Informationen - keine vagen Aussagen!
+
+Antworte IMMER auf Deutsch in diesem exakten JSON-Format:
 {
+  "actionLevel": "accept|negotiate|reject",
+  "actionReason": "Kurze Begründung warum akzeptieren/verhandeln/ablehnen (1 Satz)",
   "explanation": {
-    "simple": "Erklärung in 2-3 einfachen Sätzen für Laien",
-    "detailed": "Ausführliche rechtliche Bedeutung und Hintergründe"
+    "simple": "Erklärung in 2-3 EINFACHEN Sätzen - wie einem Freund erklären",
+    "detailed": "Ausführliche rechtliche Bedeutung und Hintergründe",
+    "whatItMeansForYou": "KONKRET: Was bedeutet das für DICH? Z.B. 'Du musst innerhalb von 14 Tagen zahlen, sonst drohen 5% Verzugszinsen'"
   },
   "riskAssessment": {
     "level": "low|medium|high",
     "score": 0-100,
-    "reasons": ["Grund 1", "Grund 2", "Grund 3"]
+    "reasons": ["Konkreter Grund 1", "Konkreter Grund 2", "Konkreter Grund 3"]
+  },
+  "worstCase": {
+    "scenario": "Das SCHLIMMSTE was passieren kann - sei konkret!",
+    "financialRisk": "KONKRETER €-Betrag, z.B. 'bis zu 10.000€' oder '3 Monatsgehälter' oder 'unbegrenzt'",
+    "timeRisk": "KONKRETE Zeitangabe, z.B. '24 Monate Bindung' oder '6 Wochen Kündigungsfrist'",
+    "probability": "unlikely|possible|likely"
   },
   "impact": {
-    "financial": "Konkrete finanzielle Auswirkungen (mit Beispielzahlen wenn möglich)",
-    "legal": "Rechtliche Konsequenzen bei Verletzung",
-    "operational": "Praktische Auswirkungen im Geschäftsalltag"
+    "financial": "Konkrete Kosten/Risiken mit €-BETRÄGEN",
+    "legal": "Was passiert rechtlich bei Verstoß? Konkret!",
+    "operational": "Wie beeinflusst das deinen Arbeitsalltag?",
+    "negotiationPower": 0-100
   },
   "consequences": [
-    "Konkrete Konsequenz 1",
-    "Konkrete Konsequenz 2",
-    "Konkrete Konsequenz 3"
+    {"scenario": "Was kann passieren?", "probability": "low|medium|high", "impact": "Konkrete Auswirkung"},
+    {"scenario": "...", "probability": "...", "impact": "..."},
+    {"scenario": "...", "probability": "...", "impact": "..."}
   ],
-  "recommendation": "Klare Handlungsempfehlung in einem Satz",
+  "recommendation": "KLARE Handlungsempfehlung: Was sollst du TUN?",
+  "betterAlternative": {
+    "text": "Bessere Formulierung der Klausel (falls nötig)",
+    "whyBetter": "Warum ist diese Formulierung fairer?",
+    "howToAsk": "So fragst du danach: 'Können wir die Klausel so anpassen, dass...'"
+  },
   "marketComparison": {
-    "isStandard": true/false,
-    "marketRange": "Was ist marktüblich (z.B. '3-5% jährlich')",
-    "deviation": "Wie weicht diese Klausel vom Markt ab"
+    "isStandard": true|false,
+    "marketRange": "Was ist marktüblich? MIT KONKRETEN ZAHLEN/FRISTEN",
+    "deviation": "Wie weicht diese Klausel ab? Ist das zu deinem Nachteil?"
   }
-}`;
+}
+
+REGELN:
+- actionLevel: "reject" NUR bei echten Dealbreakern (unfair, unüblich, zu riskant)
+- actionLevel: "negotiate" bei verbesserungswürdigen Klauseln
+- actionLevel: "accept" bei fairen, marktüblichen Klauseln
+- IMMER konkrete Zahlen nennen wo möglich (€, %, Tage, Monate)
+- KEINE vagen Aussagen wie "könnte teuer werden" - stattdessen "bis zu X€"
+- Sprich den Leser direkt an mit "du/dein"`;
 
     try {
       const startTime = Date.now();
@@ -452,28 +517,45 @@ Bei rechtlichen Fragen weise darauf hin, dass du keine Rechtsberatung gibst.`;
 
     const systemPrompt = `${perspectiveConfig.systemPrompt}
 
-WICHTIG: Antworte IMMER auf Deutsch. Strukturiere deine Antwort so:
+WICHTIG: Du bist ein erfahrener Vertragsanwalt der für Laien und Gründer berät.
+Antworte IMMER auf Deutsch. Sei KONKRET - nenne €-Beträge, Fristen, Zeiträume!
 
-**Einfache Erklärung:**
-[2-3 Sätze für Laien]
+Strukturiere deine Antwort so:
 
-**Risiko-Bewertung:**
-[Level: niedrig/mittel/hoch, Score: X/100]
-[Gründe als Aufzählung]
+## 🎯 Handlungsempfehlung
+[🟢 AKZEPTIEREN / 🟡 VERHANDELN / 🔴 ABLEHNEN]
+[Kurze Begründung]
 
-**Auswirkungen:**
-- Finanziell: [...]
-- Rechtlich: [...]
-- Praktisch: [...]
+## 📖 Einfache Erklärung
+[2-3 Sätze für Laien - wie einem Freund erklären]
 
-**Konsequenzen:**
-[3-5 konkrete Punkte]
+## 💡 Was das für dich bedeutet
+[KONKRET: Was musst DU tun/beachten? Mit Zahlen!]
 
-**Empfehlung:**
-[Klare Handlungsempfehlung]
+## ⚠️ Worst-Case Szenario
+- **Finanzielles Risiko:** [KONKRETER €-Betrag]
+- **Zeitliches Risiko:** [KONKRETE Frist/Bindung]
+- **Wahrscheinlichkeit:** [Unwahrscheinlich/Möglich/Wahrscheinlich]
 
-**Marktvergleich:**
-[Standard: Ja/Nein, Üblich: ..., Abweichung: ...]`;
+## 📊 Risiko-Bewertung
+**Level:** [niedrig/mittel/hoch] | **Score:** [X/100]
+- Grund 1
+- Grund 2
+- Grund 3
+
+## 📋 Mögliche Konsequenzen
+1. [Szenario + Auswirkung]
+2. [Szenario + Auswirkung]
+3. [Szenario + Auswirkung]
+
+## 💼 Bessere Alternative
+**Vorschlag:** "[Bessere Formulierung]"
+**So fragst du danach:** "[Konkreter Satz für Verhandlung]"
+
+## 📈 Marktvergleich
+- **Marktüblich:** [Ja/Nein]
+- **Standard ist:** [Konkrete Zahlen/Fristen]
+- **Abweichung:** [Wie weicht diese Klausel ab?]`;
 
     try {
       const stream = await this.openai.chat.completions.create({
@@ -489,7 +571,7 @@ WICHTIG: Antworte IMMER auf Deutsch. Strukturiere deine Antwort so:
         ],
         stream: true,
         temperature: 0.3,
-        max_tokens: 1200
+        max_tokens: 1800
       });
 
       let fullContent = '';
