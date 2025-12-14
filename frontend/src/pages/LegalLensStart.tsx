@@ -162,18 +162,21 @@ const LegalLensStart = () => {
         <meta name="description" content="Analysieren Sie Ihre Verträge interaktiv mit KI" />
       </Helmet>
 
-      {/* Globale Styles für diese Seite - ÜBERSCHREIBT #root! */}
+      {/* Globale Styles für diese Seite - ÜBERSCHREIBT ALLE PARENTS! */}
       <style>{`
-        /* KRITISCH: #root Einschränkungen für diese Seite aufheben */
-        #root:has(.legal-lens-page) {
+        /* HOLZHAMMER: Überschreibe #root UND alle inneren Container */
+        #root:has(.legal-lens-page),
+        #root:has(.legal-lens-page) > div,
+        #root:has(.legal-lens-page) > div > main,
+        #root:has(.legal-lens-page) > div > main > * {
           max-width: 100% !important;
-          padding: 0 !important;
-          margin: 0 !important;
+          width: 100% !important;
+          padding-left: 0 !important;
+          padding-right: 0 !important;
         }
 
-        /* Fallback für Browser ohne :has() Support */
         .legal-lens-page {
-          width: 100%;
+          width: 100% !important;
           min-height: calc(100vh - 64px);
           background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
           padding: 0 0 2rem 0;
@@ -205,7 +208,8 @@ const LegalLensStart = () => {
         .legal-lens-main {
           max-width: 800px;
           width: 100%;
-          margin: 0 auto;
+          margin-left: auto !important;
+          margin-right: auto !important;
           padding: 0 1rem;
           text-align: left;
           box-sizing: border-box;
