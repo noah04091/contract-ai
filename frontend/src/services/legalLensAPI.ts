@@ -51,7 +51,7 @@ export async function analyzeClause(
   clauseId: string,
   clauseText: string,
   perspective: PerspectiveType = 'contractor',
-  streaming: boolean = false
+  stream: boolean = false
 ): Promise<AnalyzeClauseResponse> {
   const response = await fetchWithAuth(
     `${LEGAL_LENS_BASE}/${contractId}/clause/${clauseId}/analyze`,
@@ -60,7 +60,7 @@ export async function analyzeClause(
       body: JSON.stringify({
         clauseText,
         perspective,
-        streaming
+        stream
       })
     }
   );
@@ -102,7 +102,7 @@ export function analyzeClauseStreaming(
     body: JSON.stringify({
       clauseText,
       perspective,
-      streaming: true
+      stream: true
     }),
     signal: controller.signal
   })

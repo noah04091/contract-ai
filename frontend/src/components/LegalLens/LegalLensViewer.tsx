@@ -38,12 +38,53 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [scale, setScale] = useState<number>(1.0);
 
+  // Resizable Panel State
+  const [analysisPanelWidth, setAnalysisPanelWidth] = useState<number>(480);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
   // Ref für alle aktuell gelb markierten Text-Elemente
   const highlightedElementsRef = useRef<HTMLElement[]>([]);
 
   // Ref um doppelte Analyse-Aufrufe zu verhindern
   const lastAnalyzedClauseRef = useRef<string | null>(null);
   const analysisAttemptedRef = useRef<boolean>(false);
+
+  // Resize Handler
+  const handleMouseDown = useCallback(() => {
+    setIsDragging(true);
+  }, []);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging || !containerRef.current) return;
+
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const newWidth = containerRect.right - e.clientX;
+
+      // Beschränke auf min/max Werte
+      const clampedWidth = Math.max(350, Math.min(800, newWidth));
+      setAnalysisPanelWidth(clampedWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isDragging]);
 
   const {
     clauses,
@@ -152,7 +193,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     analysisAttemptedRef.current = true;
 
     console.log('[Legal Lens] Starting analysis for:', clauseKey);
-    analyzeClause(true);
+    analyzeClause(false); // Use JSON mode, not streaming (streaming doesn't return structured data)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedClause?.id, currentPerspective, isAnalyzing]);
 
@@ -170,7 +211,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
   const handleRetryAnalysis = () => {
     if (selectedClause) {
-      analyzeClause(true);
+      analyzeClause(false); // Use JSON mode for structured data
     }
   };
 
@@ -327,59 +368,6 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
           <h1 className={styles.title}>🔍 Legal Lens: {contractName}</h1>
         </div>
 
-        {/* View Mode Toggle */}
-        <div className={styles.viewToggle} style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem',
-          background: '#f1f5f9',
-          borderRadius: '8px',
-          padding: '4px'
-        }}>
-          <button
-            onClick={() => setViewMode('text')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.375rem',
-              padding: '0.5rem 1rem',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              background: viewMode === 'text' ? 'white' : 'transparent',
-              color: viewMode === 'text' ? '#3b82f6' : '#64748b',
-              boxShadow: viewMode === 'text' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-              transition: 'all 0.2s'
-            }}
-          >
-            <FileText size={16} />
-            Vertragsinhalt
-          </button>
-          <button
-            onClick={() => setViewMode('pdf')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.375rem',
-              padding: '0.5rem 1rem',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              background: viewMode === 'pdf' ? 'white' : 'transparent',
-              color: viewMode === 'pdf' ? '#3b82f6' : '#64748b',
-              boxShadow: viewMode === 'pdf' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-              transition: 'all 0.2s'
-            }}
-          >
-            <Eye size={16} />
-            Original PDF
-          </button>
-        </div>
-
         <div className={styles.headerRight}>
           <div className={styles.progressBar}>
             <div className={styles.progressTrack}>
@@ -396,7 +384,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       </header>
 
       {/* Main Content */}
-      <main className={styles.mainContent}>
+      <main className={styles.mainContent} ref={containerRef}>
         {/* Left: Clause List OR PDF Viewer */}
         {viewMode === 'text' ? (
           <ClauseList
@@ -404,18 +392,32 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
             selectedClause={selectedClause}
             progress={progress}
             onSelectClause={selectClause}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
           />
         ) : (
           <div className={styles.contractPanel} style={{ display: 'flex', flexDirection: 'column' }}>
             {/* PDF Controls */}
-            <div className={styles.contractHeader} style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: '0.5rem'
-            }}>
-              <h3 className={styles.contractTitle}>Original PDF</h3>
+            <div className={styles.contractHeader}>
+              <h3 className={styles.contractTitle}>Dokument</h3>
+
+              {/* View Mode Toggle - Centered */}
+              <div className={styles.contractHeaderCenter}>
+                <button
+                  onClick={() => setViewMode('text')}
+                  className={styles.viewToggleBtn}
+                >
+                  <FileText size={14} />
+                  Text
+                </button>
+                <button
+                  onClick={() => setViewMode('pdf')}
+                  className={`${styles.viewToggleBtn} ${styles.active}`}
+                >
+                  <Eye size={14} />
+                  PDF
+                </button>
+              </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 {/* Zoom Controls */}
                 <button
@@ -579,8 +581,15 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
           </div>
         )}
 
+        {/* Resize Divider */}
+        <div
+          className={`${styles.resizeDivider} ${isDragging ? styles.dragging : ''}`}
+          onMouseDown={handleMouseDown}
+          title="Ziehen zum Anpassen"
+        />
+
         {/* Right: Analysis Panel */}
-        <div className={styles.analysisPanel}>
+        <div className={styles.analysisPanel} style={{ width: analysisPanelWidth }}>
           {selectedClause ? (
             <>
               {/* Perspective Switcher */}

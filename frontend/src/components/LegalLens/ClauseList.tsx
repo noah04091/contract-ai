@@ -2,22 +2,29 @@
 // Komponente für die Klausel-Liste (linke Seite)
 
 import React from 'react';
+import { FileText, Eye } from 'lucide-react';
 import type { ParsedClause, LegalLensProgress, RiskLevel } from '../../types/legalLens';
 import { RISK_LABELS } from '../../types/legalLens';
 import styles from '../../styles/LegalLens.module.css';
+
+type ViewMode = 'text' | 'pdf';
 
 interface ClauseListProps {
   clauses: ParsedClause[];
   selectedClause: ParsedClause | null;
   progress: LegalLensProgress | null;
   onSelectClause: (clause: ParsedClause) => void;
+  viewMode?: ViewMode;
+  onViewModeChange?: (mode: ViewMode) => void;
 }
 
 const ClauseList: React.FC<ClauseListProps> = ({
   clauses,
   selectedClause,
   progress,
-  onSelectClause
+  onSelectClause,
+  viewMode = 'text',
+  onViewModeChange
 }) => {
   const isClauseReviewed = (clauseId: string): boolean => {
     return progress?.reviewedClauses?.includes(clauseId) || false;
@@ -43,7 +50,28 @@ const ClauseList: React.FC<ClauseListProps> = ({
   return (
     <div className={styles.contractPanel}>
       <div className={styles.contractHeader}>
-        <h3 className={styles.contractTitle}>Vertragsinhalt</h3>
+        <h3 className={styles.contractTitle}>Dokument</h3>
+
+        {/* View Mode Toggle - Centered */}
+        {onViewModeChange && (
+          <div className={styles.contractHeaderCenter}>
+            <button
+              onClick={() => onViewModeChange('text')}
+              className={`${styles.viewToggleBtn} ${viewMode === 'text' ? styles.active : ''}`}
+            >
+              <FileText size={14} />
+              Text
+            </button>
+            <button
+              onClick={() => onViewModeChange('pdf')}
+              className={`${styles.viewToggleBtn} ${viewMode === 'pdf' ? styles.active : ''}`}
+            >
+              <Eye size={14} />
+              PDF
+            </button>
+          </div>
+        )}
+
         <span className={styles.clauseCount}>
           {clauses.length} Klauseln
         </span>
