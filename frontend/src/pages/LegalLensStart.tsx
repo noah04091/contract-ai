@@ -1,6 +1,5 @@
 // 📁 pages/LegalLensStart.tsx
 // Legal Lens Startseite - Vertragsauswahl oder Upload
-// KOMPLETT mit inline Styles - keine CSS Module
 
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -30,7 +29,6 @@ const LegalLensStart = () => {
   const [error, setError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
 
-  // API URL Helper
   const getApiUrl = () => {
     if (import.meta.env.VITE_API_URL) {
       return import.meta.env.VITE_API_URL;
@@ -42,7 +40,6 @@ const LegalLensStart = () => {
     return 'https://api.contract-ai.de';
   };
 
-  // Verträge laden
   useEffect(() => {
     const fetchContracts = async () => {
       try {
@@ -70,7 +67,6 @@ const LegalLensStart = () => {
     fetchContracts();
   }, []);
 
-  // Suche filtern
   useEffect(() => {
     if (!searchQuery.trim()) {
       setFilteredContracts(contracts);
@@ -85,7 +81,6 @@ const LegalLensStart = () => {
     setFilteredContracts(filtered);
   }, [searchQuery, contracts]);
 
-  // Datei hochladen
   const handleFileUpload = async (file: File) => {
     if (!file.type.includes('pdf')) {
       setError('Bitte laden Sie eine PDF-Datei hoch');
@@ -125,7 +120,6 @@ const LegalLensStart = () => {
     }
   };
 
-  // Drag & Drop Handler
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -165,50 +159,67 @@ const LegalLensStart = () => {
     <>
       <Helmet>
         <title>Legal Lens | Contract AI</title>
-        <meta name="description" content="Analysieren Sie Ihre Verträge interaktiv mit KI - Klauseln verstehen, Risiken erkennen, Verhandlungstipps erhalten." />
+        <meta name="description" content="Analysieren Sie Ihre Verträge interaktiv mit KI" />
       </Helmet>
 
-      {/* Page Container - volle Breite, zentrierter Content */}
-      <div style={{
-        minHeight: '100vh',
-        width: '100vw',
-        marginLeft: 'calc(-50vw + 50%)',
-        background: 'linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)',
-        paddingBottom: '2rem',
-        boxSizing: 'border-box'
-      }}>
-        {/* Header - volle Breite mit zentriertem Content */}
-        <header style={{
-          width: '100%',
-          background: 'white',
-          borderBottom: '1px solid #e2e8f0',
-          padding: '2rem 1rem',
-          boxSizing: 'border-box'
-        }}>
-          <div style={{
-            maxWidth: '800px',
-            margin: '0 auto',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '1.25rem'
-          }}>
+      {/* Globale Styles für diese Seite */}
+      <style>{`
+        .legal-lens-page {
+          min-height: calc(100vh - 64px);
+          background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+          margin: -2rem;
+          padding: 0 0 2rem 0;
+        }
+        .legal-lens-header {
+          background: white;
+          border-bottom: 1px solid #e2e8f0;
+          padding: 2rem 1rem;
+          margin-bottom: 2rem;
+        }
+        .legal-lens-header-content {
+          max-width: 800px;
+          margin: 0 auto;
+          display: flex;
+          align-items: center;
+          gap: 1.25rem;
+          text-align: left;
+        }
+        .legal-lens-main {
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 0 1rem;
+          text-align: left;
+        }
+        .legal-lens-footer {
+          max-width: 800px;
+          margin: 2rem auto 0;
+          padding: 0 1rem;
+          display: flex;
+          justify-content: center;
+          gap: 2rem;
+          flex-wrap: wrap;
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+
+      <div className="legal-lens-page">
+        {/* Header */}
+        <header className="legal-lens-header">
+          <div className="legal-lens-header-content">
             <div style={{ fontSize: '2.5rem' }}>🔍</div>
             <div>
-              <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b', margin: '0 0 0.25rem', textAlign: 'left' }}>Legal Lens</h1>
-              <p style={{ fontSize: '0.95rem', color: '#64748b', margin: 0, textAlign: 'left' }}>
+              <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b', margin: '0 0 0.25rem' }}>Legal Lens</h1>
+              <p style={{ fontSize: '0.95rem', color: '#64748b', margin: 0 }}>
                 Interaktive Vertragsanalyse mit KI - Klauseln verstehen, Risiken erkennen
               </p>
             </div>
           </div>
         </header>
 
-        {/* Main Content - zentriert */}
-        <main style={{
-          maxWidth: '800px',
-          margin: '0 auto',
-          padding: '2rem 1rem',
-          boxSizing: 'border-box'
-        }}>
+        {/* Main */}
+        <main className="legal-lens-main">
           {/* Upload Section */}
           <section style={{ marginBottom: '1.5rem' }}>
             <h2 style={{
@@ -218,8 +229,7 @@ const LegalLensStart = () => {
               fontSize: '1rem',
               fontWeight: 600,
               color: '#1e293b',
-              margin: '0 0 1rem',
-              textAlign: 'left'
+              margin: '0 0 1rem'
             }}>
               <Upload size={20} />
               Neuen Vertrag analysieren
@@ -326,8 +336,7 @@ const LegalLensStart = () => {
               fontSize: '1rem',
               fontWeight: 600,
               color: '#1e293b',
-              margin: '0 0 1rem',
-              textAlign: 'left'
+              margin: '0 0 1rem'
             }}>
               <FileText size={20} />
               Bestehenden Vertrag auswählen
@@ -432,17 +441,8 @@ const LegalLensStart = () => {
           </section>
         </main>
 
-        {/* Feature Highlights - zentriert */}
-        <footer style={{
-          maxWidth: '800px',
-          margin: '2rem auto 0',
-          padding: '0 2rem',
-          display: 'flex',
-          justifyContent: 'center',
-          gap: '2rem',
-          flexWrap: 'wrap',
-          boxSizing: 'border-box'
-        }}>
+        {/* Footer */}
+        <footer className="legal-lens-footer">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: '#64748b' }}>
             <span style={{ fontSize: '1.25rem' }}>👔</span>
             <span>4 Perspektiven</span>
@@ -461,13 +461,6 @@ const LegalLensStart = () => {
           </div>
         </footer>
       </div>
-
-      {/* Spinner Animation */}
-      <style>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </>
   );
 };
