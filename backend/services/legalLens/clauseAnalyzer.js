@@ -734,6 +734,295 @@ Antworte NUR mit diesem JSON-Format:
   isConfigured() {
     return !!process.env.OPENAI_API_KEY;
   }
+
+  /**
+   * SMART SUMMARY: Generiert Executive Summary nach Upload
+   * Zeigt sofort die wichtigsten Risiken und Handlungsempfehlungen
+   *
+   * @param {string} fullText - Der vollständige Vertragstext
+   * @param {string} contractName - Name des Vertrags
+   * @param {Array} clauses - Optional: Bereits geparste Klauseln
+   * @returns {Promise<Object>} Executive Summary mit Top-Risiken
+   */
+  async generateContractSummary(fullText, contractName = '', clauses = []) {
+    console.log(`📊 Legal Lens: Generiere Smart Summary für "${contractName}"...`);
+
+    const textLength = fullText?.length || 0;
+    const truncatedText = fullText ? fullText.substring(0, 12000) : ''; // Max 12k chars für GPT
+
+    const systemPrompt = `Du bist ein erfahrener Vertragsanwalt und analysierst Verträge für Laien und Gründer.
+
+AUFGABE: Erstelle eine SOFORT-ÜBERSICHT für diesen Vertrag. Der Nutzer soll in 10 Sekunden verstehen:
+1. Was für ein Vertrag ist das?
+2. Was sind die TOP 3 RISIKEN (mit konkreten €-Beträgen und Fristen)?
+3. Soll ich unterschreiben oder verhandeln?
+
+WICHTIG:
+- Nenne KONKRETE Zahlen (€, Monate, Prozent)
+- Sei DIREKT und EHRLICH - beschönige nichts
+- Sprich den Leser mit "du/dein" an
+- Erkläre wie einem Freund ohne Jurastudium
+
+Antworte NUR mit diesem JSON-Format:
+{
+  "contractType": "Arbeitsvertrag|Mietvertrag|Dienstleistungsvertrag|Kaufvertrag|SaaS-Vertrag|Sonstiges",
+  "contractTypeDetail": "Kurze Spezifizierung, z.B. 'Unbefristeter Arbeitsvertrag' oder 'Gewerbemietvertrag'",
+
+  "overallVerdict": {
+    "action": "accept|negotiate|reject|review",
+    "emoji": "🟢|🟡|🔴|⚪",
+    "headline": "Ein Satz Empfehlung, z.B. 'Verhandelbar - 2 kritische Punkte klären'",
+    "confidence": 0-100
+  },
+
+  "riskScore": {
+    "overall": 0-100,
+    "breakdown": {
+      "financial": 0-100,
+      "legal": 0-100,
+      "operational": 0-100
+    }
+  },
+
+  "quickStats": {
+    "criticalCount": 0,
+    "warningCount": 0,
+    "okayCount": 0,
+    "totalClauses": 0
+  },
+
+  "topRisks": [
+    {
+      "rank": 1,
+      "severity": "critical|warning|info",
+      "emoji": "🔴|🟡|🟢",
+      "title": "Kurzer Titel (max 5 Wörter)",
+      "section": "§-Nummer oder Abschnitt falls erkennbar",
+      "whatItMeans": "Was bedeutet das für DICH? Konkret! (2 Sätze)",
+      "worstCase": {
+        "scenario": "Das Schlimmste was passieren kann",
+        "financialRisk": "Konkreter €-Betrag (z.B. 'bis 10.000€' oder '3 Monatsgehälter')",
+        "timeRisk": "Zeitliche Bindung (z.B. '24 Monate' oder 'unbefristet')"
+      },
+      "recommendation": "Konkrete Handlungsempfehlung (1 Satz)",
+      "negotiationHint": "So sprichst du es an (1 Satz)"
+    }
+  ],
+
+  "highlights": {
+    "positive": ["Positiver Punkt 1", "Positiver Punkt 2"],
+    "negative": ["Negativer Punkt 1", "Negativer Punkt 2"],
+    "unusual": ["Ungewöhnliche Klausel 1"]
+  },
+
+  "keyTerms": {
+    "duration": "Laufzeit in Klartext, z.B. 'Unbefristet mit 3 Monaten Kündigungsfrist'",
+    "terminationNotice": "Kündigungsfrist, z.B. '3 Monate zum Monatsende'",
+    "value": "Vertragswert falls erkennbar, z.B. '4.500€/Monat' oder 'Nicht angegeben'",
+    "liability": "Haftungslimit falls vorhanden",
+    "specialClauses": ["Besondere Klausel 1", "Besondere Klausel 2"]
+  },
+
+  "nextSteps": [
+    {
+      "priority": 1,
+      "action": "Was als erstes tun?",
+      "reason": "Warum ist das wichtig?"
+    },
+    {
+      "priority": 2,
+      "action": "Was als zweites tun?",
+      "reason": "Warum ist das wichtig?"
+    },
+    {
+      "priority": 3,
+      "action": "Was als drittes tun?",
+      "reason": "Warum ist das wichtig?"
+    }
+  ],
+
+  "tldr": "Ein-Satz-Zusammenfassung: Was ist dieser Vertrag und was musst du beachten? (max 30 Wörter)"
+}`;
+
+    try {
+      const startTime = Date.now();
+
+      const response = await this.openai.chat.completions.create({
+        model: 'gpt-4-turbo-preview',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          {
+            role: 'user',
+            content: `Analysiere diesen Vertrag und erstelle eine Sofort-Übersicht:\n\nVertragsname: ${contractName || 'Unbekannt'}\nTextlänge: ${textLength} Zeichen\n\n---\n\n${truncatedText}`
+          }
+        ],
+        response_format: { type: 'json_object' },
+        temperature: 0.3,
+        max_tokens: 2500
+      });
+
+      const processingTime = Date.now() - startTime;
+      const result = JSON.parse(response.choices[0].message.content);
+      const tokensUsed = response.usage?.total_tokens || 0;
+
+      console.log(`✅ Smart Summary generiert in ${processingTime}ms (${tokensUsed} tokens)`);
+
+      return {
+        success: true,
+        summary: result,
+        metadata: {
+          model: 'gpt-4-turbo-preview',
+          tokensUsed,
+          processingTimeMs: processingTime,
+          analyzedAt: new Date().toISOString(),
+          textLength,
+          contractName
+        }
+      };
+
+    } catch (error) {
+      console.error('❌ Smart Summary Fehler:', error.message);
+
+      // Fallback-Response bei Fehler
+      return {
+        success: false,
+        error: error.message,
+        summary: {
+          contractType: 'Unbekannt',
+          contractTypeDetail: 'Analyse fehlgeschlagen',
+          overallVerdict: {
+            action: 'review',
+            emoji: '⚪',
+            headline: 'Automatische Analyse fehlgeschlagen - manuelle Prüfung empfohlen',
+            confidence: 0
+          },
+          riskScore: { overall: 50, breakdown: { financial: 50, legal: 50, operational: 50 } },
+          quickStats: { criticalCount: 0, warningCount: 0, okayCount: 0, totalClauses: 0 },
+          topRisks: [],
+          highlights: { positive: [], negative: [], unusual: [] },
+          keyTerms: { duration: 'Nicht erkannt', terminationNotice: 'Nicht erkannt', value: 'Nicht erkannt' },
+          nextSteps: [{ priority: 1, action: 'Vertrag manuell prüfen', reason: 'Automatische Analyse fehlgeschlagen' }],
+          tldr: 'Die automatische Analyse ist fehlgeschlagen. Bitte prüfe den Vertrag manuell oder versuche es erneut.'
+        }
+      };
+    }
+  }
+
+  /**
+   * STREAMING Smart Summary für bessere UX
+   * Zeigt Analyse-Fortschritt in Echtzeit
+   *
+   * @param {string} fullText - Der vollständige Vertragstext
+   * @param {string} contractName - Name des Vertrags
+   * @param {Function} onChunk - Callback für Streaming-Chunks
+   * @returns {Promise<Object>} Finale Summary
+   */
+  async generateContractSummaryStreaming(fullText, contractName = '', onChunk) {
+    console.log(`📊 Legal Lens: Streaming Smart Summary für "${contractName}"...`);
+
+    const truncatedText = fullText ? fullText.substring(0, 10000) : '';
+
+    const systemPrompt = `Du bist ein erfahrener Vertragsanwalt. Erstelle eine SOFORT-ÜBERSICHT.
+
+SCHREIBE IN DIESEM FORMAT (MARKDOWN):
+
+# 📋 Vertragstyp
+[Vertragstyp + kurze Beschreibung]
+
+## 🎯 Gesamtbewertung
+**[🟢 AKZEPTABEL / 🟡 VERHANDELBAR / 🔴 KRITISCH]**
+[Ein Satz warum]
+
+---
+
+## ⚠️ TOP 3 RISIKEN
+
+### 1. 🔴 [Risiko-Titel]
+**Was bedeutet das für dich?**
+[2 Sätze konkret]
+
+**Worst Case:**
+- 💰 Finanziell: [€-Betrag]
+- ⏰ Zeitlich: [Bindung/Frist]
+
+**Empfehlung:** [1 Satz was tun]
+
+---
+
+### 2. 🟡 [Risiko-Titel]
+[Gleiche Struktur]
+
+---
+
+### 3. 🟡 [Risiko-Titel]
+[Gleiche Struktur]
+
+---
+
+## 📊 Risiko-Score: [X/100]
+- 💰 Finanziell: [X/100]
+- ⚖️ Rechtlich: [X/100]
+- 🔧 Operativ: [X/100]
+
+---
+
+## ✅ Positiv | ❌ Negativ | ❓ Ungewöhnlich
+**Positiv:** [Bullet Points]
+**Negativ:** [Bullet Points]
+**Ungewöhnlich:** [Bullet Points]
+
+---
+
+## 📋 Nächste Schritte
+1. [Wichtigster Schritt]
+2. [Zweiter Schritt]
+3. [Dritter Schritt]
+
+---
+
+## 📝 TL;DR
+[Ein Satz - max 30 Wörter]
+
+---
+
+WICHTIG: Nenne KONKRETE Zahlen (€, Monate, %). Sprich mit "du/dein". Sei ehrlich und direkt!`;
+
+    try {
+      const stream = await this.openai.chat.completions.create({
+        model: 'gpt-4-turbo-preview',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          {
+            role: 'user',
+            content: `Analysiere diesen Vertrag:\n\nName: ${contractName || 'Unbekannt'}\n\n${truncatedText}`
+          }
+        ],
+        stream: true,
+        temperature: 0.3,
+        max_tokens: 2000
+      });
+
+      let fullContent = '';
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || '';
+        if (content) {
+          fullContent += content;
+          if (onChunk) onChunk(content);
+        }
+      }
+
+      return {
+        success: true,
+        content: fullContent,
+        format: 'markdown'
+      };
+
+    } catch (error) {
+      console.error('❌ Streaming Summary Fehler:', error.message);
+      throw new Error(`Streaming Summary fehlgeschlagen: ${error.message}`);
+    }
+  }
 }
 
 // Singleton-Export

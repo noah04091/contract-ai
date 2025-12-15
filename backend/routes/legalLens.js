@@ -45,6 +45,208 @@ const analysisRateLimiter = rateLimit({
 });
 
 // ============================================
+// SMART SUMMARY - SOFORT-ÜBERSICHT NACH UPLOAD
+// ============================================
+
+/**
+ * POST /api/legal-lens/smart-summary
+ *
+ * Generiert eine Executive Summary sofort nach Upload.
+ * Zeigt Top-3 Risiken, Gesamtbewertung und konkrete Handlungsempfehlungen.
+ */
+router.post('/smart-summary', verifyToken, async (req, res) => {
+  try {
+    const { contractId, stream = false } = req.body;
+    const userId = req.user.userId;
+
+    console.log(`📊 [Legal Lens] Smart Summary request for contract: ${contractId}`);
+
+    if (!contractId) {
+      return res.status(400).json({
+        success: false,
+        error: 'contractId ist erforderlich'
+      });
+    }
+
+    // Vertrag aus Datenbank laden
+    const contract = await Contract.findOne({
+      _id: new ObjectId(contractId),
+      userId: new ObjectId(userId)
+    });
+
+    if (!contract) {
+      return res.status(404).json({
+        success: false,
+        error: 'Vertrag nicht gefunden'
+      });
+    }
+
+    // Text extrahieren - mehrere Fallbacks
+    let text = contract.content || contract.extractedText || contract.fullText || contract.analysisText;
+
+    // Fallback: Aus S3 extrahieren wenn kein Text vorhanden
+    if ((!text || text.length < 50) && contract.s3Key) {
+      console.log(`📥 [Legal Lens] Kein Text im Contract - extrahiere aus S3: ${contract.s3Key}`);
+
+      try {
+        const command = new GetObjectCommand({
+          Bucket: process.env.S3_BUCKET_NAME,
+          Key: contract.s3Key
+        });
+
+        const response = await s3Client.send(command);
+        const chunks = [];
+        for await (const chunk of response.Body) {
+          chunks.push(chunk);
+        }
+        const pdfBuffer = Buffer.concat(chunks);
+
+        const pdfData = await pdfParse(pdfBuffer);
+        text = pdfData.text;
+
+        console.log(`✅ [Legal Lens] PDF-Text extrahiert: ${text.length} Zeichen`);
+
+        // Text im Contract speichern für zukünftige Anfragen
+        await Contract.updateOne(
+          { _id: contract._id },
+          { $set: { extractedText: text } }
+        );
+      } catch (s3Error) {
+        console.error(`❌ [Legal Lens] S3-Extraktion fehlgeschlagen:`, s3Error.message);
+      }
+    }
+
+    if (!text || text.length < 50) {
+      return res.status(400).json({
+        success: false,
+        error: 'Vertrag enthält keinen analysierbaren Text. Bitte stellen Sie sicher, dass die PDF lesbar ist.'
+      });
+    }
+
+    const contractName = contract.name || contract.title || 'Vertrag';
+
+    // Streaming Response
+    if (stream) {
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+
+      res.write(`event: start\ndata: ${JSON.stringify({ contractId, contractName })}\n\n`);
+
+      try {
+        const result = await clauseAnalyzer.generateContractSummaryStreaming(
+          text,
+          contractName,
+          (chunk) => {
+            res.write(`event: chunk\ndata: ${JSON.stringify({ content: chunk })}\n\n`);
+          }
+        );
+
+        res.write(`event: done\ndata: ${JSON.stringify({ complete: true, format: 'markdown' })}\n\n`);
+        res.end();
+
+      } catch (streamError) {
+        res.write(`event: error\ndata: ${JSON.stringify({ error: streamError.message })}\n\n`);
+        res.end();
+      }
+      return;
+    }
+
+    // Normale (nicht-streaming) Response
+    const result = await clauseAnalyzer.generateContractSummary(text, contractName);
+
+    if (!result.success) {
+      return res.status(500).json({
+        success: false,
+        error: result.error || 'Smart Summary fehlgeschlagen'
+      });
+    }
+
+    // Summary im Contract speichern
+    try {
+      await Contract.updateOne(
+        { _id: contract._id },
+        {
+          $set: {
+            smartSummary: result.summary,
+            smartSummaryGeneratedAt: new Date()
+          }
+        }
+      );
+      console.log(`✅ [Legal Lens] Smart Summary saved for contract ${contractId}`);
+    } catch (dbError) {
+      console.error('⚠️ [Legal Lens] DB save error (non-critical):', dbError.message);
+    }
+
+    console.log(`✅ [Legal Lens] Smart Summary generated for ${contractName}`);
+
+    res.json({
+      success: true,
+      summary: result.summary,
+      metadata: result.metadata,
+      contractName
+    });
+
+  } catch (error) {
+    console.error('❌ [Legal Lens] Smart Summary error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Interner Serverfehler bei der Smart Summary'
+    });
+  }
+});
+
+/**
+ * GET /api/legal-lens/:contractId/smart-summary
+ *
+ * Lädt eine gespeicherte Smart Summary oder generiert eine neue.
+ */
+router.get('/:contractId/smart-summary', verifyToken, async (req, res) => {
+  try {
+    const { contractId } = req.params;
+    const userId = req.user.userId;
+
+    const contract = await Contract.findOne({
+      _id: new ObjectId(contractId),
+      userId: new ObjectId(userId)
+    });
+
+    if (!contract) {
+      return res.status(404).json({
+        success: false,
+        error: 'Vertrag nicht gefunden'
+      });
+    }
+
+    // Prüfe ob bereits eine Summary existiert
+    if (contract.smartSummary) {
+      return res.json({
+        success: true,
+        summary: contract.smartSummary,
+        cached: true,
+        generatedAt: contract.smartSummaryGeneratedAt,
+        contractName: contract.name || contract.title
+      });
+    }
+
+    // Keine Summary vorhanden
+    res.json({
+      success: true,
+      summary: null,
+      cached: false,
+      message: 'Keine Smart Summary vorhanden. Bitte POST /smart-summary aufrufen.'
+    });
+
+  } catch (error) {
+    console.error('❌ [Legal Lens] Get Smart Summary error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Fehler beim Laden der Smart Summary'
+    });
+  }
+});
+
+// ============================================
 // PARSE CONTRACT INTO CLAUSES
 // ============================================
 

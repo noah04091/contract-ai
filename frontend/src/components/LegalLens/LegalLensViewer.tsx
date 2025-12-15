@@ -4,11 +4,12 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { FileText, Eye, ZoomIn, ZoomOut, ChevronLeft, ChevronRight } from 'lucide-react';
+import { FileText, Eye, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, BarChart3 } from 'lucide-react';
 import { useLegalLens } from '../../hooks/useLegalLens';
 import ClauseList from './ClauseList';
 import PerspectiveSwitcher from './PerspectiveSwitcher';
 import AnalysisPanel from './AnalysisPanel';
+import SmartSummary from './SmartSummary';
 import styles from '../../styles/LegalLens.module.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -37,6 +38,10 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [scale, setScale] = useState<number>(1.0);
+
+  // Smart Summary State
+  const [showSmartSummary, setShowSmartSummary] = useState<boolean>(true);
+  const [summaryDismissed, setSummaryDismissed] = useState<boolean>(false);
 
   // Resizable Panel State
   const [analysisPanelWidth, setAnalysisPanelWidth] = useState<number>(480);
@@ -209,6 +214,16 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     navigate(-1);
   };
 
+  // Smart Summary Handler
+  const handleDismissSummary = useCallback(() => {
+    setShowSmartSummary(false);
+    setSummaryDismissed(true);
+  }, []);
+
+  const handleShowSummary = useCallback(() => {
+    setShowSmartSummary(true);
+  }, []);
+
   const handleRetryAnalysis = () => {
     if (selectedClause) {
       analyzeClause(false); // Use JSON mode for structured data
@@ -359,6 +374,15 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
   return (
     <div className={styles.container}>
+      {/* Smart Summary Modal */}
+      {showSmartSummary && !isParsing && clauses.length > 0 && (
+        <SmartSummary
+          contractId={contractId}
+          contractName={contractName}
+          onDismiss={handleDismissSummary}
+        />
+      )}
+
       {/* Header */}
       <header className={styles.header}>
         <div className={styles.headerLeft}>
@@ -369,6 +393,18 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         </div>
 
         <div className={styles.headerRight}>
+          {/* Summary Button - nur anzeigen wenn Summary dismissed wurde */}
+          {summaryDismissed && (
+            <button
+              className={styles.summaryButton}
+              onClick={handleShowSummary}
+              title="Übersicht anzeigen"
+            >
+              <BarChart3 size={18} />
+              <span>Übersicht</span>
+            </button>
+          )}
+
           <div className={styles.progressBar}>
             <div className={styles.progressTrack}>
               <div
