@@ -5,7 +5,7 @@ const fs = require("fs").promises;
 const fsSync = require("fs");
 const { ObjectId } = require("mongodb");
 const path = require("path");
-const verifyToken = require("../middleware/verifyToken");
+// Note: verifyToken wird bereits im Router-Mount (server.js) aufgerufen
 
 const router = express.Router();
 
@@ -165,8 +165,9 @@ const checkForDuplicate = async (fileHash, userId, contractsCollection) => {
 /**
  * 📤 POST / - Upload ohne Analyse
  * Speichert Datei nur in S3/lokal, erstellt Contract-Eintrag OHNE Analyse
+ * Note: verifyToken wird bereits im Router-Mount (server.js) aufgerufen
  */
-router.post("/", verifyToken, uploadMiddleware.single("file"), async (req, res) => {
+router.post("/", uploadMiddleware.single("file"), async (req, res) => {
   const requestId = `UPLOAD-${Date.now()}`;
   console.log(`\n📤 [${requestId}] Upload-only request started`);
   console.log(`👤 [${requestId}] User ID: ${req.user.userId} (${req.user.email})`);
@@ -220,8 +221,16 @@ router.post("/", verifyToken, uploadMiddleware.single("file"), async (req, res) 
 
     console.log(`💾 [${requestId}] Storage info:`, storageInfo);
 
-    // ✅ Get database collection
-    const contractsCollection = req.contractsCollection || req.app.locals.db.collection("contracts");
+    // ✅ Get database collection (req.contractsCollection wird von server.js Middleware gesetzt)
+    const contractsCollection = req.contractsCollection || req.db?.collection("contracts");
+
+    if (!contractsCollection) {
+      console.error(`❌ [${requestId}] Database collection not available`);
+      return res.status(500).json({
+        success: false,
+        message: "Datenbank nicht verfügbar"
+      });
+    }
 
     // ✅ DUPLIKATS-PRÜFUNG: Berechne File-Hash und prüfe Duplikate
     let fileHash = null;
