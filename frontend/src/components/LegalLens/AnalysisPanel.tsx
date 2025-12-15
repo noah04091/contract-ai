@@ -1,7 +1,7 @@
 // 📁 components/LegalLens/AnalysisPanel.tsx
 // Komponente für das Analyse-Panel (rechte Seite) - KOMPLETT ÜBERARBEITET
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import type {
   ClauseAnalysis,
   PerspectiveType,
@@ -51,6 +51,16 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   const [chatInput, setChatInput] = useState('');
   const [copiedTemplate, setCopiedTemplate] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['action', 'explanation', 'worstCase']));
+
+  // Ref für Auto-Scroll im Chat
+  const chatMessagesRef = useRef<HTMLDivElement>(null);
+
+  // Auto-Scroll zum neuesten Chat-Eintrag
+  useEffect(() => {
+    if (chatMessagesRef.current) {
+      chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
+    }
+  }, [chatHistory, isChatting]);
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev => {
@@ -741,7 +751,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
         </div>
 
         {(chatHistory.length > 0 || isChatting) && (
-          <div className={styles.chatMessages}>
+          <div className={styles.chatMessages} ref={chatMessagesRef}>
             {chatHistory.map((msg, idx) => (
               <div key={idx} className={`${styles.chatMessage} ${styles[msg.role]}`}>
                 <div className={styles.messageContent}>

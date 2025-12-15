@@ -16,6 +16,7 @@ interface ClauseListProps {
   onSelectClause: (clause: ParsedClause) => void;
   viewMode?: ViewMode;
   onViewModeChange?: (mode: ViewMode) => void;
+  cachedClauseIds?: string[];
 }
 
 const ClauseList: React.FC<ClauseListProps> = ({
@@ -24,10 +25,15 @@ const ClauseList: React.FC<ClauseListProps> = ({
   progress,
   onSelectClause,
   viewMode = 'text',
-  onViewModeChange
+  onViewModeChange,
+  cachedClauseIds = []
 }) => {
   const isClauseReviewed = (clauseId: string): boolean => {
     return progress?.reviewedClauses?.includes(clauseId) || false;
+  };
+
+  const isClauseCached = (clauseId: string): boolean => {
+    return cachedClauseIds.includes(clauseId);
   };
 
   const isClauseBookmarked = (clauseId: string): boolean => {
@@ -81,6 +87,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
         {clauses.map((clause) => {
           const isSelected = selectedClause?.id === clause.id;
           const isReviewed = isClauseReviewed(clause.id);
+          const isCached = isClauseCached(clause.id);
           const isBookmarked = isClauseBookmarked(clause.id);
           const notesCount = getClauseNotes(clause.id);
           const riskLevel = clause.riskIndicators?.level || 'low';
@@ -125,8 +132,11 @@ const ClauseList: React.FC<ClauseListProps> = ({
                 </div>
               )}
 
-              {(isBookmarked || notesCount > 0 || isReviewed) && (
+              {(isBookmarked || notesCount > 0 || isReviewed || isCached) && (
                 <div className={styles.clauseIcons}>
+                  {isCached && (
+                    <span className={`${styles.clauseIcon} ${styles.cachedIcon}`} title="Bereits geladen - Sofort verfügbar">⚡</span>
+                  )}
                   {isBookmarked && (
                     <span className={styles.clauseIcon} title="Gemerkt">🔖</span>
                   )}

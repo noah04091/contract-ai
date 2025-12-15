@@ -105,6 +105,90 @@
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
 }
 
+/* ===== BATCH ANALYSIS BUTTON ===== */
+.batchAnalyzeButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
+}
+
+.batchAnalyzeButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
+}
+
+.batchAnalyzeButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Batch Progress Indicator */
+.batchProgress {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+}
+
+.batchProgressInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.batchProgressText {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #92400e;
+}
+
+.batchProgressBar {
+  width: 100px;
+  height: 4px;
+  background: #fde68a;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.batchProgressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #f59e0b, #f97316);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.batchCancelButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 6px;
+  color: #92400e;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.batchCancelButton:hover {
+  background: #fde68a;
+  color: #78350f;
+}
+
 /* ===== MAIN CONTENT (SPLIT VIEW) ===== */
 .mainContent {
   display: flex;
@@ -308,6 +392,11 @@
 .clauseIcon {
   font-size: 0.75rem;
   color: #94a3b8;
+}
+
+.cachedIcon {
+  color: #f59e0b;
+  font-size: 0.875rem;
 }
 
 /* ===== PRE-ANALYSIS INFO ===== */

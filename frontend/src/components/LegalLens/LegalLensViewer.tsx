@@ -4,7 +4,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { FileText, Eye, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, BarChart3 } from 'lucide-react';
+import { FileText, Eye, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, BarChart3, Zap, X } from 'lucide-react';
 import { useLegalLens } from '../../hooks/useLegalLens';
 import ClauseList from './ClauseList';
 import PerspectiveSwitcher from './PerspectiveSwitcher';
@@ -100,11 +100,14 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     alternatives,
     negotiation,
     chatHistory,
+    analysisCache,
+    batchProgress,
     isParsing,
     isAnalyzing,
     isGeneratingAlternatives,
     isGeneratingNegotiation,
     isChatting,
+    isBatchAnalyzing,
     streamingText,
     error,
     parseContract,
@@ -114,7 +117,9 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     loadAlternatives,
     loadNegotiationTips,
     sendChatMessage,
-    markClauseReviewed
+    markClauseReviewed,
+    analyzeAllClauses,
+    cancelBatchAnalysis
   } = useLegalLens();
 
   // API URL Helper
@@ -411,6 +416,40 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
             </button>
           )}
 
+          {/* Batch Analysis Button / Progress */}
+          {isBatchAnalyzing ? (
+            <div className={styles.batchProgress}>
+              <div className={styles.batchProgressInfo}>
+                <span className={styles.batchProgressText}>
+                  {batchProgress.completed}/{batchProgress.total} analysiert
+                </span>
+                <div className={styles.batchProgressBar}>
+                  <div
+                    className={styles.batchProgressFill}
+                    style={{ width: `${(batchProgress.completed / batchProgress.total) * 100}%` }}
+                  />
+                </div>
+              </div>
+              <button
+                className={styles.batchCancelButton}
+                onClick={cancelBatchAnalysis}
+                title="Abbrechen"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          ) : (
+            <button
+              className={styles.batchAnalyzeButton}
+              onClick={analyzeAllClauses}
+              disabled={clauses.length === 0}
+              title="Alle Klauseln im Hintergrund vorab laden"
+            >
+              <Zap size={16} />
+              <span>Alle laden</span>
+            </button>
+          )}
+
           <div className={styles.progressBar}>
             <div className={styles.progressTrack}>
               <div
@@ -436,6 +475,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
             onSelectClause={selectClause}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
+            cachedClauseIds={Object.keys(analysisCache).map(key => key.split('-')[0])}
           />
         ) : (
           <div className={styles.contractPanel} style={{ display: 'flex', flexDirection: 'column' }}>

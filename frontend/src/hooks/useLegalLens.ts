@@ -14,6 +14,13 @@ import type {
   RiskLevel
 } from '../types/legalLens';
 
+interface BatchProgress {
+  total: number;
+  completed: number;
+  current: string | null;
+  isRunning: boolean;
+}
+
 interface UseLegalLensReturn {
   // Daten
   clauses: ParsedClause[];
@@ -31,6 +38,8 @@ interface UseLegalLensReturn {
     topRisks: Array<{ clauseId: string; clauseText: string; riskLevel: RiskLevel; riskScore: number }>;
     overallRisk: RiskLevel;
   } | null;
+  analysisCache: AnalysisCache;
+  batchProgress: BatchProgress;
 
   // Status
   isLoading: boolean;
@@ -39,6 +48,7 @@ interface UseLegalLensReturn {
   isGeneratingAlternatives: boolean;
   isGeneratingNegotiation: boolean;
   isChatting: boolean;
+  isBatchAnalyzing: boolean;
   streamingText: string;
   error: string | null;
 
@@ -54,6 +64,8 @@ interface UseLegalLensReturn {
   addNote: (clauseId: string, content: string) => Promise<void>;
   toggleBookmark: (clauseId: string, label?: string, color?: string) => Promise<void>;
   loadSummary: () => Promise<void>;
+  analyzeAllClauses: () => Promise<void>;
+  cancelBatchAnalysis: () => void;
   reset: () => void;
 }
 
@@ -90,11 +102,19 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
   const [isGeneratingAlternatives, setIsGeneratingAlternatives] = useState(false);
   const [isGeneratingNegotiation, setIsGeneratingNegotiation] = useState(false);
   const [isChatting, setIsChatting] = useState(false);
+  const [isBatchAnalyzing, setIsBatchAnalyzing] = useState(false);
+  const [batchProgress, setBatchProgress] = useState<BatchProgress>({
+    total: 0,
+    completed: 0,
+    current: null,
+    isRunning: false
+  });
   const [streamingText, setStreamingText] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   // Refs
   const abortControllerRef = useRef<(() => void) | null>(null);
+  const batchAbortRef = useRef<boolean>(false);
 
   /**
    * Vertrag parsen
@@ -463,6 +483,104 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
   }, [contractId]);
 
   /**
+   * ✅ NEU: Alle Klauseln im Hintergrund analysieren (Batch)
+   */
+  const analyzeAllClauses = useCallback(async () => {
+    if (!contractId || clauses.length === 0) return;
+
+    // Reset abort flag
+    batchAbortRef.current = false;
+    setIsBatchAnalyzing(true);
+    setError(null);
+
+    // Finde alle Klauseln die noch nicht im Cache sind
+    const uncachedClauses = clauses.filter(clause => {
+      const cacheKey: CacheKey = `${clause.id}-${currentPerspective}`;
+      return !analysisCache[cacheKey];
+    });
+
+    if (uncachedClauses.length === 0) {
+      console.log('[Legal Lens] All clauses already cached!');
+      setIsBatchAnalyzing(false);
+      return;
+    }
+
+    setBatchProgress({
+      total: uncachedClauses.length,
+      completed: 0,
+      current: uncachedClauses[0]?.text.substring(0, 50) || null,
+      isRunning: true
+    });
+
+    console.log(`[Legal Lens] Starting batch analysis for ${uncachedClauses.length} clauses`);
+
+    // Analysiere Klauseln nacheinander
+    for (let i = 0; i < uncachedClauses.length; i++) {
+      // Prüfe ob abgebrochen werden soll
+      if (batchAbortRef.current) {
+        console.log('[Legal Lens] Batch analysis cancelled');
+        break;
+      }
+
+      const clause = uncachedClauses[i];
+      const cacheKey: CacheKey = `${clause.id}-${currentPerspective}`;
+
+      // Update Progress
+      setBatchProgress(prev => ({
+        ...prev,
+        current: clause.text.substring(0, 50) + '...',
+        completed: i
+      }));
+
+      try {
+        // Normale (nicht-streaming) Analyse verwenden
+        const response = await legalLensAPI.analyzeClause(
+          contractId,
+          clause.id,
+          clause.text,
+          currentPerspective,
+          false
+        );
+
+        if (response.success) {
+          // In Cache speichern
+          setAnalysisCache(prev => ({
+            ...prev,
+            [cacheKey]: response.analysis
+          }));
+          console.log(`[Legal Lens] Cached clause ${i + 1}/${uncachedClauses.length}: ${clause.id}`);
+        }
+      } catch (err) {
+        console.error(`[Legal Lens] Error analyzing clause ${clause.id}:`, err);
+        // Fehler bei einer Klausel sollte den Batch nicht abbrechen
+      }
+
+      // Kleine Pause um Backend nicht zu überlasten (300ms)
+      if (i < uncachedClauses.length - 1 && !batchAbortRef.current) {
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+    }
+
+    setBatchProgress(prev => ({
+      ...prev,
+      completed: batchAbortRef.current ? prev.completed : uncachedClauses.length,
+      current: null,
+      isRunning: false
+    }));
+    setIsBatchAnalyzing(false);
+
+    console.log('[Legal Lens] Batch analysis completed');
+  }, [contractId, clauses, currentPerspective, analysisCache]);
+
+  /**
+   * ✅ NEU: Batch-Analyse abbrechen
+   */
+  const cancelBatchAnalysis = useCallback(() => {
+    batchAbortRef.current = true;
+    console.log('[Legal Lens] Batch analysis cancel requested');
+  }, []);
+
+  /**
    * Reset
    */
   const reset = useCallback(() => {
@@ -506,6 +624,8 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
     negotiation,
     chatHistory,
     summary,
+    analysisCache,
+    batchProgress,
 
     // Status
     isLoading,
@@ -514,6 +634,7 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
     isGeneratingAlternatives,
     isGeneratingNegotiation,
     isChatting,
+    isBatchAnalyzing,
     streamingText,
     error,
 
@@ -529,6 +650,8 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
     addNote,
     toggleBookmark,
     loadSummary,
+    analyzeAllClauses,
+    cancelBatchAnalysis,
     reset
   };
 }
