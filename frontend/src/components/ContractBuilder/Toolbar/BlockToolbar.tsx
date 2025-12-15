@@ -62,7 +62,7 @@ const blockCategories = [
     blocks: [
       { type: 'divider' as BlockType, label: 'Trenner', icon: Minus, description: 'Horizontale Linie' },
       { type: 'spacer' as BlockType, label: 'Abstand', icon: Space, description: 'Vertikaler Abstand' },
-      { type: 'page-break' as BlockType, label: 'Seitenumbruch', icon: FileStack, description: 'Neue Seite beginnen' },
+      { type: 'page-break' as BlockType, label: 'Neue Seite', icon: FileStack, description: 'Seitenumbruch einfügen (PDF)' },
       { type: 'logo' as BlockType, label: 'Logo', icon: Image, description: 'Firmenlogo einfügen' },
     ],
   },

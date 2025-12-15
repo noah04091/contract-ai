@@ -253,6 +253,7 @@
   flex: 1;
   overflow: hidden;
   position: relative;
+  height: calc(100vh - 56px); /* Feste Höhe für korrektes Scrolling */
 }
 
 /* Sidebars */
@@ -263,6 +264,8 @@
   background: white;
   border-right: 1px solid #e2e8f0;
   z-index: 10;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .rightSidebar {
@@ -270,6 +273,8 @@
   background: white;
   border-left: 1px solid #e2e8f0;
   z-index: 10;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .panelTabs {
@@ -361,8 +366,9 @@
 /* Canvas */
 .canvasWrapper {
   flex: 1;
-  overflow: hidden;
+  overflow: auto;
   position: relative;
+  height: calc(100vh - 56px); /* Höhe minus Top-Bar */
 }
 
 /* Loading & Error States */

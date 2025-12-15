@@ -17,6 +17,7 @@ import {
   Lock,
   Unlock,
   Sparkles,
+  FileText,
 } from 'lucide-react';
 import styles from './PropertiesPanel.module.css';
 
@@ -24,17 +25,18 @@ interface PropertiesPanelProps {
   className?: string;
 }
 
-type SectionType = 'typography' | 'colors' | 'spacing' | 'border' | 'advanced';
+type SectionType = 'content' | 'typography' | 'colors' | 'spacing' | 'border' | 'advanced';
 
 export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className }) => {
   const [expandedSections, setExpandedSections] = useState<Set<SectionType>>(
-    new Set(['typography', 'colors'])
+    new Set(['content', 'typography'])
   );
 
   const {
     document: currentDocument,
     selectedBlockId,
     updateBlock,
+    updateBlockContent,
     deleteBlock,
     duplicateBlock,
   } = useContractBuilderStore();
@@ -145,6 +147,19 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className }) =
 
       {/* Sections */}
       <div className={styles.sections}>
+        {/* Content - Block-spezifische Inhalte */}
+        <Section
+          title="Inhalt"
+          icon={<FileText size={14} />}
+          isExpanded={expandedSections.has('content')}
+          onToggle={() => toggleSection('content')}
+        >
+          <ContentEditor
+            block={selectedBlock}
+            onUpdate={(content) => updateBlockContent(selectedBlock.id, content)}
+          />
+        </Section>
+
         {/* Typography */}
         <Section
           title="Typografie"
@@ -504,5 +519,268 @@ function getBlockTypeLabel(type: string): string {
   };
   return labels[type] || type;
 }
+
+// ContentEditor - Block-spezifische Inhaltsbearbeitung
+interface ContentEditorProps {
+  block: BlockType;
+  onUpdate: (content: Record<string, unknown>) => void;
+}
+
+const ContentEditor: React.FC<ContentEditorProps> = ({ block, onUpdate }) => {
+  const content = block.content || {};
+
+  switch (block.type) {
+    case 'header':
+      return (
+        <>
+          <div className={styles.field}>
+            <label className={styles.label}>Titel</label>
+            <input
+              type="text"
+              className={styles.input}
+              value={String(content.title || '')}
+              placeholder="Vertragstitel"
+              onChange={(e) => onUpdate({ ...content, title: e.target.value })}
+            />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label}>Untertitel</label>
+            <input
+              type="text"
+              className={styles.input}
+              value={String(content.subtitle || '')}
+              placeholder="Untertitel"
+              onChange={(e) => onUpdate({ ...content, subtitle: e.target.value })}
+            />
+          </div>
+        </>
+      );
+
+    case 'parties': {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const party1 = (content.party1 || {}) as any;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const party2 = (content.party2 || {}) as any;
+      return (
+        <>
+          <div className={styles.fieldGroup}>
+            <label className={styles.groupLabel}>Partei 1 (Auftraggeber)</label>
+            <div className={styles.field}>
+              <label className={styles.label}>Rolle</label>
+              <input
+                type="text"
+                className={styles.input}
+                value={String(party1.role || 'Auftraggeber')}
+                onChange={(e) => onUpdate({
+                  ...content,
+                  party1: { ...party1, role: e.target.value }
+                })}
+              />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label}>Name / Firma</label>
+              <input
+                type="text"
+                className={styles.input}
+                value={String(party1.name || '')}
+                placeholder="Max Mustermann GmbH"
+                onChange={(e) => onUpdate({
+                  ...content,
+                  party1: { ...party1, name: e.target.value }
+                })}
+              />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label}>Adresse</label>
+              <textarea
+                className={styles.textarea}
+                rows={2}
+                value={String(party1.address || '')}
+                placeholder="Musterstraße 1, 12345 Musterstadt"
+                onChange={(e) => onUpdate({
+                  ...content,
+                  party1: { ...party1, address: e.target.value }
+                })}
+              />
+            </div>
+          </div>
+
+          <div className={styles.fieldGroup}>
+            <label className={styles.groupLabel}>Partei 2 (Auftragnehmer)</label>
+            <div className={styles.field}>
+              <label className={styles.label}>Rolle</label>
+              <input
+                type="text"
+                className={styles.input}
+                value={String(party2.role || 'Auftragnehmer')}
+                onChange={(e) => onUpdate({
+                  ...content,
+                  party2: { ...party2, role: e.target.value }
+                })}
+              />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label}>Name / Firma</label>
+              <input
+                type="text"
+                className={styles.input}
+                value={String(party2.name || '')}
+                placeholder="Erika Musterfrau"
+                onChange={(e) => onUpdate({
+                  ...content,
+                  party2: { ...party2, name: e.target.value }
+                })}
+              />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label}>Adresse</label>
+              <textarea
+                className={styles.textarea}
+                rows={2}
+                value={String(party2.address || '')}
+                placeholder="Beispielweg 2, 54321 Beispielort"
+                onChange={(e) => onUpdate({
+                  ...content,
+                  party2: { ...party2, address: e.target.value }
+                })}
+              />
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    case 'preamble':
+      return (
+        <div className={styles.field}>
+          <label className={styles.label}>Präambeltext</label>
+          <textarea
+            className={styles.textarea}
+            rows={4}
+            value={String(content.preambleText || '')}
+            placeholder="Die nachfolgend genannten Vertragsparteien schließen folgenden Vertrag:"
+            onChange={(e) => onUpdate({ ...content, preambleText: e.target.value })}
+          />
+        </div>
+      );
+
+    case 'clause':
+      return (
+        <>
+          <div className={styles.field}>
+            <label className={styles.label}>Klauseltitel</label>
+            <input
+              type="text"
+              className={styles.input}
+              value={String(content.clauseTitle || '')}
+              placeholder="§ 1 Vertragsgegenstand"
+              onChange={(e) => onUpdate({ ...content, clauseTitle: e.target.value })}
+            />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label}>Klauseltext</label>
+            <textarea
+              className={styles.textarea}
+              rows={6}
+              value={String(content.body || '')}
+              placeholder="Der Klauselinhalt..."
+              onChange={(e) => onUpdate({ ...content, body: e.target.value })}
+            />
+          </div>
+        </>
+      );
+
+    case 'attachment':
+      return (
+        <>
+          <div className={styles.field}>
+            <label className={styles.label}>Anlagentitel</label>
+            <input
+              type="text"
+              className={styles.input}
+              value={String(content.attachmentTitle || '')}
+              placeholder="Anlage 1"
+              onChange={(e) => onUpdate({ ...content, attachmentTitle: e.target.value })}
+            />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label}>Beschreibung</label>
+            <textarea
+              className={styles.textarea}
+              rows={3}
+              value={String(content.attachmentDescription || '')}
+              placeholder="Beschreibung der Anlage..."
+              onChange={(e) => onUpdate({ ...content, attachmentDescription: e.target.value })}
+            />
+          </div>
+        </>
+      );
+
+    case 'spacer':
+      return (
+        <div className={styles.field}>
+          <label className={styles.label}>Höhe (px)</label>
+          <input
+            type="number"
+            className={styles.input}
+            value={content.height as number || 24}
+            min={8}
+            max={200}
+            onChange={(e) => onUpdate({ ...content, height: Number(e.target.value) })}
+          />
+        </div>
+      );
+
+    case 'divider':
+      return (
+        <div className={styles.field}>
+          <label className={styles.label}>Stil</label>
+          <select
+            className={styles.select}
+            value={String(content.style || 'solid')}
+            onChange={(e) => onUpdate({ ...content, style: e.target.value })}
+          >
+            <option value="solid">Durchgezogen</option>
+            <option value="dashed">Gestrichelt</option>
+            <option value="dotted">Gepunktet</option>
+          </select>
+        </div>
+      );
+
+    case 'custom': {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const customContent = content as any;
+      return (
+        <div className={styles.field}>
+          <label className={styles.label}>Freitext</label>
+          <textarea
+            className={styles.textarea}
+            rows={6}
+            value={String(customContent.text || '')}
+            placeholder="Benutzerdefinierter Text..."
+            onChange={(e) => onUpdate({ ...content, text: e.target.value })}
+          />
+        </div>
+      );
+    }
+
+    case 'page-break':
+    case 'signature':
+    case 'table':
+    case 'date-field':
+      return (
+        <p className={styles.noContent}>
+          Dieser Block-Typ hat keine bearbeitbaren Textinhalte.
+        </p>
+      );
+
+    default:
+      return (
+        <p className={styles.noContent}>
+          Für diesen Block-Typ ist keine Inhaltsbearbeitung verfügbar.
+        </p>
+      );
+  }
+};
 
 export default PropertiesPanel;
