@@ -28,6 +28,7 @@ import {
   MoreVertical,
   PanelLeftClose,
   Loader2,
+  CloudOff,
 } from 'lucide-react';
 import styles from '../styles/ContractBuilder.module.css';
 
@@ -49,6 +50,7 @@ const ContractBuilder: React.FC = () => {
     zoom,
     canUndo,
     canRedo,
+    isLocalMode,
     loadDocument,
     createDocument,
     saveDocument,
@@ -158,6 +160,12 @@ const ContractBuilder: React.FC = () => {
                currentDocument?.metadata.status === 'review' ? 'In Prüfung' :
                currentDocument?.metadata.status === 'final' ? 'Final' : 'Entwurf'}
             </span>
+            {isLocalMode && (
+              <span className={styles.localModeBadge} title="Offline-Modus: Dokument wird lokal gespeichert">
+                <CloudOff size={12} />
+                <span>Lokal</span>
+              </span>
+            )}
           </div>
         </div>
 

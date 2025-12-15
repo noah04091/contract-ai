@@ -91,6 +91,26 @@
   letter-spacing: 0.03em;
 }
 
+.localModeBadge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  color: #c05621;
+  background: #feebc8;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-left: 4px;
+}
+
+.localModeBadge svg {
+  width: 12px;
+  height: 12px;
+}
+
 .topBarCenter {
   display: flex;
   align-items: center;

@@ -254,6 +254,9 @@ interface ContractBuilderState {
 
   // Error State
   error: string | null;
+
+  // Local Mode (offline fallback)
+  isLocalMode: boolean;
 }
 
 interface ContractBuilderActions {
@@ -375,7 +378,32 @@ const initialState: ContractBuilderState = {
   aiOperation: null,
   copilotSuggestion: null,
   error: null,
+  isLocalMode: false,
 };
+
+// Helper: Lokales Dokument erstellen
+function createLocalDocument(name: string, contractType: string): ContractDocument {
+  const now = new Date().toISOString();
+  return {
+    _id: `local_${crypto.randomUUID()}`,
+    userId: 'local',
+    metadata: {
+      name,
+      contractType,
+      language: 'de',
+      status: 'draft',
+      version: 1,
+      tags: [],
+    },
+    content: {
+      blocks: [],
+      variables: [],
+    },
+    design: defaultDesign,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
 
 // ============================================
 // API HELPERS
@@ -418,6 +446,28 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
 
         loadDocument: async (id: string) => {
           set({ isLoading: true, error: null });
+
+          // Lokales Dokument aus localStorage laden
+          if (id.startsWith('local_')) {
+            try {
+              const localDocs = JSON.parse(localStorage.getItem('contractforge_local_docs') || '{}');
+              const localDoc = localDocs[id];
+              if (localDoc) {
+                set({
+                  document: localDoc,
+                  isLoading: false,
+                  hasUnsavedChanges: false,
+                  history: [localDoc],
+                  historyIndex: 0,
+                  isLocalMode: true,
+                });
+                return;
+              }
+            } catch (err) {
+              console.error('Lokales Laden fehlgeschlagen:', err);
+            }
+          }
+
           try {
             const data = await apiCall<{ success: boolean; document: ContractDocument }>(`/${id}`);
             set({
@@ -426,6 +476,7 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
               hasUnsavedChanges: false,
               history: [data.document],
               historyIndex: 0,
+              isLocalMode: false,
             });
           } catch (error) {
             set({ isLoading: false, error: (error as Error).message });
@@ -446,19 +497,46 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
               hasUnsavedChanges: false,
               history: [data.document],
               historyIndex: 0,
+              isLocalMode: false,
             });
             return data.document._id;
-          } catch (error) {
-            set({ isLoading: false, error: (error as Error).message });
-            throw error;
+          } catch {
+            // Fallback: Lokales Dokument erstellen wenn API nicht verfügbar
+            console.warn('API nicht verfügbar - erstelle lokales Dokument');
+            const localDoc = createLocalDocument(name, contractType);
+            set({
+              document: localDoc,
+              isLoading: false,
+              hasUnsavedChanges: false,
+              history: [localDoc],
+              historyIndex: 0,
+              isLocalMode: true,
+              error: null,
+            });
+            return localDoc._id;
           }
         },
 
         saveDocument: async () => {
-          const { document } = get();
+          const { document, isLocalMode } = get();
           if (!document) return;
 
           set({ isSaving: true, error: null });
+
+          // Im lokalen Modus: Speichern in localStorage
+          if (isLocalMode || document._id.startsWith('local_')) {
+            try {
+              const localDocs = JSON.parse(localStorage.getItem('contractforge_local_docs') || '{}');
+              localDocs[document._id] = document;
+              localStorage.setItem('contractforge_local_docs', JSON.stringify(localDocs));
+              set({ isSaving: false, lastSaved: new Date(), hasUnsavedChanges: false });
+              console.log('Dokument lokal gespeichert:', document._id);
+              return;
+            } catch (err) {
+              console.error('Lokales Speichern fehlgeschlagen:', err);
+            }
+          }
+
           try {
             await apiCall(`/${document._id}`, {
               method: 'PUT',
