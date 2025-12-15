@@ -510,6 +510,257 @@
   font-size: 1rem;
 }
 
+/* ===== ENHANCED PERSPECTIVE SWITCHER ===== */
+.perspectiveSwitcherEnhanced {
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.perspectiveHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.perspectiveHeaderLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.perspectiveLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.perspectiveCurrentHint {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+.perspectiveHelpBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.perspectiveHelpBtn:hover {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.perspectiveHelpBtn.active {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+/* Perspective Cards */
+.perspectiveCards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+}
+
+.perspectiveCard {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+  position: relative;
+}
+
+.perspectiveCard:hover {
+  background: var(--perspective-bg);
+  border-color: var(--perspective-color);
+}
+
+.perspectiveCard.active {
+  background: var(--perspective-bg);
+  border-color: var(--perspective-color);
+  border-width: 2px;
+}
+
+.perspectiveCard:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.perspectiveCardIcon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.perspectiveCardContent {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.perspectiveCardName {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.perspectiveCard.active .perspectiveCardName {
+  color: var(--perspective-color);
+}
+
+.perspectiveCardDesc {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.perspectiveCard.active .perspectiveCardDesc {
+  color: var(--perspective-color);
+  opacity: 0.8;
+}
+
+.perspectiveCardActive {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  width: 16px;
+  height: 16px;
+  background: var(--perspective-color);
+  color: white;
+  border-radius: 50%;
+  font-size: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+/* Help Panel */
+.perspectiveHelpPanel {
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  padding: 1rem;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.perspectiveHelpTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.75rem;
+}
+
+.perspectiveHelpGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.perspectiveHelpCard {
+  background: white;
+  border-radius: 8px;
+  padding: 0.875rem;
+  border-left: 3px solid;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.perspectiveHelpCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.perspectiveHelpDesc {
+  font-size: 0.8rem;
+  color: #64748b;
+  line-height: 1.5;
+  margin: 0 0 0.75rem 0;
+}
+
+.perspectiveHelpUseCases {
+  margin-bottom: 0.75rem;
+}
+
+.perspectiveHelpUseCasesLabel {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.375rem;
+}
+
+.perspectiveHelpUseCases ul {
+  margin: 0;
+  padding-left: 1rem;
+  font-size: 0.75rem;
+  color: #475569;
+}
+
+.perspectiveHelpUseCases li {
+  margin-bottom: 0.25rem;
+}
+
+.perspectiveHelpChoose {
+  width: 100%;
+  padding: 0.5rem;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.perspectiveHelpChoose:hover {
+  opacity: 0.9;
+}
+
+.perspectiveHelpChoose:disabled {
+  cursor: not-allowed;
+}
+
 /* ===== ANALYSIS CONTENT ===== */
 .analysisContent {
   flex: 1;
@@ -1283,5 +1534,113 @@
 
   .mobileAnalysisPanel .chatInput {
     font-size: 16px; /* Verhindert Zoom auf iOS */
+  }
+}
+
+/* ===== ENHANCED PERSPECTIVE SWITCHER MOBILE ===== */
+@media (max-width: 1024px) {
+  .perspectiveSwitcherEnhanced {
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .perspectiveHeader {
+    padding: 0.625rem 0.75rem;
+  }
+
+  .perspectiveLabel {
+    font-size: 0.65rem;
+  }
+
+  .perspectiveCurrentHint {
+    font-size: 0.75rem;
+  }
+
+  .perspectiveHelpBtn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+  }
+
+  .perspectiveHelpBtn span {
+    display: none;
+  }
+
+  .perspectiveCards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.375rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .perspectiveCard {
+    padding: 0.5rem;
+    gap: 0.375rem;
+  }
+
+  .perspectiveCardIcon {
+    font-size: 1.1rem;
+  }
+
+  .perspectiveCardName {
+    font-size: 0.75rem;
+  }
+
+  .perspectiveCardDesc {
+    font-size: 0.65rem;
+  }
+
+  .perspectiveCardActive {
+    width: 14px;
+    height: 14px;
+    font-size: 0.5rem;
+  }
+
+  .perspectiveHelpPanel {
+    padding: 0.75rem;
+  }
+
+  .perspectiveHelpTitle {
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .perspectiveHelpGrid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .perspectiveHelpCard {
+    padding: 0.75rem;
+  }
+
+  .perspectiveHelpCardHeader {
+    font-size: 0.8rem;
+    margin-bottom: 0.375rem;
+  }
+
+  .perspectiveHelpDesc {
+    font-size: 0.75rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+  }
+
+  .perspectiveHelpUseCases {
+    margin-bottom: 0.5rem;
+  }
+
+  .perspectiveHelpUseCasesLabel {
+    font-size: 0.65rem;
+  }
+
+  .perspectiveHelpUseCases ul {
+    font-size: 0.7rem;
+    padding-left: 0.875rem;
+  }
+
+  .perspectiveHelpUseCases li {
+    margin-bottom: 0.125rem;
+  }
+
+  .perspectiveHelpChoose {
+    padding: 0.375rem;
+    font-size: 0.7rem;
   }
 }
