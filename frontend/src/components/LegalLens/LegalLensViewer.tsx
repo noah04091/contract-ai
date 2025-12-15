@@ -167,7 +167,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     }
   }, [contractId, parseContract]);
 
-  // Analyse starten wenn Klausel ausgewählt - MIT Loop-Protection
+  // Analyse starten wenn Klausel ausgewählt - MIT Loop-Protection und Cache-Check
   useEffect(() => {
     // Verhindere doppelte Analyse der gleichen Klausel
     if (!selectedClause) {
@@ -177,6 +177,12 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     }
 
     const clauseKey = `${selectedClause.id}-${currentPerspective}`;
+
+    // ✅ NEU: Wenn bereits eine Analyse vorhanden ist (aus Cache), nichts tun
+    if (currentAnalysis) {
+      lastAnalyzedClauseRef.current = clauseKey;
+      return;
+    }
 
     // Wenn diese Klausel+Perspektive bereits analysiert wird/wurde, nichts tun
     if (lastAnalyzedClauseRef.current === clauseKey) {
@@ -200,7 +206,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     console.log('[Legal Lens] Starting analysis for:', clauseKey);
     analyzeClause(false); // Use JSON mode, not streaming (streaming doesn't return structured data)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedClause?.id, currentPerspective, isAnalyzing]);
+  }, [selectedClause?.id, currentPerspective, isAnalyzing, currentAnalysis]);
 
   // Klausel als gelesen markieren
   useEffect(() => {

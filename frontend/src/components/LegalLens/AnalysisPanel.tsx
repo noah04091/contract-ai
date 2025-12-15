@@ -740,7 +740,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
           <h4 className={styles.chatTitle}>Fragen zur Klausel</h4>
         </div>
 
-        {chatHistory.length > 0 && (
+        {(chatHistory.length > 0 || isChatting) && (
           <div className={styles.chatMessages}>
             {chatHistory.map((msg, idx) => (
               <div key={idx} className={`${styles.chatMessage} ${styles[msg.role]}`}>
@@ -752,7 +752,12 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
             {isChatting && (
               <div className={`${styles.chatMessage} ${styles.assistant}`}>
                 <div className={styles.messageContent}>
-                  <span className={styles.loadingSpinner} style={{ width: 16, height: 16 }} />
+                  <div className={styles.typingIndicator}>
+                    <span className={styles.typingDot}></span>
+                    <span className={styles.typingDot}></span>
+                    <span className={styles.typingDot}></span>
+                    <span className={styles.typingText}>KI denkt nach...</span>
+                  </div>
                 </div>
               </div>
             )}

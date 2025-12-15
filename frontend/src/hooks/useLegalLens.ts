@@ -57,6 +57,13 @@ interface UseLegalLensReturn {
   reset: () => void;
 }
 
+// Cache-Key für Klausel+Perspektive Kombination
+type CacheKey = `${string}-${PerspectiveType}`;
+
+interface AnalysisCache {
+  [key: CacheKey]: ClauseAnalysis;
+}
+
 /**
  * Custom Hook für die Legal Lens Funktionalität
  */
@@ -72,6 +79,9 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
   const [negotiation, setNegotiation] = useState<NegotiationInfo | null>(null);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [summary, setSummary] = useState<UseLegalLensReturn['summary']>(null);
+
+  // ✅ NEU: Analysis Cache - speichert bereits analysierte Klauseln
+  const [analysisCache, setAnalysisCache] = useState<AnalysisCache>({});
 
   // Loading States
   const [isLoading, setIsLoading] = useState(false);
@@ -120,22 +130,46 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
   }, []);
 
   /**
-   * Klausel auswählen
+   * Klausel auswählen - mit Cache-Prüfung
    */
   const selectClause = useCallback((clause: ParsedClause) => {
     setSelectedClause(clause);
-    setCurrentAnalysis(null);
+
+    // ✅ NEU: Prüfe ob Analyse bereits im Cache ist
+    const cacheKey: CacheKey = `${clause.id}-${currentPerspective}`;
+    const cachedAnalysis = analysisCache[cacheKey];
+
+    if (cachedAnalysis) {
+      console.log('[Legal Lens] Using cached analysis for:', cacheKey);
+      setCurrentAnalysis(cachedAnalysis);
+      setChatHistory(cachedAnalysis.chatHistory || []);
+    } else {
+      // Keine gecachte Analyse - wird später durch analyzeClause geladen
+      setCurrentAnalysis(null);
+      setChatHistory([]);
+    }
+
     setAlternatives([]);
     setNegotiation(null);
-    setChatHistory([]);
     setStreamingText('');
-  }, []);
+  }, [currentPerspective, analysisCache]);
 
   /**
-   * Klausel analysieren
+   * Klausel analysieren - mit Caching
    */
   const analyzeClause = useCallback(async (streaming: boolean = true) => {
     if (!contractId || !selectedClause) return;
+
+    // ✅ NEU: Prüfe zuerst den Cache
+    const cacheKey: CacheKey = `${selectedClause.id}-${currentPerspective}`;
+    const cachedAnalysis = analysisCache[cacheKey];
+
+    if (cachedAnalysis) {
+      console.log('[Legal Lens] Analysis already cached, skipping API call');
+      setCurrentAnalysis(cachedAnalysis);
+      setChatHistory(cachedAnalysis.chatHistory || []);
+      return; // Keine API-Anfrage nötig!
+    }
 
     // Vorherige Streaming-Anfrage abbrechen
     if (abortControllerRef.current) {
@@ -146,6 +180,14 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
     setIsAnalyzing(true);
     setError(null);
     setStreamingText('');
+
+    // ✅ Helper: Analyse in Cache speichern
+    const cacheAnalysis = (analysis: ClauseAnalysis) => {
+      setAnalysisCache(prev => ({
+        ...prev,
+        [cacheKey]: analysis
+      }));
+    };
 
     try {
       if (streaming) {
@@ -161,6 +203,7 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
           (response) => {
             setCurrentAnalysis(response.analysis);
             setChatHistory(response.analysis.chatHistory || []);
+            cacheAnalysis(response.analysis); // ✅ In Cache speichern
             setIsAnalyzing(false);
           },
           (err) => {
@@ -182,6 +225,7 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
         if (response.success) {
           setCurrentAnalysis(response.analysis);
           setChatHistory(response.analysis.chatHistory || []);
+          cacheAnalysis(response.analysis); // ✅ In Cache speichern
         }
         setIsAnalyzing(false);
       }
@@ -189,10 +233,10 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
       setError(err instanceof Error ? err.message : 'Analyse-Fehler');
       setIsAnalyzing(false);
     }
-  }, [contractId, selectedClause, currentPerspective]);
+  }, [contractId, selectedClause, currentPerspective, analysisCache]);
 
   /**
-   * Perspektive wechseln
+   * Perspektive wechseln - mit Cache-Prüfung
    */
   const changePerspective = useCallback(async (perspective: PerspectiveType) => {
     setCurrentPerspective(perspective);
@@ -206,12 +250,23 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
       }
     }
 
-    // Neu analysieren wenn Klausel ausgewählt
-    if (selectedClause && currentAnalysis) {
-      setCurrentAnalysis(null);
-      setStreamingText('');
+    // ✅ NEU: Prüfe Cache für neue Perspektive
+    if (selectedClause) {
+      const cacheKey: CacheKey = `${selectedClause.id}-${perspective}`;
+      const cachedAnalysis = analysisCache[cacheKey];
+
+      if (cachedAnalysis) {
+        console.log('[Legal Lens] Using cached analysis for perspective:', perspective);
+        setCurrentAnalysis(cachedAnalysis);
+        setChatHistory(cachedAnalysis.chatHistory || []);
+      } else {
+        // Keine gecachte Analyse für diese Perspektive - wird neu geladen
+        setCurrentAnalysis(null);
+        setChatHistory([]);
+        setStreamingText('');
+      }
     }
-  }, [contractId, selectedClause, currentAnalysis]);
+  }, [contractId, selectedClause, analysisCache]);
 
   /**
    * Alternativen laden
@@ -428,6 +483,7 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
     setSummary(null);
     setStreamingText('');
     setError(null);
+    setAnalysisCache({}); // ✅ NEU: Cache leeren
   }, []);
 
   // Cleanup bei Unmount
