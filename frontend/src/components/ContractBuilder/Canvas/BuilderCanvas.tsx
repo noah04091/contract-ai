@@ -183,16 +183,25 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
                   items={blocks.map((b: Block) => b.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  {blocks.map((block: Block, index: number) => (
-                    <SortableBlock
-                      key={block.id}
-                      block={block}
-                      index={index}
-                      isSelected={selectedBlockId === block.id}
-                      isPreview={view === 'preview'}
-                      onClick={() => handleBlockClick(block.id)}
-                    />
-                  ))}
+                  {blocks.map((block: Block, index: number) => {
+                    // Berechne Seitennummer für page-break Blöcke
+                    const pageBreaksBefore = blocks
+                      .slice(0, index)
+                      .filter((b: Block) => b.type === 'page-break').length;
+                    const pageNumber = pageBreaksBefore + 1;
+
+                    return (
+                      <SortableBlock
+                        key={block.id}
+                        block={block}
+                        index={index}
+                        isSelected={selectedBlockId === block.id}
+                        isPreview={view === 'preview'}
+                        onClick={() => handleBlockClick(block.id)}
+                        pageNumber={pageNumber}
+                      />
+                    );
+                  })}
                 </SortableContext>
               )}
             </div>

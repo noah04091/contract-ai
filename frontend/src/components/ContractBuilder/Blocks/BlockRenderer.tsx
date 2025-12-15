@@ -22,12 +22,14 @@ interface BlockRendererProps {
   block: Block;
   isSelected: boolean;
   isPreview: boolean;
+  pageNumber?: number; // Für Seitenumbrüche
 }
 
 export const BlockRenderer: React.FC<BlockRendererProps> = ({
   block,
   isSelected,
   isPreview,
+  pageNumber = 1,
 }) => {
   // Block-spezifische Styles anwenden
   const blockStyles: React.CSSProperties = {
@@ -157,6 +159,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
           <PageBreakBlock
             isSelected={isSelected}
             isPreview={isPreview}
+            pageNumber={pageNumber}
           />
         );
 

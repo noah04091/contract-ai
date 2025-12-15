@@ -16,6 +16,7 @@ interface SortableBlockProps {
   isSelected: boolean;
   isPreview: boolean;
   onClick: () => void;
+  pageNumber?: number; // Für Seitenumbrüche
 }
 
 export const SortableBlock: React.FC<SortableBlockProps> = ({
@@ -24,6 +25,7 @@ export const SortableBlock: React.FC<SortableBlockProps> = ({
   isSelected,
   isPreview,
   onClick,
+  pageNumber = 1,
 }) => {
   const {
     attributes,
@@ -131,6 +133,7 @@ export const SortableBlock: React.FC<SortableBlockProps> = ({
           block={block}
           isSelected={isSelected}
           isPreview={isPreview}
+          pageNumber={pageNumber}
         />
       </div>
 

@@ -1,46 +1,106 @@
 /**
- * PageBreakBlock Styles
+ * PageBreakBlock Styles - Visueller Seitenumbruch
  */
 
-.pageBreak {
+.pageBreakContainer {
+  position: relative;
+  margin: 30px -20mm; /* Negative Margin um über die Papierbreite zu gehen */
+  padding: 0 20mm;
+}
+
+.pageBreakContainer.selected {
+  background: rgba(49, 130, 206, 0.03);
+}
+
+/* Ende der aktuellen Seite */
+.pageEnd {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px 0;
+  gap: 16px;
+  padding: 20px 0;
+  margin-bottom: 8px;
 }
 
-.pageBreak.selected {
-  background: rgba(49, 130, 206, 0.03);
-  border-radius: 8px;
-  padding: 16px 12px;
-  margin: 0 -12px;
-}
-
-.breakLine {
+.pageEndLine {
   flex: 1;
-  height: 1px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #cbd5e0, #cbd5e0);
+}
+
+.pageEndLine:last-child {
+  background: linear-gradient(90deg, #cbd5e0, #cbd5e0, transparent);
+}
+
+/* Visueller Separator zwischen Seiten */
+.pageSeparator {
+  background: #e2e8f0;
+  padding: 16px;
+  margin: 0 -20mm;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.separatorPattern {
+  width: 100%;
+  height: 2px;
   background: repeating-linear-gradient(
     90deg,
     #a0aec0 0px,
-    #a0aec0 4px,
-    transparent 4px,
-    transparent 8px
+    #a0aec0 8px,
+    transparent 8px,
+    transparent 16px
   );
+  opacity: 0.5;
 }
 
-.breakLabel {
+/* Anfang der nächsten Seite */
+.pageStart {
   display: flex;
   align-items: center;
-  gap: 6px;
-  color: #718096;
-  font-size: 11px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  white-space: nowrap;
+  gap: 16px;
+  padding: 20px 0;
+  margin-top: 8px;
 }
 
+.pageStartLine {
+  flex: 1;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #3182ce, #3182ce);
+}
+
+.pageStartLine:last-child {
+  background: linear-gradient(90deg, #3182ce, #3182ce, transparent);
+}
+
+/* Seitennummer-Label */
+.pageLabel {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #4a5568;
+  background: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.pageEnd .pageLabel {
+  color: #718096;
+}
+
+.pageStart .pageLabel {
+  color: #3182ce;
+  border-color: #bee3f8;
+  background: #ebf8ff;
+}
+
+/* Preview Mode - wird für PDF-Export genutzt */
 .pageBreakPreview {
   page-break-after: always;
   height: 1px;
+  margin: 0;
 }

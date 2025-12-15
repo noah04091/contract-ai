@@ -3,7 +3,6 @@
  */
 
 .canvas {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -15,10 +14,16 @@
     linear-gradient(-45deg, transparent 75%, #e8eaed 75%);
   background-size: 20px 20px;
   background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-  overflow: auto;
-  padding: 40px 20px;
-  min-height: 100%;
-  position: relative;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 40px 20px 100px 20px;
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
 .zoomIndicator {

@@ -366,9 +366,9 @@
 /* Canvas */
 .canvasWrapper {
   flex: 1;
-  overflow: auto;
+  overflow: hidden;
   position: relative;
-  height: calc(100vh - 56px); /* Höhe minus Top-Bar */
+  min-width: 0; /* Wichtig für Flex-Shrinking */
 }
 
 /* Loading & Error States */
