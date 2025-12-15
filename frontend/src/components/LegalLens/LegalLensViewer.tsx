@@ -4,7 +4,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { FileText, Eye, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, BarChart3, Zap, X } from 'lucide-react';
+import { FileText, Eye, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, BarChart3, Zap, X, List, MessageSquare } from 'lucide-react';
 import { useLegalLens } from '../../hooks/useLegalLens';
 import ClauseList from './ClauseList';
 import PerspectiveSwitcher from './PerspectiveSwitcher';
@@ -23,6 +23,9 @@ interface LegalLensViewerProps {
   contractId: string;
   contractName?: string;
 }
+
+// Mobile Tab Type
+type MobileTab = 'clauses' | 'analysis';
 
 const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   contractId,
@@ -47,6 +50,21 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   const [analysisPanelWidth, setAnalysisPanelWidth] = useState<number>(480);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Mobile State
+  const [isMobile, setIsMobile] = useState<boolean>(false);
+  const [mobileTab, setMobileTab] = useState<MobileTab>('clauses');
+
+  // Mobile Detection
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Ref für alle aktuell gelb markierten Text-Elemente
   const highlightedElementsRef = useRef<HTMLElement[]>([]);
@@ -121,6 +139,13 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     analyzeAllClauses,
     cancelBatchAnalysis
   } = useLegalLens();
+
+  // Auto-switch to analysis tab when clause is selected on mobile
+  useEffect(() => {
+    if (isMobile && selectedClause && currentAnalysis) {
+      setMobileTab('analysis');
+    }
+  }, [isMobile, selectedClause, currentAnalysis]);
 
   // API URL Helper
   const getApiUrl = useCallback(() => {
@@ -464,20 +489,118 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className={styles.mainContent} ref={containerRef}>
-        {/* Left: Clause List OR PDF Viewer */}
-        {viewMode === 'text' ? (
-          <ClauseList
-            clauses={clauses}
-            selectedClause={selectedClause}
-            progress={progress}
-            onSelectClause={selectClause}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-            cachedClauseIds={Object.keys(analysisCache).map(key => key.split('-')[0])}
-          />
-        ) : (
+      {/* Main Content - Desktop vs Mobile */}
+      {isMobile ? (
+        // ===== MOBILE LAYOUT =====
+        <main className={styles.mobileContent}>
+          {/* Mobile Tab Content */}
+          {mobileTab === 'clauses' ? (
+            <div className={styles.mobileTabPanel}>
+              <ClauseList
+                clauses={clauses}
+                selectedClause={selectedClause}
+                progress={progress}
+                onSelectClause={(clause) => {
+                  selectClause(clause);
+                  // Auto-switch to analysis after selection
+                  setTimeout(() => setMobileTab('analysis'), 100);
+                }}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                cachedClauseIds={Object.keys(analysisCache).map(key => key.split('-')[0])}
+              />
+            </div>
+          ) : (
+            <div className={styles.mobileTabPanel}>
+              <div className={styles.mobileAnalysisPanel}>
+                {selectedClause ? (
+                  <>
+                    {/* Selected Clause Preview */}
+                    <div className={styles.mobileClausePreview}>
+                      <span className={styles.mobileClauseNumber}>
+                        {selectedClause.number || `#${selectedClause.id.slice(-4)}`}
+                      </span>
+                      <p className={styles.mobileClauseText}>{selectedClause.text}</p>
+                    </div>
+
+                    {/* Perspective Switcher */}
+                    <PerspectiveSwitcher
+                      currentPerspective={currentPerspective}
+                      onChangePerspective={changePerspective}
+                      disabled={isAnalyzing}
+                    />
+
+                    {/* Analysis Content */}
+                    <AnalysisPanel
+                      analysis={currentAnalysis}
+                      currentPerspective={currentPerspective}
+                      alternatives={alternatives}
+                      negotiation={negotiation}
+                      chatHistory={chatHistory}
+                      isAnalyzing={isAnalyzing}
+                      isGeneratingAlternatives={isGeneratingAlternatives}
+                      isGeneratingNegotiation={isGeneratingNegotiation}
+                      isChatting={isChatting}
+                      streamingText={streamingText}
+                      error={error}
+                      onLoadAlternatives={loadAlternatives}
+                      onLoadNegotiation={loadNegotiationTips}
+                      onSendChatMessage={sendChatMessage}
+                      onRetry={handleRetryAnalysis}
+                    />
+                  </>
+                ) : (
+                  <div className={styles.analysisPanelEmpty}>
+                    <span className={styles.emptyIcon}>👆</span>
+                    <h3 className={styles.emptyTitle}>Klausel auswählen</h3>
+                    <p className={styles.emptyText}>
+                      Tippen Sie auf "Klauseln" und wählen Sie eine Klausel aus.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Mobile Bottom Navigation */}
+          <nav className={styles.mobileNav}>
+            <button
+              className={`${styles.mobileNavButton} ${mobileTab === 'clauses' ? styles.mobileNavActive : ''}`}
+              onClick={() => setMobileTab('clauses')}
+            >
+              <List size={20} />
+              <span>Klauseln</span>
+              {clauses.length > 0 && (
+                <span className={styles.mobileNavBadge}>{clauses.length}</span>
+              )}
+            </button>
+            <button
+              className={`${styles.mobileNavButton} ${mobileTab === 'analysis' ? styles.mobileNavActive : ''}`}
+              onClick={() => setMobileTab('analysis')}
+            >
+              <MessageSquare size={20} />
+              <span>Analyse</span>
+              {selectedClause && currentAnalysis && (
+                <span className={styles.mobileNavDot} />
+              )}
+            </button>
+          </nav>
+        </main>
+      ) : (
+        // ===== DESKTOP LAYOUT =====
+        <main className={styles.mainContent} ref={containerRef}>
+          {/* Left: Clause List OR PDF Viewer */}
+          {viewMode === 'text' ? (
+            <ClauseList
+              clauses={clauses}
+              selectedClause={selectedClause}
+              progress={progress}
+              onSelectClause={selectClause}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+              cachedClauseIds={Object.keys(analysisCache).map(key => key.split('-')[0])}
+            />
+          ) : (
           <div className={styles.contractPanel} style={{ display: 'flex', flexDirection: 'column' }}>
             {/* PDF Controls */}
             <div className={styles.contractHeader}>
@@ -711,6 +834,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
           )}
         </div>
       </main>
+      )}
 
     </div>
   );

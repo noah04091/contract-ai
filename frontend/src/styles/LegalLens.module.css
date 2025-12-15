@@ -1109,3 +1109,179 @@
     font-size: 0.75rem;
   }
 }
+
+/* ===== MOBILE LAYOUT ===== */
+.mobileContent {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.mobileTabPanel {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 70px; /* Platz für Navigation */
+}
+
+.mobileAnalysisPanel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: white;
+}
+
+/* Mobile Clause Preview */
+.mobileClausePreview {
+  padding: 1rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.mobileClauseNumber {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #3b82f6;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.mobileClauseText {
+  font-size: 0.875rem;
+  color: #374151;
+  line-height: 1.6;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Mobile Bottom Navigation */
+.mobileNav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  background: white;
+  border-top: 1px solid #e2e8f0;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  padding: 0.5rem 1rem;
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+
+.mobileNavButton {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.75rem 0.5rem;
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #94a3b8;
+  position: relative;
+}
+
+.mobileNavButton span {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.mobileNavActive {
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.mobileNavBadge {
+  position: absolute;
+  top: 0.25rem;
+  right: 50%;
+  transform: translateX(1rem);
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  background: #3b82f6;
+  color: white;
+  font-size: 0.625rem;
+  font-weight: 600;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobileNavDot {
+  position: absolute;
+  top: 0.5rem;
+  right: 50%;
+  transform: translateX(0.75rem);
+  width: 8px;
+  height: 8px;
+  background: #10b981;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+/* Mobile Header Anpassungen */
+@media (max-width: 1024px) {
+  .title {
+    font-size: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+  }
+
+  .headerRight {
+    gap: 0.5rem;
+  }
+
+  .progressBar {
+    display: none;
+  }
+
+  .batchAnalyzeButton span,
+  .summaryButton span {
+    display: none;
+  }
+
+  .batchAnalyzeButton,
+  .summaryButton {
+    padding: 0.5rem;
+    min-width: 36px;
+  }
+}
+
+/* Mobile Analysis Panel Styles */
+@media (max-width: 1024px) {
+  .mobileAnalysisPanel .analysisContent {
+    padding: 1rem;
+  }
+
+  .mobileAnalysisPanel .analysisSection {
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .mobileAnalysisPanel .chatSection {
+    margin-top: 1rem;
+  }
+
+  .mobileAnalysisPanel .chatInput {
+    font-size: 16px; /* Verhindert Zoom auf iOS */
+  }
+}
