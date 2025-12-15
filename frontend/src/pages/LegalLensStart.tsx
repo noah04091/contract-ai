@@ -93,7 +93,7 @@ const LegalLensStart = () => {
     try {
       const apiUrl = getApiUrl();
       const formData = new FormData();
-      formData.append('contract', file);
+      formData.append('file', file); // Backend erwartet 'file', nicht 'contract'
 
       const response = await fetch(`${apiUrl}/api/upload`, {
         method: 'POST',
