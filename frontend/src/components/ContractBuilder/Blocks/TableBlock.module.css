@@ -1,0 +1,48 @@
+/**
+ * TableBlock Styles
+ */
+
+.tableWrapper {
+  margin: 16px 0;
+  overflow-x: auto;
+}
+
+.tableWrapper.selected {
+  background: rgba(49, 130, 206, 0.03);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 16px -12px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.headerCell {
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-primary, #1a202c);
+  background: #f7fafc;
+  border-bottom: 2px solid var(--primary-color, #1a365d);
+}
+
+.tableRow:nth-child(even) {
+  background: #fafafa;
+}
+
+.tableCell {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  color: var(--text-primary, #1a202c);
+}
+
+.footerCell {
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--text-secondary, #4a5568);
+  background: #f7fafc;
+  border-top: 2px solid #e2e8f0;
+}

@@ -1,0 +1,51 @@
+/**
+ * CustomBlock Styles
+ */
+
+.custom {
+  position: relative;
+  margin: 16px 0;
+  padding: 16px;
+  background: #f0fff4;
+  border: 1px dashed #68d391;
+  border-radius: 8px;
+}
+
+.custom.selected {
+  border-color: #3182ce;
+  border-style: solid;
+  box-shadow: 0 0 0 2px rgba(49, 130, 206, 0.2);
+}
+
+.customBadge {
+  position: absolute;
+  top: -10px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #48bb78;
+  color: white;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.customTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #1a202c);
+  margin: 0 0 8px;
+}
+
+.customContent {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-primary, #1a202c);
+}
+
+.customContent p {
+  margin: 0;
+  white-space: pre-wrap;
+}

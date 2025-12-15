@@ -1,0 +1,35 @@
+/**
+ * DateFieldBlock Styles
+ */
+
+.dateField {
+  margin: 12px 0;
+}
+
+.dateField.selected {
+  background: rgba(49, 130, 206, 0.03);
+  border-radius: 6px;
+  padding: 8px;
+  margin: 12px -8px;
+}
+
+.dateWrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.icon {
+  color: var(--text-secondary, #4a5568);
+}
+
+.dateLabel {
+  color: var(--text-secondary, #4a5568);
+  font-weight: 500;
+}
+
+.dateValue {
+  color: var(--text-primary, #1a202c);
+  font-weight: 500;
+}

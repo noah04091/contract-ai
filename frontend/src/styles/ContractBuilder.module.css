@@ -1,0 +1,431 @@
+/**
+ * ContractBuilder Page Styles
+ * ContractForge - Der visuelle Vertragsbaukasten
+ */
+
+.builderPage {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #f5f7fa;
+  overflow: hidden;
+}
+
+/* Top Bar */
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  padding: 0 16px;
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  z-index: 100;
+}
+
+.topBarLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: #4a5568;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.backButton:hover {
+  background: #f7fafc;
+  color: #1a202c;
+}
+
+.documentInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.documentIcon {
+  color: #3182ce;
+}
+
+.documentTitle {
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a202c;
+  padding: 4px 8px;
+  border-radius: 4px;
+  min-width: 200px;
+  transition: background 0.15s ease;
+}
+
+.documentTitle:hover {
+  background: #f7fafc;
+}
+
+.documentTitle:focus {
+  outline: none;
+  background: #edf2f7;
+}
+
+.documentStatus {
+  font-size: 11px;
+  font-weight: 500;
+  color: #718096;
+  background: #edf2f7;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.topBarCenter {
+  display: flex;
+  align-items: center;
+}
+
+.viewToggle {
+  display: flex;
+  background: #f7fafc;
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.viewButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #718096;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.viewButton:hover {
+  color: #4a5568;
+}
+
+.viewButton.active {
+  background: white;
+  color: #1a202c;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.topBarRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.historyButtons {
+  display: flex;
+  gap: 2px;
+}
+
+.iconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: #4a5568;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.iconButton:hover:not(:disabled) {
+  background: #f7fafc;
+  color: #1a202c;
+}
+
+.iconButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.zoomControls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 8px;
+  border-left: 1px solid #e2e8f0;
+  border-right: 1px solid #e2e8f0;
+  margin: 0 8px;
+}
+
+.zoomValue {
+  min-width: 50px;
+  padding: 4px 8px;
+  background: transparent;
+  border: none;
+  font-size: 12px;
+  font-weight: 500;
+  color: #4a5568;
+  cursor: pointer;
+  text-align: center;
+}
+
+.zoomValue:hover {
+  color: #3182ce;
+}
+
+.mainActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-left: 8px;
+  border-left: 1px solid #e2e8f0;
+}
+
+.saveButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.saveButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(49, 130, 206, 0.4);
+}
+
+.saveButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.saveButton.saving {
+  background: #718096;
+}
+
+/* Main Content */
+.mainContent {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Sidebars */
+.leftSidebar {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-right: 1px solid #e2e8f0;
+  z-index: 10;
+}
+
+.rightSidebar {
+  display: flex;
+  background: white;
+  border-left: 1px solid #e2e8f0;
+  z-index: 10;
+}
+
+.panelTabs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  border-right: 1px solid #e2e8f0;
+  background: #f7fafc;
+}
+
+.panelTab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: #718096;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.panelTab:hover {
+  background: #edf2f7;
+  color: #4a5568;
+}
+
+.panelTab.active {
+  background: white;
+  color: #3182ce;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.panelToggle {
+  position: absolute;
+  right: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 48px;
+  padding: 0;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 0 6px 6px 0;
+  color: #718096;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  transition: all 0.15s ease;
+}
+
+.panelToggle:hover {
+  background: #f7fafc;
+  color: #4a5568;
+}
+
+.showPanelButton {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 48px;
+  padding: 0;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-left: none;
+  border-radius: 0 6px 6px 0;
+  color: #718096;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  transition: all 0.15s ease;
+}
+
+.showPanelButton:hover {
+  background: #f7fafc;
+  color: #4a5568;
+}
+
+/* Canvas */
+.canvasWrapper {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Loading & Error States */
+.loadingState,
+.errorState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  gap: 16px;
+  color: #4a5568;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.errorState button {
+  padding: 8px 16px;
+  background: #3182ce;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .leftSidebar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 50;
+    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .rightSidebar {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 50;
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
+  }
+}
+
+@media (max-width: 768px) {
+  .topBar {
+    height: auto;
+    flex-wrap: wrap;
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .topBarLeft,
+  .topBarCenter,
+  .topBarRight {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .documentTitle {
+    min-width: 150px;
+    font-size: 14px;
+  }
+
+  .zoomControls {
+    display: none;
+  }
+
+  .viewToggle span {
+    display: none;
+  }
+}

@@ -1,0 +1,189 @@
+/**
+ * BuilderCanvas Styles - Hauptcanvas für den Vertragseditor
+ */
+
+.canvas {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #f0f2f5;
+  background-image:
+    linear-gradient(45deg, #e8eaed 25%, transparent 25%),
+    linear-gradient(-45deg, #e8eaed 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #e8eaed 75%),
+    linear-gradient(-45deg, transparent 75%, #e8eaed 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+  overflow: auto;
+  padding: 40px 20px;
+  min-height: 100%;
+  position: relative;
+}
+
+.zoomIndicator {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.75);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  z-index: 100;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.canvas:hover .zoomIndicator {
+  opacity: 1;
+}
+
+.paperWrapper {
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  justify-content: center;
+}
+
+/* A4 Paper Simulation */
+.paper {
+  width: 210mm;
+  min-height: 297mm;
+  background: white;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.05),
+    0 8px 16px rgba(0, 0, 0, 0.1),
+    0 16px 32px rgba(0, 0, 0, 0.05);
+  border-radius: 2px;
+  position: relative;
+  padding: 20mm;
+  box-sizing: border-box;
+  transition: transform 0.3s ease;
+  transform-origin: top center;
+
+  /* CSS Custom Properties für Design */
+  --primary-color: #1a365d;
+  --secondary-color: #2d3748;
+  --accent-color: #3182ce;
+  --text-primary: #1a202c;
+  --text-secondary: #4a5568;
+  --font-family: 'Inter', sans-serif;
+  --heading-font: 'Inter', sans-serif;
+
+  font-family: var(--font-family);
+  color: var(--text-primary);
+}
+
+.paper.previewMode {
+  pointer-events: none;
+  user-select: none;
+}
+
+.pageHeader {
+  margin-bottom: 15mm;
+  padding-bottom: 5mm;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.pageContent {
+  min-height: 200mm;
+  position: relative;
+}
+
+.pageFooter {
+  position: absolute;
+  bottom: 10mm;
+  left: 20mm;
+  right: 20mm;
+  display: flex;
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.pageFooter.bottom-left {
+  justify-content: flex-start;
+}
+
+.pageFooter.bottom-center {
+  justify-content: center;
+}
+
+.pageFooter.bottom-right {
+  justify-content: flex-end;
+}
+
+.pageFooter.top-left,
+.pageFooter.top-center,
+.pageFooter.top-right {
+  top: 10mm;
+  bottom: auto;
+}
+
+.pageFooter.top-left {
+  justify-content: flex-start;
+}
+
+.pageFooter.top-center {
+  justify-content: center;
+}
+
+.pageFooter.top-right {
+  justify-content: flex-end;
+}
+
+.pageNumber {
+  font-variant-numeric: tabular-nums;
+}
+
+.watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-45deg);
+  font-size: 72px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  z-index: 0;
+}
+
+/* Drag Overlay */
+.dragOverlay {
+  background: white;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  padding: 12px;
+  opacity: 0.95;
+  transform: rotate(2deg);
+  max-width: 600px;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .paper {
+    width: 100%;
+    min-height: auto;
+    padding: 15mm;
+  }
+
+  .canvas {
+    padding: 20px 10px;
+  }
+}
+
+@media (max-width: 600px) {
+  .paper {
+    padding: 10mm;
+    border-radius: 0;
+  }
+
+  .canvas {
+    padding: 10px 0;
+    background-size: 10px 10px;
+  }
+}

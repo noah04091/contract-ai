@@ -1,0 +1,75 @@
+/**
+ * ClauseBlock Styles
+ */
+
+.clause {
+  margin: 16px 0;
+  padding: 4px 0;
+}
+
+.clause.selected {
+  background: rgba(49, 130, 206, 0.03);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 4px -12px;
+}
+
+.clauseHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.clauseNumber {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary-color, #1a365d);
+  flex-shrink: 0;
+}
+
+.clauseTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary, #1a202c);
+  margin: 0;
+}
+
+.clauseBody {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-primary, #1a202c);
+  text-align: justify;
+}
+
+.clauseBody p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.subclauses {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0 0;
+  counter-reset: subclause;
+}
+
+.subclause {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.subclauseNumber {
+  color: var(--text-secondary, #4a5568);
+  font-weight: 500;
+  flex-shrink: 0;
+  min-width: 24px;
+}
+
+.subclauseText {
+  color: var(--text-primary, #1a202c);
+}

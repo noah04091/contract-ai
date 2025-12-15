@@ -1,0 +1,46 @@
+/**
+ * PageBreakBlock Styles
+ */
+
+.pageBreak {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+}
+
+.pageBreak.selected {
+  background: rgba(49, 130, 206, 0.03);
+  border-radius: 8px;
+  padding: 16px 12px;
+  margin: 0 -12px;
+}
+
+.breakLine {
+  flex: 1;
+  height: 1px;
+  background: repeating-linear-gradient(
+    90deg,
+    #a0aec0 0px,
+    #a0aec0 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}
+
+.breakLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #718096;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.pageBreakPreview {
+  page-break-after: always;
+  height: 1px;
+}

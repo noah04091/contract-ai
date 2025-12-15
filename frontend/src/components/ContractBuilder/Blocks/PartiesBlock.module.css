@@ -1,0 +1,110 @@
+/**
+ * PartiesBlock Styles
+ */
+
+.parties {
+  margin: 24px 0;
+}
+
+.parties.selected {
+  background: rgba(49, 130, 206, 0.03);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 12px -12px;
+}
+
+.partiesGrid {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.partyCard {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.partyHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.partyIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--primary-color, #1a365d);
+  color: white;
+  border-radius: 6px;
+}
+
+.partyRole {
+  font-weight: 600;
+  color: var(--text-primary, #1a202c);
+  font-size: 14px;
+}
+
+.partyDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.detailRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.detailLabel {
+  color: var(--text-secondary, #4a5568);
+  min-width: 60px;
+  flex-shrink: 0;
+}
+
+.detailValue {
+  color: var(--text-primary, #1a202c);
+  word-break: break-word;
+}
+
+.detailIcon {
+  color: var(--text-secondary, #4a5568);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.partiesDivider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 0;
+}
+
+.andText {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary, #4a5568);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+@media (max-width: 600px) {
+  .partiesGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .partiesDivider {
+    padding: 10px 0;
+  }
+}

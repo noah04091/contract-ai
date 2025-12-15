@@ -1,0 +1,163 @@
+/**
+ * DropZone Styles - Bereich für Block-Drops
+ */
+
+.dropZone {
+  height: 8px;
+  margin: 4px 0;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.dropZone.over {
+  height: 60px;
+  background: linear-gradient(
+    180deg,
+    rgba(49, 130, 206, 0.1) 0%,
+    rgba(49, 130, 206, 0.05) 50%,
+    rgba(49, 130, 206, 0.1) 100%
+  );
+  border: 2px dashed #3182ce;
+  border-radius: 8px;
+}
+
+.indicator {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 24px;
+  height: 24px;
+  background: #3182ce;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.dropZone.over .indicator {
+  opacity: 1;
+}
+
+/* Empty State Drop Zone */
+.emptyDropZone {
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed #cbd5e0;
+  border-radius: 12px;
+  background: linear-gradient(
+    180deg,
+    rgba(237, 242, 247, 0.5) 0%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transition: all 0.3s ease;
+}
+
+.emptyDropZone.over {
+  border-color: #3182ce;
+  background: linear-gradient(
+    180deg,
+    rgba(49, 130, 206, 0.1) 0%,
+    rgba(49, 130, 206, 0.02) 100%
+  );
+}
+
+.emptyContent {
+  text-align: center;
+  padding: 40px;
+}
+
+.iconWrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  margin-bottom: 20px;
+  color: #a0aec0;
+}
+
+.plusIcon {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: #3182ce;
+  color: white;
+  border-radius: 50%;
+  padding: 2px;
+}
+
+.emptyDropZone.over .iconWrapper {
+  color: #3182ce;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.message {
+  color: #4a5568;
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0 0 8px;
+}
+
+.hint {
+  color: #a0aec0;
+  font-size: 13px;
+  margin: 0;
+}
+
+.hint kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: #edf2f7;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  color: #4a5568;
+  box-shadow: 0 1px 0 #cbd5e0;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .emptyDropZone {
+    min-height: 200px;
+  }
+
+  .emptyContent {
+    padding: 20px;
+  }
+
+  .iconWrapper {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 16px;
+  }
+
+  .message {
+    font-size: 14px;
+  }
+
+  .hint {
+    font-size: 12px;
+  }
+}

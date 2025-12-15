@@ -89,6 +89,7 @@ const BetterContracts = lazy(() => import("./pages/BetterContracts"));
 const LegalPulse = lazy(() => import("./pages/LegalPulse"));
 const LegalLens = lazy(() => import("./pages/LegalLens")); // 🔍 NEU: Interaktive Vertragsanalyse
 const LegalLensStart = lazy(() => import("./pages/LegalLensStart")); // 🔍 NEU: Legal Lens Startseite
+const ContractBuilder = lazy(() => import("./pages/ContractBuilder")); // 🔧 NEU: ContractForge - Visueller Vertragsbaukasten
 const Envelopes = lazy(() => import("./pages/Envelopes")); // ✉️ NEU: Digital Signature Dashboard
 const PlaceSignatureFields = lazy(() => import("./pages/PlaceSignatureFields")); // ✉️ NEU: Field Placement Editor
 const NewSignatureRequest = lazy(() => import("./pages/NewSignatureRequest")); // ✉️ NEU: Neue Signaturanfrage
@@ -223,6 +224,10 @@ function AppWithLoader() {
             {/* 🔍 Legal Lens - Interaktive Vertragsanalyse */}
             <Route path="/legal-lens" element={<RequireAuth><LegalLensStart /></RequireAuth>} />
             <Route path="/legal-lens/:contractId" element={<RequireAuth><LegalLens /></RequireAuth>} />
+
+            {/* 🔧 ContractForge - Visueller Vertragsbaukasten */}
+            <Route path="/contract-builder" element={<RequireAuth><ContractBuilder /></RequireAuth>} />
+            <Route path="/contract-builder/:id" element={<RequireAuth><ContractBuilder /></RequireAuth>} />
 
             <Route path="/compare" element={<RequireAuth><Compare /></RequireAuth>} />
             <Route path="/chat" element={<RequireAuth><Chat /></RequireAuth>} />

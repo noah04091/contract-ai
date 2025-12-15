@@ -1,0 +1,41 @@
+/**
+ * DividerBlock Styles
+ */
+
+.divider {
+  padding: 12px 0;
+}
+
+.divider.selected {
+  background: rgba(49, 130, 206, 0.03);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 0 -12px;
+}
+
+.line {
+  border: none;
+  height: 1px;
+  margin: 0;
+}
+
+.line.solid {
+  background: #cbd5e0;
+}
+
+.line.dashed {
+  background: transparent;
+  border-top: 1px dashed #cbd5e0;
+}
+
+.line.dotted {
+  background: transparent;
+  border-top: 1px dotted #cbd5e0;
+}
+
+.line.double {
+  height: 4px;
+  background: transparent;
+  border-top: 1px solid #cbd5e0;
+  border-bottom: 1px solid #cbd5e0;
+}

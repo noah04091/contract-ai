@@ -1,0 +1,39 @@
+/**
+ * PreambleBlock Styles
+ */
+
+.preamble {
+  margin: 20px 0;
+  padding: 16px;
+  background: #f8fafc;
+  border-left: 3px solid var(--accent-color, #3182ce);
+  border-radius: 0 8px 8px 0;
+}
+
+.preamble.selected {
+  background: rgba(49, 130, 206, 0.08);
+}
+
+.preambleHeader {
+  margin-bottom: 12px;
+}
+
+.preambleTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary-color, #1a365d);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.preambleContent {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-primary, #1a202c);
+  font-style: italic;
+}
+
+.preambleContent p {
+  margin: 0;
+  white-space: pre-wrap;
+}

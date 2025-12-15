@@ -1,0 +1,48 @@
+/**
+ * AttachmentBlock Styles
+ */
+
+.attachment {
+  margin: 16px 0;
+  padding: 16px;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+}
+
+.attachment.selected {
+  border-color: #3182ce;
+  box-shadow: 0 0 0 2px rgba(49, 130, 206, 0.2);
+}
+
+.attachmentHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.icon {
+  color: #d97706;
+}
+
+.attachmentLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: #92400e;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.attachmentTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #1a202c);
+  margin: 0 0 4px;
+}
+
+.attachmentDescription {
+  font-size: 13px;
+  color: var(--text-secondary, #4a5568);
+  margin: 0;
+}

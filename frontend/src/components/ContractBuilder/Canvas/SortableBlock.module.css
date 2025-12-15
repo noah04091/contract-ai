@@ -1,0 +1,214 @@
+/**
+ * SortableBlock Styles - Einzelner sortierbarer Block
+ */
+
+.sortableBlock {
+  position: relative;
+  margin: 8px 0;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  cursor: default;
+}
+
+.sortableBlock:hover {
+  background-color: rgba(49, 130, 206, 0.03);
+}
+
+.sortableBlock.selected {
+  background-color: rgba(49, 130, 206, 0.05);
+}
+
+.sortableBlock.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+.sortableBlock.locked {
+  opacity: 0.7;
+}
+
+.sortableBlock.preview {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.sortableBlock.preview:hover {
+  background-color: transparent;
+}
+
+/* Block Controls */
+.blockControls {
+  position: absolute;
+  top: -28px;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 6px 6px 0 0;
+  border: 1px solid #e2e8f0;
+  border-bottom: none;
+  font-size: 11px;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: all 0.2s ease;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.sortableBlock:hover .blockControls,
+.sortableBlock.selected .blockControls {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.sortableBlock.preview .blockControls {
+  display: none;
+}
+
+/* Drag Handle */
+.dragHandle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: #718096;
+  cursor: grab;
+  transition: all 0.15s ease;
+}
+
+.dragHandle:hover {
+  background: #edf2f7;
+  color: #4a5568;
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+  background: #e2e8f0;
+}
+
+.dragHandle:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+/* Block Info */
+.blockInfo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.blockType {
+  color: #4a5568;
+  font-weight: 500;
+}
+
+.blockIndex {
+  color: #a0aec0;
+  font-size: 10px;
+}
+
+/* Status Icons */
+.statusIcons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.iconBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  background: #f7fafc;
+  color: #718096;
+}
+
+.iconBadge[title*="KI"] {
+  color: #805ad5;
+  background: #faf5ff;
+}
+
+.iconBadge[title*="Gesperrt"] {
+  color: #dd6b20;
+  background: #fffaf0;
+}
+
+/* Risk Indicator */
+.riskIndicator {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: 3px 0 0 3px;
+  transition: background-color 0.2s ease;
+}
+
+/* Block Content */
+.blockContent {
+  padding: 12px;
+  position: relative;
+  z-index: 1;
+}
+
+.sortableBlock.preview .blockContent {
+  padding: 0;
+}
+
+/* Selection Border */
+.selectionBorder {
+  position: absolute;
+  inset: -1px;
+  border: 2px solid #3182ce;
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Animation for new blocks */
+@keyframes blockAppear {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sortableBlock {
+  animation: blockAppear 0.3s ease;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .blockControls {
+    top: -24px;
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+
+  .dragHandle {
+    width: 20px;
+    height: 20px;
+  }
+
+  .blockContent {
+    padding: 8px;
+  }
+}

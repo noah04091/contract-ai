@@ -1,0 +1,71 @@
+/**
+ * VariableHighlight Styles
+ */
+
+.inline {
+  display: inline;
+}
+
+.multiline {
+  white-space: pre-wrap;
+}
+
+.variable {
+  display: inline;
+  padding: 1px 4px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+/* Leere Variable */
+.variable.empty {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #92400e;
+  border: 1px solid #fcd34d;
+  font-family: 'Roboto Mono', 'Fira Code', monospace;
+  font-size: 0.9em;
+}
+
+.variable.empty:hover {
+  background: linear-gradient(135deg, #fde68a 0%, #fbbf24 100%);
+  border-color: #f59e0b;
+  transform: scale(1.02);
+}
+
+/* Gefüllte Variable */
+.variable.filled {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+
+.variable.filled:hover {
+  background: linear-gradient(135deg, #a7f3d0 0%, #6ee7b7 100%);
+  border-color: #34d399;
+  transform: scale(1.02);
+}
+
+/* Focus State für Accessibility */
+.variable:focus {
+  outline: 2px solid #3182ce;
+  outline-offset: 2px;
+}
+
+/* Animation beim Ausfüllen */
+@keyframes fillPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.variable.filled {
+  animation: fillPulse 0.3s ease;
+}

@@ -1,0 +1,36 @@
+/**
+ * SpacerBlock Styles
+ */
+
+.spacer {
+  position: relative;
+  min-height: 24px;
+}
+
+.spacer.selected {
+  background: rgba(49, 130, 206, 0.05);
+  border: 1px dashed #3182ce;
+  border-radius: 4px;
+  margin: 0 -8px;
+  padding: 0 8px;
+}
+
+.spacerIndicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(49, 130, 206, 0.1);
+  color: #3182ce;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 10px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.spacer.selected .spacerIndicator,
+.spacer:hover .spacerIndicator {
+  opacity: 1;
+}

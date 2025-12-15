@@ -622,6 +622,15 @@ const connectDB = async () => {
       console.error("❌ Fehler beim Laden der Integrations-Routen:", err);
     }
 
+    // ✅ 6.6 CONTRACT BUILDER - Visueller Vertragsbaukasten (ContractForge)
+    try {
+      const contractBuilderRoutes = require("./routes/contractBuilder");
+      app.use("/api/contract-builder", contractBuilderRoutes);
+      console.log("✅ Contract Builder Routen geladen unter /api/contract-builder (ContractForge)");
+    } catch (err) {
+      console.error("❌ Fehler beim Laden der Contract Builder Routen:", err);
+    }
+
     // ✅ 7. KI ANALYSIS & OPTIMIZATION - MIT /api PREFIX
     // ✅ NEU: Upload-Route (ohne Analyse, kein Subscription-Check nötig)
     try {

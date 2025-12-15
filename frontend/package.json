@@ -27,11 +27,13 @@
     "framer-motion": "^12.16.0",
     "html2canvas": "^1.4.1",
     "html2pdf.js": "^0.12.1",
+    "immer": "^11.0.1",
     "jspdf": "^3.0.1",
     "jszip": "^3.10.1",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.487.0",
     "marked": "^17.0.0",
+    "ogl": "^1.0.11",
     "pdfjs-dist": "^5.4.296",
     "qrcode.react": "^4.2.0",
     "react": "^18.3.1",
@@ -46,7 +48,8 @@
     "react-signature-canvas": "^1.1.0-alpha.2",
     "react-toastify": "^11.0.5",
     "recharts": "^2.15.1",
-    "rollup": "^3.29.4"
+    "rollup": "^3.29.4",
+    "zustand": "^5.0.9"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
