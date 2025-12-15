@@ -17,6 +17,17 @@ const { clauseParser, clauseAnalyzer } = require('../services/legalLens');
 const ClauseAnalysis = require('../models/ClauseAnalysis');
 const LegalLensProgress = require('../models/LegalLensProgress');
 const Contract = require('../models/Contract');
+const pdfParse = require('pdf-parse');
+
+// AWS S3 für PDF-Extraktion
+const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+  }
+});
 
 // MongoDB Connection
 const MONGO_URI = process.env.MONGO_URI;
@@ -69,13 +80,45 @@ router.post('/parse', verifyToken, async (req, res) => {
       });
     }
 
-    // Text extrahieren
-    const text = contract.content || contract.extractedText || contract.fullText;
+    // Text extrahieren - mehrere Fallbacks
+    let text = contract.content || contract.extractedText || contract.fullText || contract.analysisText;
+
+    // Fallback: Aus S3 extrahieren wenn kein Text vorhanden
+    if ((!text || text.length < 50) && contract.s3Key) {
+      console.log(`📥 [Legal Lens] Kein Text im Contract - extrahiere aus S3: ${contract.s3Key}`);
+
+      try {
+        const command = new GetObjectCommand({
+          Bucket: process.env.S3_BUCKET_NAME,
+          Key: contract.s3Key
+        });
+
+        const response = await s3Client.send(command);
+        const chunks = [];
+        for await (const chunk of response.Body) {
+          chunks.push(chunk);
+        }
+        const pdfBuffer = Buffer.concat(chunks);
+
+        const pdfData = await pdfParse(pdfBuffer);
+        text = pdfData.text;
+
+        console.log(`✅ [Legal Lens] PDF-Text extrahiert: ${text.length} Zeichen`);
+
+        // Optional: Text im Contract speichern für zukünftige Anfragen
+        await Contract.updateOne(
+          { _id: contract._id },
+          { $set: { extractedText: text } }
+        );
+      } catch (s3Error) {
+        console.error(`❌ [Legal Lens] S3-Extraktion fehlgeschlagen:`, s3Error.message);
+      }
+    }
 
     if (!text || text.length < 50) {
       return res.status(400).json({
         success: false,
-        error: 'Vertrag enthält keinen analysierbaren Text'
+        error: 'Vertrag enthält keinen analysierbaren Text. Bitte stellen Sie sicher, dass die PDF lesbar ist.'
       });
     }
 
