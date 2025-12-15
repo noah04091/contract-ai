@@ -785,7 +785,8 @@ async function enrichContractWithAnalysis(contract) {
 }
 
 // GET /contracts – alle Verträge mit Events
-router.get("/", verifyToken, async (req, res) => {
+// Note: verifyToken wird bereits im Router-Mount (server.js) aufgerufen
+router.get("/", async (req, res) => {
   try {
     // ✅ Pagination: limit & skip aus Query-Parametern (optional, fallback auf ALLE)
     const limit = parseInt(req.query.limit) || 0; // 0 = keine Limitierung (Backward-Compatible!)
