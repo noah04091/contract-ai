@@ -820,21 +820,24 @@ router.post(
   async (req, res) => {
     try {
       const { contractId, clauseId } = req.params;
-      const { question, clauseText, previousMessages = [] } = req.body;
+      const { question, message, clauseText, previousMessages = [] } = req.body;
       const userId = req.user.userId;
+
+      // Akzeptiere sowohl "question" als auch "message" für Kompatibilität
+      const userQuestion = question || message;
 
       console.log(`💬 [Legal Lens] Chat about clause ${clauseId}`);
 
-      if (!question || !clauseText) {
+      if (!userQuestion || !clauseText) {
         return res.status(400).json({
           success: false,
-          error: 'question und clauseText sind erforderlich'
+          error: 'question/message und clauseText sind erforderlich'
         });
       }
 
       const result = await clauseAnalyzer.chatAboutClause(
         clauseText,
-        question,
+        userQuestion,
         previousMessages
       );
 
@@ -845,7 +848,7 @@ router.post(
           $push: {
             chatHistory: {
               $each: [
-                { role: 'user', content: question, timestamp: new Date() },
+                { role: 'user', content: userQuestion, timestamp: new Date() },
                 { role: 'assistant', content: result.answer, timestamp: new Date() }
               ]
             }
@@ -855,7 +858,8 @@ router.post(
 
       res.json({
         success: true,
-        answer: result.answer,
+        response: result.answer,  // Frontend erwartet "response"
+        answer: result.answer,    // Fallback für andere Clients
         clauseId,
         timestamp: result.timestamp
       });
