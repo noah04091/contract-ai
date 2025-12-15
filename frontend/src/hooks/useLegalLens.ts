@@ -21,6 +21,95 @@ interface BatchProgress {
   isRunning: boolean;
 }
 
+// Erweiterte Error-Info für bessere UX
+export interface ErrorInfo {
+  message: string;
+  type: 'network' | 'timeout' | 'server' | 'parse' | 'unknown';
+  retryCount: number;
+  canRetry: boolean;
+  hint: string;
+}
+
+// Hilfsfunktion für Fehlerkategorisierung
+const categorizeError = (err: unknown, retryCount: number = 0): ErrorInfo => {
+  const message = err instanceof Error ? err.message : String(err);
+  const messageLower = message.toLowerCase();
+
+  if (messageLower.includes('network') || messageLower.includes('fetch') || messageLower.includes('connection')) {
+    return {
+      message: 'Netzwerkfehler',
+      type: 'network',
+      retryCount,
+      canRetry: true,
+      hint: 'Bitte prüfe deine Internetverbindung und versuche es erneut.'
+    };
+  }
+
+  if (messageLower.includes('timeout') || messageLower.includes('aborted')) {
+    return {
+      message: 'Zeitüberschreitung',
+      type: 'timeout',
+      retryCount,
+      canRetry: true,
+      hint: 'Die Anfrage hat zu lange gedauert. Versuche es erneut.'
+    };
+  }
+
+  if (messageLower.includes('500') || messageLower.includes('502') || messageLower.includes('503') || messageLower.includes('server')) {
+    return {
+      message: 'Serverfehler',
+      type: 'server',
+      retryCount,
+      canRetry: true,
+      hint: 'Der Server ist gerade ausgelastet. Bitte warte einen Moment und versuche es erneut.'
+    };
+  }
+
+  if (messageLower.includes('parse') || messageLower.includes('json') || messageLower.includes('syntax')) {
+    return {
+      message: 'Verarbeitungsfehler',
+      type: 'parse',
+      retryCount,
+      canRetry: true,
+      hint: 'Die Antwort konnte nicht verarbeitet werden. Versuche es erneut.'
+    };
+  }
+
+  return {
+    message: message || 'Ein Fehler ist aufgetreten',
+    type: 'unknown',
+    retryCount,
+    canRetry: retryCount < 2,
+    hint: 'Bitte versuche es erneut oder kontaktiere den Support.'
+  };
+};
+
+// Retry mit exponential backoff
+const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+const withRetry = async <T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 2,
+  onRetryAttempt?: (attempt: number) => void
+): Promise<T> => {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastError = err;
+      if (attempt < maxRetries) {
+        const delay = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
+        onRetryAttempt?.(attempt + 1);
+        await wait(delay);
+      }
+    }
+  }
+
+  throw lastError;
+};
+
 interface UseLegalLensReturn {
   // Daten
   clauses: ParsedClause[];
@@ -49,8 +138,11 @@ interface UseLegalLensReturn {
   isGeneratingNegotiation: boolean;
   isChatting: boolean;
   isBatchAnalyzing: boolean;
+  isRetrying: boolean;
+  retryCount: number;
   streamingText: string;
   error: string | null;
+  errorInfo: ErrorInfo | null;
 
   // Aktionen
   parseContract: (contractId: string) => Promise<void>;
@@ -111,43 +203,70 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
   });
   const [streamingText, setStreamingText] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [errorInfo, setErrorInfo] = useState<ErrorInfo | null>(null);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   // Refs
   const abortControllerRef = useRef<(() => void) | null>(null);
   const batchAbortRef = useRef<boolean>(false);
 
   /**
-   * Vertrag parsen
+   * Vertrag parsen - mit Auto-Retry
    */
   const parseContract = useCallback(async (id: string) => {
     setIsParsing(true);
     setError(null);
+    setErrorInfo(null);
     setContractId(id);
+    setRetryCount(0);
 
     try {
-      const response = await legalLensAPI.parseContract(id);
+      const response = await withRetry(
+        () => legalLensAPI.parseContract(id),
+        2,
+        (attempt) => {
+          setIsRetrying(true);
+          setRetryCount(attempt);
+          console.log(`[Legal Lens] Parse retry attempt ${attempt}`);
+        }
+      );
+
+      setIsRetrying(false);
+      setRetryCount(0);
 
       if (response.success) {
         setClauses(response.clauses);
 
-        // Fortschritt laden
-        const progressResponse = await legalLensAPI.getProgress(id);
-        if (progressResponse.success) {
-          setProgress(progressResponse.progress);
+        // Fortschritt laden (auch mit Retry)
+        try {
+          const progressResponse = await withRetry(
+            () => legalLensAPI.getProgress(id),
+            1
+          );
+          if (progressResponse.success) {
+            setProgress(progressResponse.progress);
 
-          // Letzte Perspektive wiederherstellen
-          if (progressResponse.progress.currentPerspective) {
-            setCurrentPerspective(progressResponse.progress.currentPerspective);
+            // Letzte Perspektive wiederherstellen
+            if (progressResponse.progress.currentPerspective) {
+              setCurrentPerspective(progressResponse.progress.currentPerspective);
+            }
           }
+        } catch {
+          // Progress-Fehler ist nicht kritisch, ignorieren
+          console.warn('[Legal Lens] Could not load progress');
         }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Fehler beim Parsen');
-      console.error('[Legal Lens] Parse error:', err);
+      const errorDetails = categorizeError(err, retryCount);
+      setError(errorDetails.message);
+      setErrorInfo(errorDetails);
+      setIsRetrying(false);
+      console.error('[Legal Lens] Parse error after retries:', err);
     } finally {
       setIsParsing(false);
     }
-  }, []);
+  }, [retryCount]);
 
   /**
    * Klausel auswählen - mit Cache-Prüfung
@@ -199,7 +318,9 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
 
     setIsAnalyzing(true);
     setError(null);
+    setErrorInfo(null);
     setStreamingText('');
+    setRetryCount(0);
 
     // ✅ Helper: Analyse in Cache speichern
     const cacheAnalysis = (analysis: ClauseAnalysis) => {
@@ -211,7 +332,7 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
 
     try {
       if (streaming) {
-        // Streaming-Analyse
+        // Streaming-Analyse (kein Retry da EventSource)
         const abort = legalLensAPI.analyzeClauseStreaming(
           contractId,
           selectedClause.id,
@@ -223,37 +344,55 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
           (response) => {
             setCurrentAnalysis(response.analysis);
             setChatHistory(response.analysis.chatHistory || []);
-            cacheAnalysis(response.analysis); // ✅ In Cache speichern
+            cacheAnalysis(response.analysis);
             setIsAnalyzing(false);
+            setIsRetrying(false);
           },
           (err) => {
-            setError(err.message);
+            const errorDetails = categorizeError(err);
+            setError(errorDetails.message);
+            setErrorInfo(errorDetails);
             setIsAnalyzing(false);
+            setIsRetrying(false);
           }
         );
         abortControllerRef.current = abort;
       } else {
-        // Normale Analyse
-        const response = await legalLensAPI.analyzeClause(
-          contractId,
-          selectedClause.id,
-          selectedClause.text,
-          currentPerspective,
-          false
+        // Normale Analyse - mit Auto-Retry
+        const response = await withRetry(
+          () => legalLensAPI.analyzeClause(
+            contractId,
+            selectedClause.id,
+            selectedClause.text,
+            currentPerspective,
+            false
+          ),
+          2,
+          (attempt) => {
+            setIsRetrying(true);
+            setRetryCount(attempt);
+            console.log(`[Legal Lens] Analyze retry attempt ${attempt}`);
+          }
         );
+
+        setIsRetrying(false);
+        setRetryCount(0);
 
         if (response.success) {
           setCurrentAnalysis(response.analysis);
           setChatHistory(response.analysis.chatHistory || []);
-          cacheAnalysis(response.analysis); // ✅ In Cache speichern
+          cacheAnalysis(response.analysis);
         }
         setIsAnalyzing(false);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Analyse-Fehler');
+      const errorDetails = categorizeError(err, retryCount);
+      setError(errorDetails.message);
+      setErrorInfo(errorDetails);
       setIsAnalyzing(false);
+      setIsRetrying(false);
     }
-  }, [contractId, selectedClause, currentPerspective, analysisCache]);
+  }, [contractId, selectedClause, currentPerspective, analysisCache, retryCount]);
 
   /**
    * Perspektive wechseln - mit Cache-Prüfung
@@ -635,8 +774,11 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
     isGeneratingNegotiation,
     isChatting,
     isBatchAnalyzing,
+    isRetrying,
+    retryCount,
     streamingText,
     error,
+    errorInfo,
 
     // Aktionen
     parseContract,

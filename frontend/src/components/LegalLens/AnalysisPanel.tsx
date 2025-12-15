@@ -13,6 +13,7 @@ import type {
 } from '../../types/legalLens';
 import { PERSPECTIVES, ACTION_LABELS, PROBABILITY_LABELS } from '../../types/legalLens';
 import ClauseCompareModal from './ClauseCompareModal';
+import { ErrorInfo } from '../../hooks/useLegalLens';
 import styles from '../../styles/LegalLens.module.css';
 
 interface AnalysisPanelProps {
@@ -25,8 +26,11 @@ interface AnalysisPanelProps {
   isGeneratingAlternatives: boolean;
   isGeneratingNegotiation: boolean;
   isChatting: boolean;
+  isRetrying?: boolean;
+  retryCount?: number;
   streamingText: string;
   error: string | null;
+  errorInfo?: ErrorInfo | null;
   originalClauseText?: string; // Für Klausel-Vergleich
   onLoadAlternatives: () => void;
   onLoadNegotiation: () => void;
@@ -44,8 +48,11 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   isGeneratingAlternatives,
   isGeneratingNegotiation,
   isChatting,
+  isRetrying = false,
+  retryCount = 0,
   streamingText,
   error,
+  errorInfo,
   originalClauseText,
   onLoadAlternatives,
   onLoadNegotiation,
@@ -111,16 +118,44 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
     return PERSPECTIVES.find(p => p.id === currentPerspective) || PERSPECTIVES[0];
   };
 
-  // Error State
+  // Retrying State
+  if (isRetrying) {
+    return (
+      <div className={styles.analysisContent}>
+        <div className={styles.retryingState}>
+          <div className={styles.retrySpinner} />
+          <p className={styles.retryingText}>
+            Verbindung wird hergestellt... (Versuch {retryCount + 1})
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error State - verbessert mit errorInfo
   if (error) {
+    const errorIcon = errorInfo?.type === 'network' ? '📶' :
+                      errorInfo?.type === 'timeout' ? '⏱️' :
+                      errorInfo?.type === 'server' ? '🖥️' : '⚠️';
+
     return (
       <div className={styles.analysisContent}>
         <div className={styles.errorState}>
-          <span className={styles.errorIcon}>⚠️</span>
-          <p className={styles.errorText}>{error}</p>
-          <button className={styles.retryButton} onClick={onRetry}>
-            Erneut versuchen
-          </button>
+          <span className={styles.errorIcon}>{errorIcon}</span>
+          <p className={styles.errorTitle}>{errorInfo?.message || error}</p>
+          {errorInfo?.hint && (
+            <p className={styles.errorHint}>{errorInfo.hint}</p>
+          )}
+          {errorInfo && errorInfo.retryCount > 0 && (
+            <p className={styles.errorRetryInfo}>
+              {errorInfo.retryCount} automatische Versuche fehlgeschlagen
+            </p>
+          )}
+          {errorInfo?.canRetry !== false && (
+            <button className={styles.retryButton} onClick={onRetry}>
+              Erneut versuchen
+            </button>
+          )}
         </div>
       </div>
     );

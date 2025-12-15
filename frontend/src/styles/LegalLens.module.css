@@ -1893,6 +1893,95 @@
   border-radius: 3px;
 }
 
+/* ===== ENHANCED ERROR & RETRY STATES ===== */
+.retryingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  gap: 1rem;
+}
+
+.retrySpinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.retryingText {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.errorState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  gap: 0.75rem;
+  background: #fef2f2;
+  border-radius: 12px;
+  margin: 1rem;
+}
+
+.errorIcon {
+  font-size: 2.5rem;
+}
+
+.errorTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #dc2626;
+  margin: 0;
+}
+
+.errorHint {
+  font-size: 0.875rem;
+  color: #991b1b;
+  margin: 0;
+  max-width: 280px;
+  line-height: 1.5;
+}
+
+.errorRetryInfo {
+  font-size: 0.75rem;
+  color: #b91c1c;
+  margin: 0;
+  padding: 0.375rem 0.75rem;
+  background: rgba(220, 38, 38, 0.1);
+  border-radius: 4px;
+}
+
+.retryButton {
+  margin-top: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.retryButton:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+}
+
 /* Compare Modal Mobile */
 @media (max-width: 768px) {
   .compareModal {

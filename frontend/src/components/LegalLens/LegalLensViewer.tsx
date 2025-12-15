@@ -126,8 +126,11 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     isGeneratingNegotiation,
     isChatting,
     isBatchAnalyzing,
+    isRetrying,
+    retryCount,
     streamingText,
     error,
+    errorInfo,
     parseContract,
     selectClause,
     analyzeClause,
@@ -541,8 +544,11 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                       isGeneratingAlternatives={isGeneratingAlternatives}
                       isGeneratingNegotiation={isGeneratingNegotiation}
                       isChatting={isChatting}
+                      isRetrying={isRetrying}
+                      retryCount={retryCount}
                       streamingText={streamingText}
                       error={error}
+                      errorInfo={errorInfo}
                       originalClauseText={selectedClause?.text}
                       onLoadAlternatives={loadAlternatives}
                       onLoadNegotiation={loadNegotiationTips}
@@ -816,8 +822,11 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                 isGeneratingAlternatives={isGeneratingAlternatives}
                 isGeneratingNegotiation={isGeneratingNegotiation}
                 isChatting={isChatting}
+                isRetrying={isRetrying}
+                retryCount={retryCount}
                 streamingText={streamingText}
                 error={error}
+                errorInfo={errorInfo}
                 originalClauseText={selectedClause?.text}
                 onLoadAlternatives={loadAlternatives}
                 onLoadNegotiation={loadNegotiationTips}
