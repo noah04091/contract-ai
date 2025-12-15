@@ -2,6 +2,7 @@
 // Komponente für das Analyse-Panel (rechte Seite) - KOMPLETT ÜBERARBEITET
 
 import React, { useState, useRef, useEffect } from 'react';
+import { GitCompare } from 'lucide-react';
 import type {
   ClauseAnalysis,
   PerspectiveType,
@@ -11,6 +12,7 @@ import type {
   ActionLevel
 } from '../../types/legalLens';
 import { PERSPECTIVES, ACTION_LABELS, PROBABILITY_LABELS } from '../../types/legalLens';
+import ClauseCompareModal from './ClauseCompareModal';
 import styles from '../../styles/LegalLens.module.css';
 
 interface AnalysisPanelProps {
@@ -25,6 +27,7 @@ interface AnalysisPanelProps {
   isChatting: boolean;
   streamingText: string;
   error: string | null;
+  originalClauseText?: string; // Für Klausel-Vergleich
   onLoadAlternatives: () => void;
   onLoadNegotiation: () => void;
   onSendChatMessage: (message: string) => void;
@@ -43,6 +46,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   isChatting,
   streamingText,
   error,
+  originalClauseText,
   onLoadAlternatives,
   onLoadNegotiation,
   onSendChatMessage,
@@ -51,6 +55,9 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   const [chatInput, setChatInput] = useState('');
   const [copiedTemplate, setCopiedTemplate] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['action', 'explanation', 'worstCase']));
+  const [showCompareModal, setShowCompareModal] = useState(false);
+  const [compareAlternativeText, setCompareAlternativeText] = useState('');
+  const [compareWhyBetter, setCompareWhyBetter] = useState('');
 
   // Ref für Auto-Scroll im Chat
   const chatMessagesRef = useRef<HTMLDivElement>(null);
@@ -505,21 +512,46 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                 }}>
                   "{betterAlternative.text}"
                 </p>
-                <button
-                  onClick={() => copyText(betterAlternative.text)}
-                  style={{
-                    marginTop: '0.75rem',
-                    padding: '0.375rem 0.75rem',
-                    background: '#16a34a',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    fontSize: '0.75rem',
-                    cursor: 'pointer'
-                  }}
-                >
-                  📋 Kopieren
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+                  <button
+                    onClick={() => copyText(betterAlternative.text)}
+                    style={{
+                      padding: '0.375rem 0.75rem',
+                      background: '#16a34a',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '0.75rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    📋 Kopieren
+                  </button>
+                  {originalClauseText && (
+                    <button
+                      onClick={() => {
+                        setCompareAlternativeText(betterAlternative.text);
+                        setCompareWhyBetter(betterAlternative.whyBetter || '');
+                        setShowCompareModal(true);
+                      }}
+                      style={{
+                        padding: '0.375rem 0.75rem',
+                        background: '#3b82f6',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontSize: '0.75rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.375rem'
+                      }}
+                    >
+                      <GitCompare size={12} />
+                      Vergleichen
+                    </button>
+                  )}
+                </div>
               </div>
 
               {betterAlternative.whyBetter && (
@@ -792,6 +824,21 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Klausel-Vergleichs-Modal */}
+      <ClauseCompareModal
+        isOpen={showCompareModal}
+        onClose={() => setShowCompareModal(false)}
+        originalText={originalClauseText || ''}
+        alternativeText={compareAlternativeText}
+        originalTitle="Aktuelle Klausel"
+        alternativeTitle="Bessere Alternative"
+        whyBetter={compareWhyBetter}
+        onSelectAlternative={() => {
+          copyText(compareAlternativeText);
+          setShowCompareModal(false);
+        }}
+      />
     </div>
   );
 };
