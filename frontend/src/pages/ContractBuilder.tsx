@@ -78,6 +78,7 @@ const ContractBuilder: React.FC = () => {
     clearError,
     addBlock,
     updateMetadata,
+    generateClause,
   } = useContractBuilderStore();
 
   // Dokument laden oder Typ-Auswahl zeigen
@@ -240,28 +241,50 @@ const ContractBuilder: React.FC = () => {
 
     setIsGeneratingClause(true);
     try {
-      // Simuliere KI-Generierung (hier später echte API anbinden)
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Echte KI-Generierung über Backend-API
+      const result = await generateClause(aiClausePrompt, {
+        tone: 'formal',
+        length: 'mittel',
+        strictness: 'ausgewogen',
+      }) as {
+        clause?: { title?: string; body?: string; subclauses?: Array<{ number: string; text: string }> };
+        legalBasis?: string[];
+        riskLevel?: string;
+        suggestedVariables?: Array<{ name: string; displayName: string; type: string }>;
+      };
 
+      // Block mit KI-generiertem Inhalt erstellen
       const generatedClause = {
         type: 'clause' as const,
         content: {
           number: 'auto',
-          clauseTitle: 'KI-generierte Klausel',
-          body: `Diese Klausel wurde basierend auf Ihrer Anfrage "${aiClausePrompt}" generiert. Bitte überprüfen und anpassen Sie den Inhalt entsprechend Ihrer spezifischen Anforderungen.`,
-          subclauses: [],
+          clauseTitle: result.clause?.title || 'KI-generierte Klausel',
+          body: result.clause?.body || `Klausel basierend auf: "${aiClausePrompt}"`,
+          subclauses: result.clause?.subclauses || [],
         },
         style: {},
         locked: false,
         aiGenerated: true,
         aiPrompt: aiClausePrompt,
+        legalBasis: result.legalBasis || [],
+        riskLevel: result.riskLevel as 'low' | 'medium' | 'high' | undefined,
       };
 
       addBlock(generatedClause);
       setShowAiClauseModal(false);
       setAiClausePrompt('');
+
+      // Optional: Vorgeschlagene Variablen könnten hier zum Dokument hinzugefügt werden
+      console.log('[ContractBuilder] KI-Klausel generiert:', {
+        title: generatedClause.content.clauseTitle,
+        legalBasis: result.legalBasis,
+        riskLevel: result.riskLevel,
+        suggestedVariables: result.suggestedVariables,
+      });
     } catch (error) {
       console.error('Fehler bei KI-Generierung:', error);
+      // Fallback: Zeige Fehlermeldung im UI
+      alert('Fehler bei der KI-Generierung. Bitte versuchen Sie es erneut.');
     } finally {
       setIsGeneratingClause(false);
     }
