@@ -474,7 +474,7 @@ function createLocalDocument(name: string, contractType: string, template?: Cont
   const now = new Date().toISOString();
 
   // Wenn Template vorhanden, Blöcke und Variablen aus Template übernehmen
-  let blocks: Block[] = [];
+  const blocks: Block[] = [];
   let variables: Variable[] = [];
 
   if (template && template.id !== 'individuell') {
@@ -723,7 +723,7 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
           const contractType = template.id;
 
           // Template-Daten in Blöcke und Variablen konvertieren
-          let initialBlocks: Block[] = [];
+          const initialBlocks: Block[] = [];
           let initialVariables: Variable[] = [];
 
           if (template && template.id !== 'individuell') {
