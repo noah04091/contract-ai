@@ -31,3 +31,6 @@ export { PropertiesPanel } from './Properties';
 
 // Toolbar
 export { BlockToolbar } from './Toolbar';
+
+// Contract Type Selector
+export { ContractTypeSelector } from './ContractTypeSelector';

@@ -6,6 +6,7 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
+import { contractTemplates, ContractTemplate } from '../data/contractTemplates';
 
 // ============================================
 // TYPES
@@ -226,6 +227,7 @@ interface ContractBuilderState {
   selectedBlockId: string | null;
   selectedVariableId: string | null;
   hoveredBlockId: string | null;
+  activePageIndex: number; // Aktive Seite für Block-Einfügung
   zoom: number;
   view: 'edit' | 'preview' | 'split';
   sidebarLeft: boolean;
@@ -263,6 +265,7 @@ interface ContractBuilderActions {
   // Document Actions
   loadDocument: (id: string) => Promise<void>;
   createDocument: (name: string, contractType?: string, templateId?: string) => Promise<string>;
+  createDocumentFromTemplate: (templateId: string) => Promise<string>;
   saveDocument: () => Promise<void>;
   setDocument: (doc: ContractDocument) => void;
   updateMetadata: (metadata: Partial<ContractDocument['metadata']>) => void;
@@ -276,6 +279,7 @@ interface ContractBuilderActions {
   duplicateBlock: (blockId: string) => void;
   reorderBlocks: (fromIndex: number, toIndex: number) => void;
   lockBlock: (blockId: string, locked: boolean) => void;
+  autoInsertPageBreak: (beforeBlockId: string) => void;
 
   // Selection Actions
   selectBlock: (blockId: string | null) => void;
@@ -290,6 +294,7 @@ interface ContractBuilderActions {
   updateVariable: (variableId: string, value: string | number | Date) => void;
   addVariable: (variable: Omit<Variable, 'id'>) => void;
   deleteVariable: (variableId: string) => void;
+  syncVariables: () => void;
 
   // Design Actions
   setDesignPreset: (preset: string) => void;
@@ -298,6 +303,7 @@ interface ContractBuilderActions {
   // UI Actions
   setZoom: (zoom: number) => void;
   setView: (view: 'edit' | 'preview' | 'split') => void;
+  setActivePage: (pageIndex: number) => void;
   toggleSidebarLeft: () => void;
   toggleSidebarRight: () => void;
   toggleVariablesBar: () => void;
@@ -362,6 +368,7 @@ const initialState: ContractBuilderState = {
   selectedBlockId: null,
   selectedVariableId: null,
   hoveredBlockId: null,
+  activePageIndex: 0,
   zoom: 100,
   view: 'edit',
   sidebarLeft: true,
@@ -381,9 +388,194 @@ const initialState: ContractBuilderState = {
   isLocalMode: false,
 };
 
+// Helper: Variablen aus Text extrahieren ({{variable_name}} Syntax)
+function extractVariablesFromText(text: string): string[] {
+  const regex = /\{\{([^}]+)\}\}/g;
+  const variables: string[] = [];
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    const varName = match[1].trim();
+    if (!variables.includes(varName)) {
+      variables.push(varName);
+    }
+  }
+  return variables;
+}
+
+// Helper: Variablen aus allen Blöcken extrahieren
+function extractVariablesFromBlocks(blocks: Block[]): Variable[] {
+  const allVarNames: string[] = [];
+
+  blocks.forEach(block => {
+    const content = block.content;
+    // Durchsuche alle String-Felder im Content
+    Object.values(content).forEach(value => {
+      if (typeof value === 'string') {
+        const vars = extractVariablesFromText(value);
+        vars.forEach(v => {
+          if (!allVarNames.includes(v)) {
+            allVarNames.push(v);
+          }
+        });
+      } else if (typeof value === 'object' && value !== null) {
+        // Nested objects (z.B. party1, party2)
+        Object.values(value).forEach(nestedValue => {
+          if (typeof nestedValue === 'string') {
+            const vars = extractVariablesFromText(nestedValue);
+            vars.forEach(v => {
+              if (!allVarNames.includes(v)) {
+                allVarNames.push(v);
+              }
+            });
+          }
+        });
+      }
+    });
+  });
+
+  // Variablen-Objekte erstellen
+  return allVarNames.map(name => {
+    // Gruppe basierend auf Variablennamen bestimmen
+    let group = 'Allgemein';
+    if (name.includes('auftraggeber')) group = 'Auftraggeber';
+    else if (name.includes('auftragnehmer')) group = 'Auftragnehmer';
+    else if (name.includes('preis') || name.includes('betrag') || name.includes('kosten')) group = 'Finanzen';
+    else if (name.includes('datum') || name.includes('frist')) group = 'Termine';
+
+    // Typ basierend auf Variablennamen bestimmen
+    let type: VariableType = 'text';
+    if (name.includes('datum') || name.includes('date')) type = 'date';
+    else if (name.includes('preis') || name.includes('betrag') || name.includes('kosten')) type = 'currency';
+    else if (name.includes('email') || name.includes('mail')) type = 'email';
+    else if (name.includes('telefon') || name.includes('phone')) type = 'phone';
+    else if (name.includes('iban')) type = 'iban';
+
+    // DisplayName generieren (snake_case zu Title Case)
+    const displayName = name
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+
+    return {
+      id: `var_${name}`,
+      name: `{{${name}}}`,
+      displayName,
+      type,
+      value: undefined,
+      required: true,
+      linkedBlocks: [],
+      group,
+    };
+  });
+}
+
 // Helper: Lokales Dokument erstellen
-function createLocalDocument(name: string, contractType: string): ContractDocument {
+function createLocalDocument(name: string, contractType: string, template?: ContractTemplate): ContractDocument {
   const now = new Date().toISOString();
+
+  // Wenn Template vorhanden, Blöcke und Variablen aus Template übernehmen
+  let blocks: Block[] = [];
+  let variables: Variable[] = [];
+
+  if (template && template.id !== 'individuell') {
+    // Header Block
+    blocks.push({
+      id: crypto.randomUUID(),
+      type: 'header',
+      order: 0,
+      content: {
+        title: template.name,
+        subtitle: `${template.parties.party1.role} & ${template.parties.party2.role}`,
+      },
+      style: {},
+      locked: false,
+      aiGenerated: false,
+    });
+
+    // Parties Block
+    blocks.push({
+      id: crypto.randomUUID(),
+      type: 'parties',
+      order: 1,
+      content: {
+        party1: {
+          role: template.parties.party1.role,
+          name: `{{${template.parties.party1.role.toLowerCase().replace(/\s+/g, '_')}_name}}`,
+          address: `{{${template.parties.party1.role.toLowerCase().replace(/\s+/g, '_')}_adresse}}`,
+        },
+        party2: {
+          role: template.parties.party2.role,
+          name: `{{${template.parties.party2.role.toLowerCase().replace(/\s+/g, '_')}_name}}`,
+          address: `{{${template.parties.party2.role.toLowerCase().replace(/\s+/g, '_')}_adresse}}`,
+        },
+      },
+      style: {},
+      locked: false,
+      aiGenerated: false,
+    });
+
+    // Preamble Block
+    blocks.push({
+      id: crypto.randomUUID(),
+      type: 'preamble',
+      order: 2,
+      content: {
+        preambleText: `Zwischen den Parteien wird folgender ${template.name} geschlossen:`,
+      },
+      style: {},
+      locked: false,
+      aiGenerated: false,
+    });
+
+    // Klauseln aus Template hinzufügen
+    template.suggestedClauses.forEach((clause, index) => {
+      blocks.push({
+        id: crypto.randomUUID(),
+        type: 'clause',
+        order: 3 + index,
+        content: {
+          number: 'auto',
+          clauseTitle: clause.title,
+          body: clause.body,
+          subclauses: [],
+        },
+        style: {},
+        locked: false,
+        aiGenerated: false,
+      });
+    });
+
+    // Signatur Block am Ende
+    const lastOrder = 3 + template.suggestedClauses.length;
+    blocks.push({
+      id: crypto.randomUUID(),
+      type: 'signature',
+      order: lastOrder,
+      content: {
+        signatureFields: [
+          { partyIndex: 0, label: template.parties.party1.role, showDate: true, showPlace: true },
+          { partyIndex: 1, label: template.parties.party2.role, showDate: true, showPlace: true },
+        ],
+      },
+      style: {},
+      locked: false,
+      aiGenerated: false,
+    });
+
+    // Variablen aus Template übernehmen
+    variables = template.defaultVariables.map(v => ({
+      id: `var_${v.name}`,
+      name: `{{${v.name}}}`,
+      displayName: v.displayName,
+      type: v.type as VariableType,
+      value: undefined,
+      required: v.required || false,
+      options: v.options,
+      linkedBlocks: [],
+      group: v.group,
+    }));
+  }
+
   return {
     _id: `local_${crypto.randomUUID()}`,
     userId: 'local',
@@ -396,8 +588,8 @@ function createLocalDocument(name: string, contractType: string): ContractDocume
       tags: [],
     },
     content: {
-      blocks: [],
-      variables: [],
+      blocks,
+      variables,
     },
     design: defaultDesign,
     createdAt: now,
@@ -517,6 +709,160 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
           }
         },
 
+        createDocumentFromTemplate: async (templateId: string) => {
+          set({ isLoading: true, error: null });
+
+          // Template finden
+          const template = contractTemplates.find(t => t.id === templateId);
+          if (!template) {
+            set({ isLoading: false, error: 'Template nicht gefunden' });
+            throw new Error('Template nicht gefunden');
+          }
+
+          const name = template.id === 'individuell' ? 'Neuer Vertrag' : `Neuer ${template.name}`;
+          const contractType = template.id;
+
+          // Template-Daten in Blöcke und Variablen konvertieren
+          let initialBlocks: Block[] = [];
+          let initialVariables: Variable[] = [];
+
+          if (template && template.id !== 'individuell') {
+            // Header Block
+            initialBlocks.push({
+              id: crypto.randomUUID(),
+              type: 'header',
+              order: 0,
+              content: {
+                title: template.name,
+                subtitle: `${template.parties.party1.role} & ${template.parties.party2.role}`,
+              },
+              style: {},
+              locked: false,
+              aiGenerated: false,
+            });
+
+            // Parties Block
+            initialBlocks.push({
+              id: crypto.randomUUID(),
+              type: 'parties',
+              order: 1,
+              content: {
+                party1: {
+                  role: template.parties.party1.role,
+                  name: `{{${template.parties.party1.role.toLowerCase().replace(/\s+/g, '_')}_name}}`,
+                  address: `{{${template.parties.party1.role.toLowerCase().replace(/\s+/g, '_')}_adresse}}`,
+                },
+                party2: {
+                  role: template.parties.party2.role,
+                  name: `{{${template.parties.party2.role.toLowerCase().replace(/\s+/g, '_')}_name}}`,
+                  address: `{{${template.parties.party2.role.toLowerCase().replace(/\s+/g, '_')}_adresse}}`,
+                },
+              },
+              style: {},
+              locked: false,
+              aiGenerated: false,
+            });
+
+            // Preamble Block
+            initialBlocks.push({
+              id: crypto.randomUUID(),
+              type: 'preamble',
+              order: 2,
+              content: {
+                preambleText: `Zwischen den Parteien wird folgender ${template.name} geschlossen:`,
+              },
+              style: {},
+              locked: false,
+              aiGenerated: false,
+            });
+
+            // Klauseln aus Template hinzufügen
+            template.suggestedClauses.forEach((clause, index) => {
+              initialBlocks.push({
+                id: crypto.randomUUID(),
+                type: 'clause',
+                order: 3 + index,
+                content: {
+                  number: 'auto',
+                  clauseTitle: clause.title,
+                  body: clause.body,
+                  subclauses: [],
+                },
+                style: {},
+                locked: false,
+                aiGenerated: false,
+              });
+            });
+
+            // Signatur Block am Ende
+            const lastOrder = 3 + template.suggestedClauses.length;
+            initialBlocks.push({
+              id: crypto.randomUUID(),
+              type: 'signature',
+              order: lastOrder,
+              content: {
+                signatureFields: [
+                  { partyIndex: 0, label: template.parties.party1.role, showDate: true, showPlace: true },
+                  { partyIndex: 1, label: template.parties.party2.role, showDate: true, showPlace: true },
+                ],
+              },
+              style: {},
+              locked: false,
+              aiGenerated: false,
+            });
+
+            // Variablen aus Template übernehmen
+            initialVariables = template.defaultVariables.map(v => ({
+              id: `var_${v.name}`,
+              name: `{{${v.name}}}`,
+              displayName: v.displayName,
+              type: v.type as VariableType,
+              value: undefined,
+              required: v.required || false,
+              options: v.options,
+              linkedBlocks: [],
+              group: v.group,
+            }));
+          }
+
+          try {
+            // Versuche über API zu erstellen (mit vollständigen Template-Daten)
+            const data = await apiCall<{ success: boolean; document: ContractDocument }>('', {
+              method: 'POST',
+              body: JSON.stringify({
+                name,
+                contractType,
+                initialBlocks: initialBlocks.length > 0 ? initialBlocks : undefined,
+                initialVariables: initialVariables.length > 0 ? initialVariables : undefined,
+              }),
+            });
+            set({
+              document: data.document,
+              isLoading: false,
+              hasUnsavedChanges: false,
+              history: [data.document],
+              historyIndex: 0,
+              isLocalMode: false,
+            });
+            console.log('[ContractBuilder] Dokument über API erstellt:', data.document._id);
+            return data.document._id;
+          } catch (err) {
+            // Fallback: Lokales Dokument mit Template erstellen
+            console.warn('API nicht verfügbar - erstelle lokales Dokument mit Template:', err);
+            const localDoc = createLocalDocument(name, contractType, template);
+            set({
+              document: localDoc,
+              isLoading: false,
+              hasUnsavedChanges: false,
+              history: [localDoc],
+              historyIndex: 0,
+              isLocalMode: true,
+              error: null,
+            });
+            return localDoc._id;
+          }
+        },
+
         saveDocument: async () => {
           const { document, isLocalMode } = get();
           if (!document) return;
@@ -575,28 +921,58 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
           set((state) => {
             if (!state.document) return;
 
+            const blocks = state.document.content.blocks;
+            let insertPosition: number;
+
+            if (position !== undefined) {
+              // Explizite Position angegeben
+              insertPosition = position;
+            } else {
+              // Position basierend auf aktiver Seite berechnen
+              const pageBreakIndices: number[] = [];
+              blocks.forEach((b, idx) => {
+                if (b.type === 'page-break') {
+                  pageBreakIndices.push(idx);
+                }
+              });
+
+              if (pageBreakIndices.length === 0) {
+                // Keine Seitenumbrüche - am Ende einfügen
+                insertPosition = blocks.length;
+              } else if (state.activePageIndex === 0) {
+                // Seite 1: Vor dem ersten PageBreak einfügen
+                insertPosition = pageBreakIndices[0];
+              } else if (state.activePageIndex >= pageBreakIndices.length) {
+                // Letzte Seite: Am Ende einfügen
+                insertPosition = blocks.length;
+              } else {
+                // Mittlere Seite: Vor dem nächsten PageBreak einfügen
+                insertPosition = pageBreakIndices[state.activePageIndex];
+              }
+            }
+
             const newBlock: Block = {
               ...block,
               id: crypto.randomUUID(),
-              order: position ?? state.document.content.blocks.length,
+              order: insertPosition,
               style: block.style || {},
               locked: false,
               aiGenerated: false,
             };
 
-            if (position !== undefined) {
-              // Shift existing blocks
-              state.document.content.blocks.forEach((b) => {
-                if (b.order >= position) b.order++;
-              });
-            }
+            // Shift existing blocks
+            blocks.forEach((b) => {
+              if (b.order >= insertPosition) b.order++;
+            });
 
-            state.document.content.blocks.push(newBlock);
-            state.document.content.blocks.sort((a, b) => a.order - b.order);
+            blocks.push(newBlock);
+            blocks.sort((a, b) => a.order - b.order);
             state.hasUnsavedChanges = true;
             state.selectedBlockId = newBlock.id;
           });
           get().pushToHistory();
+          // Variablen synchronisieren
+          get().syncVariables();
         },
 
         updateBlock: (blockId, updates) => {
@@ -621,6 +997,8 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
             }
           });
           get().pushToHistory();
+          // Variablen synchronisieren
+          get().syncVariables();
         },
 
         updateBlockStyle: (blockId, style) => {
@@ -702,6 +1080,50 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
           });
         },
 
+        autoInsertPageBreak: (beforeBlockId) => {
+          set((state) => {
+            if (!state.document) return;
+
+            const blocks = state.document.content.blocks;
+            const blockIndex = blocks.findIndex((b) => b.id === beforeBlockId);
+
+            if (blockIndex === -1) return;
+
+            // Prüfen ob bereits ein PageBreak direkt davor ist
+            if (blockIndex > 0 && blocks[blockIndex - 1].type === 'page-break') {
+              return; // Bereits ein PageBreak vorhanden
+            }
+
+            // Neuen PageBreak Block erstellen
+            const pageBreakBlock: Block = {
+              id: crypto.randomUUID(),
+              type: 'page-break',
+              order: blockIndex,
+              content: {},
+              style: {},
+              locked: false,
+              aiGenerated: false,
+            };
+
+            // Alle Blöcke ab dieser Position verschieben
+            blocks.forEach((b) => {
+              if (b.order >= blockIndex) {
+                b.order++;
+              }
+            });
+
+            blocks.push(pageBreakBlock);
+            blocks.sort((a, b) => a.order - b.order);
+
+            // Aktive Seite auf die neue Seite setzen
+            const pageBreakCount = blocks.filter((b) => b.type === 'page-break').length;
+            state.activePageIndex = pageBreakCount;
+
+            state.hasUnsavedChanges = true;
+          });
+          get().pushToHistory();
+        },
+
         // ============================================
         // SELECTION ACTIONS
         // ============================================
@@ -769,6 +1191,31 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
             }
           });
           get().pushToHistory();
+        },
+
+        syncVariables: () => {
+          set((state) => {
+            if (!state.document) return;
+
+            const extractedVars = extractVariablesFromBlocks(state.document.content.blocks);
+            const existingVars = state.document.content.variables;
+
+            // Merge: Behalte existierende Werte, füge neue hinzu
+            const mergedVars: Variable[] = [];
+
+            extractedVars.forEach(extracted => {
+              const existing = existingVars.find(v => v.id === extracted.id);
+              if (existing) {
+                // Behalte den existierenden Wert
+                mergedVars.push(existing);
+              } else {
+                // Neue Variable
+                mergedVars.push(extracted);
+              }
+            });
+
+            state.document.content.variables = mergedVars;
+          });
         },
 
         // ============================================
@@ -841,6 +1288,10 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
 
         setView: (view) => {
           set({ view });
+        },
+
+        setActivePage: (pageIndex) => {
+          set({ activePageIndex: pageIndex });
         },
 
         toggleSidebarLeft: () => {

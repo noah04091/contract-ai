@@ -87,10 +87,25 @@ router.get('/:id', auth, async (req, res) => {
 /**
  * POST /api/contract-builder
  * Neues Dokument erstellen
+ *
+ * Body-Parameter:
+ * - name: Dokumentname
+ * - contractType: Vertragstyp (z.B. 'mietvertrag', 'arbeitsvertrag')
+ * - templateId: Optional - MongoDB-ID eines gespeicherten Templates
+ * - initialBlocks: Optional - Array von Blöcken (vom Frontend-Template)
+ * - initialVariables: Optional - Array von Variablen (vom Frontend-Template)
+ * - initialDesign: Optional - Design-Konfiguration
  */
 router.post('/', auth, async (req, res) => {
   try {
-    const { name, contractType, templateId } = req.body;
+    const {
+      name,
+      contractType,
+      templateId,
+      initialBlocks,
+      initialVariables,
+      initialDesign: providedDesign
+    } = req.body;
 
     let initialContent = {
       blocks: [],
@@ -110,28 +125,54 @@ router.post('/', auth, async (req, res) => {
       marginLeft: 20
     };
 
-    // Falls von Template erstellt
-    if (templateId) {
-      const template = await ContractBuilder.findOne({
-        _id: templateId,
-        'template.isTemplate': true,
-        $or: [
-          { 'template.isPublic': true },
-          { userId: req.user._id }
-        ]
-      });
-
-      if (template) {
-        initialContent = JSON.parse(JSON.stringify(template.content));
-        initialDesign = JSON.parse(JSON.stringify(template.design));
-
-        // Template-Downloads erhöhen
-        template.template.downloads++;
-        await template.save();
-      }
+    // Option 1: Initial-Daten direkt vom Frontend (z.B. von Frontend-Templates)
+    if (initialBlocks && Array.isArray(initialBlocks)) {
+      initialContent.blocks = initialBlocks.map((block, index) => ({
+        ...block,
+        id: block.id || uuidv4(),
+        order: block.order ?? index
+      }));
     }
 
-    // Leeres Dokument mit Basis-Struktur erstellen
+    if (initialVariables && Array.isArray(initialVariables)) {
+      initialContent.variables = initialVariables.map(v => ({
+        ...v,
+        id: v.id || uuidv4()
+      }));
+    }
+
+    if (providedDesign && typeof providedDesign === 'object') {
+      initialDesign = { ...initialDesign, ...providedDesign };
+    }
+
+    // Option 2: Falls MongoDB-Template-ID angegeben (für gespeicherte Templates)
+    if (templateId && !initialBlocks) {
+      // Prüfen ob es eine gültige MongoDB ObjectId ist
+      const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(templateId);
+
+      if (isValidObjectId) {
+        const template = await ContractBuilder.findOne({
+          _id: templateId,
+          'template.isTemplate': true,
+          $or: [
+            { 'template.isPublic': true },
+            { userId: req.user._id }
+          ]
+        });
+
+        if (template) {
+          initialContent = JSON.parse(JSON.stringify(template.content));
+          initialDesign = JSON.parse(JSON.stringify(template.design));
+
+          // Template-Downloads erhöhen
+          template.template.downloads++;
+          await template.save();
+        }
+      }
+      // Wenn keine gültige ObjectId, ignorieren (Frontend-Template-ID)
+    }
+
+    // Fallback: Leeres Dokument mit Basis-Struktur erstellen
     if (initialContent.blocks.length === 0) {
       initialContent.blocks = [
         {
@@ -162,6 +203,7 @@ router.post('/', auth, async (req, res) => {
 
     await document.save();
 
+    console.log(`[ContractBuilder] Dokument erstellt: ${document._id} (${contractType || 'individuell'})`);
     res.status(201).json({ success: true, document });
   } catch (error) {
     console.error('[ContractBuilder] POST / Error:', error);
