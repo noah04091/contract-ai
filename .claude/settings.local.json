@@ -54,7 +54,8 @@
       "Bash(git -C \"C:/Users/liebo/Documents/contract-ai\" commit -m \"$(cat <<''EOF''\nfeat: ContractBuilder - KI-Features, Logo-Upload & UX-Verbesserungen\n\n- KI-Assistent: Rechtsprüfung mit Legal Score Modal implementiert\n- KI-Assistent: Formulierung optimieren mit Vorher/Nachher-Vergleich\n- Logo-Block: Datei-Upload (Base64) statt nur URL\n- Logo-Block: Remove-Button zum Entfernen\n- Smart Variables: Bessere UX mit Hinweisen und \"Kopiert!\"-Feedback\n- Variable-Klick: Auto-Switch zum Variables-Panel\n- Neue Modal-Styles für Legal Score und Optimierung\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git -C \"C:/Users/liebo/Documents/contract-ai\" push)",
       "Bash(git -C \"C:/Users/liebo/Documents/contract-ai\" add -A)",
-      "Bash(git -C \"C:/Users/liebo/Documents/contract-ai\" commit -m \"$(cat <<''EOF''\nfix: TypeScript-Fehler in LegalScore Modal behoben\n\n- LegalScore Properties korrigiert (totalScore, findings statt score, issues)\n- BlockContent Interface um logoUrl erweitert\n- Unused Import entfernt\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(git -C \"C:/Users/liebo/Documents/contract-ai\" commit -m \"$(cat <<''EOF''\nfix: TypeScript-Fehler in LegalScore Modal behoben\n\n- LegalScore Properties korrigiert (totalScore, findings statt score, issues)\n- BlockContent Interface um logoUrl erweitert\n- Unused Import entfernt\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git -C \"C:/Users/liebo/Documents/contract-ai\" commit -m \"fix: API_BASE Fallback auf api.contract-ai.de gesetzt\")"
     ],
     "deny": [],
     "ask": []
