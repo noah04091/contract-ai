@@ -37,6 +37,8 @@ import {
   Printer,
   Trash2,
   X,
+  ShieldCheck,
+  Keyboard,
 } from 'lucide-react';
 import styles from '../styles/ContractBuilder.module.css';
 
@@ -57,6 +59,7 @@ const ContractBuilder: React.FC = () => {
   const [aiClausePrompt, setAiClausePrompt] = useState('');
   const [isGeneratingClause, setIsGeneratingClause] = useState(false);
   const [showTypeSelector, setShowTypeSelector] = useState(false);
+  const [showShortcutsModal, setShowShortcutsModal] = useState(false);
 
   const {
     document: currentDocument,
@@ -67,6 +70,8 @@ const ContractBuilder: React.FC = () => {
     canUndo,
     canRedo,
     isLocalMode,
+    isAiGenerating,
+    aiOperation,
     loadDocument,
     createDocument,
     createDocumentFromTemplate,
@@ -79,6 +84,7 @@ const ContractBuilder: React.FC = () => {
     addBlock,
     updateMetadata,
     generateClause,
+    calculateLegalScore,
   } = useContractBuilderStore();
 
   // Dokument laden oder Typ-Auswahl zeigen
@@ -309,6 +315,17 @@ const ContractBuilder: React.FC = () => {
         e.preventDefault();
         redo();
       }
+      // Ctrl+/ oder Ctrl+? für Shortcuts Modal
+      if ((e.ctrlKey || e.metaKey) && (e.key === '/' || e.key === '?')) {
+        e.preventDefault();
+        setShowShortcutsModal(prev => !prev);
+      }
+      // Escape zum Schließen von Modals
+      if (e.key === 'Escape') {
+        setShowShortcutsModal(false);
+        setShowAiClauseModal(false);
+        setShowMoreMenu(false);
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -442,6 +459,37 @@ const ContractBuilder: React.FC = () => {
               <ZoomIn size={16} />
             </button>
           </div>
+
+          {/* Legal Health Score */}
+          <button
+            className={`${styles.legalScoreBadge} ${
+              currentDocument?.legalScore
+                ? currentDocument.legalScore.totalScore >= 80
+                  ? styles.scoreGood
+                  : currentDocument.legalScore.totalScore >= 60
+                  ? styles.scoreMedium
+                  : styles.scoreLow
+                : ''
+            }`}
+            onClick={calculateLegalScore}
+            disabled={isAiGenerating}
+            title={
+              currentDocument?.legalScore
+                ? `Legal Score: ${currentDocument.legalScore.totalScore}/100 - Klicken zum Aktualisieren`
+                : 'Legal Score berechnen'
+            }
+          >
+            {isAiGenerating && aiOperation === 'Legal Score berechnen' ? (
+              <Loader2 size={14} className={styles.spinner} />
+            ) : (
+              <ShieldCheck size={14} />
+            )}
+            <span>
+              {currentDocument?.legalScore
+                ? `${currentDocument.legalScore.totalScore}`
+                : '—'}
+            </span>
+          </button>
 
           {/* Actions */}
           <div className={styles.mainActions}>
@@ -702,6 +750,77 @@ const ContractBuilder: React.FC = () => {
           className={styles.menuBackdrop}
           onClick={() => setShowMoreMenu(false)}
         />
+      )}
+
+      {/* Keyboard Shortcuts Modal */}
+      {showShortcutsModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowShortcutsModal(false)}>
+          <div className={`${styles.modal} ${styles.shortcutsModal}`} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <div className={styles.modalTitle}>
+                <Keyboard size={20} />
+                <span>Tastenkürzel</span>
+              </div>
+              <button
+                className={styles.modalClose}
+                onClick={() => setShowShortcutsModal(false)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className={styles.shortcutsContent}>
+              <div className={styles.shortcutsCategory}>
+                <h4>Allgemein</h4>
+                <div className={styles.shortcutRow}>
+                  <span className={styles.shortcutKeys}><kbd>Strg</kbd> + <kbd>S</kbd></span>
+                  <span className={styles.shortcutDesc}>Dokument speichern</span>
+                </div>
+                <div className={styles.shortcutRow}>
+                  <span className={styles.shortcutKeys}><kbd>Strg</kbd> + <kbd>/</kbd></span>
+                  <span className={styles.shortcutDesc}>Tastenkürzel anzeigen</span>
+                </div>
+                <div className={styles.shortcutRow}>
+                  <span className={styles.shortcutKeys}><kbd>Esc</kbd></span>
+                  <span className={styles.shortcutDesc}>Modal/Menü schließen</span>
+                </div>
+              </div>
+
+              <div className={styles.shortcutsCategory}>
+                <h4>Bearbeitung</h4>
+                <div className={styles.shortcutRow}>
+                  <span className={styles.shortcutKeys}><kbd>Strg</kbd> + <kbd>Z</kbd></span>
+                  <span className={styles.shortcutDesc}>Rückgängig</span>
+                </div>
+                <div className={styles.shortcutRow}>
+                  <span className={styles.shortcutKeys}><kbd>Strg</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd></span>
+                  <span className={styles.shortcutDesc}>Wiederherstellen</span>
+                </div>
+                <div className={styles.shortcutRow}>
+                  <span className={styles.shortcutKeys}><kbd>Strg</kbd> + <kbd>Y</kbd></span>
+                  <span className={styles.shortcutDesc}>Wiederherstellen</span>
+                </div>
+              </div>
+
+              <div className={styles.shortcutsCategory}>
+                <h4>Navigation</h4>
+                <div className={styles.shortcutRow}>
+                  <span className={styles.shortcutKeys}><kbd>↑</kbd> / <kbd>↓</kbd></span>
+                  <span className={styles.shortcutDesc}>Block wechseln</span>
+                </div>
+                <div className={styles.shortcutRow}>
+                  <span className={styles.shortcutKeys}><kbd>Entf</kbd></span>
+                  <span className={styles.shortcutDesc}>Ausgewählten Block löschen</span>
+                </div>
+              </div>
+
+              <div className={styles.shortcutsTip}>
+                <Sparkles size={14} />
+                <span>Tipp: Nutze die KI-Klausel-Generierung im Assistent-Panel für schnellere Vertragserstellung!</span>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Vertragstyp-Auswahl Modal */}

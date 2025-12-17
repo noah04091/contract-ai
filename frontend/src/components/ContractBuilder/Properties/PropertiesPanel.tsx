@@ -18,6 +18,8 @@ import {
   Unlock,
   Sparkles,
   FileText,
+  Wand2,
+  Loader2,
 } from 'lucide-react';
 import styles from './PropertiesPanel.module.css';
 
@@ -39,7 +41,11 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className }) =
     updateBlockContent,
     deleteBlock,
     duplicateBlock,
+    optimizeClause,
   } = useContractBuilderStore();
+
+  const [isOptimizing, setIsOptimizing] = useState(false);
+  const [optimizationGoal, setOptimizationGoal] = useState<string>('rechtssicher');
 
   // Ausgewählten Block finden
   const selectedBlock = selectedBlockId
@@ -157,6 +163,32 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className }) =
           <ContentEditor
             block={selectedBlock}
             onUpdate={(content) => updateBlockContent(selectedBlock.id, content)}
+            isOptimizing={isOptimizing}
+            optimizationGoal={optimizationGoal}
+            onOptimizationGoalChange={setOptimizationGoal}
+            onOptimize={async () => {
+              if (selectedBlock?.type !== 'clause') return;
+              const clauseText = String(selectedBlock.content?.body || '');
+              if (!clauseText.trim()) return;
+
+              setIsOptimizing(true);
+              try {
+                const result = await optimizeClause(clauseText, optimizationGoal) as {
+                  optimizedText?: string;
+                  changes?: string[];
+                };
+                if (result.optimizedText) {
+                  updateBlockContent(selectedBlock.id, {
+                    ...selectedBlock.content,
+                    body: result.optimizedText,
+                  });
+                }
+              } catch (error) {
+                console.error('Fehler bei Klausel-Optimierung:', error);
+              } finally {
+                setIsOptimizing(false);
+              }
+            }}
           />
         </Section>
 
@@ -524,9 +556,20 @@ function getBlockTypeLabel(type: string): string {
 interface ContentEditorProps {
   block: BlockType;
   onUpdate: (content: Record<string, unknown>) => void;
+  isOptimizing?: boolean;
+  optimizationGoal?: string;
+  onOptimizationGoalChange?: (goal: string) => void;
+  onOptimize?: () => void;
 }
 
-const ContentEditor: React.FC<ContentEditorProps> = ({ block, onUpdate }) => {
+const ContentEditor: React.FC<ContentEditorProps> = ({
+  block,
+  onUpdate,
+  isOptimizing,
+  optimizationGoal,
+  onOptimizationGoalChange,
+  onOptimize,
+}) => {
   const content = block.content || {};
 
   switch (block.type) {
@@ -687,6 +730,40 @@ const ContentEditor: React.FC<ContentEditorProps> = ({ block, onUpdate }) => {
               onChange={(e) => onUpdate({ ...content, body: e.target.value })}
             />
           </div>
+
+          {/* KI-Optimierung */}
+          {onOptimize && (
+            <div className={styles.optimizeSection}>
+              <label className={styles.label}>KI-Optimierung</label>
+              <div className={styles.optimizeControls}>
+                <select
+                  className={styles.select}
+                  value={optimizationGoal}
+                  onChange={(e) => onOptimizationGoalChange?.(e.target.value)}
+                  disabled={isOptimizing}
+                >
+                  <option value="rechtssicher">Rechtssicherer</option>
+                  <option value="verständlich">Verständlicher</option>
+                  <option value="kürzer">Kürzer/Prägnanter</option>
+                  <option value="ausgewogen">Ausgewogener</option>
+                  <option value="strenger">Strenger für mich</option>
+                </select>
+                <button
+                  className={styles.optimizeButton}
+                  onClick={onOptimize}
+                  disabled={isOptimizing || !String(content.body || '').trim()}
+                  title="Klausel mit KI optimieren"
+                >
+                  {isOptimizing ? (
+                    <Loader2 size={14} className={styles.spinner} />
+                  ) : (
+                    <Wand2 size={14} />
+                  )}
+                  <span>{isOptimizing ? 'Optimiere...' : 'Optimieren'}</span>
+                </button>
+              </div>
+            </div>
+          )}
         </>
       );
 
