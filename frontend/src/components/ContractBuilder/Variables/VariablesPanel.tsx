@@ -2,7 +2,7 @@
  * VariablesPanel - Seitenleiste für Variablen-Verwaltung
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useContractBuilderStore, Variable } from '../../../stores/contractBuilderStore';
 import { SYSTEM_VARIABLES } from '../../../utils/smartVariables';
 import {
@@ -51,6 +51,7 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
   const [showHelp, setShowHelp] = useState(false);
   const [showSystemVars, setShowSystemVars] = useState(false);
   const [copiedVar, setCopiedVar] = useState<string | null>(null);
+  const variablesListRef = useRef<HTMLDivElement>(null);
 
   const {
     document: currentDocument,
@@ -60,6 +61,30 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
   } = useContractBuilderStore();
 
   const variables = currentDocument?.content.variables || [];
+
+  // Auto-Scroll zur ausgewählten Variable
+  useEffect(() => {
+    if (selectedVariableId && variablesListRef.current) {
+      // Finde die Variable und ihre Gruppe
+      const variable = variables.find((v: Variable) => v.id === selectedVariableId);
+      if (variable) {
+        const group = variable.group || 'Allgemein';
+        // Gruppe expandieren
+        setExpandedGroups(prev => new Set([...prev, group]));
+
+        // Nach kurzer Verzögerung zum Element scrollen (damit DOM aktualisiert ist)
+        setTimeout(() => {
+          const element = document.querySelector(`[data-variable-id="${selectedVariableId}"]`);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Visuelles Feedback durch kurzes Blinken
+            element.classList.add(styles.highlight);
+            setTimeout(() => element.classList.remove(styles.highlight), 1500);
+          }
+        }, 100);
+      }
+    }
+  }, [selectedVariableId, variables]);
 
   // Variablen nach Gruppen sortieren
   const groupedVariables = useMemo(() => {
@@ -268,6 +293,13 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
               <code className={styles.exampleResult}>Datum: {new Date().toLocaleDateString('de-DE')}</code>
             </div>
           </div>
+
+          {/* Usage Hint */}
+          <div className={styles.usageHint}>
+            <span className={styles.usageIcon}>💡</span>
+            <span>Klicke auf eine Variable zum Kopieren, dann füge sie mit <kbd>Strg+V</kbd> in eine Klausel ein.</span>
+          </div>
+
           {['Datum', 'Zeit'].map(group => (
             <div key={group} className={styles.systemVarsGroup}>
               <div className={styles.systemVarsGroupHeader}>
@@ -282,14 +314,17 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
                     onClick={() => {
                       navigator.clipboard.writeText(`{{${sysVar.name}}}`);
                       setCopiedVar(sysVar.name);
-                      setTimeout(() => setCopiedVar(null), 1500);
+                      setTimeout(() => setCopiedVar(null), 2000);
                     }}
-                    title={`${sysVar.description}\nAktueller Wert: ${sysVar.getValue()}`}
+                    title={`${sysVar.description}\nAktueller Wert: ${sysVar.getValue()}\n\nKlicken zum Kopieren`}
                   >
                     <span className={styles.systemVarName}>{`{{${sysVar.name}}}`}</span>
                     <span className={styles.systemVarValue}>{sysVar.getValue()}</span>
                     {copiedVar === sysVar.name ? (
-                      <CheckCircle size={12} className={styles.copiedIcon} />
+                      <span className={styles.copiedBadge}>
+                        <CheckCircle size={12} className={styles.copiedIcon} />
+                        <span>Kopiert!</span>
+                      </span>
                     ) : (
                       <Copy size={12} className={styles.copyIcon} />
                     )}
@@ -345,6 +380,7 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
                   return (
                     <div
                       key={variable.id}
+                      data-variable-id={variable.id}
                       className={`
                         ${styles.variableItem}
                         ${isSelected ? styles.selected : ''}

@@ -728,6 +728,66 @@
   flex-shrink: 0;
 }
 
+.copiedBadge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #22c55e;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  animation: popIn 0.2s ease;
+}
+
+.copiedBadge .copiedIcon {
+  color: white;
+}
+
+@keyframes popIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.usageHint {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  background: linear-gradient(135deg, #fef9c3 0%, #fef08a 100%);
+  border: 1px solid #fde047;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 11px;
+  color: #854d0e;
+  line-height: 1.5;
+}
+
+.usageHint kbd {
+  display: inline-block;
+  padding: 1px 6px;
+  background: white;
+  border: 1px solid #fcd34d;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  color: #92400e;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.usageIcon {
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
 .computedHint {
   display: flex;
   align-items: center;
@@ -803,4 +863,18 @@
   background: #dcfce7;
   color: #166534;
   border: 1px solid #86efac;
+}
+
+/* Highlight Animation für ausgewählte Variable */
+@keyframes highlightPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3), 0 0 20px rgba(59, 130, 246, 0.2);
+  }
+}
+
+.highlight {
+  animation: highlightPulse 0.5s ease-in-out 3;
 }

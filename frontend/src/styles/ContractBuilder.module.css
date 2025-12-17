@@ -1025,3 +1025,295 @@
   color: #6b21a8;
   line-height: 1.5;
 }
+
+/* Legal Score Modal */
+.legalScoreModal {
+  max-width: 600px;
+}
+
+.legalScoreContent {
+  padding: 24px;
+}
+
+.scoreOverview {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 24px;
+}
+
+.scoreCircle {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--score-color, #10b981) calc(var(--score-percentage, 0) * 3.6deg),
+    #e5e7eb calc(var(--score-percentage, 0) * 3.6deg)
+  );
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.scoreCircle::before {
+  content: '';
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  background: white;
+  border-radius: 50%;
+}
+
+.scoreValue {
+  position: relative;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--score-color, #10b981);
+  z-index: 1;
+}
+
+.scoreLabel {
+  position: relative;
+  font-size: 11px;
+  color: #6b7280;
+  z-index: 1;
+}
+
+.scoreInfo {
+  flex: 1;
+}
+
+.scoreTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0 0 8px 0;
+}
+
+.scoreDescription {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.legalIssues {
+  margin-bottom: 24px;
+}
+
+.legalIssues h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 12px 0;
+}
+
+.legalIssues h4 svg {
+  color: #f59e0b;
+}
+
+.legalIssues ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.issueItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.issueItem:last-child {
+  border-bottom: none;
+}
+
+.issueSeverity {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.issueSeverity.high {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.issueSeverity.medium {
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.issueSeverity.low {
+  background: #eff6ff;
+  color: #3b82f6;
+}
+
+.issueText {
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.legalCategories h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 16px 0;
+}
+
+.legalCategories h4 svg {
+  color: #10b981;
+}
+
+.categoryGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.categoryItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.categoryName {
+  width: 120px;
+  font-size: 13px;
+  color: #374151;
+  flex-shrink: 0;
+}
+
+.categoryBar {
+  flex: 1;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.categoryFill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.categoryScore {
+  width: 40px;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+/* Optimize Modal */
+.optimizeModal {
+  max-width: 800px;
+}
+
+.optimizeContent {
+  padding: 24px;
+}
+
+.improvementsList {
+  margin-bottom: 24px;
+}
+
+.improvementsList h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 12px 0;
+}
+
+.improvementsList h4 svg {
+  color: #10b981;
+}
+
+.improvementsList ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.improvementsList li {
+  position: relative;
+  padding: 8px 0 8px 20px;
+  font-size: 13px;
+  color: #4b5563;
+}
+
+.improvementsList li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: #10b981;
+  font-weight: 600;
+}
+
+.textComparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.comparisonColumn h5 {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 8px 0;
+}
+
+.comparisonText {
+  padding: 16px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #374151;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.comparisonColumn:last-child .comparisonText {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .textComparison {
+    grid-template-columns: 1fr;
+  }
+
+  .scoreOverview {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .categoryName {
+    width: 80px;
+  }
+}

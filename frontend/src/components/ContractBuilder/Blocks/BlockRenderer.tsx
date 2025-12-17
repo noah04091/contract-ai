@@ -176,6 +176,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
       case 'logo':
         return (
           <LogoBlock
+            blockId={block.id}
             content={block.content}
             isSelected={isSelected}
             isPreview={isPreview}

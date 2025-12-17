@@ -39,6 +39,10 @@ import {
   X,
   ShieldCheck,
   Keyboard,
+  AlertTriangle,
+  CheckCircle,
+  TrendingUp,
+  Info,
 } from 'lucide-react';
 import styles from '../styles/ContractBuilder.module.css';
 
@@ -60,6 +64,15 @@ const ContractBuilder: React.FC = () => {
   const [isGeneratingClause, setIsGeneratingClause] = useState(false);
   const [showTypeSelector, setShowTypeSelector] = useState(false);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
+  const [showLegalScoreModal, setShowLegalScoreModal] = useState(false);
+  const [showOptimizeModal, setShowOptimizeModal] = useState(false);
+  const [isCalculatingScore, setIsCalculatingScore] = useState(false);
+  const [isOptimizing, setIsOptimizing] = useState(false);
+  const [optimizeResult, setOptimizeResult] = useState<{
+    original: string;
+    optimized: string;
+    improvements: string[];
+  } | null>(null);
 
   const {
     document: currentDocument,
@@ -72,6 +85,8 @@ const ContractBuilder: React.FC = () => {
     isLocalMode,
     isAiGenerating,
     aiOperation,
+    selectedVariableId,
+    selectedBlockId,
     loadDocument,
     createDocument,
     createDocumentFromTemplate,
@@ -82,8 +97,10 @@ const ContractBuilder: React.FC = () => {
     redo,
     clearError,
     addBlock,
+    updateBlock,
     updateMetadata,
     generateClause,
+    optimizeClause,
     calculateLegalScore,
   } = useContractBuilderStore();
 
@@ -96,6 +113,13 @@ const ContractBuilder: React.FC = () => {
       setShowTypeSelector(true);
     }
   }, [id, loadDocument, currentDocument]);
+
+  // Automatisch zum Variables-Panel wechseln wenn eine Variable ausgewählt wird
+  useEffect(() => {
+    if (selectedVariableId) {
+      setRightPanel('variables');
+    }
+  }, [selectedVariableId]);
 
   // Handler für Template-Auswahl
   const handleTemplateSelect = async (templateId: string) => {
@@ -294,6 +318,76 @@ const ContractBuilder: React.FC = () => {
     } finally {
       setIsGeneratingClause(false);
     }
+  };
+
+  // Rechtsprüfung (Legal Score)
+  const handleLegalCheck = async () => {
+    if (!currentDocument) return;
+
+    setIsCalculatingScore(true);
+    try {
+      await calculateLegalScore();
+      setShowLegalScoreModal(true);
+    } catch (error) {
+      console.error('Fehler bei Rechtsprüfung:', error);
+      alert('Fehler bei der Rechtsprüfung. Bitte versuchen Sie es erneut.');
+    } finally {
+      setIsCalculatingScore(false);
+    }
+  };
+
+  // Formulierung optimieren
+  const handleOptimize = async () => {
+    // Finde den aktuell ausgewählten Block
+    const selectedBlock = currentDocument?.content.blocks.find(b => b.id === selectedBlockId);
+
+    if (!selectedBlock || selectedBlock.type !== 'clause') {
+      alert('Bitte wählen Sie zuerst eine Klausel aus, die optimiert werden soll.');
+      return;
+    }
+
+    const clauseText = selectedBlock.content.body || '';
+    if (!clauseText.trim()) {
+      alert('Die ausgewählte Klausel hat keinen Text zum Optimieren.');
+      return;
+    }
+
+    setIsOptimizing(true);
+    setOptimizeResult(null);
+
+    try {
+      const result = await optimizeClause(clauseText, 'Klarheit und rechtliche Präzision verbessern') as {
+        optimizedText?: string;
+        improvements?: string[];
+      };
+
+      setOptimizeResult({
+        original: clauseText,
+        optimized: result.optimizedText || clauseText,
+        improvements: result.improvements || ['Formulierung verbessert'],
+      });
+      setShowOptimizeModal(true);
+    } catch (error) {
+      console.error('Fehler bei Optimierung:', error);
+      alert('Fehler bei der Optimierung. Bitte versuchen Sie es erneut.');
+    } finally {
+      setIsOptimizing(false);
+    }
+  };
+
+  // Optimierten Text übernehmen
+  const handleApplyOptimization = () => {
+    if (!optimizeResult || !selectedBlockId) return;
+
+    updateBlock(selectedBlockId, {
+      content: {
+        ...currentDocument?.content.blocks.find(b => b.id === selectedBlockId)?.content,
+        body: optimizeResult.optimized,
+      },
+    });
+
+    setShowOptimizeModal(false);
+    setOptimizeResult(null);
   };
 
   // Keyboard Shortcuts
@@ -647,13 +741,28 @@ const ContractBuilder: React.FC = () => {
                   <Sparkles size={14} />
                   <span>Klausel generieren</span>
                 </button>
-                <button onClick={() => alert('Rechtsprüfung - Coming Soon!')}>
-                  <FileText size={14} />
-                  <span>Rechtsprüfung starten</span>
+                <button
+                  onClick={handleLegalCheck}
+                  disabled={isCalculatingScore || !currentDocument}
+                >
+                  {isCalculatingScore ? (
+                    <Loader2 size={14} className={styles.spinner} />
+                  ) : (
+                    <ShieldCheck size={14} />
+                  )}
+                  <span>{isCalculatingScore ? 'Prüfe...' : 'Rechtsprüfung starten'}</span>
                 </button>
-                <button onClick={() => alert('Formulierung optimieren - Coming Soon!')}>
-                  <Edit3 size={14} />
-                  <span>Formulierung optimieren</span>
+                <button
+                  onClick={handleOptimize}
+                  disabled={isOptimizing || !selectedBlockId}
+                  title={!selectedBlockId ? 'Wählen Sie zuerst eine Klausel aus' : ''}
+                >
+                  {isOptimizing ? (
+                    <Loader2 size={14} className={styles.spinner} />
+                  ) : (
+                    <Edit3 size={14} />
+                  )}
+                  <span>{isOptimizing ? 'Optimiere...' : 'Formulierung optimieren'}</span>
                 </button>
               </div>
 
@@ -818,6 +927,166 @@ const ContractBuilder: React.FC = () => {
                 <Sparkles size={14} />
                 <span>Tipp: Nutze die KI-Klausel-Generierung im Assistent-Panel für schnellere Vertragserstellung!</span>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Legal Score Modal */}
+      {showLegalScoreModal && currentDocument?.legalScore && (
+        <div className={styles.modalOverlay} onClick={() => setShowLegalScoreModal(false)}>
+          <div className={`${styles.modal} ${styles.legalScoreModal}`} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <div className={styles.modalTitle}>
+                <ShieldCheck size={20} />
+                <span>Rechtsprüfung Ergebnis</span>
+              </div>
+              <button
+                className={styles.modalClose}
+                onClick={() => setShowLegalScoreModal(false)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className={styles.legalScoreContent}>
+              {/* Overall Score */}
+              <div className={styles.scoreOverview}>
+                <div
+                  className={styles.scoreCircle}
+                  style={{
+                    '--score-color': currentDocument.legalScore.score >= 80 ? '#10b981' :
+                                     currentDocument.legalScore.score >= 60 ? '#f59e0b' : '#ef4444'
+                  } as React.CSSProperties}
+                >
+                  <span className={styles.scoreValue}>{currentDocument.legalScore.score}</span>
+                  <span className={styles.scoreLabel}>von 100</span>
+                </div>
+                <div className={styles.scoreInfo}>
+                  <h4 className={styles.scoreTitle}>
+                    {currentDocument.legalScore.score >= 80 ? 'Sehr gut' :
+                     currentDocument.legalScore.score >= 60 ? 'Gut mit Hinweisen' : 'Verbesserungsbedarf'}
+                  </h4>
+                  <p className={styles.scoreDescription}>
+                    {currentDocument.legalScore.score >= 80
+                      ? 'Ihr Vertrag erfüllt die wichtigsten rechtlichen Standards.'
+                      : currentDocument.legalScore.score >= 60
+                      ? 'Es gibt einige Punkte, die Sie überprüfen sollten.'
+                      : 'Wir empfehlen eine Überarbeitung wichtiger Klauseln.'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Issues */}
+              {currentDocument.legalScore.issues && currentDocument.legalScore.issues.length > 0 && (
+                <div className={styles.legalIssues}>
+                  <h4><AlertTriangle size={16} /> Hinweise & Verbesserungen</h4>
+                  <ul>
+                    {currentDocument.legalScore.issues.map((issue, index) => (
+                      <li key={index} className={styles.issueItem}>
+                        <span className={`${styles.issueSeverity} ${styles[issue.severity || 'medium']}`}>
+                          {issue.severity === 'high' ? 'Wichtig' : issue.severity === 'low' ? 'Info' : 'Hinweis'}
+                        </span>
+                        <span className={styles.issueText}>{issue.description}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Categories */}
+              {currentDocument.legalScore.categories && (
+                <div className={styles.legalCategories}>
+                  <h4><TrendingUp size={16} /> Kategorien</h4>
+                  <div className={styles.categoryGrid}>
+                    {Object.entries(currentDocument.legalScore.categories).map(([name, score]) => (
+                      <div key={name} className={styles.categoryItem}>
+                        <span className={styles.categoryName}>{name}</span>
+                        <div className={styles.categoryBar}>
+                          <div
+                            className={styles.categoryFill}
+                            style={{
+                              width: `${score}%`,
+                              background: score >= 80 ? '#10b981' : score >= 60 ? '#f59e0b' : '#ef4444'
+                            }}
+                          />
+                        </div>
+                        <span className={styles.categoryScore}>{score}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className={styles.modalFooter}>
+              <button
+                className={styles.generateButton}
+                onClick={() => setShowLegalScoreModal(false)}
+              >
+                <CheckCircle size={16} />
+                <span>Verstanden</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Optimierung Modal */}
+      {showOptimizeModal && optimizeResult && (
+        <div className={styles.modalOverlay} onClick={() => setShowOptimizeModal(false)}>
+          <div className={`${styles.modal} ${styles.optimizeModal}`} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <div className={styles.modalTitle}>
+                <Sparkles size={20} />
+                <span>Optimierungsvorschlag</span>
+              </div>
+              <button
+                className={styles.modalClose}
+                onClick={() => setShowOptimizeModal(false)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className={styles.optimizeContent}>
+              {/* Improvements List */}
+              <div className={styles.improvementsList}>
+                <h4><CheckCircle size={16} /> Verbesserungen</h4>
+                <ul>
+                  {optimizeResult.improvements.map((imp, index) => (
+                    <li key={index}>{imp}</li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Side by Side Comparison */}
+              <div className={styles.textComparison}>
+                <div className={styles.comparisonColumn}>
+                  <h5>Original</h5>
+                  <div className={styles.comparisonText}>{optimizeResult.original}</div>
+                </div>
+                <div className={styles.comparisonColumn}>
+                  <h5>Optimiert</h5>
+                  <div className={styles.comparisonText}>{optimizeResult.optimized}</div>
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.modalFooter}>
+              <button
+                className={styles.cancelButton}
+                onClick={() => setShowOptimizeModal(false)}
+              >
+                Abbrechen
+              </button>
+              <button
+                className={styles.generateButton}
+                onClick={handleApplyOptimization}
+              >
+                <CheckCircle size={16} />
+                <span>Änderung übernehmen</span>
+              </button>
             </div>
           </div>
         </div>
