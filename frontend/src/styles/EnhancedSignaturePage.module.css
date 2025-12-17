@@ -161,10 +161,113 @@
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: auto; /* Allow horizontal scroll when zoomed */
   background: #F7F8FA;
   padding: 2rem;
+  padding-top: 0;
   min-width: 0; /* Important for flex */
+}
+
+/* ====================================
+   PDF TOOLBAR
+   ==================================== */
+
+.pdfToolbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: white;
+  border-bottom: 1px solid #E5E7EB;
+  border-radius: 8px 8px 0 0;
+  margin: 0 0 1rem 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.toolbarLeft,
+.toolbarCenter,
+.toolbarRight {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pageInfo {
+  font-size: 13px;
+  color: #667085;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.zoomLevel {
+  font-size: 13px;
+  color: #0B1324;
+  font-weight: 600;
+  min-width: 45px;
+  text-align: center;
+}
+
+.toolbarBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  background: white;
+  color: #667085;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toolbarBtn:hover:not(:disabled) {
+  background: #F3F4F6;
+  border-color: #D1D5DB;
+  color: #0B1324;
+}
+
+.toolbarBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ====================================
+   FULLSCREEN MODE
+   ==================================== */
+
+.fullscreenMode {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  background: #F7F8FA;
+}
+
+.fullscreenMode .sidebar {
+  display: none;
+}
+
+.pdfSectionFullscreen {
+  width: 100%;
+  max-width: none;
+  padding: 1rem;
+}
+
+.pdfSectionFullscreen .pdfToolbar {
+  margin: 0 auto 1rem auto;
+  max-width: 1200px;
+  border-radius: 8px;
+}
+
+.pdfSectionFullscreen .pdfViewer {
+  align-items: center;
 }
 
 .pdfViewer {
@@ -372,10 +475,23 @@
 
   .pdfSection {
     padding: 1rem;
+    padding-top: 0;
     order: 0; /* Position PDF section after sidebar */
 
     /* iOS Safe Area Support */
     padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Toolbar responsive */
+  .pdfToolbar {
+    padding: 0.5rem 0.75rem;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .toolbarBtn {
+    width: 40px;
+    height: 40px;
   }
 }
 
@@ -424,6 +540,34 @@
   .submitButton {
     padding: 0.75rem 1rem;
     min-height: 44px;
+  }
+
+  /* 📱 Mobile Toolbar - kompakteres Layout */
+  .pdfToolbar {
+    padding: 0.5rem;
+    gap: 0.25rem;
+    border-radius: 0;
+    margin: 0 -0.5rem 0.5rem -0.5rem;
+    width: calc(100% + 1rem);
+  }
+
+  .toolbarLeft {
+    display: none; /* Hide page info on small screens */
+  }
+
+  .toolbarCenter {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .zoomLevel {
+    font-size: 12px;
+    min-width: 40px;
+  }
+
+  .toolbarBtn {
+    width: 44px;
+    height: 44px;
   }
 
   .pdfSection {

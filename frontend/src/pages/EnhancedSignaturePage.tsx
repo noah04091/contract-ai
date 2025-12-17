@@ -11,7 +11,12 @@ import {
   Clock,
   X,
   HelpCircle,
-  Download
+  Download,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  Maximize2,
+  Minimize2
 } from "lucide-react";
 import { Document, Page, pdfjs } from "react-pdf";
 import SignatureFieldOverlay from "../components/SignatureFieldOverlay";
@@ -81,9 +86,10 @@ export default function EnhancedSignaturePage() {
   // PDF
   const [numPages, setNumPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [pdfScale] = useState<number>(1.0);
+  const [pdfScale, setPdfScale] = useState<number>(1.0);
   const [pdfPageDimensions, setPdfPageDimensions] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
   const [renderedPageWidth, setRenderedPageWidth] = useState<number>(0); // 🆕 Track actual rendered width for overlay scaling
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false); // 🆕 Fullscreen mode for mobile
 
   // Field Values & State
   const [fieldStates, setFieldStates] = useState<Record<string, FieldState>>({});
@@ -618,6 +624,36 @@ export default function EnhancedSignaturePage() {
     }
   }
 
+  // 🆕 PDF Zoom Functions
+  const handleZoomIn = useCallback(() => {
+    setPdfScale(prev => Math.min(prev + 0.25, 2.5));
+  }, []);
+
+  const handleZoomOut = useCallback(() => {
+    setPdfScale(prev => Math.max(prev - 0.25, 0.5));
+  }, []);
+
+  const handleZoomReset = useCallback(() => {
+    setPdfScale(1.0);
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    setIsFullscreen(prev => !prev);
+  }, []);
+
+  // 🆕 Download original PDF
+  const handleDownloadPdf = useCallback(() => {
+    if (!envelope?.pdfUrl) return;
+
+    const link = document.createElement('a');
+    link.href = envelope.pdfUrl;
+    link.download = `${envelope.title || 'dokument'}.pdf`;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }, [envelope]);
+
   async function handleDecline() {
     if (!token) {
       alert("Kein Token vorhanden");
@@ -823,9 +859,67 @@ export default function EnhancedSignaturePage() {
       </header>
 
       {/* Main Split Layout */}
-      <main className={styles.splitLayout} role="main" aria-label="Dokument und Feldübersicht">
+      <main className={`${styles.splitLayout} ${isFullscreen ? styles.fullscreenMode : ''}`} role="main" aria-label="Dokument und Feldübersicht">
         {/* PDF Viewer (Left) */}
-        <section className={styles.pdfSection} ref={pdfContainerRef} aria-label="PDF-Dokument mit Signaturfeldern">
+        <section className={`${styles.pdfSection} ${isFullscreen ? styles.pdfSectionFullscreen : ''}`} ref={pdfContainerRef} aria-label="PDF-Dokument mit Signaturfeldern">
+          {/* 🆕 PDF Toolbar */}
+          <div className={styles.pdfToolbar}>
+            <div className={styles.toolbarLeft}>
+              <span className={styles.pageInfo}>
+                Seite {currentPage} von {numPages || '...'}
+              </span>
+            </div>
+
+            <div className={styles.toolbarCenter}>
+              <button
+                className={styles.toolbarBtn}
+                onClick={handleZoomOut}
+                disabled={pdfScale <= 0.5}
+                title="Verkleinern"
+                aria-label="PDF verkleinern"
+              >
+                <ZoomOut size={18} />
+              </button>
+              <span className={styles.zoomLevel}>{Math.round(pdfScale * 100)}%</span>
+              <button
+                className={styles.toolbarBtn}
+                onClick={handleZoomIn}
+                disabled={pdfScale >= 2.5}
+                title="Vergrößern"
+                aria-label="PDF vergrößern"
+              >
+                <ZoomIn size={18} />
+              </button>
+              <button
+                className={styles.toolbarBtn}
+                onClick={handleZoomReset}
+                title="Zoom zurücksetzen"
+                aria-label="Zoom auf 100% zurücksetzen"
+              >
+                <RotateCcw size={18} />
+              </button>
+            </div>
+
+            <div className={styles.toolbarRight}>
+              <button
+                className={styles.toolbarBtn}
+                onClick={handleDownloadPdf}
+                title="PDF herunterladen"
+                aria-label="Original-PDF herunterladen"
+              >
+                <Download size={18} />
+              </button>
+              <button
+                className={styles.toolbarBtn}
+                onClick={toggleFullscreen}
+                title={isFullscreen ? "Vollbild beenden" : "Vollbild"}
+                aria-label={isFullscreen ? "Vollbildmodus beenden" : "Vollbildmodus aktivieren"}
+              >
+                {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+              </button>
+            </div>
+          </div>
+
           {envelope.pdfUrl ? (
             <div className={styles.pdfViewer}>
               <Document
@@ -856,8 +950,10 @@ export default function EnhancedSignaturePage() {
                         pageNumber={pageNumber}
                         renderTextLayer={true}
                         renderAnnotationLayer={false}
-                        width={Math.min(window.innerWidth * 0.55, 800)}
-                        scale={pdfScale}
+                        width={isFullscreen
+                          ? Math.min(window.innerWidth * 0.9, 1200) * pdfScale
+                          : Math.min(window.innerWidth * (window.innerWidth <= 768 ? 0.95 : 0.55), 800) * pdfScale
+                        }
                         onLoadSuccess={onPageLoadSuccess}
                       />
 
