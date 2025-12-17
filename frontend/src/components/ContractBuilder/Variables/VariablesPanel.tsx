@@ -4,6 +4,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useContractBuilderStore, Variable } from '../../../stores/contractBuilderStore';
+import { SYSTEM_VARIABLES } from '../../../utils/smartVariables';
 import {
   Hash,
   Calendar,
@@ -21,6 +22,9 @@ import {
   AlertCircle,
   HelpCircle,
   X,
+  Zap,
+  Copy,
+  Clock,
 } from 'lucide-react';
 import styles from './VariablesPanel.module.css';
 
@@ -45,6 +49,8 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['Allgemein']));
   const [showHelp, setShowHelp] = useState(false);
+  const [showSystemVars, setShowSystemVars] = useState(false);
+  const [copiedVar, setCopiedVar] = useState<string | null>(null);
 
   const {
     document: currentDocument,
@@ -234,6 +240,59 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
               <span className={styles.exampleArrowInline}>→</span>
               <span className={styles.exampleValue}>Max Mustermann</span>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* System Variables Toggle */}
+      <button
+        className={`${styles.systemVarsToggle} ${showSystemVars ? styles.active : ''}`}
+        onClick={() => setShowSystemVars(!showSystemVars)}
+      >
+        <Zap size={14} />
+        <span>Smart Variables</span>
+        {showSystemVars ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+      </button>
+
+      {/* System Variables List */}
+      {showSystemVars && (
+        <div className={styles.systemVarsList}>
+          <p className={styles.systemVarsHint}>
+            Diese Variablen werden automatisch ausgefüllt. Klicke zum Kopieren.
+          </p>
+          {['Datum', 'Zeit'].map(group => (
+            <div key={group} className={styles.systemVarsGroup}>
+              <div className={styles.systemVarsGroupHeader}>
+                {group === 'Datum' ? <Calendar size={12} /> : <Clock size={12} />}
+                <span>{group}</span>
+              </div>
+              <div className={styles.systemVarsItems}>
+                {SYSTEM_VARIABLES.filter(v => v.group === group).map(sysVar => (
+                  <button
+                    key={sysVar.name}
+                    className={`${styles.systemVarItem} ${copiedVar === sysVar.name ? styles.copied : ''}`}
+                    onClick={() => {
+                      navigator.clipboard.writeText(`{{${sysVar.name}}}`);
+                      setCopiedVar(sysVar.name);
+                      setTimeout(() => setCopiedVar(null), 1500);
+                    }}
+                    title={`${sysVar.description}\nAktueller Wert: ${sysVar.getValue()}`}
+                  >
+                    <span className={styles.systemVarName}>{`{{${sysVar.name}}}`}</span>
+                    <span className={styles.systemVarValue}>{sysVar.getValue()}</span>
+                    {copiedVar === sysVar.name ? (
+                      <CheckCircle size={12} className={styles.copiedIcon} />
+                    ) : (
+                      <Copy size={12} className={styles.copyIcon} />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+          <div className={styles.computedHint}>
+            <Calculator size={14} />
+            <span>Tipp: Nutze Berechnungen wie <code>{`{{preis * 1.19}}`}</code></span>
           </div>
         </div>
       )}

@@ -601,3 +601,149 @@
 .variablesList::-webkit-scrollbar-thumb:hover {
   background: #a0aec0;
 }
+
+/* ============================================
+   SMART VARIABLES (System & Computed)
+   ============================================ */
+
+.systemVarsToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  margin: 8px 0;
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border: 1px solid #93c5fd;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1e40af;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.systemVarsToggle:hover {
+  background: linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%);
+  border-color: #60a5fa;
+}
+
+.systemVarsToggle.active {
+  background: linear-gradient(135deg, #93c5fd 0%, #60a5fa 100%);
+  border-color: #3b82f6;
+  color: #1e3a8a;
+}
+
+.systemVarsToggle span {
+  flex: 1;
+  text-align: left;
+}
+
+.systemVarsList {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.systemVarsHint {
+  font-size: 11px;
+  color: #64748b;
+  margin: 0 0 12px 0;
+  line-height: 1.4;
+}
+
+.systemVarsGroup {
+  margin-bottom: 12px;
+}
+
+.systemVarsGroup:last-of-type {
+  margin-bottom: 0;
+}
+
+.systemVarsGroupHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 8px;
+}
+
+.systemVarsItems {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.systemVarItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.systemVarItem:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+}
+
+.systemVarItem.copied {
+  background: #d1fae5;
+  border-color: #6ee7b7;
+}
+
+.systemVarName {
+  font-family: 'Roboto Mono', 'Fira Code', monospace;
+  font-size: 11px;
+  color: #1e40af;
+  background: #dbeafe;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.systemVarValue {
+  flex: 1;
+  font-size: 12px;
+  color: #475569;
+  text-align: right;
+}
+
+.copyIcon {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.copiedIcon {
+  color: #22c55e;
+  flex-shrink: 0;
+}
+
+.computedHint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px;
+  background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+  border: 1px solid #d8b4fe;
+  border-radius: 6px;
+  font-size: 11px;
+  color: #6b21a8;
+}
+
+.computedHint code {
+  background: rgba(107, 33, 168, 0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Roboto Mono', monospace;
+}

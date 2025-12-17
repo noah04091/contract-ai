@@ -69,3 +69,50 @@
 .variable.filled {
   animation: fillPulse 0.3s ease;
 }
+
+/* System-Variable (auto-resolved) */
+.variable.system {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #1e40af;
+  border: 1px solid #93c5fd;
+  cursor: default;
+}
+
+.variable.system::before {
+  content: '⚡';
+  margin-right: 2px;
+  font-size: 0.85em;
+}
+
+.variable.system:hover {
+  background: linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%);
+  border-color: #60a5fa;
+  transform: none;
+}
+
+/* Berechnete Variable */
+.variable.computed {
+  background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+  color: #6b21a8;
+  border: 1px solid #d8b4fe;
+  cursor: default;
+}
+
+.variable.computed::before {
+  content: '🔢';
+  margin-right: 2px;
+  font-size: 0.85em;
+}
+
+.variable.computed:hover {
+  background: linear-gradient(135deg, #e9d5ff 0%, #d8b4fe 100%);
+  border-color: #c084fc;
+  transform: none;
+}
+
+/* Computed ohne Wert (Variablen fehlen) */
+.variable.computed.empty {
+  background: linear-gradient(135deg, #fef3c7 0%, #f3e8ff 100%);
+  color: #7c3aed;
+  border: 1px dashed #d8b4fe;
+}

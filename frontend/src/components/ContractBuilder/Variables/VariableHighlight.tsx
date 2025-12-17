@@ -1,9 +1,11 @@
 /**
  * VariableHighlight - Hebt {{variablen}} im Text hervor
+ * Unterstützt: System-Variablen ({{heute}}), Berechnungen ({{preis * 1.19}})
  */
 
 import React, { useMemo } from 'react';
-import { useContractBuilderStore } from '../../../stores/contractBuilderStore';
+import { useContractBuilderStore, Variable } from '../../../stores/contractBuilderStore';
+import { resolveSmartVariable } from '../../../utils/smartVariables';
 import styles from './VariableHighlight.module.css';
 
 interface VariableHighlightProps {
@@ -11,7 +13,7 @@ interface VariableHighlightProps {
   multiline?: boolean;
 }
 
-// Regex für {{variable_name}}
+// Regex für {{variable_name}} oder {{berechnung}}
 const VARIABLE_PATTERN = /\{\{([^}]+)\}\}/g;
 
 export const VariableHighlight: React.FC<VariableHighlightProps> = ({
@@ -21,6 +23,24 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
   const { document: currentDocument, setSelectedVariable } = useContractBuilderStore();
   const variables = currentDocument?.content.variables || [];
 
+  // Variable-Werte als Map für Berechnungen
+  const variableValuesMap = useMemo(() => {
+    const map = new Map<string, string | number>();
+    variables.forEach((v: Variable) => {
+      if (v.value !== undefined && v.value !== '') {
+        // Name ohne {{ }} speichern
+        const cleanName = v.name.replace(/^\{\{|\}\}$/g, '');
+        // Date zu String konvertieren
+        if (v.value instanceof Date) {
+          map.set(cleanName, v.value.toLocaleDateString('de-DE'));
+        } else {
+          map.set(cleanName, v.value);
+        }
+      }
+    });
+    return map;
+  }, [variables]);
+
   // Text in Segmente aufteilen
   const segments = useMemo(() => {
     const result: Array<{
@@ -29,6 +49,7 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
       variableName?: string;
       value?: string;
       isFilled?: boolean;
+      varType?: 'system' | 'computed' | 'user';
     }> = [];
 
     let lastIndex = 0;
@@ -46,17 +67,29 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
         });
       }
 
-      // Variable finden
-      const variableName = match[1];
-      const variable = variables.find((v: { name: string }) => v.name === `{{${variableName}}}`);
-      const hasValue = variable?.value !== undefined && variable?.value !== '';
+      // Variable finden und Smart-Auflösung versuchen
+      const variableName = match[1].trim();
+      const resolved = resolveSmartVariable(variableName, variableValuesMap);
+
+      // Für normale User-Variablen: Wert aus Store holen falls nicht resolved
+      let finalValue = resolved.value;
+      let hasValue = finalValue !== null && finalValue !== '';
+
+      if (resolved.type === 'user' && !hasValue) {
+        const variable = variables.find((v: { name: string }) => v.name === `{{${variableName}}}`);
+        if (variable?.value !== undefined && variable?.value !== '') {
+          finalValue = String(variable.value);
+          hasValue = true;
+        }
+      }
 
       result.push({
         type: 'variable',
         content: match[0],
         variableName,
-        value: hasValue ? String(variable.value) : undefined,
+        value: hasValue ? finalValue! : undefined,
         isFilled: hasValue,
+        varType: resolved.type,
       });
 
       lastIndex = match.index + match[0].length;
@@ -71,11 +104,28 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
     }
 
     return result;
-  }, [text, variables]);
+  }, [text, variables, variableValuesMap]);
 
-  // Variable auswählen
-  const handleVariableClick = (variableName: string) => {
+  // Variable auswählen (nur für User-Variablen)
+  const handleVariableClick = (variableName: string, varType?: string) => {
+    // System-Variablen sind nicht editierbar
+    if (varType === 'system' || varType === 'computed') return;
     setSelectedVariable(variableName);
+  };
+
+  // Tooltip-Text basierend auf Typ
+  const getTooltip = (segment: typeof segments[0]) => {
+    if (segment.varType === 'system') {
+      return `⚡ System: ${segment.variableName} → ${segment.value}`;
+    }
+    if (segment.varType === 'computed') {
+      return segment.isFilled
+        ? `🔢 Berechnung: ${segment.variableName} = ${segment.value}`
+        : `🔢 Berechnung: ${segment.variableName} (Werte fehlen)`;
+    }
+    return segment.isFilled
+      ? `${segment.variableName}: ${segment.value}`
+      : `Variable: ${segment.variableName} (nicht ausgefüllt)`;
   };
 
   // Render
@@ -84,21 +134,26 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
       return <span key={index}>{segment.content}</span>;
     }
 
+    // CSS-Klasse basierend auf Typ und Status
+    const varClass = [
+      styles.variable,
+      segment.isFilled ? styles.filled : styles.empty,
+      segment.varType === 'system' ? styles.system : '',
+      segment.varType === 'computed' ? styles.computed : '',
+    ].filter(Boolean).join(' ');
+
     return (
       <span
         key={index}
-        className={`
-          ${styles.variable}
-          ${segment.isFilled ? styles.filled : styles.empty}
-        `}
+        className={varClass}
         onClick={(e) => {
           e.stopPropagation();
-          handleVariableClick(segment.variableName!);
+          handleVariableClick(segment.variableName!, segment.varType);
         }}
-        title={segment.isFilled
-          ? `${segment.variableName}: ${segment.value}`
-          : `Variable: ${segment.variableName} (nicht ausgefüllt)`
-        }
+        title={getTooltip(segment)}
+        style={{
+          cursor: segment.varType === 'system' || segment.varType === 'computed' ? 'default' : 'pointer'
+        }}
       >
         {segment.isFilled ? segment.value : segment.content}
       </span>
