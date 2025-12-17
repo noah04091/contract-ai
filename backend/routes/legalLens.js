@@ -1133,14 +1133,41 @@ router.get('/perspectives', verifyToken, (req, res) => {
  *
  * Generiert eine priorisierte Verhandlungs-Checkliste basierend auf den Analysen.
  * NUR für Vertragsempfänger (Perspektive 'contractor' oder 'client').
+ *
+ * CACHING: Checkliste wird gespeichert und beim nächsten Aufruf aus Cache geladen.
+ * Parameter: forceRegenerate=true um neu zu generieren.
  */
 router.post('/:contractId/negotiation-checklist', verifyToken, async (req, res) => {
   try {
     const { contractId } = req.params;
-    const { perspective = 'contractor' } = req.body;
+    const { perspective = 'contractor', forceRegenerate = false } = req.body;
     const userId = req.user.userId;
 
-    console.log(`📋 [Legal Lens] Generating negotiation checklist for contract: ${contractId}`);
+    console.log(`📋 [Legal Lens] Negotiation checklist request for contract: ${contractId} (force: ${forceRegenerate})`);
+
+    // Progress laden (enthält Cache)
+    let progress = await LegalLensProgress.findOne({
+      userId: new ObjectId(userId),
+      contractId: new ObjectId(contractId)
+    });
+
+    // Prüfen ob gecachte Checkliste vorhanden und gültig ist
+    if (!forceRegenerate &&
+        progress?.cachedChecklist?.checklist?.length > 0 &&
+        progress.cachedChecklist.perspective === perspective) {
+
+      console.log(`✅ [Legal Lens] Returning cached checklist (${progress.cachedChecklist.checklist.length} items)`);
+
+      return res.json({
+        success: true,
+        checklist: progress.cachedChecklist.checklist,
+        summary: progress.cachedChecklist.summary,
+        perspective,
+        industryContext: progress?.industryContext || 'general',
+        generatedAt: progress.cachedChecklist.generatedAt?.toISOString(),
+        fromCache: true
+      });
+    }
 
     // Vertragsdaten laden
     const contract = await Contract.findOne({
@@ -1155,17 +1182,13 @@ router.post('/:contractId/negotiation-checklist', verifyToken, async (req, res) 
       });
     }
 
-    // Progress laden um Branchen-Kontext zu erhalten
-    const progress = await LegalLensProgress.findOne({
-      userId: new ObjectId(userId),
-      contractId: new ObjectId(contractId)
-    });
-
     const industryContext = progress?.industryContext || 'general';
 
     // Vertragstext für Analyse vorbereiten
     const contractText = contract.extractedText || contract.originalText || '';
     const truncatedText = contractText.substring(0, 15000); // Max 15k chars
+
+    console.log(`🔄 [Legal Lens] Generating new checklist...`);
 
     // GPT-Prompt für Verhandlungs-Checkliste
     const systemPrompt = `Du bist ein erfahrener Vertragsanwalt und Verhandlungsexperte.
@@ -1198,6 +1221,8 @@ Antworte NUR mit diesem JSON-Format:
   "summary": {
     "totalIssues": 5,
     "criticalCount": 2,
+    "importantCount": 2,
+    "optionalCount": 1,
     "estimatedNegotiationTime": "30-45 Minuten",
     "overallStrategy": "Ein Satz zur empfohlenen Verhandlungsstrategie"
   }
@@ -1225,8 +1250,21 @@ REGELN:
     });
 
     const result = JSON.parse(response.choices[0].message.content);
+    const generatedAt = new Date();
 
-    console.log(`[Legal Lens] Negotiation checklist generated with ${result.checklist?.length || 0} items`);
+    console.log(`✅ [Legal Lens] Checklist generated with ${result.checklist?.length || 0} items`);
+
+    // Checkliste im Progress cachen
+    if (progress) {
+      progress.cachedChecklist = {
+        checklist: result.checklist || [],
+        summary: result.summary || {},
+        perspective,
+        generatedAt
+      };
+      await progress.save();
+      console.log(`💾 [Legal Lens] Checklist cached for future requests`);
+    }
 
     res.json({
       success: true,
@@ -1234,7 +1272,8 @@ REGELN:
       summary: result.summary || {},
       perspective,
       industryContext,
-      generatedAt: new Date().toISOString()
+      generatedAt: generatedAt.toISOString(),
+      fromCache: false
     });
 
   } catch (error) {

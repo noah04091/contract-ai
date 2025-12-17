@@ -143,6 +143,33 @@ const legalLensProgressSchema = new mongoose.Schema({
     default: 0
   },
 
+  // Cached Negotiation Checklist
+  cachedChecklist: {
+    checklist: [{
+      id: String,
+      title: String,
+      emoji: String,
+      priority: { type: Number, min: 1, max: 3 },
+      category: String,
+      section: String,
+      issue: String,
+      risk: String,
+      whatToSay: String,
+      alternativeSuggestion: String,
+      difficulty: { type: String, enum: ["easy", "medium", "hard"] }
+    }],
+    summary: {
+      totalIssues: Number,
+      criticalCount: Number,
+      importantCount: Number,
+      optionalCount: Number,
+      estimatedNegotiationTime: String,
+      overallStrategy: String
+    },
+    perspective: String,
+    generatedAt: Date
+  },
+
   // Export-Historie
   exports: [{
     type: {
