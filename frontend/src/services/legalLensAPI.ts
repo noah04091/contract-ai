@@ -519,6 +519,29 @@ export async function generateNegotiationChecklist(
   return response.json();
 }
 
+/**
+ * Checkliste als PDF exportieren
+ */
+export async function exportChecklistPdf(
+  contractId: string,
+  perspective: PerspectiveType = 'contractor'
+): Promise<Blob> {
+  const response = await fetchWithAuth(
+    `${LEGAL_LENS_BASE}/${contractId}/checklist-pdf`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ perspective })
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Fehler beim Exportieren der Checkliste');
+  }
+
+  return response.blob();
+}
+
 // ============================================
 // EXPORT REPORT API
 // ============================================

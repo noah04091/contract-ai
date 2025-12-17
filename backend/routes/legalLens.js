@@ -19,6 +19,7 @@ const LegalLensProgress = require('../models/LegalLensProgress');
 const Contract = require('../models/Contract');
 const pdfParse = require('pdf-parse');
 const { generateAnalysisReport, getAvailableDesigns, getAvailableSections } = require('../services/legalLens/analysisReportGenerator');
+const { generateChecklistPdf } = require('../services/legalLens/checklistPdfGenerator');
 
 // AWS S3 für PDF-Extraktion
 const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
@@ -1435,6 +1436,82 @@ REGELN:
     res.status(500).json({
       success: false,
       error: 'Fehler beim Generieren der Verhandlungs-Checkliste'
+    });
+  }
+});
+
+// ============================================
+// CHECKLIST PDF EXPORT
+// ============================================
+
+/**
+ * POST /api/legal-lens/:contractId/checklist-pdf
+ *
+ * Exportiert die Verhandlungs-Checkliste als PDF.
+ * Verwendet gecachte Daten falls verfügbar.
+ */
+router.post('/:contractId/checklist-pdf', verifyToken, async (req, res) => {
+  try {
+    const { contractId } = req.params;
+    const { perspective = 'contractor' } = req.body;
+    const userId = req.user.userId;
+
+    console.log(`📄 [Legal Lens] Checklist PDF export for contract: ${contractId}`);
+
+    // Vertrag laden
+    const contract = await Contract.findOne({
+      _id: new ObjectId(contractId),
+      userId: new ObjectId(userId)
+    });
+
+    if (!contract) {
+      return res.status(404).json({
+        success: false,
+        error: 'Vertrag nicht gefunden'
+      });
+    }
+
+    // Progress mit gecachter Checklist laden
+    const progress = await LegalLensProgress.findOne({
+      userId: new ObjectId(userId),
+      contractId: new ObjectId(contractId)
+    });
+
+    // Prüfen ob Checkliste gecacht ist
+    if (!progress?.cachedChecklist?.checklist?.length) {
+      return res.status(400).json({
+        success: false,
+        error: 'Keine Checkliste gefunden. Bitte erst eine Checkliste generieren.'
+      });
+    }
+
+    const { checklist, summary } = progress.cachedChecklist;
+    const contractName = contract.name || contract.title || 'Vertrag';
+
+    // PDF generieren
+    const pdfBuffer = await generateChecklistPdf({
+      checklist,
+      summary,
+      contractName,
+      perspective: progress.cachedChecklist.perspective || perspective
+    });
+
+    // PDF als Response senden
+    const filename = `Checkliste_${contractName.replace(/[^a-zA-Z0-9äöüÄÖÜß]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+
+    res.send(pdfBuffer);
+
+    console.log(`✅ [Legal Lens] Checklist PDF sent: ${filename}`);
+
+  } catch (error) {
+    console.error('❌ [Legal Lens] Checklist PDF error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Fehler beim Erstellen des PDF'
     });
   }
 });

@@ -148,6 +148,42 @@
   color: #1e293b;
 }
 
+/* ===== HEADER ACTIONS ===== */
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.exportPdfBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.exportPdfBtn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  transform: translateY(-1px);
+}
+
+.exportPdfBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.exportPdfBtn .spinning {
+  animation: spin 1s linear infinite;
+}
+
 /* ===== SUMMARY GRID ===== */
 .summaryGrid {
   display: grid;

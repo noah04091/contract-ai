@@ -13,7 +13,8 @@ import {
   Check,
   Loader2,
   Target,
-  MessageSquare
+  MessageSquare,
+  Download
 } from 'lucide-react';
 import type {
   NegotiationChecklistItem,
@@ -62,6 +63,7 @@ const NegotiationChecklist: React.FC<NegotiationChecklistProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Checkliste laden
   const loadChecklist = useCallback(async () => {
@@ -128,6 +130,31 @@ const NegotiationChecklist: React.FC<NegotiationChecklistProps> = ({
     }
   };
 
+  // PDF Export
+  const handleExportPdf = async () => {
+    setIsExporting(true);
+    try {
+      const blob = await legalLensAPI.exportChecklistPdf(contractId, perspective);
+
+      // Download triggern
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Checkliste_${contractName.replace(/[^a-zA-Z0-9äöüÄÖÜß]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      console.log('[NegotiationChecklist] PDF exported successfully');
+    } catch (err) {
+      console.error('[NegotiationChecklist] PDF export failed:', err);
+      // Optionally: Show error toast
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   // Fortschritt berechnen
   const completedCount = checklist.filter(i => i.checked).length;
   const progressPercent = checklist.length > 0
@@ -185,9 +212,24 @@ const NegotiationChecklist: React.FC<NegotiationChecklistProps> = ({
                 <span className={styles.contractName}>{contractName}</span>
               </div>
             </div>
-            <button className={styles.closeBtn} onClick={onClose}>
-              <X size={20} />
-            </button>
+            <div className={styles.headerActions}>
+              <button
+                className={styles.exportPdfBtn}
+                onClick={handleExportPdf}
+                disabled={isExporting || checklist.length === 0}
+                title="Als PDF exportieren"
+              >
+                {isExporting ? (
+                  <Loader2 size={18} className={styles.spinning} />
+                ) : (
+                  <Download size={18} />
+                )}
+                <span>PDF</span>
+              </button>
+              <button className={styles.closeBtn} onClick={onClose}>
+                <X size={20} />
+              </button>
+            </div>
           </div>
 
           {/* Summary Stats */}
