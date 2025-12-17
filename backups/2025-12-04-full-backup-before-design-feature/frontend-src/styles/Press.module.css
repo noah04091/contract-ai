@@ -1,0 +1,473 @@
+/* Press.module.css */
+
+/* Container */
+.pressContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 120px 24px;
+  color: #333;
+}
+
+/* Hero Section */
+.heroSection {
+  text-align: center;
+  margin-bottom: 120px;
+  position: relative;
+  padding: 80px 0;
+}
+
+.heroSection::after {
+  content: '';
+  display: block;
+  width: 48px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(0,122,255,0), rgba(0,122,255,1), rgba(0,122,255,0));
+  margin: 60px auto 0;
+}
+
+.heroTitle {
+  font-size: 56px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  max-width: 900px;
+  margin: 0 auto 24px;
+  color: #1d1d1f;
+}
+
+.heroTitleHighlight {
+  background: linear-gradient(90deg, rgba(0,122,255,1) 0%, rgba(64,156,255,1) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+.heroSubtitle {
+  font-size: 20px;
+  line-height: 1.5;
+  color: #666;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Content Container */
+.contentContainer {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Section Titles */
+.sectionTitle {
+  font-size: 40px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  margin-bottom: 48px;
+  color: #1d1d1f;
+  text-align: center;
+  position: relative;
+}
+
+.sectionTitle::after {
+  content: '';
+  display: block;
+  width: 30px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(0,122,255,0), rgba(0,122,255,1), rgba(0,122,255,0));
+  margin: 16px auto 0;
+}
+
+/* Boilerplate Section */
+.boilerplateSection {
+  margin-bottom: 120px;
+}
+
+.boilerplateBox {
+  background: #f5f5f7;
+  border-radius: 16px;
+  padding: 32px;
+  position: relative;
+}
+
+.boilerplateText {
+  font-size: 18px;
+  line-height: 1.6;
+  color: #333;
+  margin-bottom: 24px;
+}
+
+.copyButton {
+  background: linear-gradient(90deg, rgba(0,122,255,1) 0%, rgba(64,156,255,1) 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.copyButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,122,255,0.3);
+}
+
+/* Press Releases Section */
+.pressReleasesSection {
+  margin-bottom: 120px;
+}
+
+.releasesList {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.releaseItem {
+  padding-bottom: 24px;
+  border-bottom: 1px solid #e9e9ef;
+  transition: transform 0.2s ease;
+}
+
+.releaseItem:last-child {
+  border-bottom: none;
+}
+
+.releaseItem:hover {
+  transform: translateX(8px);
+}
+
+.releaseDate {
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.releaseTitle {
+  margin-top: 8px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.releaseLink {
+  color: #1d1d1f;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.releaseLink:hover {
+  color: #007aff;
+}
+
+/* Founder Section */
+.founderSection {
+  margin-bottom: 120px;
+}
+
+.founderCard {
+  display: flex;
+  gap: 48px;
+  align-items: center;
+}
+
+.founderImagePlaceholder {
+  width: 200px;
+  height: 200px;
+  background: linear-gradient(145deg, #f5f5f7 0%, #e9e9ef 100%);
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.founderImagePlaceholder:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+
+.founderInfo {
+  flex: 1;
+}
+
+.founderName {
+  font-size: 28px;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin-bottom: 4px;
+}
+
+.founderRole {
+  font-size: 18px;
+  color: #007aff;
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+
+.founderBio {
+  font-size: 17px;
+  line-height: 1.6;
+  color: #333;
+}
+
+/* Downloads Section */
+.downloadsSection {
+  margin-bottom: 120px;
+}
+
+.downloadsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.downloadCard {
+  background: white;
+  border: 1px solid #e9e9ef;
+  border-radius: 12px;
+  padding: 24px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.downloadCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+}
+
+.assetPreview {
+  width: 100%;
+  height: 120px;
+  background: #f5f5f7;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  overflow: hidden;
+  padding: 16px;
+}
+
+.assetImage {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.assetName {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin-bottom: 4px;
+}
+
+.assetSpecs {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 16px;
+}
+
+.downloadButton {
+  display: block;
+  width: 100%;
+  padding: 10px 20px;
+  background: #007aff;
+  color: white;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.downloadButton:hover {
+  background: #0056d3;
+}
+
+.usageNote {
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+  font-style: italic;
+}
+
+/* Contact Section */
+.contactSection {
+  margin-bottom: 120px;
+}
+
+.contactCard {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e6f7ff 100%);
+  border-radius: 16px;
+  padding: 48px;
+  text-align: center;
+}
+
+.contactInfo {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.contactName {
+  font-size: 28px;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin-bottom: 4px;
+}
+
+.contactRole {
+  font-size: 18px;
+  color: #666;
+  margin-bottom: 24px;
+}
+
+.contactDetails {
+  margin-bottom: 16px;
+}
+
+.contactLink {
+  font-size: 20px;
+  color: #007aff;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.contactLink:hover {
+  color: #0056d3;
+}
+
+.responseTime {
+  font-size: 14px;
+  color: #666;
+  margin-top: 16px;
+}
+
+/* FAQ Section */
+.faqSection {
+  margin-bottom: 120px;
+}
+
+.faqList {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.faqItem {
+  border-left: 3px solid #007aff;
+  padding-left: 24px;
+  transition: border-color 0.3s ease;
+}
+
+.faqItem:hover {
+  border-color: #0056d3;
+}
+
+.faqQuestion {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin-bottom: 12px;
+}
+
+.faqAnswer {
+  font-size: 17px;
+  line-height: 1.6;
+  color: #333;
+}
+
+/* Social Proof Section */
+.socialProofSection {
+  margin-bottom: 80px;
+  text-align: center;
+}
+
+.comingSoon {
+  font-size: 16px;
+  color: #666;
+  font-style: italic;
+}
+
+/* Animation Classes */
+:global(.fadeInUp) {
+  opacity: 0;
+  transform: translateY(30px);
+  animation: fadeInUp 0.8s ease forwards;
+}
+
+:global(.scaleIn) {
+  opacity: 0;
+  transform: scale(0.95);
+  animation: scaleIn 0.8s ease forwards;
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .pressContainer {
+    padding: 80px 20px;
+  }
+  
+  .heroSection {
+    padding: 60px 0;
+    margin-bottom: 80px;
+  }
+  
+  .heroTitle {
+    font-size: 40px;
+  }
+  
+  .heroSubtitle {
+    font-size: 18px;
+  }
+  
+  .sectionTitle {
+    font-size: 32px;
+    margin-bottom: 32px;
+  }
+  
+  .boilerplateText {
+    font-size: 16px;
+  }
+  
+  .founderCard {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .founderImagePlaceholder {
+    width: 160px;
+    height: 160px;
+  }
+  
+  .downloadsGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .faqQuestion {
+    font-size: 18px;
+  }
+  
+  .faqAnswer {
+    font-size: 16px;
+  }
+  
+  .contactCard {
+    padding: 32px 24px;
+  }
+}

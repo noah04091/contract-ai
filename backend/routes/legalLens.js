@@ -18,6 +18,7 @@ const ClauseAnalysis = require('../models/ClauseAnalysis');
 const LegalLensProgress = require('../models/LegalLensProgress');
 const Contract = require('../models/Contract');
 const pdfParse = require('pdf-parse');
+const { generateAnalysisReport, getAvailableDesigns, getAvailableSections } = require('../services/legalLens/analysisReportGenerator');
 
 // AWS S3 für PDF-Extraktion
 const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
@@ -440,10 +441,28 @@ router.post(
   async (req, res) => {
     try {
       const { contractId, clauseId } = req.params;
-      const { perspective = 'contractor', clauseText, stream = false } = req.body;
+      const { perspective = 'contractor', clauseText, stream = false, industry } = req.body;
       const userId = req.user.userId;
 
-      console.log(`🔍 [Legal Lens] Analyze clause ${clauseId} from ${perspective} perspective`);
+      // Branchen-Kontext ermitteln
+      let industryContext = industry || 'general';
+
+      // Wenn keine Branche übergeben, aus Progress laden
+      if (!industry) {
+        try {
+          const progress = await LegalLensProgress.findOne({
+            userId: new ObjectId(userId),
+            contractId: new ObjectId(contractId)
+          });
+          if (progress?.industryContext) {
+            industryContext = progress.industryContext;
+          }
+        } catch (err) {
+          console.warn('[Legal Lens] Could not load industry from progress:', err.message);
+        }
+      }
+
+      console.log(`🔍 [Legal Lens] Analyze clause ${clauseId} from ${perspective} perspective (Industry: ${industryContext})`);
 
       if (!clauseText) {
         return res.status(400).json({
@@ -497,8 +516,8 @@ router.post(
         return;
       }
 
-      // Normale Analyse
-      const result = await clauseAnalyzer.analyzeClause(clauseText, perspective);
+      // Normale Analyse mit Branchen-Kontext
+      const result = await clauseAnalyzer.analyzeClause(clauseText, perspective, '', { industry: industryContext });
 
       if (!result.success) {
         return res.status(500).json({
@@ -914,6 +933,7 @@ router.get('/:contractId/progress', verifyToken, async (req, res) => {
         percentComplete: progress.percentComplete,
         lastViewedClause: progress.lastViewedClause,
         currentPerspective: progress.currentPerspective,
+        industryContext: progress.industryContext || 'general',
         bookmarks: progress.bookmarks,
         notes: progress.notes,
         status: progress.status,
@@ -1105,6 +1125,231 @@ router.get('/perspectives', verifyToken, (req, res) => {
 });
 
 // ============================================
+// NEGOTIATION CHECKLIST
+// ============================================
+
+/**
+ * POST /api/legal-lens/:contractId/negotiation-checklist
+ *
+ * Generiert eine priorisierte Verhandlungs-Checkliste basierend auf den Analysen.
+ * NUR für Vertragsempfänger (Perspektive 'contractor' oder 'client').
+ */
+router.post('/:contractId/negotiation-checklist', verifyToken, async (req, res) => {
+  try {
+    const { contractId } = req.params;
+    const { perspective = 'contractor' } = req.body;
+    const userId = req.user.userId;
+
+    console.log(`📋 [Legal Lens] Generating negotiation checklist for contract: ${contractId}`);
+
+    // Vertragsdaten laden
+    const contract = await Contract.findOne({
+      _id: new ObjectId(contractId),
+      userId: new ObjectId(userId)
+    });
+
+    if (!contract) {
+      return res.status(404).json({
+        success: false,
+        error: 'Vertrag nicht gefunden'
+      });
+    }
+
+    // Progress laden um Branchen-Kontext zu erhalten
+    const progress = await LegalLensProgress.findOne({
+      userId: new ObjectId(userId),
+      contractId: new ObjectId(contractId)
+    });
+
+    const industryContext = progress?.industryContext || 'general';
+
+    // Vertragstext für Analyse vorbereiten
+    const contractText = contract.extractedText || contract.originalText || '';
+    const truncatedText = contractText.substring(0, 15000); // Max 15k chars
+
+    // GPT-Prompt für Verhandlungs-Checkliste
+    const systemPrompt = `Du bist ein erfahrener Vertragsanwalt und Verhandlungsexperte.
+
+AUFGABE: Erstelle eine PRIORISIERTE Verhandlungs-Checkliste für einen ${perspective === 'contractor' ? 'Auftraggeber/Kunden' : 'Auftragnehmer/Dienstleister'}.
+
+BRANCHEN-KONTEXT: ${industryContext}
+
+Analysiere den Vertrag und identifiziere die TOP 5-7 wichtigsten Verhandlungspunkte.
+Sortiere nach PRIORITÄT - die wichtigsten Punkte zuerst!
+
+Antworte NUR mit diesem JSON-Format:
+{
+  "checklist": [
+    {
+      "id": "1",
+      "priority": 1,
+      "category": "financial|liability|termination|scope|other",
+      "title": "Kurzer Titel (max 5 Wörter)",
+      "section": "§-Nummer oder Abschnitt falls erkennbar",
+      "clausePreview": "Die ersten 100 Zeichen der betroffenen Klausel...",
+      "issue": "Was ist das Problem? (2-3 Sätze)",
+      "risk": "Was droht im schlimmsten Fall? Mit €-Betrag/Zeitraum",
+      "whatToSay": "Konkreter Satz für die Verhandlung: 'Ich möchte gerne...'",
+      "alternativeSuggestion": "Bessere Formulierung für die Klausel",
+      "difficulty": "easy|medium|hard",
+      "emoji": "Passendes Emoji"
+    }
+  ],
+  "summary": {
+    "totalIssues": 5,
+    "criticalCount": 2,
+    "estimatedNegotiationTime": "30-45 Minuten",
+    "overallStrategy": "Ein Satz zur empfohlenen Verhandlungsstrategie"
+  }
+}
+
+REGELN:
+- Max 7 Punkte, min 3 Punkte
+- priority 1 = kritisch/Dealbreaker, 2 = wichtig, 3 = nice-to-have
+- Konkrete Beträge und Zeiträume nennen wo möglich
+- "whatToSay" muss ein KOMPLETTER Satz sein, den man direkt verwenden kann
+- Sprich den Leser mit "du/dein" an in issue und risk`;
+
+    const response = await clauseAnalyzer.openai.chat.completions.create({
+      model: 'gpt-4-turbo-preview',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        {
+          role: 'user',
+          content: `Analysiere diesen Vertrag und erstelle eine Verhandlungs-Checkliste:\n\nVertragsname: ${contract.name || 'Unbekannt'}\n\n${truncatedText}`
+        }
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.3,
+      max_tokens: 3000
+    });
+
+    const result = JSON.parse(response.choices[0].message.content);
+
+    console.log(`[Legal Lens] Negotiation checklist generated with ${result.checklist?.length || 0} items`);
+
+    res.json({
+      success: true,
+      checklist: result.checklist || [],
+      summary: result.summary || {},
+      perspective,
+      industryContext,
+      generatedAt: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('[Legal Lens] Negotiation checklist error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Fehler beim Generieren der Verhandlungs-Checkliste'
+    });
+  }
+});
+
+// ============================================
+// INDUSTRY CONTEXT
+// ============================================
+
+/**
+ * GET /api/legal-lens/industries
+ *
+ * Gibt alle verfügbaren Branchen zurück.
+ */
+router.get('/industries', verifyToken, (req, res) => {
+  res.json({
+    success: true,
+    industries: clauseAnalyzer.getAvailableIndustries()
+  });
+});
+
+/**
+ * POST /api/legal-lens/:contractId/industry
+ *
+ * Setzt den Branchen-Kontext für einen Vertrag.
+ */
+router.post('/:contractId/industry', verifyToken, async (req, res) => {
+  try {
+    const { contractId } = req.params;
+    const { industry } = req.body;
+    const userId = req.user.userId;
+
+    console.log(`🏢 [Legal Lens] Setting industry context to "${industry}" for contract: ${contractId}`);
+
+    // Validierung
+    const validIndustries = [
+      'it_software', 'construction', 'real_estate', 'consulting',
+      'manufacturing', 'retail', 'healthcare', 'finance', 'general'
+    ];
+
+    if (!validIndustries.includes(industry)) {
+      return res.status(400).json({
+        success: false,
+        error: `Ungültige Branche. Erlaubt: ${validIndustries.join(', ')}`
+      });
+    }
+
+    // Progress aktualisieren
+    const progress = await LegalLensProgress.findOneAndUpdate(
+      { userId: new ObjectId(userId), contractId: new ObjectId(contractId) },
+      {
+        $set: {
+          industryContext: industry,
+          industrySetAt: new Date(),
+          updatedAt: new Date()
+        }
+      },
+      { upsert: true, new: true }
+    );
+
+    console.log(`✅ [Legal Lens] Industry context set to "${industry}"`);
+
+    res.json({
+      success: true,
+      industry,
+      industrySetAt: progress.industrySetAt,
+      message: `Branchen-Kontext auf "${industry}" gesetzt`
+    });
+
+  } catch (error) {
+    console.error('❌ [Legal Lens] Set industry error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Fehler beim Setzen der Branche'
+    });
+  }
+});
+
+/**
+ * GET /api/legal-lens/:contractId/industry
+ *
+ * Gibt den aktuellen Branchen-Kontext für einen Vertrag zurück.
+ */
+router.get('/:contractId/industry', verifyToken, async (req, res) => {
+  try {
+    const { contractId } = req.params;
+    const userId = req.user.userId;
+
+    const progress = await LegalLensProgress.findOne({
+      userId: new ObjectId(userId),
+      contractId: new ObjectId(contractId)
+    });
+
+    res.json({
+      success: true,
+      industry: progress?.industryContext || 'general',
+      industrySetAt: progress?.industrySetAt || null
+    });
+
+  } catch (error) {
+    console.error('❌ [Legal Lens] Get industry error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Fehler beim Laden der Branche'
+    });
+  }
+});
+
+// ============================================
 // GET CONTRACT ANALYSIS SUMMARY
 // ============================================
 
@@ -1169,6 +1414,167 @@ router.get('/:contractId/summary', verifyToken, async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Fehler beim Laden der Zusammenfassung'
+    });
+  }
+});
+
+// ============================================
+// EXPORT ANALYSIS REPORT
+// ============================================
+
+/**
+ * GET /api/legal-lens/export/designs
+ *
+ * Gibt alle verfügbaren Design-Varianten zurück.
+ */
+router.get('/export/designs', verifyToken, (req, res) => {
+  res.json({
+    success: true,
+    designs: getAvailableDesigns()
+  });
+});
+
+/**
+ * GET /api/legal-lens/export/sections
+ *
+ * Gibt alle verfügbaren Sektionen für den Export zurück.
+ */
+router.get('/export/sections', verifyToken, (req, res) => {
+  res.json({
+    success: true,
+    sections: getAvailableSections()
+  });
+});
+
+/**
+ * POST /api/legal-lens/:contractId/export-report
+ *
+ * Generiert einen professionellen PDF-Report der Analyse.
+ */
+router.post('/:contractId/export-report', verifyToken, async (req, res) => {
+  try {
+    const { contractId } = req.params;
+    const { design = 'executive', includeSections = ['summary', 'criticalClauses'] } = req.body;
+    const userId = req.user.userId;
+
+    console.log(`📄 [Legal Lens] Export report request for contract: ${contractId}`);
+    console.log(`📄 [Legal Lens] Design: ${design}, Sections: ${includeSections.join(', ')}`);
+
+    // Vertrag laden
+    const contract = await Contract.findOne({
+      _id: new ObjectId(contractId),
+      userId: new ObjectId(userId)
+    });
+
+    if (!contract) {
+      return res.status(404).json({
+        success: false,
+        error: 'Vertrag nicht gefunden'
+      });
+    }
+
+    // Alle Klausel-Analysen laden
+    const analyses = await ClauseAnalysis.find({
+      contractId: new ObjectId(contractId),
+      userId: new ObjectId(userId)
+    }).sort({ 'position.start': 1 });
+
+    // Progress laden (für Branchen-Kontext etc.)
+    const progress = await LegalLensProgress.findOne({
+      userId: new ObjectId(userId),
+      contractId: new ObjectId(contractId)
+    });
+
+    // Daten für Report aufbereiten
+    const clauses = analyses.map(a => ({
+      id: a.clauseId,
+      number: a.clauseId,
+      text: a.clauseText,
+      riskLevel: a.riskLevel,
+      riskScore: a.riskScore,
+      actionLevel: a.actionLevel,
+      summary: a.perspectives?.contractor?.explanation?.simple || '',
+      alternative: a.perspectives?.contractor?.betterAlternative?.text || ''
+    }));
+
+    // Kritische Klauseln (high und medium risk)
+    const criticalClauses = clauses.filter(c =>
+      c.riskLevel === 'high' || c.riskLevel === 'medium'
+    ).sort((a, b) => (b.riskScore || 0) - (a.riskScore || 0));
+
+    // Risk Summary berechnen
+    const riskCounts = { high: 0, medium: 0, low: 0 };
+    let totalScore = 0;
+
+    for (const clause of clauses) {
+      if (clause.riskLevel) {
+        riskCounts[clause.riskLevel] = (riskCounts[clause.riskLevel] || 0) + 1;
+      }
+      totalScore += clause.riskScore || 0;
+    }
+
+    const riskSummary = {
+      totalClauses: clauses.length,
+      highRisk: riskCounts.high,
+      mediumRisk: riskCounts.medium,
+      lowRisk: riskCounts.low,
+      averageScore: clauses.length > 0 ? Math.round(totalScore / clauses.length) : 0,
+      overallRisk: riskCounts.high > 0 ? 'high' : riskCounts.medium > 0 ? 'medium' : 'low'
+    };
+
+    // Top 3 Risiken
+    const topRisks = criticalClauses.slice(0, 3).map(c => ({
+      clauseId: c.id,
+      title: `Klausel ${c.number}`,
+      score: c.riskScore || 0,
+      mainRisk: c.summary || 'Keine Zusammenfassung verfügbar',
+      summary: c.summary
+    }));
+
+    // Verhandlungs-Checkliste (wenn Sektionen enthalten und vorhanden)
+    let checklist = [];
+    if (includeSections.includes('checklist')) {
+      // Checklist aus kritischen Klauseln generieren
+      checklist = criticalClauses.slice(0, 7).map((c, idx) => ({
+        priority: c.riskLevel === 'high' ? 1 : 2,
+        title: `Klausel ${c.number}`,
+        issue: c.summary || 'Klausel sollte überprüft werden',
+        whatToSay: c.alternative ? `Alternative vorschlagen: "${c.alternative.substring(0, 100)}..."` : ''
+      }));
+    }
+
+    // Report-Daten zusammenstellen
+    const reportData = {
+      contractName: contract.name || contract.title || 'Vertrag',
+      contractId,
+      generatedAt: new Date(),
+      industry: progress?.industryContext || 'general',
+      clauses,
+      criticalClauses,
+      riskSummary,
+      topRisks,
+      checklist
+    };
+
+    // PDF generieren
+    const pdfBuffer = await generateAnalysisReport(reportData, design, includeSections);
+
+    // PDF als Download senden
+    const filename = `Vertragsanalyse_${(contract.name || 'Vertrag').replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+
+    console.log(`✅ [Legal Lens] Report generated: ${filename} (${pdfBuffer.length} bytes)`);
+
+    res.send(pdfBuffer);
+
+  } catch (error) {
+    console.error('❌ [Legal Lens] Export report error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Fehler beim Generieren des Reports: ' + error.message
     });
   }
 });

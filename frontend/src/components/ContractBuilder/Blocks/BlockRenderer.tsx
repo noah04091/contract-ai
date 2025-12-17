@@ -16,6 +16,7 @@ import { PageBreakBlock } from './PageBreakBlock';
 import { AttachmentBlock } from './AttachmentBlock';
 import { DateFieldBlock } from './DateFieldBlock';
 import { CustomBlock } from './CustomBlock';
+import { LogoBlock } from './LogoBlock';
 import styles from './BlockRenderer.module.css';
 
 interface BlockRendererProps {
@@ -166,6 +167,15 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
       case 'custom':
         return (
           <CustomBlock
+            content={block.content}
+            isSelected={isSelected}
+            isPreview={isPreview}
+          />
+        );
+
+      case 'logo':
+        return (
+          <LogoBlock
             content={block.content}
             isSelected={isSelected}
             isPreview={isPreview}

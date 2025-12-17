@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Calendar, Clock, User } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, User, Share2, Twitter, Linkedin, Link2, ArrowRight } from 'lucide-react';
 import { Helmet } from "react-helmet-async";
 import styles from '../styles/BlogPost.module.css';
 
@@ -24,7 +24,32 @@ interface BlogPostProps {
 const BlogPost: React.FC<BlogPostProps> = ({ article }) => {
   const navigate = useNavigate();
   const { slug } = useParams<{ slug: string }>();
-  
+  const articleRef = useRef<HTMLDivElement>(null);
+  const [readingProgress, setReadingProgress] = useState(0);
+  const [copied, setCopied] = useState(false);
+
+  // Reading Progress Bar
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!articleRef.current) return;
+
+      const element = articleRef.current;
+      const totalHeight = element.offsetHeight - window.innerHeight;
+      const windowScrollTop = window.scrollY - element.offsetTop;
+
+      if (windowScrollTop <= 0) {
+        setReadingProgress(0);
+      } else if (windowScrollTop >= totalHeight) {
+        setReadingProgress(100);
+      } else {
+        setReadingProgress((windowScrollTop / totalHeight) * 100);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   // ✅ 404-HANDLING: Saubere Behandlung unbekannter Slugs
   const rawArticle = slug ? getArticleBySlug(slug) : null;
   const isNotFound = !!slug && !rawArticle;
@@ -86,6 +111,28 @@ const BlogPost: React.FC<BlogPostProps> = ({ article }) => {
 
   const handleRelatedArticleClick = (relatedSlug: string) => {
     navigate(`/blog/${relatedSlug}`);
+    window.scrollTo(0, 0);
+  };
+
+  // Share Functions
+  const shareOnTwitter = () => {
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(currentArticle.title)}&url=${encodeURIComponent(canonicalUrl)}`;
+    window.open(url, '_blank');
+  };
+
+  const shareOnLinkedIn = () => {
+    const url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(canonicalUrl)}`;
+    window.open(url, '_blank');
+  };
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(canonicalUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
   };
 
   // ✅ Dynamische Related Articles basierend auf zentralen Daten
@@ -96,6 +143,13 @@ const BlogPost: React.FC<BlogPostProps> = ({ article }) => {
   };
 
   const relatedArticles = getRelatedArticles();
+
+  // Author Info
+  const authorInfo = {
+    name: currentArticle.author || 'Contract AI Team',
+    bio: 'Experten für KI-gestützte Vertragsanalyse. Wir helfen Unternehmen und Privatpersonen, ihre Verträge besser zu verstehen und zu optimieren.',
+    initial: (currentArticle.author || 'C').charAt(0)
+  };
 
   // 🚫 404-SEITE: Wenn Artikel nicht gefunden
   if (isNotFound) {
@@ -196,7 +250,15 @@ const BlogPost: React.FC<BlogPostProps> = ({ article }) => {
         </script>
       </Helmet>
 
-      <div className={styles.blogPost}>
+      <div className={styles.blogPost} ref={articleRef}>
+        {/* Reading Progress Bar */}
+        <div className={styles.progressBar}>
+          <div
+            className={styles.progressFill}
+            style={{ width: `${readingProgress}%` }}
+          />
+        </div>
+
         {/* Article Hero */}
         <section className={styles.articleHero}>
           <div className={styles.container}>
@@ -233,10 +295,61 @@ const BlogPost: React.FC<BlogPostProps> = ({ article }) => {
         <section className={styles.articleBody}>
           <div className={styles.container}>
             <div className={styles.articleContentFull}>
-              <div 
+              <div
                 className={styles.content}
                 dangerouslySetInnerHTML={{ __html: currentArticle.content }}
               />
+
+              {/* Share Section */}
+              <div className={styles.shareSection}>
+                <span className={styles.shareLabel}>
+                  <Share2 size={18} />
+                  Artikel teilen
+                </span>
+                <div className={styles.shareButtons}>
+                  <button
+                    className={`${styles.shareButton} ${styles.twitter}`}
+                    onClick={shareOnTwitter}
+                    title="Auf Twitter teilen"
+                  >
+                    <Twitter size={20} />
+                  </button>
+                  <button
+                    className={`${styles.shareButton} ${styles.linkedin}`}
+                    onClick={shareOnLinkedIn}
+                    title="Auf LinkedIn teilen"
+                  >
+                    <Linkedin size={20} />
+                  </button>
+                  <button
+                    className={`${styles.shareButton} ${styles.copy}`}
+                    onClick={copyLink}
+                    title={copied ? 'Link kopiert!' : 'Link kopieren'}
+                  >
+                    <Link2 size={20} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Author Box */}
+              <div className={styles.authorBox}>
+                <div className={styles.authorAvatar}>
+                  {authorInfo.initial}
+                </div>
+                <div className={styles.authorInfo}>
+                  <span className={styles.authorLabel}>Geschrieben von</span>
+                  <h4 className={styles.authorName}>{authorInfo.name}</h4>
+                  <p className={styles.authorBio}>{authorInfo.bio}</p>
+                  <div className={styles.authorSocial}>
+                    <button className={styles.authorSocialLink} title="Twitter">
+                      <Twitter size={16} />
+                    </button>
+                    <button className={styles.authorSocialLink} title="LinkedIn">
+                      <Linkedin size={16} />
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -244,17 +357,36 @@ const BlogPost: React.FC<BlogPostProps> = ({ article }) => {
         {/* Related Articles */}
         <section className={styles.relatedSection}>
           <div className={styles.container}>
-            <h2 className={styles.relatedTitle}>Ähnliche Artikel</h2>
+            <div className={styles.relatedHeader}>
+              <h2 className={styles.relatedTitle}>Das könnte Sie auch interessieren</h2>
+              <p className={styles.relatedSubtitle}>Weitere spannende Artikel aus unserem Blog</p>
+            </div>
             <div className={styles.relatedGrid}>
               {relatedArticles.map((relatedArticle) => (
-                <article 
+                <article
                   key={relatedArticle.id}
                   className={styles.relatedCard}
                   onClick={() => handleRelatedArticleClick(relatedArticle.slug)}
                 >
-                  <h3>{relatedArticle.title}</h3>
-                  <p>{relatedArticle.subtitle}</p>
-                  <span className={styles.relatedLink}>Artikel lesen →</span>
+                  <div className={styles.relatedCardImage}>
+                    <img
+                      src={relatedArticle.image}
+                      alt={relatedArticle.title}
+                      className={styles.relatedCardImg}
+                      loading="lazy"
+                    />
+                  </div>
+                  <div className={styles.relatedCardContent}>
+                    <div className={styles.relatedCardMeta}>
+                      <span><Clock size={14} /> {relatedArticle.readTime}</span>
+                    </div>
+                    <h3>{relatedArticle.title}</h3>
+                    <p>{relatedArticle.excerpt}</p>
+                    <span className={styles.relatedLink}>
+                      Weiterlesen
+                      <ArrowRight size={16} />
+                    </span>
+                  </div>
                 </article>
               ))}
             </div>

@@ -1,0 +1,973 @@
+/* Profile.module.css */
+@import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600&display=swap');
+
+.pageContainer {
+  --apple-blue: #0071e3;
+  --apple-blue-dark: #0058b3;
+  --apple-gray-50: #f5f5f7;
+  --apple-gray-100: #e8e8ed;
+  --apple-gray-200: #d2d2d7;
+  --apple-gray-300: #a1a1a6;
+  --apple-gray-400: #6e6e73;
+  --apple-gray-500: #86868b;
+  --apple-gray-800: #1d1d1f;
+  --success-green: #34c759;
+  --error-red: #ff453a;
+
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--apple-gray-50);
+  min-height: 100vh;
+  min-height: 100dvh; /* iOS Safari fix */
+  display: flex;
+  justify-content: center;
+  color: var(--apple-gray-800);
+  padding: 2rem;
+}
+
+.container {
+  max-width: 800px;
+  width: 100%;
+}
+
+/* Header Styling */
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 2.5rem;
+  text-align: center;
+}
+
+.profileIcon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #0070e0, #42a4ff);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 8px 20px rgba(0, 113, 227, 0.2);
+}
+
+.icon {
+  color: white;
+}
+
+.title {
+  font-size: 2.2rem;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+/* Content Styling */
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+/* User Info */
+.userInfo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+}
+
+.emailContainer, .subscriptionContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--apple-gray-400);
+}
+
+.email {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.premium, .standard {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.premium {
+  color: #34c759;
+}
+
+.standard {
+  color: var(--apple-gray-500);
+}
+
+.premiumIcon, .standardIcon {
+  font-size: 1.2rem;
+}
+
+/* Company Profile Section */
+.companyProfileSection {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 170, 255, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.companyProfileContent {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.companyProfileIcon {
+  color: #0aa5f7;
+  flex-shrink: 0;
+  margin-top: 0.3rem;
+}
+
+.companyProfileTitle {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+}
+
+.companyProfileDescription {
+  font-size: 1rem;
+  color: var(--apple-gray-500);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.companyProfileButton {
+  background: linear-gradient(135deg, #0aa5f7, #0284c7);
+  color: white;
+  border: none;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.9rem;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.companyProfileButton:hover {
+  background: linear-gradient(135deg, #0284c7, #0369a1);
+  transform: translateY(-1px);
+}
+
+.companyProfileButtonIcon {
+  font-size: 1.1rem;
+}
+
+/* Upgrade Section */
+.upgradeSection {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 113, 227, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.upgradeContent {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.upgradeIcon {
+  color: var(--apple-blue);
+  flex-shrink: 0;
+  margin-top: 0.3rem;
+}
+
+.upgradeTitle {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+}
+
+.upgradeDescription {
+  font-size: 1rem;
+  color: var(--apple-gray-500);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.upgradeButton {
+  background-color: var(--apple-blue);
+  color: white;
+  border: none;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.9rem;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.upgradeButton:hover:not(:disabled) {
+  background-color: var(--apple-blue-dark);
+}
+
+.upgradeButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.upgradeButtonIcon {
+  font-size: 1.2rem;
+}
+
+/* Password Section */
+.section {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 1.5rem;
+}
+
+.sectionIcon {
+  color: var(--apple-blue);
+}
+
+.sectionTitle {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.passwordForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.inputGroup label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--apple-gray-500);
+}
+
+.input {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--apple-gray-200);
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+  font-family: inherit;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.input:focus {
+  border-color: var(--apple-blue);
+  box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.15);
+}
+
+.passwordButton {
+  background-color: var(--apple-blue);
+  color: white;
+  border: none;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.9rem;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  margin-top: 0.5rem;
+}
+
+.passwordButton:hover:not(:disabled) {
+  background-color: var(--apple-blue-dark);
+}
+
+.passwordButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Danger Section */
+.dangerSection {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(255, 69, 58, 0.2);
+}
+
+.dangerHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.dangerIcon {
+  color: var(--error-red);
+}
+
+.dangerTitle {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.dangerText {
+  color: var(--apple-gray-500);
+  margin: 0 0 1.5rem;
+  line-height: 1.5;
+  font-size: 1rem;
+}
+
+.deleteButton {
+  background-color: var(--error-red);
+  color: white;
+  border: none;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.9rem;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  align-self: flex-start;
+}
+
+.deleteButton:hover {
+  background-color: #e1302a;
+}
+
+/* Loading State */
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: 1rem;
+  color: var(--apple-gray-400);
+}
+
+.loadingSpinner, .buttonSpinner {
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-top-color: var(--apple-blue);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+}
+
+.buttonSpinner {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+  border-top-color: white;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Error State */
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 3rem;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+}
+
+.errorIcon {
+  color: var(--error-red);
+  margin-bottom: 1.5rem;
+}
+
+.errorMessage {
+  font-size: 1.1rem;
+  margin: 0 0 2rem;
+  color: var(--apple-gray-500);
+}
+
+.logoutButton {
+  background-color: var(--apple-gray-200);
+  color: var(--apple-gray-800);
+  border: none;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.9rem 1.5rem;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.logoutButton:hover {
+  background-color: var(--apple-gray-300);
+}
+
+/* Notification */
+.notification {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  backdrop-filter: blur(10px);
+  z-index: 100;
+  min-width: 300px;
+  max-width: 90%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.success {
+  background: rgba(52, 199, 89, 0.15);
+  border: 1px solid rgba(52, 199, 89, 0.3);
+  color: var(--success-green);
+}
+
+.error {
+  background: rgba(255, 69, 58, 0.15);
+  border: 1px solid rgba(255, 69, 58, 0.3);
+  color: var(--error-red);
+}
+
+.notificationIcon {
+  flex-shrink: 0;
+}
+
+.notificationMessage {
+  font-weight: 500;
+  flex-grow: 1;
+}
+
+.notificationClose {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.notificationClose:hover {
+  opacity: 1;
+}
+
+/* Responsive Styling */
+@media (max-width: 768px) {
+  .pageContainer {
+    padding: max(1.5rem, env(safe-area-inset-top)) max(1.5rem, env(safe-area-inset-right)) max(1.5rem, env(safe-area-inset-bottom)) max(1.5rem, env(safe-area-inset-left));
+  }
+
+  .title {
+    font-size: 1.8rem;
+  }
+
+  .userInfo {
+    grid-template-columns: 1fr;
+  }
+
+  /* Touch-Targets für Mobile */
+  .upgradeButton,
+  .passwordButton,
+  .deleteButton,
+  .logoutButton,
+  .downloadButton,
+  .companyProfileButton {
+    min-height: 44px;
+  }
+
+  .notification {
+    bottom: max(2rem, env(safe-area-inset-bottom));
+    left: max(1rem, env(safe-area-inset-left));
+    right: max(1rem, env(safe-area-inset-right));
+    transform: none;
+  }
+}
+
+/* Neue Styling für die Rechnungssektion */
+
+/* Keine Rechnungen Nachricht */
+.noInvoices {
+  text-align: center;
+  color: var(--apple-gray-500);
+  margin: 1.5rem 0;
+  font-size: 0.95rem;
+}
+
+/* Invoice Container */
+.invoicesContainer {
+  margin-top: 1rem;
+  width: 100%;
+}
+
+/* Invoice Table - für Desktop */
+.invoiceTable {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: table;
+  background-color: white;
+}
+
+/* Table Header */
+.invoiceTableHeader {
+  display: table-row;
+  background-color: var(--apple-gray-50);
+  font-weight: 600;
+  color: var(--apple-gray-400);
+  font-size: 0.85rem;
+  border-bottom: 1px solid var(--apple-gray-100);
+}
+
+.invoiceTableHeader > div {
+  display: table-cell;
+  padding: 1rem;
+  text-align: left;
+}
+
+/* Table Row */
+.invoiceRow {
+  display: table-row;
+  border-bottom: 1px solid var(--apple-gray-100);
+  transition: background-color 0.2s ease;
+}
+
+.invoiceRow:last-child {
+  border-bottom: none;
+}
+
+.invoiceRow > div {
+  display: table-cell;
+  padding: 1rem;
+  vertical-align: middle;
+}
+
+/* Column Styles */
+.invoiceDate {
+  width: 25%;
+  white-space: nowrap;
+}
+
+.invoicePlan {
+  width: 40%;
+}
+
+.invoiceAmount {
+  width: 20%;
+  font-weight: 500;
+}
+
+.invoiceAction {
+  width: 15%;
+  text-align: right;
+}
+
+/* Plan Badges */
+.premiumPlan, .businessPlan, .standardPlan {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.premiumPlan {
+  color: var(--success-green);
+}
+
+.businessPlan {
+  color: var(--apple-blue);
+}
+
+.standardPlan {
+  color: var(--apple-gray-500);
+}
+
+.premiumIcon, .businessIcon, .standardIcon {
+  margin-right: 0.5rem;
+}
+
+/* Download Button */
+.downloadButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--apple-gray-50);
+  color: var(--apple-gray-800);
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 0.8rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.downloadButton:hover {
+  background-color: var(--apple-gray-200);
+}
+
+.downloadButton svg {
+  margin-right: 0.5rem;
+  color: var(--apple-blue);
+}
+
+/* Responsive Card View - für mobile Geräte */
+.invoiceCards {
+  display: none;
+}
+
+.invoiceCard {
+  background-color: white;
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--apple-gray-100);
+}
+
+.invoiceCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--apple-gray-50);
+}
+
+.invoiceCardContent {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.invoicePlanLabel {
+  font-size: 0.85rem;
+  color: var(--apple-gray-400);
+  margin-right: 0.5rem;
+}
+
+.invoiceCardFooter {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.invoiceCardFooter .downloadButton {
+  width: 100%;
+  justify-content: center;
+  padding: 0.75rem;
+  background-color: var(--apple-gray-50);
+  transition: all 0.2s ease;
+}
+
+.invoiceCardFooter .downloadButton:hover {
+  background-color: var(--apple-gray-100);
+}
+
+/* Media Queries für Responsivität */
+@media (max-width: 768px) {
+  .invoiceTable {
+    display: none;
+  }
+  
+  .invoiceCards {
+    display: block;
+  }
+  
+  .invoiceCard {
+    margin-bottom: 1rem;
+  }
+  
+  .invoiceCardFooter .downloadButton {
+    padding: 0.75rem;
+  }
+}
+/* ============================================ */
+/* CHATBOT TOGGLE SETTINGS */
+/* ============================================ */
+
+.settingRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 0;
+  gap: 1.5rem;
+}
+
+.settingInfo {
+  flex: 1;
+}
+
+.settingLabel {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 0.25rem 0;
+}
+
+.settingDescription {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Toggle Switch */
+.toggleSwitch {
+  position: relative;
+  display: inline-block;
+  width: 52px;
+  height: 28px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.toggleInput {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggleSlider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #d1d5db;
+  transition: 0.3s;
+  border-radius: 34px;
+}
+
+.toggleSlider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggleInput:checked + .toggleSlider {
+  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+}
+
+.toggleInput:focus + .toggleSlider {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.toggleInput:checked + .toggleSlider:before {
+  transform: translateX(24px);
+}
+
+/* Hover effect */
+.toggleSwitch:hover .toggleSlider {
+  opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+  .settingRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .toggleSwitch {
+    align-self: flex-end;
+  }
+}
+
+/* 📱 SMALL MOBILE (max-width: 480px) */
+@media (max-width: 480px) {
+  .pageContainer {
+    padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  }
+
+  .title {
+    font-size: 1.6rem;
+  }
+
+  .profileIcon {
+    width: 64px;
+    height: 64px;
+  }
+
+  .section,
+  .upgradeSection,
+  .dangerSection,
+  .companyProfileSection {
+    padding: 1.25rem;
+  }
+
+  .sectionTitle,
+  .upgradeTitle,
+  .dangerTitle,
+  .companyProfileTitle {
+    font-size: 1.1rem;
+  }
+
+  .upgradeButton,
+  .passwordButton,
+  .deleteButton,
+  .logoutButton,
+  .companyProfileButton {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* 📱 EXTRA SMALL MOBILE (max-width: 375px) */
+@media (max-width: 375px) {
+  .pageContainer {
+    padding: max(0.75rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right)) max(0.75rem, env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left));
+  }
+
+  .title {
+    font-size: 1.4rem;
+  }
+
+  .profileIcon {
+    width: 56px;
+    height: 56px;
+    margin-bottom: 1rem;
+  }
+
+  .header {
+    margin-bottom: 1.5rem;
+  }
+
+  .content {
+    gap: 1.5rem;
+  }
+
+  .section,
+  .upgradeSection,
+  .dangerSection,
+  .companyProfileSection {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  .sectionTitle,
+  .upgradeTitle,
+  .dangerTitle,
+  .companyProfileTitle {
+    font-size: 1rem;
+  }
+
+  .input {
+    font-size: 16px; /* Prevents iOS zoom */
+    padding: 0.75rem;
+  }
+
+  .label {
+    font-size: 0.85rem;
+  }
+
+  .email {
+    font-size: 1rem;
+  }
+
+  .upgradeButton,
+  .passwordButton,
+  .deleteButton,
+  .logoutButton,
+  .companyProfileButton {
+    padding: 0.8rem;
+    font-size: 0.9rem;
+  }
+
+  .notification {
+    min-width: auto;
+    padding: 0.875rem 1rem;
+    font-size: 0.9rem;
+  }
+}

@@ -1,0 +1,1138 @@
+/* ====================================
+   NEW SIGNATURE REQUEST PAGE
+   Professional DocuSign-style Design
+   ==================================== */
+
+/* Page Wrapper - Full bleed background */
+.pageWrapper {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #eef2f7 100%);
+  padding: 1.5rem;
+}
+
+/* Container */
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+/* ====================================
+   HEADER SECTION
+   ==================================== */
+.header {
+  margin-bottom: 1.5rem;
+}
+
+.backButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 1rem;
+}
+
+.backButton:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+.headerContent {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.headerIcon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  border-radius: 12px;
+  color: white;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.headerSubtitle {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0.25rem 0 0 0;
+}
+
+/* ====================================
+   PROGRESS STEPS
+   ==================================== */
+.progressContainer {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.progressSteps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  max-width: 200px;
+}
+
+.stepNumber {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  border: 2px solid #e2e8f0;
+  border-radius: 50%;
+  font-weight: 600;
+  font-size: 14px;
+  color: #94a3b8;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.stepInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.stepLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: #94a3b8;
+  transition: color 0.3s ease;
+}
+
+.stepDesc {
+  font-size: 12px;
+  color: #cbd5e1;
+  transition: color 0.3s ease;
+}
+
+.stepActive .stepNumber {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  border-color: #2563eb;
+  color: white;
+}
+
+.stepActive .stepLabel {
+  color: #0f172a;
+}
+
+.stepActive .stepDesc {
+  color: #64748b;
+}
+
+.stepCompleted .stepNumber {
+  background: #10b981;
+  border-color: #10b981;
+  color: white;
+}
+
+.stepLine {
+  flex: 0 0 80px;
+  height: 3px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  margin: 0 0.5rem;
+  overflow: hidden;
+}
+
+.stepLineFill {
+  width: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #2563eb);
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+.stepLineFillActive {
+  width: 100%;
+}
+
+/* ====================================
+   ERROR MESSAGE
+   ==================================== */
+.errorMessage {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  color: #dc2626;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.1);
+}
+
+.errorMessage svg {
+  flex-shrink: 0;
+}
+
+.errorMessage span {
+  flex: 1;
+}
+
+.errorClose {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(220, 38, 38, 0.1);
+  border: none;
+  border-radius: 6px;
+  color: #dc2626;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.errorClose:hover {
+  background: rgba(220, 38, 38, 0.2);
+}
+
+/* ====================================
+   STEP CONTENT CARD
+   ==================================== */
+.stepContent {
+  background: white;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  padding: 2rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+}
+
+.stepHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.stepHeader svg {
+  color: #2563eb;
+}
+
+.stepHeader h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0;
+}
+
+/* ====================================
+   UPLOAD ZONE
+   ==================================== */
+.uploadZone {
+  border: 2px dashed #d1d5db;
+  border-radius: 16px;
+  padding: 3rem 2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: #fafbfc;
+}
+
+.uploadZone:hover {
+  border-color: #2563eb;
+  background: #f0f7ff;
+}
+
+.uploadZoneDragging {
+  border-color: #2563eb;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  transform: scale(1.01);
+}
+
+.uploadZoneActive {
+  border-color: #10b981;
+  border-style: solid;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+}
+
+.uploadPlaceholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+}
+
+.uploadIconWrapper {
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-radius: 50%;
+  color: #2563eb;
+}
+
+.uploadTextContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.uploadText {
+  font-size: 16px;
+  font-weight: 600;
+  color: #334155;
+  margin: 0;
+}
+
+.uploadTextOr {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.uploadBrowseBtn {
+  padding: 0.625rem 1.25rem;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.uploadBrowseBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
+
+.uploadHint {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* Uploaded File Display */
+.uploadedFile {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.fileIconWrapper {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  border-radius: 12px;
+  color: #16a34a;
+}
+
+.fileInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  text-align: left;
+  min-width: 0;
+}
+
+.fileName {
+  font-weight: 600;
+  color: #0f172a;
+  word-break: break-all;
+  font-size: 15px;
+}
+
+.fileSize {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.fileSuccess {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  background: #dcfce7;
+  border-radius: 20px;
+  color: #16a34a;
+  font-size: 13px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+/* ====================================
+   TITLE INPUT
+   ==================================== */
+.titleInput {
+  margin-top: 1.5rem;
+}
+
+.titleInput label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 0.5rem;
+}
+
+.titleInput input {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 15px;
+  transition: all 0.2s ease;
+  background: #f8fafc;
+}
+
+.titleInput input:focus {
+  outline: none;
+  border-color: #2563eb;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.titleInput input::placeholder {
+  color: #94a3b8;
+}
+
+/* ====================================
+   SECTION LABELS
+   ==================================== */
+.sectionLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 0.75rem;
+}
+
+.sectionLabel svg {
+  color: #64748b;
+}
+
+.optionalTag {
+  font-size: 11px;
+  font-weight: 500;
+  color: #94a3b8;
+  background: #f1f5f9;
+  padding: 0.125rem 0.5rem;
+  border-radius: 4px;
+  margin-left: 0.5rem;
+}
+
+/* ====================================
+   MODE SECTION
+   ==================================== */
+.modeSection {
+  margin-bottom: 1.5rem;
+}
+
+.modeOptions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.modeOption {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.modeOption:hover {
+  border-color: #cbd5e1;
+  background: white;
+}
+
+.modeOptionActive {
+  border-color: #2563eb;
+  background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%);
+}
+
+.modeOptionIcon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 10px;
+  color: #64748b;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.modeOptionActive .modeOptionIcon {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: white;
+}
+
+.modeOptionContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.modeOptionTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.modeOptionDesc {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.modeCheckIcon {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  color: #2563eb;
+}
+
+/* ====================================
+   ORDER SECTION
+   ==================================== */
+.orderSection {
+  margin-bottom: 1.5rem;
+  padding: 1.25rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+.orderOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.radioOption {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.radioOption:hover {
+  border-color: #cbd5e1;
+}
+
+.radioOptionActive {
+  border-color: #2563eb;
+  background: linear-gradient(135deg, #eff6ff 0%, white 100%);
+}
+
+.radioOption input {
+  width: 18px;
+  height: 18px;
+  accent-color: #2563eb;
+  flex-shrink: 0;
+}
+
+.radioContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.radioTitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: #0f172a;
+}
+
+.radioDesc {
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* ====================================
+   ADD SIGNER SECTION
+   ==================================== */
+.addSignerSection {
+  margin-bottom: 1.5rem;
+}
+
+.addSignerForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.inputRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.inputGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.inputGroup:focus-within {
+  border-color: #2563eb;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.inputGroup svg {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.inputGroup input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  outline: none;
+  min-width: 0;
+}
+
+.inputGroup input::placeholder {
+  color: #94a3b8;
+}
+
+.addButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.25rem;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.addButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
+
+/* ====================================
+   SIGNERS LIST
+   ==================================== */
+.signersList {
+  margin-bottom: 1.5rem;
+}
+
+.signerItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  margin-top: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.signerItem:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.signerAvatar {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  border-radius: 50%;
+  color: white;
+  font-weight: 600;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.signerInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.signerName {
+  font-weight: 600;
+  color: #0f172a;
+  font-size: 14px;
+}
+
+.signerEmail {
+  font-size: 13px;
+  color: #64748b;
+  word-break: break-all;
+}
+
+.removeButton {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.removeButton:hover {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+/* ====================================
+   MESSAGE SECTION
+   ==================================== */
+.messageSection {
+  margin-bottom: 1.5rem;
+}
+
+.messageSection textarea {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+  transition: all 0.2s ease;
+  background: #f8fafc;
+}
+
+.messageSection textarea:focus {
+  outline: none;
+  border-color: #2563eb;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.messageSection textarea::placeholder {
+  color: #94a3b8;
+}
+
+/* ====================================
+   STEP ACTIONS
+   ==================================== */
+.stepActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.nextButton,
+.submitButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.75rem;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+.nextButton:hover:not(:disabled),
+.submitButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35);
+}
+
+.nextButton:disabled,
+.submitButton:disabled {
+  background: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.backStepButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  color: #64748b;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.backStepButton:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ====================================
+   TRUST BADGE
+   ==================================== */
+.trustBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  padding: 0.75rem;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.trustBadge svg {
+  color: #10b981;
+}
+
+/* ====================================
+   MOBILE RESPONSIVE
+   ==================================== */
+@media (max-width: 768px) {
+  .pageWrapper {
+    padding: 1rem;
+    padding-bottom: 2rem;
+  }
+
+  .container {
+    max-width: 100%;
+  }
+
+  .header {
+    margin-bottom: 1rem;
+  }
+
+  .backButton {
+    padding: 0.375rem 0.625rem;
+    font-size: 13px;
+  }
+
+  .backButton span {
+    display: none;
+  }
+
+  .headerContent {
+    gap: 0.75rem;
+  }
+
+  .headerIcon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+
+  .headerIcon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .header h1 {
+    font-size: 1.25rem;
+  }
+
+  .headerSubtitle {
+    font-size: 13px;
+  }
+
+  /* Progress Steps Mobile */
+  .progressContainer {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .progressSteps {
+    gap: 0.25rem;
+  }
+
+  .step {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
+
+  .stepNumber {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+  }
+
+  .stepInfo {
+    align-items: center;
+  }
+
+  .stepLabel {
+    font-size: 12px;
+  }
+
+  .stepDesc {
+    display: none;
+  }
+
+  .stepLine {
+    flex: 0 0 40px;
+    margin: 0 0.25rem;
+  }
+
+  /* Step Content Mobile */
+  .stepContent {
+    padding: 1.25rem;
+    border-radius: 16px;
+  }
+
+  .stepHeader {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .stepHeader h2 {
+    font-size: 1rem;
+  }
+
+  /* Upload Zone Mobile */
+  .uploadZone {
+    padding: 2rem 1.25rem;
+    border-radius: 12px;
+  }
+
+  .uploadIconWrapper {
+    width: 60px;
+    height: 60px;
+  }
+
+  .uploadIconWrapper svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .uploadText {
+    font-size: 15px;
+  }
+
+  .uploadBrowseBtn {
+    padding: 0.5rem 1rem;
+    font-size: 13px;
+  }
+
+  .uploadedFile {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .fileInfo {
+    text-align: center;
+  }
+
+  /* Mode Options Mobile */
+  .modeOptions {
+    grid-template-columns: 1fr;
+  }
+
+  .modeOption {
+    padding: 1rem;
+  }
+
+  .modeOptionIcon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .modeOptionTitle {
+    font-size: 14px;
+  }
+
+  .modeOptionDesc {
+    font-size: 12px;
+  }
+
+  /* Input Row Mobile */
+  .inputRow {
+    grid-template-columns: 1fr;
+  }
+
+  .inputGroup {
+    padding: 0.75rem 1rem;
+  }
+
+  .addButton {
+    padding: 0.75rem 1rem;
+  }
+
+  /* Signer Items Mobile */
+  .signerItem {
+    padding: 0.875rem;
+  }
+
+  .signerAvatar {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+
+  .signerName {
+    font-size: 13px;
+  }
+
+  .signerEmail {
+    font-size: 12px;
+  }
+
+  .removeButton {
+    width: 32px;
+    height: 32px;
+  }
+
+  /* Actions Mobile */
+  .stepActions {
+    flex-direction: column-reverse;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+  }
+
+  .nextButton,
+  .submitButton,
+  .backStepButton {
+    width: 100%;
+    justify-content: center;
+    padding: 0.875rem 1.25rem;
+    font-size: 14px;
+  }
+
+  /* Trust Badge Mobile */
+  .trustBadge {
+    font-size: 12px;
+    margin-top: 1rem;
+  }
+}
+
+/* Extra Small Screens */
+@media (max-width: 400px) {
+  .pageWrapper {
+    padding: 0.75rem;
+  }
+
+  .stepContent {
+    padding: 1rem;
+  }
+
+  .uploadZone {
+    padding: 1.5rem 1rem;
+  }
+
+  .modeOption {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .modeCheckIcon {
+    display: none;
+  }
+
+  .orderSection {
+    padding: 1rem;
+  }
+
+  .radioOption {
+    padding: 0.75rem;
+  }
+}

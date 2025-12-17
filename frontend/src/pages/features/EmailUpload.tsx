@@ -97,7 +97,7 @@ const EmailUpload: React.FC = () => {
           <p className={styles.heroSubtitle}>
             Leiten Sie E-Mails mit Vertragsanhängen einfach an Ihre persönliche Contract AI E-Mail-Adresse weiter. Das System erkennt PDFs automatisch, lädt sie hoch und analysiert sie – ohne manuelle Eingabe.
           </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '24px', justifyContent: 'center' }}>
+          <div className={styles.heroButtons}>
             <Link to={target} className={styles.ctaButton} style={{ fontSize: '18px', padding: '16px 32px' }} aria-label="Jetzt E-Mail-Adresse erhalten">
               📧 Jetzt E-Mail-Adresse erhalten
             </Link>
@@ -248,26 +248,26 @@ const EmailUpload: React.FC = () => {
           {/* USE CASES */}
           <section className={styles.beispielSection}>
             <h2 className={styles.sectionTitle}>Typische Anwendungsfälle</h2>
-            <div style={{ display: 'grid', gap: '20px', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', marginBottom: '40px' }}>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Unterwegs auf dem Smartphone</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}><strong>Szenario:</strong> Vertragsmail am Handy erhalten</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>Lösung:</strong> Einfach weiterleiten – kein umständliches Download & Upload</p>
+            <div className={styles.useCaseGrid}>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>Unterwegs auf dem Smartphone</h3>
+                <p className={styles.useCaseChallenge}><strong>Szenario:</strong> Vertragsmail am Handy erhalten</p>
+                <p className={styles.useCaseSolution}><strong>Lösung:</strong> Einfach weiterleiten – kein umständliches Download & Upload</p>
               </div>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Integration mit anderen Tools</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}><strong>Szenario:</strong> Verträge aus CRM oder ERP-System</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>Lösung:</strong> Automatische Weiterleitung konfigurieren – vollständig automatisiert</p>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>Integration mit anderen Tools</h3>
+                <p className={styles.useCaseChallenge}><strong>Szenario:</strong> Verträge aus CRM oder ERP-System</p>
+                <p className={styles.useCaseSolution}><strong>Lösung:</strong> Automatische Weiterleitung konfigurieren – vollständig automatisiert</p>
               </div>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Verträge von Partnern/Kunden</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}><strong>Szenario:</strong> Partner senden Verträge per E-Mail</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>Lösung:</strong> Einfach CC an Contract AI – automatisch im System</p>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>Verträge von Partnern/Kunden</h3>
+                <p className={styles.useCaseChallenge}><strong>Szenario:</strong> Partner senden Verträge per E-Mail</p>
+                <p className={styles.useCaseSolution}><strong>Lösung:</strong> Einfach CC an Contract AI – automatisch im System</p>
               </div>
-              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Workflow-Automatisierung</h3>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}><strong>Szenario:</strong> Viele Verträge, wenig Zeit</p>
-                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>Lösung:</strong> E-Mail-Regeln aufsetzen – komplett automatischer Upload</p>
+              <div className={styles.useCaseCard}>
+                <h3 className={styles.useCaseTitle}>Workflow-Automatisierung</h3>
+                <p className={styles.useCaseChallenge}><strong>Szenario:</strong> Viele Verträge, wenig Zeit</p>
+                <p className={styles.useCaseSolution}><strong>Lösung:</strong> E-Mail-Regeln aufsetzen – komplett automatischer Upload</p>
               </div>
             </div>
             <div className={styles.beispielBox}>
@@ -336,36 +336,57 @@ const EmailUpload: React.FC = () => {
           </section>
 
           {/* FAQ */}
-          <section className={styles.funktionSection}>
-            <h2 className={styles.sectionTitle}>Häufige Fragen</h2>
-            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Ist der E-Mail-Upload sicher?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Ja, vollständig. E-Mails werden NICHT gespeichert – nur PDF-Anhänge. Diese werden verschlüsselt übertragen und auf deutschen Servern (Frankfurt) gespeichert. Vollständig DSGVO-konform.</p>
+          <section className={styles.funktionSection} aria-labelledby="faq-heading">
+            <h2 id="faq-heading" className={styles.sectionTitle}>Häufige Fragen</h2>
+            <div className={styles.faqContainer}>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Ist der E-Mail-Upload sicher?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Ja, vollständig. E-Mails werden NICHT gespeichert – nur PDF-Anhänge. Diese werden verschlüsselt übertragen und auf deutschen Servern (Frankfurt) gespeichert. Vollständig DSGVO-konform.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Muss ich mich einloggen, um Verträge per E-Mail hochzuladen?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Nein, absolut nicht. Sie leiten einfach E-Mails an Ihre persönliche Contract AI Adresse weiter. Das System verarbeitet alles automatisch im Hintergrund.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Muss ich mich einloggen, um Verträge per E-Mail hochzuladen?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Nein, absolut nicht. Sie leiten einfach E-Mails an Ihre persönliche Contract AI Adresse weiter. Das System verarbeitet alles automatisch im Hintergrund.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Welche Dateiformate werden unterstützt?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Aktuell werden ausschließlich PDF-Dateien unterstützt (max. 15 MB pro Datei). Andere Formate werden automatisch ignoriert.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Welche Dateiformate werden unterstützt?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Aktuell werden ausschließlich PDF-Dateien unterstützt (max. 15 MB pro Datei). Andere Formate werden automatisch ignoriert.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Werden meine E-Mails gespeichert?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Nein, niemals. Wir speichern KEINE E-Mails. Nur PDF-Anhänge und der E-Mail-Betreff werden verarbeitet. Maximale Privatsphäre.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Werden meine E-Mails gespeichert?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Nein, niemals. Wir speichern KEINE E-Mails. Nur PDF-Anhänge und der E-Mail-Betreff werden verarbeitet. Maximale Privatsphäre.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Funktioniert das mit jedem E-Mail-Anbieter?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Ja, mit allen gängigen Anbietern: Gmail, Outlook, Apple Mail, Yahoo Mail, GMX, Web.de, etc. Funktioniert auf PC, Tablet und Smartphone.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Funktioniert das mit jedem E-Mail-Anbieter?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Ja, mit allen gängigen Anbietern: Gmail, Outlook, Apple Mail, Yahoo Mail, GMX, Web.de, etc. Funktioniert auf PC, Tablet und Smartphone.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Kann ich meine E-Mail-Adresse ändern?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Ja, Sie können jederzeit eine neue persönliche E-Mail-Adresse generieren. Die alte Adresse wird dann ungültig.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Kann ich meine E-Mail-Adresse ändern?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Ja, Sie können jederzeit eine neue persönliche E-Mail-Adresse generieren. Die alte Adresse wird dann ungültig.</p>
               </details>
-              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
-                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Gibt es ein Upload-Limit?</summary>
-                <p style={{ margin: '0', color: '#666' }}>Ja, abhängig von Ihrem Plan: Free (1 E-Mail/Stunde), Premium (10 E-Mails/Stunde), Business (20 E-Mails/Stunde). Einzelne PDFs dürfen max. 15 MB groß sein.</p>
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Gibt es ein Upload-Limit?
+                  <span className={styles.faqIcon}>▼</span>
+                </summary>
+                <p className={styles.faqAnswer}>Ja, abhängig von Ihrem Plan: Free (1 E-Mail/Stunde), Premium (10 E-Mails/Stunde), Business (20 E-Mails/Stunde). Einzelne PDFs dürfen max. 15 MB groß sein.</p>
               </details>
             </div>
           </section>
@@ -377,9 +398,9 @@ const EmailUpload: React.FC = () => {
               <p className={styles.ctaSubtitle}>
                 Sparen Sie Zeit und laden Sie Verträge per E-Mail hoch – vollautomatisch, sicher und DSGVO-konform. Probieren Sie es jetzt kostenlos aus!
               </p>
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '24px' }}>
+              <div className={styles.ctaButtons}>
                 <button
-                  style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', padding: '12px 16px', borderRadius: '12px', fontWeight: '600', cursor: 'pointer' }}
+                  className={styles.secondaryButtonLight}
                   onClick={() => document.getElementById('so-funktionierts')?.scrollIntoView({ behavior: 'smooth' })}
                 >
                   So funktioniert E-Mail-Upload

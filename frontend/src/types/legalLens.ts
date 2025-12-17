@@ -7,6 +7,145 @@
 export type PerspectiveType = 'contractor' | 'client' | 'neutral' | 'worstCase';
 
 /**
+ * Branchen-Kontext für spezifische Analysen
+ */
+export type IndustryType =
+  | 'it_software'      // IT & Software
+  | 'construction'     // Bauwesen
+  | 'real_estate'      // Immobilien
+  | 'consulting'       // Beratung
+  | 'manufacturing'    // Produktion/Industrie
+  | 'retail'           // Handel
+  | 'healthcare'       // Gesundheitswesen
+  | 'finance'          // Finanzdienstleistungen
+  | 'general';         // Allgemein/Sonstige
+
+/**
+ * Branchen-Info für UI
+ */
+export interface IndustryInfo {
+  id: IndustryType;
+  name: string;
+  description: string;
+  icon: string;
+  examples: string[];
+  keyTerms: string[];
+}
+
+/**
+ * Verhandlungs-Checkliste Types
+ */
+export interface NegotiationChecklistItem {
+  id: string;
+  priority: 1 | 2 | 3;
+  category: 'financial' | 'liability' | 'termination' | 'scope' | 'other';
+  title: string;
+  section?: string;
+  clausePreview: string;
+  issue: string;
+  risk: string;
+  whatToSay: string;
+  alternativeSuggestion: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  emoji: string;
+  checked?: boolean;
+}
+
+export interface NegotiationChecklistSummary {
+  totalIssues: number;
+  criticalCount: number;
+  estimatedNegotiationTime: string;
+  overallStrategy: string;
+}
+
+export interface NegotiationChecklistResponse {
+  success: boolean;
+  checklist: NegotiationChecklistItem[];
+  summary: NegotiationChecklistSummary;
+  perspective: PerspectiveType;
+  industryContext: IndustryType;
+  generatedAt: string;
+}
+
+/**
+ * Verfügbare Branchen
+ */
+export const INDUSTRIES: IndustryInfo[] = [
+  {
+    id: 'it_software',
+    name: 'IT & Software',
+    description: 'Software-Entwicklung, SaaS, Cloud-Services',
+    icon: '💻',
+    examples: ['Softwareentwicklungsverträge', 'SaaS-Abonnements', 'IT-Dienstleistungen'],
+    keyTerms: ['SLA', 'Uptime', 'IP-Rechte', 'Source-Code-Escrow', 'Wartung']
+  },
+  {
+    id: 'construction',
+    name: 'Bauwesen',
+    description: 'Bauverträge, Handwerk, Architektur',
+    icon: '🏗️',
+    examples: ['Bauverträge', 'Werkverträge', 'Architektenverträge'],
+    keyTerms: ['VOB/B', 'Gewährleistung', 'Nachträge', 'Abnahme', 'Mängelhaftung']
+  },
+  {
+    id: 'real_estate',
+    name: 'Immobilien',
+    description: 'Mietverträge, Kauf, Verwaltung',
+    icon: '🏠',
+    examples: ['Gewerbemietverträge', 'Kaufverträge', 'Maklerverträge'],
+    keyTerms: ['Nebenkosten', 'Kaution', 'Staffelmiete', 'Konkurrenzschutz', 'Instandhaltung']
+  },
+  {
+    id: 'consulting',
+    name: 'Beratung',
+    description: 'Unternehmensberatung, Coaching, Agenturen',
+    icon: '📊',
+    examples: ['Beratungsverträge', 'Agenturverträge', 'Coaching-Verträge'],
+    keyTerms: ['Stundenhonorar', 'Erfolgsbeteiligung', 'Geheimhaltung', 'Wettbewerbsverbot']
+  },
+  {
+    id: 'manufacturing',
+    name: 'Produktion',
+    description: 'Fertigung, Lieferkette, Industrie',
+    icon: '🏭',
+    examples: ['Lieferverträge', 'Fertigungsverträge', 'OEM-Verträge'],
+    keyTerms: ['Lieferzeiten', 'Qualitätssicherung', 'Produkthaftung', 'Mindestabnahme']
+  },
+  {
+    id: 'retail',
+    name: 'Handel',
+    description: 'Einzelhandel, E-Commerce, Großhandel',
+    icon: '🛒',
+    examples: ['Handelsverträge', 'Rahmenverträge', 'Franchiseverträge'],
+    keyTerms: ['Rabatte', 'Rückgaberecht', 'Exklusivität', 'Mindestbestellwert']
+  },
+  {
+    id: 'healthcare',
+    name: 'Gesundheit',
+    description: 'Medizin, Pflege, Pharma',
+    icon: '🏥',
+    examples: ['Praxisverträge', 'Pflegeverträge', 'Lieferverträge Pharma'],
+    keyTerms: ['Datenschutz', 'Haftung', 'Zulassungen', 'Schweigepflicht']
+  },
+  {
+    id: 'finance',
+    name: 'Finanzwesen',
+    description: 'Banken, Versicherungen, Investments',
+    icon: '🏦',
+    examples: ['Kreditverträge', 'Investmentverträge', 'Versicherungen'],
+    keyTerms: ['Zinsen', 'Gebühren', 'Kündigungsfristen', 'Provisionen', 'Regulatorik']
+  },
+  {
+    id: 'general',
+    name: 'Allgemein',
+    description: 'Branchenübergreifend',
+    icon: '📄',
+    examples: ['Standardverträge', 'Arbeitsverträge', 'Allgemeine Dienstleistungen'],
+    keyTerms: ['AGB', 'Haftung', 'Kündigung', 'Datenschutz']
+  }
+];
+
+/**
  * Risikostufen
  */
 export type RiskLevel = 'low' | 'medium' | 'high';
@@ -484,3 +623,105 @@ export const PROBABILITY_LABELS: Record<Probability, string> = {
   medium: 'Mittel',
   high: 'Hoch'
 };
+
+// ============================================
+// EXPORT REPORT TYPES
+// ============================================
+
+/**
+ * Design-Variante für PDF-Export
+ */
+export type ReportDesign = 'executive' | 'modern' | 'minimal' | 'detailed';
+
+/**
+ * Export-Sektion
+ */
+export type ReportSection = 'summary' | 'criticalClauses' | 'checklist' | 'allClauses';
+
+/**
+ * Design-Info für UI
+ */
+export interface ReportDesignInfo {
+  id: ReportDesign;
+  name: string;
+  primaryColor: string;
+  accentColor: string;
+}
+
+/**
+ * Sektion-Info für UI
+ */
+export interface ReportSectionInfo {
+  id: ReportSection;
+  name: string;
+  description: string;
+  default: boolean;
+}
+
+/**
+ * Export-Request
+ */
+export interface ExportReportRequest {
+  design: ReportDesign;
+  includeSections: ReportSection[];
+}
+
+/**
+ * Verfügbare Designs
+ */
+export const REPORT_DESIGNS: ReportDesignInfo[] = [
+  {
+    id: 'executive',
+    name: 'Executive',
+    primaryColor: '#1e293b',
+    accentColor: '#3b82f6'
+  },
+  {
+    id: 'modern',
+    name: 'Modern',
+    primaryColor: '#0f172a',
+    accentColor: '#6366f1'
+  },
+  {
+    id: 'minimal',
+    name: 'Minimal',
+    primaryColor: '#18181b',
+    accentColor: '#18181b'
+  },
+  {
+    id: 'detailed',
+    name: 'Detailliert',
+    primaryColor: '#1e3a5f',
+    accentColor: '#2563eb'
+  }
+];
+
+/**
+ * Verfügbare Sektionen
+ */
+export const REPORT_SECTIONS: ReportSectionInfo[] = [
+  {
+    id: 'summary',
+    name: 'Executive Summary',
+    description: 'Übersicht und Risiko-Verteilung',
+    default: true
+  },
+  {
+    id: 'criticalClauses',
+    name: 'Kritische Klauseln',
+    description: 'Detaillierte Analyse der Risiko-Klauseln',
+    default: true
+  },
+  {
+    id: 'checklist',
+    name: 'Verhandlungs-Checkliste',
+    description: 'Priorisierte Verhandlungspunkte',
+    default: false
+  },
+  {
+    id: 'allClauses',
+    name: 'Alle Klauseln',
+    description: 'Vollständige Klausel-Liste (Anhang)',
+    default: false
+  }
+];

@@ -1,0 +1,403 @@
+/* 📁 FolderBar.module.css - Modern Horizontal Folder Navigation */
+
+.folderBar {
+  width: 100%;
+  margin-bottom: 2rem;
+  padding: 0;
+}
+
+.scrollContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 0;
+  overflow-x: auto;
+  overflow-y: visible;
+  scroll-behavior: smooth;
+
+  /* Custom Scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(102, 126, 234, 0.2) transparent;
+}
+
+.scrollContainer::-webkit-scrollbar {
+  height: 6px;
+}
+
+.scrollContainer::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 0 1rem;
+}
+
+.scrollContainer::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
+  border-radius: 3px;
+}
+
+.scrollContainer::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.5) 0%, rgba(118, 75, 162, 0.5) 100%);
+}
+
+/* Folder Chip */
+.folderChipWrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.folderChip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  background: white;
+  color: #334155;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  position: relative;
+  overflow: visible;
+}
+
+.folderChip:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transform: translateY(-1px); /* Leichter Lift statt scale */
+}
+
+/* Active State */
+.folderChip.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.folderChip.active .chipIcon {
+  color: white;
+}
+
+.folderChip.active .chipCount {
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+}
+
+/* Folder-specific color accent */
+.folderChip:not(.active):not(.unassignedChip):not(.newFolderBtn):not(.smartFoldersBtn) {
+  border-left: 4px solid var(--folder-color, #667eea);
+}
+
+/* Chip Elements */
+.chipIcon {
+  flex-shrink: 0;
+  color: #667eea;
+  transition: color 0.2s ease;
+}
+
+.chipLabel {
+  flex-shrink: 0;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chipCount {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 0.4rem;
+  background: #f1f5f9;
+  color: #64748b;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+/* Drag Handle */
+.dragHandle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 24px;
+  margin-right: 0.25rem;
+  color: #94a3b8;
+  cursor: grab;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.dragHandle:hover {
+  color: #667eea;
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.folderChip.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+  transform: scale(1.05) rotate(2deg); /* Visuelles Feedback */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+}
+
+/* Mobile: Stärkeres Drag-Feedback */
+@media (max-width: 768px) {
+  .folderChip.dragging {
+    transform: scale(1.08) rotate(3deg);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+  }
+}
+
+/* More Button */
+.moreButton {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  margin-left: 0.25rem;
+  border: none;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 6px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.folderChip:hover .moreButton {
+  display: flex;
+}
+
+.moreButton:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: #334155;
+}
+
+.folderChip.active .moreButton {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.folderChip.active .moreButton:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Context Menu */
+.contextMenu {
+  position: fixed;
+  z-index: 10000;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e2e8f0;
+  padding: 0.5rem;
+  min-width: 160px;
+}
+
+.contextMenuItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: none;
+  background: transparent;
+  color: #334155;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: left;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.contextMenuItem:hover {
+  background: #f1f5f9;
+}
+
+.contextMenuItem.danger {
+  color: #ef4444;
+}
+
+.contextMenuItem.danger:hover {
+  background: #fee2e2;
+}
+
+/* Unassigned Chip */
+.unassignedChip {
+  border-color: #fbbf24;
+  background: #fffbeb;
+}
+
+.unassignedChip:hover {
+  background: #fef3c7;
+}
+
+.unassignedChip.active {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+}
+
+.unassignedChip .chipIcon {
+  color: #f59e0b;
+}
+
+.unassignedChip.active .chipIcon {
+  color: white;
+}
+
+/* New Folder Button */
+.newFolderBtn {
+  border-color: #10b981;
+  background: #f0fdf4;
+  color: #059669;
+}
+
+.newFolderBtn:hover {
+  background: #dcfce7;
+  border-color: #059669;
+}
+
+.newFolderBtn .chipIcon {
+  color: #10b981;
+}
+
+/* Smart Folders Button */
+.smartFoldersBtn {
+  border-color: transparent;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
+}
+
+.smartFoldersBtn:hover {
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.35);
+  transform: translateY(-1px);
+}
+
+.smartFoldersBtn .chipIcon {
+  color: white;
+}
+
+/* Divider */
+.divider {
+  width: 2px;
+  height: 32px;
+  background: linear-gradient(to bottom, transparent, #e2e8f0, transparent);
+  margin: 0 0.5rem;
+  flex-shrink: 0;
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  .folderBar {
+    margin-bottom: 1.5rem;
+  }
+
+  .scrollContainer {
+    gap: 0.5rem;
+    padding: 0.75rem 0;
+    -webkit-overflow-scrolling: touch;
+    /* Größere Touch-freundliche Scrollbar */
+    scrollbar-width: auto;
+  }
+
+  .scrollContainer::-webkit-scrollbar {
+    height: 10px; /* Größer für besseres Touch-Feedback */
+  }
+
+  .scrollContainer::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.5) 0%, rgba(118, 75, 162, 0.5) 100%);
+    border-radius: 5px;
+  }
+
+  .folderChip {
+    padding: 0.6rem 0.875rem; /* Etwas größer für Touch */
+    font-size: 0.8125rem;
+    /* Touch-freundlicher Tap-Bereich */
+    min-height: 44px; /* Apple Human Interface Guidelines */
+  }
+
+  .chipLabel {
+    max-width: 100px; /* Kompakter auf kleinen Screens */
+  }
+
+  .chipCount {
+    min-width: 22px;
+    height: 22px;
+    font-size: 0.7rem;
+  }
+
+  /* ✅ WICHTIG: Drag Handle auf Mobile verstecken (Touch = kein Grab) */
+  .dragHandle {
+    display: none !important;
+  }
+
+  /* ✅ Touch-freundlicher More Button (größer für Finger) */
+  .moreButton {
+    display: flex;
+    width: 32px; /* Größer: 44x44px Touch Target */
+    height: 32px;
+    margin-left: 0.5rem;
+  }
+
+  .moreButton svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  /* Mobile-friendly context menu */
+  .contextMenu {
+    min-width: 160px;
+    /* Sicherstellen dass es immer im Viewport ist */
+    left: auto !important;
+    right: 1rem !important;
+  }
+
+  .contextMenuItem {
+    padding: 1rem 0.875rem; /* Größer für Touch */
+    font-size: 0.875rem;
+    min-height: 48px; /* Touch-friendly */
+  }
+
+  /* Touch-Feedback für Chips */
+  .folderChip:active {
+    transform: scale(0.98);
+    background: #f1f5f9;
+  }
+
+  .folderChip.active:active {
+    transform: scale(0.98);
+  }
+
+  /* Divider etwas kleiner auf Mobile */
+  .divider {
+    height: 28px;
+    margin: 0 0.25rem;
+  }
+}
+
+/* Tablet */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .chipLabel {
+    max-width: 130px;
+  }
+}
+
+/* Loading State */
+.folderBar.loading .folderChip {
+  pointer-events: none;
+  opacity: 0.6;
+}

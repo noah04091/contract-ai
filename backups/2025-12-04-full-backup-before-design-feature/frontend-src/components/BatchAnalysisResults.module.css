@@ -1,0 +1,355 @@
+/* 📁 src/components/BatchAnalysisResults.module.css - NEU: Styles für Batch-Analyse */
+
+.singleAnalysisContainer {
+  margin-top: 2rem;
+}
+
+.batchContainer {
+  margin-top: 2rem;
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+}
+
+/* Batch Header */
+.batchHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  gap: 1rem;
+}
+
+.batchInfo {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.successIcon {
+  color: #10b981;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.batchInfo h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.25rem;
+}
+
+.batchInfo p {
+  color: #64748b;
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.batchActions {
+  display: flex;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.newBatchButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.newBatchButton:hover {
+  background: #e2e8f0;
+  color: #475569;
+  transform: translateY(-1px);
+}
+
+/* Analysis Grid */
+.analysisGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Analysis Cards */
+.analysisCard {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.analysisCard:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #d1d5db;
+  transform: translateY(-2px);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.fileInfo {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.fileIcon {
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+  padding: 0.5rem;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.fileName {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.25rem;
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+.fileSize {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Quick Score */
+.quickScore {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.scoreCircle {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: #e5e7eb;
+}
+
+.scoreInner {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #1e293b;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.scoreInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.scoreLabel {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Quick Summary */
+.quickSummary {
+  margin-bottom: 1rem;
+}
+
+.quickSummary p {
+  color: #64748b;
+  line-height: 1.5;
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+/* Card Actions */
+.cardActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.expandButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  justify-content: center;
+}
+
+.expandButton:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+  transform: translateY(-1px);
+}
+
+/* Expanded Analysis */
+.expandedAnalysis {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .batchContainer {
+    padding: 1.5rem;
+  }
+
+  .batchHeader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.5rem;
+  }
+
+  .batchActions {
+    justify-content: center;
+  }
+
+  .analysisGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .analysisCard {
+    padding: 1rem;
+  }
+
+  .cardHeader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .quickScore {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .scoreInfo {
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+
+  .newBatchButton,
+  .expandButton {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 640px) {
+  .batchContainer {
+    padding: 1.25rem;
+  }
+
+  .batchInfo h3 {
+    font-size: 1.375rem;
+  }
+
+  .analysisGrid {
+    gap: 0.875rem;
+  }
+
+  .analysisCard {
+    padding: 0.875rem;
+  }
+
+  .fileName {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .batchContainer {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 16px;
+  }
+
+  .batchInfo h3 {
+    font-size: 1.25rem;
+  }
+
+  .batchInfo p {
+    font-size: 0.9rem;
+  }
+
+  .analysisGrid {
+    gap: 0.75rem;
+  }
+
+  .analysisCard {
+    padding: 0.75rem;
+  }
+
+  .fileInfo {
+    gap: 0.5rem;
+  }
+
+  .fileName {
+    font-size: 0.9rem;
+  }
+
+  .fileSize {
+    font-size: 0.8rem;
+  }
+
+  .scoreCircle {
+    width: 50px;
+    height: 50px;
+  }
+
+  .scoreInner {
+    width: 40px;
+    height: 40px;
+    font-size: 0.875rem;
+  }
+
+  .quickSummary p {
+    font-size: 0.8125rem;
+  }
+}

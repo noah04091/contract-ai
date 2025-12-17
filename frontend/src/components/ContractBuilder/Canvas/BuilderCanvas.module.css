@@ -115,10 +115,11 @@
 }
 
 .pageContent {
-  height: calc(297mm - 40mm - 20mm); /* A4 Höhe minus Padding und Footer-Bereich */
+  height: calc(297mm - 40mm - 25mm); /* A4 Höhe minus Padding und Footer-Bereich */
   position: relative;
   overflow: hidden; /* Überlauf abschneiden - Auto-PageBreak verschiebt Blöcke */
   padding-top: 32px; /* Platz für Block-Controls (Drag-Handles etc.) */
+  padding-bottom: 15mm; /* Abstand zum Seitenfuß */
   margin-top: -32px; /* Kompensiere das Padding nach oben */
 }
 

@@ -97,7 +97,7 @@ const Vertragsanalyse: React.FC = () => {
           <p className={styles.heroSubtitle}>
             Unsere KI liest, bewertet und erklärt Ihre Verträge in unter 60 Sekunden. Risiken, Chancen und kritische Klauseln – alles auf einen Blick.
           </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '24px', justifyContent: 'center' }}>
+          <div className={styles.heroButtons}>
             <Link to={target} className={styles.ctaButton} style={{ fontSize: '18px', padding: '16px 32px' }} aria-label="Vertrag jetzt analysieren">
               🔍 Vertrag jetzt analysieren
             </Link>
@@ -383,9 +383,9 @@ const Vertragsanalyse: React.FC = () => {
               <p className={styles.ctaSubtitle}>
                 Über 87% unserer Nutzer finden kritische Klauseln, die sie übersehen hätten. Analysieren Sie Ihren Vertrag – in 60 Sekunden
               </p>
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '24px' }}>
-                <button 
-                  style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', padding: '12px 16px', borderRadius: '12px', fontWeight: '600', cursor: 'pointer' }}
+              <div className={styles.ctaButtons}>
+                <button
+                  className={styles.secondaryButtonLight}
                   onClick={() => document.getElementById('so-funktionierts')?.scrollIntoView({ behavior: 'smooth' })}
                 >
                   So funktioniert die Analyse

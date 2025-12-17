@@ -257,9 +257,17 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
       {/* System Variables List */}
       {showSystemVars && (
         <div className={styles.systemVarsList}>
-          <p className={styles.systemVarsHint}>
-            Diese Variablen werden automatisch ausgefüllt. Klicke zum Kopieren.
-          </p>
+          <div className={styles.systemVarsIntro}>
+            <p className={styles.systemVarsHint}>
+              <strong>Automatische Variablen</strong> - werden beim Export mit aktuellen Werten gefüllt.
+            </p>
+            <div className={styles.systemVarsExample}>
+              <span className={styles.exampleLabel}>Beispiel im Vertrag:</span>
+              <code>Datum: {'{{heute}}'}</code>
+              <span className={styles.exampleArrow}>→</span>
+              <code className={styles.exampleResult}>Datum: {new Date().toLocaleDateString('de-DE')}</code>
+            </div>
+          </div>
           {['Datum', 'Zeit'].map(group => (
             <div key={group} className={styles.systemVarsGroup}>
               <div className={styles.systemVarsGroupHeader}>

@@ -1,0 +1,1804 @@
+/* ContractAnalysis.module.css - OPTIMIZED FOR WHITE BACKGROUND & IMPROVED RESPONSIVENESS */
+
+/* Base Container */
+.analysisContainer {
+  background: #ffffff;
+  border: 1px solid #e5e5e7;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  margin-top: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.analysisContainer:hover {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+/* Header Styles */
+.header {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  padding: 2rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+}
+
+.headerContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+  gap: 1.5rem;
+}
+
+.fileInfo {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.fileIconContainer {
+  padding: 1rem;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.fileIconContainer:hover {
+  background: rgba(59, 130, 246, 0.15);
+  transform: scale(1.05);
+}
+
+.fileIcon {
+  color: #3b82f6;
+}
+
+.fileDetails h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem;
+  color: #000000;
+  line-height: 1.3;
+}
+
+.fileName {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem;
+  color: #000000;
+  line-height: 1.3;
+}
+
+.fileSize {
+  font-size: 0.9rem;
+  color: #374151;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-weight: 500;
+}
+
+.serviceWarning {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #ef4444;
+  font-weight: 600;
+}
+
+/* ✅ OPTIMIZED: Enhanced Badge Styles */
+.reanalysisBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 8px;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+  transition: all 0.2s ease;
+}
+
+.reanalysisBadge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+}
+
+.lawyerBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 8px;
+  box-shadow: 0 2px 4px rgba(139, 92, 246, 0.2);
+  transition: all 0.2s ease;
+}
+
+.lawyerBadge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(139, 92, 246, 0.3);
+}
+
+.initialResultBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 8px;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+  transition: all 0.2s ease;
+}
+
+.initialResultBadge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+/* ✅ OPTIMIZED: Enhanced Action Buttons */
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.analyzeButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.925rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.analyzeButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+  background: linear-gradient(135deg, #2563eb, #5b21b6);
+}
+
+.analyzeButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.reanalyzeButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.925rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.reanalyzeButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+  background: linear-gradient(135deg, #059669, #047857);
+}
+
+.loadingButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: #ffffff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  font-weight: 500;
+  font-size: 0.925rem;
+}
+
+.resetButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.25rem;
+  background: #ffffff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  font-weight: 500;
+  font-size: 0.925rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.resetButton:hover {
+  background: #f9fafb;
+  color: #111827;
+  border-color: #9ca3af;
+  transform: translateY(-1px);
+}
+
+.resetButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ✅ OPTIMIZED: Enhanced Modal Styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.duplicateModal {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+  max-width: 540px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  position: relative;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 24px 16px 24px;
+  border-bottom: 1px solid #f1f5f9;
+  position: relative;
+  background: #ffffff;
+}
+
+.modalIcon {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.modalHeader h3 {
+  margin: 0;
+  color: #000000;
+  font-size: 20px;
+  font-weight: 600;
+  flex: 1;
+}
+
+.modalCloseBtn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modalCloseBtn:hover {
+  background: #f1f5f9;
+  color: #000000;
+}
+
+.modalContent {
+  padding: 24px;
+  background: #ffffff;
+}
+
+.duplicateMessage {
+  margin: 0 0 24px 0;
+  color: #374151;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.duplicateMessage strong {
+  color: #000000;
+  font-weight: 600;
+}
+
+.duplicateOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.optionCard {
+  display: flex;
+  gap: 16px;
+  padding: 20px;
+  border: 2px solid #f1f5f9;
+  border-radius: 12px;
+  transition: all 0.2s;
+  cursor: pointer;
+  background: #ffffff;
+}
+
+.optionCard:hover {
+  border-color: #e2e8f0;
+  background: #f8fafc;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.optionIcon {
+  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+  color: #64748b;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.optionContent h4 {
+  margin: 0 0 6px 0;
+  color: #000000;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.optionContent p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.modalActions {
+  display: flex;
+  gap: 12px;
+  padding: 16px 24px 24px 24px;
+  border-top: 1px solid #f1f5f9;
+  background: #ffffff;
+}
+
+.primaryModalBtn,
+.secondaryModalBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  flex: 1;
+  justify-content: center;
+}
+
+.primaryModalBtn {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+}
+
+.primaryModalBtn:hover {
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+}
+
+.secondaryModalBtn {
+  background: #ffffff;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.secondaryModalBtn:hover {
+  background: #f1f5f9;
+  color: #475569;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+/* ✅ OPTIMIZED: Navigation Message */
+.navigationContainer {
+  background: linear-gradient(135deg, #ffffff, #f0fdf4);
+  border: 1px solid #a7f3d0;
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
+}
+
+.navigationContent {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+.navigationIcon {
+  flex-shrink: 0;
+  padding: 0.75rem;
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navigationDetails {
+  flex: 1;
+}
+
+.navigationTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #047857;
+  margin: 0 0 0.75rem;
+}
+
+.navigationMessage {
+  color: #064e3b;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 0 0 1.5rem;
+}
+
+.navigationMessage strong {
+  color: #047857;
+  font-weight: 600;
+}
+
+.navigationActions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.goToContractsButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: linear-gradient(135deg, #10b981, #047857);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 500;
+  font-size: 0.925rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.goToContractsButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+  background: linear-gradient(135deg, #059669, #065f46);
+}
+
+.continueButton {
+  display: flex;
+  align-items: center;
+  padding: 0.875rem 1.25rem;
+  background: transparent;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  border-radius: 12px;
+  font-weight: 500;
+  font-size: 0.925rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.continueButton:hover {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: #6ee7b7;
+}
+
+/* ✅ OPTIMIZED: Progress Section with White Background */
+.progressContainer {
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 2rem;
+}
+
+.progressBar {
+  width: 100%;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #6366f1);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.progressTextContainer {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.progressText {
+  font-size: 1rem;
+  color: #000000;
+  margin: 0;
+  font-weight: 500;
+}
+
+.progressSteps {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+}
+
+.progressStep {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  transition: color 0.3s ease;
+}
+
+.progressStep.active {
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+.progressStep:not(.active) {
+  color: #6b7280;
+}
+
+/* ✅ OPTIMIZED: Error Handling with Better Contrast */
+.errorContainer {
+  background: #ffffff;
+  border-bottom: 1px solid rgba(252, 165, 165, 1);
+  padding: 2rem;
+  border-left: 4px solid #dc2626;
+}
+
+.errorContent {
+  display: flex;
+  gap: 1rem;
+}
+
+.errorIcon {
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+  color: #dc2626;
+}
+
+.errorDetails {
+  flex: 1;
+}
+
+.errorTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #000000;
+  margin: 0 0 0.5rem;
+}
+
+.errorMessage {
+  color: #374151;
+  margin: 0 0 1rem;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.retrySection {
+  margin-top: 1rem;
+}
+
+.retryButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 0.75rem;
+}
+
+.retryButton:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+}
+
+.retryButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.retryHint {
+  font-size: 0.875rem;
+  color: #dc2626;
+  margin: 0;
+  font-weight: 500;
+}
+
+.exhaustedRetries {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.exhaustedRetries p {
+  color: #000000;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+}
+
+.contactSupportButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.contactSupportButton:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+/* ✅ OPTIMIZED: Results Section with White Background */
+.resultsContainer {
+  padding: 2rem;
+  background: #ffffff;
+}
+
+.successHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.successInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.successIcon {
+  color: #10b981;
+}
+
+.successDetails h4 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #000000;
+  margin: 0;
+  line-height: 1.3;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.successDetails p {
+  color: #374151;
+  margin: 0.25rem 0 0;
+  font-weight: 500;
+}
+
+.lawyerLevelIndicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  border-radius: 8px;
+  color: white;
+  margin-right: 0.5rem;
+  box-shadow: 0 2px 4px rgba(139, 92, 246, 0.3);
+}
+
+.lawyerLevelFeatures {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.feature {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: #8b5cf6;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  background: rgba(139, 92, 246, 0.1);
+  border-radius: 6px;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.requestId {
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Consolas', monospace;
+  font-size: 0.75rem;
+  color: #6b7280;
+  background: #f9fafb;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+}
+
+/* ✅ OPTIMIZED: Score Display with White Background */
+.scoreSection {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 2.5rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  border: 2px solid #e0f2fe;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.scoreSectionTitle {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #000000;
+  margin: 0 0 2rem;
+}
+
+.scoreSectionContent {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.scoreCircleWrapper {
+  position: relative;
+  display: inline-block;
+  width: 128px;
+  height: 128px;
+}
+
+.scoreCircle {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.scoreContent {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.scoreNumber {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #000000;
+  line-height: 1;
+}
+
+.scoreUnit {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
+.scoreInfoContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.scoreLabel {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.scoreDescription {
+  font-size: 0.9rem;
+  color: #374151;
+  max-width: 28rem;
+  margin: 0 auto;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+/* ✅ OPTIMIZED: Enhanced Cards Layout with White Background */
+.detailsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.detailCard {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 0;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.detailCard:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  border-color: #d1d5db;
+}
+
+/* ✅ Full Width Card (für Handlungsempfehlungen) */
+.fullWidthCard {
+  margin-top: 1.5rem;
+}
+
+.fullWidthCard .structuredList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.detailHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem 1.5rem 1rem;
+  border-bottom: 1px solid #f3f4f6;
+  background: #ffffff;
+}
+
+.detailIconContainer {
+  padding: 0.5rem;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.detailCard h5 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #000000;
+  margin: 0;
+}
+
+.cardContent {
+  padding: 0 1.5rem 1.5rem;
+  background: #ffffff;
+}
+
+/* ✅ OPTIMIZED: Enhanced Point Lists with Better Readability */
+.pointsList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pointItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f9fafb;
+}
+
+.pointItem:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.pointBullet {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 0.6rem;
+  flex-shrink: 0;
+}
+
+.pointText {
+  color: #000000;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 0;
+  font-weight: 500;
+  max-width: 500px;
+}
+
+/* ✅ OPTIMIZED: Structured Lists with Enhanced Styling */
+.structuredList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.structuredItem {
+  margin-bottom: 1.5rem;
+  padding: 1.2rem;
+  background: #ffffff;
+  border-radius: 12px;
+  border-left: 4px solid #e5e7eb;
+  transition: all 0.2s ease;
+  border: 1px solid #f3f4f6;
+}
+
+.structuredItem:last-child {
+  margin-bottom: 0;
+}
+
+.structuredItem:hover {
+  background: #f8fafc;
+  transform: translateX(3px);
+  border-left-color: #3b82f6;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.structuredHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.structuredTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #000000;
+  margin: 0;
+  flex: 1;
+}
+
+.structuredDescription {
+  color: #374151;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* ✅ OPTIMIZED: Enhanced Risk and Priority Badges */
+.riskBadge, .priorityBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.6rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.riskHigh, .priorityHigh {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.2));
+  color: #dc2626;
+  border-left-color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.riskMedium, .priorityMedium {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.2));
+  color: #d97706;
+  border-left-color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.riskLow, .priorityLow {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.2));
+  color: #16a34a;
+  border-left-color: #16a34a;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.riskNeutral, .priorityNeutral {
+  background: linear-gradient(135deg, rgba(107, 114, 128, 0.1), rgba(107, 114, 128, 0.2));
+  color: #6b7280;
+  border-left-color: #6b7280;
+  border: 1px solid rgba(107, 114, 128, 0.3);
+}
+
+/* ✅ OPTIMIZED: Icon Colors */
+.iconRed { color: #dc2626; }
+.iconOrange { color: #d97706; }
+.iconYellow { color: #eab308; }
+.iconGreen { color: #16a34a; }
+.iconGray { color: #6b7280; }
+.iconOrangeRed { color: #f97316; }
+
+.fallbackMessage {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin: 0;
+  border: 1px solid #f3f4f6;
+}
+
+.fallbackMessage p {
+  color: #374151;
+  font-size: 0.9rem;
+  margin: 0;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+/* ✅ OPTIMIZED: Color schemes for different card types */
+.blueIcon { 
+  background: rgba(59, 130, 246, 0.1); 
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+.greenIcon { 
+  background: rgba(16, 185, 129, 0.1); 
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+.yellowIcon { 
+  background: rgba(245, 158, 11, 0.1); 
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+.purpleIcon { 
+  background: rgba(139, 92, 246, 0.1); 
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+.redIcon { 
+  background: rgba(239, 68, 68, 0.1); 
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.blueBullet { background: #3b82f6; }
+.greenBullet { background: #10b981; }
+.yellowBullet { background: #f59e0b; }
+.purpleBullet { background: #8b5cf6; }
+
+/* ✅ Usage Info - Kleine Randinformation ganz unten (ohne Umrandung) */
+.usageInfo {
+  margin-top: 2rem;
+  text-align: center;
+  opacity: 0.7;
+}
+
+.usageInfo p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 400;
+}
+
+.planBadge {
+  background: transparent;
+  color: #6b7280;
+  font-size: 0.75rem;
+  padding: 0;
+  margin-left: 0.25rem;
+  font-weight: 500;
+}
+
+/* ✅ OPTIMIZED: Enhanced Action Buttons */
+.actionButtonsContainer {
+  display: flex;
+  flex-direction: row;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: stretch;
+  margin-top: 2.5rem;
+}
+
+.primaryActionButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: linear-gradient(135deg, #f97316, #dc2626);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
+  flex: 1;
+  min-width: 200px;
+  justify-content: center;
+}
+
+.primaryActionButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(249, 115, 22, 0.5);
+  background: linear-gradient(135deg, #ea580c, #b91c1c);
+}
+
+.primaryActionButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2);
+}
+
+.secondaryButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: #ffffff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 200px;
+  justify-content: center;
+}
+
+.secondaryButton:hover {
+  background: #f9fafb;
+  transform: translateY(-1px);
+  border-color: #9ca3af;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.secondaryButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Alle Secondary Buttons haben jetzt den gleichen Base-Style */
+.legalPulseButton {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  font-weight: 600;
+}
+
+.legalPulseButton:hover {
+  background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%) !important;
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.5);
+}
+
+.downloadButton {
+  /* Erbt alle Styles von .secondaryButton */
+}
+
+.newAnalysisButton {
+  /* Erbt alle Styles von .secondaryButton */
+}
+
+/* ✅ OPTIMIZED: Optimization Result with White Background */
+.optimizationResult {
+  margin-top: 2rem;
+  background: #ffffff;
+  border: 2px solid #a7f3d0;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);
+}
+
+.optimizationHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
+  background: #ffffff;
+  border-bottom: 1px solid #a7f3d0;
+}
+
+.optimizationTitleSection {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.optimizationTitleSection svg {
+  color: #047857;
+}
+
+.optimizationHeader h5 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #000000;
+  margin: 0;
+}
+
+.expandToggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #ffffff;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.expandToggle:hover {
+  background: #f0fdf4;
+  transform: translateY(-1px);
+}
+
+.optimizationContent {
+  padding: 1.5rem;
+  color: #000000;
+  line-height: 1.6;
+  background: #ffffff;
+}
+
+.optimizationSections {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.optimizationSection {
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(167, 243, 208, 0.3);
+}
+
+.optimizationSection:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.optimizationSectionTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #047857;
+  margin: 0 0 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid rgba(16, 185, 129, 0.2);
+}
+
+.optimizationSectionContent {
+  color: #374151;
+  line-height: 1.6;
+  margin: 0;
+  font-size: 0.925rem;
+  font-weight: 500;
+}
+
+.optimizationPlainText {
+  color: #374151;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  font-weight: 500;
+}
+
+/* ✅ OPTIMIZED: Enhanced Responsive Design */
+@media (max-width: 1024px) {
+  .detailsGrid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+  
+  .scoreCircleWrapper {
+    width: 120px;
+    height: 120px;
+  }
+  
+  .scoreNumber {
+    font-size: 1.75rem;
+  }
+
+  .pointText {
+    font-size: 0.9rem;
+  }
+
+  .structuredDescription {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .analysisContainer {
+    border-radius: 16px;
+    margin-top: 1rem;
+  }
+
+  .header {
+    padding: 1.5rem;
+  }
+
+  .headerContent {
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: stretch;
+  }
+
+  .actions {
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .scoreSection {
+    padding: 2rem 1.5rem;
+  }
+
+  .scoreCircleWrapper {
+    width: 100px;
+    height: 100px;
+  }
+
+  .scoreNumber {
+    font-size: 1.5rem;
+  }
+
+  .detailCard {
+    margin-bottom: 1rem;
+  }
+
+  .detailHeader {
+    padding: 1.25rem 1.25rem 0.75rem;
+  }
+
+  .cardContent {
+    padding: 0 1.25rem 1.25rem;
+  }
+
+  .resultsContainer {
+    padding: 1.5rem;
+  }
+
+  .progressContainer {
+    padding: 1.5rem;
+  }
+
+  .errorContainer {
+    padding: 1.5rem;
+  }
+
+  .progressSteps {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .actionButtonsContainer {
+    align-items: stretch;
+  }
+
+  .secondaryActions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .successHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .optimizationHeader {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .expandToggle {
+    align-self: flex-end;
+  }
+
+  .modalOverlay {
+    padding: 16px;
+  }
+
+  .duplicateModal {
+    max-width: 100%;
+  }
+
+  .modalHeader {
+    padding: 20px 20px 16px 20px;
+  }
+
+  .modalContent {
+    padding: 20px;
+  }
+
+  .modalActions {
+    padding: 16px 20px 20px 20px;
+    flex-direction: column;
+  }
+
+  .duplicateOptions {
+    gap: 16px;
+  }
+
+  .optionCard {
+    padding: 16px;
+  }
+
+  .structuredItem {
+    padding: 1rem;
+  }
+
+  .structuredHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .structuredTitle {
+    font-size: 0.95rem;
+  }
+
+  .structuredDescription {
+    font-size: 0.85rem;
+  }
+
+  .lawyerLevelFeatures {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .feature {
+    justify-content: center;
+  }
+
+  /* ✅ IMPROVED: Better font sizes for mobile */
+  .pointText {
+    font-size: 0.9rem;
+  }
+
+  .fileName {
+    font-size: 1.2rem;
+  }
+
+  .fileSize {
+    font-size: 0.85rem;
+  }
+
+  .analyzeButton,
+  .reanalyzeButton,
+  .resetButton,
+  .primaryActionButton,
+  .secondaryButton,
+  .downloadButton,
+  .newAnalysisButton {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 640px) {
+  .header {
+    padding: 1.25rem;
+  }
+
+  .detailsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .detailCard h5 {
+    font-size: 1.05rem;
+  }
+
+  .scoreSection {
+    padding: 1.5rem;
+  }
+
+  .scoreSectionTitle {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .fileInfo {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .scoreInfoContainer {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .primaryActionButton {
+    padding: 1rem 1.5rem;
+    font-size: 0.925rem;
+  }
+  
+  .scoreCircleWrapper {
+    width: 90px;
+    height: 90px;
+  }
+  
+  .scoreNumber {
+    font-size: 1.25rem;
+  }
+  
+  .pointText {
+    font-size: 0.85rem;
+  }
+  
+  .detailHeader {
+    padding: 1rem;
+  }
+  
+  .cardContent {
+    padding: 0 1rem 1rem;
+  }
+
+  .fileSize {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .fileSize > span {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .fileName {
+    font-size: 1.1rem;
+  }
+
+  .structuredDescription {
+    font-size: 0.8rem;
+  }
+
+  .structuredTitle {
+    font-size: 0.9rem;
+  }
+}
+
+/* ✅ Animation utilities */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+.loadingIcon {
+  animation: spin 1s linear infinite;
+}
+
+/* ✅ OPTIMIZED: Enhanced Focus states for accessibility */
+.analyzeButton:focus,
+.reanalyzeButton:focus,
+.resetButton:focus,
+.primaryActionButton:focus,
+.secondaryButton:focus,
+.primaryModalBtn:focus,
+.secondaryModalBtn:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+/* ✅ Print styles */
+@media print {
+  .analysisContainer {
+    box-shadow: none;
+    border: 1px solid #ccc;
+    background: #ffffff;
+  }
+  
+  .actions,
+  .expandToggle,
+  .modalOverlay {
+    display: none;
+  }
+  
+  .optimizationContent {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .lawyerLevelFeatures {
+    display: none;
+  }
+
+  * {
+    color: #000000 !important;
+    background: #ffffff !important;
+  }
+}
+
+/* ✅ NEU: Ausführliches Rechtsgutachten Section */
+.legalOpinionSection {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 2px solid #fbbf24;
+  border-radius: 16px;
+  padding: 2rem;
+  margin-top: 2rem;
+  box-shadow: 0 4px 20px rgba(251, 191, 36, 0.15);
+  transition: all 0.3s ease;
+}
+
+.legalOpinionSection:hover {
+  box-shadow: 0 8px 32px rgba(251, 191, 36, 0.25);
+  transform: translateY(-2px);
+}
+
+.legalOpinionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid #fbbf24;
+}
+
+.legalOpinionTitleSection {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.legalOpinionTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #92400e;
+  margin: 0 0 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.legalOpinionSubtitle {
+  font-size: 0.95rem;
+  color: #78350f;
+  font-weight: 500;
+  margin: 0;
+}
+
+.legalOpinionBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: #ffffff;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+  white-space: nowrap;
+}
+
+.goldIcon {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
+  color: #ffffff !important;
+}
+
+.legalOpinionContent {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  line-height: 1.8;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.legalOpinionParagraph {
+  margin: 0 0 1.25rem 0;
+  color: #1f2937;
+  font-size: 1.05rem;
+  line-height: 1.8;
+  text-align: justify;
+}
+
+.legalOpinionParagraph:last-child {
+  margin-bottom: 0;
+}
+
+/* ✅ Responsive: Rechtsgutachten */
+@media (max-width: 768px) {
+  .legalOpinionSection {
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+  }
+
+  .legalOpinionHeader {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .legalOpinionTitle {
+    font-size: 1.25rem;
+  }
+
+  .legalOpinionBadge {
+    align-self: flex-start;
+  }
+
+  .legalOpinionContent {
+    padding: 1rem;
+  }
+
+  .legalOpinionParagraph {
+    font-size: 1rem;
+    text-align: left;
+  }
+}
+
+/* ✅ REMOVED: Dark mode support (focusing on white background as requested) */

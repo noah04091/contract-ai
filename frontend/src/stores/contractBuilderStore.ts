@@ -1440,9 +1440,14 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
 
           set({ isAiGenerating: true, aiOperation: 'Legal Score berechnen' });
           try {
+            // Send both documentId AND blocks/contractType for fallback (local mode support)
             const result = await apiCall<LegalScore>('/ai/legal-score', {
               method: 'POST',
-              body: JSON.stringify({ documentId: document._id }),
+              body: JSON.stringify({
+                documentId: document._id,
+                blocks: document.content.blocks,
+                contractType: document.metadata?.contractType || 'Allgemeiner Vertrag'
+              }),
             });
             set((state) => {
               if (state.document) {

@@ -1,0 +1,619 @@
+/* ✉️ SignaturePage - Public Signature View with PDF Preview */
+
+.container {
+  min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height für iOS Safari */
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 2rem;
+  /* Safe-Area für iPhone X+ */
+  padding: max(2rem, env(safe-area-inset-top)) max(2rem, env(safe-area-inset-right)) max(2rem, env(safe-area-inset-bottom)) max(2rem, env(safe-area-inset-left));
+}
+
+/* Split Layout - PDF left, Signature right */
+.splitLayout {
+  display: grid;
+  grid-template-columns: 1fr 500px;
+  gap: 2rem;
+  max-width: 1600px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+/* ===== LEFT SIDE - PDF PREVIEW ===== */
+.pdfSection {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 600px;
+  max-height: calc(100vh - 4rem);
+}
+
+.pdfHeader {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.pdfHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.pdfHeader h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.pdfDownloadBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.2s ease;
+}
+
+.pdfDownloadBtn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.pdfViewer {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem;
+  background: #f8f9fa;
+}
+
+.pdfViewer > div {
+  /* react-pdf Document wrapper */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.pdfViewer canvas {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+.pdfInfo {
+  text-align: center;
+  padding: 1rem;
+  background: white;
+  border-top: 1px solid #e5e5e5;
+  color: #6e6e73;
+  font-size: 0.875rem;
+}
+
+.pdfInfo p {
+  margin: 0;
+}
+
+.pdfLoading {
+  text-align: center;
+  padding: 3rem;
+  color: #6e6e73;
+}
+
+.pdfError {
+  text-align: center;
+  padding: 3rem;
+  color: #ff3b30;
+}
+
+.pdfError p {
+  margin: 0.5rem 0 0 0;
+}
+
+.pdfPlaceholder {
+  text-align: center;
+  padding: 3rem;
+  color: #86868b;
+}
+
+.pdfPlaceholder p {
+  margin: 1rem 0 0 0;
+}
+
+/* ===== RIGHT SIDE - SIGNATURE FORM ===== */
+.signatureSection {
+  position: sticky;
+  top: 2rem;
+}
+
+.signatureCard {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.headerIcon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0 0 0.5rem 0;
+}
+
+.subtitle {
+  font-size: 0.875rem;
+  color: #6e6e73;
+  margin: 0;
+  word-break: break-word;
+}
+
+/* Message */
+.message {
+  background: #f8f9fa;
+  border-left: 4px solid #667eea;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.message p {
+  margin: 0;
+  color: #1d1d1f;
+  line-height: 1.6;
+  font-size: 0.875rem;
+}
+
+/* Signer Info */
+.signerInfo {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.infoRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #6e6e73;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.infoRow:last-child {
+  margin-bottom: 0;
+}
+
+.infoRow svg {
+  flex-shrink: 0;
+}
+
+/* Canvas Signature */
+.canvasContainer {
+  margin-bottom: 1.5rem;
+}
+
+.canvasHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.sectionTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0;
+}
+
+.sectionSubtitle {
+  font-size: 0.875rem;
+  color: #6e6e73;
+  margin: 0 0 1rem 0;
+}
+
+.clearBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: 1px solid #d2d2d7;
+  border-radius: 6px;
+  color: #6e6e73;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clearBtn:hover {
+  background: #f8f9fa;
+  border-color: #ff3b30;
+  color: #ff3b30;
+}
+
+.canvasWrapper {
+  border: 2px solid #d2d2d7;
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+}
+
+.signatureCanvas {
+  width: 100% !important;
+  height: 200px !important;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+/* Submit Button */
+.submitBtn {
+  width: 100%;
+  padding: 1rem;
+  min-height: 44px; /* Touch-Target für Mobile */
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 0.75rem;
+}
+
+.submitBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.submitBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Decline Button */
+.declineBtn {
+  width: 100%;
+  padding: 0.875rem;
+  min-height: 44px; /* Touch-Target für Mobile */
+  background: transparent;
+  color: #ff3b30;
+  border: 1.5px solid #ff3b30;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.declineBtn:hover:not(:disabled) {
+  background: #fff5f4;
+  transform: translateY(-1px);
+}
+
+.declineBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Footer */
+.footer {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.footerText {
+  font-size: 0.75rem;
+  color: #86868b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* ===== STATUS CARDS (Loading, Success, Error, Info) ===== */
+.loader {
+  text-align: center;
+  color: #6e6e73;
+  padding: 3rem;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e5e5e5;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.successCard,
+.errorCard,
+.infoCard {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.successIcon {
+  color: #34c759;
+  margin-bottom: 1rem;
+}
+
+.errorIcon {
+  color: #ff3b30;
+  margin-bottom: 1rem;
+}
+
+.infoIcon {
+  color: #007aff;
+  margin-bottom: 1rem;
+}
+
+.successCard h2,
+.errorCard h2,
+.infoCard h2 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0 0 0.5rem 0;
+}
+
+.successCard p,
+.errorCard p,
+.infoCard p {
+  font-size: 1rem;
+  color: #6e6e73;
+  margin: 0 0 0.5rem 0;
+}
+
+.successSubtext {
+  font-size: 0.875rem;
+  color: #86868b;
+}
+
+.downloadBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 2rem;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.downloadBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 1200px) {
+  .splitLayout {
+    grid-template-columns: 1fr 450px;
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 992px) {
+  .splitLayout {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .pdfSection {
+    max-height: 500px;
+  }
+
+  .signatureSection {
+    position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .signatureCard,
+  .successCard,
+  .errorCard,
+  .infoCard {
+    padding: 1.5rem;
+  }
+
+  .pdfSection {
+    max-height: 400px;
+  }
+
+  .pdfViewer {
+    padding: 1rem;
+  }
+
+  .title {
+    font-size: 1.25rem;
+  }
+
+  .signatureCanvas {
+    height: 150px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .canvasHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .clearBtn {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .pdfDownloadBtn,
+  .downloadBtn {
+    min-height: 44px;
+  }
+}
+
+/* 📱 EXTRA SMALL MOBILE (max-width: 375px) - iPhone SE, Mini etc. */
+@media (max-width: 375px) {
+  .container {
+    padding: max(1rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left));
+  }
+
+  .signatureCard,
+  .successCard,
+  .errorCard,
+  .infoCard {
+    padding: 1.25rem;
+    border-radius: 12px;
+  }
+
+  .pdfSection {
+    max-height: 350px;
+    min-height: 300px;
+    border-radius: 12px;
+  }
+
+  .pdfHeader {
+    padding: 1rem;
+  }
+
+  .pdfHeader h2 {
+    font-size: 1rem;
+  }
+
+  .pdfViewer {
+    padding: 0.75rem;
+  }
+
+  .headerIcon {
+    width: 52px;
+    height: 52px;
+  }
+
+  .title {
+    font-size: 1.125rem;
+  }
+
+  .subtitle {
+    font-size: 0.8rem;
+  }
+
+  .message {
+    padding: 0.875rem;
+    font-size: 0.8rem;
+  }
+
+  .signerInfo {
+    padding: 0.875rem;
+  }
+
+  .infoRow {
+    font-size: 0.8rem;
+    gap: 0.5rem;
+  }
+
+  .sectionTitle {
+    font-size: 0.9rem;
+  }
+
+  .sectionSubtitle {
+    font-size: 0.8rem;
+  }
+
+  .signatureCanvas {
+    height: 130px !important;
+  }
+
+  .submitBtn {
+    padding: 0.875rem;
+    font-size: 0.9rem;
+  }
+
+  .declineBtn {
+    padding: 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .clearBtn {
+    padding: 0.5rem 0.875rem;
+    font-size: 0.8rem;
+  }
+
+  .footerText {
+    font-size: 0.7rem;
+  }
+
+  .successCard h2,
+  .errorCard h2,
+  .infoCard h2 {
+    font-size: 1.4rem;
+  }
+
+  .successCard p,
+  .errorCard p,
+  .infoCard p {
+    font-size: 0.9rem;
+  }
+
+  .successSubtext {
+    font-size: 0.8rem;
+  }
+
+  .downloadBtn {
+    padding: 0.875rem 1.5rem;
+    font-size: 0.9rem;
+  }
+}

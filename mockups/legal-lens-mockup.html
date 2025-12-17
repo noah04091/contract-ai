@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal Lens - Interactive Contract Review | Contract AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0 24px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .feature-badge {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #6366f1;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .feature-badge svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .contract-name {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .contract-name span {
+            color: #1e293b;
+            font-weight: 500;
+        }
+
+        .header-center {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .progress-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #f1f5f9;
+            padding: 8px 16px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+            border-radius: 3px;
+            width: 35%;
+            transition: width 0.5s ease;
+        }
+
+        .progress-text {
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .progress-text span {
+            color: #6366f1;
+            font-weight: 600;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-ghost {
+            background: #ffffff;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+        }
+
+        .btn-ghost:hover {
+            background: #f8fafc;
+            color: #1e293b;
+            border-color: #cbd5e1;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        /* Main Layout */
+        .main-container {
+            display: flex;
+            margin-top: 64px;
+            height: calc(100vh - 64px);
+        }
+
+        /* Left Panel - Contract View */
+        .contract-panel {
+            flex: 1;
+            background: #f1f5f9;
+            border-right: 1px solid #e2e8f0;
+            overflow-y: auto;
+            padding: 32px;
+        }
+
+        .contract-paper {
+            max-width: 700px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 48px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e2e8f0;
+            color: #1e293b;
+        }
+
+        .contract-header {
+            text-align: center;
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .contract-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+
+        .contract-subtitle {
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .contract-section {
+            margin-bottom: 28px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .clause {
+            padding: 12px 16px;
+            margin: 8px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+            font-size: 14px;
+            line-height: 1.7;
+            color: #475569;
+            position: relative;
+            background: #ffffff;
+        }
+
+        .clause:hover {
+            background: #f8fafc;
+            border-color: #e2e8f0;
+        }
+
+        .clause.selected {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+            border-color: #6366f1;
+        }
+
+        .clause.risk-low::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 60%;
+            background: #22c55e;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .clause.risk-medium::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 60%;
+            background: #f59e0b;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .clause.risk-high::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 60%;
+            background: #ef4444;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .clause-number {
+            font-weight: 600;
+            color: #6366f1;
+        }
+
+        /* Right Panel - Analysis */
+        .analysis-panel {
+            width: 480px;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border-left: 1px solid #e2e8f0;
+        }
+
+        /* Perspective Switcher */
+        .perspective-switcher {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            background: #fafbfc;
+        }
+
+        .perspective-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #64748b;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .perspective-tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .perspective-tab {
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .perspective-tab:hover {
+            background: #f8fafc;
+            color: #1e293b;
+            border-color: #cbd5e1;
+        }
+
+        .perspective-tab.active {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border-color: #6366f1;
+            color: #6366f1;
+        }
+
+        /* Analysis Content */
+        .analysis-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            background: #fafbfc;
+        }
+
+        .analysis-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            color: #94a3b8;
+        }
+
+        .analysis-empty svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .analysis-empty h3 {
+            font-size: 16px;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        .analysis-empty p {
+            font-size: 14px;
+            max-width: 280px;
+        }
+
+        /* Selected Clause Analysis */
+        .clause-analysis {
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .analysis-header {
+            margin-bottom: 24px;
+        }
+
+        .clause-reference {
+            font-size: 12px;
+            color: #6366f1;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .clause-text-preview {
+            font-size: 14px;
+            color: #64748b;
+            font-style: italic;
+            padding: 12px;
+            background: #ffffff;
+            border-radius: 8px;
+            border-left: 3px solid #6366f1;
+            border: 1px solid #e2e8f0;
+            border-left: 3px solid #6366f1;
+        }
+
+        /* Risk Badge */
+        .risk-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 16px;
+        }
+
+        .risk-badge.low {
+            background: rgba(34, 197, 94, 0.1);
+            color: #16a34a;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .risk-badge.medium {
+            background: rgba(245, 158, 11, 0.1);
+            color: #d97706;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .risk-badge.high {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        /* Analysis Cards */
+        .analysis-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+
+        .analysis-card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .analysis-card-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .analysis-card-icon.explain {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+        }
+
+        .analysis-card-icon.impact {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(249, 115, 22, 0.1) 100%);
+        }
+
+        .analysis-card-icon.alternative {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
+        }
+
+        .analysis-card-icon.negotiate {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%);
+        }
+
+        .analysis-card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        .analysis-card-content {
+            font-size: 14px;
+            line-height: 1.7;
+            color: #64748b;
+        }
+
+        .analysis-card-content strong {
+            color: #1e293b;
+        }
+
+        /* Impact Box */
+        .impact-box {
+            background: rgba(239, 68, 68, 0.05);
+            border: 1px solid rgba(239, 68, 68, 0.15);
+            border-radius: 10px;
+            padding: 16px;
+            margin-top: 12px;
+        }
+
+        .impact-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(239, 68, 68, 0.1);
+        }
+
+        .impact-row:last-child {
+            border-bottom: none;
+        }
+
+        .impact-label {
+            font-size: 13px;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .impact-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #dc2626;
+        }
+
+        .impact-value.warning {
+            color: #d97706;
+        }
+
+        /* Alternative Suggestion */
+        .alternative-box {
+            background: rgba(34, 197, 94, 0.05);
+            border: 1px solid rgba(34, 197, 94, 0.15);
+            border-radius: 10px;
+            padding: 16px;
+            margin-top: 12px;
+        }
+
+        .alternative-text {
+            font-size: 14px;
+            line-height: 1.7;
+            color: #16a34a;
+            font-style: italic;
+        }
+
+        .alternative-benefits {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(34, 197, 94, 0.15);
+        }
+
+        .benefit-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 6px;
+        }
+
+        .benefit-item svg {
+            width: 16px;
+            height: 16px;
+            color: #22c55e;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .action-btn:hover {
+            background: #f8fafc;
+            color: #1e293b;
+            border-color: #cbd5e1;
+        }
+
+        .action-btn.primary {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            border: none;
+            color: white;
+        }
+
+        .action-btn.primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        /* Chat Input */
+        .chat-container {
+            padding: 20px;
+            border-top: 1px solid #e2e8f0;
+            background: #ffffff;
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px 18px;
+            font-size: 14px;
+            color: #1e293b;
+            resize: none;
+            outline: none;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .chat-input:focus {
+            border-color: #6366f1;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .chat-input::placeholder {
+            color: #94a3b8;
+        }
+
+        .chat-send-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            color: white;
+        }
+
+        .chat-send-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .chat-send-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Quick Questions */
+        .quick-questions {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .quick-question {
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-question:hover {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: rgba(99, 102, 241, 0.3);
+            color: #6366f1;
+        }
+
+        /* Legend */
+        .risk-legend {
+            position: fixed;
+            bottom: 24px;
+            left: 24px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px 20px;
+            display: flex;
+            gap: 20px;
+            z-index: 50;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+
+        .legend-dot.low { background: #22c55e; }
+        .legend-dot.medium { background: #f59e0b; }
+        .legend-dot.high { background: #ef4444; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: fixed;
+            background: #1e293b;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 12px;
+            color: #ffffff;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.2s;
+            max-width: 250px;
+        }
+
+        .tooltip.visible {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">Contract AI</div>
+            <div class="feature-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <circle cx="12" cy="12" r="4"/>
+                    <line x1="21.17" y1="8" x2="12" y2="8"/>
+                    <line x1="3.95" y1="6.06" x2="8.54" y2="14"/>
+                    <line x1="10.88" y1="21.94" x2="15.46" y2="14"/>
+                </svg>
+                Legal Lens
+            </div>
+            <div class="contract-name">
+                Analysiere: <span>Dienstleistungsvertrag_2024.pdf</span>
+            </div>
+        </div>
+
+        <div class="header-center">
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text">
+                    <span id="progressPercent">35%</span> analysiert
+                </div>
+            </div>
+        </div>
+
+        <div class="header-right">
+            <button class="btn btn-ghost">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 5v14M5 12h14"/>
+                </svg>
+                Notiz hinzufügen
+            </button>
+            <button class="btn btn-ghost">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Export
+            </button>
+            <button class="btn btn-primary">
+                Analyse abschließen
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Left: Contract View -->
+        <div class="contract-panel">
+            <div class="contract-paper">
+                <div class="contract-header">
+                    <h1 class="contract-title">Dienstleistungsvertrag</h1>
+                    <p class="contract-subtitle">zwischen TechCorp GmbH und ServicePro AG</p>
+                </div>
+
+                <!-- § 1 -->
+                <div class="contract-section">
+                    <h2 class="section-title">§ 1 Vertragsparteien</h2>
+                    <div class="clause risk-low" data-clause="1.1" onclick="selectClause(this, 'low')">
+                        <span class="clause-number">1.1</span> Dieser Vertrag wird geschlossen zwischen der TechCorp GmbH, vertreten durch den Geschäftsführer Max Mustermann, Musterstraße 123, 10115 Berlin (nachfolgend "Auftraggeber" genannt) und der ServicePro AG, vertreten durch den Vorstand Dr. Anna Schmidt, Serviceweg 456, 80333 München (nachfolgend "Auftragnehmer" genannt).
+                    </div>
+                </div>
+
+                <!-- § 2 -->
+                <div class="contract-section">
+                    <h2 class="section-title">§ 2 Vertragsgegenstand</h2>
+                    <div class="clause risk-low" data-clause="2.1" onclick="selectClause(this, 'low')">
+                        <span class="clause-number">2.1</span> Der Auftragnehmer verpflichtet sich, IT-Beratungsdienstleistungen für den Auftraggeber zu erbringen. Der genaue Umfang der Leistungen ergibt sich aus der Anlage A zu diesem Vertrag.
+                    </div>
+                    <div class="clause risk-medium" data-clause="2.2" onclick="selectClause(this, 'medium')">
+                        <span class="clause-number">2.2</span> Der Auftragnehmer ist berechtigt, den Leistungsumfang nach eigenem Ermessen anzupassen, sofern dies zur ordnungsgemäßen Vertragserfüllung erforderlich ist. Der Auftraggeber wird über wesentliche Änderungen informiert.
+                    </div>
+                </div>
+
+                <!-- § 3 -->
+                <div class="contract-section">
+                    <h2 class="section-title">§ 3 Vergütung</h2>
+                    <div class="clause risk-low" data-clause="3.1" onclick="selectClause(this, 'low')">
+                        <span class="clause-number">3.1</span> Die Vergütung beträgt 150,00 EUR pro Stunde, zuzüglich der gesetzlichen Mehrwertsteuer. Die Abrechnung erfolgt monatlich auf Basis der geleisteten Stunden.
+                    </div>
+                    <div class="clause risk-high selected" data-clause="3.2" onclick="selectClause(this, 'high')">
+                        <span class="clause-number">3.2</span> Der Auftragnehmer behält sich das Recht vor, die Vergütung jährlich um bis zu 15% anzupassen. Eine Ankündigung von 14 Tagen vor Inkrafttreten der neuen Preise ist ausreichend. Der Auftraggeber hat kein Sonderkündigungsrecht bei Preisanpassungen.
+                    </div>
+                    <div class="clause risk-medium" data-clause="3.3" onclick="selectClause(this, 'medium')">
+                        <span class="clause-number">3.3</span> Zahlungen sind innerhalb von 7 Tagen nach Rechnungsstellung fällig. Bei Zahlungsverzug werden Verzugszinsen in Höhe von 9 Prozentpunkten über dem Basiszinssatz berechnet.
+                    </div>
+                </div>
+
+                <!-- § 4 -->
+                <div class="contract-section">
+                    <h2 class="section-title">§ 4 Haftung</h2>
+                    <div class="clause risk-high" data-clause="4.1" onclick="selectClause(this, 'high')">
+                        <span class="clause-number">4.1</span> Die Haftung des Auftragnehmers ist auf Vorsatz und grobe Fahrlässigkeit beschränkt. Bei leichter Fahrlässigkeit haftet der Auftragnehmer nur bei Verletzung wesentlicher Vertragspflichten, maximal jedoch in Höhe des vertragstypischen, vorhersehbaren Schadens.
+                    </div>
+                    <div class="clause risk-high" data-clause="4.2" onclick="selectClause(this, 'high')">
+                        <span class="clause-number">4.2</span> Der Auftraggeber stellt den Auftragnehmer von allen Ansprüchen Dritter frei, die im Zusammenhang mit der Nutzung der erbrachten Leistungen entstehen, einschließlich der Kosten der Rechtsverteidigung.
+                    </div>
+                </div>
+
+                <!-- § 5 -->
+                <div class="contract-section">
+                    <h2 class="section-title">§ 5 Vertraulichkeit</h2>
+                    <div class="clause risk-medium" data-clause="5.1" onclick="selectClause(this, 'medium')">
+                        <span class="clause-number">5.1</span> Beide Parteien verpflichten sich, alle im Rahmen der Zusammenarbeit erlangten vertraulichen Informationen geheim zu halten. Diese Verpflichtung gilt über das Vertragsende hinaus für einen Zeitraum von 5 Jahren.
+                    </div>
+                </div>
+
+                <!-- § 6 -->
+                <div class="contract-section">
+                    <h2 class="section-title">§ 6 Laufzeit und Kündigung</h2>
+                    <div class="clause risk-medium" data-clause="6.1" onclick="selectClause(this, 'medium')">
+                        <span class="clause-number">6.1</span> Der Vertrag beginnt am 01.01.2024 und wird auf unbestimmte Zeit geschlossen. Er kann von beiden Seiten mit einer Frist von 6 Monaten zum Quartalsende gekündigt werden.
+                    </div>
+                    <div class="clause risk-high" data-clause="6.2" onclick="selectClause(this, 'high')">
+                        <span class="clause-number">6.2</span> Eine außerordentliche Kündigung durch den Auftraggeber ist nur bei schwerem Vertragsbruch des Auftragnehmers möglich, der durch unabhängige Gutachter bestätigt werden muss. Die Kosten für das Gutachten trägt der Auftraggeber.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Analysis Panel -->
+        <div class="analysis-panel">
+            <!-- Perspective Switcher -->
+            <div class="perspective-switcher">
+                <div class="perspective-label">Perspektive wählen</div>
+                <div class="perspective-tabs">
+                    <div class="perspective-tab active" onclick="switchPerspective(this, 'contractor')">
+                        👤 Auftraggeber
+                    </div>
+                    <div class="perspective-tab" onclick="switchPerspective(this, 'client')">
+                        🏢 Auftragnehmer
+                    </div>
+                    <div class="perspective-tab" onclick="switchPerspective(this, 'neutral')">
+                        ⚖️ Marktüblich
+                    </div>
+                    <div class="perspective-tab" onclick="switchPerspective(this, 'worst')">
+                        💀 Worst-Case
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analysis Content -->
+            <div class="analysis-content" id="analysisContent">
+                <div class="clause-analysis">
+                    <!-- Header -->
+                    <div class="analysis-header">
+                        <div class="clause-reference">§ 3.2 — Preisanpassung</div>
+                        <div class="clause-text-preview">
+                            "Der Auftragnehmer behält sich das Recht vor, die Vergütung jährlich um bis zu 15% anzupassen..."
+                        </div>
+                        <div class="risk-badge high">
+                            🔴 Kritisch — Hohe Priorität
+                        </div>
+                    </div>
+
+                    <!-- Explanation Card -->
+                    <div class="analysis-card">
+                        <div class="analysis-card-header">
+                            <div class="analysis-card-icon explain">📖</div>
+                            <div class="analysis-card-title">Einfache Erklärung</div>
+                        </div>
+                        <div class="analysis-card-content">
+                            <strong>Was steht hier?</strong><br>
+                            Der Dienstleister darf die Preise jedes Jahr um bis zu 15% erhöhen. Er muss Ihnen das nur 2 Wochen vorher sagen, und Sie können deswegen nicht kündigen.
+                            <br><br>
+                            <strong>In normalem Deutsch:</strong><br>
+                            Sie zahlen heute 150€/Stunde. In einem Jahr könnten es schon 172,50€ sein — ohne dass Sie etwas dagegen tun können.
+                        </div>
+                    </div>
+
+                    <!-- Impact Card -->
+                    <div class="analysis-card">
+                        <div class="analysis-card-header">
+                            <div class="analysis-card-icon impact">💥</div>
+                            <div class="analysis-card-title">Konsequenzen für Sie</div>
+                        </div>
+                        <div class="analysis-card-content">
+                            <div class="impact-box">
+                                <div class="impact-row">
+                                    <span class="impact-label">
+                                        💰 Kostenrisiko (5 Jahre)
+                                    </span>
+                                    <span class="impact-value">+101% möglich</span>
+                                </div>
+                                <div class="impact-row">
+                                    <span class="impact-label">
+                                        📅 Ankündigungsfrist
+                                    </span>
+                                    <span class="impact-value warning">Nur 14 Tage</span>
+                                </div>
+                                <div class="impact-row">
+                                    <span class="impact-label">
+                                        🚪 Sonderkündigungsrecht
+                                    </span>
+                                    <span class="impact-value">Keines!</span>
+                                </div>
+                                <div class="impact-row">
+                                    <span class="impact-label">
+                                        ⚖️ Marktüblich
+                                    </span>
+                                    <span class="impact-value warning">3-5% / Jahr</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alternative Card -->
+                    <div class="analysis-card">
+                        <div class="analysis-card-header">
+                            <div class="analysis-card-icon alternative">✨</div>
+                            <div class="analysis-card-title">Bessere Formulierung</div>
+                        </div>
+                        <div class="analysis-card-content">
+                            <div class="alternative-box">
+                                <div class="alternative-text">
+                                    "Die Vergütung kann jährlich maximal entsprechend der Inflationsrate (VPI) angepasst werden. Anpassungen über 5% berechtigen den Auftraggeber zur außerordentlichen Kündigung mit einer Frist von 30 Tagen."
+                                </div>
+                                <div class="alternative-benefits">
+                                    <div class="benefit-item">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="20 6 9 17 4 12"/>
+                                        </svg>
+                                        Faire Preisanpassung an Inflation gekoppelt
+                                    </div>
+                                    <div class="benefit-item">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="20 6 9 17 4 12"/>
+                                        </svg>
+                                        Sonderkündigungsrecht bei großen Erhöhungen
+                                    </div>
+                                    <div class="benefit-item">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="20 6 9 17 4 12"/>
+                                        </svg>
+                                        Planungssicherheit für beide Seiten
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Negotiation Card -->
+                    <div class="analysis-card">
+                        <div class="analysis-card-header">
+                            <div class="analysis-card-icon negotiate">🎯</div>
+                            <div class="analysis-card-title">Verhandlungstipp</div>
+                        </div>
+                        <div class="analysis-card-content">
+                            <strong>So können Sie argumentieren:</strong><br><br>
+                            "Eine Preisanpassung von bis zu 15% liegt deutlich über dem Marktstandard. Wir schlagen vor, die Anpassung an den Verbraucherpreisindex zu koppeln und bei Erhöhungen über 5% ein Sonderkündigungsrecht einzuräumen. Das ist die übliche Praxis bei vergleichbaren Dienstleistungsverträgen."
+                        </div>
+                        <div class="action-buttons">
+                            <button class="action-btn">
+                                📋 Kopieren
+                            </button>
+                            <button class="action-btn primary">
+                                📧 Als E-Mail
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Input -->
+            <div class="chat-container">
+                <div class="quick-questions">
+                    <div class="quick-question" onclick="askQuestion('Ist das legal?')">Ist das legal?</div>
+                    <div class="quick-question" onclick="askQuestion('Was ist marktüblich?')">Was ist marktüblich?</div>
+                    <div class="quick-question" onclick="askQuestion('Wie kann ich verhandeln?')">Wie verhandeln?</div>
+                </div>
+                <div class="chat-input-wrapper">
+                    <textarea class="chat-input" placeholder="Fragen Sie zu dieser Klausel..." rows="1"></textarea>
+                    <button class="chat-send-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"/>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Risk Legend -->
+    <div class="risk-legend">
+        <div class="legend-item">
+            <div class="legend-dot low"></div>
+            Unkritisch
+        </div>
+        <div class="legend-item">
+            <div class="legend-dot medium"></div>
+            Verhandelbar
+        </div>
+        <div class="legend-item">
+            <div class="legend-dot high"></div>
+            Kritisch
+        </div>
+    </div>
+
+    <script>
+        // Track reviewed clauses for progress
+        let reviewedClauses = new Set(['3.2']); // Start with one selected
+        const totalClauses = 11;
+
+        function updateProgress() {
+            const percent = Math.round((reviewedClauses.size / totalClauses) * 100);
+            document.getElementById('progressFill').style.width = percent + '%';
+            document.getElementById('progressPercent').textContent = percent + '%';
+        }
+
+        function selectClause(element, riskLevel) {
+            // Remove selection from all clauses
+            document.querySelectorAll('.clause').forEach(c => c.classList.remove('selected'));
+
+            // Add selection to clicked clause
+            element.classList.add('selected');
+
+            // Track this clause as reviewed
+            const clauseId = element.dataset.clause;
+            reviewedClauses.add(clauseId);
+            updateProgress();
+
+            // Scroll clause into view
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            // Update analysis panel (in real app, this would fetch AI analysis)
+            updateAnalysis(clauseId, element.textContent, riskLevel);
+        }
+
+        function updateAnalysis(clauseId, text, riskLevel) {
+            // Animation effect
+            const content = document.getElementById('analysisContent');
+            content.style.opacity = '0';
+
+            setTimeout(() => {
+                content.style.opacity = '1';
+                // In real implementation, content would be updated here
+            }, 150);
+        }
+
+        function switchPerspective(element, perspective) {
+            document.querySelectorAll('.perspective-tab').forEach(t => t.classList.remove('active'));
+            element.classList.add('active');
+
+            // Animate content change
+            const content = document.getElementById('analysisContent');
+            content.style.opacity = '0.5';
+            setTimeout(() => {
+                content.style.opacity = '1';
+            }, 200);
+
+            // Show perspective-specific message
+            console.log('Switched to perspective:', perspective);
+        }
+
+        function askQuestion(question) {
+            const input = document.querySelector('.chat-input');
+            input.value = question;
+            input.focus();
+        }
+
+        // Auto-resize textarea
+        document.querySelector('.chat-input').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+
+        // Initialize progress
+        updateProgress();
+    </script>
+</body>
+</html>

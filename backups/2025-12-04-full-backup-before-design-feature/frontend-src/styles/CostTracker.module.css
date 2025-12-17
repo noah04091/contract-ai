@@ -1,0 +1,386 @@
+/* ✨ CostTracker.module.css - Clean Minimal Cost Overview Styling */
+
+.costTracker {
+  background: #fafafa;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 1.25rem;
+  transition: all 0.2s ease;
+}
+
+.costTracker:hover {
+  border-color: #d1d5db;
+}
+
+/* Title */
+.title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0 0 1rem 0;
+}
+
+.icon {
+  font-size: 1rem;
+}
+
+/* Frequency Section - Clean Minimal */
+.frequencySection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.frequencyLabel {
+  font-size: 0.75rem;
+  color: #86868b;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.frequencyToggle {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.frequencyBtn {
+  flex: 1;
+  padding: 0.65rem 0.75rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #1d1d1f;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.frequencyBtn:hover:not(:disabled) {
+  border-color: #667eea;
+  background: #f9fafb;
+}
+
+.frequencyBtn.active {
+  background: #667eea;
+  border-color: #667eea;
+  color: white;
+}
+
+.frequencyBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Base Amount Section - Editierbar */
+.baseAmountSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.85rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.baseAmountLabel {
+  font-size: 0.75rem;
+  color: #86868b;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.baseAmountInputWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.baseAmountInput {
+  flex: 1;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 1rem;
+  color: #1d1d1f;
+  background: #fafafa;
+  transition: all 0.2s ease;
+  font-variant-numeric: tabular-nums;
+}
+
+.baseAmountInput:hover:not(:disabled) {
+  border-color: #667eea;
+  background: white;
+}
+
+.baseAmountInput:focus {
+  outline: none;
+  border-color: #667eea;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.baseAmountInput:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Remove number input arrows */
+.baseAmountInput::-webkit-outer-spin-button,
+.baseAmountInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.baseAmountInput[type=number] {
+  -moz-appearance: textfield;
+}
+
+.currencySymbol {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #86868b;
+}
+
+/* Start Date Section - Clean Minimal */
+.startDateSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.85rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.startDateLabel {
+  font-size: 0.75rem;
+  color: #86868b;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.startDateInput {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: #1d1d1f;
+  background: #fafafa;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.startDateInput:hover:not(:disabled) {
+  border-color: #667eea;
+  background: white;
+}
+
+.startDateInput:focus {
+  outline: none;
+  border-color: #667eea;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.startDateInput:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Saving Indicator */
+.savingIndicator {
+  margin-top: 1rem;
+  padding: 0.6rem;
+  background: #dbeafe;
+  border: 1px solid #3b82f6;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: #1e40af;
+  font-weight: 600;
+}
+
+/* Cost Grid */
+.costGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.costItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.75rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #f3f4f6;
+  transition: all 0.2s ease;
+}
+
+.costItem:hover {
+  border-color: #e5e7eb;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.costLabel {
+  font-size: 0.7rem;
+  color: #6e6e73;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+.costValue {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #667eea;
+}
+
+/* Compare Button */
+.compareBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.25rem;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.compareBtn:hover {
+  background: #5568d3;
+  transform: translateY(-1px);
+}
+
+.compareBtn:active {
+  transform: translateY(0);
+}
+
+.arrow {
+  font-size: 1.1rem;
+  transition: transform 0.2s ease;
+}
+
+.compareBtn:hover .arrow {
+  transform: translateX(3px);
+}
+
+/* No Cost Hint */
+.noCostHint {
+  text-align: center;
+  color: #6e6e73;
+  font-size: 0.85rem;
+  font-style: italic;
+  margin: 0;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px dashed #e5e7eb;
+}
+
+/* ========================================
+   MOBILE RESPONSIVENESS
+   ======================================== */
+
+@media (max-width: 768px) {
+  .costTracker {
+    padding: 1.25rem;
+  }
+
+  .title {
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+  }
+
+  .frequencyToggle {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .frequencyBtn {
+    width: 100%;
+    padding: 0.7rem;
+  }
+
+  .startDateSection {
+    padding: 0.75rem;
+  }
+
+  /* Mobile: Vertical statt Grid */
+  .costGrid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .costItem {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.9rem 1rem;
+  }
+
+  .costItem:hover {
+    transform: none; /* Kein Lift auf Mobile */
+  }
+
+  .costLabel {
+    font-size: 0.75rem;
+  }
+
+  .costValue {
+    font-size: 1.25rem;
+  }
+
+  .compareBtn {
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .costTracker {
+    padding: 1rem;
+  }
+
+  .costGrid {
+    gap: 0.6rem;
+  }
+
+  .costItem {
+    padding: 0.75rem 0.85rem;
+  }
+
+  .costLabel {
+    font-size: 0.7rem;
+  }
+
+  .costValue {
+    font-size: 1.1rem;
+  }
+
+  .noCostHint {
+    font-size: 0.8rem;
+    padding: 0.85rem;
+  }
+}

@@ -1041,6 +1041,15 @@ const connectDB = async () => {
       console.error("❌ Fehler bei Legal Lens API:", err);
     }
 
+    // 📚 CLAUSE LIBRARY - Klausel-Favoriten/Bibliothek
+    try {
+      const clauseLibraryRoutes = require("./routes/clauseLibrary");
+      app.use("/api/clause-library", verifyToken, clauseLibraryRoutes);
+      console.log("✅ Clause Library API geladen unter /api/clause-library");
+    } catch (err) {
+      console.error("❌ Fehler bei Clause Library API:", err);
+    }
+
     // 💰 COST TRACKING API (OpenAI Usage & Budget Monitoring)
     try {
       const costTrackingRoutes = require("./routes/costTracking");

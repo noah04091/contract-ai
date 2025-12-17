@@ -1,0 +1,1252 @@
+import { useState, useEffect, ReactNode } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { CheckCircle, X, Users, Zap, Star, Shield, Clock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
+import Footer from "../components/Footer";
+import styles from "../styles/Pricing.module.css";
+
+// Typdefinitionen
+interface PlanButton {
+  text: string;
+  action: () => void;
+  variant: "outline" | "filled" | "gradient";
+  icon?: ReactNode;
+}
+
+interface Plan {
+  id: string;
+  title: string;
+  pricing: {
+    monthly: {
+      original: string;
+      discounted: string;
+      discount: string;
+    };
+    yearly: {
+      original: string;
+      discounted: string;
+      discount: string;
+      yearlyNote: string;
+    };
+  };
+  icon: ReactNode;
+  description: string;
+  features: string[];
+  limitations?: string[];
+  color: string;
+  popular?: boolean;
+  button: PlanButton;
+}
+
+export default function Pricing() {
+  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'cards' | 'table'>('cards');
+  const [animateCards, setAnimateCards] = useState(false);
+  const [currentActivity, setCurrentActivity] = useState(0);
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
+  const [showSwipeHint, setShowSwipeHint] = useState(true);
+  const navigate = useNavigate();
+
+  // Urgency & Scarcity Daten - Recurring 14-Tage Zyklen
+  const urgencyData = {
+    getNextCycleEnd: () => {
+      const cycleLength = 14 * 24 * 60 * 60 * 1000; // 14 Tage in Millisekunden
+      const currentTime = Date.now();
+      const cycleStart = Math.floor(currentTime / cycleLength) * cycleLength;
+      return new Date(cycleStart + cycleLength);
+    },
+    remainingSpots: 47,
+    discountPercent: 25,
+    message: "Früher-Zugang Aktion"
+  };
+
+  // Echte Testimonials mit messbaren Ergebnissen
+  const testimonials = [
+    {
+      name: "Dr. Sarah Weber",
+      company: "Weber Rechtsanwälte",
+      quote: "Spare täglich 2-3h bei Vertragsanalysen",
+      metric: "⏱️ 2-3h/Tag gespart",
+      action: "nutzt seit 8 Monaten"
+    },
+    {
+      name: "Michael Schmidt",
+      company: "Schmidt & Partner GmbH",
+      quote: "Übersehe keine kritischen Klauseln mehr",
+      metric: "⚖️ Mehr Rechtssicherheit",
+      action: "hat Business verlängert"
+    },
+    {
+      name: "Lisa Müller",
+      company: "StartUp Legal München",
+      quote: "Perfekt für schnelle Ersteinschätzungen",
+      metric: "⚡ 2x schneller",
+      action: "empfiehlt Contract AI"
+    },
+    {
+      name: "Thomas Klein",
+      company: "Klein Consulting",
+      quote: "Finde kritische Klauseln 3x schneller",
+      metric: "🔍 Weniger Nachverhandlungen",
+      action: "nutzt täglich"
+    },
+    {
+      name: "Nina Hoffmann",
+      company: "Hoffmann Legal Services",
+      quote: "Mandanten lieben die schnellen Analysen",
+      metric: "😀 Zufriedenere Mandanten",
+      action: "nutzt Enterprise"
+    },
+    {
+      name: "Andreas Berger",
+      company: "Berger & Kollegen",
+      quote: "Endlich Übersicht bei komplexen Verträgen",
+      metric: "📂 Bessere Organisation",
+      action: "ganzes Team nutzt es"
+    },
+    {
+      name: "Julia Richter",
+      company: "Richter Rechtsberatung",
+      quote: "Spare viel Zeit bei Standardverträgen",
+      metric: "⏱️ Effizienter im Alltag",
+      action: "nutzt seit 6 Monaten"
+    },
+    {
+      name: "Martin Fischer",
+      company: "Fischer Legal Group",
+      quote: "Risiken & Chancen sofort erkennbar",
+      metric: "📊 Klarere Einschätzungen",
+      action: "empfiehlt Business-Plan"
+    },
+    {
+      name: "Petra Krause",
+      company: "Krause Wirtschaftsrecht",
+      quote: "Spare 30% der Zeit für Risikoanalyse",
+      metric: "💰 Niedrigere Kosten",
+      action: "nutzt seit Start"
+    },
+    {
+      name: "David Scholz",
+      company: "Scholz Legal Tech",
+      quote: "Konkurrenzfähig durch schnelle Angebote",
+      metric: "🚀 Wettbewerbsvorteil",
+      action: "wechselte zu Enterprise"
+    },
+    {
+      name: "Sabine Mayer",
+      company: "Mayer Vertragsrecht",
+      quote: "Weniger Haftungsrisiken dank KI-Check",
+      metric: "🛡️ Reduzierte Risiken",
+      action: "empfiehlt Kollegen"
+    },
+    {
+      name: "Robert Lange",
+      company: "Lange & Associates",
+      quote: "Günstiger als externe Anwaltsstunden",
+      metric: "💶 Kostenersparnis",
+      action: "hat Team erweitert"
+    }
+  ];
+
+  useEffect(() => {
+    // Trigger card animations after component mount
+    const timer = setTimeout(() => {
+      setAnimateCards(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Countdown Timer für Urgency - Recurring 14-Tage Zyklen
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const now = new Date().getTime();
+      const nextCycleEnd = urgencyData.getNextCycleEnd().getTime();
+      const distance = nextCycleEnd - now;
+
+      if (distance > 0) {
+        setTimeLeft({
+          days: Math.floor(distance / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
+          seconds: Math.floor((distance % (1000 * 60)) / 1000),
+        });
+      } else {
+        // Fallback: Wenn Timer abgelaufen, neuen Zyklus starten
+        const newCycleEnd = urgencyData.getNextCycleEnd().getTime();
+        const newDistance = newCycleEnd - now;
+        setTimeLeft({
+          days: Math.floor(newDistance / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((newDistance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          minutes: Math.floor((newDistance % (1000 * 60 * 60)) / (1000 * 60)),
+          seconds: Math.floor((newDistance % (1000 * 60)) / 1000),
+        });
+      }
+    };
+
+    calculateTimeLeft();
+    const timer = setInterval(calculateTimeLeft, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // Testimonial Rotation (alle 8 Sekunden)
+  useEffect(() => {
+    const testimonialTimer = setInterval(() => {
+      setCurrentActivity((prev) => (prev + 1) % testimonials.length);
+    }, 8000);
+
+    return () => clearInterval(testimonialTimer);
+  }, [testimonials.length]);
+
+  // Smooth Marquee Animation für Mobile
+  useEffect(() => {
+    let animationId: number;
+    let position = 0;
+    const speed = 0.5; // Pixel per frame
+
+    const animate = () => {
+      const marqueeElement = document.querySelector(`.${styles.infoItems}`) as HTMLElement;
+
+      if (marqueeElement && window.innerWidth <= 767) {
+        const contentWidth = marqueeElement.scrollWidth;
+
+        position -= speed;
+
+        // Reset position when fully scrolled (seamless loop)
+        if (Math.abs(position) >= contentWidth / 2) {
+          position = 0;
+        }
+
+        marqueeElement.style.transform = `translateX(${position}px)`;
+      }
+
+      animationId = requestAnimationFrame(animate);
+    };
+
+    // Nur auf Mobile starten
+    if (window.innerWidth <= 767) {
+      animate();
+    }
+
+    return () => {
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
+    };
+  }, []);
+
+  // Stripe Checkout Funktion
+  const startCheckout = async (plan: string) => {
+    setLoading(true);
+    let res: Response | undefined;
+
+    try {
+      res = await fetch("/api/stripe/create-checkout-session", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          plan,
+          billing: billingPeriod
+        })
+      });
+
+      const data: { url?: string; message?: string } = await res.json();
+
+      if (!res.ok || !data.url) {
+        throw new Error(data.message || "Fehler beim Stripe-Checkout");
+      }
+
+      // Weiterleitung zur Stripe Checkout URL
+      window.location.href = data.url;
+    } catch (error) {
+      const err = error as Error;
+
+      // Prüfe ob es ein Authentifizierungsfehler ist (401/403)
+      if (res && (res.status === 401 || res.status === 403)) {
+        alert("Um ein Abo zu kaufen, müssen Sie sich zuerst registrieren. Sie werden zur Registrierung weitergeleitet.");
+        navigate("/register?from=pricing&plan=" + plan);
+      } else {
+        alert("❌ Fehler beim Checkout: " + err.message);
+        navigate("/dashboard?status=error");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const plans: Plan[] = [
+    {
+      id: "free",
+      title: "Starter",
+      pricing: {
+        monthly: {
+          original: "0€",
+          discounted: "0€",
+          discount: ""
+        },
+        yearly: {
+          original: "0€",
+          discounted: "0€",
+          discount: "",
+          yearlyNote: "für immer kostenlos"
+        }
+      },
+      icon: <Users size={22} />,
+      description: "Zum Testen & Reinschnuppern",
+      features: [
+        "3 KI-Vertragsanalysen (einmalig)",
+        "Verträge hochladen & ansehen",
+        "Kalender & Fristen (nur Ansicht)",
+        "Legal Pulse Feed (nur Ansicht)",
+        "Community Support",
+      ],
+      limitations: [
+        "Keine Optimierung oder Vergleich",
+        "Keine digitalen Signaturen",
+        "Keine Email-Erinnerungen",
+        "Keine KI-Vertragserstellung",
+      ],
+      color: "#0080FF",
+      button: {
+        text: "Kostenlos starten",
+        action: () => navigate("/register"),
+        variant: "outline" as const
+      }
+    },
+    {
+      id: "business",
+      title: "Business",
+      pricing: {
+        monthly: {
+          original: "29€",
+          discounted: "19€",
+          discount: "33%"
+        },
+        yearly: {
+          original: "348€",
+          discounted: "190€",
+          discount: "45%",
+          yearlyNote: "10 Monate zahlen, 12 bekommen"
+        }
+      },
+      icon: <Zap size={22} />,
+      description: "Vollwertig mit Limits - für Freelancer",
+      features: [
+        "25 KI-Analysen pro Monat",
+        "15 Optimierungen & 20 Vergleiche",
+        "50 KI-Chat Fragen pro Monat",
+        "10 KI-Vertragserstellungen",
+        "Unbegrenzte digitale Signaturen",
+        "Email-Erinnerungen & Smart Folders",
+        "Legal Pulse mit Benachrichtigungen",
+        "Priority Support (24h)",
+      ],
+      color: "#2D7FF9",
+      popular: true,
+      button: {
+        text: "Business wählen",
+        action: () => startCheckout('business'),
+        variant: "filled" as const
+      }
+    },
+    {
+      id: "premium",
+      title: "Enterprise",
+      pricing: {
+        monthly: {
+          original: "39€",
+          discounted: "29€",
+          discount: "25%"
+        },
+        yearly: {
+          original: "468€",
+          discounted: "290€",
+          discount: "38%",
+          yearlyNote: "10 Monate zahlen, 12 bekommen"
+        }
+      },
+      icon: <Star size={22} />,
+      description: "Unbegrenzt + Profi-Features",
+      features: [
+        "Unbegrenzte Analysen & Optimierungen",
+        "Unbegrenzter KI-Chat & Erstellung",
+        "White-Label PDF-Export",
+        "Team-Management (bis 10 User)",
+        "Bulk-Operationen & Excel-Export",
+        "Custom Templates & API-Zugang",
+        "Priority Processing",
+        "Persönliches Onboarding",
+      ],
+      color: "#0062E0",
+      button: {
+        text: "Enterprise wählen",
+        action: () => startCheckout('premium'),
+        variant: "gradient" as const
+      }
+    },
+  ];
+
+  const featureMatrix = [
+    // KI-Analyse & Optimierung
+    { feature: "KI-Vertragsanalysen", free: "3 (einmalig)", business: "25/Monat", premium: "Unbegrenzt" },
+    { feature: "KI-Optimierung", free: "–", business: "15/Monat", premium: "Unbegrenzt" },
+    { feature: "Vertragsvergleich", free: "–", business: "20/Monat", premium: "Unbegrenzt" },
+    { feature: "KI-Chat mit Vertrag", free: "–", business: "50 Fragen/Monat", premium: "Unbegrenzt" },
+    { feature: "KI-Vertragserstellung", free: "–", business: "10/Monat", premium: "Unbegrenzt" },
+    { feature: "Priority Processing", free: "–", business: "–", premium: "✓" },
+    // Verwaltung & Organisation
+    { feature: "Verträge hochladen", free: "✓ Nur ansehen", business: "✓ Unbegrenzt", premium: "✓ Unbegrenzt" },
+    { feature: "Ordner-Organisation", free: "–", business: "✓ + KI-Vorschläge", premium: "✓ + KI-Vorschläge" },
+    { feature: "Kalender & Fristen", free: "✓ Nur ansehen", business: "✓ Vollzugriff", premium: "✓ Vollzugriff" },
+    { feature: "Email-Erinnerungen", free: "–", business: "✓", premium: "✓" },
+    { feature: "Kündigungsassistent", free: "–", business: "✓ Manuell", premium: "✓ 1-Click" },
+    { feature: "Email-to-Contract Import", free: "–", business: "✓", premium: "✓" },
+    { feature: "Bulk-Operationen", free: "–", business: "–", premium: "✓" },
+    // Legal Pulse
+    { feature: "Legal Pulse Feed", free: "✓ Nur ansehen", business: "✓ Aktiv", premium: "✓ Aktiv" },
+    { feature: "Gesetzessuche", free: "–", business: "✓ Basis", premium: "✓ Erweitert" },
+    { feature: "Legal Pulse Benachrichtigungen", free: "–", business: "✓", premium: "✓" },
+    // Digitale Signaturen
+    { feature: "Digitale Signaturen", free: "–", business: "✓ Unbegrenzt", premium: "✓ Unbegrenzt" },
+    { feature: "Multi-Signer Support", free: "–", business: "✓", premium: "✓" },
+    // Export & Dokumentation
+    { feature: "PDF-Download", free: "✓ Nur ansehen", business: "✓ + Analyse-Reports", premium: "✓ White-Label" },
+    { feature: "Firmenprofil & Logo", free: "–", business: "–", premium: "✓" },
+    { feature: "Excel-Export", free: "–", business: "–", premium: "✓" },
+    { feature: "Bulk-Download (ZIP)", free: "–", business: "–", premium: "✓" },
+    // Analytics & Insights
+    { feature: "Kostenübersicht", free: "–", business: "✓ Basis", premium: "✓ + Forecasting" },
+    { feature: "Portfolio-Analyse", free: "–", business: "✓ Basis", premium: "✓ Pro + Benchmarks" },
+    { feature: "Custom Templates", free: "–", business: "–", premium: "✓ Unbegrenzt" },
+    // Integration & API
+    { feature: "REST API-Zugang", free: "–", business: "–", premium: "✓" },
+    { feature: "Team-Management", free: "–", business: "–", premium: "✓ (bis 10 User)" },
+    // Support
+    { feature: "Support", free: "Community", business: "Priority (24h)", premium: "Priority + Onboarding" },
+  ];
+
+  // Card animation variants
+  const cardWrapperVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: (i: number) => ({
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: i * 0.15 + 0.2,
+        duration: 0.6,
+        ease: [0.23, 1, 0.32, 1]
+      }
+    })
+  };
+
+  // Hover animation für Karten
+  const cardHoverVariants = {
+    initial: { y: 0, boxShadow: "0 10px 40px rgba(0, 0, 0, 0.06), 0 0 1px rgba(0, 0, 0, 0.1)" },
+    hover: (i: number) => ({
+      y: -10,
+      boxShadow: i === 1 
+        ? "0 30px 60px rgba(45, 127, 249, 0.2)" 
+        : "0 30px 60px rgba(0, 0, 0, 0.1)",
+      transition: {
+        type: "spring",
+        stiffness: 500,
+        damping: 30
+      }
+    })
+  };
+  
+  // Button hover animation
+  const buttonHoverVariants = {
+    initial: { scale: 1, y: 0 },
+    hover: { scale: 1.02, y: -2 },
+    tap: { scale: 0.98 },
+    transition: {
+      type: "spring",
+      stiffness: 500,
+      damping: 30
+    }
+  };
+
+  // Feature list animation
+  const featureItemVariants = {
+    hidden: { opacity: 0, x: -10 },
+    visible: (customDelay: number) => ({
+      opacity: 1,
+      x: 0,
+      transition: {
+        delay: customDelay,
+        duration: 0.5
+      }
+    })
+  };
+
+  // Table row animation
+  const tableRowVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: (i: number) => ({
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: i * 0.05 + 0.3,
+        duration: 0.5
+      }
+    })
+  };
+
+  // Hintergrund animation
+  const backgroundVariants = {
+    animate: {
+      backgroundPosition: ["0% 0%", "100% 100%"],
+      transition: {
+        duration: 20,
+        ease: "linear",
+        repeat: Infinity,
+        repeatType: "reverse" as const
+      }
+    }
+  };
+
+  // Render buttons basierend auf Plan-Konfiguration
+  const renderButton = (plan: Plan, isLoading = false) => {
+    if (plan.button.variant === "outline") {
+      return (
+        <motion.button 
+          className={styles.btnOutline} 
+          onClick={plan.button.action}
+          variants={buttonHoverVariants}
+          initial="initial"
+          whileHover="hover"
+          whileTap="tap"
+          style={{
+            borderColor: plan.color,
+            color: plan.color
+          }}
+        >
+          {plan.button.text}
+        </motion.button>
+      );
+    } else if (plan.button.variant === "filled") {
+      return (
+        <motion.button
+          onClick={plan.button.action}
+          disabled={isLoading}
+          className={styles.btnFilled}
+          variants={buttonHoverVariants}
+          initial="initial"
+          whileHover={!isLoading ? "hover" : undefined}
+          whileTap={!isLoading ? "tap" : undefined}
+          style={{
+            backgroundColor: isLoading ? undefined : plan.color,
+            boxShadow: isLoading ? undefined : `0 8px 20px ${plan.color}40`
+          }}
+        >
+          {isLoading ? (
+            <>
+              <span className={styles.loadingSpinner}></span>
+              <span>Lade Stripe...</span>
+            </>
+          ) : (
+            <>
+              {plan.button.text}
+              {plan.button.icon && plan.button.icon}
+            </>
+          )}
+        </motion.button>
+      );
+    } else {
+      return (
+        <motion.button
+          onClick={plan.button.action}
+          disabled={isLoading}
+          className={styles.btnGradient}
+          variants={buttonHoverVariants}
+          initial="initial"
+          whileHover={!isLoading ? "hover" : undefined}
+          whileTap={!isLoading ? "tap" : undefined}
+          style={{
+            background: isLoading ? undefined : `linear-gradient(135deg, ${plan.color} 0%, ${plan.color}BB 100%)`,
+            boxShadow: isLoading ? undefined : `0 8px 25px ${plan.color}50`
+          }}
+        >
+          {isLoading ? (
+            <>
+              <span className={styles.loadingSpinner}></span>
+              <span>Lade Stripe...</span>
+            </>
+          ) : (
+            <>
+              {plan.button.text}
+              {plan.button.icon && <span className={styles.buttonIcon}>{plan.button.icon}</span>}
+            </>
+          )}
+        </motion.button>
+      );
+    }
+  };
+
+  return (
+    <>
+      <Helmet>
+        <title>Preise & Tarife – Contract AI | KI-Vertragsanalyse ab 0€</title>
+        <meta name="description" content="Vergleiche unsere Preise: Free, Premium (9,90€), Business (19,90€). KI-gestützte Vertragsanalyse, Risikoerkennung & Optimierung. Jetzt kostenlos starten!" />
+        <meta name="keywords" content="Preise Contract AI, Vertragsanalyse Kosten, KI Vertragsanalyse Preis, Legal Tech Preise, Vertragsmanagement Software Kosten, SaaS Preisvergleich" />
+        <link rel="canonical" href="https://www.contract-ai.de/pricing" />
+        <meta name="robots" content="index, follow" />
+
+        {/* Open Graph / Facebook */}
+        <meta property="og:locale" content="de_DE" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Preise & Tarife – Contract AI | KI-Vertragsanalyse" />
+        <meta property="og:description" content="Transparente Preise für KI-gestützte Vertragsanalyse. Free, Premium & Business Pläne. Jetzt kostenlos testen!" />
+        <meta property="og:url" content="https://www.contract-ai.de/pricing" />
+        <meta property="og:site_name" content="Contract AI" />
+        <meta property="og:image" content="https://www.contract-ai.de/og-image.jpg" />
+
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Preise & Tarife – Contract AI" />
+        <meta name="twitter:description" content="KI-Vertragsanalyse ab 0€. Premium ab 9,90€/Monat. Jetzt Preise vergleichen!" />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
+
+        {/* Schema.org JSON-LD: Product Schema für Pricing */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Product",
+            "name": "Contract AI",
+            "description": "KI-gestützte Vertragsanalyse und -optimierung Software",
+            "brand": {
+              "@type": "Brand",
+              "name": "Contract AI"
+            },
+            "offers": [
+              {
+                "@type": "Offer",
+                "name": "Free",
+                "description": "3 Analysen/Monat, Basis-Features",
+                "price": "0",
+                "priceCurrency": "EUR",
+                "availability": "https://schema.org/InStock",
+                "url": "https://www.contract-ai.de/pricing"
+              },
+              {
+                "@type": "Offer",
+                "name": "Premium",
+                "description": "15 Analysen/Monat, alle Features",
+                "price": "9.90",
+                "priceCurrency": "EUR",
+                "availability": "https://schema.org/InStock",
+                "priceValidUntil": "2025-12-31",
+                "url": "https://www.contract-ai.de/pricing"
+              },
+              {
+                "@type": "Offer",
+                "name": "Business",
+                "description": "50 Analysen/Monat, Team-Features, Priority Support",
+                "price": "19.90",
+                "priceCurrency": "EUR",
+                "availability": "https://schema.org/InStock",
+                "priceValidUntil": "2025-12-31",
+                "url": "https://www.contract-ai.de/pricing"
+              }
+            ],
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": "4.8",
+              "reviewCount": "127",
+              "bestRating": "5",
+              "worstRating": "1"
+            }
+          })}
+        </script>
+
+        {/* Schema.org JSON-LD: BreadcrumbList */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "https://www.contract-ai.de"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Preise",
+                "item": "https://www.contract-ai.de/pricing"
+              }
+            ]
+          })}
+        </script>
+      </Helmet>
+
+      <motion.div 
+        className={styles.pageWrapper}
+        variants={backgroundVariants}
+        animate="animate"
+        style={{
+          backgroundSize: "400% 400%",
+          background: "linear-gradient(135deg, #f5f7fb 0%, #eef2f6 25%, #eff4f9 50%, #edf1f5 75%, #f0f4f8 100%)",
+        }}
+      >
+        {/* Info Bar GANZ OBEN - Direkt unter Navigation */}
+        <motion.div
+          className={styles.topInfoBar}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4, duration: 0.5 }}
+        >
+          <div className={styles.infoItems}>
+            {/* Erstes Set für seamless loop */}
+            <span className={styles.infoItem}>
+              📈 <strong>2.847+</strong> analysierte Verträge
+            </span>
+            <span className={styles.infoDivider}>•</span>
+            <span className={styles.infoItem}>
+              🛡️ <strong>96%</strong> zufrieden
+            </span>
+            <span className={styles.infoDivider}>•</span>
+            {/* Desktop: Animiertes Testimonial */}
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={currentActivity}
+                className={`${styles.infoTestimonial} ${styles.desktopTestimonial}`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                🎯 <strong>{testimonials[currentActivity].name}</strong>: „{testimonials[currentActivity].metric}"
+              </motion.span>
+            </AnimatePresence>
+
+            {/* Mobile: Statisches Testimonial für smooth Marquee */}
+            <span className={`${styles.infoTestimonial} ${styles.mobileMarqueeOnly}`}>
+              🎯 <strong>Dr. Sarah Weber</strong>: „2-3h/Tag gespart"
+            </span>
+
+            {/* Multiple Wiederholungen für echten endlos loop */}
+            <span className={`${styles.infoDivider} ${styles.mobileMarqueeOnly}`}>•</span>
+            <span className={`${styles.infoItem} ${styles.mobileMarqueeOnly}`}>
+              📈 <strong>2.847+</strong> analysierte Verträge
+            </span>
+            <span className={`${styles.infoDivider} ${styles.mobileMarqueeOnly}`}>•</span>
+            <span className={`${styles.infoItem} ${styles.mobileMarqueeOnly}`}>
+              🛡️ <strong>96%</strong> zufrieden
+            </span>
+            <span className={`${styles.infoDivider} ${styles.mobileMarqueeOnly}`}>•</span>
+            <span className={`${styles.infoTestimonial} ${styles.mobileMarqueeOnly}`}>
+              🎯 <strong>Dr. Sarah Weber</strong>: „2-3h/Tag gespart"
+            </span>
+            <span className={`${styles.infoDivider} ${styles.mobileMarqueeOnly}`}>•</span>
+            <span className={`${styles.infoItem} ${styles.mobileMarqueeOnly}`}>
+              📈 <strong>2.847+</strong> analysierte Verträge
+            </span>
+            <span className={`${styles.infoDivider} ${styles.mobileMarqueeOnly}`}>•</span>
+            <span className={`${styles.infoItem} ${styles.mobileMarqueeOnly}`}>
+              🛡️ <strong>96%</strong> zufrieden
+            </span>
+            <span className={`${styles.infoDivider} ${styles.mobileMarqueeOnly}`}>•</span>
+            <span className={`${styles.infoTestimonial} ${styles.mobileMarqueeOnly}`}>
+              🎯 <strong>Dr. Sarah Weber</strong>: „2-3h/Tag gespart"
+            </span>
+            <span className={`${styles.infoDivider} ${styles.mobileMarqueeOnly}`}>•</span>
+            <span className={`${styles.infoItem} ${styles.mobileMarqueeOnly}`}>
+              📈 <strong>2.847+</strong> analysierte Verträge
+            </span>
+            <span className={`${styles.infoDivider} ${styles.mobileMarqueeOnly}`}>•</span>
+            <span className={`${styles.infoItem} ${styles.mobileMarqueeOnly}`}>
+              🛡️ <strong>96%</strong> zufrieden
+            </span>
+            <span className={`${styles.infoDivider} ${styles.mobileMarqueeOnly}`}>•</span>
+            <span className={`${styles.infoTestimonial} ${styles.mobileMarqueeOnly}`}>
+              🎯 <strong>Dr. Sarah Weber</strong>: „2-3h/Tag gespart"
+            </span>
+
+          </div>
+        </motion.div>
+
+        <div className={styles.container}>
+          <motion.div
+            className={styles.header}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+          >
+            <motion.h1
+              className={styles.title}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+            >
+              Wähle dein Paket
+            </motion.h1>
+            <motion.p
+              className={styles.subtitle}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3, duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+            >
+              Finde den perfekten Plan für deine Vertragsmanagement-Bedürfnisse
+            </motion.p>
+          </motion.div>
+
+          {/* Urgency Banner - Direkt unter Social Proof */}
+          <motion.div
+            className={styles.urgencyBanner}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.6, duration: 0.6 }}
+          >
+            <div className={styles.urgencyContent}>
+              <div className={styles.urgencyText}>
+                <span className={styles.urgencyTitle}>🔥 {urgencyData.message} – 47 von 100 Plätzen vergeben</span>
+                <span className={styles.urgencySubtitle}>⏳ {urgencyData.discountPercent}% endet in:</span>
+              </div>
+              <div className={styles.countdown}>
+                <div className={styles.countdownItem}>
+                  <span className={styles.countdownNumber}>{timeLeft.days}</span>
+                  <span className={styles.countdownLabel}>Tage</span>
+                </div>
+                <span className={styles.countdownSeparator}>:</span>
+                <div className={styles.countdownItem}>
+                  <span className={styles.countdownNumber}>{String(timeLeft.hours).padStart(2, '0')}</span>
+                  <span className={styles.countdownLabel}>Std</span>
+                </div>
+                <span className={styles.countdownSeparator}>:</span>
+                <div className={styles.countdownItem}>
+                  <span className={styles.countdownNumber}>{String(timeLeft.minutes).padStart(2, '0')}</span>
+                  <span className={styles.countdownLabel}>Min</span>
+                </div>
+                <span className={styles.countdownSeparator}>:</span>
+                <div className={styles.countdownItem}>
+                  <span className={styles.countdownNumber}>{String(timeLeft.seconds).padStart(2, '0')}</span>
+                  <span className={styles.countdownLabel}>Sek</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            className={styles.viewToggle}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.7, duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+          >
+            <button
+              className={`${styles.toggleButton} ${activeTab === 'cards' ? styles.activeToggle : ''}`}
+              onClick={() => setActiveTab('cards')}
+            >
+              Pläne
+            </button>
+            <button
+              className={`${styles.toggleButton} ${activeTab === 'table' ? styles.activeToggle : ''}`}
+              onClick={() => setActiveTab('table')}
+            >
+              Vergleich
+            </button>
+          </motion.div>
+
+          {/* Billing Period Toggle */}
+          <motion.div
+            className={styles.billingToggle}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.9, duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+          >
+            <div className={styles.billingOptions}>
+              <button
+                className={`${styles.billingButton} ${billingPeriod === 'monthly' ? styles.activeBilling : ''}`}
+                onClick={() => setBillingPeriod('monthly')}
+              >
+                Monatlich
+              </button>
+              <button
+                className={`${styles.billingButton} ${billingPeriod === 'yearly' ? styles.activeBilling : ''}`}
+                onClick={() => setBillingPeriod('yearly')}
+              >
+                Jährlich
+                <span className={styles.yearlyBadge}>3 Monate gratis</span>
+              </button>
+            </div>
+          </motion.div>
+
+          <AnimatePresence mode="wait" initial={false}>
+            {activeTab === 'cards' && (
+              <motion.div
+                className={styles.plansContainer}
+                key="plans"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+              >
+                <div className={styles.plans}>
+                  {plans.map((plan, index) => (
+                    <motion.div
+                      key={index}
+                      className={styles.cardWrapper}
+                      custom={index}
+                      variants={cardWrapperVariants}
+                      initial="hidden"
+                      animate={animateCards ? "visible" : "hidden"}
+                      style={{
+                        transformStyle: 'preserve-3d',
+                        perspective: '1000px'
+                      }}
+                    >
+                      <motion.div 
+                        className={`${styles.card} ${plan.popular ? styles.popularCard : ''}`}
+                        custom={index === 1 ? 1 : 0}
+                        variants={cardHoverVariants}
+                        initial="initial"
+                        whileHover="hover"
+                        style={{
+                          borderColor: plan.popular ? `${plan.color}30` : undefined,
+                          boxShadow: plan.popular ? `0 20px 40px ${plan.color}20` : undefined
+                        }}
+                      >
+                        {/* Popular Badge */}
+                        {plan.popular && (
+                          <div className={styles.popularBadge} style={{ background: plan.color }}>
+                            Beliebt
+                          </div>
+                        )}
+                        
+                        {/* Card Header */}
+                        <div className={styles.cardHeader}>
+                          <motion.div 
+                            className={styles.iconWrapper} 
+                            style={{ 
+                              color: plan.color,
+                              background: `${plan.color}12`
+                            }}
+                            whileHover={{
+                              scale: 1.05, 
+                              boxShadow: `0 3px 10px ${plan.color}20`
+                            }}
+                            transition={{ 
+                              type: "spring", 
+                              stiffness: 500, 
+                              damping: 30 
+                            }}
+                          >
+                            {plan.icon}
+                          </motion.div>
+                          <h2 className={styles.planTitle}>{plan.title}</h2>
+                          <p className={styles.planDescription}>{plan.description}</p>
+                          
+                          <div className={styles.priceContainer}>
+                            {/* Sale Badge */}
+                            {plan.pricing[billingPeriod].discount && (
+                              <div className={styles.saleBadge}>
+                                {plan.pricing[billingPeriod].discount} RABATT
+                              </div>
+                            )}
+
+                            {/* Original Price (crossed out) */}
+                            {plan.pricing[billingPeriod].original !== plan.pricing[billingPeriod].discounted && (
+                              <span className={styles.originalPrice}>
+                                {plan.pricing[billingPeriod].original}
+                              </span>
+                            )}
+
+                            {/* Discounted Price */}
+                            <p className={styles.price} style={{ color: plan.popular ? plan.color : undefined }}>
+                              {plan.pricing[billingPeriod].discounted}
+                            </p>
+
+                            <div className={styles.period}>
+                              <span>{billingPeriod === 'yearly' ? 'pro Jahr' : 'pro Monat'}</span>
+                              {billingPeriod === 'yearly' && plan.pricing.yearly.yearlyNote && (
+                                <>
+                                  <br />
+                                  <span className={styles.yearlyNote}>({plan.pricing.yearly.yearlyNote})</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className={styles.divider}></div>
+
+                        {/* Card Content */}
+                        <div className={styles.cardContent}>
+                          <ul className={styles.features}>
+                            {plan.features.map((feature, i) => (
+                              <motion.li 
+                                key={i}
+                                variants={featureItemVariants}
+                                custom={i * 0.07 + index * 0.15 + 0.5}
+                                initial="hidden"
+                                animate={animateCards ? "visible" : "hidden"}
+                                whileHover={{
+                                  x: 2,
+                                  transition: { 
+                                    type: "spring", 
+                                    stiffness: 500, 
+                                    damping: 30 
+                                  }
+                                }}
+                              >
+                                <CheckCircle 
+                                  size={16} 
+                                  className={styles.featureIcon} 
+                                  style={{ color: plan.color }} 
+                                /> 
+                                <span>{feature}</span>
+                              </motion.li>
+                            ))}
+                          </ul>
+
+                          {plan.limitations && (
+                            <ul className={styles.limitations}>
+                              {plan.limitations.map((limitation, i) => (
+                                <motion.li 
+                                  key={i}
+                                  variants={featureItemVariants}
+                                  custom={i * 0.07 + plan.features.length * 0.07 + index * 0.15 + 0.5}
+                                  initial="hidden"
+                                  animate={animateCards ? "visible" : "hidden"}
+                                >
+                                  <X size={16} className={styles.limitationIcon} /> 
+                                  <span>{limitation}</span>
+                                </motion.li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+
+                        <div className={styles.buttonBox}>
+                          {renderButton(plan, loading)}
+                        </div>
+                      </motion.div>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* Mobile Swipe Indicators */}
+                <div className={styles.mobileSwipeIndicators}>
+                  {/* Swipe Hint Arrow */}
+                  {showSwipeHint && (
+                    <motion.div
+                      className={styles.swipeHint}
+                      initial={{ opacity: 1, x: 0 }}
+                      animate={{ x: [0, 8, 0] }}
+                      transition={{ duration: 1.5, repeat: 2, ease: "easeInOut" }}
+                      onAnimationComplete={() => setShowSwipeHint(false)}
+                    >
+                      <span>Wischen für mehr</span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </motion.div>
+                  )}
+
+                  {/* Dot Indicators */}
+                  <div className={styles.dotIndicators}>
+                    {plans.map((_, index) => (
+                      <div
+                        key={index}
+                        className={`${styles.dot} ${index === 1 ? styles.activeDot : ''}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Clean Trust Section - Direkt unter Cards */}
+                <motion.div
+                  className={styles.cleanTrustSection}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: animateCards ? 1 : 0 }}
+                  transition={{ delay: 1.1, duration: 0.5 }}
+                >
+                  {/* Cancellation Note */}
+                  <p className={styles.cancellationNote}>
+                    Keine Kündigungsfrist. Jederzeit kündbar.
+                  </p>
+
+                  {/* Three Green Trust Badges */}
+                  <div className={styles.greenTrustBadges}>
+                    <motion.div
+                      className={styles.greenTrustBadge}
+                      whileHover={{ scale: 1.05 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    >
+                      <Shield size={16} />
+                      <span>60-Tage-Geld-zurück-Garantie</span>
+                    </motion.div>
+
+                    <motion.div
+                      className={styles.greenTrustBadge}
+                      whileHover={{ scale: 1.05 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    >
+                      <CheckCircle size={16} />
+                      <span>TÜV-zertifiziert & DSGVO konform</span>
+                    </motion.div>
+
+                    <motion.div
+                      className={styles.greenTrustBadge}
+                      whileHover={{ scale: 1.05 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    >
+                      <Clock size={16} />
+                      <span>99,9% Uptime-Garantie</span>
+                    </motion.div>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+
+            {activeTab === 'table' && (
+              <motion.div 
+                className={styles.tableContainer}
+                key="table"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+              >
+                <motion.div 
+                  className={styles.tableWrapper}
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.2, duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+                >
+                  <table className={styles.featureTable}>
+                    <thead>
+                      <tr>
+                        <th className={styles.featureColumn}>Funktion</th>
+                        <th className={styles.planColumn}>Starter</th>
+                        <th className={`${styles.planColumn} ${styles.businessColumn}`}>Business</th>
+                        <th className={`${styles.planColumn} ${styles.premiumColumn}`}>Enterprise</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {featureMatrix.map((item, index) => (
+                        <motion.tr 
+                          key={index}
+                          variants={tableRowVariants}
+                          custom={index}
+                          initial="hidden"
+                          animate="visible"
+                          whileHover={{ backgroundColor: "rgba(245, 247, 250, 0.8)" }}
+                        >
+                          <td className={styles.featureCell}>{item.feature}</td>
+                          <td className={styles.freeCell}>
+                            {item.free === "✓" ? (
+                              <CheckCircle size={18} className={styles.checkIcon} style={{ color: plans[0].color }} />
+                            ) : item.free === "–" ? (
+                              <span className={styles.dash}>–</span>
+                            ) : (
+                              item.free
+                            )}
+                          </td>
+                          <td className={`${styles.businessCell}`}>
+                            {item.business === "✓" ? (
+                              <CheckCircle size={18} className={styles.checkIcon} style={{ color: plans[1].color }} />
+                            ) : item.business === "–" ? (
+                              <span className={styles.dash}>–</span>
+                            ) : (
+                              item.business
+                            )}
+                          </td>
+                          <td className={`${styles.premiumCell}`}>
+                            {item.premium === "✓" ? (
+                              <CheckCircle size={18} className={styles.checkIcon} style={{ color: plans[2].color }} />
+                            ) : item.premium === "–" ? (
+                              <span className={styles.dash}>–</span>
+                            ) : (
+                              item.premium
+                            )}
+                          </td>
+                        </motion.tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </motion.div>
+                
+                <div className={styles.tableActions}>
+                  <div className={styles.actionButtons}>
+                    <motion.button
+                      onClick={() => startCheckout('business')}
+                      disabled={loading}
+                      className={styles.btnFilled}
+                      variants={buttonHoverVariants}
+                      initial="initial"
+                      whileHover={!loading ? "hover" : undefined}
+                      whileTap={!loading ? "tap" : undefined}
+                      style={{
+                        background: loading ? undefined : plans[1].color,
+                        boxShadow: loading ? undefined : `0 8px 20px ${plans[1].color}40`
+                      }}
+                    >
+                      {loading ? (
+                        <>
+                          <span className={styles.loadingSpinner}></span>
+                          <span>Lade Stripe...</span>
+                        </>
+                      ) : (
+                        "Business wählen"
+                      )}
+                    </motion.button>
+
+                    <motion.button
+                      onClick={() => startCheckout('premium')}
+                      disabled={loading}
+                      className={styles.btnGradient}
+                      variants={buttonHoverVariants}
+                      initial="initial"
+                      whileHover={!loading ? "hover" : undefined}
+                      whileTap={!loading ? "tap" : undefined}
+                      style={{
+                        background: loading ? undefined : `linear-gradient(135deg, ${plans[2].color} 0%, ${plans[2].color}BB 100%)`,
+                        boxShadow: loading ? undefined : `0 8px 25px ${plans[2].color}50`
+                      }}
+                    >
+                      {loading ? (
+                        <>
+                          <span className={styles.loadingSpinner}></span>
+                          <span>Lade Stripe...</span>
+                        </>
+                      ) : (
+                        "Enterprise wählen"
+                      )}
+                    </motion.button>
+                  </div>
+                  
+                  <motion.div
+                    className={styles.riskReversalSection}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.8, duration: 0.5 }}
+                  >
+                    <div className={styles.riskReversalBox}>
+                      <div className={styles.riskReversalIcon}>🛡️</div>
+                      <div className={styles.riskReversalContent}>
+                        <h4 className={styles.riskReversalTitle}>100% Risikofrei testen</h4>
+                        <p className={styles.riskReversalText}>
+                          60 Tage Geld-zurück-Garantie • Jederzeit kündbar • Keine versteckten Kosten • Sofort einsetzbar
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </motion.div>
+      <Footer />
+    </>
+  );
+}

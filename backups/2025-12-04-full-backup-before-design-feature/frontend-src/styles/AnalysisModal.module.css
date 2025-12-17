@@ -1,0 +1,682 @@
+/* AnalysisModal.module.css - Vollbild-Analyse-Modal */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modal {
+  width: 95vw;
+  max-width: 1200px;
+  height: 90vh;
+  height: 90dvh; /* iOS Safari fix */
+  max-height: 900px;
+  background: white;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #e5e5e7;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  flex-shrink: 0;
+}
+
+.headerContent {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.headerIcon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.headerInfo {
+  flex: 1;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem;
+  color: #1e293b;
+}
+
+.contractName {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.headerActions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.copyBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.copyBtn:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.closeBtn {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.closeBtn:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+  transform: scale(1.05);
+}
+
+/* Content */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Score Section */
+.scoreSection {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.scoreDisplay {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  padding: 2rem;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+}
+
+.scoreCircle {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: conic-gradient(var(--score-color) calc(var(--score) * 3.6deg), #e2e8f0 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.scoreCircle::before {
+  content: '';
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  background: white;
+  border-radius: 50%;
+}
+
+.scoreNumber {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--score-color);
+  z-index: 1;
+}
+
+.scoreMax {
+  font-size: 1.2rem;
+  color: #64748b;
+  z-index: 1;
+}
+
+.scoreInfo {
+  text-align: left;
+}
+
+.scoreInfo h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+}
+
+.scoreInfo p {
+  font-size: 1rem;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Analysis Grid */
+.analysisGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 2rem;
+  flex: 1;
+}
+
+.analysisSection {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.analysisSection:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.sectionIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  flex-shrink: 0;
+}
+
+.legalIcon {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+.suggestionsIcon {
+  background: rgba(249, 115, 22, 0.1);
+  color: #f97316;
+}
+
+.comparisonIcon {
+  background: rgba(168, 85, 247, 0.1);
+  color: #a855f7;
+}
+
+.riskIcon {
+  background: rgba(239, 68, 68, 0.1);  
+  color: #ef4444;
+}
+
+.sectionHeader h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+  color: #1e293b;
+}
+
+.sectionContent {
+  padding: 1.5rem;
+}
+
+.pointsList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.point {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.point:last-child {
+  margin-bottom: 0;
+}
+
+.pointBullet {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3b82f6;
+  margin-top: 0.5rem;
+  flex-shrink: 0;
+}
+
+.legalBullet {
+  background: #22c55e;
+}
+
+.suggestionsBullet {
+  background: #f97316;
+}
+
+.comparisonBullet {
+  background: #a855f7;
+}
+
+.riskBullet {
+  background: #ef4444;
+}
+
+.point span {
+  color: #374151;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.summaryText {
+  color: #374151;
+  font-size: 1rem;
+  line-height: 1.7;
+  background: #f8fafc;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+/* Footer */
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+  flex-shrink: 0;
+}
+
+.analysisDate,
+.analysisId {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+/* Mobile Responsive */
+@media (max-width: 640px) {
+  .overlay {
+    padding: max(0.5rem, env(safe-area-inset-top)) max(0.5rem, env(safe-area-inset-right)) max(0.5rem, env(safe-area-inset-bottom)) max(0.5rem, env(safe-area-inset-left));
+  }
+
+  .modal {
+    max-width: 95vw;
+    height: 95vh;
+    height: 95dvh; /* iOS Safari fix */
+    border-radius: 16px;
+  }
+
+  /* Touch-Targets */
+  .copyBtn,
+  .closeBtn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .header {
+    padding: 1rem;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: stretch;
+  }
+
+  .headerContent {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .headerActions {
+    justify-content: center;
+  }
+
+  .title {
+    font-size: 1.2rem;
+  }
+
+  .copyBtn {
+    min-height: 44px;
+  }
+
+  .closeBtn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .content {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .scoreDisplay {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .scoreCircle {
+    width: 90px;
+    height: 90px;
+  }
+
+  .scoreCircle::before {
+    width: 70px;
+    height: 70px;
+  }
+
+  .scoreNumber {
+    font-size: 1.4rem;
+  }
+
+  .scoreMax {
+    font-size: 0.95rem;
+  }
+
+  .scoreInfo h3 {
+    font-size: 1.15rem;
+  }
+
+  .analysisGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .sectionHeader {
+    padding: 0.875rem;
+  }
+
+  .sectionIcon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .sectionHeader h3 {
+    font-size: 0.95rem;
+  }
+
+  .sectionContent {
+    padding: 0.875rem;
+  }
+
+  .point {
+    gap: 0.625rem;
+    margin-bottom: 1rem;
+  }
+
+  .point span {
+    font-size: 0.875rem;
+  }
+
+  .summaryText {
+    padding: 0.875rem;
+    font-size: 0.875rem;
+  }
+
+  .footer {
+    padding: 0.875rem 1rem;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal {
+    max-width: 100vw;
+  }
+
+  .header {
+    padding: 0.75rem;
+  }
+
+  .title {
+    font-size: 1.1rem;
+  }
+
+  .content {
+    padding: 0.75rem;
+  }
+
+  .scoreDisplay {
+    padding: 0.75rem;
+  }
+}
+
+/* 📱 EXTRA SMALL MOBILE (max-width: 375px) */
+@media (max-width: 375px) {
+  .overlay {
+    padding: max(0.25rem, env(safe-area-inset-top)) max(0.25rem, env(safe-area-inset-right)) max(0.25rem, env(safe-area-inset-bottom)) max(0.25rem, env(safe-area-inset-left));
+  }
+
+  .modal {
+    max-width: 100%;
+    border-radius: 12px;
+  }
+
+  .header {
+    padding: 0.625rem;
+  }
+
+  .headerIcon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .title {
+    font-size: 1rem;
+  }
+
+  .contractName {
+    font-size: 0.8rem;
+  }
+
+  .content {
+    padding: 0.625rem;
+    gap: 0.75rem;
+  }
+
+  .scoreCircle {
+    width: 70px;
+    height: 70px;
+  }
+
+  .scoreCircle::before {
+    width: 55px;
+    height: 55px;
+  }
+
+  .scoreNumber {
+    font-size: 1.2rem;
+  }
+
+  .scoreInfo h3 {
+    font-size: 1rem;
+  }
+
+  .sectionHeader {
+    padding: 0.75rem;
+  }
+
+  .sectionIcon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .sectionHeader h3 {
+    font-size: 0.875rem;
+  }
+
+  .sectionContent {
+    padding: 0.75rem;
+  }
+
+  .point span {
+    font-size: 0.8rem;
+  }
+
+  .footer {
+    padding: 0.75rem;
+  }
+}
+
+/* Scrollbar Styling */
+.content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.content::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* ✅ NEU: Ausführliches Rechtsgutachten Section */
+.legalOpinionSection {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 2px solid #fbbf24;
+  border-radius: 12px;
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.legalOpinionIcon {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
+  color: #ffffff !important;
+}
+
+.legalOpinionBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: #ffffff;
+  padding: 0.35rem 0.75rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.75rem;
+  box-shadow: 0 2px 6px rgba(251, 191, 36, 0.3);
+  margin-left: auto;
+}
+
+.legalOpinionSection .sectionHeader {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: #ffffff;
+  padding: 1rem 1.25rem;
+  margin: 0;
+  border-radius: 0;
+}
+
+.legalOpinionSection .sectionHeader h3 {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.legalOpinionSection .sectionContent {
+  background: #ffffff;
+  padding: 1.5rem 1.25rem;
+}
+
+.legalOpinionText {
+  line-height: 1.8;
+}
+
+.legalOpinionParagraph {
+  margin: 0 0 1.25rem 0;
+  color: #1f2937;
+  font-size: 1rem;
+  line-height: 1.8;
+  text-align: justify;
+}
+
+.legalOpinionParagraph:last-child {
+  margin-bottom: 0;
+}
+
+/* ✅ Responsive: Rechtsgutachten in Modal */
+@media (max-width: 768px) {
+  .legalOpinionSection .sectionHeader {
+    padding: 0.875rem 1rem;
+    flex-wrap: wrap;
+  }
+
+  .legalOpinionBadge {
+    font-size: 0.7rem;
+    padding: 0.3rem 0.6rem;
+    margin-left: 0;
+    margin-top: 0.5rem;
+  }
+
+  .legalOpinionSection .sectionContent {
+    padding: 1rem;
+  }
+
+  .legalOpinionParagraph {
+    font-size: 0.95rem;
+    text-align: left;
+  }
+}

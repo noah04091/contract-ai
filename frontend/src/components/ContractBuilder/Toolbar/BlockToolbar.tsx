@@ -3,7 +3,7 @@
  */
 
 import React, { useState } from 'react';
-import { useContractBuilderStore, BlockType } from '../../../stores/contractBuilderStore';
+import { useContractBuilderStore, BlockType, Variable } from '../../../stores/contractBuilderStore';
 import {
   FileText,
   Users,
@@ -77,36 +77,64 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({ className }) => {
   const [aiPrompt, setAiPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const { addBlock } = useContractBuilderStore();
+  const { addBlock, generateClause, addVariable } = useContractBuilderStore();
 
-  // KI-Klausel generieren
+  // KI-Klausel generieren über echte API
   const handleGenerateClause = async () => {
     if (!aiPrompt.trim()) return;
 
     setIsGenerating(true);
     try {
-      // Simuliere KI-Generierung
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Echte KI-Generierung über Backend-API
+      const result = await generateClause(aiPrompt, {
+        tone: 'formal',
+        length: 'mittel',
+        strictness: 'ausgewogen',
+      }) as {
+        clause?: { title?: string; body?: string; subclauses?: Array<{ number: string; text: string }> };
+        legalBasis?: string[];
+        riskLevel?: string;
+        suggestedVariables?: Array<{ name: string; displayName: string; type: string }>;
+      };
 
       const generatedClause = {
         type: 'clause' as BlockType,
         content: {
           number: 'auto',
-          clauseTitle: 'KI-generierte Klausel',
-          body: `Diese Klausel wurde basierend auf Ihrer Anfrage "${aiPrompt}" generiert. Bitte überprüfen und anpassen Sie den Inhalt entsprechend Ihrer spezifischen Anforderungen.`,
-          subclauses: [],
+          clauseTitle: result.clause?.title || 'KI-generierte Klausel',
+          body: result.clause?.body || `Klausel basierend auf: "${aiPrompt}"`,
+          subclauses: result.clause?.subclauses || [],
         },
         style: {},
         locked: false,
         aiGenerated: true,
         aiPrompt: aiPrompt,
+        legalBasis: result.legalBasis || [],
+        riskLevel: result.riskLevel as 'low' | 'medium' | 'high' | undefined,
       };
 
       addBlock(generatedClause);
+
+      // Vorgeschlagene Variablen hinzufügen
+      if (result.suggestedVariables && result.suggestedVariables.length > 0) {
+        result.suggestedVariables.forEach(sv => {
+          const newVar: Omit<Variable, 'id'> = {
+            name: `{{${sv.name}}}`,
+            displayName: sv.displayName,
+            type: sv.type as Variable['type'],
+            required: false,
+            group: 'KI-generiert',
+            linkedBlocks: [],
+          };
+          addVariable(newVar);
+        });
+      }
+
       setShowAiModal(false);
       setAiPrompt('');
     } catch (error) {
       console.error('Fehler bei KI-Generierung:', error);
+      alert('Fehler bei der KI-Generierung. Bitte versuchen Sie es erneut.');
     } finally {
       setIsGenerating(false);
     }
@@ -319,6 +347,13 @@ function getDefaultContent(type: BlockType): Record<string, unknown> {
     case 'divider':
       return {
         style: 'solid',
+      };
+    case 'logo':
+      return {
+        logoUrl: '',
+        altText: 'Firmenlogo',
+        width: 150,
+        alignment: 'left',
       };
     default:
       return {};

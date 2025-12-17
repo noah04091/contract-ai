@@ -61,6 +61,135 @@
   66% { transform: translate(30px, -40px) scale(1.05); }
 }
 
+/* Dots Pattern Overlay */
+.dotsPattern {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(rgba(0, 122, 255, 0.07) 1px, transparent 1px);
+  background-size: 24px 24px;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+}
+
+/* Trust Badges als moderne Pillen */
+.trustBadges {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 28px;
+}
+
+.trustBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 100px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1d1d1f;
+  border: 1px solid rgba(0, 122, 255, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+}
+
+.trustBadge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 122, 255, 0.1);
+  border-color: rgba(0, 122, 255, 0.2);
+}
+
+.trustBadgeIcon {
+  font-size: 16px;
+}
+
+/* ============================================
+   FEATURE LISTEN (Emoji Bullet Points)
+   ============================================ */
+
+.featureList {
+  list-style: none;
+  padding: 0;
+  margin: 0 auto;
+  max-width: 800px;
+  font-size: 17px;
+  line-height: 1.8;
+}
+
+.featureListItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 16px 0;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border-radius: 14px;
+  border: 1px solid rgba(0, 122, 255, 0.08);
+  color: #2a3440;
+  transition: all 0.3s ease;
+}
+
+.featureListItem:hover {
+  transform: translateX(4px);
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 122, 255, 0.15);
+  box-shadow: 0 4px 20px rgba(0, 122, 255, 0.08);
+}
+
+.featureListIcon {
+  font-size: 22px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.featureListContent {
+  flex: 1;
+}
+
+.featureListContent strong {
+  color: #1d1d1f;
+  font-weight: 600;
+}
+
+/* Wave Divider */
+.waveDivider {
+  position: relative;
+  width: 100%;
+  height: 80px;
+  margin: -40px 0;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.waveDivider svg {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.waveDividerFlip {
+  transform: rotate(180deg);
+}
+
+/* Section mit Wave Background */
+.sectionWithWave {
+  position: relative;
+  background: rgba(248, 250, 255, 0.5);
+  padding: 80px 0;
+  margin: 0 -24px;
+}
+
 /* Container */
 .featureContainer {
   position: relative;
@@ -157,11 +286,18 @@
 }
 
 .heroTitleHighlight {
-  background: linear-gradient(90deg, rgba(0,122,255,1) 0%, rgba(64,156,255,1) 100%);
+  background: linear-gradient(90deg, #007aff 0%, #409cff 25%, #00c6ff 50%, #409cff 75%, #007aff 100%);
+  background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   color: transparent;
+  animation: shimmerText 4s linear infinite;
+}
+
+@keyframes shimmerText {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
 }
 
 .heroSubtitle {
@@ -326,6 +462,199 @@
 }
 
 /* Beispiel Section */
+/* Modern Use-Case Cards */
+.useCaseGrid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(2, 1fr);
+  max-width: 900px;
+  margin: 0 auto 40px auto;
+}
+
+.useCaseCard {
+  background: #f8fbff;
+  border: 1px dashed #d7e0ef;
+  border-radius: 16px;
+  padding: 24px;
+  transition: all 0.3s ease;
+}
+
+.useCaseCard:hover {
+  border-color: #b8c8e0;
+  background: #f0f5ff;
+}
+
+.useCaseIcon {
+  font-size: 28px;
+  margin-bottom: 12px;
+}
+
+.useCaseTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0 0 8px 0;
+}
+
+.useCaseChallenge {
+  font-size: 14px;
+  color: #666;
+  margin: 0 0 8px 0;
+}
+
+.useCaseSolution {
+  font-size: 14px;
+  color: #333;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Modern FAQ Accordion */
+.faqContainer {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.faqItem {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 122, 255, 0.08);
+  border-radius: 16px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.faqItem:hover {
+  border-color: rgba(0, 122, 255, 0.15);
+  box-shadow: 0 4px 16px rgba(0, 122, 255, 0.06);
+}
+
+.faqQuestion {
+  width: 100%;
+  padding: 20px 24px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1d1d1f;
+  transition: color 0.3s ease;
+}
+
+.faqQuestion:hover {
+  color: #007aff;
+}
+
+.faqIcon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(0, 122, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #007aff;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.faqItem[open] .faqIcon {
+  transform: rotate(180deg);
+  background: #007aff;
+  color: white;
+}
+
+.faqAnswer {
+  padding: 0 24px 20px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #666;
+}
+
+/* Floating Decorative Elements */
+.floatingElements {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.floatingIcon {
+  position: absolute;
+  opacity: 0.15;
+  color: #007aff;
+  animation: floatIcon 15s ease-in-out infinite;
+}
+
+.floatingIcon:nth-child(1) {
+  top: 12%;
+  left: 4%;
+  animation-delay: 0s;
+}
+
+.floatingIcon:nth-child(2) {
+  top: 20%;
+  right: 6%;
+  animation-delay: -2s;
+}
+
+.floatingIcon:nth-child(3) {
+  top: 35%;
+  left: 8%;
+  animation-delay: -4s;
+}
+
+.floatingIcon:nth-child(4) {
+  top: 45%;
+  right: 4%;
+  animation-delay: -6s;
+}
+
+.floatingIcon:nth-child(5) {
+  top: 58%;
+  left: 3%;
+  animation-delay: -8s;
+}
+
+.floatingIcon:nth-child(6) {
+  top: 68%;
+  right: 7%;
+  animation-delay: -10s;
+}
+
+.floatingIcon:nth-child(7) {
+  top: 82%;
+  left: 6%;
+  animation-delay: -12s;
+}
+
+.floatingIcon:nth-child(8) {
+  top: 88%;
+  right: 3%;
+  animation-delay: -14s;
+}
+
+@keyframes floatIcon {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0.12;
+  }
+  50% {
+    transform: translateY(-25px) rotate(12deg);
+    opacity: 0.22;
+  }
+}
+
 .beispielSection {
   margin-bottom: 120px;
 }
@@ -620,6 +949,76 @@
 
 .ctaButton:hover::before {
   opacity: 1;
+}
+
+/* Secondary Button - Hero Section (Glassmorphism, Blau) */
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  color: #007aff;
+  border: 1px solid rgba(0, 122, 255, 0.3);
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-height: 44px;
+}
+
+.secondaryButton:hover {
+  background: rgba(0, 122, 255, 0.1);
+  border-color: rgba(0, 122, 255, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 122, 255, 0.15);
+}
+
+/* Secondary Button - CTA Section (Weiß auf dunklem Hintergrund) */
+.secondaryButtonLight {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-height: 44px;
+}
+
+.secondaryButtonLight:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.15);
+}
+
+/* Hero Buttons Container */
+.heroButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+  justify-content: center;
+}
+
+/* CTA Buttons Container */
+.ctaButtons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 24px;
 }
 
 /* Feature-spezifische Animation Classes (NUR lokal) */
@@ -1111,5 +1510,532 @@
     padding: 10px 14px;
     font-size: 13px;
     min-height: 44px;
+  }
+}
+
+/* ============================================
+   RESPONSIVE STYLES FÜR NEUE ELEMENTE
+   ============================================ */
+
+/* Trust Badges - Responsive */
+@media (max-width: 768px) {
+  .trustBadges {
+    gap: 8px;
+    margin-top: 20px;
+  }
+
+  .trustBadge {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
+  .trustBadgeIcon {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .trustBadges {
+    gap: 6px;
+    margin-top: 16px;
+  }
+
+  .trustBadge {
+    padding: 6px 12px;
+    font-size: 12px;
+    gap: 6px;
+  }
+
+  .trustBadgeIcon {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 375px) {
+  .trustBadges {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .trustBadge {
+    width: 100%;
+    max-width: 200px;
+    justify-content: center;
+  }
+}
+
+/* Use Case Cards - Responsive */
+@media (max-width: 768px) {
+  .useCaseGrid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .useCaseCard {
+    padding: 20px 18px;
+  }
+
+  .useCaseIcon {
+    font-size: 24px;
+  }
+
+  .useCaseTitle {
+    font-size: 17px;
+  }
+
+  .useCaseChallenge,
+  .useCaseSolution {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .useCaseCard {
+    padding: 18px 16px;
+    border-radius: 14px;
+  }
+
+  .useCaseIcon {
+    font-size: 22px;
+    margin-bottom: 10px;
+  }
+
+  .useCaseTitle {
+    font-size: 16px;
+    margin-bottom: 6px;
+  }
+
+  .useCaseChallenge,
+  .useCaseSolution {
+    font-size: 12px;
+  }
+}
+
+/* FAQ - Responsive */
+@media (max-width: 768px) {
+  .faqContainer {
+    max-width: 100%;
+  }
+
+  .faqItem {
+    border-radius: 14px;
+    margin-bottom: 10px;
+  }
+
+  .faqQuestion {
+    padding: 16px 20px;
+    font-size: 15px;
+  }
+
+  .faqIcon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .faqAnswer {
+    padding: 0 20px 16px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .faqItem {
+    border-radius: 12px;
+    margin-bottom: 8px;
+  }
+
+  .faqQuestion {
+    padding: 14px 16px;
+    font-size: 14px;
+    gap: 12px;
+  }
+
+  .faqIcon {
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+  }
+
+  .faqAnswer {
+    padding: 0 16px 14px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+}
+
+/* Floating Elements - Responsive */
+@media (max-width: 1024px) {
+  .floatingIcon {
+    opacity: 0.1;
+  }
+
+  .floatingIcon:nth-child(n+5) {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .floatingElements {
+    display: none;
+  }
+}
+
+/* Dots Pattern - Responsive */
+@media (max-width: 768px) {
+  .dotsPattern {
+    opacity: 0.3;
+    background-size: 20px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dotsPattern {
+    opacity: 0.2;
+    background-size: 16px 16px;
+  }
+}
+
+/* Stats Section - Mobile Padding Fix */
+@media (max-width: 768px) {
+  .statsSection {
+    padding: 60px 20px;
+    margin-left: -20px;
+    margin-right: -20px;
+    border-radius: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .statsSection {
+    padding: 40px 16px;
+    margin-left: -12px;
+    margin-right: -12px;
+    border-radius: 20px;
+  }
+
+  .statsGrid {
+    gap: 16px;
+  }
+
+  .statItem {
+    padding: 20px 16px;
+  }
+}
+
+/* Vorteile Section - Mobile Padding Fix */
+@media (max-width: 768px) {
+  .vorteileSection {
+    margin-left: -20px;
+    margin-right: -20px;
+    padding: 60px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .vorteileSection {
+    margin-left: -12px;
+    margin-right: -12px;
+    padding: 40px 16px;
+  }
+
+  .vorteilCard::before {
+    width: 3px;
+  }
+}
+
+/* Hero Buttons - Mobile Stack */
+@media (max-width: 640px) {
+  .heroSection > div[style*="display: 'flex'"],
+  .heroSection > div[style*="display:'flex'"] {
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+}
+
+/* CTA Card Buttons - Mobile */
+@media (max-width: 640px) {
+  .ctaCard > div[style*="display: 'flex'"],
+  .ctaCard > div[style*="display:'flex'"] {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+
+  .ctaCard .ctaButton {
+    width: 100%;
+    max-width: 280px;
+    text-align: center;
+  }
+}
+
+/* Touch-friendly improvements */
+@media (max-width: 768px) {
+  .funktionItem,
+  .vorteilCard,
+  .useCaseCard,
+  .statItem,
+  .faqItem,
+  .featureListItem {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .funktionItem:active,
+  .vorteilCard:active,
+  .useCaseCard:active,
+  .statItem:active,
+  .featureListItem:active {
+    transform: scale(0.98);
+  }
+}
+
+/* Feature Listen - Responsive */
+@media (max-width: 768px) {
+  .featureList {
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .featureListItem {
+    padding: 14px 16px;
+    gap: 10px;
+    margin: 12px 0;
+    border-radius: 12px;
+  }
+
+  .featureListItem:hover {
+    transform: none;
+  }
+
+  .featureListIcon {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .featureList {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .featureListItem {
+    padding: 12px 14px;
+    gap: 8px;
+    margin: 10px 0;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .featureListIcon {
+    font-size: 18px;
+  }
+
+  .featureListContent {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 375px) {
+  .featureListItem {
+    padding: 10px 12px;
+    margin: 8px 0;
+  }
+
+  .featureListContent {
+    font-size: 13px;
+  }
+}
+
+/* iPad / Tablet Landscape */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .featureContainer {
+    padding: 80px 32px 100px 32px;
+  }
+
+  .heroTitle {
+    font-size: 48px;
+  }
+
+  .sectionTitle {
+    font-size: 36px;
+  }
+
+  .useCaseGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .statsGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+
+  .vorteileGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Large Desktop */
+@media (min-width: 1400px) {
+  .featureContainer {
+    max-width: 1300px;
+  }
+
+  .heroTitle {
+    font-size: 64px;
+  }
+
+  .heroSubtitle {
+    font-size: 22px;
+  }
+}
+
+/* ============================================
+   ACCESSIBILITY: Reduced Motion
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  /* Disable all animations for users who prefer reduced motion */
+  .pageBackground::before,
+  .pageBackground::after {
+    animation: none !important;
+  }
+
+  .floatingIcon {
+    animation: none !important;
+  }
+
+  .heroTitleHighlight {
+    animation: none !important;
+    background-size: 100% 100% !important;
+  }
+
+  .trustBadge,
+  .vorteilCard,
+  .funktionItem,
+  .useCaseCard,
+  .featureListItem,
+  .faqItem,
+  .statItem,
+  .beispielBox {
+    transition: none !important;
+  }
+
+  .trustBadge:hover,
+  .vorteilCard:hover,
+  .funktionItem:hover,
+  .useCaseCard:hover,
+  .featureListItem:hover,
+  .faqItem:hover {
+    transform: none !important;
+  }
+
+  .faqIcon {
+    transition: none !important;
+  }
+}
+
+/* ============================================
+   ACCESSIBILITY: High Contrast Mode
+   ============================================ */
+@media (prefers-contrast: high) {
+  .vorteilCard,
+  .funktionItem,
+  .useCaseCard,
+  .faqItem,
+  .featureListItem {
+    border: 2px solid #1d1d1f !important;
+    background: white !important;
+  }
+
+  .trustBadge {
+    border: 2px solid #007aff !important;
+    background: white !important;
+  }
+
+  .heroTitleHighlight {
+    background: none !important;
+    -webkit-background-clip: unset !important;
+    background-clip: unset !important;
+    -webkit-text-fill-color: #007aff !important;
+    color: #007aff !important;
+  }
+}
+
+/* ============================================
+   CTA BUTTONS - Responsive
+   ============================================ */
+
+/* Tablet */
+@media (max-width: 768px) {
+  .heroButtons,
+  .ctaButtons {
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .secondaryButton,
+  .secondaryButtonLight {
+    padding: 10px 18px;
+    font-size: 15px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .heroButtons,
+  .ctaButtons {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .heroButtons > *,
+  .ctaButtons > * {
+    width: 100%;
+    max-width: 280px;
+    text-align: center;
+  }
+
+  .secondaryButton,
+  .secondaryButtonLight {
+    width: 100%;
+    max-width: 280px;
+    padding: 12px 16px;
+    font-size: 15px;
+    justify-content: center;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .heroButtons,
+  .ctaButtons {
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .secondaryButton,
+  .secondaryButtonLight {
+    padding: 11px 14px;
+    font-size: 14px;
+    border-radius: 10px;
+    max-width: 260px;
+  }
+}
+
+/* Extra Small Mobile */
+@media (max-width: 375px) {
+  .heroButtons,
+  .ctaButtons {
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .secondaryButton,
+  .secondaryButtonLight {
+    padding: 10px 12px;
+    font-size: 13px;
+    border-radius: 8px;
+    max-width: 100%;
   }
 }

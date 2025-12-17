@@ -1,0 +1,134 @@
+.container {
+  max-width: 700px;
+  margin: 2rem auto;
+  background-color: #1a1a1a;
+  padding: 2rem;
+  border-radius: 10px;
+  color: white;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
+}
+
+h2 {
+  text-align: center;
+  color: #00e5ff;
+  margin-bottom: 2rem;
+}
+
+.calendar {
+  background-color: white;
+  border-radius: 10px;
+  padding: 1rem;
+  color: black;
+}
+
+.dateInfo {
+  margin-top: 2rem;
+  padding: 1rem;
+  border-left: 5px solid #00e5ff;
+  background-color: #2a2a2a;
+  border-radius: 5px;
+}
+
+/* Mobile Breakpoints */
+@media (max-width: 768px) {
+  .container {
+    margin: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+    padding: 1.5rem;
+    max-width: calc(100vw - 32px);
+  }
+
+  h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .calendar {
+    padding: 0.875rem;
+    border-radius: 8px;
+  }
+
+  .dateInfo {
+    margin-top: 1.5rem;
+    padding: 0.875rem;
+    border-radius: 8px;
+  }
+}
+
+@media (max-width: 640px) {
+  .container {
+    margin: 0.75rem;
+    padding: 1.25rem;
+    max-width: calc(100vw - 24px);
+    border-radius: 8px;
+  }
+
+  h2 {
+    font-size: 1.3rem;
+    margin-bottom: 1.125rem;
+  }
+
+  .calendar {
+    padding: 0.75rem;
+    border-radius: 8px;
+  }
+
+  .dateInfo {
+    margin-top: 1.25rem;
+    padding: 0.75rem;
+    border-left-width: 4px;
+    border-radius: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    margin: 0.5rem;
+    padding: 1rem;
+    max-width: calc(100vw - 16px);
+    border-radius: 8px;
+  }
+
+  h2 {
+    font-size: 1.15rem;
+    margin-bottom: 1rem;
+  }
+
+  .calendar {
+    padding: 0.625rem;
+    border-radius: 6px;
+  }
+
+  .dateInfo {
+    margin-top: 1rem;
+    padding: 0.625rem;
+    border-left-width: 3px;
+    font-size: 0.9rem;
+  }
+}
+
+/* 📱 EXTRA SMALL MOBILE (max-width: 375px) */
+@media (max-width: 375px) {
+  .container {
+    margin: max(0.375rem, env(safe-area-inset-top)) max(0.375rem, env(safe-area-inset-right)) max(0.375rem, env(safe-area-inset-bottom)) max(0.375rem, env(safe-area-inset-left));
+    padding: 0.75rem;
+    max-width: calc(100vw - 12px);
+    border-radius: 6px;
+  }
+
+  h2 {
+    font-size: 1rem;
+    margin-bottom: 0.875rem;
+  }
+
+  .calendar {
+    padding: 0.5rem;
+    border-radius: 5px;
+  }
+
+  .dateInfo {
+    margin-top: 0.875rem;
+    padding: 0.5rem;
+    border-left-width: 3px;
+    font-size: 0.85rem;
+  }
+}

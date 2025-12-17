@@ -841,6 +841,59 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
       );
     }
 
+    case 'logo': {
+      const logoContent = content as { logoUrl?: string; altText?: string; width?: number; alignment?: string };
+      return (
+        <>
+          <div className={styles.field}>
+            <label className={styles.label}>Logo-URL</label>
+            <input
+              type="url"
+              className={styles.input}
+              value={String(logoContent.logoUrl || '')}
+              placeholder="https://example.com/logo.png"
+              onChange={(e) => onUpdate({ ...content, logoUrl: e.target.value })}
+            />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label}>Alt-Text</label>
+            <input
+              type="text"
+              className={styles.input}
+              value={String(logoContent.altText || 'Firmenlogo')}
+              placeholder="Firmenlogo"
+              onChange={(e) => onUpdate({ ...content, altText: e.target.value })}
+            />
+          </div>
+          <div className={styles.fieldRow}>
+            <div className={styles.field}>
+              <label className={styles.label}>Breite (px)</label>
+              <input
+                type="number"
+                className={styles.input}
+                value={logoContent.width || 150}
+                min={50}
+                max={500}
+                onChange={(e) => onUpdate({ ...content, width: Number(e.target.value) })}
+              />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label}>Ausrichtung</label>
+              <select
+                className={styles.select}
+                value={String(logoContent.alignment || 'left')}
+                onChange={(e) => onUpdate({ ...content, alignment: e.target.value })}
+              >
+                <option value="left">Links</option>
+                <option value="center">Zentriert</option>
+                <option value="right">Rechts</option>
+              </select>
+            </div>
+          </div>
+        </>
+      );
+    }
+
     case 'page-break':
     case 'signature':
     case 'table':

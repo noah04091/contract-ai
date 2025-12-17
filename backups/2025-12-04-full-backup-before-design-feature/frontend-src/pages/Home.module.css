@@ -1,0 +1,146 @@
+.container {
+  min-height: 100vh;
+  padding-top: 60px; /* Höhe deiner festen Navbar ausgleichen */
+  padding-left: 2rem;
+  padding-right: 2rem;
+  background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(10, 10, 15, 0.9)),
+    url("../assets/hero-contract.png");
+  background-size: cover;
+  background-position: center;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ---------- HERO ---------- */
+.hero {
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto;
+  animation: fadeIn 0.6s ease;
+}
+
+.hero h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.hero p {
+  font-size: 1.2rem;
+  opacity: 0.95;
+  margin-bottom: 2rem;
+}
+
+.ctaButton {
+  background-color: #36a3f5;
+  color: #000;
+  padding: 0.8rem 1.6rem;
+  border-radius: 10px;
+  font-weight: bold;
+  text-decoration: none;
+  cursor: pointer;
+  transition: 0.2s ease;
+  border: none;
+}
+
+.ctaButton:hover {
+  background-color: #1c8ce3;
+  transform: scale(1.03);
+}
+
+.buttonRow {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* ---------- FEATURES ---------- */
+.features {
+  margin-top: 4rem;
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.featureCard {
+  background: rgba(20, 20, 30, 0.85);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #333;
+  text-align: center;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(6px);
+}
+
+.featureCard:hover {
+  border-color: #36a3f5;
+  transform: translateY(-5px);
+}
+
+.featureCard h3 {
+  color: #36a3f5;
+  margin-bottom: 0.5rem;
+}
+
+.featureCard p {
+  font-size: 0.95rem;
+  opacity: 0.9;
+  line-height: 1.5;
+}
+
+/* ---------- Animation ---------- */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.scrollButton {
+  background: none;
+  color: #36a3f5;
+  border: none;
+  font-size: 1.2rem;
+  margin-top: 2rem;
+  cursor: pointer;
+  animation: pulse 2s infinite, fadeIn 1s ease forwards;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.scrollButton:hover {
+  transform: translateY(14px);
+  opacity: 0.85;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.logo {
+  max-width: 440px;
+  height: auto;
+  margin-bottom: 1rem;
+  animation: fadeIn 0.5s ease;
+}

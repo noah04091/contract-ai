@@ -48,6 +48,24 @@ const legalLensProgressSchema = new mongoose.Schema({
     default: 0
   },
 
+  // Branchen-Kontext für branchenspezifische Analyse
+  industryContext: {
+    type: String,
+    enum: [
+      "it_software",      // IT & Software
+      "construction",     // Bauwesen
+      "real_estate",      // Immobilien
+      "consulting",       // Beratung
+      "manufacturing",    // Produktion/Industrie
+      "retail",           // Handel
+      "healthcare",       // Gesundheitswesen
+      "finance",          // Finanzdienstleistungen
+      "general"           // Allgemein/Sonstige
+    ],
+    default: "general"
+  },
+  industrySetAt: Date,
+
   // Bookmarks
   bookmarks: [{
     clauseId: {

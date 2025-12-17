@@ -1,0 +1,249 @@
+// 📄 src/App.tsx
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { useEffect, useState, lazy, Suspense } from "react";
+import Navbar from "./components/Navbar";
+import RequireAuth from "./components/RequireAuth";
+import PageLoader from "./components/PageLoader";
+import ErrorBoundary from "./components/ErrorBoundary";
+import { AuthProvider } from "./context/AuthContext";
+import { ToastProvider } from "./context/ToastContext";
+import { AnnouncerProvider } from "./components/ScreenReaderAnnouncer";
+import { ToastContainer } from "./components/Toast";
+import { useToast } from "./context/ToastContext";
+import SkipNavigation from "./components/SkipNavigation";
+import CookieConsentBanner from "./components/CookieConsentBanner";
+import ScrollToTop from "./components/ScrollToTop";
+import AssistantWidget from "./components/AssistantWidget";
+import OnboardingTour from "./components/OnboardingTour";
+import { useOnboarding } from "./hooks/useOnboarding";
+
+// 🚀 PERFORMANCE: Lazy Loading für alle Seiten (Code Splitting)
+// Homepage, Login, Contracts und Profile werden sofort geladen (kritische Seiten)
+import HomeRedesign from "./pages/HomeRedesign";
+import Login from "./pages/Login";
+import Contracts from "./pages/Contracts"; // 🔧 FIX: Direct import verhindert CSS-Preload-Fehler
+import Profile from "./pages/Profile"; // 🔧 FIX: Direct import verhindert CSS-Preload-Fehler
+// 🔧 FIX: Direct imports für rechtliche Seiten - verhindert CSS-Preload-Fehler
+import Impressum from "./pages/Impressum";
+import Datenschutz from "./pages/Datenschutz";
+import AGB from "./pages/AGB";
+
+// 🔓 Öffentliche Seiten - Lazy Loading
+const Register = lazy(() => import("./pages/Register"));
+const VerifySuccess = lazy(() => import("./pages/VerifySuccess"));
+const AcceptInvite = lazy(() => import("./pages/AcceptInvite")); // 👥 Team-Einladung annehmen
+
+// Feature Flag: Enhanced Signature UI
+const useEnhancedSignUI = import.meta.env.VITE_SIGN_UI_ENHANCED !== "false"; // Default true
+const SignaturePageComponent = useEnhancedSignUI
+  ? lazy(() => import("./pages/EnhancedSignaturePage")) // ✉️ DocuSign-style UI
+  : lazy(() => import("./pages/SignaturePage"));        // 🔙 Fallback to old UI
+
+const Pricing = lazy(() => import("./pages/Pricing"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+// Impressum, Datenschutz, AGB werden direkt importiert (siehe oben)
+const About = lazy(() => import("./pages/About"));
+const Press = lazy(() => import("./pages/Press"));
+const Success = lazy(() => import("./pages/Success"));
+const HelpCenter = lazy(() => import("./pages/HelpCenter"));
+const Blog = lazy(() => import("./pages/Blog"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
+const Beta = lazy(() => import("./pages/Beta")); // 🎁 Beta-Tester Landing Page
+const NotFound = lazy(() => import("./pages/NotFound"));
+
+// 🌟 Feature-Landingpages - Lazy Loading
+const Vertragsanalyse = lazy(() => import("./pages/features/Vertragsanalyse"));
+const Optimierung = lazy(() => import("./pages/features/Optimierung"));
+const Fristen = lazy(() => import("./pages/features/Fristen"));
+const Vergleich = lazy(() => import("./pages/features/Vergleich"));
+const GeneratorPage = lazy(() => import("./pages/features/Generator"));
+const LegalPulsePage = lazy(() => import("./pages/features/LegalPulse"));
+const Vertragsverwaltung = lazy(() => import("./pages/features/Vertragsverwaltung"));
+const DigitaleSignatur = lazy(() => import("./pages/features/DigitaleSignatur"));
+const EmailUpload = lazy(() => import("./pages/features/EmailUpload"));
+
+// 🔒 Geschützte Seiten - Lazy Loading
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+// Contracts und Profile werden direkt importiert (siehe oben) - verhindert CSS-Preload-Fehler
+const ContractDetails = lazy(() => import("./pages/ContractDetails"));
+const EditContract = lazy(() => import("./pages/EditContract"));
+const CalendarView = lazy(() => import("./pages/CalendarView"));
+const Cancel = lazy(() => import("./pages/Cancel"));
+const Optimizer = lazy(() => import("./pages/Optimizer"));
+const Compare = lazy(() => import("./pages/Compare"));
+const Chat = lazy(() => import("./pages/Chat"));
+const Generate = lazy(() => import("./pages/Generate"));
+const CompanyProfile = lazy(() => import("./pages/CompanyProfile"));
+const ApiKeys = lazy(() => import("./pages/ApiKeys")); // 🔑 REST API-Zugang (Enterprise)
+const ApiDocs = lazy(() => import("./pages/ApiDocs")); // 📚 REST API-Dokumentation
+const Team = lazy(() => import("./pages/Team")); // 👥 Team-Management (Enterprise)
+const Subscribe = lazy(() => import("./pages/Subscribe"));
+const Upgrade = lazy(() => import("./pages/Upgrade"));
+const BetterContracts = lazy(() => import("./pages/BetterContracts"));
+const LegalPulse = lazy(() => import("./pages/LegalPulse"));
+const Envelopes = lazy(() => import("./pages/Envelopes")); // ✉️ NEU: Digital Signature Dashboard
+const PlaceSignatureFields = lazy(() => import("./pages/PlaceSignatureFields")); // ✉️ NEU: Field Placement Editor
+const NewSignatureRequest = lazy(() => import("./pages/NewSignatureRequest")); // ✉️ NEU: Neue Signaturanfrage
+
+function AppWithLoader() {
+  const location = useLocation();
+  const [loading, setLoading] = useState(false);
+  const { toasts, removeToast } = useToast();
+  const { runTour, finishTour } = useOnboarding();
+
+  // 🛡️ DOM Error Handler für removeChild-Fehler
+  useEffect(() => {
+    const handleDOMError = (event: ErrorEvent) => {
+      if (event.error?.message?.includes('removeChild') || 
+          event.error?.name === 'NotFoundError') {
+        console.log('🔧 DOM-Fehler abgefangen:', event.error.message);
+        event.preventDefault(); // Verhindere den Crash
+        event.stopPropagation();
+        return false; // Unterdrücke weitere Error-Propagation
+      }
+    };
+
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      if (event.reason?.message?.includes('removeChild')) {
+        console.log('🔧 Promise-Rejection abgefangen:', event.reason.message);
+        event.preventDefault();
+      }
+    };
+
+    // Global Error Handler registrieren
+    window.addEventListener('error', handleDOMError, true);
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+
+    return () => {
+      window.removeEventListener('error', handleDOMError, true);
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
+  }, []);
+
+  // ✅ FIX: Nur bei echten Seitenwechseln laden, nicht bei Query-Parameter-Änderungen
+  useEffect(() => {
+    setLoading(true);
+    const timer = setTimeout(() => setLoading(false), 300);
+    return () => clearTimeout(timer);
+  }, [location.pathname]); // Nur pathname, nicht location.search!
+
+  // Seiten ohne Navbar (Auth-Seiten mit Split-Screen Design)
+  const hideNavbarRoutes = ['/login', '/register', '/verify-success'];
+  const shouldHideNavbar = hideNavbarRoutes.includes(location.pathname);
+
+  return (
+    <ErrorBoundary>
+      <SkipNavigation />
+      <ScrollToTop />
+      <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+        {loading && <PageLoader />}
+        {!shouldHideNavbar && <Navbar />}
+        <main id="main-content" style={{ flex: 1, paddingTop: shouldHideNavbar ? "0" : "60px" }}>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+            {/* 🔓 Öffentliche Seiten */}
+            <Route path="/" element={<HomeRedesign />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/verify-success" element={<VerifySuccess />} /> {/* ✅ NEU: E-Mail bestätigt Seite */}
+            <Route path="/accept-invite/:token" element={<AcceptInvite />} /> {/* 👥 Team-Einladung annehmen */}
+            <Route path="/sign/:token" element={<SignaturePageComponent />} /> {/* ✉️ Signature Page (Feature-Flag controlled) */}
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/press" element={<Press />} />
+            <Route path="/success" element={<Success />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/impressum" element={<Impressum />} />
+            <Route path="/datenschutz" element={<Datenschutz />} />
+            <Route path="/agb" element={<AGB />} />
+            <Route path="/api-docs" element={<ApiDocs />} />
+            <Route path="/hilfe" element={<HelpCenter />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
+            <Route path="/beta" element={<Beta />} /> {/* 🎁 Beta-Tester Landing Page */}
+
+            {/* 🌟 Feature-Landingpages (NEU) */}
+            <Route path="/features/vertragsanalyse" element={<Vertragsanalyse />} />
+            <Route path="/features/optimierung" element={<Optimierung />} />
+            <Route path="/features/fristen" element={<Fristen />} />
+            <Route path="/features/vergleich" element={<Vergleich />} />
+            <Route path="/features/generator" element={<GeneratorPage />} />
+            <Route path="/features/legalpulse" element={<LegalPulsePage />} />
+            <Route path="/features/vertragsverwaltung" element={<Vertragsverwaltung />} />
+            <Route path="/features/digitalesignatur" element={<DigitaleSignatur />} />
+            <Route path="/features/email-upload" element={<EmailUpload />} />
+
+            {/* 🔄 SEO Redirects für alte/falsche URLs (301 Redirects) */}
+            <Route path="/features/legal-pulse" element={<Navigate to="/features/legalpulse" replace />} />
+            <Route path="/features/fristenkalender" element={<Navigate to="/features/fristen" replace />} />
+            <Route path="/calendar-view" element={<Navigate to="/calendar" replace />} />
+            <Route path="/help-center" element={<Navigate to="/hilfe" replace />} />
+            <Route path="/blog/autokauf-vertrag-gewährleistung" element={<Navigate to="/blog/autokauf-vertrag-gewaehrleistung" replace />} />
+
+            {/* 🔒 Geschützte Seiten */}
+            <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
+            <Route path="/contracts" element={<RequireAuth><Contracts /></RequireAuth>} />
+            <Route path="/contracts/:id" element={<RequireAuth><ContractDetails /></RequireAuth>} />
+            <Route path="/contracts/:id/edit" element={<RequireAuth><EditContract /></RequireAuth>} />
+
+            {/* ✉️ NEU: Digital Signature Dashboard */}
+            <Route path="/envelopes" element={<RequireAuth><Envelopes /></RequireAuth>} />
+            <Route path="/envelopes/new" element={<RequireAuth><NewSignatureRequest /></RequireAuth>} />
+
+            {/* ✉️ NEU: Field Placement Editor für Envelopes */}
+            <Route path="/signature/place-fields/:envelopeId" element={<RequireAuth><PlaceSignatureFields /></RequireAuth>} />
+
+            <Route path="/me" element={<RequireAuth><Profile /></RequireAuth>} />
+            <Route path="/calendar" element={<RequireAuth><CalendarView /></RequireAuth>} />
+            
+            {/* ✅ NEU: Cancel Route */}
+            <Route path="/cancel/:contractId" element={<RequireAuth><Cancel /></RequireAuth>} />
+            
+            {/* ✨ KI-Vertragsoptimierung - Legendary Feature */}
+            <Route path="/optimizer" element={<RequireAuth><Optimizer /></RequireAuth>} />
+            <Route path="/optimizer/:jobId" element={<RequireAuth><Optimizer /></RequireAuth>} />
+            <Route path="/optimize/:contractId" element={<RequireAuth><Optimizer /></RequireAuth>} />
+
+            {/* 🔍 Legal Pulse - Rechtliche Risikoanalyse */}
+            <Route path="/legalpulse" element={<RequireAuth><LegalPulse /></RequireAuth>} />
+            <Route path="/legalpulse/:contractId" element={<RequireAuth><LegalPulse /></RequireAuth>} />
+
+            <Route path="/compare" element={<RequireAuth><Compare /></RequireAuth>} />
+            <Route path="/chat" element={<RequireAuth><Chat /></RequireAuth>} />
+            <Route path="/Generate" element={<RequireAuth><Generate /></RequireAuth>} />
+            <Route path="/company-profile" element={<RequireAuth><CompanyProfile /></RequireAuth>} />
+            <Route path="/api-keys" element={<RequireAuth><ApiKeys /></RequireAuth>} />
+            <Route path="/team" element={<RequireAuth><Team /></RequireAuth>} />
+            <Route path="/subscribe" element={<RequireAuth><Subscribe /></RequireAuth>} />
+            <Route path="/upgrade" element={<RequireAuth><Upgrade /></RequireAuth>} />
+            <Route path="/better-contracts" element={<RequireAuth><BetterContracts /></RequireAuth>} />
+
+            {/* ✅ 404 Catch-All Route (muss am Ende stehen) */}
+            <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+        </main>
+        <CookieConsentBanner />
+        <ToastContainer toasts={toasts} onRemove={removeToast} />
+        <AssistantWidget />
+        <OnboardingTour run={runTour} onFinish={finishTour} />
+      </div>
+    </ErrorBoundary>
+  );
+}
+
+export default function App() {
+  return (
+    <Router>
+      <AuthProvider>
+        <ToastProvider>
+          <AnnouncerProvider>
+            <AppWithLoader />
+          </AnnouncerProvider>
+        </ToastProvider>
+      </AuthProvider>
+    </Router>
+  );
+}

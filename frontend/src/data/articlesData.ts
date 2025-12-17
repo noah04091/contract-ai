@@ -11,6 +11,7 @@ export interface Article {
   readTime: string;
   author: string;
   icon: string;
+  image: string;
   content: string;
 }
 
@@ -26,6 +27,7 @@ export const articles: Article[] = [
     readTime: '8 Min. Lesezeit',
     author: 'Contract AI Team',
     icon: '🛡️',
+    image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&q=80',
     content: `
       <p>Seit der DSGVO können Datenschutzverletzungen astronomisch teuer werden: Bis zu 20 Millionen Euro oder 4% des weltweiten Jahresumsatzes. Oft entstehen diese Verletzungen nicht durch Hacker-Angriffe, sondern durch unscheinbare Klauseln in alltäglichen Verträgen.</p>
 
@@ -163,6 +165,7 @@ export const articles: Article[] = [
     readTime: '6 Min. Lesezeit',
     author: 'Contract AI Team',
     icon: '⚡',
+    image: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800&q=80',
     content: `
       <p>Du musst einen Vertrag erstellen, hast aber keine Lust auf stundenlange Recherche oder teure Anwaltskosten? Dann ist ein smarter Vertragsgenerator die perfekte Lösung. Mit Contract AI kannst du in nur fünf Minuten einen rechtssicheren, individuell angepassten Vertrag erstellen — ganz ohne Vorwissen.</p>
 
@@ -306,6 +309,7 @@ export const articles: Article[] = [
     readTime: '9 Min. Lesezeit',
     author: 'Contract AI Team',
     icon: '⚖️',
+    image: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&q=80',
     content: `
       <p>Die Frage stellt sich immer häufiger: Brauche ich für meinen Vertrag wirklich einen teuren Anwalt oder reicht moderne KI? Die ehrliche Antwort: Es kommt darauf an. Hier erfährst du, wann welche Lösung die richtige ist.</p>
 
@@ -430,6 +434,7 @@ export const articles: Article[] = [
     readTime: '7 Min. Lesezeit',
     author: 'Contract AI Team',
     icon: '🔍',
+    image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80',
     content: `
       <p>Wenn du vor der Wahl zwischen mehreren Vertragsangeboten stehst, ist die Entscheidung oft schwer. Unterschiedliche Preise, versteckte Klauseln, juristische Formulierungen — schnell verliert man den Überblick. Mit KI-basierten Tools wie Contract AI kannst du Verträge objektiv vergleichen und die beste Option finden.</p>
 
@@ -547,6 +552,7 @@ export const articles: Article[] = [
     readTime: '8 Min. Lesezeit',
     author: 'Contract AI Team',
     icon: '💰',
+    image: 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=800&q=80',
     content: `
       <p>Jeden Tag fallen Millionen Deutsche auf teure Vertragsklauseln herein. Oft sind es nur wenige Wörter, die den Unterschied zwischen einem fairen Deal und einer kostspieligen Falle ausmachen. Wir haben die teuersten Vertragsklauseln Deutschlands analysiert und zeigen dir, wie du sie erkennst.</p>
 
@@ -633,6 +639,7 @@ export const articles: Article[] = [
     readTime: '6 Min. Lesezeit',
     author: 'Contract AI Team',
     icon: '🔧',
+    image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&q=80',
     content: `
       <p>Ob Mietvertrag, Dienstleistungsvertrag oder Softwarelizenz — oft verhandeln wir Verträge nur einmal und lassen sie dann jahrelang unverändert. Dabei verschenken wir bares Geld und riskieren Nachteile. Mit Contract AI kannst du deine Verträge schnell, einfach und intelligent optimieren.</p>
 
@@ -716,6 +723,7 @@ export const articles: Article[] = [
     readTime: '7 Min. Lesezeit',
     author: 'Contract AI Team',
     icon: '💥',
+    image: 'https://images.unsplash.com/photo-1507925921958-8a62f3d1a50d?w=800&q=80',
     content: `
       <p>Verträge sind das Rückgrat jeder geschäftlichen Beziehung — egal ob beim Mietvertrag, beim Dienstleistungsvertrag oder beim IT-Projektvertrag. Doch viele Verträge enthalten Risiken, die oft erst dann auffallen, wenn es zu spät ist. Mit Hilfe von Künstlicher Intelligenz (KI) kannst du diese Risiken jedoch frühzeitig erkennen und deine Verträge zukunftssicher machen.</p>
 
@@ -787,6 +795,7 @@ export const articles: Article[] = [
     readTime: '5 Min. Lesezeit',
     author: 'Contract AI Team',
     icon: '📋',
+    image: 'https://images.unsplash.com/photo-1554224154-26032ffc0d07?w=800&q=80',
     content: `
       <p>Täglich schließen wir Verträge ab – beim Online-Shopping, der Wohnungssuche oder beim neuen Mobilfunkvertrag. Doch nicht alle Verträge sind fair gestaltet. Einige enthalten Fallen, die später teuer werden können.</p>
 
@@ -878,6 +887,7 @@ export const articles: Article[] = [
     readTime: '8 Min. Lesezeit',
     author: 'Contract AI Team',
     icon: '🏠',
+    image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&q=80',
     content: `
       <p>Mietverträge enthalten oft Klauseln, die zu Gunsten des Vermieters formuliert sind. Doch nicht alles, was im Vertrag steht, ist auch rechtlich wirksam. Wir zeigen Ihnen, welche Klauseln problematisch sind.</p>
 
@@ -933,6 +943,7 @@ export const articles: Article[] = [
     readTime: '6 Min. Lesezeit',
     author: 'Contract AI Team',
     icon: '💼',
+    image: 'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=800&q=80',
     content: `
       <p>Ihr Arbeitsvertrag regelt mehr als nur Gehalt und Arbeitszeit. Wir erklären die wichtigsten Klauseln und Ihre Rechte als Arbeitnehmer.</p>
 
@@ -987,6 +998,7 @@ export const articles: Article[] = [
     readTime: '4 Min. Lesezeit',
     author: 'Contract AI Team',
     icon: '📜',
+    image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&q=80',
     content: `
       <p>Beim Online-Shopping klicken wir oft schnell auf "AGB akzeptieren" – doch das kann teuer werden. Wir zeigen, worauf Sie achten müssen.</p>
 
@@ -1031,6 +1043,7 @@ export const articles: Article[] = [
     readTime: '7 Min. Lesezeit',
     author: 'Contract AI Team',
     icon: '🚗',
+    image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800&q=80',
     content: `
       <p>Der Autokauf ist für viele eine große Investition. Umso wichtiger ist es, den Kaufvertrag genau zu prüfen und seine Rechte zu kennen.</p>
 
@@ -1085,6 +1098,7 @@ export const articles: Article[] = [
     readTime: '5 Min. Lesezeit',
     author: 'Contract AI Team',
     icon: '⚖️',
+    image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=80',
     content: `
       <p>Viele glauben, Verträge seien in Stein gemeißelt. Doch oft lassen sich auch als Privatperson bessere Konditionen aushandeln.</p>
 
@@ -1141,6 +1155,7 @@ export const articles: Article[] = [
     readTime: '6 Min. Lesezeit',
     author: 'Contract AI Team',
     icon: '↩️',
+    image: 'https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=800&q=80',
     content: `
       <p>Das 14-tägige Widerrufsrecht ist ein wichtiger Verbraucherschutz. Doch es gibt Ausnahmen und Regeln, die Sie kennen sollten.</p>
 
@@ -1197,6 +1212,7 @@ export const articles: Article[] = [
     readTime: '9 Min. Lesezeit',
     author: 'Contract AI Team',
     icon: '📋',
+    image: 'https://images.unsplash.com/photo-1568992687947-868a62a9f521?w=800&q=80',
     content: `
       <p>Eine Kündigung ist ein wichtiger rechtlicher Schritt. Dabei gibt es viele Fallstricke und Formvorschriften zu beachten.</p>
 

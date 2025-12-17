@@ -1,0 +1,838 @@
+.resultHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--apple-gray-100);
+}
+
+.resultHeader h2 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--apple-gray-800);
+}
+
+.exportButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.2rem;
+  border-radius: 10px;
+  background-color: var(--apple-gray-50);
+  color: var(--apple-gray-800);
+  border: none;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.exportButton:hover {
+  background-color: var(--apple-gray-100);
+}
+
+.resultSection {
+  border-bottom: 1px solid var(--apple-gray-100);
+}
+
+.resultSection:last-child {
+  border-bottom: none;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.2rem 2rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.sectionHeader:hover {
+  background-color: var(--apple-gray-50);
+}
+
+.sectionTitleContainer {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.sectionIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--apple-gray-50);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--apple-blue);
+}
+
+.sectionHeader h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--apple-gray-800);
+}
+
+.expandButton {
+  background: none;
+  border: none;
+  color: var(--apple-gray-400);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.expandButton:hover {
+  color: var(--apple-gray-800);
+}
+
+.sectionContent {
+  padding: 0 2rem 1.5rem;
+}
+
+.sectionContent p {
+  margin: 0;
+  line-height: 1.6;
+  color: var(--apple-gray-500);
+}
+
+/* Notification */
+.notification {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  backdrop-filter: blur(10px);
+  z-index: 100;
+  min-width: 300px;
+  max-width: 90%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.success {
+  background: rgba(52, 199, 89, 0.15);
+  border: 1px solid rgba(52, 199, 89, 0.3);
+  color: var(--success-green);
+}
+
+.error {
+  background: rgba(255, 69, 58, 0.15);
+  border: 1px solid rgba(255, 69, 58, 0.3);
+  color: var(--error-red);
+}
+
+.notificationIcon {
+  flex-shrink: 0;
+}
+
+.notificationMessage {
+  font-weight: 500;
+  flex-grow: 1;
+}
+
+.notificationClose {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.notificationClose:hover {
+  opacity: 1;
+}
+
+/* Loading Container */
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: 1rem;
+  color: var(--apple-gray-400);
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(0, 113, 227, 0.1);
+  border-top-color: var(--apple-blue);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .container {
+    padding: 1.5rem;
+  }
+
+  .title {
+    font-size: 1.8rem;
+  }
+
+  .uploadContainer {
+    flex-direction: column;
+  }
+
+  .uploadCard {
+    width: 100%;
+    max-width: 400px;
+    padding: 1.5rem;
+    height: 180px;
+  }
+
+  .uploadCard h3 {
+    font-size: 1rem;
+  }
+
+  .uploadCard p {
+    font-size: 0.875rem;
+  }
+
+  .fileName {
+    font-size: 0.9375rem;
+  }
+
+  .fileSize {
+    font-size: 0.8125rem;
+  }
+
+  .arrowContainer {
+    transform: rotate(90deg);
+    margin: 1rem 0;
+  }
+
+  .actionButtons {
+    flex-direction: column;
+  }
+
+  .primaryButton, .secondaryButton {
+    width: 100%;
+  }
+
+  .premiumNotice {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1.5rem;
+  }
+
+  .resultHeader, .sectionHeader {
+    padding: 1rem 1.5rem;
+  }
+
+  .sectionContent {
+    padding: 0 1.5rem 1.5rem;
+  }
+
+  .notification {
+    width: calc(100% - 3rem);
+    min-width: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: 1.25rem;
+  }
+
+  .title {
+    font-size: 1.6rem;
+  }
+
+  .uploadCard {
+    max-width: 100%;
+    padding: 1.25rem;
+    height: 160px;
+  }
+
+  .uploadCard h3 {
+    font-size: 0.9375rem;
+  }
+
+  .uploadCard p {
+    font-size: 0.8125rem;
+  }
+
+  .fileName {
+    font-size: 0.875rem;
+  }
+
+  .fileSize {
+    font-size: 0.75rem;
+  }
+
+  .premiumNotice {
+    padding: 1.25rem;
+  }
+
+  .premiumContent h3 {
+    font-size: 1.125rem;
+  }
+
+  .premiumContent p {
+    font-size: 0.9375rem;
+  }
+
+  .resultHeader h2 {
+    font-size: 1.125rem;
+  }
+
+  .sectionHeader h3 {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .title {
+    font-size: 1.4rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+  }
+
+  .uploadCard {
+    padding: 1rem;
+    height: 140px;
+  }
+
+  .uploadCard h3 {
+    font-size: 0.875rem;
+    margin-bottom: 0.375rem;
+  }
+
+  .uploadCard p {
+    font-size: 0.75rem;
+  }
+
+  .fileName {
+    font-size: 0.8125rem;
+  }
+
+  .fileSize {
+    font-size: 0.7rem;
+  }
+
+  .premiumBadge {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.6rem;
+    top: 0.75rem;
+    right: 0.75rem;
+  }
+
+  .premiumNotice {
+    padding: 1rem;
+  }
+
+  .premiumIcon {
+    font-size: 2rem;
+  }
+
+  .premiumContent h3 {
+    font-size: 1.05rem;
+  }
+
+  .premiumContent p {
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+  }
+
+  .primaryButton, .secondaryButton {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9375rem;
+  }
+
+  .resultHeader h2 {
+    font-size: 1.05rem;
+  }
+
+  .sectionHeader h3 {
+    font-size: 0.9375rem;
+  }
+
+  .sectionContent p {
+    font-size: 0.875rem;
+  }
+}/* Compare.module.css */
+@import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600&display=swap');
+
+.pageContainer {
+  --apple-blue: #0071e3;
+  --apple-blue-dark: #0058b3;
+  --apple-gray-50: #f5f5f7;
+  --apple-gray-100: #e8e8ed;
+  --apple-gray-200: #d2d2d7;
+  --apple-gray-300: #a1a1a6;
+  --apple-gray-400: #6e6e73;
+  --apple-gray-500: #86868b;
+  --apple-gray-800: #1d1d1f;
+  --success-green: #34c759;
+  --error-red: #ff453a;
+
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: white;
+  min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height für iOS Safari */
+  color: var(--apple-gray-800);
+  /* Safe-Area für iPhone X+ */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Header Styling */
+.header {
+  margin-bottom: 2.5rem;
+  text-align: center;
+}
+
+.title {
+  font-size: 2.2rem;
+  font-weight: 600;
+  margin: 0 0 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  letter-spacing: -0.02em;
+  color: var(--apple-gray-800);
+}
+
+.titleIcon {
+  color: var(--apple-blue);
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  font-weight: 400;
+  margin: 0;
+  color: var(--apple-gray-400);
+  line-height: 1.5;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Premium Notice */
+.premiumNotice {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  margin-bottom: 2.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.premiumIcon {
+  font-size: 2.5rem;
+  color: #FFD700;
+}
+
+.premiumContent {
+  flex: 1;
+}
+
+.premiumContent h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0 0 0.8rem;
+  color: var(--apple-gray-800);
+}
+
+.premiumContent p {
+  font-size: 1rem;
+  color: var(--apple-gray-400);
+  margin: 0 0 1.2rem;
+  line-height: 1.5;
+}
+
+.upgradeButton {
+  background-color: var(--apple-blue);
+  color: white;
+  border: none;
+  padding: 0.7rem 1.5rem;
+  border-radius: 20px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.upgradeButton:hover {
+  background-color: var(--apple-blue-dark);
+}
+
+/* Upload Section */
+.uploadSection {
+  margin-bottom: 3rem;
+}
+
+.uploadContainer {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  justify-content: center;
+}
+
+.uploadCard {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--apple-gray-100);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  padding: 2rem;
+  width: 320px;
+  height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.uploadCard.disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.uploadCard:hover:not(.disabled) {
+  border-color: var(--apple-blue);
+}
+
+.fileSelected {
+  border-color: var(--apple-blue);
+  background-color: rgba(0, 113, 227, 0.03);
+}
+
+.uploadContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+}
+
+.uploadIcon {
+  color: var(--apple-blue);
+  margin-bottom: 1rem;
+}
+
+.uploadCard h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: var(--apple-gray-800);
+}
+
+.uploadCard p {
+  font-size: 0.95rem;
+  color: var(--apple-gray-500);
+  margin: 0;
+}
+
+.fileInput {
+  display: none;
+}
+
+.arrowContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background-color: var(--apple-gray-50);
+  border-radius: 50%;
+}
+
+.arrowIcon {
+  color: var(--apple-gray-400);
+}
+
+.filePreview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  position: relative;
+}
+
+.fileIcon {
+  color: var(--apple-blue);
+  margin-bottom: 1rem;
+}
+
+.fileInfo {
+  text-align: center;
+  width: 100%;
+}
+
+.fileName {
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 0 0 0.3rem;
+  color: var(--apple-gray-800);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90%;
+}
+
+.fileSize {
+  font-size: 0.85rem;
+  color: var(--apple-gray-400);
+  margin: 0;
+}
+
+.fileIndicator {
+  position: absolute;
+  top: 0;
+  right: 0;
+  color: var(--success-green);
+}
+
+.premiumBadge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: linear-gradient(135deg, #facf0f, #fb8c00);
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+}
+
+/* Action Buttons */
+.actionButtons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.primaryButton {
+  background-color: var(--apple-blue);
+  color: white;
+  border: none;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.9rem 1.8rem;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  transition: all 0.2s ease;
+  min-width: 200px;
+}
+
+.primaryButton:hover:not(:disabled) {
+  background-color: var(--apple-blue-dark);
+}
+
+.primaryButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.secondaryButton {
+  background-color: var(--apple-gray-100);
+  color: var(--apple-gray-800);
+  border: none;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.9rem 1.8rem;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  transition: all 0.2s ease;
+}
+
+.secondaryButton:hover {
+  background-color: var(--apple-gray-200);
+}
+
+.buttonSpinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 0.3rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Result Section */
+.resultContainer {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--apple-gray-100);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  margin-top: 2rem;
+  margin-bottom: 3rem;
+}
+
+/* 📱 EXTRA SMALL MOBILE (max-width: 375px) - iPhone SE, Mini etc. */
+@media (max-width: 375px) {
+  .container {
+    padding: 0.75rem;
+  }
+
+  .title {
+    font-size: 1.25rem;
+    gap: 0.5rem;
+  }
+
+  .subtitle {
+    font-size: 0.875rem;
+  }
+
+  .uploadContainer {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .uploadCard {
+    width: 100%;
+    padding: 0.875rem;
+    height: 120px;
+    border-radius: 12px;
+  }
+
+  .uploadCard h3 {
+    font-size: 0.8rem;
+  }
+
+  .uploadCard p {
+    font-size: 0.7rem;
+  }
+
+  .arrowContainer {
+    width: 36px;
+    height: 36px;
+    transform: rotate(90deg);
+  }
+
+  .fileName {
+    font-size: 0.75rem;
+  }
+
+  .fileSize {
+    font-size: 0.65rem;
+  }
+
+  .premiumBadge {
+    font-size: 0.625rem;
+    padding: 0.2rem 0.5rem;
+  }
+
+  .premiumNotice {
+    padding: 0.875rem;
+    border-radius: 12px;
+  }
+
+  .premiumIcon {
+    font-size: 1.75rem;
+  }
+
+  .premiumContent h3 {
+    font-size: 0.95rem;
+  }
+
+  .premiumContent p {
+    font-size: 0.8rem;
+  }
+
+  .primaryButton, .secondaryButton {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+    min-height: 44px;
+  }
+
+  .resultHeader {
+    padding: 1rem;
+  }
+
+  .resultHeader h2 {
+    font-size: 0.95rem;
+  }
+
+  .sectionHeader {
+    padding: 1rem;
+  }
+
+  .sectionHeader h3 {
+    font-size: 0.875rem;
+  }
+
+  .sectionIcon {
+    width: 30px;
+    height: 30px;
+  }
+
+  .sectionContent {
+    padding: 0 1rem 1rem;
+  }
+
+  .sectionContent p {
+    font-size: 0.8rem;
+  }
+
+  .resultContainer {
+    border-radius: 12px;
+    margin-top: 1.5rem;
+  }
+
+  .exportButton {
+    padding: 0.5rem 0.875rem;
+    font-size: 0.8rem;
+    min-height: 44px;
+  }
+}

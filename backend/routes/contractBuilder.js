@@ -561,10 +561,17 @@ router.post('/ai/optimize', auth, async (req, res) => {
     const { clauseText, optimizationGoal } = req.body;
 
     const goals = {
+      // English keys (legacy)
       clarity: 'Verbessere die Verständlichkeit und Klarheit',
       legal: 'Optimiere die rechtliche Präzision und Durchsetzbarkeit',
       balance: 'Mache die Klausel ausgewogener für beide Parteien',
-      shorter: 'Kürze die Klausel ohne Inhaltsverlust'
+      shorter: 'Kürze die Klausel ohne Inhaltsverlust',
+      // German keys (from Frontend)
+      rechtssicher: 'Optimiere die rechtliche Präzision und Durchsetzbarkeit. Stelle sicher, dass die Klausel gerichtlich durchsetzbar ist.',
+      verständlich: 'Verbessere die Verständlichkeit und Klarheit. Verwende einfache Sprache ohne juristischen Jargon.',
+      kürzer: 'Kürze die Klausel ohne Inhaltsverlust. Entferne Redundanzen.',
+      ausgewogen: 'Mache die Klausel ausgewogener für beide Parteien. Vermeide einseitige Benachteiligungen.',
+      strenger: 'Formuliere die Klausel strenger zugunsten meiner Position (des Auftraggebers). Stärke meine Rechte.'
     };
 
     const response = await openai.chat.completions.create({
@@ -591,7 +598,13 @@ Behalte {{variablen}} bei.`
 
     const result = JSON.parse(response.choices[0].message.content);
 
-    res.json({ success: true, ...result });
+    // Map 'optimized' to 'optimizedText' for frontend compatibility
+    res.json({
+      success: true,
+      optimizedText: result.optimized || result.optimizedText,
+      changes: result.changes || [],
+      explanation: result.explanation || ''
+    });
   } catch (error) {
     console.error('[ContractBuilder] POST /ai/optimize Error:', error);
     res.status(500).json({ success: false, error: 'Fehler bei der Optimierung' });
@@ -692,22 +705,45 @@ Gib einen hilfreichen Vorschlag.`
  */
 router.post('/ai/legal-score', auth, async (req, res) => {
   try {
-    const { documentId } = req.body;
+    const { documentId, blocks, contractType } = req.body;
 
-    const document = await ContractBuilder.findOne({
-      _id: documentId,
-      userId: req.user._id
-    });
+    let document = null;
+    let clauseTexts = '';
+    let docType = contractType || 'Allgemeiner Vertrag';
+    let blockCount = 0;
 
-    if (!document) {
-      return res.status(404).json({ success: false, error: 'Dokument nicht gefunden' });
+    // Wenn documentId vorhanden, aus DB laden
+    if (documentId) {
+      document = await ContractBuilder.findOne({
+        _id: documentId,
+        userId: req.user._id
+      });
     }
 
-    // Alle Klauseltexte sammeln
-    const clauseTexts = document.content.blocks
-      .filter(b => b.type === 'clause')
-      .map(b => `${b.content.clauseTitle || ''}\n${b.content.body || ''}`)
-      .join('\n\n');
+    // Wenn Dokument aus DB geladen
+    if (document) {
+      clauseTexts = document.content.blocks
+        .filter(b => b.type === 'clause')
+        .map(b => `${b.content.clauseTitle || ''}\n${b.content.body || ''}`)
+        .join('\n\n');
+      docType = document.metadata?.contractType || docType;
+      blockCount = document.content.blocks.length;
+    }
+    // Wenn Blöcke direkt übergeben (lokaler Modus)
+    else if (blocks && Array.isArray(blocks)) {
+      clauseTexts = blocks
+        .filter(b => b.type === 'clause')
+        .map(b => `${b.content?.clauseTitle || ''}\n${b.content?.body || ''}`)
+        .join('\n\n');
+      blockCount = blocks.length;
+    }
+
+    if (!clauseTexts.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Keine Klauseln zum Analysieren gefunden'
+      });
+    }
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
@@ -744,12 +780,11 @@ Antworte als JSON:
         },
         {
           role: 'user',
-          content: `Analysiere diesen Vertrag (Typ: ${document.metadata.contractType}):
+          content: `Analysiere diesen Vertrag (Typ: ${docType}):
 
 ${clauseTexts || 'Keine Klauseln vorhanden'}
 
-Variablen ausgefüllt: ${document.completionPercentage}%
-Anzahl Blöcke: ${document.content.blocks.length}`
+Anzahl Blöcke: ${blockCount}`
         }
       ],
       temperature: 0.2,
@@ -758,12 +793,14 @@ Anzahl Blöcke: ${document.content.blocks.length}`
 
     const result = JSON.parse(response.choices[0].message.content);
 
-    // Score im Dokument speichern
-    document.legalScore = {
-      ...result,
-      lastAnalyzed: new Date()
-    };
-    await document.save();
+    // Score im Dokument speichern (nur wenn Dokument aus DB)
+    if (document) {
+      document.legalScore = {
+        ...result,
+        lastAnalyzed: new Date()
+      };
+      await document.save();
+    }
 
     res.json({ success: true, ...result });
   } catch (error) {

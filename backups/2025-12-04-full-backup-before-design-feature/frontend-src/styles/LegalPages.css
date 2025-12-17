@@ -1,0 +1,217 @@
+/* Apple-style Legal Pages CSS */
+.legal-container {
+    position: relative;
+    padding: 0;
+    margin: 0;
+    min-height: 100vh;
+    background-color: #f5f5f7;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: #1d1d1f;
+    overflow-x: hidden;
+  }
+  
+  .legal-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+  
+  .legal-shape {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(70px);
+    opacity: 0.5;
+  }
+  
+  .legal-shape.shape-1 {
+    background: rgba(61, 124, 243, 0.1);
+    width: 800px;
+    height: 800px;
+    top: -200px;
+    right: -200px;
+  }
+  
+  .legal-shape.shape-2 {
+    background: rgba(92, 126, 234, 0.07);
+    width: 600px;
+    height: 600px;
+    bottom: -100px;
+    left: -200px;
+  }
+  
+  .legal-header {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 120px 20px 60px;
+    text-align: center;
+    background-color: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    z-index: 1;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  
+  .legal-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 70px;
+    height: 70px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #3d7cf3, #5c7eea);
+    margin-bottom: 25px;
+    color: white;
+    box-shadow: 0 10px 20px rgba(61, 124, 243, 0.2);
+  }
+  
+  .legal-header h1 {
+    font-size: 40px;
+    font-weight: 700;
+    margin-bottom: 15px;
+    color: #1d1d1f;
+    letter-spacing: -0.02em;
+  }
+  
+  .legal-subtitle {
+    font-size: 16px;
+    color: #86868b;
+  }
+  
+  .legal-content {
+    position: relative;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 60px 20px;
+    z-index: 1;
+  }
+  
+  .legal-section {
+    display: flex;
+    margin-bottom: 50px;
+    padding: 30px;
+    background-color: white;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .legal-section.hovered {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  }
+  
+  .section-number {
+    font-size: 36px;
+    font-weight: 700;
+    color: #3d7cf3;
+    opacity: 0.2;
+    margin-right: 30px;
+    line-height: 1;
+    flex-shrink: 0;
+    min-width: 60px;
+  }
+  
+  .section-content {
+    flex: 1;
+  }
+  
+  .section-content h2 {
+    font-size: 22px;
+    font-weight: 600;
+    color: #1d1d1f;
+    margin-bottom: 12px;
+    letter-spacing: -0.01em;
+  }
+  
+  .section-content p {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #515154;
+    margin: 0;
+  }
+  
+  .legal-footer {
+    position: relative;
+    padding: 40px 20px;
+    text-align: center;
+    font-size: 14px;
+    color: #86868b;
+    background-color: white;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    z-index: 1;
+  }
+  
+  .legal-footer a {
+    color: #3d7cf3;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+  }
+  
+  .legal-footer a:hover {
+    color: #2e60c1;
+    text-decoration: underline;
+  }
+  
+  .legal-updated {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #a1a1a6;
+  }
+  
+  /* Responsive styles */
+  @media (max-width: 768px) {
+    .legal-header {
+      padding: 100px 20px 50px;
+    }
+    
+    .legal-header h1 {
+      font-size: 32px;
+    }
+    
+    .legal-icon {
+      width: 60px;
+      height: 60px;
+    }
+    
+    .legal-section {
+      padding: 24px;
+      flex-direction: column;
+    }
+    
+    .section-number {
+      margin-right: 0;
+      margin-bottom: 15px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .legal-header {
+      padding: 80px 15px 40px;
+    }
+    
+    .legal-header h1 {
+      font-size: 28px;
+    }
+    
+    .legal-icon {
+      width: 50px;
+      height: 50px;
+    }
+    
+    .section-content h2 {
+      font-size: 18px;
+    }
+    
+    .section-content p {
+      font-size: 15px;
+    }
+  }

@@ -81,7 +81,7 @@ const Vergleich: React.FC = () => {
           <p className={styles.heroSubtitle}>
             Lassen Sie zwei Verträge gegeneinander antreten. Wir visualisieren die Unterschiede, bewerten Fairness & Risiko und geben eine klare Empfehlung.
           </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '24px', justifyContent: 'center' }}>
+          <div className={styles.heroButtons}>
             <Link to={target} className={styles.ctaButton} aria-label="Verträge vergleichen">
               Verträge vergleichen
             </Link>
@@ -367,9 +367,9 @@ const Vergleich: React.FC = () => {
               <p className={styles.ctaSubtitle}>
                 Objektive Analyse, visualisierte Unterschiede und eine klare Empfehlung – damit Sie die richtige Wahl treffen.
               </p>
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '24px' }}>
-                <button 
-                  style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', padding: '12px 16px', borderRadius: '12px', fontWeight: '600', cursor: 'pointer' }}
+              <div className={styles.ctaButtons}>
+                <button
+                  className={styles.secondaryButtonLight}
                   onClick={() => document.getElementById('so-funktionierts')?.scrollIntoView({ behavior: 'smooth' })}
                 >
                   Wie der Vergleich arbeitet

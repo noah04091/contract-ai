@@ -2,11 +2,11 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from "react-helmet-async";
-import { Search, Calendar, Clock, ArrowRight } from 'lucide-react';
+import { Search, Calendar, Clock, ArrowRight, Sparkles, Mail, TrendingUp } from 'lucide-react';
 import styles from '../styles/Blog.module.css';
 
 // ✅ Import der zentralen Artikel-Daten
-import { getArticlesByCategory, searchArticles, Article } from '../data/articlesData';
+import { getArticlesByCategory, searchArticles, Article, articles } from '../data/articlesData';
 
 interface CategoryFilter {
   key: string;
@@ -64,6 +64,21 @@ const Blog: React.FC = () => {
     return category ? category.label : categoryKey;
   };
 
+  // Featured Article (neuester Artikel)
+  const featuredArticle = articles[0];
+
+  // Restliche Artikel (ohne Featured)
+  const remainingArticles = useMemo(() => {
+    if (activeCategory === 'alle' && !searchTerm) {
+      return filteredArticles.slice(1); // Skip featured
+    }
+    return filteredArticles;
+  }, [filteredArticles, activeCategory, searchTerm]);
+
+  // Stats für Hero
+  const totalArticles = articles.length;
+  const totalCategories = categories.length - 1; // Minus "Alle"
+
   return (
     <>
       <Helmet>
@@ -102,12 +117,74 @@ const Blog: React.FC = () => {
         {/* Hero Section */}
         <section className={styles.hero}>
           <div className={styles.container}>
-            <h1 className={styles.heroTitle}>Contract AI Blog</h1>
-            <p className={styles.heroSubtitle}>
-              Expertenwissen zu Verträgen, Rechtsfragen und smarten Lösungen für Ihren Alltag
-            </p>
+            <div className={styles.heroContent}>
+              <div className={styles.heroBadge}>
+                <Sparkles size={16} />
+                Wissen für klügere Verträge
+              </div>
+              <h1 className={styles.heroTitle}>Contract AI Blog</h1>
+              <p className={styles.heroSubtitle}>
+                Expertenwissen zu Verträgen, Rechtsfragen und smarten Lösungen für Ihren Alltag
+              </p>
+              <div className={styles.heroStats}>
+                <div className={styles.heroStat}>
+                  <span className={styles.heroStatNumber}>{totalArticles}+</span>
+                  <span className={styles.heroStatLabel}>Artikel</span>
+                </div>
+                <div className={styles.heroStat}>
+                  <span className={styles.heroStatNumber}>{totalCategories}</span>
+                  <span className={styles.heroStatLabel}>Kategorien</span>
+                </div>
+                <div className={styles.heroStat}>
+                  <span className={styles.heroStatNumber}>5 Min</span>
+                  <span className={styles.heroStatLabel}>Ø Lesezeit</span>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
+
+        {/* Featured Article */}
+        {activeCategory === 'alle' && !searchTerm && (
+          <section className={styles.featuredSection}>
+            <div className={styles.containerWide}>
+              <article
+                className={styles.featuredArticle}
+                onClick={() => handleArticleClick(featuredArticle.slug)}
+              >
+                <div className={styles.featuredImage}>
+                  <img
+                    src={featuredArticle.image}
+                    alt={featuredArticle.title}
+                    className={styles.featuredImg}
+                  />
+                </div>
+                <div className={styles.featuredContent}>
+                  <div className={styles.featuredBadge}>
+                    <TrendingUp size={14} />
+                    Neuester Artikel
+                  </div>
+                  <div className={styles.featuredMeta}>
+                    <span className={styles.featuredMetaItem}>
+                      <Calendar size={14} />
+                      {featuredArticle.date}
+                    </span>
+                    <span className={styles.featuredMetaItem}>
+                      <Clock size={14} />
+                      {featuredArticle.readTime}
+                    </span>
+                  </div>
+                  <h2 className={styles.featuredTitle}>{featuredArticle.title}</h2>
+                  <p className={styles.featuredExcerpt}>{featuredArticle.excerpt}</p>
+                  <button className={styles.featuredCta}>
+                    Artikel lesen
+                    <ArrowRight size={18} />
+                  </button>
+                </div>
+              </article>
+            </div>
+          </section>
+        )}
 
         {/* Filter Section */}
         <section className={styles.filterSection}>
@@ -146,47 +223,132 @@ const Blog: React.FC = () => {
               {activeCategory === 'alle' ? 'Neueste Artikel' : getCategoryDisplayName(activeCategory)}
             </h2>
             
-            {filteredArticles.length === 0 ? (
+            {remainingArticles.length === 0 ? (
               <div className={styles.noResults}>
                 <p>Keine Artikel gefunden. Versuchen Sie andere Suchbegriffe oder wählen Sie eine andere Kategorie.</p>
               </div>
             ) : (
-              <div className={styles.articlesGrid}>
-                {filteredArticles.map((article: Article) => (
-                  <article
-                    key={article.id}
-                    className={styles.articleCard}
-                    onClick={() => handleArticleClick(article.slug)}
-                  >
-                    <div className={styles.articleImage}>
-                      <span className={styles.articleIcon}>{article.icon}</span>
-                    </div>
-                    <div className={styles.articleContent}>
-                      <div className={styles.articleMeta}>
-                        <span className={styles.articleCategory}>
-                          {getCategoryDisplayName(article.category)}
-                        </span>
-                        <span className={styles.metaSeparator}>•</span>
-                        <span className={styles.articleReadTime}>
-                          <Clock size={14} />
-                          {article.readTime}
-                        </span>
-                        <span className={styles.metaSeparator}>•</span>
-                        <span className={styles.articleDate}>
-                          <Calendar size={14} />
-                          {article.date}
-                        </span>
+              <>
+                <div className={styles.articlesGrid}>
+                  {remainingArticles.slice(0, 3).map((article: Article) => (
+                    <article
+                      key={article.id}
+                      className={styles.articleCard}
+                      onClick={() => handleArticleClick(article.slug)}
+                    >
+                      <div className={styles.articleImage}>
+                        <img
+                          src={article.image}
+                          alt={article.title}
+                          className={styles.articleImg}
+                          loading="lazy"
+                        />
                       </div>
-                      <h3 className={styles.articleTitle}>{article.title}</h3>
-                      <p className={styles.articleExcerpt}>{article.excerpt}</p>
-                      <div className={styles.articleCta}>
-                        <span>Artikel lesen</span>
-                        <ArrowRight className={styles.ctaIcon} size={16} />
+                      <div className={styles.articleContent}>
+                        <div className={styles.articleMeta}>
+                          <span className={styles.articleCategory}>
+                            {getCategoryDisplayName(article.category)}
+                          </span>
+                          <span className={styles.metaSeparator}>•</span>
+                          <span className={styles.articleReadTime}>
+                            <Clock size={14} />
+                            {article.readTime}
+                          </span>
+                          <span className={styles.metaSeparator}>•</span>
+                          <span className={styles.articleDate}>
+                            <Calendar size={14} />
+                            {article.date}
+                          </span>
+                        </div>
+                        <h3 className={styles.articleTitle}>{article.title}</h3>
+                        <p className={styles.articleExcerpt}>{article.excerpt}</p>
+                        <div className={styles.articleAuthor}>
+                          <div className={styles.authorAvatar}>
+                            {article.author?.charAt(0) || 'C'}
+                          </div>
+                          <span className={styles.authorName}>
+                            von <strong>{article.author || 'Contract AI'}</strong>
+                          </span>
+                        </div>
                       </div>
+                    </article>
+                  ))}
+                </div>
+
+                {/* Newsletter Banner nach ersten 3 Artikeln */}
+                {remainingArticles.length > 3 && (
+                  <div className={styles.newsletterBanner}>
+                    <div className={styles.newsletterContent}>
+                      <div className={styles.newsletterIcon}>
+                        <Mail size={24} />
+                      </div>
+                      <h3 className={styles.newsletterTitle}>Keine Neuigkeiten verpassen</h3>
+                      <p className={styles.newsletterText}>
+                        Erhalten Sie die neuesten Artikel und Tipps direkt in Ihr Postfach.
+                      </p>
                     </div>
-                  </article>
-                ))}
-              </div>
+                    <form className={styles.newsletterForm} onSubmit={(e) => e.preventDefault()}>
+                      <input
+                        type="email"
+                        placeholder="Ihre E-Mail-Adresse"
+                        className={styles.newsletterInput}
+                      />
+                      <button type="submit" className={styles.newsletterButton}>
+                        Abonnieren
+                      </button>
+                    </form>
+                  </div>
+                )}
+
+                {/* Restliche Artikel */}
+                {remainingArticles.length > 3 && (
+                  <div className={styles.articlesGrid}>
+                    {remainingArticles.slice(3).map((article: Article) => (
+                      <article
+                        key={article.id}
+                        className={styles.articleCard}
+                        onClick={() => handleArticleClick(article.slug)}
+                      >
+                        <div className={styles.articleImage}>
+                          <img
+                            src={article.image}
+                            alt={article.title}
+                            className={styles.articleImg}
+                            loading="lazy"
+                          />
+                        </div>
+                        <div className={styles.articleContent}>
+                          <div className={styles.articleMeta}>
+                            <span className={styles.articleCategory}>
+                              {getCategoryDisplayName(article.category)}
+                            </span>
+                            <span className={styles.metaSeparator}>•</span>
+                            <span className={styles.articleReadTime}>
+                              <Clock size={14} />
+                              {article.readTime}
+                            </span>
+                            <span className={styles.metaSeparator}>•</span>
+                            <span className={styles.articleDate}>
+                              <Calendar size={14} />
+                              {article.date}
+                            </span>
+                          </div>
+                          <h3 className={styles.articleTitle}>{article.title}</h3>
+                          <p className={styles.articleExcerpt}>{article.excerpt}</p>
+                          <div className={styles.articleAuthor}>
+                            <div className={styles.authorAvatar}>
+                              {article.author?.charAt(0) || 'C'}
+                            </div>
+                            <span className={styles.authorName}>
+                              von <strong>{article.author || 'Contract AI'}</strong>
+                            </span>
+                          </div>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
         </section>

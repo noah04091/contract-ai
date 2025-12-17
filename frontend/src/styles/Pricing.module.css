@@ -996,6 +996,12 @@
 
   .enterpriseHalf {
     order: -1;
+    padding-bottom: 5.5rem; /* Mehr Abstand zum "ODER" Divider */
+  }
+
+  /* Business-Sektion braucht auch mehr Abstand oben */
+  .planHalf:not(.enterpriseHalf) {
+    padding-top: 5.5rem;
   }
 
   .plansGrid {
@@ -1088,6 +1094,14 @@
 
   .planHalf {
     padding: 2.5rem 1.5rem;
+  }
+
+  .enterpriseHalf {
+    padding-bottom: 5rem;
+  }
+
+  .planHalf:not(.enterpriseHalf) {
+    padding-top: 5rem;
   }
 
   .planHalfContent {
@@ -1251,6 +1265,14 @@
 
   .planHalf {
     padding: 2rem 1rem;
+  }
+
+  .enterpriseHalf {
+    padding-bottom: 4.5rem;
+  }
+
+  .planHalf:not(.enterpriseHalf) {
+    padding-top: 4.5rem;
   }
 
   .planBadge {

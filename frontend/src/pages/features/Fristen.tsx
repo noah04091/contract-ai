@@ -81,7 +81,7 @@ const Fristen: React.FC = () => {
           <p className={styles.heroSubtitle}>
             Contract AI erkennt Fristen automatisch in Ihren Verträgen und erinnert Sie rechtzeitig – per E-Mail und Kalenderintegration.
           </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '24px', justifyContent: 'center' }}>
+          <div className={styles.heroButtons}>
             <Link to={target} className={styles.ctaButton} aria-label="Zum Fristenkalender">
               Zum Fristenkalender
             </Link>
@@ -367,9 +367,9 @@ const Fristen: React.FC = () => {
               <p className={styles.ctaSubtitle}>
                 Nie wieder wichtige Termine verpassen. Lassen Sie die KI Ihre Verträge überwachen und rechtzeitig erinnern.
               </p>
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '24px' }}>
-                <button 
-                  style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', padding: '12px 16px', borderRadius: '12px', fontWeight: '600', cursor: 'pointer' }}
+              <div className={styles.ctaButtons}>
+                <button
+                  className={styles.secondaryButtonLight}
                   onClick={() => document.getElementById('so-funktionierts')?.scrollIntoView({ behavior: 'smooth' })}
                 >
                   Mehr über Erinnerungen

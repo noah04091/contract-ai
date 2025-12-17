@@ -84,6 +84,97 @@
   font-weight: 500;
 }
 
+/* ===== OVERVIEW TOGGLE BUTTON ===== */
+.overviewToggleButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.overviewToggleButton:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+.overviewToggleButton.active {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+}
+
+.overviewToggleButton.active:hover {
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+}
+
+/* ===== CHECKLIST BUTTON ===== */
+.checklistButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 6px rgba(139, 92, 246, 0.25);
+}
+
+.checklistButton:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.35);
+  transform: translateY(-1px);
+}
+
+.checklistButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ===== EXPORT BUTTON ===== */
+.exportButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.25);
+}
+
+.exportButton:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+  transform: translateY(-1px);
+}
+
+.exportButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 .summaryButton {
   display: flex;
   align-items: center;
@@ -572,10 +663,30 @@
 
 /* Perspective Cards */
 .perspectiveCards {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  display: flex;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.perspectiveCards::-webkit-scrollbar {
+  height: 6px;
+}
+
+.perspectiveCards::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.perspectiveCards::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.perspectiveCards::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .perspectiveCard {
@@ -590,6 +701,9 @@
   transition: all 0.2s;
   text-align: left;
   position: relative;
+  flex: 1 0 auto;
+  min-width: 140px;
+  max-width: 220px;
 }
 
 .perspectiveCard:hover {
@@ -667,6 +781,27 @@
   border-top: 1px solid #e2e8f0;
   padding: 1rem;
   animation: slideDown 0.2s ease-out;
+  max-height: 400px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.perspectiveHelpPanel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.perspectiveHelpPanel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.perspectiveHelpPanel::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.perspectiveHelpPanel::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 @keyframes slideDown {
@@ -707,6 +842,12 @@
   gap: 0.5rem;
   margin-bottom: 0.5rem;
   font-size: 0.875rem;
+  color: #1e293b;
+}
+
+.perspectiveHelpCardHeader strong {
+  color: #1e293b;
+  font-weight: 600;
 }
 
 .perspectiveHelpDesc {
@@ -1506,14 +1647,25 @@
   }
 
   .batchAnalyzeButton span,
-  .summaryButton span {
+  .summaryButton span,
+  .checklistButton span {
+    display: none;
+  }
+
+  .overviewToggleButton span {
     display: none;
   }
 
   .batchAnalyzeButton,
-  .summaryButton {
+  .summaryButton,
+  .overviewToggleButton,
+  .checklistButton {
     padding: 0.5rem;
     min-width: 36px;
+  }
+
+  .overviewToggleButton {
+    border-width: 1px;
   }
 }
 
@@ -1565,14 +1717,18 @@
   }
 
   .perspectiveCards {
-    grid-template-columns: repeat(2, 1fr);
+    flex-wrap: wrap;
     gap: 0.375rem;
     padding: 0.5rem 0.75rem;
+    overflow-x: visible;
   }
 
   .perspectiveCard {
     padding: 0.5rem;
     gap: 0.375rem;
+    flex: 1 1 calc(50% - 0.2rem);
+    min-width: 110px;
+    max-width: calc(50% - 0.2rem);
   }
 
   .perspectiveCardIcon {
@@ -1595,16 +1751,26 @@
 
   .perspectiveHelpPanel {
     padding: 0.75rem;
+    max-height: 350px;
   }
 
   .perspectiveHelpTitle {
     font-size: 0.85rem;
     margin-bottom: 0.5rem;
+    color: #1e293b;
   }
 
   .perspectiveHelpGrid {
     grid-template-columns: 1fr;
     gap: 0.5rem;
+  }
+
+  .perspectiveHelpCardHeader {
+    color: #1e293b;
+  }
+
+  .perspectiveHelpCardHeader strong {
+    color: #1e293b;
   }
 
   .perspectiveHelpCard {
@@ -2019,5 +2185,47 @@
   .compareLegend {
     flex-direction: column;
     gap: 0.75rem;
+  }
+}
+
+/* ===== TOAST NOTIFICATION ===== */
+.copiedToast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #16a34a;
+  color: white;
+  padding: 0.75rem 1.25rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  z-index: 10000;
+  animation: toastSlideIn 0.3s ease-out;
+}
+
+.copiedToast span:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  font-size: 0.75rem;
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
   }
 }

@@ -97,7 +97,7 @@ const Vertragsverwaltung: React.FC = () => {
           <p className={styles.heroSubtitle}>
             Schluss mit Papierstapeln und verstreuten Dateien. Organisieren Sie alle Verträge zentral, sicher und intelligent in der Cloud – mit automatischen Erinnerungen und Volltextsuche.
           </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '24px', justifyContent: 'center' }}>
+          <div className={styles.heroButtons}>
             <Link to={target} className={styles.ctaButton} style={{ fontSize: '18px', padding: '16px 32px' }} aria-label="Verträge jetzt verwalten">
               📂 Verträge jetzt verwalten
             </Link>
@@ -383,9 +383,9 @@ const Vertragsverwaltung: React.FC = () => {
               <p className={styles.ctaSubtitle}>
                 Über 92% unserer Nutzer finden, dass Contract AI ihre Vertragsverwaltung deutlich vereinfacht hat. Probieren Sie es jetzt kostenlos aus!
               </p>
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '24px' }}>
+              <div className={styles.ctaButtons}>
                 <button
-                  style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', padding: '12px 16px', borderRadius: '12px', fontWeight: '600', cursor: 'pointer' }}
+                  className={styles.secondaryButtonLight}
                   onClick={() => document.getElementById('so-funktionierts')?.scrollIntoView({ behavior: 'smooth' })}
                 >
                   So funktioniert die Verwaltung

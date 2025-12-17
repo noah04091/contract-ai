@@ -1,0 +1,456 @@
+/* ====================================== */
+/* InfoTooltip.module.css - Modern Design */
+/* ====================================== */
+
+.tooltipContainer {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  z-index: 100;
+}
+
+/* ====================================== */
+/* TRIGGER BUTTON - SUBTLE & MODERN       */
+/* ====================================== */
+
+.tooltipTrigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  flex-shrink: 0;
+  padding: 6px;
+  outline: none;
+  color: #94a3b8;
+  z-index: 100;
+}
+
+.tooltipTrigger:hover {
+  color: #3b82f6;
+  transform: scale(1.1);
+}
+
+.tooltipTrigger.active {
+  color: #3b82f6;
+}
+
+.tooltipTrigger:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.5);
+  outline-offset: 2px;
+  border-radius: 50%;
+}
+
+.infoIcon {
+  width: 16px;
+  height: 16px;
+  transition: inherit;
+}
+
+/* ====================================== */
+/* TOOLTIP CONTENT - GLASSMORPHISM        */
+/* ====================================== */
+
+.tooltipContent {
+  position: fixed;
+  z-index: 10000;
+  min-width: 220px;
+  max-width: min(320px, calc(100vw - 24px));
+
+  /* Glassmorphism Effect */
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 12px;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 10px 15px -3px rgba(0, 0, 0, 0.08),
+    0 20px 25px -5px rgba(0, 0, 0, 0.05);
+
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  opacity: 0;
+  animation: tooltipFadeIn 0.15s ease-out forwards;
+  pointer-events: auto;
+  overflow: hidden;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tooltipContent.top {
+  animation-name: tooltipFadeInTop;
+}
+
+@keyframes tooltipFadeInTop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tooltipContent.left {
+  animation-name: tooltipFadeInLeft;
+}
+
+@keyframes tooltipFadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.tooltipContent.right {
+  animation-name: tooltipFadeInRight;
+}
+
+@keyframes tooltipFadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ====================================== */
+/* TOOLTIP SIZES                          */
+/* ====================================== */
+
+.tooltipContent.sm {
+  min-width: 180px;
+  max-width: 240px;
+}
+
+.tooltipContent.md {
+  min-width: 220px;
+  max-width: 300px;
+}
+
+.tooltipContent.lg {
+  min-width: 280px;
+  max-width: 380px;
+}
+
+/* ====================================== */
+/* TOOLTIP HEADER                         */
+/* ====================================== */
+
+.tooltipHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px 8px 14px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+}
+
+.tooltipIconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-radius: 6px;
+  color: #3b82f6;
+  flex-shrink: 0;
+}
+
+.tooltipTitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+/* ====================================== */
+/* TOOLTIP BODY                           */
+/* ====================================== */
+
+.tooltipBody {
+  padding: 10px 14px 14px 14px;
+}
+
+.tooltipText {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: #64748b;
+}
+
+/* ====================================== */
+/* TOOLTIP ARROWS                         */
+/* ====================================== */
+
+.tooltipArrow {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  transform: rotate(45deg);
+}
+
+.tooltipContent.top .tooltipArrow {
+  bottom: -6px;
+  left: 50%;
+  margin-left: -5px;
+  border-top: none;
+  border-left: none;
+}
+
+.tooltipContent.bottom .tooltipArrow {
+  top: -6px;
+  left: 50%;
+  margin-left: -5px;
+  border-bottom: none;
+  border-right: none;
+}
+
+.tooltipContent.left .tooltipArrow {
+  right: -6px;
+  top: 50%;
+  margin-top: -5px;
+  border-bottom: none;
+  border-left: none;
+}
+
+.tooltipContent.right .tooltipArrow {
+  left: -6px;
+  top: 50%;
+  margin-top: -5px;
+  border-top: none;
+  border-right: none;
+}
+
+/* ====================================== */
+/* MOBILE DESIGN                          */
+/* ====================================== */
+
+.mobileOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.4);
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: overlayFadeIn 0.2s ease-out forwards;
+}
+
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.tooltipContent.mobile {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  min-width: 280px;
+  max-width: calc(100vw - 48px);
+  max-height: 80vh;
+  overflow-y: auto;
+  margin: 0;
+  z-index: 10000;
+  animation: mobileSlideIn 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+
+  /* Stärkerer Schatten für Mobile */
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 25px 50px -12px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes mobileSlideIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.closeButton {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: #f1f5f9;
+  color: #64748b;
+  cursor: pointer;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.closeButton:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.closeButton:active {
+  transform: scale(0.95);
+}
+
+/* ====================================== */
+/* RESPONSIVE DESIGN                      */
+/* ====================================== */
+
+@media (max-width: 768px) {
+  .tooltipTrigger {
+    width: 20px;
+    height: 20px;
+  }
+
+  .infoIcon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .tooltipContent.mobile {
+    min-width: 260px;
+  }
+
+  .tooltipHeader {
+    padding: 14px 16px 10px 16px;
+    padding-right: 44px; /* Platz für Close-Button */
+  }
+
+  .tooltipBody {
+    padding: 10px 16px 16px 16px;
+  }
+
+  .tooltipTitle {
+    font-size: 14px;
+  }
+
+  .tooltipText {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tooltipContent.mobile {
+    min-width: 240px;
+    max-width: calc(100vw - 32px);
+  }
+}
+
+/* ====================================== */
+/* ACCESSIBILITY                          */
+/* ====================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .tooltipContent,
+  .tooltipTrigger,
+  .mobileOverlay,
+  .closeButton {
+    transition: none;
+    animation: none;
+  }
+
+  .tooltipContent {
+    opacity: 1;
+  }
+}
+
+/* ====================================== */
+/* HIGH CONTRAST MODE                     */
+/* ====================================== */
+
+@media (prefers-contrast: high) {
+  .tooltipContent {
+    background: #ffffff;
+    border: 2px solid #1e293b;
+  }
+
+  .tooltipTitle {
+    color: #000000;
+  }
+
+  .tooltipText {
+    color: #1e293b;
+  }
+
+  .tooltipTrigger {
+    color: #1e293b;
+  }
+
+  .tooltipArrow {
+    border-width: 2px;
+  }
+}
+
+/* ====================================== */
+/* DARK MODE SUPPORT (optional)           */
+/* ====================================== */
+
+@media (prefers-color-scheme: dark) {
+  /* Falls Dark Mode gewünscht wird, hier aktivieren */
+  /*
+  .tooltipContent {
+    background: rgba(30, 41, 59, 0.95);
+    border-color: rgba(71, 85, 105, 0.6);
+  }
+
+  .tooltipHeader {
+    border-bottom-color: rgba(71, 85, 105, 0.4);
+  }
+
+  .tooltipIconWrapper {
+    background: linear-gradient(135deg, #1e3a5f 0%, #1e40af 100%);
+  }
+
+  .tooltipTitle {
+    color: #f1f5f9;
+  }
+
+  .tooltipText {
+    color: #94a3b8;
+  }
+
+  .tooltipArrow {
+    background: rgba(30, 41, 59, 0.95);
+    border-color: rgba(71, 85, 105, 0.6);
+  }
+  */
+}

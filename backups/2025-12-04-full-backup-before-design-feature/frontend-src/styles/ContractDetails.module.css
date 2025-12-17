@@ -1,0 +1,703 @@
+/* ContractDetails.module.css - Apple Design Style with LegalPulse Integration */
+
+/* Base Variables */
+:root {
+  --apple-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --apple-blue: #0071e3;
+  --apple-blue-hover: #0077ed;
+  --apple-blue-active: #006edb;
+  --apple-blue-light: rgba(0, 113, 227, 0.1);
+  --apple-gray: #f5f5f7;
+  --apple-light-gray: #e8e8ed;
+  --apple-dark-gray: #86868b;
+  --apple-text: #1d1d1f;
+  --apple-text-secondary: #515154;
+  --apple-success: #32d74b;
+  --apple-warning: #ff9f0a;
+  --apple-danger: #ff453a;
+  --apple-glass-bg: rgba(255, 255, 255, 0.8);
+  --apple-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --apple-shadow-md: 0 8px 20px rgba(0, 0, 0, 0.08);
+  --apple-border-radius: 12px;
+  --apple-transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  
+  /* Legal Pulse Colors */
+  --risk-high: #ff453a;
+  --risk-high-bg: rgba(255, 69, 58, 0.1);
+  --risk-medium: #ff9f0a;
+  --risk-medium-bg: rgba(255, 159, 10, 0.1);
+  --risk-low: #32d74b;
+  --risk-low-bg: rgba(50, 215, 75, 0.1);
+  --risk-unrated: #86868b;
+  --risk-unrated-bg: rgba(134, 134, 139, 0.1);
+}
+
+/* Main Container */
+.container {
+  font-family: var(--apple-font);
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem;
+  color: var(--apple-text);
+  min-height: 100vh;
+  animation: fadeIn 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  font-size: 2.2rem;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.02em;
+  background: linear-gradient(90deg, var(--apple-blue), #00b9ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.headerActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Icon Button */
+.iconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--apple-light-gray);
+  border: none;
+  color: var(--apple-text-secondary);
+  cursor: pointer;
+  transition: var(--apple-transition);
+}
+
+.iconButton:hover {
+  background-color: var(--apple-gray);
+  color: var(--apple-text);
+}
+
+/* Contract Card */
+.contractCard {
+  background: var(--apple-glass-bg);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border-radius: var(--apple-border-radius);
+  box-shadow: var(--apple-shadow-md);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  transition: var(--apple-transition);
+}
+
+.contractCard:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.contractHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--apple-light-gray);
+}
+
+.contractHeader h2 {
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin: 0;
+  color: var(--apple-text);
+}
+
+/* Status Badge */
+.statusBadge {
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.statusActive {
+  background-color: rgba(50, 215, 75, 0.1);
+  color: var(--apple-success);
+}
+
+.statusExpiring {
+  background-color: rgba(255, 159, 10, 0.1);
+  color: var(--apple-warning);
+}
+
+.statusCancelled {
+  background-color: rgba(255, 69, 58, 0.1);
+  color: var(--apple-danger);
+}
+
+.statusNeutral {
+  background-color: var(--apple-light-gray);
+  color: var(--apple-dark-gray);
+}
+
+/* Info Grid */
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.infoItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.infoIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background-color: var(--apple-blue-light);
+  border-radius: 50%;
+  color: var(--apple-blue);
+  flex-shrink: 0;
+}
+
+.infoContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.infoLabel {
+  font-size: 0.85rem;
+  color: var(--apple-text-secondary);
+}
+
+.infoValue {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--apple-text);
+}
+
+/* ===== LEGAL PULSE SECTION ===== */
+.legalPulseSection {
+  background: var(--apple-glass-bg);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border-radius: var(--apple-border-radius);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  margin-bottom: 2rem;
+  overflow: hidden;
+  transition: var(--apple-transition);
+}
+
+.legalPulseSection:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--apple-shadow-md);
+}
+
+.legalPulseHeader {
+  background: linear-gradient(135deg, rgba(0, 113, 227, 0.05), rgba(0, 185, 255, 0.05));
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--apple-light-gray);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.sectionIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, var(--apple-blue), #00b9ff);
+  border-radius: 50%;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 113, 227, 0.3);
+}
+
+.legalPulseHeader h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--apple-text);
+  letter-spacing: -0.01em;
+}
+
+.riskBadge {
+  margin-left: auto;
+  padding: 0.6rem 1.2rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: var(--apple-transition);
+}
+
+.riskBadge:hover {
+  transform: scale(1.05);
+}
+
+.riskScoreText {
+  font-size: 0.75rem;
+  opacity: 0.9;
+}
+
+/* Risk Level Colors */
+.riskHigh {
+  background: var(--risk-high);
+  color: white;
+  box-shadow: 0 4px 12px rgba(255, 69, 58, 0.3);
+}
+
+.riskMedium {
+  background: var(--risk-medium);
+  color: white;
+  box-shadow: 0 4px 12px rgba(255, 159, 10, 0.3);
+}
+
+.riskLow {
+  background: var(--risk-low);
+  color: white;
+  box-shadow: 0 4px 12px rgba(50, 215, 75, 0.3);
+}
+
+.riskUnrated {
+  background: var(--risk-unrated);
+  color: white;
+  box-shadow: 0 4px 12px rgba(134, 134, 139, 0.3);
+}
+
+.legalPulseContent {
+  padding: 2rem;
+}
+
+.pulseItem {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: var(--apple-border-radius);
+  border-left: 4px solid var(--apple-blue);
+  transition: var(--apple-transition);
+}
+
+.pulseItem:hover {
+  background: rgba(0, 113, 227, 0.04);
+  transform: translateX(4px);
+}
+
+.pulseItem:last-child {
+  margin-bottom: 0;
+}
+
+.pulseItem h4 {
+  margin: 0 0 1rem 0;
+  color: var(--apple-text);
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pulseSummary {
+  color: var(--apple-text-secondary);
+  line-height: 1.7;
+  margin: 0;
+  font-size: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid var(--apple-light-gray);
+}
+
+.pulseList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pulseList li {
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid var(--apple-light-gray);
+  color: var(--apple-text-secondary);
+  line-height: 1.6;
+  transition: var(--apple-transition);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.pulseList li:hover {
+  background: var(--apple-gray);
+  transform: translateY(-1px);
+  box-shadow: var(--apple-shadow-sm);
+}
+
+.riskItem {
+  border-left: 3px solid var(--risk-high);
+}
+
+.legalItem {
+  border-left: 3px solid var(--apple-blue);
+}
+
+.recommendationItem {
+  border-left: 3px solid var(--risk-low);
+}
+
+.pulseFooter {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--apple-light-gray);
+  display: flex;
+  justify-content: center;
+}
+
+.analysisDate {
+  color: var(--apple-dark-gray);
+  font-size: 0.875rem;
+  font-style: italic;
+  padding: 0.5rem 1rem;
+  background: var(--apple-gray);
+  border-radius: 20px;
+}
+
+/* Reminder Section */
+.reminderSection {
+  background: linear-gradient(135deg, rgba(0, 113, 227, 0.04), rgba(0, 185, 255, 0.04));
+  border-radius: var(--apple-border-radius);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border: 1px solid rgba(0, 113, 227, 0.1);
+}
+
+.reminderTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 1rem;
+}
+
+.reminderIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background-color: var(--apple-blue-light);
+  border-radius: 50%;
+  color: var(--apple-blue);
+}
+
+.reminderTitle h3 {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.reminderContent {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.reminderToggle {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.reminderInfo {
+  font-size: 0.9rem;
+  color: var(--apple-text-secondary);
+}
+
+/* Toggle Switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 28px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--apple-light-gray);
+  transition: .4s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 24px;
+  width: 24px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+input:checked + .slider {
+  background-color: var(--apple-blue);
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px var(--apple-blue);
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+/* Edit Form */
+.editForm {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: var(--apple-border-radius);
+  padding: 1.5rem;
+  margin-top: 1rem;
+}
+
+.formGroup {
+  margin-bottom: 1.5rem;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--apple-text);
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.formGroup input {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--apple-light-gray);
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: var(--apple-font);
+  transition: var(--apple-transition);
+  background: white;
+}
+
+.formGroup input:focus {
+  outline: none;
+  border-color: var(--apple-blue);
+  box-shadow: 0 0 0 3px var(--apple-blue-light);
+}
+
+.formActions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+/* Buttons */
+.primaryButton, .actionButton, .secondaryButton, .dangerButton {
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--apple-transition);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  box-shadow: var(--apple-shadow-sm);
+}
+
+.primaryButton {
+  background: var(--apple-blue);
+  color: white;
+}
+
+.primaryButton:hover {
+  background: var(--apple-blue-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--apple-shadow-md);
+}
+
+.actionButton {
+  background: var(--apple-gray);
+  color: var(--apple-text);
+}
+
+.actionButton:hover {
+  background: var(--apple-light-gray);
+  transform: translateY(-1px);
+}
+
+.secondaryButton {
+  background: transparent;
+  color: var(--apple-text-secondary);
+  border: 1px solid var(--apple-light-gray);
+}
+
+.secondaryButton:hover {
+  background: var(--apple-gray);
+  color: var(--apple-text);
+}
+
+.dangerButton {
+  background: var(--apple-danger);
+  color: white;
+}
+
+.dangerButton:hover {
+  background: #ff3b30;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 69, 58, 0.3);
+}
+
+.actionButtons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+
+/* Loading States */
+.loadingContainer, .errorContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--apple-light-gray);
+  border-top: 3px solid var(--apple-blue);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.errorIcon {
+  color: var(--apple-danger);
+  margin-bottom: 1rem;
+}
+
+.errorContainer h2 {
+  color: var(--apple-text);
+  margin-bottom: 0.5rem;
+}
+
+.errorContainer p {
+  color: var(--apple-text-secondary);
+  margin-bottom: 2rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+  
+  .header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .contractCard {
+    padding: 1.5rem;
+  }
+  
+  .contractHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .infoGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .actionButtons {
+    flex-direction: column;
+  }
+  
+  .formActions {
+    flex-direction: column;
+  }
+  
+  .legalPulseHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .riskBadge {
+    margin-left: 0;
+    align-self: flex-start;
+  }
+  
+  .pulseItem {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0.5rem;
+  }
+  
+  .contractCard {
+    padding: 1rem;
+  }
+  
+  .legalPulseContent {
+    padding: 1rem;
+  }
+}

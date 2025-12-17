@@ -1962,9 +1962,9 @@ a {
   height: 100%;
   background: linear-gradient(180deg,
     transparent 0%,
-    rgba(99, 102, 241, 0.3) 20%,
-    rgba(99, 102, 241, 0.6) 50%,
-    rgba(99, 102, 241, 0.3) 80%,
+    rgba(0, 122, 255, 0.3) 20%,
+    rgba(0, 122, 255, 0.6) 50%,
+    rgba(0, 122, 255, 0.3) 80%,
     transparent 100%
   );
   z-index: 100;
@@ -1981,9 +1981,9 @@ a {
   height: 100%;
   background: linear-gradient(180deg,
     transparent 0%,
-    rgba(99, 102, 241, 0.3) 20%,
-    rgba(99, 102, 241, 0.6) 50%,
-    rgba(99, 102, 241, 0.3) 80%,
+    rgba(0, 122, 255, 0.3) 20%,
+    rgba(0, 122, 255, 0.6) 50%,
+    rgba(0, 122, 255, 0.3) 80%,
     transparent 100%
   );
   z-index: 100;
@@ -2005,7 +2005,7 @@ a {
   height: 100px;
   background: linear-gradient(180deg,
     transparent 0%,
-    rgba(99, 102, 241, 0.6) 50%,
+    rgba(0, 122, 255, 0.6) 50%,
     transparent 100%
   );
   border-radius: 3px;
@@ -3038,6 +3038,76 @@ a {
   order: 1;
 }
 
+/* Badge Style für Sektionen */
+.cm-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, rgba(0, 122, 255, 0.1) 0%, rgba(0, 82, 204, 0.1) 100%);
+  border: 1px solid rgba(0, 122, 255, 0.2);
+  border-radius: 50px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #007aff;
+  margin-bottom: 20px;
+  letter-spacing: 0.3px;
+}
+
+.cm-badge svg {
+  color: #007aff;
+}
+
+/* Moderne Headline für Sektionen */
+.cm-headline {
+  font-size: 52px;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 24px;
+  color: #1a1a2e;
+  letter-spacing: -0.03em;
+}
+
+.cm-headline .text-gradient {
+  background: linear-gradient(135deg, #007aff 0%, #0052cc 50%, #003d99 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Bullet Icon Container */
+.cm-bullet-icon {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(0, 122, 255, 0.1) 0%, rgba(0, 122, 255, 0.05) 100%);
+  border-radius: 12px;
+  color: #007aff;
+  transition: all 0.3s ease;
+}
+
+.cm-bullets li:hover .cm-bullet-icon {
+  background: linear-gradient(135deg, #007aff 0%, #0052cc 100%);
+  color: white;
+  transform: scale(1.05);
+}
+
+/* SVG Illustration Styles */
+.cm-illustration {
+  width: 120%;
+  height: auto;
+  display: block;
+  background: transparent;
+  transform: translateX(-10%);
+}
+
+.cm-illustration-reverse {
+  transform: translateX(10%);
+}
+
 .cm-visual {
   order: 2;
   min-height: 400px;
@@ -3070,12 +3140,13 @@ a {
   left: -10%;
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(102, 126, 234, 0.05) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(0, 122, 255, 0.05) 0%, transparent 70%);
   border-radius: 50%;
   pointer-events: none;
 }
 
-.cm-text h2 {
+/* Legacy h2 styles - now using .cm-headline instead */
+.cm-text h2:not(.cm-headline) {
   font-size: 42px;
   font-weight: 700;
   line-height: 1.2;
@@ -4068,10 +4139,44 @@ a {
 @media (max-width: 768px) {
   .testimonials-section {
     padding: 50px 0 70px 0;
+    overflow: visible;
+  }
+
+  .testimonials-section .section-container {
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .testimonials-section .section-container > .section-title,
+  .testimonials-section .section-container > .reveal-text {
+    padding: 0 20px;
   }
 
   .testimonials-marquee {
+    gap: 20px;
+    max-width: 100%;
+  }
+
+  /* Marquee-Row volle Breite auf Mobile */
+  .marquee-row {
+    /* Volle Viewport-Breite für Edge-to-Edge Look */
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    overflow: hidden;
+  }
+
+  /* Animation beibehalten auf Mobile - nur langsamer */
+  .marquee-track {
     gap: 16px;
+    padding: 16px 0;
+    width: max-content;
+    animation-duration: 30s;
+  }
+
+  /* Fade-Effekte ausblenden auf Mobile */
+  .marquee-fade {
+    display: none;
   }
 
   .testimonial-card-new {
@@ -4103,15 +4208,6 @@ a {
     line-height: 1.5;
   }
 
-  .marquee-track {
-    gap: 16px;
-    animation-duration: 25s;
-  }
-
-  .marquee-fade {
-    width: 40px;
-  }
-
   .testimonial-stars svg {
     width: 14px;
     height: 14px;
@@ -4131,11 +4227,7 @@ a {
 
   .marquee-track {
     gap: 12px;
-    animation-duration: 20s;
-  }
-
-  .marquee-fade {
-    width: 30px;
+    animation-duration: 25s;
   }
 }
 
@@ -5207,7 +5299,6 @@ a[href*="kontakt"]:hover,
 .hp-trust {
   margin-top: 56px;
   padding-top: 32px;
-  border-top: 1px solid #e2e8f0;
 }
 
 .hp-trust-items {
@@ -5260,19 +5351,46 @@ a[href*="kontakt"]:hover,
 
 @media (max-width: 900px) {
   .hp-cards {
-    grid-template-columns: 1fr;
-    max-width: 420px;
-    margin: 0 auto;
-    gap: 24px;
+    display: flex;
+    overflow-x: auto;
+    overflow-y: visible;
+    scroll-snap-type: x mandatory;
+    gap: 16px;
+    padding: 20px 0 30px 0;
+    /* Aus dem Container ausbrechen - volle Viewport-Breite */
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+  }
+
+  .hp-cards::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+  }
+
+  .hp-card {
+    flex: 0 0 85%;
+    max-width: 340px;
+    scroll-snap-align: center;
+  }
+
+  .hp-card:first-child {
+    margin-left: 16px;
+  }
+
+  .hp-card:last-child {
+    margin-right: 16px;
   }
 
   .hp-card-highlight {
-    order: -1;
     transform: scale(1);
+    order: 0; /* Natürliche Reihenfolge beibehalten */
   }
 
   .hp-card-highlight:hover {
-    transform: translateY(-8px);
+    transform: translateY(-4px);
   }
 
   .hp-badge {
@@ -5282,11 +5400,13 @@ a[href*="kontakt"]:hover,
 
 @media (max-width: 768px) {
   .hp-section {
-    padding: 0 16px;
+    padding: 0; /* Kein Padding - Karten gehen bis zum Rand */
+    overflow: visible;
   }
 
   .hp-toggle-wrapper {
-    margin-bottom: 40px;
+    margin-bottom: 32px;
+    padding: 0 16px; /* Toggle bekommt eigenes Padding */
   }
 
   .hp-toggle {
@@ -5303,6 +5423,41 @@ a[href*="kontakt"]:hover,
 
   .hp-toggle-slider {
     width: calc(50% - 2.5px);
+  }
+
+  .hp-cards {
+    display: flex;
+    overflow-x: auto;
+    overflow-y: visible;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 20px 0 30px 0;
+    gap: 16px;
+    /* Aus dem Container ausbrechen - volle Viewport-Breite */
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+  }
+
+  .hp-cards::-webkit-scrollbar {
+    display: none;
+  }
+
+  .hp-card {
+    flex: 0 0 85vw; /* Prozent der Viewport-Breite */
+    max-width: 340px;
+    min-width: 280px;
+    scroll-snap-align: center;
+  }
+
+  .hp-card:first-child {
+    margin-left: 16px;
+  }
+
+  .hp-card:last-child {
+    margin-right: 16px;
   }
 
   .hp-card-inner {
@@ -5326,6 +5481,10 @@ a[href*="kontakt"]:hover,
     font-size: 40px;
   }
 
+  .hp-trust {
+    padding: 0 16px; /* Trust-Bereich bekommt eigenes Padding */
+  }
+
   .hp-trust-items {
     flex-direction: column;
     gap: 16px;
@@ -5337,6 +5496,19 @@ a[href*="kontakt"]:hover,
 }
 
 @media (max-width: 380px) {
+  .hp-card {
+    flex: 0 0 92%;
+    min-width: 260px;
+  }
+
+  .hp-card:first-child {
+    margin-left: 12px;
+  }
+
+  .hp-card:last-child {
+    margin-right: 12px;
+  }
+
   .hp-card-inner {
     padding: 20px 16px;
   }
@@ -7439,7 +7611,7 @@ main,
 }
 
 /* Mobile Fix: Schatten der Pricing Cards nicht abschneiden */
-@media (max-width: 767px) {
+@media (max-width: 900px) {
   .pricing-section {
     overflow: visible !important;
     padding-top: 450px !important; /* Viel Platz für sanften Gradient-Übergang */
@@ -7526,8 +7698,25 @@ main,
 
   /* Section Container */
   .pricing-section .section-container {
-    padding-top: 0;
-    padding-bottom: 2rem;
+    padding: 0 !important; /* Kein Padding - Karten gehen bis zum Rand */
+    max-width: 100% !important;
+    overflow: visible !important;
+  }
+
+  /* HP Section muss auch volle Breite haben */
+  .pricing-section .hp-section {
+    max-width: 100%;
+    padding: 0;
+    overflow: visible;
+  }
+
+  /* Titel bekommt eigenes Padding */
+  .pricing-section .section-title {
+    padding: 0 20px;
+  }
+
+  .pricing-section .section-subtitle {
+    padding: 0 20px;
   }
 
   /* 🌈 Platform Line Mobile Responsive */

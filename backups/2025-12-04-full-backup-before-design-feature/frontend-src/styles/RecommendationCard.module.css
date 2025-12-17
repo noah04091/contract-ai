@@ -1,0 +1,130 @@
+/* 📁 frontend/src/styles/RecommendationCard.module.css */
+/* Recommendation Card Component - Premium Apple-Inspired Design */
+
+.recommendationCard {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 16px;
+  padding: 24px;
+  transition: all 0.3s ease;
+  animation: recommendationCardSlide 0.4s ease-out;
+}
+
+@keyframes recommendationCardSlide {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.recommendationCard.completed {
+  background: #f8fafc;
+  border-color: #d1d5db;
+  opacity: 0.8;
+}
+
+.recommendationCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.recommendationHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.recommendationIcon {
+  font-size: 1.25rem;
+}
+
+.recommendationPriority {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #059669;
+  background: #d1fae5;
+  padding: 4px 12px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.completedLabel {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.recommendationDescription {
+  color: #064e3b;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0 0 20px 0;
+}
+
+.recommendationCard.completed .recommendationDescription {
+  color: #6b7280;
+  text-decoration: line-through;
+}
+
+.recommendationActions {
+  display: flex;
+  gap: 12px;
+}
+
+.recommendationActionButton {
+  padding: 10px 18px;
+  border: 1px solid #86efac;
+  background: transparent;
+  color: #059669;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.recommendationActionButton.completed {
+  background: #10b981;
+  color: white;
+  border-color: #10b981;
+}
+
+.recommendationActionButton.primary {
+  background: #059669;
+  color: white;
+  border-color: #059669;
+}
+
+.recommendationActionButton:hover {
+  background: #d1fae5;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2);
+}
+
+.recommendationActionButton.primary:hover {
+  background: #047857;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+}
+
+.recommendationActionButton.completed:hover {
+  background: #059669;
+}
+
+/* Responsive */
+
+@media (max-width: 768px) {
+  .recommendationActions {
+    flex-direction: column;
+  }
+
+  .recommendationActionButton {
+    width: 100%;
+    justify-content: center;
+  }
+}

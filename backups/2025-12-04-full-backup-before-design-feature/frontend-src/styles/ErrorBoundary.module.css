@@ -1,0 +1,186 @@
+/* 🛡️ styles/ErrorBoundary.module.css - Error Boundary Styles */
+
+.errorContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 2rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.errorContent {
+  background: white;
+  border-radius: 16px;
+  padding: 3rem 2rem;
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 
+    0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e2e8f0;
+}
+
+.errorIcon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  color: #f59e0b;
+}
+
+.errorTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
+.errorMessage {
+  color: #6b7280;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.persistentError {
+  background: #fef3f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 2rem;
+  text-align: left;
+}
+
+.persistentError p {
+  color: #dc2626;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.persistentError ul {
+  color: #7f1d1d;
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.persistentError li {
+  margin-bottom: 0.25rem;
+}
+
+.errorActions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.retryButton,
+.homeButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.retryButton {
+  background: #3b82f6;
+  color: white;
+}
+
+.retryButton:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.homeButton {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.homeButton:hover {
+  background: #e5e7eb;
+  transform: translateY(-1px);
+}
+
+.errorDetails {
+  margin-top: 2rem;
+  text-align: left;
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid #e2e8f0;
+}
+
+.errorDetails summary {
+  cursor: pointer;
+  font-weight: 500;
+  color: #4b5563;
+  margin-bottom: 1rem;
+}
+
+.errorDetails summary:hover {
+  color: #1f2937;
+}
+
+.errorStack {
+  margin-top: 1rem;
+}
+
+.errorStack h4 {
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 1rem 0 0.5rem 0;
+}
+
+.errorStack h4:first-child {
+  margin-top: 0;
+}
+
+.errorStack pre {
+  background: #1f2937;
+  color: #f9fafb;
+  padding: 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* 📱 Mobile Responsive */
+@media (max-width: 640px) {
+  .errorContainer {
+    padding: 1rem;
+    min-height: 50vh;
+  }
+
+  .errorContent {
+    padding: 2rem 1.5rem;
+  }
+
+  .errorTitle {
+    font-size: 1.25rem;
+  }
+
+  .errorActions {
+    flex-direction: column;
+  }
+
+  .retryButton,
+  .homeButton {
+    width: 100%;
+    justify-content: center;
+  }
+}

@@ -1,0 +1,2520 @@
+/* ContractDetailsView.module.css - Premium Apple-Style Modal + Mobile-Optimized Analysis Preview */
+@import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.drawer {
+  width: 600px;
+  max-width: 90vw;
+  height: 100vh;
+  height: 100dvh; /* iOS Safari fix */
+  background: white;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -10px 0 50px rgba(0, 0, 0, 0.15);
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Header Styling */
+.header {
+  border-bottom: 1px solid #e5e5e7;
+  background: white;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  transition: all 0.3s ease;
+}
+
+/* ✅ Collapsed Header State (Mobile) */
+.headerCollapsed .headerTop {
+  padding: 0.75rem 1.5rem;
+}
+
+.headerCollapsed .contractName {
+  font-size: 1.1rem;
+}
+
+.headerCollapsed .contractIcon {
+  width: 36px;
+  height: 36px;
+}
+
+.headerCollapsed .statusBar {
+  display: none;
+}
+
+.headerTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 1.5rem 2rem 1rem;
+}
+
+.contractInfo {
+  display: flex;
+  gap: 1rem;
+  flex: 1;
+}
+
+.contractIcon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #007AFF, #5856D6);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.contractName {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: #1d1d1f;
+  line-height: 1.2;
+}
+
+.contractMeta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.uploadDate {
+  font-size: 0.9rem;
+  color: #6e6e73;
+}
+
+.generatedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: linear-gradient(135deg, #FF9500, #FF6B35);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.25rem 0.6rem;
+  border-radius: 8px;
+}
+
+.headerActions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.actionBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f7;
+  border: none;
+  color: #6e6e73;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.actionBtn:hover {
+  background: #e8e8ed;
+  color: #1d1d1f;
+  transform: scale(1.05);
+}
+
+.deleteBtn:hover {
+  background: rgba(255, 69, 58, 0.1);
+  color: #ff453a;
+}
+
+/* 🎨 Signature Details Button - Blue highlight for signature info */
+.signatureDetailsBtn {
+  background: rgba(0, 122, 255, 0.1);
+  color: #007aff;
+}
+
+.signatureDetailsBtn:hover {
+  background: rgba(0, 122, 255, 0.2);
+  color: #0051d5;
+}
+
+.closeBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f7;
+  border: none;
+  color: #6e6e73;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: 0.5rem;
+}
+
+.closeBtn:hover {
+  background: #e8e8ed;
+  color: #1d1d1f;
+}
+
+/* Status Bar */
+.statusBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: #f5f5f7;
+  border-top: 1px solid #e5e5e7;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.statusActive {
+  background: rgba(52, 199, 89, 0.1);
+  color: #34c759;
+}
+
+.statusWarning {
+  background: rgba(255, 149, 0, 0.1);
+  color: #ff9500;
+}
+
+.statusCancelled {
+  background: rgba(255, 69, 58, 0.1);
+  color: #ff453a;
+}
+
+.statusNeutral {
+  background: #e8e8ed;
+  color: #6e6e73;
+}
+
+.statusIconActive {
+  color: #34c759;
+}
+
+.statusIconWarning {
+  color: #ff9500;
+}
+
+.statusIconNeutral {
+  color: #6e6e73;
+}
+
+.quickStats {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.quickStat {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: #6e6e73;
+}
+
+/* Tab Navigation */
+.tabNav {
+  display: flex;
+  padding: 0 2rem;
+  border-bottom: 1px solid #e5e5e7;
+  background: white;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  border: none;
+  background: none;
+  color: #6e6e73;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.tab:hover:not(:disabled) {
+  color: #1d1d1f;
+}
+
+.tab:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.activeTab {
+  color: #007AFF;
+  border-bottom-color: #007AFF;
+}
+
+.comingSoon {
+  background: #ff9500;
+  color: white;
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 0.5rem;
+}
+
+/* Content Area */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem;
+}
+
+.overviewTab {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.section {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e5e5e7;
+  overflow: hidden;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+  padding: 1.5rem 1.5rem 1rem;
+  color: #1d1d1f;
+  border-bottom: 1px solid #f5f5f7;
+}
+
+.detailGrid {
+  padding: 0 1.5rem 1.5rem;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.detailItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.detailItem label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #6e6e73;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detailItem span {
+  font-size: 1rem;
+  color: #1d1d1f;
+}
+
+.settingsGrid {
+  padding: 1.5rem;
+}
+
+.aiNotice {
+  display: flex;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, rgba(255, 149, 0, 0.05), rgba(255, 107, 53, 0.05));
+  border-radius: 16px;
+  border: 1px solid rgba(255, 149, 0, 0.2);
+}
+
+.aiNotice h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: #ff9500;
+}
+
+.aiNotice p {
+  font-size: 0.9rem;
+  color: #6e6e73;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* View Contract Button Section */
+.viewContractSection {
+  padding: 0 1.5rem 1.5rem;
+  border-top: 1px solid #f5f5f7;
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+
+.viewContractButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: #2563eb;
+  color: white;
+  border-radius: 10px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.viewContractButton:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  color: white;
+  text-decoration: none;
+}
+
+.viewContractButton:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
+}
+
+/* Content Tab Styles */
+.contentTab {
+  height: 100%;
+}
+
+.contentViewer {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.contentHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e5e7;
+}
+
+.contentHeader h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0;
+  color: #1d1d1f;
+}
+
+.downloadBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: #007AFF;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.downloadBtn:hover {
+  background: #0056b3;
+  transform: translateY(-1px);
+}
+
+/* Content Text - Moderne, lesbare Darstellung */
+.contentText {
+  flex: 1;
+  background: #f9f9f9;
+  border: 1px solid #e5e5e7;
+  border-radius: 12px;
+  padding: 1.5rem;
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #2a2a2a;
+  white-space: pre-line;
+  word-break: break-word;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+  max-height: 65vh;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db #f9f9f9;
+  -webkit-overflow-scrolling: touch; /* ✅ iOS Momentum Scrolling */
+}
+
+.contentText::-webkit-scrollbar {
+  width: 8px;
+}
+
+.contentText::-webkit-scrollbar-track {
+  background: #f9f9f9;
+  border-radius: 4px;
+}
+
+.contentText::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+  border: 2px solid #f9f9f9;
+}
+
+.contentText::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Bessere Lesbarkeit für verschiedene Text-Elemente */
+.contentText h1,
+.contentText h2,
+.contentText h3,
+.contentText h4,
+.contentText h5,
+.contentText h6 {
+  font-weight: 600;
+  margin: 1.5em 0 0.5em 0;
+  color: #1f2937;
+}
+
+.contentText p {
+  margin: 0.75em 0;
+}
+
+.contentText strong,
+.contentText b {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* Content Source Info */
+.contentSourceInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sourceLabel {
+  font-size: 0.8rem;
+  color: #6e6e73;
+  background: #f5f5f7;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #e5e5e7;
+}
+
+/* Debug Info Styles */
+.debugInfo {
+  margin-top: 1.5rem;
+  text-align: left;
+}
+
+.debugInfo details {
+  cursor: pointer;
+}
+
+.debugInfo summary {
+  font-size: 0.9rem;
+  color: #6e6e73;
+  padding: 0.5rem;
+  background: #f5f5f7;
+  border-radius: 6px;
+  border: 1px solid #e5e5e7;
+}
+
+.debugInfo summary:hover {
+  background: #e8e8ed;
+}
+
+/* Content Stats */
+.contentStats {
+  display: flex;
+  gap: 2rem;
+  padding: 1rem;
+  background: rgba(0, 122, 255, 0.05);
+  border-radius: 10px;
+  border: 1px solid rgba(0, 122, 255, 0.1);
+  flex-wrap: wrap;
+}
+
+.contentStat {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.statLabel {
+  font-size: 0.85rem;
+  color: #6e6e73;
+  font-weight: 500;
+}
+
+.statValue {
+  font-size: 0.9rem;
+  color: #007AFF;
+  font-weight: 600;
+}
+
+.noContent, .comingSoonContent, .noAnalysis {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem;
+  color: #6e6e73;
+  height: 300px;
+}
+
+.noContent svg, .comingSoonContent svg, .noAnalysis svg {
+  color: #d2d2d7;
+  margin-bottom: 1rem;
+}
+
+.noContent h3, .comingSoonContent h3, .noAnalysis h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+  color: #1d1d1f;
+}
+
+.noContent p, .comingSoonContent p, .noAnalysis p {
+  font-size: 1rem;
+  margin: 0 0 1.5rem;
+  max-width: 300px;
+  line-height: 1.5;
+}
+
+/* Content & Analysis Action Buttons */
+.noContentActions, .noAnalysisActions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.retryBtn, .analyzeBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: #007AFF;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.retryBtn:hover, .analyzeBtn:hover {
+  background: #0056b3;
+  transform: translateY(-1px);
+}
+
+/* Analysis Tab - Neues schlankes Design */
+.analysisTab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Analysis Preview - Ersetzt die komplexe Analyse-Anzeige */
+.analysisPreview {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e5e5e7;
+  overflow: hidden;
+  margin-bottom: 2rem;
+  animation: slideInFromRight 0.3s ease-out;
+}
+
+.previewHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border-bottom: 1px solid #e5e5e7;
+}
+
+.previewIcon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.previewInfo {
+  flex: 1;
+}
+
+.previewInfo h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem;
+  color: #1d1d1f;
+}
+
+.previewInfo p {
+  font-size: 0.9rem;
+  color: #6e6e73;
+  margin: 0;
+}
+
+.scorePreview {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background: #f5f5f7;
+  border-bottom: 1px solid #e5e5e7;
+}
+
+.scoreCircleSmall {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: conic-gradient(var(--score-color) calc(var(--score) * 3.6deg), #e5e5e7 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.scoreCircleSmall::before {
+  content: '';
+  position: absolute;
+  width: 45px;
+  height: 45px;
+  background: white;
+  border-radius: 50%;
+}
+
+.scoreNumberSmall {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--score-color);
+  z-index: 1;
+}
+
+.scoreMaxSmall {
+  font-size: 0.75rem;
+  color: #6e6e73;
+  z-index: 1;
+}
+
+.scoreInfoSmall {
+  flex: 1;
+}
+
+.scoreInfoSmall h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem;
+}
+
+.scoreInfoSmall p {
+  font-size: 0.85rem;
+  color: #6e6e73;
+  margin: 0;
+}
+
+.previewActions {
+  display: flex;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: white;
+}
+
+.viewAnalysisButton {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 48px;
+}
+
+.viewAnalysisButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+}
+
+.copyAnalysisButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: #f5f5f7;
+  color: #6e6e73;
+  border: 1px solid #e5e5e7;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 48px;
+  white-space: nowrap;
+}
+
+.copyAnalysisButton:hover {
+  background: #e8e8ed;
+  color: #1d1d1f;
+  transform: translateY(-1px);
+}
+
+.analysisInfo {
+  padding: 1rem 1.5rem;
+  background: #f5f5f7;
+  border-top: 1px solid #e5e5e7;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.analysisInfoItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #6e6e73;
+}
+
+/* Animation für Analysis Preview */
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  /* ✅ Mobile: Komplette Seite statt Overlay - kein Hintergrund sichtbar */
+  .overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: white; /* Kein transparenter Hintergrund mehr */
+    backdrop-filter: none;
+    justify-content: stretch;
+    align-items: stretch;
+    z-index: 9999; /* Sehr hoch, damit nichts durchkommt */
+    /* Safe-Area für iPhone X+ */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+
+  .drawer {
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    height: 100dvh; /* iOS Safari fix */
+    max-height: 100dvh;
+    border-radius: 0;
+    box-shadow: none; /* Kein Shadow, da kein Overlay mehr */
+  }
+
+  /* Touch-Targets für Mobile */
+  .actionBtn,
+  .deleteBtn,
+  .closeBtn,
+  .tab,
+  .downloadBtn,
+  .viewContractButton,
+  .viewAnalysisButton,
+  .copyAnalysisButton,
+  .analyzeBtn,
+  .retryBtn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* ✅ OPTIMIERT: Kompakterer Header für mehr Content-Platz */
+  .headerTop {
+    padding: 0.75rem 1rem 0.5rem;
+    flex-direction: row;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+
+  .contractInfo {
+    gap: 0.6rem;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .contractIcon {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+  }
+
+  .contractName {
+    font-size: 1.1rem;
+    line-height: 1.3;
+    margin-bottom: 0.25rem;
+  }
+
+  .contractMeta {
+    gap: 0.5rem;
+  }
+
+  .uploadDate {
+    font-size: 0.8rem;
+  }
+
+  .generatedBadge {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+  }
+
+  .headerActions {
+    justify-content: flex-end;
+    gap: 0.4rem;
+    flex-shrink: 0;
+  }
+
+  .actionBtn,
+  .deleteBtn,
+  .closeBtn {
+    width: 32px;
+    height: 32px;
+    padding: 0.4rem;
+  }
+
+  /* ✅ OPTIMIERT: Kompaktere Status-Bar */
+  .statusBar {
+    padding: 0.6rem 1rem;
+    flex-direction: row;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .statusBadge {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.7rem;
+  }
+
+  .quickStats {
+    gap: 0.75rem;
+  }
+
+  .quickStat {
+    font-size: 0.75rem;
+  }
+  
+  .quickStats {
+    justify-content: space-between;
+  }
+  
+  /* ✅ OPTIMIERT: Kompaktere Tabs */
+  .tabNav {
+    padding: 0 1rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .tabNav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab {
+    padding: 0.65rem 0.85rem;
+    white-space: nowrap;
+    font-size: 0.85rem;
+  }
+
+  .tab svg {
+    width: 14px;
+    height: 14px;
+  }
+  
+  /* ✅ PREMIUM: Native Page-Scroll mit Momentum */
+  .content {
+    padding: 0.75rem;
+    overflow-y: auto; /* Native Page-Scroll */
+    -webkit-overflow-scrolling: touch; /* iOS Momentum */
+    overscroll-behavior-y: contain; /* Bounce nur im Container */
+    scroll-behavior: smooth; /* Smooth Scrolling */
+  }
+
+  /* ✅ REVOLUTIONÄR: Native Page-Scroll statt Container-Scroll */
+  .contentTab {
+    display: block; /* Nicht flex - natürlicher Flow */
+    min-height: 100%;
+  }
+
+  .contentViewer {
+    display: block; /* Natürlicher Document-Flow */
+    padding-bottom: 2rem; /* Platz am Ende */
+  }
+  
+  /* ✅ OPTIMIERT: Kompaktere Sections */
+  .section {
+    border-radius: 12px;
+  }
+
+  .sectionTitle {
+    padding: 0.85rem 1rem 0.65rem;
+    font-size: 0.95rem;
+  }
+
+  .sectionTitle svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .detailGrid {
+    padding: 0 1rem 0.85rem;
+    gap: 0.85rem;
+  }
+
+  .detailItem {
+    gap: 0.35rem;
+  }
+
+  .detailItem label {
+    font-size: 0.75rem;
+  }
+
+  .detailItem span {
+    font-size: 0.9rem;
+  }
+
+  /* Mobile: View Contract Button */
+  .viewContractSection {
+    padding: 0 1rem 1rem;
+  }
+  
+  /* ✅ PREMIUM: Content-Header kompakt & smooth */
+  .contentHeader {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #e8e8e8;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .contentHeader h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    flex: 1;
+    margin: 0;
+  }
+
+  .downloadBtn {
+    padding: 0.55rem 0.9rem;
+    font-size: 0.8rem;
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+
+  /* ✅ PREMIUM: Native-App-Style Content-Text */
+  .contentText {
+    /* Kein flex mehr - natürlicher Block */
+    display: block;
+    max-height: none; /* Unbegrenzt scrollbar */
+    min-height: auto; /* Natürliche Höhe */
+    height: auto;
+    overflow-y: visible; /* Kein Container-Scroll! */
+
+    /* Typography - Professional */
+    font-size: 15.5px; /* Optimal für Mobile-Lesbarkeit */
+    line-height: 1.85; /* Perfekter Abstand */
+    letter-spacing: 0.015em; /* Subtil, aber spürbar */
+
+    /* Spacing */
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+
+    /* Styling */
+    background: #fafafa;
+    border: 1px solid #e8e8e8;
+    border-radius: 10px;
+
+    /* iOS-Style Scrolling */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  .contentText p {
+    margin: 1.2em 0; /* Großzügiger Absatz-Abstand */
+  }
+
+  .contentText strong,
+  .contentText b {
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+
+  /* Optimale Lesbarkeit */
+  .contentText {
+    max-width: 100%; /* Volle Breite */
+    word-spacing: 0.05em; /* Subtiler Wort-Abstand */
+  }
+  
+  .contentStats {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .noContentActions, .noAnalysisActions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  /* ✅ REVOLUTIONÄR: Mobile Analysis Preview - Perfekte UX */
+  .analysisPreview {
+    margin-bottom: 1rem;
+  }
+  
+  .previewHeader {
+    padding: 1rem;
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    text-align: center;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .previewIcon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto;
+  }
+  
+  .previewInfo {
+    text-align: center;
+  }
+  
+  .previewInfo h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .previewInfo p {
+    font-size: 0.9rem;
+    color: #6e6e73;
+  }
+  
+  /* ✅ WICHTIG: Score Section auf Mobile optimiert */
+  .scorePreview {
+    padding: 1.5rem 1rem;
+    background: #f5f5f7;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .scoreCircleSmall {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 0.5rem;
+  }
+  
+  .scoreCircleSmall::before {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .scoreNumberSmall {
+    font-size: 1.5rem;
+  }
+  
+  .scoreInfoSmall {
+    text-align: center;
+  }
+  
+  .scoreInfoSmall h4 {
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  /* ✅ KRITISCH: Mobile Action Buttons - Viel größer und auffälliger */
+  .previewActions {
+    padding: 1.5rem 1rem;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .viewAnalysisButton {
+    min-height: 56px;
+    font-size: 1rem;
+    font-weight: 700;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  }
+  
+  .viewAnalysisButton:active {
+    transform: scale(0.98);
+  }
+  
+  .copyAnalysisButton {
+    min-height: 48px;
+    font-size: 0.95rem;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    color: #64748b;
+  }
+  
+  .copyAnalysisButton:active {
+    background: #f1f5f9;
+    transform: scale(0.98);
+  }
+  
+  /* ✅ Analysis Info auf Mobile besser lesbar */
+  .analysisInfo {
+    padding: 1rem;
+    background: #f8fafc;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .analysisInfoItem {
+    font-size: 0.9rem;
+    color: #64748b;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  
+  /* ✅ No Analysis State auf Mobile */
+  .noAnalysis {
+    padding: 2rem 1rem;
+    text-align: center;
+    height: auto;
+    min-height: 300px;
+  }
+  
+  .noAnalysis svg {
+    margin-bottom: 1.5rem;
+  }
+  
+  .noAnalysis h3 {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+  }
+  
+  .noAnalysis p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+    max-width: none;
+  }
+  
+  .noAnalysisActions {
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+  
+  .analyzeBtn {
+    min-height: 56px;
+    font-size: 1rem;
+    font-weight: 700;
+    border-radius: 16px;
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, #007AFF, #0056b3);
+    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+  }
+  
+  .analyzeBtn:active {
+    transform: scale(0.98);
+  }
+  
+  /* ✅ KRITISCHE MOBILE-FIX: Analysis Tab - Button immer sichtbar */
+  .analysisTab {
+    min-height: calc(100vh - 320px);
+    max-height: calc(100vh - 320px);
+    overflow-y: auto;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .analysisTab .analysisPreview {
+    margin: 0;
+    border-radius: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* Wichtig für Flexbox-Scrolling */
+  }
+  
+  .analysisTab .noAnalysis {
+    margin: 0;
+    border-radius: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: calc(100vh - 320px);
+  }
+  
+  /* ✅ WICHTIG: Preview Header bleibt kompakt */
+  .analysisTab .previewHeader {
+    flex-shrink: 0;
+    padding: 1rem;
+  }
+  
+  /* ✅ WICHTIG: Score Preview bleibt kompakt */
+  .analysisTab .scorePreview {
+    flex-shrink: 0;
+    padding: 1rem;
+  }
+  
+  /* ✅ KRITISCH: Actions immer am unteren Rand, immer sichtbar */
+  .analysisTab .previewActions {
+    flex-shrink: 0;
+    margin-top: auto;
+    padding: 1.5rem 1rem 2rem;
+    background: linear-gradient(135deg, #f8fafc, #ffffff);
+    border-top: 1px solid #e2e8f0;
+    /* Zusätzliche Mobile-Sicherheit */
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+  }
+  
+  /* ✅ Analysis Info kann scrollen wenn nötig */
+  .analysisTab .analysisInfo {
+    flex-shrink: 0;
+    padding: 1rem;
+  }
+  
+  /* ✅ NOTFALL-OPTIMIERUNG: Sehr kleine Screens (iPhone SE, etc.) */
+  @media (max-width: 480px), (max-height: 650px) {
+    .analysisTab {
+      min-height: calc(100vh - 280px);
+      max-height: calc(100vh - 280px);
+    }
+    
+    .analysisTab .previewHeader {
+      padding: 0.75rem;
+    }
+    
+    .analysisTab .scorePreview {
+      padding: 1rem 0.75rem;
+      gap: 0.75rem;
+    }
+    
+    .analysisTab .previewActions {
+      padding: 1rem 0.75rem 1.5rem;
+    }
+    
+    .viewAnalysisButton {
+      min-height: 52px;
+      font-size: 0.95rem;
+      padding: 0.875rem 1.25rem;
+    }
+    
+    .copyAnalysisButton {
+      min-height: 44px;
+      font-size: 0.9rem;
+    }
+    
+    .analysisTab .noAnalysis {
+      min-height: calc(100vh - 280px);
+      padding: 1.5rem 1rem;
+    }
+    
+    .analyzeBtn {
+      min-height: 52px;
+      font-size: 0.95rem;
+      padding: 0.875rem 1.75rem;
+    }
+  }
+}
+
+/* Scrollbar Styling */
+.content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.content::-webkit-scrollbar-thumb {
+  background: #d2d2d7;
+  border-radius: 3px;
+}
+
+.content::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a6;
+}
+
+/* ============================================
+   MOBILE LAYOUT - Complete Redesign
+   ============================================ */
+
+/* Mobile Overlay - Full screen white background */
+.mobileOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: white;
+  z-index: 9999;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.mobileContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  height: 100dvh;
+  background: #f8fafc;
+}
+
+/* Mobile Header - App Bar Style */
+.mobileHeader {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  min-height: 56px;
+  position: relative;
+  z-index: 10;
+}
+
+.mobileBackBtn {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: #1d1d1f;
+  cursor: pointer;
+  border-radius: 12px;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.mobileBackBtn:active {
+  background: #f3f4f6;
+}
+
+.mobileHeaderTitle {
+  flex: 1;
+  text-align: center;
+  padding: 0 8px;
+  min-width: 0;
+}
+
+.mobileHeaderTitle h1 {
+  font-size: 17px;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.mobileGeneratedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #ff9500;
+  background: rgba(255, 149, 0, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.mobileMenuBtn {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: #1d1d1f;
+  cursor: pointer;
+  border-radius: 12px;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.mobileMenuBtn:active {
+  background: #f3f4f6;
+}
+
+/* Mobile Menu Dropdown */
+.mobileMenuBackdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 100;
+}
+
+.mobileMenuDropdown {
+  position: absolute;
+  top: 100%;
+  right: 16px;
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  min-width: 200px;
+  overflow: hidden;
+  z-index: 101;
+  margin-top: 4px;
+}
+
+.mobileMenuDropdown button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  background: transparent;
+  border: none;
+  color: #1d1d1f;
+  font-size: 15px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.mobileMenuDropdown button:active {
+  background: #f3f4f6;
+}
+
+.mobileMenuDropdown button:not(:last-child) {
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.mobileMenuDropdown button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mobileMenuDeleteBtn {
+  color: #ff3b30 !important;
+}
+
+/* Mobile Tabs - Segmented Control */
+.mobileTabNav {
+  display: flex;
+  background: white;
+  padding: 8px 12px;
+  gap: 4px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.mobileTab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 8px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 44px;
+}
+
+.mobileTab span {
+  white-space: nowrap;
+}
+
+.mobileTab svg {
+  flex-shrink: 0;
+}
+
+.mobileTabActive {
+  background: #007AFF;
+  color: white;
+}
+
+.mobileTabActive svg {
+  color: white;
+}
+
+/* Mobile Content Area */
+.mobileContent {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+/* Mobile Overview Tab */
+.mobileOverviewTab {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Mobile Cards */
+.mobileCard {
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.mobileCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.mobileCardHeader svg {
+  color: #007AFF;
+}
+
+.mobileCardHeader h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0;
+}
+
+/* Status Row */
+.mobileStatusRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.mobileStatusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.mobileScoreIndicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mobileScoreCircle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+}
+
+.mobileScoreCircle span {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.mobileScoreInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.mobileScoreLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1d1d1f;
+}
+
+.mobileRiskLabel {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* Data Grid */
+.mobileDataGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.mobileDataItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mobileDataLabel {
+  font-size: 11px;
+  font-weight: 500;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.mobileDataValue {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1d1d1f;
+}
+
+/* Actions Grid */
+.mobileActionsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.mobileActionBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 16px 12px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 70px;
+}
+
+.mobileActionBtn:active {
+  background: #f1f5f9;
+  transform: scale(0.98);
+}
+
+.mobileActionBtn svg {
+  color: #6b7280;
+}
+
+.mobileActionPrimary {
+  background: linear-gradient(135deg, #007AFF, #0056b3);
+  border: none;
+  color: white;
+}
+
+.mobileActionPrimary svg {
+  color: white;
+}
+
+.mobileActionPrimary:active {
+  background: linear-gradient(135deg, #0056b3, #003d82);
+}
+
+/* Mobile Notes */
+.mobileNotesText {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #4b5563;
+  margin: 0;
+}
+
+/* Mobile AI Notice */
+.mobileAiNotice {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(255, 149, 0, 0.08), rgba(255, 107, 53, 0.08));
+  border-radius: 16px;
+  border: 1px solid rgba(255, 149, 0, 0.2);
+}
+
+.mobileAiNotice svg {
+  color: #ff9500;
+  flex-shrink: 0;
+}
+
+.mobileAiNotice h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ff9500;
+  margin: 0 0 4px;
+}
+
+.mobileAiNotice p {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* ========== Mobile Document Tab ========== */
+.mobileDocumentTab {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.mobilePdfControls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.mobilePdfControlBtn {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 10px;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mobilePdfControlBtn:active {
+  background: #e5e7eb;
+}
+
+.mobilePdfControlBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.mobilePdfZoomLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1d1d1f;
+  min-width: 50px;
+  text-align: center;
+}
+
+.mobilePdfContainer {
+  flex: 1;
+  position: relative;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  background: #f1f5f9;
+}
+
+.mobilePdfLoading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.mobileSpinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #007AFF;
+  border-radius: 50%;
+  animation: mobileSpin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes mobileSpin {
+  to { transform: rotate(360deg); }
+}
+
+.mobilePdfLoading p {
+  font-size: 15px;
+  color: #6b7280;
+}
+
+.mobilePdfError {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  padding: 32px;
+}
+
+.mobilePdfError svg {
+  color: #ef4444;
+  margin-bottom: 16px;
+}
+
+.mobilePdfError h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0 0 8px;
+}
+
+.mobilePdfError p {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 20px;
+  max-width: 280px;
+}
+
+.mobileRetryBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  background: #007AFF;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mobileRetryBtn:active {
+  background: #0056b3;
+}
+
+.mobilePdfViewer {
+  width: 100%;
+  height: calc(100vh - 180px);
+  border: none;
+  background: white;
+}
+
+/* Mobile Text Content (fallback) */
+.mobileTextContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: white;
+}
+
+.mobileTextHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.mobileTextHeader h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0;
+}
+
+.mobileDownloadBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 8px;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.mobileTextBody {
+  flex: 1;
+  padding: 16px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: #1d1d1f;
+  white-space: pre-wrap;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ========== Mobile Insights Tab ========== */
+.mobileInsightsTab {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mobileInsightsSummary {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.mobileInsightsScore {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+}
+
+.mobileScoreBig {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mobileScoreBigInner {
+  width: 64px;
+  height: 64px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobileScoreBigNumber {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1d1d1f;
+  line-height: 1;
+}
+
+.mobileScoreBigLabel {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.mobileScoreBigInfo {
+  flex: 1;
+}
+
+.mobileScoreBigInfo h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+
+.mobileScoreBigInfo p {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Accordion */
+.mobileAccordionList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mobileAccordionItem {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.mobileAccordionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.mobileAccordionHeader:active {
+  background: #f8fafc;
+}
+
+.mobileAccordionHeader.expanded {
+  background: #f8fafc;
+}
+
+.mobileAccordionTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mobileAccordionTitle svg {
+  color: #007AFF;
+}
+
+.mobileAccordionTitle span {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1d1d1f;
+}
+
+.mobileAccordionHeader > svg {
+  color: #9ca3af;
+}
+
+.mobileAccordionContent {
+  padding: 0 16px 16px;
+  overflow: hidden;
+}
+
+.mobileAccordionContent p {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #4b5563;
+  margin: 0;
+}
+
+.mobileInsightsList {
+  margin: 0;
+  padding: 0 0 0 20px;
+  list-style-type: disc;
+}
+
+.mobileInsightsList li {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #4b5563;
+  margin-bottom: 8px;
+}
+
+.mobileInsightsList li:last-child {
+  margin-bottom: 0;
+}
+
+/* Insights Actions */
+.mobileInsightsActions {
+  display: flex;
+  gap: 10px;
+}
+
+.mobileFullAnalysisBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  background: linear-gradient(135deg, #007AFF, #0056b3);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 54px;
+}
+
+.mobileFullAnalysisBtn:active {
+  opacity: 0.9;
+  transform: scale(0.98);
+}
+
+.mobileCopyBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 16px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  min-height: 54px;
+}
+
+.mobileCopyBtn:active {
+  background: #f8fafc;
+}
+
+/* Insights Meta */
+.mobileInsightsMeta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 10px;
+}
+
+.mobileInsightsMeta svg {
+  color: #9ca3af;
+}
+
+.mobileInsightsMeta span {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* No Analysis State */
+.mobileNoAnalysis {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 24px;
+  min-height: 400px;
+}
+
+.mobileNoAnalysis svg {
+  color: #d1d5db;
+  margin-bottom: 20px;
+}
+
+.mobileNoAnalysis h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0 0 8px;
+}
+
+.mobileNoAnalysis p {
+  font-size: 15px;
+  color: #6b7280;
+  margin: 0 0 28px;
+  max-width: 280px;
+  line-height: 1.5;
+}
+
+.mobileAnalyzeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px 32px;
+  background: linear-gradient(135deg, #007AFF, #0056b3);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 54px;
+}
+
+.mobileAnalyzeBtn:active {
+  opacity: 0.9;
+  transform: scale(0.98);
+}
+
+.mobileAnalyzeBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Small Mobile Adjustments (375px) */
+@media (max-width: 375px) {
+  .mobileHeaderTitle h1 {
+    font-size: 15px;
+  }
+
+  .mobileTab {
+    padding: 8px 6px;
+    font-size: 12px;
+  }
+
+  .mobileTab svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .mobileOverviewTab {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .mobileCard {
+    padding: 14px;
+  }
+
+  .mobileDataGrid {
+    gap: 10px;
+  }
+
+  .mobileActionsGrid {
+    gap: 8px;
+  }
+
+  .mobileActionBtn {
+    padding: 12px 10px;
+    min-height: 60px;
+    font-size: 11px;
+  }
+
+  .mobileScoreBig {
+    width: 70px;
+    height: 70px;
+  }
+
+  .mobileScoreBigInner {
+    width: 56px;
+    height: 56px;
+  }
+
+  .mobileScoreBigNumber {
+    font-size: 20px;
+  }
+
+  .mobileInsightsActions {
+    flex-direction: column;
+  }
+
+  .mobileFullAnalysisBtn,
+  .mobileCopyBtn {
+    width: 100%;
+  }
+}
+
+/* ========== SIGNIERPROZESS TAB ========== */
+.signatureTab {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.signatureHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e5e7;
+}
+
+.signatureHeader svg {
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+.signatureHeader h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.signatureHeader p {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.signatureStatus {
+  display: flex;
+  justify-content: center;
+}
+
+.signatureStatusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 100px;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.signatureCompleted {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  color: #166534;
+}
+
+.signatureVoided {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #991b1b;
+}
+
+.signaturePending {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #92400e;
+}
+
+.signatureProgress {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.signatureProgressHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.signatureProgressHeader span:first-child {
+  color: #666;
+}
+
+.signatureProgressHeader span:last-child {
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.signatureProgressBar {
+  height: 8px;
+  background: #e5e5e7;
+  border-radius: 100px;
+  overflow: hidden;
+}
+
+.signatureProgressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
+  border-radius: 100px;
+  transition: width 0.5s ease;
+}
+
+.signatureActions {
+  display: flex;
+  justify-content: center;
+}
+
+.viewEnvelopeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.viewEnvelopeBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.3);
+}
+
+.signatureCompletionInfo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: #f0fdf4;
+  border-radius: 12px;
+  color: #166534;
+  font-size: 0.9rem;
+}
+
+/* Mobile Signierprozess Tab */
+@media (max-width: 768px) {
+  .signatureTab {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .signatureHeader {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .signatureStatusBadge {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+  }
+
+  .viewEnvelopeBtn {
+    width: 100%;
+    justify-content: center;
+  }
+}

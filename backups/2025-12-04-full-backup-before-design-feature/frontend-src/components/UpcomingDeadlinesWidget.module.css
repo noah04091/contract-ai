@@ -1,0 +1,406 @@
+/* 📅 Upcoming Deadlines Widget */
+
+.widget {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fb 100%);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(99, 102, 241, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-bottom: 32px;
+}
+
+.widget:hover {
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.08),
+    0 4px 6px -2px rgba(0, 0, 0, 0.04);
+  transform: translateY(-2px);
+}
+
+/* Header */
+.widgetHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+.headerTitle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #1f2937;
+}
+
+.headerTitle svg {
+  color: #6366f1;
+  flex-shrink: 0;
+}
+
+.headerTitle h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.eventCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 12px;
+}
+
+.viewAllButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.viewAllButton:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.viewAllButton svg {
+  transition: transform 0.2s ease;
+}
+
+.viewAllButton:hover svg {
+  transform: translateX(2px);
+}
+
+/* Content */
+.widgetContent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.deadlineItem {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: white;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.deadlineItem:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: rgba(99, 102, 241, 0.2);
+}
+
+.deadlineIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.deadlineCritical .deadlineIcon {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+}
+
+.deadlineWarning .deadlineIcon {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+}
+
+.deadlineInfo .deadlineIcon {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+}
+
+.iconCritical {
+  color: #dc2626;
+}
+
+.iconWarning {
+  color: #d97706;
+}
+
+.iconInfo {
+  color: #2563eb;
+}
+
+.deadlineInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.deadlineTitle {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.deadlineContract {
+  margin: 0 0 2px 0;
+  font-size: 13px;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.deadlineDate {
+  margin: 0;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.deadlineCountdown {
+  flex-shrink: 0;
+}
+
+.countdownBadge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.deadlineCritical .countdownBadge {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #dc2626;
+}
+
+.deadlineWarning .countdownBadge {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #d97706;
+}
+
+.deadlineInfo .countdownBadge {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #2563eb;
+}
+
+/* Footer */
+.widgetFooter {
+  margin-top: 12px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.viewMoreButton {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  color: #6366f1;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.viewMoreButton:hover {
+  background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Empty State */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.emptyIcon {
+  color: #10b981;
+  margin-bottom: 16px;
+}
+
+.emptyTitle {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.emptySubtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+  max-width: 300px;
+}
+
+/* Error State */
+.errorState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.errorState svg {
+  color: #ef4444;
+  margin-bottom: 16px;
+}
+
+.errorState p {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.retryButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.retryButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+/* Skeleton Loading */
+.skeletonItem {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: white;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.skeletonIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #f3f4f6 0%, #e5e7eb 50%, #f3f4f6 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.skeletonText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeletonTitle {
+  height: 14px;
+  width: 70%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #f3f4f6 0%, #e5e7eb 50%, #f3f4f6 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.skeletonSubtitle {
+  height: 12px;
+  width: 50%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #f3f4f6 0%, #e5e7eb 50%, #f3f4f6 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.skeletonBadge {
+  width: 80px;
+  height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #f3f4f6 0%, #e5e7eb 50%, #f3f4f6 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .widget {
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  .widgetHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .viewAllButton {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .deadlineItem {
+    padding: 12px;
+  }
+
+  .deadlineTitle {
+    font-size: 13px;
+  }
+
+  .deadlineContract {
+    font-size: 12px;
+  }
+
+  .countdownBadge {
+    font-size: 12px;
+    padding: 4px 10px;
+  }
+}

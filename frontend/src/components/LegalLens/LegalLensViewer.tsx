@@ -4,12 +4,18 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { FileText, Eye, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, BarChart3, Zap, X, List, MessageSquare } from 'lucide-react';
+import { FileText, Eye, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, BarChart3, Zap, X, List, MessageSquare, LayoutGrid, ClipboardCheck, Download } from 'lucide-react';
 import { useLegalLens } from '../../hooks/useLegalLens';
 import ClauseList from './ClauseList';
 import PerspectiveSwitcher from './PerspectiveSwitcher';
 import AnalysisPanel from './AnalysisPanel';
 import SmartSummary from './SmartSummary';
+import ContractOverview from './ContractOverview';
+import IndustrySelector from './IndustrySelector';
+import NegotiationChecklist from './NegotiationChecklist';
+import ExportAnalysisModal from './ExportAnalysisModal';
+import * as legalLensAPI from '../../services/legalLensAPI';
+import type { IndustryType } from '../../types/legalLens';
 import styles from '../../styles/LegalLens.module.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -45,6 +51,19 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   // Smart Summary State
   const [showSmartSummary, setShowSmartSummary] = useState<boolean>(true);
   const [summaryDismissed, setSummaryDismissed] = useState<boolean>(false);
+
+  // Overview State
+  const [showOverview, setShowOverview] = useState<boolean>(false);
+
+  // Industry Context State
+  const [currentIndustry, setCurrentIndustry] = useState<IndustryType>('general');
+  const [industryLoading, setIndustryLoading] = useState<boolean>(false);
+
+  // Negotiation Checklist State
+  const [showChecklist, setShowChecklist] = useState<boolean>(false);
+
+  // Export Modal State
+  const [showExportModal, setShowExportModal] = useState<boolean>(false);
 
   // Resizable Panel State
   const [analysisPanelWidth, setAnalysisPanelWidth] = useState<number>(480);
@@ -199,6 +218,42 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       parseContract(contractId);
     }
   }, [contractId, parseContract]);
+
+  // Industry Context beim Laden holen
+  useEffect(() => {
+    const loadIndustry = async () => {
+      if (!contractId) return;
+      try {
+        const response = await legalLensAPI.getIndustryContext(contractId);
+        if (response.success && response.industry) {
+          setCurrentIndustry(response.industry);
+        }
+      } catch (err) {
+        console.warn('[Legal Lens] Could not load industry context:', err);
+      }
+    };
+    loadIndustry();
+  }, [contractId]);
+
+  // Industry Change Handler
+  const handleIndustryChange = useCallback(async (industry: IndustryType) => {
+    if (!contractId || industry === currentIndustry) return;
+
+    setIndustryLoading(true);
+    try {
+      const response = await legalLensAPI.setIndustryContext(contractId, industry);
+      if (response.success) {
+        setCurrentIndustry(industry);
+        // Hinweis: Bei Branchenwechsel könnte man hier den Cache invalidieren
+        // und Analysen neu laden lassen
+        console.log(`[Legal Lens] Industry changed to: ${industry}`);
+      }
+    } catch (err) {
+      console.error('[Legal Lens] Failed to set industry:', err);
+    } finally {
+      setIndustryLoading(false);
+    }
+  }, [contractId, currentIndustry]);
 
   // Analyse starten wenn Klausel ausgewählt - MIT Loop-Protection und Cache-Check
   useEffect(() => {
@@ -432,8 +487,50 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         </div>
 
         <div className={styles.headerRight}>
+          {/* Industry Selector */}
+          <IndustrySelector
+            currentIndustry={currentIndustry}
+            onIndustryChange={handleIndustryChange}
+            disabled={industryLoading || isParsing}
+            compact={false}
+          />
+
+          {/* Export Button */}
+          <button
+            className={styles.exportButton}
+            onClick={() => setShowExportModal(true)}
+            disabled={clauses.length === 0}
+            title="Analyse als PDF exportieren"
+          >
+            <Download size={18} />
+            <span>Export</span>
+          </button>
+
+          {/* Negotiation Checklist Button - nur für Vertragsempfänger */}
+          {(currentPerspective === 'contractor' || currentPerspective === 'client') && (
+            <button
+              className={styles.checklistButton}
+              onClick={() => setShowChecklist(true)}
+              disabled={clauses.length === 0}
+              title="Verhandlungs-Checkliste"
+            >
+              <ClipboardCheck size={18} />
+              <span>Checkliste</span>
+            </button>
+          )}
+
+          {/* Overview Toggle Button */}
+          <button
+            className={`${styles.overviewToggleButton} ${showOverview ? styles.active : ''}`}
+            onClick={() => setShowOverview(!showOverview)}
+            title={showOverview ? 'Zur Detail-Ansicht' : 'Gesamtübersicht'}
+          >
+            <LayoutGrid size={18} />
+            <span>{showOverview ? 'Details' : 'Dashboard'}</span>
+          </button>
+
           {/* Summary Button - nur anzeigen wenn Summary dismissed wurde */}
-          {summaryDismissed && (
+          {summaryDismissed && !showOverview && (
             <button
               className={styles.summaryButton}
               onClick={handleShowSummary}
@@ -492,8 +589,22 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         </div>
       </header>
 
-      {/* Main Content - Desktop vs Mobile */}
-      {isMobile ? (
+      {/* Main Content - Overview vs Detail View */}
+      {showOverview ? (
+        // ===== OVERVIEW DASHBOARD =====
+        <main className={styles.mainContent} style={{ display: 'flex', flex: 1 }}>
+          <ContractOverview
+            clauses={clauses}
+            analysisCache={analysisCache as Record<string, typeof analysisCache[keyof typeof analysisCache]>}
+            currentPerspective={currentPerspective}
+            onSelectClause={(clause) => {
+              selectClause(clause);
+              setShowOverview(false);
+            }}
+            onClose={() => setShowOverview(false)}
+          />
+        </main>
+      ) : isMobile ? (
         // ===== MOBILE LAYOUT =====
         <main className={styles.mobileContent}>
           {/* Mobile Tab Content */}
@@ -550,6 +661,9 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                       error={error}
                       errorInfo={errorInfo}
                       originalClauseText={selectedClause?.text}
+                      sourceContractId={contractId}
+                      sourceContractName={contractName}
+                      sourceClauseId={selectedClause?.id}
                       onLoadAlternatives={loadAlternatives}
                       onLoadNegotiation={loadNegotiationTips}
                       onSendChatMessage={sendChatMessage}
@@ -828,6 +942,9 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                 error={error}
                 errorInfo={errorInfo}
                 originalClauseText={selectedClause?.text}
+                sourceContractId={contractId}
+                sourceContractName={contractName}
+                sourceClauseId={selectedClause?.id}
                 onLoadAlternatives={loadAlternatives}
                 onLoadNegotiation={loadNegotiationTips}
                 onSendChatMessage={sendChatMessage}
@@ -846,6 +963,24 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         </div>
       </main>
       )}
+
+      {/* Negotiation Checklist Modal */}
+      {showChecklist && (
+        <NegotiationChecklist
+          contractId={contractId}
+          contractName={contractName}
+          perspective={currentPerspective}
+          onClose={() => setShowChecklist(false)}
+        />
+      )}
+
+      {/* Export Analysis Modal */}
+      <ExportAnalysisModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        contractId={contractId}
+        contractName={contractName}
+      />
 
     </div>
   );

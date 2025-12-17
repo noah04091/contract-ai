@@ -12,7 +12,7 @@ import {
   CheckSquare, Square, Mail, Bell, Download,
   LayoutGrid, List, FolderPlus,
   FileUp, AlertTriangle, Sparkles, RotateCcw, CreditCard,
-  MoreVertical, ChevronUp, ChevronDown,
+  MoreVertical, ChevronUp, ChevronDown, ChevronLeft,
   SlidersHorizontal, // 📱 Mobile Filter Icon
   Star // ⭐ Favoriten-Icon
 } from "lucide-react";
@@ -368,6 +368,11 @@ export default function Contracts() {
 
   // 🎨 Contract Detail Modal State
   const [selectedEnvelopeId, setSelectedEnvelopeId] = useState<string | null>(null);
+
+  // 📱 MOBILE-FIRST 2025: Neue States für Bottom Nav, Filter Chips, Search Overlay
+  const [mobileNavTab, setMobileNavTab] = useState<'alle' | 'aktiv' | 'faellig' | 'archiv' | 'suche'>('alle');
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
+  const [mobileSearchQuery, setMobileSearchQuery] = useState('');
 
   // 🆕 Handle navigation state from Optimizer page
   useEffect(() => {
@@ -3481,6 +3486,43 @@ export default function Contracts() {
               )}
             </div>
 
+            {/* 📱 MOBILE-FIRST 2025: Filter Chips */}
+            <div className={styles.mobileFilterChips}>
+              <div className={styles.filterChipGroup}>
+                <button
+                  className={`${styles.filterChip} ${sourceFilter === 'alle' && statusFilter === 'alle' ? styles.active : ''}`}
+                  onClick={() => {
+                    setSourceFilter('alle');
+                    setStatusFilter('alle');
+                  }}
+                >
+                  Alle
+                  <span className={styles.filterChipCount}>{contracts.length}</span>
+                </button>
+                <button
+                  className={`${styles.filterChip} ${sourceFilter === 'generated' ? styles.active : ''}`}
+                  onClick={() => setSourceFilter(sourceFilter === 'generated' ? 'alle' : 'generated')}
+                >
+                  <Sparkles size={14} />
+                  Generiert
+                </button>
+                <button
+                  className={`${styles.filterChip} ${sourceFilter === 'optimized' ? styles.active : ''}`}
+                  onClick={() => setSourceFilter(sourceFilter === 'optimized' ? 'alle' : 'optimized')}
+                >
+                  <Zap size={14} />
+                  Optimiert
+                </button>
+                <button
+                  className={`${styles.filterChip} ${statusFilter === 'bald_ablaufend' ? styles.active : ''}`}
+                  onClick={() => setStatusFilter(statusFilter === 'bald_ablaufend' ? 'alle' : 'bald_ablaufend')}
+                >
+                  <AlertTriangle size={14} />
+                  Bald fällig
+                </button>
+              </div>
+            </div>
+
             {/* Enterprise Toolbar */}
             <div className={styles.enterpriseToolbar}>
               <div className={styles.toolbarSection}>
@@ -5335,6 +5377,148 @@ export default function Contracts() {
             <span className={styles.analyzingHint}>
               Die KI analysiert Ihren Vertrag. Dies kann bis zu 30 Sekunden dauern.
             </span>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* 📱 MOBILE-FIRST 2025: Bottom Navigation */}
+      <nav className={styles.mobileBottomNav}>
+        <div className={styles.mobileNavTabs}>
+          <button
+            className={`${styles.mobileNavTab} ${mobileNavTab === 'alle' ? styles.active : ''}`}
+            onClick={() => {
+              setMobileNavTab('alle');
+              setStatusFilter('alle');
+            }}
+          >
+            <FileText />
+            <span>Alle</span>
+            {contracts.length > 0 && (
+              <span className={styles.mobileNavBadge}>{contracts.length}</span>
+            )}
+          </button>
+
+          <button
+            className={`${styles.mobileNavTab} ${mobileNavTab === 'aktiv' ? styles.active : ''}`}
+            onClick={() => {
+              setMobileNavTab('aktiv');
+              setStatusFilter('aktiv');
+            }}
+          >
+            <CheckCircle />
+            <span>Aktiv</span>
+          </button>
+
+          <button
+            className={`${styles.mobileNavTab} ${mobileNavTab === 'faellig' ? styles.active : ''}`}
+            onClick={() => {
+              setMobileNavTab('faellig');
+              setStatusFilter('bald_ablaufend');
+            }}
+          >
+            <Bell />
+            <span>Fällig</span>
+            {(() => {
+              const urgentCount = contracts.filter(c => {
+                if (!c.expiryDate) return false;
+                const days = Math.ceil((new Date(c.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                return days <= 30 && days > 0;
+              }).length;
+              return urgentCount > 0 ? (
+                <span className={`${styles.mobileNavBadge} ${styles.warning}`}>{urgentCount}</span>
+              ) : null;
+            })()}
+          </button>
+
+          <button
+            className={`${styles.mobileNavTab} ${mobileNavTab === 'archiv' ? styles.active : ''}`}
+            onClick={() => {
+              setMobileNavTab('archiv');
+              setStatusFilter('gekündigt');
+            }}
+          >
+            <Folder />
+            <span>Archiv</span>
+          </button>
+
+          <button
+            className={`${styles.mobileNavTab} ${mobileNavTab === 'suche' ? styles.active : ''}`}
+            onClick={() => {
+              setMobileNavTab('suche');
+              setShowMobileSearch(true);
+            }}
+          >
+            <Search />
+            <span>Suche</span>
+          </button>
+        </div>
+      </nav>
+
+      {/* 📱 MOBILE-FIRST 2025: Floating Action Button */}
+      <button
+        className={styles.mobileFab}
+        onClick={() => fileInputRef.current?.click()}
+        title="Neuen Vertrag hochladen"
+      >
+        <Plus />
+      </button>
+
+      {/* 📱 MOBILE-FIRST 2025: Search Overlay */}
+      {showMobileSearch && createPortal(
+        <div className={`${styles.mobileSearchOverlay} ${styles.open}`}>
+          <div className={styles.mobileSearchHeader}>
+            <button
+              className={styles.mobileSearchBack}
+              onClick={() => {
+                setShowMobileSearch(false);
+                setMobileSearchQuery('');
+                setMobileNavTab('alle');
+              }}
+            >
+              <ChevronLeft size={24} />
+            </button>
+            <input
+              type="text"
+              className={styles.mobileSearchField}
+              placeholder="Verträge durchsuchen..."
+              value={mobileSearchQuery}
+              onChange={(e) => {
+                setMobileSearchQuery(e.target.value);
+                setSearchQuery(e.target.value);
+              }}
+              autoFocus
+            />
+            {mobileSearchQuery && (
+              <button
+                className={styles.mobileSearchBack}
+                onClick={() => {
+                  setMobileSearchQuery('');
+                  setSearchQuery('');
+                }}
+              >
+                <X size={20} />
+              </button>
+            )}
+          </div>
+          <div className={styles.mobileSearchResults}>
+            {mobileSearchQuery.length === 0 ? (
+              <div className={styles.mobileSearchEmpty}>
+                <Search />
+                <p>Suche nach Vertragsnamen, Anbieter oder Inhalt</p>
+              </div>
+            ) : filteredContracts.length === 0 ? (
+              <div className={styles.mobileSearchEmpty}>
+                <FileText />
+                <p>Keine Verträge gefunden für "{mobileSearchQuery}"</p>
+              </div>
+            ) : (
+              <div className={styles.mobileListContainer}>
+                {filteredContracts.map((contract) => (
+                  <MobileListRow key={contract._id} contract={contract} />
+                ))}
+              </div>
+            )}
           </div>
         </div>,
         document.body

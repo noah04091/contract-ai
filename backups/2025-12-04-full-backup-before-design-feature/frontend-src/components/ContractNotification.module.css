@@ -1,0 +1,24 @@
+/* src/components/ContractNotification.module.css */
+.notification {
+    background-color: #ffc107;
+    color: #000;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
+  }
+  
+  .notification h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.1rem;
+  }
+  
+  .notification ul {
+    margin: 0;
+    padding-left: 1.2rem;
+  }
+  
+  .notification li {
+    margin-bottom: 0.3rem;
+  }
+  

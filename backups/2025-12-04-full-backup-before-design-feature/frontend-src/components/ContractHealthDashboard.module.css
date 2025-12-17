@@ -1,0 +1,251 @@
+/* 📁 src/components/ContractHealthDashboard.module.css */
+
+.dashboard {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.8) 100%);
+  backdrop-filter: blur(30px);
+  border-radius: 24px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08), 0 1px 0px rgba(255, 255, 255, 0.9) inset;
+  position: relative;
+  overflow: hidden;
+}
+
+.backgroundPattern {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  transform: translate(50%, -50%);
+  pointer-events: none;
+}
+
+.content {
+  position: relative;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.title {
+  margin: 0 0 0.5rem;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #1d1d1f;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #6e6e73;
+}
+
+.scoreSection {
+  text-align: right;
+}
+
+.score {
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+.scoreLabel {
+  font-size: 0.9rem;
+  color: #6e6e73;
+  margin-top: 0.2rem;
+}
+
+.simulationBanner {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1rem;
+  background-color: rgba(52, 199, 89, 0.1);
+  border-radius: 16px;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(52, 199, 89, 0.2);
+}
+
+.simulationBanner svg {
+  color: #34c759;
+}
+
+.simulationTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1d1d1f;
+}
+
+.simulationSubtitle {
+  font-size: 0.85rem;
+  color: #6e6e73;
+}
+
+.categories {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.categoryCard {
+  padding: 1rem;
+  background-color: rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+.categoryHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.categoryName {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1d1d1f;
+}
+
+.categoryScore {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.trendUp {
+  color: #34c759;
+}
+
+.trendDown {
+  color: #ff453a;
+  transform: rotate(180deg);
+}
+
+.progressBar {
+  width: 100%;
+  height: 4px;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 1s ease;
+}
+
+/* ✨ RESPONSIVE */
+@media (max-width: 768px) {
+  .dashboard {
+    padding: 1.5rem;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .scoreSection {
+    text-align: left;
+  }
+
+  .score {
+    font-size: 2.5rem;
+  }
+
+  .categories {
+    grid-template-columns: 1fr;
+    gap: 0.875rem;
+  }
+
+  .simulationBanner {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard {
+    padding: 1.25rem;
+  }
+
+  .title {
+    font-size: 1.2rem;
+  }
+
+  .score {
+    font-size: 2.25rem;
+  }
+
+  .categories {
+    gap: 0.75rem;
+  }
+
+  .categoryCard {
+    padding: 0.875rem;
+  }
+
+  .categoryName {
+    font-size: 0.8125rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard {
+    padding: 1rem;
+    border-radius: 16px;
+  }
+
+  .title {
+    font-size: 1.125rem;
+  }
+
+  .subtitle {
+    font-size: 0.85rem;
+  }
+
+  .score {
+    font-size: 2rem;
+  }
+
+  .scoreLabel {
+    font-size: 0.85rem;
+  }
+
+  .categoryCard {
+    padding: 0.75rem;
+  }
+
+  .categoryName {
+    font-size: 0.75rem;
+  }
+
+  .categoryScore {
+    font-size: 1rem;
+  }
+
+  .simulationTitle {
+    font-size: 0.9rem;
+  }
+
+  .simulationSubtitle {
+    font-size: 0.8rem;
+  }
+}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Check, X, Users, Zap, Crown, Shield, Clock, TrendingUp } from "lucide-react";
 
@@ -7,6 +7,35 @@ export default function HomePricingCards() {
   const [loading, setLoading] = useState(false);
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const navigate = useNavigate();
+  const cardsContainerRef = useRef<HTMLDivElement>(null);
+
+  // Scroll zu Enterprise-Karte auf Mobile beim Laden
+  useEffect(() => {
+    const scrollToEnterprise = () => {
+      if (cardsContainerRef.current && window.innerWidth <= 900) {
+        const container = cardsContainerRef.current;
+        const cards = container.querySelectorAll('.hp-card');
+        const enterpriseCard = cards[2]; // Index 2 = Enterprise
+
+        if (enterpriseCard) {
+          // Scroll zur Enterprise-Karte (zentriert)
+          const containerWidth = container.offsetWidth;
+          const cardLeft = (enterpriseCard as HTMLElement).offsetLeft;
+          const cardWidth = (enterpriseCard as HTMLElement).offsetWidth;
+          const scrollPosition = cardLeft - (containerWidth / 2) + (cardWidth / 2);
+
+          container.scrollTo({
+            left: scrollPosition,
+            behavior: 'auto' // Kein smooth, damit es sofort beim Laden da ist
+          });
+        }
+      }
+    };
+
+    // Kurzes Timeout damit das Layout fertig gerendert ist
+    const timer = setTimeout(scrollToEnterprise, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Stripe Checkout
   const startCheckout = async (plan: string) => {
@@ -147,7 +176,7 @@ export default function HomePricingCards() {
       </div>
 
       {/* Pricing Cards */}
-      <div className="hp-cards">
+      <div className="hp-cards" ref={cardsContainerRef}>
         {plans.map((plan) => (
           <div
             key={plan.id}

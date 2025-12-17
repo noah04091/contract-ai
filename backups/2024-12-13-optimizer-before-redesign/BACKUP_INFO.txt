@@ -1,0 +1,37 @@
+BACKUP: Optimizer Redesign - VOR den Änderungen
+================================================
+
+Datum: 13.12.2024
+Grund: Enterprise-Level UI/UX Redesign des Optimizers
+
+GESICHERTE DATEIEN:
+-------------------
+1. Optimizer.tsx (195 KB) - Hauptseite
+2. OptimizerFinalize.tsx (47 KB) - Finalisierungsseite
+3. Optimizer.module.css (24 KB) - Hauptstyles
+4. optimizer.ts (1.5 KB) - TypeScript Types
+5. ContractHealthDashboard.tsx (4.4 KB) - Score Dashboard
+6. AnalysisProgress.tsx (8 KB) - Fortschrittsanzeige
+7. AnalysisProgress.module.css (6 KB) - Progress Styles
+8. SimpleExplanationPopup.tsx (12 KB) - Erklärungs-Popup
+9. PDFDocumentViewer.tsx (20 KB) - PDF Viewer
+
+WIEDERHERSTELLUNG:
+------------------
+Um zum ursprünglichen Stand zurückzukehren:
+
+1. Kopiere alle .tsx Dateien nach:
+   frontend/src/pages/ (Optimizer.tsx, OptimizerFinalize.tsx)
+   frontend/src/components/ (Rest)
+
+2. Kopiere alle .css Dateien nach:
+   frontend/src/styles/
+
+3. Kopiere optimizer.ts nach:
+   frontend/src/types/
+
+PowerShell Befehl für schnelle Wiederherstellung:
+-------------------------------------------------
+Copy-Item -Path "C:\Users\liebo\Documents\contract-ai\backups\2024-12-13-optimizer-before-redesign\Optimizer.tsx" -Destination "C:\Users\liebo\Documents\contract-ai\frontend\src\pages\Optimizer.tsx" -Force
+Copy-Item -Path "C:\Users\liebo\Documents\contract-ai\backups\2024-12-13-optimizer-before-redesign\OptimizerFinalize.tsx" -Destination "C:\Users\liebo\Documents\contract-ai\frontend\src\pages\OptimizerFinalize.tsx" -Force
+Copy-Item -Path "C:\Users\liebo\Documents\contract-ai\backups\2024-12-13-optimizer-before-redesign\Optimizer.module.css" -Destination "C:\Users\liebo\Documents\contract-ai\frontend\src\styles\Optimizer.module.css" -Force

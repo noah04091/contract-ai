@@ -1,0 +1,221 @@
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
+body.dark {
+  background-color: #0f0f17;
+  color: #ffffff;
+}
+
+body.light {
+  background-color: #f4f4f4;
+  color: #111;
+}
+
+body {
+  transition: background 0.3s, color 0.3s;
+}
+
+/* ✨ Contract Content Viewer Scrollbars */
+.contract-content-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.contract-content-scroll::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.contract-content-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.contract-content-scroll::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Modal Scrollbars */
+.contract-modal-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.contract-modal-scroll::-webkit-scrollbar-track {
+  background: #f8fafc;
+  border-radius: 4px;
+}
+
+.contract-modal-scroll::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.contract-modal-scroll::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Firefox Support */
+.contract-content-scroll,
+.contract-modal-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+/* ============================================
+   📱 MOBILE/TABLET RESPONSIVE OPTIMIERUNGEN
+   ============================================ */
+
+/* Large Tablet (max 1024px) */
+@media (max-width: 1024px) {
+  h1 {
+    font-size: 2.6em;
+  }
+}
+
+/* Tablet (max 768px) */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2.2em;
+  }
+
+  /* Touch-Targets: Minimum 44px für alle interaktiven Elemente */
+  button,
+  [role="button"],
+  input[type="submit"],
+  input[type="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Scrollbar auf Touch-Devices dünner */
+  .contract-content-scroll::-webkit-scrollbar,
+  .contract-modal-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+}
+
+/* Mobile (max 480px) */
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.8em;
+  }
+
+  button {
+    padding: 0.75em 1em;
+    font-size: 0.95em;
+  }
+
+  /* Links mit genug Touch-Area */
+  a {
+    padding: 0.25em 0;
+  }
+}
+
+/* Extra Small (max 375px) - iPhone SE */
+@media (max-width: 375px) {
+  h1 {
+    font-size: 1.5em;
+  }
+
+  button {
+    padding: 0.7em 0.9em;
+    font-size: 0.9em;
+  }
+}
+
+/* iOS Safari: Prevent zoom on input focus */
+@media (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important; /* Verhindert Auto-Zoom auf iOS */
+  }
+}
+
+/* Reduced Motion: Deaktiviere Animationen auf Mobile für Performance */
+@media (prefers-reduced-motion: reduce), (max-width: 768px) and (prefers-reduced-motion: no-preference) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Re-enable transitions für wichtige UI-Elemente auf Mobile */
+@media (max-width: 768px) {
+  button,
+  a,
+  input,
+  .modal,
+  .sidebar {
+    transition-duration: 0.2s !important;
+  }
+}

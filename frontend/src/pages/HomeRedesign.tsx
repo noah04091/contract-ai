@@ -1120,37 +1120,54 @@ const HomeRedesign = () => {
           <div className="section-container">
             <div className="cm-grid">
               <div className="cm-text">
-                <h2 id="contracts-management-title" className="reveal-text">📂 Digitale Vertragsverwaltung — Alles an einem Ort, jederzeit verfügbar</h2>
-                <p className="cm-subtext reveal-text">Speichern, organisieren und verwalten Sie all Ihre Verträge sicher in der Contract AI Cloud. Mit automatischen Erinnerungen, schneller Suche und DSGVO-konformer Speicherung behalten Sie jederzeit den Überblick — ob am Schreibtisch oder unterwegs.</p>
+                <div className="cm-badge reveal-text">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 10v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2v1Z"></path>
+                  </svg>
+                  Digitale Vertragsverwaltung
+                </div>
+                <h2 id="contracts-management-title" className="cm-headline reveal-text">
+                  Ihre Verträge.<br />
+                  <span className="text-gradient">Perfekt organisiert.</span>
+                </h2>
+                <p className="cm-subtext reveal-text">Speichern, organisieren und verwalten Sie all Ihre Verträge sicher in der Contract AI Cloud. Mit automatischen Erinnerungen, schneller Suche und DSGVO-konformer Speicherung.</p>
                 <ul className="cm-bullets reveal-block">
                   <li>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M22 10v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2v1Z"></path>
-                    </svg>
+                    <div className="cm-bullet-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M22 10v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2v1Z"></path>
+                      </svg>
+                    </div>
                     <span><strong>Zentrale Ablage:</strong> Alle Verträge sicher an einem Ort</span>
                   </li>
                   <li>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="11" cy="11" r="8"></circle>
-                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
+                    <div className="cm-bullet-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                      </svg>
+                    </div>
                     <span><strong>Sofortiger Zugriff:</strong> Finden Sie Dokumente in Sekunden</span>
                   </li>
                   <li>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                      <line x1="16" y1="2" x2="16" y2="6"></line>
-                      <line x1="8" y1="2" x2="8" y2="6"></line>
-                      <line x1="3" y1="10" x2="21" y2="10"></line>
-                    </svg>
+                    <div className="cm-bullet-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                      </svg>
+                    </div>
                     <span><strong>Automatische Erinnerungen:</strong> Fristen nie wieder verpassen</span>
                   </li>
                   <li>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect>
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                    </svg>
-                    <span><strong>100 % DSGVO-konform:</strong> Speicherung auf deutschen Servern</span>
+                    <div className="cm-bullet-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                      </svg>
+                    </div>
+                    <span><strong>100 % DSGVO-konform:</strong> Deutsche Server</span>
                   </li>
                 </ul>
                 <div className="cm-cta reveal-text">
@@ -1167,53 +1184,89 @@ const HomeRedesign = () => {
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 500 400"
-                  style={{
-                    width: '120%',
-                    height: 'auto',
-                    display: 'block',
-                    background: 'transparent',
-                    transform: 'translateX(-10%)'
-                  }}
+                  className="cm-illustration"
                 >
                   <defs>
-                    <linearGradient id="folder-gradient-v2" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" style={{stopColor: '#3b82f6', stopOpacity: 1}} />
-                      <stop offset="100%" style={{stopColor: '#2563eb', stopOpacity: 1}} />
+                    <linearGradient id="folder-gradient-v3" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" style={{stopColor: '#007aff', stopOpacity: 1}} />
+                      <stop offset="100%" style={{stopColor: '#0052cc', stopOpacity: 1}} />
                     </linearGradient>
-                    <filter id="shadow-v2">
-                      <feDropShadow dx="0" dy="4" stdDeviation="6" floodOpacity="0.12"/>
+                    <linearGradient id="card-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" style={{stopColor: '#ffffff', stopOpacity: 1}} />
+                      <stop offset="100%" style={{stopColor: '#f8fafc', stopOpacity: 1}} />
+                    </linearGradient>
+                    <filter id="shadow-soft">
+                      <feDropShadow dx="0" dy="8" stdDeviation="12" floodColor="#007aff" floodOpacity="0.15"/>
+                    </filter>
+                    <filter id="shadow-card">
+                      <feDropShadow dx="0" dy="4" stdDeviation="8" floodOpacity="0.08"/>
                     </filter>
                   </defs>
 
-                  <circle cx="130" cy="90" r="8" fill="#ec4899" opacity="0.6" className="floating-dot floating-dot-1"/>
-                  <circle cx="400" cy="150" r="6" fill="#10b981" opacity="0.6" className="floating-dot floating-dot-2"/>
-                  <circle cx="370" cy="320" r="9" fill="#f97316" opacity="0.6" className="floating-dot floating-dot-3"/>
-                  <circle cx="110" cy="290" r="7" fill="#a855f7" opacity="0.6" className="floating-dot floating-dot-4"/>
-                  <circle cx="420" cy="250" r="5" fill="#3b82f6" opacity="0.6" className="floating-dot floating-dot-5"/>
+                  {/* Background glow */}
+                  <circle cx="250" cy="200" r="120" fill="#007aff" opacity="0.05"/>
+                  <circle cx="250" cy="200" r="180" fill="#007aff" opacity="0.03"/>
 
-                  <g transform="translate(175, 120)" filter="url(#shadow-v2)">
-                    <rect x="0" y="30" width="150" height="110" rx="10" fill="url(#folder-gradient-v2)"/>
-                    <path d="M0 30 L0 18 Q0 12 6 12 L45 12 L57 24 L144 24 Q150 24 150 30" fill="#60a5fa"/>
+                  {/* Floating elements */}
+                  <circle cx="100" cy="80" r="6" fill="#007aff" opacity="0.4" className="floating-dot floating-dot-1"/>
+                  <circle cx="420" cy="120" r="8" fill="#10b981" opacity="0.5" className="floating-dot floating-dot-2"/>
+                  <circle cx="380" cy="320" r="5" fill="#007aff" opacity="0.3" className="floating-dot floating-dot-3"/>
+                  <circle cx="80" cy="300" r="7" fill="#f59e0b" opacity="0.4" className="floating-dot floating-dot-4"/>
 
-                    <rect x="25" y="60" width="30" height="40" rx="4" fill="#ffffff" opacity="0.95"/>
-                    <rect x="60" y="65" width="30" height="40" rx="4" fill="#f0f9ff" opacity="0.9"/>
-                    <rect x="95" y="70" width="30" height="40" rx="4" fill="#dbeafe" opacity="0.85"/>
+                  {/* Main folder card */}
+                  <g transform="translate(125, 80)" filter="url(#shadow-soft)">
+                    {/* Folder back */}
+                    <rect x="0" y="35" width="250" height="180" rx="16" fill="url(#folder-gradient-v3)"/>
+                    {/* Folder tab */}
+                    <path d="M0 51 Q0 35 16 35 L80 35 L100 55 L234 55 Q250 55 250 71 L250 51 Q250 35 234 35 L100 35 L80 35 L16 35 Q0 35 0 51 Z" fill="#339dff"/>
 
-                    <line x1="30" y1="70" x2="50" y2="70" stroke="#2563eb" strokeWidth="2.5"/>
-                    <line x1="30" y1="78" x2="50" y2="78" stroke="#2563eb" strokeWidth="2.5"/>
-                    <line x1="30" y1="86" x2="50" y2="86" stroke="#2563eb" strokeWidth="2.5"/>
-                    <line x1="30" y1="94" x2="45" y2="94" stroke="#2563eb" strokeWidth="2.5" opacity="0.6"/>
+                    {/* Glass effect overlay */}
+                    <rect x="0" y="35" width="250" height="90" rx="16" fill="url(#card-gradient)" opacity="0.1"/>
+
+                    {/* Document cards stacked */}
+                    <g transform="translate(25, 75)" filter="url(#shadow-card)">
+                      <rect x="0" y="0" width="80" height="100" rx="8" fill="#ffffff"/>
+                      <rect x="10" y="15" width="40" height="4" rx="2" fill="#007aff" opacity="0.8"/>
+                      <rect x="10" y="25" width="60" height="3" rx="1.5" fill="#e2e8f0"/>
+                      <rect x="10" y="33" width="55" height="3" rx="1.5" fill="#e2e8f0"/>
+                      <rect x="10" y="41" width="50" height="3" rx="1.5" fill="#e2e8f0"/>
+                      <rect x="10" y="55" width="30" height="20" rx="4" fill="#007aff" opacity="0.1"/>
+                      <text x="25" y="68" fontSize="8" fill="#007aff" fontWeight="600" textAnchor="middle">PDF</text>
+                    </g>
+
+                    <g transform="translate(85, 65)" filter="url(#shadow-card)">
+                      <rect x="0" y="0" width="80" height="100" rx="8" fill="#ffffff"/>
+                      <rect x="10" y="15" width="45" height="4" rx="2" fill="#10b981" opacity="0.8"/>
+                      <rect x="10" y="25" width="60" height="3" rx="1.5" fill="#e2e8f0"/>
+                      <rect x="10" y="33" width="50" height="3" rx="1.5" fill="#e2e8f0"/>
+                      <rect x="10" y="41" width="55" height="3" rx="1.5" fill="#e2e8f0"/>
+                      <circle cx="60" cy="75" r="12" fill="#10b981" opacity="0.15"/>
+                      <path d="M54 75 L58 79 L66 71" stroke="#10b981" strokeWidth="2" fill="none" strokeLinecap="round"/>
+                    </g>
+
+                    <g transform="translate(145, 55)" filter="url(#shadow-card)">
+                      <rect x="0" y="0" width="80" height="100" rx="8" fill="#ffffff"/>
+                      <rect x="10" y="15" width="35" height="4" rx="2" fill="#f59e0b" opacity="0.8"/>
+                      <rect x="10" y="25" width="60" height="3" rx="1.5" fill="#e2e8f0"/>
+                      <rect x="10" y="33" width="45" height="3" rx="1.5" fill="#e2e8f0"/>
+                      <rect x="10" y="41" width="55" height="3" rx="1.5" fill="#e2e8f0"/>
+                      <rect x="10" y="60" width="60" height="25" rx="4" fill="#f59e0b" opacity="0.1"/>
+                    </g>
                   </g>
 
-                  <g transform="translate(360, 250)" filter="url(#shadow-v2)">
-                    <circle cx="20" cy="20" r="18" fill="none" stroke="#2563eb" strokeWidth="5"/>
-                    <line x1="32" y1="32" x2="45" y2="45" stroke="#2563eb" strokeWidth="5" strokeLinecap="round"/>
+                  {/* Search icon floating */}
+                  <g transform="translate(380, 220)" filter="url(#shadow-card)">
+                    <circle cx="25" cy="25" r="25" fill="#ffffff"/>
+                    <circle cx="22" cy="22" r="10" fill="none" stroke="#007aff" strokeWidth="2.5"/>
+                    <line x1="29" y1="29" x2="36" y2="36" stroke="#007aff" strokeWidth="2.5" strokeLinecap="round"/>
                   </g>
 
-                  <g transform="translate(100, 200)" filter="url(#shadow-v2)">
-                    <rect x="0" y="15" width="35" height="28" rx="5" fill="#10b981"/>
-                    <path d="M9 15 L9 9 Q9 0 17.5 0 Q26 0 26 9 L26 15" fill="none" stroke="#10b981" strokeWidth="4"/>
-                    <circle cx="17.5" cy="26" r="4" fill="#ffffff"/>
+                  {/* Lock icon floating */}
+                  <g transform="translate(70, 180)" filter="url(#shadow-card)">
+                    <circle cx="22" cy="22" r="22" fill="#ffffff"/>
+                    <rect x="12" y="20" width="20" height="14" rx="3" fill="#10b981"/>
+                    <path d="M16 20 L16 16 Q16 10 22 10 Q28 10 28 16 L28 20" fill="none" stroke="#10b981" strokeWidth="2.5"/>
+                    <circle cx="22" cy="26" r="2" fill="#ffffff"/>
                   </g>
                 </svg>
               </div>
@@ -1229,108 +1282,147 @@ const HomeRedesign = () => {
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 500 400"
-                  style={{
-                    width: '120%',
-                    height: 'auto',
-                    display: 'block',
-                    background: 'transparent',
-                    transform: 'translateX(10%)'
-                  }}
+                  className="cm-illustration cm-illustration-reverse"
                 >
                   <defs>
-                    <linearGradient id="email-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" style={{stopColor: '#667eea', stopOpacity: 1}} />
-                      <stop offset="100%" style={{stopColor: '#764ba2', stopOpacity: 1}} />
+                    <linearGradient id="email-gradient-blue" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" style={{stopColor: '#007aff', stopOpacity: 1}} />
+                      <stop offset="100%" style={{stopColor: '#0052cc', stopOpacity: 1}} />
                     </linearGradient>
-                    <filter id="shadow-email">
-                      <feDropShadow dx="0" dy="4" stdDeviation="6" floodOpacity="0.12"/>
+                    <linearGradient id="envelope-flap" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" style={{stopColor: '#339dff', stopOpacity: 1}} />
+                      <stop offset="100%" style={{stopColor: '#007aff', stopOpacity: 1}} />
+                    </linearGradient>
+                    <filter id="shadow-email-v2">
+                      <feDropShadow dx="0" dy="8" stdDeviation="12" floodColor="#007aff" floodOpacity="0.2"/>
+                    </filter>
+                    <filter id="glow-blue">
+                      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                      <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                      </feMerge>
                     </filter>
                   </defs>
 
-                  {/* Floating dots */}
-                  <circle cx="100" cy="80" r="7" fill="#667eea" opacity="0.6" className="floating-dot floating-dot-1"/>
-                  <circle cx="420" cy="120" r="8" fill="#764ba2" opacity="0.6" className="floating-dot floating-dot-2"/>
-                  <circle cx="380" cy="300" r="6" fill="#10b981" opacity="0.6" className="floating-dot floating-dot-3"/>
-                  <circle cx="90" cy="280" r="9" fill="#f59e0b" opacity="0.6" className="floating-dot floating-dot-4"/>
+                  {/* Background glow */}
+                  <circle cx="250" cy="200" r="130" fill="#007aff" opacity="0.04"/>
+                  <circle cx="250" cy="200" r="190" fill="#007aff" opacity="0.02"/>
 
-                  {/* Email Envelope - Klassisches @ Symbol */}
-                  <g transform="translate(150, 110)" filter="url(#shadow-email)">
-                    {/* Envelope body (Rechteck) */}
-                    <rect x="0" y="40" width="200" height="140" rx="12" fill="url(#email-gradient)"/>
+                  {/* Floating dots - alle in Firmenfarben */}
+                  <circle cx="90" cy="70" r="6" fill="#007aff" opacity="0.5" className="floating-dot floating-dot-1"/>
+                  <circle cx="430" cy="100" r="8" fill="#0052cc" opacity="0.4" className="floating-dot floating-dot-2"/>
+                  <circle cx="400" cy="310" r="5" fill="#10b981" opacity="0.5" className="floating-dot floating-dot-3"/>
+                  <circle cx="80" cy="290" r="7" fill="#f59e0b" opacity="0.4" className="floating-dot floating-dot-4"/>
+                  <circle cx="350" cy="60" r="4" fill="#007aff" opacity="0.3" className="floating-dot floating-dot-5"/>
 
-                    {/* Briefumschlag-Klappe (V-Form oben) */}
-                    <path d="M0 40 L100 110 L200 40" fill="#764ba2" opacity="0.9"/>
+                  {/* Main Email Envelope - Modern Design */}
+                  <g transform="translate(125, 90)" filter="url(#shadow-email-v2)">
+                    {/* Envelope body */}
+                    <rect x="0" y="50" width="250" height="170" rx="16" fill="url(#email-gradient-blue)"/>
 
-                    {/* Umschlag-Kanten für 3D-Effekt */}
-                    <line x1="0" y1="40" x2="100" y2="110" stroke="#ffffff" strokeWidth="2" opacity="0.3"/>
-                    <line x1="200" y1="40" x2="100" y2="110" stroke="#ffffff" strokeWidth="2" opacity="0.3"/>
+                    {/* Envelope flap (opened, tilted back) */}
+                    <path d="M0 66 Q0 50 16 50 L234 50 Q250 50 250 66 L125 140 Z" fill="url(#envelope-flap)"/>
 
-                    {/* Großes @ Symbol in der Mitte */}
-                    <text x="100" y="135" fontSize="80" fontWeight="bold" fill="#ffffff" textAnchor="middle" fontFamily="Arial, sans-serif">@</text>
+                    {/* Glass highlight on envelope */}
+                    <rect x="0" y="50" width="250" height="85" rx="16" fill="#ffffff" opacity="0.08"/>
+
+                    {/* Inner envelope shadow line */}
+                    <line x1="0" y1="66" x2="125" y2="140" stroke="#ffffff" strokeWidth="1.5" opacity="0.2"/>
+                    <line x1="250" y1="66" x2="125" y2="140" stroke="#ffffff" strokeWidth="1.5" opacity="0.2"/>
+
+                    {/* @ Symbol - cleaner design */}
+                    <circle cx="125" cy="160" r="35" fill="#ffffff" opacity="0.15"/>
+                    <text x="125" y="175" fontSize="50" fontWeight="700" fill="#ffffff" textAnchor="middle" fontFamily="Inter, system-ui, sans-serif">@</text>
                   </g>
 
-                  {/* Upload arrow icon */}
-                  <g transform="translate(330, 180)" filter="url(#shadow-email)">
-                    <circle cx="25" cy="25" r="25" fill="#10b981"/>
-                    <path d="M25 15 L25 35 M25 15 L18 22 M25 15 L32 22"
-                          stroke="#ffffff"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          fill="none"/>
+                  {/* Incoming document animation feel */}
+                  <g transform="translate(70, 150)" filter="url(#shadow-card)">
+                    <rect x="0" y="0" width="55" height="70" rx="6" fill="#ffffff"/>
+                    <rect x="8" y="12" width="25" height="3" rx="1.5" fill="#007aff"/>
+                    <rect x="8" y="20" width="40" height="2" rx="1" fill="#e2e8f0"/>
+                    <rect x="8" y="26" width="35" height="2" rx="1" fill="#e2e8f0"/>
+                    <rect x="8" y="32" width="38" height="2" rx="1" fill="#e2e8f0"/>
+                    <rect x="8" y="45" width="20" height="15" rx="3" fill="#ef4444" opacity="0.9"/>
+                    <text x="18" y="56" fontSize="7" fill="#ffffff" fontWeight="700" textAnchor="middle">PDF</text>
+                    {/* Motion lines */}
+                    <line x1="60" y1="25" x2="75" y2="25" stroke="#007aff" strokeWidth="2" opacity="0.4" strokeLinecap="round"/>
+                    <line x1="65" y1="35" x2="80" y2="35" stroke="#007aff" strokeWidth="2" opacity="0.3" strokeLinecap="round"/>
+                    <line x1="60" y1="45" x2="72" y2="45" stroke="#007aff" strokeWidth="2" opacity="0.2" strokeLinecap="round"/>
                   </g>
 
-                  {/* PDF document icon */}
-                  <g transform="translate(110, 240)" filter="url(#shadow-email)">
-                    <rect x="0" y="0" width="45" height="55" rx="4" fill="#ef4444"/>
-                    <path d="M45 0 L45 15 L30 0 Z" fill="#dc2626"/>
-                    <text x="22.5" y="38" fontSize="14" fontWeight="bold" fill="#ffffff" textAnchor="middle">PDF</text>
+                  {/* Success checkmark badge */}
+                  <g transform="translate(370, 140)" filter="url(#shadow-card)">
+                    <circle cx="28" cy="28" r="28" fill="#ffffff"/>
+                    <circle cx="28" cy="28" r="20" fill="#10b981"/>
+                    <path d="M20 28 L26 34 L38 22" stroke="#ffffff" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
                   </g>
 
-                  {/* Checkmark badge */}
-                  <g transform="translate(360, 90)">
-                    <circle cx="15" cy="15" r="15" fill="#10b981"/>
-                    <path d="M8 15 L13 20 L22 11"
-                          stroke="#ffffff"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          fill="none"/>
+                  {/* Upload cloud icon */}
+                  <g transform="translate(340, 250)" filter="url(#shadow-card)">
+                    <circle cx="25" cy="25" r="25" fill="#ffffff"/>
+                    <path d="M25 32 L25 18 M19 24 L25 18 L31 24" stroke="#007aff" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M17 32 L33 32" stroke="#007aff" strokeWidth="2.5" strokeLinecap="round"/>
+                  </g>
+
+                  {/* Small notification badge */}
+                  <g transform="translate(95, 95)">
+                    <circle cx="12" cy="12" r="12" fill="#007aff" filter="url(#glow-blue)"/>
+                    <text x="12" y="16" fontSize="12" fill="#ffffff" fontWeight="700" textAnchor="middle">1</text>
                   </g>
                 </svg>
               </div>
 
               <div className="cm-text">
-                <h2 id="email-upload-title" className="reveal-text">Automatischer E-Mail-Upload — Verträge per E-Mail hochladen</h2>
-                <p className="cm-subtext reveal-text">Leiten Sie E-Mails mit Vertragsanhängen einfach an Ihre persönliche Contract AI E-Mail-Adresse weiter. Das System erkennt PDF-Dateien automatisch, lädt sie hoch und analysiert sie — vollautomatisch und ohne manuelle Eingabe.</p>
+                <div className="cm-badge reveal-text">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                  </svg>
+                  Automatischer E-Mail-Upload
+                </div>
+                <h2 id="email-upload-title" className="cm-headline reveal-text">
+                  Verträge per E-Mail.<br />
+                  <span className="text-gradient">Automatisch erfasst.</span>
+                </h2>
+                <p className="cm-subtext reveal-text">Leiten Sie E-Mails mit Vertragsanhängen einfach an Ihre persönliche Contract AI Adresse weiter. PDFs werden automatisch erkannt, hochgeladen und analysiert.</p>
                 <ul className="cm-bullets reveal-block">
                   <li>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21.5 12H16c-.7 2-2 3-4 3s-3.3-1-4-3H2.5"></path>
-                      <path d="M5.5 5.1L2 12v6c0 1.1.9 2 2 2h16a2 2 0 002-2v-6l-3.4-6.9A2 2 0 0016.8 4H7.2a2 2 0 00-1.8 1.1z"></path>
-                    </svg>
-                    <span><strong>Keine manuelle Eingabe:</strong> Einfach E-Mail weiterleiten</span>
+                    <div className="cm-bullet-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21.5 12H16c-.7 2-2 3-4 3s-3.3-1-4-3H2.5"></path>
+                        <path d="M5.5 5.1L2 12v6c0 1.1.9 2 2 2h16a2 2 0 002-2v-6l-3.4-6.9A2 2 0 0016.8 4H7.2a2 2 0 00-1.8 1.1z"></path>
+                      </svg>
+                    </div>
+                    <span><strong>Zero Aufwand:</strong> Einfach E-Mail weiterleiten</span>
                   </li>
                   <li>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path>
-                      <polyline points="7 10 12 15 17 10"></polyline>
-                      <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                    <span><strong>Automatische Erkennung:</strong> PDFs werden sofort verarbeitet</span>
+                    <div className="cm-bullet-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                      </svg>
+                    </div>
+                    <span><strong>Auto-Erkennung:</strong> PDFs sofort verarbeitet</span>
                   </li>
                   <li>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-                      <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"></path>
-                    </svg>
-                    <span><strong>Funktioniert überall:</strong> Von jedem E-Mail-Postfach</span>
+                    <div className="cm-bullet-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                      </svg>
+                    </div>
+                    <span><strong>Jedes Postfach:</strong> Gmail, Outlook, Apple Mail</span>
                   </li>
                   <li>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-                    </svg>
-                    <span><strong>Sofort im Dashboard:</strong> Verträge erscheinen automatisch</span>
+                    <div className="cm-bullet-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                      </svg>
+                    </div>
+                    <span><strong>Instant sync:</strong> Direkt im Dashboard</span>
                   </li>
                 </ul>
                 <div className="cm-cta reveal-text">

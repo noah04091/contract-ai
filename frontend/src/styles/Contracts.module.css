@@ -7102,3 +7102,439 @@
 .ratingBad svg {
   color: #ef4444 !important;
 }
+
+/* ============================================
+   📱 MOBILE-FIRST REDESIGN 2025
+   Bottom Navigation, FAB, Pull-to-Refresh, Filter Chips
+   ============================================ */
+
+/* === MOBILE BOTTOM NAVIGATION === */
+.mobileBottomNav {
+  display: none; /* Hidden on desktop */
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+  padding: 0.5rem 0;
+  padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+  z-index: 100;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.mobileNavTabs {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.mobileNavTab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  min-width: 60px;
+}
+
+.mobileNavTab:active {
+  transform: scale(0.92);
+}
+
+.mobileNavTab svg {
+  width: 22px;
+  height: 22px;
+  color: #9ca3af;
+  transition: all 0.2s ease;
+}
+
+.mobileNavTab span {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: #9ca3af;
+  transition: all 0.2s ease;
+}
+
+.mobileNavTab.active {
+  background: #eff6ff;
+}
+
+.mobileNavTab.active svg {
+  color: #3b82f6;
+}
+
+.mobileNavTab.active span {
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+.mobileNavBadge {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.5rem;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  background: #ef4444;
+  color: white;
+  font-size: 0.625rem;
+  font-weight: 700;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobileNavBadge.warning {
+  background: #f59e0b;
+}
+
+/* === FLOATING ACTION BUTTON === */
+.mobileFab {
+  display: none; /* Hidden on desktop */
+  position: fixed;
+  bottom: calc(80px + env(safe-area-inset-bottom));
+  right: 1rem;
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+  cursor: pointer;
+  z-index: 99;
+  transition: all 0.2s ease;
+}
+
+.mobileFab:active {
+  transform: scale(0.92);
+  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.3);
+}
+
+.mobileFab svg {
+  width: 24px;
+  height: 24px;
+  color: white;
+}
+
+/* FAB expanded state */
+.mobileFab.expanded {
+  width: auto;
+  padding: 0 1.25rem;
+  gap: 0.5rem;
+}
+
+.mobileFab.expanded span {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
+}
+
+/* === FILTER CHIPS === */
+.mobileFilterChips {
+  display: none; /* Hidden on desktop */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 0.75rem 1rem;
+  gap: 0.5rem;
+  background: white;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.mobileFilterChips::-webkit-scrollbar {
+  display: none;
+}
+
+.filterChipGroup {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.filterChip {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  background: #f3f4f6;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #4b5563;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.filterChip:active {
+  transform: scale(0.96);
+}
+
+.filterChip.active {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.filterChip svg {
+  width: 14px;
+  height: 14px;
+}
+
+.filterChipCount {
+  background: rgba(0, 0, 0, 0.1);
+  padding: 0.125rem 0.375rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.filterChip.active .filterChipCount {
+  background: rgba(59, 130, 246, 0.15);
+}
+
+/* === PULL TO REFRESH === */
+.pullToRefresh {
+  display: none; /* Hidden on desktop */
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: linear-gradient(180deg, #f8fafc 0%, transparent 100%);
+  transform: translateY(-100%);
+  transition: transform 0.2s ease;
+  z-index: 10;
+}
+
+.pullToRefresh.visible {
+  transform: translateY(0);
+}
+
+.pullToRefresh.refreshing {
+  transform: translateY(0);
+}
+
+.pullToRefreshIcon {
+  width: 24px;
+  height: 24px;
+  color: #3b82f6;
+  transition: transform 0.2s ease;
+}
+
+.pullToRefresh.refreshing .pullToRefreshIcon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.pullToRefreshText {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+/* === MOBILE SWIPE ACTIONS === */
+.swipeContainer {
+  position: relative;
+  overflow: hidden;
+}
+
+.swipeContent {
+  position: relative;
+  z-index: 1;
+  background: white;
+  transition: transform 0.2s ease;
+}
+
+.swipeActions {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: stretch;
+}
+
+.swipeAction {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0 1.25rem;
+  border: none;
+  cursor: pointer;
+  color: white;
+  font-size: 0.6875rem;
+  font-weight: 500;
+}
+
+.swipeAction svg {
+  width: 20px;
+  height: 20px;
+}
+
+.swipeAction.edit {
+  background: #3b82f6;
+}
+
+.swipeAction.lens {
+  background: #8b5cf6;
+}
+
+.swipeAction.delete {
+  background: #ef4444;
+}
+
+/* === MOBILE SEARCH OVERLAY === */
+.mobileSearchOverlay {
+  display: none; /* Hidden on desktop */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: white;
+  z-index: 200;
+  padding-top: env(safe-area-inset-top);
+}
+
+.mobileSearchOverlay.open {
+  display: flex;
+  flex-direction: column;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.mobileSearchHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.mobileSearchBack {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  color: #6b7280;
+}
+
+.mobileSearchBack:active {
+  background: #f3f4f6;
+}
+
+.mobileSearchField {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  color: #1f2937;
+  outline: none;
+}
+
+.mobileSearchField::placeholder {
+  color: #9ca3af;
+}
+
+.mobileSearchResults {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem 0;
+}
+
+.mobileSearchEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.mobileSearchEmpty svg {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+/* === MOBILE MEDIA QUERY === */
+@media (max-width: 768px) {
+  .mobileBottomNav {
+    display: block;
+  }
+
+  .mobileFab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobileFilterChips {
+    display: flex;
+  }
+
+  /* Adjust content padding for bottom nav */
+  .mobileCardsContainer {
+    padding-bottom: calc(100px + env(safe-area-inset-bottom));
+  }
+
+  .mobileListContainer,
+  .mobileGridContainer {
+    padding-bottom: calc(100px + env(safe-area-inset-bottom));
+  }
+
+  /* Hide desktop-only elements */
+  .toolbarActions {
+    display: none;
+  }
+
+  /* Mobile header adjustments */
+  .pageHeader {
+    padding: 1rem;
+  }
+
+  .pageTitle {
+    font-size: 1.25rem;
+  }
+
+  /* Full-width cards on mobile */
+  .contentArea {
+    padding: 0;
+  }
+}

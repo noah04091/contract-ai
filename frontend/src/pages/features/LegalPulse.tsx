@@ -81,7 +81,7 @@ const LegalPulse: React.FC = () => {
           <p className={styles.heroSubtitle}>
             Gesetze ändern sich. Märkte bewegen sich. Legal Pulse prüft Ihre Verträge regelmäßig, erkennt neue Risiken und empfiehlt konkrete Updates.
           </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '24px', justifyContent: 'center' }}>
+          <div className={styles.heroButtons}>
             <Link to={target} className={styles.ctaButton} aria-label="Legal Pulse aktivieren">
               Legal Pulse aktivieren
             </Link>
@@ -367,9 +367,9 @@ const LegalPulse: React.FC = () => {
               <p className={styles.ctaSubtitle}>
                 Erkennen Sie Risiken bevor sie zum Problem werden. Legal Pulse überwacht, warnt und empfiehlt – Sie setzen um.
               </p>
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '24px' }}>
-                <button 
-                  style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', padding: '12px 16px', borderRadius: '12px', fontWeight: '600', cursor: 'pointer' }}
+              <div className={styles.ctaButtons}>
+                <button
+                  className={styles.secondaryButtonLight}
                   onClick={() => document.getElementById('so-funktionierts')?.scrollIntoView({ behavior: 'smooth' })}
                 >
                   Wie Legal Pulse arbeitet

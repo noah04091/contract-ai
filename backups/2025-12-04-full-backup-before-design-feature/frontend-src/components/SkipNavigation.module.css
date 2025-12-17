@@ -1,0 +1,45 @@
+/* ⚡ SkipNavigation.module.css - Skip to Main Content Styles */
+
+.skipLink {
+  position: fixed;
+  top: -100px;
+  left: 20px;
+  z-index: 100000;
+  padding: 12px 24px;
+  background: #3b82f6;
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: top 0.3s ease;
+  outline: none;
+}
+
+.skipLink:focus,
+.skipLink.visible:focus {
+  top: 20px;
+  outline: 3px solid #fbbf24;
+  outline-offset: 2px;
+}
+
+.skipLink:hover {
+  background: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .skipLink {
+    border: 2px solid currentColor;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .skipLink {
+    transition: none;
+  }
+}

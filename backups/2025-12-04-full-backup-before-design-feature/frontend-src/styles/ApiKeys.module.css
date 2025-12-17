@@ -1,0 +1,558 @@
+/* 📁 frontend/src/styles/ApiKeys.module.css */
+/* REST API-Zugang: API-Keys Management UI */
+
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 80px 20px 40px;
+}
+
+.content {
+  max-width: 900px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.headerLeft {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.headerIcon {
+  color: #667eea;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 8px 0;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+.generateButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.generateButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.generateButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Enterprise Badge */
+.enterpriseBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+/* Info Box */
+.infoBox {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background: #f0f9ff;
+  border: 1px solid #0ea5e9;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  color: #0c4a6e;
+}
+
+.infoBox strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.docsLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 12px;
+  color: #0ea5e9;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.docsLink:hover {
+  text-decoration: underline;
+}
+
+/* Loading & Empty State */
+.loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: #666;
+  font-size: 16px;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.emptyIcon {
+  color: #cbd5e1;
+  margin-bottom: 16px;
+}
+
+.emptyState h3 {
+  font-size: 20px;
+  color: #1a1a1a;
+  margin: 0 0 8px 0;
+}
+
+.emptyState p {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+/* Keys List */
+.keysList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.keyCard {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.keyCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.keyHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.keyName {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  color: #1a1a1a;
+}
+
+.keyName svg {
+  color: #667eea;
+}
+
+.deleteButton {
+  padding: 8px;
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.deleteButton:hover {
+  background: #fee2e2;
+}
+
+/* Key Details */
+.keyDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.keyPrefixRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.keyPrefix {
+  flex: 1;
+  padding: 10px 12px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+  color: #1a1a1a;
+}
+
+.copyButton {
+  padding: 10px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #667eea;
+  transition: background 0.2s;
+}
+
+.copyButton:hover {
+  background: #f3f4f6;
+}
+
+.keyMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 12px;
+  color: #666;
+}
+
+.keyPermissions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.permissionBadge {
+  padding: 4px 8px;
+  background: #dbeafe;
+  color: #1e40af;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* Warning Box */
+.warningBox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #fef3c7;
+  border: 1px solid #fbbf24;
+  border-radius: 8px;
+  margin-top: 16px;
+  font-size: 14px;
+  color: #92400e;
+}
+
+/* Modal */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.modalTitle {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 12px 0;
+}
+
+.modalDescription {
+  font-size: 14px;
+  color: #666;
+  margin: 0 0 24px 0;
+}
+
+.input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 24px;
+  transition: border-color 0.2s;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.modalActions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.cancelButton,
+.createButton {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancelButton {
+  background: #f3f4f6;
+  color: #1a1a1a;
+}
+
+.cancelButton:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+.createButton {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.createButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.createButton:disabled,
+.cancelButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Success State */
+.successHeader {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.successIcon {
+  color: #10b981;
+  margin-bottom: 16px;
+}
+
+.generatedKeyBox {
+  margin: 24px 0;
+}
+
+.keyDisplay {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.generatedKey {
+  flex: 1;
+  padding: 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+  color: #1a1a1a;
+  word-break: break-all;
+}
+
+.toggleKeyButton {
+  padding: 12px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #667eea;
+  transition: background 0.2s;
+}
+
+.toggleKeyButton:hover {
+  background: #f3f4f6;
+}
+
+.copyButtonLarge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.copyButtonLarge:hover {
+  background: #5568d3;
+  transform: translateY(-2px);
+}
+
+.doneButton {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 16px;
+}
+
+.doneButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+/* Notification */
+.notification {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1001;
+  min-width: 300px;
+}
+
+.notification.success {
+  border-left: 4px solid #10b981;
+}
+
+.notification.error {
+  border-left: 4px solid #ef4444;
+}
+
+.notification.warning {
+  border-left: 4px solid #f59e0b;
+}
+
+.notification svg {
+  flex-shrink: 0;
+}
+
+.notification.success svg {
+  color: #10b981;
+}
+
+.notification.error svg {
+  color: #ef4444;
+}
+
+.notification.warning svg {
+  color: #f59e0b;
+}
+
+.notification span {
+  flex: 1;
+  font-size: 14px;
+  color: #1a1a1a;
+}
+
+.notification button {
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notification button:hover {
+  color: #1a1a1a;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .content {
+    padding: 24px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .generateButton {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .keyPrefixRow {
+    flex-direction: column;
+  }
+
+  .copyButton {
+    width: 100%;
+  }
+
+  .notification {
+    left: 20px;
+    right: 20px;
+    min-width: auto;
+  }
+}

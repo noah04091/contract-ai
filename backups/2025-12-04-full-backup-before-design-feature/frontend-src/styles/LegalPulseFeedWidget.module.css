@@ -1,0 +1,256 @@
+/* 📁 frontend/src/styles/LegalPulseFeedWidget.module.css */
+/* Legal Pulse Feed Widget - Premium Apple-Inspired Design */
+
+.feedWidget {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.feedHeader h3 {
+  margin: 0 0 8px 0;
+  color: #1f2937;
+  font-size: 1.5rem;
+}
+
+.feedHeader p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.feedStatus {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.statusConnected {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #d1fae5;
+  color: #065f46;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.statusDisconnected {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #fee2e2;
+  color: #991b1b;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.clearButton {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+}
+
+.clearButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35);
+}
+
+.feedList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.feedEvent {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  border-left: 4px solid #e5e7eb;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.feedEvent:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateX(2px);
+}
+
+.feedEvent.type-alert {
+  border-left-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.feedEvent.type-law-change {
+  border-left-color: #8b5cf6;
+  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+}
+
+.feedEvent.type-connected {
+  border-left-color: #10b981;
+  background: #f0fdf4;
+}
+
+.feedEvent.type-test {
+  border-left-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.feedEventHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.feedEventType {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.feedEventTime {
+  font-size: 0.85rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.feedEventMessage {
+  color: #1f2937;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.feedEventData {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.feedEventData strong {
+  display: block;
+  color: #1f2937;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.feedEventData p {
+  color: #4b5563;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0 0 12px 0;
+}
+
+.feedActionButton {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.25);
+}
+
+.feedActionButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+}
+
+/* Law Change Details */
+.lawChangeDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.lawChangeMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
+.metaLabel {
+  font-weight: 600;
+  color: #7c3aed;
+  min-width: 100px;
+}
+
+.metaValue {
+  color: #1f2937;
+  font-weight: 500;
+}
+
+/* Empty State */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  background: #f9fafb;
+  border-radius: 12px;
+  border: 2px dashed #d1d5db;
+}
+
+.emptyState p {
+  color: #6b7280;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.emptyState small {
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+/* Responsive */
+
+@media (max-width: 768px) {
+  .feedStatus {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .clearButton {
+    width: 100%;
+  }
+
+  .feedEventHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .metaLabel {
+    min-width: 80px;
+  }
+}

@@ -1,0 +1,273 @@
+/* Upgrade.module.css */
+@import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600&display=swap');
+
+.pageContainer {
+  --apple-blue: #0071e3;
+  --apple-blue-dark: #0058b3;
+  --apple-gray-50: #f5f5f7;
+  --apple-gray-100: #e8e8ed;
+  --apple-gray-200: #d2d2d7;
+  --apple-gray-300: #a1a1a6;
+  --apple-gray-400: #6e6e73;
+  --apple-gray-500: #86868b;
+  --apple-gray-800: #1d1d1f;
+  --success-green: #34c759;
+  --error-red: #ff453a;
+
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--apple-gray-50);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.upgradeContainer {
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  justify-content: center;
+}
+
+.upgradeContent {
+  width: 100%;
+  max-width: 500px;
+}
+
+/* Heading Section */
+.headingContainer {
+  text-align: center;
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.premiumBadge {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #facf0f, #fb8c00);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 8px 20px rgba(251, 140, 0, 0.2);
+}
+
+.premiumIcon {
+  color: white;
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: 600;
+  margin: 0 0 1rem;
+  letter-spacing: -0.02em;
+  color: var(--apple-gray-800);
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  color: var(--apple-gray-400);
+  margin: 0;
+  line-height: 1.5;
+  max-width: 500px;
+}
+
+/* Plan Card */
+.planCard {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  padding: 2rem;
+}
+
+.priceInfo {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--apple-gray-100);
+}
+
+.priceContainer {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.price {
+  font-size: 3rem;
+  font-weight: 600;
+  color: var(--apple-gray-800);
+}
+
+.period {
+  font-size: 1.1rem;
+  color: var(--apple-gray-400);
+}
+
+.priceTagline {
+  font-size: 1rem;
+  color: var(--apple-gray-500);
+}
+
+/* Features List */
+.featuresList {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2rem;
+}
+
+.featuresList li {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.8rem 0;
+  font-size: 1rem;
+  color: var(--apple-gray-800);
+}
+
+.featureIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #0070e0, #42a4ff);
+  border-radius: 50%;
+  color: white;
+  flex-shrink: 0;
+}
+
+/* Button & Notes */
+.upgradeButton {
+  background-color: var(--apple-blue);
+  color: white;
+  border: none;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 1rem;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  transition: all 0.2s ease;
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+.upgradeButton:hover:not(:disabled) {
+  background-color: var(--apple-blue-dark);
+}
+
+.upgradeButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.buttonSpinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.secureNote {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: var(--apple-gray-400);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* Notification */
+.notification {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  backdrop-filter: blur(10px);
+  z-index: 100;
+  min-width: 300px;
+  max-width: 90%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.success {
+  background: rgba(52, 199, 89, 0.15);
+  border: 1px solid rgba(52, 199, 89, 0.3);
+  color: var(--success-green);
+}
+
+.error {
+  background: rgba(255, 69, 58, 0.15);
+  border: 1px solid rgba(255, 69, 58, 0.3);
+  color: var(--error-red);
+}
+
+.notificationIcon {
+  flex-shrink: 0;
+}
+
+.notificationMessage {
+  font-weight: 500;
+  flex-grow: 1;
+}
+
+.notificationClose {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.notificationClose:hover {
+  opacity: 1;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .pageContainer {
+    padding: 1.5rem;
+    align-items: flex-start;
+  }
+  
+  .title {
+    font-size: 2rem;
+  }
+  
+  .planCard {
+    padding: 1.5rem;
+  }
+}

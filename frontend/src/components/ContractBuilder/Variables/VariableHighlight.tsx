@@ -110,7 +110,15 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
   const handleVariableClick = (variableName: string, varType?: string) => {
     // System-Variablen sind nicht editierbar
     if (varType === 'system' || varType === 'computed') return;
-    setSelectedVariable(variableName);
+
+    // Finde die Variable anhand des Namens und übergebe die ID
+    const variable = variables.find((v: Variable) =>
+      v.name === `{{${variableName}}}` || v.name === variableName
+    );
+
+    if (variable) {
+      setSelectedVariable(variable.id);
+    }
   };
 
   // Tooltip-Text basierend auf Typ

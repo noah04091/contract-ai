@@ -2,7 +2,7 @@
 // Komponente für das Analyse-Panel (rechte Seite) - KOMPLETT ÜBERARBEITET
 
 import React, { useState, useRef, useEffect } from 'react';
-import { GitCompare } from 'lucide-react';
+import { GitCompare, BookmarkPlus } from 'lucide-react';
 import type {
   ClauseAnalysis,
   PerspectiveType,
@@ -13,6 +13,7 @@ import type {
 } from '../../types/legalLens';
 import { PERSPECTIVES, ACTION_LABELS, PROBABILITY_LABELS } from '../../types/legalLens';
 import ClauseCompareModal from './ClauseCompareModal';
+import SaveClauseModal from './SaveClauseModal';
 import { ErrorInfo } from '../../hooks/useLegalLens';
 import styles from '../../styles/LegalLens.module.css';
 
@@ -32,10 +33,14 @@ interface AnalysisPanelProps {
   error: string | null;
   errorInfo?: ErrorInfo | null;
   originalClauseText?: string; // Für Klausel-Vergleich
+  sourceContractId?: string;
+  sourceContractName?: string;
+  sourceClauseId?: string;
   onLoadAlternatives: () => void;
   onLoadNegotiation: () => void;
   onSendChatMessage: (message: string) => void;
   onRetry: () => void;
+  onClauseSaved?: (clauseId: string) => void;
 }
 
 const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
@@ -54,10 +59,14 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   error,
   errorInfo,
   originalClauseText,
+  sourceContractId,
+  sourceContractName,
+  sourceClauseId,
   onLoadAlternatives,
   onLoadNegotiation,
   onSendChatMessage,
-  onRetry
+  onRetry,
+  onClauseSaved
 }) => {
   const [chatInput, setChatInput] = useState('');
   const [copiedTemplate, setCopiedTemplate] = useState(false);
@@ -65,6 +74,8 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [compareAlternativeText, setCompareAlternativeText] = useState('');
   const [compareWhyBetter, setCompareWhyBetter] = useState('');
+  const [showCopiedToast, setShowCopiedToast] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
 
   // Ref für Auto-Scroll im Chat
   const chatMessagesRef = useRef<HTMLDivElement>(null);
@@ -254,19 +265,43 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
               </span>
             </div>
           </div>
-          {riskAssessment && (
-            <div style={{
-              textAlign: 'right',
-              padding: '0.5rem 1rem',
-              background: 'white',
-              borderRadius: '8px'
-            }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: actionInfo.color }}>
-                {riskAssessment.score}/100
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            {/* Save to Library Button */}
+            <button
+              onClick={() => setShowSaveModal(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.375rem',
+                padding: '0.5rem 0.875rem',
+                background: 'white',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                fontSize: '0.75rem',
+                fontWeight: 500,
+                color: '#64748b',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+              title="Klausel in Bibliothek speichern"
+            >
+              <BookmarkPlus size={16} />
+              Speichern
+            </button>
+            {riskAssessment && (
+              <div style={{
+                textAlign: 'right',
+                padding: '0.5rem 1rem',
+                background: 'white',
+                borderRadius: '8px'
+              }}>
+                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: actionInfo.color }}>
+                  {riskAssessment.score}/100
+                </div>
+                <div style={{ fontSize: '0.7rem', color: '#64748b' }}>Risiko-Score</div>
               </div>
-              <div style={{ fontSize: '0.7rem', color: '#64748b' }}>Risiko-Score</div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
         {actionReason && (
           <p style={{
@@ -872,8 +907,38 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
         onSelectAlternative={() => {
           copyText(compareAlternativeText);
           setShowCompareModal(false);
+          setShowCopiedToast(true);
+          setTimeout(() => setShowCopiedToast(false), 3000);
         }}
       />
+
+      {/* Toast Notification für kopierte Alternative */}
+      {showCopiedToast && (
+        <div className={styles.copiedToast}>
+          <span>✓</span>
+          <span>Alternative in Zwischenablage kopiert!</span>
+        </div>
+      )}
+
+      {/* Save Clause Modal */}
+      {showSaveModal && originalClauseText && (
+        <SaveClauseModal
+          clauseText={originalClauseText}
+          sourceContractId={sourceContractId}
+          sourceContractName={sourceContractName}
+          sourceClauseId={sourceClauseId}
+          originalAnalysis={{
+            riskLevel: riskAssessment?.level as 'low' | 'medium' | 'high' | undefined,
+            riskScore: riskAssessment?.score,
+            actionLevel: actionLevel
+          }}
+          onClose={() => setShowSaveModal(false)}
+          onSaved={(clauseId) => {
+            onClauseSaved?.(clauseId);
+            setShowSaveModal(false);
+          }}
+        />
+      )}
     </div>
   );
 };

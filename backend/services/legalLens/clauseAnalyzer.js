@@ -16,6 +16,125 @@ class ClauseAnalyzer {
       apiKey: process.env.OPENAI_API_KEY
     });
 
+    // Branchen-spezifische Kontext-Prompts
+    this.industryContexts = {
+      it_software: {
+        name: 'IT & Software',
+        focusAreas: `
+BRANCHENSPEZIFISCHER FOKUS - IT & SOFTWARE:
+- Prüfe SLAs (Service Level Agreements): Uptime-Garantien (99.9% üblich), Response-Zeiten, Verfügbarkeitsklauseln
+- IP-Rechte & Source-Code: Wem gehört der Code? Source-Code-Escrow vorhanden? Nutzungsrechte bei Vertragsende?
+- Daten & DSGVO: Auftragsverarbeitung, Serverstandort, Datenportabilität, Löschfristen
+- Support & Wartung: Reaktionszeiten, Patch-Zyklen, End-of-Life-Regelungen
+- Lizenzmodelle: Named User vs. Concurrent, Übertragbarkeit, Audit-Rechte
+- Change Requests: Wie werden Änderungen gehandhabt und bepreist?
+- Marktüblich in IT: 99.5-99.9% Uptime, 24-48h Support-Reaktion, jährliche Preisanpassung max. 5%`,
+      },
+      construction: {
+        name: 'Bauwesen',
+        focusAreas: `
+BRANCHENSPEZIFISCHER FOKUS - BAUWESEN:
+- VOB/B Konformität: Gilt VOB/B oder BGB-Werkvertragsrecht? Was wurde ausgeschlossen?
+- Gewährleistungsfristen: VOB/B = 4 Jahre, BGB = 5 Jahre - was gilt hier?
+- Nachträge & Mengenänderungen: Wie werden Mehr- und Mindermengen abgerechnet?
+- Abnahme: Förmliche oder fiktive Abnahme? Teilabnahmen möglich?
+- Sicherheiten: Vertragserfüllungsbürgschaft (5-10%), Gewährleistungsbürgschaft (3-5%)
+- Bauzeitverlängerung: Wie werden Behinderungen gemeldet und vergütet?
+- Zahlungsfristen: Nach VOB/B 21 Tage nach Zugang der Rechnung
+- Marktüblich: 5% Sicherheitseinbehalt, Zahlungsziel 30 Tage, 4 Jahre Gewährleistung`,
+      },
+      real_estate: {
+        name: 'Immobilien',
+        focusAreas: `
+BRANCHENSPEZIFISCHER FOKUS - IMMOBILIEN:
+- Mietanpassung: Staffelmiete, Indexmiete oder freie Anpassung? Obergrenze?
+- Nebenkosten: Was ist umlagefähig? Vorauszahlung oder Pauschale?
+- Kaution: Max. 3 Monatsmieten (Wohnraum), bei Gewerbe oft höher - was gilt?
+- Konkurrenzschutz: Bei Gewerbe - welche Nutzungen sind ausgeschlossen?
+- Instandhaltung: Wer trägt was? Schönheitsreparaturen? Dach und Fach?
+- Untervermietung: Erlaubt? Mit Zustimmung? Ausschluss der Mieterhöhung?
+- Kündigungsfristen: Gewerbe oft 6-12 Monate, Wohnraum gesetzlich
+- Marktüblich: 3 Monatskaltmieten Kaution, NK-Pauschale 2-3 €/m², Staffelmiete max. 10%/Jahr`,
+      },
+      consulting: {
+        name: 'Beratung',
+        focusAreas: `
+BRANCHENSPEZIFISCHER FOKUS - BERATUNG:
+- Honorarstruktur: Stundenhonorar, Tagessatz oder Festpreis? Was deckt es ab?
+- Reisekosten: Pauschale oder nach Aufwand? Obergrenze?
+- Erfolgsbeteiligung: Wie wird Erfolg gemessen und vergütet?
+- Geheimhaltung/NDA: Dauer, Umfang, Vertragsstrafen
+- Wettbewerbsverbot: Für wen gilt es? Wie lange nach Vertragsende?
+- Arbeitsergebnisse: Wem gehören sie? Nutzungsrechte?
+- Abnahmeverfahren: Wie werden Leistungen abgenommen?
+- Marktüblich: 150-300€/h Senior-Berater, Tagessätze 1.200-2.500€, NDA 2-5 Jahre`,
+      },
+      manufacturing: {
+        name: 'Produktion',
+        focusAreas: `
+BRANCHENSPEZIFISCHER FOKUS - PRODUKTION:
+- Lieferzeiten: Fix oder Richtwert? Konsequenzen bei Verzug?
+- Qualitätssicherung: Welche Standards (ISO, CE)? Prüfverfahren?
+- Produkthaftung: Wer haftet für Mängel am Endprodukt?
+- Mindestabnahme: Gibt es Mindestmengen oder -umsätze?
+- Preisanpassung: Rohstoffklauseln? Anpassungsintervalle?
+- Werkzeuge & Formen: Wem gehören sie? Aufbewahrungspflicht?
+- Lieferketten-Compliance: LkSG-Anforderungen erfüllt?
+- Marktüblich: 2-4 Wochen Lieferzeit, 0,5% Verzugspauschale/Tag max. 5%, 2 Jahre Gewährleistung`,
+      },
+      retail: {
+        name: 'Handel',
+        focusAreas: `
+BRANCHENSPEZIFISCHER FOKUS - HANDEL:
+- Rabatte & Boni: Staffelrabatte, Jahresboni, Naturalrabatte?
+- Rückgaberecht: Über gesetzliches Widerrufsrecht hinaus?
+- Exklusivität: Gebiets- oder Produktexklusivität?
+- Mindestbestellwert: Gibt es Mindestmengen oder -werte?
+- Zahlungsbedingungen: Skonto, Zahlungsfristen, Vorkasse?
+- Preisbindung: Unverbindliche Preisempfehlung oder Fixpreis?
+- Reklamationsabwicklung: Prozess, Fristen, Kostenübernahme?
+- Marktüblich: 2% Skonto bei 14 Tagen, 30 Tage Zahlungsziel, 5-15% Jahresbonus ab Mindestumsatz`,
+      },
+      healthcare: {
+        name: 'Gesundheitswesen',
+        focusAreas: `
+BRANCHENSPEZIFISCHER FOKUS - GESUNDHEITSWESEN:
+- Datenschutz: Besondere Kategorien nach DSGVO Art. 9 - Patientendaten!
+- Zulassungen: Medizinprodukte-Verordnung, CE-Kennzeichnung?
+- Berufliche Schweigepflicht: § 203 StGB beachtet?
+- Haftung: Verschuldensunabhängige Produkthaftung bei Medizinprodukten
+- Dokumentation: Aufbewahrungsfristen (oft 10-30 Jahre)
+- Compliance: Anti-Korruptionsregeln im Gesundheitswesen
+- Zertifizierungen: ISO 13485 für Medizinprodukte?
+- Marktüblich: 10 Jahre Aufbewahrungsfrist, Audit-Rechte quartalsweise, 24/7 Support bei kritischen Geräten`,
+      },
+      finance: {
+        name: 'Finanzwesen',
+        focusAreas: `
+BRANCHENSPEZIFISCHER FOKUS - FINANZWESEN:
+- Zinsen & Gebühren: Effektiver Jahreszins? Versteckte Gebühren?
+- Kündigungsfristen: Wie schnell kannst du aus dem Vertrag raus?
+- Widerrufsrecht: 14 Tage bei Verbraucherdarlehen
+- Sicherheiten: Welche Sicherheiten werden verlangt?
+- Provisionen: Abschluss- und Bestandsprovisionen transparent?
+- Regulatorik: BaFin-Konformität, MiFID II, PSD2?
+- Vorfälligkeitsentschädigung: Bei vorzeitiger Kündigung/Rückzahlung?
+- Marktüblich: Effektivzins 3-8% (variiert stark), max. 1% Vorfälligkeitsentschädigung, 3 Monate Kündigungsfrist`,
+      },
+      general: {
+        name: 'Allgemein',
+        focusAreas: `
+ALLGEMEINE PRÜFPUNKTE:
+- AGB-Konformität: Sind die Klauseln mit AGB-Recht vereinbar?
+- Haftungsbeschränkungen: Angemessen oder überzogen?
+- Kündigungsfristen: Wie lange bist du gebunden?
+- Datenschutz: DSGVO-konform?
+- Gerichtsstand & anwendbares Recht: Deutsches Recht? Welches Gericht?
+- Schriftformklauseln: Was muss schriftlich sein?
+- Salvatorische Klausel: Vorhanden?`,
+      }
+    };
+
     // Perspektiven-Definitionen
     this.perspectives = {
       contractor: {
@@ -168,16 +287,38 @@ Sei PESSIMISTISCH und zeige MAXIMALE RISIKEN auf - aber bleibe realistisch.`
   }
 
   /**
+   * Gibt Branchen-spezifischen Kontext zurück
+   *
+   * @param {string} industry - Die Branche
+   * @returns {string} Der Branchen-Kontext für den Prompt
+   */
+  getIndustryContext(industry = 'general') {
+    const context = this.industryContexts[industry] || this.industryContexts.general;
+    return context.focusAreas;
+  }
+
+  /**
+   * Gibt alle verfügbaren Branchen zurück
+   */
+  getAvailableIndustries() {
+    return Object.entries(this.industryContexts).map(([key, value]) => ({
+      id: key,
+      name: value.name
+    }));
+  }
+
+  /**
    * Analysiert eine einzelne Klausel aus einer bestimmten Perspektive
    *
    * @param {string} clauseText - Der Text der Klausel
    * @param {string} perspective - Die Perspektive (contractor, client, neutral, worstCase)
    * @param {string} contractContext - Optionaler Kontext zum Vertrag
-   * @param {Object} options - Zusätzliche Optionen
+   * @param {Object} options - Zusätzliche Optionen (inkl. industry für Branchen-Kontext)
    * @returns {Promise<Object>} Die Analyse
    */
   async analyzeClause(clauseText, perspective = 'contractor', contractContext = '', options = {}) {
-    console.log(`🔍 Legal Lens: Analysiere Klausel aus Perspektive "${perspective}"...`);
+    const { industry = 'general' } = options;
+    console.log(`🔍 Legal Lens: Analysiere Klausel aus Perspektive "${perspective}" (Branche: ${industry})...`);
 
     const perspectiveConfig = this.perspectives[perspective];
     if (!perspectiveConfig) {
@@ -191,7 +332,12 @@ Sei PESSIMISTISCH und zeige MAXIMALE RISIKEN auf - aber bleibe realistisch.`
       language = 'de'
     } = options;
 
+    // Branchen-spezifischen Kontext hinzufügen
+    const industryContext = this.getIndustryContext(industry);
+
     const systemPrompt = `${perspectiveConfig.systemPrompt}
+
+${industryContext}
 
 WICHTIG: Du bist ein erfahrener Vertragsanwalt der für Laien und Gründer berät.
 Gib KONKRETE, ACTIONABLE Informationen - keine vagen Aussagen!

@@ -1,0 +1,6349 @@
+/* ✅ NEU: Duplikat-Modal Styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  /* Safe-Area für iPhone X+ */
+  padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+}
+
+.duplicateModal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  max-height: 90dvh; /* Dynamic viewport height für iOS Safari */
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ✅ NEU: Legacy-Modal für alte Verträge */
+.legacyModal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  max-width: 480px;
+  width: 100%;
+  max-height: 80vh;
+  max-height: 80dvh; /* Dynamic viewport height für iOS Safari */
+  overflow: hidden;
+}
+
+.modalHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 24px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.modalHeader h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+  text-align: center;
+}
+
+.modalIcon {
+  width: 40px;
+  height: 40px;
+  background: #fef3c7;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.duplicateIcon {
+  color: #d97706;
+}
+
+.legacyIcon {
+  color: #dc2626;
+}
+
+.modalHeader h3 {
+  flex: 1;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.modalCloseButton {
+  width: 32px;
+  height: 32px;
+  min-width: 44px; /* Touch-Target für Mobile */
+  min-height: 44px; /* Touch-Target für Mobile */
+  border: none;
+  background: none;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  transition: all 0.2s;
+}
+
+.modalCloseButton:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.modalContent {
+  padding: 20px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.fileComparison {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.fileComparisonItem {
+  flex: 1;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.fileComparisonLabel {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.fileComparisonName {
+  font-weight: 500;
+  color: #111827;
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+.fileComparisonSize,
+.fileComparisonDate {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.duplicateArrow {
+  color: #d97706;
+}
+
+.duplicateMessage p {
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ✅ NEU: Legacy-Modal spezifische Styles */
+.legacyInfo {
+  text-align: center;
+}
+
+.contractInfo h4 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 8px 0;
+}
+
+.contractDate {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 0 0 20px 0;
+}
+
+.legacyMessage {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.legacyMessage p {
+  color: #991b1b;
+  margin: 0;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.legacyExplanation {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: left;
+}
+
+.legacyExplanation h5 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 8px 0;
+}
+
+.legacyExplanation p {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.modalActions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  background: white;
+  flex-shrink: 0;
+}
+
+.modalActionButton {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1px solid #d1d5db;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.modalActionButton:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.primaryAction {
+  background: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  color: white !important;
+}
+
+.primaryAction:hover {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+}
+
+.warningAction {
+  background: #ef4444 !important;
+  border-color: #ef4444 !important;
+  color: white !important;
+}
+
+.warningAction:hover {
+  background: #dc2626 !important;
+  border-color: #dc2626 !important;
+}
+
+.duplicateStatus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.duplicateActionButton {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.duplicateActionButton:hover {
+  background: #2563eb;
+}
+
+/* ✅ NEU: Modernisiertes Duplicate Modal Design */
+.modalIconWrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.modalIconBadge {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+}
+
+.modalIconBadge .duplicateIcon {
+  color: #d97706;
+  filter: drop-shadow(0 2px 4px rgba(217, 119, 6, 0.2));
+}
+
+.modalSubtitle {
+  text-align: center;
+  font-size: 14px;
+  color: #6b7280;
+  margin-top: 8px;
+  font-weight: 400;
+}
+
+.fileComparisonGrid {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 12px;
+  align-items: center;
+  margin: 20px 0 16px;
+}
+
+.fileCard {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px;
+  transition: all 0.3s ease;
+}
+
+.fileCard:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.fileCardExisting {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-color: #86efac;
+}
+
+.fileCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.fileCardIcon {
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.fileCardExisting .fileCardIcon {
+  color: #16a34a;
+}
+
+.fileCardLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.fileCardExisting .fileCardLabel {
+  color: #15803d;
+}
+
+.fileCardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fileCardName {
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827;
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+.fileCardMeta {
+  font-size: 12px;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.analyzedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: #dcfce7;
+  color: #166534;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.fileComparisonDivider {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.fileComparisonArrow {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+}
+
+/* ✅ Modernisierte Action Cards */
+.modalActionCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  width: 100%;
+}
+
+.modalActionCard:hover {
+  border-color: #d1d5db;
+  background: #f9fafb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.actionCardIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.actionView .actionCardIcon {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #1e40af;
+}
+
+.actionAnalyze .actionCardIcon {
+  background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%);
+  color: #6d28d9;
+}
+
+.actionReplace .actionCardIcon {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #b91c1c;
+}
+
+.actionCardContent {
+  flex: 1;
+}
+
+.actionCardTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 2px;
+}
+
+.actionCardDescription {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.actionView:hover .actionCardIcon {
+  background: linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%);
+  transform: scale(1.05);
+}
+
+.actionAnalyze:hover .actionCardIcon {
+  background: linear-gradient(135deg, #c4b5fd 0%, #a78bfa 100%);
+  transform: scale(1.05);
+}
+
+.actionReplace:hover .actionCardIcon {
+  background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+  transform: scale(1.05);
+}
+
+/* ✅ NEU: Contract Badges - Cloud, Reupload etc. */
+.contractBadges {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.cloudBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  background: #dcfce7;
+  color: #166534;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.reuploadBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+/* ✅ NEU: Loading Icon Animation */
+.loadingIcon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ✅ KORRIGIERT: Plan-Badges für Free/Business/Premium */
+.freeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #9ca3af, #6b7280);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 12px;
+  box-shadow: 0 2px 8px rgba(156, 163, 175, 0.3);
+}
+
+.businessBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 12px;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.premiumBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 12px;
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+}
+
+/* ✅ Premium-Badge im Tab - Modernized */
+.premiumTabBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  margin-left: 8px;
+  box-shadow: 0 2px 6px rgba(251, 191, 36, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* ✅ NEU: Premium-Hinweis */
+.premiumHint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border: 1px solid #fbbf24;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-top: 12px;
+  color: #92400e;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.premiumHint svg {
+  color: #f59e0b;
+}
+
+/* ✅ KORRIGIERT: Limit-Progress für Business-User */
+.limitProgress {
+  margin-top: 16px;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.limitText {
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.limitBar {
+  width: 100%;
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.limitBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #6366f1);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+/* ✅ NEU: Limit-Warnung */
+.limitWarning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+  border: 1px solid #fca5a5;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-top: 12px;
+  color: #991b1b;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.limitWarning svg {
+  color: #dc2626;
+}
+
+.limitWarning button {
+  background: none;
+  border: none;
+  color: #dc2626;
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0;
+  margin-left: 4px;
+}
+
+.limitWarning button:hover {
+  color: #991b1b;
+}
+
+/* ✅ KORRIGIERT: Premium-Hinweis für Business-User */
+.premiumHint button {
+  background: none;
+  border: none;
+  color: #f59e0b;
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0;
+  margin-left: 4px;
+}
+
+.premiumHint button:hover {
+  color: #d97706;
+}
+
+/* ✅ NEU: Upgrade-Bereich für Free-User */
+.upgradeSection {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: linear-gradient(135deg, #f8fafc, #e0f2fe);
+  border-radius: 20px;
+}
+
+.upgradeIcon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.upgradeIcon svg {
+  color: #f59e0b;
+  padding: 1rem;
+  background: rgba(251, 191, 36, 0.1);
+  border-radius: 20px;
+}
+
+.upgradeSection h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 1rem;
+}
+
+.upgradeDescription {
+  font-size: 1.125rem;
+  color: #64748b;
+  margin: 0 0 3rem;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+}
+
+.upgradePlans {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.upgradePlan {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 2rem;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.upgradePlan:hover {
+  border-color: #3b82f6;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+}
+
+.recommendedPlan {
+  border-color: #fbbf24;
+  background: linear-gradient(135deg, #fffbeb, #fef3c7);
+}
+
+.recommendedPlan:hover {
+  border-color: #f59e0b;
+  box-shadow: 0 8px 25px rgba(251, 191, 36, 0.2);
+}
+
+.upgradePlanHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.upgradePlanHeader svg {
+  color: #3b82f6;
+}
+
+.recommendedPlan .upgradePlanHeader svg {
+  color: #f59e0b;
+}
+
+.upgradePlanHeader h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.recommendedBadge {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.upgradePlan ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.upgradePlan li {
+  padding: 8px 0;
+  color: #374151;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.upgradeActions {
+  margin-top: 2rem;
+}
+
+.upgradeButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4);
+}
+
+.upgradeButton:hover {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(251, 191, 36, 0.5);
+}
+
+/* ✅ NEU: Disabled States */
+.disabledTab {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.disabledButton {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.disabledButton:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.disabledUpload {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Nur Texte und Icons verblassen, nicht den Button */
+.disabledUpload .uploadPrompt h3,
+.disabledUpload .uploadPrompt p,
+.disabledUpload .uploadIcon,
+.disabledUpload .uploadFormats {
+  opacity: 0.6;
+}
+
+.lockIcon {
+  color: #9ca3af;
+  margin-left: 8px;
+}
+
+/* ✅ NEU: Premium-Feature Badge im Upload */
+.premiumFeature {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(251, 191, 36, 0.1);
+  color: #92400e;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 12px;
+}
+
+.premiumFeature svg {
+  color: #f59e0b;
+}
+
+/* ========== PREMIUM MULTI-FILE PREVIEW ========== */
+.multiFilePreview {
+  width: 100%;
+  background: white;
+  border-radius: 20px;
+  padding: 1.75rem;
+  border: 2px solid #e2e8f0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.multiFileHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.multiFileInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.multiFileInfo svg {
+  color: white;
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  padding: 0.75rem;
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.multiFileInfo h3 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.multiFileInfo p {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: #64748b;
+}
+
+.multiFileActions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+/* ✅ Premium Upload Button */
+.multiFileActions .uploadButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.35);
+}
+
+.multiFileActions .uploadButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.45);
+}
+
+.clearFilesButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: white;
+  color: #64748b;
+  border: 2px solid #e2e8f0;
+  border-radius: 14px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.clearFilesButton:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #475569;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.clearFilesButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ========== PREMIUM FILES LIST ========== */
+.filesList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.fileItem {
+  background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  transition: all 0.25s ease;
+}
+
+.fileItem:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.12);
+  transform: translateX(4px);
+}
+
+.fileItemLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.fileItemIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #f1f5f9;
+}
+
+.fileItemInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fileItemName {
+  font-weight: 500;
+  color: #1e293b;
+  font-size: 14px;
+  line-height: 1.3;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileItemSize {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.fileItemRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fileItemStatus {
+  font-size: 12px;
+  color: #64748b;
+  text-align: right;
+  min-width: 120px;
+}
+
+.fileItemActions {
+  display: flex;
+  gap: 4px;
+}
+
+.retryButton,
+.removeFileButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.retryButton {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.retryButton:hover {
+  background: #fee2e2;
+}
+
+.retryButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.removeFileButton {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.removeFileButton:hover {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+/* ✅ NEU: Progress Bar für Datei-Analyse */
+.fileItemProgress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #f1f5f9;
+  border-radius: 0 0 10px 10px;
+  overflow: hidden;
+}
+
+.fileItemProgressBar {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #6366f1);
+  transition: width 0.3s ease;
+  border-radius: 0 0 10px 10px;
+}
+
+/* 🎨 Premium Analysis Progress Wrapper */
+.analysisProgressWrapper {
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0;
+}
+
+/* ✅ NEU: Status-Farben für Upload-Icons */
+.statusPending {
+  color: #64748b;
+}
+
+.statusAnalyzing {
+  color: #3b82f6;
+}
+
+.statusCompleted {
+  color: #10b981;
+}
+
+.statusDuplicate {
+  color: #f59e0b;
+}
+
+.statusError {
+  color: #dc2626;
+}
+
+/* ========== ENTERPRISE LAYOUT - EXPLORER STYLE ========== */
+.pageContainer {
+  height: calc(100vh - 64px); /* ✅ Viewport minus Navbar-Höhe (64px) */
+  max-height: calc(100vh - 64px);
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* ✅ Verhindert Scroll auf Container-Ebene */
+  position: fixed; /* ✅ Fixiert den Container im Viewport */
+  top: 64px; /* ✅ Unter der Navbar */
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+/* Enterprise App Layout */
+.enterpriseLayout {
+  display: flex;
+  flex: 1;
+  min-height: 0; /* ✅ Wichtig für Flex-Children mit overflow */
+  height: 0; /* ✅ Erzwingt dass flex: 1 die Höhe begrenzt */
+  overflow: hidden; /* ✅ Kein Scroll hier - nur in contentArea */
+}
+
+/* Sidebar Navigation */
+.sidebar {
+  width: 260px;
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  height: 100%; /* ✅ Volle Höhe des Containers */
+  overflow-y: auto;
+}
+
+.sidebarHeader {
+  padding: 1.25rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebarTitle {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0 0 0.75rem;
+  padding: 0 0.5rem;
+}
+
+.sidebarNav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem 0.75rem;
+}
+
+.sidebarNavItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  margin-bottom: 0.25rem;
+}
+
+.sidebarNavItem:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.sidebarNavItem.active {
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.sidebarNavIcon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.sidebarNavBadge {
+  margin-left: auto;
+  background: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+}
+
+.sidebarNavItem.active .sidebarNavBadge {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.sidebarDivider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 0.75rem 0;
+}
+
+/* Folder Items in Sidebar */
+.sidebarFolderList {
+  padding: 0.5rem 0;
+}
+
+.sidebarFolderItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 1rem;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  position: relative;
+}
+
+.sidebarFolderItem:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.sidebarFolderItem.active {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+}
+
+/* User folders - with menu button */
+.sidebarFolderItem.userFolder {
+  padding-right: 0.5rem; /* Less padding on right for menu btn */
+}
+
+.sidebarFolderName {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ⋮ Menu button - shows on hover */
+.sidebarFolderMenuBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0;
+  flex-shrink: 0;
+}
+
+.sidebarFolderItem:hover .sidebarFolderMenuBtn {
+  opacity: 1;
+}
+
+.sidebarFolderMenuBtn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.sidebarFolderIcon {
+  color: #fbbf24;
+  flex-shrink: 0;
+}
+
+/* 📁 Folder Context Menu */
+.folderContextMenu {
+  position: fixed;
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  min-width: 180px;
+  padding: 0.5rem;
+  z-index: 99999;
+  animation: contextMenuFadeIn 0.15s ease;
+}
+
+@keyframes contextMenuFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.folderContextMenuItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.folderContextMenuItem:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.folderContextMenuItem:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.folderContextMenuItem.danger {
+  color: #f87171;
+}
+
+.folderContextMenuItem.danger:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+}
+
+.folderContextMenuDivider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 0.5rem 0;
+}
+
+.sidebarAddFolder {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  margin-top: 0.25rem;
+}
+
+.sidebarAddFolder:hover {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Main Content Area */
+.mainContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0; /* ✅ Wichtig für Flex-Children mit overflow */
+  height: 100%; /* ✅ Volle Höhe des Eltern-Containers */
+  background: #f8fafc;
+  overflow: hidden; /* ✅ Kein Scroll hier */
+}
+
+/* Premium Hint Banner */
+.premiumHintBanner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-bottom: 1px solid #f59e0b;
+  color: #92400e;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.premiumHintBanner svg:first-child {
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
+.premiumHintBanner span {
+  flex: 1;
+}
+
+.premiumHintUpgrade {
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.premiumHintUpgrade:hover {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  transform: translateY(-1px);
+}
+
+.premiumHintClose {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.375rem;
+  background: transparent;
+  border: none;
+  color: #92400e;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.premiumHintClose:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* Enterprise Toolbar */
+.enterpriseToolbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem 1.5rem;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.toolbarSection {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.toolbarDivider {
+  width: 1px;
+  height: 24px;
+  background: #e2e8f0;
+  margin: 0 0.5rem;
+}
+
+.toolbarButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #475569;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toolbarButton:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+.toolbarButton.primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  border: none;
+  color: #ffffff;
+}
+
+.toolbarButton.primary:hover {
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transform: translateY(-1px);
+}
+
+.toolbarButton.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #ffffff;
+}
+
+.toolbarButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Spinning animation for refresh button */
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.toolbarSearch {
+  flex: 1;
+  max-width: 400px;
+  position: relative;
+}
+
+.toolbarSearchInput {
+  width: 100%;
+  padding: 0.5rem 1rem 0.5rem 2.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  background: #f8fafc;
+  transition: all 0.2s ease;
+}
+
+.toolbarSearchInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.toolbarSearchIcon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.toolbarViewButtons {
+  display: flex;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.viewButton {
+  padding: 0.5rem 0.75rem;
+  border: none;
+  background: #ffffff;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.viewButton:not(:last-child) {
+  border-right: 1px solid #e2e8f0;
+}
+
+.viewButton:hover {
+  background: #f8fafc;
+  color: #1e293b;
+}
+
+.viewButton.active {
+  background: #f1f5f9;
+  color: #3b82f6;
+}
+
+/* Content Area */
+.contentArea {
+  flex: 1;
+  padding: 1.5rem;
+  min-height: 0; /* ✅ Kritisch für Flex-Children */
+  height: 0; /* ✅ Erzwingt dass flex: 1 die Höhe begrenzt */
+  overflow-y: auto; /* ✅ Nur dieser Bereich scrollt */
+  overflow-x: hidden;
+}
+
+/* Grid View for Contracts */
+.contractsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+/* ========== ENTERPRISE GRID VIEW ========== */
+.enterpriseGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.25rem;
+  padding: 0.5rem 0;
+}
+
+.enterpriseGridCard {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.enterpriseGridCard:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.enterpriseGridCard.selected {
+  border-color: #3b82f6;
+  background: #f0f9ff;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.gridCardCheckbox {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.gridCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.gridCardIcon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.gridCardBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  justify-content: flex-end;
+}
+
+.gridStatusBadge {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.gridBadge {
+  font-size: 0.625rem;
+  font-weight: 600;
+  padding: 0.1875rem 0.5rem;
+  border-radius: 6px;
+}
+
+.gridCardTitle {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.gridCardInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.gridCardInfoRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: #64748b;
+}
+
+.gridCardInfoRow.warning {
+  color: #d97706;
+}
+
+.gridCardInfoRow svg {
+  flex-shrink: 0;
+  color: #94a3b8;
+}
+
+.gridCardInfoRow.warning svg {
+  color: #d97706;
+}
+
+.daysLeft {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #ea580c;
+  background: #fff7ed;
+  padding: 0.125rem 0.375rem;
+  border-radius: 4px;
+  margin-left: auto;
+}
+
+.gridCardActions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.75rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.gridActionBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.625rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.gridActionBtn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+.gridActionBtn.deleteBtn:hover {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.gridNotAnalyzed {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: #ffffff;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0 0 11px 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+}
+
+/* Preview Active State */
+.enterpriseGridCard.previewActive,
+.tableRow.previewActive {
+  border-color: #3b82f6 !important;
+  background: #f0f9ff !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15) !important;
+}
+
+/* ========== PREVIEW PANEL ========== */
+/* ========== REDESIGNED PREVIEW PANEL ========== */
+.previewPanel {
+  width: 420px; /* ✅ Breiter für mehr Übersicht */
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-left: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  height: 100%;
+  overflow: hidden;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.03);
+}
+
+/* Gradient Header mit Glassmorphism */
+.previewHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  position: relative;
+  overflow: hidden;
+  gap: 0.75rem;
+  min-height: 72px;
+}
+
+.previewHeader::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.3) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Header Info mit Icon und Text */
+.previewHeaderInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.previewHeaderIcon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.previewHeaderText {
+  flex: 1;
+  min-width: 0;
+}
+
+.previewHeaderLabel {
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  display: block;
+  margin-bottom: 0.125rem;
+}
+
+.previewHeaderTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+.previewHeader h3 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+.previewCloseBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 1;
+  backdrop-filter: blur(4px);
+}
+
+.previewCloseBtn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  transform: scale(1.05);
+}
+
+.previewContent {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Status Row - kompakt unter Header */
+.previewStatusRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.previewStatusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.375rem 0.875rem;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.previewAnalyzedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.3125rem 0.75rem;
+  border-radius: 9999px;
+  background: #dcfce7;
+  color: #15803d;
+}
+
+/* Legacy support - falls noch verwendet */
+.previewStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.375rem 1rem;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Score Ring - NEU */
+.previewScoreRing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: 1.25rem;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.scoreCircle {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.scoreCircleBg {
+  fill: none;
+  stroke: #e2e8f0;
+  stroke-width: 8;
+}
+
+.scoreCircleProgress {
+  fill: none;
+  stroke: url(#scoreGradient);
+  stroke-width: 8;
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: center;
+  transition: stroke-dashoffset 0.8s ease;
+}
+
+.scoreValue {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.scoreNumber {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1;
+}
+
+.scoreLabel {
+  font-size: 0.625rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 0.25rem;
+}
+
+.scoreDetails {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.scoreDetailItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: #475569;
+}
+
+.scoreDetailItem svg {
+  flex-shrink: 0;
+}
+
+/* Info Grid - 2 Spalten */
+.previewInfo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.previewInfoItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.875rem;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+}
+
+.previewInfoItem:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.previewInfoItem.fullWidth {
+  grid-column: 1 / -1;
+}
+
+.previewLabel {
+  font-size: 0.6875rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 500;
+}
+
+.previewValue {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.previewValue.scoreValue {
+  color: #3b82f6;
+  font-weight: 700;
+}
+
+.previewValue.warning {
+  color: #f59e0b;
+}
+
+.previewValue.danger {
+  color: #ef4444;
+}
+
+.previewValue.success {
+  color: #10b981;
+}
+
+/* Badges Section */
+.previewBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.previewBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.375rem 0.75rem;
+  border-radius: 8px;
+  transition: transform 0.2s ease;
+}
+
+.previewBadge:hover {
+  transform: translateY(-1px);
+}
+
+/* Sections mit Icons */
+.previewSection {
+  padding: 1rem;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.previewSectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.previewSectionIcon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.previewSectionIcon.summary {
+  background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%);
+  color: #3b82f6;
+}
+
+.previewSectionIcon.risks {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #ef4444;
+}
+
+.previewSectionIcon.payment {
+  background: linear-gradient(135deg, #dcfce7 0%, #d1fae5 100%);
+  color: #10b981;
+}
+
+.previewSection h5 {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+  flex: 1;
+}
+
+.previewSummary {
+  font-size: 0.8125rem;
+  color: #475569;
+  line-height: 1.7;
+  margin: 0;
+  padding: 0.75rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border-left: 3px solid #3b82f6;
+}
+
+.previewList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.previewRisk {
+  font-size: 0.8125rem;
+  color: #1e293b;
+  padding: 0.625rem 0.75rem 0.625rem 2rem;
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-radius: 8px;
+  position: relative;
+  border: 1px solid #fecaca;
+}
+
+.previewRisk::before {
+  content: '';
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  background: #ef4444;
+  border-radius: 50%;
+}
+
+.previewMore {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-style: italic;
+  padding-left: 0.75rem;
+}
+
+/* Actions Section - Redesigned */
+.previewActions {
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.previewActionBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  padding: 0.875rem 1.25rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #475569;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.previewActionBtn:hover {
+  background: #ffffff;
+  border-color: #3b82f6;
+  color: #3b82f6;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.previewActionBtn.primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  border: none;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25);
+}
+
+.previewActionBtn.primary:hover {
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
+  transform: translateY(-2px);
+}
+
+.previewActionBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Quick Action Buttons Row */
+.previewQuickActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.previewQuickAction {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.previewQuickAction:hover {
+  border-color: #cbd5e1;
+  color: #1e293b;
+  background: #f8fafc;
+}
+
+.previewQuickAction.delete:hover {
+  border-color: #fecaca;
+  color: #ef4444;
+  background: #fef2f2;
+}
+
+/* List View Container */
+.contractsListView {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+/* Legacy container - still used in some places */
+.container {
+  max-width: 100%;
+  margin: 0;
+  width: 100%;
+  padding: 0;
+}
+
+/* ========== MODERNIZED HEADER ========== */
+.header {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%);
+  padding: 3rem 2rem 2.5rem;
+  margin-bottom: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle pattern overlay */
+.header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(circle at 25% 25%, rgba(255,255,255,0.03) 0%, transparent 50%),
+                    radial-gradient(circle at 75% 75%, rgba(255,255,255,0.03) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.headerContent {
+  max-width: 1400px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.headerTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.headerLeft {
+  flex: 1;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 2rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0 0 0.75rem;
+  letter-spacing: -0.02em;
+}
+
+.titleIcon {
+  color: #60a5fa;
+  background: rgba(96, 165, 250, 0.15);
+  padding: 0.75rem;
+  border-radius: 14px;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+  line-height: 1.6;
+  max-width: 500px;
+}
+
+/* Stats Cards Row */
+.statsRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+  max-width: 700px;
+}
+
+.statCard {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.statCard:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.statValue {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 0.25rem;
+  line-height: 1;
+}
+
+.statLabel {
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+  font-weight: 500;
+}
+
+.statCardWarning .statValue {
+  color: #fbbf24;
+}
+
+.statCardSuccess .statValue {
+  color: #34d399;
+}
+
+/* Plan Badge Positioning */
+.headerBadge {
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+}
+
+/* ========== MODERNIZED TABS ========== */
+.tabsContainer {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  padding: 0.625rem;
+  border-radius: 18px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.tabButton {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 1rem 1.75rem;
+  background: transparent;
+  border: none;
+  border-radius: 14px;
+  font-weight: 500;
+  font-size: 0.9375rem;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  flex: 1;
+  justify-content: center;
+  position: relative;
+}
+
+.tabButton:hover:not(.activeTab) {
+  background: rgba(59, 130, 246, 0.06);
+  color: #3b82f6;
+  transform: translateY(-1px);
+}
+
+.tabButton svg {
+  transition: transform 0.25s ease;
+}
+
+.tabButton:hover svg {
+  transform: scale(1.1);
+}
+
+.activeTab {
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%);
+  color: white;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35), 0 2px 6px rgba(99, 102, 241, 0.2);
+  font-weight: 600;
+}
+
+.activeTab:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4), 0 3px 8px rgba(99, 102, 241, 0.25);
+}
+
+.tabBadge {
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  margin-left: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  backdrop-filter: blur(4px);
+}
+
+.tabButton:not(.activeTab) .tabBadge {
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: white;
+}
+
+.activeTab .tabBadge {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* ========== PREMIUM SECTION DESIGN ========== */
+.section {
+  background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
+  border-radius: 24px;
+  padding: 2.5rem;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.03),
+    0 4px 12px rgba(0, 0, 0, 0.04),
+    0 16px 40px rgba(0, 0, 0, 0.06);
+  border: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.section:hover::before {
+  opacity: 1;
+}
+
+.sectionHeader {
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.sectionHeader h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  letter-spacing: -0.02em;
+}
+
+.sectionHeader h2 svg {
+  color: #3b82f6;
+}
+
+.sectionTitle {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  letter-spacing: -0.02em;
+}
+
+.sectionTitle svg {
+  color: #3b82f6;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  padding: 0.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.sectionDescription {
+  color: #64748b;
+  margin: 0;
+  line-height: 1.6;
+  font-size: 1rem;
+}
+
+.sectionActions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+/* ========== PREMIUM UPLOAD AREA ========== */
+.uploadArea {
+  border: 3px dashed #d1d5db;
+  border-radius: 24px;
+  padding: 4rem 2.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.uploadArea::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 80%, rgba(139, 92, 246, 0.06) 0%, transparent 50%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.uploadArea:hover {
+  border-color: #3b82f6;
+  border-style: dashed;
+  background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 50%, #bfdbfe 100%);
+  transform: translateY(-4px);
+  box-shadow:
+    0 0 0 4px rgba(59, 130, 246, 0.1),
+    0 12px 40px rgba(59, 130, 246, 0.2);
+}
+
+.uploadArea:hover::before {
+  opacity: 1;
+}
+
+.dragActive {
+  border-color: #3b82f6 !important;
+  border-style: solid !important;
+  background: linear-gradient(135deg, #dbeafe 0%, #c7d2fe 50%, #a5b4fc 100%) !important;
+  transform: scale(1.02) !important;
+  box-shadow:
+    0 0 0 6px rgba(59, 130, 246, 0.15),
+    0 20px 50px rgba(59, 130, 246, 0.3) !important;
+}
+
+.fileInput {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+}
+
+.uploadPrompt {
+  pointer-events: none;
+  position: relative;
+  z-index: 2;
+}
+
+/* ✅ FIX: Klickbare Elemente innerhalb uploadPrompt */
+.uploadPromptButton {
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 10;
+  opacity: 1 !important;
+  cursor: pointer !important;
+}
+
+.uploadIcon {
+  margin: 0 auto 2rem;
+  color: white;
+  display: flex;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%);
+  border-radius: 24px;
+  align-items: center;
+  box-shadow:
+    0 8px 24px rgba(59, 130, 246, 0.35),
+    0 4px 8px rgba(99, 102, 241, 0.2);
+  transition: all 0.3s ease;
+}
+
+.uploadArea:hover .uploadIcon {
+  transform: scale(1.1) rotate(-3deg);
+  box-shadow:
+    0 12px 32px rgba(59, 130, 246, 0.4),
+    0 6px 12px rgba(99, 102, 241, 0.25);
+}
+
+.uploadPrompt h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 0.75rem;
+  letter-spacing: -0.02em;
+}
+
+.uploadPrompt p {
+  color: #64748b;
+  margin: 0 0 1.5rem;
+  font-size: 1rem;
+  line-height: 1.6;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.uploadFormats {
+  font-size: 0.875rem;
+  color: #64748b;
+  font-style: normal;
+  padding: 0.75rem 1.25rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.uploadFormats::before {
+  content: '📄';
+}
+
+/* ========== PREMIUM FILE PREVIEW ========== */
+.filePreview {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  background: white;
+  padding: 1.5rem 2rem;
+  border-radius: 20px;
+  border: 2px solid #e2e8f0;
+  margin-top: 1.5rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+.filePreview:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.12);
+}
+
+.fileIcon {
+  color: white;
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  padding: 1.25rem;
+  border-radius: 16px;
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3);
+}
+
+.fileInfo {
+  flex: 1;
+}
+
+.fileName {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 0.375rem;
+}
+
+.fileSize {
+  color: #64748b;
+  font-size: 0.9375rem;
+  margin: 0;
+}
+
+.successMessage {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #10b981;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  background: #ecfdf5;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  border: 1px solid #a7f3d0;
+}
+
+/* Analysis Container */
+.analysisContainer {
+  margin-top: 2rem;
+}
+
+/* Contracts Section */
+.contractsCount {
+  color: #64748b;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.refreshButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #64748b;
+}
+
+.refreshButton:hover {
+  background: #e2e8f0;
+  color: #374151;
+}
+
+.refreshButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.exportButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: white;
+  color: #3b82f6;
+  border: 1.5px solid #3b82f6;
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.exportButton:hover {
+  background: #eff6ff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.exportButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f1f5f9;
+  color: #94a3b8;
+  border-color: #e2e8f0;
+}
+
+.newContractButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.newContractButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+}
+
+/* ========== MODERNIZED FILTERS ========== */
+.filtersToolbar {
+  display: flex;
+  gap: 1.25rem;
+  margin-bottom: 1.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.searchSection {
+  flex: 1;
+  min-width: 280px;
+  display: flex;
+  gap: 0.875rem;
+  align-items: center;
+}
+
+/* 📋 Bulk Select Toggle Button */
+.bulkSelectToggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  background: white;
+  color: #6b7280;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.bulkSelectToggle:hover {
+  border-color: #667eea;
+  background: #f9fafb;
+  color: #667eea;
+}
+
+.bulkSelectToggle.active {
+  border-color: #667eea;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.bulkSelectToggle.active:hover {
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+  transform: translateY(-1px);
+}
+
+.searchInputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 1.125rem;
+  color: #94a3b8;
+  pointer-events: none;
+  transition: color 0.2s ease;
+}
+
+.searchInputWrapper:focus-within .searchIcon {
+  color: #3b82f6;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.9375rem 2.75rem 0.9375rem 3.25rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 14px;
+  font-size: 0.9375rem;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  background: white;
+  color: #1e293b;
+}
+
+.searchInput::placeholder {
+  color: #94a3b8;
+}
+
+.searchInput:hover {
+  border-color: #cbd5e1;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12), 0 2px 8px rgba(59, 130, 246, 0.08);
+}
+
+.clearSearchButton {
+  position: absolute;
+  right: 0.875rem;
+  background: #f1f5f9;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0.375rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.clearSearchButton:hover {
+  color: #1e293b;
+  background: #e2e8f0;
+}
+
+/* 🆕 Source Filter Tabs (Alle | Generiert | Optimiert) */
+.sourceFilterTabs {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  margin-bottom: 0.75rem;
+}
+
+.sourceTab {
+  padding: 0.5rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sourceTab:hover {
+  border-color: #d1d5db;
+  background: #f9fafb;
+  color: #374151;
+}
+
+.sourceTab.activeTab {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.sourceTab:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.filtersSection {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.quickFilters {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.quickFilter {
+  padding: 0.625rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  background: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 150px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2.5rem;
+}
+
+.quickFilter:hover {
+  border-color: #cbd5e1;
+  background-color: #f8fafc;
+}
+
+.quickFilter:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.clearAllFilters {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clearAllFilters:hover {
+  background: #fee2e2;
+}
+
+/* Results Info - Modernized */
+.resultsInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.resultsText {
+  color: #475569;
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.resultsText strong {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.activeFilters {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.activeFilter {
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: white;
+  padding: 0.375rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.25);
+}
+
+/* Loading */
+.loadingContainer {
+  text-align: center;
+  padding: 3rem;
+  color: #6b7280;
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e5e7eb;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+/* Error */
+.errorContainer {
+  text-align: center;
+  padding: 3rem;
+}
+
+.errorIcon {
+  color: #ef4444;
+  margin: 0 auto 1rem;
+}
+
+.errorMessage {
+  color: #7f1d1d;
+  margin: 0 0 1.5rem;
+  font-size: 1.125rem;
+}
+
+.retryButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.retryButton:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+/* Empty State */
+.emptyState {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #6b7280;
+}
+
+.emptyIcon {
+  color: #d1d5db;
+  margin: 0 auto 1.5rem;
+}
+
+.emptyState h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 0.5rem;
+}
+
+.emptyState p {
+  margin: 0 0 2rem;
+  line-height: 1.6;
+}
+
+.uploadButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.uploadButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+}
+
+/* ✅ NEU: Load More Button */
+.loadMoreButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.loadMoreButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+}
+
+/* ✅ RESPONSIVE TABLE FIXES - Optimierte Tabelle für alle Geräte */
+.tableContainer {
+  width: 100%;
+  overflow: hidden; /* ⭐ KEIN horizontales Scrollen mehr! */
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-top: 1.5rem;
+}
+
+/* ========== MODERNIZED TABLE ========== */
+.contractsTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.875rem;
+  table-layout: fixed;
+  background: white;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+/* ✅ Spaltenbreiten OHNE Checkbox-Spalte (Standard) */
+.contractsTable thead th:nth-child(1) { width: 30%; } /* Vertragsname */
+.contractsTable thead th:nth-child(2) { width: 15%; } /* Kündigungsfrist */
+.contractsTable thead th:nth-child(3) { width: 15%; } /* Ablaufdatum */
+.contractsTable thead th:nth-child(4) { width: 12%; } /* Status */
+.contractsTable thead th:nth-child(5) { width: 15%; } /* Upload-Datum */
+.contractsTable thead th:nth-child(6) { width: 13%; } /* Aktionen */
+
+/* ✅ Spaltenbreiten MIT Checkbox-Spalte (Bulk-Modus aktiv) */
+.contractsTable.withCheckboxes thead th:nth-child(1) { width: 28px; } /* Checkbox - FIXED */
+.contractsTable.withCheckboxes thead th:nth-child(2) { width: 30%; } /* Vertragsname - behält Größe */
+.contractsTable.withCheckboxes thead th:nth-child(3) { width: 15%; } /* Kündigungsfrist */
+.contractsTable.withCheckboxes thead th:nth-child(4) { width: 15%; } /* Ablaufdatum */
+.contractsTable.withCheckboxes thead th:nth-child(5) { width: 12%; } /* Status */
+.contractsTable.withCheckboxes thead th:nth-child(6) { width: 15%; } /* Upload-Datum */
+.contractsTable.withCheckboxes thead th:nth-child(7) { width: 13%; } /* Aktionen */
+
+.contractsTable th {
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  padding: 0.875rem 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  color: #475569;
+  border-bottom: 2px solid #e2e8f0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 📋 Override padding for checkbox header */
+.contractsTable thead th.checkboxColumn {
+  padding: 0.5rem 0.25rem !important;
+  width: 28px;
+}
+
+.tableRow {
+  border-bottom: 1px solid #f1f5f9;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tableRow:hover {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.04) 0%, rgba(99, 102, 241, 0.02) 100%);
+}
+
+.tableRow:last-child {
+  border-bottom: none;
+}
+
+.tableRow td {
+  padding: 0.875rem 0.75rem;
+  vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #374151;
+}
+
+/* 📋 Override padding for checkbox column */
+.contractsTable tbody td.checkboxColumn {
+  padding: 0.5rem 0.25rem !important;
+  width: 28px;
+}
+
+.contractName {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* ✅ Kleinerer Gap */
+  min-width: 0; /* ✅ Für text-overflow */
+}
+
+.contractIcon {
+  flex-shrink: 0;
+  width: 32px; /* ✅ Kleineres Icon */
+  height: 32px;
+  background: #f0f9ff;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0284c7;
+}
+
+.contractNameText {
+  font-weight: 500;
+  color: #111827;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.generatedBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.375rem; /* ✅ Sehr kompakt */
+  background: #ede9fe;
+  color: #7c3aed;
+  border-radius: 4px;
+  font-size: 0.7rem; /* ✅ Sehr kleine Schrift */
+  font-weight: 500;
+  margin-left: 0.5rem;
+}
+
+/* ✅ NEU: "Optimiert" Badge - Hellgrün */
+.optimizedBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.375rem; /* ✅ Sehr kompakt */
+  background: #dcfce7; /* ✅ Hellgrün für "Optimiert" */
+  color: #16a34a; /* ✅ Dunkelgrün */
+  border-radius: 4px;
+  font-size: 0.7rem; /* ✅ Sehr kleine Schrift */
+  font-weight: 500;
+  margin-left: 0.5rem;
+}
+
+/* ✅ NEU: "Per Email importiert" Badge - Hellblau mit Icon & Tooltip */
+.emailImportBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem; /* ✅ Abstand zwischen Icon und Text */
+  padding: 0.125rem 0.375rem; /* ✅ Sehr kompakt */
+  background: #dbeafe; /* ✅ Hellblau für Email */
+  color: #1d4ed8; /* ✅ Dunkelblau */
+  border-radius: 4px;
+  font-size: 0.7rem; /* ✅ Sehr kleine Schrift */
+  font-weight: 500;
+  margin-left: 0.5rem;
+  cursor: help; /* ✅ Zeigt Tooltip-Cursor beim Hover */
+  transition: all 0.2s ease;
+}
+
+.emailImportBadge:hover {
+  background: #bfdbfe; /* ✅ Etwas dunkler beim Hover */
+  transform: scale(1.05); /* ✅ Leichte Vergrößerung */
+}
+
+/* ✅ NEU: "Nicht analysiert" Badge - Subtiles Orange */
+.notAnalyzedBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.375rem;
+  background: #fff7ed;
+  color: #ea580c;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  margin-left: 0.5rem;
+  border: 1px solid #fed7aa;
+}
+
+.contractDetail {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem; /* ✅ Kleinerer Gap */
+  color: #6b7280;
+  font-size: 0.8rem; /* ✅ Kleinere Schrift */
+}
+
+.detailIcon {
+  flex-shrink: 0;
+  color: #9ca3af;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem; /* ✅ Kompakter */
+  border-radius: 6px;
+  font-size: 0.75rem; /* ✅ Kleinere Schrift */
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.statusActive {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.statusWarning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.statusCancelled {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.statusNeutral {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+/* ✉️ NEU: Signature Badge - Digitale Signatur Status - KOMPAKT */
+.signatureBadge {
+  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+  color: #0369a1;
+  border: 1px solid #7dd3fc;
+  font-size: 0.65rem; /* ✅ Noch kleiner: 0.7rem → 0.65rem */
+  padding: 0.15rem 0.35rem; /* ✅ Weniger padding */
+  margin-left: 0.25rem; /* ✅ Weniger margin */
+  border-radius: 4px; /* ✅ Kleinerer radius */
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem; /* ✅ Weniger gap zwischen Icon und Text */
+  white-space: nowrap;
+  font-weight: 500;
+  line-height: 1;
+}
+
+/* 🆕 Smart Signature Badge States */
+.signatureCompleted {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+
+.signaturePartial {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #92400e;
+  border: 1px solid #fbbf24;
+}
+
+.signaturePending {
+  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+  color: #0369a1;
+  border: 1px solid #7dd3fc;
+}
+
+.signatureDraft {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.signatureDeclined {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.signatureExpired {
+  background: linear-gradient(135deg, #ffe4e6 0%, #fecdd3 100%);
+  color: #9f1239;
+  border: 1px solid #fda4af;
+}
+
+.signatureVoided {
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+/* 🖱️ Clickable signature badge */
+.signatureBadgeClickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.signatureBadgeClickable:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  filter: brightness(1.05);
+}
+
+.uploadDate {
+  color: #6b7280;
+  font-size: 0.8rem; /* ✅ Kleinere Schrift */
+  white-space: nowrap;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 0.25rem; /* ✅ Kleinerer Gap */
+  justify-content: flex-end;
+}
+
+.actionButton {
+  width: 28px; /* ✅ Kleinere Buttons */
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #6b7280;
+}
+
+.actionButton:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  color: #374151;
+}
+
+.actionButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.deleteButton {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.deleteButton:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* 📋 Bulk Selection Styles */
+/* ✅ CHECKBOX COLUMN - ULTRA minimal spacing */
+.checkboxColumn {
+  width: 28px;
+  max-width: 28px;
+  min-width: 28px;
+  padding: 0.5rem 0.25rem !important;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.bulkCheckbox {
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  accent-color: #667eea;
+  margin: 0;
+  padding: 0;
+}
+
+.selectedRow {
+  background: #f0f4ff !important;
+}
+
+/* 📋 Bulk Action Bar */
+.bulkActionBar {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  z-index: 999;
+  min-width: 500px;
+}
+
+.bulkActionInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #667eea;
+  font-weight: 600;
+}
+
+.bulkActionCount {
+  font-size: 0.9375rem;
+}
+
+.bulkActionButtons {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.bulkDropdownWrapper {
+  position: relative;
+}
+
+.bulkActionButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.bulkActionButton:hover {
+  background: #5568d3;
+  transform: translateY(-1px);
+}
+
+.bulkDeleteButton {
+  background: #ef4444;
+}
+
+.bulkDeleteButton:hover {
+  background: #dc2626;
+}
+
+.bulkCancelButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: #f3f4f6;
+  color: #6b7280;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.bulkCancelButton:hover {
+  background: #e5e7eb;
+}
+
+.bulkFolderDropdown {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  min-width: 220px;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.bulkFolderItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: white;
+  border: none;
+  border-bottom: 1px solid #f3f4f6;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1d1d1f;
+}
+
+.bulkFolderItem:last-child {
+  border-bottom: none;
+}
+
+.bulkFolderItem:hover {
+  background: #f9fafb;
+}
+
+/* 📁 Mobile Folder Dropdown Styles */
+.mobileFolderWrapper {
+  position: relative;
+}
+
+/* ✅ MOBILE FOLDER DROPDOWN - Als modales Bottom-Sheet auf Mobile */
+.mobileFolderDropdown {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border: none;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.25);
+  max-height: 60vh;
+  overflow: hidden;
+  z-index: 10000;
+  animation: slideUpModal 0.3s ease-out;
+}
+
+@keyframes slideUpModal {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Overlay hinter dem Dropdown */
+.mobileFolderDropdown::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: -1;
+}
+
+.mobileFolderHeader {
+  padding: 1rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+  text-transform: none;
+  letter-spacing: 0;
+  border-bottom: 1px solid #e5e7eb;
+  background: white;
+  text-align: center;
+  position: relative;
+}
+
+/* Handle/Griff für Bottom-Sheet */
+.mobileFolderHeader::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 4px;
+  background: #d1d5db;
+  border-radius: 2px;
+}
+
+.mobileFolderList {
+  max-height: calc(60vh - 60px);
+  overflow-y: auto;
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+
+.mobileFolderItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 1rem 1.25rem;
+  background: white;
+  border: none;
+  border-bottom: 1px solid #f3f4f6;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #1e293b;
+  min-height: 52px;
+}
+
+.mobileFolderItem:last-child {
+  border-bottom: none;
+}
+
+.mobileFolderItem:hover {
+  background: #f9fafb;
+}
+
+.mobileFolderItem.selected {
+  background: #f0f4ff;
+  color: #667eea;
+}
+
+.mobileFolderItem .folderIcon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.mobileFolderItem .checkIcon {
+  margin-left: auto;
+  color: #667eea;
+  flex-shrink: 0;
+}
+
+/* 📁 Folder Dropdown Styles */
+.folderDropdownWrapper {
+  position: relative;
+  overflow: visible !important;
+}
+
+/* Actions Cell muss overflow erlauben für Dropdown */
+.tableRow td:last-child {
+  overflow: visible !important;
+}
+
+.actionButton.active {
+  background: #f3f4f6;
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.folderDropdown {
+  position: fixed; /* ✅ Fixed statt absolute - schwebt über allem */
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 10px 50px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  min-width: 240px;
+  max-width: 280px;
+  z-index: 99999; /* Sehr hoher z-index */
+  overflow: hidden;
+  /* Wird per JS positioniert, Fallback: */
+  top: auto;
+  bottom: auto;
+  right: 20px;
+}
+
+.folderDropdownHeader {
+  padding: 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.folderDropdownList {
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.folderDropdownItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: white;
+  border: none;
+  border-bottom: 1px solid #f3f4f6;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.folderDropdownItem:last-child {
+  border-bottom: none;
+}
+
+.folderDropdownItem:hover {
+  background: #f9fafb;
+}
+
+.folderDropdownItem.selected {
+  background: #f0f4ff;
+  color: #667eea;
+}
+
+.folderDropdownItem .folderIcon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.folderDropdownItem .folderName {
+  flex: 1;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.folderDropdownItem .checkIcon {
+  color: #667eea;
+  flex-shrink: 0;
+}
+
+/* ✅ MOBILE CARDS - Zeigt Cards statt Tabelle auf mobilen Geräten */
+.mobileCardsContainer {
+  display: none; /* Hidden by default, shown on mobile via media query */
+}
+
+/* ========== MODERNIZED CONTRACT CARDS ========== */
+.contractCard {
+  background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.contractCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, #3b82f6 0%, #6366f1 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.contractCard:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1), 0 4px 10px rgba(59, 130, 246, 0.08);
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+}
+
+.contractCard:hover::before {
+  opacity: 1;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+/* 📋 Mobile Card Checkbox (nur für Bulk Select) */
+.cardCheckbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.cardCheckbox:hover {
+  background: #f3f4f6;
+}
+
+.checkboxUnchecked {
+  color: #9ca3af;
+  transition: color 0.2s ease;
+}
+
+.checkboxChecked {
+  color: #667eea;
+}
+
+.cardIcon {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3b82f6;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.12);
+}
+
+.cardTitle {
+  flex: 1;
+  min-width: 0;
+}
+
+.cardFileName {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 1.0625rem;
+  line-height: 1.4;
+  margin-bottom: 0.375rem;
+  word-break: break-word;
+  letter-spacing: -0.01em;
+}
+
+.cardStatus {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.cardDetails {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.cardDetailItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.cardDetailItem.fullWidth {
+  grid-column: 1 / -1;
+}
+
+.cardDetailLabel {
+  font-size: 0.6875rem;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.cardDetailValue {
+  font-size: 0.9rem;
+  color: #1e293b;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.cardActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-top: 1rem;
+  margin-top: 0.5rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.cardActionButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  color: #475569;
+  flex: 1 1 calc(50% - 0.25rem);
+  min-height: 44px;
+}
+
+.cardActionButton:hover {
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  border-color: #cbd5e1;
+  color: #1e293b;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.cardActionButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ✅ NEU: Full-Width Action ("Jetzt analysieren") - Volle Breite, grüner Gradient */
+.cardActionButton.fullWidthAction {
+  flex: 1 1 100%; /* ✅ Volle Breite */
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-color: #10b981;
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+}
+
+.cardActionButton.fullWidthAction:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  border-color: #059669;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* ✅ Folder Wrapper muss auch flex: 1 1 calc(50% - 0.25rem) für 2x2 Grid */
+.mobileFolderWrapper {
+  flex: 1 1 calc(50% - 0.25rem); /* ✅ Gleiche Größe wie andere Buttons */
+  display: flex;
+  position: relative; /* ✅ Für Dropdown-Positionierung */
+}
+
+.mobileFolderWrapper button {
+  flex: 1; /* ✅ Button nimmt volle Breite des Wrappers ein */
+}
+
+/* ✅ Löschen-Button - jetzt NORMAL gestylt wie andere Buttons (kein rotes Outline mehr) */
+.cardActionButton.deleteAction {
+  /* Keine besonderen Styles - einfach normaler Button wie die anderen */
+}
+
+/* ✅ RESPONSIVE BREAKPOINTS */
+
+/* 📱 TABLET BREAKPOINT (768px - 1024px) */
+@media (max-width: 1024px) {
+  .container {
+    max-width: 100%;
+    padding: 0 1rem;
+  }
+
+  .contractsTable {
+    font-size: 0.8rem; /* ✅ Noch kleinere Schrift */
+  }
+
+  .contractsTable thead th,
+  .contractsTable tbody td {
+    padding: 0.5rem 0.375rem; /* ✅ Noch kompakter */
+  }
+
+  /* 📋 Override for checkbox column in tablet view */
+  .contractsTable thead th.checkboxColumn,
+  .contractsTable tbody td.checkboxColumn {
+    padding: 0.5rem 0.25rem !important;
+  }
+
+  /* ✅ Spaltenbreiten für Tablet angepasst */
+  .contractsTable thead th:nth-child(1) { width: 35%; } /* Mehr Platz für Name */
+  .contractsTable thead th:nth-child(2) { width: 12%; } /* Kündigungsfrist kürzer */
+  .contractsTable thead th:nth-child(3) { width: 12%; } /* Ablaufdatum kürzer */
+  .contractsTable thead th:nth-child(4) { width: 15%; } /* Status */
+  .contractsTable thead th:nth-child(5) { width: 12%; } /* Upload kürzer */
+  .contractsTable thead th:nth-child(6) { width: 14%; } /* Aktionen */
+
+  .contractIcon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .contractDetail {
+    gap: 0.25rem;
+    font-size: 0.75rem;
+  }
+
+  .statusBadge {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.7rem;
+  }
+
+  .filtersToolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .searchSection {
+    min-width: auto;
+  }
+
+  .resultsInfo {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+}
+
+/* 📱 MOBILE OPTIMIZATIONS (max-width: 768px) */
+@media (max-width: 768px) {
+  /* Enterprise Layout - Hide Sidebar & Preview on Mobile */
+  .sidebar {
+    display: none;
+  }
+
+  .previewPanel {
+    display: none;
+  }
+
+  .enterpriseLayout {
+    flex-direction: column;
+  }
+
+  .mainContent {
+    height: auto;
+    min-height: calc(100vh - 64px);
+  }
+
+  /* ✅ MOBILE ENTERPRISE TOOLBAR - Horizontal scrollbar statt abgeschnitten */
+  .enterpriseToolbar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 0.75rem 1rem;
+    gap: 0.5rem;
+  }
+
+  .enterpriseToolbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .toolbarSection {
+    flex-shrink: 0;
+    gap: 0.375rem;
+  }
+
+  .toolbarButton {
+    flex-shrink: 0;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+    min-height: 40px;
+    white-space: nowrap;
+  }
+
+  .toolbarButton span {
+    display: none; /* Text auf Mobile verstecken, nur Icons */
+  }
+
+  .toolbarButton.primary span {
+    display: inline; /* Hochladen-Text anzeigen */
+  }
+
+  .toolbarSearch {
+    flex-shrink: 0;
+    min-width: 200px;
+    max-width: 200px;
+    order: 0;
+  }
+
+  .toolbarSearchInput {
+    font-size: 16px !important; /* iOS Zoom verhindern */
+    padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+  }
+
+  .toolbarDivider {
+    display: none;
+  }
+
+  .toolbarViewButtons {
+    flex-shrink: 0;
+  }
+
+  .viewButton {
+    padding: 0.5rem;
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  .contentArea {
+    padding: 1rem;
+  }
+
+  /* Container & Padding */
+  .pageContainer {
+    padding: 0;
+  }
+
+  .container {
+    padding: 0 1rem 1rem;
+  }
+
+  /* Header Optimizations - Mobile */
+  .header {
+    padding: 2rem 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .headerTop {
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .headerBadge {
+    position: static;
+    order: -1;
+  }
+
+  .title {
+    font-size: 1.5rem;
+    gap: 0.75rem;
+  }
+
+  .titleIcon {
+    padding: 0.5rem;
+    border-radius: 10px;
+  }
+
+  .subtitle {
+    font-size: 0.875rem;
+  }
+
+  .statsRow {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .statCard {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  .statValue {
+    font-size: 1.5rem;
+  }
+
+  .statLabel {
+    font-size: 0.75rem;
+  }
+
+  /* Section Padding */
+  .section {
+    padding: 1.25rem;
+    border-radius: 16px;
+  }
+
+  .sectionHeader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .sectionHeader h2 {
+    font-size: 1.25rem;
+  }
+
+  /* ✅ MOBILE TABS - Horizontal Scroll wie App-Navigation */
+  .tabsContainer {
+    flex-direction: row;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: white;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-radius: 14px;
+  }
+
+  .tabsContainer::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tabButton {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    white-space: nowrap;
+    min-width: fit-content;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 44px; /* Touch-Target */
+  }
+
+  .tabButton svg {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+  }
+
+  .activeTab {
+    box-shadow: 0 3px 10px rgba(59, 130, 246, 0.3);
+  }
+
+  /* Upload Area */
+  .uploadArea {
+    padding: 2rem 1rem;
+  }
+
+  .uploadPrompt h3 {
+    font-size: 1.1rem;
+  }
+
+  .uploadPrompt p {
+    font-size: 0.9rem;
+  }
+
+  /* Filter Sidebar Full-Width */
+  .filtersToolbar {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .searchSection {
+    width: 100%;
+    min-width: 100%;
+    flex-direction: row; /* Keep horizontal layout */
+    gap: 0.5rem;
+  }
+
+  /* ✅ iOS: Font-size 16px verhindert Auto-Zoom beim Fokus */
+  .searchInput {
+    font-size: 16px !important; /* Verhindert iOS Safari Zoom */
+    padding: 0.875rem 1rem 0.875rem 2.75rem;
+    border-radius: 12px;
+    min-height: 48px;
+  }
+
+  /* 📋 Mobile Bulk Select Toggle - kompakter Button neben Suchleiste */
+  .bulkSelectToggle {
+    flex-shrink: 0;
+    padding: 0.65rem 0.875rem;
+    font-size: 0.8rem;
+    gap: 0.375rem;
+    border-radius: 8px;
+  }
+
+  .bulkSelectToggle span {
+    display: none; /* Text verstecken, nur Icon anzeigen */
+  }
+
+  .filtersSection {
+    width: 100%;
+  }
+
+  /* ✅ QUICK FILTERS - Horizontal Scroll wie Chips */
+  .quickFilters {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    gap: 0.5rem;
+    padding-bottom: 0.25rem;
+  }
+
+  .quickFilters::-webkit-scrollbar {
+    display: none;
+  }
+
+  .quickFilter {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    min-width: fit-content;
+    padding: 0.625rem 1rem;
+    font-size: 0.85rem;
+    border-radius: 20px;
+    min-height: 40px;
+  }
+
+  .sectionActions {
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .newContractButton {
+    padding: 0.65rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .exportButton {
+    padding: 0.65rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .refreshButton {
+    width: 36px;
+    height: 36px;
+  }
+
+  /* ✅ BULK ACTION BAR - Mobile: Grid Layout + Safe-Area */
+  .bulkActionBar {
+    min-width: 0 !important;
+    width: auto;
+    max-width: calc(100vw - 2rem);
+    padding: 1rem;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    gap: 0.75rem;
+    bottom: 1rem;
+    left: 1rem;
+    right: 1rem;
+    transform: none;
+    flex-direction: column;
+    align-items: stretch;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  }
+
+  .bulkActionInfo {
+    font-size: 0.875rem;
+    gap: 0.5rem;
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .bulkActionCount {
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  /* ✅ Buttons als 2x2 Grid */
+  .bulkActionButtons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .bulkActionButton,
+  .bulkDeleteButton,
+  .bulkCancelButton {
+    padding: 0.625rem 0.75rem;
+    font-size: 0.8rem;
+    min-height: 44px;
+    justify-content: center;
+    border-radius: 10px;
+  }
+
+  /* 📁 Folder Dropdown auf Mobile - ZENTRIERT mit FIXED positioning */
+  .bulkFolderDropdown {
+    position: fixed !important; /* Fixed statt absolute für Viewport-Zentrierung */
+    bottom: 7rem !important; /* Über der Bulk Action Bar */
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%);
+    max-width: calc(100vw - 3rem); /* Verhindert Overflow */
+    min-width: max(240px, 70vw); /* Breiter für bessere Lesbarkeit */
+  }
+
+  /* 📁 Regular Folder Dropdown auf Mobile Cards - auch FIXED */
+  .folderDropdown {
+    position: fixed !important;
+    bottom: 50% !important;
+    left: 50% !important;
+    right: auto !important;
+    top: auto !important;
+    transform: translate(-50%, 50%);
+    max-width: calc(100vw - 2rem);
+    min-width: max(260px, 75vw);
+    max-height: 50vh;
+    overflow-y: auto;
+    z-index: 1001;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  }
+
+  .folderDropdownWrapper {
+    position: static;
+  }
+
+  /* Overlay für Modal-ähnliches Verhalten */
+  .folderDropdownWrapper::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .folderDropdownWrapper.active::before {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* HIDE TABLE, SHOW CARDS on Mobile */
+  .tableContainer {
+    display: none;
+  }
+
+  .mobileCardsContainer {
+    display: block;
+  }
+
+  /* ✅ ENTERPRISE GRID - auch auf Mobile sichtbar wenn viewMode=grid */
+  .enterpriseGrid {
+    display: none; /* Versteckt, wird durch mobileCardsContainer ersetzt */
+  }
+
+  /* ✅ MOBILE CONTRACT CARDS - KOMPAKT wie echte App */
+  .contractCard {
+    padding: 0.875rem;
+    margin-bottom: 0.625rem;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .contractCard::before {
+    width: 3px;
+  }
+
+  .cardHeader {
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .cardIcon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+  }
+
+  .cardIcon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .cardFileName {
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  .cardStatus {
+    gap: 0.375rem;
+  }
+
+  /* ✅ Status Badges - kleiner auf Mobile */
+  .statusBadge {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.5rem;
+  }
+
+  /* ✅ Card Details - KOMPAKT 2-spaltig */
+  .cardDetails {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-bottom: 0.625rem;
+    padding: 0.5rem;
+    background: #f8fafc;
+    border-radius: 8px;
+  }
+
+  .cardDetailItem {
+    gap: 0.125rem;
+  }
+
+  .cardDetailLabel {
+    font-size: 0.6rem;
+  }
+
+  .cardDetailValue {
+    font-size: 0.75rem;
+  }
+
+  /* ✅ Card Actions - Icon-Only auf Mobile für Kompaktheit */
+  .cardActions {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.375rem;
+    padding-top: 0.625rem;
+    margin-top: 0.375rem;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  /* Action Buttons als Icon-Only für Platz */
+  .cardActionButton {
+    min-height: 40px;
+    min-width: 40px;
+    padding: 0.5rem;
+    font-size: 0.75rem;
+    justify-content: center;
+    border-radius: 8px;
+    font-weight: 500;
+    flex: 1;
+  }
+
+  .cardActionButton span {
+    display: none; /* Text verstecken, nur Icons */
+  }
+
+  .cardActionButton svg {
+    flex-shrink: 0;
+  }
+
+  /* ✅ Folder Wrapper */
+  .mobileFolderWrapper {
+    flex: 1;
+  }
+
+  /* ✅ MULTI-FILE UPLOAD - Vereinfachtes Card-Layout */
+  .multiFilePreview {
+    padding: 1rem;
+    border-radius: 14px;
+  }
+
+  .multiFileHeader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 1rem;
+  }
+
+  .multiFileInfo h3 {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .multiFileActions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .multiFileActions .uploadButton,
+  .clearFilesButton {
+    min-height: 44px;
+    font-size: 0.85rem;
+    justify-content: center;
+    border-radius: 10px;
+  }
+
+  /* ✅ File Items als Cards */
+  .fileItem {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-radius: 12px;
+    background: #f8fafc;
+    margin-bottom: 0.5rem;
+  }
+
+  .fileItemLeft {
+    width: 100%;
+    gap: 0.75rem;
+  }
+
+  .fileItemIcon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+
+  .fileItemRight {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .fileItemName {
+    max-width: 100%;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .fileItemSize {
+    font-size: 0.75rem;
+    color: #64748b;
+  }
+
+  .fileItemStatus {
+    text-align: left;
+    min-width: auto;
+    font-size: 0.8rem;
+  }
+
+  .fileItemActions {
+    gap: 0.5rem;
+  }
+
+  .fileItemActions button {
+    min-height: 40px;
+    min-width: 40px;
+    border-radius: 10px;
+  }
+
+  /* Progress Bar volle Breite */
+  .fileItemProgress {
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    margin-top: 0.5rem;
+  }
+
+  /* Plan Badges Mobile */
+  .premiumBadge,
+  .businessBadge,
+  .freeBadge {
+    margin-left: 0;
+    margin-top: 8px;
+    align-self: center;
+    font-size: 0.7rem;
+    padding: 5px 10px;
+  }
+
+  /* ✅ MODAL MOBILE - App-ähnliches Design mit Safe-Area */
+  .modalOverlay {
+    padding: max(0.75rem, env(safe-area-inset-top))
+             max(0.75rem, env(safe-area-inset-right))
+             max(0.75rem, env(safe-area-inset-bottom))
+             max(0.75rem, env(safe-area-inset-left));
+  }
+
+  .duplicateModal,
+  .legacyModal {
+    max-width: 100%;
+    max-height: 85dvh; /* Dynamic viewport height für iOS Safari */
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .modalHeader {
+    padding: 18px 20px;
+    flex-shrink: 0;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .modalHeader h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  .modalContent {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 20px;
+  }
+
+  .modalActions {
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px 20px;
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+    background: white;
+    flex-shrink: 0;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .modalActionButton {
+    min-height: 48px;
+    font-size: 0.9rem;
+    border-radius: 12px;
+    font-weight: 500;
+  }
+
+  .modalActionCard {
+    padding: 14px 16px;
+    min-height: 64px;
+    border-radius: 14px;
+  }
+
+  .actionCardTitle {
+    font-size: 0.95rem;
+  }
+
+  .actionCardDescription {
+    font-size: 0.8rem;
+  }
+
+  .fileComparison {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .duplicateArrow {
+    transform: rotate(90deg);
+  }
+
+  .fileComparisonGrid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .fileComparisonArrow {
+    transform: rotate(90deg);
+    margin: 0 auto;
+  }
+
+  .fileCard {
+    padding: 14px;
+  }
+
+  /* Results Info */
+  .resultsInfo {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    padding: 0.875rem;
+  }
+
+  .resultsText {
+    font-size: 0.85rem;
+  }
+
+  /* Upgrade Section */
+  .upgradeSection {
+    padding: 2.5rem 1.5rem;
+  }
+
+  .upgradeSection h2 {
+    font-size: 1.5rem;
+  }
+
+  .upgradeDescription {
+    font-size: 1rem;
+  }
+
+  .upgradePlans {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+/* 📱 SMALLER MOBILE (max-width: 640px) */
+@media (max-width: 640px) {
+  /* Grid to 1-Column */
+  .contractsTable {
+    display: none;
+  }
+
+  .mobileCardsContainer {
+    display: block;
+  }
+
+  .upgradePlans {
+    grid-template-columns: 1fr;
+  }
+
+  .cardDetails {
+    grid-template-columns: 1fr;
+  }
+
+  /* Container Padding */
+  .pageContainer {
+    padding: 0.875rem 0.625rem;
+  }
+
+  .container {
+    padding: 0 0.375rem;
+  }
+
+  .section {
+    padding: 1.125rem;
+  }
+
+  /* Header Font Sizes */
+  .title {
+    font-size: 1.625rem;
+  }
+
+  .subtitle {
+    font-size: 0.9rem;
+  }
+
+  .sectionHeader h2 {
+    font-size: 1.125rem;
+  }
+
+  /* Action Buttons min-height 44px for Touch */
+  .cardActionButton {
+    min-height: 44px;
+    padding: 0.625rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .newContractButton,
+  .exportButton,
+  .uploadButton {
+    min-height: 44px;
+  }
+
+  .modalActionButton {
+    min-height: 44px;
+  }
+
+  .multiFileActions .uploadButton,
+  .clearFilesButton {
+    min-height: 44px;
+  }
+
+  /* Upload Area Adjustments */
+  .uploadArea {
+    padding: 1.75rem 0.875rem;
+    border-radius: 16px;
+  }
+
+  .uploadPrompt h3 {
+    font-size: 1.05rem;
+  }
+
+  .uploadPrompt p {
+    font-size: 0.875rem;
+  }
+}
+
+/* 📱 VERY SMALL MOBILE (max-width: 480px) - App-ähnliches Design */
+@media (max-width: 480px) {
+  /* Container Padding */
+  .pageContainer {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .container {
+    padding: 0;
+  }
+
+  .section {
+    padding: 1rem;
+    border-radius: 14px;
+  }
+
+  /* ✅ SECTION HEADER - Verbesserte Icons */
+  .sectionHeader {
+    gap: 0.75rem;
+  }
+
+  .sectionTitle {
+    font-size: 1.125rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .sectionTitle svg {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+  }
+
+  .sectionHeader h2 {
+    font-size: 1.125rem;
+    font-weight: 600;
+  }
+
+  .sectionDescription {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: #64748b;
+  }
+
+  /* Header Font Sizes */
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .titleIcon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .subtitle {
+    font-size: 0.85rem;
+  }
+
+  /* Tabs - bleiben horizontal scrollbar */
+  .tabsContainer {
+    padding: 0.375rem;
+  }
+
+  .tabButton {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.85rem;
+  }
+
+  /* ✅ UPLOAD AREA - Kompakt für Mobile */
+  .uploadArea {
+    padding: 1.5rem 1rem;
+    border-radius: 16px;
+  }
+
+  .uploadIcon {
+    width: 56px;
+    height: 56px;
+  }
+
+  .uploadIcon svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .uploadPrompt h3 {
+    font-size: 1rem;
+  }
+
+  .uploadPrompt p {
+    font-size: 0.8rem;
+  }
+
+  .uploadFormats {
+    font-size: 0.75rem;
+  }
+
+  /* File Preview */
+  .filePreview {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+    padding: 1.25rem;
+  }
+
+  /* Filters - Search bleibt 16px wegen iOS */
+  .filtersToolbar {
+    gap: 0.75rem;
+  }
+
+  .searchInput {
+    font-size: 16px !important; /* iOS Zoom verhindern */
+    padding: 0.875rem 1rem 0.875rem 2.75rem;
+  }
+
+  /* Buttons mit Touch-Targets */
+  .newContractButton {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.85rem;
+    min-height: 44px;
+  }
+
+  .exportButton {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.85rem;
+    min-height: 44px;
+  }
+
+  .refreshButton {
+    width: 44px;
+    height: 44px;
+  }
+
+  /* ✅ MOBILE CARDS - Verbessert */
+  .contractCard {
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    border-radius: 14px;
+  }
+
+  .cardFileName {
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .cardDetailLabel {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .cardDetailValue {
+    font-size: 0.825rem;
+  }
+
+  .cardActionButton {
+    padding: 0.625rem;
+    font-size: 0.8rem;
+    min-height: 44px;
+  }
+
+  /* Plan Badges */
+  .premiumBadge,
+  .businessBadge,
+  .freeBadge {
+    margin-left: 0;
+    margin-top: 6px;
+    align-self: center;
+    font-size: 0.65rem;
+    padding: 4px 8px;
+  }
+
+  /* ✅ MODALS - App-ähnliches Design */
+  .modalOverlay {
+    padding: max(0.5rem, env(safe-area-inset-top))
+             max(0.5rem, env(safe-area-inset-right))
+             max(0.5rem, env(safe-area-inset-bottom))
+             max(0.5rem, env(safe-area-inset-left));
+  }
+
+  .duplicateModal,
+  .legacyModal {
+    max-height: 90dvh;
+    border-radius: 18px;
+  }
+
+  .modalHeader {
+    padding: 16px 18px;
+    border-radius: 18px 18px 0 0;
+  }
+
+  .modalHeader h3 {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .modalContent {
+    padding: 18px;
+  }
+
+  .modalActions {
+    padding: 14px 18px;
+    padding-bottom: max(14px, env(safe-area-inset-bottom));
+  }
+
+  .modalActionButton {
+    font-size: 0.85rem;
+    padding: 0.75rem;
+    min-height: 48px;
+    border-radius: 12px;
+  }
+
+  /* Results Info */
+  .resultsInfo {
+    padding: 0.875rem;
+    border-radius: 12px;
+  }
+
+  .resultsText {
+    font-size: 0.8rem;
+  }
+
+  /* ✅ UPGRADE SECTION - Verbessert */
+  .upgradeSection {
+    padding: 2rem 1.25rem;
+    border-radius: 16px;
+  }
+
+  .upgradeIcon svg {
+    width: 40px;
+    height: 40px;
+  }
+
+  .upgradeSection h2 {
+    font-size: 1.375rem;
+    font-weight: 700;
+  }
+
+  .upgradeDescription {
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .upgradePlans {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .upgradePlan {
+    padding: 1.5rem;
+    border-radius: 14px;
+  }
+
+  .upgradePlanHeader h3 {
+    font-size: 1.125rem;
+  }
+
+  .upgradePlan li {
+    font-size: 0.8rem;
+    padding: 6px 0;
+  }
+
+  .upgradeButton {
+    padding: 0.875rem 1.75rem;
+    font-size: 0.95rem;
+    min-height: 48px;
+    border-radius: 12px;
+  }
+
+  /* ✅ EMPTY STATE - Zentriert und App-ähnlich */
+  .emptyState {
+    padding: 3rem 1.5rem;
+    min-height: 50vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+
+  .emptyIcon {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 1rem;
+  }
+
+  .emptyState h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .emptyState p {
+    font-size: 0.9rem;
+    color: #64748b;
+    max-width: 280px;
+    line-height: 1.5;
+  }
+
+  .emptyState button {
+    margin-top: 1.5rem;
+    min-height: 48px;
+    padding: 0.875rem 1.5rem;
+    border-radius: 12px;
+  }
+}
+
+/* 📱 EXTRA SMALL MOBILE (max-width: 375px) - iPhone SE, Mini etc. */
+@media (max-width: 375px) {
+  /* Container */
+  .pageContainer {
+    padding: 0.5rem 0.375rem;
+  }
+
+  .section {
+    padding: 0.875rem;
+    border-radius: 10px;
+  }
+
+  /* Header */
+  .title {
+    font-size: 1.375rem;
+  }
+
+  .subtitle {
+    font-size: 0.8rem;
+  }
+
+  .sectionHeader h2 {
+    font-size: 0.95rem;
+  }
+
+  /* Tabs - horizontal scroll */
+  .tabsContainer {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .tabsContainer::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tabButton {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Upload Area */
+  .uploadArea {
+    padding: 1.25rem 0.625rem;
+  }
+
+  .uploadPrompt h3 {
+    font-size: 0.95rem;
+  }
+
+  .uploadPrompt p {
+    font-size: 0.775rem;
+  }
+
+  /* Cards */
+  .contractCard {
+    padding: 0.75rem;
+    margin-bottom: 0.625rem;
+    border-radius: 10px;
+  }
+
+  .cardFileName {
+    font-size: 0.85rem;
+  }
+
+  .cardDetailLabel {
+    font-size: 0.65rem;
+  }
+
+  .cardDetailValue {
+    font-size: 0.775rem;
+  }
+
+  /* Action Buttons - Stack vertical on very small screens */
+  .cardActions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .cardActionButton {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.625rem;
+    font-size: 0.75rem;
+    flex: none;
+  }
+
+  /* Search & Filters */
+  .searchInput {
+    padding: 0.625rem 0.75rem 0.625rem 2.5rem;
+    font-size: 0.8rem;
+  }
+
+  .quickFilter {
+    padding: 0.5rem 0.625rem;
+    font-size: 0.8rem;
+  }
+
+  /* Bulk Action Bar - kompakter */
+  .bulkActionBar {
+    padding: 0.75rem;
+    max-width: calc(100vw - 1.5rem);
+    gap: 0.625rem;
+    bottom: 1rem;
+  }
+
+  .bulkActionInfo {
+    font-size: 0.8rem;
+  }
+
+  .bulkActionButton,
+  .bulkDeleteButton,
+  .bulkCancelButton {
+    padding: 0.5rem 0.625rem;
+    font-size: 0.75rem;
+    min-height: 40px;
+  }
+
+  /* Modal */
+  .modalOverlay {
+    padding: max(6px, env(safe-area-inset-top)) max(6px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left));
+  }
+
+  .duplicateModal,
+  .legacyModal {
+    border-radius: 10px;
+  }
+
+  .modalHeader {
+    padding: 12px 14px;
+  }
+
+  .modalHeader h3 {
+    font-size: 0.9rem;
+  }
+
+  .modalContent {
+    padding: 14px;
+  }
+
+  .modalActionButton {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.625rem;
+  }
+
+  /* File Comparison Grid - stacked */
+  .fileComparisonGrid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .fileComparisonArrow {
+    transform: rotate(90deg);
+    margin: 0 auto;
+  }
+
+  .fileCard {
+    padding: 10px;
+  }
+
+  .fileCardName {
+    font-size: 0.8rem;
+  }
+
+  .fileCardMeta {
+    font-size: 0.7rem;
+  }
+
+  /* Results Info */
+  .resultsInfo {
+    padding: 0.625rem;
+  }
+
+  .resultsText {
+    font-size: 0.75rem;
+  }
+
+  /* Upgrade Section */
+  .upgradeSection {
+    padding: 1.5rem 1rem;
+    border-radius: 14px;
+  }
+
+  .upgradeSection h2 {
+    font-size: 1.25rem;
+  }
+
+  .upgradeDescription {
+    font-size: 0.875rem;
+    margin-bottom: 2rem;
+  }
+
+  .upgradePlan {
+    padding: 1.25rem;
+  }
+
+  .upgradePlanHeader h3 {
+    font-size: 1rem;
+  }
+
+  .upgradePlan li {
+    font-size: 0.75rem;
+    padding: 5px 0;
+  }
+
+  .upgradeButton {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.875rem;
+  }
+
+  /* Empty State */
+  .emptyState {
+    padding: 2rem 1rem;
+  }
+
+  .emptyIcon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .emptyState h3 {
+    font-size: 1rem;
+  }
+
+  .emptyState p {
+    font-size: 0.85rem;
+  }
+
+  /* Plan Badges */
+  .premiumBadge,
+  .businessBadge,
+  .freeBadge {
+    font-size: 0.6rem;
+    padding: 3px 6px;
+  }
+}
+
+/* ===== PREMIUM ANALYSE-LIMIT BADGE ===== */
+.limitBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 2px solid #7dd3fc;
+  border-radius: 16px;
+  padding: 0.875rem 1.25rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(56, 189, 248, 0.15);
+}
+
+.limitBadgeText {
+  font-size: 0.9375rem;
+  color: #0369a1;
+  font-weight: 500;
+}
+
+.limitBadgeUpgrade {
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.limitBadgeUpgrade:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+/* 📱 Mobile Responsive für Limit-Badge */
+@media (max-width: 768px) {
+  .limitBadge {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    padding: 0.875rem;
+    text-align: center;
+    border-radius: 14px;
+  }
+
+  .limitBadgeText {
+    font-size: 0.85rem;
+  }
+
+  .limitBadgeUpgrade {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 0.875rem;
+    min-height: 44px;
+    border-radius: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .limitBadge {
+    padding: 0.75rem;
+  }
+
+  .limitBadgeText {
+    font-size: 0.8rem;
+  }
+
+  .limitBadgeUpgrade {
+    font-size: 0.8rem;
+  }
+}
+
+/* ============================================
+   📱 MOBILE UX ENHANCEMENTS
+   ============================================ */
+
+/* Mobile Suchleiste - Immer sichtbar auf Mobile */
+.mobileSearchBar {
+  display: none;
+  position: relative;
+  padding: 0.75rem 1rem;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.mobileSearchIcon {
+  position: absolute;
+  left: 1.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.mobileSearchInput {
+  width: 100%;
+  padding: 0.75rem 2.5rem 0.75rem 2.75rem;
+  font-size: 16px; /* Verhindert iOS Zoom */
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f9fafb;
+  color: #1f2937;
+  transition: all 0.2s ease;
+}
+
+.mobileSearchInput:focus {
+  outline: none;
+  border-color: #6366f1;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.mobileSearchInput::placeholder {
+  color: #9ca3af;
+}
+
+.mobileSearchClear {
+  position: absolute;
+  right: 1.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #e5e7eb;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mobileSearchClear:hover {
+  background: #d1d5db;
+  color: #374151;
+}
+
+/* Mobile Filter Button */
+.mobileFilterButton {
+  display: none !important;
+}
+
+.filterBadge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #ef4444;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hasActiveFilters {
+  border-color: #6366f1 !important;
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%) !important;
+}
+
+/* Mobile Filter Bottom-Sheet */
+.mobileFilterOverlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+}
+
+.mobileFilterSheet {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2);
+  z-index: 10000;
+  max-height: 80vh;
+  overflow: hidden;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.mobileFilterHandle {
+  width: 40px;
+  height: 4px;
+  background: #d1d5db;
+  border-radius: 2px;
+  margin: 12px auto 8px;
+}
+
+.mobileFilterHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.mobileFilterHeader h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.mobileFilterClose {
+  background: #f3f4f6;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mobileFilterClose:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.mobileFilterContent {
+  padding: 1.25rem;
+  overflow-y: auto;
+  max-height: calc(80vh - 180px);
+}
+
+.mobileFilterGroup {
+  margin-bottom: 1.25rem;
+}
+
+.mobileFilterGroup:last-child {
+  margin-bottom: 0;
+}
+
+.mobileFilterGroup label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.mobileFilterGroup select {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  font-size: 1rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  background: white;
+  color: #1f2937;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+}
+
+.mobileFilterGroup select:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.mobileFilterActions {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.mobileFilterReset {
+  flex: 1;
+  padding: 0.875rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  background: white;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 48px;
+}
+
+.mobileFilterReset:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.mobileFilterApply {
+  flex: 1;
+  padding: 0.875rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 48px;
+}
+
+.mobileFilterApply:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+/* Desktop Filter Selects - versteckt auf Mobile */
+.desktopFilters {
+  display: flex;
+}
+
+/* Upload Header mit Schließen-Button */
+.uploadHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.uploadHeaderTitle {
+  flex: 1;
+}
+
+.uploadHeaderTitle h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 0.5rem;
+}
+
+.uploadCloseButton {
+  display: none; /* Nur auf Mobile sichtbar */
+  background: #f3f4f6;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.uploadCloseButton:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+/* Upload Tabs */
+.uploadTabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  padding: 0.375rem;
+  background: #f3f4f6;
+  border-radius: 14px;
+}
+
+.uploadTab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 44px;
+}
+
+.uploadTab:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.5);
+  color: #374151;
+}
+
+.uploadTab.active {
+  background: white;
+  color: #6366f1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.uploadTab svg {
+  flex-shrink: 0;
+}
+
+/* Email Upload Section */
+.emailUploadSection {
+  padding: 1rem 0;
+}
+
+/* 📱 MOBILE MEDIA QUERIES */
+@media (max-width: 768px) {
+  /* Mobile Suchleiste anzeigen */
+  .mobileSearchBar {
+    display: block;
+  }
+
+  /* Desktop Suchleiste verstecken */
+  .toolbarSearch {
+    display: none !important;
+  }
+
+  /* Desktop Filter verstecken */
+  .desktopFilters {
+    display: none !important;
+  }
+
+  /* Mobile Filter Button anzeigen */
+  .mobileFilterButton {
+    display: flex !important;
+    position: relative;
+  }
+
+  /* Filter Bottom-Sheet anzeigen (wenn aktiviert) */
+  .mobileFilterOverlay,
+  .mobileFilterSheet {
+    display: block;
+  }
+
+  /* Upload Schließen-Button anzeigen */
+  .uploadCloseButton {
+    display: flex;
+  }
+
+  /* Upload Tabs anpassen */
+  .uploadTabs {
+    margin-bottom: 1.25rem;
+  }
+
+  .uploadTab {
+    padding: 0.625rem 0.75rem;
+    font-size: 0.875rem;
+  }
+
+  .uploadTab span {
+    display: none;
+  }
+
+  .uploadHeaderTitle h2 {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .mobileSearchBar {
+    padding: 0.625rem 0.875rem;
+  }
+
+  .mobileSearchInput {
+    padding: 0.625rem 2.25rem 0.625rem 2.5rem;
+    border-radius: 10px;
+  }
+
+  .mobileSearchIcon {
+    left: 1.5rem;
+  }
+
+  .mobileSearchClear {
+    right: 1.5rem;
+  }
+
+  .mobileFilterContent {
+    padding: 1rem;
+  }
+
+  .mobileFilterGroup select {
+    padding: 0.75rem;
+    font-size: 16px; /* iOS Zoom verhindern */
+  }
+
+  .uploadTabs {
+    padding: 0.25rem;
+  }
+
+  .uploadTab {
+    min-height: 40px;
+  }
+
+  /* Tab-Text auf sehr kleinen Screens wieder anzeigen */
+  .uploadTab span {
+    display: inline;
+    font-size: 0.8125rem;
+  }
+}
+
+/* ============================================
+   📱 MOBILE VIEW MODES - Listen- und Rasteransicht
+   ============================================ */
+
+/* Basis-Klassen (werden durch Media Queries aktiviert) */
+.mobileListView,
+.mobileGridView {
+  /* Nur als Marker-Klassen, Styles werden in Media Queries definiert */
+}
+
+@media (max-width: 768px) {
+  /* ✅ LISTEN-ANSICHT (Standard) - Volle Breite Cards untereinander */
+  .mobileListView {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+  }
+
+  .mobileListView .contractCard {
+    width: 100%;
+  }
+
+  /* ✅ RASTER-ANSICHT - 2 Spalten Grid mit kompakteren Cards */
+  .mobileGridView {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+
+  .mobileGridView .contractCard {
+    padding: 0.625rem;
+    margin-bottom: 0;
+  }
+
+  /* Grid-Ansicht: Header kompakter */
+  .mobileGridView .cardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.375rem;
+  }
+
+  .mobileGridView .cardIcon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .mobileGridView .cardIcon svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .mobileGridView .cardFileName {
+    font-size: 0.75rem;
+    line-height: 1.2;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .mobileGridView .cardStatus {
+    flex-wrap: wrap;
+  }
+
+  .mobileGridView .statusBadge {
+    font-size: 0.55rem;
+    padding: 0.125rem 0.375rem;
+  }
+
+  /* Grid-Ansicht: Details VERSTECKEN für Kompaktheit */
+  .mobileGridView .cardDetails {
+    display: none;
+  }
+
+  /* Grid-Ansicht: Actions als Icon-Only Row */
+  .mobileGridView .cardActions {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 0.25rem;
+    padding-top: 0.5rem;
+    margin-top: 0.375rem;
+    justify-content: space-between;
+  }
+
+  .mobileGridView .cardActionButton {
+    min-height: 32px;
+    min-width: 32px;
+    padding: 0.375rem;
+    flex: 0 0 auto;
+  }
+
+  .mobileGridView .cardActionButton span {
+    display: none;
+  }
+
+  /* Grid-Ansicht: Checkbox kleiner */
+  .mobileGridView .cardCheckbox {
+    position: absolute;
+    top: 0.375rem;
+    right: 0.375rem;
+  }
+
+  .mobileGridView .cardCheckbox svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Auf sehr kleinen Screens: Grid bleibt 2-spaltig aber noch kompakter */
+  .mobileGridView {
+    gap: 0.375rem;
+  }
+
+  .mobileGridView .contractCard {
+    padding: 0.5rem;
+    border-radius: 10px;
+  }
+
+  .mobileGridView .cardIcon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .mobileGridView .cardFileName {
+    font-size: 0.6875rem;
+  }
+
+  .mobileGridView .cardActionButton {
+    min-height: 28px;
+    min-width: 28px;
+    padding: 0.25rem;
+  }
+}

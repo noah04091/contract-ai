@@ -1,0 +1,1097 @@
+/* Contract Pages - Apple Style - Complete Version */
+.contract-page {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: #1d1d1f;
+    background-color: #f5f5f7;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    padding-bottom: 60px;
+  }
+  
+  .contract-page-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  
+  .contract-page-shape {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.3;
+  }
+  
+  .contract-page-shape.shape-1 {
+    background: rgba(61, 124, 243, 0.15);
+    width: 800px;
+    height: 800px;
+    top: -200px;
+    right: -300px;
+    z-index: 0;
+  }
+  
+  .contract-page-shape.shape-2 {
+    background: rgba(92, 126, 234, 0.1);
+    width: 600px;
+    height: 600px;
+    bottom: -100px;
+    left: -200px;
+    z-index: 0;
+  }
+  
+  .contract-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* WICHTIG: Breiterer Container für Results */
+  .contract-container.has-results,
+  .results-step .contract-container {
+    max-width: 1200px !important;
+  }
+  
+  .contract-header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  
+  .contract-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #3d7cf3, #5c7eea);
+    margin: 0 auto 24px;
+    color: white;
+    box-shadow: 0 8px 16px rgba(61, 124, 243, 0.2);
+  }
+  
+  .contract-header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: #1d1d1f;
+    letter-spacing: -0.02em;
+  }
+  
+  .contract-description {
+    font-size: 16px;
+    color: #86868b;
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+  
+  /* Progress Steps */
+  .contract-progress-steps {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+    position: relative;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  .step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+  }
+  
+  .step-number {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #f5f5f7;
+    border: 2px solid #d1d1d6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: #86868b;
+    margin-bottom: 8px;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+  
+  .step-label {
+    font-size: 13px;
+    color: #86868b;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+  
+  .step.active .step-number {
+    background-color: #3d7cf3;
+    border-color: #3d7cf3;
+    color: white;
+    box-shadow: 0 2px 8px rgba(61, 124, 243, 0.3);
+  }
+  
+  .step.active .step-label {
+    color: #3d7cf3;
+    font-weight: 600;
+  }
+  
+  .step.completed .step-number {
+    background-color: #10b981;
+    border-color: #10b981;
+    color: white;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  }
+  
+  .step.completed .step-number::after {
+    content: "✓";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+    font-weight: bold;
+  }
+  
+  .step-connector {
+    flex: 1;
+    height: 2px;
+    background-color: #d1d1d6;
+    position: relative;
+    z-index: 0;
+    margin: 0 10px;
+    margin-bottom: 30px;
+  }
+  
+  .step.completed + .step-connector {
+    background-color: #3d7cf3;
+  }
+  
+  /* Uploader Styles */
+  .contract-step-container {
+    background-color: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    padding: 30px;
+    margin-bottom: 20px;
+    animation: slideInUp 0.4s ease-out;
+  }
+  
+  .contract-uploader {
+    border: 2px dashed #d1d1d6;
+    border-radius: 12px;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: #f5f5f7;
+    margin-bottom: 20px;
+    position: relative;
+  }
+  
+  .contract-uploader:hover {
+    border-color: #3d7cf3;
+    background-color: rgba(61, 124, 243, 0.03);
+  }
+  
+  .contract-uploader.drag-active {
+    border-color: #3d7cf3;
+    background-color: rgba(61, 124, 243, 0.05);
+    transform: scale(1.01);
+    box-shadow: 0 4px 15px rgba(61, 124, 243, 0.1);
+  }
+  
+  .file-input {
+    opacity: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+  }
+  
+  .uploader-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    color: #86868b;
+  }
+  
+  .uploader-content svg {
+    color: #3d7cf3;
+    margin-bottom: 10px;
+  }
+  
+  .upload-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1d1d1f;
+    margin: 0;
+  }
+  
+  .upload-subtitle {
+    font-size: 14px;
+    color: #86868b;
+    margin: 0;
+  }
+  
+  .file-name {
+    font-size: 15px;
+    font-weight: 500;
+    color: #3d7cf3;
+    margin: 0;
+  }
+  
+  .progress-container {
+    width: 100%;
+    height: 4px;
+    background-color: #efefef;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 10px;
+    max-width: 200px;
+  }
+  
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #3d7cf3, #5c7eea);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+  }
+  
+  .divider-container {
+    display: flex;
+    align-items: center;
+    margin: 30px 0;
+  }
+  
+  .divider {
+    flex: 1;
+    height: 1px;
+    background-color: #d1d1d6;
+  }
+  
+  .divider-text {
+    padding: 0 15px;
+    font-size: 14px;
+    color: #86868b;
+  }
+  
+  /* Contract Text Form */
+  .contract-text-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .contract-text-form label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1d1d1f;
+  }
+  
+  .contract-text-form textarea {
+    width: 100%;
+    padding: 15px;
+    border: 1px solid #d1d1d6;
+    border-radius: 10px;
+    font-size: 15px;
+    resize: vertical;
+    outline: none;
+    transition: border 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .contract-text-form textarea:focus {
+    border-color: #3d7cf3;
+    box-shadow: 0 0 0 3px rgba(61, 124, 243, 0.15);
+  }
+  
+  .contract-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 24px;
+    background-color: #3d7cf3;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+    align-self: flex-end;
+  }
+  
+  .contract-button:hover:not(:disabled) {
+    background-color: #2e60c1;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  }
+  
+  .contract-button:active {
+    transform: translateY(0);
+  }
+  
+  .contract-button:disabled {
+    background-color: #a1a1a6;
+    cursor: not-allowed;
+    opacity: 0.6;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  
+  .contract-button.secondary {
+    background-color: transparent;
+    color: #3d7cf3;
+    border: 1px solid #3d7cf3;
+  }
+  
+  .contract-button.secondary:hover:not(:disabled) {
+    background-color: rgba(61, 124, 243, 0.05);
+    box-shadow: none;
+  }
+  
+  /* Price Input Section */
+  .price-input-section {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  
+  .contract-info-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 16px;
+    background-color: rgba(61, 124, 243, 0.05);
+    border-radius: 10px;
+    border-left: 4px solid #3d7cf3;
+  }
+  
+  .info-icon {
+    color: #3d7cf3;
+    margin-top: 2px;
+  }
+  
+  .info-text p {
+    margin: 0;
+    font-size: 14px;
+    color: #1d1d1f;
+    line-height: 1.5;
+  }
+  
+  .price-input-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .price-input-container label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1d1d1f;
+  }
+  
+  .currency-input {
+    position: relative;
+    width: 100%;
+  }
+  
+  .currency-input input {
+    width: 100%;
+    padding: 14px 40px 14px 15px;
+    border: 1px solid #d1d1d6;
+    border-radius: 10px;
+    font-size: 16px;
+    outline: none;
+    transition: border 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .currency-input input:focus {
+    border-color: #3d7cf3;
+    box-shadow: 0 0 0 3px rgba(61, 124, 243, 0.15);
+  }
+  
+  .currency-input input:invalid {
+    border-color: #f87171;
+    box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.1);
+  }
+  
+  .currency-input input:valid {
+    border-color: #10b981;
+  }
+  
+  .currency-symbol {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #86868b;
+    font-size: 16px;
+  }
+  
+  .contract-text-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .contract-text-preview label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1d1d1f;
+  }
+  
+  .text-preview {
+    padding: 16px;
+    background-color: #f5f5f7;
+    border-radius: 10px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #515154;
+    max-height: 150px;
+    overflow-y: auto;
+  }
+  
+  .contract-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    margin-top: 20px;
+  }
+  
+  .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s linear infinite;
+  }
+  
+  .analyzing-progress {
+    margin-top: 20px;
+  }
+  
+  .analyzing-progress .analyzing-text {
+    font-size: 14px;
+    color: #86868b;
+    text-align: center;
+    margin-top: 10px;
+    font-weight: 500;
+  }
+  
+  /* Results Section - WICHTIG: Ohne Einschränkungen */
+  .results-container {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+  }
+  
+  .result-header {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .result-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background-color: #f5f5f7;
+    border-radius: 100px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #86868b;
+    align-self: flex-start;
+  }
+  
+  .result-badge svg {
+    color: #86868b;
+  }
+  
+  .result-badge.success {
+    background-color: rgba(46, 213, 115, 0.1);
+    color: #2ed573;
+  }
+  
+  .result-badge.success svg {
+    color: #2ed573;
+  }
+  
+  .result-summary {
+    background-color: #f5f5f7;
+    border-radius: 12px;
+    padding: 20px;
+  }
+  
+  .result-summary h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1d1d1f;
+    margin: 0 0 10px 0;
+  }
+  
+  .result-summary p {
+    font-size: 14px;
+    color: #515154;
+    margin: 0;
+  }
+  
+  .highlighted-text {
+    color: #3d7cf3;
+    font-weight: 600;
+  }
+  
+  .comparison-container {
+    border: 1px solid #d1d1d6;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  
+  .comparison-title {
+    margin: 0;
+    padding: 16px 20px;
+    font-size: 16px;
+    font-weight: 600;
+    background-color: #f5f5f7;
+    border-bottom: 1px solid #d1d1d6;
+  }
+  
+  .new-search {
+    align-self: center;
+    margin-top: 20px;
+  }
+  
+  /* Error Message */
+  .error-message {
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    border: 1px solid #fca5a5;
+    color: #991b1b;
+    padding: 12px 16px;
+    border-radius: 12px;
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    line-height: 1.5;
+    box-shadow: 0 1px 3px rgba(239, 68, 68, 0.1);
+  }
+  
+  .error-message svg {
+    color: #dc2626;
+    flex-shrink: 0;
+  }
+  
+  /* ========== NEW ADDITIONS FOR BETTER CONTRACTS ========== */
+  
+  /* Search Input Container */
+  .search-input-container {
+    margin-bottom: 1.5rem;
+  }
+  
+  .search-input-container label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #1d1d1f;
+    font-size: 14px;
+  }
+  
+  .search-input-container input {
+    width: 100%;
+    padding: 14px 15px;
+    border: 1px solid #d1d1d6;
+    border-radius: 10px;
+    font-size: 15px;
+    color: #1d1d1f;
+    background: white;
+    transition: all 0.2s ease;
+    outline: none;
+  }
+  
+  .search-input-container input:focus {
+    border-color: #3d7cf3;
+    box-shadow: 0 0 0 3px rgba(61, 124, 243, 0.15);
+  }
+  
+  .input-help {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #86868b;
+    font-style: italic;
+  }
+  
+  /* Results Step Container - WICHTIG: Volle Breite */
+  .results-step {
+    padding: 0;
+    background: none;
+    border: none;
+    box-shadow: none;
+    min-height: 400px;
+    width: 100%;
+    max-width: none !important;
+  }
+
+  /* Wenn Step 3 aktiv ist, Container breiter machen */
+  .step:nth-child(3).active ~ .contract-step-container,
+  .contract-step-container.results-step {
+    max-width: 100%;
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+  }
+  
+  /* Step Actions */
+  .step-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 30px;
+    padding: 20px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  /* Retry Button in Error Message */
+  .retry-button {
+    margin-left: 12px;
+    padding: 6px 12px;
+    background: #3d7cf3;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .retry-button:hover:not(:disabled) {
+    background: #2e60c1;
+    transform: translateY(-1px);
+  }
+  
+  .retry-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  /* Focus States for Accessibility */
+  .contract-button:focus,
+  .search-input-container input:focus,
+  .contract-text-form textarea:focus,
+  .currency-input input:focus {
+    outline: 2px solid #3d7cf3;
+    outline-offset: 2px;
+  }
+  
+  /* Animation Keyframes */
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes spin {
+    0% { 
+      transform: rotate(0deg); 
+    }
+    100% { 
+      transform: rotate(360deg); 
+    }
+  }
+  
+  /* Responsive Styles */
+  @media (max-width: 768px) {
+    .contract-icon {
+      width: 56px;
+      height: 56px;
+    }
+    
+    .contract-header h1 {
+      font-size: 28px;
+    }
+    
+    .contract-description {
+      font-size: 15px;
+    }
+    
+    .contract-progress-steps {
+      max-width: 100%;
+    }
+    
+    .step-label {
+      font-size: 12px;
+    }
+    
+    .contract-step-container {
+      padding: 20px;
+    }
+    
+    .contract-uploader {
+      padding: 30px 15px;
+    }
+    
+    .contract-actions {
+      flex-direction: column;
+    }
+    
+    .contract-button {
+      width: 100%;
+      align-self: center;
+    }
+    
+    .step-actions {
+      flex-direction: column;
+    }
+    
+    .retry-button {
+      margin-left: 0;
+      margin-top: 8px;
+      width: 100%;
+    }
+    
+    .error-message {
+      flex-direction: column;
+      text-align: center;
+      gap: 8px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .contract-header h1 {
+      font-size: 24px;
+    }
+    
+    .step-number {
+      width: 28px;
+      height: 28px;
+      font-size: 12px;
+    }
+    
+    .step-label {
+      font-size: 11px;
+    }
+    
+    .upload-title {
+      font-size: 15px;
+    }
+    
+    .upload-subtitle {
+      font-size: 13px;
+    }
+    
+    .result-summary h3 {
+      font-size: 15px;
+    }
+    
+    .comparison-title {
+      font-size: 15px;
+    }
+    
+    .contract-container {
+      padding: 20px 15px;
+    }
+    
+    .contract-step-container {
+      padding: 15px;
+    }
+    
+    .price-input-section {
+      gap: 20px;
+    }
+    
+    .contract-info-box {
+      padding: 12px;
+      gap: 10px;
+    }
+  }
+
+/* 🎯 ZUSÄTZLICHE KLASSEN für deine bestehende ContractPages.css */
+
+/* Enhanced Progress States */
+.analyzing-progress .analyzing-text {
+  font-size: 0.875rem;
+  color: #475569;
+  margin-top: 0.75rem;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* Improved Error Message */
+.error-message {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border: 1px solid #fca5a5;
+  color: #991b1b;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  box-shadow: 0 1px 3px rgba(239, 68, 68, 0.1);
+}
+
+.error-message svg {
+  flex-shrink: 0;
+  color: #dc2626;
+}
+
+/* Button Disabled States */
+.contract-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.contract-button:disabled:hover {
+  transform: none !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Enhanced Input Validation */
+.currency-input input:invalid {
+  border-color: #f87171;
+  box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.1);
+}
+
+.currency-input input:valid {
+  border-color: #10b981;
+}
+
+/* Loading States for Results */
+.results-step {
+  min-height: 400px;
+}
+
+/* Mobile Responsive Updates */
+@media (max-width: 768px) {
+  .step-actions {
+    flex-direction: column;
+  }
+  
+  .retry-button {
+    margin-left: 0;
+    margin-top: 0.5rem;
+    width: 100%;
+  }
+  
+  .error-message {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
+}
+
+/* Improved Animation for Step Transitions */
+.contract-step-container {
+  animation: slideInUp 0.4s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Enhanced Typography for Better Readability */
+.contract-description {
+  line-height: 1.6;
+  color: #64748b;
+  font-size: 1rem;
+}
+
+/* Success States */
+.step.completed .step-number {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.step.completed .step-number::after {
+  content: "✓";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+/* Enhanced Hover States */
+.contract-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* Focus States for Accessibility */
+.contract-button:focus,
+.filter-select:focus,
+.search-input-container input:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Loading Animation Enhancement */
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Floating Action Button für gespeicherte Alternativen */
+.fab-saved-alternatives {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: none;
+  border-radius: 50%;
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+  cursor: pointer;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: white;
+}
+
+.fab-saved-alternatives:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(59, 130, 246, 0.4);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+.fab-saved-alternatives:active {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+}
+
+.fab-saved-alternatives svg {
+  transition: transform 0.2s ease;
+}
+
+.fab-saved-alternatives:hover svg {
+  transform: scale(1.1);
+}
+
+.fab-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 2px solid white;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+/* Responsive FAB */
+@media (max-width: 768px) {
+  .fab-saved-alternatives {
+    bottom: 20px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+  }
+
+  .fab-saved-alternatives svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .fab-badge {
+    width: 22px;
+    height: 22px;
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .fab-saved-alternatives {
+    bottom: 15px;
+    right: 15px;
+    width: 52px;
+    height: 52px;
+  }
+
+  .fab-saved-alternatives svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .fab-badge {
+    width: 20px;
+    height: 20px;
+    font-size: 0.65rem;
+  }
+}

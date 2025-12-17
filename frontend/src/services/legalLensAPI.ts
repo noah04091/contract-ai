@@ -10,9 +10,15 @@ import type {
   ProgressResponse,
   SummaryResponse,
   PerspectiveType,
+  IndustryType,
+  NegotiationChecklistResponse,
   LegalLensProgress,
   Note,
-  Bookmark
+  Bookmark,
+  ReportDesign,
+  ReportSection,
+  ReportDesignInfo,
+  ReportSectionInfo
 } from '../types/legalLens';
 
 const LEGAL_LENS_BASE = `${API_BASE_URL}/legal-lens`;
@@ -403,4 +409,204 @@ export async function getAnalysisSummary(
   }
 
   return response.json();
+}
+
+// ============================================
+// INDUSTRY CONTEXT API
+// ============================================
+
+/**
+ * Verfügbare Branchen abrufen
+ */
+export async function getAvailableIndustries(): Promise<{
+  success: boolean;
+  industries: Array<{
+    id: IndustryType;
+    name: string;
+  }>;
+}> {
+  const response = await fetchWithAuth(
+    `${LEGAL_LENS_BASE}/industries`,
+    { method: 'GET' }
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Fehler beim Laden der Branchen');
+  }
+
+  return response.json();
+}
+
+/**
+ * Branchen-Kontext für einen Vertrag setzen
+ */
+export async function setIndustryContext(
+  contractId: string,
+  industry: IndustryType
+): Promise<{
+  success: boolean;
+  industry: IndustryType;
+  industrySetAt: string;
+  message: string;
+}> {
+  const response = await fetchWithAuth(
+    `${LEGAL_LENS_BASE}/${contractId}/industry`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ industry })
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Fehler beim Setzen der Branche');
+  }
+
+  return response.json();
+}
+
+/**
+ * Branchen-Kontext für einen Vertrag abrufen
+ */
+export async function getIndustryContext(
+  contractId: string
+): Promise<{
+  success: boolean;
+  industry: IndustryType;
+  industrySetAt: string | null;
+}> {
+  const response = await fetchWithAuth(
+    `${LEGAL_LENS_BASE}/${contractId}/industry`,
+    { method: 'GET' }
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Fehler beim Laden der Branche');
+  }
+
+  return response.json();
+}
+
+// ============================================
+// NEGOTIATION CHECKLIST API
+// ============================================
+
+/**
+ * Verhandlungs-Checkliste generieren
+ */
+export async function generateNegotiationChecklist(
+  contractId: string,
+  perspective: PerspectiveType = 'contractor'
+): Promise<NegotiationChecklistResponse> {
+  const response = await fetchWithAuth(
+    `${LEGAL_LENS_BASE}/${contractId}/negotiation-checklist`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ perspective })
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Fehler beim Generieren der Verhandlungs-Checkliste');
+  }
+
+  return response.json();
+}
+
+// ============================================
+// EXPORT REPORT API
+// ============================================
+
+/**
+ * Verfügbare Export-Designs abrufen
+ */
+export async function getExportDesigns(): Promise<{
+  success: boolean;
+  designs: ReportDesignInfo[];
+}> {
+  const response = await fetchWithAuth(
+    `${LEGAL_LENS_BASE}/export/designs`,
+    { method: 'GET' }
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Fehler beim Laden der Export-Designs');
+  }
+
+  return response.json();
+}
+
+/**
+ * Verfügbare Export-Sektionen abrufen
+ */
+export async function getExportSections(): Promise<{
+  success: boolean;
+  sections: ReportSectionInfo[];
+}> {
+  const response = await fetchWithAuth(
+    `${LEGAL_LENS_BASE}/export/sections`,
+    { method: 'GET' }
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Fehler beim Laden der Export-Sektionen');
+  }
+
+  return response.json();
+}
+
+/**
+ * Analyse-Report als PDF exportieren
+ * Gibt einen Blob zurück, der direkt heruntergeladen werden kann
+ */
+export async function exportAnalysisReport(
+  contractId: string,
+  design: ReportDesign = 'executive',
+  includeSections: ReportSection[] = ['summary', 'criticalClauses']
+): Promise<Blob> {
+  const token = localStorage.getItem('token');
+
+  const response = await fetch(
+    `${LEGAL_LENS_BASE}/${contractId}/export-report`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` })
+      },
+      credentials: 'include',
+      body: JSON.stringify({ design, includeSections })
+    }
+  );
+
+  if (!response.ok) {
+    // Versuche JSON-Fehlermeldung zu lesen
+    try {
+      const error = await response.json();
+      throw new Error(error.error || 'Fehler beim Exportieren des Reports');
+    } catch {
+      throw new Error('Fehler beim Exportieren des Reports');
+    }
+  }
+
+  return response.blob();
+}
+
+/**
+ * Hilfsfunktion: PDF-Blob herunterladen
+ */
+export function downloadPdfBlob(blob: Blob, filename: string): void {
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
 }
