@@ -266,28 +266,6 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            {/* Save to Library Button */}
-            <button
-              onClick={() => setShowSaveModal(true)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.375rem',
-                padding: '0.5rem 0.875rem',
-                background: 'white',
-                border: '1px solid #e2e8f0',
-                borderRadius: '8px',
-                fontSize: '0.75rem',
-                fontWeight: 500,
-                color: '#64748b',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-              title="Klausel in Bibliothek speichern"
-            >
-              <BookmarkPlus size={16} />
-              Speichern
-            </button>
             {riskAssessment && (
               <div style={{
                 textAlign: 'right',
@@ -911,6 +889,18 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
           setTimeout(() => setShowCopiedToast(false), 3000);
         }}
       />
+
+      {/* Floating Save Button */}
+      {originalClauseText && (
+        <button
+          onClick={() => setShowSaveModal(true)}
+          className={styles.floatingSaveButton}
+          title="Klausel in Bibliothek speichern"
+        >
+          <BookmarkPlus size={20} />
+          <span>Klausel speichern</span>
+        </button>
+      )}
 
       {/* Toast Notification für kopierte Alternative */}
       {showCopiedToast && (

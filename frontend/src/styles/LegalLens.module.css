@@ -2188,6 +2188,44 @@
   }
 }
 
+/* ===== FLOATING SAVE BUTTON ===== */
+.floatingSaveButton {
+  position: sticky;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
+  border: none;
+  border-radius: 50px;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4);
+  margin: 1rem auto;
+  z-index: 100;
+}
+
+.floatingSaveButton:hover {
+  background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
+  transform: translateX(-50%) translateY(-2px);
+  box-shadow: 0 6px 25px rgba(168, 85, 247, 0.5);
+}
+
+.floatingSaveButton:active {
+  transform: translateX(-50%) translateY(0);
+}
+
+.floatingSaveButton svg {
+  flex-shrink: 0;
+}
+
 /* ===== TOAST NOTIFICATION ===== */
 .copiedToast {
   position: fixed;
