@@ -19,6 +19,8 @@ import {
   ChevronRight,
   CheckCircle,
   AlertCircle,
+  HelpCircle,
+  X,
 } from 'lucide-react';
 import styles from './VariablesPanel.module.css';
 
@@ -42,6 +44,7 @@ const typeIcons: Record<string, React.ReactNode> = {
 export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['Allgemein']));
+  const [showHelp, setShowHelp] = useState(false);
 
   const {
     document: currentDocument,
@@ -181,8 +184,17 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
       {/* Header */}
       <div className={styles.header}>
         <h3 className={styles.title}>Variablen</h3>
-        <div className={styles.progressBadge}>
-          {progress.filled}/{progress.total}
+        <div className={styles.headerActions}>
+          <button
+            className={`${styles.helpButton} ${showHelp ? styles.active : ''}`}
+            onClick={() => setShowHelp(!showHelp)}
+            title="Hilfe anzeigen"
+          >
+            <HelpCircle size={16} />
+          </button>
+          <div className={styles.progressBadge}>
+            {progress.filled}/{progress.total}
+          </div>
         </div>
       </div>
 
@@ -193,6 +205,38 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
           style={{ width: `${progress.percentage}%` }}
         />
       </div>
+
+      {/* Collapsible Help Section */}
+      {showHelp && (
+        <div className={styles.helpBanner}>
+          <div className={styles.helpBannerHeader}>
+            <span>So funktionieren Variablen</span>
+            <button onClick={() => setShowHelp(false)}>
+              <X size={14} />
+            </button>
+          </div>
+          <div className={styles.helpBannerContent}>
+            <div className={styles.helpStep}>
+              <span className={styles.stepNumber}>1</span>
+              <span>Klausel hinzufügen (links im Menü)</span>
+            </div>
+            <div className={styles.helpStep}>
+              <span className={styles.stepNumber}>2</span>
+              <span>Im Text <code>{'{{'}</code><strong>name</strong><code>{'}}'}</code> schreiben</span>
+            </div>
+            <div className={styles.helpStep}>
+              <span className={styles.stepNumber}>3</span>
+              <span>Variable erscheint hier → Wert eingeben</span>
+            </div>
+            <div className={styles.helpExampleInline}>
+              <span className={styles.exampleLabel}>Beispiel:</span>
+              <code>{'{{kundenname}}'}</code>
+              <span className={styles.exampleArrowInline}>→</span>
+              <span className={styles.exampleValue}>Max Mustermann</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Search */}
       <div className={styles.searchWrapper}>
@@ -278,11 +322,23 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
           </div>
         ))}
 
-        {/* Empty State */}
+        {/* Empty State with Clear CTA */}
         {Object.keys(groupedVariables).length === 0 && (
           <div className={styles.emptyState}>
-            <Type size={32} strokeWidth={1} />
-            <p>Keine Variablen gefunden</p>
+            <div className={styles.emptyIcon}>
+              <Type size={40} strokeWidth={1.5} />
+            </div>
+            <h4 className={styles.emptyTitle}>Noch keine Variablen</h4>
+            <p className={styles.emptyText}>
+              Fügen Sie links eine <strong>Klausel</strong> hinzu – sie enthält bereits Beispiel-Variablen!
+            </p>
+            <button
+              className={styles.showHelpButton}
+              onClick={() => setShowHelp(true)}
+            >
+              <HelpCircle size={14} />
+              <span>Wie funktionieren Variablen?</span>
+            </button>
           </div>
         )}
       </div>

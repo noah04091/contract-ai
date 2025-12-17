@@ -1,9 +1,9 @@
 /**
  * BuilderCanvas - Hauptkomponente für den visuellen Vertragseditor
- * Drag & Drop Canvas mit DND-Kit
+ * NEU: Separate A4-Seiten mit echten Seitenumbrüchen
  */
 
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -22,6 +22,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
+import { AlertTriangle } from 'lucide-react';
 import { useContractBuilderStore, Block } from '../../../stores/contractBuilderStore';
 import { SortableBlock } from './SortableBlock';
 import { BlockRenderer } from '../Blocks/BlockRenderer';
@@ -32,28 +33,133 @@ interface BuilderCanvasProps {
   className?: string;
 }
 
+// Blöcke nach Seiten gruppieren (PageBreak-Blöcke sind die Trennpunkte)
+function groupBlocksByPage(blocks: Block[]): Block[][] {
+  const pages: Block[][] = [[]];
+  let currentPageIndex = 0;
+
+  blocks.forEach((block) => {
+    if (block.type === 'page-break') {
+      // Starte eine neue Seite
+      currentPageIndex++;
+      pages[currentPageIndex] = [];
+    } else {
+      pages[currentPageIndex].push(block);
+    }
+  });
+
+  return pages;
+}
+
+// A4 Seitenhöhe in Pixel (ca. 297mm bei 96dpi, minus Padding)
+const PAGE_CONTENT_HEIGHT = 800; // Approximation der nutzbaren Höhe in px
+
 export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
+  const pageContentRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  const blockRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [overflowPages, setOverflowPages] = useState<Set<number>>(new Set());
+  const autoPageBreakProcessed = useRef<Set<string>>(new Set()); // Verhindert endlose Loops
 
   const {
     document: currentDocument,
     selectedBlockId,
+    activePageIndex,
     zoom,
     view,
     reorderBlocks,
     setSelectedBlock,
+    setActivePage,
     setDragState,
+    autoInsertPageBreak,
   } = useContractBuilderStore();
 
   const blocks = currentDocument?.content.blocks || [];
   const design = currentDocument?.design;
 
+  // Blöcke nach Seiten gruppieren
+  const pages = useMemo(() => groupBlocksByPage(blocks), [blocks]);
+
+  // Überlauf-Erkennung und automatischer Seitenumbruch
+  useEffect(() => {
+    const checkOverflowAndAutoBreak = () => {
+      const newOverflowPages = new Set<number>();
+
+      pages.forEach((pageBlocks, pageIndex) => {
+        const pageContentEl = pageContentRefs.current.get(pageIndex);
+        if (!pageContentEl) return;
+
+        let cumulativeHeight = 0;
+
+        // Gehe durch alle Blöcke auf dieser Seite
+        for (const block of pageBlocks) {
+          const blockEl = blockRefs.current.get(block.id);
+          if (!blockEl) continue;
+
+          const blockHeight = blockEl.offsetHeight + 16; // +16 für margin
+          cumulativeHeight += blockHeight;
+
+          // Prüfe ob dieser Block die Seite überläuft
+          if (cumulativeHeight > PAGE_CONTENT_HEIGHT) {
+            newOverflowPages.add(pageIndex);
+
+            // Auto-Seitenumbruch nur wenn nicht bereits verarbeitet
+            const processKey = `${pageIndex}-${block.id}`;
+            if (!autoPageBreakProcessed.current.has(processKey) && view !== 'preview') {
+              autoPageBreakProcessed.current.add(processKey);
+
+              // Verzögert den PageBreak einfügen um Race Conditions zu vermeiden
+              setTimeout(() => {
+                autoInsertPageBreak(block.id);
+              }, 50);
+
+              return; // Nur einen PageBreak pro Durchlauf
+            }
+            break;
+          }
+        }
+      });
+
+      setOverflowPages(newOverflowPages);
+    };
+
+    // Prüfe nach kurzer Verzögerung (damit DOM aktualisiert ist)
+    const timer = setTimeout(checkOverflowAndAutoBreak, 200);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [blocks, pages, autoInsertPageBreak, view]);
+
+  // Reset processed list wenn Blocks sich ändern
+  useEffect(() => {
+    autoPageBreakProcessed.current.clear();
+  }, [blocks.length]);
+
+  // Ref-Callback für pageContent Elemente
+  const setPageContentRef = useCallback((pageIndex: number) => (el: HTMLDivElement | null) => {
+    if (el) {
+      pageContentRefs.current.set(pageIndex, el);
+    } else {
+      pageContentRefs.current.delete(pageIndex);
+    }
+  }, []);
+
+  // Ref-Callback für Block Elemente (für Höhenmessung)
+  const setBlockRef = useCallback((blockId: string) => (el: HTMLDivElement | null) => {
+    if (el) {
+      blockRefs.current.set(blockId, el);
+    } else {
+      blockRefs.current.delete(blockId);
+    }
+  }, []);
+
   // Sensoren für Drag & Drop
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8, // Mindestens 8px bewegen bevor Drag startet
+        distance: 8,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -122,6 +228,12 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
     }
   }, [setSelectedBlock]);
 
+  // Seite auswählen
+  const handlePageClick = useCallback((pageIndex: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActivePage(pageIndex);
+  }, [setActivePage]);
+
   // Aktiver Block für DragOverlay
   const activeBlock = activeId ? blocks.find((b: Block) => b.id === activeId) : null;
 
@@ -134,9 +246,12 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
     '--text-secondary': design?.textSecondary || '#4a5568',
     '--font-family': design?.fontFamily || 'Inter, sans-serif',
     '--heading-font': design?.headingFont || 'Inter, sans-serif',
+  } as React.CSSProperties;
+
+  const zoomStyle: React.CSSProperties = {
     transform: `scale(${zoom / 100})`,
     transformOrigin: 'top center',
-  } as React.CSSProperties;
+  };
 
   return (
     <div
@@ -149,95 +264,161 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
         {zoom}%
       </div>
 
-      {/* Paper/Document Area */}
-      <div className={styles.paperWrapper}>
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragStart={handleDragStart}
-          onDragOver={handleDragOver}
-          onDragEnd={handleDragEnd}
-          measuring={measuringConfig}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+        measuring={measuringConfig}
+      >
+        <SortableContext
+          items={blocks.map((b: Block) => b.id)}
+          strategy={verticalListSortingStrategy}
         >
-          <div
-            className={`${styles.paper} ${view === 'preview' ? styles.previewMode : ''}`}
-            style={pageStyles}
-          >
-            {/* Page Header (optional) */}
-            {design?.showHeaderOnAllPages && (
-              <div className={styles.pageHeader}>
-                {/* Wiederholender Header */}
-              </div>
-            )}
-
-            {/* Content Area */}
-            <div className={styles.pageContent}>
-              {blocks.length === 0 ? (
-                <DropZone
-                  position={0}
-                  isEmpty
-                  message="Ziehen Sie Blöcke hierher oder klicken Sie, um zu beginnen"
-                />
-              ) : (
-                <SortableContext
-                  items={blocks.map((b: Block) => b.id)}
-                  strategy={verticalListSortingStrategy}
+          {/* Seiten Container */}
+          <div className={styles.pagesContainer} style={zoomStyle}>
+            {pages.length === 0 || (pages.length === 1 && pages[0].length === 0) ? (
+              // Leeres Dokument - eine leere Seite
+              <div className={styles.paperWrapper}>
+                <div
+                  className={`${styles.paper} ${styles.activePage} ${view === 'preview' ? styles.previewMode : ''}`}
+                  style={pageStyles}
+                  onClick={(e) => handlePageClick(0, e)}
                 >
-                  {blocks.map((block: Block, index: number) => {
-                    // Berechne Seitennummer für page-break Blöcke
-                    const pageBreaksBefore = blocks
-                      .slice(0, index)
-                      .filter((b: Block) => b.type === 'page-break').length;
-                    const pageNumber = pageBreaksBefore + 1;
-
-                    return (
-                      <SortableBlock
-                        key={block.id}
-                        block={block}
-                        index={index}
-                        isSelected={selectedBlockId === block.id}
-                        isPreview={view === 'preview'}
-                        onClick={() => handleBlockClick(block.id)}
-                        pageNumber={pageNumber}
-                      />
-                    );
-                  })}
-                </SortableContext>
-              )}
-            </div>
-
-            {/* Page Footer */}
-            {design?.showPageNumbers && (
-              <div className={`${styles.pageFooter} ${styles[design.pageNumberPosition || 'bottom-center']}`}>
-                <span className={styles.pageNumber}>Seite 1</span>
+                  {/* Aktive Seite Badge */}
+                  {view !== 'preview' && (
+                    <div className={styles.activePageBadge}>
+                      Aktive Seite
+                    </div>
+                  )}
+                  <div className={styles.pageContent}>
+                    <DropZone
+                      position={0}
+                      isEmpty
+                      message="Ziehen Sie Blöcke hierher oder klicken Sie, um zu beginnen"
+                    />
+                  </div>
+                  {/* Page Footer */}
+                  {design?.showPageNumbers && (
+                    <div className={`${styles.pageFooter} ${styles[design.pageNumberPosition || 'bottom-center']}`}>
+                      <span className={styles.pageNumber}>Seite 1</span>
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
+            ) : (
+              // Seiten mit Inhalten
+              pages.map((pageBlocks, pageIndex) => (
+                <div key={pageIndex} className={styles.paperWrapper}>
+                  <div
+                    className={`
+                      ${styles.paper}
+                      ${view === 'preview' ? styles.previewMode : ''}
+                      ${activePageIndex === pageIndex && view !== 'preview' ? styles.activePage : ''}
+                    `}
+                    style={pageStyles}
+                    data-page={pageIndex + 1}
+                    onClick={(e) => handlePageClick(pageIndex, e)}
+                  >
+                    {/* Aktive Seite Indikator */}
+                    {activePageIndex === pageIndex && view !== 'preview' && (
+                      <div className={styles.activePageBadge}>
+                        Aktive Seite
+                      </div>
+                    )}
 
-            {/* Watermark */}
-            {design?.watermark && (
-              <div
-                className={styles.watermark}
-                style={{ opacity: design.watermarkOpacity || 0.1 }}
-              >
-                {design.watermark}
-              </div>
+                    {/* Page Header (optional) */}
+                    {design?.showHeaderOnAllPages && pageIndex > 0 && (
+                      <div className={styles.pageHeader}>
+                        {/* Wiederholender Header */}
+                      </div>
+                    )}
+
+                    {/* Content Area */}
+                    <div
+                      className={styles.pageContent}
+                      ref={setPageContentRef(pageIndex)}
+                    >
+                      {pageBlocks.length === 0 ? (
+                        <div className={styles.emptyPage}>
+                          <span>Seite {pageIndex + 1}</span>
+                          <span className={styles.emptyPageHint}>
+                            {activePageIndex === pageIndex
+                              ? 'Blöcke werden hier eingefügt'
+                              : 'Klicken um diese Seite zu aktivieren'}
+                          </span>
+                        </div>
+                      ) : (
+                        pageBlocks.map((block: Block) => (
+                          <div key={block.id} ref={setBlockRef(block.id)}>
+                            <SortableBlock
+                              block={block}
+                              index={blocks.findIndex((b: Block) => b.id === block.id)}
+                              isSelected={selectedBlockId === block.id}
+                              isPreview={view === 'preview'}
+                              onClick={() => handleBlockClick(block.id)}
+                              pageNumber={pageIndex + 1}
+                            />
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    {/* Überlauf-Warnung */}
+                    {overflowPages.has(pageIndex) && view !== 'preview' && (
+                      <>
+                        <div className={styles.overflowOverlay} />
+                        <div className={styles.overflowWarning}>
+                          <AlertTriangle size={14} />
+                          <span>Inhalt zu lang – Seitenumbruch einfügen</span>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Page Footer */}
+                    {design?.showPageNumbers && (
+                      <div className={`${styles.pageFooter} ${styles[design.pageNumberPosition || 'bottom-center']}`}>
+                        <span className={styles.pageNumber}>Seite {pageIndex + 1}</span>
+                      </div>
+                    )}
+
+                    {/* Watermark */}
+                    {design?.watermark && (
+                      <div
+                        className={styles.watermark}
+                        style={{ opacity: design.watermarkOpacity || 0.1 }}
+                      >
+                        {design.watermark}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Seiten-Trenner Label (nur im Edit-Modus) */}
+                  {pageIndex < pages.length - 1 && view !== 'preview' && (
+                    <div className={styles.pageSeparatorLabel}>
+                      <span>Seitenumbruch nach Seite {pageIndex + 1}</span>
+                    </div>
+                  )}
+                </div>
+              ))
             )}
           </div>
+        </SortableContext>
 
-          {/* Drag Overlay */}
-          <DragOverlay>
-            {activeBlock ? (
-              <div className={styles.dragOverlay}>
-                <BlockRenderer
-                  block={activeBlock}
-                  isSelected={false}
-                  isPreview={true}
-                />
-              </div>
-            ) : null}
-          </DragOverlay>
-        </DndContext>
-      </div>
+        {/* Drag Overlay */}
+        <DragOverlay>
+          {activeBlock ? (
+            <div className={styles.dragOverlay}>
+              <BlockRenderer
+                block={activeBlock}
+                isSelected={false}
+                isPreview={true}
+              />
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
     </div>
   );
 };

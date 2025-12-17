@@ -25,6 +25,36 @@
   margin: 0;
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.helpButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: #f7fafc;
+  border-radius: 6px;
+  color: #4a5568;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.helpButton:hover {
+  background: #edf2f7;
+  color: #3182ce;
+}
+
+.helpButton.active {
+  background: #3182ce;
+  color: white;
+}
+
 .progressBadge {
   font-size: 12px;
   font-weight: 500;
@@ -43,6 +73,119 @@
   height: 100%;
   background: linear-gradient(90deg, #38a169 0%, #48bb78 100%);
   transition: width 0.3s ease;
+}
+
+/* Help Banner */
+.helpBanner {
+  background: #ebf8ff;
+  border-bottom: 1px solid #bee3f8;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 300px;
+  }
+}
+
+.helpBannerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: #3182ce;
+  color: white;
+}
+
+.helpBannerHeader span {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.helpBannerHeader button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.helpBannerHeader button:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.helpBannerContent {
+  padding: 12px 16px;
+}
+
+.helpBannerContent .helpStep {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #2c5282;
+}
+
+.helpBannerContent .helpStep code {
+  background: #2d3748;
+  color: #68d391;
+  padding: 1px 3px;
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+.helpBannerContent .helpStep strong {
+  color: #3182ce;
+}
+
+.helpExampleInline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: white;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.helpExampleInline .exampleLabel {
+  color: #4a5568;
+  font-weight: 500;
+}
+
+.helpExampleInline code {
+  background: #2d3748;
+  color: #68d391;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: 'Roboto Mono', monospace;
+}
+
+.exampleArrowInline {
+  color: #3182ce;
+  font-weight: bold;
+}
+
+.helpExampleInline .exampleValue {
+  background: #c6f6d5;
+  color: #22543d;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 500;
 }
 
 .searchWrapper {
@@ -245,13 +388,200 @@
   align-items: center;
   justify-content: center;
   padding: 40px 20px;
-  color: #a0aec0;
   text-align: center;
 }
 
-.emptyState p {
-  margin: 12px 0 0;
+.emptyIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  background: #f7fafc;
+  border-radius: 50%;
+  color: #a0aec0;
+  margin-bottom: 16px;
+}
+
+.emptyTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0 0 8px 0;
+}
+
+.emptyText {
   font-size: 13px;
+  color: #718096;
+  line-height: 1.5;
+  margin: 0 0 20px 0;
+}
+
+.emptyText strong {
+  color: #3182ce;
+}
+
+.showHelpButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: #ebf8ff;
+  border: 1px solid #bee3f8;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #3182ce;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.showHelpButton:hover {
+  background: #bee3f8;
+  border-color: #90cdf4;
+}
+
+/* Help Section */
+.helpSection {
+  width: 100%;
+}
+
+.helpTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0 0 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.helpText {
+  font-size: 13px;
+  color: #4a5568;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+
+.helpExample {
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.helpExample strong {
+  font-size: 12px;
+  color: #4a5568;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.exampleCode {
+  display: inline-block;
+  background: #2d3748;
+  color: #68d391;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 13px;
+}
+
+.exampleArrow {
+  display: inline-block;
+  margin: 0 10px;
+  color: #3182ce;
+  font-weight: bold;
+}
+
+.exampleResult {
+  display: inline-block;
+  background: #ebf8ff;
+  color: #2b6cb0;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.helpSteps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.helpStep {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #4a5568;
+}
+
+.helpStep strong {
+  color: #3182ce;
+}
+
+.helpStep code {
+  background: #edf2f7;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: 'Roboto Mono', monospace;
+  color: #2d3748;
+}
+
+.stepNumber {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: #3182ce;
+  color: white;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.commonVariables {
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.commonVariables strong {
+  font-size: 12px;
+  color: #4a5568;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.variableChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.variableChips code {
+  background: white;
+  border: 1px solid #e2e8f0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: 'Roboto Mono', monospace;
+  color: #2d3748;
+  cursor: default;
+}
+
+.variableChips code:hover {
+  background: #ebf8ff;
+  border-color: #3182ce;
+  color: #2b6cb0;
 }
 
 /* Scrollbar */

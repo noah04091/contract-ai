@@ -23,6 +23,8 @@ import {
   ChevronRight,
   Plus,
   Sparkles,
+  X,
+  Loader2,
 } from 'lucide-react';
 import styles from './BlockToolbar.module.css';
 
@@ -71,8 +73,44 @@ const blockCategories = [
 export const BlockToolbar: React.FC<BlockToolbarProps> = ({ className }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedCategory, setExpandedCategory] = useState<string | null>('Inhalt');
+  const [showAiModal, setShowAiModal] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const { addBlock } = useContractBuilderStore();
+
+  // KI-Klausel generieren
+  const handleGenerateClause = async () => {
+    if (!aiPrompt.trim()) return;
+
+    setIsGenerating(true);
+    try {
+      // Simuliere KI-Generierung
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      const generatedClause = {
+        type: 'clause' as BlockType,
+        content: {
+          number: 'auto',
+          clauseTitle: 'KI-generierte Klausel',
+          body: `Diese Klausel wurde basierend auf Ihrer Anfrage "${aiPrompt}" generiert. Bitte überprüfen und anpassen Sie den Inhalt entsprechend Ihrer spezifischen Anforderungen.`,
+          subclauses: [],
+        },
+        style: {},
+        locked: false,
+        aiGenerated: true,
+        aiPrompt: aiPrompt,
+      };
+
+      addBlock(generatedClause);
+      setShowAiModal(false);
+      setAiPrompt('');
+    } catch (error) {
+      console.error('Fehler bei KI-Generierung:', error);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   // Block hinzufügen
   const handleAddBlock = (type: BlockType) => {
@@ -119,11 +157,54 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({ className }) => {
 
       {/* AI Quick Add */}
       <div className={styles.aiSection}>
-        <button className={styles.aiButton}>
+        <button className={styles.aiButton} onClick={() => setShowAiModal(true)}>
           <Sparkles size={16} />
           <span>KI-Klausel generieren</span>
         </button>
       </div>
+
+      {/* KI-Modal */}
+      {showAiModal && (
+        <div className={styles.aiModalOverlay} onClick={() => setShowAiModal(false)}>
+          <div className={styles.aiModal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.aiModalHeader}>
+              <span><Sparkles size={16} /> KI-Klausel generieren</span>
+              <button onClick={() => setShowAiModal(false)}>
+                <X size={16} />
+              </button>
+            </div>
+            <div className={styles.aiModalContent}>
+              <textarea
+                placeholder="Beschreiben Sie die gewünschte Klausel, z.B. 'Haftungsausschluss für Softwaredienstleistungen'"
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+                rows={4}
+              />
+              <div className={styles.aiSuggestions}>
+                <button onClick={() => setAiPrompt('Haftungsausschluss')}>Haftung</button>
+                <button onClick={() => setAiPrompt('Vertraulichkeitsklausel')}>Vertraulichkeit</button>
+                <button onClick={() => setAiPrompt('Kündigungsklausel')}>Kündigung</button>
+              </div>
+            </div>
+            <div className={styles.aiModalFooter}>
+              <button className={styles.cancelBtn} onClick={() => setShowAiModal(false)}>
+                Abbrechen
+              </button>
+              <button
+                className={styles.generateBtn}
+                onClick={handleGenerateClause}
+                disabled={!aiPrompt.trim() || isGenerating}
+              >
+                {isGenerating ? (
+                  <><Loader2 size={14} className={styles.spinner} /> Generiere...</>
+                ) : (
+                  <><Sparkles size={14} /> Generieren</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Block Categories */}
       <div className={styles.categories}>
@@ -209,8 +290,8 @@ function getDefaultContent(type: BlockType): Record<string, unknown> {
     case 'clause':
       return {
         number: 'auto',
-        clauseTitle: 'Klauseltitel',
-        body: 'Hier steht der Klauseltext. Verwenden Sie {{variablen}} für dynamische Werte.',
+        clauseTitle: 'Vertragsgegenstand',
+        body: 'Der Auftraggeber {{kundenname}} beauftragt den Auftragnehmer mit der Erbringung der vereinbarten Leistungen zum Preis von {{preis}} Euro.\n\n💡 Tipp: Text in doppelten geschweiften Klammern {{so}} wird automatisch zur Variable!',
         subclauses: [],
       };
     case 'table':

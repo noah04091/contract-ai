@@ -1,19 +1,21 @@
 /**
  * BuilderCanvas Styles - Hauptcanvas für den Vertragseditor
+ * NEU: Separate A4-Seiten mit echten Seitenumbrüchen
  */
 
 .canvas {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: #f0f2f5;
+  /* Dezenter, professioneller Hintergrund */
+  background-color: #f1f5f9;
   background-image:
-    linear-gradient(45deg, #e8eaed 25%, transparent 25%),
-    linear-gradient(-45deg, #e8eaed 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #e8eaed 75%),
-    linear-gradient(-45deg, transparent 75%, #e8eaed 75%);
-  background-size: 20px 20px;
-  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    linear-gradient(45deg, #e2e8f0 25%, transparent 25%),
+    linear-gradient(-45deg, #e2e8f0 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #e2e8f0 75%),
+    linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 40px 20px 100px 20px;
@@ -46,17 +48,36 @@
   opacity: 1;
 }
 
-.paperWrapper {
+/* Container für alle Seiten */
+.pagesContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
   width: 100%;
   max-width: 900px;
-  display: flex;
-  justify-content: center;
+  transition: transform 0.3s ease;
 }
 
-/* A4 Paper Simulation */
+.paperWrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 40px;
+  padding-top: 24px; /* Platz für "Aktive Seite" Badge */
+}
+
+.paperWrapper:last-child {
+  margin-bottom: 0;
+}
+
+/* A4 Paper Simulation - FESTE HÖHE */
 .paper {
   width: 210mm;
+  height: 297mm; /* Feste A4 Höhe */
   min-height: 297mm;
+  max-height: 297mm;
   background: white;
   box-shadow:
     0 2px 4px rgba(0, 0, 0, 0.05),
@@ -65,9 +86,9 @@
   border-radius: 2px;
   position: relative;
   padding: 20mm;
+  padding-top: calc(20mm + 8px); /* Extra Platz für Block-Controls oben */
   box-sizing: border-box;
-  transition: transform 0.3s ease;
-  transform-origin: top center;
+  overflow: visible; /* Zeige Überlauf für Block-Controls */
 
   /* CSS Custom Properties für Design */
   --primary-color: #1a365d;
@@ -94,8 +115,11 @@
 }
 
 .pageContent {
-  min-height: 200mm;
+  height: calc(297mm - 40mm - 20mm); /* A4 Höhe minus Padding und Footer-Bereich */
   position: relative;
+  overflow: hidden; /* Überlauf abschneiden - Auto-PageBreak verschiebt Blöcke */
+  padding-top: 32px; /* Platz für Block-Controls (Drag-Handles etc.) */
+  margin-top: -32px; /* Kompensiere das Padding nach oben */
 }
 
 .pageFooter {
@@ -157,6 +181,143 @@
   z-index: 0;
 }
 
+/* Aktive Seite Styling */
+.paper.activePage {
+  outline: 3px solid #3182ce;
+  outline-offset: -3px;
+  cursor: default;
+}
+
+.paper:not(.activePage):not(.previewMode) {
+  cursor: pointer;
+  transition: outline 0.2s ease, box-shadow 0.2s ease;
+}
+
+.paper:not(.activePage):not(.previewMode):hover {
+  outline: 2px dashed #a0aec0;
+  outline-offset: -2px;
+}
+
+/* Aktive Seite Badge */
+.activePageBadge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #3182ce;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(49, 130, 206, 0.4);
+}
+
+/* Leere Seite Platzhalter */
+.emptyPage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #a0aec0;
+  gap: 8px;
+  border: 2px dashed #e2e8f0;
+  border-radius: 8px;
+  margin: 10px;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.activePage .emptyPage {
+  border-color: #3182ce;
+  background: rgba(49, 130, 206, 0.05);
+}
+
+.emptyPage span:first-child {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.emptyPageHint {
+  font-size: 13px;
+  color: #cbd5e0;
+}
+
+.activePage .emptyPageHint {
+  color: #3182ce;
+}
+
+/* Seiten-Trenner Label zwischen den Seiten */
+.pageSeparatorLabel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 0;
+  margin: 8px 0;
+  width: 100%;
+}
+
+.pageSeparatorLabel span {
+  font-size: 11px;
+  font-weight: 500;
+  color: #718096;
+  background: #e2e8f0;
+  padding: 4px 12px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Überlauf-Warnung */
+.overflowWarning {
+  position: absolute;
+  bottom: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #f56565 0%, #c53030 100%);
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 20;
+  box-shadow: 0 4px 12px rgba(245, 101, 101, 0.4);
+  animation: pulse 2s infinite;
+}
+
+.overflowWarning svg {
+  width: 14px;
+  height: 14px;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    transform: translateX(-50%) scale(1.02);
+  }
+}
+
+/* Überlauf-Overlay auf der Seite */
+.overflowOverlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(to top, rgba(245, 101, 101, 0.15), transparent);
+  pointer-events: none;
+  border-bottom-left-radius: 2px;
+  border-bottom-right-radius: 2px;
+}
+
 /* Drag Overlay */
 .dragOverlay {
   background: white;
@@ -168,12 +329,52 @@
   max-width: 600px;
 }
 
+/* Print Styles für PDF Export */
+@media print {
+  .canvas {
+    background: none;
+    padding: 0;
+    overflow: visible;
+  }
+
+  .pagesContainer {
+    gap: 0;
+  }
+
+  .paperWrapper {
+    margin-bottom: 0;
+    page-break-after: always;
+  }
+
+  .paperWrapper:last-child {
+    page-break-after: auto;
+  }
+
+  .paper {
+    box-shadow: none;
+    margin: 0;
+    padding: 20mm;
+  }
+
+  .zoomIndicator,
+  .pageSeparatorLabel {
+    display: none !important;
+  }
+}
+
 /* Responsive */
 @media (max-width: 900px) {
   .paper {
     width: 100%;
+    height: auto;
     min-height: auto;
+    max-height: none;
     padding: 15mm;
+  }
+
+  .pageContent {
+    height: auto;
+    min-height: 200mm;
   }
 
   .canvas {

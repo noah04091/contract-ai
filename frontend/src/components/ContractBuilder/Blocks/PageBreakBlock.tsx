@@ -1,5 +1,5 @@
 /**
- * PageBreakBlock - Visueller Seitenumbruch mit Seitenende/Seitenanfang
+ * PageBreakBlock - Echter visueller Seitenumbruch wie bei DIN A4 Blättern
  */
 
 import React from 'react';
@@ -8,7 +8,7 @@ import styles from './PageBreakBlock.module.css';
 interface PageBreakBlockProps {
   isSelected: boolean;
   isPreview: boolean;
-  pageNumber?: number; // Seitennummer vor dem Umbruch
+  pageNumber?: number;
 }
 
 export const PageBreakBlock: React.FC<PageBreakBlockProps> = ({
@@ -19,30 +19,30 @@ export const PageBreakBlock: React.FC<PageBreakBlockProps> = ({
   if (isPreview) {
     return (
       <div className={styles.pageBreakPreview}>
-        {/* Im Preview wird der eigentliche Seitenumbruch beim PDF-Export angewandt */}
+        {/* Im Preview/PDF-Export: echter Seitenumbruch */}
       </div>
     );
   }
 
   return (
     <div className={`${styles.pageBreakContainer} ${isSelected ? styles.selected : ''}`}>
-      {/* Ende der aktuellen Seite */}
-      <div className={styles.pageEnd}>
-        <div className={styles.pageEndLine} />
-        <span className={styles.pageLabel}>Ende Seite {pageNumber}</span>
-        <div className={styles.pageEndLine} />
+      {/* Seitenende - unterer Rand der aktuellen Seite */}
+      <div className={styles.pageEndShadow} />
+
+      {/* Seitennummer der aktuellen Seite */}
+      <div className={styles.pageNumberBadge}>
+        Seite {pageNumber}
       </div>
 
-      {/* Visueller Abstand zwischen Seiten */}
-      <div className={styles.pageSeparator}>
-        <div className={styles.separatorPattern} />
-      </div>
+      {/* Grauer Bereich zwischen den Seiten */}
+      <div className={styles.pageSeparator} />
 
-      {/* Anfang der nächsten Seite */}
-      <div className={styles.pageStart}>
-        <div className={styles.pageStartLine} />
-        <span className={styles.pageLabel}>Seite {pageNumber + 1}</span>
-        <div className={styles.pageStartLine} />
+      {/* Seitenanfang - oberer Rand der neuen Seite */}
+      <div className={styles.pageStartShadow} />
+
+      {/* Seitennummer der nächsten Seite */}
+      <div className={styles.pageNumberBadgeNext}>
+        Seite {pageNumber + 1}
       </div>
     </div>
   );

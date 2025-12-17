@@ -10,6 +10,11 @@
   cursor: default;
 }
 
+/* Erster Block braucht mehr Platz oben für Controls */
+.sortableBlock:first-child {
+  margin-top: 0;
+}
+
 .sortableBlock:hover {
   background-color: rgba(49, 130, 206, 0.03);
 }

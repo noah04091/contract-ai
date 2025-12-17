@@ -1,106 +1,109 @@
 /**
- * PageBreakBlock Styles - Visueller Seitenumbruch
+ * PageBreakBlock Styles - Echter Seitenumbruch wie bei DIN A4 Blättern
  */
 
 .pageBreakContainer {
   position: relative;
-  margin: 30px -20mm; /* Negative Margin um über die Papierbreite zu gehen */
-  padding: 0 20mm;
+  /* Negative margins um aus dem weißen Papier "rauszubrechen" */
+  margin: 0 -20mm;
+  margin-top: 20mm;
+  margin-bottom: 20mm;
+  cursor: pointer;
 }
 
 .pageBreakContainer.selected {
-  background: rgba(49, 130, 206, 0.03);
+  outline: 2px solid #3182ce;
+  outline-offset: -2px;
 }
 
-/* Ende der aktuellen Seite */
-.pageEnd {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 20px 0;
-  margin-bottom: 8px;
-}
-
-.pageEndLine {
-  flex: 1;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #cbd5e0, #cbd5e0);
-}
-
-.pageEndLine:last-child {
-  background: linear-gradient(90deg, #cbd5e0, #cbd5e0, transparent);
-}
-
-/* Visueller Separator zwischen Seiten */
-.pageSeparator {
-  background: #e2e8f0;
-  padding: 16px;
-  margin: 0 -20mm;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.separatorPattern {
-  width: 100%;
-  height: 2px;
-  background: repeating-linear-gradient(
-    90deg,
-    #a0aec0 0px,
-    #a0aec0 8px,
-    transparent 8px,
-    transparent 16px
+/* Schatten am Ende der vorherigen Seite (simuliert Papierrand) */
+.pageEndShadow {
+  height: 20px;
+  background: linear-gradient(to bottom,
+    white 0%,
+    #f0f0f0 60%,
+    #e0e0e0 100%
   );
-  opacity: 0.5;
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.05);
+  border-bottom-left-radius: 2px;
+  border-bottom-right-radius: 2px;
 }
 
-/* Anfang der nächsten Seite */
-.pageStart {
+/* Grauer Bereich zwischen den Seiten */
+.pageSeparator {
+  height: 40px;
+  background: #e2e8f0;
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 20px 0;
-  margin-top: 8px;
+  justify-content: center;
 }
 
-.pageStartLine {
-  flex: 1;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #3182ce, #3182ce);
+/* Schatten am Anfang der neuen Seite (simuliert Papierrand) */
+.pageStartShadow {
+  height: 20px;
+  background: linear-gradient(to top,
+    white 0%,
+    #f8f8f8 60%,
+    #f0f0f0 100%
+  );
+  box-shadow:
+    0 -4px 8px rgba(0, 0, 0, 0.08),
+    0 -2px 4px rgba(0, 0, 0, 0.04);
+  border-top-left-radius: 2px;
+  border-top-right-radius: 2px;
 }
 
-.pageStartLine:last-child {
-  background: linear-gradient(90deg, #3182ce, #3182ce, transparent);
-}
-
-/* Seitennummer-Label */
-.pageLabel {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: #4a5568;
-  background: white;
-  padding: 4px 12px;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  white-space: nowrap;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.pageEnd .pageLabel {
+/* Seitennummer Badge - aktuelle Seite (unten rechts) */
+.pageNumberBadge {
+  position: absolute;
+  top: 0;
+  right: 20mm;
+  transform: translateY(-100%);
+  font-size: 10px;
+  font-weight: 500;
   color: #718096;
+  background: white;
+  padding: 2px 8px;
+  border-radius: 4px 4px 0 0;
+  border: 1px solid #e2e8f0;
+  border-bottom: none;
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.pageStart .pageLabel {
+/* Seitennummer Badge - nächste Seite (oben rechts) */
+.pageNumberBadgeNext {
+  position: absolute;
+  bottom: 0;
+  right: 20mm;
+  transform: translateY(100%);
+  font-size: 10px;
+  font-weight: 500;
   color: #3182ce;
-  border-color: #bee3f8;
-  background: #ebf8ff;
+  background: white;
+  padding: 2px 8px;
+  border-radius: 0 0 4px 4px;
+  border: 1px solid #bee3f8;
+  border-top: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 /* Preview Mode - wird für PDF-Export genutzt */
 .pageBreakPreview {
   page-break-after: always;
-  height: 1px;
+  break-after: page;
+  height: 0;
   margin: 0;
+  padding: 0;
+}
+
+/* Hover-Effekt */
+.pageBreakContainer:hover .pageSeparator {
+  background: #cbd5e0;
+}
+
+.pageBreakContainer:hover .pageNumberBadge,
+.pageBreakContainer:hover .pageNumberBadgeNext {
+  color: #2d3748;
 }
