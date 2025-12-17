@@ -7,7 +7,7 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const ContractBuilder = require('../models/ContractBuilder');
-const auth = require('../middleware/auth');
+const auth = require('../middleware/verifyToken');
 const { v4: uuidv4 } = require('uuid');
 
 // OpenAI für KI-Funktionen
