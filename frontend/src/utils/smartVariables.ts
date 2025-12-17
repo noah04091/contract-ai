@@ -181,7 +181,7 @@ export const SYSTEM_VARIABLES_MAP = new Map<string, SystemVariable>(
  */
 export function isComputedVariable(varName: string): boolean {
   // Enthält mathematische Operatoren?
-  return /[\+\-\*\/\(\)]/.test(varName);
+  return /[+\-*/()]/.test(varName);
 }
 
 /**
@@ -214,7 +214,7 @@ export function evaluateExpression(
         numValue = value;
       } else {
         // String zu Nummer konvertieren
-        const cleaned = value.replace(/[^\d,.\-]/g, '').replace(',', '.');
+        const cleaned = value.replace(/[^\d,.]/g, '').replace(',', '.');
         numValue = parseFloat(cleaned);
         if (isNaN(numValue)) {
           return null;
@@ -229,7 +229,7 @@ export function evaluateExpression(
     }
 
     // Sicherheitscheck: Nur erlaubte Zeichen
-    if (!/^[\d\s\+\-\*\/\(\)\.,]+$/.test(evalExpression)) {
+    if (!/^[\d\s+\-*/().,]+$/.test(evalExpression)) {
       return null;
     }
 
