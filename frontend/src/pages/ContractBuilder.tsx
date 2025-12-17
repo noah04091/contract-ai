@@ -42,7 +42,6 @@ import {
   AlertTriangle,
   CheckCircle,
   TrendingUp,
-  Info,
 } from 'lucide-react';
 import styles from '../styles/ContractBuilder.module.css';
 
@@ -955,65 +954,90 @@ const ContractBuilder: React.FC = () => {
                 <div
                   className={styles.scoreCircle}
                   style={{
-                    '--score-color': currentDocument.legalScore.score >= 80 ? '#10b981' :
-                                     currentDocument.legalScore.score >= 60 ? '#f59e0b' : '#ef4444'
+                    '--score-color': currentDocument.legalScore.totalScore >= 80 ? '#10b981' :
+                                     currentDocument.legalScore.totalScore >= 60 ? '#f59e0b' : '#ef4444'
                   } as React.CSSProperties}
                 >
-                  <span className={styles.scoreValue}>{currentDocument.legalScore.score}</span>
+                  <span className={styles.scoreValue}>{currentDocument.legalScore.totalScore}</span>
                   <span className={styles.scoreLabel}>von 100</span>
                 </div>
                 <div className={styles.scoreInfo}>
                   <h4 className={styles.scoreTitle}>
-                    {currentDocument.legalScore.score >= 80 ? 'Sehr gut' :
-                     currentDocument.legalScore.score >= 60 ? 'Gut mit Hinweisen' : 'Verbesserungsbedarf'}
+                    {currentDocument.legalScore.totalScore >= 80 ? 'Sehr gut' :
+                     currentDocument.legalScore.totalScore >= 60 ? 'Gut mit Hinweisen' : 'Verbesserungsbedarf'}
                   </h4>
                   <p className={styles.scoreDescription}>
-                    {currentDocument.legalScore.score >= 80
+                    {currentDocument.legalScore.totalScore >= 80
                       ? 'Ihr Vertrag erfüllt die wichtigsten rechtlichen Standards.'
-                      : currentDocument.legalScore.score >= 60
+                      : currentDocument.legalScore.totalScore >= 60
                       ? 'Es gibt einige Punkte, die Sie überprüfen sollten.'
                       : 'Wir empfehlen eine Überarbeitung wichtiger Klauseln.'}
                   </p>
                 </div>
               </div>
 
-              {/* Issues */}
-              {currentDocument.legalScore.issues && currentDocument.legalScore.issues.length > 0 && (
+              {/* Findings - Critical & Warnings */}
+              {currentDocument.legalScore.findings && (
+                (currentDocument.legalScore.findings.critical.length > 0 || currentDocument.legalScore.findings.warnings.length > 0) && (
                 <div className={styles.legalIssues}>
                   <h4><AlertTriangle size={16} /> Hinweise & Verbesserungen</h4>
                   <ul>
-                    {currentDocument.legalScore.issues.map((issue, index) => (
-                      <li key={index} className={styles.issueItem}>
-                        <span className={`${styles.issueSeverity} ${styles[issue.severity || 'medium']}`}>
-                          {issue.severity === 'high' ? 'Wichtig' : issue.severity === 'low' ? 'Info' : 'Hinweis'}
-                        </span>
-                        <span className={styles.issueText}>{issue.description}</span>
+                    {currentDocument.legalScore.findings.critical.map((finding, index) => (
+                      <li key={`critical-${index}`} className={styles.issueItem}>
+                        <span className={`${styles.issueSeverity} ${styles.high}`}>Kritisch</span>
+                        <span className={styles.issueText}>{finding.message}</span>
+                      </li>
+                    ))}
+                    {currentDocument.legalScore.findings.warnings.map((finding, index) => (
+                      <li key={`warning-${index}`} className={styles.issueItem}>
+                        <span className={`${styles.issueSeverity} ${styles.medium}`}>Warnung</span>
+                        <span className={styles.issueText}>{finding.message}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
-              )}
+              ))}
 
               {/* Categories */}
               {currentDocument.legalScore.categories && (
                 <div className={styles.legalCategories}>
                   <h4><TrendingUp size={16} /> Kategorien</h4>
                   <div className={styles.categoryGrid}>
-                    {Object.entries(currentDocument.legalScore.categories).map(([name, score]) => (
-                      <div key={name} className={styles.categoryItem}>
-                        <span className={styles.categoryName}>{name}</span>
-                        <div className={styles.categoryBar}>
-                          <div
-                            className={styles.categoryFill}
-                            style={{
-                              width: `${score}%`,
-                              background: score >= 80 ? '#10b981' : score >= 60 ? '#f59e0b' : '#ef4444'
-                            }}
-                          />
-                        </div>
-                        <span className={styles.categoryScore}>{score}%</span>
+                    <div className={styles.categoryItem}>
+                      <span className={styles.categoryName}>Vollständigkeit</span>
+                      <div className={styles.categoryBar}>
+                        <div className={styles.categoryFill} style={{ width: `${currentDocument.legalScore.categories.completeness}%`, background: currentDocument.legalScore.categories.completeness >= 80 ? '#10b981' : currentDocument.legalScore.categories.completeness >= 60 ? '#f59e0b' : '#ef4444' }} />
                       </div>
-                    ))}
+                      <span className={styles.categoryScore}>{currentDocument.legalScore.categories.completeness}%</span>
+                    </div>
+                    <div className={styles.categoryItem}>
+                      <span className={styles.categoryName}>Rechtliche Präzision</span>
+                      <div className={styles.categoryBar}>
+                        <div className={styles.categoryFill} style={{ width: `${currentDocument.legalScore.categories.legalPrecision}%`, background: currentDocument.legalScore.categories.legalPrecision >= 80 ? '#10b981' : currentDocument.legalScore.categories.legalPrecision >= 60 ? '#f59e0b' : '#ef4444' }} />
+                      </div>
+                      <span className={styles.categoryScore}>{currentDocument.legalScore.categories.legalPrecision}%</span>
+                    </div>
+                    <div className={styles.categoryItem}>
+                      <span className={styles.categoryName}>Ausgewogenheit</span>
+                      <div className={styles.categoryBar}>
+                        <div className={styles.categoryFill} style={{ width: `${currentDocument.legalScore.categories.balance}%`, background: currentDocument.legalScore.categories.balance >= 80 ? '#10b981' : currentDocument.legalScore.categories.balance >= 60 ? '#f59e0b' : '#ef4444' }} />
+                      </div>
+                      <span className={styles.categoryScore}>{currentDocument.legalScore.categories.balance}%</span>
+                    </div>
+                    <div className={styles.categoryItem}>
+                      <span className={styles.categoryName}>Klarheit</span>
+                      <div className={styles.categoryBar}>
+                        <div className={styles.categoryFill} style={{ width: `${currentDocument.legalScore.categories.clarity}%`, background: currentDocument.legalScore.categories.clarity >= 80 ? '#10b981' : currentDocument.legalScore.categories.clarity >= 60 ? '#f59e0b' : '#ef4444' }} />
+                      </div>
+                      <span className={styles.categoryScore}>{currentDocument.legalScore.categories.clarity}%</span>
+                    </div>
+                    <div className={styles.categoryItem}>
+                      <span className={styles.categoryName}>Durchsetzbarkeit</span>
+                      <div className={styles.categoryBar}>
+                        <div className={styles.categoryFill} style={{ width: `${currentDocument.legalScore.categories.enforceability}%`, background: currentDocument.legalScore.categories.enforceability >= 80 ? '#10b981' : currentDocument.legalScore.categories.enforceability >= 60 ? '#f59e0b' : '#ef4444' }} />
+                      </div>
+                      <span className={styles.categoryScore}>{currentDocument.legalScore.categories.enforceability}%</span>
+                    </div>
                   </div>
                 </div>
               )}

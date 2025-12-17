@@ -48,7 +48,13 @@
       "Bash(mkdir:*)",
       "Bash(start \"\" \"C:\\Users\\liebo\\Documents\\contract-ai\\mockups\\legal-lens-mockup.html\")",
       "Bash(ls:*)",
-      "Bash(git -C \"C:/Users/liebo/Documents/contract-ai\" status --short)"
+      "Bash(git -C \"C:/Users/liebo/Documents/contract-ai\" status --short)",
+      "Bash(git -C \"C:/Users/liebo/Documents/contract-ai\" add frontend/src/components/ContractBuilder/Blocks/BlockRenderer.tsx frontend/src/components/ContractBuilder/Blocks/LogoBlock.module.css frontend/src/components/ContractBuilder/Blocks/LogoBlock.tsx frontend/src/components/ContractBuilder/Canvas/BuilderCanvas.module.css frontend/src/components/ContractBuilder/Variables/VariablesPanel.module.css frontend/src/components/ContractBuilder/Variables/VariablesPanel.tsx frontend/src/pages/ContractBuilder.tsx frontend/src/styles/ContractBuilder.module.css)",
+      "Bash(git -C \"C:/Users/liebo/Documents/contract-ai\" log -3 --oneline)",
+      "Bash(git -C \"C:/Users/liebo/Documents/contract-ai\" commit -m \"$(cat <<''EOF''\nfeat: ContractBuilder - KI-Features, Logo-Upload & UX-Verbesserungen\n\n- KI-Assistent: Rechtsprüfung mit Legal Score Modal implementiert\n- KI-Assistent: Formulierung optimieren mit Vorher/Nachher-Vergleich\n- Logo-Block: Datei-Upload (Base64) statt nur URL\n- Logo-Block: Remove-Button zum Entfernen\n- Smart Variables: Bessere UX mit Hinweisen und \"Kopiert!\"-Feedback\n- Variable-Klick: Auto-Switch zum Variables-Panel\n- Neue Modal-Styles für Legal Score und Optimierung\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git -C \"C:/Users/liebo/Documents/contract-ai\" push)",
+      "Bash(git -C \"C:/Users/liebo/Documents/contract-ai\" add -A)",
+      "Bash(git -C \"C:/Users/liebo/Documents/contract-ai\" commit -m \"$(cat <<''EOF''\nfix: TypeScript-Fehler in LegalScore Modal behoben\n\n- LegalScore Properties korrigiert (totalScore, findings statt score, issues)\n- BlockContent Interface um logoUrl erweitert\n- Unused Import entfernt\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []

@@ -74,6 +74,11 @@ export interface BlockContent {
   title?: string;
   subtitle?: string;
   logo?: string;
+  // Logo Block
+  logoUrl?: string;
+  altText?: string;
+  width?: number;
+  alignment?: 'left' | 'center' | 'right';
   // Parties
   party1?: PartyInfo;
   party2?: PartyInfo;
