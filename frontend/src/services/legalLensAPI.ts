@@ -475,6 +475,9 @@ export async function getIndustryContext(
   success: boolean;
   industry: IndustryType;
   industrySetAt: string | null;
+  autoDetected?: boolean;
+  confidence?: number;
+  detectedKeywords?: string[];
 }> {
   const response = await fetchWithAuth(
     `${LEGAL_LENS_BASE}/${contractId}/industry`,

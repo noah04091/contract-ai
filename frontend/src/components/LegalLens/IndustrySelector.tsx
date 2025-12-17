@@ -2,7 +2,7 @@
 // Branchen-Auswahl für kontextspezifische Analyse
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Building2, ChevronDown, Check, Info } from 'lucide-react';
+import { Building2, ChevronDown, Check, Info, Sparkles } from 'lucide-react';
 import type { IndustryType, IndustryInfo } from '../../types/legalLens';
 import { INDUSTRIES } from '../../types/legalLens';
 import styles from '../../styles/IndustrySelector.module.css';
@@ -12,13 +12,19 @@ interface IndustrySelectorProps {
   onIndustryChange: (industry: IndustryType) => void;
   disabled?: boolean;
   compact?: boolean;
+  autoDetected?: boolean;
+  confidence?: number;
+  detectedKeywords?: string[];
 }
 
 const IndustrySelector: React.FC<IndustrySelectorProps> = ({
   currentIndustry,
   onIndustryChange,
   disabled = false,
-  compact = false
+  compact = false,
+  autoDetected = false,
+  confidence = 0,
+  detectedKeywords = []
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showTooltip, setShowTooltip] = useState<string | null>(null);
@@ -48,15 +54,24 @@ const IndustrySelector: React.FC<IndustrySelectorProps> = ({
   return (
     <div className={`${styles.selectorContainer} ${compact ? styles.compact : ''}`} ref={dropdownRef}>
       <button
-        className={`${styles.selectorButton} ${isOpen ? styles.open : ''}`}
+        className={`${styles.selectorButton} ${isOpen ? styles.open : ''} ${autoDetected ? styles.autoDetected : ''}`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        title={`Branche: ${currentIndustryInfo.name}`}
+        title={autoDetected
+          ? `Automatisch erkannt: ${currentIndustryInfo.name} (${confidence}% Konfidenz)`
+          : `Branche: ${currentIndustryInfo.name}`
+        }
       >
         <span className={styles.buttonIcon}>{currentIndustryInfo.icon}</span>
         {!compact && (
           <>
             <span className={styles.buttonLabel}>{currentIndustryInfo.name}</span>
+            {autoDetected && confidence > 0 && (
+              <span className={styles.autoDetectedBadge} title={`${confidence}% Konfidenz`}>
+                <Sparkles size={12} />
+                Auto
+              </span>
+            )}
             <ChevronDown size={16} className={`${styles.chevron} ${isOpen ? styles.rotated : ''}`} />
           </>
         )}
@@ -68,9 +83,32 @@ const IndustrySelector: React.FC<IndustrySelectorProps> = ({
             <Building2 size={16} />
             <span>Branchen-Kontext</span>
           </div>
-          <p className={styles.dropdownHint}>
-            Wähle deine Branche für spezifischere Analysen
-          </p>
+
+          {autoDetected && confidence > 0 ? (
+            <div className={styles.autoDetectedInfo}>
+              <div className={styles.autoDetectedHeader}>
+                <Sparkles size={14} />
+                <span>Automatisch erkannt ({confidence}%)</span>
+              </div>
+              {detectedKeywords.length > 0 && (
+                <div className={styles.detectedKeywords}>
+                  <span className={styles.keywordsLabel}>Erkannte Keywords:</span>
+                  <div className={styles.keywordTags}>
+                    {detectedKeywords.slice(0, 5).map((kw, idx) => (
+                      <span key={idx} className={styles.keywordTag}>{kw}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <p className={styles.autoDetectedHint}>
+                Du kannst die Branche manuell ändern
+              </p>
+            </div>
+          ) : (
+            <p className={styles.dropdownHint}>
+              Wähle deine Branche für spezifischere Analysen
+            </p>
+          )}
 
           <div className={styles.optionsList}>
             {INDUSTRIES.map((industry) => (

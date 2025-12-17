@@ -46,6 +46,141 @@ const analysisRateLimiter = rateLimit({
 });
 
 // ============================================
+// BRANCHEN AUTO-ERKENNUNG
+// ============================================
+
+/**
+ * Erkennt die Branche automatisch aus dem Vertragstext.
+ * Verwendet Keyword-basierte Erkennung (schnell, kein API-Call).
+ * @param {string} text - Der Vertragstext
+ * @returns {{ industry: string, confidence: number, detectedKeywords: string[] }}
+ */
+function detectIndustryFromText(text) {
+  const textLower = text.toLowerCase();
+
+  // Branchen-Keywords mit Gewichtung
+  const industryPatterns = {
+    it_software: {
+      keywords: [
+        'software', 'saas', 'cloud', 'api', 'lizenz', 'quellcode', 'source code',
+        'hosting', 'server', 'datenbank', 'app', 'application', 'entwicklung',
+        'programmierung', 'it-dienstleistung', 'support-level', 'sla', 'uptime',
+        'wartung', 'release', 'deployment', 'agil', 'scrum', 'sprint',
+        'software-entwicklung', 'it-projekt', 'systemintegration', 'schnittstelle'
+      ],
+      weight: 1.5
+    },
+    construction: {
+      keywords: [
+        'bauleistung', 'bauvertrag', 'vob', 'bauherr', 'auftragnehmer', 'baustelle',
+        'gewährleistung', 'mängelansprüche', 'abnahme', 'bauzeit', 'nachträge',
+        'werkvertrag', 'schlüsselfertig', 'rohbau', 'ausbau', 'architekt',
+        'statik', 'baugenehmigung', 'bauabnahme', 'baumängel', 'gewährleistungsfrist'
+      ],
+      weight: 1.8
+    },
+    real_estate: {
+      keywords: [
+        'immobilie', 'miete', 'mietvertrag', 'pacht', 'grundstück', 'eigentum',
+        'kaufvertrag', 'notar', 'grundbuch', 'wohnfläche', 'nebenkosten',
+        'kaution', 'makler', 'provision', 'vermietung', 'mietsache', 'mietobjekt',
+        'wohnraum', 'gewerberaum', 'mietdauer', 'kündigungsfrist'
+      ],
+      weight: 1.5
+    },
+    consulting: {
+      keywords: [
+        'beratung', 'consulting', 'beratungsleistung', 'honorar', 'tagessatz',
+        'projektberatung', 'unternehmensberatung', 'strategieberatung',
+        'management consulting', 'berater', 'beratungsvertrag', 'mandate',
+        'beratungsprojekt', 'analyse', 'empfehlung', 'gutachten'
+      ],
+      weight: 1.3
+    },
+    manufacturing: {
+      keywords: [
+        'fertigung', 'produktion', 'liefervertrag', 'warenlieferung', 'herstellung',
+        'serienproduktion', 'qualitätssicherung', 'spezifikation', 'technische daten',
+        'muster', 'prototyp', 'stückzahl', 'mindestabnahme', 'produktionsanlage',
+        'fertigungskapazität', 'materialien', 'rohstoffe'
+      ],
+      weight: 1.4
+    },
+    retail: {
+      keywords: [
+        'handel', 'vertrieb', 'distribution', 'händler', 'vertriebspartner',
+        'wiederverkauf', 'einzelhandel', 'großhandel', 'handelsmarge',
+        'exklusivvertrieb', 'verkaufsgebiet', 'absatz', 'umsatzbeteiligung',
+        'franchise', 'markenrecht', 'warenzeichen'
+      ],
+      weight: 1.3
+    },
+    healthcare: {
+      keywords: [
+        'gesundheit', 'medizin', 'patient', 'arzt', 'klinik', 'krankenhaus',
+        'medizinprodukt', 'pharma', 'arzneimittel', 'medikament', 'therapie',
+        'behandlung', 'diagnose', 'gesundheitsleistung', 'krankenkasse',
+        'zulassung', 'ce-kennzeichnung', 'klinische studie'
+      ],
+      weight: 1.6
+    },
+    finance: {
+      keywords: [
+        'darlehen', 'kredit', 'finanzierung', 'bank', 'zinsen', 'tilgung',
+        'sicherheit', 'bürgschaft', 'hypothek', 'grundschuld', 'kapital',
+        'investition', 'rendite', 'portfolio', 'wertpapier', 'anlage',
+        'versicherung', 'police', 'prämie', 'leasing', 'factoring'
+      ],
+      weight: 1.5
+    }
+  };
+
+  const results = {};
+  const allDetectedKeywords = {};
+
+  // Zähle Treffer pro Branche
+  for (const [industry, config] of Object.entries(industryPatterns)) {
+    const foundKeywords = config.keywords.filter(kw => textLower.includes(kw));
+    const score = foundKeywords.length * config.weight;
+    results[industry] = score;
+    allDetectedKeywords[industry] = foundKeywords;
+  }
+
+  // Finde die Branche mit dem höchsten Score
+  const sortedIndustries = Object.entries(results)
+    .sort((a, b) => b[1] - a[1]);
+
+  const [topIndustry, topScore] = sortedIndustries[0];
+  const [secondIndustry, secondScore] = sortedIndustries[1] || ['', 0];
+
+  // Berechne Confidence (0-100)
+  // Hohe Confidence wenn: viele Keywords UND klarer Vorsprung vor zweiter Branche
+  const confidence = topScore > 0
+    ? Math.min(100, Math.round((topScore * 15) + ((topScore - secondScore) * 10)))
+    : 0;
+
+  // Mindest-Schwelle: mindestens 3 Keywords und confidence > 30
+  if (topScore >= 3 && confidence > 30) {
+    console.log(`🏢 [Industry Detection] Detected: ${topIndustry} (confidence: ${confidence}%, keywords: ${allDetectedKeywords[topIndustry].slice(0, 5).join(', ')})`);
+    return {
+      industry: topIndustry,
+      confidence,
+      detectedKeywords: allDetectedKeywords[topIndustry].slice(0, 10),
+      allScores: results
+    };
+  }
+
+  // Fallback: Allgemein
+  console.log(`🏢 [Industry Detection] No clear industry detected, using 'general'`);
+  return {
+    industry: 'general',
+    confidence: 0,
+    detectedKeywords: [],
+    allScores: results
+  };
+}
+
+// ============================================
 // SMART SUMMARY - SOFORT-ÜBERSICHT NACH UPLOAD
 // ============================================
 
@@ -378,6 +513,10 @@ router.post('/parse', verifyToken, async (req, res) => {
       // Fortfahren ohne Voranalyse - nicht kritisch
     }
 
+    // 🏢 AUTO-BRANCHENERKENNUNG
+    const industryDetection = detectIndustryFromText(text);
+    console.log(`🏢 [Legal Lens] Auto-detected industry: ${industryDetection.industry} (${industryDetection.confidence}% confidence)`);
+
     // Progress erstellen/aktualisieren
     await LegalLensProgress.findOneAndUpdate(
       { userId: new ObjectId(userId), contractId: new ObjectId(contractId) },
@@ -387,6 +526,14 @@ router.post('/parse', verifyToken, async (req, res) => {
           overallRisk: preAnalysis?.overallRisk || 'medium',
           highRiskCount: preAnalysis?.highRiskCount || 0,
           preAnalyzedAt: preAnalysis?.success ? new Date() : null,
+          // Auto-erkannte Branche (nur setzen wenn Confidence > 50% oder noch keine Branche)
+          ...(industryDetection.confidence > 50 ? {
+            industryContext: industryDetection.industry,
+            industrySetAt: new Date(),
+            industryAutoDetected: true,
+            industryConfidence: industryDetection.confidence,
+            industryKeywords: industryDetection.detectedKeywords
+          } : {}),
           updatedAt: new Date()
         },
         $setOnInsert: {
@@ -413,7 +560,14 @@ router.post('/parse', verifyToken, async (req, res) => {
         overallRisk: preAnalysis.overallRisk,
         highRiskCount: preAnalysis.highRiskCount,
         metadata: preAnalysis.metadata
-      } : null
+      } : null,
+      // Auto-erkannte Branche
+      industryDetection: {
+        industry: industryDetection.industry,
+        confidence: industryDetection.confidence,
+        detectedKeywords: industryDetection.detectedKeywords,
+        autoDetected: industryDetection.confidence > 50
+      }
     });
 
   } catch (error) {
@@ -1376,7 +1530,11 @@ router.get('/:contractId/industry', verifyToken, async (req, res) => {
     res.json({
       success: true,
       industry: progress?.industryContext || 'general',
-      industrySetAt: progress?.industrySetAt || null
+      industrySetAt: progress?.industrySetAt || null,
+      // Auto-Erkennungs-Info
+      autoDetected: progress?.industryAutoDetected || false,
+      confidence: progress?.industryConfidence || 0,
+      detectedKeywords: progress?.industryKeywords || []
     });
 
   } catch (error) {

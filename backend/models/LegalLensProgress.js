@@ -65,6 +65,19 @@ const legalLensProgressSchema = new mongoose.Schema({
     default: "general"
   },
   industrySetAt: Date,
+  // Auto-Erkennung Felder
+  industryAutoDetected: {
+    type: Boolean,
+    default: false
+  },
+  industryConfidence: {
+    type: Number,
+    min: 0,
+    max: 100
+  },
+  industryKeywords: [{
+    type: String
+  }],
 
   // Bookmarks
   bookmarks: [{

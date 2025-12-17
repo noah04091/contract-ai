@@ -58,6 +58,9 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   // Industry Context State
   const [currentIndustry, setCurrentIndustry] = useState<IndustryType>('general');
   const [industryLoading, setIndustryLoading] = useState<boolean>(false);
+  const [industryAutoDetected, setIndustryAutoDetected] = useState<boolean>(false);
+  const [industryConfidence, setIndustryConfidence] = useState<number>(0);
+  const [industryKeywords, setIndustryKeywords] = useState<string[]>([]);
 
   // Negotiation Checklist State
   const [showChecklist, setShowChecklist] = useState<boolean>(false);
@@ -227,6 +230,10 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         const response = await legalLensAPI.getIndustryContext(contractId);
         if (response.success && response.industry) {
           setCurrentIndustry(response.industry);
+          // Auto-Erkennungs-Info setzen
+          setIndustryAutoDetected(response.autoDetected || false);
+          setIndustryConfidence(response.confidence || 0);
+          setIndustryKeywords(response.detectedKeywords || []);
         }
       } catch (err) {
         console.warn('[Legal Lens] Could not load industry context:', err);
@@ -244,9 +251,11 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       const response = await legalLensAPI.setIndustryContext(contractId, industry);
       if (response.success) {
         setCurrentIndustry(industry);
-        // Hinweis: Bei Branchenwechsel könnte man hier den Cache invalidieren
-        // und Analysen neu laden lassen
-        console.log(`[Legal Lens] Industry changed to: ${industry}`);
+        // Bei manuellem Wechsel: Auto-Detection Badge entfernen
+        setIndustryAutoDetected(false);
+        setIndustryConfidence(0);
+        setIndustryKeywords([]);
+        console.log(`[Legal Lens] Industry manually changed to: ${industry}`);
       }
     } catch (err) {
       console.error('[Legal Lens] Failed to set industry:', err);
@@ -493,6 +502,9 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
             onIndustryChange={handleIndustryChange}
             disabled={industryLoading || isParsing}
             compact={false}
+            autoDetected={industryAutoDetected}
+            confidence={industryConfidence}
+            detectedKeywords={industryKeywords}
           />
 
           {/* Export Button */}
