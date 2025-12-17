@@ -1,5 +1,9 @@
-// 📧 Signature Invitation Email Template (HTML + Plain Text)
-// DocuSign-style, responsive, dark-mode ready, accessible
+// 📧 Signature Email Templates - V4 Design
+// Clean, Modern, Professional - Consistent with Contract AI branding
+
+const generateEmailTemplate = require('../utils/emailTemplate');
+
+const logoUrl = 'https://www.contract-ai.de/logo.png';
 
 /**
  * Generate HTML email for signature invitation
@@ -23,22 +27,13 @@ function generateSignatureInvitationHTML(data) {
     text: 0
   };
 
-  const fieldsByPage = {};
-
   signatureFields.forEach(field => {
     if (fieldCounts.hasOwnProperty(field.type)) {
       fieldCounts[field.type]++;
     }
-
-    // Group by page
-    if (!fieldsByPage[field.page]) {
-      fieldsByPage[field.page] = [];
-    }
-    fieldsByPage[field.page].push(field);
   });
 
   const totalFields = signatureFields.length;
-  const pageNumbers = Object.keys(fieldsByPage).sort((a, b) => a - b);
 
   // Field type labels
   const fieldLabels = {
@@ -48,7 +43,7 @@ function generateSignatureInvitationHTML(data) {
     text: { icon: '📝', label: 'Textfeld' }
   };
 
-  // Build field summary bullets
+  // Build field summary
   let fieldSummaryHTML = '';
   Object.keys(fieldCounts).forEach(type => {
     const count = fieldCounts[type];
@@ -64,13 +59,7 @@ function generateSignatureInvitationHTML(data) {
         ? `Seite ${pages[0]}`
         : `Seiten ${pages.join(', ')}`;
 
-      fieldSummaryHTML += `
-        <tr>
-          <td class="field-item">
-            ${icon} <strong>${count}×</strong> ${label} auf ${pageText}
-          </td>
-        </tr>
-      `;
+      fieldSummaryHTML += `<p style="margin: 8px 0; padding-left: 0;">${icon} <strong>${count}×</strong> ${label} auf ${pageText}</p>`;
     }
   });
 
@@ -82,427 +71,150 @@ function generateSignatureInvitationHTML(data) {
     minute: '2-digit'
   });
 
-  return `
-<!DOCTYPE html>
-<html lang="de" xmlns="http://www.w3.org/1999/xhtml">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="x-apple-disable-message-reformatting">
-  <meta name="format-detection" content="telephone=no, date=no, email=no, address=no">
-  <meta name="color-scheme" content="light dark">
-  <meta name="supported-color-schemes" content="light dark">
-  <title>Signaturanfrage – ${envelope.title}</title>
+  const body = `
+    <p style="margin: 0 0 20px 0; text-align: center;">
+      <strong>${ownerEmail}</strong> hat Ihnen ein Dokument zur Unterschrift geschickt.
+    </p>
 
-  <style>
-    /* Reset & Base Styles */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    <!-- Document Card -->
+    <div style="background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 20px; margin: 25px 0;">
+      <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">
+        📄 ${envelope.title}
+      </p>
+      <p style="margin: 0; font-size: 14px; color: #666666;">
+        Absender: ${ownerEmail}
+      </p>
+      ${envelope.message ? `
+        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e9ecef;">
+          <p style="margin: 0; font-size: 14px; color: #555555;">
+            <strong>💬 Nachricht:</strong><br>
+            ${envelope.message}
+          </p>
+        </div>
+      ` : ''}
+    </div>
 
-    /* Explicit Light Mode (Default) - Prevents client auto-inversion */
-    body, .email-wrapper {
-      background-color: #ffffff !important;
-      color: #0F172A !important;
+    <!-- Fields Section -->
+    <div style="margin: 25px 0;">
+      <p style="margin: 0 0 12px 0; font-weight: 600; color: #1a1a1a;">
+        Sie müssen folgende Felder ausfüllen:
+      </p>
+      ${fieldSummaryHTML}
+      <p style="margin: 15px 0 0 0; padding-top: 12px; border-top: 1px solid #e9ecef; font-size: 14px; color: #666666;">
+        <strong>Gesamt: ${totalFields} ${totalFields === 1 ? 'Feld' : 'Felder'}</strong>
+      </p>
+    </div>
+
+    <!-- Info Box -->
+    <div style="background-color: #fff8e6; border: 1px solid #ffe066; border-radius: 12px; padding: 16px; margin: 25px 0;">
+      <p style="margin: 0 0 8px 0; font-weight: 600; color: #8a6d00; font-size: 14px;">
+        ⏰ Wichtige Hinweise
+      </p>
+      <p style="margin: 0; font-size: 13px; color: #8a6d00; line-height: 1.6;">
+        • Link gültig bis: <strong>${formattedExpiryDate}</strong><br>
+        • Leiten Sie diesen Link nicht weiter<br>
+        • Bei Fragen: ${ownerEmail}
+      </p>
+    </div>
+  `;
+
+  return generateEmailTemplate({
+    title: `Signaturanfrage`,
+    preheader: `${ownerEmail} bittet Sie, "${envelope.title}" zu unterschreiben`,
+    body: body,
+    cta: {
+      url: signUrl,
+      text: 'Jetzt signieren →'
     }
+  });
+}
 
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
+/**
+ * Generate HTML email for completion notification (document fully signed)
+ * @param {Object} data - Email data
+ * @param {Object} data.envelope - Envelope info
+ * @param {string} data.downloadLink - PDF download URL
+ * @returns {string} HTML email
+ */
+function generateCompletionNotificationHTML(data) {
+  const { envelope, downloadLink } = data;
+
+  const signersListHTML = envelope.signers.map(s => {
+    const signedDate = s.signedAt ? new Date(s.signedAt).toLocaleString('de-DE', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }) : 'Ausstehend';
+
+    return `
+      <div style="display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0;">
+        <span style="color: #22c55e; margin-right: 10px;">✓</span>
+        <span style="flex: 1;">
+          <strong>${s.name}</strong><br>
+          <span style="font-size: 13px; color: #666666;">${s.email} • ${signedDate}</span>
+        </span>
+      </div>
+    `;
+  }).join('');
+
+  const completedDate = new Date().toLocaleString('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  const body = `
+    <p style="margin: 0 0 20px 0; text-align: center;">
+      Alle Parteien haben das Dokument erfolgreich unterzeichnet.
+    </p>
+
+    <!-- Success Badge -->
+    <div style="text-align: center; margin: 25px 0;">
+      <span style="display: inline-block; background-color: #dcfce7; color: #16a34a; padding: 8px 20px; border-radius: 20px; font-size: 14px; font-weight: 600;">
+        ✓ Vollständig signiert
+      </span>
+    </div>
+
+    <!-- Document Card -->
+    <div style="background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 20px; margin: 25px 0;">
+      <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">
+        📄 ${envelope.title}
+      </p>
+      <p style="margin: 0; font-size: 14px; color: #666666;">
+        Abgeschlossen am: ${completedDate}
+      </p>
+    </div>
+
+    <!-- Signers List -->
+    <div style="margin: 25px 0;">
+      <p style="margin: 0 0 15px 0; font-weight: 600; color: #1a1a1a;">
+        Unterzeichner:
+      </p>
+      ${signersListHTML}
+    </div>
+
+    <!-- Download Info -->
+    <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 16px; margin: 25px 0; text-align: center;">
+      <p style="margin: 0; font-size: 14px; color: #1e40af;">
+        📥 Das signierte Dokument steht zum Download bereit.<br>
+        <span style="font-size: 12px; color: #3b82f6;">(Link 24 Stunden gültig)</span>
+      </p>
+    </div>
+  `;
+
+  return generateEmailTemplate({
+    title: `Dokument vollständig signiert`,
+    preheader: `"${envelope.title}" wurde von allen Parteien unterschrieben`,
+    body: body,
+    cta: {
+      url: downloadLink,
+      text: 'Dokument herunterladen →'
     }
-
-    .email-container, .content-section, .document-card {
-      background-color: #ffffff !important;
-      color: #0F172A !important;
-    }
-
-    .button-primary {
-      background-color: #2E6CF6 !important;
-      color: #ffffff !important;
-    }
-
-    table { border-spacing: 0; border-collapse: collapse; width: 100%; }
-    img { border: 0; display: block; outline: none; text-decoration: none; }
-
-    /* Prevent Outlook.com/Gmail from auto-inverting colors */
-    [data-ogsc] body,
-    [data-ogsc] .email-wrapper {
-      background-color: #ffffff !important;
-      color: #0F172A !important;
-    }
-
-    /* Dark Mode Support - Apple Mail, iOS, Gmail iOS */
-    @media (prefers-color-scheme: dark) {
-      body { background-color: #0b0f17 !important; color: #e8eefc !important; }
-      .email-wrapper { background-color: #0b0f17 !important; }
-      .email-container { background-color: #121826 !important; }
-      .email-header { background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%) !important; }
-      .content-section { background-color: #121826 !important; border-color: #374151 !important; }
-      .greeting, .document-title, .fields-title, .field-item { color: #e8eefc !important; }
-      .main-text, .document-sender, .document-message { color: #b9c4d0 !important; }
-      .document-card { background-color: #1a2332 !important; border-color: #2d3748 !important; }
-      .info-box { background-color: #422006 !important; border-color: #78350f !important; }
-      .info-box-title { color: #fbbf24 !important; }
-      .info-box-text { color: #fcd34d !important; }
-      .footer { background-color: #0b0f17 !important; color: #9ca3af !important; }
-      .footer-text { color: #9ca3af !important; }
-      .footer-link { color: #60a5fa !important; }
-      .fields-total { color: #b9c4d0 !important; border-color: #374151 !important; }
-      .fallback-link { color: #9ca3af !important; }
-      .fallback-link a { color: #60a5fa !important; }
-    }
-
-    /* Outlook.com Dark Mode Support */
-    [data-ogsc] body { background-color: #0b0f17 !important; }
-    [data-ogsc] .email-wrapper { background-color: #0b0f17 !important; }
-    [data-ogsc] .email-container { background-color: #121826 !important; }
-    [data-ogsc] .content-section { background-color: #121826 !important; }
-    [data-ogsc] .greeting, [data-ogsc] .document-title, [data-ogsc] .fields-title, [data-ogsc] .field-item { color: #e8eefc !important; }
-    [data-ogsc] .main-text, [data-ogsc] .document-sender, [data-ogsc] .document-message { color: #b9c4d0 !important; }
-    [data-ogsc] .document-card { background-color: #1a2332 !important; }
-    [data-ogsc] .footer { background-color: #0b0f17 !important; }
-    [data-ogsc] .footer-link { color: #60a5fa !important; }
-
-    /* Container */
-    .email-wrapper {
-      width: 100%;
-      background-color: #f3f4f6;
-      padding: 20px 0;
-    }
-
-    .email-container {
-      max-width: 600px;
-      margin: 0 auto;
-      background-color: #ffffff;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    /* Header */
-    .email-header {
-      background: linear-gradient(135deg, #2E6CF6 0%, #1E53D8 100%);
-      padding: 32px 24px;
-      text-align: center;
-    }
-
-    .header-icon {
-      font-size: 48px;
-      margin-bottom: 12px;
-    }
-
-    .header-title {
-      font-size: 24px;
-      font-weight: 600;
-      color: #ffffff;
-      margin: 0 0 8px 0;
-    }
-
-    .header-subtitle {
-      font-size: 15px;
-      color: rgba(255, 255, 255, 0.9);
-      margin: 0;
-    }
-
-    /* Content */
-    .content-section {
-      padding: 32px 24px;
-      background-color: #ffffff;
-    }
-
-    .greeting {
-      font-size: 16px;
-      color: #1f2937;
-      margin: 0 0 16px 0;
-      line-height: 1.5;
-    }
-
-    .main-text {
-      font-size: 15px;
-      color: #4b5563;
-      line-height: 1.6;
-      margin: 0 0 24px 0;
-    }
-
-    /* Document Info Card */
-    .document-card {
-      background-color: #f9fafb;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      padding: 20px;
-      margin: 0 0 24px 0;
-    }
-
-    .document-title {
-      font-size: 18px;
-      font-weight: 600;
-      color: #1f2937;
-      margin: 0 0 8px 0;
-    }
-
-    .document-sender {
-      font-size: 14px;
-      color: #6b7280;
-      margin: 0 0 12px 0;
-    }
-
-    .document-message {
-      font-size: 14px;
-      color: #4b5563;
-      line-height: 1.5;
-      margin: 0;
-      padding: 12px 0 0 0;
-      border-top: 1px solid #e5e7eb;
-    }
-
-    /* Fields Section */
-    .fields-section {
-      margin: 24px 0;
-    }
-
-    .fields-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: #1f2937;
-      margin: 0 0 12px 0;
-    }
-
-    .field-item {
-      padding: 8px 0;
-      font-size: 15px;
-      line-height: 1.5;
-      color: #1f2937;
-    }
-
-    .fields-total {
-      font-size: 14px;
-      color: #6b7280;
-      margin: 12px 0 0 0;
-      padding: 12px 0 0 0;
-      border-top: 1px solid #e5e7eb;
-    }
-
-    /* Bulletproof Button */
-    .button-wrapper {
-      text-align: center;
-      margin: 32px 0;
-    }
-
-    .cta-button {
-      display: inline-block;
-      background: linear-gradient(135deg, #2E6CF6 0%, #1E53D8 100%);
-      color: #ffffff !important;
-      font-size: 16px;
-      font-weight: 600;
-      text-decoration: none;
-      padding: 16px 40px;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(46, 108, 246, 0.3);
-      transition: all 0.2s ease;
-    }
-
-    .cta-button:hover {
-      box-shadow: 0 6px 16px rgba(46, 108, 246, 0.4);
-      transform: translateY(-1px);
-    }
-
-    /* Fallback Link */
-    .fallback-link {
-      text-align: center;
-      margin: 16px 0;
-      font-size: 13px;
-      color: #6b7280;
-    }
-
-    .fallback-link a {
-      color: #2E6CF6;
-      text-decoration: none;
-      word-break: break-all;
-    }
-
-    /* Info Box */
-    .info-box {
-      background-color: #fef3c7;
-      border: 1px solid #fbbf24;
-      border-radius: 8px;
-      padding: 16px;
-      margin: 24px 0;
-    }
-
-    .info-box-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: #92400e;
-      margin: 0 0 8px 0;
-    }
-
-    .info-box-text {
-      font-size: 13px;
-      color: #78350f;
-      line-height: 1.5;
-      margin: 0;
-    }
-
-    /* Footer */
-    .footer {
-      background-color: #f9fafb;
-      padding: 24px;
-      text-align: center;
-      border-top: 1px solid #e5e7eb;
-    }
-
-    .footer-text {
-      font-size: 13px;
-      color: #6b7280;
-      line-height: 1.6;
-      margin: 0 0 12px 0;
-    }
-
-    .footer-links {
-      font-size: 12px;
-      color: #9ca3af;
-      margin: 12px 0 0 0;
-    }
-
-    .footer-link {
-      color: #2E6CF6;
-      text-decoration: none;
-      margin: 0 8px;
-    }
-
-    /* Mobile Responsive */
-    @media only screen and (max-width: 600px) {
-      .email-wrapper { padding: 0 !important; }
-      .email-container { border-radius: 0 !important; }
-      .email-header { padding: 24px 16px !important; }
-      .content-section { padding: 24px 16px !important; }
-      .header-title { font-size: 20px !important; }
-      .cta-button { padding: 14px 32px !important; font-size: 15px !important; }
-    }
-  </style>
-</head>
-
-<body style="margin:0;padding:0;background-color:#f3f4f6;color:#1f2937;">
-  <table role="presentation" class="email-wrapper" width="100%" cellpadding="0" cellspacing="0" bgcolor="#f3f4f6" style="background-color:#f3f4f6;">
-    <tr>
-      <td align="center" style="padding:20px 0;">
-        <!-- Main Container -->
-        <table role="presentation" class="email-container" width="600" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="background-color:#ffffff;border-radius:12px;max-width:600px;">
-
-          <!-- Header -->
-          <tr>
-            <td class="email-header" bgcolor="#2E6CF6" style="background:linear-gradient(135deg, #2E6CF6 0%, #1E53D8 100%);padding:32px 24px;text-align:center;">
-              <div class="header-icon" style="font-size:48px;margin-bottom:12px;">📝</div>
-              <h1 class="header-title" style="font-size:24px;font-weight:600;color:#ffffff;margin:0 0 8px 0;">Signaturanfrage</h1>
-              <p class="header-subtitle" style="font-size:15px;color:rgba(255,255,255,0.9);margin:0;">Ein Dokument wartet auf Ihre Unterschrift</p>
-            </td>
-          </tr>
-
-          <!-- Content -->
-          <tr>
-            <td class="content-section" bgcolor="#ffffff" style="padding:32px 24px;background-color:#ffffff;">
-              <p class="greeting" style="font-size:16px;color:#1f2937;margin:0 0 16px 0;line-height:1.5;">Hallo ${signer.name},</p>
-
-              <p class="main-text" style="font-size:15px;color:#4b5563;line-height:1.6;margin:0 0 24px 0;">
-                <strong>${ownerEmail}</strong> hat Ihnen ein Dokument zur Unterschrift geschickt.
-              </p>
-
-              <!-- Document Card -->
-              <table role="presentation" class="document-card" width="100%" cellpadding="0" cellspacing="0" bgcolor="#f9fafb" style="background-color:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;">
-                <tr>
-                  <td style="padding:20px;">
-                    <h2 class="document-title" style="font-size:18px;font-weight:600;color:#1f2937;margin:0 0 8px 0;">📄 ${envelope.title}</h2>
-                    <p class="document-sender" style="font-size:14px;color:#6b7280;margin:0 0 12px 0;">Absender: ${ownerEmail}</p>
-                    ${envelope.message ? `
-                      <p class="document-message" style="font-size:14px;color:#4b5563;line-height:1.5;margin:0;padding:12px 0 0 0;border-top:1px solid #e5e7eb;">
-                        <strong>💬 Nachricht:</strong><br>
-                        ${envelope.message}
-                      </p>
-                    ` : ''}
-                  </td>
-                </tr>
-              </table>
-
-              <!-- Fields Section -->
-              <div class="fields-section">
-                <h3 class="fields-title">Sie müssen folgende Felder ausfüllen:</h3>
-                <table role="presentation">
-                  ${fieldSummaryHTML}
-                </table>
-                <p class="fields-total">
-                  <strong>Gesamt: ${totalFields} ${totalFields === 1 ? 'Feld' : 'Felder'}</strong>
-                </p>
-              </div>
-
-              <!-- CTA Button (Bulletproof) -->
-              <table role="presentation" class="button-wrapper">
-                <tr>
-                  <td align="center">
-                    <!--[if mso]>
-                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${signUrl}" style="height:48px;v-text-anchor:middle;width:200px;" arcsize="17%" strokecolor="#1E53D8" fillcolor="#2E6CF6">
-                      <w:anchorlock/>
-                      <center style="color:#ffffff;font-family:sans-serif;font-size:16px;font-weight:bold;">Jetzt signieren</center>
-                    </v:roundrect>
-                    <![endif]-->
-                    <!--[if !mso]><!-->
-                    <a href="${signUrl}" class="cta-button" style="display: inline-block; background: linear-gradient(135deg, #2E6CF6 0%, #1E53D8 100%); color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 16px 40px; border-radius: 8px; box-shadow: 0 4px 12px rgba(46, 108, 246, 0.3);">
-                      Jetzt sicher signieren →
-                    </a>
-                    <!--<![endif]-->
-                  </td>
-                </tr>
-              </table>
-
-              <!-- Fallback Link -->
-              <div class="fallback-link">
-                <p style="margin: 0 0 8px 0;">Link funktioniert nicht? Kopieren Sie diese URL:</p>
-                <a href="${signUrl}" style="color: #2E6CF6; text-decoration: none; word-break: break-all;">${signUrl}</a>
-              </div>
-
-              <!-- Info Box -->
-              <table role="presentation" class="info-box">
-                <tr>
-                  <td>
-                    <p class="info-box-title">⏰ Wichtige Hinweise</p>
-                    <p class="info-box-text">
-                      • Dieser Link ist gültig bis: <strong>${formattedExpiryDate}</strong><br>
-                      • Leiten Sie diesen Link nicht weiter – er ist nur für Sie bestimmt<br>
-                      • Bei Fragen wenden Sie sich bitte an ${ownerEmail}
-                    </p>
-                  </td>
-                </tr>
-              </table>
-
-            </td>
-          </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td class="footer">
-              <p class="footer-text">
-                Mit freundlichen Grüßen<br>
-                <strong>Contract AI Signaturservice</strong>
-              </p>
-              <p class="footer-text" style="font-size: 12px; color: #9ca3af; margin: 16px 0 0 0;">
-                Diese E-Mail wurde automatisch generiert. Bitte antworten Sie nicht auf diese E-Mail.
-              </p>
-              <div class="footer-links">
-                <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}" class="footer-link">Website</a> •
-                <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/datenschutz" class="footer-link">Datenschutz</a> •
-                <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/impressum" class="footer-link">Impressum</a>
-              </div>
-            </td>
-          </tr>
-
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-  `.trim();
+  });
 }
 
 /**
@@ -609,7 +321,72 @@ Impressum: ${process.env.FRONTEND_URL || 'http://localhost:5173'}/impressum
   `.trim();
 }
 
+/**
+ * Generate plain text email for completion notification (fallback)
+ */
+function generateCompletionNotificationText(data) {
+  const { envelope, downloadLink } = data;
+
+  const completedDate = new Date().toLocaleString('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  const signersList = envelope.signers.map(s => {
+    const signedDate = s.signedAt ? new Date(s.signedAt).toLocaleString('de-DE', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }) : 'Ausstehend';
+    return `  ✓ ${s.name} (${s.email}) - ${signedDate}`;
+  }).join('\n');
+
+  return `
+Dokument vollständig signiert
+
+Gute Nachrichten! Alle Parteien haben das Dokument erfolgreich unterzeichnet.
+
+═══════════════════════════════════════════════════
+
+DOKUMENT: ${envelope.title}
+ABGESCHLOSSEN AM: ${completedDate}
+
+═══════════════════════════════════════════════════
+
+UNTERZEICHNER:
+
+${signersList}
+
+═══════════════════════════════════════════════════
+
+📥 SIGNIERTES DOKUMENT HERUNTERLADEN:
+
+${downloadLink}
+
+(Link 24 Stunden gültig)
+
+═══════════════════════════════════════════════════
+
+Mit freundlichen Grüßen
+Contract AI Signaturservice
+
+---
+Diese E-Mail wurde automatisch generiert.
+
+Website: https://www.contract-ai.de
+Datenschutz: https://www.contract-ai.de/datenschutz
+Impressum: https://www.contract-ai.de/impressum
+  `.trim();
+}
+
 module.exports = {
   generateSignatureInvitationHTML,
-  generateSignatureInvitationText
+  generateSignatureInvitationText,
+  generateCompletionNotificationHTML,
+  generateCompletionNotificationText
 };

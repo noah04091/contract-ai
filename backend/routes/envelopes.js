@@ -255,7 +255,7 @@ async function sendCompletionNotification(envelope, recipientEmail) {
   const subject = `✅ Dokument vollständig signiert: ${envelope.title}`;
 
   // 🆕 Generate direct download link for signed PDF (valid 24 hours)
-  let downloadLink = "Dashboard: " + (process.env.FRONTEND_URL || 'http://localhost:5173') + '/contracts';
+  let downloadLink = (process.env.FRONTEND_URL || 'http://localhost:5173') + '/contracts';
 
   if (envelope.s3KeySealed) {
     try {
@@ -268,28 +268,22 @@ async function sendCompletionNotification(envelope, recipientEmail) {
     }
   }
 
-  const text = `
-Hallo,
+  // 🆕 Import and use V4 email templates
+  const {
+    generateCompletionNotificationHTML,
+    generateCompletionNotificationText
+  } = require('../templates/signatureInvitationEmail');
 
-gute Nachrichten! Ihr Dokument wurde von allen Parteien signiert.
+  const templateData = {
+    envelope: envelope,
+    downloadLink: downloadLink
+  };
 
-Dokument: ${envelope.title}
-Signiert am: ${new Date().toLocaleString('de-DE')}
-
-Unterzeichner:
-${envelope.signers.map(s => `  - ${s.name} (${s.email}) - Signiert am ${new Date(s.signedAt).toLocaleString('de-DE')}`).join('\n')}
-
-📥 Signiertes Dokument herunterladen:
-${downloadLink}
-
-${envelope.s3KeySealed ? '(Dieser Link ist 24 Stunden gültig)' : ''}
-
-Mit freundlichen Grüßen
-Ihr Contract AI Team
-`;
+  const htmlContent = generateCompletionNotificationHTML(templateData);
+  const textContent = generateCompletionNotificationText(templateData);
 
   try {
-    await sendEmail(recipientEmail, subject, text);
+    await sendEmail(recipientEmail, subject, textContent, htmlContent);
     console.log(`✉️ Completion notification sent to: ${recipientEmail}`);
     return true;
   } catch (error) {
