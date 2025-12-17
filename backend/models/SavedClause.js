@@ -282,7 +282,9 @@ savedClauseSchema.statics.checkDuplicate = async function(userId, clauseText) {
     .update(clauseText.toLowerCase().replace(/\s+/g, " ").trim())
     .digest("hex");
 
-  return this.findOne({ userId, clauseTextHash: hash });
+  // Ensure userId is ObjectId
+  const userObjId = typeof userId === 'string' ? new mongoose.Types.ObjectId(userId) : userId;
+  return this.findOne({ userId: userObjId, clauseTextHash: hash });
 };
 
 savedClauseSchema.statics.findSimilar = async function(userId, clauseText, threshold = 3) {
@@ -293,9 +295,12 @@ savedClauseSchema.statics.findSimilar = async function(userId, clauseText, thres
     return [];
   }
 
+  // Ensure userId is ObjectId
+  const userObjId = typeof userId === 'string' ? new mongoose.Types.ObjectId(userId) : userId;
+
   // Klauseln mit übereinstimmenden Keywords finden
   const matches = await this.find({
-    userId,
+    userId: userObjId,
     keywords: { $in: searchKeywords }
   }).lean();
 

@@ -10,9 +10,19 @@
 const express = require('express');
 const router = express.Router();
 const verifyToken = require('../middleware/verifyToken');
-const { ObjectId } = require('mongodb');
+const mongoose = require('mongoose');
 const SavedClause = require('../models/SavedClause');
 const Contract = require('../models/Contract');
+
+// Helper für ObjectId-Konvertierung
+const toObjectId = (id) => {
+  try {
+    return new mongoose.Types.ObjectId(id);
+  } catch (err) {
+    console.error('[ClauseLibrary] Invalid ObjectId:', id);
+    return null;
+  }
+};
 
 // ============================================
 // GET ALL SAVED CLAUSES
@@ -42,7 +52,7 @@ router.get('/', verifyToken, async (req, res) => {
     console.log(`📚 [ClauseLibrary] Fetching clauses for user: ${userId}`);
 
     // Filter aufbauen
-    const filter = { userId: new ObjectId(userId) };
+    const filter = { userId: toObjectId(userId) };
 
     if (category) {
       filter.category = category;
@@ -167,11 +177,11 @@ router.post('/', verifyToken, async (req, res) => {
 
     // Neue Klausel erstellen
     const savedClause = new SavedClause({
-      userId: new ObjectId(userId),
+      userId: toObjectId(userId),
       clauseText,
       category,
       clauseArea,
-      sourceContractId: sourceContractId ? new ObjectId(sourceContractId) : undefined,
+      sourceContractId: sourceContractId ? toObjectId(sourceContractId) : undefined,
       sourceContractName: contractName,
       sourceClauseId,
       originalAnalysis,
@@ -214,8 +224,8 @@ router.get('/:id', verifyToken, async (req, res) => {
     const { id } = req.params;
 
     const clause = await SavedClause.findOne({
-      _id: new ObjectId(id),
-      userId: new ObjectId(userId)
+      _id: toObjectId(id),
+      userId: toObjectId(userId)
     });
 
     if (!clause) {
@@ -272,8 +282,8 @@ router.put('/:id', verifyToken, async (req, res) => {
 
     const clause = await SavedClause.findOneAndUpdate(
       {
-        _id: new ObjectId(id),
-        userId: new ObjectId(userId)
+        _id: toObjectId(id),
+        userId: toObjectId(userId)
       },
       { $set: updateData },
       { new: true }
@@ -320,8 +330,8 @@ router.delete('/:id', verifyToken, async (req, res) => {
     console.log(`🗑️ [ClauseLibrary] Deleting clause: ${id}`);
 
     const result = await SavedClause.findOneAndDelete({
-      _id: new ObjectId(id),
-      userId: new ObjectId(userId)
+      _id: toObjectId(id),
+      userId: toObjectId(userId)
     });
 
     if (!result) {
@@ -579,8 +589,8 @@ router.post('/:id/use', verifyToken, async (req, res) => {
     const { id } = req.params;
 
     const clause = await SavedClause.findOne({
-      _id: new ObjectId(id),
-      userId: new ObjectId(userId)
+      _id: toObjectId(id),
+      userId: toObjectId(userId)
     });
 
     if (!clause) {
