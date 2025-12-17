@@ -609,7 +609,8 @@ function createLocalDocument(name: string, contractType: string, template?: Cont
 const API_BASE = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
 
 async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const token = localStorage.getItem('token');
+  // Token-Fallback: authToken (von Login.tsx) ODER token (legacy)
+  const token = localStorage.getItem('authToken') || localStorage.getItem('token');
   const response = await fetch(`${API_BASE}/api/contract-builder${endpoint}`, {
     ...options,
     headers: {
