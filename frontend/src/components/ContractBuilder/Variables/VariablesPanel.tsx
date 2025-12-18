@@ -62,26 +62,42 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
 
   const variables = currentDocument?.content.variables || [];
 
-  // Auto-Scroll zur ausgewählten Variable
+  // Auto-Scroll zur ausgewählten Variable UND Gruppe öffnen
   useEffect(() => {
     if (selectedVariableId && variablesListRef.current) {
       // Finde die Variable und ihre Gruppe
       const variable = variables.find((v: Variable) => v.id === selectedVariableId);
+      console.log('[VariablesPanel] Variable ausgewählt:', selectedVariableId, 'Gefunden:', variable?.displayName);
+
       if (variable) {
         const group = variable.group || 'Allgemein';
-        // Gruppe expandieren
-        setExpandedGroups(prev => new Set([...prev, group]));
+        console.log('[VariablesPanel] Öffne Gruppe:', group);
+
+        // Gruppe expandieren - ALLE anderen schließen für Fokus
+        setExpandedGroups(new Set([group]));
 
         // Nach kurzer Verzögerung zum Element scrollen (damit DOM aktualisiert ist)
         setTimeout(() => {
-          const element = document.querySelector(`[data-variable-id="${selectedVariableId}"]`);
+          const element = document.querySelector(`[data-variable-id="${selectedVariableId}"]`) as HTMLElement;
+          console.log('[VariablesPanel] Element gefunden:', !!element);
+
           if (element) {
+            // Scroll zur Variable
             element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            // Visuelles Feedback durch kurzes Blinken
+
+            // Visuelles Feedback durch Highlighting
             element.classList.add(styles.highlight);
-            setTimeout(() => element.classList.remove(styles.highlight), 1500);
+
+            // Input-Feld finden und fokussieren
+            const input = element.querySelector('input, select') as HTMLInputElement;
+            if (input) {
+              setTimeout(() => input.focus(), 200);
+            }
+
+            // Highlight nach 3 Sekunden entfernen
+            setTimeout(() => element.classList.remove(styles.highlight), 3000);
           }
-        }, 100);
+        }, 150); // Etwas mehr Zeit für DOM-Update
       }
     }
   }, [selectedVariableId, variables]);
