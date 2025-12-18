@@ -36,6 +36,46 @@ const CATEGORY_LABELS = {
   other: 'Sonstiges'
 };
 
+// Helper: Emojis zu Text-Symbolen konvertieren (react-pdf unterstützt keine Unicode-Emojis)
+const emojiToSymbol = (emoji) => {
+  if (!emoji) return '';
+
+  const emojiMap = {
+    // Warnung/Risiko
+    '⚠️': '[!]',
+    '🚨': '[!]',
+    '❗': '[!]',
+    '❌': '[X]',
+    // Geld/Finanzen
+    '💰': '[$]',
+    '💵': '[$]',
+    '💸': '[$]',
+    '🏦': '[$]',
+    // Zeit/Termine
+    '⏰': '[T]',
+    '📅': '[T]',
+    '🕐': '[T]',
+    // Dokument/Vertrag
+    '📄': '[D]',
+    '📋': '[D]',
+    '📝': '[D]',
+    // Positiv
+    '✅': '[OK]',
+    '✓': '[OK]',
+    '👍': '[OK]',
+    // Neutral
+    '📌': '[*]',
+    '🔹': '[*]',
+    '➡️': '[>]',
+    // Sonstiges
+    '🔒': '[S]',
+    '⚖️': '[J]',
+    '🤝': '[H]'
+  };
+
+  return emojiMap[emoji] || '';
+};
+
 // ===== STYLES =====
 const styles = StyleSheet.create({
   page: {
@@ -348,7 +388,7 @@ const ChecklistDocument = ({ checklist, summary, contractName, perspective }) =>
             React.createElement(
               View,
               { style: styles.itemTitleSection },
-              React.createElement(Text, { style: styles.itemTitle }, `${item.emoji || ''} ${item.title}`),
+              React.createElement(Text, { style: styles.itemTitle }, emojiToSymbol(item.emoji) ? `${emojiToSymbol(item.emoji)} ${item.title}` : item.title),
               React.createElement(
                 View,
                 { style: styles.itemMetaRow },

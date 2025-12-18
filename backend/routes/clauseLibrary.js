@@ -142,6 +142,25 @@ router.post('/', verifyToken, async (req, res) => {
     } = req.body;
 
     console.log(`💾 [ClauseLibrary] Saving new clause for user: ${userId}`);
+    console.log(`💾 [ClauseLibrary] Request body:`, JSON.stringify({
+      clauseTextLength: clauseText?.length,
+      category,
+      clauseArea,
+      sourceContractId,
+      sourceClauseId,
+      hasOriginalAnalysis: !!originalAnalysis,
+      tagsCount: tags?.length
+    }));
+
+    // Validiere userId
+    const userObjId = toObjectId(userId);
+    if (!userObjId) {
+      console.error(`❌ [ClauseLibrary] Invalid userId: ${userId}`);
+      return res.status(400).json({
+        success: false,
+        error: 'Ungültige Benutzer-ID'
+      });
+    }
 
     if (!clauseText || clauseText.length < 10) {
       return res.status(400).json({
@@ -151,7 +170,7 @@ router.post('/', verifyToken, async (req, res) => {
     }
 
     // Prüfe auf Duplikat
-    const existing = await SavedClause.checkDuplicate(userId, clauseText);
+    const existing = await SavedClause.checkDuplicate(userObjId, clauseText);
     if (existing) {
       return res.status(409).json({
         success: false,
@@ -175,18 +194,27 @@ router.post('/', verifyToken, async (req, res) => {
       }
     }
 
+    // Validiere sourceContractId falls vorhanden
+    let sourceContractObjId = undefined;
+    if (sourceContractId) {
+      sourceContractObjId = toObjectId(sourceContractId);
+      if (!sourceContractObjId) {
+        console.warn(`⚠️ [ClauseLibrary] Invalid sourceContractId: ${sourceContractId}, ignoring`);
+      }
+    }
+
     // Neue Klausel erstellen
     const savedClause = new SavedClause({
-      userId: toObjectId(userId),
+      userId: userObjId,
       clauseText,
       category,
       clauseArea,
-      sourceContractId: sourceContractId ? toObjectId(sourceContractId) : undefined,
+      sourceContractId: sourceContractObjId,
       sourceContractName: contractName,
       sourceClauseId,
       originalAnalysis,
       userNotes,
-      tags: tags.map(t => t.toLowerCase().trim()),
+      tags: tags ? tags.map(t => t.toLowerCase().trim()) : [],
       industryContext
     });
 
@@ -201,10 +229,22 @@ router.post('/', verifyToken, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ [ClauseLibrary] Save clause error:', error);
+    console.error('❌ [ClauseLibrary] Save clause error:', error.message);
+    console.error('❌ [ClauseLibrary] Error stack:', error.stack);
+    console.error('❌ [ClauseLibrary] Error name:', error.name);
+
+    // Spezifischere Fehlermeldungen
+    let errorMessage = 'Fehler beim Speichern der Klausel';
+    if (error.name === 'ValidationError') {
+      errorMessage = `Validierungsfehler: ${Object.values(error.errors).map(e => e.message).join(', ')}`;
+    } else if (error.code === 11000) {
+      errorMessage = 'Diese Klausel existiert bereits in deiner Bibliothek';
+    }
+
     res.status(500).json({
       success: false,
-      error: 'Fehler beim Speichern der Klausel'
+      error: errorMessage,
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
