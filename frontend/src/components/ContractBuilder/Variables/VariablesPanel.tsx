@@ -2,7 +2,7 @@
  * VariablesPanel - Seitenleiste für Variablen-Verwaltung
  */
 
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useContractBuilderStore, Variable } from '../../../stores/contractBuilderStore';
 import { SYSTEM_VARIABLES } from '../../../utils/smartVariables';
 import {
@@ -51,7 +51,6 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
   const [showHelp, setShowHelp] = useState(false);
   const [showSystemVars, setShowSystemVars] = useState(false);
   const [copiedVar, setCopiedVar] = useState<string | null>(null);
-  const variablesListRef = useRef<HTMLDivElement>(null);
 
   const {
     document: currentDocument,
@@ -62,9 +61,12 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
 
   const variables = currentDocument?.content.variables || [];
 
-  // Auto-Scroll zur ausgewählten Variable UND Gruppe öffnen
+  // State für die zu scrollende Variable (nach Gruppen-Öffnung)
+  const [pendingScrollToVariable, setPendingScrollToVariable] = useState<string | null>(null);
+
+  // SCHRITT 1: Variable ausgewählt → Gruppe öffnen
   useEffect(() => {
-    if (selectedVariableId && variablesListRef.current) {
+    if (selectedVariableId) {
       // Finde die Variable und ihre Gruppe
       const variable = variables.find((v: Variable) => v.id === selectedVariableId);
       console.log('[VariablesPanel] Variable ausgewählt:', selectedVariableId, 'Gefunden:', variable?.displayName);
@@ -73,34 +75,62 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
         const group = variable.group || 'Allgemein';
         console.log('[VariablesPanel] Öffne Gruppe:', group);
 
-        // Gruppe expandieren - ALLE anderen schließen für Fokus
-        setExpandedGroups(new Set([group]));
+        // Gruppe expandieren
+        setExpandedGroups(prev => {
+          const newSet = new Set(prev);
+          newSet.add(group);
+          return newSet;
+        });
 
-        // Nach kurzer Verzögerung zum Element scrollen (damit DOM aktualisiert ist)
-        setTimeout(() => {
-          const element = document.querySelector(`[data-variable-id="${selectedVariableId}"]`) as HTMLElement;
-          console.log('[VariablesPanel] Element gefunden:', !!element);
-
-          if (element) {
-            // Scroll zur Variable
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-            // Visuelles Feedback durch Highlighting
-            element.classList.add(styles.highlight);
-
-            // Input-Feld finden und fokussieren
-            const input = element.querySelector('input, select') as HTMLInputElement;
-            if (input) {
-              setTimeout(() => input.focus(), 200);
-            }
-
-            // Highlight nach 3 Sekunden entfernen
-            setTimeout(() => element.classList.remove(styles.highlight), 3000);
-          }
-        }, 150); // Etwas mehr Zeit für DOM-Update
+        // Merken, dass wir zur Variable scrollen müssen
+        setPendingScrollToVariable(selectedVariableId);
       }
     }
   }, [selectedVariableId, variables]);
+
+  // SCHRITT 2: Nach Gruppen-Expansion zum Element scrollen (separater Effect!)
+  useEffect(() => {
+    if (pendingScrollToVariable) {
+      // Multiple Frames warten, damit React das DOM vollständig aktualisiert hat
+      let attempts = 0;
+      const maxAttempts = 10;
+
+      const tryScroll = () => {
+        const element = document.querySelector(`[data-variable-id="${pendingScrollToVariable}"]`) as HTMLElement;
+        console.log('[VariablesPanel] Scroll-Versuch', attempts + 1, '- Element gefunden:', !!element);
+
+        if (element) {
+          // Scroll zur Variable
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+          // Visuelles Feedback durch Highlighting
+          element.classList.add(styles.highlight);
+
+          // Input-Feld finden und fokussieren
+          const input = element.querySelector('input, select') as HTMLInputElement;
+          if (input) {
+            setTimeout(() => input.focus(), 100);
+          }
+
+          // Highlight nach 3 Sekunden entfernen
+          setTimeout(() => element.classList.remove(styles.highlight), 3000);
+
+          // Erfolgreich - pendingScrollToVariable zurücksetzen
+          setPendingScrollToVariable(null);
+        } else if (attempts < maxAttempts) {
+          // Element noch nicht im DOM - nochmal versuchen
+          attempts++;
+          requestAnimationFrame(tryScroll);
+        } else {
+          console.warn('[VariablesPanel] Element nicht gefunden nach', maxAttempts, 'Versuchen');
+          setPendingScrollToVariable(null);
+        }
+      };
+
+      // Starte nach kurzem Delay (für setState-Batching)
+      requestAnimationFrame(tryScroll);
+    }
+  }, [pendingScrollToVariable, expandedGroups]);
 
   // Variablen nach Gruppen sortieren
   const groupedVariables = useMemo(() => {
