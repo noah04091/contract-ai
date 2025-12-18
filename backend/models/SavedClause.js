@@ -22,10 +22,9 @@ const savedClauseSchema = new mongoose.Schema({
     required: true
   },
 
-  // Hash für exakte Duplikaterkennung
+  // Hash für exakte Duplikaterkennung (wird automatisch im pre-save generiert)
   clauseTextHash: {
     type: String,
-    required: true,
     index: true
   },
 
