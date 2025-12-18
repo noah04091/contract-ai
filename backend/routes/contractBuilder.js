@@ -712,8 +712,9 @@ router.post('/ai/legal-score', auth, async (req, res) => {
     let docType = contractType || 'Allgemeiner Vertrag';
     let blockCount = 0;
 
-    // Wenn documentId vorhanden, aus DB laden
-    if (documentId) {
+    // Wenn documentId vorhanden UND gültige MongoDB ObjectId, aus DB laden
+    const isValidObjectId = documentId && /^[0-9a-fA-F]{24}$/.test(documentId);
+    if (isValidObjectId) {
       document = await ContractBuilder.findOne({
         _id: documentId,
         userId: req.user.userId
