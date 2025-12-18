@@ -745,12 +745,14 @@ router.post('/ai/legal-score', auth, async (req, res) => {
       });
     }
 
+    console.log(`[ContractBuilder] Legal Score: Analysiere ${blockCount} Blöcke für ${docType}`);
+
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-4o-mini', // Schneller und günstiger für Score-Berechnung
       messages: [
         {
           role: 'system',
-          content: `Analysiere einen Vertrag und erstelle einen Legal Health Score.
+          content: `Du bist ein deutscher Rechtsexperte. Analysiere einen Vertrag und erstelle einen Legal Health Score.
 
 Bewerte folgende Kategorien von 0-100:
 - completeness: Vollständigkeit (alle wichtigen Klauseln vorhanden?)
@@ -760,21 +762,21 @@ Bewerte folgende Kategorien von 0-100:
 - currentness: Aktualität (entspricht aktueller Rechtslage?)
 - enforceability: Durchsetzbarkeit (vor Gericht haltbar?)
 
-Antworte als JSON:
+Antworte IMMER als valides JSON mit genau dieser Struktur:
 {
-  "totalScore": 0-100,
+  "totalScore": 75,
   "categories": {
-    "completeness": 0-100,
-    "legalPrecision": 0-100,
-    "balance": 0-100,
-    "clarity": 0-100,
-    "currentness": 0-100,
-    "enforceability": 0-100
+    "completeness": 70,
+    "legalPrecision": 80,
+    "balance": 75,
+    "clarity": 85,
+    "currentness": 70,
+    "enforceability": 75
   },
   "findings": {
-    "critical": [{ "message": "...", "autoFixAvailable": true/false }],
-    "warnings": [{ "message": "...", "autoFixAvailable": true/false }],
-    "suggestions": [{ "message": "..." }]
+    "critical": [],
+    "warnings": [{ "message": "Beispiel-Warnung", "autoFixAvailable": false }],
+    "suggestions": [{ "message": "Beispiel-Vorschlag" }]
   }
 }`
         },
@@ -784,14 +786,45 @@ Antworte als JSON:
 
 ${clauseTexts || 'Keine Klauseln vorhanden'}
 
-Anzahl Blöcke: ${blockCount}`
+Anzahl Blöcke: ${blockCount}
+
+Gib einen realistischen Legal Health Score basierend auf dem Inhalt.`
         }
       ],
-      temperature: 0.2,
-      response_format: { type: 'json_object' }
+      temperature: 0.3,
+      response_format: { type: 'json_object' },
+      max_tokens: 1500
     });
 
-    const result = JSON.parse(response.choices[0].message.content);
+    let result;
+    try {
+      result = JSON.parse(response.choices[0].message.content);
+    } catch (parseError) {
+      console.error('[ContractBuilder] JSON Parse Error:', parseError, 'Response:', response.choices[0].message.content);
+      // Fallback mit Standardwerten
+      result = {
+        totalScore: 70,
+        categories: {
+          completeness: 70,
+          legalPrecision: 70,
+          balance: 70,
+          clarity: 70,
+          currentness: 70,
+          enforceability: 70
+        },
+        findings: {
+          critical: [],
+          warnings: [{ message: 'Analyse konnte nicht vollständig durchgeführt werden', autoFixAvailable: false }],
+          suggestions: []
+        }
+      };
+    }
+
+    // Ensure findings arrays exist
+    if (!result.findings) result.findings = {};
+    if (!result.findings.critical) result.findings.critical = [];
+    if (!result.findings.warnings) result.findings.warnings = [];
+    if (!result.findings.suggestions) result.findings.suggestions = [];
 
     // Score im Dokument speichern (nur wenn Dokument aus DB)
     if (document) {
@@ -802,10 +835,15 @@ Anzahl Blöcke: ${blockCount}`
       await document.save();
     }
 
+    console.log(`[ContractBuilder] Legal Score berechnet: ${result.totalScore}/100`);
     res.json({ success: true, ...result });
   } catch (error) {
-    console.error('[ContractBuilder] POST /ai/legal-score Error:', error);
-    res.status(500).json({ success: false, error: 'Fehler bei der Score-Berechnung' });
+    console.error('[ContractBuilder] POST /ai/legal-score Error:', error.message || error);
+    res.status(500).json({
+      success: false,
+      error: 'Fehler bei der Score-Berechnung',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 

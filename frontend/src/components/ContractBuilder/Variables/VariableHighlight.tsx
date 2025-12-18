@@ -117,7 +117,10 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
     );
 
     if (variable) {
+      console.log('[VariableHighlight] Variable geklickt:', variable.id, variableName);
       setSelectedVariable(variable.id);
+    } else {
+      console.warn('[VariableHighlight] Variable nicht gefunden:', variableName, 'Verfügbare:', variables.map(v => v.name));
     }
   };
 

@@ -116,6 +116,7 @@ const ContractBuilder: React.FC = () => {
   // Automatisch zum Variables-Panel wechseln wenn eine Variable ausgewählt wird
   useEffect(() => {
     if (selectedVariableId) {
+      console.log('[ContractBuilder] Variable ausgewählt:', selectedVariableId, '→ Wechsle zu Variables-Panel');
       setRightPanel('variables');
     }
   }, [selectedVariableId]);

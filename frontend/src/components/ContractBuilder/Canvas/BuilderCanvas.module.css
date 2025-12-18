@@ -85,8 +85,9 @@
     0 16px 32px rgba(0, 0, 0, 0.05);
   border-radius: 2px;
   position: relative;
-  padding: 20mm;
-  padding-top: calc(20mm + 8px); /* Extra Platz für Block-Controls oben */
+  /* OPTIMIERT: Weniger Padding = Mehr nutzbarer Platz */
+  padding: 15mm 20mm 20mm 20mm; /* oben, rechts, unten, links */
+  padding-top: calc(15mm + 8px); /* Extra Platz für Block-Controls oben */
   box-sizing: border-box;
   overflow: visible; /* Zeige Überlauf für Block-Controls */
 
@@ -115,11 +116,11 @@
 }
 
 .pageContent {
-  /* A4 = 297mm, Paper Padding = 40mm (20mm oben+unten), Footer-Bereich = 15mm */
-  /* Nutzbare Höhe: 297mm - 40mm - 15mm = 242mm */
-  min-height: 242mm;
-  max-height: 242mm;
-  height: 242mm;
+  /* A4 = 297mm, Paper Padding = 35mm (15mm oben + 20mm unten), Footer-Bereich = 10mm */
+  /* Nutzbare Höhe: 297mm - 35mm - 10mm = 252mm - MEHR PLATZ! */
+  min-height: 252mm;
+  max-height: 252mm;
+  height: 252mm;
   position: relative;
   overflow: hidden; /* Überlauf abschneiden - Auto-PageBreak verschiebt Blöcke */
   padding-top: 32px; /* Platz für Block-Controls (Drag-Handles etc.) */
