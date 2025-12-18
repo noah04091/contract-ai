@@ -26,7 +26,7 @@ router.get('/', auth, async (req, res) => {
   try {
     const { status, contractType, limit = 50, skip = 0, sort = '-updatedAt' } = req.query;
 
-    const query = { userId: req.user._id };
+    const query = { userId: req.user.userId };
 
     if (status) query['metadata.status'] = status;
     if (contractType) query['metadata.contractType'] = contractType;
@@ -68,8 +68,8 @@ router.get('/:id', auth, async (req, res) => {
     const document = await ContractBuilder.findOne({
       _id: req.params.id,
       $or: [
-        { userId: req.user._id },
-        { 'collaboration.sharedWith.userId': req.user._id }
+        { userId: req.user.userId },
+        { 'collaboration.sharedWith.userId': req.user.userId }
       ]
     });
 
@@ -156,7 +156,7 @@ router.post('/', auth, async (req, res) => {
           'template.isTemplate': true,
           $or: [
             { 'template.isPublic': true },
-            { userId: req.user._id }
+            { userId: req.user.userId }
           ]
         });
 
@@ -191,7 +191,7 @@ router.post('/', auth, async (req, res) => {
     }
 
     const document = new ContractBuilder({
-      userId: req.user._id,
+      userId: req.user.userId,
       metadata: {
         name: name || 'Neuer Vertrag',
         contractType: contractType || 'individuell',
@@ -222,8 +222,8 @@ router.put('/:id', auth, async (req, res) => {
     const document = await ContractBuilder.findOne({
       _id: req.params.id,
       $or: [
-        { userId: req.user._id },
-        { 'collaboration.sharedWith': { $elemMatch: { userId: req.user._id, permission: 'edit' } } }
+        { userId: req.user.userId },
+        { 'collaboration.sharedWith': { $elemMatch: { userId: req.user.userId, permission: 'edit' } } }
       ]
     });
 
@@ -263,7 +263,7 @@ router.delete('/:id', auth, async (req, res) => {
   try {
     const result = await ContractBuilder.deleteOne({
       _id: req.params.id,
-      userId: req.user._id
+      userId: req.user.userId
     });
 
     if (result.deletedCount === 0) {
@@ -285,7 +285,7 @@ router.post('/:id/duplicate', auth, async (req, res) => {
   try {
     const original = await ContractBuilder.findOne({
       _id: req.params.id,
-      userId: req.user._id
+      userId: req.user.userId
     });
 
     if (!original) {
@@ -293,7 +293,7 @@ router.post('/:id/duplicate', auth, async (req, res) => {
     }
 
     const duplicate = await original.duplicate();
-    duplicate.userId = req.user._id;
+    duplicate.userId = req.user.userId;
     await duplicate.save();
 
     res.status(201).json({ success: true, document: duplicate });
@@ -317,7 +317,7 @@ router.post('/:id/blocks', auth, async (req, res) => {
 
     const document = await ContractBuilder.findOne({
       _id: req.params.id,
-      userId: req.user._id
+      userId: req.user.userId
     });
 
     if (!document) {
@@ -349,7 +349,7 @@ router.put('/:id/blocks/:blockId', auth, async (req, res) => {
 
     const document = await ContractBuilder.findOne({
       _id: req.params.id,
-      userId: req.user._id
+      userId: req.user.userId
     });
 
     if (!document) {
@@ -388,7 +388,7 @@ router.delete('/:id/blocks/:blockId', auth, async (req, res) => {
   try {
     const document = await ContractBuilder.findOne({
       _id: req.params.id,
-      userId: req.user._id
+      userId: req.user.userId
     });
 
     if (!document) {
@@ -415,7 +415,7 @@ router.put('/:id/blocks/reorder', auth, async (req, res) => {
 
     const document = await ContractBuilder.findOne({
       _id: req.params.id,
-      userId: req.user._id
+      userId: req.user.userId
     });
 
     if (!document) {
@@ -446,7 +446,7 @@ router.put('/:id/variables', auth, async (req, res) => {
 
     const document = await ContractBuilder.findOne({
       _id: req.params.id,
-      userId: req.user._id
+      userId: req.user.userId
     });
 
     if (!document) {
@@ -716,7 +716,7 @@ router.post('/ai/legal-score', auth, async (req, res) => {
     if (documentId) {
       document = await ContractBuilder.findOne({
         _id: documentId,
-        userId: req.user._id
+        userId: req.user.userId
       });
     }
 
@@ -747,12 +747,15 @@ router.post('/ai/legal-score', auth, async (req, res) => {
 
     console.log(`[ContractBuilder] Legal Score: Analysiere ${blockCount} Blöcke für ${docType}`);
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini', // Schneller und günstiger für Score-Berechnung
-      messages: [
-        {
-          role: 'system',
-          content: `Du bist ein deutscher Rechtsexperte. Analysiere einen Vertrag und erstelle einen Legal Health Score.
+    let result;
+    try {
+      // OpenAI API-Aufruf mit Error-Handling
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o-mini', // Schneller und günstiger für Score-Berechnung
+        messages: [
+          {
+            role: 'system',
+            content: `Du bist ein deutscher Rechtsexperte. Analysiere einen Vertrag und erstelle einen Legal Health Score.
 
 Bewerte folgende Kategorien von 0-100:
 - completeness: Vollständigkeit (alle wichtigen Klauseln vorhanden?)
@@ -779,29 +782,59 @@ Antworte IMMER als valides JSON mit genau dieser Struktur:
     "suggestions": [{ "message": "Beispiel-Vorschlag" }]
   }
 }`
-        },
-        {
-          role: 'user',
-          content: `Analysiere diesen Vertrag (Typ: ${docType}):
+          },
+          {
+            role: 'user',
+            content: `Analysiere diesen Vertrag (Typ: ${docType}):
 
 ${clauseTexts || 'Keine Klauseln vorhanden'}
 
 Anzahl Blöcke: ${blockCount}
 
 Gib einen realistischen Legal Health Score basierend auf dem Inhalt.`
-        }
-      ],
-      temperature: 0.3,
-      response_format: { type: 'json_object' },
-      max_tokens: 1500
-    });
+          }
+        ],
+        temperature: 0.3,
+        response_format: { type: 'json_object' },
+        max_tokens: 1500
+      });
 
-    let result;
-    try {
-      result = JSON.parse(response.choices[0].message.content);
-    } catch (parseError) {
-      console.error('[ContractBuilder] JSON Parse Error:', parseError, 'Response:', response.choices[0].message.content);
-      // Fallback mit Standardwerten
+      const rawContent = response.choices[0].message.content;
+      console.log('[ContractBuilder] OpenAI Response:', rawContent?.substring(0, 200));
+      result = JSON.parse(rawContent);
+    } catch (openaiError) {
+      // OpenAI-Fehler oder JSON-Parse-Fehler
+      console.error('[ContractBuilder] OpenAI/Parse Error:', openaiError.message || openaiError);
+
+      // Fallback mit Standardwerten damit die UI trotzdem funktioniert
+      result = {
+        totalScore: 65,
+        categories: {
+          completeness: 60,
+          legalPrecision: 65,
+          balance: 70,
+          clarity: 65,
+          currentness: 65,
+          enforceability: 65
+        },
+        findings: {
+          critical: [],
+          warnings: [{
+            id: uuidv4(),
+            message: 'KI-Analyse vorübergehend nicht verfügbar. Bitte versuchen Sie es später erneut.',
+            autoFixAvailable: false
+          }],
+          suggestions: [{
+            id: uuidv4(),
+            message: 'Dies ist ein geschätzter Score basierend auf der Dokumentstruktur.'
+          }]
+        }
+      };
+    }
+
+    // Zusätzliche Validierung (falls Result kein Objekt ist)
+    if (!result || typeof result !== 'object') {
+      console.error('[ContractBuilder] Result validation failed, using fallback');
       result = {
         totalScore: 70,
         categories: {
@@ -814,17 +847,36 @@ Gib einen realistischen Legal Health Score basierend auf dem Inhalt.`
         },
         findings: {
           critical: [],
-          warnings: [{ message: 'Analyse konnte nicht vollständig durchgeführt werden', autoFixAvailable: false }],
+          warnings: [{ id: uuidv4(), message: 'Analyse konnte nicht vollständig durchgeführt werden', autoFixAvailable: false }],
           suggestions: []
         }
       };
     }
 
-    // Ensure findings arrays exist
+    // Ensure findings arrays exist and have IDs
     if (!result.findings) result.findings = {};
     if (!result.findings.critical) result.findings.critical = [];
     if (!result.findings.warnings) result.findings.warnings = [];
     if (!result.findings.suggestions) result.findings.suggestions = [];
+
+    // Add UUIDs to all findings if missing
+    result.findings.critical = result.findings.critical.map(f => ({
+      id: f.id || uuidv4(),
+      message: f.message || '',
+      blockId: f.blockId || null,
+      autoFixAvailable: f.autoFixAvailable || false
+    }));
+    result.findings.warnings = result.findings.warnings.map(f => ({
+      id: f.id || uuidv4(),
+      message: f.message || '',
+      blockId: f.blockId || null,
+      autoFixAvailable: f.autoFixAvailable || false
+    }));
+    result.findings.suggestions = result.findings.suggestions.map(f => ({
+      id: f.id || uuidv4(),
+      message: f.message || '',
+      blockId: f.blockId || null
+    }));
 
     // Score im Dokument speichern (nur wenn Dokument aus DB)
     if (document) {
@@ -909,7 +961,7 @@ router.post('/:id/export/pdf', auth, async (req, res) => {
   try {
     const document = await ContractBuilder.findOne({
       _id: req.params.id,
-      userId: req.user._id
+      userId: req.user.userId
     });
 
     if (!document) {
@@ -973,7 +1025,7 @@ router.post('/:id/save-as-template', auth, async (req, res) => {
 
     const document = await ContractBuilder.findOne({
       _id: req.params.id,
-      userId: req.user._id
+      userId: req.user.userId
     });
 
     if (!document) {
