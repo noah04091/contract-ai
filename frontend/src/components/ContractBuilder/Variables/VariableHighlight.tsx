@@ -106,15 +106,33 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
     return result;
   }, [text, variables, variableValuesMap]);
 
+  // Umlaute normalisieren für Matching (ä→ae, ö→oe, ü→ue, ß→ss)
+  const normalizeUmlauts = (str: string): string => {
+    return str
+      .toLowerCase()
+      .replace(/ä/g, 'ae')
+      .replace(/ö/g, 'oe')
+      .replace(/ü/g, 'ue')
+      .replace(/ß/g, 'ss');
+  };
+
   // Variable auswählen (nur für User-Variablen)
   const handleVariableClick = (variableName: string, varType?: string) => {
     // System-Variablen sind nicht editierbar
     if (varType === 'system' || varType === 'computed') return;
 
-    // Finde die Variable anhand des Namens und übergebe die ID
-    const variable = variables.find((v: Variable) =>
-      v.name === `{{${variableName}}}` || v.name === variableName
-    );
+    // Normalisiere den gesuchten Namen für Umlaut-Toleranz
+    const normalizedSearch = normalizeUmlauts(variableName);
+
+    // Finde die Variable - mit Umlaut-Normalisierung
+    const variable = variables.find((v: Variable) => {
+      const varNameClean = v.name.replace(/^\{\{|\}\}$/g, ''); // Entferne {{ }}
+      const normalizedVarName = normalizeUmlauts(varNameClean);
+
+      return normalizedVarName === normalizedSearch ||
+             v.name === `{{${variableName}}}` ||
+             v.name === variableName;
+    });
 
     if (variable) {
       console.log('[VariableHighlight] Variable geklickt:', variable.id, variableName);
