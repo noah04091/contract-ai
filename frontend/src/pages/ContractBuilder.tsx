@@ -3,7 +3,7 @@
  * Der visuelle Vertragsbaukasten
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import html2pdf from 'html2pdf.js';
 import { useContractBuilderStore } from '../stores/contractBuilderStore';
@@ -120,6 +120,41 @@ const ContractBuilder: React.FC = () => {
       setRightPanel('variables');
     }
   }, [selectedVariableId]);
+
+  // Auto-Calculate Legal Score bei Block-Änderungen (mit Debouncing)
+  const legalScoreTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastBlocksHashRef = useRef<string>('');
+
+  useEffect(() => {
+    if (!currentDocument?.content?.blocks || currentDocument.content.blocks.length === 0) return;
+
+    // Hash der Blöcke berechnen um unnötige Neuberechnungen zu vermeiden
+    const blocksHash = JSON.stringify(
+      currentDocument.content.blocks
+        .filter(b => b.type === 'clause')
+        .map(b => b.content?.body || '')
+    );
+
+    // Wenn sich nichts geändert hat, nicht neu berechnen
+    if (blocksHash === lastBlocksHashRef.current) return;
+    lastBlocksHashRef.current = blocksHash;
+
+    // Debounce: 5 Sekunden nach letzter Änderung
+    if (legalScoreTimerRef.current) {
+      clearTimeout(legalScoreTimerRef.current);
+    }
+
+    legalScoreTimerRef.current = setTimeout(() => {
+      console.log('[ContractBuilder] Auto-Calculate Legal Score (nach Änderung)');
+      calculateLegalScore();
+    }, 5000);
+
+    return () => {
+      if (legalScoreTimerRef.current) {
+        clearTimeout(legalScoreTimerRef.current);
+      }
+    };
+  }, [currentDocument?.content?.blocks, calculateLegalScore]);
 
   // Handler für Template-Auswahl
   const handleTemplateSelect = async (templateId: string) => {
@@ -554,7 +589,7 @@ const ContractBuilder: React.FC = () => {
             </button>
           </div>
 
-          {/* Legal Health Score */}
+          {/* Legal Health Score - Klick öffnet Modal mit Details */}
           <button
             className={`${styles.legalScoreBadge} ${
               currentDocument?.legalScore
@@ -565,12 +600,20 @@ const ContractBuilder: React.FC = () => {
                   : styles.scoreLow
                 : ''
             }`}
-            onClick={calculateLegalScore}
+            onClick={() => {
+              if (currentDocument?.legalScore) {
+                // Score vorhanden → Modal öffnen
+                setShowLegalScoreModal(true);
+              } else {
+                // Noch kein Score → erst berechnen
+                calculateLegalScore();
+              }
+            }}
             disabled={isAiGenerating}
             title={
               currentDocument?.legalScore
-                ? `Legal Score: ${currentDocument.legalScore.totalScore}/100 - Klicken zum Aktualisieren`
-                : 'Legal Score berechnen'
+                ? `Legal Score: ${currentDocument.legalScore.totalScore}/100 - Klicken für Details`
+                : 'Legal Score wird automatisch berechnet...'
             }
           >
             {isAiGenerating && aiOperation === 'Legal Score berechnen' ? (
