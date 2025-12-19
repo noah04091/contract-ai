@@ -3,7 +3,7 @@
  * Der visuelle Vertragsbaukasten
  */
 
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import html2pdf from 'html2pdf.js';
 import { useContractBuilderStore } from '../stores/contractBuilderStore';
