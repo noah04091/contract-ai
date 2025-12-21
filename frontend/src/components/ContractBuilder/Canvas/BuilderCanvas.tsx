@@ -51,9 +51,11 @@ function groupBlocksByPage(blocks: Block[]): Block[][] {
   return pages;
 }
 
-// A4 Seitenhöhe in Pixel (297mm × 3.78px/mm = 1122px, minus Padding ca. 35mm = 132px)
-// Nutzbare Höhe: 1122 - 132 = ~990px, aber wir geben etwas mehr Spielraum
-const PAGE_CONTENT_HEIGHT = 950; // ERHÖHT von 800 für mehr nutzbaren Platz
+// A4 Seitenhöhe: 297mm ≈ 1122px (bei 96 DPI: 297mm × 3.78px/mm)
+// Paper Padding: ~27mm (12mm oben + 15mm unten) ≈ 102px
+// Nutzbare Höhe: 1122px - 102px = ~1020px
+// MAXIMIERT: Wir nutzen fast den gesamten verfügbaren Platz
+const PAGE_CONTENT_HEIGHT = 1050; // STARK ERHÖHT - nutzt max. A4 Platz
 
 export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
   const canvasRef = useRef<HTMLDivElement>(null);

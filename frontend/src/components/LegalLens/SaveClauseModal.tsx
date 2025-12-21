@@ -10,7 +10,9 @@ import {
   AlertTriangle,
   CheckCircle,
   Loader2,
-  Info
+  Info,
+  BookOpen,
+  ArrowRight
 } from 'lucide-react';
 import type {
   ClauseCategory,
@@ -99,10 +101,7 @@ const SaveClauseModal: React.FC<SaveClauseModalProps> = ({
 
       if (result.success) {
         setSuccess(true);
-        setTimeout(() => {
-          onSaved?.(result.clause._id);
-          onClose();
-        }, 1500);
+        onSaved?.(result.clause._id);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Fehler beim Speichern';
@@ -132,6 +131,25 @@ const SaveClauseModal: React.FC<SaveClauseModalProps> = ({
             <CheckCircle size={64} className={styles.successIcon} />
             <h3>Klausel gespeichert!</h3>
             <p>Die Klausel wurde erfolgreich in deiner Bibliothek gespeichert.</p>
+            <div className={styles.successActions}>
+              <button
+                className={styles.libraryBtn}
+                onClick={() => {
+                  window.open('/clause-library', '_blank');
+                  onClose();
+                }}
+              >
+                <BookOpen size={18} />
+                Zur Bibliothek
+                <ArrowRight size={16} />
+              </button>
+              <button
+                className={styles.closeSuccessBtn}
+                onClick={onClose}
+              >
+                Schließen
+              </button>
+            </div>
           </div>
         ) : (
           <>

@@ -1195,6 +1195,12 @@ export default function Navbar() {
                       </Link>
                     </li>
                     <li>
+                      <Link to="/clause-library" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
+                        <span className={styles.sidebarIcon}>📚</span>
+                        Klausel-Bibliothek
+                      </Link>
+                    </li>
+                    <li>
                       <Link to="/hilfe" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
                         <span className={styles.sidebarIcon}>❓</span>
                         Hilfe

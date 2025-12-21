@@ -55,7 +55,16 @@
       "Bash(git -C \"C:/Users/liebo/Documents/contract-ai\" push)",
       "Bash(git -C \"C:/Users/liebo/Documents/contract-ai\" add -A)",
       "Bash(git -C \"C:/Users/liebo/Documents/contract-ai\" commit -m \"$(cat <<''EOF''\nfix: TypeScript-Fehler in LegalScore Modal behoben\n\n- LegalScore Properties korrigiert (totalScore, findings statt score, issues)\n- BlockContent Interface um logoUrl erweitert\n- Unused Import entfernt\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git -C \"C:/Users/liebo/Documents/contract-ai\" commit -m \"fix: API_BASE Fallback auf api.contract-ai.de gesetzt\")"
+      "Bash(git -C \"C:/Users/liebo/Documents/contract-ai\" commit -m \"fix: API_BASE Fallback auf api.contract-ai.de gesetzt\")",
+      "Bash(git -C \"C:\\Users\\liebo\\Documents\\contract-ai\" status --short)",
+      "Bash(git -C \"C:\\Users\\liebo\\Documents\\contract-ai\" diff frontend/src/components/ContractBuilder/Variables/VariablesPanel.tsx)",
+      "Bash(git -C \"C:\\Users\\liebo\\Documents\\contract-ai\" show HEAD:frontend/src/components/ContractBuilder/Variables/VariablesPanel.tsx)",
+      "Bash(git -C \"C:\\Users\\liebo\\Documents\\contract-ai\" show HEAD:backend/routes/contractBuilder.js)",
+      "Bash(git -C \"C:\\Users\\liebo\\Documents\\contract-ai\" show HEAD:frontend/src/stores/contractBuilderStore.ts)",
+      "Bash(git -C \"C:\\Users\\liebo\\Documents\\contract-ai\" show HEAD:frontend/src/components/ContractBuilder/Canvas/BuilderCanvas.tsx)",
+      "Bash(git -C \"C:\\Users\\liebo\\Documents\\contract-ai\" show HEAD:frontend/src/components/ContractBuilder/Canvas/BuilderCanvas.module.css)",
+      "Bash(git -C \"C:\\Users\\liebo\\Documents\\contract-ai\" add frontend/src/components/ContractBuilder/Variables/VariablesPanel.tsx)",
+      "Bash(copy:*)"
     ],
     "deny": [],
     "ask": []

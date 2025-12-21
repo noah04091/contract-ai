@@ -4,6 +4,8 @@ import { Helmet } from "react-helmet-async";
 import { useAuth } from "../hooks/useAuth";
 import "../styles/SplitAuth.css";
 
+const API_BASE = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
+
 // Back Arrow Icon SVG
 const BackArrowIcon = () => (
   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -38,7 +40,7 @@ export default function Login() {
   // E-Mail-Verification senden
   const sendVerificationEmail = async (emailToVerify: string) => {
     try {
-      const response = await fetch("/api/email-verification/send-verification", {
+      const response = await fetch(`${API_BASE}/api/email-verification/send-verification`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -80,7 +82,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/auth/login", {
+      const response = await fetch(`${API_BASE}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -123,7 +125,10 @@ export default function Login() {
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
-        const response = await fetch("/api/auth/me", { method: "GET", credentials: "include" });
+        const token = localStorage.getItem("token");
+        const headers: HeadersInit = {};
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+        const response = await fetch(`${API_BASE}/api/auth/me`, { method: "GET", headers, credentials: "include" });
         if (response.ok) {
           await refetchUser();
           navigate(redirectUrl);

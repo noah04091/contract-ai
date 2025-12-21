@@ -129,9 +129,9 @@ const ClauseLibraryPage: React.FC = () => {
     }
   };
 
-  // Navigate to contract
+  // Navigate to contract - öffnet das Modal auf der Contracts-Seite
   const handleNavigateToContract = (contractId: string) => {
-    navigate(`/contracts/${contractId}`);
+    navigate(`/contracts?view=${contractId}`);
   };
 
   // Format date
@@ -184,28 +184,36 @@ const ClauseLibraryPage: React.FC = () => {
         </div>
       </header>
 
-      {/* Statistics Bar */}
+      {/* Statistics Bar - Premium Cards */}
       {statistics && statistics.total > 0 && (
         <div className={styles.statsBar}>
           <div className={styles.statItem}>
             <span className={styles.statIcon}>{CATEGORY_INFO.risky.icon}</span>
-            <span className={styles.statValue}>{statistics.risky}</span>
-            <span className={styles.statLabel}>Riskant</span>
+            <div>
+              <span className={styles.statValue}>{statistics.risky}</span>
+              <span className={styles.statLabel}>Riskant</span>
+            </div>
           </div>
           <div className={styles.statItem}>
             <span className={styles.statIcon}>{CATEGORY_INFO.good_practice.icon}</span>
-            <span className={styles.statValue}>{statistics.goodPractice}</span>
-            <span className={styles.statLabel}>Best Practice</span>
+            <div>
+              <span className={styles.statValue}>{statistics.goodPractice}</span>
+              <span className={styles.statLabel}>Best Practice</span>
+            </div>
           </div>
           <div className={styles.statItem}>
             <span className={styles.statIcon}>{CATEGORY_INFO.important.icon}</span>
-            <span className={styles.statValue}>{statistics.important}</span>
-            <span className={styles.statLabel}>Wichtig</span>
+            <div>
+              <span className={styles.statValue}>{statistics.important}</span>
+              <span className={styles.statLabel}>Wichtig</span>
+            </div>
           </div>
           <div className={styles.statItem}>
             <span className={styles.statIcon}>{CATEGORY_INFO.unusual.icon}</span>
-            <span className={styles.statValue}>{statistics.unusual}</span>
-            <span className={styles.statLabel}>Ungewöhnlich</span>
+            <div>
+              <span className={styles.statValue}>{statistics.unusual}</span>
+              <span className={styles.statLabel}>Ungewöhnlich</span>
+            </div>
           </div>
         </div>
       )}

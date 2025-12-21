@@ -1032,6 +1032,15 @@ const connectDB = async () => {
       console.error("❌ Fehler bei Legal Pulse Notifications:", err);
     }
 
+    // 📊 DASHBOARD NOTIFICATIONS - Aggregierte Benachrichtigungen fürs Dashboard
+    try {
+      const dashboardNotificationsRoutes = require("./routes/dashboardNotifications");
+      app.use("/api/dashboard/notifications", dashboardNotificationsRoutes);
+      console.log("✅ Dashboard Notifications API geladen unter /api/dashboard/notifications");
+    } catch (err) {
+      console.error("❌ Fehler bei Dashboard Notifications:", err);
+    }
+
     // 🔍 LEGAL LENS - Interaktive Vertragsanalyse
     try {
       const legalLensRoutes = require("./routes/legalLens");

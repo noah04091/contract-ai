@@ -399,7 +399,9 @@ router.get("/me", verifyToken, async (req, res) => {
       emailInboxEnabled: user.emailInboxEnabled ?? true,
       emailInboxAddressCreatedAt: user.emailInboxAddressCreatedAt || null,
       // 🎓 ONBOARDING TOURS (serverseitig gespeichert)
-      completedTours: user.completedTours || []
+      completedTours: user.completedTours || [],
+      // 📷 PROFILBILD
+      profilePicture: user.profilePicture || null
     };
 
     console.log("✅ User-Info erfolgreich geladen:", {

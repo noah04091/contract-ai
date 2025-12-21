@@ -14,14 +14,21 @@ export default function RequireAuth({ children }: RequireAuthProps) {
 
     const checkAuth = async () => {
       try {
-        const res = await fetch("/api/auth/me", {
-          credentials: "include", // ✅ Cookies nutzen
+        const token = localStorage.getItem("token");
+        const API_BASE = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
+
+        const headers: HeadersInit = { "Content-Type": "application/json" };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+
+        const res = await fetch(`${API_BASE}/api/auth/me`, {
+          headers,
+          credentials: "include",
         });
 
         if (!res.ok) throw new Error("Nicht authentifiziert");
 
         const data = await res.json();
-        console.log("✅ Eingeloggt als:", data.email);
+        console.log("✅ Eingeloggt als:", data.email || data.user?.email);
 
         if (!cancelled) setIsAuthenticated(true);
       } catch (err) {

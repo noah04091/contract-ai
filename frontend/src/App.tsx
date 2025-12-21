@@ -7,6 +7,7 @@ import PageLoader from "./components/PageLoader";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { AuthProvider } from "./context/AuthContext";
 import { ToastProvider } from "./context/ToastContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import { AnnouncerProvider } from "./components/ScreenReaderAnnouncer";
 import { ToastContainer } from "./components/Toast";
 import { useToast } from "./context/ToastContext";
@@ -67,7 +68,8 @@ const DigitaleSignatur = lazy(() => import("./pages/features/DigitaleSignatur"))
 const EmailUpload = lazy(() => import("./pages/features/EmailUpload"));
 
 // 🔒 Geschützte Seiten - Lazy Loading
-const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Dashboard = lazy(() => import("./pages/DashboardV2")); // ✅ Neues Premium Dashboard
+const DashboardLegacy = lazy(() => import("./pages/Dashboard")); // 🔙 Altes Dashboard (Backup)
 // Contracts und Profile werden direkt importiert (siehe oben) - verhindert CSS-Preload-Fehler
 const ContractDetails = lazy(() => import("./pages/ContractDetails"));
 const EditContract = lazy(() => import("./pages/EditContract"));
@@ -137,10 +139,10 @@ function AppWithLoader() {
     return () => clearTimeout(timer);
   }, [location.pathname]); // Nur pathname, nicht location.search!
 
-  // Seiten ohne Navbar (Auth-Seiten mit Split-Screen Design)
-  const hideNavbarRoutes = ['/login', '/register', '/verify-success'];
-  // Auch /verify/:id soll keine Navbar haben
-  const shouldHideNavbar = hideNavbarRoutes.includes(location.pathname) || location.pathname.startsWith('/verify/');
+  // Seiten ohne Navbar (Auth-Seiten mit Split-Screen Design + Dashboard mit eigener Sidebar)
+  const hideNavbarRoutes = ['/login', '/register', '/verify-success', '/dashboard'];
+  // Auch /verify/:id soll keine Navbar haben, und /dashboard hat eigene Sidebar
+  const shouldHideNavbar = hideNavbarRoutes.includes(location.pathname) || location.pathname.startsWith('/verify/') || location.pathname.startsWith('/dashboard');
 
   return (
     <ErrorBoundary>
@@ -195,6 +197,7 @@ function AppWithLoader() {
 
             {/* 🔒 Geschützte Seiten */}
             <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
+            <Route path="/dashboard-legacy" element={<RequireAuth><DashboardLegacy /></RequireAuth>} /> {/* 🔙 Altes Dashboard */}
             <Route path="/contracts" element={<RequireAuth><Contracts /></RequireAuth>} />
             <Route path="/contracts/:id" element={<RequireAuth><ContractDetails /></RequireAuth>} />
             <Route path="/contracts/:id/edit" element={<RequireAuth><EditContract /></RequireAuth>} />
@@ -261,13 +264,15 @@ function AppWithLoader() {
 export default function App() {
   return (
     <Router>
-      <AuthProvider>
-        <ToastProvider>
-          <AnnouncerProvider>
-            <AppWithLoader />
-          </AnnouncerProvider>
-        </ToastProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <ToastProvider>
+            <AnnouncerProvider>
+              <AppWithLoader />
+            </AnnouncerProvider>
+          </ToastProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </Router>
   );
 }

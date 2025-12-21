@@ -2,7 +2,6 @@
 // Haupt-Komponente für Legal Lens Feature
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { FileText, Eye, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, BarChart3, Zap, X, List, MessageSquare, LayoutGrid, ClipboardCheck, Download } from 'lucide-react';
 import { useLegalLens } from '../../hooks/useLegalLens';
@@ -37,8 +36,6 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   contractId,
   contractName = 'Vertrag'
 }) => {
-  const navigate = useNavigate();
-
   // View Mode State
   const [viewMode, setViewMode] = useState<ViewMode>('text');
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
@@ -313,10 +310,6 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedClause?.id, currentAnalysis]);
 
-  const handleBack = () => {
-    navigate(-1);
-  };
-
   // Smart Summary Handler
   const handleDismissSummary = useCallback(() => {
     setShowSmartSummary(false);
@@ -489,9 +482,6 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       {/* Header */}
       <header className={styles.header}>
         <div className={styles.headerLeft}>
-          <button className={styles.backButton} onClick={handleBack}>
-            ← Zurück
-          </button>
           <h1 className={styles.title}>🔍 Legal Lens: {contractName}</h1>
         </div>
 
