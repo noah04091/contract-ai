@@ -80,15 +80,7 @@ const getAuthToken = (): string | null => {
   return localStorage.getItem("authToken") || localStorage.getItem("token");
 };
 
-const getContractStatus = (contract: Contract): string => {
-  if (!contract.expiryDate) return 'unknown';
-  const expiry = new Date(contract.expiryDate);
-  const now = new Date();
-  const daysUntil = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-  if (daysUntil < 0) return 'expired';
-  if (daysUntil <= 30) return 'warning';
-  return 'active';
-};
+// getContractStatus entfernt - Stats werden jetzt server-side berechnet
 
 const getDaysUntilExpiry = (expiryDate?: string): number | null => {
   if (!expiryDate) return null;
@@ -196,6 +188,9 @@ const AnimatedNumber = ({ value, duration = 800 }: { value: number; duration?: n
 
 export default function DashboardV2() {
   const [contracts, setContracts] = useState<Contract[]>([]);
+  const [recentContractsData, setRecentContractsData] = useState<Contract[]>([]);
+  const [urgentContractsData, setUrgentContractsData] = useState<Contract[]>([]);
+  const [summaryStats, setSummaryStats] = useState<{total: number; active: number; expiringSoon: number; expired: number; generated: number; analyzed: number} | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -235,33 +230,46 @@ export default function DashboardV2() {
       const headers: HeadersInit = { "Content-Type": "application/json" };
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      const [userResponse, contractsResponse] = await Promise.all([
-        fetch(`${API_BASE}/api/auth/me`, { headers, credentials: "include" }),
-        fetch(`${API_BASE}/api/contracts`, { headers, credentials: "include" }),
-      ]);
+      // OPTIMIERT: Nutze den schnellen Summary-Endpoint statt alle Contracts zu laden
+      const summaryResponse = await fetch(
+        `${API_BASE}/api/dashboard/notifications/summary`,
+        { headers, credentials: "include" }
+      );
 
-      if (!userResponse.ok && userResponse.status === 401) {
-        // Nicht eingeloggt - zur Login-Seite weiterleiten
+      if (summaryResponse.status === 401) {
         navigate('/login?redirect=/dashboard');
         return;
       }
 
-      if (userResponse.ok) {
-        const userJson = await userResponse.json();
-        setUserData(userJson.user || userJson);
-      }
+      if (summaryResponse.ok) {
+        const data = await summaryResponse.json();
 
-      if (contractsResponse.ok) {
-        const contractsJson = await contractsResponse.json();
-        const contractList = contractsJson.contracts || contractsJson || [];
-        setContracts(contractList);
+        if (data.success) {
+          // User-Daten setzen
+          setUserData(data.user);
 
-        if (showRefreshIndicator) {
-          showNotification('Daten aktualisiert', 'success');
+          // Stats direkt vom Server nutzen (SCHNELL!)
+          setSummaryStats(data.stats);
+
+          // Recent & Urgent Contracts separat speichern
+          setRecentContractsData(data.recentContracts || []);
+          setUrgentContractsData(data.urgentContracts || []);
+
+          // Contracts für Kompatibilität (falls irgendwo noch genutzt)
+          const allContracts = [...(data.recentContracts || [])];
+          (data.urgentContracts || []).forEach((uc: Contract) => {
+            if (!allContracts.find(c => c._id === uc._id)) {
+              allContracts.push(uc);
+            }
+          });
+          setContracts(allContracts);
+
+          if (showRefreshIndicator) {
+            showNotification('Daten aktualisiert', 'success');
+          }
         }
-      } else if (contractsResponse.status === 401) {
-        navigate('/login?redirect=/dashboard');
-        return;
+      } else {
+        throw new Error('Dashboard konnte nicht geladen werden');
       }
     } catch (err) {
       console.error("Error fetching dashboard data:", err);
@@ -283,40 +291,32 @@ export default function DashboardV2() {
   // COMPUTED VALUES
   // ============================================
 
+  // Stats direkt vom Server (SCHNELL - keine Client-Side Berechnung nötig!)
   const stats = useMemo(() => {
-    const total = contracts.length;
-    const active = contracts.filter(c => getContractStatus(c) === 'active').length;
-    const expiringSoon = contracts.filter(c => getContractStatus(c) === 'warning').length;
-    const expired = contracts.filter(c => getContractStatus(c) === 'expired').length;
-    const generated = contracts.filter(c => c.isGenerated).length;
-    const analyzed = contracts.filter(c => c.legalPulse?.riskScore !== null && c.legalPulse?.riskScore !== undefined).length;
-    const withReminder = contracts.filter(c => c.reminder).length;
-    return { total, active, expiringSoon, expired, generated, analyzed, withReminder };
-  }, [contracts]);
+    if (summaryStats) {
+      return {
+        total: summaryStats.total,
+        active: summaryStats.active,
+        expiringSoon: summaryStats.expiringSoon,
+        expired: summaryStats.expired,
+        generated: summaryStats.generated,
+        analyzed: summaryStats.analyzed,
+        withReminder: 0 // TODO: Später vom Server holen wenn nötig
+      };
+    }
+    // Fallback für alte Contracts-Logik (sollte nicht mehr genutzt werden)
+    return { total: 0, active: 0, expiringSoon: 0, expired: 0, generated: 0, analyzed: 0, withReminder: 0 };
+  }, [summaryStats]);
 
+  // Recent Contracts direkt vom Server
   const recentContracts = useMemo(() => {
-    return [...contracts]
-      .sort((a, b) => {
-        const dateA = new Date(a.updatedAt || a.createdAt || a.uploadedAt || 0).getTime();
-        const dateB = new Date(b.updatedAt || b.createdAt || b.uploadedAt || 0).getTime();
-        return dateB - dateA;
-      })
-      .slice(0, 5);
-  }, [contracts]);
+    return recentContractsData;
+  }, [recentContractsData]);
 
+  // Urgent Contracts direkt vom Server
   const urgentContracts = useMemo(() => {
-    return contracts
-      .filter(c => {
-        const days = getDaysUntilExpiry(c.expiryDate);
-        return days !== null && days > 0 && days <= 30;
-      })
-      .sort((a, b) => {
-        const daysA = getDaysUntilExpiry(a.expiryDate) || Infinity;
-        const daysB = getDaysUntilExpiry(b.expiryDate) || Infinity;
-        return daysA - daysB;
-      })
-      .slice(0, 4);
-  }, [contracts]);
+    return urgentContractsData;
+  }, [urgentContractsData]);
 
   const analysisUsage = useMemo(() => {
     const used = userData?.analysisCount || 0;

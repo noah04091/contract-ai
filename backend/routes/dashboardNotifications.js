@@ -76,6 +76,127 @@ async function connectDB() {
 }
 
 /**
+ * GET /api/dashboard/notifications/summary
+ * OPTIMIERT: Schnelles Dashboard-Summary für schnelleres Laden
+ * Lädt nur Stats + letzte 5 Verträge + dringende Verträge
+ */
+router.get("/summary", verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const db = await connectDB();
+    const contractsCollection = db.collection("contracts");
+
+    const now = new Date();
+    const in30Days = new Date();
+    in30Days.setDate(in30Days.getDate() + 30);
+
+    // 1. Schnelle Stats mit aggregation
+    const statsResult = await contractsCollection.aggregate([
+      { $match: { userId: new ObjectId(userId) } },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          active: {
+            $sum: {
+              $cond: [
+                { $or: [
+                  { $gt: ["$expiryDate", in30Days] },
+                  { $eq: ["$expiryDate", null] }
+                ]},
+                1, 0
+              ]
+            }
+          },
+          expiringSoon: {
+            $sum: {
+              $cond: [
+                { $and: [
+                  { $ne: ["$expiryDate", null] },
+                  { $gt: ["$expiryDate", now] },
+                  { $lte: ["$expiryDate", in30Days] }
+                ]},
+                1, 0
+              ]
+            }
+          },
+          expired: {
+            $sum: {
+              $cond: [
+                { $and: [
+                  { $ne: ["$expiryDate", null] },
+                  { $lte: ["$expiryDate", now] }
+                ]},
+                1, 0
+              ]
+            }
+          },
+          generated: { $sum: { $cond: ["$isGenerated", 1, 0] } },
+          analyzed: { $sum: { $cond: [{ $ne: ["$legalPulse.riskScore", null] }, 1, 0] } }
+        }
+      }
+    ]).toArray();
+
+    const stats = statsResult[0] || {
+      total: 0, active: 0, expiringSoon: 0, expired: 0, generated: 0, analyzed: 0
+    };
+
+    // 2. Letzte 5 Verträge (nur essentielle Felder)
+    const recentContracts = await contractsCollection
+      .find({ userId: new ObjectId(userId) })
+      .project({
+        _id: 1, name: 1, status: 1, expiryDate: 1, createdAt: 1,
+        uploadedAt: 1, isGenerated: 1, 'legalPulse.riskScore': 1
+      })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .toArray();
+
+    // 3. Dringende Verträge (nächste 30 Tage, max 4)
+    const urgentContracts = await contractsCollection
+      .find({
+        userId: new ObjectId(userId),
+        expiryDate: { $gt: now, $lte: in30Days }
+      })
+      .project({
+        _id: 1, name: 1, expiryDate: 1, 'legalPulse.riskScore': 1
+      })
+      .sort({ expiryDate: 1 })
+      .limit(4)
+      .toArray();
+
+    // 4. User-Daten (Abo, Quota)
+    const user = await db.collection("users").findOne(
+      { _id: new ObjectId(userId) },
+      { projection: { email: 1, name: 1, subscriptionPlan: 1, analysisCount: 1, analysisLimit: 1, profilePicture: 1 } }
+    );
+
+    res.json({
+      success: true,
+      stats,
+      recentContracts,
+      urgentContracts,
+      user: {
+        email: user?.email,
+        name: user?.name,
+        subscriptionPlan: user?.subscriptionPlan || 'free',
+        analysisCount: user?.analysisCount || 0,
+        analysisLimit: user?.analysisLimit || 3,
+        profilePicture: user?.profilePicture
+      }
+    });
+
+  } catch (error) {
+    console.error('[DASHBOARD-SUMMARY] Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Laden des Dashboards',
+      error: error.message
+    });
+  }
+});
+
+/**
  * GET /api/dashboard/notifications/settings
  * Notification-Einstellungen abrufen
  * HINWEIS: Diese Route muss VOR den parametrisierten Routen stehen!
