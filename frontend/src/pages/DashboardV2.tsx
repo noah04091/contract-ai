@@ -373,9 +373,18 @@ export default function DashboardV2() {
       <DashboardLayout user={userData}>
         <div className={styles.dashboard}>
           <Helmet><title>Dashboard | Contract AI</title></Helmet>
+          <div className={styles.loadingState}>
+            <div className={styles.loadingSpinner}>
+              <RefreshCw size={32} className={styles.spinIcon} />
+            </div>
+            <h2>Dashboard wird geladen...</h2>
+            <p>Deine Verträge werden abgerufen</p>
+          </div>
           <div className={styles.loadingGrid}>
-            {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-              <div key={i} className={styles.skeletonCard} />
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className={styles.skeletonCard}>
+                <div className={styles.skeletonShimmer} />
+              </div>
             ))}
           </div>
         </div>

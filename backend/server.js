@@ -1943,6 +1943,22 @@ const connectDB = async () => {
       }
     });
 
+    // ============================================
+    // HEALTH CHECK ENDPOINT (für UptimeRobot/Render)
+    // ============================================
+    app.get("/api/health", (req, res) => {
+      res.status(200).json({
+        status: "ok",
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime()
+      });
+    });
+
+    // Auch ohne /api prefix für einfacheren Zugang
+    app.get("/health", (req, res) => {
+      res.status(200).json({ status: "ok" });
+    });
+
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, async () => {
       console.log(`🚀 Server läuft auf Port ${PORT}`);
