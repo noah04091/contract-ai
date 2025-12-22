@@ -83,16 +83,32 @@ async function connectDB() {
 router.get("/summary", verifyToken, async (req, res) => {
   try {
     const userId = req.user.userId;
+    console.log('[DASHBOARD-SUMMARY] 🔍 userId from token:', userId);
+
     const db = await connectDB();
     const contractsCollection = db.collection("contracts");
+
+    // ✅ FIX: Unterstütze BEIDE Formate (ObjectId UND String)
+    // Einige alte Verträge könnten userId als String gespeichert haben
+    const userIdFilter = {
+      $or: [
+        { userId: new ObjectId(userId) },
+        { userId: userId }
+      ]
+    };
+
+    // DEBUG: Check contract counts
+    const contractCountObjectId = await contractsCollection.countDocuments({ userId: new ObjectId(userId) });
+    const contractCountString = await contractsCollection.countDocuments({ userId: userId });
+    console.log('[DASHBOARD-SUMMARY] 📄 Contracts ObjectId:', contractCountObjectId, '| String:', contractCountString);
 
     const now = new Date();
     const in30Days = new Date();
     in30Days.setDate(in30Days.getDate() + 30);
 
-    // 1. Schnelle Stats mit aggregation
+    // 1. Schnelle Stats mit aggregation - nutze $or für beide Formate
     const statsResult = await contractsCollection.aggregate([
-      { $match: { userId: new ObjectId(userId) } },
+      { $match: userIdFilter },
       {
         $group: {
           _id: null,
@@ -143,7 +159,7 @@ router.get("/summary", verifyToken, async (req, res) => {
 
     // 2. Letzte 5 Verträge (nur essentielle Felder)
     const recentContracts = await contractsCollection
-      .find({ userId: new ObjectId(userId) })
+      .find(userIdFilter)
       .project({
         _id: 1, name: 1, status: 1, expiryDate: 1, createdAt: 1,
         uploadedAt: 1, isGenerated: 1, 'legalPulse.riskScore': 1
@@ -155,8 +171,10 @@ router.get("/summary", verifyToken, async (req, res) => {
     // 3. Dringende Verträge (nächste 30 Tage, max 4)
     const urgentContracts = await contractsCollection
       .find({
-        userId: new ObjectId(userId),
-        expiryDate: { $gt: now, $lte: in30Days }
+        $and: [
+          userIdFilter,
+          { expiryDate: { $gt: now, $lte: in30Days } }
+        ]
       })
       .project({
         _id: 1, name: 1, expiryDate: 1, 'legalPulse.riskScore': 1
@@ -170,6 +188,10 @@ router.get("/summary", verifyToken, async (req, res) => {
       { _id: new ObjectId(userId) },
       { projection: { email: 1, name: 1, subscriptionPlan: 1, analysisCount: 1, analysisLimit: 1, profilePicture: 1 } }
     );
+
+    console.log('[DASHBOARD-SUMMARY] 👤 User found:', user ? `${user.email} (${user.subscriptionPlan})` : 'NOT FOUND!');
+    console.log('[DASHBOARD-SUMMARY] 📊 Stats:', stats);
+    console.log('[DASHBOARD-SUMMARY] 📄 Recent contracts:', recentContracts.length);
 
     res.json({
       success: true,

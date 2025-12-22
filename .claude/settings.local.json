@@ -65,7 +65,10 @@
       "Bash(git -C \"C:\\Users\\liebo\\Documents\\contract-ai\" show HEAD:frontend/src/components/ContractBuilder/Canvas/BuilderCanvas.module.css)",
       "Bash(git -C \"C:\\Users\\liebo\\Documents\\contract-ai\" add frontend/src/components/ContractBuilder/Variables/VariablesPanel.tsx)",
       "Bash(copy:*)",
-      "Bash(git -C \"C:/Users/liebo/Documents/contract-ai\" commit -m \"$\\(cat <<''EOF''\nfix: Dashboard zeigt nun korrekten Benutzernamen, Abo & Upgrade-Banner\n\n- TopBar: Zeigt user.name statt nur email-Präfix\n- TopBar: Formatiert subscriptionPlan korrekt \\(Premium, Business, Enterprise\\)\n- Sidebar: Erhält jetzt user-Props von DashboardLayout\n- Sidebar: Upgrade-Banner nur für Free-User sichtbar\n- UserData Interface erweitert um name + profilePicture\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git -C \"C:/Users/liebo/Documents/contract-ai\" commit -m \"$\\(cat <<''EOF''\nfix: Dashboard zeigt nun korrekten Benutzernamen, Abo & Upgrade-Banner\n\n- TopBar: Zeigt user.name statt nur email-Präfix\n- TopBar: Formatiert subscriptionPlan korrekt \\(Premium, Business, Enterprise\\)\n- Sidebar: Erhält jetzt user-Props von DashboardLayout\n- Sidebar: Upgrade-Banner nur für Free-User sichtbar\n- UserData Interface erweitert um name + profilePicture\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "WebFetch(domain:api.contract-ai.de)",
+      "Bash(Where-Object { $_ -match 'assets.*\\\\.js' })",
+      "Bash(Select-Object -First 5 \")"
     ],
     "deny": [],
     "ask": []

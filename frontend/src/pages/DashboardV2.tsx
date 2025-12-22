@@ -246,6 +246,14 @@ export default function DashboardV2() {
         const data = await summaryResponse.json();
 
         if (data.success) {
+          // DEBUG: Was kommt vom Server?
+          console.log('📊 Dashboard Summary Response:', {
+            user: data.user,
+            stats: data.stats,
+            recentCount: data.recentContracts?.length,
+            urgentCount: data.urgentContracts?.length
+          });
+
           // User-Daten setzen
           setUserData(data.user);
 
