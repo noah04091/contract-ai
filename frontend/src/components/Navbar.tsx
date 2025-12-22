@@ -8,13 +8,6 @@ import logo from "../assets/logo.png";
 import { clearAuthData } from "../utils/api";
 import { useAuth } from "../hooks/useAuth";
 
-// ✅ HINZUGEFÜGT: Minimal Interface für TypeScript Fix
-interface User {
-  email?: string;
-  subscriptionActive?: boolean;
-  subscriptionPlan?: string;
-}
-
 // Feature-Daten für das Mega-Menü
 const featureCategories = [
   {
@@ -88,22 +81,6 @@ export default function Navbar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-
-  // ✅ GEÄNDERT: TypeScript Fix - user: any wurde zu user: User | null
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const renderSubscriptionBadge = (user: User | null, isMobile: boolean = false) => {
-    if (!user?.subscriptionActive) return null;
-    
-    const badgeClass = isMobile ? styles.badgeMobile : styles.badge;
-    
-    if (user.subscriptionPlan === "business") {
-      return <span className={badgeClass}>🏢 Business</span>;
-    } else if (user.subscriptionPlan === "premium") {
-      return <span className={badgeClass}>💎 Premium</span>;
-    }
-    
-    return null; // Fallback für unbekannte Pläne
-  };
 
   // Check for mobile viewport
   useEffect(() => {
