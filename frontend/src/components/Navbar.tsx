@@ -90,6 +90,7 @@ export default function Navbar() {
   const navigate = useNavigate();
 
   // ✅ GEÄNDERT: TypeScript Fix - user: any wurde zu user: User | null
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const renderSubscriptionBadge = (user: User | null, isMobile: boolean = false) => {
     if (!user?.subscriptionActive) return null;
     
@@ -300,12 +301,16 @@ export default function Navbar() {
               <div className={styles.dropdownWrapper} ref={dropdownRef}>
                 <motion.button
                   onClick={() => setDropdownOpen((prev) => !prev)}
-                  className={styles.profileButtonMobile}
+                  className={styles.userButtonNew}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  Account
-                  {renderSubscriptionBadge(user, true)}
+                  <div className={styles.userAvatarSmall}>{userInitial}</div>
+                  <div className={styles.userInfoSmall}>
+                    <span className={styles.userNameSmall}>{userName}</span>
+                    <span className={styles.userPlanSmall}>{formatPlan(user.subscriptionPlan)}</span>
+                  </div>
+                  <ChevronDown size={16} strokeWidth={2} />
                 </motion.button>
 
                 <AnimatePresence>
@@ -655,21 +660,18 @@ export default function Navbar() {
             <div className={styles.dropdownWrapper} ref={dropdownRef}>
               <motion.button
                 onClick={() => setDropdownOpen((prev) => !prev)}
-                className={styles.profileButton}
+                className={styles.userButtonNew}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                {renderSubscriptionBadge(user)} {/* ✅ KORRIGIERT */}
-                <span>Account</span>
-                <motion.span
-                  animate={{ rotate: dropdownOpen ? 180 : 0 }}
-                  transition={{ duration: 0.3 }}
-                  className={styles.dropdownArrow}
-                >
-                  ▾
-                </motion.span>
+                <div className={styles.userAvatarSmall}>{userInitial}</div>
+                <div className={styles.userInfoSmall}>
+                  <span className={styles.userNameSmall}>{userName}</span>
+                  <span className={styles.userPlanSmall}>{formatPlan(user.subscriptionPlan)}</span>
+                </div>
+                <ChevronDown size={16} strokeWidth={2} />
               </motion.button>
-              
+
               <AnimatePresence>
                 {dropdownOpen && (
                   <motion.div
@@ -764,21 +766,18 @@ export default function Navbar() {
             <div className={styles.dropdownWrapper} ref={dropdownRef}>
               <motion.button
                 onClick={() => setDropdownOpen((prev) => !prev)}
-                className={styles.profileButton}
+                className={styles.userButtonNew}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                {renderSubscriptionBadge(user)} {/* ✅ KORRIGIERT */}
-                <span>Account</span>
-                <motion.span
-                  animate={{ rotate: dropdownOpen ? 180 : 0 }}
-                  transition={{ duration: 0.3 }}
-                  className={styles.dropdownArrow}
-                >
-                  ▾
-                </motion.span>
+                <div className={styles.userAvatarSmall}>{userInitial}</div>
+                <div className={styles.userInfoSmall}>
+                  <span className={styles.userNameSmall}>{userName}</span>
+                  <span className={styles.userPlanSmall}>{formatPlan(user.subscriptionPlan)}</span>
+                </div>
+                <ChevronDown size={16} strokeWidth={2} />
               </motion.button>
-              
+
               <AnimatePresence>
                 {dropdownOpen && (
                   <motion.div
@@ -833,14 +832,18 @@ export default function Navbar() {
             <div className={styles.dropdownWrapper} ref={dropdownRef}>
               <motion.button
                 onClick={() => setDropdownOpen((prev) => !prev)}
-                className={styles.profileButtonMobile}
+                className={styles.userButtonNew}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                Account
-                {renderSubscriptionBadge(user, true)} {/* ✅ KORRIGIERT */}
+                <div className={styles.userAvatarSmall}>{userInitial}</div>
+                <div className={styles.userInfoSmall}>
+                  <span className={styles.userNameSmall}>{userName}</span>
+                  <span className={styles.userPlanSmall}>{formatPlan(user.subscriptionPlan)}</span>
+                </div>
+                <ChevronDown size={16} strokeWidth={2} />
               </motion.button>
-              
+
               <AnimatePresence>
                 {dropdownOpen && (
                   <motion.div
@@ -955,21 +958,18 @@ export default function Navbar() {
             <div className={styles.dropdownWrapper} ref={dropdownRef}>
               <motion.button
                 onClick={() => setDropdownOpen((prev) => !prev)}
-                className={styles.profileButton}
+                className={styles.userButtonNew}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                {renderSubscriptionBadge(user)} {/* ✅ KORRIGIERT */}
-                <span>Account</span>
-                <motion.span
-                  animate={{ rotate: dropdownOpen ? 180 : 0 }}
-                  transition={{ duration: 0.3 }}
-                  className={styles.dropdownArrow}
-                >
-                  ▾
-                </motion.span>
+                <div className={styles.userAvatarSmall}>{userInitial}</div>
+                <div className={styles.userInfoSmall}>
+                  <span className={styles.userNameSmall}>{userName}</span>
+                  <span className={styles.userPlanSmall}>{formatPlan(user.subscriptionPlan)}</span>
+                </div>
+                <ChevronDown size={16} strokeWidth={2} />
               </motion.button>
-              
+
               <AnimatePresence>
                 {dropdownOpen && (
                   <motion.div
