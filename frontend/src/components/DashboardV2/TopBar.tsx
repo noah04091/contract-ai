@@ -304,9 +304,22 @@ export default function TopBar({ onMenuClick, user }: TopBarProps) {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      // Backend-Logout aufrufen um Cookie zu löschen
+      await fetch(`${API_BASE}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (error) {
+      console.error('Logout-Fehler:', error);
+    }
+    // localStorage leeren
     localStorage.removeItem('token');
     localStorage.removeItem('authToken');
+    localStorage.removeItem('authEmail');
+    localStorage.removeItem('authTimestamp');
+    // Zur Login-Seite
     window.location.href = '/login';
   };
 

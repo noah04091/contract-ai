@@ -955,6 +955,7 @@ export const getDashboardStats = async (): Promise<unknown> => {
  * Löscht alle gespeicherten Authentifizierungsdaten
  */
 export const clearAuthData = (): void => {
+  localStorage.removeItem("token");
   localStorage.removeItem("authToken");
   localStorage.removeItem("authEmail");
   localStorage.removeItem("authTimestamp");
