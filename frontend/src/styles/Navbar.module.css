@@ -842,6 +842,42 @@
   letter-spacing: -0.01em;
 }
 
+/* Mobile User Button - Kompakt nur Avatar + Pfeil */
+.userButtonMobile {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px 4px 4px;
+  background: rgba(248, 248, 248, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.userButtonMobile:hover,
+.userButtonMobile:active {
+  background: rgba(240, 240, 240, 0.95);
+}
+
+.userAvatarMobile {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #007AFF, #5856D6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.userChevronMobile {
+  color: #666;
+  margin-left: 2px;
+}
+
 .dropdownMenuNew {
   position: absolute;
   top: calc(100% + 8px);

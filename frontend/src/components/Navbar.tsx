@@ -302,16 +302,12 @@ export default function Navbar() {
               <div className={styles.dropdownWrapper} ref={dropdownRef}>
                 <motion.button
                   onClick={() => setDropdownOpen((prev) => !prev)}
-                  className={styles.userButtonNew}
+                  className={styles.userButtonMobile}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <div className={styles.userAvatarSmall}>{userInitial}</div>
-                  <div className={styles.userInfoSmall}>
-                    <span className={styles.userNameSmall}>{userName}</span>
-                    <span className={styles.userPlanSmall}>{formatPlan(user.subscriptionPlan)}</span>
-                  </div>
-                  <ChevronDown size={16} strokeWidth={2} />
+                  <div className={styles.userAvatarMobile}>{userInitial}</div>
+                  <ChevronDown size={14} strokeWidth={2.5} className={styles.userChevronMobile} />
                 </motion.button>
 
                 <AnimatePresence>
