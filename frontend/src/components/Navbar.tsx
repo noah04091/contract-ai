@@ -1,11 +1,12 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { User as UserIcon, Building2, CreditCard, HelpCircle, LogOut, ChevronDown } from "lucide-react";
 import styles from "../styles/Navbar.module.css";
 import Notification from "./Notification";
 import logo from "../assets/logo.png";
 import { clearAuthData } from "../utils/api";
-import { useAuth } from "../hooks/useAuth";;
+import { useAuth } from "../hooks/useAuth";
 
 // ✅ HINZUGEFÜGT: Minimal Interface für TypeScript Fix
 interface User {
@@ -56,8 +57,27 @@ export default function Navbar() {
 
   const megaMenuRef = useRef<HTMLDivElement>(null);
   const megaMenuTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   const location = useLocation();
+
+  // User display helpers
+  const userName = useMemo(() => {
+    if (!user) return 'User';
+    // TODO: Add name field to User interface when available
+    return user.email?.split('@')[0] || 'User';
+  }, [user]);
+
+  const userInitial = useMemo(() => {
+    return userName.charAt(0).toUpperCase();
+  }, [userName]);
+
+  const formatPlan = (plan?: string): string => {
+    if (!plan || plan === 'free') return 'Free';
+    if (plan === 'premium') return 'Premium';
+    if (plan === 'business') return 'Business';
+    if (plan === 'legendary' || plan === 'enterprise') return 'Enterprise';
+    return plan.charAt(0).toUpperCase() + plan.slice(1);
+  };
   const isHomePage = location.pathname === "/";
   const isAuthPage = location.pathname === "/login" || location.pathname === "/register";
   
@@ -291,15 +311,46 @@ export default function Navbar() {
                 <AnimatePresence>
                   {dropdownOpen && (
                     <motion.div
-                      className={styles.dropdownMenu}
+                      className={styles.dropdownMenuNew}
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <span className={styles.dropdownItem}>{user.email}</span>
-                      <Link to="/me" className={styles.dropdownItem}>Profil</Link>
-                      <button onClick={handleLogout} className={styles.dropdownItem}>Logout</button>
+                      <div className={styles.dropdownUserHeader}>
+                        <div className={styles.dropdownUserAvatar}>{userInitial}</div>
+                        <div>
+                          <div className={styles.dropdownUserName}>{userName}</div>
+                          <div className={styles.dropdownUserEmail}>{user.email}</div>
+                        </div>
+                      </div>
+                      <div className={styles.dropdownDivider} />
+                      <div className={styles.dropdownList}>
+                        <Link to="/me" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
+                          <UserIcon size={16} strokeWidth={1.75} />
+                          <span>Mein Profil</span>
+                        </Link>
+                        <Link to="/company-profile" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
+                          <Building2 size={16} strokeWidth={1.75} />
+                          <span>Unternehmen</span>
+                        </Link>
+                        <Link to="/pricing" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
+                          <CreditCard size={16} strokeWidth={1.75} />
+                          <span>Abo verwalten</span>
+                        </Link>
+                      </div>
+                      <div className={styles.dropdownDivider} />
+                      <div className={styles.dropdownList}>
+                        <Link to="/hilfe" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
+                          <HelpCircle size={16} strokeWidth={1.75} />
+                          <span>Hilfe & Support</span>
+                        </Link>
+                      </div>
+                      <div className={styles.dropdownDivider} />
+                      <button className={`${styles.dropdownItemNew} ${styles.dropdownItemDanger}`} onClick={handleLogout}>
+                        <LogOut size={16} strokeWidth={1.75} />
+                        <span>Abmelden</span>
+                      </button>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -308,33 +359,61 @@ export default function Navbar() {
               <div className={styles.dropdownWrapper} ref={dropdownRef}>
                 <motion.button
                   onClick={() => setDropdownOpen((prev) => !prev)}
-                  className={styles.profileButton}
+                  className={styles.userButtonNew}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  {renderSubscriptionBadge(user)}
-                  <span>Account</span>
-                  <motion.span
-                    animate={{ rotate: dropdownOpen ? 180 : 0 }}
-                    transition={{ duration: 0.3 }}
-                    className={styles.dropdownArrow}
-                  >
-                    ▾
-                  </motion.span>
+                  <div className={styles.userAvatarSmall}>{userInitial}</div>
+                  <div className={styles.userInfoSmall}>
+                    <span className={styles.userNameSmall}>{userName}</span>
+                    <span className={styles.userPlanSmall}>{formatPlan(user.subscriptionPlan)}</span>
+                  </div>
+                  <ChevronDown size={16} strokeWidth={2} />
                 </motion.button>
 
                 <AnimatePresence>
                   {dropdownOpen && (
                     <motion.div
-                      className={styles.dropdownMenu}
+                      className={styles.dropdownMenuNew}
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <span className={styles.dropdownItem}>{user.email}</span>
-                      <Link to="/me" className={styles.dropdownItem}>Profil</Link>
-                      <button onClick={handleLogout} className={styles.dropdownItem}>Logout</button>
+                      <div className={styles.dropdownUserHeader}>
+                        <div className={styles.dropdownUserAvatar}>{userInitial}</div>
+                        <div>
+                          <div className={styles.dropdownUserName}>{userName}</div>
+                          <div className={styles.dropdownUserEmail}>{user.email}</div>
+                        </div>
+                      </div>
+                      <div className={styles.dropdownDivider} />
+                      <div className={styles.dropdownList}>
+                        <Link to="/me" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
+                          <UserIcon size={16} strokeWidth={1.75} />
+                          <span>Mein Profil</span>
+                        </Link>
+                        <Link to="/company-profile" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
+                          <Building2 size={16} strokeWidth={1.75} />
+                          <span>Unternehmen</span>
+                        </Link>
+                        <Link to="/pricing" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
+                          <CreditCard size={16} strokeWidth={1.75} />
+                          <span>Abo verwalten</span>
+                        </Link>
+                      </div>
+                      <div className={styles.dropdownDivider} />
+                      <div className={styles.dropdownList}>
+                        <Link to="/hilfe" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
+                          <HelpCircle size={16} strokeWidth={1.75} />
+                          <span>Hilfe & Support</span>
+                        </Link>
+                      </div>
+                      <div className={styles.dropdownDivider} />
+                      <button className={`${styles.dropdownItemNew} ${styles.dropdownItemDanger}`} onClick={handleLogout}>
+                        <LogOut size={16} strokeWidth={1.75} />
+                        <span>Abmelden</span>
+                      </button>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -593,16 +672,47 @@ export default function Navbar() {
               
               <AnimatePresence>
                 {dropdownOpen && (
-                  <motion.div 
-                    className={styles.dropdownMenu}
+                  <motion.div
+                    className={styles.dropdownMenuNew}
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <span className={styles.dropdownItem}>{user.email}</span>
-                    <Link to="/me" className={styles.dropdownItem}>Profil</Link>
-                    <button onClick={handleLogout} className={styles.dropdownItem}>Logout</button>
+                    <div className={styles.dropdownUserHeader}>
+                      <div className={styles.dropdownUserAvatar}>{userInitial}</div>
+                      <div>
+                        <div className={styles.dropdownUserName}>{userName}</div>
+                        <div className={styles.dropdownUserEmail}>{user.email}</div>
+                      </div>
+                    </div>
+                    <div className={styles.dropdownDivider} />
+                    <div className={styles.dropdownList}>
+                      <Link to="/me" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
+                        <UserIcon size={16} strokeWidth={1.75} />
+                        <span>Mein Profil</span>
+                      </Link>
+                      <Link to="/company-profile" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
+                        <Building2 size={16} strokeWidth={1.75} />
+                        <span>Unternehmen</span>
+                      </Link>
+                      <Link to="/pricing" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
+                        <CreditCard size={16} strokeWidth={1.75} />
+                        <span>Abo verwalten</span>
+                      </Link>
+                    </div>
+                    <div className={styles.dropdownDivider} />
+                    <div className={styles.dropdownList}>
+                      <Link to="/hilfe" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
+                        <HelpCircle size={16} strokeWidth={1.75} />
+                        <span>Hilfe & Support</span>
+                      </Link>
+                    </div>
+                    <div className={styles.dropdownDivider} />
+                    <button className={`${styles.dropdownItemNew} ${styles.dropdownItemDanger}`} onClick={handleLogout}>
+                      <LogOut size={16} strokeWidth={1.75} />
+                      <span>Abmelden</span>
+                    </button>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -671,16 +781,47 @@ export default function Navbar() {
               
               <AnimatePresence>
                 {dropdownOpen && (
-                  <motion.div 
-                    className={styles.dropdownMenu}
+                  <motion.div
+                    className={styles.dropdownMenuNew}
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <span className={styles.dropdownItem}>{user.email}</span>
-                    <Link to="/me" className={styles.dropdownItem}>Profil</Link>
-                    <button onClick={handleLogout} className={styles.dropdownItem}>Logout</button>
+                    <div className={styles.dropdownUserHeader}>
+                      <div className={styles.dropdownUserAvatar}>{userInitial}</div>
+                      <div>
+                        <div className={styles.dropdownUserName}>{userName}</div>
+                        <div className={styles.dropdownUserEmail}>{user.email}</div>
+                      </div>
+                    </div>
+                    <div className={styles.dropdownDivider} />
+                    <div className={styles.dropdownList}>
+                      <Link to="/me" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
+                        <UserIcon size={16} strokeWidth={1.75} />
+                        <span>Mein Profil</span>
+                      </Link>
+                      <Link to="/company-profile" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
+                        <Building2 size={16} strokeWidth={1.75} />
+                        <span>Unternehmen</span>
+                      </Link>
+                      <Link to="/pricing" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
+                        <CreditCard size={16} strokeWidth={1.75} />
+                        <span>Abo verwalten</span>
+                      </Link>
+                    </div>
+                    <div className={styles.dropdownDivider} />
+                    <div className={styles.dropdownList}>
+                      <Link to="/hilfe" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
+                        <HelpCircle size={16} strokeWidth={1.75} />
+                        <span>Hilfe & Support</span>
+                      </Link>
+                    </div>
+                    <div className={styles.dropdownDivider} />
+                    <button className={`${styles.dropdownItemNew} ${styles.dropdownItemDanger}`} onClick={handleLogout}>
+                      <LogOut size={16} strokeWidth={1.75} />
+                      <span>Abmelden</span>
+                    </button>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -702,16 +843,47 @@ export default function Navbar() {
               
               <AnimatePresence>
                 {dropdownOpen && (
-                  <motion.div 
-                    className={styles.dropdownMenu}
+                  <motion.div
+                    className={styles.dropdownMenuNew}
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <span className={styles.dropdownItem}>{user.email}</span>
-                    <Link to="/me" className={styles.dropdownItem}>Profil</Link>
-                    <button onClick={handleLogout} className={styles.dropdownItem}>Logout</button>
+                    <div className={styles.dropdownUserHeader}>
+                      <div className={styles.dropdownUserAvatar}>{userInitial}</div>
+                      <div>
+                        <div className={styles.dropdownUserName}>{userName}</div>
+                        <div className={styles.dropdownUserEmail}>{user.email}</div>
+                      </div>
+                    </div>
+                    <div className={styles.dropdownDivider} />
+                    <div className={styles.dropdownList}>
+                      <Link to="/me" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
+                        <UserIcon size={16} strokeWidth={1.75} />
+                        <span>Mein Profil</span>
+                      </Link>
+                      <Link to="/company-profile" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
+                        <Building2 size={16} strokeWidth={1.75} />
+                        <span>Unternehmen</span>
+                      </Link>
+                      <Link to="/pricing" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
+                        <CreditCard size={16} strokeWidth={1.75} />
+                        <span>Abo verwalten</span>
+                      </Link>
+                    </div>
+                    <div className={styles.dropdownDivider} />
+                    <div className={styles.dropdownList}>
+                      <Link to="/hilfe" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
+                        <HelpCircle size={16} strokeWidth={1.75} />
+                        <span>Hilfe & Support</span>
+                      </Link>
+                    </div>
+                    <div className={styles.dropdownDivider} />
+                    <button className={`${styles.dropdownItemNew} ${styles.dropdownItemDanger}`} onClick={handleLogout}>
+                      <LogOut size={16} strokeWidth={1.75} />
+                      <span>Abmelden</span>
+                    </button>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -800,16 +972,47 @@ export default function Navbar() {
               
               <AnimatePresence>
                 {dropdownOpen && (
-                  <motion.div 
-                    className={styles.dropdownMenu}
+                  <motion.div
+                    className={styles.dropdownMenuNew}
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <span className={styles.dropdownItem}>{user.email}</span>
-                    <Link to="/me" className={styles.dropdownItem}>Profil</Link>
-                    <button onClick={handleLogout} className={styles.dropdownItem}>Logout</button>
+                    <div className={styles.dropdownUserHeader}>
+                      <div className={styles.dropdownUserAvatar}>{userInitial}</div>
+                      <div>
+                        <div className={styles.dropdownUserName}>{userName}</div>
+                        <div className={styles.dropdownUserEmail}>{user.email}</div>
+                      </div>
+                    </div>
+                    <div className={styles.dropdownDivider} />
+                    <div className={styles.dropdownList}>
+                      <Link to="/me" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
+                        <UserIcon size={16} strokeWidth={1.75} />
+                        <span>Mein Profil</span>
+                      </Link>
+                      <Link to="/company-profile" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
+                        <Building2 size={16} strokeWidth={1.75} />
+                        <span>Unternehmen</span>
+                      </Link>
+                      <Link to="/pricing" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
+                        <CreditCard size={16} strokeWidth={1.75} />
+                        <span>Abo verwalten</span>
+                      </Link>
+                    </div>
+                    <div className={styles.dropdownDivider} />
+                    <div className={styles.dropdownList}>
+                      <Link to="/hilfe" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
+                        <HelpCircle size={16} strokeWidth={1.75} />
+                        <span>Hilfe & Support</span>
+                      </Link>
+                    </div>
+                    <div className={styles.dropdownDivider} />
+                    <button className={`${styles.dropdownItemNew} ${styles.dropdownItemDanger}`} onClick={handleLogout}>
+                      <LogOut size={16} strokeWidth={1.75} />
+                      <span>Abmelden</span>
+                    </button>
                   </motion.div>
                 )}
               </AnimatePresence>
