@@ -431,9 +431,46 @@ function extractContractDetails(text) {
     const db = client.db("contract_ai");
     contractsCollection = db.collection("contracts");
     analysisCollection = db.collection("analyses");
-    eventsCollection = db.collection("contract_events"); // ✅ NEU
-    usersCollection = db.collection("users"); // ✅ NEU: Für Bulk-Ops Enterprise-Check
+    eventsCollection = db.collection("contract_events");
+    usersCollection = db.collection("users");
     console.log("📦 Verbunden mit contracts, analyses, contract_events UND users");
+
+    // 🚀 PERFORMANCE: MongoDB Indizes erstellen (idempotent - existierende werden übersprungen)
+    try {
+      // Compound Index für häufigste Query: User's Contracts sortiert nach Datum
+      await contractsCollection.createIndex(
+        { userId: 1, createdAt: -1 },
+        { name: "idx_userId_createdAt", background: true }
+      );
+
+      // Index für Ablaufdatum-Filter (Status-Berechnung)
+      await contractsCollection.createIndex(
+        { userId: 1, expiryDate: 1 },
+        { name: "idx_userId_expiryDate", background: true }
+      );
+
+      // Index für Text-Suche auf Name
+      await contractsCollection.createIndex(
+        { userId: 1, name: 1 },
+        { name: "idx_userId_name", background: true }
+      );
+
+      // Index für Legal Pulse Risk Score Sortierung
+      await contractsCollection.createIndex(
+        { userId: 1, "legalPulse.riskScore": -1 },
+        { name: "idx_userId_riskScore", background: true }
+      );
+
+      // Index für Folder-Filter
+      await contractsCollection.createIndex(
+        { userId: 1, folderId: 1 },
+        { name: "idx_userId_folderId", background: true }
+      );
+
+      console.log("✅ MongoDB Indizes erstellt/verifiziert");
+    } catch (indexErr) {
+      console.warn("⚠️ Index-Erstellung fehlgeschlagen (nicht kritisch):", indexErr.message);
+    }
   } catch (err) {
     console.error("❌ MongoDB-Fehler (contracts.js):", err);
   }

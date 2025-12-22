@@ -326,6 +326,8 @@ export default function Contracts() {
   const hasScrolledRef = useRef(false); // ✅ Flag um initiales Auto-Loading zu verhindern
   const userInfoCacheRef = useRef<{ data: UserInfo | null; timestamp: number }>({ data: null, timestamp: 0 }); // ✅ Cache für User-Info
   const isFirstMountRef = useRef(true); // ✅ Flag um First Mount zu erkennen (verhindert doppelten API-Call)
+  const abortControllerRef = useRef<AbortController | null>(null); // 🚀 AbortController für Race Condition Prevention
+  const fetchRequestIdRef = useRef(0); // 🚀 Request-ID um veraltete Responses zu ignorieren
 
   // 📁 Folder Management Hook
   const {
@@ -1323,7 +1325,11 @@ export default function Contracts() {
   };
 
   // ✅ Verbesserte fetchContracts mit Pagination & Filtern (Infinite Scroll)
+  // 🚀 Mit Race Condition Prevention via Request-ID
   const fetchContracts = async (): Promise<Contract[] | null> => {
+    // 🚀 Request-ID inkrementieren um veraltete Responses zu ignorieren
+    const currentRequestId = ++fetchRequestIdRef.current;
+
     try {
       setLoading(true);
       setRefreshing(true);
@@ -1354,6 +1360,12 @@ export default function Contracts() {
         };
       };
 
+      // 🚀 Race Condition Check: Ignoriere Response wenn neuerer Request gestartet wurde
+      if (currentRequestId !== fetchRequestIdRef.current) {
+        console.log(`⚠️ Veraltete Response ignoriert (Request ${currentRequestId}, aktuell: ${fetchRequestIdRef.current})`);
+        return null;
+      }
+
       setContracts(response.contracts);
       setFilteredContracts(response.contracts); // Wird jetzt vom Backend gefiltert
       setError(null);
@@ -1368,14 +1380,20 @@ export default function Contracts() {
       console.log(`✅ Verträge geladen: ${response.contracts.length} von ${response.pagination.total} (hasMore: ${response.pagination.hasMore})`);
       return response.contracts;
     } catch (err) {
-      console.error("❌ Fehler beim Laden der Verträge:", err);
-      setError("Die Verträge konnten nicht geladen werden. Bitte versuche es später erneut.");
-      setContracts([]);
-      setFilteredContracts([]);
+      // 🚀 Nur Error setzen wenn dies noch der aktuelle Request ist
+      if (currentRequestId === fetchRequestIdRef.current) {
+        console.error("❌ Fehler beim Laden der Verträge:", err);
+        setError("Die Verträge konnten nicht geladen werden. Bitte versuche es später erneut.");
+        setContracts([]);
+        setFilteredContracts([]);
+      }
       return null;
     } finally {
-      setLoading(false);
-      setTimeout(() => setRefreshing(false), 600);
+      // 🚀 Nur Loading-State ändern wenn dies der aktuelle Request ist
+      if (currentRequestId === fetchRequestIdRef.current) {
+        setLoading(false);
+        setTimeout(() => setRefreshing(false), 600);
+      }
     }
   };
 
@@ -1421,11 +1439,15 @@ export default function Contracts() {
   };
 
   // ✅ NEU: Load More Contracts für Infinite Scroll (mit Filtern)
+  // 🚀 Mit Race Condition Prevention - ignoriert Response wenn Filter geändert wurde
   const loadMoreContracts = async () => {
     // Verhindere doppeltes Laden oder Laden wenn keine weiteren verfügbar
     if (loadingMore || !paginationInfo.hasMore) {
       return;
     }
+
+    // 🚀 Speichere aktuelle Request-ID beim Start (NICHT inkrementieren!)
+    const startRequestId = fetchRequestIdRef.current;
 
     try {
       setLoadingMore(true);
@@ -1459,6 +1481,12 @@ export default function Contracts() {
         };
       };
 
+      // 🚀 Race Condition Check: Ignoriere wenn Filter sich geändert hat (neuer fetchContracts lief)
+      if (startRequestId !== fetchRequestIdRef.current) {
+        console.log(`⚠️ LoadMore ignoriert - Filter wurde geändert (Request ${startRequestId} → ${fetchRequestIdRef.current})`);
+        return;
+      }
+
       // ✅ WICHTIG: Append (nicht replace!)
       setContracts(prev => [...prev, ...response.contracts]);
       setFilteredContracts(prev => [...prev, ...response.contracts]);
@@ -1475,11 +1503,15 @@ export default function Contracts() {
       console.error("❌ Fehler beim Nachladen der Verträge:", err);
       // Fehler nicht als kritisch behandeln - User kann manuell neu laden
     } finally {
-      setLoadingMore(false);
+      // 🚀 Nur Loading-State ändern wenn Request noch relevant ist
+      if (startRequestId === fetchRequestIdRef.current) {
+        setLoadingMore(false);
+      }
     }
   };
 
   // ✅ NEU: Bei Filter-Änderung Contracts neu laden (Backend filtert jetzt!)
+  // 🚀 OPTIMIERT: Debounce für ALLE Filter um mehrfache API-Calls zu verhindern
   useEffect(() => {
     // Überspringe First Mount (Initial Load useEffect übernimmt das)
     if (isFirstMountRef.current) {
@@ -1490,11 +1522,14 @@ export default function Contracts() {
     // ✅ FIX: Reset hasScrolledRef bei Filter-Änderung für Infinite Scroll
     hasScrolledRef.current = false;
 
-    // Debounce für Search-Query (nicht bei jedem Tastendruck neu laden)
+    // 🚀 Debounce für ALLE Filter-Änderungen (verhindert 5-10x unnötige API-Calls)
+    // - 400ms für Suche (Tippen)
+    // - 150ms für andere Filter (schnelles Klicken)
+    const debounceTime = searchQuery ? 400 : 150;
+
     const debounceTimer = setTimeout(() => {
-      console.log('🔄 Filter geändert, lade Contracts neu mit Filter:', { searchQuery, statusFilter, dateFilter, sortOrder, sourceFilter });
       fetchContracts();
-    }, searchQuery ? 500 : 0); // 500ms Debounce für Search, sofort für andere Filter
+    }, debounceTime);
 
     return () => clearTimeout(debounceTimer);
   }, [searchQuery, statusFilter, dateFilter, sortOrder, sourceFilter, activeFolder]);
