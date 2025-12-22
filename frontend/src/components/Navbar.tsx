@@ -23,7 +23,6 @@ import {
   Users,
   Link2,
   Star,
-  Home,
   X
 } from "lucide-react";
 import styles from "../styles/Navbar.module.css";
