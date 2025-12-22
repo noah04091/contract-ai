@@ -4598,7 +4598,7 @@ export default function Contracts() {
                       >
                         {loadingMore ? (
                           <>
-                            <Loader size={24} className="spin" style={{ color: '#6b7280' }} />
+                            <Loader size={24} className={styles.spinning} style={{ color: '#3b82f6' }} />
                             <div style={{
                               fontSize: '14px',
                               color: '#6b7280',

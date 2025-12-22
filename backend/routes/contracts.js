@@ -598,16 +598,7 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
       recommendations: { $ifNull: ["$recommendations", { $arrayElemAt: ["$analysisData.recommendations", 0] }] },
       // ✅ Laien-Zusammenfassung
       laymanSummary: { $ifNull: ["$laymanSummary", { $arrayElemAt: ["$analysisData.laymanSummary", 0] }] },
-      // FullText ermitteln (Priorität: analysis.fullText > analysis.extractedText > contract.content > contract.extractedText)
-      fullText: {
-        $ifNull: [
-          { $arrayElemAt: ["$analysisData.fullText", 0] },
-          { $ifNull: [
-            { $arrayElemAt: ["$analysisData.extractedText", 0] },
-            { $ifNull: ["$content", "$extractedText"] }
-          ]}
-        ]
-      },
+      // 🚫 fullText NICHT in Liste laden (10-50KB pro Vertrag!) - nur bei Einzel-Abruf
       // Upcoming Events formatieren
       upcomingEvents: {
         $map: {
@@ -653,11 +644,19 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
     }
   });
 
-  // Temporäre Felder entfernen
+  // 🚀 PERFORMANCE: Große Felder entfernen die für die Liste nicht benötigt werden
+  // fullText, content, extractedText können 10-50KB PRO Vertrag sein!
   pipeline.push({
     $project: {
       analysisData: 0,
-      envelopeData: 0
+      envelopeData: 0,
+      // 🚫 Große Text-Felder ausschließen (werden nur bei Einzel-Abruf benötigt)
+      fullText: 0,
+      content: 0,
+      extractedText: 0,
+      detailedLegalOpinion: 0,  // Kann sehr lang sein
+      rawHtmlContent: 0,        // HTML-Content von generierten Verträgen
+      optimizedContent: 0       // Optimierter Content
     }
   });
 
