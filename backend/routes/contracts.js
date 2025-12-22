@@ -479,9 +479,22 @@ function extractContractDetails(text) {
 // 🚀 OPTIMIERT: Batch-Enrichment mit $lookup statt N+1 Queries
 // Vorher: 394 Verträge = 1182 Queries (3 pro Vertrag)
 // Jetzt: 394 Verträge = 1 Query mit $lookup JOINs
+// 🚀 V2: Gibt jetzt { contracts, totalCount } zurück - spart separaten countDocuments() Call!
 async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, limit) {
   const Envelope = require("../models/Envelope");
   const db = client.db("contractai");
+
+  // 🚀 OPTIMIERT: Erst Count berechnen (schnell, nur $match + $count)
+  const countResult = await contractsCollection.aggregate([
+    { $match: mongoFilter },
+    { $count: "total" }
+  ]).toArray();
+  const totalCount = countResult[0]?.total || 0;
+
+  // Wenn keine Contracts, früh returnen
+  if (totalCount === 0) {
+    return { contracts: [], totalCount: 0 };
+  }
 
   const pipeline = [
     { $match: mongoFilter },
@@ -700,7 +713,8 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
   // Query ausführen mit allowDiskUse für große Datensätze
   const contracts = await contractsCollection.aggregate(pipeline, { allowDiskUse: true }).toArray();
 
-  return contracts;
+  // 🚀 V2: Gibt jetzt { contracts, totalCount } zurück
+  return { contracts, totalCount };
 }
 
 // 🔄 Legacy-Funktion für Einzelverträge (z.B. GET /:id)
@@ -1027,9 +1041,6 @@ router.get("/", async (req, res) => {
       }
     }
 
-    // ✅ Total Count MIT den gleichen Filtern
-    const totalCount = await contractsCollection.countDocuments(mongoFilter);
-
     // 🔄 Sortierung
     let sortOptions = {};
     switch (sortOrder) {
@@ -1062,11 +1073,11 @@ router.get("/", async (req, res) => {
     }
 
     // 🚀 OPTIMIERT: Single Aggregation mit $lookup statt N+1 Queries
-    // Vorher: Bei 20 Verträgen = 60 Queries (3 pro Vertrag)
-    // Jetzt: Bei 20 Verträgen = 1 Query mit $lookup JOINs
-    const enrichedContracts = await enrichContractsWithAggregation(mongoFilter, sortOptions, skip, limit);
+    // Vorher: Bei 20 Verträgen = 60 Queries (3 pro Vertrag) + 1 countDocuments
+    // Jetzt: Bei 20 Verträgen = 1 Query mit $lookup JOINs + 1 schneller $count
+    const { contracts: enrichedContracts, totalCount } = await enrichContractsWithAggregation(mongoFilter, sortOptions, skip, limit);
 
-    console.log(`📦 ${enrichedContracts.length} von ${totalCount} Verträgen geladen (skip: ${skip}, limit: ${limit || 'alle'}, Filter: ${searchQuery ? 'Search' : ''}${statusFilter !== 'alle' ? ' Status' : ''}${dateFilter !== 'alle' ? ' Date' : ''}) [OPTIMIERT: 1 Query]`);
+    console.log(`📦 ${enrichedContracts.length} von ${totalCount} Verträgen geladen (skip: ${skip}, limit: ${limit || 'alle'}) [OPTIMIERT]`);
 
     // ✅ Response mit Pagination-Info
     res.json({

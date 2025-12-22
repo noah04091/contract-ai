@@ -235,7 +235,7 @@ export default function Contracts() {
   const navigate = useNavigate();
 
   const [contracts, setContracts] = useState<Contract[]>([]);
-  const [filteredContracts, setFilteredContracts] = useState<Contract[]>([]);
+  // 🚀 OPTIMIERT: contracts State entfernt - war redundant da Backend bereits filtert
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
@@ -761,10 +761,10 @@ export default function Contracts() {
   };
 
   const toggleSelectAll = () => {
-    if (selectedContracts.length === filteredContracts.length) {
+    if (selectedContracts.length === contracts.length) {
       setSelectedContracts([]);
     } else {
-      setSelectedContracts(filteredContracts.map(c => c._id));
+      setSelectedContracts(contracts.map(c => c._id));
     }
   };
 
@@ -1367,7 +1367,6 @@ export default function Contracts() {
       }
 
       setContracts(response.contracts);
-      setFilteredContracts(response.contracts); // Wird jetzt vom Backend gefiltert
       setError(null);
 
       // ✅ Pagination-Info speichern
@@ -1385,7 +1384,6 @@ export default function Contracts() {
         console.error("❌ Fehler beim Laden der Verträge:", err);
         setError("Die Verträge konnten nicht geladen werden. Bitte versuche es später erneut.");
         setContracts([]);
-        setFilteredContracts([]);
       }
       return null;
     } finally {
@@ -1425,7 +1423,6 @@ export default function Contracts() {
       };
 
       setContracts(response.contracts);
-      setFilteredContracts(response.contracts);
       setPaginationInfo({
         total: response.pagination.total,
         hasMore: response.pagination.hasMore,
@@ -1489,7 +1486,6 @@ export default function Contracts() {
 
       // ✅ WICHTIG: Append (nicht replace!)
       setContracts(prev => [...prev, ...response.contracts]);
-      setFilteredContracts(prev => [...prev, ...response.contracts]);
 
       // ✅ Pagination-Info aktualisieren
       setPaginationInfo({
@@ -1603,7 +1599,9 @@ export default function Contracts() {
       }
       window.removeEventListener('scroll', handleWindowScroll);
     };
-  }, [paginationInfo.hasMore, loadingMore, contracts.length]); // Re-run wenn sich contracts ändern
+  // 🚀 OPTIMIERT: Nur hasMore und loadingMore als Dependencies
+  // contracts.length verursachte unnötige Re-Creation des IntersectionObservers
+  }, [paginationInfo.hasMore, loadingMore]);
 
   // ✅ FIX: Wenn contracts sich ändern und ein Contract ausgewählt ist, aktualisiere selectedContract
   useEffect(() => {
@@ -2033,23 +2031,33 @@ export default function Contracts() {
         console.log("✅ Analysis successful for existing contract");
 
         // ✅ Silent Refresh - ohne Loading-Skeleton (damit UI nicht springt)
-        const refreshedContracts = await silentRefreshContracts();
+        let refreshedContracts = await silentRefreshContracts();
+
+        // 🚀 FIX: Wenn Silent Refresh fehlschlägt, mache regulären Refresh
+        if (!refreshedContracts) {
+          console.warn("⚠️ Silent Refresh fehlgeschlagen, versuche regulären Refresh...");
+          refreshedContracts = await fetchContracts();
+        }
+
         await fetchUserInfo();
 
         // ✅ WICHTIG: Hole den aktualisierten Contract aus der frisch geladenen Liste
         // Das stellt sicher, dass alle Analysedaten (risiken, summary, etc.) vorhanden sind
         const foundContract = refreshedContracts?.find((c: Contract) => c._id === contract._id);
 
-        // Fallback: Backend-Response oder alten Contract mit analyzed: true
-        const updatedContract: Contract = foundContract || data.contract || { ...contract, analyzed: true };
-
-        console.log("📊 Updated contract data:", {
-          id: updatedContract._id,
-          hasRisiken: !!updatedContract.risiken,
-          hasSummary: !!updatedContract.summary,
-          hasContractScore: !!updatedContract.contractScore,
-          source: foundContract ? 'refreshedList' : 'backendResponse'
-        });
+        // 🚀 FIX: Bessere Fallback-Logik - Backend-Response hat vollständige Daten
+        let updatedContract: Contract;
+        if (foundContract) {
+          updatedContract = foundContract;
+          console.log("📊 Contract aus frischer Liste geladen");
+        } else if (data.contract) {
+          updatedContract = data.contract;
+          console.log("📊 Contract aus Backend-Response geladen");
+        } else {
+          // Letzter Fallback - sollte nie passieren
+          console.warn("⚠️ Kein aktualisierter Contract gefunden, verwende alten mit analyzed: true");
+          updatedContract = { ...contract, analyzed: true };
+        }
 
         setSelectedContract(updatedContract);
         setShowDetails(true);
@@ -2393,22 +2401,39 @@ export default function Contracts() {
     navigate(`/contracts?view=${contract._id}`, { replace: true });
   };
 
-  // ✅ Verbesserte Löschfunktion
+  // ✅ OPTIMIERT: Löschfunktion mit Optimistic Update
   const handleDeleteContract = async (contractId: string, contractName: string) => {
     if (!confirm(`Möchtest du den Vertrag "${contractName}" wirklich löschen?`)) {
       return;
+    }
+
+    // 🚀 OPTIMISTIC UPDATE: Sofort aus UI entfernen für bessere UX
+    const previousContracts = [...contracts];
+
+    setContracts(prev => prev.filter(c => c._id !== contractId));
+    setPaginationInfo(prev => ({ ...prev, total: Math.max(0, prev.total - 1) }));
+    setShowDetails(false);
+
+    // Wenn der gelöschte Contract ausgewählt war, Preview schließen
+    if (selectedContract?._id === contractId) {
+      setSelectedContract(null);
+    }
+    if (previewContract?._id === contractId) {
+      setPreviewContract(null);
     }
 
     try {
       await apiCall(`/contracts/${contractId}`, {
         method: 'DELETE'
       });
-      
+
       console.log("✅ Vertrag gelöscht:", contractName);
-      fetchContracts();
-      setShowDetails(false);
+      // ✅ Kein fetchContracts() nötig - State ist bereits aktuell
     } catch (err) {
+      // 🔄 ROLLBACK: Bei Fehler ursprünglichen State wiederherstellen
       console.error("❌ Fehler beim Löschen:", err);
+      setContracts(previousContracts);
+      setPaginationInfo(prev => ({ ...prev, total: prev.total + 1 }));
       alert("Fehler beim Löschen des Vertrags. Bitte versuche es erneut.");
     }
   };
@@ -2770,7 +2795,7 @@ export default function Contracts() {
   const hasAnalysesLeft = userInfo.analysisLimit === Infinity || userInfo.analysisCount < userInfo.analysisLimit;
 
   // ✅ Infinite Scroll: Zeige alle geladenen Contracts (keine Frontend-Slice mehr)
-  const displayedContracts = filteredContracts;
+  const displayedContracts = contracts;
 
   // ✅ RESPONSIVE: Mobile Card Component
   const MobileContractCard = ({ contract }: { contract: Contract }) => {
@@ -4229,8 +4254,8 @@ export default function Contracts() {
                 {(searchQuery || activeFiltersCount() > 0) && (
                   <div className={styles.resultsInfo}>
                     <div className={styles.resultsText}>
-                      <strong>{filteredContracts.length}</strong> Ergebnis
-                      {filteredContracts.length !== 1 ? 'se' : ''}
+                      <strong>{contracts.length}</strong> Ergebnis
+                      {contracts.length !== 1 ? 'se' : ''}
                       {searchQuery && (
                         <span> für <em>"{searchQuery}"</em></span>
                       )}
@@ -4270,7 +4295,7 @@ export default function Contracts() {
                   </div>
                 ) : loading ? (
                   <ContractsCardsSkeleton />
-                ) : filteredContracts.length === 0 ? (
+                ) : contracts.length === 0 ? (
                   <div className={styles.emptyState}>
                     <FileText size={64} className={styles.emptyIcon} />
                     <h3>
@@ -4313,7 +4338,7 @@ export default function Contracts() {
                     {/* 🆕 ENTERPRISE GRID VIEW */}
                     {viewMode === 'grid' && (
                       <div className={styles.enterpriseGrid}>
-                        {filteredContracts.map((contract) => (
+                        {contracts.map((contract) => (
                           <EnterpriseGridCard key={contract._id} contract={contract} />
                         ))}
                       </div>
@@ -4330,7 +4355,7 @@ export default function Contracts() {
                               <th className={styles.checkboxColumn}>
                                 <input
                                   type="checkbox"
-                                  checked={selectedContracts.length === filteredContracts.length && filteredContracts.length > 0}
+                                  checked={selectedContracts.length === contracts.length && contracts.length > 0}
                                   onChange={toggleSelectAll}
                                   className={styles.bulkCheckbox}
                                 />
@@ -4345,7 +4370,7 @@ export default function Contracts() {
                           </tr>
                         </thead>
                         <tbody>
-                          {filteredContracts.length === 0 ? (
+                          {contracts.length === 0 ? (
                             <tr>
                               <td colSpan={bulkSelectMode ? 7 : 6} style={{ textAlign: 'center', padding: '60px 20px' }}>
                                 <div style={{ color: '#6b7280' }}>
@@ -5542,14 +5567,14 @@ export default function Contracts() {
                 <Search />
                 <p>Suche nach Vertragsnamen, Anbieter oder Inhalt</p>
               </div>
-            ) : filteredContracts.length === 0 ? (
+            ) : contracts.length === 0 ? (
               <div className={styles.mobileSearchEmpty}>
                 <FileText />
                 <p>Keine Verträge gefunden für "{mobileSearchQuery}"</p>
               </div>
             ) : (
               <div className={styles.mobileListContainer}>
-                {filteredContracts.map((contract) => (
+                {contracts.map((contract) => (
                   <MobileListRow key={contract._id} contract={contract} />
                 ))}
               </div>
