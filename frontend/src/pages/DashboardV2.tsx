@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from "../context/AuthContext";
 import { DashboardLayout } from "../components/DashboardV2";
+import AdminDashboard from "../components/AdminDashboard"; // 🔐 Admin Dashboard
 
 // ============================================
 // TYPES
@@ -436,6 +437,21 @@ export default function DashboardV2() {
   // ============================================
   // RENDER
   // ============================================
+
+  // 🔐 ADMIN CHECK - Show admin dashboard for admin users
+  const isAdmin = user?.role === 'admin';
+
+  // 🔐 If admin, show AdminDashboard
+  if (isAdmin) {
+    return (
+      <DashboardLayout user={userData}>
+        <Helmet>
+          <title>Admin Dashboard | Contract AI</title>
+        </Helmet>
+        <AdminDashboard />
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout user={userData}>
