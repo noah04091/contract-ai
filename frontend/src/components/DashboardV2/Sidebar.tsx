@@ -20,6 +20,7 @@ import {
   Link2,
   Star,
   ChevronRight,
+  TrendingUp,
   type LucideIcon
 } from 'lucide-react';
 import styles from './DashboardLayout.module.css';
@@ -103,6 +104,12 @@ const navigation: NavSection[] = [
         label: 'Legal Pulse',
         icon: Lightbulb,
         href: '/legalpulse',
+      },
+      {
+        id: 'better-contracts',
+        label: 'Anbieterwechsel',
+        icon: TrendingUp,
+        href: '/better-contracts',
       },
     ],
   },

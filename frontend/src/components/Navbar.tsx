@@ -1393,7 +1393,7 @@ export default function Navbar() {
                     <li className={styles.navItemNew}>
                       <Link to="/better-contracts" className={`${styles.navLinkNew} ${location.pathname === '/better-contracts' ? styles.navLinkActiveNew : ''}`} onClick={() => setSidebarOpen(false)}>
                         <span className={styles.navIconNew}><TrendingUp size={20} strokeWidth={1.75} /></span>
-                        <span className={styles.navLabelNew}>Bessere Anbieter</span>
+                        <span className={styles.navLabelNew}>Anbieterwechsel</span>
                       </Link>
                     </li>
                   </ul>
