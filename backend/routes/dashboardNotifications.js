@@ -212,6 +212,12 @@ router.get("/summary", verifyToken, async (req, res) => {
       { projection: { email: 1, name: 1, subscriptionPlan: 1, analysisCount: 1, analysisLimit: 1, profilePicture: 1 } }
     );
 
+    // 📊 ANALYSE LIMITS - Dynamisch nach Plan berechnen (wie in auth.js)
+    const plan = user?.subscriptionPlan || 'free';
+    let analysisLimit = 3;  // ✅ Free: 3 Analysen
+    if (plan === "business") analysisLimit = 25;  // 📊 Business: 25 pro Monat
+    if (plan === "premium" || plan === "legendary" || plan === "enterprise") analysisLimit = Infinity; // ♾️ Premium/Legendary/Enterprise: Unbegrenzt
+
     res.json({
       success: true,
       stats,
@@ -222,9 +228,9 @@ router.get("/summary", verifyToken, async (req, res) => {
       user: {
         email: user?.email,
         name: user?.name,
-        subscriptionPlan: user?.subscriptionPlan || 'free',
+        subscriptionPlan: plan,
         analysisCount: user?.analysisCount || 0,
-        analysisLimit: user?.analysisLimit || 3,
+        analysisLimit: analysisLimit,
         profilePicture: user?.profilePicture
       }
     });

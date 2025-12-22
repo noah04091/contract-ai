@@ -340,9 +340,10 @@ export default function DashboardV2() {
   const analysisUsage = useMemo(() => {
     const used = userData?.analysisCount || 0;
     const total = userData?.analysisLimit || 15;
-    const percentage = total > 0 ? (used / total) * 100 : 0;
-    const remaining = total - used;
-    return { used, total, percentage: Math.min(percentage, 100), remaining };
+    const isUnlimited = total === null || total === Infinity || total > 999999;
+    const percentage = isUnlimited ? 0 : (total > 0 ? (used / total) * 100 : 0);
+    const remaining = isUnlimited ? Infinity : total - used;
+    return { used, total, percentage: Math.min(percentage, 100), remaining, isUnlimited };
   }, [userData]);
 
   // Benutzername ermitteln
@@ -659,16 +660,18 @@ export default function DashboardV2() {
             </div>
             <div className={styles.statContent}>
               <span className={styles.statValue}>
-                <AnimatedNumber value={analysisUsage.used} />/{analysisUsage.total}
+                <AnimatedNumber value={analysisUsage.used} />{analysisUsage.isUnlimited ? '/∞' : `/${analysisUsage.total}`}
               </span>
               <span className={styles.statLabel}>Analysen</span>
             </div>
-            <div className={styles.quotaBar}>
-              <div
-                className={`${styles.quotaFill} ${analysisUsage.percentage > 80 ? styles.quotaWarning : ''}`}
-                style={{ width: `${analysisUsage.percentage}%` }}
-              />
-            </div>
+            {!analysisUsage.isUnlimited && (
+              <div className={styles.quotaBar}>
+                <div
+                  className={`${styles.quotaFill} ${analysisUsage.percentage > 80 ? styles.quotaWarning : ''}`}
+                  style={{ width: `${analysisUsage.percentage}%` }}
+                />
+              </div>
+            )}
           </div>
         </div>
 
