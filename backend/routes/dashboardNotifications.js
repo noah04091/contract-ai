@@ -70,7 +70,8 @@ setInterval(() => {
 async function connectDB() {
   if (!db) {
     await client.connect();
-    db = client.db("contract-ai");
+    // ✅ FIX: Muss "contract_ai" sein (mit Underscore), nicht "contract-ai"!
+    db = client.db("contract_ai");
   }
   return db;
 }

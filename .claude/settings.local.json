@@ -68,7 +68,9 @@
       "Bash(git -C \"C:/Users/liebo/Documents/contract-ai\" commit -m \"$\\(cat <<''EOF''\nfix: Dashboard zeigt nun korrekten Benutzernamen, Abo & Upgrade-Banner\n\n- TopBar: Zeigt user.name statt nur email-Präfix\n- TopBar: Formatiert subscriptionPlan korrekt \\(Premium, Business, Enterprise\\)\n- Sidebar: Erhält jetzt user-Props von DashboardLayout\n- Sidebar: Upgrade-Banner nur für Free-User sichtbar\n- UserData Interface erweitert um name + profilePicture\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "WebFetch(domain:api.contract-ai.de)",
       "Bash(Where-Object { $_ -match 'assets.*\\\\.js' })",
-      "Bash(Select-Object -First 5 \")"
+      "Bash(Select-Object -First 5 \")",
+      "Bash(git -C \"C:/Users/liebo/Documents/contract-ai\" commit -m \"$\\(cat <<''EOF''\nfix: Dashboard Summary - Unterstütze sowohl ObjectId als auch String userId\n\n- userIdFilter mit $or für beide Formate \\(ObjectId und String\\)\n- Behebt Problem dass Verträge nicht gefunden wurden\n- Debug-Logging für userId-Format hinzugefügt\n- Frontend: Debug-Log für API Response\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git -C \"C:/Users/liebo/Documents/contract-ai\" commit -m \"fix: Dashboard Summary nutzte falsche Datenbank \\(contract-ai statt contract_ai\\)\")"
     ],
     "deny": [],
     "ask": []
