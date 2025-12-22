@@ -213,10 +213,11 @@ router.get("/summary", verifyToken, async (req, res) => {
     );
 
     // 📊 ANALYSE LIMITS - Dynamisch nach Plan berechnen (wie in auth.js)
+    // WICHTIG: Infinity wird in JSON zu null, daher -1 als "unbegrenzt" verwenden
     const plan = user?.subscriptionPlan || 'free';
     let analysisLimit = 3;  // ✅ Free: 3 Analysen
     if (plan === "business") analysisLimit = 25;  // 📊 Business: 25 pro Monat
-    if (plan === "premium" || plan === "legendary" || plan === "enterprise") analysisLimit = Infinity; // ♾️ Premium/Legendary/Enterprise: Unbegrenzt
+    if (plan === "premium" || plan === "legendary" || plan === "enterprise") analysisLimit = -1; // ♾️ -1 = Unbegrenzt
 
     res.json({
       success: true,

@@ -339,8 +339,9 @@ export default function DashboardV2() {
 
   const analysisUsage = useMemo(() => {
     const used = userData?.analysisCount || 0;
-    const total = userData?.analysisLimit || 15;
-    const isUnlimited = total === null || total === Infinity || total > 999999;
+    const total = userData?.analysisLimit ?? 3; // Default: Free = 3
+    // -1 bedeutet unbegrenzt (Backend sendet -1 statt Infinity wegen JSON)
+    const isUnlimited = total === -1 || total === null || total === Infinity;
     const percentage = isUnlimited ? 0 : (total > 0 ? (used / total) * 100 : 0);
     const remaining = isUnlimited ? Infinity : total - used;
     return { used, total, percentage: Math.min(percentage, 100), remaining, isUnlimited };
