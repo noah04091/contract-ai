@@ -19,7 +19,6 @@ import {
   ArrowRight,
   Calendar,
   PenTool,
-  Sun,
   Moon,
   RefreshCw,
   Settings,
@@ -29,7 +28,6 @@ import {
   X,
   Save
 } from 'lucide-react';
-import { useTheme } from '../../context/ThemeContext';
 import styles from './DashboardLayout.module.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
@@ -118,7 +116,6 @@ export default function TopBar({ onMenuClick, user }: TopBarProps) {
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [settingsTab, setSettingsTab] = useState<'channels' | 'types' | 'schedule'>('channels');
   const navigate = useNavigate();
-  const { theme, toggleTheme } = useTheme();
 
   const notificationRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -465,22 +462,6 @@ export default function TopBar({ onMenuClick, user }: TopBarProps) {
 
         {/* Right side */}
         <div className={styles.topBarRight}>
-          {/* Theme Toggle */}
-          <div className={styles.topBarItem}>
-            <button
-              className={styles.iconButton}
-              onClick={toggleTheme}
-              aria-label={theme === 'dark' ? 'Light Mode aktivieren' : 'Dark Mode aktivieren'}
-              title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-            >
-              {theme === 'dark' ? (
-                <Sun size={20} strokeWidth={2} />
-              ) : (
-                <Moon size={20} strokeWidth={2} />
-              )}
-            </button>
-          </div>
-
           {/* Notifications */}
           <div className={styles.topBarItem} ref={notificationRef}>
             <button

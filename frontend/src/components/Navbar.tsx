@@ -1467,23 +1467,6 @@ export default function Navbar() {
                 </div>
               )}
 
-              {/* Logout Button für eingeloggte User */}
-              {user && (
-                <div className={styles.sidebarFooterNew}>
-                  <motion.button
-                    className={styles.logoutButtonNew}
-                    onClick={() => {
-                      setSidebarOpen(false);
-                      handleLogout();
-                    }}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <LogOut size={18} strokeWidth={1.75} />
-                    <span>Abmelden</span>
-                  </motion.button>
-                </div>
-              )}
 
               {/* Login/Register für nicht eingeloggte User */}
               {!user && (

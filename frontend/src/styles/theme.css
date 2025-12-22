@@ -1,25 +1,5 @@
-/* 🌍 Standard (Dark Mode als Basis) */
+/* ☀️ Light Mode (Standard - einziger Modus) */
 :root {
-  --color-bg: #0e0e17;
-  --color-bg-light: #1a1a28;
-  --color-primary: #4f46e5;
-  --color-accent: #22c55e;
-  --color-danger: #ef4444;
-  --color-text: #f9fafb;
-  --color-muted: #94a3b8;
-  --color-border: #2c2f3a;
-}
-
-/* 🌓 Übergänge */
-body {
-  background-color: var(--color-bg);
-  color: var(--color-text);
-  font-family: 'Segoe UI', sans-serif;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-/* ☀️ Light Mode – überschreibt Variablen */
-body.light {
   --color-bg: #ffffff;
   --color-bg-light: #f3f4f6;
   --color-primary: #6366f1;
@@ -28,4 +8,10 @@ body.light {
   --color-text: #1e1e1e;
   --color-muted: #6b7280;
   --color-border: #d1d5db;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: 'Segoe UI', sans-serif;
 }
