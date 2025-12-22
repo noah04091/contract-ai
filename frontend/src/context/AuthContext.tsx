@@ -1,7 +1,7 @@
 // 📁 frontend/src/context/AuthContext.tsx
-// ✅ VERBESSERTES DEBUGGING - Warum wird User-State nicht gesetzt?
+// ✅ OPTIMIERT: Mit Caching um doppelte API-Calls zu vermeiden
 
-import { createContext, useState, useEffect, useContext } from "react";
+import { createContext, useState, useEffect, useContext, useRef } from "react";
 import { fetchUserData } from "../utils/fetchUserData";
 import type { UserData } from "../utils/authUtils";
 
@@ -11,6 +11,9 @@ interface AuthContextType {
   isLoading: boolean;
   refetchUser: () => Promise<void>;
 }
+
+// ✅ Cache-Konstanten
+const CACHE_DURATION_MS = 2000; // 2 Sekunden Cache
 
 // ✅ Export the context for useAuth hook
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,80 +27,52 @@ export const useAuth = () => {
   return context;
 };
 
-// ✅ AuthProvider component - mit DEBUGGING
+// ✅ AuthProvider component - OPTIMIERT mit Caching
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // ✅ DEBUGGING: User-State-Änderungen loggen
-  useEffect(() => {
-    console.log("🔄 AuthContext User-State geändert:", user ? `${user.email} (${user.subscriptionPlan})` : "null");
-  }, [user]);
+  // ✅ Cache-Refs um doppelte Fetches zu vermeiden
+  const lastFetchTime = useRef<number>(0);
+  const fetchPromise = useRef<Promise<void> | null>(null);
 
-  const refetchUser = async () => {
-    console.log("🔄 refetchUser aufgerufen...");
-    try {
-      setIsLoading(true);
-      const userData = await fetchUserData();
-      
-      console.log("✅ fetchUserData erfolgreich in refetchUser:", userData);
-      console.log("🔄 Setze User-State in refetchUser...");
-      
-      setUser(userData);
-      
-      // ✅ DEBUGGING: Prüfen ob setUser funktioniert hat
-      setTimeout(() => {
-        console.log("🔍 User-State nach setUser in refetchUser:", userData.email);
-      }, 100);
-      
-    } catch (error) {
-      console.error("❌ refetchUser Fehler:", error);
-      setUser(null);
-    } finally {
-      setIsLoading(false);
+  const refetchUser = async (force = false) => {
+    const now = Date.now();
+
+    // ✅ Wenn bereits ein Fetch läuft, auf diesen warten
+    if (fetchPromise.current) {
+      return fetchPromise.current;
     }
-  };
 
-  useEffect(() => {
-    const loadUser = async () => {
-      console.log("🚀 AuthProvider: Lade User beim Start...");
+    // ✅ Cache-Check: Nicht erneut fetchen wenn kürzlich erfolgt (außer force=true)
+    if (!force && lastFetchTime.current && (now - lastFetchTime.current) < CACHE_DURATION_MS) {
+      return;
+    }
+
+    const doFetch = async () => {
       try {
         setIsLoading(true);
         const userData = await fetchUserData();
-        
-        console.log("✅ Initial fetchUserData erfolgreich:", userData);
-        console.log("🔄 Setze initialen User-State...");
-        
         setUser(userData);
-        
-        // ✅ DEBUGGING: Prüfen ob setUser funktioniert hat
-        setTimeout(() => {
-          console.log("🔍 Initial User-State nach setUser:", userData.email);
-        }, 100);
-        
+        lastFetchTime.current = Date.now();
       } catch (error) {
-        console.error("❌ Initial loadUser Fehler:", error);
+        console.error("❌ refetchUser Fehler:", error);
         setUser(null);
       } finally {
         setIsLoading(false);
-        console.log("✅ AuthProvider: Loading abgeschlossen");
+        fetchPromise.current = null;
       }
     };
 
-    loadUser();
-  }, []); // Läuft nur einmal beim Mount
+    fetchPromise.current = doFetch();
+    return fetchPromise.current;
+  };
 
-  // ✅ DEBUGGING: Context-Value loggen
-  const contextValue = { user, setUser, isLoading, refetchUser };
-  
   useEffect(() => {
-    console.log("🔄 AuthContext contextValue:", {
-      hasUser: !!user,
-      userEmail: user?.email,
-      isLoading,
-      userPlan: user?.subscriptionPlan
-    });
-  }, [user, isLoading]);
+    refetchUser(true); // Force-Fetch beim ersten Mount
+  }, []);
+
+  const contextValue = { user, setUser, isLoading, refetchUser: () => refetchUser(true) };
 
   return (
     <AuthContext.Provider value={contextValue}>

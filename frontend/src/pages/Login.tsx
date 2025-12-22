@@ -103,6 +103,8 @@ export default function Login() {
       }
 
       if (data.token) {
+        // ✅ Beide Keys setzen für Backwards-Compatibility
+        localStorage.setItem("token", data.token);
         localStorage.setItem("authToken", data.token);
         localStorage.setItem("authEmail", email);
         localStorage.setItem("authTimestamp", String(Date.now()));
@@ -125,7 +127,8 @@ export default function Login() {
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
-        const token = localStorage.getItem("token");
+        // ✅ Beide Keys prüfen für Backwards-Compatibility
+        const token = localStorage.getItem("token") || localStorage.getItem("authToken");
         const headers: HeadersInit = {};
         if (token) headers["Authorization"] = `Bearer ${token}`;
         const response = await fetch(`${API_BASE}/api/auth/me`, { method: "GET", headers, credentials: "include" });

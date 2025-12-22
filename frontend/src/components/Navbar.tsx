@@ -32,6 +32,9 @@ import logo from "../assets/logo.png";
 import { clearAuthData } from "../utils/api";
 import { useAuth } from "../hooks/useAuth";
 
+// ✅ API Base URL für Production
+const API_BASE = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
+
 // Feature-Daten für das Mega-Menü
 const featureCategories = [
   {
@@ -204,7 +207,8 @@ export default function Navbar() {
   // 🚪 Logout-Handler
   const handleLogout = async () => {
     try {
-      await fetch("/api/auth/logout", {
+      // ✅ Production-kompatible URL
+      await fetch(`${API_BASE}/api/auth/logout`, {
         method: "POST",
         credentials: "include",
       });

@@ -14,7 +14,8 @@ export default function RequireAuth({ children }: RequireAuthProps) {
 
     const checkAuth = async () => {
       try {
-        const token = localStorage.getItem("token");
+        // ✅ Beide Keys prüfen für Backwards-Compatibility
+        const token = localStorage.getItem("token") || localStorage.getItem("authToken");
         const API_BASE = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
 
         const headers: HeadersInit = { "Content-Type": "application/json" };

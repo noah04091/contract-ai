@@ -20,7 +20,8 @@ const securityHeaders = {
   "Permissions-Policy": "geolocation=(), camera=()",
 };
 
-export default defineConfig({
+// ✅ defineConfig als Funktion für korrekten Mode-Zugriff
+export default defineConfig(({ mode }) => ({
   base: "/", // ✅ wichtig für korrekte Pfade bei Rewrite + Deployment
 
   plugins: [react()],
@@ -54,6 +55,11 @@ export default defineConfig({
     headers: securityHeaders,
   },
 
+  // 🧹 Console.logs im Production-Build entfernen
+  esbuild: {
+    drop: mode === 'production' ? ['console', 'debugger'] : [],
+  },
+
   // 📦 Build-Optimierungen
   build: {
     outDir: "dist",
@@ -80,4 +86,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));

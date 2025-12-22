@@ -66,16 +66,20 @@ export const isSubscriptionActive = (user: UserData): boolean => {
 
 // ✅ TOKEN-UTILITIES (hinzugefügt)
 export const getAuthToken = (): string | null => {
-  const token = localStorage.getItem("token");
-  return token;
+  // ✅ Beide Keys prüfen für Backwards-Compatibility
+  return localStorage.getItem("token") || localStorage.getItem("authToken");
 };
 
 export const setAuthToken = (token: string): void => {
+  // ✅ Beide Keys setzen für Backwards-Compatibility
   localStorage.setItem("token", token);
+  localStorage.setItem("authToken", token);
 };
 
 export const removeAuthToken = (): void => {
+  // ✅ Beide Keys entfernen
   localStorage.removeItem("token");
+  localStorage.removeItem("authToken");
 };
 
 export const isAuthenticated = (): boolean => {
