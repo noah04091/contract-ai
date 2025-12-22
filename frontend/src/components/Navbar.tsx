@@ -23,7 +23,8 @@ import {
   Users,
   Link2,
   Star,
-  X
+  X,
+  TrendingUp
 } from "lucide-react";
 import styles from "../styles/Navbar.module.css";
 import Notification from "./Notification";
@@ -1387,6 +1388,12 @@ export default function Navbar() {
                       <Link to="/legalpulse" className={`${styles.navLinkNew} ${location.pathname === '/legalpulse' ? styles.navLinkActiveNew : ''}`} onClick={() => setSidebarOpen(false)}>
                         <span className={styles.navIconNew}><Lightbulb size={20} strokeWidth={1.75} /></span>
                         <span className={styles.navLabelNew}>Legal Pulse</span>
+                      </Link>
+                    </li>
+                    <li className={styles.navItemNew}>
+                      <Link to="/better-contracts" className={`${styles.navLinkNew} ${location.pathname === '/better-contracts' ? styles.navLinkActiveNew : ''}`} onClick={() => setSidebarOpen(false)}>
+                        <span className={styles.navIconNew}><TrendingUp size={20} strokeWidth={1.75} /></span>
+                        <span className={styles.navLabelNew}>Bessere Anbieter</span>
                       </Link>
                     </li>
                   </ul>
