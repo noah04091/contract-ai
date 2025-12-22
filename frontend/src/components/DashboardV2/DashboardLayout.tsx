@@ -5,9 +5,11 @@ import styles from './DashboardLayout.module.css';
 
 interface UserData {
   email?: string;
+  name?: string;
   subscriptionPlan?: string;
   analysisCount?: number;
   analysisLimit?: number;
+  profilePicture?: string;
 }
 
 interface DashboardLayoutProps {
@@ -46,7 +48,7 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
   return (
     <div className={styles.dashboardLayout}>
       {/* Sidebar */}
-      <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
+      <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} user={user} />
 
       {/* Main Content Area */}
       <div className={styles.mainArea}>

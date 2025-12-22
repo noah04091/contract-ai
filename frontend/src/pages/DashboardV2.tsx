@@ -58,6 +58,7 @@ interface UserData {
   analysisCount?: number;
   analysisLimit?: number;
   subscriptionPlan?: string;
+  profilePicture?: string;
 }
 
 interface Notification {

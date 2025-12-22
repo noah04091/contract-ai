@@ -164,12 +164,19 @@ const navigation: NavSection[] = [
   },
 ];
 
+interface UserData {
+  email?: string;
+  name?: string;
+  subscriptionPlan?: string;
+}
+
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  user?: UserData | null;
 }
 
-export default function Sidebar({ isOpen, onClose }: SidebarProps) {
+export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
   const location = useLocation();
   const [expandedItems, setExpandedItems] = useState<string[]>(['ai-features']);
 
@@ -292,19 +299,21 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           ))}
         </nav>
 
-        {/* Upgrade Card */}
-        <div className={styles.upgradeCard}>
-          <div className={styles.upgradeIcon}>
-            <Star size={24} strokeWidth={1.5} />
+        {/* Upgrade Card - Nur für Free-User anzeigen */}
+        {(!user?.subscriptionPlan || user.subscriptionPlan === 'free') && (
+          <div className={styles.upgradeCard}>
+            <div className={styles.upgradeIcon}>
+              <Star size={24} strokeWidth={1.5} />
+            </div>
+            <div className={styles.upgradeTitle}>Upgrade auf Pro</div>
+            <div className={styles.upgradeText}>
+              Unbegrenzte Analysen und alle Features freischalten
+            </div>
+            <Link to="/pricing" className={styles.upgradeButton} onClick={onClose}>
+              Jetzt upgraden
+            </Link>
           </div>
-          <div className={styles.upgradeTitle}>Upgrade auf Pro</div>
-          <div className={styles.upgradeText}>
-            Unbegrenzte Analysen und alle Features freischalten
-          </div>
-          <Link to="/pricing" className={styles.upgradeButton} onClick={onClose}>
-            Jetzt upgraden
-          </Link>
-        </div>
+        )}
       </aside>
     </>
   );

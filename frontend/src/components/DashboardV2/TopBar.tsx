@@ -36,6 +36,7 @@ const API_BASE = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
 
 interface UserData {
   email?: string;
+  name?: string;
   subscriptionPlan?: string;
   profilePicture?: string;
 }
@@ -431,9 +432,18 @@ export default function TopBar({ onMenuClick, user }: TopBarProps) {
     }
   };
 
-  const userName = user?.email?.split('@')[0] || 'User';
+  // Benutzername: Bevorzuge name, dann email-Präfix, dann 'User'
+  const userName = user?.name || user?.email?.split('@')[0] || 'User';
   const userInitial = userName.charAt(0).toUpperCase();
-  const userPlan = user?.subscriptionPlan || 'Free';
+  // Plan-Anzeige: Formatiere für bessere Lesbarkeit
+  const formatPlan = (plan?: string): string => {
+    if (!plan || plan === 'free') return 'Free';
+    if (plan === 'premium') return 'Premium';
+    if (plan === 'business') return 'Business';
+    if (plan === 'legendary' || plan === 'enterprise') return 'Enterprise';
+    return plan.charAt(0).toUpperCase() + plan.slice(1);
+  };
+  const userPlan = formatPlan(user?.subscriptionPlan);
 
   return (
     <>
