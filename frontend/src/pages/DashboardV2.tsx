@@ -256,13 +256,30 @@ export default function DashboardV2() {
           setRecentContractsData(data.recentContracts || []);
           setUrgentContractsData(data.urgentContracts || []);
 
-          // Contracts für Kompatibilität (falls irgendwo noch genutzt)
+          // Contracts zusammenführen (für Filter-Anzeige)
           const allContracts = [...(data.recentContracts || [])];
+
+          // Urgent Contracts hinzufügen (ohne Duplikate)
           (data.urgentContracts || []).forEach((uc: Contract) => {
             if (!allContracts.find(c => c._id === uc._id)) {
               allContracts.push(uc);
             }
           });
+
+          // Generated Contracts hinzufügen (ohne Duplikate)
+          (data.generatedContracts || []).forEach((gc: Contract) => {
+            if (!allContracts.find(c => c._id === gc._id)) {
+              allContracts.push(gc);
+            }
+          });
+
+          // Reminder Contracts hinzufügen (ohne Duplikate)
+          (data.reminderContracts || []).forEach((rc: Contract) => {
+            if (!allContracts.find(c => c._id === rc._id)) {
+              allContracts.push(rc);
+            }
+          });
+
           setContracts(allContracts);
 
           if (showRefreshIndicator) {

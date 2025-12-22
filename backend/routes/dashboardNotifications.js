@@ -176,7 +176,37 @@ router.get("/summary", verifyToken, async (req, res) => {
       .limit(4)
       .toArray();
 
-    // 4. User-Daten (Abo, Quota)
+    // 4. KI-Generierte Verträge (max 3)
+    const generatedContracts = await contractsCollection
+      .find({
+        $and: [
+          userIdFilter,
+          { isGenerated: true }
+        ]
+      })
+      .project({
+        _id: 1, name: 1, createdAt: 1, updatedAt: 1, isGenerated: 1
+      })
+      .sort({ createdAt: -1 })
+      .limit(3)
+      .toArray();
+
+    // 5. Gemerkte Verträge mit Erinnerung (max 3)
+    const reminderContracts = await contractsCollection
+      .find({
+        $and: [
+          userIdFilter,
+          { reminder: true }
+        ]
+      })
+      .project({
+        _id: 1, name: 1, expiryDate: 1, reminder: 1
+      })
+      .sort({ expiryDate: 1 })
+      .limit(3)
+      .toArray();
+
+    // 6. User-Daten (Abo, Quota)
     const user = await db.collection("users").findOne(
       { _id: new ObjectId(userId) },
       { projection: { email: 1, name: 1, subscriptionPlan: 1, analysisCount: 1, analysisLimit: 1, profilePicture: 1 } }
@@ -187,6 +217,8 @@ router.get("/summary", verifyToken, async (req, res) => {
       stats,
       recentContracts,
       urgentContracts,
+      generatedContracts,
+      reminderContracts,
       user: {
         email: user?.email,
         name: user?.name,
