@@ -662,6 +662,16 @@
   color: var(--warning);
 }
 
+.listItemIconRed {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+}
+
+.listItemIconBlue {
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--primary);
+}
+
 .listItemContent {
   flex: 1;
   min-width: 0;

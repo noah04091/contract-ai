@@ -188,10 +188,21 @@ const AnimatedNumber = ({ value, duration = 800 }: { value: number; duration?: n
 // MAIN DASHBOARD COMPONENT
 // ============================================
 
+// Calendar Event Type
+interface CalendarEvent {
+  id: string;
+  title: string;
+  date: string;
+  severity: 'info' | 'warning' | 'critical';
+  contractName?: string;
+  daysUntil: number;
+}
+
 export default function DashboardV2() {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [recentContractsData, setRecentContractsData] = useState<Contract[]>([]);
   const [urgentContractsData, setUrgentContractsData] = useState<Contract[]>([]);
+  const [upcomingEvents, setUpcomingEvents] = useState<CalendarEvent[]>([]);
   const [summaryStats, setSummaryStats] = useState<{total: number; active: number; expiringSoon: number; expired: number; generated: number; analyzed: number} | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -290,6 +301,24 @@ export default function DashboardV2() {
       } else {
         throw new Error('Dashboard konnte nicht geladen werden');
       }
+
+      // 📅 Kalender-Events separat laden
+      try {
+        const calendarResponse = await fetch(
+          `${API_BASE}/api/calendar/upcoming?days=30`,
+          { headers, credentials: "include" }
+        );
+        if (calendarResponse.ok) {
+          const calendarData = await calendarResponse.json();
+          if (calendarData.success && calendarData.events) {
+            setUpcomingEvents(calendarData.events);
+          }
+        }
+      } catch (calendarErr) {
+        console.warn("Calendar events could not be loaded:", calendarErr);
+        // Kein Error anzeigen - Kalender ist optional
+      }
+
     } catch (err) {
       console.error("Error fetching dashboard data:", err);
       setError("Verbindung zum Server fehlgeschlagen. Bitte versuche es erneut.");
@@ -733,7 +762,7 @@ export default function DashboardV2() {
             </div>
           </div>
 
-          {/* Urgent / Deadlines */}
+          {/* Urgent / Deadlines + Calendar Events */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <div className={styles.cardHeaderLeft}>
@@ -745,34 +774,61 @@ export default function DashboardV2() {
               </Link>
             </div>
             <div className={styles.listContainer}>
-              {urgentContracts.length > 0 ? (
-                urgentContracts.map(contract => {
-                  const days = getDaysUntilExpiry(contract.expiryDate);
-                  return (
-                    <div
-                      key={contract._id}
-                      className={styles.listItem}
-                      onClick={() => handleContractClick(contract._id)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => e.key === 'Enter' && handleContractClick(contract._id)}
-                    >
-                      <div className={`${styles.listItemIcon} ${styles.listItemIconOrange}`}>
-                        <Calendar size={16} />
-                      </div>
-                      <div className={styles.listItemContent}>
-                        <span className={styles.listItemTitle}>{contract.name}</span>
-                        <span className={styles.listItemMeta}>
-                          {formatFullDate(contract.expiryDate)}
-                        </span>
-                      </div>
-                      <span className={`${styles.daysBadge} ${days && days <= 7 ? styles.daysBadgeUrgent : ''}`}>
-                        {days} {days === 1 ? 'Tag' : 'Tage'}
+              {/* Urgent Contracts */}
+              {urgentContracts.map(contract => {
+                const days = getDaysUntilExpiry(contract.expiryDate);
+                return (
+                  <div
+                    key={`contract-${contract._id}`}
+                    className={styles.listItem}
+                    onClick={() => handleContractClick(contract._id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === 'Enter' && handleContractClick(contract._id)}
+                  >
+                    <div className={`${styles.listItemIcon} ${styles.listItemIconOrange}`}>
+                      <FileText size={16} />
+                    </div>
+                    <div className={styles.listItemContent}>
+                      <span className={styles.listItemTitle}>{contract.name}</span>
+                      <span className={styles.listItemMeta}>
+                        Vertrag läuft ab • {formatFullDate(contract.expiryDate)}
                       </span>
                     </div>
-                  );
-                })
-              ) : (
+                    <span className={`${styles.daysBadge} ${days && days <= 7 ? styles.daysBadgeUrgent : ''}`}>
+                      {days} {days === 1 ? 'Tag' : 'Tage'}
+                    </span>
+                  </div>
+                );
+              })}
+
+              {/* Calendar Events */}
+              {upcomingEvents.map(event => (
+                <div
+                  key={`event-${event.id}`}
+                  className={styles.listItem}
+                  onClick={() => navigate('/calendar')}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && navigate('/calendar')}
+                >
+                  <div className={`${styles.listItemIcon} ${event.severity === 'critical' ? styles.listItemIconRed : event.severity === 'warning' ? styles.listItemIconOrange : styles.listItemIconBlue}`}>
+                    <Bell size={16} />
+                  </div>
+                  <div className={styles.listItemContent}>
+                    <span className={styles.listItemTitle}>{event.title}</span>
+                    <span className={styles.listItemMeta}>
+                      {event.contractName ? `${event.contractName} • ` : ''}{formatFullDate(event.date)}
+                    </span>
+                  </div>
+                  <span className={`${styles.daysBadge} ${event.daysUntil <= 7 ? styles.daysBadgeUrgent : ''}`}>
+                    {event.daysUntil} {event.daysUntil === 1 ? 'Tag' : 'Tage'}
+                  </span>
+                </div>
+              ))}
+
+              {/* Empty State */}
+              {urgentContracts.length === 0 && upcomingEvents.length === 0 && (
                 <div className={styles.emptyStateCard}>
                   <div className={`${styles.emptyStateIconWrapper} ${styles.emptyStateSuccess}`}>
                     <div className={styles.emptyStateIconBg} />
@@ -780,7 +836,7 @@ export default function DashboardV2() {
                   </div>
                   <div className={styles.emptyStateContent}>
                     <h4>Alles im grünen Bereich</h4>
-                    <p>Keine Verträge laufen in den nächsten 30 Tagen ab.</p>
+                    <p>Keine Ereignisse in den nächsten 30 Tagen.</p>
                   </div>
                 </div>
               )}
