@@ -3,6 +3,7 @@
 
 export interface UserData {
   email: string;
+  role?: "user" | "admin";
   subscriptionPlan: "free" | "business" | "premium";
   subscriptionStatus: string;
   subscriptionActive: boolean;
