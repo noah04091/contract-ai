@@ -2043,3 +2043,375 @@
     font-size: 14px;
   }
 }
+
+
+/* ============================================
+   NEW SIDEBAR - Dashboard V2 Design
+   ============================================ */
+
+.sidebarOverlayNew {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+}
+
+.sidebarNew {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 280px;
+  height: 100vh;
+  background: #FFFFFF;
+  border-right: 1px solid #E5E7EB;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  z-index: 1001;
+  overflow: hidden;
+}
+
+/* Logo Section */
+.sidebarLogoNew {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 16px 20px 20px;
+  border-bottom: 1px solid #E5E7EB;
+  background: linear-gradient(180deg, #F9FAFB 0%, transparent 100%);
+}
+
+.logoLinkNew {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.logoImageNew {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
+}
+
+.sidebarCloseNew {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: none;
+  color: #6B7280;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.sidebarCloseNew:hover {
+  background: #F3F4F6;
+  color: #374151;
+}
+
+/* Navigation */
+.sidebarNavNew {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 0 24px;
+}
+
+.sidebarNavNew::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebarNavNew::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebarNavNew::-webkit-scrollbar-thumb {
+  background: #E5E7EB;
+  border-radius: 3px;
+}
+
+.sidebarNavNew::-webkit-scrollbar-thumb:hover {
+  background: #D1D5DB;
+}
+
+/* Navigation Sections */
+.navSectionNew {
+  margin-top: 20px;
+}
+
+.navSectionNew:first-child {
+  margin-top: 8px;
+}
+
+.navSectionTitleNew {
+  padding: 0 20px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #9CA3AF;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.navListNew {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.navItemNew {
+  margin: 1px 8px;
+}
+
+/* Navigation Links */
+.navLinkNew {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  color: #6B7280;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  position: relative;
+  transition: all 0.15s ease;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.navLinkNew:hover {
+  background: #F3F4F6;
+  color: #374151;
+}
+
+.navLinkActiveNew {
+  background: rgba(59, 130, 246, 0.08);
+  color: #2563EB;
+  font-weight: 600;
+}
+
+.navLinkActiveNew::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 20px;
+  background: #3B82F6;
+  border-radius: 0 3px 3px 0;
+}
+
+/* Nav Icon Container */
+.navIconNew {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+
+.navLinkNew:hover .navIconNew,
+.navLinkActiveNew .navIconNew {
+  opacity: 1;
+}
+
+.navLabelNew {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Badges */
+.navBadgeNew {
+  padding: 3px 7px;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  line-height: 1;
+}
+
+.navBadgeBlue {
+  background: #3B82F6;
+  color: white;
+}
+
+.navBadgeGreen {
+  background: #10B981;
+  color: white;
+}
+
+.navBadgeOrange {
+  background: #F59E0B;
+  color: white;
+}
+
+.navBadgePurple {
+  background: #8B5CF6;
+  color: white;
+}
+
+/* Upgrade Card */
+.upgradeCardNew {
+  margin: 16px;
+  padding: 20px;
+  background: linear-gradient(135deg, #EFF6FF 0%, #F5F3FF 100%);
+  border: 1px solid #DBEAFE;
+  border-radius: 16px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.upgradeCardNew::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
+  animation: sidebarPulse 4s ease-in-out infinite;
+}
+
+@keyframes sidebarPulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+.upgradeIconNew {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  color: #3B82F6;
+}
+
+.upgradeTitleNew {
+  position: relative;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 8px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.upgradeTextNew {
+  position: relative;
+  font-size: 12px;
+  color: #4B5563;
+  line-height: 1.5;
+  margin-bottom: 16px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.upgradeButtonNew {
+  position: relative;
+  display: block;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  color: white;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.upgradeButtonNew:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+/* Sidebar Footer */
+.sidebarFooterNew {
+  padding: 16px;
+  border-top: 1px solid #E5E7EB;
+}
+
+.logoutButtonNew {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: 1px solid #E5E7EB;
+  color: #6B7280;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.logoutButtonNew:hover {
+  background: #FEF2F2;
+  border-color: #FECACA;
+  color: #DC2626;
+}
+
+/* Auth Buttons for non-logged-in users */
+.sidebarAuthNew {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border-top: 1px solid #E5E7EB;
+}
+
+.authButtonNew {
+  display: block;
+  padding: 12px 20px;
+  text-align: center;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #F3F4F6;
+  color: #374151;
+}
+
+.authButtonNew:hover {
+  background: #E5E7EB;
+}
+
+.authButtonPrimaryNew {
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.authButtonPrimaryNew:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+/* Mobile Responsive */
+@media (max-width: 480px) {
+  .sidebarNew {
+    width: 100%;
+  }
+}

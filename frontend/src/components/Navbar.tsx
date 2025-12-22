@@ -1,7 +1,31 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { User as UserIcon, Building2, CreditCard, HelpCircle, LogOut, ChevronDown } from "lucide-react";
+import {
+  User as UserIcon,
+  Building2,
+  CreditCard,
+  HelpCircle,
+  LogOut,
+  ChevronDown,
+  LayoutDashboard,
+  FileText,
+  Calendar,
+  Search,
+  Sparkles,
+  Rocket,
+  Scale,
+  MessageSquare,
+  Lightbulb,
+  Hammer,
+  PenTool,
+  BookOpen,
+  Users,
+  Link2,
+  Star,
+  Home,
+  X
+} from "lucide-react";
 import styles from "../styles/Navbar.module.css";
 import Notification from "./Notification";
 import logo from "../assets/logo.png";
@@ -1262,225 +1286,218 @@ export default function Navbar() {
         )}
       </AnimatePresence>
 
-      {/* Sidebar Implementation - Enhanced Apple Design */}
+      {/* Sidebar Implementation - Dashboard V2 Design */}
       <AnimatePresence>
         {sidebarOpen && (
           <>
             {/* Backdrop overlay */}
-            <motion.div 
-              className={styles.sidebarBackdrop}
+            <motion.div
+              className={styles.sidebarOverlayNew}
               initial={{ opacity: 0 }}
-              animate={{ opacity: 0.4 }}
+              animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSidebarOpen(false)}
             />
-            
+
             {/* Sidebar content */}
-            <motion.div 
-              className={styles.sidebar}
+            <motion.aside
+              className={styles.sidebarNew}
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 400 }}
             >
-              <div className={styles.sidebarHeader}>
-                <img src={logo} alt="Contract AI Logo" className={styles.sidebarLogo} />
-                <motion.button 
-                  className={styles.sidebarClose} 
+              {/* Logo Header */}
+              <div className={styles.sidebarLogoNew}>
+                <Link to="/dashboard" className={styles.logoLinkNew} onClick={() => setSidebarOpen(false)}>
+                  <img src={logo} alt="Contract AI" className={styles.logoImageNew} />
+                </Link>
+                <motion.button
+                  className={styles.sidebarCloseNew}
                   onClick={() => setSidebarOpen(false)}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
+                  <X size={20} strokeWidth={2} />
                 </motion.button>
               </div>
-              
-              <div className={styles.sidebarContent}>
-                <div className={styles.sidebarSection}>
-                  <h3 className={styles.sidebarTitle}>Navigation</h3>
-                  <ul className={styles.sidebarNav}>
-                    <li>
-                      <Link to="/" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
-                        <span className={styles.sidebarIcon}>🏠</span>
-                        Home
+
+              {/* Navigation */}
+              <nav className={styles.sidebarNavNew}>
+                {/* ÜBERSICHT Section */}
+                <div className={styles.navSectionNew}>
+                  <div className={styles.navSectionTitleNew}>ÜBERSICHT</div>
+                  <ul className={styles.navListNew}>
+                    <li className={styles.navItemNew}>
+                      <Link to="/dashboard" className={`${styles.navLinkNew} ${location.pathname === '/dashboard' ? styles.navLinkActiveNew : ''}`} onClick={() => setSidebarOpen(false)}>
+                        <span className={styles.navIconNew}><LayoutDashboard size={20} strokeWidth={1.75} /></span>
+                        <span className={styles.navLabelNew}>Dashboard</span>
                       </Link>
                     </li>
-                    <li>
-                      <Link to="/dashboard" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
-                        <span className={styles.sidebarIcon}>📊</span>
-                        Dashboard
+                    <li className={styles.navItemNew}>
+                      <Link to="/contracts" className={`${styles.navLinkNew} ${location.pathname === '/contracts' ? styles.navLinkActiveNew : ''}`} onClick={() => setSidebarOpen(false)}>
+                        <span className={styles.navIconNew}><FileText size={20} strokeWidth={1.75} /></span>
+                        <span className={styles.navLabelNew}>Verträge</span>
                       </Link>
                     </li>
-                    <li>
-                      <Link to="/contracts" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
-                        <span className={styles.sidebarIcon}>📄</span>
-                        Verträge
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/envelopes" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
-                        <span className={styles.sidebarIcon}>✉️</span>
-                        Signaturen
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/calendar" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
-                        <span className={styles.sidebarIcon}>🗓️</span>
-                        Kalender
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/optimizer" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
-                        <span className={styles.sidebarIcon}>🧠</span>
-                        Optimierer
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/compare" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
-                        <span className={styles.sidebarIcon}>🔍</span>
-                        Vergleich
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/better-contracts" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
-                        <span className={styles.sidebarIcon}>💡</span>
-                        Bessere Anbieter
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/Generate" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
-                        <span className={styles.sidebarIcon}>⚙️</span>
-                        Generator
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/chat" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
-                        <span className={styles.sidebarIcon}>💬</span>
-                        Vertrags-Chat
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/legalpulse" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
-                        <span className={styles.sidebarIcon}>⚖️</span>
-                        Legal Pulse
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/legal-lens" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
-                        <span className={styles.sidebarIcon}>🔍</span>
-                        Legal Lens
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/clause-library" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
-                        <span className={styles.sidebarIcon}>📚</span>
-                        Klausel-Bibliothek
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/hilfe" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
-                        <span className={styles.sidebarIcon}>❓</span>
-                        Hilfe
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/blog" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
-                        <span className={styles.sidebarIcon}>📰</span>
-                        Blog
+                    <li className={styles.navItemNew}>
+                      <Link to="/calendar" className={`${styles.navLinkNew} ${location.pathname === '/calendar' ? styles.navLinkActiveNew : ''}`} onClick={() => setSidebarOpen(false)}>
+                        <span className={styles.navIconNew}><Calendar size={20} strokeWidth={1.75} /></span>
+                        <span className={styles.navLabelNew}>Kalender</span>
                       </Link>
                     </li>
                   </ul>
                 </div>
-                
-                {!user ? (
-                  <div className={styles.sidebarSection}>
-                    <h3 className={styles.sidebarTitle}>Account</h3>
-                    <div className={styles.sidebarAuth}>
-                      <Link to="/login" className={styles.sidebarAuthBtn} onClick={() => setSidebarOpen(false)}>
-                        Login
-                      </Link>
-                      <Link to="/register" className={`${styles.sidebarAuthBtn} ${styles.primary}`} onClick={() => setSidebarOpen(false)}>
-                        Registrieren
-                      </Link>
-                    </div>
-                  </div>
-                ) : (
-                  <div className={styles.sidebarSection}>
-                    <h3 className={styles.sidebarTitle}>Account</h3>
-                    <div className={styles.sidebarUser}>
-                      <div className={styles.sidebarUserInfo}>
-                        <div className={styles.sidebarUserAvatar}>
-                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                          </svg>
-                        </div>
-                        <div className={styles.sidebarUserDetails}>
-                          <span className={styles.sidebarUserEmail}>{user.email}</span>
-                          <span className={styles.sidebarUserPlan}>
-                            {user.subscriptionActive ? (
-                              <span className={styles.premiumBadgeSidebar}>
-                                {/* ✅ KORRIGIERT: Sidebar Badge */}
-                                {user.subscriptionPlan === "business" ? "🏢 Business" : "💎 Premium"}
-                              </span>
-                            ) : (
-                              <span className={styles.standardBadge}>Standard</span>
-                            )}
-                          </span>
-                        </div>
-                      </div>
-                      <Link to="/me" className={styles.sidebarUserProfile} onClick={() => setSidebarOpen(false)}>
-                        Profil bearbeiten
-                      </Link>
-                      <Link to="/company-profile" className={styles.sidebarUserProfile} onClick={() => setSidebarOpen(false)}>
-                        🏢 Firmenprofil (NEU!)
-                      </Link>
-                      <motion.button 
-                        className={styles.sidebarLogoutBtn} 
-                        onClick={() => {
-                          setSidebarOpen(false);
-                          handleLogout();
-                        }}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        <span className={styles.sidebarLogoutIcon}>🚪</span>
-                        Logout
-                      </motion.button>
-                    </div>
-                  </div>
-                )}
-                
-                <div className={styles.sidebarSection}>
-                  <h3 className={styles.sidebarTitle}>Weitere Links</h3>
-                  <ul className={styles.sidebarLinks}>
-                    <li>
-                      <Link to="/about" className={`${styles.sidebarLink} ${styles.secondary}`} onClick={() => setSidebarOpen(false)}>
-                        Über uns
+
+                {/* KI-ASSISTENT Section */}
+                <div className={styles.navSectionNew}>
+                  <div className={styles.navSectionTitleNew}>KI-ASSISTENT</div>
+                  <ul className={styles.navListNew}>
+                    <li className={styles.navItemNew}>
+                      <Link to="/Generate" className={`${styles.navLinkNew} ${location.pathname === '/Generate' ? styles.navLinkActiveNew : ''}`} onClick={() => setSidebarOpen(false)}>
+                        <span className={styles.navIconNew}><Sparkles size={20} strokeWidth={1.75} /></span>
+                        <span className={styles.navLabelNew}>Vertrag erstellen</span>
                       </Link>
                     </li>
-                    <li>
-                      <Link to="/datenschutz" className={`${styles.sidebarLink} ${styles.secondary}`} onClick={() => setSidebarOpen(false)}>
-                        Datenschutz
+                    <li className={styles.navItemNew}>
+                      <Link to="/optimizer" className={`${styles.navLinkNew} ${location.pathname === '/optimizer' ? styles.navLinkActiveNew : ''}`} onClick={() => setSidebarOpen(false)}>
+                        <span className={styles.navIconNew}><Rocket size={20} strokeWidth={1.75} /></span>
+                        <span className={styles.navLabelNew}>Vertrag optimieren</span>
                       </Link>
                     </li>
-                    <li>
-                      <Link to="/agb" className={`${styles.sidebarLink} ${styles.secondary}`} onClick={() => setSidebarOpen(false)}>
-                        AGB
+                    <li className={styles.navItemNew}>
+                      <Link to="/compare" className={`${styles.navLinkNew} ${location.pathname === '/compare' ? styles.navLinkActiveNew : ''}`} onClick={() => setSidebarOpen(false)}>
+                        <span className={styles.navIconNew}><Scale size={20} strokeWidth={1.75} /></span>
+                        <span className={styles.navLabelNew}>Verträge vergleichen</span>
                       </Link>
                     </li>
-                    <li>
-                      <Link to="/impressum" className={`${styles.sidebarLink} ${styles.secondary}`} onClick={() => setSidebarOpen(false)}>
-                        Impressum
+                    <li className={styles.navItemNew}>
+                      <Link to="/chat" className={`${styles.navLinkNew} ${location.pathname === '/chat' ? styles.navLinkActiveNew : ''}`} onClick={() => setSidebarOpen(false)}>
+                        <span className={styles.navIconNew}><MessageSquare size={20} strokeWidth={1.75} /></span>
+                        <span className={styles.navLabelNew}>KI-Chat</span>
+                      </Link>
+                    </li>
+                    <li className={styles.navItemNew}>
+                      <Link to="/legal-lens" className={`${styles.navLinkNew} ${location.pathname === '/legal-lens' ? styles.navLinkActiveNew : ''}`} onClick={() => setSidebarOpen(false)}>
+                        <span className={styles.navIconNew}><Search size={20} strokeWidth={1.75} /></span>
+                        <span className={styles.navLabelNew}>Legal Lens</span>
+                        <span className={`${styles.navBadgeNew} ${styles.navBadgeBlue}`}>NEU</span>
+                      </Link>
+                    </li>
+                    <li className={styles.navItemNew}>
+                      <Link to="/legalpulse" className={`${styles.navLinkNew} ${location.pathname === '/legalpulse' ? styles.navLinkActiveNew : ''}`} onClick={() => setSidebarOpen(false)}>
+                        <span className={styles.navIconNew}><Lightbulb size={20} strokeWidth={1.75} /></span>
+                        <span className={styles.navLabelNew}>Legal Pulse</span>
                       </Link>
                     </li>
                   </ul>
                 </div>
-              </div>
-            </motion.div>
+
+                {/* WERKZEUGE Section */}
+                <div className={styles.navSectionNew}>
+                  <div className={styles.navSectionTitleNew}>WERKZEUGE</div>
+                  <ul className={styles.navListNew}>
+                    <li className={styles.navItemNew}>
+                      <Link to="/contract-builder" className={`${styles.navLinkNew} ${location.pathname === '/contract-builder' ? styles.navLinkActiveNew : ''}`} onClick={() => setSidebarOpen(false)}>
+                        <span className={styles.navIconNew}><Hammer size={20} strokeWidth={1.75} /></span>
+                        <span className={styles.navLabelNew}>ContractForge</span>
+                        <span className={`${styles.navBadgeNew} ${styles.navBadgeGreen}`}>NEU</span>
+                      </Link>
+                    </li>
+                    <li className={styles.navItemNew}>
+                      <Link to="/clause-library" className={`${styles.navLinkNew} ${location.pathname === '/clause-library' ? styles.navLinkActiveNew : ''}`} onClick={() => setSidebarOpen(false)}>
+                        <span className={styles.navIconNew}><BookOpen size={20} strokeWidth={1.75} /></span>
+                        <span className={styles.navLabelNew}>Klausel-Bibliothek</span>
+                      </Link>
+                    </li>
+                    <li className={styles.navItemNew}>
+                      <Link to="/envelopes" className={`${styles.navLinkNew} ${location.pathname === '/envelopes' ? styles.navLinkActiveNew : ''}`} onClick={() => setSidebarOpen(false)}>
+                        <span className={styles.navIconNew}><PenTool size={20} strokeWidth={1.75} /></span>
+                        <span className={styles.navLabelNew}>Digitale Signatur</span>
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* EINSTELLUNGEN Section */}
+                <div className={styles.navSectionNew}>
+                  <div className={styles.navSectionTitleNew}>EINSTELLUNGEN</div>
+                  <ul className={styles.navListNew}>
+                    <li className={styles.navItemNew}>
+                      <Link to="/me" className={`${styles.navLinkNew} ${location.pathname === '/me' ? styles.navLinkActiveNew : ''}`} onClick={() => setSidebarOpen(false)}>
+                        <span className={styles.navIconNew}><UserIcon size={20} strokeWidth={1.75} /></span>
+                        <span className={styles.navLabelNew}>Profil</span>
+                      </Link>
+                    </li>
+                    <li className={styles.navItemNew}>
+                      <Link to="/company-profile" className={`${styles.navLinkNew} ${location.pathname === '/company-profile' ? styles.navLinkActiveNew : ''}`} onClick={() => setSidebarOpen(false)}>
+                        <span className={styles.navIconNew}><Building2 size={20} strokeWidth={1.75} /></span>
+                        <span className={styles.navLabelNew}>Unternehmen</span>
+                      </Link>
+                    </li>
+                    <li className={styles.navItemNew}>
+                      <Link to="/team" className={`${styles.navLinkNew} ${location.pathname === '/team' ? styles.navLinkActiveNew : ''}`} onClick={() => setSidebarOpen(false)}>
+                        <span className={styles.navIconNew}><Users size={20} strokeWidth={1.75} /></span>
+                        <span className={styles.navLabelNew}>Team</span>
+                        <span className={`${styles.navBadgeNew} ${styles.navBadgePurple}`}>PRO</span>
+                      </Link>
+                    </li>
+                    <li className={styles.navItemNew}>
+                      <Link to="/integrations" className={`${styles.navLinkNew} ${location.pathname === '/integrations' ? styles.navLinkActiveNew : ''}`} onClick={() => setSidebarOpen(false)}>
+                        <span className={styles.navIconNew}><Link2 size={20} strokeWidth={1.75} /></span>
+                        <span className={styles.navLabelNew}>Integrationen</span>
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+              </nav>
+
+              {/* Upgrade Card - Nur für Free-User */}
+              {(!user?.subscriptionActive || user?.subscriptionPlan === 'free') && (
+                <div className={styles.upgradeCardNew}>
+                  <div className={styles.upgradeIconNew}>
+                    <Star size={24} strokeWidth={1.5} />
+                  </div>
+                  <div className={styles.upgradeTitleNew}>Upgrade auf Pro</div>
+                  <div className={styles.upgradeTextNew}>
+                    Unbegrenzte Analysen und alle Features freischalten
+                  </div>
+                  <Link to="/pricing" className={styles.upgradeButtonNew} onClick={() => setSidebarOpen(false)}>
+                    Jetzt upgraden
+                  </Link>
+                </div>
+              )}
+
+              {/* Logout Button für eingeloggte User */}
+              {user && (
+                <div className={styles.sidebarFooterNew}>
+                  <motion.button
+                    className={styles.logoutButtonNew}
+                    onClick={() => {
+                      setSidebarOpen(false);
+                      handleLogout();
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <LogOut size={18} strokeWidth={1.75} />
+                    <span>Abmelden</span>
+                  </motion.button>
+                </div>
+              )}
+
+              {/* Login/Register für nicht eingeloggte User */}
+              {!user && (
+                <div className={styles.sidebarAuthNew}>
+                  <Link to="/login" className={styles.authButtonNew} onClick={() => setSidebarOpen(false)}>
+                    Login
+                  </Link>
+                  <Link to="/register" className={`${styles.authButtonNew} ${styles.authButtonPrimaryNew}`} onClick={() => setSidebarOpen(false)}>
+                    Registrieren
+                  </Link>
+                </div>
+              )}
+            </motion.aside>
           </>
         )}
       </AnimatePresence>
