@@ -16,7 +16,12 @@ import {
   Zap,
   Target,
   TrendingUp,
-  Bell
+  Bell,
+  AlertTriangle,
+  Info,
+  Sparkles,
+  ArrowRight,
+  BellOff
 } from "lucide-react";
 import axios from "axios";
 import "../styles/AppleCalendar.css";
@@ -208,7 +213,7 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, onDateClick, on
   );
 }
 
-// ========== Quick Actions Modal ==========
+// ========== Quick Actions Modal (Premium Design) ==========
 interface QuickActionsModalProps {
   event: CalendarEvent;
   onAction: (action: string, eventId: string) => void;
@@ -216,183 +221,181 @@ interface QuickActionsModalProps {
 }
 
 function QuickActionsModal({ event, onAction, onClose }: QuickActionsModalProps) {
-  const daysInfo = getDaysRemaining(event.date);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  const getSeverityColor = () => {
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handleViewContract = () => {
+    window.location.href = `/contracts?view=${event.contractId}`;
+    onClose();
+  };
+
+  const formatDate = () => {
+    return new Date(event.date).toLocaleDateString('de-DE', {
+      weekday: 'long',
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
+
+  const getSeverityStyle = () => {
     switch(event.severity) {
-      case 'critical': return '#ef4444';
-      case 'warning': return '#f59e0b';
-      default: return '#3b82f6';
+      case 'critical':
+        return {
+          color: '#ef4444',
+          icon: <AlertCircle size={20} />,
+          bg: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05))',
+          borderColor: 'rgba(239, 68, 68, 0.2)'
+        };
+      case 'warning':
+        return {
+          color: '#f59e0b',
+          icon: <AlertTriangle size={20} />,
+          bg: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.05))',
+          borderColor: 'rgba(245, 158, 11, 0.2)'
+        };
+      default:
+        return {
+          color: '#3b82f6',
+          icon: <Info size={20} />,
+          bg: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05))',
+          borderColor: 'rgba(59, 130, 246, 0.2)'
+        };
     }
   };
 
+  const severityStyle = getSeverityStyle();
+  const daysInfo = getDaysRemaining(event.date);
+
   return (
     <motion.div
-      className="modal-overlay"
+      className="quick-actions-overlay"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={onClose}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.5)',
-        backdropFilter: 'blur(4px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-        padding: '20px'
-      }}
+      style={{ padding: isMobile ? '20px' : '40px' }}
     >
       <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
+        className="quick-actions-modal premium-modal"
+        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.9, opacity: 0, y: 20 }}
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: 'white',
-          borderRadius: '16px',
-          maxWidth: '480px',
-          width: '100%',
-          boxShadow: '0 25px 50px rgba(0,0,0,0.25)',
-          overflow: 'hidden'
+          maxWidth: isMobile ? '100%' : '600px',
+          width: isMobile ? 'calc(100% - 40px)' : '600px',
+          maxHeight: isMobile ? '90vh' : 'auto',
+          overflowY: isMobile ? 'auto' : 'visible'
         }}
       >
-        {/* Header */}
-        <div style={{
-          padding: '20px 24px',
-          borderBottom: '1px solid #e2e8f0',
-          display: 'flex',
-          alignItems: 'flex-start',
-          justifyContent: 'space-between'
+        <div className="modal-header-premium" style={{
+          background: severityStyle.bg,
+          borderBottom: `1px solid ${severityStyle.borderColor}`
         }}>
-          <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-            <div style={{
-              width: '44px',
-              height: '44px',
-              borderRadius: '12px',
-              background: getSeverityColor(),
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white'
+          <div className="modal-header-content">
+            <div className="severity-badge-premium" style={{
+              background: severityStyle.color,
+              boxShadow: `0 4px 12px ${severityStyle.color}40`
             }}>
-              <AlertCircle size={24} />
+              {severityStyle.icon}
             </div>
-            <div>
-              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#0f172a' }}>
-                {formatContractName(event.contractName)}
-              </h3>
-              <p style={{ margin: '4px 0 0', fontSize: '14px', color: '#64748b' }}>
-                {event.title}
-              </p>
+            <div className="modal-header-text">
+              <h3>{formatContractName(event.contractName)}</h3>
+              <p>{event.title}</p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            style={{
-              width: '32px',
-              height: '32px',
-              border: 'none',
-              background: '#f1f5f9',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              color: '#64748b'
-            }}
-          >
-            <X size={18} />
+          <button className="modal-close-btn" onClick={onClose}>
+            <X size={20} />
           </button>
         </div>
 
-        {/* Content */}
-        <div style={{ padding: '24px' }}>
-          {/* Meta Info */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '12px',
-            marginBottom: '24px'
-          }}>
-            <div style={{
-              padding: '12px',
-              background: '#f8fafc',
-              borderRadius: '10px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px'
-            }}>
-              <CalendarIcon size={18} style={{ color: '#6366f1' }} />
+        <div className="modal-content-premium">
+          <div className="event-description-premium">
+            <Sparkles size={16} className="description-icon" />
+            <p>{event.description}</p>
+          </div>
+
+          <div className="event-meta-grid">
+            <div className="meta-card">
+              <CalendarIcon size={18} className="meta-icon" />
               <div>
-                <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase' }}>Datum</div>
-                <div style={{ fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>
-                  {new Date(event.date).toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' })}
-                </div>
+                <span className="meta-label">Datum</span>
+                <span className="meta-value">{formatDate()}</span>
               </div>
             </div>
-            <div style={{
-              padding: '12px',
-              background: daysInfo.urgent ? 'rgba(239,68,68,0.1)' : '#f8fafc',
-              borderRadius: '10px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px'
-            }}>
-              <Clock size={18} style={{ color: daysInfo.urgent ? '#ef4444' : '#6366f1' }} />
+            <div className="meta-card">
+              <Clock size={18} className="meta-icon" />
               <div>
-                <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase' }}>Verbleibend</div>
-                <div style={{ fontSize: '14px', fontWeight: 600, color: daysInfo.urgent ? '#ef4444' : '#0f172a' }}>
+                <span className="meta-label">Verbleibend</span>
+                <span className="meta-value" style={{ color: severityStyle.color }}>
                   {daysInfo.text}
-                </div>
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Actions */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <button
-              onClick={() => window.location.href = `/contracts?view=${event.contractId}`}
-              style={{
-                padding: '14px',
-                background: '#f8fafc',
-                border: '1px solid #e2e8f0',
-                borderRadius: '10px',
-                fontSize: '14px',
-                fontWeight: 600,
-                color: '#475569',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}
+          <div className="modal-actions-grid">
+            <motion.button
+              className="action-btn-premium view-contract"
+              onClick={handleViewContract}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              style={{ gridColumn: '1 / -1' }}
             >
               <FileText size={18} />
-              Vertrag anzeigen
-            </button>
-            <button
-              onClick={() => onAction('cancel', event.id)}
-              style={{
-                padding: '14px',
-                background: '#6366f1',
-                border: 'none',
-                borderRadius: '10px',
-                fontSize: '14px',
-                fontWeight: 600,
-                color: 'white',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}
+              <span>📄 Vertrag anzeigen</span>
+              <ArrowRight size={16} className="action-arrow" />
+            </motion.button>
+
+            {event.metadata?.suggestedAction === "cancel" && (
+              <motion.button
+                className="action-btn-premium primary"
+                onClick={() => onAction("cancel", event.id)}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                style={{ gridColumn: '1 / -1' }}
+              >
+                <Zap size={18} />
+                <span>Jetzt kündigen</span>
+                <ArrowRight size={16} className="action-arrow" />
+              </motion.button>
+            )}
+
+            <motion.button
+              className="action-btn-premium secondary"
+              onClick={() => onAction("compare", event.id)}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
-              <Zap size={18} />
-              Handeln
-            </button>
+              <TrendingUp size={18} />
+              <span>Vergleichen</span>
+            </motion.button>
+
+            <motion.button
+              className="action-btn-premium secondary"
+              onClick={() => onAction("optimize", event.id)}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <RefreshCw size={18} />
+              <span>Optimieren</span>
+            </motion.button>
+
+            <motion.button
+              className="action-btn-premium ghost"
+              onClick={() => onAction("snooze", event.id)}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <BellOff size={18} />
+              <span>Später</span>
+            </motion.button>
           </div>
         </div>
       </motion.div>
@@ -400,7 +403,7 @@ function QuickActionsModal({ event, onAction, onClose }: QuickActionsModalProps)
   );
 }
 
-// ========== Day Events Modal ==========
+// ========== Day Events Modal (Premium Design) ==========
 interface DayEventsModalProps {
   date: Date;
   events: CalendarEvent[];
@@ -409,144 +412,193 @@ interface DayEventsModalProps {
 }
 
 function DayEventsModal({ date, events, onEventClick, onClose }: DayEventsModalProps) {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const getSeverityIcon = (severity: string) => {
+    switch (severity) {
+      case 'critical': return <AlertCircle size={18} style={{ color: '#ef4444' }} />;
+      case 'warning': return <AlertTriangle size={18} style={{ color: '#f59e0b' }} />;
+      default: return <Info size={18} style={{ color: '#3b82f6' }} />;
+    }
+  };
+
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'critical': return '#ef4444';
+      case 'warning': return '#f59e0b';
+      default: return '#3b82f6';
+    }
+  };
+
   return (
     <motion.div
-      className="modal-overlay"
+      className="quick-actions-overlay"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={onClose}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.5)',
-        backdropFilter: 'blur(4px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-        padding: '20px'
-      }}
+      style={{ padding: isMobile ? '20px' : '40px', zIndex: 1001 }}
     >
       <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
+        className="premium-modal"
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: 'white',
-          borderRadius: '16px',
-          maxWidth: '500px',
-          width: '100%',
-          maxHeight: '80vh',
-          boxShadow: '0 25px 50px rgba(0,0,0,0.25)',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column'
+          maxWidth: isMobile ? '100%' : '600px',
+          width: isMobile ? 'calc(100% - 40px)' : '600px',
+          maxHeight: isMobile ? '90vh' : '80vh',
+          overflowY: 'auto'
         }}
       >
         {/* Header */}
         <div style={{
-          padding: '20px 24px',
-          borderBottom: '1px solid #e2e8f0',
+          padding: isMobile ? '20px' : '30px',
+          borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+          background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.05))',
           display: 'flex',
+          justifyContent: 'space-between',
           alignItems: 'center',
-          justifyContent: 'space-between'
+          position: 'sticky',
+          top: 0,
+          zIndex: 10
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{
-              width: '44px',
-              height: '44px',
-              borderRadius: '12px',
-              background: '#6366f1',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white'
+          <div>
+            <h2 style={{
+              margin: 0,
+              fontSize: isMobile ? '20px' : '24px',
+              fontWeight: 700,
+              color: '#1f2937'
             }}>
-              <CalendarIcon size={24} />
-            </div>
-            <div>
-              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#0f172a' }}>
-                {date.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })}
-              </h3>
-              <p style={{ margin: '2px 0 0', fontSize: '14px', color: '#64748b' }}>
-                {events.length} Ereignis{events.length !== 1 ? 'se' : ''}
-              </p>
-            </div>
+              {date.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })}
+            </h2>
+            <p style={{ margin: '5px 0 0 0', fontSize: '14px', color: '#6b7280' }}>
+              {events.length} Ereignis{events.length !== 1 ? 'se' : ''}
+            </p>
           </div>
-          <button
+          <motion.button
             onClick={onClose}
+            whileHover={{ scale: 1.1, rotate: 90 }}
+            whileTap={{ scale: 0.9 }}
             style={{
-              width: '32px',
-              height: '32px',
+              background: 'rgba(0, 0, 0, 0.05)',
               border: 'none',
-              background: '#f1f5f9',
               borderRadius: '50%',
+              width: '36px',
+              height: '36px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              cursor: 'pointer',
-              color: '#64748b'
+              cursor: 'pointer'
             }}
           >
-            <X size={18} />
-          </button>
+            <X size={20} />
+          </motion.button>
         </div>
 
         {/* Events List */}
-        <div style={{ padding: '16px 24px', overflowY: 'auto', flex: 1 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {events.map(event => {
-              const daysInfo = getDaysRemaining(event.date);
-              const severityColors: Record<string, { bg: string; text: string; border: string }> = {
-                critical: { bg: 'rgba(239,68,68,0.1)', text: '#dc2626', border: '#ef4444' },
-                warning: { bg: 'rgba(245,158,11,0.1)', text: '#d97706', border: '#f59e0b' },
-                info: { bg: 'rgba(59,130,246,0.1)', text: '#2563eb', border: '#3b82f6' }
-              };
-              const colors = severityColors[event.severity] || severityColors.info;
+        <div style={{ padding: isMobile ? '20px' : '30px' }}>
+          {events.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '60px 20px', color: '#9ca3af' }}>
+              <Sparkles size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
+              <p style={{ fontSize: '16px', fontWeight: 500 }}>Keine Ereignisse an diesem Tag</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {events.map((event, index) => {
+                const daysInfo = getDaysRemaining(event.date);
+                return (
+                  <motion.div
+                    key={event.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    onClick={() => onEventClick(event)}
+                    whileHover={{ scale: 1.02, x: 5 }}
+                    style={{
+                      background: '#ffffff',
+                      border: `1px solid ${getSeverityColor(event.severity)}30`,
+                      borderRadius: '12px',
+                      padding: isMobile ? '16px' : '20px',
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+                      cursor: 'pointer',
+                      position: 'relative',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    {/* Left border accent */}
+                    <div style={{
+                      position: 'absolute',
+                      left: 0,
+                      top: 0,
+                      width: '4px',
+                      height: '100%',
+                      background: `linear-gradient(180deg, ${getSeverityColor(event.severity)}, ${getSeverityColor(event.severity)}80)`
+                    }} />
 
-              return (
-                <div
-                  key={event.id}
-                  onClick={() => onEventClick(event)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    padding: '14px',
-                    background: colors.bg,
-                    borderRadius: '12px',
-                    borderLeft: `4px solid ${colors.border}`,
-                    cursor: 'pointer',
-                    transition: 'transform 0.15s ease'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.transform = 'translateX(4px)'}
-                  onMouseLeave={(e) => e.currentTarget.style.transform = 'translateX(0)'}
-                >
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '15px', fontWeight: 600, color: '#0f172a', marginBottom: '4px' }}>
-                      {formatContractName(event.contractName)}
+                    {/* Header */}
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                      gap: '12px',
+                      marginBottom: '12px',
+                      paddingLeft: '12px'
+                    }}>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        {getSeverityIcon(event.severity)}
+                        <span style={{
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          color: getSeverityColor(event.severity),
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em'
+                        }}>
+                          {event.severity === 'critical' ? 'Kritisch' :
+                           event.severity === 'warning' ? 'Warnung' : 'Info'}
+                        </span>
+                      </div>
+                      <span style={{
+                        fontSize: '12px',
+                        fontWeight: 500,
+                        color: '#9ca3af',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {daysInfo.text}
+                      </span>
                     </div>
-                    <div style={{ fontSize: '13px', color: '#64748b' }}>
-                      {event.title}
+
+                    {/* Title & Description */}
+                    <div style={{ paddingLeft: '12px' }}>
+                      <h4 style={{
+                        margin: '0 0 8px 0',
+                        fontSize: isMobile ? '15px' : '16px',
+                        fontWeight: 600,
+                        color: '#1f2937'
+                      }}>
+                        {formatContractName(event.contractName)}
+                      </h4>
+                      <p style={{
+                        margin: 0,
+                        fontSize: '14px',
+                        color: '#6b7280',
+                        lineHeight: 1.5
+                      }}>
+                        {event.title}
+                      </p>
                     </div>
-                  </div>
-                  <div style={{
-                    padding: '6px 12px',
-                    borderRadius: '20px',
-                    background: colors.bg,
-                    color: colors.text,
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    whiteSpace: 'nowrap'
-                  }}>
-                    {daysInfo.text}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </motion.div>
     </motion.div>
