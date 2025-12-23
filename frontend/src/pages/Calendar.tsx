@@ -158,6 +158,7 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateCli
     const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Monday as start
     startOfWeek.setDate(startOfWeek.getDate() + diff);
 
+    const weekDayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
     const weekDays = [];
     for (let i = 0; i < 7; i++) {
       const day = new Date(startOfWeek);
@@ -167,6 +168,7 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateCli
       weekDays.push({
         date: day,
         day: day.getDate(),
+        dayName: weekDayNames[day.getDay()], // Actual day name from date
         events: dayEvents,
         isToday: isToday(day.getDate(), day.getMonth(), day.getFullYear()),
         isSelected: selectedDate && day.toDateString() === selectedDate.toDateString()
@@ -194,7 +196,7 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateCli
               className={`week-day-header ${dayInfo.isToday ? 'today' : ''} ${dayInfo.isSelected ? 'selected' : ''}`}
               onClick={() => onDateClick(dayInfo.date)}
             >
-              <span className="week-day-name">{WEEKDAYS[index]}</span>
+              <span className="week-day-name">{dayInfo.dayName}</span>
               <span className="week-day-number">{dayInfo.day}</span>
             </div>
           ))}
@@ -671,12 +673,12 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange 
 
               <motion.button
                 onClick={() => onAction("optimize", currentEvent.id)}
-                whileHover={{ scale: 1.02, background: '#f5f3ff', borderColor: '#8b5cf6' }}
+                whileHover={{ scale: 1.02, background: '#eef2ff', borderColor: '#4f46e5' }}
                 whileTap={{ scale: 0.98 }}
                 style={{
                   flex: 1,
                   background: '#f9fafb',
-                  color: '#7c3aed',
+                  color: '#4f46e5',
                   border: '1px solid #e5e7eb',
                   padding: '10px 12px',
                   borderRadius: '8px',
@@ -833,7 +835,7 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
           <div style={{
             padding: isMobile ? '20px' : '30px',
             borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
-            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(79, 70, 229, 0.05))',
+            background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.05), rgba(67, 56, 202, 0.03))',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -987,7 +989,7 @@ function DayEventsModal({ date, events, onEventClick, onClose }: DayEventsModalP
         <div style={{
           padding: isMobile ? '20px' : '30px',
           borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
-          background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.05), rgba(99, 102, 241, 0.05))',
+          background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.05), rgba(67, 56, 202, 0.03))',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -1171,7 +1173,11 @@ function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalPro
     setSaving(true);
     try {
       const token = localStorage.getItem("token");
-      const eventDate = new Date(`${formData.date}T${formData.time}:00`);
+      // Create date string that preserves local date (avoid timezone issues)
+      // Format: YYYY-MM-DDTHH:mm:00.000Z but adjusted for local timezone
+      const [year, month, day] = formData.date.split('-').map(Number);
+      const [hours, minutes] = formData.time.split(':').map(Number);
+      const eventDate = new Date(Date.UTC(year, month - 1, day, hours, minutes, 0));
 
       await axios.post("/api/calendar/events", {
         title: formData.title,

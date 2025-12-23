@@ -11,7 +11,7 @@
 :root {
   --primary: #4f46e5;
   --primary-dark: #4338ca;
-  --primary-light: #6366f1;
+  --primary-light: #818cf8;
   --primary-bg: rgba(79, 70, 229, 0.08);
   --primary-bg-hover: rgba(79, 70, 229, 0.12);
 
@@ -71,7 +71,7 @@
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
 }
 
 .page-title h1 {
@@ -110,13 +110,13 @@
 .btn-primary {
   background: var(--primary);
   color: white;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
 }
 
 .btn-primary:hover {
   background: var(--primary-dark);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
 }
 
 .btn-secondary {
@@ -978,11 +978,11 @@
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.05));
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.05), rgba(79, 70, 229, 0.05));
   padding: 16px;
   border-radius: 12px;
   margin-bottom: 20px;
-  border: 1px solid rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(79, 70, 229, 0.1);
 }
 
 .event-description-premium .description-icon {
