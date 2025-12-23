@@ -217,12 +217,45 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, onDateClick, on
 // ========== Quick Actions Modal (Premium Design) ==========
 interface QuickActionsModalProps {
   event: CalendarEvent;
+  allEvents?: CalendarEvent[]; // For pagination through multiple events
   onAction: (action: string, eventId: string) => void;
   onClose: () => void;
+  onEventChange?: (event: CalendarEvent) => void; // Callback when navigating to different event
 }
 
-function QuickActionsModal({ event, onAction, onClose }: QuickActionsModalProps) {
+function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange }: QuickActionsModalProps) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [currentIndex, setCurrentIndex] = useState(() => {
+    if (allEvents && allEvents.length > 1) {
+      return allEvents.findIndex(e => e.id === event.id);
+    }
+    return 0;
+  });
+
+  // Get current event from allEvents or use the single event
+  const currentEvent = allEvents && allEvents.length > 1 ? allEvents[currentIndex] : event;
+  const hasPagination = allEvents && allEvents.length > 1;
+  const totalEvents = allEvents?.length || 1;
+
+  const goToPrev = () => {
+    if (currentIndex > 0) {
+      const newIndex = currentIndex - 1;
+      setCurrentIndex(newIndex);
+      if (onEventChange && allEvents) {
+        onEventChange(allEvents[newIndex]);
+      }
+    }
+  };
+
+  const goToNext = () => {
+    if (allEvents && currentIndex < allEvents.length - 1) {
+      const newIndex = currentIndex + 1;
+      setCurrentIndex(newIndex);
+      if (onEventChange && allEvents) {
+        onEventChange(allEvents[newIndex]);
+      }
+    }
+  };
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -231,12 +264,12 @@ function QuickActionsModal({ event, onAction, onClose }: QuickActionsModalProps)
   }, []);
 
   const handleViewContract = () => {
-    window.location.href = `/contracts?view=${event.contractId}`;
+    window.location.href = `/contracts?view=${currentEvent.contractId}`;
     onClose();
   };
 
   const formatDate = () => {
-    return new Date(event.date).toLocaleDateString('de-DE', {
+    return new Date(currentEvent.date).toLocaleDateString('de-DE', {
       weekday: 'long',
       day: '2-digit',
       month: 'long',
@@ -245,7 +278,7 @@ function QuickActionsModal({ event, onAction, onClose }: QuickActionsModalProps)
   };
 
   const getSeverityStyle = () => {
-    switch(event.severity) {
+    switch(currentEvent.severity) {
       case 'critical':
         return {
           color: '#ef4444',
@@ -271,7 +304,7 @@ function QuickActionsModal({ event, onAction, onClose }: QuickActionsModalProps)
   };
 
   const severityStyle = getSeverityStyle();
-  const daysInfo = getDaysRemaining(event.date);
+  const daysInfo = getDaysRemaining(currentEvent.date);
 
   return (
     <motion.div
@@ -307,8 +340,8 @@ function QuickActionsModal({ event, onAction, onClose }: QuickActionsModalProps)
               {severityStyle.icon}
             </div>
             <div className="modal-header-text">
-              <h3>{formatContractName(event.contractName)}</h3>
-              <p>{event.title}</p>
+              <h3>{formatContractName(currentEvent.contractName)}</h3>
+              <p>{currentEvent.title}</p>
             </div>
           </div>
           <button className="modal-close-btn" onClick={onClose}>
@@ -316,10 +349,73 @@ function QuickActionsModal({ event, onAction, onClose }: QuickActionsModalProps)
           </button>
         </div>
 
+        {/* Pagination Controls */}
+        {hasPagination && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '16px',
+            padding: '12px 20px',
+            background: 'rgba(99, 102, 241, 0.05)',
+            borderBottom: '1px solid rgba(0, 0, 0, 0.06)'
+          }}>
+            <motion.button
+              onClick={goToPrev}
+              disabled={currentIndex === 0}
+              whileHover={{ scale: currentIndex > 0 ? 1.1 : 1 }}
+              whileTap={{ scale: currentIndex > 0 ? 0.9 : 1 }}
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                border: 'none',
+                background: currentIndex > 0 ? '#6366f1' : 'rgba(0, 0, 0, 0.1)',
+                color: currentIndex > 0 ? '#fff' : '#9ca3af',
+                cursor: currentIndex > 0 ? 'pointer' : 'not-allowed',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <ChevronLeft size={20} />
+            </motion.button>
+            <span style={{
+              fontSize: '14px',
+              fontWeight: 600,
+              color: '#4b5563',
+              minWidth: '60px',
+              textAlign: 'center'
+            }}>
+              {currentIndex + 1} / {totalEvents}
+            </span>
+            <motion.button
+              onClick={goToNext}
+              disabled={currentIndex >= totalEvents - 1}
+              whileHover={{ scale: currentIndex < totalEvents - 1 ? 1.1 : 1 }}
+              whileTap={{ scale: currentIndex < totalEvents - 1 ? 0.9 : 1 }}
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                border: 'none',
+                background: currentIndex < totalEvents - 1 ? '#6366f1' : 'rgba(0, 0, 0, 0.1)',
+                color: currentIndex < totalEvents - 1 ? '#fff' : '#9ca3af',
+                cursor: currentIndex < totalEvents - 1 ? 'pointer' : 'not-allowed',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <ChevronRight size={20} />
+            </motion.button>
+          </div>
+        )}
+
         <div className="modal-content-premium">
           <div className="event-description-premium">
             <Sparkles size={16} className="description-icon" />
-            <p>{event.description}</p>
+            <p>{currentEvent.description}</p>
           </div>
 
           <div className="event-meta-grid">
@@ -354,10 +450,10 @@ function QuickActionsModal({ event, onAction, onClose }: QuickActionsModalProps)
               <ArrowRight size={16} className="action-arrow" />
             </motion.button>
 
-            {event.metadata?.suggestedAction === "cancel" && (
+            {currentEvent.metadata?.suggestedAction === "cancel" && (
               <motion.button
                 className="action-btn-premium primary"
-                onClick={() => onAction("cancel", event.id)}
+                onClick={() => onAction("cancel", currentEvent.id)}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 style={{ gridColumn: '1 / -1' }}
@@ -370,7 +466,7 @@ function QuickActionsModal({ event, onAction, onClose }: QuickActionsModalProps)
 
             <motion.button
               className="action-btn-premium secondary"
-              onClick={() => onAction("compare", event.id)}
+              onClick={() => onAction("compare", currentEvent.id)}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
@@ -380,7 +476,7 @@ function QuickActionsModal({ event, onAction, onClose }: QuickActionsModalProps)
 
             <motion.button
               className="action-btn-premium secondary"
-              onClick={() => onAction("optimize", event.id)}
+              onClick={() => onAction("optimize", currentEvent.id)}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
@@ -390,7 +486,7 @@ function QuickActionsModal({ event, onAction, onClose }: QuickActionsModalProps)
 
             <motion.button
               className="action-btn-premium ghost"
-              onClick={() => onAction("snooze", event.id)}
+              onClick={() => onAction("snooze", currentEvent.id)}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
@@ -866,6 +962,184 @@ function DayEventsModal({ date, events, onEventClick, onClose }: DayEventsModalP
   );
 }
 
+// ========== Create Event Modal ==========
+interface CreateEventModalProps {
+  date: Date;
+  onClose: () => void;
+}
+
+function CreateEventModal({ date, onClose }: CreateEventModalProps) {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handleCreateEvent = () => {
+    // TODO: Implement direct event creation
+    // For now, navigate to contracts with create event intent
+    window.location.href = `/contracts?createEvent=true&date=${date.toISOString().split('T')[0]}`;
+    onClose();
+  };
+
+  const handleUploadContract = () => {
+    window.location.href = '/contracts?upload=true';
+    onClose();
+  };
+
+  return (
+    <motion.div
+      className="quick-actions-overlay"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+      style={{ padding: isMobile ? '20px' : '40px', zIndex: 1001 }}
+    >
+      <motion.div
+        className="premium-modal"
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          maxWidth: isMobile ? '100%' : '450px',
+          width: isMobile ? 'calc(100% - 40px)' : '450px',
+          background: '#ffffff',
+          borderRadius: '20px',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)',
+          overflow: 'hidden'
+        }}
+      >
+        {/* Header */}
+        <div style={{
+          padding: isMobile ? '20px' : '30px',
+          borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+          background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(79, 70, 229, 0.05))',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <div>
+            <h2 style={{
+              margin: 0,
+              fontSize: isMobile ? '18px' : '22px',
+              fontWeight: 700,
+              color: '#1f2937'
+            }}>
+              Ereignis erstellen
+            </h2>
+            <p style={{ margin: '5px 0 0 0', fontSize: '14px', color: '#6b7280' }}>
+              {date.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            </p>
+          </div>
+          <motion.button
+            onClick={onClose}
+            whileHover={{ scale: 1.1, rotate: 90 }}
+            whileTap={{ scale: 0.9 }}
+            style={{
+              background: 'rgba(0, 0, 0, 0.05)',
+              border: 'none',
+              borderRadius: '50%',
+              width: '36px',
+              height: '36px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer'
+            }}
+          >
+            <X size={20} />
+          </motion.button>
+        </div>
+
+        {/* Options */}
+        <div style={{ padding: isMobile ? '20px' : '30px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <motion.button
+            onClick={handleCreateEvent}
+            whileHover={{ scale: 1.02, x: 5 }}
+            whileTap={{ scale: 0.98 }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px',
+              padding: '20px',
+              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(79, 70, 229, 0.04))',
+              border: '1px solid rgba(99, 102, 241, 0.2)',
+              borderRadius: '14px',
+              cursor: 'pointer',
+              textAlign: 'left'
+            }}
+          >
+            <div style={{
+              width: '50px',
+              height: '50px',
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0
+            }}>
+              <CalendarIcon size={24} style={{ color: '#fff' }} />
+            </div>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: '#1f2937' }}>
+                Ereignis direkt erstellen
+              </h3>
+              <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#6b7280' }}>
+                Fügen Sie ein neues Ereignis hinzu
+              </p>
+            </div>
+            <ChevronRight size={20} style={{ marginLeft: 'auto', color: '#9ca3af' }} />
+          </motion.button>
+
+          <motion.button
+            onClick={handleUploadContract}
+            whileHover={{ scale: 1.02, x: 5 }}
+            whileTap={{ scale: 0.98 }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px',
+              padding: '20px',
+              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(5, 150, 105, 0.04))',
+              border: '1px solid rgba(16, 185, 129, 0.2)',
+              borderRadius: '14px',
+              cursor: 'pointer',
+              textAlign: 'left'
+            }}
+          >
+            <div style={{
+              width: '50px',
+              height: '50px',
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, #10b981, #059669)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0
+            }}>
+              <FileText size={24} style={{ color: '#fff' }} />
+            </div>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: '#1f2937' }}>
+                Vertrag hochladen
+              </h3>
+              <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#6b7280' }}>
+                Laden Sie einen neuen Vertrag hoch
+              </p>
+            </div>
+            <ChevronRight size={20} style={{ marginLeft: 'auto', color: '#9ca3af' }} />
+          </motion.button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 // ========== Main Calendar Page ==========
 export default function CalendarPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -883,7 +1157,9 @@ export default function CalendarPage() {
   const [urgentPage, setUrgentPage] = useState(0);
   const [dayEventsModal, setDayEventsModal] = useState<{ date: Date; events: CalendarEvent[] } | null>(null);
   const [showStatsModal, setShowStatsModal] = useState(false);
-  const [selectedStatFilter, setSelectedStatFilter] = useState<"total" | "critical" | "thisMonth" | "past">("total");
+  const [selectedStatFilter, setSelectedStatFilter] = useState<"upcoming" | "past" | "cancelable" | "autoRenewal">("upcoming");
+  const [showCreateEventModal, setShowCreateEventModal] = useState<Date | null>(null);
+  const [allDayEventsForPagination, setAllDayEventsForPagination] = useState<CalendarEvent[]>([]);
 
   const EVENTS_PER_PAGE = 5;
 
@@ -986,20 +1262,30 @@ export default function CalendarPage() {
     setSelectedDate(new Date());
   };
 
-  // Statistics
+  // Statistics - Kommende, Vergangene, Kündbar, Auto-Verlängerung
   const stats = useMemo(() => {
     const now = new Date();
-    const thisMonth = events.filter(e => {
-      const d = new Date(e.date);
-      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-    });
-    const critical = events.filter(e => e.severity === 'critical');
+    now.setHours(0, 0, 0, 0);
+
+    // Kommende Ereignisse (Zukunft)
+    const upcoming = events.filter(e => new Date(e.date) >= now);
+
+    // Vergangene Ereignisse
     const past = events.filter(e => new Date(e.date) < now);
+
+    // Kündbar (Kündigungsfenster offen oder Letzte Chance)
+    const cancelable = events.filter(e =>
+      e.type === 'CANCEL_WINDOW_OPEN' || e.type === 'LAST_CANCEL_DAY'
+    );
+
+    // Auto-Verlängerung
+    const autoRenewal = events.filter(e => e.type === 'AUTO_RENEWAL');
+
     return {
-      total: events.length,
-      critical: critical.length,
-      thisMonth: thisMonth.length,
-      past: past.length
+      upcoming: upcoming.length,
+      past: past.length,
+      cancelable: cancelable.length,
+      autoRenewal: autoRenewal.length
     };
   }, [events]);
 
@@ -1027,7 +1313,7 @@ export default function CalendarPage() {
   const totalPages = Math.ceil(urgentEvents.length / EVENTS_PER_PAGE);
 
   // Handle Stats Card Click - Opens Modal
-  const handleStatsCardClick = (filterType: "total" | "critical" | "thisMonth" | "past") => {
+  const handleStatsCardClick = (filterType: "upcoming" | "past" | "cancelable" | "autoRenewal") => {
     setSelectedStatFilter(filterType);
     setShowStatsModal(true);
   };
@@ -1035,17 +1321,16 @@ export default function CalendarPage() {
   // Get filtered events for stats modal
   const getFilteredStatsEvents = () => {
     const now = new Date();
+    now.setHours(0, 0, 0, 0);
     switch (selectedStatFilter) {
-      case "critical":
-        return events.filter(e => e.severity === 'critical');
-      case "thisMonth":
-        return events.filter(e => {
-          const d = new Date(e.date);
-          return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-        });
+      case "upcoming":
+        return events.filter(e => new Date(e.date) >= now);
       case "past":
         return events.filter(e => new Date(e.date) < now);
-      case "total":
+      case "cancelable":
+        return events.filter(e => e.type === 'CANCEL_WINDOW_OPEN' || e.type === 'LAST_CANCEL_DAY');
+      case "autoRenewal":
+        return events.filter(e => e.type === 'AUTO_RENEWAL');
       default:
         return events;
     }
@@ -1054,10 +1339,10 @@ export default function CalendarPage() {
   // Get title for stats modal
   const getStatsModalTitle = () => {
     switch (selectedStatFilter) {
-      case "critical": return "Kritische Ereignisse";
-      case "thisMonth": return "Ereignisse diesen Monat";
+      case "upcoming": return "Kommende Ereignisse";
       case "past": return "Vergangene Ereignisse";
-      case "total":
+      case "cancelable": return "Kündbare Verträge";
+      case "autoRenewal": return "Auto-Verlängerungen";
       default: return "Alle Ereignisse";
     }
   };
@@ -1147,8 +1432,28 @@ export default function CalendarPage() {
                   currentDate={currentDate}
                   events={filteredEvents}
                   selectedDate={selectedDate}
-                  onDateClick={(date) => setSelectedDate(date)}
+                  onDateClick={(date) => {
+                    setSelectedDate(date);
+                    // Check if this date has events
+                    const dateStr = date.toISOString().split('T')[0];
+                    const dayEvents = filteredEvents.filter(e => e.date && e.date.split('T')[0] === dateStr);
+
+                    if (dayEvents.length === 0) {
+                      // No events - show create event modal
+                      setShowCreateEventModal(date);
+                    } else if (dayEvents.length === 1) {
+                      // Single event - show quick actions (no pagination)
+                      setAllDayEventsForPagination([]);
+                      setSelectedEvent(dayEvents[0]);
+                      setShowQuickActions(true);
+                    } else {
+                      // Multiple events - show day events modal
+                      setDayEventsModal({ date, events: dayEvents });
+                    }
+                  }}
                   onEventClick={(event) => {
+                    // Clear pagination when clicking on a single event pill
+                    setAllDayEventsForPagination([]);
                     setSelectedEvent(event);
                     setShowQuickActions(true);
                   }}
@@ -1184,21 +1489,21 @@ export default function CalendarPage() {
                   </div>
                 </div>
                 <div className="stats-grid">
-                  <div className="stat-card clickable" onClick={() => handleStatsCardClick('total')}>
-                    <div className="stat-value">{stats.total}</div>
-                    <div className="stat-label">Ereignisse</div>
-                  </div>
-                  <div className="stat-card critical clickable" onClick={() => handleStatsCardClick('critical')}>
-                    <div className="stat-value">{stats.critical}</div>
-                    <div className="stat-label">Kritisch</div>
-                  </div>
-                  <div className="stat-card warning clickable" onClick={() => handleStatsCardClick('thisMonth')}>
-                    <div className="stat-value">{stats.thisMonth}</div>
-                    <div className="stat-label">Diesen Monat</div>
+                  <div className="stat-card clickable" onClick={() => handleStatsCardClick('upcoming')}>
+                    <div className="stat-value">{stats.upcoming}</div>
+                    <div className="stat-label">Kommende</div>
                   </div>
                   <div className="stat-card clickable" onClick={() => handleStatsCardClick('past')}>
                     <div className="stat-value">{stats.past}</div>
                     <div className="stat-label">Vergangen</div>
+                  </div>
+                  <div className="stat-card warning clickable" onClick={() => handleStatsCardClick('cancelable')}>
+                    <div className="stat-value">{stats.cancelable}</div>
+                    <div className="stat-label">Kündbar</div>
+                  </div>
+                  <div className="stat-card clickable" onClick={() => handleStatsCardClick('autoRenewal')}>
+                    <div className="stat-value">{stats.autoRenewal}</div>
+                    <div className="stat-label">Auto-Verl.</div>
                   </div>
                 </div>
               </div>
@@ -1351,11 +1656,14 @@ export default function CalendarPage() {
         {showQuickActions && selectedEvent && (
           <QuickActionsModal
             event={selectedEvent}
+            allEvents={allDayEventsForPagination.length > 1 ? allDayEventsForPagination : undefined}
             onAction={handleQuickAction}
             onClose={() => {
               setShowQuickActions(false);
               setSelectedEvent(null);
+              setAllDayEventsForPagination([]);
             }}
+            onEventChange={(event) => setSelectedEvent(event)}
           />
         )}
         {dayEventsModal && (
@@ -1363,11 +1671,19 @@ export default function CalendarPage() {
             date={dayEventsModal.date}
             events={dayEventsModal.events}
             onEventClick={(event) => {
+              // Store all events from this day for pagination
+              setAllDayEventsForPagination(dayEventsModal.events);
               setDayEventsModal(null);
               setSelectedEvent(event);
               setShowQuickActions(true);
             }}
             onClose={() => setDayEventsModal(null)}
+          />
+        )}
+        {showCreateEventModal && (
+          <CreateEventModal
+            date={showCreateEventModal}
+            onClose={() => setShowCreateEventModal(null)}
           />
         )}
       </AnimatePresence>
