@@ -326,7 +326,6 @@ export default function Contracts() {
   const hasScrolledRef = useRef(false); // ✅ Flag um initiales Auto-Loading zu verhindern
   const userInfoCacheRef = useRef<{ data: UserInfo | null; timestamp: number }>({ data: null, timestamp: 0 }); // ✅ Cache für User-Info
   const isFirstMountRef = useRef(true); // ✅ Flag um First Mount zu erkennen (verhindert doppelten API-Call)
-  const abortControllerRef = useRef<AbortController | null>(null); // 🚀 AbortController für Race Condition Prevention
   const fetchRequestIdRef = useRef(0); // 🚀 Request-ID um veraltete Responses zu ignorieren
 
   // 📁 Folder Management Hook
