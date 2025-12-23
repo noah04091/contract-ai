@@ -4675,8 +4675,8 @@ export default function Contracts() {
                           flexDirection: 'column',
                           alignItems: 'center',
                           gap: '12px',
-                          padding: '24px 0 120px 0', // 📱 120px padding-bottom für Mobile Bottom-Nav
-                          marginTop: '8px'
+                          padding: '16px 0 160px 0', // 📱 160px padding-bottom für Mobile Bottom-Nav + Safe Area
+                          marginTop: '0'
                         }}
                       >
                         {loadingMore ? (

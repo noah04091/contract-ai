@@ -7526,14 +7526,14 @@
     display: flex;
   }
 
-  /* Adjust content padding for bottom nav */
+  /* 📱 FIXED: Padding nur minimal - Loading-Indicator hat eigenes padding */
   .mobileCardsContainer {
-    padding-bottom: calc(100px + env(safe-area-inset-bottom));
+    padding-bottom: 8px;
   }
 
   .mobileListContainer,
   .mobileGridContainer {
-    padding-bottom: calc(100px + env(safe-area-inset-bottom));
+    padding-bottom: 8px;
   }
 
   /* Hide desktop-only elements */
