@@ -56,8 +56,9 @@ export default defineConfig(({ mode }) => ({
   },
 
   // 🧹 Console.logs im Production-Build entfernen
+  // TEMPORÄR DEAKTIVIERT FÜR DEBUG!
   esbuild: {
-    drop: mode === 'production' ? ['console', 'debugger'] : [],
+    drop: [], // mode === 'production' ? ['console', 'debugger'] : [],
   },
 
   // 📦 Build-Optimierungen
