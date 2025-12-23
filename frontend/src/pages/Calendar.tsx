@@ -518,7 +518,11 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  console.log('[DEBUG] StatsDetailModal render:', { isOpen, title, eventsCount: events?.length });
+
   if (!isOpen) return null;
+
+  console.log('[DEBUG] StatsDetailModal is open, events:', events);
 
   // Filter out events without valid dates and sort by date
   const validEvents = events.filter(e => e && e.date);
@@ -1314,6 +1318,8 @@ export default function CalendarPage() {
 
   // Handle Stats Card Click - Opens Modal
   const handleStatsCardClick = (filterType: "upcoming" | "past" | "cancelable" | "autoRenewal") => {
+    console.log('[DEBUG] Stats card clicked:', filterType);
+    console.log('[DEBUG] Current events:', events.length);
     setSelectedStatFilter(filterType);
     setShowStatsModal(true);
   };
@@ -1322,18 +1328,26 @@ export default function CalendarPage() {
   const getFilteredStatsEvents = () => {
     const now = new Date();
     now.setHours(0, 0, 0, 0);
+    console.log('[DEBUG] getFilteredStatsEvents called:', { selectedStatFilter, totalEvents: events.length });
+    let result: CalendarEvent[] = [];
     switch (selectedStatFilter) {
       case "upcoming":
-        return events.filter(e => new Date(e.date) >= now);
+        result = events.filter(e => new Date(e.date) >= now);
+        break;
       case "past":
-        return events.filter(e => new Date(e.date) < now);
+        result = events.filter(e => new Date(e.date) < now);
+        break;
       case "cancelable":
-        return events.filter(e => e.type === 'CANCEL_WINDOW_OPEN' || e.type === 'LAST_CANCEL_DAY');
+        result = events.filter(e => e.type === 'CANCEL_WINDOW_OPEN' || e.type === 'LAST_CANCEL_DAY');
+        break;
       case "autoRenewal":
-        return events.filter(e => e.type === 'AUTO_RENEWAL');
+        result = events.filter(e => e.type === 'AUTO_RENEWAL');
+        break;
       default:
-        return events;
+        result = events;
     }
+    console.log('[DEBUG] getFilteredStatsEvents result:', result.length);
+    return result;
   };
 
   // Get title for stats modal
@@ -1452,8 +1466,16 @@ export default function CalendarPage() {
                     }
                   }}
                   onEventClick={(event) => {
-                    // Clear pagination when clicking on a single event pill
-                    setAllDayEventsForPagination([]);
+                    // Get all events for this day for pagination
+                    const eventDateStr = event.date?.split('T')[0];
+                    const dayEvents = filteredEvents.filter(e => e.date && e.date.split('T')[0] === eventDateStr);
+
+                    // Set pagination if there are multiple events on this day
+                    if (dayEvents.length > 1) {
+                      setAllDayEventsForPagination(dayEvents);
+                    } else {
+                      setAllDayEventsForPagination([]);
+                    }
                     setSelectedEvent(event);
                     setShowQuickActions(true);
                   }}
