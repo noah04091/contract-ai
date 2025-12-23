@@ -1179,6 +1179,12 @@ function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalPro
       const [hours, minutes] = formData.time.split(':').map(Number);
       const eventDate = new Date(Date.UTC(year, month - 1, day, hours, minutes, 0));
 
+      // ===== DEBUG: Date.UTC Fix =====
+      console.log('%c[DEBUG] CreateEvent - Date.UTC Fix aktiv!', 'background: #10b981; color: white; font-weight: bold; padding: 5px;');
+      console.log('%c[DEBUG] Eingabe:', 'color: #4f46e5;', { date: formData.date, time: formData.time });
+      console.log('%c[DEBUG] Parsed:', 'color: #f59e0b;', { year, month, day, hours, minutes });
+      console.log('%c[DEBUG] Event Date (UTC):', 'color: #10b981;', eventDate.toISOString());
+
       await axios.post("/api/calendar/events", {
         title: formData.title,
         description: formData.description,
@@ -1561,6 +1567,9 @@ function SnoozeModal({ isOpen, onClose, onSnooze }: SnoozeModalProps) {
 
   if (!isOpen) return null;
 
+  // ===== DEBUG: Snooze Options =====
+  console.log('%c[DEBUG] SnoozeModal geladen', 'color: #4f46e5; font-weight: bold;');
+
   const snoozeOptions = [
     { days: 1, label: '1 Tag später', icon: '📅', description: 'Erinnerung um 1 Tag verschieben' },
     { days: 3, label: '3 Tage später', icon: '📆', description: 'Erinnerung um 3 Tage verschieben' },
@@ -1568,6 +1577,8 @@ function SnoozeModal({ isOpen, onClose, onSnooze }: SnoozeModalProps) {
     { days: 14, label: '2 Wochen später', icon: '📋', description: 'Erinnerung um 14 Tage verschieben' },
     { days: 30, label: '1 Monat später', icon: '📁', description: 'Erinnerung um 30 Tage verschieben' },
   ];
+
+  console.log('%c[DEBUG] Snooze Labels:', 'color: #f59e0b;', snoozeOptions.map(o => o.label));
 
   return (
     <motion.div
@@ -1705,7 +1716,24 @@ function SnoozeModal({ isOpen, onClose, onSnooze }: SnoozeModalProps) {
 }
 
 // ========== Main Calendar Page ==========
+// DEBUG VERSION - 2025-12-24 - Build-Verification
+const CALENDAR_VERSION = "2025-12-24-DEBUG-V1";
+const DEBUG_COLORS = {
+  upcoming: '#10b981',    // Grün
+  past: '#9ca3af',        // Grau
+  cancelable: '#f59e0b',  // Orange
+  autoRenewal: '#4f46e5'  // Firmenblau
+};
+
 export default function CalendarPage() {
+  // ===== DEBUG: Component Load =====
+  console.log('%c=== CALENDAR DEBUG ===', 'background: #4f46e5; color: white; font-size: 16px; padding: 10px;');
+  console.log('%cVersion: ' + CALENDAR_VERSION, 'color: #10b981; font-weight: bold; font-size: 14px;');
+  console.log('%cDEBUG_COLORS:', 'color: #f59e0b;', DEBUG_COLORS);
+  console.log('%cSnooze Labels: "1 Tag später", "3 Tage später", etc.', 'color: #4f46e5;');
+  console.log('%cDate.UTC Fix: AKTIV', 'color: #10b981;');
+  console.log('==========================================');
+
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<CalendarEvent[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -1856,12 +1884,22 @@ export default function CalendarPage() {
     // Auto-Verlängerung
     const autoRenewal = events.filter(e => e.type === 'AUTO_RENEWAL');
 
-    return {
+    const result = {
       upcoming: upcoming.length,
       past: past.length,
       cancelable: cancelable.length,
       autoRenewal: autoRenewal.length
     };
+
+    // ===== DEBUG: Stats berechnet =====
+    console.log('%c[DEBUG] Stats berechnet:', 'color: #4f46e5; font-weight: bold;', result);
+    console.log('%c[DEBUG] Stats-Farben werden verwendet:', 'color: #f59e0b;');
+    console.log('  - Kommende: #10b981 (Grün)');
+    console.log('  - Vergangen: #9ca3af (Grau)');
+    console.log('  - Kündbar: #f59e0b (Orange)');
+    console.log('  - Auto-Verl: #4f46e5 (Blau)');
+
+    return result;
   }, [events]);
 
   // Urgent Events (next 60 days - all upcoming events, sorted by urgency)
@@ -1992,7 +2030,10 @@ export default function CalendarPage() {
                     <button
                       key={view}
                       className={`view-btn ${currentView === view ? 'active' : ''}`}
-                      onClick={() => setCurrentView(view)}
+                      onClick={() => {
+                        console.log('%c[DEBUG] View-Wechsel:', 'color: #4f46e5; font-weight: bold;', view);
+                        setCurrentView(view);
+                      }}
                     >
                       {view === 'month' ? 'Monat' : view === 'week' ? 'Woche' : 'Tag'}
                     </button>
@@ -2077,20 +2118,32 @@ export default function CalendarPage() {
                   </div>
                 </div>
                 <div className="stats-grid">
-                  <div className="stat-card clickable" onClick={() => handleStatsCardClick('upcoming')}>
-                    <div className="stat-value" style={{ color: '#10b981' }}>{stats.upcoming}</div>
+                  <div className="stat-card clickable" onClick={() => {
+                    console.log('%c[DEBUG] Stats-Karte geklickt: upcoming', 'color: #10b981; font-weight: bold;');
+                    handleStatsCardClick('upcoming');
+                  }}>
+                    <div className="stat-value" style={{ color: DEBUG_COLORS.upcoming }}>{stats.upcoming}</div>
                     <div className="stat-label">Kommende</div>
                   </div>
-                  <div className="stat-card clickable" onClick={() => handleStatsCardClick('past')}>
-                    <div className="stat-value" style={{ color: '#9ca3af' }}>{stats.past}</div>
+                  <div className="stat-card clickable" onClick={() => {
+                    console.log('%c[DEBUG] Stats-Karte geklickt: past', 'color: #9ca3af; font-weight: bold;');
+                    handleStatsCardClick('past');
+                  }}>
+                    <div className="stat-value" style={{ color: DEBUG_COLORS.past }}>{stats.past}</div>
                     <div className="stat-label">Vergangen</div>
                   </div>
-                  <div className="stat-card warning clickable" onClick={() => handleStatsCardClick('cancelable')}>
-                    <div className="stat-value" style={{ color: '#f59e0b' }}>{stats.cancelable}</div>
+                  <div className="stat-card warning clickable" onClick={() => {
+                    console.log('%c[DEBUG] Stats-Karte geklickt: cancelable', 'color: #f59e0b; font-weight: bold;');
+                    handleStatsCardClick('cancelable');
+                  }}>
+                    <div className="stat-value" style={{ color: DEBUG_COLORS.cancelable }}>{stats.cancelable}</div>
                     <div className="stat-label">Kündbar</div>
                   </div>
-                  <div className="stat-card clickable" onClick={() => handleStatsCardClick('autoRenewal')}>
-                    <div className="stat-value" style={{ color: '#4f46e5' }}>{stats.autoRenewal}</div>
+                  <div className="stat-card clickable" onClick={() => {
+                    console.log('%c[DEBUG] Stats-Karte geklickt: autoRenewal', 'color: #4f46e5; font-weight: bold;');
+                    handleStatsCardClick('autoRenewal');
+                  }}>
+                    <div className="stat-value" style={{ color: DEBUG_COLORS.autoRenewal }}>{stats.autoRenewal}</div>
                     <div className="stat-label">Auto-Verl.</div>
                   </div>
                 </div>
