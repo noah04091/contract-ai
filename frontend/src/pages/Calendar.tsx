@@ -871,7 +871,7 @@ export default function CalendarPage() {
             </div>
 
             {/* Sidebar */}
-            <aside className="sidebar" style={{ gridColumn: '2' }}>
+            <aside className="calendar-sidebar" style={{ gridColumn: '2' }}>
               {/* Stats Card */}
               <div className="sidebar-card">
                 <div className="sidebar-card-header">

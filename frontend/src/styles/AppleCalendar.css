@@ -142,7 +142,7 @@
   min-width: 0;
 }
 
-.calendar-page .content-grid > .sidebar {
+.calendar-page .content-grid > .calendar-sidebar {
   grid-column: 2 !important;
 }
 
@@ -450,8 +450,8 @@
 .legend-dot.info { background: var(--info); }
 .legend-dot.success { background: var(--success); }
 
-/* ========== Sidebar ========== */
-.sidebar {
+/* ========== Calendar Sidebar ========== */
+.calendar-sidebar {
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -790,7 +790,7 @@
     grid-column: 1 !important;
   }
 
-  .calendar-page .content-grid > .sidebar {
+  .calendar-page .content-grid > .calendar-sidebar {
     grid-column: 1 !important;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -838,7 +838,7 @@
     padding: 3px 6px;
   }
 
-  .sidebar {
+  .calendar-sidebar {
     grid-template-columns: 1fr;
   }
 }
