@@ -22,14 +22,31 @@ import {
   X,
   ChevronRight,
   Sparkles,
+  Clock,
+  FolderOpen,
+  Loader2,
 } from 'lucide-react';
 import { contractTemplates, templateCategories, ContractTemplate } from '../../data/contractTemplates';
 import styles from './ContractTypeSelector.module.css';
+
+interface SavedDraft {
+  _id: string;
+  metadata: {
+    name: string;
+    contractType: string;
+    status: string;
+  };
+  updatedAt: string;
+  blockCount: number;
+}
 
 interface ContractTypeSelectorProps {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (templateId: string) => void;
+  savedDrafts?: SavedDraft[];
+  isLoadingDrafts?: boolean;
+  onLoadDraft?: (draftId: string) => void;
 }
 
 // Icon mapping
@@ -54,12 +71,28 @@ export const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
   isOpen,
   onClose,
   onSelect,
+  savedDrafts = [],
+  isLoadingDrafts = false,
+  onLoadDraft,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [hoveredTemplate, setHoveredTemplate] = useState<ContractTemplate | null>(null);
+  const [showDrafts, setShowDrafts] = useState(false);
 
   if (!isOpen) return null;
+
+  // Hilfsfunktion für Datumsformatierung
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('de-DE', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
 
   // Filter templates based on search and category
   const filteredTemplates = contractTemplates.filter(template => {
@@ -92,7 +125,7 @@ export const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
           </button>
         </div>
 
-        {/* Search */}
+        {/* Search + Drafts Toggle */}
         <div className={styles.searchSection}>
           <div className={styles.searchWrapper}>
             <Search size={18} className={styles.searchIcon} />
@@ -105,7 +138,59 @@ export const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
               autoFocus
             />
           </div>
+          {savedDrafts.length > 0 && (
+            <button
+              className={`${styles.draftsToggle} ${showDrafts ? styles.active : ''}`}
+              onClick={() => setShowDrafts(!showDrafts)}
+            >
+              <FolderOpen size={16} />
+              <span>Gespeicherte Entwürfe ({savedDrafts.length})</span>
+            </button>
+          )}
         </div>
+
+        {/* Saved Drafts Section */}
+        {showDrafts && (
+          <div className={styles.draftsSection}>
+            <div className={styles.draftsHeader}>
+              <h3>Gespeicherte Entwürfe</h3>
+              <button className={styles.closeDrafts} onClick={() => setShowDrafts(false)}>
+                <X size={16} />
+              </button>
+            </div>
+            {isLoadingDrafts ? (
+              <div className={styles.draftsLoading}>
+                <Loader2 size={20} className={styles.spinner} />
+                <span>Lade Entwürfe...</span>
+              </div>
+            ) : savedDrafts.length === 0 ? (
+              <div className={styles.draftsEmpty}>
+                <FolderOpen size={24} />
+                <span>Keine gespeicherten Entwürfe</span>
+              </div>
+            ) : (
+              <div className={styles.draftsList}>
+                {savedDrafts.map((draft) => (
+                  <button
+                    key={draft._id}
+                    className={styles.draftCard}
+                    onClick={() => onLoadDraft?.(draft._id)}
+                  >
+                    <div className={styles.draftInfo}>
+                      <span className={styles.draftName}>{draft.metadata.name}</span>
+                      <span className={styles.draftMeta}>
+                        <Clock size={12} />
+                        {formatDate(draft.updatedAt)}
+                        <span className={styles.draftBlocks}>{draft.blockCount} Blöcke</span>
+                      </span>
+                    </div>
+                    <ChevronRight size={18} className={styles.draftArrow} />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Categories */}
         <div className={styles.categories}>

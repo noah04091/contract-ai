@@ -417,6 +417,175 @@
   background: #a0aec0;
 }
 
+/* Drafts Toggle Button */
+.draftsToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 16px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #4a5568;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.draftsToggle:hover {
+  background: #f7fafc;
+  border-color: #3182ce;
+  color: #3182ce;
+}
+
+.draftsToggle.active {
+  background: #ebf8ff;
+  border-color: #3182ce;
+  color: #3182ce;
+}
+
+/* Drafts Section */
+.draftsSection {
+  background: #f7fafc;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 16px 24px;
+  animation: slideDown 0.2s ease forwards;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 300px;
+  }
+}
+
+.draftsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.draftsHeader h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0;
+}
+
+.closeDrafts {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #718096;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.closeDrafts:hover {
+  background: #e2e8f0;
+  color: #4a5568;
+}
+
+.draftsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.draftCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.draftCard:hover {
+  border-color: #3182ce;
+  background: #ebf8ff;
+}
+
+.draftInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.draftName {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a202c;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.draftMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #718096;
+}
+
+.draftBlocks {
+  margin-left: 8px;
+  padding-left: 8px;
+  border-left: 1px solid #e2e8f0;
+}
+
+.draftArrow {
+  color: #cbd5e0;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.draftCard:hover .draftArrow {
+  color: #3182ce;
+  transform: translateX(4px);
+}
+
+.draftsLoading,
+.draftsEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  color: #718096;
+  font-size: 13px;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .modal {
@@ -431,5 +600,10 @@
 
   .templateGrid {
     grid-template-columns: 1fr;
+  }
+
+  .draftsToggle {
+    width: 100%;
+    justify-content: center;
   }
 }

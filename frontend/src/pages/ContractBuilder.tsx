@@ -47,6 +47,18 @@ import styles from '../styles/ContractBuilder.module.css';
 
 type RightPanel = 'properties' | 'variables' | null;
 
+// Typ für gespeicherte Entwürfe
+interface SavedDraft {
+  _id: string;
+  metadata: {
+    name: string;
+    contractType: string;
+    status: string;
+  };
+  updatedAt: string;
+  blockCount: number;
+}
+
 const ContractBuilder: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id?: string }>();
@@ -72,6 +84,8 @@ const ContractBuilder: React.FC = () => {
     optimized: string;
     improvements: string[];
   } | null>(null);
+  const [savedDrafts, setSavedDrafts] = useState<SavedDraft[]>([]);
+  const [isLoadingDrafts, setIsLoadingDrafts] = useState(false);
 
   const {
     document: currentDocument,
@@ -112,6 +126,37 @@ const ContractBuilder: React.FC = () => {
       setShowTypeSelector(true);
     }
   }, [id, loadDocument, currentDocument]);
+
+  // Gespeicherte Entwürfe laden wenn Modal geöffnet wird
+  useEffect(() => {
+    if (showTypeSelector) {
+      const fetchSavedDrafts = async () => {
+        setIsLoadingDrafts(true);
+        try {
+          const API_BASE = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
+          const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+
+          const response = await fetch(`${API_BASE}/api/contract-builder?limit=10&sort=-updatedAt`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            setSavedDrafts(data.documents || []);
+          }
+        } catch (error) {
+          console.error('Fehler beim Laden der Entwürfe:', error);
+        } finally {
+          setIsLoadingDrafts(false);
+        }
+      };
+
+      fetchSavedDrafts();
+    }
+  }, [showTypeSelector]);
 
   // Automatisch zum Variables-Panel wechseln wenn eine Variable ausgewählt wird
   useEffect(() => {
@@ -166,6 +211,16 @@ const ContractBuilder: React.FC = () => {
       console.error('Fehler beim Erstellen des Dokuments:', err);
       // Bei Fehler zurück zur Vertragsliste
       navigate('/contracts');
+    }
+  };
+
+  // Handler für gespeicherten Entwurf laden
+  const handleLoadDraft = async (draftId: string) => {
+    try {
+      await loadDocument(draftId);
+      setShowTypeSelector(false);
+    } catch (err) {
+      console.error('Fehler beim Laden des Entwurfs:', err);
     }
   };
 
@@ -489,8 +544,11 @@ const ContractBuilder: React.FC = () => {
         <div className={styles.topBarLeft}>
           <button
             className={styles.backButton}
-            onClick={() => navigate('/contracts')}
-            title="Zurück"
+            onClick={() => {
+              // Zurück-Button zeigt Modal statt zum Dashboard zu navigieren
+              setShowTypeSelector(true);
+            }}
+            title="Vorlage wechseln"
           >
             <ChevronLeft size={18} />
           </button>
@@ -1164,13 +1222,17 @@ const ContractBuilder: React.FC = () => {
       <ContractTypeSelector
         isOpen={showTypeSelector}
         onClose={() => {
-          // Wenn geschlossen ohne Auswahl, navigiere zurück
+          // Wenn geschlossen ohne Auswahl, erstelle leere Vorlage
           if (!currentDocument) {
-            navigate('/contracts');
+            handleTemplateSelect('individuell');
+          } else {
+            setShowTypeSelector(false);
           }
-          setShowTypeSelector(false);
         }}
         onSelect={handleTemplateSelect}
+        savedDrafts={savedDrafts}
+        isLoadingDrafts={isLoadingDrafts}
+        onLoadDraft={handleLoadDraft}
       />
     </div>
   );
