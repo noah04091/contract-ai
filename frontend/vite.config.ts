@@ -21,7 +21,8 @@ const securityHeaders = {
 };
 
 // ✅ defineConfig als Funktion für korrekten Mode-Zugriff
-export default defineConfig(({ mode }) => ({
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export default defineConfig(({ mode: _mode }) => ({
   base: "/", // ✅ wichtig für korrekte Pfade bei Rewrite + Deployment
 
   plugins: [react()],
