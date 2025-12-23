@@ -443,10 +443,23 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange 
               onClick={handleViewContract}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              style={{ gridColumn: '1 / -1' }}
+              style={{
+                gridColumn: '1 / -1',
+                background: 'linear-gradient(135deg, #4f46e5, #6366f1)',
+                color: '#fff',
+                border: 'none',
+                padding: '14px 20px',
+                borderRadius: '12px',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px',
+                cursor: 'pointer'
+              }}
             >
               <FileText size={18} />
-              <span>📄 Vertrag anzeigen</span>
+              <span>Vertrag anzeigen</span>
               <ArrowRight size={16} className="action-arrow" />
             </motion.button>
 
@@ -456,7 +469,20 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange 
                 onClick={() => onAction("cancel", currentEvent.id)}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                style={{ gridColumn: '1 / -1' }}
+                style={{
+                  gridColumn: '1 / -1',
+                  background: 'linear-gradient(135deg, #ef4444, #f87171)',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '14px 20px',
+                  borderRadius: '12px',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px',
+                  cursor: 'pointer'
+                }}
               >
                 <Zap size={18} />
                 <span>Jetzt kündigen</span>
@@ -464,35 +490,86 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange 
               </motion.button>
             )}
 
-            <motion.button
-              className="action-btn-premium secondary"
-              onClick={() => onAction("compare", currentEvent.id)}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <TrendingUp size={18} />
-              <span>Vergleichen</span>
-            </motion.button>
+            {/* Action Buttons - Equal Width Grid */}
+            <div style={{
+              gridColumn: '1 / -1',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '12px',
+              marginTop: '8px'
+            }}>
+              <motion.button
+                onClick={() => onAction("compare", currentEvent.id)}
+                whileHover={{ scale: 1.02, background: 'linear-gradient(135deg, #10b981, #34d399)' }}
+                whileTap={{ scale: 0.98 }}
+                style={{
+                  background: 'linear-gradient(135deg, #059669, #10b981)',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '12px 16px',
+                  borderRadius: '10px',
+                  fontWeight: 600,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  cursor: 'pointer',
+                  fontSize: '13px'
+                }}
+              >
+                <TrendingUp size={20} />
+                <span>Vergleichen</span>
+              </motion.button>
 
-            <motion.button
-              className="action-btn-premium secondary"
-              onClick={() => onAction("optimize", currentEvent.id)}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <RefreshCw size={18} />
-              <span>Optimieren</span>
-            </motion.button>
+              <motion.button
+                onClick={() => onAction("optimize", currentEvent.id)}
+                whileHover={{ scale: 1.02, background: 'linear-gradient(135deg, #8b5cf6, #a78bfa)' }}
+                whileTap={{ scale: 0.98 }}
+                style={{
+                  background: 'linear-gradient(135deg, #7c3aed, #8b5cf6)',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '12px 16px',
+                  borderRadius: '10px',
+                  fontWeight: 600,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  cursor: 'pointer',
+                  fontSize: '13px'
+                }}
+              >
+                <RefreshCw size={20} />
+                <span>Optimieren</span>
+              </motion.button>
 
-            <motion.button
-              className="action-btn-premium ghost"
-              onClick={() => onAction("snooze", currentEvent.id)}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <BellOff size={18} />
-              <span>Später</span>
-            </motion.button>
+              <motion.button
+                onClick={() => onAction("snooze", currentEvent.id)}
+                whileHover={{ scale: 1.02, background: 'linear-gradient(135deg, #64748b, #94a3b8)' }}
+                whileTap={{ scale: 0.98 }}
+                style={{
+                  background: 'linear-gradient(135deg, #475569, #64748b)',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '12px 16px',
+                  borderRadius: '10px',
+                  fontWeight: 600,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  cursor: 'pointer',
+                  fontSize: '13px'
+                }}
+              >
+                <BellOff size={20} />
+                <span>Später</span>
+              </motion.button>
+            </div>
           </div>
         </div>
       </motion.div>
@@ -1082,6 +1159,167 @@ function CreateEventModal({ date, onClose }: CreateEventModalProps) {
   );
 }
 
+// ========== Snooze Modal ==========
+interface SnoozeModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSnooze: (days: number) => void;
+}
+
+function SnoozeModal({ isOpen, onClose, onSnooze }: SnoozeModalProps) {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  if (!isOpen) return null;
+
+  const snoozeOptions = [
+    { days: 1, label: 'Morgen', icon: '🌅', description: 'In 1 Tag erinnern' },
+    { days: 3, label: 'In 3 Tagen', icon: '📅', description: 'Kurze Pause' },
+    { days: 7, label: 'In 1 Woche', icon: '📆', description: 'Nächste Woche erinnern' },
+    { days: 14, label: 'In 2 Wochen', icon: '🗓️', description: 'In 14 Tagen erinnern' },
+    { days: 30, label: 'In 1 Monat', icon: '📋', description: 'Nächsten Monat erinnern' },
+  ];
+
+  return (
+    <motion.div
+      className="quick-actions-overlay"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+      style={{ padding: isMobile ? '20px' : '40px', zIndex: 1002 }}
+    >
+      <motion.div
+        className="premium-modal"
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          maxWidth: isMobile ? '100%' : '420px',
+          width: isMobile ? 'calc(100% - 40px)' : '420px',
+          background: '#ffffff',
+          borderRadius: '20px',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)',
+          overflow: 'hidden'
+        }}
+      >
+        {/* Header */}
+        <div style={{
+          padding: isMobile ? '20px' : '24px',
+          borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+          background: 'linear-gradient(135deg, rgba(71, 85, 105, 0.08), rgba(100, 116, 139, 0.04))',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{
+              width: '44px',
+              height: '44px',
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, #475569, #64748b)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <BellOff size={22} style={{ color: '#fff' }} />
+            </div>
+            <div>
+              <h2 style={{ margin: 0, fontSize: isMobile ? '18px' : '20px', fontWeight: 700, color: '#1f2937' }}>
+                Später erinnern
+              </h2>
+              <p style={{ margin: '2px 0 0 0', fontSize: '13px', color: '#6b7280' }}>
+                Wann sollen wir Sie erinnern?
+              </p>
+            </div>
+          </div>
+          <motion.button
+            onClick={onClose}
+            whileHover={{ scale: 1.1, rotate: 90 }}
+            whileTap={{ scale: 0.9 }}
+            style={{
+              background: 'rgba(0, 0, 0, 0.05)',
+              border: 'none',
+              borderRadius: '50%',
+              width: '36px',
+              height: '36px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer'
+            }}
+          >
+            <X size={20} />
+          </motion.button>
+        </div>
+
+        {/* Options */}
+        <div style={{ padding: isMobile ? '16px' : '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {snoozeOptions.map((option) => (
+            <motion.button
+              key={option.days}
+              onClick={() => onSnooze(option.days)}
+              whileHover={{ scale: 1.02, x: 5 }}
+              whileTap={{ scale: 0.98 }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '14px',
+                padding: '16px',
+                background: '#f9fafb',
+                border: '1px solid #e5e7eb',
+                borderRadius: '12px',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <span style={{ fontSize: '24px' }}>{option.icon}</span>
+              <div style={{ flex: 1 }}>
+                <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: '#1f2937' }}>
+                  {option.label}
+                </h3>
+                <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#9ca3af' }}>
+                  {option.description}
+                </p>
+              </div>
+              <ChevronRight size={18} style={{ color: '#9ca3af' }} />
+            </motion.button>
+          ))}
+        </div>
+
+        {/* Cancel Button */}
+        <div style={{ padding: '0 20px 20px 20px' }}>
+          <motion.button
+            onClick={onClose}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            style={{
+              width: '100%',
+              padding: '12px',
+              background: 'transparent',
+              border: '1px solid #e5e7eb',
+              borderRadius: '10px',
+              color: '#6b7280',
+              fontSize: '14px',
+              fontWeight: 500,
+              cursor: 'pointer'
+            }}
+          >
+            Abbrechen
+          </motion.button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 // ========== Main Calendar Page ==========
 export default function CalendarPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -1102,6 +1340,8 @@ export default function CalendarPage() {
   const [selectedStatFilter, setSelectedStatFilter] = useState<"upcoming" | "past" | "cancelable" | "autoRenewal">("upcoming");
   const [showCreateEventModal, setShowCreateEventModal] = useState<Date | null>(null);
   const [allDayEventsForPagination, setAllDayEventsForPagination] = useState<CalendarEvent[]>([]);
+  const [showSnoozeModal, setShowSnoozeModal] = useState(false);
+  const [snoozeEventId, setSnoozeEventId] = useState<string | null>(null);
 
   const EVENTS_PER_PAGE = 5;
 
@@ -1169,11 +1409,18 @@ export default function CalendarPage() {
   };
 
   // Handle Quick Action
-  const handleQuickAction = async (action: string, eventId: string) => {
+  const handleQuickAction = async (action: string, eventId: string, snoozeDays?: number) => {
+    // If snooze action without days, open the snooze modal
+    if (action === "snooze" && !snoozeDays) {
+      setSnoozeEventId(eventId);
+      setShowSnoozeModal(true);
+      return;
+    }
+
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post<ApiResponse>("/api/calendar/quick-action", {
-        eventId, action, data: action === "snooze" ? { days: 7 } : {}
+        eventId, action, data: action === "snooze" ? { days: snoozeDays || 7 } : {}
       }, { headers: { Authorization: `Bearer ${token}` } });
 
       if (response.data.success) {
@@ -1182,6 +1429,8 @@ export default function CalendarPage() {
         } else {
           await fetchEvents();
           setShowQuickActions(false);
+          setShowSnoozeModal(false);
+          setSnoozeEventId(null);
           setSelectedEvent(null);
         }
       }
@@ -1440,19 +1689,19 @@ export default function CalendarPage() {
                 </div>
                 <div className="stats-grid">
                   <div className="stat-card clickable" onClick={() => handleStatsCardClick('upcoming')}>
-                    <div className="stat-value">{stats.upcoming}</div>
+                    <div className="stat-value" style={{ color: '#10b981' }}>{stats.upcoming}</div>
                     <div className="stat-label">Kommende</div>
                   </div>
                   <div className="stat-card clickable" onClick={() => handleStatsCardClick('past')}>
-                    <div className="stat-value">{stats.past}</div>
+                    <div className="stat-value" style={{ color: '#9ca3af' }}>{stats.past}</div>
                     <div className="stat-label">Vergangen</div>
                   </div>
                   <div className="stat-card warning clickable" onClick={() => handleStatsCardClick('cancelable')}>
-                    <div className="stat-value">{stats.cancelable}</div>
+                    <div className="stat-value" style={{ color: '#f59e0b' }}>{stats.cancelable}</div>
                     <div className="stat-label">Kündbar</div>
                   </div>
                   <div className="stat-card clickable" onClick={() => handleStatsCardClick('autoRenewal')}>
-                    <div className="stat-value">{stats.autoRenewal}</div>
+                    <div className="stat-value" style={{ color: '#6366f1' }}>{stats.autoRenewal}</div>
                     <div className="stat-label">Auto-Verl.</div>
                   </div>
                 </div>
@@ -1655,6 +1904,22 @@ export default function CalendarPage() {
               setShowStatsModal(false);
               setSelectedEvent(event);
               setShowQuickActions(true);
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Snooze Modal */}
+      <AnimatePresence>
+        {showSnoozeModal && snoozeEventId && (
+          <SnoozeModal
+            isOpen={showSnoozeModal}
+            onClose={() => {
+              setShowSnoozeModal(false);
+              setSnoozeEventId(null);
+            }}
+            onSnooze={(days) => {
+              handleQuickAction("snooze", snoozeEventId, days);
             }}
           />
         )}
