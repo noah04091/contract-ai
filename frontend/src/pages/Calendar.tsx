@@ -490,83 +490,85 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange 
               </motion.button>
             )}
 
-            {/* Action Buttons - Equal Width Grid */}
+            {/* Secondary Action Buttons - Compact */}
             <div style={{
               gridColumn: '1 / -1',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: '12px',
+              display: 'flex',
+              gap: '8px',
               marginTop: '8px'
             }}>
               <motion.button
                 onClick={() => onAction("compare", currentEvent.id)}
-                whileHover={{ scale: 1.02, background: 'linear-gradient(135deg, #10b981, #34d399)' }}
+                whileHover={{ scale: 1.02, background: '#f0fdf4', borderColor: '#10b981' }}
                 whileTap={{ scale: 0.98 }}
                 style={{
-                  background: 'linear-gradient(135deg, #059669, #10b981)',
-                  color: '#fff',
-                  border: 'none',
-                  padding: '12px 16px',
-                  borderRadius: '10px',
-                  fontWeight: 600,
+                  flex: 1,
+                  background: '#f9fafb',
+                  color: '#059669',
+                  border: '1px solid #e5e7eb',
+                  padding: '10px 12px',
+                  borderRadius: '8px',
+                  fontWeight: 500,
                   display: 'flex',
-                  flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '6px',
                   cursor: 'pointer',
-                  fontSize: '13px'
+                  fontSize: '13px',
+                  transition: 'all 0.2s ease'
                 }}
               >
-                <TrendingUp size={20} />
+                <TrendingUp size={16} />
                 <span>Vergleichen</span>
               </motion.button>
 
               <motion.button
                 onClick={() => onAction("optimize", currentEvent.id)}
-                whileHover={{ scale: 1.02, background: 'linear-gradient(135deg, #8b5cf6, #a78bfa)' }}
+                whileHover={{ scale: 1.02, background: '#f5f3ff', borderColor: '#8b5cf6' }}
                 whileTap={{ scale: 0.98 }}
                 style={{
-                  background: 'linear-gradient(135deg, #7c3aed, #8b5cf6)',
-                  color: '#fff',
-                  border: 'none',
-                  padding: '12px 16px',
-                  borderRadius: '10px',
-                  fontWeight: 600,
+                  flex: 1,
+                  background: '#f9fafb',
+                  color: '#7c3aed',
+                  border: '1px solid #e5e7eb',
+                  padding: '10px 12px',
+                  borderRadius: '8px',
+                  fontWeight: 500,
                   display: 'flex',
-                  flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '6px',
                   cursor: 'pointer',
-                  fontSize: '13px'
+                  fontSize: '13px',
+                  transition: 'all 0.2s ease'
                 }}
               >
-                <RefreshCw size={20} />
+                <RefreshCw size={16} />
                 <span>Optimieren</span>
               </motion.button>
 
               <motion.button
                 onClick={() => onAction("snooze", currentEvent.id)}
-                whileHover={{ scale: 1.02, background: 'linear-gradient(135deg, #64748b, #94a3b8)' }}
+                whileHover={{ scale: 1.02, background: '#f1f5f9', borderColor: '#64748b' }}
                 whileTap={{ scale: 0.98 }}
                 style={{
-                  background: 'linear-gradient(135deg, #475569, #64748b)',
-                  color: '#fff',
-                  border: 'none',
-                  padding: '12px 16px',
-                  borderRadius: '10px',
-                  fontWeight: 600,
+                  flex: 1,
+                  background: '#f9fafb',
+                  color: '#475569',
+                  border: '1px solid #e5e7eb',
+                  padding: '10px 12px',
+                  borderRadius: '8px',
+                  fontWeight: 500,
                   display: 'flex',
-                  flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '6px',
                   cursor: 'pointer',
-                  fontSize: '13px'
+                  fontSize: '13px',
+                  transition: 'all 0.2s ease'
                 }}
               >
-                <BellOff size={20} />
+                <BellOff size={16} />
                 <span>Später</span>
               </motion.button>
             </div>
@@ -1178,11 +1180,11 @@ function SnoozeModal({ isOpen, onClose, onSnooze }: SnoozeModalProps) {
   if (!isOpen) return null;
 
   const snoozeOptions = [
-    { days: 1, label: 'Morgen', icon: '🌅', description: 'In 1 Tag erinnern' },
-    { days: 3, label: 'In 3 Tagen', icon: '📅', description: 'Kurze Pause' },
-    { days: 7, label: 'In 1 Woche', icon: '📆', description: 'Nächste Woche erinnern' },
-    { days: 14, label: 'In 2 Wochen', icon: '🗓️', description: 'In 14 Tagen erinnern' },
-    { days: 30, label: 'In 1 Monat', icon: '📋', description: 'Nächsten Monat erinnern' },
+    { days: 1, label: '1 Tag später', icon: '📅', description: 'Erinnerung um 1 Tag verschieben' },
+    { days: 3, label: '3 Tage später', icon: '📆', description: 'Erinnerung um 3 Tage verschieben' },
+    { days: 7, label: '1 Woche später', icon: '🗓️', description: 'Erinnerung um 7 Tage verschieben' },
+    { days: 14, label: '2 Wochen später', icon: '📋', description: 'Erinnerung um 14 Tage verschieben' },
+    { days: 30, label: '1 Monat später', icon: '📁', description: 'Erinnerung um 30 Tage verschieben' },
   ];
 
   return (
