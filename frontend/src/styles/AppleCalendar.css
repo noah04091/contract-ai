@@ -132,21 +132,18 @@
 
 /* ========== Main Content Grid ========== */
 .calendar-page .content-grid {
-  display: flex !important;
-  flex-direction: row !important;
+  display: grid !important;
+  grid-template-columns: 1fr 340px !important;
   gap: 24px;
 }
 
 .calendar-page .content-grid > .calendar-container {
-  flex: 1 1 auto !important;
+  grid-column: 1 !important;
   min-width: 0;
-  order: 1 !important;
 }
 
 .calendar-page .content-grid > .sidebar {
-  width: 340px !important;
-  flex-shrink: 0;
-  order: 2 !important;
+  grid-column: 2 !important;
 }
 
 /* ========== Calendar Container ========== */
@@ -786,16 +783,15 @@
 /* ========== Responsive ========== */
 @media (max-width: 1200px) {
   .calendar-page .content-grid {
-    flex-direction: column !important;
+    grid-template-columns: 1fr !important;
   }
 
   .calendar-page .content-grid > .calendar-container {
-    order: 1 !important;
+    grid-column: 1 !important;
   }
 
   .calendar-page .content-grid > .sidebar {
-    width: 100% !important;
-    order: 2 !important;
+    grid-column: 1 !important;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 20px;
