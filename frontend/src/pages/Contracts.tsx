@@ -4666,6 +4666,7 @@ export default function Contracts() {
                     </div>
 
                     {/* ✅ NEU: Infinite Scroll Loading Indicator & Sentinel */}
+                    {/* 📱 MOBILE-FIX: Extra padding-bottom damit es nicht von Bottom-Nav überdeckt wird */}
                     {paginationInfo.hasMore && (
                       <div
                         ref={loadMoreRef}
@@ -4674,20 +4675,20 @@ export default function Contracts() {
                           flexDirection: 'column',
                           alignItems: 'center',
                           gap: '12px',
-                          padding: '32px 0',
-                          borderTop: '1px solid #e5e7eb'
+                          padding: '24px 0 120px 0', // 📱 120px padding-bottom für Mobile Bottom-Nav
+                          marginTop: '8px'
                         }}
                       >
                         {loadingMore ? (
                           <>
                             {/* ✅ CSS-Animation für zuverlässige Spinner-Rotation */}
                             <div className={styles.spinnerRotate}>
-                              <Loader size={28} style={{ color: '#3b82f6' }} />
+                              <Loader size={32} style={{ color: '#3b82f6' }} />
                             </div>
                             <div style={{
-                              fontSize: '14px',
-                              color: '#6b7280',
-                              fontWeight: 500
+                              fontSize: '15px',
+                              color: '#374151',
+                              fontWeight: 600
                             }}>
                               Lädt weitere Verträge...
                             </div>
