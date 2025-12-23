@@ -523,6 +523,38 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
   // Safety check for events
   const safeEvents = Array.isArray(events) ? events : [];
 
+  // Helper: Format date as DD.MM.YYYY
+  const formatDateFull = (dateStr: string): string => {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return 'Kein Datum';
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}.${month}.${year}`;
+  };
+
+  // Helper: Get relative days text
+  const getRelativeDays = (dateStr: string): string => {
+    const eventDate = new Date(dateStr);
+    if (isNaN(eventDate.getTime())) return '';
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    eventDate.setHours(0, 0, 0, 0);
+
+    const diffTime = eventDate.getTime() - today.getTime();
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'Heute';
+    if (diffDays === 1) return 'Morgen';
+    if (diffDays === -1) return 'Gestern';
+    if (diffDays > 0) return `in ${diffDays} Tagen`;
+    return `vor ${Math.abs(diffDays)} Tagen`;
+  };
+
+  // Check if this is a "past" events modal
+  const isPastEvents = title.toLowerCase().includes('vergangen');
+
   // Filter out events without valid dates and sort by date
   const validEvents = safeEvents.filter(e => e && e.date);
   const sortedEvents = [...validEvents].sort((a, b) => {
@@ -530,7 +562,11 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
     const dateB = new Date(b.date);
     if (isNaN(dateA.getTime())) return 1;
     if (isNaN(dateB.getTime())) return -1;
-    return dateA.getTime() - dateB.getTime();
+    // For past events: newest first (descending)
+    // For upcoming events: nearest first (ascending)
+    return isPastEvents
+      ? dateB.getTime() - dateA.getTime()
+      : dateA.getTime() - dateB.getTime();
   });
 
   const getSeverityColor = (severity: string) => {
@@ -639,9 +675,16 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
                       }}>
                         {event.severity === 'critical' ? 'Kritisch' : event.severity === 'warning' ? 'Warnung' : 'Info'}
                       </span>
-                      <span style={{ fontSize: '12px', color: '#9ca3af' }}>
-                        {event.date ? new Date(event.date).toLocaleDateString('de-DE') : 'Kein Datum'}
-                      </span>
+                      <div style={{ textAlign: 'right' }}>
+                        <span style={{ fontSize: '12px', color: '#6b7280', fontWeight: 500 }}>
+                          {event.date ? formatDateFull(event.date) : 'Kein Datum'}
+                        </span>
+                        {event.date && (
+                          <span style={{ fontSize: '11px', color: '#9ca3af', marginLeft: '8px' }}>
+                            ({getRelativeDays(event.date)})
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <h4 style={{ margin: '0 0 4px 0', fontSize: '15px', fontWeight: 600, color: '#1f2937' }}>
                       {event.contractName ? formatContractName(event.contractName) : 'Unbekannter Vertrag'}
@@ -718,7 +761,7 @@ function DayEventsModal({ date, events, onEventClick, onClose }: DayEventsModalP
         <div style={{
           padding: isMobile ? '20px' : '30px',
           borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
-          background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.05))',
+          background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.05), rgba(99, 102, 241, 0.05))',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
