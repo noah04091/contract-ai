@@ -522,6 +522,9 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
 
   if (!isOpen) return null;
 
+  // TEMPORARY: Alert to debug modal opening
+  alert('StatsDetailModal opened! Events: ' + (events?.length || 0));
+
   // Safety check for events
   const safeEvents = Array.isArray(events) ? events : [];
   console.log('[DEBUG] StatsDetailModal is open, safeEvents:', safeEvents.length);
@@ -1320,6 +1323,8 @@ export default function CalendarPage() {
 
   // Handle Stats Card Click - Opens Modal
   const handleStatsCardClick = (filterType: "upcoming" | "past" | "cancelable" | "autoRenewal") => {
+    // TEMPORARY: Alert to debug
+    alert('Stats card clicked: ' + filterType + ', Events: ' + events.length);
     try {
       console.log('[DEBUG] Stats card clicked:', filterType);
       console.log('[DEBUG] Current events:', events.length);
@@ -1329,6 +1334,7 @@ export default function CalendarPage() {
       console.log('[DEBUG] Modal should now be open');
     } catch (error) {
       console.error('[DEBUG] Error in handleStatsCardClick:', error);
+      alert('Error: ' + String(error));
     }
   };
 
