@@ -4305,6 +4305,10 @@ export default function Contracts() {
                         Einen Moment bitte
                       </div>
                     </div>
+                    {/* Desktop Table Skeleton */}
+                    <ContractsSkeleton rows={5} />
+                    {/* Mobile Cards Skeleton */}
+                    <ContractsCardsSkeleton cards={3} />
                   </>
                 ) : errorMessage ? (
                   <div className={styles.errorContainer}>
