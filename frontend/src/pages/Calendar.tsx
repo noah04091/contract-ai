@@ -13,12 +13,9 @@ import {
   X,
   FileText,
   Clock,
-  AlertTriangle,
   Zap,
   Target,
   TrendingUp,
-  Shield,
-  Info,
   Bell
 } from "lucide-react";
 import axios from "axios";
@@ -177,7 +174,7 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, onDateClick, on
           >
             <div className="day-number">{dayInfo.day}</div>
             <div className="day-events">
-              {dayInfo.events.slice(0, 3).map((event, eventIndex) => (
+              {dayInfo.events.slice(0, 3).map((event) => (
                 <div
                   key={event.id}
                   className={`event-pill ${event.severity}`}
