@@ -25,7 +25,8 @@ import {
   Target,
   BarChart3,
   ArrowRight,
-  Link2
+  Link2,
+  Plus
 } from "lucide-react";
 import axios from "axios";
 import "../styles/AppleCalendar.css";
@@ -684,6 +685,8 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [view, setView] = useState<"month" | "year">("month");
+  const [calendarView, setCalendarView] = useState<"month" | "week" | "day">("month");
+  const [activeDate, setActiveDate] = useState<Date>(new Date());
   const [filterSeverity, setFilterSeverity] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
   const [showQuickActions, setShowQuickActions] = useState(false);
@@ -697,6 +700,29 @@ export default function CalendarPage() {
   const [showSyncModal, setShowSyncModal] = useState(false);
 
   const EVENTS_PER_PAGE = isMobile ? 3 : 5;
+
+  // Calendar Navigation Helpers
+  const navigateMonth = (direction: 'prev' | 'next') => {
+    const newDate = new Date(activeDate);
+    if (direction === 'prev') {
+      newDate.setMonth(newDate.getMonth() - 1);
+    } else {
+      newDate.setMonth(newDate.getMonth() + 1);
+    }
+    setActiveDate(newDate);
+  };
+
+  const goToToday = () => {
+    setActiveDate(new Date());
+    setSelectedDate(new Date());
+  };
+
+  const formatCurrentMonth = () => {
+    return activeDate.toLocaleDateString('de-DE', {
+      month: 'long',
+      year: 'numeric'
+    });
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -1177,307 +1203,388 @@ export default function CalendarPage() {
           )}
         </AnimatePresence>
 
-        {/* Main Content Grid */}
+        {/* Main Content Grid - Calendar Left, Sidebar Right */}
         <div className={`calendar-grid-premium ${isMobile ? 'mobile' : isTablet ? 'tablet' : 'desktop'}`}>
-          {/* Statistics Cards - Top Position */}
-          <motion.div 
-            className="stats-section-premium"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <div className="stats-grid-premium">
-              <motion.div
-                className="stat-card-premium total"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => handleStatsCardClick("total")}
-                style={{ cursor: 'pointer' }}
-              >
-                <div className="stat-icon-wrapper">
-                  <BarChart3 size={24} />
-                </div>
-                <div className="stat-content">
-                  <div className="stat-value">{stats.total}</div>
-                  <div className="stat-label">Ereignisse gesamt</div>
-                </div>
-                <div className="stat-card-arrow">
-                  <ArrowRight size={16} />
-                </div>
-              </motion.div>
 
-              <motion.div
-                className="stat-card-premium past"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => handleStatsCardClick("past")}
-                style={{ cursor: 'pointer' }}
-              >
-                <div className="stat-icon-wrapper">
-                  <Clock size={24} />
-                </div>
-                <div className="stat-content">
-                  <div className="stat-value">{stats.past}</div>
-                  <div className="stat-label">Vergangene Ereignisse</div>
-                </div>
-                <div className="stat-card-arrow">
-                  <ArrowRight size={16} />
-                </div>
-              </motion.div>
-
-              <motion.div
-                className="stat-card-premium warning"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => handleStatsCardClick("thisMonth")}
-                style={{ cursor: 'pointer' }}
-              >
-                <div className="stat-icon-wrapper">
-                  <Target size={24} />
-                </div>
-                <div className="stat-content">
-                  <div className="stat-value">{stats.thisMonth}</div>
-                  <div className="stat-label">Diesen Monat</div>
-                </div>
-                <div className="stat-card-arrow">
-                  <ArrowRight size={16} />
-                </div>
-              </motion.div>
-
-              <motion.div
-                className="stat-card-premium info"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => handleStatsCardClick("notified")}
-                style={{ cursor: 'pointer' }}
-              >
-                <div className="stat-icon-wrapper">
-                  <Bell size={24} />
-                </div>
-                <div className="stat-content">
-                  <div className="stat-value">{stats.notified}</div>
-                  <div className="stat-label">Benachrichtigt</div>
-                </div>
-                <div className="stat-card-arrow">
-                  <ArrowRight size={16} />
-                </div>
-              </motion.div>
-            </div>
-          </motion.div>
-
-          {/* Calendar Section */}
-          <motion.div 
+          {/* Calendar Section - Main Area */}
+          <motion.div
             className="calendar-section-premium"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2 }}
+            transition={{ delay: 0.1 }}
           >
+            {/* Custom Calendar Header Controls */}
+            <div className="calendar-header-controls">
+              <div className="calendar-nav">
+                <button
+                  className="calendar-nav-btn"
+                  onClick={() => navigateMonth('prev')}
+                  aria-label="Vorheriger Monat"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+                <span className="calendar-current-month">{formatCurrentMonth()}</span>
+                <button
+                  className="calendar-nav-btn"
+                  onClick={() => navigateMonth('next')}
+                  aria-label="Nächster Monat"
+                >
+                  <ChevronRight size={20} />
+                </button>
+                <button
+                  className="calendar-today-btn"
+                  onClick={goToToday}
+                >
+                  Heute
+                </button>
+              </div>
+
+              <div className="view-switcher">
+                <button
+                  className={`view-btn ${calendarView === 'month' ? 'active' : ''}`}
+                  onClick={() => setCalendarView('month')}
+                >
+                  Monat
+                </button>
+                <button
+                  className={`view-btn ${calendarView === 'week' ? 'active' : ''}`}
+                  onClick={() => setCalendarView('week')}
+                >
+                  Woche
+                </button>
+                <button
+                  className={`view-btn ${calendarView === 'day' ? 'active' : ''}`}
+                  onClick={() => setCalendarView('day')}
+                >
+                  Tag
+                </button>
+              </div>
+            </div>
+
             {loading ? (
-              <div className="calendar-loading-premium">
-                <div className="loading-spinner"></div>
+              <div className="calendar-loading">
+                <RefreshCw size={32} className="spinning" />
                 <p>Kalenderereignisse werden geladen...</p>
               </div>
             ) : error ? (
-              <div className="calendar-error-premium">
-                <AlertCircle size={32} />
+              <div className="empty-state">
+                <AlertCircle size={48} />
+                <h3>Fehler beim Laden</h3>
                 <p>{error}</p>
               </div>
             ) : (
               <>
-                <Calendar 
+                <Calendar
                   onChange={handleDateClick}
                   value={selectedDate || new Date()}
+                  activeStartDate={activeDate}
+                  onActiveStartDateChange={({ activeStartDate }) => {
+                    if (activeStartDate) setActiveDate(activeStartDate);
+                  }}
                   tileClassName={tileClassName}
                   tileContent={tileContent}
                   view={view}
                   onViewChange={({ view: newView }) => setView(newView as "month" | "year")}
-                  showNeighboringMonth={false}
+                  showNeighboringMonth={true}
                   minDetail="year"
                   locale="de-DE"
+                  calendarType="iso8601"
                   className="calendar-premium"
+                  showNavigation={false}
                 />
-                
-                <div className="calendar-legend-premium">
-                  <div className="legend-item">
-                    <div className="legend-dot critical"></div>
-                    <span>Kritisch</span>
+
+                <div className="calendar-legend-premium" style={{
+                  display: 'flex',
+                  gap: '16px',
+                  justifyContent: 'center',
+                  marginTop: '16px',
+                  paddingTop: '16px',
+                  borderTop: '1px solid rgba(0,0,0,0.08)'
+                }}>
+                  <div className="legend-item" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444' }}></div>
+                    <span style={{ fontSize: '12px', color: '#6b7280' }}>Kritisch</span>
                   </div>
-                  <div className="legend-item">
-                    <div className="legend-dot warning"></div>
-                    <span>Warnung</span>
+                  <div className="legend-item" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f59e0b' }}></div>
+                    <span style={{ fontSize: '12px', color: '#6b7280' }}>Warnung</span>
                   </div>
-                  <div className="legend-item">
-                    <div className="legend-dot info"></div>
-                    <span>Info</span>
+                  <div className="legend-item" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#3b82f6' }}></div>
+                    <span style={{ fontSize: '12px', color: '#6b7280' }}>Info</span>
                   </div>
                 </div>
               </>
             )}
           </motion.div>
 
-          {/* Urgent Events Section with Pagination */}
-          <motion.div 
-            className="urgent-section-premium"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <div className="section-header-premium">
-              <div className="section-title">
-                <AlertCircle size={20} className="section-icon" />
-                <h3>Dringende Ereignisse</h3>
+          {/* Sidebar Container - Right Side */}
+          <div className="sidebar-container">
+            {/* Statistics Cards */}
+            <motion.div
+              className="stats-section-premium"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+            >
+              <div className="stats-grid-premium">
+                <motion.div
+                  className="stat-card-premium total"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => handleStatsCardClick("total")}
+                >
+                  <div className="stat-icon-wrapper">
+                    <BarChart3 size={20} />
+                  </div>
+                  <div className="stat-content">
+                    <div className="stat-value">{stats.total}</div>
+                    <div className="stat-label">Gesamt</div>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  className="stat-card-premium past"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => handleStatsCardClick("past")}
+                >
+                  <div className="stat-icon-wrapper">
+                    <Clock size={20} />
+                  </div>
+                  <div className="stat-content">
+                    <div className="stat-value">{stats.past}</div>
+                    <div className="stat-label">Vergangen</div>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  className="stat-card-premium warning"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => handleStatsCardClick("thisMonth")}
+                >
+                  <div className="stat-icon-wrapper">
+                    <Target size={20} />
+                  </div>
+                  <div className="stat-content">
+                    <div className="stat-value">{stats.thisMonth}</div>
+                    <div className="stat-label">Dieser Monat</div>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  className="stat-card-premium info"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => handleStatsCardClick("notified")}
+                >
+                  <div className="stat-icon-wrapper">
+                    <Bell size={20} />
+                  </div>
+                  <div className="stat-content">
+                    <div className="stat-value">{stats.notified}</div>
+                    <div className="stat-label">Benachrichtigt</div>
+                  </div>
+                </motion.div>
               </div>
-              {urgentEvents.length > EVENTS_PER_PAGE && (
-                <div className="pagination-controls">
-                  <button 
-                    onClick={() => setUrgentEventsPage(Math.max(0, urgentEventsPage - 1))}
-                    disabled={urgentEventsPage === 0}
-                    className="pagination-btn"
+            </motion.div>
+
+            {/* Filter Section */}
+            <motion.div
+              className="filter-section-premium"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <h3 className="filter-section-title">
+                <Filter size={16} />
+                Filter
+              </h3>
+              <div className="filter-grid-premium">
+                <div className="filter-group-compact">
+                  <AlertTriangle size={16} />
+                  <select
+                    value={filterSeverity}
+                    onChange={(e) => setFilterSeverity(e.target.value)}
+                    className="filter-select-compact"
                   >
-                    <ChevronLeft size={16} />
-                  </button>
-                  <span className="pagination-info">
-                    {urgentEventsPage + 1} / {totalPages}
-                  </span>
-                  <button 
-                    onClick={() => setUrgentEventsPage(Math.min(totalPages - 1, urgentEventsPage + 1))}
-                    disabled={urgentEventsPage === totalPages - 1}
-                    className="pagination-btn"
+                    <option value="all">Alle Dringlichkeiten</option>
+                    <option value="critical">Kritisch</option>
+                    <option value="warning">Warnung</option>
+                    <option value="info">Info</option>
+                  </select>
+                </div>
+
+                <div className="filter-group-compact">
+                  <FileText size={16} />
+                  <select
+                    value={filterType}
+                    onChange={(e) => setFilterType(e.target.value)}
+                    className="filter-select-compact"
                   >
-                    <ChevronRight size={16} />
-                  </button>
+                    <option value="all">Alle Ereignisse</option>
+                    <option value="CANCEL_WINDOW_OPEN">Kündigungsfenster</option>
+                    <option value="LAST_CANCEL_DAY">Letzte Chance</option>
+                    <option value="PRICE_INCREASE">Preiserhöhung</option>
+                    <option value="AUTO_RENEWAL">Verlängerung</option>
+                    <option value="REVIEW">Review</option>
+                  </select>
+                </div>
+
+                <motion.button
+                  className={`refresh-btn-premium ${refreshing ? 'refreshing' : ''}`}
+                  onClick={handleRegenerateEvents}
+                  disabled={refreshing}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <RefreshCw size={16} className={refreshing ? "spinning" : ""} />
+                  <span>{refreshing ? "Aktualisiere..." : "Events aktualisieren"}</span>
+                </motion.button>
+              </div>
+            </motion.div>
+
+            {/* Urgent Events Section */}
+            <motion.div
+              className="urgent-section-premium"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+            >
+              <h3>
+                <AlertCircle size={18} />
+                Dringende Ereignisse
+              </h3>
+
+              {paginatedEvents.length > 0 ? (
+                <>
+                  <div className="urgent-list">
+                    {paginatedEvents.map((event, index) => {
+                      const daysInfo = getDaysRemaining(event.date);
+                      const formattedName = formatContractName(event.contractName);
+
+                      return (
+                        <motion.div
+                          key={event.id}
+                          className={`urgent-item ${event.severity}`}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.05 * index }}
+                          onClick={() => {
+                            setSelectedEvent(event);
+                            setShowQuickActions(true);
+                          }}
+                        >
+                          <div className="urgent-item-icon">
+                            {getEventTypeIcon(event.type)}
+                          </div>
+                          <div className="urgent-item-content">
+                            <p className="urgent-item-title">{formattedName}</p>
+                            <div className="urgent-item-meta">
+                              <span className="urgent-item-date">
+                                <CalendarIconLucide size={12} />
+                                {new Date(event.date).toLocaleDateString('de-DE', {
+                                  day: '2-digit',
+                                  month: 'short'
+                                })}
+                              </span>
+                              <span style={{
+                                color: daysInfo.urgent ? '#ef4444' : '#6b7280',
+                                fontWeight: daysInfo.urgent ? 600 : 400
+                              }}>
+                                {daysInfo.text}
+                              </span>
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+
+                  {urgentEvents.length > EVENTS_PER_PAGE && (
+                    <div className="pagination-premium">
+                      <button
+                        onClick={() => setUrgentEventsPage(Math.max(0, urgentEventsPage - 1))}
+                        disabled={urgentEventsPage === 0}
+                        className="pagination-btn"
+                      >
+                        <ChevronLeft size={14} />
+                      </button>
+                      <span className="pagination-info">
+                        {urgentEventsPage + 1} / {totalPages}
+                      </span>
+                      <button
+                        onClick={() => setUrgentEventsPage(Math.min(totalPages - 1, urgentEventsPage + 1))}
+                        disabled={urgentEventsPage === totalPages - 1}
+                        className="pagination-btn"
+                      >
+                        <ChevronRight size={14} />
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="no-urgent-events">
+                  <Sparkles size={32} />
+                  <p>
+                    {events.length === 0
+                      ? "Keine Events vorhanden"
+                      : "Keine dringenden Ereignisse"}
+                  </p>
                 </div>
               )}
-            </div>
-            
-            {paginatedEvents.length > 0 ? (
-              <div className="urgent-events-grid">
-                {paginatedEvents.map((event, index) => {
-                  const daysInfo = getDaysRemaining(event.date);
-                  const formattedName = formatContractName(event.contractName);
-                  
-                  return (
-                    <motion.div 
-                      key={event.id} 
-                      className={`event-card-premium severity-${event.severity}`}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.05 * index }}
-                      whileHover={{ scale: 1.02 }}
-                      onClick={() => {
-                        setSelectedEvent(event);
-                        setShowQuickActions(true);
-                      }}
-                    >
-                      <div className="event-card-header">
-                        <div className="event-type-badge">
-                          {getEventTypeIcon(event.type)}
-                        </div>
-                        <span className={`days-badge-premium ${daysInfo.urgent ? 'urgent' : ''}`}>
-                          {daysInfo.text}
-                        </span>
-                      </div>
-                      <h4 className="event-card-title">{formattedName}</h4>
-                      <p className="event-card-description">{event.title}</p>
-                      <div className="event-card-footer">
-                        <span className="event-date">
-                          <CalendarIconLucide size={14} />
-                          {new Date(event.date).toLocaleDateString('de-DE')}
-                        </span>
-                        {event.metadata?.suggestedAction && (
-                          <motion.button 
-                            className="suggested-action-btn"
-                            whileHover={{ scale: 1.05 }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedEvent(event);
-                              setShowQuickActions(true);
-                            }}
-                          >
-                            <Zap size={14} />
-                            {event.metadata.suggestedAction === "cancel" ? "Kündigen" :
-                             event.metadata.suggestedAction === "compare" ? "Vergleichen" :
-                             "Handeln"}
-                          </motion.button>
-                        )}
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="no-events-premium">
-                <Sparkles size={32} />
-                <h4>Alles im Griff!</h4>
-                <p>
-                  {events.length === 0 
-                    ? "Laden Sie Verträge hoch oder generieren Sie Events."
-                    : "Keine dringenden Ereignisse in den nächsten 30 Tagen."}
-                </p>
-              </div>
-            )}
-          </motion.div>
+            </motion.div>
 
-          {/* Premium Features Section */}
-          <motion.div 
-            className="features-section-premium"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <div className="section-header-premium">
-              <div className="section-title">
-                <Sparkles size={20} className="section-icon" />
-                <h3>Premium Features</h3>
+            {/* Quick Actions Section */}
+            <motion.div
+              className="features-section-premium"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <h3>
+                <Zap size={18} />
+                Schnellaktionen
+              </h3>
+
+              <div className="quick-actions-grid">
+                <button
+                  className="quick-action-btn"
+                  onClick={() => setShowSyncModal(true)}
+                >
+                  <Link2 size={18} />
+                  <span>Kalender sync</span>
+                </button>
+
+                <button
+                  className="quick-action-btn"
+                  onClick={handleRegenerateEvents}
+                  disabled={refreshing}
+                >
+                  <RefreshCw size={18} className={refreshing ? "spinning" : ""} />
+                  <span>Aktualisieren</span>
+                </button>
+
+                <button
+                  className="quick-action-btn"
+                  onClick={() => window.location.href = '/contracts'}
+                >
+                  <FileText size={18} />
+                  <span>Verträge</span>
+                </button>
+
+                <button
+                  className="quick-action-btn"
+                  onClick={() => window.location.href = '/compare'}
+                >
+                  <TrendingUp size={18} />
+                  <span>Vergleichen</span>
+                </button>
               </div>
-            </div>
-            
-            <div className="features-grid-premium">
-              <motion.div 
-                className="feature-card-premium"
-                whileHover={{ scale: 1.05 }}
-              >
-                <div className="feature-icon-wrapper cancel">
-                  <Zap size={20} />
-                </div>
-                <h4>1-Klick-Kündigung</h4>
-                <p>Kündigen Sie direkt aus dem Kalender</p>
-              </motion.div>
-              
-              <motion.div 
-                className="feature-card-premium"
-                whileHover={{ scale: 1.05 }}
-              >
-                <div className="feature-icon-wrapper notify">
-                  <Bell size={20} />
-                </div>
-                <h4>Smart Notifications</h4>
-                <p>Intelligente Erinnerungen per E-Mail</p>
-              </motion.div>
-              
-              <motion.div 
-                className="feature-card-premium"
-                whileHover={{ scale: 1.05 }}
-              >
-                <div className="feature-icon-wrapper compare">
-                  <TrendingUp size={20} />
-                </div>
-                <h4>Marktvergleich</h4>
-                <p>Automatischer Preisvergleich</p>
-              </motion.div>
-              
-              <motion.div 
-                className="feature-card-premium"
-                whileHover={{ scale: 1.05 }}
-              >
-                <div className="feature-icon-wrapper optimize">
-                  <RefreshCw size={20} />
-                </div>
-                <h4>KI-Optimierung</h4>
-                <p>Personalisierte Empfehlungen</p>
-              </motion.div>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
+          {/* End Sidebar Container */}
         </div>
         
         <AnimatePresence>
