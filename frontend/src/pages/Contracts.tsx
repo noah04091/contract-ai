@@ -4271,7 +4271,7 @@ export default function Contracts() {
                   </div>
                 )}
 
-                {loading && !refreshing ? (
+                {loading ? (
                   <>
                     {/* ✅ Klare Lade-Anzeige MITTIG mit rotierendem Spinner */}
                     <div style={{
