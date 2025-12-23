@@ -357,7 +357,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange 
             justifyContent: 'center',
             gap: '16px',
             padding: '12px 20px',
-            background: 'rgba(99, 102, 241, 0.05)',
+            background: 'rgba(79, 70, 229, 0.05)',
             borderBottom: '1px solid rgba(0, 0, 0, 0.06)'
           }}>
             <motion.button
@@ -370,7 +370,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange 
                 height: '36px',
                 borderRadius: '50%',
                 border: 'none',
-                background: currentIndex > 0 ? '#6366f1' : 'rgba(0, 0, 0, 0.1)',
+                background: currentIndex > 0 ? '#4f46e5' : 'rgba(0, 0, 0, 0.1)',
                 color: currentIndex > 0 ? '#fff' : '#9ca3af',
                 cursor: currentIndex > 0 ? 'pointer' : 'not-allowed',
                 display: 'flex',
@@ -399,7 +399,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange 
                 height: '36px',
                 borderRadius: '50%',
                 border: 'none',
-                background: currentIndex < totalEvents - 1 ? '#6366f1' : 'rgba(0, 0, 0, 0.1)',
+                background: currentIndex < totalEvents - 1 ? '#4f46e5' : 'rgba(0, 0, 0, 0.1)',
                 color: currentIndex < totalEvents - 1 ? '#fff' : '#9ca3af',
                 cursor: currentIndex < totalEvents - 1 ? 'pointer' : 'not-allowed',
                 display: 'flex',
@@ -522,10 +522,12 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
 
   if (!isOpen) return null;
 
-  console.log('[DEBUG] StatsDetailModal is open, events:', events);
+  // Safety check for events
+  const safeEvents = Array.isArray(events) ? events : [];
+  console.log('[DEBUG] StatsDetailModal is open, safeEvents:', safeEvents.length);
 
   // Filter out events without valid dates and sort by date
-  const validEvents = events.filter(e => e && e.date);
+  const validEvents = safeEvents.filter(e => e && e.date);
   const sortedEvents = [...validEvents].sort((a, b) => {
     const dateA = new Date(a.date);
     const dateB = new Date(b.date);
@@ -629,7 +631,7 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
                 {title}
               </h2>
               <p style={{ margin: '5px 0 0 0', fontSize: '14px', color: '#6b7280' }}>
-                {events.length} {events.length === 1 ? 'Ereignis' : 'Ereignisse'}
+                {safeEvents.length} {safeEvents.length === 1 ? 'Ereignis' : 'Ereignisse'}
               </p>
             </div>
             <motion.button
@@ -654,7 +656,7 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
 
           {/* Timeline Content */}
           <div style={{ padding: isMobile ? '20px' : '30px' }}>
-            {events.length === 0 ? (
+            {safeEvents.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '60px 20px', color: '#9ca3af' }}>
                 <Sparkles size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
                 <p style={{ fontSize: '16px', fontWeight: 500 }}>Keine Ereignisse gefunden</p>
@@ -1318,10 +1320,16 @@ export default function CalendarPage() {
 
   // Handle Stats Card Click - Opens Modal
   const handleStatsCardClick = (filterType: "upcoming" | "past" | "cancelable" | "autoRenewal") => {
-    console.log('[DEBUG] Stats card clicked:', filterType);
-    console.log('[DEBUG] Current events:', events.length);
-    setSelectedStatFilter(filterType);
-    setShowStatsModal(true);
+    try {
+      console.log('[DEBUG] Stats card clicked:', filterType);
+      console.log('[DEBUG] Current events:', events.length);
+      console.log('[DEBUG] Events sample:', events.slice(0, 2));
+      setSelectedStatFilter(filterType);
+      setShowStatsModal(true);
+      console.log('[DEBUG] Modal should now be open');
+    } catch (error) {
+      console.error('[DEBUG] Error in handleStatsCardClick:', error);
+    }
   };
 
   // Get filtered events for stats modal
@@ -1715,18 +1723,22 @@ export default function CalendarPage() {
         onClose={() => setShowSyncModal(false)}
       />
 
-      {/* Stats Detail Modal */}
-      <StatsDetailModal
-        isOpen={showStatsModal}
-        onClose={() => setShowStatsModal(false)}
-        title={getStatsModalTitle()}
-        events={getFilteredStatsEvents()}
-        onEventClick={(event) => {
-          setShowStatsModal(false);
-          setSelectedEvent(event);
-          setShowQuickActions(true);
-        }}
-      />
+      {/* Stats Detail Modal - wrapped in AnimatePresence */}
+      <AnimatePresence>
+        {showStatsModal && (
+          <StatsDetailModal
+            isOpen={showStatsModal}
+            onClose={() => setShowStatsModal(false)}
+            title={getStatsModalTitle()}
+            events={getFilteredStatsEvents()}
+            onEventClick={(event) => {
+              setShowStatsModal(false);
+              setSelectedEvent(event);
+              setShowQuickActions(true);
+            }}
+          />
+        )}
+      </AnimatePresence>
 
       <style>{`
         @keyframes spin {
