@@ -25,8 +25,7 @@ import {
   Target,
   BarChart3,
   ArrowRight,
-  Link2,
-  Plus
+  Link2
 } from "lucide-react";
 import axios from "axios";
 import "../styles/AppleCalendar.css";
