@@ -131,20 +131,22 @@
 }
 
 /* ========== Main Content Grid ========== */
-.content-grid {
-  display: flex;
-  flex-direction: row;
+.calendar-page .content-grid {
+  display: flex !important;
+  flex-direction: row !important;
   gap: 24px;
 }
 
-.content-grid .calendar-container {
-  flex: 1;
+.calendar-page .content-grid > .calendar-container {
+  flex: 1 1 auto !important;
   min-width: 0;
+  order: 1 !important;
 }
 
-.content-grid .sidebar {
-  width: 340px;
+.calendar-page .content-grid > .sidebar {
+  width: 340px !important;
   flex-shrink: 0;
+  order: 2 !important;
 }
 
 /* ========== Calendar Container ========== */
@@ -783,12 +785,17 @@
 
 /* ========== Responsive ========== */
 @media (max-width: 1200px) {
-  .content-grid {
-    flex-direction: column;
+  .calendar-page .content-grid {
+    flex-direction: column !important;
   }
 
-  .content-grid .sidebar {
-    width: 100%;
+  .calendar-page .content-grid > .calendar-container {
+    order: 1 !important;
+  }
+
+  .calendar-page .content-grid > .sidebar {
+    width: 100% !important;
+    order: 2 !important;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 20px;
