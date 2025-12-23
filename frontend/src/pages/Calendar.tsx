@@ -1960,11 +1960,49 @@ export default function CalendarPage() {
     }
   };
 
+  // ===== DEBUG BANNER (sichtbar auf der Seite) =====
+  const showDebugBanner = true; // Auf false setzen um zu deaktivieren
+
   return (
     <>
       <Helmet>
         <title>Vertragskalender | Contract AI</title>
       </Helmet>
+
+      {/* DEBUG BANNER - SICHTBAR AUF DER SEITE! */}
+      {showDebugBanner && (
+        <div style={{
+          position: 'fixed',
+          bottom: '20px',
+          right: '20px',
+          background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+          color: 'white',
+          padding: '16px 24px',
+          borderRadius: '12px',
+          fontSize: '14px',
+          fontFamily: 'monospace',
+          zIndex: 9999,
+          boxShadow: '0 8px 32px rgba(79, 70, 229, 0.4)',
+          maxWidth: '400px',
+          lineHeight: '1.6'
+        }}>
+          <div style={{ fontWeight: 'bold', marginBottom: '8px', fontSize: '16px' }}>
+            DEBUG: {CALENDAR_VERSION}
+          </div>
+          <div style={{ fontSize: '12px', opacity: 0.9 }}>
+            <div>Stats-Farben:</div>
+            <div style={{ display: 'flex', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
+              <span style={{ background: DEBUG_COLORS.upcoming, padding: '2px 8px', borderRadius: '4px' }}>Kommend</span>
+              <span style={{ background: DEBUG_COLORS.past, padding: '2px 8px', borderRadius: '4px' }}>Vergangen</span>
+              <span style={{ background: DEBUG_COLORS.cancelable, padding: '2px 8px', borderRadius: '4px' }}>Kuendbar</span>
+              <span style={{ background: DEBUG_COLORS.autoRenewal, padding: '2px 8px', borderRadius: '4px' }}>Auto-V.</span>
+            </div>
+            <div style={{ marginTop: '8px' }}>View: {currentView} | Events: {events.length}</div>
+            <div>Snooze: 1 Tag spaeter, 3 Tage spaeter...</div>
+            <div>Date.UTC Fix: AKTIV</div>
+          </div>
+        </div>
+      )}
 
       <div className="calendar-page">
         <div className="calendar-page-content">
