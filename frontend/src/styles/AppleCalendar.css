@@ -137,6 +137,14 @@
   gap: 24px;
 }
 
+.content-grid .calendar-container {
+  order: 1;
+}
+
+.content-grid .sidebar {
+  order: 2;
+}
+
 /* ========== Calendar Container ========== */
 .calendar-container {
   background: var(--bg-card);
@@ -389,12 +397,23 @@
   font-size: 11px;
   color: var(--text-muted);
   padding: 2px 8px;
-  cursor: pointer;
-  transition: color 0.2s;
+  cursor: default;
+  transition: all 0.2s;
 }
 
-.more-events:hover {
+.more-events.clickable {
   color: var(--primary);
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--primary-bg);
+  border-radius: 4px;
+  margin-top: 2px;
+}
+
+.more-events.clickable:hover {
+  background: var(--primary-bg-hover);
+  color: var(--primary-dark);
+  transform: scale(1.05);
 }
 
 /* ========== Calendar Legend ========== */

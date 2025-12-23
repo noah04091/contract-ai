@@ -84,9 +84,10 @@ interface CalendarGridProps {
   selectedDate: Date | null;
   onDateClick: (date: Date) => void;
   onEventClick: (event: CalendarEvent) => void;
+  onMoreClick: (date: Date, events: CalendarEvent[]) => void;
 }
 
-function CustomCalendarGrid({ currentDate, events, selectedDate, onDateClick, onEventClick }: CalendarGridProps) {
+function CustomCalendarGrid({ currentDate, events, selectedDate, onDateClick, onEventClick, onMoreClick }: CalendarGridProps) {
   // Get days in month
   const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
 
@@ -188,7 +189,16 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, onDateClick, on
                 </div>
               ))}
               {dayInfo.events.length > 3 && (
-                <div className="more-events">+{dayInfo.events.length - 3} mehr</div>
+                <div
+                  className="more-events clickable"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const targetDate = new Date(year, month + (dayInfo.type === 'prev' ? -1 : dayInfo.type === 'next' ? 1 : 0), dayInfo.day);
+                    onMoreClick(targetDate, dayInfo.events);
+                  }}
+                >
+                  +{dayInfo.events.length - 3} mehr
+                </div>
               )}
             </div>
           </div>
@@ -390,6 +400,159 @@ function QuickActionsModal({ event, onAction, onClose }: QuickActionsModalProps)
   );
 }
 
+// ========== Day Events Modal ==========
+interface DayEventsModalProps {
+  date: Date;
+  events: CalendarEvent[];
+  onEventClick: (event: CalendarEvent) => void;
+  onClose: () => void;
+}
+
+function DayEventsModal({ date, events, onEventClick, onClose }: DayEventsModalProps) {
+  return (
+    <motion.div
+      className="modal-overlay"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.5)',
+        backdropFilter: 'blur(4px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        padding: '20px'
+      }}
+    >
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: 'white',
+          borderRadius: '16px',
+          maxWidth: '500px',
+          width: '100%',
+          maxHeight: '80vh',
+          boxShadow: '0 25px 50px rgba(0,0,0,0.25)',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+      >
+        {/* Header */}
+        <div style={{
+          padding: '20px 24px',
+          borderBottom: '1px solid #e2e8f0',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{
+              width: '44px',
+              height: '44px',
+              borderRadius: '12px',
+              background: '#6366f1',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white'
+            }}>
+              <CalendarIcon size={24} />
+            </div>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#0f172a' }}>
+                {date.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })}
+              </h3>
+              <p style={{ margin: '2px 0 0', fontSize: '14px', color: '#64748b' }}>
+                {events.length} Ereignis{events.length !== 1 ? 'se' : ''}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              width: '32px',
+              height: '32px',
+              border: 'none',
+              background: '#f1f5f9',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: '#64748b'
+            }}
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Events List */}
+        <div style={{ padding: '16px 24px', overflowY: 'auto', flex: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {events.map(event => {
+              const daysInfo = getDaysRemaining(event.date);
+              const severityColors: Record<string, { bg: string; text: string; border: string }> = {
+                critical: { bg: 'rgba(239,68,68,0.1)', text: '#dc2626', border: '#ef4444' },
+                warning: { bg: 'rgba(245,158,11,0.1)', text: '#d97706', border: '#f59e0b' },
+                info: { bg: 'rgba(59,130,246,0.1)', text: '#2563eb', border: '#3b82f6' }
+              };
+              const colors = severityColors[event.severity] || severityColors.info;
+
+              return (
+                <div
+                  key={event.id}
+                  onClick={() => onEventClick(event)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '14px',
+                    background: colors.bg,
+                    borderRadius: '12px',
+                    borderLeft: `4px solid ${colors.border}`,
+                    cursor: 'pointer',
+                    transition: 'transform 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'translateX(4px)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'translateX(0)'}
+                >
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '15px', fontWeight: 600, color: '#0f172a', marginBottom: '4px' }}>
+                      {formatContractName(event.contractName)}
+                    </div>
+                    <div style={{ fontSize: '13px', color: '#64748b' }}>
+                      {event.title}
+                    </div>
+                  </div>
+                  <div style={{
+                    padding: '6px 12px',
+                    borderRadius: '20px',
+                    background: colors.bg,
+                    color: colors.text,
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    whiteSpace: 'nowrap'
+                  }}>
+                    {daysInfo.text}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 // ========== Main Calendar Page ==========
 export default function CalendarPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -405,6 +568,7 @@ export default function CalendarPage() {
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [currentView, setCurrentView] = useState<'month' | 'week' | 'day'>('month');
   const [urgentPage, setUrgentPage] = useState(0);
+  const [dayEventsModal, setDayEventsModal] = useState<{ date: Date; events: CalendarEvent[] } | null>(null);
 
   const EVENTS_PER_PAGE = 5;
 
@@ -524,17 +688,24 @@ export default function CalendarPage() {
     };
   }, [events]);
 
-  // Urgent Events (next 30 days)
+  // Urgent Events (next 60 days - all upcoming events, sorted by urgency)
   const urgentEvents = useMemo(() => {
     const now = new Date();
+    now.setHours(0, 0, 0, 0);
     const future = new Date();
-    future.setDate(future.getDate() + 30);
+    future.setDate(future.getDate() + 60);
     return filteredEvents
       .filter(e => {
         const d = new Date(e.date);
-        return d >= now && d <= future && (e.severity === 'critical' || e.severity === 'warning');
+        return d >= now && d <= future;
       })
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      .sort((a, b) => {
+        // Sort by severity first (critical > warning > info), then by date
+        const severityOrder: Record<string, number> = { critical: 0, warning: 1, info: 2 };
+        const severityDiff = (severityOrder[a.severity] || 3) - (severityOrder[b.severity] || 3);
+        if (severityDiff !== 0) return severityDiff;
+        return new Date(a.date).getTime() - new Date(b.date).getTime();
+      });
   }, [filteredEvents]);
 
   const paginatedUrgent = urgentEvents.slice(urgentPage * EVENTS_PER_PAGE, (urgentPage + 1) * EVENTS_PER_PAGE);
@@ -622,6 +793,7 @@ export default function CalendarPage() {
                     setSelectedEvent(event);
                     setShowQuickActions(true);
                   }}
+                  onMoreClick={(date, events) => setDayEventsModal({ date, events })}
                 />
               )}
 
@@ -653,19 +825,19 @@ export default function CalendarPage() {
                   </div>
                 </div>
                 <div className="stats-grid">
-                  <div className="stat-card">
+                  <div className="stat-card" onClick={() => { setFilterSeverity('all'); setFilterType('all'); }}>
                     <div className="stat-value">{stats.total}</div>
                     <div className="stat-label">Ereignisse</div>
                   </div>
-                  <div className="stat-card critical">
+                  <div className="stat-card critical" onClick={() => { setFilterSeverity('critical'); setFilterType('all'); }}>
                     <div className="stat-value">{stats.critical}</div>
                     <div className="stat-label">Kritisch</div>
                   </div>
-                  <div className="stat-card warning">
+                  <div className="stat-card warning" onClick={() => { setFilterSeverity('warning'); setFilterType('all'); }}>
                     <div className="stat-value">{stats.thisMonth}</div>
                     <div className="stat-label">Diesen Monat</div>
                   </div>
-                  <div className="stat-card">
+                  <div className="stat-card" onClick={() => { setFilterSeverity('all'); setFilterType('all'); }}>
                     <div className="stat-value">{stats.past}</div>
                     <div className="stat-label">Vergangen</div>
                   </div>
@@ -825,6 +997,18 @@ export default function CalendarPage() {
               setShowQuickActions(false);
               setSelectedEvent(null);
             }}
+          />
+        )}
+        {dayEventsModal && (
+          <DayEventsModal
+            date={dayEventsModal.date}
+            events={dayEventsModal.events}
+            onEventClick={(event) => {
+              setDayEventsModal(null);
+              setSelectedEvent(event);
+              setShowQuickActions(true);
+            }}
+            onClose={() => setDayEventsModal(null)}
           />
         )}
       </AnimatePresence>
