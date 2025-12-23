@@ -518,16 +518,10 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  console.log('[DEBUG] StatsDetailModal render:', { isOpen, title, eventsCount: events?.length });
-
   if (!isOpen) return null;
-
-  // TEMPORARY: Alert to debug modal opening
-  alert('StatsDetailModal opened! Events: ' + (events?.length || 0));
 
   // Safety check for events
   const safeEvents = Array.isArray(events) ? events : [];
-  console.log('[DEBUG] StatsDetailModal is open, safeEvents:', safeEvents.length);
 
   // Filter out events without valid dates and sort by date
   const validEvents = safeEvents.filter(e => e && e.date);
@@ -539,56 +533,12 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
     return dateA.getTime() - dateB.getTime();
   });
 
-  // Group events by month
-  const eventsByMonth = sortedEvents.reduce((acc, event) => {
-    if (!event.date) return acc;
-    const eventDate = new Date(event.date);
-    if (isNaN(eventDate.getTime())) return acc;
-
-    const monthKey = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}`;
-    const monthLabel = eventDate.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
-
-    if (!acc[monthKey]) {
-      acc[monthKey] = { label: monthLabel, events: [] };
-    }
-    acc[monthKey].events.push(event);
-    return acc;
-  }, {} as Record<string, { label: string; events: CalendarEvent[] }>);
-
-  const getSeverityIcon = (severity: string) => {
-    switch (severity) {
-      case 'critical': return <AlertCircle size={18} style={{ color: '#ef4444' }} />;
-      case 'warning': return <AlertTriangle size={18} style={{ color: '#f59e0b' }} />;
-      default: return <Info size={18} style={{ color: '#3b82f6' }} />;
-    }
-  };
-
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'critical': return '#ef4444';
       case 'warning': return '#f59e0b';
       default: return '#3b82f6';
     }
-  };
-
-  const getDaysUntil = (dateString: string) => {
-    const now = new Date();
-    const eventDate = new Date(dateString);
-    const diffTime = eventDate.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) return 'Heute';
-    if (diffDays === 1) return 'Morgen';
-    if (diffDays < 0) return `Vor ${Math.abs(diffDays)} Tagen`;
-    return `In ${diffDays} Tagen`;
-  };
-
-  const formatEventDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('de-DE', {
-      weekday: 'short',
-      day: '2-digit',
-      month: 'short'
-    });
   };
 
   return (
@@ -657,108 +607,48 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
             </motion.button>
           </div>
 
-          {/* Timeline Content */}
-          <div style={{ padding: isMobile ? '20px' : '30px' }}>
-            {safeEvents.length === 0 ? (
+          {/* Simple Events List */}
+          <div style={{ padding: isMobile ? '20px' : '30px', maxHeight: '60vh', overflowY: 'auto' }}>
+            {sortedEvents.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '60px 20px', color: '#9ca3af' }}>
                 <Sparkles size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
                 <p style={{ fontSize: '16px', fontWeight: 500 }}>Keine Ereignisse gefunden</p>
               </div>
             ) : (
-              <div className="timeline-container">
-                {Object.entries(eventsByMonth).map(([monthKey, { label, events: monthEvents }]) => (
-                  <div key={monthKey} style={{ marginBottom: '40px' }}>
-                    {/* Month Header */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-                      <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.1), transparent)' }} />
-                      <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        {label}
-                      </h3>
-                      <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.1), transparent)' }} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {sortedEvents.map((event, index) => (
+                  <div
+                    key={event.id || `event-${index}`}
+                    onClick={() => onEventClick(event)}
+                    style={{
+                      background: '#ffffff',
+                      border: '1px solid #e5e7eb',
+                      borderLeft: `4px solid ${getSeverityColor(event.severity || 'info')}`,
+                      borderRadius: '8px',
+                      padding: '16px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                      <span style={{
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        color: getSeverityColor(event.severity || 'info'),
+                        textTransform: 'uppercase'
+                      }}>
+                        {event.severity === 'critical' ? 'Kritisch' : event.severity === 'warning' ? 'Warnung' : 'Info'}
+                      </span>
+                      <span style={{ fontSize: '12px', color: '#9ca3af' }}>
+                        {event.date ? new Date(event.date).toLocaleDateString('de-DE') : 'Kein Datum'}
+                      </span>
                     </div>
-
-                    {/* Events */}
-                    <div style={{ position: 'relative', paddingLeft: isMobile ? '20px' : '30px' }}>
-                      {/* Timeline line */}
-                      <div style={{
-                        position: 'absolute',
-                        left: 0,
-                        top: '20px',
-                        bottom: '20px',
-                        width: '2px',
-                        background: 'linear-gradient(180deg, rgba(99, 102, 241, 0.3), rgba(79, 70, 229, 0.3))'
-                      }} />
-
-                      {monthEvents.map((event, index) => (
-                        <motion.div
-                          key={event.id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.05 }}
-                          style={{ position: 'relative', marginBottom: '20px', paddingLeft: '25px' }}
-                        >
-                          {/* Timeline dot */}
-                          <div style={{
-                            position: 'absolute',
-                            left: '-7px',
-                            top: '20px',
-                            width: '16px',
-                            height: '16px',
-                            borderRadius: '50%',
-                            background: getSeverityColor(event.severity),
-                            border: '3px solid #ffffff',
-                            boxShadow: `0 0 0 1px ${getSeverityColor(event.severity)}40`,
-                            zIndex: 1
-                          }} />
-
-                          {/* Event Card */}
-                          <motion.div
-                            whileHover={{ scale: 1.02, x: 5 }}
-                            onClick={() => onEventClick(event)}
-                            style={{
-                              background: '#ffffff',
-                              border: `1px solid ${getSeverityColor(event.severity)}30`,
-                              borderRadius: '12px',
-                              padding: isMobile ? '16px' : '20px',
-                              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
-                              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                {getSeverityIcon(event.severity)}
-                                <span style={{ fontSize: '14px', fontWeight: 600, color: getSeverityColor(event.severity), textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                  {event.severity === 'critical' ? 'Kritisch' : event.severity === 'warning' ? 'Warnung' : 'Info'}
-                                </span>
-                              </div>
-                              <span style={{ fontSize: '12px', fontWeight: 500, color: '#9ca3af', whiteSpace: 'nowrap' }}>
-                                {getDaysUntil(event.date)}
-                              </span>
-                            </div>
-
-                            <h4 style={{ margin: '0 0 8px 0', fontSize: isMobile ? '15px' : '16px', fontWeight: 600, color: '#1f2937' }}>
-                              {formatContractName(event.contractName)}
-                            </h4>
-                            <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#6b7280', lineHeight: 1.5 }}>
-                              {event.title}
-                            </p>
-
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '13px', color: '#9ca3af' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <CalendarIcon size={14} />
-                                {formatEventDate(event.date)}
-                              </div>
-                              {event.metadata?.provider && (
-                                <>
-                                  <span>•</span>
-                                  <span>{event.metadata.provider}</span>
-                                </>
-                              )}
-                            </div>
-                          </motion.div>
-                        </motion.div>
-                      ))}
-                    </div>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '15px', fontWeight: 600, color: '#1f2937' }}>
+                      {event.contractName ? formatContractName(event.contractName) : 'Unbekannter Vertrag'}
+                    </h4>
+                    <p style={{ margin: 0, fontSize: '13px', color: '#6b7280' }}>
+                      {event.title || 'Keine Beschreibung'}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -1323,45 +1213,26 @@ export default function CalendarPage() {
 
   // Handle Stats Card Click - Opens Modal
   const handleStatsCardClick = (filterType: "upcoming" | "past" | "cancelable" | "autoRenewal") => {
-    // TEMPORARY: Alert to debug
-    alert('Stats card clicked: ' + filterType + ', Events: ' + events.length);
-    try {
-      console.log('[DEBUG] Stats card clicked:', filterType);
-      console.log('[DEBUG] Current events:', events.length);
-      console.log('[DEBUG] Events sample:', events.slice(0, 2));
-      setSelectedStatFilter(filterType);
-      setShowStatsModal(true);
-      console.log('[DEBUG] Modal should now be open');
-    } catch (error) {
-      console.error('[DEBUG] Error in handleStatsCardClick:', error);
-      alert('Error: ' + String(error));
-    }
+    setSelectedStatFilter(filterType);
+    setShowStatsModal(true);
   };
 
   // Get filtered events for stats modal
   const getFilteredStatsEvents = () => {
     const now = new Date();
     now.setHours(0, 0, 0, 0);
-    console.log('[DEBUG] getFilteredStatsEvents called:', { selectedStatFilter, totalEvents: events.length });
-    let result: CalendarEvent[] = [];
     switch (selectedStatFilter) {
       case "upcoming":
-        result = events.filter(e => new Date(e.date) >= now);
-        break;
+        return events.filter(e => e.date && new Date(e.date) >= now);
       case "past":
-        result = events.filter(e => new Date(e.date) < now);
-        break;
+        return events.filter(e => e.date && new Date(e.date) < now);
       case "cancelable":
-        result = events.filter(e => e.type === 'CANCEL_WINDOW_OPEN' || e.type === 'LAST_CANCEL_DAY');
-        break;
+        return events.filter(e => e.type === 'CANCEL_WINDOW_OPEN' || e.type === 'LAST_CANCEL_DAY');
       case "autoRenewal":
-        result = events.filter(e => e.type === 'AUTO_RENEWAL');
-        break;
+        return events.filter(e => e.type === 'AUTO_RENEWAL');
       default:
-        result = events;
+        return events;
     }
-    console.log('[DEBUG] getFilteredStatsEvents result:', result.length);
-    return result;
   };
 
   // Get title for stats modal
