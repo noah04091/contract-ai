@@ -1,58 +1,31 @@
-// src/pages/Calendar.tsx
-import { useEffect, useState, useCallback } from "react";
+// src/pages/Calendar.tsx - Custom Calendar Redesign
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
-import Calendar from "react-calendar";
-import "react-calendar/dist/Calendar.css";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   AlertCircle,
-  Clock,
-  X,
   ChevronRight,
   ChevronLeft,
-  Zap,
-  TrendingUp,
-  FileText,
-  Bell,
-  BellOff,
   RefreshCw,
-  Filter,
-  Calendar as CalendarIconLucide,
-  Shield,
-  AlertTriangle,
-  Info,
-  Sparkles,
-  Target,
+  Calendar as CalendarIcon,
   BarChart3,
-  ArrowRight,
-  Link2
+  Link2,
+  X,
+  FileText,
+  Clock,
+  AlertTriangle,
+  Zap,
+  Target,
+  TrendingUp,
+  Shield,
+  Info,
+  Bell
 } from "lucide-react";
 import axios from "axios";
 import "../styles/AppleCalendar.css";
 import CalendarSyncModal from "../components/CalendarSyncModal";
 
-// Type for provider
-type ProviderType = string | {
-  name?: string;
-  displayName?: string;
-  confidence?: number;
-  extractedFromText?: boolean;
-} | null | undefined;
-
-// Helper function to safely get provider name
-const getProviderName = (provider: ProviderType): string => {
-  if (!provider) return 'Unbekannt';
-  if (typeof provider === 'string') return provider;
-  if (typeof provider === 'object') {
-    return provider.displayName || provider.name || 'Unbekannt';
-  }
-  return 'Unbekannt';
-};
-
-// Type für react-calendar
-type ValuePiece = Date | null;
-type Value = ValuePiece | [ValuePiece, ValuePiece];
-
+// ========== Types ==========
 interface CalendarEvent {
   id: string;
   contractId: string;
@@ -64,233 +37,355 @@ interface CalendarEvent {
   severity: "info" | "warning" | "critical";
   status: string;
   metadata?: {
-    provider?: ProviderType;
+    provider?: string;
     noticePeriodDays?: number;
     autoRenewMonths?: number;
     suggestedAction?: string;
     daysLeft?: number;
-    daysUntilWindow?: number;
-    contractName?: string;
   };
-  provider?: ProviderType;
   amount?: number;
 }
 
-interface ApiResponse<T> {
+interface ApiResponse {
   success: boolean;
-  events?: T[];
+  events?: CalendarEvent[];
   message?: string;
-  result?: {
-    redirect?: string;
-    message?: string;
-  };
+  result?: { redirect?: string; message?: string };
 }
 
-interface QuickActionsProps {
+// ========== Helper Functions ==========
+const formatContractName = (name: string): string => {
+  let formatted = name.replace(/\.(pdf|docx?|txt|png|jpg|jpeg)$/i, '');
+  formatted = formatted.replace(/_/g, ' ').replace(/\d{8}_?\d{6}/g, '').replace(/\s+/g, ' ').trim();
+  if (!formatted) formatted = name.split('.')[0];
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+};
+
+const getDaysRemaining = (date: string) => {
+  const now = new Date();
+  const eventDate = new Date(date);
+  const diffTime = eventDate.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return { text: "Heute", urgent: true };
+  if (diffDays === 1) return { text: "Morgen", urgent: true };
+  if (diffDays < 0) return { text: "Abgelaufen", urgent: true };
+  if (diffDays <= 7) return { text: `${diffDays} Tage`, urgent: true };
+  return { text: `${diffDays} Tage`, urgent: false };
+};
+
+// German weekday names (Monday first)
+const WEEKDAYS = ['MO', 'DI', 'MI', 'DO', 'FR', 'SA', 'SO'];
+const MONTH_NAMES = [
+  'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
+  'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'
+];
+
+// ========== Custom Calendar Grid ==========
+interface CalendarGridProps {
+  currentDate: Date;
+  events: CalendarEvent[];
+  selectedDate: Date | null;
+  onDateClick: (date: Date) => void;
+  onEventClick: (event: CalendarEvent) => void;
+}
+
+function CustomCalendarGrid({ currentDate, events, selectedDate, onDateClick, onEventClick }: CalendarGridProps) {
+  // Get days in month
+  const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
+
+  // Get first day of month (0 = Sunday, 1 = Monday, etc.)
+  const getFirstDayOfMonth = (year: number, month: number) => {
+    const day = new Date(year, month, 1).getDay();
+    return day === 0 ? 6 : day - 1; // Convert to Monday-based (0 = Monday)
+  };
+
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  const daysInMonth = getDaysInMonth(year, month);
+  const firstDayOfMonth = getFirstDayOfMonth(year, month);
+  const daysInPrevMonth = getDaysInMonth(year, month - 1);
+
+  const today = new Date();
+  const isToday = (d: number, m: number, y: number) =>
+    d === today.getDate() && m === today.getMonth() && y === today.getFullYear();
+
+  const isSelected = (d: number, m: number, y: number) =>
+    selectedDate && d === selectedDate.getDate() && m === selectedDate.getMonth() && y === selectedDate.getFullYear();
+
+  // Get events for a specific date
+  const getEventsForDate = (day: number, monthOffset: number = 0) => {
+    const targetDate = new Date(year, month + monthOffset, day);
+    const dateString = targetDate.toISOString().split('T')[0];
+    return events.filter(e => e.date && e.date.split('T')[0] === dateString);
+  };
+
+  // Build calendar days
+  const calendarDays = [];
+
+  // Previous month days
+  for (let i = firstDayOfMonth - 1; i >= 0; i--) {
+    const day = daysInPrevMonth - i;
+    calendarDays.push({ day, type: 'prev', events: getEventsForDate(day, -1) });
+  }
+
+  // Current month days
+  for (let day = 1; day <= daysInMonth; day++) {
+    calendarDays.push({
+      day,
+      type: 'current',
+      events: getEventsForDate(day),
+      isToday: isToday(day, month, year),
+      isSelected: isSelected(day, month, year),
+      isWeekend: (firstDayOfMonth + day - 1) % 7 >= 5
+    });
+  }
+
+  // Next month days (fill to 42 cells = 6 rows)
+  const remainingDays = 42 - calendarDays.length;
+  for (let day = 1; day <= remainingDays; day++) {
+    calendarDays.push({ day, type: 'next', events: getEventsForDate(day, 1) });
+  }
+
+  return (
+    <div className="calendar-grid">
+      {/* Weekday Headers */}
+      {WEEKDAYS.map((day, index) => (
+        <div key={day} className={`weekday-header ${index >= 5 ? 'weekend' : ''}`}>
+          {day}
+        </div>
+      ))}
+
+      {/* Calendar Days */}
+      {calendarDays.map((dayInfo, index) => {
+        const dayClasses = [
+          'calendar-day',
+          dayInfo.type !== 'current' ? 'other-month' : '',
+          dayInfo.isToday ? 'today' : '',
+          dayInfo.isSelected ? 'selected' : '',
+          dayInfo.isWeekend && dayInfo.type === 'current' ? 'weekend' : ''
+        ].filter(Boolean).join(' ');
+
+        return (
+          <div
+            key={index}
+            className={dayClasses}
+            onClick={() => {
+              if (dayInfo.type === 'current') {
+                onDateClick(new Date(year, month, dayInfo.day));
+              }
+            }}
+          >
+            <div className="day-number">{dayInfo.day}</div>
+            <div className="day-events">
+              {dayInfo.events.slice(0, 3).map((event, eventIndex) => (
+                <div
+                  key={event.id}
+                  className={`event-pill ${event.severity}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEventClick(event);
+                  }}
+                >
+                  <div className="event-indicator"></div>
+                  <span className="event-text">{formatContractName(event.contractName)}</span>
+                </div>
+              ))}
+              {dayInfo.events.length > 3 && (
+                <div className="more-events">+{dayInfo.events.length - 3} mehr</div>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ========== Quick Actions Modal ==========
+interface QuickActionsModalProps {
   event: CalendarEvent;
   onAction: (action: string, eventId: string) => void;
   onClose: () => void;
 }
 
-function QuickActionsModal({ event, onAction, onClose }: QuickActionsProps) {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+function QuickActionsModal({ event, onAction, onClose }: QuickActionsModalProps) {
+  const daysInfo = getDaysRemaining(event.date);
 
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // Vertrag anzeigen Handler
-  const handleViewContract = () => {
-    // Navigate to contracts page with contract details open
-    window.location.href = `/contracts?view=${event.contractId}`;
-    onClose();
-  };
-
-  const getDaysRemaining = () => {
-    const now = new Date();
-    const eventDate = new Date(event.date);
-    const diffTime = eventDate.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) return "Heute";
-    if (diffDays === 1) return "Morgen";
-    if (diffDays < 0) return "Abgelaufen";
-    return `In ${diffDays} Tagen`;
-  };
-
-  const formatDate = () => {
-    return new Date(event.date).toLocaleDateString('de-DE', {
-      weekday: 'long',
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric'
-    });
-  };
-
-  const getSeverityStyle = () => {
+  const getSeverityColor = () => {
     switch(event.severity) {
-      case 'critical':
-        return { 
-          color: '#ef4444', 
-          icon: <AlertCircle size={20} />, 
-          bg: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05))',
-          borderColor: 'rgba(239, 68, 68, 0.2)'
-        };
-      case 'warning':
-        return { 
-          color: '#f59e0b', 
-          icon: <AlertTriangle size={20} />, 
-          bg: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.05))',
-          borderColor: 'rgba(245, 158, 11, 0.2)'
-        };
-      default:
-        return { 
-          color: '#3b82f6', 
-          icon: <Info size={20} />, 
-          bg: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05))',
-          borderColor: 'rgba(59, 130, 246, 0.2)'
-        };
+      case 'critical': return '#ef4444';
+      case 'warning': return '#f59e0b';
+      default: return '#3b82f6';
     }
   };
 
-  const severityStyle = getSeverityStyle();
-
   return (
     <motion.div
-      className="quick-actions-overlay"
+      className="modal-overlay"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={onClose}
-      style={{ padding: isMobile ? '20px' : '40px' }}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.5)',
+        backdropFilter: 'blur(4px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        padding: '20px'
+      }}
     >
       <motion.div
-        className="quick-actions-modal premium-modal"
-        initial={{ scale: 0.9, opacity: 0, y: 20 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
         onClick={(e) => e.stopPropagation()}
         style={{
-          maxWidth: isMobile ? '100%' : '600px',
-          width: isMobile ? 'calc(100% - 40px)' : '600px',
-          maxHeight: isMobile ? '90vh' : 'auto',
-          overflowY: isMobile ? 'auto' : 'visible'
+          background: 'white',
+          borderRadius: '16px',
+          maxWidth: '480px',
+          width: '100%',
+          boxShadow: '0 25px 50px rgba(0,0,0,0.25)',
+          overflow: 'hidden'
         }}
       >
-        <div className="modal-header-premium" style={{ 
-          background: severityStyle.bg,
-          borderBottom: `1px solid ${severityStyle.borderColor}`
+        {/* Header */}
+        <div style={{
+          padding: '20px 24px',
+          borderBottom: '1px solid #e2e8f0',
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between'
         }}>
-          <div className="modal-header-content">
-            <div className="severity-badge-premium" style={{ 
-              background: severityStyle.color,
-              boxShadow: `0 4px 12px ${severityStyle.color}40`
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+            <div style={{
+              width: '44px',
+              height: '44px',
+              borderRadius: '12px',
+              background: getSeverityColor(),
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white'
             }}>
-              {severityStyle.icon}
+              <AlertCircle size={24} />
             </div>
-            <div className="modal-header-text">
-              <h3>{event.metadata?.contractName || event.contractName}</h3>
-              <p>{event.title}</p>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#0f172a' }}>
+                {formatContractName(event.contractName)}
+              </h3>
+              <p style={{ margin: '4px 0 0', fontSize: '14px', color: '#64748b' }}>
+                {event.title}
+              </p>
             </div>
           </div>
-          <button className="modal-close-btn" onClick={onClose}>
-            <X size={20} />
+          <button
+            onClick={onClose}
+            style={{
+              width: '32px',
+              height: '32px',
+              border: 'none',
+              background: '#f1f5f9',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: '#64748b'
+            }}
+          >
+            <X size={18} />
           </button>
         </div>
 
-        <div className="modal-content-premium">
-          <div className="event-description-premium">
-            <Sparkles size={16} className="description-icon" />
-            <p>{event.description}</p>
-          </div>
-          
-          <div className="event-meta-grid">
-            <div className="meta-card">
-              <CalendarIconLucide size={18} className="meta-icon" />
+        {/* Content */}
+        <div style={{ padding: '24px' }}>
+          {/* Meta Info */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '12px',
+            marginBottom: '24px'
+          }}>
+            <div style={{
+              padding: '12px',
+              background: '#f8fafc',
+              borderRadius: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
+            }}>
+              <CalendarIcon size={18} style={{ color: '#6366f1' }} />
               <div>
-                <span className="meta-label">Datum</span>
-                <span className="meta-value">{formatDate()}</span>
-              </div>
-            </div>
-            {event.provider && (
-              <div className="meta-card">
-                <FileText size={18} className="meta-icon" />
-                <div>
-                  <span className="meta-label">Anbieter</span>
-                  <span className="meta-value">{getProviderName(event.provider)}</span>
+                <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase' }}>Datum</div>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>
+                  {new Date(event.date).toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' })}
                 </div>
               </div>
-            )}
-            <div className="meta-card">
-              <Clock size={18} className="meta-icon" />
+            </div>
+            <div style={{
+              padding: '12px',
+              background: daysInfo.urgent ? 'rgba(239,68,68,0.1)' : '#f8fafc',
+              borderRadius: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
+            }}>
+              <Clock size={18} style={{ color: daysInfo.urgent ? '#ef4444' : '#6366f1' }} />
               <div>
-                <span className="meta-label">Verbleibend</span>
-                <span className="meta-value" style={{ color: severityStyle.color }}>
-                  {getDaysRemaining()}
-                </span>
+                <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase' }}>Verbleibend</div>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: daysInfo.urgent ? '#ef4444' : '#0f172a' }}>
+                  {daysInfo.text}
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="modal-actions-grid">
-            {/* Vertrag anzeigen Button - prominent platziert */}
-            <motion.button 
-              className="action-btn-premium view-contract"
-              onClick={handleViewContract}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              style={{ gridColumn: '1 / -1' }}
+          {/* Actions */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <button
+              onClick={() => window.location.href = `/contracts?view=${event.contractId}`}
+              style={{
+                padding: '14px',
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                borderRadius: '10px',
+                fontSize: '14px',
+                fontWeight: 600,
+                color: '#475569',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px'
+              }}
             >
               <FileText size={18} />
-              <span>📄 Vertrag anzeigen</span>
-              <ArrowRight size={16} className="action-arrow" />
-            </motion.button>
-
-            {event.metadata?.suggestedAction === "cancel" && (
-              <motion.button 
-                className="action-btn-premium primary"
-                onClick={() => onAction("cancel", event.id)}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                style={{ gridColumn: '1 / -1' }}
-              >
-                <Zap size={18} />
-                <span>Jetzt kündigen</span>
-                <ArrowRight size={16} className="action-arrow" />
-              </motion.button>
-            )}
-            
-            <motion.button 
-              className="action-btn-premium secondary"
-              onClick={() => onAction("compare", event.id)}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              Vertrag anzeigen
+            </button>
+            <button
+              onClick={() => onAction('cancel', event.id)}
+              style={{
+                padding: '14px',
+                background: '#6366f1',
+                border: 'none',
+                borderRadius: '10px',
+                fontSize: '14px',
+                fontWeight: 600,
+                color: 'white',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px'
+              }}
             >
-              <TrendingUp size={18} />
-              <span>Vergleichen</span>
-            </motion.button>
-            
-            <motion.button 
-              className="action-btn-premium secondary"
-              onClick={() => onAction("optimize", event.id)}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <RefreshCw size={18} />
-              <span>Optimieren</span>
-            </motion.button>
-            
-            <motion.button 
-              className="action-btn-premium ghost"
-              onClick={() => onAction("snooze", event.id)}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <BellOff size={18} />
-              <span>Später</span>
-            </motion.button>
+              <Zap size={18} />
+              Handeln
+            </button>
           </div>
         </div>
       </motion.div>
@@ -298,458 +393,50 @@ function QuickActionsModal({ event, onAction, onClose }: QuickActionsProps) {
   );
 }
 
-// Stats Detail Modal - Timeline View
-interface StatsDetailModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  title: string;
-  events: CalendarEvent[];
-}
-
-function StatsDetailModal({ isOpen, onClose, title, events }: StatsDetailModalProps) {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  if (!isOpen) return null;
-
-  // Sort events by date (ascending)
-  const sortedEvents = [...events].sort((a, b) =>
-    new Date(a.date).getTime() - new Date(b.date).getTime()
-  );
-
-  // Group events by month
-  const eventsByMonth = sortedEvents.reduce((acc, event) => {
-    const eventDate = new Date(event.date);
-    const monthKey = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}`;
-    const monthLabel = eventDate.toLocaleDateString('de-DE', {
-      month: 'long',
-      year: 'numeric'
-    });
-
-    if (!acc[monthKey]) {
-      acc[monthKey] = {
-        label: monthLabel,
-        events: []
-      };
-    }
-
-    acc[monthKey].events.push(event);
-    return acc;
-  }, {} as Record<string, { label: string; events: CalendarEvent[] }>);
-
-  const getSeverityIcon = (severity: string) => {
-    switch (severity) {
-      case 'critical':
-        return <AlertCircle size={18} style={{ color: '#ef4444' }} />;
-      case 'warning':
-        return <AlertTriangle size={18} style={{ color: '#f59e0b' }} />;
-      default:
-        return <Info size={18} style={{ color: '#3b82f6' }} />;
-    }
-  };
-
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'critical': return '#ef4444';
-      case 'warning': return '#f59e0b';
-      default: return '#3b82f6';
-    }
-  };
-
-  const formatEventDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('de-DE', {
-      weekday: 'short',
-      day: '2-digit',
-      month: 'short'
-    });
-  };
-
-  const getDaysUntil = (dateString: string) => {
-    const now = new Date();
-    const eventDate = new Date(dateString);
-    const diffTime = eventDate.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) return 'Heute';
-    if (diffDays === 1) return 'Morgen';
-    if (diffDays < 0) return `Vor ${Math.abs(diffDays)} Tagen`;
-    return `In ${diffDays} Tagen`;
-  };
-
-  return (
-    <AnimatePresence>
-      <motion.div
-        className="quick-actions-overlay"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={onClose}
-        style={{
-          padding: isMobile ? '20px' : '40px',
-          zIndex: 1001
-        }}
-      >
-        <motion.div
-          className="stats-detail-modal premium-modal"
-          initial={{ scale: 0.95, opacity: 0, y: 20 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.95, opacity: 0, y: 20 }}
-          onClick={(e) => e.stopPropagation()}
-          style={{
-            maxWidth: isMobile ? '100%' : '800px',
-            width: isMobile ? 'calc(100% - 40px)' : '800px',
-            maxHeight: isMobile ? '90vh' : '80vh',
-            overflowY: 'auto',
-            background: '#ffffff',
-            borderRadius: '20px',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)',
-            padding: 0
-          }}
-        >
-          {/* Header */}
-          <div style={{
-            padding: isMobile ? '20px' : '30px',
-            borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
-            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(147, 51, 234, 0.05))',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            position: 'sticky',
-            top: 0,
-            zIndex: 10
-          }}>
-            <div>
-              <h2 style={{
-                margin: 0,
-                fontSize: isMobile ? '20px' : '24px',
-                fontWeight: '700',
-                color: '#1f2937'
-              }}>
-                {title}
-              </h2>
-              <p style={{
-                margin: '5px 0 0 0',
-                fontSize: '14px',
-                color: '#6b7280'
-              }}>
-                {events.length} {events.length === 1 ? 'Ereignis' : 'Ereignisse'}
-              </p>
-            </div>
-            <motion.button
-              onClick={onClose}
-              whileHover={{ scale: 1.1, rotate: 90 }}
-              whileTap={{ scale: 0.9 }}
-              style={{
-                background: 'rgba(0, 0, 0, 0.05)',
-                border: 'none',
-                borderRadius: '50%',
-                width: '36px',
-                height: '36px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-            >
-              <X size={20} />
-            </motion.button>
-          </div>
-
-          {/* Timeline Content */}
-          <div style={{
-            padding: isMobile ? '20px' : '30px'
-          }}>
-            {events.length === 0 ? (
-              <div style={{
-                textAlign: 'center',
-                padding: '60px 20px',
-                color: '#9ca3af'
-              }}>
-                <Sparkles size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
-                <p style={{ fontSize: '16px', fontWeight: '500' }}>
-                  Keine Ereignisse gefunden
-                </p>
-              </div>
-            ) : (
-              <div className="timeline-container">
-                {Object.entries(eventsByMonth).map(([monthKey, { label, events: monthEvents }]) => (
-                  <div key={monthKey} style={{ marginBottom: '40px' }}>
-                    {/* Month Header */}
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      marginBottom: '20px'
-                    }}>
-                      <div style={{
-                        flex: 1,
-                        height: '1px',
-                        background: 'linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.1), transparent)'
-                      }} />
-                      <h3 style={{
-                        margin: 0,
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        color: '#6b7280',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em'
-                      }}>
-                        {label}
-                      </h3>
-                      <div style={{
-                        flex: 1,
-                        height: '1px',
-                        background: 'linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.1), transparent)'
-                      }} />
-                    </div>
-
-                    {/* Events in this month */}
-                    <div style={{ position: 'relative', paddingLeft: isMobile ? '20px' : '30px' }}>
-                      {/* Timeline line */}
-                      <div style={{
-                        position: 'absolute',
-                        left: '0',
-                        top: '20px',
-                        bottom: '20px',
-                        width: '2px',
-                        background: 'linear-gradient(180deg, rgba(59, 130, 246, 0.3), rgba(147, 51, 234, 0.3))'
-                      }} />
-
-                      {monthEvents.map((event, index) => (
-                        <motion.div
-                          key={event.id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.05 }}
-                          style={{
-                            position: 'relative',
-                            marginBottom: '20px',
-                            paddingLeft: '25px'
-                          }}
-                        >
-                          {/* Timeline dot */}
-                          <div style={{
-                            position: 'absolute',
-                            left: '-7px',
-                            top: '20px',
-                            width: '16px',
-                            height: '16px',
-                            borderRadius: '50%',
-                            background: getSeverityColor(event.severity),
-                            border: '3px solid #ffffff',
-                            boxShadow: `0 0 0 1px ${getSeverityColor(event.severity)}40`,
-                            zIndex: 1
-                          }} />
-
-                          {/* Event Card */}
-                          <motion.div
-                            whileHover={{ scale: 1.02, x: 5 }}
-                            style={{
-                              background: '#ffffff',
-                              border: `1px solid ${getSeverityColor(event.severity)}30`,
-                              borderRadius: '12px',
-                              padding: isMobile ? '16px' : '20px',
-                              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s'
-                            }}
-                          >
-                            {/* Header */}
-                            <div style={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'flex-start',
-                              gap: '12px',
-                              marginBottom: '12px'
-                            }}>
-                              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                {getSeverityIcon(event.severity)}
-                                <span style={{
-                                  fontSize: '14px',
-                                  fontWeight: '600',
-                                  color: getSeverityColor(event.severity),
-                                  textTransform: 'uppercase',
-                                  letterSpacing: '0.05em'
-                                }}>
-                                  {event.severity === 'critical' ? 'Kritisch' :
-                                   event.severity === 'warning' ? 'Warnung' : 'Info'}
-                                </span>
-                              </div>
-                              <span style={{
-                                fontSize: '12px',
-                                fontWeight: '500',
-                                color: '#9ca3af',
-                                whiteSpace: 'nowrap'
-                              }}>
-                                {getDaysUntil(event.date)}
-                              </span>
-                            </div>
-
-                            {/* Title */}
-                            <h4 style={{
-                              margin: '0 0 8px 0',
-                              fontSize: isMobile ? '15px' : '16px',
-                              fontWeight: '600',
-                              color: '#1f2937'
-                            }}>
-                              {event.contractName}
-                            </h4>
-
-                            {/* Description */}
-                            <p style={{
-                              margin: '0 0 12px 0',
-                              fontSize: '14px',
-                              color: '#6b7280',
-                              lineHeight: '1.5'
-                            }}>
-                              {event.title}
-                            </p>
-
-                            {/* Footer */}
-                            <div style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '12px',
-                              fontSize: '13px',
-                              color: '#9ca3af'
-                            }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <CalendarIconLucide size={14} />
-                                {formatEventDate(event.date)}
-                              </div>
-                              {event.metadata?.provider && (
-                                <>
-                                  <span>•</span>
-                                  <span>{getProviderName(event.metadata.provider)}</span>
-                                </>
-                              )}
-                            </div>
-                          </motion.div>
-                        </motion.div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
-  );
-}
-
-// Helper function to format contract name
-const formatContractName = (name: string): string => {
-  let formatted = name.replace(/\.(pdf|docx?|txt|png|jpg|jpeg)$/i, '');
-  formatted = formatted.replace(/_/g, ' ');
-  formatted = formatted.replace(/\d{8}_?\d{6}/g, '');
-  formatted = formatted.replace(/\s+/g, ' ').trim();
-  if (!formatted) {
-    formatted = name.split('.')[0];
-  }
-  return formatted.charAt(0).toUpperCase() + formatted.slice(1);
-};
-
-// Get event type icon
-const getEventTypeIcon = (type: string) => {
-  switch(type) {
-    case 'CANCEL_WINDOW_OPEN':
-      return <Target size={14} />;
-    case 'LAST_CANCEL_DAY':
-      return <AlertCircle size={14} />;
-    case 'PRICE_INCREASE':
-      return <TrendingUp size={14} />;
-    case 'AUTO_RENEWAL':
-      return <RefreshCw size={14} />;
-    case 'REVIEW':
-      return <Shield size={14} />;
-    default:
-      return <Info size={14} />;
-  }
-};
-
+// ========== Main Calendar Page ==========
 export default function CalendarPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<CalendarEvent[]>([]);
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [view, setView] = useState<"month" | "year">("month");
-  const [filterSeverity, setFilterSeverity] = useState<string>("all");
-  const [filterType, setFilterType] = useState<string>("all");
-  const [showQuickActions, setShowQuickActions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [urgentEventsPage, setUrgentEventsPage] = useState(0);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth < 1024);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [showStatsModal, setShowStatsModal] = useState(false);
-  const [selectedStatFilter, setSelectedStatFilter] = useState<"total" | "past" | "thisMonth" | "notified">("total");
+  const [filterSeverity, setFilterSeverity] = useState("all");
+  const [filterType, setFilterType] = useState("all");
+  const [showQuickActions, setShowQuickActions] = useState(false);
   const [showSyncModal, setShowSyncModal] = useState(false);
+  const [currentView, setCurrentView] = useState<'month' | 'week' | 'day'>('month');
+  const [urgentPage, setUrgentPage] = useState(0);
 
-  const EVENTS_PER_PAGE = isMobile ? 3 : 5;
+  const EVENTS_PER_PAGE = 5;
 
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-      setIsTablet(window.innerWidth >= 768 && window.innerWidth < 1024);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // Fetch Events from new Calendar API
+  // Fetch Events
   const fetchEvents = useCallback(async () => {
     setLoading(true);
-    setError("");
-    
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        console.warn("Kein Token gefunden");
-        setError("Bitte melden Sie sich an.");
         setLoading(false);
         return;
       }
 
-      // ✅ Load past events (last 60 days) AND future events (next 365 days)
       const pastDate = new Date();
-      pastDate.setDate(pastDate.getDate() - 60); // 60 Tage zurück
-
+      pastDate.setDate(pastDate.getDate() - 60);
       const futureDate = new Date();
-      futureDate.setDate(futureDate.getDate() + 365); // 365 Tage voraus
+      futureDate.setDate(futureDate.getDate() + 365);
 
-      const response = await axios.get<ApiResponse<CalendarEvent>>("/api/calendar/events", {
+      const response = await axios.get<ApiResponse>("/api/calendar/events", {
         headers: { Authorization: `Bearer ${token}` },
-        params: {
-          from: pastDate.toISOString(),
-          to: futureDate.toISOString()
-        }
+        params: { from: pastDate.toISOString(), to: futureDate.toISOString() }
       });
-
-      console.log("Calendar Events Response:", response.data);
 
       if (response.data.success && response.data.events) {
         setEvents(response.data.events);
         setFilteredEvents(response.data.events);
-      } else {
-        setEvents([]);
-        setFilteredEvents([]);
       }
     } catch (err) {
-      console.error("Fehler beim Laden der Kalenderereignisse:", err);
-      setError("Die Kalenderdaten konnten nicht geladen werden.");
-      setEvents([]);
-      setFilteredEvents([]);
+      console.error("Error fetching events:", err);
     } finally {
       setLoading(false);
     }
@@ -762,49 +449,38 @@ export default function CalendarPage() {
   // Filter events
   useEffect(() => {
     let filtered = [...events];
-    
     if (filterSeverity !== "all") {
       filtered = filtered.filter(e => e.severity === filterSeverity);
     }
-    
     if (filterType !== "all") {
       filtered = filtered.filter(e => e.type === filterType);
     }
-    
     setFilteredEvents(filtered);
   }, [events, filterSeverity, filterType]);
 
-  // Regenerate all events
+  // Regenerate events
   const handleRegenerateEvents = async () => {
     setRefreshing(true);
-    
     try {
       const token = localStorage.getItem("token");
       await axios.post("/api/calendar/regenerate-all", {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
       await fetchEvents();
-      alert("Events wurden erfolgreich regeneriert!");
     } catch (err) {
-      console.error("Fehler beim Regenerieren der Events:", err);
-      alert("Events konnten nicht regeneriert werden.");
+      console.error("Error regenerating events:", err);
     } finally {
       setRefreshing(false);
     }
   };
 
-  // Handle Quick Actions
+  // Handle Quick Action
   const handleQuickAction = async (action: string, eventId: string) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.post<ApiResponse<CalendarEvent>>("/api/calendar/quick-action", {
-        eventId,
-        action,
-        data: action === "snooze" ? { days: 7 } : {}
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.post<ApiResponse>("/api/calendar/quick-action", {
+        eventId, action, data: action === "snooze" ? { days: 7 } : {}
+      }, { headers: { Authorization: `Bearer ${token}` } });
 
       if (response.data.success) {
         if (response.data.result?.redirect) {
@@ -813,700 +489,362 @@ export default function CalendarPage() {
           await fetchEvents();
           setShowQuickActions(false);
           setSelectedEvent(null);
-          
-          if (response.data.result?.message) {
-            alert(response.data.result.message);
-          }
         }
       }
     } catch (err) {
-      console.error("Fehler bei Quick Action:", err);
-      alert("Aktion konnte nicht ausgeführt werden.");
+      console.error("Error executing action:", err);
     }
   };
 
-  // Modern calendar tile styling
-  const tileClassName = ({ date }: { date: Date }) => {
-    // ✅ FIX: Use local date format to avoid timezone shift
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const dateString = `${year}-${month}-${day}`;
-    const dayEvents = filteredEvents.filter(e =>
-      e.date && e.date.split('T')[0] === dateString
-    );
-    
-    if (dayEvents.length === 0) return null;
-    
-    const hasCritical = dayEvents.some(e => e.severity === "critical");
-    const hasWarning = dayEvents.some(e => e.severity === "warning");
-    
-    if (hasCritical) return "tile-critical";
-    if (hasWarning) return "tile-warning";
-    return "tile-info";
+  // Navigation
+  const navigateMonth = (direction: 'prev' | 'next') => {
+    setCurrentDate(prev => {
+      const newDate = new Date(prev);
+      newDate.setMonth(newDate.getMonth() + (direction === 'prev' ? -1 : 1));
+      return newDate;
+    });
   };
 
-  const tileContent = ({ date }: { date: Date }) => {
-    // ✅ FIX: Use local date format to avoid timezone shift
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const dateString = `${year}-${month}-${day}`;
-    const dayEvents = filteredEvents.filter(e =>
-      e.date && e.date.split('T')[0] === dateString
-    );
-    
-    if (dayEvents.length === 0) return null;
-    
-    const hasCritical = dayEvents.some(e => e.severity === "critical");
-    const hasWarning = dayEvents.some(e => e.severity === "warning");
-    const hasInfo = dayEvents.some(e => e.severity === "info");
-    
-    return (
-      <div className="tile-content-modern">
-        {hasCritical && (
-          <div className="event-dot critical-dot">
-            <span className="dot-pulse"></span>
-          </div>
-        )}
-        {hasWarning && !hasCritical && (
-          <div className="event-dot warning-dot">
-            <span className="dot-pulse"></span>
-          </div>
-        )}
-        {hasInfo && !hasCritical && !hasWarning && (
-          <div className="event-dot info-dot"></div>
-        )}
-        {dayEvents.length > 1 && (
-          <div className="event-count-badge">{dayEvents.length}</div>
-        )}
-      </div>
-    );
+  const goToToday = () => {
+    setCurrentDate(new Date());
+    setSelectedDate(new Date());
   };
 
-  const handleDateClick = (value: Value) => {
-    if (value instanceof Date) {
-      setSelectedDate(value);
+  // Statistics
+  const stats = useMemo(() => {
+    const now = new Date();
+    const thisMonth = events.filter(e => {
+      const d = new Date(e.date);
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    });
+    const critical = events.filter(e => e.severity === 'critical');
+    const past = events.filter(e => new Date(e.date) < now);
+    return {
+      total: events.length,
+      critical: critical.length,
+      thisMonth: thisMonth.length,
+      past: past.length
+    };
+  }, [events]);
 
-      // ✅ FIX: Use local date format to avoid timezone shift
-      const year = value.getFullYear();
-      const month = String(value.getMonth() + 1).padStart(2, '0');
-      const day = String(value.getDate()).padStart(2, '0');
-      const dateString = `${year}-${month}-${day}`;
-      const dayEvents = filteredEvents.filter(e =>
-        e.date && e.date.split('T')[0] === dateString
-      );
-      
-      if (dayEvents.length === 1) {
-        setSelectedEvent(dayEvents[0]);
-        setShowQuickActions(true);
-      } else if (dayEvents.length > 1) {
-        setSelectedEvent(dayEvents[0]);
-        setShowQuickActions(true);
-      }
-    } else if (Array.isArray(value) && value[0] instanceof Date) {
-      setSelectedDate(value[0]);
-    }
-  };
-
-  const getUpcomingCriticalEvents = () => {
+  // Urgent Events (next 30 days)
+  const urgentEvents = useMemo(() => {
     const now = new Date();
     const future = new Date();
     future.setDate(future.getDate() + 30);
-    
     return filteredEvents
       .filter(e => {
-        const eventDate = new Date(e.date);
-        return eventDate >= now && 
-               eventDate <= future && 
-               (e.severity === "critical" || e.severity === "warning");
+        const d = new Date(e.date);
+        return d >= now && d <= future && (e.severity === 'critical' || e.severity === 'warning');
       })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  };
+  }, [filteredEvents]);
 
-  const getDaysRemaining = (date: string) => {
-    const now = new Date();
-    const eventDate = new Date(date);
-    const diffTime = eventDate.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) return { text: "Heute", urgent: true };
-    if (diffDays === 1) return { text: "Morgen", urgent: true };
-    if (diffDays < 0) return { text: "Abgelaufen", urgent: true };
-    if (diffDays <= 7) return { text: `${diffDays} Tage`, urgent: true };
-    return { text: `${diffDays} Tage`, urgent: false };
-  };
-
-  // Calculate statistics
-  const getStatistics = () => {
-    const now = new Date();
-    const thisMonth = filteredEvents.filter(e => {
-      const eventDate = new Date(e.date);
-      return eventDate.getMonth() === now.getMonth() &&
-             eventDate.getFullYear() === now.getFullYear();
-    });
-
-    // ✅ Past events: Last 60 days
-    const past60Days = new Date();
-    past60Days.setDate(past60Days.getDate() - 60);
-    const pastEvents = events.filter(e => {
-      const eventDate = new Date(e.date);
-      return eventDate < now && eventDate >= past60Days;
-    });
-
-    return {
-      total: events.length,
-      past: pastEvents.length, // ✅ Changed from 'critical' to 'past'
-      thisMonth: thisMonth.length,
-      notified: events.filter(e => e.status === "notified").length
-    };
-  };
-
-  const stats = getStatistics();
-
-  // Handle Stats Card Click - Open Modal with filtered events
-  const handleStatsCardClick = (filterType: "total" | "past" | "thisMonth" | "notified") => {
-    setSelectedStatFilter(filterType);
-    setShowStatsModal(true);
-  };
-
-  // Get filtered events for stats modal
-  const getFilteredStatsEvents = () => {
-    const now = new Date();
-
-    switch (selectedStatFilter) {
-      case "past": {
-        // ✅ Past events: Last 60 days
-        const past60Days = new Date();
-        past60Days.setDate(past60Days.getDate() - 60);
-        return events.filter(e => {
-          const eventDate = new Date(e.date);
-          return eventDate < now && eventDate >= past60Days;
-        });
-      }
-      case "thisMonth":
-        return events.filter(e => {
-          const eventDate = new Date(e.date);
-          return eventDate.getMonth() === now.getMonth() &&
-                 eventDate.getFullYear() === now.getFullYear();
-        });
-      case "notified":
-        return events.filter(e => e.status === "notified");
-      case "total":
-      default:
-        return events;
-    }
-  };
-
-  // Get title for stats modal
-  const getStatsModalTitle = () => {
-    switch (selectedStatFilter) {
-      case "past":
-        return "Vergangene Ereignisse";
-      case "thisMonth":
-        return "Ereignisse diesen Monat";
-      case "notified":
-        return "Benachrichtigte Ereignisse";
-      case "total":
-      default:
-        return "Alle Ereignisse";
-    }
-  };
-
-  // Paginated urgent events
-  const urgentEvents = getUpcomingCriticalEvents();
+  const paginatedUrgent = urgentEvents.slice(urgentPage * EVENTS_PER_PAGE, (urgentPage + 1) * EVENTS_PER_PAGE);
   const totalPages = Math.ceil(urgentEvents.length / EVENTS_PER_PAGE);
-  const paginatedEvents = urgentEvents.slice(
-    urgentEventsPage * EVENTS_PER_PAGE,
-    (urgentEventsPage + 1) * EVENTS_PER_PAGE
-  );
 
   return (
     <>
       <Helmet>
-        <title>Intelligenter Vertragskalender – Nie wieder Fristen verpassen | Contract AI</title>
-        <meta name="description" content="Revolutionärer Vertragskalender mit automatischen Erinnerungen, 1-Klick-Kündigung und KI-gestützten Optimierungsvorschlägen. Sparen Sie Zeit und Geld!" />
+        <title>Vertragskalender | Contract AI</title>
       </Helmet>
-      
-      <div className="calendar-page-premium">
-        {/* Premium Header */}
-        <motion.header 
-          className="calendar-header-premium"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <div className="header-content">
-            <div className="header-main">
-              <div className="header-icon-wrapper">
-                <CalendarIconLucide size={32} />
+
+      <div className="calendar-page">
+        <div className="calendar-page-content">
+          {/* Page Header */}
+          <header className="page-header">
+            <div className="page-title">
+              <div className="page-title-icon">
+                <CalendarIcon size={24} />
               </div>
-              <div className="header-text">
-                <h1>Intelligenter Vertragskalender</h1>
-                <p>Automatische Erinnerungen • 1-Klick-Kündigung • KI-Optimierung</p>
+              <div>
+                <h1>Vertragskalender</h1>
+                <p>Alle Fristen im Blick - nie wieder eine Deadline verpassen</p>
               </div>
             </div>
-            
-            {/* Mobile Menu Toggle */}
-            {isMobile && (
-              <button 
-                className="mobile-menu-toggle"
-                onClick={() => setShowMobileMenu(!showMobileMenu)}
-              >
-                <Filter size={24} />
+            <div className="header-actions">
+              <button className="btn btn-secondary" onClick={() => setShowSyncModal(true)}>
+                <Link2 size={16} />
+                Kalender Sync
               </button>
-            )}
-          </div>
-
-          {/* Filter Bar - Desktop & Tablet */}
-          {!isMobile && (
-            <div className="filter-bar-premium">
-              <div className="filter-group-premium">
-                <Filter size={16} />
-                <select 
-                  value={filterSeverity} 
-                  onChange={(e) => setFilterSeverity(e.target.value)}
-                  className="filter-select-premium"
-                >
-                  <option value="all">Alle Dringlichkeiten</option>
-                  <option value="critical">Kritisch</option>
-                  <option value="warning">Warnung</option>
-                  <option value="info">Info</option>
-                </select>
-              </div>
-              
-              <div className="filter-group-premium">
-                <FileText size={16} />
-                <select 
-                  value={filterType} 
-                  onChange={(e) => setFilterType(e.target.value)}
-                  className="filter-select-premium"
-                >
-                  <option value="all">Alle Ereignisse</option>
-                  <option value="CANCEL_WINDOW_OPEN">Kündigungsfenster</option>
-                  <option value="LAST_CANCEL_DAY">Letzte Chance</option>
-                  <option value="PRICE_INCREASE">Preiserhöhung</option>
-                  <option value="AUTO_RENEWAL">Verlängerung</option>
-                  <option value="REVIEW">Review</option>
-                </select>
-              </div>
-              
-              <motion.button
-                className={`refresh-btn-premium ${refreshing ? 'refreshing' : ''}`}
+              <button
+                className="btn btn-secondary"
                 onClick={handleRegenerateEvents}
                 disabled={refreshing}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
               >
-                <RefreshCw size={16} className={refreshing ? "spinning" : ""} />
-                <span>{refreshing ? "Aktualisiere..." : "Events neu generieren"}</span>
-              </motion.button>
-
-              <motion.button
-                className="sync-calendar-btn-premium"
-                onClick={() => setShowSyncModal(true)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Link2 size={16} />
-                <span>Kalender synchronisieren</span>
-              </motion.button>
+                <RefreshCw size={16} className={refreshing ? 'spinning' : ''} />
+                {refreshing ? 'Lädt...' : 'Aktualisieren'}
+              </button>
             </div>
-          )}
-        </motion.header>
+          </header>
 
-        {/* Mobile Filter Menu */}
-        <AnimatePresence>
-          {isMobile && showMobileMenu && (
-            <motion.div 
-              className="mobile-filter-menu"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-            >
-              <div className="mobile-filter-content">
-                <div className="mobile-filter-group">
-                  <label>Dringlichkeit</label>
-                  <select 
-                    value={filterSeverity} 
-                    onChange={(e) => setFilterSeverity(e.target.value)}
-                  >
-                    <option value="all">Alle</option>
-                    <option value="critical">Kritisch</option>
-                    <option value="warning">Warnung</option>
-                    <option value="info">Info</option>
-                  </select>
-                </div>
-                
-                <div className="mobile-filter-group">
-                  <label>Ereignistyp</label>
-                  <select 
-                    value={filterType} 
-                    onChange={(e) => setFilterType(e.target.value)}
-                  >
-                    <option value="all">Alle</option>
-                    <option value="CANCEL_WINDOW_OPEN">Kündigungsfenster</option>
-                    <option value="LAST_CANCEL_DAY">Letzte Chance</option>
-                    <option value="PRICE_INCREASE">Preiserhöhung</option>
-                    <option value="AUTO_RENEWAL">Verlängerung</option>
-                    <option value="REVIEW">Review</option>
-                  </select>
-                </div>
-                
-                <button
-                  className="mobile-refresh-btn"
-                  onClick={handleRegenerateEvents}
-                  disabled={refreshing}
-                >
-                  <RefreshCw size={16} className={refreshing ? "spinning" : ""} />
-                  {refreshing ? "Aktualisiere..." : "Events generieren"}
-                </button>
-
-                <button
-                  className="mobile-sync-btn"
-                  onClick={() => {
-                    setShowMobileMenu(false);
-                    setShowSyncModal(true);
-                  }}
-                >
-                  <Link2 size={16} />
-                  Kalender synchronisieren
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Main Content Grid */}
-        <div className={`calendar-grid-premium ${isMobile ? 'mobile' : isTablet ? 'tablet' : 'desktop'}`}>
-          {/* Statistics Cards - Top Position */}
-          <motion.div 
-            className="stats-section-premium"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <div className="stats-grid-premium">
-              <motion.div
-                className="stat-card-premium total"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => handleStatsCardClick("total")}
-                style={{ cursor: 'pointer' }}
-              >
-                <div className="stat-icon-wrapper">
-                  <BarChart3 size={24} />
-                </div>
-                <div className="stat-content">
-                  <div className="stat-value">{stats.total}</div>
-                  <div className="stat-label">Ereignisse gesamt</div>
-                </div>
-                <div className="stat-card-arrow">
-                  <ArrowRight size={16} />
-                </div>
-              </motion.div>
-
-              <motion.div
-                className="stat-card-premium past"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => handleStatsCardClick("past")}
-                style={{ cursor: 'pointer' }}
-              >
-                <div className="stat-icon-wrapper">
-                  <Clock size={24} />
-                </div>
-                <div className="stat-content">
-                  <div className="stat-value">{stats.past}</div>
-                  <div className="stat-label">Vergangene Ereignisse</div>
-                </div>
-                <div className="stat-card-arrow">
-                  <ArrowRight size={16} />
-                </div>
-              </motion.div>
-
-              <motion.div
-                className="stat-card-premium warning"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => handleStatsCardClick("thisMonth")}
-                style={{ cursor: 'pointer' }}
-              >
-                <div className="stat-icon-wrapper">
-                  <Target size={24} />
-                </div>
-                <div className="stat-content">
-                  <div className="stat-value">{stats.thisMonth}</div>
-                  <div className="stat-label">Diesen Monat</div>
-                </div>
-                <div className="stat-card-arrow">
-                  <ArrowRight size={16} />
-                </div>
-              </motion.div>
-
-              <motion.div
-                className="stat-card-premium info"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => handleStatsCardClick("notified")}
-                style={{ cursor: 'pointer' }}
-              >
-                <div className="stat-icon-wrapper">
-                  <Bell size={24} />
-                </div>
-                <div className="stat-content">
-                  <div className="stat-value">{stats.notified}</div>
-                  <div className="stat-label">Benachrichtigt</div>
-                </div>
-                <div className="stat-card-arrow">
-                  <ArrowRight size={16} />
-                </div>
-              </motion.div>
-            </div>
-          </motion.div>
-
-          {/* Calendar Section */}
-          <motion.div 
-            className="calendar-section-premium"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2 }}
-          >
-            {loading ? (
-              <div className="calendar-loading-premium">
-                <div className="loading-spinner"></div>
-                <p>Kalenderereignisse werden geladen...</p>
-              </div>
-            ) : error ? (
-              <div className="calendar-error-premium">
-                <AlertCircle size={32} />
-                <p>{error}</p>
-              </div>
-            ) : (
-              <>
-                <Calendar 
-                  onChange={handleDateClick}
-                  value={selectedDate || new Date()}
-                  tileClassName={tileClassName}
-                  tileContent={tileContent}
-                  view={view}
-                  onViewChange={({ view: newView }) => setView(newView as "month" | "year")}
-                  showNeighboringMonth={false}
-                  minDetail="year"
-                  locale="de-DE"
-                  className="calendar-premium"
-                />
-                
-                <div className="calendar-legend-premium">
-                  <div className="legend-item">
-                    <div className="legend-dot critical"></div>
-                    <span>Kritisch</span>
-                  </div>
-                  <div className="legend-item">
-                    <div className="legend-dot warning"></div>
-                    <span>Warnung</span>
-                  </div>
-                  <div className="legend-item">
-                    <div className="legend-dot info"></div>
-                    <span>Info</span>
-                  </div>
-                </div>
-              </>
-            )}
-          </motion.div>
-
-          {/* Urgent Events Section with Pagination */}
-          <motion.div 
-            className="urgent-section-premium"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <div className="section-header-premium">
-              <div className="section-title">
-                <AlertCircle size={20} className="section-icon" />
-                <h3>Dringende Ereignisse</h3>
-              </div>
-              {urgentEvents.length > EVENTS_PER_PAGE && (
-                <div className="pagination-controls">
-                  <button 
-                    onClick={() => setUrgentEventsPage(Math.max(0, urgentEventsPage - 1))}
-                    disabled={urgentEventsPage === 0}
-                    className="pagination-btn"
-                  >
-                    <ChevronLeft size={16} />
+          {/* Main Content Grid */}
+          <div className="content-grid">
+            {/* Calendar Container */}
+            <div className="calendar-container">
+              {/* Calendar Header */}
+              <div className="calendar-header">
+                <div className="calendar-nav">
+                  <button className="nav-btn" onClick={() => navigateMonth('prev')}>
+                    <ChevronLeft size={20} />
                   </button>
-                  <span className="pagination-info">
-                    {urgentEventsPage + 1} / {totalPages}
-                  </span>
-                  <button 
-                    onClick={() => setUrgentEventsPage(Math.min(totalPages - 1, urgentEventsPage + 1))}
-                    disabled={urgentEventsPage === totalPages - 1}
-                    className="pagination-btn"
-                  >
-                    <ChevronRight size={16} />
+                  <button className="nav-btn" onClick={() => navigateMonth('next')}>
+                    <ChevronRight size={20} />
                   </button>
+                  <button className="today-btn" onClick={goToToday}>Heute</button>
                 </div>
-              )}
-            </div>
-            
-            {paginatedEvents.length > 0 ? (
-              <div className="urgent-events-grid">
-                {paginatedEvents.map((event, index) => {
-                  const daysInfo = getDaysRemaining(event.date);
-                  const formattedName = formatContractName(event.contractName);
-                  
-                  return (
-                    <motion.div 
-                      key={event.id} 
-                      className={`event-card-premium severity-${event.severity}`}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.05 * index }}
-                      whileHover={{ scale: 1.02 }}
-                      onClick={() => {
-                        setSelectedEvent(event);
-                        setShowQuickActions(true);
-                      }}
+                <div className="current-month">
+                  {MONTH_NAMES[currentDate.getMonth()]} {currentDate.getFullYear()}
+                </div>
+                <div className="view-switcher">
+                  {(['month', 'week', 'day'] as const).map(view => (
+                    <button
+                      key={view}
+                      className={`view-btn ${currentView === view ? 'active' : ''}`}
+                      onClick={() => setCurrentView(view)}
                     >
-                      <div className="event-card-header">
-                        <div className="event-type-badge">
-                          {getEventTypeIcon(event.type)}
-                        </div>
-                        <span className={`days-badge-premium ${daysInfo.urgent ? 'urgent' : ''}`}>
-                          {daysInfo.text}
-                        </span>
-                      </div>
-                      <h4 className="event-card-title">{formattedName}</h4>
-                      <p className="event-card-description">{event.title}</p>
-                      <div className="event-card-footer">
-                        <span className="event-date">
-                          <CalendarIconLucide size={14} />
-                          {new Date(event.date).toLocaleDateString('de-DE')}
-                        </span>
-                        {event.metadata?.suggestedAction && (
-                          <motion.button 
-                            className="suggested-action-btn"
-                            whileHover={{ scale: 1.05 }}
-                            onClick={(e) => {
-                              e.stopPropagation();
+                      {view === 'month' ? 'Monat' : view === 'week' ? 'Woche' : 'Tag'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Calendar Grid */}
+              {loading ? (
+                <div className="loading">
+                  <div className="loading-spinner"></div>
+                  <p>Lade Kalender...</p>
+                </div>
+              ) : (
+                <CustomCalendarGrid
+                  currentDate={currentDate}
+                  events={filteredEvents}
+                  selectedDate={selectedDate}
+                  onDateClick={(date) => setSelectedDate(date)}
+                  onEventClick={(event) => {
+                    setSelectedEvent(event);
+                    setShowQuickActions(true);
+                  }}
+                />
+              )}
+
+              {/* Legend */}
+              <div className="calendar-legend">
+                <div className="legend-item">
+                  <div className="legend-dot critical"></div>
+                  <span>Kritisch</span>
+                </div>
+                <div className="legend-item">
+                  <div className="legend-dot warning"></div>
+                  <span>Warnung</span>
+                </div>
+                <div className="legend-item">
+                  <div className="legend-dot info"></div>
+                  <span>Info</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Sidebar */}
+            <aside className="sidebar">
+              {/* Stats Card */}
+              <div className="sidebar-card">
+                <div className="sidebar-card-header">
+                  <div className="sidebar-card-title">
+                    <BarChart3 size={18} />
+                    Übersicht
+                  </div>
+                </div>
+                <div className="stats-grid">
+                  <div className="stat-card">
+                    <div className="stat-value">{stats.total}</div>
+                    <div className="stat-label">Ereignisse</div>
+                  </div>
+                  <div className="stat-card critical">
+                    <div className="stat-value">{stats.critical}</div>
+                    <div className="stat-label">Kritisch</div>
+                  </div>
+                  <div className="stat-card warning">
+                    <div className="stat-value">{stats.thisMonth}</div>
+                    <div className="stat-label">Diesen Monat</div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-value">{stats.past}</div>
+                    <div className="stat-label">Vergangen</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Urgent Events */}
+              <div className="sidebar-card">
+                <div className="sidebar-card-header">
+                  <div className="sidebar-card-title">
+                    <AlertCircle size={18} />
+                    Dringende Ereignisse
+                  </div>
+                  {urgentEvents.length > 0 && (
+                    <span style={{ fontSize: '12px', color: '#ef4444', fontWeight: 600 }}>
+                      {urgentEvents.length} offen
+                    </span>
+                  )}
+                </div>
+
+                {paginatedUrgent.length > 0 ? (
+                  <>
+                    <div className="urgent-events-list">
+                      {paginatedUrgent.map(event => {
+                        const daysInfo = getDaysRemaining(event.date);
+                        return (
+                          <div
+                            key={event.id}
+                            className="urgent-event-item"
+                            onClick={() => {
                               setSelectedEvent(event);
                               setShowQuickActions(true);
                             }}
                           >
-                            <Zap size={14} />
-                            {event.metadata.suggestedAction === "cancel" ? "Kündigen" :
-                             event.metadata.suggestedAction === "compare" ? "Vergleichen" :
-                             "Handeln"}
-                          </motion.button>
-                        )}
+                            <div className={`urgent-event-indicator ${event.severity}`}></div>
+                            <div className="urgent-event-content">
+                              <div className="urgent-event-title">
+                                {formatContractName(event.contractName)}
+                              </div>
+                              <div className="urgent-event-desc">{event.title}</div>
+                              <div className="urgent-event-meta">
+                                <span className="urgent-event-date">
+                                  {new Date(event.date).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' })}
+                                </span>
+                              </div>
+                            </div>
+                            <div className={`urgent-event-badge ${event.severity}`}>
+                              {daysInfo.text}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {totalPages > 1 && (
+                      <div className="pagination">
+                        <button
+                          className="pagination-btn"
+                          onClick={() => setUrgentPage(p => Math.max(0, p - 1))}
+                          disabled={urgentPage === 0}
+                        >
+                          <ChevronLeft size={16} />
+                        </button>
+                        <span className="pagination-info">{urgentPage + 1} / {totalPages}</span>
+                        <button
+                          className="pagination-btn"
+                          onClick={() => setUrgentPage(p => Math.min(totalPages - 1, p + 1))}
+                          disabled={urgentPage >= totalPages - 1}
+                        >
+                          <ChevronRight size={16} />
+                        </button>
                       </div>
-                    </motion.div>
-                  );
-                })}
+                    )}
+                  </>
+                ) : (
+                  <div className="no-events">
+                    <Bell size={32} />
+                    <p>Keine dringenden Ereignisse</p>
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="no-events-premium">
-                <Sparkles size={32} />
-                <h4>Alles im Griff!</h4>
-                <p>
-                  {events.length === 0 
-                    ? "Laden Sie Verträge hoch oder generieren Sie Events."
-                    : "Keine dringenden Ereignisse in den nächsten 30 Tagen."}
-                </p>
-              </div>
-            )}
-          </motion.div>
 
-          {/* Premium Features Section */}
-          <motion.div 
-            className="features-section-premium"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <div className="section-header-premium">
-              <div className="section-title">
-                <Sparkles size={20} className="section-icon" />
-                <h3>Premium Features</h3>
+              {/* Filter Card */}
+              <div className="sidebar-card">
+                <div className="sidebar-card-header">
+                  <div className="sidebar-card-title">
+                    <Target size={18} />
+                    Filter
+                  </div>
+                </div>
+                <div className="filter-section">
+                  <div className="filter-group">
+                    <label className="filter-label">Dringlichkeit</label>
+                    <select
+                      className="filter-select"
+                      value={filterSeverity}
+                      onChange={(e) => setFilterSeverity(e.target.value)}
+                    >
+                      <option value="all">Alle</option>
+                      <option value="critical">Kritisch</option>
+                      <option value="warning">Warnung</option>
+                      <option value="info">Info</option>
+                    </select>
+                  </div>
+                  <div className="filter-group">
+                    <label className="filter-label">Ereignistyp</label>
+                    <select
+                      className="filter-select"
+                      value={filterType}
+                      onChange={(e) => setFilterType(e.target.value)}
+                    >
+                      <option value="all">Alle</option>
+                      <option value="CANCEL_WINDOW_OPEN">Kündigungsfenster</option>
+                      <option value="LAST_CANCEL_DAY">Letzte Chance</option>
+                      <option value="PRICE_INCREASE">Preiserhöhung</option>
+                      <option value="AUTO_RENEWAL">Auto-Verlängerung</option>
+                    </select>
+                  </div>
+                </div>
               </div>
-            </div>
-            
-            <div className="features-grid-premium">
-              <motion.div 
-                className="feature-card-premium"
-                whileHover={{ scale: 1.05 }}
-              >
-                <div className="feature-icon-wrapper cancel">
-                  <Zap size={20} />
+
+              {/* Quick Actions */}
+              <div className="sidebar-card">
+                <div className="sidebar-card-header">
+                  <div className="sidebar-card-title">
+                    <Zap size={18} />
+                    Schnellaktionen
+                  </div>
                 </div>
-                <h4>1-Klick-Kündigung</h4>
-                <p>Kündigen Sie direkt aus dem Kalender</p>
-              </motion.div>
-              
-              <motion.div 
-                className="feature-card-premium"
-                whileHover={{ scale: 1.05 }}
-              >
-                <div className="feature-icon-wrapper notify">
-                  <Bell size={20} />
+                <div className="quick-actions">
+                  <button className="quick-action-btn" onClick={() => setShowSyncModal(true)}>
+                    <Link2 size={18} />
+                    Kalender synchronisieren
+                  </button>
+                  <button className="quick-action-btn" onClick={() => window.location.href = '/contracts'}>
+                    <FileText size={18} />
+                    Alle Verträge anzeigen
+                  </button>
+                  <button className="quick-action-btn" onClick={() => window.location.href = '/compare'}>
+                    <TrendingUp size={18} />
+                    Verträge vergleichen
+                  </button>
                 </div>
-                <h4>Smart Notifications</h4>
-                <p>Intelligente Erinnerungen per E-Mail</p>
-              </motion.div>
-              
-              <motion.div 
-                className="feature-card-premium"
-                whileHover={{ scale: 1.05 }}
-              >
-                <div className="feature-icon-wrapper compare">
-                  <TrendingUp size={20} />
-                </div>
-                <h4>Marktvergleich</h4>
-                <p>Automatischer Preisvergleich</p>
-              </motion.div>
-              
-              <motion.div 
-                className="feature-card-premium"
-                whileHover={{ scale: 1.05 }}
-              >
-                <div className="feature-icon-wrapper optimize">
-                  <RefreshCw size={20} />
-                </div>
-                <h4>KI-Optimierung</h4>
-                <p>Personalisierte Empfehlungen</p>
-              </motion.div>
-            </div>
-          </motion.div>
+              </div>
+            </aside>
+          </div>
         </div>
-        
-        <AnimatePresence>
-          {showQuickActions && selectedEvent && (
-            <QuickActionsModal
-              event={selectedEvent}
-              onAction={handleQuickAction}
-              onClose={() => {
-                setShowQuickActions(false);
-                setSelectedEvent(null);
-              }}
-            />
-          )}
-        </AnimatePresence>
-
-        {/* Stats Detail Modal */}
-        <StatsDetailModal
-          isOpen={showStatsModal}
-          onClose={() => setShowStatsModal(false)}
-          title={getStatsModalTitle()}
-          events={getFilteredStatsEvents()}
-        />
-
-        {/* Calendar Sync Modal */}
-        <CalendarSyncModal
-          isOpen={showSyncModal}
-          onClose={() => setShowSyncModal(false)}
-        />
       </div>
+
+      {/* Modals */}
+      <AnimatePresence>
+        {showQuickActions && selectedEvent && (
+          <QuickActionsModal
+            event={selectedEvent}
+            onAction={handleQuickAction}
+            onClose={() => {
+              setShowQuickActions(false);
+              setSelectedEvent(null);
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      <CalendarSyncModal
+        isOpen={showSyncModal}
+        onClose={() => setShowSyncModal(false)}
+      />
+
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        .spinning {
+          animation: spin 1s linear infinite;
+        }
+      `}</style>
     </>
   );
 }
