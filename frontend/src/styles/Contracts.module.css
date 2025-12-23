@@ -1701,6 +1701,13 @@
   overflow-x: hidden;
 }
 
+/* ✅ DESKTOP-ONLY: Weniger weißer Bereich über der Tabelle */
+@media (min-width: 769px) {
+  .contentArea {
+    padding-top: 0.5rem;
+  }
+}
+
 /* Grid View for Contracts */
 .contractsGrid {
   display: grid;
@@ -2638,6 +2645,13 @@
   border: none;
   position: relative;
   overflow: hidden;
+}
+
+/* ✅ DESKTOP-ONLY: Weniger Abstand oben im Section-Bereich */
+@media (min-width: 769px) {
+  .section {
+    padding-top: 1rem;
+  }
 }
 
 .section::before {

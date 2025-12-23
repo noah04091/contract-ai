@@ -1,0 +1,40 @@
+.calendarContainer {
+  padding: 2rem;
+}
+
+.calendarContainer h1 {
+  margin-bottom: 1rem;
+  font-size: 1.8rem;
+}
+
+/* Mobile Breakpoints */
+@media (max-width: 768px) {
+  .calendarContainer {
+    padding: 1rem;
+  }
+
+  .calendarContainer h1 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .calendarContainer {
+    padding: 0.75rem;
+  }
+
+  .calendarContainer h1 {
+    font-size: 1.3rem;
+    margin-bottom: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .calendarContainer {
+    padding: 0.5rem;
+  }
+
+  .calendarContainer h1 {
+    font-size: 1.2rem;
+  }
+}

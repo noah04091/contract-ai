@@ -1,0 +1,54 @@
+=====================================================
+BACKUP: Kalenderseite vor Redesign
+Datum: 23.12.2025
+=====================================================
+
+INHALT DIESES BACKUPS:
+----------------------
+- Calendar.tsx              (Hauptseite)
+- AppleCalendar.css         (Haupt-Stylesheet)
+- CalendarSyncModal.tsx     (Sync Modal Komponente)
+- CalendarSyncModal.module.css (Sync Modal Styles)
+- CalendarPage.module.css   (Legacy Styles)
+- calendar-routes.js        (Backend Routes)
+- calendarEvents-service.js (Backend Service)
+
+
+WIEDERHERSTELLEN (falls noetig):
+--------------------------------
+
+1. KOMPLETT ZURUECKSETZEN:
+   Kopiere alle Dateien zurueck an ihre Originalpositionen:
+
+   Calendar.tsx              -> frontend/src/pages/Calendar.tsx
+   AppleCalendar.css         -> frontend/src/styles/AppleCalendar.css
+   CalendarSyncModal.tsx     -> frontend/src/components/CalendarSyncModal.tsx
+   CalendarSyncModal.module.css -> frontend/src/components/CalendarSyncModal.module.css
+   CalendarPage.module.css   -> frontend/src/styles/CalendarPage.module.css
+   calendar-routes.js        -> backend/routes/calendar.js
+   calendarEvents-service.js -> backend/services/calendarEvents.js
+
+
+2. POWERSHELL BEFEHLE ZUM WIEDERHERSTELLEN:
+
+   # Frontend Dateien
+   Copy-Item "C:\Users\liebo\Documents\contract-ai\backups\2025-12-23-calendar-before-redesign\Calendar.tsx" "C:\Users\liebo\Documents\contract-ai\frontend\src\pages\Calendar.tsx" -Force
+   Copy-Item "C:\Users\liebo\Documents\contract-ai\backups\2025-12-23-calendar-before-redesign\AppleCalendar.css" "C:\Users\liebo\Documents\contract-ai\frontend\src\styles\AppleCalendar.css" -Force
+   Copy-Item "C:\Users\liebo\Documents\contract-ai\backups\2025-12-23-calendar-before-redesign\CalendarSyncModal.tsx" "C:\Users\liebo\Documents\contract-ai\frontend\src\components\CalendarSyncModal.tsx" -Force
+   Copy-Item "C:\Users\liebo\Documents\contract-ai\backups\2025-12-23-calendar-before-redesign\CalendarSyncModal.module.css" "C:\Users\liebo\Documents\contract-ai\frontend\src\components\CalendarSyncModal.module.css" -Force
+   Copy-Item "C:\Users\liebo\Documents\contract-ai\backups\2025-12-23-calendar-before-redesign\CalendarPage.module.css" "C:\Users\liebo\Documents\contract-ai\frontend\src\styles\CalendarPage.module.css" -Force
+
+   # Backend Dateien (sollten nicht geaendert werden, aber zur Sicherheit)
+   Copy-Item "C:\Users\liebo\Documents\contract-ai\backups\2025-12-23-calendar-before-redesign\calendar-routes.js" "C:\Users\liebo\Documents\contract-ai\backend\routes\calendar.js" -Force
+   Copy-Item "C:\Users\liebo\Documents\contract-ai\backups\2025-12-23-calendar-before-redesign\calendarEvents-service.js" "C:\Users\liebo\Documents\contract-ai\backend\services\calendarEvents.js" -Force
+
+
+3. NACH WIEDERHERSTELLUNG:
+   - Frontend neu starten: npm run dev (im frontend Ordner)
+   - Bei Backend-Aenderungen: Server neu starten
+
+
+=====================================================
+WICHTIG: Backend-Dateien werden beim Redesign NICHT
+geaendert! Nur Frontend wird angepasst.
+=====================================================
