@@ -73,7 +73,7 @@ const DashboardLegacy = lazy(() => import("./pages/Dashboard")); // 🔙 Altes D
 // Contracts und Profile werden direkt importiert (siehe oben) - verhindert CSS-Preload-Fehler
 const ContractDetails = lazy(() => import("./pages/ContractDetails"));
 const EditContract = lazy(() => import("./pages/EditContract"));
-const CalendarView = lazy(() => import("./pages/CalendarView"));
+const CalendarView = lazy(() => import("./pages/Calendar"));
 const Cancel = lazy(() => import("./pages/Cancel"));
 const Optimizer = lazy(() => import("./pages/Optimizer"));
 const OptimizerFinalize = lazy(() => import("./pages/OptimizerFinalize")); // 🎯 Optimizer Post-Generation Seite
