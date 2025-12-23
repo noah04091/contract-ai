@@ -445,7 +445,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange 
               whileTap={{ scale: 0.98 }}
               style={{
                 gridColumn: '1 / -1',
-                background: 'linear-gradient(135deg, #4f46e5, #6366f1)',
+                background: 'linear-gradient(135deg, #4f46e5, #4338ca)',
                 color: '#fff',
                 border: 'none',
                 padding: '14px 20px',
@@ -987,10 +987,22 @@ function DayEventsModal({ date, events, onEventClick, onClose }: DayEventsModalP
 interface CreateEventModalProps {
   date: Date;
   onClose: () => void;
+  onEventCreated: () => void;
 }
 
-function CreateEventModal({ date, onClose }: CreateEventModalProps) {
+function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalProps) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [showForm, setShowForm] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    date: date.toISOString().split('T')[0],
+    time: '09:00',
+    type: 'REMINDER' as 'REMINDER' | 'DEADLINE' | 'CANCEL_WINDOW_OPEN' | 'LAST_CANCEL_DAY' | 'AUTO_RENEWAL',
+    severity: 'info' as 'info' | 'warning' | 'critical',
+    notes: ''
+  });
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -998,16 +1010,59 @@ function CreateEventModal({ date, onClose }: CreateEventModalProps) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleCreateEvent = () => {
-    // TODO: Implement direct event creation
-    // For now, navigate to contracts with create event intent
-    window.location.href = `/contracts?createEvent=true&date=${date.toISOString().split('T')[0]}`;
-    onClose();
-  };
-
   const handleUploadContract = () => {
     window.location.href = '/contracts?upload=true';
     onClose();
+  };
+
+  const handleSaveEvent = async () => {
+    if (!formData.title.trim()) {
+      alert('Bitte geben Sie einen Titel ein');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const token = localStorage.getItem("token");
+      const eventDate = new Date(`${formData.date}T${formData.time}:00`);
+
+      await axios.post("/api/calendar/events", {
+        title: formData.title,
+        description: formData.description,
+        date: eventDate.toISOString(),
+        type: formData.type,
+        severity: formData.severity,
+        notes: formData.notes,
+        contractName: 'Manuelles Ereignis',
+        isManual: true
+      }, { headers: { Authorization: `Bearer ${token}` } });
+
+      onEventCreated();
+      onClose();
+    } catch (err) {
+      console.error("Error creating event:", err);
+      alert('Fehler beim Erstellen des Ereignisses');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const inputStyle = {
+    width: '100%',
+    padding: '12px 14px',
+    border: '1px solid #e5e7eb',
+    borderRadius: '10px',
+    fontSize: '14px',
+    outline: 'none',
+    transition: 'border-color 0.2s ease'
+  };
+
+  const labelStyle = {
+    display: 'block',
+    fontSize: '13px',
+    fontWeight: 600,
+    color: '#374151',
+    marginBottom: '6px'
   };
 
   return (
@@ -1026,35 +1081,61 @@ function CreateEventModal({ date, onClose }: CreateEventModalProps) {
         exit={{ scale: 0.95, opacity: 0, y: 20 }}
         onClick={(e) => e.stopPropagation()}
         style={{
-          maxWidth: isMobile ? '100%' : '450px',
-          width: isMobile ? 'calc(100% - 40px)' : '450px',
+          maxWidth: isMobile ? '100%' : showForm ? '520px' : '450px',
+          width: isMobile ? 'calc(100% - 40px)' : showForm ? '520px' : '450px',
+          maxHeight: isMobile ? '90vh' : '85vh',
+          overflowY: 'auto',
           background: '#ffffff',
           borderRadius: '20px',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)',
-          overflow: 'hidden'
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)'
         }}
       >
         {/* Header */}
         <div style={{
-          padding: isMobile ? '20px' : '30px',
+          padding: isMobile ? '20px' : '24px',
           borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
-          background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(79, 70, 229, 0.05))',
+          background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.05), rgba(67, 56, 202, 0.05))',
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center'
+          alignItems: 'center',
+          position: 'sticky',
+          top: 0,
+          zIndex: 10
         }}>
-          <div>
-            <h2 style={{
-              margin: 0,
-              fontSize: isMobile ? '18px' : '22px',
-              fontWeight: 700,
-              color: '#1f2937'
-            }}>
-              Ereignis erstellen
-            </h2>
-            <p style={{ margin: '5px 0 0 0', fontSize: '14px', color: '#6b7280' }}>
-              {date.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-            </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {showForm && (
+              <motion.button
+                onClick={() => setShowForm(false)}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                style={{
+                  background: 'rgba(0, 0, 0, 0.05)',
+                  border: 'none',
+                  borderRadius: '8px',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer'
+                }}
+              >
+                <ChevronLeft size={18} />
+              </motion.button>
+            )}
+            <div>
+              <h2 style={{
+                margin: 0,
+                fontSize: isMobile ? '18px' : '20px',
+                fontWeight: 700,
+                color: '#1f2937'
+              }}>
+                {showForm ? 'Neues Ereignis' : 'Ereignis erstellen'}
+              </h2>
+              <p style={{ margin: '3px 0 0 0', fontSize: '13px', color: '#6b7280' }}>
+                {date.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              </p>
+            </div>
           </div>
           <motion.button
             onClick={onClose}
@@ -1076,86 +1157,234 @@ function CreateEventModal({ date, onClose }: CreateEventModalProps) {
           </motion.button>
         </div>
 
-        {/* Options */}
-        <div style={{ padding: isMobile ? '20px' : '30px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <motion.button
-            onClick={handleCreateEvent}
-            whileHover={{ scale: 1.02, x: 5 }}
-            whileTap={{ scale: 0.98 }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '16px',
-              padding: '20px',
-              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(79, 70, 229, 0.04))',
-              border: '1px solid rgba(99, 102, 241, 0.2)',
-              borderRadius: '14px',
-              cursor: 'pointer',
-              textAlign: 'left'
-            }}
-          >
-            <div style={{
-              width: '50px',
-              height: '50px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0
-            }}>
-              <CalendarIcon size={24} style={{ color: '#fff' }} />
-            </div>
-            <div>
-              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: '#1f2937' }}>
-                Ereignis direkt erstellen
-              </h3>
-              <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#6b7280' }}>
-                Fügen Sie ein neues Ereignis hinzu
-              </p>
-            </div>
-            <ChevronRight size={20} style={{ marginLeft: 'auto', color: '#9ca3af' }} />
-          </motion.button>
+        {!showForm ? (
+          /* Options */
+          <div style={{ padding: isMobile ? '20px' : '24px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <motion.button
+              onClick={() => setShowForm(true)}
+              whileHover={{ scale: 1.02, x: 5 }}
+              whileTap={{ scale: 0.98 }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '16px',
+                padding: '18px',
+                background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.08), rgba(67, 56, 202, 0.04))',
+                border: '1px solid rgba(79, 70, 229, 0.2)',
+                borderRadius: '14px',
+                cursor: 'pointer',
+                textAlign: 'left'
+              }}
+            >
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, #4f46e5, #4338ca)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                <CalendarIcon size={22} style={{ color: '#fff' }} />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: '#1f2937' }}>
+                  Ereignis direkt erstellen
+                </h3>
+                <p style={{ margin: '3px 0 0 0', fontSize: '12px', color: '#6b7280' }}>
+                  Neues Ereignis mit Details hinzufügen
+                </p>
+              </div>
+              <ChevronRight size={18} style={{ marginLeft: 'auto', color: '#9ca3af' }} />
+            </motion.button>
 
-          <motion.button
-            onClick={handleUploadContract}
-            whileHover={{ scale: 1.02, x: 5 }}
-            whileTap={{ scale: 0.98 }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '16px',
-              padding: '20px',
-              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(5, 150, 105, 0.04))',
-              border: '1px solid rgba(16, 185, 129, 0.2)',
-              borderRadius: '14px',
-              cursor: 'pointer',
-              textAlign: 'left'
-            }}
-          >
-            <div style={{
-              width: '50px',
-              height: '50px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #10b981, #059669)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0
-            }}>
-              <FileText size={24} style={{ color: '#fff' }} />
-            </div>
+            <motion.button
+              onClick={handleUploadContract}
+              whileHover={{ scale: 1.02, x: 5 }}
+              whileTap={{ scale: 0.98 }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '16px',
+                padding: '18px',
+                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(5, 150, 105, 0.04))',
+                border: '1px solid rgba(16, 185, 129, 0.2)',
+                borderRadius: '14px',
+                cursor: 'pointer',
+                textAlign: 'left'
+              }}
+            >
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, #10b981, #059669)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                <FileText size={22} style={{ color: '#fff' }} />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: '#1f2937' }}>
+                  Vertrag hochladen
+                </h3>
+                <p style={{ margin: '3px 0 0 0', fontSize: '12px', color: '#6b7280' }}>
+                  Vertrag hochladen & analysieren
+                </p>
+              </div>
+              <ChevronRight size={18} style={{ marginLeft: 'auto', color: '#9ca3af' }} />
+            </motion.button>
+          </div>
+        ) : (
+          /* Event Form */
+          <div style={{ padding: isMobile ? '20px' : '24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+            {/* Title */}
             <div>
-              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: '#1f2937' }}>
-                Vertrag hochladen
-              </h3>
-              <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#6b7280' }}>
-                Laden Sie einen neuen Vertrag hoch
-              </p>
+              <label style={labelStyle}>Titel *</label>
+              <input
+                type="text"
+                placeholder="z.B. Kündigungsfrist beachten"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                style={inputStyle}
+              />
             </div>
-            <ChevronRight size={20} style={{ marginLeft: 'auto', color: '#9ca3af' }} />
-          </motion.button>
-        </div>
+
+            {/* Date & Time Row */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div>
+                <label style={labelStyle}>Datum</label>
+                <input
+                  type="date"
+                  value={formData.date}
+                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  style={inputStyle}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Uhrzeit</label>
+                <input
+                  type="time"
+                  value={formData.time}
+                  onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                  style={inputStyle}
+                />
+              </div>
+            </div>
+
+            {/* Type & Severity Row */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div>
+                <label style={labelStyle}>Typ</label>
+                <select
+                  value={formData.type}
+                  onChange={(e) => setFormData({ ...formData, type: e.target.value as typeof formData.type })}
+                  style={{ ...inputStyle, cursor: 'pointer' }}
+                >
+                  <option value="REMINDER">Erinnerung</option>
+                  <option value="DEADLINE">Frist</option>
+                  <option value="CANCEL_WINDOW_OPEN">Kündigungsfenster</option>
+                  <option value="LAST_CANCEL_DAY">Letzte Kündigungschance</option>
+                  <option value="AUTO_RENEWAL">Auto-Verlängerung</option>
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>Priorität</label>
+                <select
+                  value={formData.severity}
+                  onChange={(e) => setFormData({ ...formData, severity: e.target.value as typeof formData.severity })}
+                  style={{ ...inputStyle, cursor: 'pointer' }}
+                >
+                  <option value="info">Normal</option>
+                  <option value="warning">Wichtig</option>
+                  <option value="critical">Kritisch</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Description */}
+            <div>
+              <label style={labelStyle}>Beschreibung</label>
+              <textarea
+                placeholder="Kurze Beschreibung des Ereignisses..."
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                rows={2}
+                style={{ ...inputStyle, resize: 'none' }}
+              />
+            </div>
+
+            {/* Notes */}
+            <div>
+              <label style={labelStyle}>Notizen (optional)</label>
+              <textarea
+                placeholder="Weitere Notizen oder Details..."
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                rows={3}
+                style={{ ...inputStyle, resize: 'none' }}
+              />
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+              <motion.button
+                onClick={() => setShowForm(false)}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background: '#f9fafb',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '10px',
+                  color: '#6b7280',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  cursor: 'pointer'
+                }}
+              >
+                Abbrechen
+              </motion.button>
+              <motion.button
+                onClick={handleSaveEvent}
+                disabled={saving}
+                whileHover={{ scale: saving ? 1 : 1.02 }}
+                whileTap={{ scale: saving ? 1 : 0.98 }}
+                style={{
+                  flex: 2,
+                  padding: '12px',
+                  background: saving ? '#9ca3af' : 'linear-gradient(135deg, #4f46e5, #4338ca)',
+                  border: 'none',
+                  borderRadius: '10px',
+                  color: '#fff',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: saving ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+              >
+                {saving ? (
+                  <>
+                    <RefreshCw size={16} className="spinning" />
+                    Speichern...
+                  </>
+                ) : (
+                  <>
+                    <Plus size={16} />
+                    Ereignis erstellen
+                  </>
+                )}
+              </motion.button>
+            </div>
+          </div>
+        )}
       </motion.div>
     </motion.div>
   );
@@ -1560,8 +1789,12 @@ export default function CalendarPage() {
               </div>
             </div>
             <div className="header-actions">
-              <button className="btn btn-primary" onClick={() => window.location.href = '/contracts?upload=true'}>
+              <button className="btn btn-primary" onClick={() => setShowCreateEventModal(new Date())}>
                 <Plus size={16} />
+                Ereignis erstellen
+              </button>
+              <button className="btn btn-secondary" onClick={() => window.location.href = '/contracts?upload=true'}>
+                <FileText size={16} />
                 Vertrag hochladen
               </button>
               <button className="btn btn-secondary" onClick={() => setShowSyncModal(true)}>
@@ -1703,7 +1936,7 @@ export default function CalendarPage() {
                     <div className="stat-label">Kündbar</div>
                   </div>
                   <div className="stat-card clickable" onClick={() => handleStatsCardClick('autoRenewal')}>
-                    <div className="stat-value" style={{ color: '#6366f1' }}>{stats.autoRenewal}</div>
+                    <div className="stat-value" style={{ color: '#4f46e5' }}>{stats.autoRenewal}</div>
                     <div className="stat-label">Auto-Verl.</div>
                   </div>
                 </div>
@@ -1885,6 +2118,7 @@ export default function CalendarPage() {
           <CreateEventModal
             date={showCreateEventModal}
             onClose={() => setShowCreateEventModal(null)}
+            onEventCreated={() => fetchEvents()}
           />
         )}
       </AnimatePresence>

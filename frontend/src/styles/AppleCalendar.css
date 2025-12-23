@@ -1,6 +1,6 @@
 /* ============================================================
    Contract-AI Calendar - Custom Redesign (Mockup Match)
-   Primary Color: #6366f1 (Company Blue)
+   Primary Color: #4f46e5 (Company Blue)
    German Standard: Monday first
    ============================================================ */
 
@@ -9,11 +9,11 @@
 }
 
 :root {
-  --primary: #6366f1;
-  --primary-dark: #4f46e5;
-  --primary-light: #818cf8;
-  --primary-bg: rgba(99, 102, 241, 0.08);
-  --primary-bg-hover: rgba(99, 102, 241, 0.12);
+  --primary: #4f46e5;
+  --primary-dark: #4338ca;
+  --primary-light: #6366f1;
+  --primary-bg: rgba(79, 70, 229, 0.08);
+  --primary-bg-hover: rgba(79, 70, 229, 0.12);
 
   --critical: #ef4444;
   --critical-bg: rgba(239, 68, 68, 0.1);
@@ -1015,7 +1015,7 @@
 }
 
 .meta-icon {
-  color: #6366f1;
+  color: #4f46e5;
 }
 
 .meta-card div {
@@ -1070,15 +1070,15 @@
 }
 
 .action-btn-premium.primary {
-  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  background: linear-gradient(135deg, #4f46e5, #4338ca);
   color: white;
   grid-column: 1 / -1;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
 }
 
 .action-btn-premium.primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.35);
 }
 
 .action-btn-premium.secondary {
