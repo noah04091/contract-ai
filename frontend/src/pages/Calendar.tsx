@@ -424,14 +424,22 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
 
   if (!isOpen) return null;
 
-  // Sort events by date
-  const sortedEvents = [...events].sort((a, b) =>
-    new Date(a.date).getTime() - new Date(b.date).getTime()
-  );
+  // Filter out events without valid dates and sort by date
+  const validEvents = events.filter(e => e && e.date);
+  const sortedEvents = [...validEvents].sort((a, b) => {
+    const dateA = new Date(a.date);
+    const dateB = new Date(b.date);
+    if (isNaN(dateA.getTime())) return 1;
+    if (isNaN(dateB.getTime())) return -1;
+    return dateA.getTime() - dateB.getTime();
+  });
 
   // Group events by month
   const eventsByMonth = sortedEvents.reduce((acc, event) => {
+    if (!event.date) return acc;
     const eventDate = new Date(event.date);
+    if (isNaN(eventDate.getTime())) return acc;
+
     const monthKey = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}`;
     const monthLabel = eventDate.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
 
