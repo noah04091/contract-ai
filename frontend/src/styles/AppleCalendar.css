@@ -179,12 +179,12 @@
   grid-area: sidebar;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 /* ========== Statistics Section - Sidebar Cards ========== */
 .stats-section-premium {
-  grid-area: stats;
+  /* Styles defined below */
 }
 
 .stats-grid-premium {
@@ -266,7 +266,6 @@
 
 /* ========== Filter Section - Sidebar ========== */
 .filter-section-premium {
-  grid-area: filter;
   background: var(--cal-card);
   border-radius: var(--cal-radius);
   padding: 16px;
@@ -678,7 +677,6 @@
 
 /* ========== Urgent Events Section ========== */
 .urgent-section-premium {
-  grid-area: urgent;
   background: var(--cal-card);
   border-radius: var(--cal-radius);
   padding: 16px;
@@ -819,7 +817,6 @@
 
 /* ========== Quick Actions Section ========== */
 .features-section-premium {
-  grid-area: features;
   background: var(--cal-card);
   border-radius: var(--cal-radius);
   padding: 16px;
