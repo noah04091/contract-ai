@@ -799,9 +799,13 @@ export default function CalendarPage() {
           </header>
 
           {/* Main Content Grid */}
-          <div className="content-grid">
+          <div className="content-grid" style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 340px',
+            gap: '24px'
+          }}>
             {/* Calendar Container */}
-            <div className="calendar-container">
+            <div className="calendar-container" style={{ gridColumn: '1' }}>
               {/* Calendar Header */}
               <div className="calendar-header">
                 <div className="calendar-nav">
@@ -867,7 +871,7 @@ export default function CalendarPage() {
             </div>
 
             {/* Sidebar */}
-            <aside className="sidebar">
+            <aside className="sidebar" style={{ gridColumn: '2' }}>
               {/* Stats Card */}
               <div className="sidebar-card">
                 <div className="sidebar-card-header">
