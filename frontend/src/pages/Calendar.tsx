@@ -88,12 +88,13 @@ interface CalendarGridProps {
   currentDate: Date;
   events: CalendarEvent[];
   selectedDate: Date | null;
+  view: 'month' | 'week' | 'day';
   onDateClick: (date: Date) => void;
   onEventClick: (event: CalendarEvent) => void;
   onMoreClick: (date: Date, events: CalendarEvent[]) => void;
 }
 
-function CustomCalendarGrid({ currentDate, events, selectedDate, onDateClick, onEventClick, onMoreClick }: CalendarGridProps) {
+function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateClick, onEventClick, onMoreClick }: CalendarGridProps) {
   // Get days in month
   const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
 
@@ -150,6 +151,152 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, onDateClick, on
     calendarDays.push({ day, type: 'next', events: getEventsForDate(day, 1) });
   }
 
+  // Get week days for week view
+  const getWeekDays = () => {
+    const startOfWeek = new Date(currentDate);
+    const dayOfWeek = startOfWeek.getDay();
+    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Monday as start
+    startOfWeek.setDate(startOfWeek.getDate() + diff);
+
+    const weekDays = [];
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(startOfWeek);
+      day.setDate(startOfWeek.getDate() + i);
+      const dateStr = day.toISOString().split('T')[0];
+      const dayEvents = events.filter(e => e.date && e.date.split('T')[0] === dateStr);
+      weekDays.push({
+        date: day,
+        day: day.getDate(),
+        events: dayEvents,
+        isToday: isToday(day.getDate(), day.getMonth(), day.getFullYear()),
+        isSelected: selectedDate && day.toDateString() === selectedDate.toDateString()
+      });
+    }
+    return weekDays;
+  };
+
+  // Get events for day view
+  const getDayEvents = () => {
+    const dateStr = currentDate.toISOString().split('T')[0];
+    return events.filter(e => e.date && e.date.split('T')[0] === dateStr);
+  };
+
+  // WEEK VIEW
+  if (view === 'week') {
+    const weekDays = getWeekDays();
+    return (
+      <div className="calendar-week-view">
+        {/* Week Header */}
+        <div className="week-header">
+          {weekDays.map((dayInfo, index) => (
+            <div
+              key={index}
+              className={`week-day-header ${dayInfo.isToday ? 'today' : ''} ${dayInfo.isSelected ? 'selected' : ''}`}
+              onClick={() => onDateClick(dayInfo.date)}
+            >
+              <span className="week-day-name">{WEEKDAYS[index]}</span>
+              <span className="week-day-number">{dayInfo.day}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Week Content */}
+        <div className="week-content">
+          {weekDays.map((dayInfo, index) => (
+            <div
+              key={index}
+              className={`week-day-column ${dayInfo.isToday ? 'today' : ''}`}
+              onClick={() => onDateClick(dayInfo.date)}
+            >
+              {dayInfo.events.length === 0 ? (
+                <div className="week-day-empty">
+                  <span>Keine Ereignisse</span>
+                </div>
+              ) : (
+                <div className="week-day-events">
+                  {dayInfo.events.map((event) => (
+                    <div
+                      key={event.id}
+                      className={`week-event-card ${event.severity}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEventClick(event);
+                      }}
+                    >
+                      <div className="week-event-indicator"></div>
+                      <div className="week-event-content">
+                        <span className="week-event-title">{formatContractName(event.contractName)}</span>
+                        <span className="week-event-type">{event.title}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // DAY VIEW
+  if (view === 'day') {
+    const dayEvents = getDayEvents();
+    const dayIsToday = isToday(currentDate.getDate(), currentDate.getMonth(), currentDate.getFullYear());
+
+    return (
+      <div className="calendar-day-view">
+        {/* Day Header */}
+        <div className={`day-view-header ${dayIsToday ? 'today' : ''}`}>
+          <span className="day-view-weekday">
+            {currentDate.toLocaleDateString('de-DE', { weekday: 'long' })}
+          </span>
+          <span className="day-view-date">
+            {currentDate.toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' })}
+          </span>
+          {dayIsToday && <span className="day-view-today-badge">Heute</span>}
+        </div>
+
+        {/* Day Events */}
+        <div className="day-view-content">
+          {dayEvents.length === 0 ? (
+            <div className="day-view-empty" onClick={() => onDateClick(currentDate)}>
+              <CalendarIcon size={48} style={{ color: '#d1d5db', marginBottom: '16px' }} />
+              <p>Keine Ereignisse an diesem Tag</p>
+              <span>Klicken Sie, um ein Ereignis zu erstellen</span>
+            </div>
+          ) : (
+            <div className="day-view-events">
+              {dayEvents.map((event) => (
+                <div
+                  key={event.id}
+                  className={`day-event-card ${event.severity}`}
+                  onClick={() => onEventClick(event)}
+                >
+                  <div className="day-event-time">
+                    {new Date(event.date).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                  <div className="day-event-indicator"></div>
+                  <div className="day-event-details">
+                    <span className="day-event-title">{formatContractName(event.contractName)}</span>
+                    <span className="day-event-type">{event.title}</span>
+                    {event.description && (
+                      <span className="day-event-description">{event.description}</span>
+                    )}
+                  </div>
+                  <div className={`day-event-severity ${event.severity}`}>
+                    {event.severity === 'critical' ? 'Kritisch' : event.severity === 'warning' ? 'Wichtig' : 'Info'}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // MONTH VIEW (default)
   return (
     <div className="calendar-grid">
       {/* Weekday Headers */}
@@ -1858,6 +2005,7 @@ export default function CalendarPage() {
                   currentDate={currentDate}
                   events={filteredEvents}
                   selectedDate={selectedDate}
+                  view={currentView}
                   onDateClick={(date) => {
                     setSelectedDate(date);
                     // Check if this date has events

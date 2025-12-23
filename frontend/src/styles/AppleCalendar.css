@@ -1105,3 +1105,353 @@
   margin-left: auto;
   opacity: 0.6;
 }
+
+/* ============================================================
+   WEEK VIEW STYLES
+   ============================================================ */
+
+.calendar-week-view {
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.week-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.05), rgba(67, 56, 202, 0.03));
+  border-bottom: 1px solid var(--border);
+}
+
+.week-day-header {
+  padding: 16px 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.week-day-header:hover {
+  background: rgba(79, 70, 229, 0.08);
+}
+
+.week-day-header.today {
+  background: rgba(79, 70, 229, 0.1);
+}
+
+.week-day-header.selected {
+  background: var(--primary);
+}
+
+.week-day-header.selected .week-day-name,
+.week-day-header.selected .week-day-number {
+  color: #fff;
+}
+
+.week-day-name {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.week-day-number {
+  display: block;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.week-day-header.today .week-day-number {
+  color: var(--primary);
+}
+
+.week-content {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  min-height: 400px;
+}
+
+.week-day-column {
+  border-right: 1px solid var(--border);
+  padding: 12px 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  min-height: 350px;
+}
+
+.week-day-column:last-child {
+  border-right: none;
+}
+
+.week-day-column:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.week-day-column.today {
+  background: rgba(79, 70, 229, 0.03);
+}
+
+.week-day-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.week-day-events {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.week-event-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.week-event-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.week-event-card.critical {
+  border-left: 3px solid var(--critical);
+}
+
+.week-event-card.warning {
+  border-left: 3px solid var(--warning);
+}
+
+.week-event-card.info {
+  border-left: 3px solid var(--info);
+}
+
+.week-event-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.week-event-card.critical .week-event-indicator { background: var(--critical); }
+.week-event-card.warning .week-event-indicator { background: var(--warning); }
+.week-event-card.info .week-event-indicator { background: var(--info); }
+
+.week-event-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.week-event-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.week-event-type {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ============================================================
+   DAY VIEW STYLES
+   ============================================================ */
+
+.calendar-day-view {
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.day-view-header {
+  padding: 24px;
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.05), rgba(67, 56, 202, 0.03));
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.day-view-header.today {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.1), rgba(67, 56, 202, 0.05));
+}
+
+.day-view-weekday {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.day-view-date {
+  font-size: 16px;
+  color: var(--text-secondary);
+}
+
+.day-view-today-badge {
+  background: var(--primary);
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: auto;
+}
+
+.day-view-content {
+  padding: 24px;
+  min-height: 400px;
+}
+
+.day-view-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 350px;
+  color: var(--text-muted);
+  cursor: pointer;
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.day-view-empty:hover {
+  border-color: var(--primary);
+  background: rgba(79, 70, 229, 0.03);
+}
+
+.day-view-empty p {
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.day-view-empty span {
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.day-view-events {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.day-event-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.day-event-card:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.day-event-card.critical {
+  border-left: 4px solid var(--critical);
+}
+
+.day-event-card.warning {
+  border-left: 4px solid var(--warning);
+}
+
+.day-event-card.info {
+  border-left: 4px solid var(--info);
+}
+
+.day-event-time {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 50px;
+}
+
+.day-event-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.day-event-card.critical .day-event-indicator { background: var(--critical); }
+.day-event-card.warning .day-event-indicator { background: var(--warning); }
+.day-event-card.info .day-event-indicator { background: var(--info); }
+
+.day-event-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.day-event-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.day-event-type {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.day-event-description {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.day-event-severity {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.day-event-severity.critical {
+  background: var(--critical-bg);
+  color: var(--critical);
+}
+
+.day-event-severity.warning {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
+.day-event-severity.info {
+  background: var(--info-bg);
+  color: var(--info);
+}
