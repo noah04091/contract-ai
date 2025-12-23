@@ -4273,6 +4273,39 @@ export default function Contracts() {
 
                 {loading && !refreshing ? (
                   <>
+                    {/* ✅ Klare Lade-Anzeige mit rotierendem Spinner */}
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '16px',
+                      padding: '48px 24px',
+                      backgroundColor: '#f8fafc',
+                      borderRadius: '12px',
+                      margin: '0 0 24px 0'
+                    }}>
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        <Loader size={36} style={{ color: '#3b82f6' }} />
+                      </motion.div>
+                      <div style={{
+                        fontSize: '16px',
+                        fontWeight: 600,
+                        color: '#1e293b'
+                      }}>
+                        Lädt Verträge...
+                      </div>
+                      <div style={{
+                        fontSize: '14px',
+                        color: '#64748b'
+                      }}>
+                        Einen Moment bitte
+                      </div>
+                    </div>
                     {/* Desktop Table Skeleton */}
                     <ContractsSkeleton rows={5} />
                     {/* Mobile Cards Skeleton */}
@@ -4657,7 +4690,14 @@ export default function Contracts() {
                       >
                         {loadingMore ? (
                           <>
-                            <Loader size={24} className={styles.spinning} style={{ color: '#3b82f6' }} />
+                            {/* ✅ Framer Motion für zuverlässige Spinner-Animation */}
+                            <motion.div
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            >
+                              <Loader size={28} style={{ color: '#3b82f6' }} />
+                            </motion.div>
                             <div style={{
                               fontSize: '14px',
                               color: '#6b7280',
