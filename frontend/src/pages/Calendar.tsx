@@ -487,22 +487,21 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
   };
 
   return (
-    <AnimatePresence>
+    <motion.div
+      className="quick-actions-overlay"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+      style={{ padding: isMobile ? '20px' : '40px', zIndex: 1001 }}
+    >
       <motion.div
-        className="quick-actions-overlay"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={onClose}
-        style={{ padding: isMobile ? '20px' : '40px', zIndex: 1001 }}
-      >
-        <motion.div
-          className="stats-detail-modal premium-modal"
-          initial={{ scale: 0.95, opacity: 0, y: 20 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.95, opacity: 0, y: 20 }}
-          onClick={(e) => e.stopPropagation()}
-          style={{
+        className="stats-detail-modal premium-modal"
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+        onClick={(e) => e.stopPropagation()}
+        style={{
             maxWidth: isMobile ? '100%' : '800px',
             width: isMobile ? 'calc(100% - 40px)' : '800px',
             maxHeight: isMobile ? '90vh' : '80vh',
@@ -661,8 +660,7 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
             )}
           </div>
         </motion.div>
-      </motion.div>
-    </AnimatePresence>
+    </motion.div>
   );
 }
 
