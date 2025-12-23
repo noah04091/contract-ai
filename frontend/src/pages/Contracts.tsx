@@ -32,7 +32,6 @@ import ImportantDatesSection from "../components/ImportantDatesSection"; // 📅
 import { apiCall, uploadAndAnalyze, uploadOnly } from "../utils/api"; // ✅ NEU: uploadOnly hinzugefügt
 import { useFolders } from "../hooks/useFolders"; // 📁 Folder Hook
 import type { FolderType } from "../components/FolderBar"; // 📁 Folder Type
-import ContractsSkeleton, { ContractsCardsSkeleton } from "../components/ContractsSkeleton"; // 💀 Skeleton Loader
 import AnalysisProgressComponent from "../components/AnalysisProgress"; // 🎨 Premium Analysis Progress
 import { mapLegacyToProgress } from "../utils/analysisAdapter"; // 🔄 Legacy Progress Adapter
 
@@ -4272,44 +4271,38 @@ export default function Contracts() {
                 )}
 
                 {loading ? (
-                  <>
-                    {/* ✅ Klare Lade-Anzeige MITTIG mit rotierendem Spinner */}
-                    <div style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '16px',
-                      padding: '60px 24px',
-                      backgroundColor: '#f8fafc',
-                      borderRadius: '16px',
-                      margin: '20px 0',
-                      minHeight: '200px',
-                      border: '1px solid #e2e8f0'
-                    }}>
-                      {/* ✅ CSS-Animation für zuverlässige Rotation */}
-                      <div className={styles.spinnerRotate}>
-                        <Loader size={40} style={{ color: '#3b82f6' }} />
-                      </div>
-                      <div style={{
-                        fontSize: '18px',
-                        fontWeight: 600,
-                        color: '#1e293b'
-                      }}>
-                        Lädt Verträge...
-                      </div>
-                      <div style={{
-                        fontSize: '14px',
-                        color: '#64748b'
-                      }}>
-                        Einen Moment bitte
-                      </div>
+                  /* ✅ Klare Lade-Anzeige MITTIG mit rotierendem Spinner */
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '16px',
+                    padding: '80px 24px',
+                    backgroundColor: '#f8fafc',
+                    borderRadius: '16px',
+                    margin: '20px 0',
+                    minHeight: '300px',
+                    border: '1px solid #e2e8f0'
+                  }}>
+                    {/* ✅ CSS-Animation für zuverlässige Rotation */}
+                    <div className={styles.spinnerRotate}>
+                      <Loader size={48} style={{ color: '#3b82f6' }} />
                     </div>
-                    {/* Desktop Table Skeleton */}
-                    <ContractsSkeleton rows={5} />
-                    {/* Mobile Cards Skeleton */}
-                    <ContractsCardsSkeleton cards={3} />
-                  </>
+                    <div style={{
+                      fontSize: '18px',
+                      fontWeight: 600,
+                      color: '#1e293b'
+                    }}>
+                      Lädt Verträge...
+                    </div>
+                    <div style={{
+                      fontSize: '14px',
+                      color: '#64748b'
+                    }}>
+                      Einen Moment bitte
+                    </div>
+                  </div>
                 ) : errorMessage ? (
                   <div className={styles.errorContainer}>
                     <AlertCircle size={40} className={styles.errorIcon} />
@@ -4324,8 +4317,6 @@ export default function Contracts() {
                       <span>Erneut versuchen</span>
                     </motion.button>
                   </div>
-                ) : loading ? (
-                  <ContractsCardsSkeleton />
                 ) : contracts.length === 0 ? (
                   <div className={styles.emptyState}>
                     <FileText size={64} className={styles.emptyIcon} />
