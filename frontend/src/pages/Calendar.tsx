@@ -1812,27 +1812,15 @@ export default function CalendarPage() {
 
   const EVENTS_PER_PAGE = 5;
 
-  // ===== MOBILE: Auto-detect and switch view =====
+  // ===== MOBILE: Nur Erkennung, KEIN Auto-View-Switch mehr =====
   useEffect(() => {
     const handleResize = () => {
-      const mobile = window.innerWidth < 768;
-      setIsMobile(mobile);
-
-      // Auto-switch to day view on mobile, month view on desktop
-      if (mobile && currentView === 'month') {
-        setCurrentView('day');
-      } else if (!mobile && currentView === 'day' && window.innerWidth >= 1024) {
-        // Only auto-switch back on large screens
-        setCurrentView('month');
-      }
+      setIsMobile(window.innerWidth < 768);
     };
-
-    // Initial check
     handleResize();
-
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [currentView]);
+  }, []);
 
   // Fetch events on mount (uses cache if available)
   useEffect(() => {
@@ -2062,7 +2050,7 @@ export default function CalendarPage() {
 
       <div className="calendar-page">
         <div className="calendar-page-content">
-          {/* Page Header */}
+          {/* Page Header - Mobile optimiert */}
           <header className="page-header">
             <div className="page-title">
               <div className="page-title-icon">
@@ -2070,29 +2058,46 @@ export default function CalendarPage() {
               </div>
               <div>
                 <h1>Vertragskalender</h1>
-                <p>Alle Fristen im Blick - nie wieder eine Deadline verpassen</p>
+                {!isMobile && <p>Alle Fristen im Blick - nie wieder eine Deadline verpassen</p>}
               </div>
             </div>
             <div className="header-actions">
-              <button className="btn btn-primary" onClick={() => setShowCreateEventModal(new Date())}>
-                <Plus size={16} />
-                Ereignis erstellen
+              <button
+                className="btn btn-primary"
+                onClick={() => setShowCreateEventModal(new Date())}
+                title="Ereignis erstellen"
+              >
+                <Plus size={18} />
+                {!isMobile && <span className="btn-text">Ereignis erstellen</span>}
               </button>
-              <button className="btn btn-secondary" onClick={() => window.location.href = '/contracts?upload=true'}>
-                <FileText size={16} />
-                Vertrag hochladen
-              </button>
-              <button className="btn btn-secondary" onClick={() => setShowSyncModal(true)}>
-                <Link2 size={16} />
-                Kalender Sync
-              </button>
+              {!isMobile && (
+                <>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => window.location.href = '/contracts?upload=true'}
+                    title="Vertrag hochladen"
+                  >
+                    <FileText size={18} />
+                    <span className="btn-text">Vertrag hochladen</span>
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => setShowSyncModal(true)}
+                    title="Kalender Sync"
+                  >
+                    <Link2 size={18} />
+                    <span className="btn-text">Kalender Sync</span>
+                  </button>
+                </>
+              )}
               <button
                 className="btn btn-secondary"
                 onClick={handleRegenerateEvents}
                 disabled={refreshing}
+                title="Aktualisieren"
               >
-                <RefreshCw size={16} className={refreshing ? 'spinning' : ''} />
-                {refreshing ? 'Lädt...' : 'Aktualisieren'}
+                <RefreshCw size={18} className={refreshing ? 'spinning' : ''} />
+                {!isMobile && <span className="btn-text">{refreshing ? 'Lädt...' : 'Aktualisieren'}</span>}
               </button>
             </div>
           </header>
@@ -2105,14 +2110,6 @@ export default function CalendarPage() {
           }}>
             {/* Calendar Container - with Swipe Support */}
             <div className="calendar-container" style={{ gridColumn: '1' }} {...swipeHandlers}>
-              {/* Mobile Swipe Hint */}
-              {isMobile && (
-                <div className="swipe-hint">
-                  <ChevronLeft size={14} style={{ display: 'inline' }} />
-                  <span style={{ margin: '0 8px' }}>Wischen für Navigation</span>
-                  <ChevronRight size={14} style={{ display: 'inline' }} />
-                </div>
-              )}
               {/* Calendar Header */}
               <div className="calendar-header">
                 <div className="calendar-nav">
