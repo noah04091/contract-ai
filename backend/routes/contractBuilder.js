@@ -278,11 +278,46 @@ router.delete('/:id', auth, async (req, res) => {
 });
 
 /**
+ * PATCH /api/contract-builder/:id
+ * Dokument partiell aktualisieren (z.B. nur Name ändern)
+ */
+router.patch('/:id', auth, async (req, res) => {
+  try {
+    const { metadata } = req.body;
+
+    const document = await ContractBuilder.findOne({
+      _id: req.params.id,
+      userId: req.user.userId
+    });
+
+    if (!document) {
+      return res.status(404).json({ success: false, error: 'Dokument nicht gefunden' });
+    }
+
+    // Nur Metadata-Felder aktualisieren die übergeben wurden
+    if (metadata) {
+      if (metadata.name) document.metadata.name = metadata.name;
+      if (metadata.status) document.metadata.status = metadata.status;
+      if (metadata.contractType) document.metadata.contractType = metadata.contractType;
+    }
+
+    await document.save();
+
+    res.json({ success: true, document });
+  } catch (error) {
+    console.error('[ContractBuilder] PATCH /:id Error:', error);
+    res.status(500).json({ success: false, error: 'Fehler beim Aktualisieren' });
+  }
+});
+
+/**
  * POST /api/contract-builder/:id/duplicate
  * Dokument duplizieren
  */
 router.post('/:id/duplicate', auth, async (req, res) => {
   try {
+    const { name } = req.body;
+
     const original = await ContractBuilder.findOne({
       _id: req.params.id,
       userId: req.user.userId
@@ -294,6 +329,12 @@ router.post('/:id/duplicate', auth, async (req, res) => {
 
     const duplicate = await original.duplicate();
     duplicate.userId = req.user.userId;
+
+    // Custom Name falls übergeben
+    if (name) {
+      duplicate.metadata.name = name;
+    }
+
     await duplicate.save();
 
     res.status(201).json({ success: true, document: duplicate });

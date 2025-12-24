@@ -29,6 +29,28 @@ export interface ContractTemplate {
 
 export const contractTemplates: ContractTemplate[] = [
   // =============================================
+  // INDIVIDUELL (LEER) - Als erstes für schnellen Zugriff
+  // =============================================
+  {
+    id: 'individuell',
+    name: 'Individueller Vertrag',
+    description: 'Leere Vorlage für komplett individuelle Verträge',
+    icon: 'FileEdit',
+    category: 'personal',
+    parties: {
+      party1: { role: 'Partei 1', defaultName: '{{partei1_name}}' },
+      party2: { role: 'Partei 2', defaultName: '{{partei2_name}}' },
+    },
+    suggestedClauses: [],
+    defaultVariables: [
+      { name: 'partei1_name', displayName: 'Partei 1', type: 'text', group: 'Parteien', required: true },
+      { name: 'partei2_name', displayName: 'Partei 2', type: 'text', group: 'Parteien', required: true },
+      { name: 'vertragsdatum', displayName: 'Vertragsdatum', type: 'date', group: 'Allgemein' },
+      { name: 'vertragsort', displayName: 'Vertragsort', type: 'text', group: 'Allgemein' },
+    ],
+  },
+
+  // =============================================
   // ARBEITSVERTRAG
   // =============================================
   {
@@ -692,28 +714,6 @@ export const contractTemplates: ContractTemplate[] = [
       { name: 'mindestabsatz', displayName: 'Mindestabsatz (€)', type: 'currency', group: 'Ziele' },
       { name: 'zeitraum', displayName: 'Zeitraum Mindestabsatz', type: 'select', group: 'Ziele', options: ['Monat', 'Quartal', 'Jahr'] },
       { name: 'kuendigungsfrist', displayName: 'Kündigungsfrist', type: 'select', group: 'Kündigung', options: ['1 Monat', '3 Monate', '6 Monate'] },
-    ],
-  },
-
-  // =============================================
-  // INDIVIDUELL (LEER)
-  // =============================================
-  {
-    id: 'individuell',
-    name: 'Individueller Vertrag',
-    description: 'Leere Vorlage für komplett individuelle Verträge',
-    icon: 'FileEdit',
-    category: 'personal',
-    parties: {
-      party1: { role: 'Partei 1', defaultName: '{{partei1_name}}' },
-      party2: { role: 'Partei 2', defaultName: '{{partei2_name}}' },
-    },
-    suggestedClauses: [],
-    defaultVariables: [
-      { name: 'partei1_name', displayName: 'Partei 1', type: 'text', group: 'Parteien', required: true },
-      { name: 'partei2_name', displayName: 'Partei 2', type: 'text', group: 'Parteien', required: true },
-      { name: 'vertragsdatum', displayName: 'Vertragsdatum', type: 'date', group: 'Allgemein' },
-      { name: 'vertragsort', displayName: 'Vertragsort', type: 'text', group: 'Allgemein' },
     ],
   },
 ];

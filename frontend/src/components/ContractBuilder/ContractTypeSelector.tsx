@@ -25,6 +25,10 @@ import {
   Clock,
   FolderOpen,
   Loader2,
+  Edit2,
+  Trash2,
+  Copy,
+  MoreVertical,
 } from 'lucide-react';
 import { contractTemplates, templateCategories, ContractTemplate } from '../../data/contractTemplates';
 import styles from './ContractTypeSelector.module.css';
@@ -47,6 +51,9 @@ interface ContractTypeSelectorProps {
   savedDrafts?: SavedDraft[];
   isLoadingDrafts?: boolean;
   onLoadDraft?: (draftId: string) => void;
+  onDeleteDraft?: (draftId: string) => void;
+  onRenameDraft?: (draftId: string, currentName: string) => void;
+  onDuplicateDraft?: (draftId: string, originalName: string) => void;
 }
 
 // Icon mapping
@@ -74,11 +81,15 @@ export const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
   savedDrafts = [],
   isLoadingDrafts = false,
   onLoadDraft,
+  onDeleteDraft,
+  onRenameDraft,
+  onDuplicateDraft,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [hoveredTemplate, setHoveredTemplate] = useState<ContractTemplate | null>(null);
   const [showDrafts, setShowDrafts] = useState(false);
+  const [activeDraftMenu, setActiveDraftMenu] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -171,21 +182,69 @@ export const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
             ) : (
               <div className={styles.draftsList}>
                 {savedDrafts.map((draft) => (
-                  <button
-                    key={draft._id}
-                    className={styles.draftCard}
-                    onClick={() => onLoadDraft?.(draft._id)}
-                  >
-                    <div className={styles.draftInfo}>
-                      <span className={styles.draftName}>{draft.metadata.name}</span>
-                      <span className={styles.draftMeta}>
-                        <Clock size={12} />
-                        {formatDate(draft.updatedAt)}
-                        <span className={styles.draftBlocks}>{draft.blockCount} Blöcke</span>
-                      </span>
+                  <div key={draft._id} className={styles.draftCardWrapper}>
+                    <button
+                      className={styles.draftCard}
+                      onClick={() => onLoadDraft?.(draft._id)}
+                    >
+                      <div className={styles.draftInfo}>
+                        <span className={styles.draftName}>{draft.metadata.name}</span>
+                        <span className={styles.draftMeta}>
+                          <Clock size={12} />
+                          {formatDate(draft.updatedAt)}
+                          <span className={styles.draftBlocks}>{draft.blockCount} Blöcke</span>
+                        </span>
+                      </div>
+                      <ChevronRight size={18} className={styles.draftArrow} />
+                    </button>
+                    <div className={styles.draftActions}>
+                      <button
+                        className={styles.draftActionBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveDraftMenu(activeDraftMenu === draft._id ? null : draft._id);
+                        }}
+                        title="Aktionen"
+                      >
+                        <MoreVertical size={16} />
+                      </button>
+                      {activeDraftMenu === draft._id && (
+                        <div className={styles.draftMenu}>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onRenameDraft?.(draft._id, draft.metadata.name);
+                              setActiveDraftMenu(null);
+                            }}
+                          >
+                            <Edit2 size={14} />
+                            <span>Umbenennen</span>
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDuplicateDraft?.(draft._id, draft.metadata.name);
+                              setActiveDraftMenu(null);
+                            }}
+                          >
+                            <Copy size={14} />
+                            <span>Duplizieren</span>
+                          </button>
+                          <button
+                            className={styles.dangerAction}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDeleteDraft?.(draft._id);
+                              setActiveDraftMenu(null);
+                            }}
+                          >
+                            <Trash2 size={14} />
+                            <span>Löschen</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
-                    <ChevronRight size={18} className={styles.draftArrow} />
-                  </button>
+                  </div>
                 ))}
               </div>
             )}

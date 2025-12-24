@@ -321,7 +321,7 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateCli
   return (
     <div className="calendar-grid">
       {/* DEBUG: View Indicator - nur temporär sichtbar */}
-      <div style={{ gridColumn: '1 / -1', background: '#4f46e5', color: 'white', padding: '8px 16px', borderRadius: '8px', marginBottom: '8px', fontWeight: 'bold' }}>
+      <div style={{ gridColumn: '1 / -1', background: '#3b82f6', color: 'white', padding: '8px 16px', borderRadius: '8px', marginBottom: '8px', fontWeight: 'bold' }}>
         MONATSANSICHT AKTIV
       </div>
       {/* Weekday Headers */}
@@ -529,7 +529,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange 
             justifyContent: 'center',
             gap: '16px',
             padding: '12px 20px',
-            background: 'rgba(79, 70, 229, 0.05)',
+            background: 'rgba(59, 130, 246, 0.05)',
             borderBottom: '1px solid rgba(0, 0, 0, 0.06)'
           }}>
             <motion.button
@@ -542,7 +542,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange 
                 height: '36px',
                 borderRadius: '50%',
                 border: 'none',
-                background: currentIndex > 0 ? '#4f46e5' : 'rgba(0, 0, 0, 0.1)',
+                background: currentIndex > 0 ? '#3b82f6' : 'rgba(0, 0, 0, 0.1)',
                 color: currentIndex > 0 ? '#fff' : '#9ca3af',
                 cursor: currentIndex > 0 ? 'pointer' : 'not-allowed',
                 display: 'flex',
@@ -571,7 +571,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange 
                 height: '36px',
                 borderRadius: '50%',
                 border: 'none',
-                background: currentIndex < totalEvents - 1 ? '#4f46e5' : 'rgba(0, 0, 0, 0.1)',
+                background: currentIndex < totalEvents - 1 ? '#3b82f6' : 'rgba(0, 0, 0, 0.1)',
                 color: currentIndex < totalEvents - 1 ? '#fff' : '#9ca3af',
                 cursor: currentIndex < totalEvents - 1 ? 'pointer' : 'not-allowed',
                 display: 'flex',
@@ -617,7 +617,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange 
               whileTap={{ scale: 0.98 }}
               style={{
                 gridColumn: '1 / -1',
-                background: 'linear-gradient(135deg, #4f46e5, #4338ca)',
+                background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
                 color: '#fff',
                 border: 'none',
                 padding: '14px 20px',
@@ -696,12 +696,12 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange 
 
               <motion.button
                 onClick={() => onAction("optimize", currentEvent.id)}
-                whileHover={{ scale: 1.02, background: '#eef2ff', borderColor: '#4f46e5' }}
+                whileHover={{ scale: 1.02, background: '#eef2ff', borderColor: '#3b82f6' }}
                 whileTap={{ scale: 0.98 }}
                 style={{
                   flex: 1,
                   background: '#f9fafb',
-                  color: '#4f46e5',
+                  color: '#3b82f6',
                   border: '1px solid #e5e7eb',
                   padding: '10px 12px',
                   borderRadius: '8px',
@@ -858,7 +858,7 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
           <div style={{
             padding: isMobile ? '20px' : '30px',
             borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
-            background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.05), rgba(67, 56, 202, 0.03))',
+            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(67, 56, 202, 0.03))',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -1012,7 +1012,7 @@ function DayEventsModal({ date, events, onEventClick, onClose }: DayEventsModalP
         <div style={{
           padding: isMobile ? '20px' : '30px',
           borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
-          background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.05), rgba(67, 56, 202, 0.03))',
+          background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(67, 56, 202, 0.03))',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -1204,7 +1204,7 @@ function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalPro
 
       // ===== DEBUG: Date.UTC Fix =====
       console.log('%c[DEBUG] CreateEvent - Date.UTC Fix aktiv!', 'background: #10b981; color: white; font-weight: bold; padding: 5px;');
-      console.log('%c[DEBUG] Eingabe:', 'color: #4f46e5;', { date: formData.date, time: formData.time });
+      console.log('%c[DEBUG] Eingabe:', 'color: #3b82f6;', { date: formData.date, time: formData.time });
       console.log('%c[DEBUG] Parsed:', 'color: #f59e0b;', { year, month, day, hours, minutes });
       console.log('%c[DEBUG] Event Date (UTC):', 'color: #10b981;', eventDate.toISOString());
 
@@ -1276,7 +1276,7 @@ function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalPro
         <div style={{
           padding: isMobile ? '20px' : '24px',
           borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
-          background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.05), rgba(67, 56, 202, 0.05))',
+          background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(67, 56, 202, 0.05))',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -1351,8 +1351,8 @@ function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalPro
                 alignItems: 'center',
                 gap: '16px',
                 padding: '18px',
-                background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.08), rgba(67, 56, 202, 0.04))',
-                border: '1px solid rgba(79, 70, 229, 0.2)',
+                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(67, 56, 202, 0.04))',
+                border: '1px solid rgba(59, 130, 246, 0.2)',
                 borderRadius: '14px',
                 cursor: 'pointer',
                 textAlign: 'left'
@@ -1362,7 +1362,7 @@ function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalPro
                 width: '48px',
                 height: '48px',
                 borderRadius: '12px',
-                background: 'linear-gradient(135deg, #4f46e5, #4338ca)',
+                background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1539,7 +1539,7 @@ function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalPro
                 style={{
                   flex: 2,
                   padding: '12px',
-                  background: saving ? '#9ca3af' : 'linear-gradient(135deg, #4f46e5, #4338ca)',
+                  background: saving ? '#9ca3af' : 'linear-gradient(135deg, #3b82f6, #2563eb)',
                   border: 'none',
                   borderRadius: '10px',
                   color: '#fff',
@@ -1591,7 +1591,7 @@ function SnoozeModal({ isOpen, onClose, onSnooze }: SnoozeModalProps) {
   if (!isOpen) return null;
 
   // ===== DEBUG: Snooze Options =====
-  console.log('%c[DEBUG] SnoozeModal geladen', 'color: #4f46e5; font-weight: bold;');
+  console.log('%c[DEBUG] SnoozeModal geladen', 'color: #3b82f6; font-weight: bold;');
 
   const snoozeOptions = [
     { days: 1, label: '1 Tag später', icon: '📅', description: 'Erinnerung um 1 Tag verschieben' },
@@ -1745,15 +1745,15 @@ const DEBUG_COLORS = {
   upcoming: '#10b981',    // Grün
   past: '#9ca3af',        // Grau
   cancelable: '#f59e0b',  // Orange
-  autoRenewal: '#4f46e5'  // Firmenblau
+  autoRenewal: '#3b82f6'  // Firmenblau
 };
 
 export default function CalendarPage() {
   // ===== DEBUG: Component Load =====
-  console.log('%c=== CALENDAR DEBUG ===', 'background: #4f46e5; color: white; font-size: 16px; padding: 10px;');
+  console.log('%c=== CALENDAR DEBUG ===', 'background: #3b82f6; color: white; font-size: 16px; padding: 10px;');
   console.log('%cVersion: ' + CALENDAR_VERSION, 'color: #10b981; font-weight: bold; font-size: 14px;');
   console.log('%cDEBUG_COLORS:', 'color: #f59e0b;', DEBUG_COLORS);
-  console.log('%cSnooze Labels: "1 Tag später", "3 Tage später", etc.', 'color: #4f46e5;');
+  console.log('%cSnooze Labels: "1 Tag später", "3 Tage später", etc.', 'color: #3b82f6;');
   console.log('%cDate.UTC Fix: AKTIV', 'color: #10b981;');
   console.log('==========================================');
 
@@ -1915,12 +1915,12 @@ export default function CalendarPage() {
     };
 
     // ===== DEBUG: Stats berechnet =====
-    console.log('%c[DEBUG] Stats berechnet:', 'color: #4f46e5; font-weight: bold;', result);
+    console.log('%c[DEBUG] Stats berechnet:', 'color: #3b82f6; font-weight: bold;', result);
     console.log('%c[DEBUG] Stats-Farben werden verwendet:', 'color: #f59e0b;');
     console.log('  - Kommende: #10b981 (Grün)');
     console.log('  - Vergangen: #9ca3af (Grau)');
     console.log('  - Kündbar: #f59e0b (Orange)');
-    console.log('  - Auto-Verl: #4f46e5 (Blau)');
+    console.log('  - Auto-Verl: #3b82f6 (Blau)');
 
     return result;
   }, [events]);
@@ -1998,14 +1998,14 @@ export default function CalendarPage() {
           position: 'fixed',
           bottom: '20px',
           right: '20px',
-          background: 'linear-gradient(135deg, #4f46e5, #4338ca)',
+          background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
           color: 'white',
           padding: '16px 24px',
           borderRadius: '12px',
           fontSize: '14px',
           fontFamily: 'monospace',
           zIndex: 9999,
-          boxShadow: '0 8px 32px rgba(79, 70, 229, 0.4)',
+          boxShadow: '0 8px 32px rgba(59, 130, 246, 0.4)',
           maxWidth: '400px',
           lineHeight: '1.6'
         }}>
@@ -2092,7 +2092,7 @@ export default function CalendarPage() {
                       key={view}
                       className={`view-btn ${currentView === view ? 'active' : ''}`}
                       onClick={() => {
-                        console.log('%c[DEBUG] View-Wechsel:', 'color: #4f46e5; font-weight: bold;', view);
+                        console.log('%c[DEBUG] View-Wechsel:', 'color: #3b82f6; font-weight: bold;', view);
                         setCurrentView(view);
                       }}
                     >
@@ -2201,7 +2201,7 @@ export default function CalendarPage() {
                     <div className="stat-label">Kündbar</div>
                   </div>
                   <div className="stat-card clickable" onClick={() => {
-                    console.log('%c[DEBUG] Stats-Karte geklickt: autoRenewal', 'color: #4f46e5; font-weight: bold;');
+                    console.log('%c[DEBUG] Stats-Karte geklickt: autoRenewal', 'color: #3b82f6; font-weight: bold;');
                     handleStatsCardClick('autoRenewal');
                   }}>
                     <div className="stat-value" style={{ color: DEBUG_COLORS.autoRenewal }}>{stats.autoRenewal}</div>

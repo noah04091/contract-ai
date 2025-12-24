@@ -224,6 +224,99 @@ const ContractBuilder: React.FC = () => {
     }
   };
 
+  // Handler für Entwurf löschen
+  const handleDeleteDraft = async (draftId: string) => {
+    if (!confirm('Möchten Sie diesen Entwurf wirklich löschen?')) return;
+
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+
+      const response = await fetch(`${API_BASE}/api/contract-builder/${draftId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        // Drafts neu laden
+        setSavedDrafts(prev => prev.filter(d => d._id !== draftId));
+      } else {
+        alert('Fehler beim Löschen des Entwurfs');
+      }
+    } catch (error) {
+      console.error('Fehler beim Löschen:', error);
+      alert('Fehler beim Löschen des Entwurfs');
+    }
+  };
+
+  // Handler für Entwurf umbenennen
+  const handleRenameDraft = async (draftId: string, currentName: string) => {
+    const newName = prompt('Neuer Name für den Entwurf:', currentName);
+    if (!newName || newName === currentName) return;
+
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+
+      const response = await fetch(`${API_BASE}/api/contract-builder/${draftId}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          metadata: { name: newName }
+        }),
+      });
+
+      if (response.ok) {
+        // Drafts aktualisieren
+        setSavedDrafts(prev => prev.map(d =>
+          d._id === draftId
+            ? { ...d, metadata: { ...d.metadata, name: newName } }
+            : d
+        ));
+      } else {
+        alert('Fehler beim Umbenennen des Entwurfs');
+      }
+    } catch (error) {
+      console.error('Fehler beim Umbenennen:', error);
+      alert('Fehler beim Umbenennen des Entwurfs');
+    }
+  };
+
+  // Handler für Entwurf duplizieren
+  const handleDuplicateDraft = async (draftId: string, originalName: string) => {
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+
+      const response = await fetch(`${API_BASE}/api/contract-builder/${draftId}/duplicate`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: `${originalName} (Kopie)`
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Neuen Entwurf zur Liste hinzufügen
+        setSavedDrafts(prev => [data.document, ...prev]);
+      } else {
+        alert('Fehler beim Duplizieren des Entwurfs');
+      }
+    } catch (error) {
+      console.error('Fehler beim Duplizieren:', error);
+      alert('Fehler beim Duplizieren des Entwurfs');
+    }
+  };
+
   // Speichern
   const handleSave = async () => {
     setIsSaving(true);
@@ -1233,6 +1326,9 @@ const ContractBuilder: React.FC = () => {
         savedDrafts={savedDrafts}
         isLoadingDrafts={isLoadingDrafts}
         onLoadDraft={handleLoadDraft}
+        onDeleteDraft={handleDeleteDraft}
+        onRenameDraft={handleRenameDraft}
+        onDuplicateDraft={handleDuplicateDraft}
       />
     </div>
   );

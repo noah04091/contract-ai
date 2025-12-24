@@ -506,6 +506,13 @@
   overflow-y: auto;
 }
 
+.draftCardWrapper {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  position: relative;
+}
+
 .draftCard {
   display: flex;
   align-items: center;
@@ -517,11 +524,79 @@
   cursor: pointer;
   text-align: left;
   transition: all 0.15s ease;
+  flex: 1;
 }
 
 .draftCard:hover {
   border-color: #3182ce;
   background: #ebf8ff;
+}
+
+/* Draft Actions */
+.draftActions {
+  position: relative;
+}
+
+.draftActionBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 100%;
+  min-height: 48px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #718096;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.draftActionBtn:hover {
+  background: #f7fafc;
+  border-color: #cbd5e0;
+  color: #4a5568;
+}
+
+.draftMenu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  z-index: 100;
+  min-width: 140px;
+}
+
+.draftMenu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: #4a5568;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  text-align: left;
+}
+
+.draftMenu button:hover {
+  background: #f7fafc;
+}
+
+.draftMenu .dangerAction {
+  color: #e53e3e;
+}
+
+.draftMenu .dangerAction:hover {
+  background: #fff5f5;
 }
 
 .draftInfo {
