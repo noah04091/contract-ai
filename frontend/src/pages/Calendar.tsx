@@ -1,5 +1,5 @@
 // src/pages/Calendar.tsx - Custom Calendar Redesign
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -31,6 +31,7 @@ import axios from "axios";
 import "../styles/AppleCalendar.css";
 import CalendarSyncModal from "../components/CalendarSyncModal";
 import { debug } from "../utils/debug";
+import { useCalendarStore } from "../stores/calendarStore";
 
 // ========== Types ==========
 interface CalendarEvent {
@@ -1773,12 +1774,19 @@ export default function CalendarPage() {
     debug.componentMount('CalendarPage');
   }, []);
 
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  // ===== ZUSTAND STORE - Events werden gecacht! =====
+  const {
+    events,
+    loading,
+    fetchEvents,
+    dismissEvent,
+    snoozeEvent
+  } = useCalendarStore();
+
   const [filteredEvents, setFilteredEvents] = useState<CalendarEvent[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
-  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [filterSeverity, setFilterSeverity] = useState("all");
   const [filterType, setFilterType] = useState("all");
@@ -1797,42 +1805,10 @@ export default function CalendarPage() {
 
   const EVENTS_PER_PAGE = 5;
 
-  // Fetch Events
-  const fetchEvents = useCallback(async () => {
-    debug.info('Lade Kalender-Events...');
-    setLoading(true);
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        debug.warning('Kein Auth-Token vorhanden');
-        setLoading(false);
-        return;
-      }
-
-      const pastDate = new Date();
-      pastDate.setDate(pastDate.getDate() - 60);
-      const futureDate = new Date();
-      futureDate.setDate(futureDate.getDate() + 365);
-
-      const response = await axios.get<ApiResponse>("/api/calendar/events", {
-        headers: { Authorization: `Bearer ${token}` },
-        params: { from: pastDate.toISOString(), to: futureDate.toISOString() }
-      });
-
-      if (response.data.success && response.data.events) {
-        setEvents(response.data.events);
-        setFilteredEvents(response.data.events);
-        debug.eventData('Kalender-Events geladen', response.data.events.length, response.data.events[0]);
-      }
-    } catch (err) {
-      debug.error('Fehler beim Laden der Events', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
+  // Fetch events on mount (uses cache if available)
   useEffect(() => {
-    fetchEvents();
+    debug.info('Kalender geladen - prüfe Cache...');
+    fetchEvents(); // Uses cache if valid, otherwise fetches
   }, [fetchEvents]);
 
   // Filter events
@@ -1857,7 +1833,7 @@ export default function CalendarPage() {
       await axios.post("/api/calendar/regenerate-all", {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      await fetchEvents();
+      await fetchEvents(true); // Force refresh - bypass cache
       debug.success('Events erfolgreich regeneriert');
     } catch (err) {
       debug.error('Fehler beim Regenerieren der Events', err);
@@ -1866,7 +1842,7 @@ export default function CalendarPage() {
     }
   };
 
-  // Handle Quick Action
+  // Handle Quick Action - mit optimistischen Updates!
   const handleQuickAction = async (action: string, eventId: string, snoozeDays?: number) => {
     // If snooze action without days, open the snooze modal
     if (action === "snooze" && !snoozeDays) {
@@ -1876,19 +1852,36 @@ export default function CalendarPage() {
     }
 
     try {
+      // Optimistische Updates - kein Server-Roundtrip für UI
+      if (action === "dismiss") {
+        await dismissEvent(eventId);
+        setShowQuickActions(false);
+        setSelectedEvent(null);
+        debug.success('Event ausgeblendet (optimistisch)');
+        return;
+      }
+
+      if (action === "snooze" && snoozeDays) {
+        await snoozeEvent(eventId, snoozeDays);
+        setShowQuickActions(false);
+        setShowSnoozeModal(false);
+        setSnoozeEventId(null);
+        setSelectedEvent(null);
+        debug.success(`Event um ${snoozeDays} Tage verschoben (optimistisch)`);
+        return;
+      }
+
+      // Für andere Aktionen (compare, optimize, cancel) - Server-Request
       const token = localStorage.getItem("token");
       const response = await axios.post<ApiResponse>("/api/calendar/quick-action", {
-        eventId, action, data: action === "snooze" ? { days: snoozeDays || 7 } : {}
+        eventId, action, data: {}
       }, { headers: { Authorization: `Bearer ${token}` } });
 
       if (response.data.success) {
         if (response.data.result?.redirect) {
           window.location.href = response.data.result.redirect;
         } else {
-          await fetchEvents();
           setShowQuickActions(false);
-          setShowSnoozeModal(false);
-          setSnoozeEventId(null);
           setSelectedEvent(null);
         }
       }
@@ -2366,7 +2359,7 @@ export default function CalendarPage() {
           <CreateEventModal
             date={showCreateEventModal}
             onClose={() => setShowCreateEventModal(null)}
-            onEventCreated={() => fetchEvents()}
+            onEventCreated={() => fetchEvents(true)} // Force refresh after creating
           />
         )}
       </AnimatePresence>
