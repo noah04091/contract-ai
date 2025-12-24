@@ -478,7 +478,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange 
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={onClose}
-      style={{ padding: isMobile ? '20px' : '40px' }}
+      style={{ padding: isMobile ? 0 : '40px' }}
     >
       <motion.div
         className="quick-actions-modal premium-modal"
@@ -488,7 +488,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange 
         onClick={(e) => e.stopPropagation()}
         style={{
           maxWidth: isMobile ? '100%' : '600px',
-          width: isMobile ? 'calc(100% - 16px)' : '600px',
+          width: isMobile ? '100%' : '600px',
           maxHeight: isMobile ? '90vh' : 'auto',
           overflowY: isMobile ? 'auto' : 'visible'
         }}
@@ -859,7 +859,7 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={onClose}
-      style={{ padding: isMobile ? '20px' : '40px', zIndex: 1001 }}
+      style={{ padding: isMobile ? 0 : '40px', zIndex: 1001 }}
     >
       <motion.div
         className="stats-detail-modal premium-modal"
@@ -869,11 +869,11 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
         onClick={(e) => e.stopPropagation()}
         style={{
             maxWidth: isMobile ? '100%' : '800px',
-            width: isMobile ? 'calc(100% - 16px)' : '800px',
+            width: isMobile ? '100%' : '800px',
             maxHeight: isMobile ? '90vh' : '80vh',
             overflowY: 'auto',
             background: '#ffffff',
-            borderRadius: '20px',
+            borderRadius: isMobile ? '20px 20px 0 0' : '20px',
             boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)',
             padding: 0
           }}
@@ -1017,7 +1017,7 @@ function DayEventsModal({ date, events, onEventClick, onClose }: DayEventsModalP
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={onClose}
-      style={{ padding: isMobile ? '20px' : '40px', zIndex: 1001 }}
+      style={{ padding: isMobile ? 0 : '40px', zIndex: 1001 }}
     >
       <motion.div
         className="premium-modal"
@@ -1027,7 +1027,7 @@ function DayEventsModal({ date, events, onEventClick, onClose }: DayEventsModalP
         onClick={(e) => e.stopPropagation()}
         style={{
           maxWidth: isMobile ? '100%' : '600px',
-          width: isMobile ? 'calc(100% - 16px)' : '600px',
+          width: isMobile ? '100%' : '600px',
           maxHeight: isMobile ? '90vh' : '80vh',
           overflowY: 'auto'
         }}
@@ -1278,7 +1278,7 @@ function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalPro
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={onClose}
-      style={{ padding: isMobile ? '20px' : '40px', zIndex: 1001 }}
+      style={{ padding: isMobile ? 0 : '40px', zIndex: 1001 }}
     >
       <motion.div
         className="premium-modal"
@@ -1288,11 +1288,11 @@ function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalPro
         onClick={(e) => e.stopPropagation()}
         style={{
           maxWidth: isMobile ? '100%' : showForm ? '520px' : '450px',
-          width: isMobile ? 'calc(100% - 16px)' : showForm ? '520px' : '450px',
+          width: isMobile ? '100%' : showForm ? '520px' : '450px',
           maxHeight: isMobile ? '90vh' : '85vh',
           overflowY: 'auto',
           background: '#ffffff',
-          borderRadius: '20px',
+          borderRadius: isMobile ? '20px 20px 0 0' : '20px',
           boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)'
         }}
       >
@@ -1634,7 +1634,7 @@ function SnoozeModal({ isOpen, onClose, onSnooze }: SnoozeModalProps) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={onClose}
-      style={{ padding: isMobile ? '20px' : '40px', zIndex: 1002 }}
+      style={{ padding: isMobile ? 0 : '40px', zIndex: 1002 }}
     >
       <motion.div
         className="premium-modal"
@@ -1644,9 +1644,9 @@ function SnoozeModal({ isOpen, onClose, onSnooze }: SnoozeModalProps) {
         onClick={(e) => e.stopPropagation()}
         style={{
           maxWidth: isMobile ? '100%' : '420px',
-          width: isMobile ? 'calc(100% - 16px)' : '420px',
+          width: isMobile ? '100%' : '420px',
           background: '#ffffff',
-          borderRadius: '20px',
+          borderRadius: isMobile ? '20px 20px 0 0' : '20px',
           boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)',
           overflow: 'hidden'
         }}
