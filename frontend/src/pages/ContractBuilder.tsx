@@ -331,140 +331,257 @@ const ContractBuilder: React.FC = () => {
     }
   };
 
-  // PDF Export - Rendert direkt vom Canvas
+  // PDF Export - Generiert HTML aus Block-Daten
   const handleExportPdf = async () => {
-    // Finde das pagesContainer Element (enthält alle Seiten)
-    const canvasWrapper = document.querySelector(`.${styles.canvasWrapper}`);
-    if (!canvasWrapper) {
-      console.error('Canvas wrapper not found');
-      alert('PDF-Export fehlgeschlagen: Canvas nicht gefunden');
-      return;
-    }
-
-    // Finde alle Paper-Elemente (CSS Module generiert Namen wie "BuilderCanvas_paper__xxx")
-    const paperElements = canvasWrapper.querySelectorAll('[class*="paper"]');
-    if (!paperElements || paperElements.length === 0) {
-      console.error('Paper elements not found');
-      alert('PDF-Export fehlgeschlagen: Keine Seiten gefunden');
-      return;
-    }
-
-    console.log(`[PDF Export] Found ${paperElements.length} pages`);
     setIsExporting(true);
 
     try {
       const filename = `${currentDocument?.metadata.name || 'Vertrag'}.pdf`;
 
-      // Erstelle einen sichtbaren Export-Container (html2pdf braucht sichtbare Elemente)
-      const exportContainer = document.createElement('div');
-      exportContainer.id = 'pdf-export-container';
-      exportContainer.style.cssText = `
-        position: fixed;
-        left: 0;
-        top: 0;
-        width: 210mm;
-        background: white;
-        z-index: -1;
-        opacity: 0;
-        pointer-events: none;
-      `;
+      // Prüfe ob Dokument vorhanden
+      if (!currentDocument) {
+        throw new Error('Kein Dokument geladen');
+      }
 
-      // Klone jede Seite und inline alle Styles
-      paperElements.forEach((paper, index) => {
-        const clone = paper.cloneNode(true) as HTMLElement;
+      // Sammle den Inhalt aller Blöcke
+      const blocks = currentDocument.content?.blocks || [];
+      const variables = currentDocument.content?.variables || [];
 
-        // Entferne Editor-UI-Elemente
-        const uiSelectors = [
-          '[class*="blockControls"]',
-          '[class*="dragHandle"]',
-          '[class*="riskIndicator"]',
-          '[class*="selectionBorder"]',
-          '[class*="statusIcons"]',
-          '[class*="activePageBadge"]',
-          '[class*="overflowWarning"]',
-          '[class*="overflowOverlay"]',
-          '[class*="emptyPage"]',
-          '[data-no-export="true"]',
-        ];
-        uiSelectors.forEach(selector => {
-          clone.querySelectorAll(selector).forEach(el => el.remove());
-        });
+      console.log('[PDF Export] Blocks:', blocks.length, 'Variables:', variables.length);
 
-        // Kopiere computed styles für das Paper-Element
-        const computedStyle = window.getComputedStyle(paper);
-        clone.style.cssText = `
-          width: 210mm;
-          min-height: 297mm;
-          padding: ${computedStyle.padding};
-          margin: 0;
-          background: white;
-          box-shadow: none;
-          font-family: ${computedStyle.fontFamily};
-          color: ${computedStyle.color};
-          page-break-after: ${index < paperElements.length - 1 ? 'always' : 'auto'};
-          position: relative;
-          box-sizing: border-box;
-        `;
+      if (blocks.length === 0) {
+        throw new Error('Keine Blöcke im Dokument');
+      }
 
-        // Finde die ursprünglichen Kind-Elemente und kopiere deren Styles
-        const originalChildren = paper.querySelectorAll('*');
-        const clonedChildren = clone.querySelectorAll('*');
-
-        originalChildren.forEach((original, i) => {
-          if (clonedChildren[i] instanceof HTMLElement && original instanceof HTMLElement) {
-            const origStyles = window.getComputedStyle(original);
-            const cloned = clonedChildren[i] as HTMLElement;
-
-            cloned.style.fontFamily = origStyles.fontFamily;
-            cloned.style.fontSize = origStyles.fontSize;
-            cloned.style.fontWeight = origStyles.fontWeight;
-            cloned.style.color = origStyles.color;
-            cloned.style.backgroundColor = origStyles.backgroundColor === 'rgba(0, 0, 0, 0)' ? 'transparent' : origStyles.backgroundColor;
-            cloned.style.padding = origStyles.padding;
-            cloned.style.margin = origStyles.margin;
-            cloned.style.border = origStyles.border;
-            cloned.style.borderRadius = origStyles.borderRadius;
-            cloned.style.textAlign = origStyles.textAlign;
-            cloned.style.lineHeight = origStyles.lineHeight;
-            cloned.style.whiteSpace = origStyles.whiteSpace;
+      // Variable-Werte als Map
+      const varValues = new Map<string, string>();
+      variables.forEach((v: { name: string; value?: string | number | Date }) => {
+        if (v.value !== undefined && v.value !== '') {
+          const cleanName = v.name.replace(/^\{\{|\}\}$/g, '');
+          if (v.value instanceof Date) {
+            varValues.set(cleanName, v.value.toLocaleDateString('de-DE'));
+          } else {
+            varValues.set(cleanName, String(v.value));
           }
-        });
-
-        exportContainer.appendChild(clone);
+        }
       });
 
-      document.body.appendChild(exportContainer);
+      // Funktion zum Ersetzen von Variablen im Text
+      const replaceVariables = (text: string): string => {
+        if (!text) return '';
+        return text.replace(/\{\{([^}]+)\}\}/g, (match, varName) => {
+          const value = varValues.get(varName.trim());
+          return value || match;
+        });
+      };
+
+      // Escape HTML für Sicherheit
+      const escapeHtml = (text: string): string => {
+        if (!text) return '';
+        return text
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      };
+
+      // Baue HTML-String aus den Block-Daten
+      let htmlContent = '';
+
+      blocks.forEach((block: { type: string; content: Record<string, unknown> }) => {
+        const content = block.content || {};
+
+        switch (block.type) {
+          case 'header': {
+            const title = escapeHtml(replaceVariables(content.title as string || ''));
+            const subtitle = escapeHtml(replaceVariables(content.subtitle as string || ''));
+            htmlContent += `
+              <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="font-size: 22pt; font-weight: 700; margin: 0 0 8px 0; color: #1a365d;">
+                  ${title || 'Vertrag'}
+                </h1>
+                ${subtitle ? `<p style="font-size: 12pt; color: #4a5568; margin: 0;">${subtitle}</p>` : ''}
+              </div>
+            `;
+            break;
+          }
+
+          case 'parties': {
+            const party1 = content.party1 as { role?: string; name?: string; address?: string } || {};
+            const party2 = content.party2 as { role?: string; name?: string; address?: string } || {};
+            htmlContent += `
+              <table style="width: 100%; margin-bottom: 25px; border-collapse: collapse;">
+                <tr>
+                  <td style="width: 48%; vertical-align: top; padding: 15px; background: #f7fafc; border-radius: 6px;">
+                    <p style="font-weight: 600; color: #2d3748; margin: 0 0 8px 0;">${escapeHtml(party1.role || 'Partei 1')}</p>
+                    <p style="margin: 0; color: #1a202c;">${escapeHtml(replaceVariables(party1.name || ''))}</p>
+                    <p style="margin: 4px 0 0 0; font-size: 10pt; color: #718096;">${escapeHtml(replaceVariables(party1.address || ''))}</p>
+                  </td>
+                  <td style="width: 4%;"></td>
+                  <td style="width: 48%; vertical-align: top; padding: 15px; background: #f7fafc; border-radius: 6px;">
+                    <p style="font-weight: 600; color: #2d3748; margin: 0 0 8px 0;">${escapeHtml(party2.role || 'Partei 2')}</p>
+                    <p style="margin: 0; color: #1a202c;">${escapeHtml(replaceVariables(party2.name || ''))}</p>
+                    <p style="margin: 4px 0 0 0; font-size: 10pt; color: #718096;">${escapeHtml(replaceVariables(party2.address || ''))}</p>
+                  </td>
+                </tr>
+              </table>
+            `;
+            break;
+          }
+
+          case 'clause': {
+            const clauseNum = content.number as string || '';
+            const clauseTitle = escapeHtml(replaceVariables(content.clauseTitle as string || content.title as string || ''));
+            const body = escapeHtml(replaceVariables(content.body as string || ''));
+            const subclauses = content.subclauses as Array<{ number: string; text: string }> || [];
+
+            htmlContent += `
+              <div style="margin-bottom: 20px;">
+                <h3 style="font-size: 12pt; font-weight: 600; color: #1a365d; margin: 0 0 10px 0;">
+                  ${clauseNum ? `§ ${escapeHtml(clauseNum)} ` : ''}${clauseTitle}
+                </h3>
+                <p style="margin: 0 0 10px 0; text-align: justify;">${body}</p>
+                ${subclauses.length > 0 ? `
+                  <div style="margin-left: 20px;">
+                    ${subclauses.map(sc => `
+                      <p style="margin: 6px 0;"><strong>${escapeHtml(sc.number)}</strong> ${escapeHtml(replaceVariables(sc.text))}</p>
+                    `).join('')}
+                  </div>
+                ` : ''}
+              </div>
+            `;
+            break;
+          }
+
+          case 'preamble': {
+            const preambleText = escapeHtml(replaceVariables(content.body as string || content.text as string || ''));
+            htmlContent += `
+              <div style="margin-bottom: 25px; padding: 15px; background: #f7fafc; border-left: 3px solid #3182ce; font-style: italic;">
+                <p style="margin: 0;">${preambleText}</p>
+              </div>
+            `;
+            break;
+          }
+
+          case 'signature': {
+            const sigFields = content.signatureFields as Array<{ label: string; showDate?: boolean; showPlace?: boolean }> || [];
+            if (sigFields.length > 0) {
+              htmlContent += `
+                <table style="width: 100%; margin-top: 50px; border-collapse: collapse;">
+                  <tr>
+                    ${sigFields.map(field => `
+                      <td style="width: ${100 / sigFields.length}%; text-align: center; padding: 0 10px;">
+                        <div style="border-top: 1px solid #2d3748; padding-top: 8px; margin-top: 60px;">
+                          <p style="margin: 0; font-size: 10pt; color: #4a5568;">${escapeHtml(field.label)}</p>
+                          ${field.showDate ? '<p style="margin: 4px 0 0 0; font-size: 9pt; color: #718096;">Datum: ________________</p>' : ''}
+                          ${field.showPlace ? '<p style="margin: 4px 0 0 0; font-size: 9pt; color: #718096;">Ort: ________________</p>' : ''}
+                        </div>
+                      </td>
+                    `).join('')}
+                  </tr>
+                </table>
+              `;
+            }
+            break;
+          }
+
+          case 'divider':
+            htmlContent += `<hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />`;
+            break;
+
+          case 'spacer':
+            htmlContent += `<div style="height: 30px;"></div>`;
+            break;
+
+          case 'page-break':
+            htmlContent += `<div style="page-break-after: always;"></div>`;
+            break;
+
+          case 'logo': {
+            const logoUrl = content.logoUrl as string || content.imageUrl as string || '';
+            if (logoUrl) {
+              const logoWidth = content.width as number || 150;
+              const alignment = content.alignment as string || 'center';
+              htmlContent += `
+                <div style="text-align: ${alignment}; margin-bottom: 20px;">
+                  <img src="${logoUrl}" style="max-width: ${logoWidth}px; max-height: 100px;" />
+                </div>
+              `;
+            }
+            break;
+          }
+
+          default: {
+            // Generischer Block
+            const text = content.body as string || content.text as string;
+            if (text) {
+              htmlContent += `<p style="margin: 0 0 15px 0;">${escapeHtml(replaceVariables(text))}</p>`;
+            }
+          }
+        }
+      });
+
+      console.log('[PDF Export] Generated HTML length:', htmlContent.length);
+
+      // Erstelle Export-Container - WICHTIG: Muss im sichtbaren Bereich sein!
+      const exportDiv = document.createElement('div');
+      exportDiv.id = 'pdf-export-container';
+      exportDiv.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 210mm;
+        min-height: 297mm;
+        padding: 20mm;
+        box-sizing: border-box;
+        background: white;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-size: 11pt;
+        line-height: 1.6;
+        color: #1a202c;
+        z-index: 9999;
+        overflow: visible;
+      `;
+
+      exportDiv.innerHTML = htmlContent;
+      document.body.appendChild(exportDiv);
 
       // Kurz warten bis DOM gerendert ist
       await new Promise(resolve => setTimeout(resolve, 100));
 
+      console.log('[PDF Export] ExportDiv dimensions:', exportDiv.offsetWidth, 'x', exportDiv.offsetHeight);
+      console.log('[PDF Export] ExportDiv innerHTML length:', exportDiv.innerHTML.length);
+
       const opt = {
-        margin: [10, 10, 10, 10] as [number, number, number, number], // 10mm Rand
+        margin: 0,
         filename,
         image: { type: 'jpeg' as const, quality: 0.98 },
         html2canvas: {
           scale: 2,
           useCORS: true,
-          logging: false,
+          logging: true, // Debug-Logging aktivieren
           backgroundColor: '#ffffff',
+          windowWidth: 794,
+          scrollX: 0,
+          scrollY: 0,
         },
         jsPDF: {
           unit: 'mm' as const,
           format: 'a4' as const,
           orientation: 'portrait' as const
         },
-        pagebreak: { mode: ['css', 'legacy'] as const },
       };
 
-      await html2pdf().set(opt).from(exportContainer).save();
+      await html2pdf().set(opt).from(exportDiv).save();
 
-      // Cleanup
-      document.body.removeChild(exportContainer);
-
+      // Aufräumen
+      document.body.removeChild(exportDiv);
       console.log('[PDF Export] Success');
+
     } catch (error) {
-      console.error('PDF export failed:', error);
-      alert('PDF-Export fehlgeschlagen. Bitte versuchen Sie es erneut.');
+      console.error('[PDF Export] Failed:', error);
+      alert(`PDF-Export fehlgeschlagen: ${(error as Error).message}`);
     } finally {
       setIsExporting(false);
     }
