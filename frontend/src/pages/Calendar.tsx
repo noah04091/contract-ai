@@ -2071,25 +2071,23 @@ export default function CalendarPage() {
                 {!isMobile && <span className="btn-text">Ereignis erstellen</span>}
               </button>
               {!isMobile && (
-                <>
-                  <button
-                    className="btn btn-secondary"
-                    onClick={() => window.location.href = '/contracts?upload=true'}
-                    title="Vertrag hochladen"
-                  >
-                    <FileText size={18} />
-                    <span className="btn-text">Vertrag hochladen</span>
-                  </button>
-                  <button
-                    className="btn btn-secondary"
-                    onClick={() => setShowSyncModal(true)}
-                    title="Kalender Sync"
-                  >
-                    <Link2 size={18} />
-                    <span className="btn-text">Kalender Sync</span>
-                  </button>
-                </>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => window.location.href = '/contracts?upload=true'}
+                  title="Vertrag hochladen"
+                >
+                  <FileText size={18} />
+                  <span className="btn-text">Vertrag hochladen</span>
+                </button>
               )}
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowSyncModal(true)}
+                title="Kalender Sync"
+              >
+                <Link2 size={18} />
+                {!isMobile && <span className="btn-text">Kalender Sync</span>}
+              </button>
               <button
                 className="btn btn-secondary"
                 onClick={handleRegenerateEvents}
