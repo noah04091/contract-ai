@@ -164,6 +164,11 @@
   border-bottom: 1px solid var(--border-light);
 }
 
+/* Mobile-only navigation row - hidden on desktop */
+.calendar-nav-row {
+  display: none;
+}
+
 .calendar-nav {
   display: flex;
   align-items: center;
@@ -1714,28 +1719,38 @@
 
   /* ========== CALENDAR HEADER - Native App Style ========== */
   .calendar-header {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
     padding: 16px;
     background: white;
     border-radius: 16px 16px 0 0;
     border-bottom: 1px solid var(--border-light);
   }
 
-  /* Row 1: Navigation + Month + Today - Single Row */
-  .calendar-nav {
-    order: 1;
-    display: flex;
+  /* Row 1: [<] [Monat Jahr] [>] [Heute] - Nur auf Mobile sichtbar */
+  .calendar-nav-row {
+    display: flex !important;
     align-items: center;
-    justify-content: space-between;
-    width: 100%;
     gap: 8px;
+    width: 100%;
   }
 
-  .nav-btn {
-    width: 48px;
-    height: 48px;
+  .calendar-nav-row .current-month {
+    flex: 1;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    padding: 0 4px;
+    margin: 0;
+    letter-spacing: -0.3px;
+    white-space: nowrap;
+  }
+
+  .calendar-nav-row .nav-btn {
+    width: 44px;
+    height: 44px;
     border-radius: 12px;
     flex-shrink: 0;
     display: flex;
@@ -1747,62 +1762,58 @@
     transition: all 0.2s ease;
   }
 
-  .nav-btn:active {
+  .calendar-nav-row .nav-btn:active {
     transform: scale(0.95);
     background: var(--border);
   }
 
-  .nav-btn svg {
-    width: 22px;
-    height: 22px;
+  .calendar-nav-row .nav-btn svg {
+    width: 20px;
+    height: 20px;
   }
 
-  .today-btn {
-    padding: 12px 20px;
-    font-size: 15px;
+  .calendar-nav-row .today-btn {
+    padding: 10px 14px;
+    font-size: 14px;
     font-weight: 600;
-    min-height: 48px;
+    min-height: 44px;
     flex-shrink: 0;
-    border-radius: 12px;
+    border-radius: 10px;
     background: var(--primary);
     color: white;
     border: none;
+    margin-left: 4px;
   }
 
-  .today-btn:active {
+  .calendar-nav-row .today-btn:active {
     transform: scale(0.97);
   }
 
-  /* Month/Year zwischen den Buttons */
+  /* Hide old calendar-nav on mobile */
+  .calendar-nav {
+    display: none;
+  }
+
   .current-month {
-    order: 0;
-    flex: 1;
-    text-align: center;
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--text-primary);
-    padding: 0;
-    margin: 0;
-    letter-spacing: -0.3px;
+    display: none;
   }
 
   /* Row 2: View Switcher - Segmented Control */
   .view-switcher {
-    order: 2;
     width: 100%;
     display: flex;
     background: #f1f5f9;
-    border-radius: 12px;
-    padding: 4px;
+    border-radius: 10px;
+    padding: 3px;
   }
 
   .view-btn {
     flex: 1;
-    padding: 14px 8px;
-    font-size: 15px;
+    padding: 12px 8px;
+    font-size: 14px;
     font-weight: 600;
-    min-height: 48px;
-    border-radius: 10px;
+    min-height: 44px;
+    border-radius: 8px;
     transition: all 0.2s ease;
     background: transparent;
     border: none;

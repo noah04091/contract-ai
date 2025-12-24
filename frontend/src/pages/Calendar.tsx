@@ -2110,18 +2110,20 @@ export default function CalendarPage() {
             <div className="calendar-container" style={{ gridColumn: '1' }} {...swipeHandlers}>
               {/* Calendar Header */}
               <div className="calendar-header">
-                <div className="calendar-nav">
+                {/* Row 1: [<] [Monat Jahr] [>] [Heute] */}
+                <div className="calendar-nav-row">
                   <button className="nav-btn" onClick={() => navigateMonth('prev')}>
                     <ChevronLeft size={20} />
                   </button>
+                  <div className="current-month">
+                    {MONTH_NAMES[currentDate.getMonth()]} {currentDate.getFullYear()}
+                  </div>
                   <button className="nav-btn" onClick={() => navigateMonth('next')}>
                     <ChevronRight size={20} />
                   </button>
                   <button className="today-btn" onClick={goToToday}>Heute</button>
                 </div>
-                <div className="current-month">
-                  {MONTH_NAMES[currentDate.getMonth()]} {currentDate.getFullYear()}
-                </div>
+                {/* Row 2: View Switcher */}
                 <div className="view-switcher">
                   {(['month', 'week', 'day'] as const).map(view => (
                     <button
