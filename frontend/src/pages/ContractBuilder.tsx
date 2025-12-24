@@ -331,81 +331,141 @@ const ContractBuilder: React.FC = () => {
     }
   };
 
-  // PDF Export - Rendert jede Seite einzeln
+  // PDF Export - Rendert direkt vom Canvas
   const handleExportPdf = async () => {
-    // Finde alle Paper-Elemente (jede Seite ist ein separates Paper)
-    const paperElements = document.querySelectorAll(`.${styles.canvasWrapper} [class*="paper"]`);
-    if (!paperElements || paperElements.length === 0) {
-      console.error('Paper elements not found');
+    // Finde das pagesContainer Element (enthält alle Seiten)
+    const canvasWrapper = document.querySelector(`.${styles.canvasWrapper}`);
+    if (!canvasWrapper) {
+      console.error('Canvas wrapper not found');
+      alert('PDF-Export fehlgeschlagen: Canvas nicht gefunden');
       return;
     }
 
-    setIsExporting(true);
+    // Finde alle Paper-Elemente (CSS Module generiert Namen wie "BuilderCanvas_paper__xxx")
+    const paperElements = canvasWrapper.querySelectorAll('[class*="paper"]');
+    if (!paperElements || paperElements.length === 0) {
+      console.error('Paper elements not found');
+      alert('PDF-Export fehlgeschlagen: Keine Seiten gefunden');
+      return;
+    }
 
-    // Temporäre Klasse für sauberen Export hinzufügen
-    document.body.classList.add('pdf-export-mode');
+    console.log(`[PDF Export] Found ${paperElements.length} pages`);
+    setIsExporting(true);
 
     try {
       const filename = `${currentDocument?.metadata.name || 'Vertrag'}.pdf`;
 
-      const opt = {
-        margin: 0,
-        filename,
-        image: { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          letterRendering: true,
-          // Ignoriere Editor-UI-Elemente
-          ignoreElements: (element: Element) => {
-            const classList = element.classList;
-            if (!classList) return false;
-            // Ignoriere Drag-Handles, Block-Controls, Separators, etc.
-            return (
-              classList.contains('blockControls') ||
-              classList.contains('dragHandle') ||
-              classList.contains('riskIndicator') ||
-              classList.contains('selectionBorder') ||
-              classList.contains('pageSeparatorLabel') ||
-              classList.contains('zoomIndicator') ||
-              element.getAttribute('data-no-export') === 'true'
-            );
-          },
-        },
-        jsPDF: {
-          unit: 'mm',
-          format: 'a4',
-          orientation: 'portrait' as const
-        },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
-      };
-
-      // Erstelle ein Container-Element mit allen Seiten
+      // Erstelle einen sichtbaren Export-Container (html2pdf braucht sichtbare Elemente)
       const exportContainer = document.createElement('div');
-      exportContainer.style.cssText = 'position: absolute; left: -9999px; top: 0;';
+      exportContainer.id = 'pdf-export-container';
+      exportContainer.style.cssText = `
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 210mm;
+        background: white;
+        z-index: -1;
+        opacity: 0;
+        pointer-events: none;
+      `;
 
+      // Klone jede Seite und inline alle Styles
       paperElements.forEach((paper, index) => {
         const clone = paper.cloneNode(true) as HTMLElement;
-        // Entferne Editor-spezifische Elemente
-        clone.querySelectorAll('[class*="blockControls"], [class*="dragHandle"], [class*="riskIndicator"], [class*="selectionBorder"], [class*="statusIcons"]').forEach(el => el.remove());
-        // Style für sauberen Export
-        clone.style.cssText = 'width: 210mm; height: 297mm; box-shadow: none; margin: 0; page-break-after: always;';
-        if (index === paperElements.length - 1) {
-          clone.style.pageBreakAfter = 'auto';
-        }
+
+        // Entferne Editor-UI-Elemente
+        const uiSelectors = [
+          '[class*="blockControls"]',
+          '[class*="dragHandle"]',
+          '[class*="riskIndicator"]',
+          '[class*="selectionBorder"]',
+          '[class*="statusIcons"]',
+          '[class*="activePageBadge"]',
+          '[class*="overflowWarning"]',
+          '[class*="overflowOverlay"]',
+          '[class*="emptyPage"]',
+          '[data-no-export="true"]',
+        ];
+        uiSelectors.forEach(selector => {
+          clone.querySelectorAll(selector).forEach(el => el.remove());
+        });
+
+        // Kopiere computed styles für das Paper-Element
+        const computedStyle = window.getComputedStyle(paper);
+        clone.style.cssText = `
+          width: 210mm;
+          min-height: 297mm;
+          padding: ${computedStyle.padding};
+          margin: 0;
+          background: white;
+          box-shadow: none;
+          font-family: ${computedStyle.fontFamily};
+          color: ${computedStyle.color};
+          page-break-after: ${index < paperElements.length - 1 ? 'always' : 'auto'};
+          position: relative;
+          box-sizing: border-box;
+        `;
+
+        // Finde die ursprünglichen Kind-Elemente und kopiere deren Styles
+        const originalChildren = paper.querySelectorAll('*');
+        const clonedChildren = clone.querySelectorAll('*');
+
+        originalChildren.forEach((original, i) => {
+          if (clonedChildren[i] instanceof HTMLElement && original instanceof HTMLElement) {
+            const origStyles = window.getComputedStyle(original);
+            const cloned = clonedChildren[i] as HTMLElement;
+
+            cloned.style.fontFamily = origStyles.fontFamily;
+            cloned.style.fontSize = origStyles.fontSize;
+            cloned.style.fontWeight = origStyles.fontWeight;
+            cloned.style.color = origStyles.color;
+            cloned.style.backgroundColor = origStyles.backgroundColor === 'rgba(0, 0, 0, 0)' ? 'transparent' : origStyles.backgroundColor;
+            cloned.style.padding = origStyles.padding;
+            cloned.style.margin = origStyles.margin;
+            cloned.style.border = origStyles.border;
+            cloned.style.borderRadius = origStyles.borderRadius;
+            cloned.style.textAlign = origStyles.textAlign;
+            cloned.style.lineHeight = origStyles.lineHeight;
+            cloned.style.whiteSpace = origStyles.whiteSpace;
+          }
+        });
+
         exportContainer.appendChild(clone);
       });
 
       document.body.appendChild(exportContainer);
 
+      // Kurz warten bis DOM gerendert ist
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const opt = {
+        margin: [10, 10, 10, 10] as [number, number, number, number], // 10mm Rand
+        filename,
+        image: { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+        },
+        jsPDF: {
+          unit: 'mm' as const,
+          format: 'a4' as const,
+          orientation: 'portrait' as const
+        },
+        pagebreak: { mode: ['css', 'legacy'] as const },
+      };
+
       await html2pdf().set(opt).from(exportContainer).save();
 
       // Cleanup
       document.body.removeChild(exportContainer);
+
+      console.log('[PDF Export] Success');
     } catch (error) {
       console.error('PDF export failed:', error);
+      alert('PDF-Export fehlgeschlagen. Bitte versuchen Sie es erneut.');
     } finally {
-      document.body.classList.remove('pdf-export-mode');
       setIsExporting(false);
     }
   };

@@ -472,6 +472,19 @@
   margin-bottom: 16px;
 }
 
+.sidebar-card-header.clickable {
+  cursor: pointer;
+  padding: 8px;
+  margin: -8px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  transition: background 0.15s ease;
+}
+
+.sidebar-card-header.clickable:hover {
+  background: rgba(59, 130, 246, 0.08);
+}
+
 .sidebar-card-title {
   display: flex;
   align-items: center;

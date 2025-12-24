@@ -6,6 +6,8 @@ import {
   AlertCircle,
   ChevronRight,
   ChevronLeft,
+  ChevronDown,
+  ChevronUp,
   RefreshCw,
   Calendar as CalendarIcon,
   BarChart3,
@@ -1748,6 +1750,7 @@ export default function CalendarPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [filterSeverity, setFilterSeverity] = useState("all");
   const [filterType, setFilterType] = useState("all");
+  const [showFilters, setShowFilters] = useState(false);
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [currentView, setCurrentView] = useState<'month' | 'week' | 'day'>('month');
@@ -2236,67 +2239,62 @@ export default function CalendarPage() {
                 )}
               </div>
 
-              {/* Filter Card */}
+              {/* Filter Card - Collapsible */}
               <div className="sidebar-card">
-                <div className="sidebar-card-header">
+                <div
+                  className="sidebar-card-header clickable"
+                  onClick={() => setShowFilters(!showFilters)}
+                  style={{ cursor: 'pointer' }}
+                >
                   <div className="sidebar-card-title">
                     <Target size={18} />
                     Filter
+                    {(filterSeverity !== 'all' || filterType !== 'all') && (
+                      <span style={{
+                        marginLeft: '8px',
+                        fontSize: '11px',
+                        background: '#3b82f6',
+                        color: 'white',
+                        padding: '2px 6px',
+                        borderRadius: '10px'
+                      }}>
+                        aktiv
+                      </span>
+                    )}
                   </div>
+                  {showFilters ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                 </div>
-                <div className="filter-section">
-                  <div className="filter-group">
-                    <label className="filter-label">Dringlichkeit</label>
-                    <select
-                      className="filter-select"
-                      value={filterSeverity}
-                      onChange={(e) => setFilterSeverity(e.target.value)}
-                    >
-                      <option value="all">Alle</option>
-                      <option value="critical">Kritisch</option>
-                      <option value="warning">Warnung</option>
-                      <option value="info">Info</option>
-                    </select>
+                {showFilters && (
+                  <div className="filter-section">
+                    <div className="filter-group">
+                      <label className="filter-label">Dringlichkeit</label>
+                      <select
+                        className="filter-select"
+                        value={filterSeverity}
+                        onChange={(e) => setFilterSeverity(e.target.value)}
+                      >
+                        <option value="all">Alle</option>
+                        <option value="critical">Kritisch</option>
+                        <option value="warning">Warnung</option>
+                        <option value="info">Info</option>
+                      </select>
+                    </div>
+                    <div className="filter-group">
+                      <label className="filter-label">Ereignistyp</label>
+                      <select
+                        className="filter-select"
+                        value={filterType}
+                        onChange={(e) => setFilterType(e.target.value)}
+                      >
+                        <option value="all">Alle</option>
+                        <option value="CANCEL_WINDOW_OPEN">Kündigungsfenster</option>
+                        <option value="LAST_CANCEL_DAY">Letzte Chance</option>
+                        <option value="PRICE_INCREASE">Preiserhöhung</option>
+                        <option value="AUTO_RENEWAL">Auto-Verlängerung</option>
+                      </select>
+                    </div>
                   </div>
-                  <div className="filter-group">
-                    <label className="filter-label">Ereignistyp</label>
-                    <select
-                      className="filter-select"
-                      value={filterType}
-                      onChange={(e) => setFilterType(e.target.value)}
-                    >
-                      <option value="all">Alle</option>
-                      <option value="CANCEL_WINDOW_OPEN">Kündigungsfenster</option>
-                      <option value="LAST_CANCEL_DAY">Letzte Chance</option>
-                      <option value="PRICE_INCREASE">Preiserhöhung</option>
-                      <option value="AUTO_RENEWAL">Auto-Verlängerung</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Quick Actions */}
-              <div className="sidebar-card">
-                <div className="sidebar-card-header">
-                  <div className="sidebar-card-title">
-                    <Zap size={18} />
-                    Schnellaktionen
-                  </div>
-                </div>
-                <div className="quick-actions">
-                  <button className="quick-action-btn" onClick={() => setShowSyncModal(true)}>
-                    <Link2 size={18} />
-                    Kalender synchronisieren
-                  </button>
-                  <button className="quick-action-btn" onClick={() => window.location.href = '/contracts'}>
-                    <FileText size={18} />
-                    Alle Verträge anzeigen
-                  </button>
-                  <button className="quick-action-btn" onClick={() => window.location.href = '/compare'}>
-                    <TrendingUp size={18} />
-                    Verträge vergleichen
-                  </button>
-                </div>
+                )}
               </div>
             </aside>
           </div>
