@@ -83,6 +83,14 @@ const MONTH_NAMES = [
   'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'
 ];
 
+// ===== TIMEZONE FIX: Lokale Datum-Formatierung ohne UTC-Konvertierung =====
+const formatLocalDate = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 // ========== Custom Calendar Grid ==========
 interface CalendarGridProps {
   currentDate: Date;
@@ -120,7 +128,7 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateCli
   // Get events for a specific date
   const getEventsForDate = (day: number, monthOffset: number = 0) => {
     const targetDate = new Date(year, month + monthOffset, day);
-    const dateString = targetDate.toISOString().split('T')[0];
+    const dateString = formatLocalDate(targetDate);
     return events.filter(e => e.date && e.date.split('T')[0] === dateString);
   };
 
@@ -163,7 +171,7 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateCli
     for (let i = 0; i < 7; i++) {
       const day = new Date(startOfWeek);
       day.setDate(startOfWeek.getDate() + i);
-      const dateStr = day.toISOString().split('T')[0];
+      const dateStr = formatLocalDate(day);
       const dayEvents = events.filter(e => e.date && e.date.split('T')[0] === dateStr);
       weekDays.push({
         date: day,
@@ -179,7 +187,7 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateCli
 
   // Get events for day view
   const getDayEvents = () => {
-    const dateStr = currentDate.toISOString().split('T')[0];
+    const dateStr = formatLocalDate(currentDate);
     return events.filter(e => e.date && e.date.split('T')[0] === dateStr);
   };
 
@@ -1161,7 +1169,7 @@ function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalPro
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    date: date.toISOString().split('T')[0],
+    date: formatLocalDate(date),
     time: '09:00',
     type: 'REMINDER' as 'REMINDER' | 'DEADLINE' | 'CANCEL_WINDOW_OPEN' | 'LAST_CANCEL_DAY' | 'AUTO_RENEWAL',
     severity: 'info' as 'info' | 'warning' | 'critical',
@@ -2109,7 +2117,7 @@ export default function CalendarPage() {
                   onDateClick={(date) => {
                     setSelectedDate(date);
                     // Check if this date has events
-                    const dateStr = date.toISOString().split('T')[0];
+                    const dateStr = formatLocalDate(date);
                     const dayEvents = filteredEvents.filter(e => e.date && e.date.split('T')[0] === dateStr);
 
                     if (dayEvents.length === 0) {

@@ -1120,7 +1120,7 @@
 
 .week-header {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   background: linear-gradient(135deg, rgba(79, 70, 229, 0.05), rgba(67, 56, 202, 0.03));
   border-bottom: 1px solid var(--border);
 }
@@ -1172,7 +1172,7 @@
 
 .week-content {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   min-height: 400px;
 }
 
@@ -1182,6 +1182,7 @@
   cursor: pointer;
   transition: background 0.2s ease;
   min-height: 350px;
+  overflow: hidden;
 }
 
 .week-day-column:last-child {
@@ -1221,6 +1222,8 @@
   border: 1px solid var(--border);
   cursor: pointer;
   transition: all 0.2s ease;
+  overflow: hidden;
+  word-break: break-word;
 }
 
 .week-event-card:hover {
