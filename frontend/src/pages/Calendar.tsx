@@ -1990,7 +1990,7 @@ export default function CalendarPage() {
           position: 'fixed',
           bottom: '20px',
           right: '20px',
-          background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+          background: 'linear-gradient(135deg, #4f46e5, #4338ca)',
           color: 'white',
           padding: '16px 24px',
           borderRadius: '12px',
