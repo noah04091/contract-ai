@@ -86,6 +86,7 @@ export interface BlockContent {
   number?: string;
   clauseTitle?: string;
   body?: string;
+  text?: string;  // Generic text content (Fallback für diverse Block-Typen)
   subclauses?: Subclause[];
   // Table
   headers?: string[];
