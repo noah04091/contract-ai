@@ -488,7 +488,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange 
         onClick={(e) => e.stopPropagation()}
         style={{
           maxWidth: isMobile ? '100%' : '600px',
-          width: isMobile ? 'calc(100% - 40px)' : '600px',
+          width: isMobile ? 'calc(100% - 16px)' : '600px',
           maxHeight: isMobile ? '90vh' : 'auto',
           overflowY: isMobile ? 'auto' : 'visible'
         }}
@@ -869,7 +869,7 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
         onClick={(e) => e.stopPropagation()}
         style={{
             maxWidth: isMobile ? '100%' : '800px',
-            width: isMobile ? 'calc(100% - 40px)' : '800px',
+            width: isMobile ? 'calc(100% - 16px)' : '800px',
             maxHeight: isMobile ? '90vh' : '80vh',
             overflowY: 'auto',
             background: '#ffffff',
@@ -1027,7 +1027,7 @@ function DayEventsModal({ date, events, onEventClick, onClose }: DayEventsModalP
         onClick={(e) => e.stopPropagation()}
         style={{
           maxWidth: isMobile ? '100%' : '600px',
-          width: isMobile ? 'calc(100% - 40px)' : '600px',
+          width: isMobile ? 'calc(100% - 16px)' : '600px',
           maxHeight: isMobile ? '90vh' : '80vh',
           overflowY: 'auto'
         }}
@@ -1288,7 +1288,7 @@ function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalPro
         onClick={(e) => e.stopPropagation()}
         style={{
           maxWidth: isMobile ? '100%' : showForm ? '520px' : '450px',
-          width: isMobile ? 'calc(100% - 40px)' : showForm ? '520px' : '450px',
+          width: isMobile ? 'calc(100% - 16px)' : showForm ? '520px' : '450px',
           maxHeight: isMobile ? '90vh' : '85vh',
           overflowY: 'auto',
           background: '#ffffff',
@@ -1644,7 +1644,7 @@ function SnoozeModal({ isOpen, onClose, onSnooze }: SnoozeModalProps) {
         onClick={(e) => e.stopPropagation()}
         style={{
           maxWidth: isMobile ? '100%' : '420px',
-          width: isMobile ? 'calc(100% - 40px)' : '420px',
+          width: isMobile ? 'calc(100% - 16px)' : '420px',
           background: '#ffffff',
           borderRadius: '20px',
           boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)',
