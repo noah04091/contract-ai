@@ -440,6 +440,9 @@ const ContractBuilder: React.FC = () => {
         yPosition += height;
       };
 
+      // Klausel-Zähler für automatische Nummerierung
+      let clauseCounter = 0;
+
       // Blöcke durchgehen und PDF generieren
       blocks.forEach((block: Block) => {
         const content = block.content || {};
@@ -469,66 +472,91 @@ const ContractBuilder: React.FC = () => {
             const party1 = content.party1 || { role: '', name: '', address: '' };
             const party2 = content.party2 || { role: '', name: '', address: '' };
 
-            checkNewPage(40);
+            checkNewPage(50);
 
-            // Box für Partei 1
-            pdf.setFillColor(247, 250, 252); // #f7fafc
-            pdf.rect(marginLeft, yPosition, contentWidth / 2 - 5, 35, 'F');
+            const boxWidth = (contentWidth - 15) / 2; // 15mm Abstand für "UND"
+            const boxHeight = 40;
 
-            // Box für Partei 2
-            pdf.rect(marginLeft + contentWidth / 2 + 5, yPosition, contentWidth / 2 - 5, 35, 'F');
+            // Box für Partei 1 - mit Rahmen
+            pdf.setFillColor(255, 255, 255); // Weiß
+            pdf.setDrawColor(226, 232, 240); // #e2e8f0
+            pdf.rect(marginLeft, yPosition, boxWidth, boxHeight, 'FD');
+
+            // Box für Partei 2 - mit Rahmen
+            pdf.rect(marginLeft + boxWidth + 15, yPosition, boxWidth, boxHeight, 'FD');
+
+            // "UND" in der Mitte
+            pdf.setTextColor(113, 128, 150); // #718096
+            pdf.setFontSize(9);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text('UND', pageWidth / 2, yPosition + boxHeight / 2, { align: 'center' });
 
             const boxStartY = yPosition;
 
             // Partei 1 Inhalt
-            yPosition = boxStartY + 5;
+            yPosition = boxStartY + 8;
             pdf.setTextColor(45, 55, 72); // #2d3748
-            pdf.setFontSize(10);
+            pdf.setFontSize(11);
             pdf.setFont('helvetica', 'bold');
             pdf.text(party1.role || 'Partei 1', marginLeft + 5, yPosition);
-            yPosition += 6;
+            yPosition += 8;
 
-            pdf.setTextColor(26, 32, 44); // #1a202c
-            pdf.setFont('helvetica', 'normal');
-            pdf.text(replaceVariables(party1.name || ''), marginLeft + 5, yPosition);
-            yPosition += 5;
-
+            // Name: Label + Wert
             pdf.setTextColor(113, 128, 150); // #718096
             pdf.setFontSize(9);
-            const addr1Lines = pdf.splitTextToSize(replaceVariables(party1.address || ''), contentWidth / 2 - 15);
-            addr1Lines.forEach((line: string) => {
-              pdf.text(line, marginLeft + 5, yPosition);
-              yPosition += 4;
+            pdf.setFont('helvetica', 'normal');
+            pdf.text('Name:', marginLeft + 5, yPosition);
+            pdf.setTextColor(26, 32, 44); // #1a202c
+            pdf.text(replaceVariables(party1.name || ''), marginLeft + 25, yPosition);
+            yPosition += 6;
+
+            // Adresse: Label + Wert
+            pdf.setTextColor(113, 128, 150);
+            pdf.text('Adresse:', marginLeft + 5, yPosition);
+            pdf.setTextColor(26, 32, 44);
+            const addr1 = replaceVariables(party1.address || '');
+            const addr1Lines = pdf.splitTextToSize(addr1, boxWidth - 35);
+            addr1Lines.forEach((line: string, idx: number) => {
+              pdf.text(line, marginLeft + 25, yPosition + (idx * 4));
             });
 
             // Partei 2 Inhalt
-            yPosition = boxStartY + 5;
+            const party2X = marginLeft + boxWidth + 20;
+            yPosition = boxStartY + 8;
             pdf.setTextColor(45, 55, 72);
-            pdf.setFontSize(10);
+            pdf.setFontSize(11);
             pdf.setFont('helvetica', 'bold');
-            pdf.text(party2.role || 'Partei 2', marginLeft + contentWidth / 2 + 10, yPosition);
-            yPosition += 6;
+            pdf.text(party2.role || 'Partei 2', party2X, yPosition);
+            yPosition += 8;
 
-            pdf.setTextColor(26, 32, 44);
-            pdf.setFont('helvetica', 'normal');
-            pdf.text(replaceVariables(party2.name || ''), marginLeft + contentWidth / 2 + 10, yPosition);
-            yPosition += 5;
-
+            // Name: Label + Wert
             pdf.setTextColor(113, 128, 150);
             pdf.setFontSize(9);
-            const addr2Lines = pdf.splitTextToSize(replaceVariables(party2.address || ''), contentWidth / 2 - 15);
-            addr2Lines.forEach((line: string) => {
-              pdf.text(line, marginLeft + contentWidth / 2 + 10, yPosition);
-              yPosition += 4;
+            pdf.setFont('helvetica', 'normal');
+            pdf.text('Name:', party2X, yPosition);
+            pdf.setTextColor(26, 32, 44);
+            pdf.text(replaceVariables(party2.name || ''), party2X + 20, yPosition);
+            yPosition += 6;
+
+            // Adresse: Label + Wert
+            pdf.setTextColor(113, 128, 150);
+            pdf.text('Adresse:', party2X, yPosition);
+            pdf.setTextColor(26, 32, 44);
+            const addr2 = replaceVariables(party2.address || '');
+            const addr2Lines = pdf.splitTextToSize(addr2, boxWidth - 35);
+            addr2Lines.forEach((line: string, idx: number) => {
+              pdf.text(line, party2X + 20, yPosition + (idx * 4));
             });
 
             pdf.setTextColor(0, 0, 0);
-            yPosition = boxStartY + 40;
+            yPosition = boxStartY + boxHeight + 10;
             break;
           }
 
           case 'clause': {
-            const clauseNum = content.number || '';
+            // Auto-Nummerierung: Wenn "auto", verwende Zähler
+            clauseCounter++;
+            const clauseNum = content.number === 'auto' ? String(clauseCounter) : (content.number || String(clauseCounter));
             const clauseTitle = replaceVariables(content.clauseTitle || content.title || '');
             const body = replaceVariables(content.body || '');
             const subclauses = content.subclauses || [];
@@ -537,7 +565,7 @@ const ContractBuilder: React.FC = () => {
 
             // Klausel-Titel
             pdf.setTextColor(26, 54, 93); // #1a365d
-            const titleText = clauseNum ? `§ ${clauseNum} ${clauseTitle}` : clauseTitle;
+            const titleText = `§ ${clauseNum} ${clauseTitle}`;
             addWrappedText(titleText, 11, 'bold');
             addSpace(2);
 
@@ -567,18 +595,25 @@ const ContractBuilder: React.FC = () => {
           case 'preamble': {
             const preambleText = replaceVariables(content.body || content.text || content.preambleText || '');
 
-            checkNewPage(20);
+            checkNewPage(30);
+
+            // "PRÄAMBEL" Label
+            pdf.setTextColor(113, 128, 150); // #718096
+            pdf.setFontSize(8);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('PRÄAMBEL', marginLeft + 8, yPosition);
+            yPosition += 5;
 
             // Hintergrund-Box
-            const preambleLines = pdf.splitTextToSize(preambleText, contentWidth - 15);
-            const boxHeight = Math.max(15, preambleLines.length * 5 + 10);
+            const preambleLines = pdf.splitTextToSize(preambleText, contentWidth - 20);
+            const boxHeight = Math.max(15, preambleLines.length * 5 + 8);
 
             pdf.setFillColor(247, 250, 252); // #f7fafc
             pdf.rect(marginLeft, yPosition, contentWidth, boxHeight, 'F');
 
             // Linker Rand (blau)
             pdf.setFillColor(49, 130, 206); // #3182ce
-            pdf.rect(marginLeft, yPosition, 2, boxHeight, 'F');
+            pdf.rect(marginLeft, yPosition, 3, boxHeight, 'F');
 
             // Text
             yPosition += 5;
@@ -586,12 +621,12 @@ const ContractBuilder: React.FC = () => {
             pdf.setFont('helvetica', 'italic');
             pdf.setFontSize(10);
             preambleLines.forEach((line: string) => {
-              pdf.text(line, marginLeft + 8, yPosition);
+              pdf.text(line, marginLeft + 10, yPosition);
               yPosition += 5;
             });
 
             pdf.setFont('helvetica', 'normal');
-            yPosition += 5;
+            yPosition += 8;
             break;
           }
 
