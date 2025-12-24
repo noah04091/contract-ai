@@ -5,7 +5,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import html2pdf from 'html2pdf.js';
+import jsPDF from 'jspdf';
 import { useContractBuilderStore, Block, Variable } from '../stores/contractBuilderStore';
 import {
   BuilderCanvas,
@@ -331,7 +331,7 @@ const ContractBuilder: React.FC = () => {
     }
   };
 
-  // PDF Export - Generiert HTML aus Block-Daten
+  // PDF Export - Direkt mit jsPDF (ohne html2canvas)
   const handleExportPdf = async () => {
     setIsExporting(true);
 
@@ -375,209 +375,295 @@ const ContractBuilder: React.FC = () => {
         });
       };
 
-      // Escape HTML für Sicherheit
-      const escapeHtml = (text: string): string => {
-        if (!text) return '';
-        return text
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#039;');
+      // PDF erstellen mit jsPDF
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      // Konstanten für Layout
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const marginLeft = 20;
+      const marginRight = 20;
+      const marginTop = 20;
+      const marginBottom = 20;
+      const contentWidth = pageWidth - marginLeft - marginRight;
+      let yPosition = marginTop;
+
+      // Hilfsfunktion: Neue Seite wenn nötig
+      const checkNewPage = (neededHeight: number) => {
+        if (yPosition + neededHeight > pageHeight - marginBottom) {
+          pdf.addPage();
+          yPosition = marginTop;
+          return true;
+        }
+        return false;
       };
 
-      // Baue HTML-String aus den Block-Daten
-      let htmlContent = '';
+      // Hilfsfunktion: Text mit Zeilenumbruch
+      const addWrappedText = (text: string, fontSize: number, fontStyle: 'normal' | 'bold' | 'italic' = 'normal', maxWidth: number = contentWidth, align: 'left' | 'center' | 'right' | 'justify' = 'left') => {
+        if (!text) return;
 
+        pdf.setFontSize(fontSize);
+        pdf.setFont('helvetica', fontStyle);
+
+        const lines = pdf.splitTextToSize(text, maxWidth);
+        const lineHeight = fontSize * 0.5; // Zeilenhöhe in mm
+
+        for (const line of lines) {
+          checkNewPage(lineHeight);
+
+          let xPos = marginLeft;
+          if (align === 'center') {
+            xPos = pageWidth / 2;
+          } else if (align === 'right') {
+            xPos = pageWidth - marginRight;
+          }
+
+          pdf.text(line, xPos, yPosition, { align });
+          yPosition += lineHeight;
+        }
+      };
+
+      // Hilfsfunktion: Linie zeichnen
+      const addLine = () => {
+        checkNewPage(5);
+        pdf.setDrawColor(200, 200, 200);
+        pdf.line(marginLeft, yPosition, pageWidth - marginRight, yPosition);
+        yPosition += 5;
+      };
+
+      // Hilfsfunktion: Abstand
+      const addSpace = (height: number) => {
+        yPosition += height;
+      };
+
+      // Blöcke durchgehen und PDF generieren
       blocks.forEach((block: Block) => {
         const content = block.content || {};
 
         switch (block.type) {
           case 'header': {
-            const title = escapeHtml(replaceVariables(content.title || ''));
-            const subtitle = escapeHtml(replaceVariables(content.subtitle || ''));
-            htmlContent += `
-              <div style="text-align: center; margin-bottom: 30px;">
-                <h1 style="font-size: 22pt; font-weight: 700; margin: 0 0 8px 0; color: #1a365d;">
-                  ${title || 'Vertrag'}
-                </h1>
-                ${subtitle ? `<p style="font-size: 12pt; color: #4a5568; margin: 0;">${subtitle}</p>` : ''}
-              </div>
-            `;
+            const title = replaceVariables(content.title || '');
+            const subtitle = replaceVariables(content.subtitle || '');
+
+            // Titel
+            pdf.setTextColor(26, 54, 93); // #1a365d
+            addWrappedText(title || 'Vertrag', 18, 'bold', contentWidth, 'center');
+            addSpace(3);
+
+            // Untertitel
+            if (subtitle) {
+              pdf.setTextColor(74, 85, 104); // #4a5568
+              addWrappedText(subtitle, 11, 'normal', contentWidth, 'center');
+            }
+
+            pdf.setTextColor(0, 0, 0);
+            addSpace(10);
             break;
           }
 
           case 'parties': {
             const party1 = content.party1 || { role: '', name: '', address: '' };
             const party2 = content.party2 || { role: '', name: '', address: '' };
-            htmlContent += `
-              <table style="width: 100%; margin-bottom: 25px; border-collapse: collapse;">
-                <tr>
-                  <td style="width: 48%; vertical-align: top; padding: 15px; background: #f7fafc; border-radius: 6px;">
-                    <p style="font-weight: 600; color: #2d3748; margin: 0 0 8px 0;">${escapeHtml(party1.role || 'Partei 1')}</p>
-                    <p style="margin: 0; color: #1a202c;">${escapeHtml(replaceVariables(party1.name || ''))}</p>
-                    <p style="margin: 4px 0 0 0; font-size: 10pt; color: #718096;">${escapeHtml(replaceVariables(party1.address || ''))}</p>
-                  </td>
-                  <td style="width: 4%;"></td>
-                  <td style="width: 48%; vertical-align: top; padding: 15px; background: #f7fafc; border-radius: 6px;">
-                    <p style="font-weight: 600; color: #2d3748; margin: 0 0 8px 0;">${escapeHtml(party2.role || 'Partei 2')}</p>
-                    <p style="margin: 0; color: #1a202c;">${escapeHtml(replaceVariables(party2.name || ''))}</p>
-                    <p style="margin: 4px 0 0 0; font-size: 10pt; color: #718096;">${escapeHtml(replaceVariables(party2.address || ''))}</p>
-                  </td>
-                </tr>
-              </table>
-            `;
+
+            checkNewPage(40);
+
+            // Box für Partei 1
+            pdf.setFillColor(247, 250, 252); // #f7fafc
+            pdf.rect(marginLeft, yPosition, contentWidth / 2 - 5, 35, 'F');
+
+            // Box für Partei 2
+            pdf.rect(marginLeft + contentWidth / 2 + 5, yPosition, contentWidth / 2 - 5, 35, 'F');
+
+            const boxStartY = yPosition;
+
+            // Partei 1 Inhalt
+            yPosition = boxStartY + 5;
+            pdf.setTextColor(45, 55, 72); // #2d3748
+            pdf.setFontSize(10);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text(party1.role || 'Partei 1', marginLeft + 5, yPosition);
+            yPosition += 6;
+
+            pdf.setTextColor(26, 32, 44); // #1a202c
+            pdf.setFont('helvetica', 'normal');
+            pdf.text(replaceVariables(party1.name || ''), marginLeft + 5, yPosition);
+            yPosition += 5;
+
+            pdf.setTextColor(113, 128, 150); // #718096
+            pdf.setFontSize(9);
+            const addr1Lines = pdf.splitTextToSize(replaceVariables(party1.address || ''), contentWidth / 2 - 15);
+            addr1Lines.forEach((line: string) => {
+              pdf.text(line, marginLeft + 5, yPosition);
+              yPosition += 4;
+            });
+
+            // Partei 2 Inhalt
+            yPosition = boxStartY + 5;
+            pdf.setTextColor(45, 55, 72);
+            pdf.setFontSize(10);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text(party2.role || 'Partei 2', marginLeft + contentWidth / 2 + 10, yPosition);
+            yPosition += 6;
+
+            pdf.setTextColor(26, 32, 44);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text(replaceVariables(party2.name || ''), marginLeft + contentWidth / 2 + 10, yPosition);
+            yPosition += 5;
+
+            pdf.setTextColor(113, 128, 150);
+            pdf.setFontSize(9);
+            const addr2Lines = pdf.splitTextToSize(replaceVariables(party2.address || ''), contentWidth / 2 - 15);
+            addr2Lines.forEach((line: string) => {
+              pdf.text(line, marginLeft + contentWidth / 2 + 10, yPosition);
+              yPosition += 4;
+            });
+
+            pdf.setTextColor(0, 0, 0);
+            yPosition = boxStartY + 40;
             break;
           }
 
           case 'clause': {
             const clauseNum = content.number || '';
-            const clauseTitle = escapeHtml(replaceVariables(content.clauseTitle || content.title || ''));
-            const body = escapeHtml(replaceVariables(content.body || ''));
+            const clauseTitle = replaceVariables(content.clauseTitle || content.title || '');
+            const body = replaceVariables(content.body || '');
             const subclauses = content.subclauses || [];
 
-            htmlContent += `
-              <div style="margin-bottom: 20px;">
-                <h3 style="font-size: 12pt; font-weight: 600; color: #1a365d; margin: 0 0 10px 0;">
-                  ${clauseNum ? `§ ${escapeHtml(clauseNum)} ` : ''}${clauseTitle}
-                </h3>
-                <p style="margin: 0 0 10px 0; text-align: justify;">${body}</p>
-                ${subclauses.length > 0 ? `
-                  <div style="margin-left: 20px;">
-                    ${subclauses.map(sc => `
-                      <p style="margin: 6px 0;"><strong>${escapeHtml(sc.number)}</strong> ${escapeHtml(replaceVariables(sc.text))}</p>
-                    `).join('')}
-                  </div>
-                ` : ''}
-              </div>
-            `;
+            checkNewPage(15);
+
+            // Klausel-Titel
+            pdf.setTextColor(26, 54, 93); // #1a365d
+            const titleText = clauseNum ? `§ ${clauseNum} ${clauseTitle}` : clauseTitle;
+            addWrappedText(titleText, 11, 'bold');
+            addSpace(2);
+
+            // Klausel-Text
+            pdf.setTextColor(0, 0, 0);
+            addWrappedText(body, 10, 'normal', contentWidth, 'justify');
+
+            // Unterklauseln
+            if (subclauses.length > 0) {
+              addSpace(2);
+              subclauses.forEach((sc: { number: string; text: string }) => {
+                const scText = `${sc.number} ${replaceVariables(sc.text)}`;
+                pdf.setFontSize(10);
+                const scLines = pdf.splitTextToSize(scText, contentWidth - 10);
+                scLines.forEach((line: string, idx: number) => {
+                  checkNewPage(5);
+                  pdf.text(line, marginLeft + (idx === 0 ? 5 : 10), yPosition);
+                  yPosition += 5;
+                });
+              });
+            }
+
+            addSpace(8);
             break;
           }
 
           case 'preamble': {
-            const preambleText = escapeHtml(replaceVariables(content.body || content.text || ''));
-            htmlContent += `
-              <div style="margin-bottom: 25px; padding: 15px; background: #f7fafc; border-left: 3px solid #3182ce; font-style: italic;">
-                <p style="margin: 0;">${preambleText}</p>
-              </div>
-            `;
+            const preambleText = replaceVariables(content.body || content.text || content.preambleText || '');
+
+            checkNewPage(20);
+
+            // Hintergrund-Box
+            const preambleLines = pdf.splitTextToSize(preambleText, contentWidth - 15);
+            const boxHeight = Math.max(15, preambleLines.length * 5 + 10);
+
+            pdf.setFillColor(247, 250, 252); // #f7fafc
+            pdf.rect(marginLeft, yPosition, contentWidth, boxHeight, 'F');
+
+            // Linker Rand (blau)
+            pdf.setFillColor(49, 130, 206); // #3182ce
+            pdf.rect(marginLeft, yPosition, 2, boxHeight, 'F');
+
+            // Text
+            yPosition += 5;
+            pdf.setTextColor(0, 0, 0);
+            pdf.setFont('helvetica', 'italic');
+            pdf.setFontSize(10);
+            preambleLines.forEach((line: string) => {
+              pdf.text(line, marginLeft + 8, yPosition);
+              yPosition += 5;
+            });
+
+            pdf.setFont('helvetica', 'normal');
+            yPosition += 5;
             break;
           }
 
           case 'signature': {
             const sigFields = content.signatureFields || [];
-            if (sigFields.length > 0) {
-              htmlContent += `
-                <table style="width: 100%; margin-top: 50px; border-collapse: collapse;">
-                  <tr>
-                    ${sigFields.map(field => `
-                      <td style="width: ${100 / sigFields.length}%; text-align: center; padding: 0 10px;">
-                        <div style="border-top: 1px solid #2d3748; padding-top: 8px; margin-top: 60px;">
-                          <p style="margin: 0; font-size: 10pt; color: #4a5568;">${escapeHtml(field.label)}</p>
-                          ${field.showDate ? '<p style="margin: 4px 0 0 0; font-size: 9pt; color: #718096;">Datum: ________________</p>' : ''}
-                          ${field.showPlace ? '<p style="margin: 4px 0 0 0; font-size: 9pt; color: #718096;">Ort: ________________</p>' : ''}
-                        </div>
-                      </td>
-                    `).join('')}
-                  </tr>
-                </table>
-              `;
-            }
+            if (sigFields.length === 0) break;
+
+            checkNewPage(50);
+            addSpace(20);
+
+            const fieldWidth = contentWidth / sigFields.length;
+
+            sigFields.forEach((field: { label: string; showDate?: boolean; showPlace?: boolean }, index: number) => {
+              const xPos = marginLeft + (fieldWidth * index) + fieldWidth / 2;
+
+              // Unterschriftslinie
+              pdf.setDrawColor(45, 55, 72); // #2d3748
+              pdf.line(xPos - 30, yPosition + 25, xPos + 30, yPosition + 25);
+
+              // Label
+              pdf.setTextColor(74, 85, 104); // #4a5568
+              pdf.setFontSize(9);
+              pdf.text(field.label, xPos, yPosition + 30, { align: 'center' });
+
+              // Datum
+              if (field.showDate) {
+                pdf.setTextColor(113, 128, 150); // #718096
+                pdf.setFontSize(8);
+                pdf.text('Datum: ________________', xPos, yPosition + 36, { align: 'center' });
+              }
+
+              // Ort
+              if (field.showPlace) {
+                pdf.setTextColor(113, 128, 150);
+                pdf.setFontSize(8);
+                pdf.text('Ort: ________________', xPos, yPosition + 41, { align: 'center' });
+              }
+            });
+
+            pdf.setTextColor(0, 0, 0);
+            yPosition += 50;
             break;
           }
 
           case 'divider':
-            htmlContent += `<hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />`;
+            addLine();
             break;
 
           case 'spacer':
-            htmlContent += `<div style="height: 30px;"></div>`;
+            addSpace(content.height || 10);
             break;
 
           case 'page-break':
-            htmlContent += `<div style="page-break-after: always;"></div>`;
+            pdf.addPage();
+            yPosition = marginTop;
             break;
-
-          case 'logo': {
-            const logoUrl = content.logoUrl || '';
-            if (logoUrl) {
-              const logoWidth = content.width || 150;
-              const alignment = content.alignment || 'center';
-              htmlContent += `
-                <div style="text-align: ${alignment}; margin-bottom: 20px;">
-                  <img src="${logoUrl}" style="max-width: ${logoWidth}px; max-height: 100px;" />
-                </div>
-              `;
-            }
-            break;
-          }
 
           default: {
             // Generischer Block
-            const text = content.body || content.text;
+            const text = replaceVariables(content.body || content.text || '');
             if (text) {
-              htmlContent += `<p style="margin: 0 0 15px 0;">${escapeHtml(replaceVariables(text))}</p>`;
+              pdf.setTextColor(0, 0, 0);
+              addWrappedText(text, 10);
+              addSpace(5);
             }
           }
         }
       });
 
-      console.log('[PDF Export] Generated HTML length:', htmlContent.length);
-
-      // Erstelle Export-Container - WICHTIG: Muss im sichtbaren Bereich sein!
-      const exportDiv = document.createElement('div');
-      exportDiv.id = 'pdf-export-container';
-      exportDiv.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 210mm;
-        min-height: 297mm;
-        padding: 20mm;
-        box-sizing: border-box;
-        background: white;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        font-size: 11pt;
-        line-height: 1.6;
-        color: #1a202c;
-        z-index: 9999;
-        overflow: visible;
-      `;
-
-      exportDiv.innerHTML = htmlContent;
-      document.body.appendChild(exportDiv);
-
-      // Kurz warten bis DOM gerendert ist
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      console.log('[PDF Export] ExportDiv dimensions:', exportDiv.offsetWidth, 'x', exportDiv.offsetHeight);
-      console.log('[PDF Export] ExportDiv innerHTML length:', exportDiv.innerHTML.length);
-
-      const opt = {
-        margin: 0,
-        filename,
-        image: { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          logging: true, // Debug-Logging aktivieren
-          backgroundColor: '#ffffff',
-          windowWidth: 794,
-          scrollX: 0,
-          scrollY: 0,
-        },
-        jsPDF: {
-          unit: 'mm' as const,
-          format: 'a4' as const,
-          orientation: 'portrait' as const
-        },
-      };
-
-      await html2pdf().set(opt).from(exportDiv).save();
-
-      // Aufräumen
-      document.body.removeChild(exportDiv);
-      console.log('[PDF Export] Success');
+      // PDF speichern
+      pdf.save(filename);
+      console.log('[PDF Export] Success - Saved as:', filename);
 
     } catch (error) {
       console.error('[PDF Export] Failed:', error);
