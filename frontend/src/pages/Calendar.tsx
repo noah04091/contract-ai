@@ -186,8 +186,13 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateCli
   // WEEK VIEW
   if (view === 'week') {
     const weekDays = getWeekDays();
+    console.log('[DEBUG] Rendering WEEK VIEW', { weekDays: weekDays.length });
     return (
       <div className="calendar-week-view">
+        {/* DEBUG: View Indicator */}
+        <div style={{ background: '#10b981', color: 'white', padding: '8px 16px', borderRadius: '8px', marginBottom: '16px', fontWeight: 'bold' }}>
+          WOCHENANSICHT AKTIV
+        </div>
         {/* Week Header */}
         <div className="week-header">
           {weekDays.map((dayInfo, index) => (
@@ -245,9 +250,14 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateCli
   if (view === 'day') {
     const dayEvents = getDayEvents();
     const dayIsToday = isToday(currentDate.getDate(), currentDate.getMonth(), currentDate.getFullYear());
+    console.log('[DEBUG] Rendering DAY VIEW', { dayEvents: dayEvents.length, date: currentDate.toISOString() });
 
     return (
       <div className="calendar-day-view">
+        {/* DEBUG: View Indicator */}
+        <div style={{ background: '#f59e0b', color: 'white', padding: '8px 16px', borderRadius: '8px', marginBottom: '16px', fontWeight: 'bold' }}>
+          TAGESANSICHT AKTIV - {currentDate.toLocaleDateString('de-DE')}
+        </div>
         {/* Day Header */}
         <div className={`day-view-header ${dayIsToday ? 'today' : ''}`}>
           <span className="day-view-weekday">
@@ -299,8 +309,13 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateCli
   }
 
   // MONTH VIEW (default)
+  console.log('[DEBUG] Rendering MONTH VIEW');
   return (
     <div className="calendar-grid">
+      {/* DEBUG: View Indicator - nur temporär sichtbar */}
+      <div style={{ gridColumn: '1 / -1', background: '#4f46e5', color: 'white', padding: '8px 16px', borderRadius: '8px', marginBottom: '8px', fontWeight: 'bold' }}>
+        MONATSANSICHT AKTIV
+      </div>
       {/* Weekday Headers */}
       {WEEKDAYS.map((day, index) => (
         <div key={day} className={`weekday-header ${index >= 5 ? 'weekend' : ''}`}>

@@ -1,10 +1,10 @@
-/* ✨ HelpCenter.module.css - Professionelles Hilfe-Center Design */
+/* ✨ HelpCenter.module.css - Premium Help Center Design (Firmenblau) */
 
 .helpCenter {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   line-height: 1.6;
   color: #1a1a1a;
-  background: #f8fafc;
+  background: #fafafa;
   min-height: 100vh;
 }
 
@@ -15,12 +15,12 @@
 }
 
 /* ========================================
-   HERO SECTION
+   HERO SECTION - Modern Enterprise Style
    ======================================== */
 .hero {
   text-align: center;
-  padding: 100px 0 60px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 100px 0 70px;
+  background: linear-gradient(135deg, #007aff 0%, #0052cc 100%);
   color: white;
   position: relative;
   overflow: hidden;
@@ -33,74 +33,77 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120"><path d="M0,64L48,69.3C96,75,192,85,288,80C384,75,480,53,576,48C672,43,768,53,864,58.7C960,64,1056,64,1152,58.7L1200,56L1200,0L1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z" fill="rgba(255,255,255,0.1)"/></svg>') no-repeat bottom;
-  background-size: cover;
-  opacity: 0.3;
+  background: radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+              radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.08) 0%, transparent 40%);
+  pointer-events: none;
 }
 
 .heroIcon {
   margin-bottom: 20px;
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
   position: relative;
   z-index: 1;
+  opacity: 0.95;
 }
 
 .heroTitle {
-  font-size: 56px;
+  font-size: 52px;
   font-weight: 800;
   margin-bottom: 16px;
   letter-spacing: -0.03em;
   position: relative;
   z-index: 1;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .heroSubtitle {
-  font-size: 22px;
+  font-size: 20px;
   opacity: 0.95;
-  max-width: 700px;
-  margin: 0 auto;
+  max-width: 600px;
+  margin: 0 auto 32px;
   font-weight: 400;
   position: relative;
   z-index: 1;
+  line-height: 1.6;
 }
 
 .startTourButton {
-  margin-top: 24px;
-  padding: 14px 28px;
-  background: rgba(255, 255, 255, 0.2);
+  padding: 16px 32px;
+  background: rgba(255, 255, 255, 0.15);
   color: white;
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 14px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   z-index: 1;
   backdrop-filter: blur(10px);
+  font-family: inherit;
 }
 
 .startTourButton:hover {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.6);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
 }
 
 .startTourButton:active {
-  transform: translateY(0);
+  transform: translateY(-1px);
 }
 
 /* ========================================
-   SEARCH SECTION
+   SEARCH SECTION - Clean & Modern
    ======================================== */
 .searchSection {
   background: white;
-  padding: 40px 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  padding: 48px 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
   border-bottom: 1px solid #e5e7eb;
 }
 
@@ -112,25 +115,25 @@
 
 .searchInput {
   width: 100%;
-  padding: 18px 60px 18px 50px;
+  padding: 20px 60px 20px 56px;
   border: 2px solid #e5e7eb;
   border-radius: 16px;
   font-size: 16px;
-  background: #f8fafc;
+  background: #fafafa;
   transition: all 0.3s ease;
   font-family: inherit;
 }
 
 .searchInput:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #007aff;
   background: white;
-  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+  box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.12);
 }
 
 .searchIcon {
   position: absolute;
-  left: 18px;
+  left: 20px;
   top: 50%;
   transform: translateY(-50%);
   color: #9ca3af;
@@ -139,14 +142,14 @@
 
 .clearSearch {
   position: absolute;
-  right: 18px;
+  right: 20px;
   top: 50%;
   transform: translateY(-50%);
   background: #e5e7eb;
   border: none;
   border-radius: 50%;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -156,21 +159,21 @@
 }
 
 .clearSearch:hover {
-  background: #d1d5db;
+  background: #007aff;
+  color: white;
   transform: translateY(-50%) scale(1.1);
 }
 
 /* ========================================
-   TAB NAVIGATION
+   TAB NAVIGATION - Premium Style
    ======================================== */
 .tabNav {
   background: white;
-  border-bottom: 2px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
   padding: 0;
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
 
 .tabButtons {
@@ -182,10 +185,10 @@
 }
 
 .tabButton {
-  padding: 16px 28px;
+  padding: 18px 32px;
   background: none;
   border: none;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   color: #6b7280;
   cursor: pointer;
@@ -195,13 +198,13 @@
   font-family: inherit;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .tabButton.active {
-  color: #667eea;
-  border-bottom-color: #667eea;
-  background: linear-gradient(to bottom, rgba(102, 126, 234, 0.05), transparent);
+  color: #007aff;
+  border-bottom-color: #007aff;
+  background: linear-gradient(to bottom, rgba(0, 122, 255, 0.04), transparent);
 }
 
 .tabButton:hover:not(.active) {
@@ -213,7 +216,7 @@
    CONTENT SECTIONS
    ======================================== */
 .contentSection {
-  padding: 60px 0 80px;
+  padding: 60px 0 100px;
   min-height: 600px;
 }
 
@@ -235,7 +238,7 @@
 .sectionTitle {
   text-align: center;
   margin-bottom: 12px;
-  font-size: 40px;
+  font-size: 36px;
   font-weight: 700;
   color: #1a1a1a;
   letter-spacing: -0.02em;
@@ -245,69 +248,92 @@
   text-align: center;
   color: #64748b;
   margin-bottom: 48px;
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 400;
 }
 
 /* ========================================
-   CATEGORY FILTER
+   CATEGORY SECTIONS - Grouped Headers
    ======================================== */
-.categoryFilter {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
+.categorySection,
+.faqCategorySection {
   margin-bottom: 48px;
-  flex-wrap: wrap;
 }
 
-.categoryBtn {
-  padding: 12px 24px;
-  background: white;
-  border: 2px solid #e5e7eb;
-  border-radius: 100px;
-  font-size: 15px;
-  font-weight: 600;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: inherit;
+.categorySection:last-child,
+.faqCategorySection:last-child {
+  margin-bottom: 0;
 }
 
-.categoryBtn:hover {
-  border-color: #667eea;
-  color: #667eea;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+/* FAQ Category Section - zentriert wie die FAQ Items */
+.faqCategorySection {
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.categoryBtn.active {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  border-color: transparent;
+.categoryHeading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.01em;
+}
+
+.categoryIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #007aff, #0052cc);
+  border-radius: 10px;
   color: white;
-  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.25);
+}
+
+.categoryIcon.premiumIcon {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.categoryIcon.securityIcon {
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.categoryDescription {
+  color: #64748b;
+  font-size: 15px;
+  margin: 0 0 20px 52px;
+  font-weight: 400;
 }
 
 /* ========================================
-   GUIDES CONTAINER
+   GUIDES CONTAINER - Card Grid
    ======================================== */
 .guidesContainer {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 .guideCard {
   background: white;
   border-radius: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  border: 2px solid #f1f5f9;
-  transition: all 0.3s ease;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  border: 1px solid #f1f5f9;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
 }
 
 .guideCard:hover {
-  border-color: #e5e7eb;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 122, 255, 0.15);
+  box-shadow: 0 12px 32px rgba(0, 122, 255, 0.1);
+  transform: translateY(-2px);
 }
 
 .guideHeader {
@@ -320,20 +346,20 @@
 }
 
 .guideHeader:hover {
-  background: #f8fafc;
+  background: #fafbfc;
 }
 
 .guideIcon {
   width: 56px;
   height: 56px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  border-radius: 16px;
+  background: linear-gradient(135deg, #007aff, #0052cc);
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
 }
 
 .guideInfo {
@@ -341,15 +367,15 @@
 }
 
 .guideTitle {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   color: #1a1a1a;
 }
 
 .guideDescription {
   color: #64748b;
-  line-height: 1.6;
+  line-height: 1.5;
   margin: 0;
   font-size: 15px;
 }
@@ -358,41 +384,58 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  background: linear-gradient(135deg, #f59e0b, #d97706);
   color: white;
-  padding: 6px 14px;
+  padding: 5px 12px;
   border-radius: 100px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   margin-top: 10px;
-  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
 }
 
 .expandIcon {
   color: #9ca3af;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, color 0.2s ease;
   flex-shrink: 0;
 }
 
 .expandIcon.rotated {
   transform: rotate(180deg);
-  color: #667eea;
+  color: #007aff;
 }
 
 /* ========================================
-   GUIDE STEPS
+   GUIDE STEPS - Timeline Style
    ======================================== */
 .guideSteps {
   padding: 0 28px 28px;
   animation: slideDown 0.3s ease;
 }
 
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .step {
-  background: #f8fafc;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   padding: 24px;
   border-radius: 16px;
-  margin-bottom: 16px;
-  border-left: 4px solid #667eea;
+  margin-bottom: 12px;
+  border-left: 4px solid #007aff;
+  transition: all 0.2s ease;
+}
+
+.step:hover {
+  border-left-color: #0052cc;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.08);
 }
 
 .step:last-child {
@@ -409,21 +452,21 @@
 .stepNumber {
   width: 36px;
   height: 36px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #007aff, #0052cc);
   color: white;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 16px;
+  font-size: 15px;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
 }
 
 .stepTitle {
   flex: 1;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   color: #1a1a1a;
   margin: 6px 0 0 0;
@@ -438,14 +481,14 @@
 }
 
 /* ========================================
-   TIPS BOX
+   TIPS BOX - Highlight Style
    ======================================== */
 .stepTips {
   margin-top: 16px;
   padding: 16px 16px 16px 52px;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(118, 75, 162, 0.08));
+  background: linear-gradient(135deg, rgba(0, 122, 255, 0.06), rgba(0, 82, 204, 0.06));
   border-radius: 12px;
-  border-left: 3px solid #667eea;
+  border-left: 3px solid #007aff;
 }
 
 .tipsHeader {
@@ -453,7 +496,7 @@
   align-items: center;
   gap: 8px;
   font-weight: 700;
-  color: #667eea;
+  color: #007aff;
   margin-bottom: 10px;
   font-size: 14px;
 }
@@ -475,21 +518,19 @@
 }
 
 /* ========================================
-   FAQ SECTION
+   FAQ SECTION - Accordion Style
    ======================================== */
 .faqList {
-  max-width: 900px;
-  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .faqItem {
   background: white;
   border-radius: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  border: 2px solid #f1f5f9;
+  border: 1px solid #f1f5f9;
   overflow: hidden;
   transition: all 0.2s ease;
 }
@@ -500,7 +541,8 @@
 }
 
 .faqItem.open {
-  border-color: #667eea;
+  border-color: #007aff;
+  box-shadow: 0 8px 24px rgba(0, 122, 255, 0.12);
 }
 
 .faqQuestion {
@@ -509,7 +551,7 @@
   background: none;
   border: none;
   text-align: left;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 600;
   color: #1a1a1a;
   cursor: pointer;
@@ -522,11 +564,51 @@
 }
 
 .faqQuestion:hover {
-  background: #f8fafc;
+  background: #fafbfc;
+}
+
+.faqQuestionContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
 }
 
 .faqQuestionText {
   flex: 1;
+  text-align: left;
+}
+
+/* FAQ Category Badges */
+.faqCategoryBadge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.faqCategory_general {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.faqCategory_technical {
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+.faqCategory_security {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.faqCategory_billing {
+  background: #fae8ff;
+  color: #a21caf;
 }
 
 .faqAnswer {
@@ -549,7 +631,7 @@
 
 .faqToggle.rotated {
   transform: rotate(180deg);
-  color: #667eea;
+  color: #007aff;
 }
 
 @keyframes expandAnswer {
@@ -575,6 +657,7 @@
 .noResults svg {
   margin-bottom: 20px;
   opacity: 0.5;
+  color: #007aff;
 }
 
 .noResults h3 {
@@ -587,14 +670,16 @@
 .noResults p {
   font-size: 16px;
   color: #94a3b8;
+  max-width: 400px;
+  margin: 0 auto;
 }
 
 /* ========================================
-   HELP SECTION (Still Need Help?)
+   HELP SECTION (Still Need Help?) - CTA
    ======================================== */
 .helpSection {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 80px 0;
+  background: linear-gradient(135deg, #007aff 0%, #0052cc 100%);
+  padding: 100px 0;
   position: relative;
   overflow: hidden;
 }
@@ -606,9 +691,9 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120"><path d="M0,64L48,69.3C96,75,192,85,288,80C384,75,480,53,576,48C672,43,768,53,864,58.7C960,64,1056,64,1152,58.7L1200,56L1200,0L1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z" fill="rgba(255,255,255,0.1)"/></svg>') no-repeat top;
-  background-size: cover;
-  opacity: 0.3;
+  background: radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+              radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.08) 0%, transparent 40%);
+  pointer-events: none;
 }
 
 .helpBox {
@@ -630,7 +715,8 @@
 .helpBox p {
   font-size: 18px;
   opacity: 0.95;
-  margin-bottom: 32px;
+  margin-bottom: 36px;
+  line-height: 1.6;
 }
 
 .helpActions {
@@ -646,18 +732,20 @@
   gap: 10px;
   padding: 16px 32px;
   background: white;
-  color: #667eea;
+  color: #007aff;
   text-decoration: none;
-  border-radius: 12px;
+  border-radius: 14px;
   font-weight: 600;
   font-size: 16px;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  font-family: inherit;
 }
 
 .helpBtn:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+  color: #0052cc;
 }
 
 /* ========================================
@@ -665,7 +753,7 @@
    ======================================== */
 @media (max-width: 768px) {
   .heroTitle {
-    font-size: 40px;
+    font-size: 36px;
   }
 
   .heroSubtitle {
@@ -683,7 +771,7 @@
 
   .tabButton {
     padding: 14px 20px;
-    font-size: 15px;
+    font-size: 14px;
   }
 
   .container {
@@ -691,7 +779,11 @@
   }
 
   .searchSection {
-    padding: 30px 0;
+    padding: 32px 0;
+  }
+
+  .searchInput {
+    padding: 18px 50px 18px 50px;
   }
 
   .contentSection {
@@ -699,21 +791,34 @@
   }
 
   .sectionTitle {
-    font-size: 32px;
+    font-size: 28px;
   }
 
   .sectionSubtitle {
-    font-size: 16px;
+    font-size: 15px;
   }
 
-  .categoryFilter {
-    gap: 8px;
-    margin-bottom: 32px;
+  /* Category Sections - Tablet */
+  .categorySection,
+  .faqCategorySection {
+    margin-bottom: 36px;
   }
 
-  .categoryBtn {
-    padding: 10px 18px;
+  .categoryHeading {
+    font-size: 20px;
+    gap: 10px;
+  }
+
+  .categoryIcon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+  }
+
+  .categoryDescription {
     font-size: 14px;
+    margin-left: 46px;
+    margin-bottom: 16px;
   }
 
   .guideHeader {
@@ -724,10 +829,11 @@
   .guideIcon {
     width: 48px;
     height: 48px;
+    border-radius: 12px;
   }
 
   .guideTitle {
-    font-size: 18px;
+    font-size: 17px;
   }
 
   .guideDescription {
@@ -754,12 +860,25 @@
 
   .faqQuestion {
     padding: 20px;
-    font-size: 16px;
+    font-size: 15px;
+  }
+
+  .faqQuestionContent {
+    gap: 6px;
+  }
+
+  .faqCategoryBadge {
+    font-size: 10px;
+    padding: 3px 10px;
   }
 
   .faqAnswer {
     padding: 0 20px 20px;
     font-size: 14px;
+  }
+
+  .helpSection {
+    padding: 60px 0;
   }
 
   .helpBox h2 {
@@ -772,17 +891,19 @@
 
   .helpActions {
     flex-direction: column;
+    align-items: center;
   }
 
   .helpBtn {
     width: 100%;
+    max-width: 300px;
     justify-content: center;
   }
 }
 
 @media (max-width: 480px) {
   .heroTitle {
-    font-size: 32px;
+    font-size: 28px;
   }
 
   .heroSubtitle {
@@ -793,12 +914,17 @@
     padding: 60px 0 40px;
   }
 
+  .startTourButton {
+    padding: 14px 24px;
+    font-size: 15px;
+  }
+
   .container {
     padding: 0 12px;
   }
 
   .searchInput {
-    padding: 16px 50px 16px 45px;
+    padding: 16px 45px 16px 45px;
     font-size: 15px;
   }
 
@@ -813,25 +939,40 @@
     border-left: 3px solid transparent;
     text-align: left;
     padding: 16px 20px;
+    width: 100%;
   }
 
   .tabButton.active {
-    border-left-color: #667eea;
+    border-left-color: #007aff;
     border-bottom-color: transparent;
-    background: linear-gradient(to right, rgba(102, 126, 234, 0.05), transparent);
+    background: linear-gradient(to right, rgba(0, 122, 255, 0.05), transparent);
   }
 
   .sectionTitle {
-    font-size: 28px;
+    font-size: 24px;
   }
 
-  .categoryFilter {
-    gap: 6px;
+  /* Category Sections - Mobile */
+  .categorySection,
+  .faqCategorySection {
+    margin-bottom: 32px;
   }
 
-  .categoryBtn {
-    padding: 8px 16px;
+  .categoryHeading {
+    font-size: 18px;
+    gap: 8px;
+  }
+
+  .categoryIcon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+  }
+
+  .categoryDescription {
     font-size: 13px;
+    margin-left: 40px;
+    margin-bottom: 14px;
   }
 
   .guideHeader {
@@ -855,11 +996,7 @@
   }
 
   .stepTitle {
-    font-size: 16px;
-  }
-
-  .helpSection {
-    padding: 60px 0;
+    font-size: 15px;
   }
 
   .helpBox h2 {
@@ -868,5 +1005,152 @@
 
   .helpBox p {
     font-size: 15px;
+  }
+}
+
+@media (max-width: 375px) {
+  .heroTitle {
+    font-size: 24px;
+  }
+
+  .heroSubtitle {
+    font-size: 15px;
+  }
+
+  .hero {
+    padding: 50px 0 35px;
+  }
+
+  .container {
+    padding: 0 10px;
+  }
+
+  .sectionTitle {
+    font-size: 22px;
+  }
+
+  /* Category Sections - Small Mobile */
+  .categorySection,
+  .faqCategorySection {
+    margin-bottom: 28px;
+  }
+
+  .categoryHeading {
+    font-size: 16px;
+    gap: 8px;
+  }
+
+  .categoryIcon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+  }
+
+  .categoryDescription {
+    font-size: 12px;
+    margin-left: 36px;
+    margin-bottom: 12px;
+  }
+
+  .guideTitle {
+    font-size: 16px;
+  }
+
+  .guideDescription {
+    font-size: 13px;
+  }
+
+  .step {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .stepDescription {
+    font-size: 14px;
+  }
+
+  .faqQuestion {
+    padding: 16px;
+    font-size: 14px;
+  }
+
+  .faqAnswer {
+    padding: 0 16px 16px;
+    font-size: 13px;
+  }
+
+  .helpSection {
+    padding: 50px 0;
+  }
+
+  .helpBox h2 {
+    font-size: 22px;
+  }
+
+  .helpBox p {
+    font-size: 14px;
+    margin-bottom: 28px;
+  }
+
+  .helpBtn {
+    padding: 14px 24px;
+    font-size: 15px;
+  }
+}
+
+/* ========================================
+   ANIMATIONS & EFFECTS
+   ======================================== */
+.guideCard {
+  animation: fadeInUp 0.4s ease forwards;
+}
+
+.guideCard:nth-child(1) { animation-delay: 0.05s; }
+.guideCard:nth-child(2) { animation-delay: 0.1s; }
+.guideCard:nth-child(3) { animation-delay: 0.15s; }
+.guideCard:nth-child(4) { animation-delay: 0.2s; }
+.guideCard:nth-child(5) { animation-delay: 0.25s; }
+
+.faqItem {
+  animation: fadeInUp 0.4s ease forwards;
+}
+
+.faqItem:nth-child(1) { animation-delay: 0.05s; }
+.faqItem:nth-child(2) { animation-delay: 0.1s; }
+.faqItem:nth-child(3) { animation-delay: 0.15s; }
+.faqItem:nth-child(4) { animation-delay: 0.2s; }
+.faqItem:nth-child(5) { animation-delay: 0.25s; }
+
+/* Focus styles for accessibility */
+.tabButton:focus,
+.categoryBtn:focus,
+.searchInput:focus,
+.helpBtn:focus {
+  outline: 2px solid #007aff;
+  outline-offset: 2px;
+}
+
+.guideCard:focus-within {
+  outline: 2px solid #007aff;
+  outline-offset: 4px;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .guideCard,
+  .faqItem,
+  .tabContent {
+    animation: none;
+    transition: none;
+  }
+
+  .guideCard:hover,
+  .faqItem:hover {
+    transform: none;
+  }
+
+  .startTourButton:hover,
+  .helpBtn:hover {
+    transform: none;
   }
 }

@@ -35,7 +35,6 @@ const HelpCenter: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'guides' | 'faq'>('guides');
   const [openFAQ, setOpenFAQ] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [expandedGuide, setExpandedGuide] = useState<string | null>(null);
 
   // 📚 KOMPLETTE FEATURE-ANLEITUNGEN (Super einfach erklärt!)
@@ -551,6 +550,331 @@ const HelpCenter: React.FC = () => {
           description: 'Aktivieren Sie Checkboxen, um mehrere Verträge auszuwählen. Dann: In Ordner verschieben, Löschen, Exportieren.',
         }
       ]
+    },
+    // ========== NEUE ANLEITUNGEN ==========
+    {
+      id: 'legal-lens',
+      icon: <FileText size={24} />,
+      title: 'Legal Lens - Tiefenanalyse',
+      description: 'Umfassende juristische Analyse mit detaillierten Einblicken',
+      category: 'premium',
+      steps: [
+        {
+          title: '1. Legal Lens öffnen',
+          description: 'Navigieren Sie zu "Legal Lens" in der Hauptnavigation oder klicken Sie bei einem Vertrag auf "Tiefenanalyse starten".',
+        },
+        {
+          title: '2. Vertrag auswählen oder hochladen',
+          description: 'Wählen Sie einen bestehenden Vertrag aus der Liste oder laden Sie einen neuen Vertrag direkt hoch.',
+        },
+        {
+          title: '3. Analyse-Ergebnisse verstehen',
+          description: 'Legal Lens zeigt Ihnen: Vertragsübersicht mit allen wichtigen Daten, Parteien-Identifikation, Klausel-für-Klausel-Analyse, Risikobewertung pro Abschnitt.',
+          tips: ['Grüne Klauseln = unbedenklich', 'Gelbe Klauseln = Überprüfung empfohlen', 'Rote Klauseln = kritisch, Handlungsbedarf']
+        },
+        {
+          title: '4. Einzelne Klauseln analysieren',
+          description: 'Klicken Sie auf eine Klausel, um die detaillierte Bewertung zu sehen: Was bedeutet sie? Ist sie fair? Welche Risiken gibt es?',
+        },
+        {
+          title: '5. Handlungsempfehlungen',
+          description: 'Zu jeder problematischen Klausel erhalten Sie konkrete Handlungsempfehlungen und alternative Formulierungen.',
+        },
+        {
+          title: '6. Report exportieren',
+          description: 'Exportieren Sie die komplette Analyse als PDF-Report für Ihre Unterlagen oder zur Weitergabe an einen Anwalt.',
+        }
+      ]
+    },
+    {
+      id: 'clause-library',
+      icon: <FolderOpen size={24} />,
+      title: 'Klauselbibliothek nutzen',
+      description: 'Häufig verwendete Klauseln speichern und wiederverwenden',
+      category: 'premium',
+      steps: [
+        {
+          title: '1. Klauselbibliothek öffnen',
+          description: 'Navigieren Sie zu "Klauselbibliothek" in der Navigation oder im Dashboard unter "Werkzeuge".',
+        },
+        {
+          title: '2. Klausel hinzufügen',
+          description: 'Klicken Sie auf "Neue Klausel" und geben Sie ein: Titel, Kategorie (z.B. Haftung, Kündigung), den Klauseltext.',
+          tips: ['Kategorien helfen beim späteren Finden', 'Sie können Klauseln auch aus analysierten Verträgen direkt speichern']
+        },
+        {
+          title: '3. Klauseln organisieren',
+          description: 'Sortieren Sie Klauseln nach Kategorien: Haftungsklauseln, Kündigungsklauseln, Geheimhaltung, Zahlungsbedingungen, etc.',
+        },
+        {
+          title: '4. Klauseln suchen',
+          description: 'Nutzen Sie die Suchfunktion, um schnell die richtige Klausel zu finden. Suchen Sie nach Titel oder Inhalt.',
+        },
+        {
+          title: '5. Klauseln in Verträge einfügen',
+          description: 'Beim Erstellen eines neuen Vertrags (Generator/Contract Builder) können Sie gespeicherte Klauseln mit einem Klick einfügen.',
+        }
+      ]
+    },
+    {
+      id: 'contract-builder',
+      icon: <FileCheck size={24} />,
+      title: 'Contract Builder - Visueller Editor',
+      description: 'Verträge visuell per Drag & Drop erstellen und bearbeiten',
+      category: 'premium',
+      steps: [
+        {
+          title: '1. Contract Builder öffnen',
+          description: 'Navigieren Sie zu "Contract Builder" in der Navigation. Sie sehen einen visuellen Editor mit Blöcken.',
+        },
+        {
+          title: '2. Blöcke hinzufügen',
+          description: 'Ziehen Sie Bausteine aus der linken Seitenleiste in den Editor: Überschriften, Textblöcke, Klauseln, Tabellen, Unterschriftenfelder.',
+          tips: ['Doppelklick zum Bearbeiten', 'Drag & Drop zum Verschieben', 'Rechtsklick für weitere Optionen']
+        },
+        {
+          title: '3. Variablen verwenden',
+          description: 'Fügen Sie Platzhalter ein wie {{Firmenname}}, {{Datum}}, {{Betrag}}. Diese werden später automatisch ausgefüllt.',
+        },
+        {
+          title: '4. Design anpassen',
+          description: 'Passen Sie Schriftart, Farben und Layout an. Fügen Sie Ihr Firmenlogo hinzu.',
+        },
+        {
+          title: '5. KI-Unterstützung nutzen',
+          description: 'Klicken Sie auf "KI-Assistent" um: Klauseln rechtlich prüfen zu lassen, Formulierungen zu optimieren, fehlende Abschnitte vorschlagen zu lassen.',
+        },
+        {
+          title: '6. Vorlage speichern',
+          description: 'Speichern Sie Ihren Vertrag als Vorlage für zukünftige Verwendung. Ideal für wiederkehrende Vertragstypen.',
+        },
+        {
+          title: '7. Exportieren',
+          description: 'Exportieren Sie den fertigen Vertrag als PDF oder DOCX. Optional: Direkt zur digitalen Signatur senden.',
+        }
+      ]
+    },
+    {
+      id: 'team-management',
+      icon: <Building2 size={24} />,
+      title: 'Team-Verwaltung',
+      description: 'Mehrere Benutzer einladen und Berechtigungen verwalten',
+      category: 'premium',
+      steps: [
+        {
+          title: '1. Team-Bereich öffnen',
+          description: 'Navigieren Sie zu "Team" in der Navigation (nur für Business/Enterprise-Pläne verfügbar).',
+        },
+        {
+          title: '2. Teammitglied einladen',
+          description: 'Klicken Sie auf "Mitglied einladen" und geben Sie die E-Mail-Adresse ein. Der Eingeladene erhält einen Link per E-Mail.',
+          tips: ['Einladungen sind 7 Tage gültig', 'Sie können die Rolle direkt bei der Einladung festlegen']
+        },
+        {
+          title: '3. Rollen verstehen',
+          description: 'Es gibt verschiedene Rollen: Admin (voller Zugriff), Editor (kann Verträge bearbeiten), Viewer (nur Lesezugriff).',
+        },
+        {
+          title: '4. Berechtigungen anpassen',
+          description: 'Klicken Sie auf ein Teammitglied, um dessen Rolle zu ändern oder spezifische Berechtigungen festzulegen.',
+        },
+        {
+          title: '5. Verträge teilen',
+          description: 'Ordner und Verträge können mit dem Team geteilt werden. Legen Sie fest, wer welche Verträge sehen darf.',
+        },
+        {
+          title: '6. Aktivitäten nachverfolgen',
+          description: 'Im Team-Dashboard sehen Sie, wer wann welche Aktionen durchgeführt hat (Audit-Log).',
+        }
+      ]
+    },
+    {
+      id: 'api-keys',
+      icon: <Zap size={24} />,
+      title: 'API-Schlüssel verwalten',
+      description: 'Programmatischer Zugriff auf Contract AI für Entwickler',
+      category: 'premium',
+      steps: [
+        {
+          title: '1. API-Keys öffnen',
+          description: 'Navigieren Sie zu "API-Keys" in Ihrem Profil oder unter Einstellungen (nur Enterprise-Plan).',
+        },
+        {
+          title: '2. Neuen Key erstellen',
+          description: 'Klicken Sie auf "Neuen API-Key erstellen". Geben Sie einen Namen ein (z.B. "Produktions-Server", "Entwicklung").',
+          tips: ['Der Key wird nur einmal angezeigt - kopieren Sie ihn sofort!', 'Speichern Sie Keys niemals im Code']
+        },
+        {
+          title: '3. Berechtigungen festlegen',
+          description: 'Wählen Sie, welche API-Endpoints der Key nutzen darf: Analyse, Generierung, Vergleich, etc.',
+        },
+        {
+          title: '4. Rate-Limits beachten',
+          description: 'Jeder Key hat Limits: Anfragen pro Minute, pro Tag. Diese werden im Dashboard angezeigt.',
+        },
+        {
+          title: '5. Key widerrufen',
+          description: 'Bei Sicherheitsbedenken können Sie einen Key jederzeit widerrufen. Er funktioniert dann sofort nicht mehr.',
+        },
+        {
+          title: '6. API-Dokumentation',
+          description: 'Die vollständige API-Dokumentation finden Sie unter api.contract-ai.de/docs mit Beispielen für alle Endpoints.',
+        }
+      ]
+    },
+    {
+      id: 'integrations',
+      icon: <Zap size={24} />,
+      title: 'Integrationen einrichten',
+      description: 'Contract AI mit anderen Tools verbinden',
+      category: 'premium',
+      steps: [
+        {
+          title: '1. Integrationen öffnen',
+          description: 'Navigieren Sie zu "Integrationen" in der Navigation oder unter Einstellungen.',
+        },
+        {
+          title: '2. Verfügbare Integrationen',
+          description: 'Aktuell verfügbar: Google Drive, Dropbox, OneDrive, Slack, Microsoft Teams, Zapier, Make (Integromat).',
+        },
+        {
+          title: '3. Integration aktivieren',
+          description: 'Klicken Sie auf die gewünschte Integration und folgen Sie dem Authentifizierungs-Prozess (OAuth).',
+          tips: ['Sie werden zur Anmeldung beim Drittanbieter weitergeleitet', 'Contract AI erhält nur die notwendigen Berechtigungen']
+        },
+        {
+          title: '4. Automatisierungen einrichten',
+          description: 'Nach der Verbindung können Sie Automatisierungen erstellen: z.B. "Neuer Vertrag in Drive → automatisch analysieren".',
+        },
+        {
+          title: '5. Webhooks nutzen',
+          description: 'Für Entwickler: Richten Sie Webhooks ein, um bei bestimmten Events benachrichtigt zu werden (neue Analyse, Frist erreicht, etc.).',
+        }
+      ]
+    },
+    {
+      id: 'cancel-contract',
+      icon: <AlertCircle size={24} />,
+      title: 'Kündigungshilfe nutzen',
+      description: 'Verträge rechtzeitig und korrekt kündigen',
+      category: 'features',
+      steps: [
+        {
+          title: '1. Kündigungshilfe öffnen',
+          description: 'Bei einem Vertrag mit erkannter Kündigungsfrist erscheint der Button "Kündigung vorbereiten".',
+        },
+        {
+          title: '2. Kündigungsdaten prüfen',
+          description: 'Contract AI zeigt Ihnen: Kündigungsfrist, spätestes Kündigungsdatum, empfohlenes Absendedatum, Empfängeradresse.',
+        },
+        {
+          title: '3. Kündigungsschreiben generieren',
+          description: 'Klicken Sie auf "Kündigungsschreiben erstellen". Die KI erstellt ein rechtssicheres Kündigungsschreiben mit allen wichtigen Angaben.',
+          tips: ['Einschreiben mit Rückschein empfohlen', 'PDF zum Ausdrucken oder direkt versenden']
+        },
+        {
+          title: '4. Erinnerung aktivieren',
+          description: 'Aktivieren Sie eine Erinnerung, damit Sie die Kündigungsfrist nicht verpassen. Sie erhalten E-Mails 30, 14 und 7 Tage vorher.',
+        },
+        {
+          title: '5. Status nachverfolgen',
+          description: 'Nach der Kündigung können Sie den Status aktualisieren: "Kündigung versendet", "Bestätigung erhalten", etc.',
+        }
+      ]
+    },
+    {
+      id: 'contract-details',
+      icon: <FileText size={24} />,
+      title: 'Vertragsdetails verstehen',
+      description: 'Alle Informationen zu einem analysierten Vertrag',
+      category: 'basics',
+      steps: [
+        {
+          title: '1. Vertrag öffnen',
+          description: 'Klicken Sie in der Vertragsliste auf einen Vertrag, um die Detailansicht zu öffnen.',
+        },
+        {
+          title: '2. Übersicht',
+          description: 'Oben sehen Sie: Vertragsname, Contract Score, Status (aktiv/abgelaufen), Hochladedatum, Laufzeit.',
+        },
+        {
+          title: '3. Analyse-Ergebnisse',
+          description: 'Der Tab "Analyse" zeigt: Erkannte Risiken (rot markiert), Warnungen (gelb), positive Aspekte (grün), Verbesserungsvorschläge.',
+        },
+        {
+          title: '4. Extrahierte Daten',
+          description: 'Contract AI extrahiert automatisch: Vertragsparteien, Laufzeit, Kündigungsfrist, Zahlungsbedingungen, wichtige Termine.',
+          tips: ['Falsch erkannte Daten können manuell korrigiert werden', 'Klicken Sie auf "Bearbeiten" neben jedem Feld']
+        },
+        {
+          title: '5. Original-Dokument',
+          description: 'Im Tab "Dokument" können Sie das Original-PDF ansehen, herunterladen oder eine neue Version hochladen.',
+        },
+        {
+          title: '6. Aktionen',
+          description: 'Verfügbare Aktionen: Optimieren, Vergleichen, Zur Signatur senden, Kalender-Event erstellen, Löschen.',
+        }
+      ]
+    },
+    {
+      id: 'qr-verification',
+      icon: <Shield size={24} />,
+      title: 'QR-Code Verifizierung',
+      description: 'Verträge mit QR-Code auf Echtheit prüfen',
+      category: 'premium',
+      steps: [
+        {
+          title: '1. QR-Code verstehen',
+          description: 'Jeder von Contract AI generierte oder signierte Vertrag enthält einen eindeutigen QR-Code zur Verifizierung.',
+        },
+        {
+          title: '2. QR-Code scannen',
+          description: 'Scannen Sie den QR-Code mit Ihrer Smartphone-Kamera oder einer QR-Code-App.',
+        },
+        {
+          title: '3. Verifizierung prüfen',
+          description: 'Sie werden zu contract-ai.de/verify/[ID] weitergeleitet. Dort sehen Sie: Ist der Vertrag echt? Wann wurde er erstellt? Wer hat unterschrieben?',
+          tips: ['Grünes Häkchen = Vertrag ist verifiziert und unverändert', 'Rotes X = Vertrag wurde manipuliert oder ist ungültig']
+        },
+        {
+          title: '4. Details einsehen',
+          description: 'Die Verifizierungsseite zeigt: Erstellungsdatum, Signatur-Zeitstempel, Hash-Wert zur Integritätsprüfung.',
+        }
+      ]
+    },
+    {
+      id: 'better-contracts',
+      icon: <Wand2 size={24} />,
+      title: 'Better Contracts - KI-Verbesserungen',
+      description: 'Verträge automatisch verbessern und modernisieren',
+      category: 'premium',
+      steps: [
+        {
+          title: '1. Better Contracts öffnen',
+          description: 'Navigieren Sie zu "Better Contracts" oder klicken Sie bei einem Vertrag auf "Verbessern".',
+        },
+        {
+          title: '2. Vertrag hochladen',
+          description: 'Laden Sie den Vertrag hoch, den Sie verbessern möchten. Unterstützt werden PDF, DOC und DOCX.',
+        },
+        {
+          title: '3. Verbesserungsoptionen wählen',
+          description: 'Wählen Sie, was verbessert werden soll: Rechtliche Sicherheit, Verständlichkeit, Fairness, Vollständigkeit.',
+        },
+        {
+          title: '4. KI-Analyse abwarten',
+          description: 'Die KI analysiert den Vertrag und erstellt Verbesserungsvorschläge. Dies dauert 2-3 Minuten.',
+        },
+        {
+          title: '5. Vorschläge prüfen',
+          description: 'Sie sehen eine Liste aller Vorschläge: Original-Formulierung vs. Verbesserung, mit Begründung warum.',
+          tips: ['Jeder Vorschlag kann einzeln angenommen oder abgelehnt werden', 'Sie behalten die volle Kontrolle']
+        },
+        {
+          title: '6. Verbesserten Vertrag exportieren',
+          description: 'Laden Sie den verbesserten Vertrag als PDF oder DOCX herunter. Original bleibt erhalten.',
+        }
+      ]
     }
   ];
 
@@ -656,33 +980,139 @@ const HelpCenter: React.FC = () => {
       question: 'Bekomme ich Support, wenn ich Hilfe brauche?',
       answer: 'JA! Starter: E-Mail-Support (48h Antwortzeit). Business: E-Mail + Chat-Support (24h). Enterprise: Priority-Support (4h) + Telefon-Support. Alle Pläne: Umfangreiches Hilfe-Center, Video-Tutorials, Webinare.',
       category: 'general'
+    },
+    // ========== NEUE FAQs ==========
+    {
+      question: 'Was ist der Unterschied zwischen Legal Lens und normaler Analyse?',
+      answer: 'Die normale Analyse gibt Ihnen einen schnellen Überblick: Contract Score, wichtigste Risiken, Zusammenfassung. Legal Lens geht viel tiefer: Klausel-für-Klausel-Analyse, detaillierte Risikobewertung pro Abschnitt, konkrete Handlungsempfehlungen, Parteien-Identifikation, und ein exportierbarer Vollreport. Legal Lens ist ideal für wichtige oder komplexe Verträge.',
+      category: 'general'
+    },
+    {
+      question: 'Was ist der Unterschied zwischen Contract Builder und Generator?',
+      answer: 'Generator: Geführter Prozess mit Formularfeldern. Ideal für Einsteiger und Standardverträge. Contract Builder: Visueller Drag & Drop Editor für maximale Flexibilität. Ideal für individuelle Verträge und Power-User. Beide können mit KI-Unterstützung und gespeicherten Klauseln arbeiten.',
+      category: 'general'
+    },
+    {
+      question: 'Wozu brauche ich die Klauselbibliothek?',
+      answer: 'Die Klauselbibliothek ist Ihre persönliche Sammlung von bewährten Vertragsklauseln. Speichern Sie Klauseln, die Sie häufig verwenden, und fügen Sie sie bei neuen Verträgen mit einem Klick ein. Zeit sparen + Konsistenz sicherstellen!',
+      category: 'general'
+    },
+    {
+      question: 'Kann ich mit mehreren Personen an Verträgen arbeiten?',
+      answer: 'JA! Mit dem Team-Feature (Business/Enterprise) können Sie Teammitglieder einladen, Rollen vergeben (Admin, Editor, Viewer), Verträge teilen und gemeinsam bearbeiten. Alle Aktivitäten werden im Audit-Log protokolliert.',
+      category: 'general'
+    },
+    {
+      question: 'Wie funktioniert die Kündigungshilfe?',
+      answer: 'Contract AI erkennt automatisch Kündigungsfristen in Ihren Verträgen. Sie können: 1) Erinnerungen aktivieren (E-Mail 30/14/7 Tage vorher), 2) Ein rechtssicheres Kündigungsschreiben per KI generieren lassen, 3) Den Kündigungsstatus tracken. Nie wieder eine Frist verpassen!',
+      category: 'general'
+    },
+    {
+      question: 'Was bedeutet der QR-Code auf generierten Verträgen?',
+      answer: 'Jeder von Contract AI erstellte oder signierte Vertrag enthält einen QR-Code zur Echtheitsprüfung. Scannen Sie ihn mit dem Smartphone → Sie sehen sofort, ob der Vertrag echt ist, wann er erstellt wurde und wer unterschrieben hat. Perfekt gegen Fälschungen!',
+      category: 'security'
+    },
+    {
+      question: 'Welche Integrationen gibt es?',
+      answer: 'Aktuell verfügbar: Google Drive, Dropbox, OneDrive (Dokumente automatisch synchronisieren), Slack & Microsoft Teams (Benachrichtigungen), Zapier & Make (Automatisierungen). Weitere Integrationen werden regelmäßig hinzugefügt. Enterprise-Kunden können auch individuelle Integrationen anfragen.',
+      category: 'technical'
+    },
+    {
+      question: 'Wie sicher ist die digitale Signatur?',
+      answer: 'Sehr sicher! Unsere digitale Signatur ist rechtlich bindend in Deutschland und der EU (eIDAS-konform). Technisch: Kryptografische Hash-Verifizierung, Zeitstempel, eindeutige Signatur-ID, Audit-Trail. Jede Signatur wird mit IP-Adresse und Geräteinformationen protokolliert.',
+      category: 'security'
+    },
+    {
+      question: 'Kann ich meine Daten exportieren?',
+      answer: 'JA! DSGVO-konform können Sie jederzeit alle Ihre Daten exportieren: Verträge (Original-PDFs), Analysen (als PDF), Kalender-Events (ICS), Kontodaten (JSON). Gehen Sie zu Profil → Datenschutz → "Alle Daten exportieren".',
+      category: 'security'
+    },
+    {
+      question: 'Wie lange werden meine Verträge gespeichert?',
+      answer: 'Solange Ihr Konto aktiv ist, bleiben alle Verträge gespeichert. Nach Kündigung: 30 Tage zum Exportieren, dann dauerhafte Löschung. Sie können einzelne Verträge jederzeit selbst löschen. Gelöschte Verträge sind unwiderruflich weg (kein Papierkorb).',
+      category: 'security'
+    },
+    {
+      question: 'Funktioniert Contract AI offline?',
+      answer: 'NEIN. Contract AI ist eine Web-App und benötigt Internetverbindung. Die KI-Analyse läuft auf unseren Servern. Aber: Sie können Analysen und Verträge als PDF herunterladen für Offline-Nutzung.',
+      category: 'technical'
+    },
+    {
+      question: 'Was passiert bei sehr langen Verträgen?',
+      answer: 'Kein Problem! Contract AI analysiert Verträge bis zu 200 Seiten. Bei sehr langen Dokumenten kann die Analyse 2-3 Minuten dauern. Die Qualität bleibt gleich hoch. Bei Verträgen über 200 Seiten empfehlen wir, sie in Teildokumente aufzuteilen.',
+      category: 'technical'
+    },
+    {
+      question: 'Werden handschriftliche Verträge unterstützt?',
+      answer: 'Teilweise. Wenn der Vertrag als Scan (PDF/Bild) vorliegt, funktioniert OCR (Texterkennung). Die Qualität hängt von der Scan-Qualität ab. Für beste Ergebnisse: Hochauflösend scannen, guter Kontrast, keine Knicke. Rein handschriftliche Dokumente sind noch nicht optimal.',
+      category: 'technical'
+    },
+    {
+      question: 'Kann ich mein Abo upgraden oder downgraden?',
+      answer: 'JA! Jederzeit. Upgrade: Sofort wirksam, nur der Differenzbetrag wird berechnet. Downgrade: Zum nächsten Abrechnungszeitpunkt wirksam. Gehen Sie zu Profil → Abonnement → "Plan ändern".',
+      category: 'billing'
+    },
+    {
+      question: 'Welche Zahlungsmethoden werden akzeptiert?',
+      answer: 'Kredit-/Debitkarte (Visa, Mastercard, Amex), SEPA-Lastschrift, PayPal, Apple Pay, Google Pay. Unternehmenskunden können auch auf Rechnung zahlen (Enterprise-Plan). Alle Zahlungen werden sicher über Stripe abgewickelt.',
+      category: 'billing'
+    },
+    {
+      question: 'Bekomme ich eine Rechnung?',
+      answer: 'JA! Nach jeder Zahlung erhalten Sie automatisch eine Rechnung per E-Mail. Alle Rechnungen finden Sie auch unter Profil → Rechnungen. Format: PDF mit allen steuerlich relevanten Angaben (inkl. MwSt.).',
+      category: 'billing'
+    },
+    {
+      question: 'Was ist, wenn mein Analyse-Kontingent aufgebraucht ist?',
+      answer: 'Sie werden benachrichtigt, wenn Sie 80% erreicht haben. Wenn alle Analysen verbraucht sind, können Sie: 1) Auf den nächsten Monat warten (Reset am 1.), 2) Einzelne Analysen nachkaufen (0,99€/Stück), 3) Ihren Plan upgraden. Bestehende Verträge bleiben verfügbar.',
+      category: 'billing'
+    },
+    {
+      question: 'Gibt es Rabatte für Startups oder NGOs?',
+      answer: 'JA! Startups (< 2 Jahre, < 10 Mitarbeiter) erhalten 50% Rabatt im ersten Jahr. NGOs und gemeinnützige Organisationen erhalten 30% dauerhaft. Schreiben Sie uns an support@contract-ai.de mit einem Nachweis.',
+      category: 'billing'
+    },
+    {
+      question: 'Was passiert bei technischen Problemen?',
+      answer: 'Sollte etwas nicht funktionieren: 1) Seite neu laden (Strg+F5), 2) Cache löschen, 3) Anderen Browser testen. Immer noch Probleme? Schreiben Sie an support@contract-ai.de mit Screenshot und Fehlerbeschreibung. Wir antworten innerhalb von 24h.',
+      category: 'technical'
+    },
+    {
+      question: 'Wie genau ist die KI-Analyse?',
+      answer: 'Sehr genau! Unsere KI wurde mit tausenden deutschen Verträgen trainiert und erreicht eine Erkennungsrate von über 95% bei Standardklauseln. WICHTIG: Die Analyse ist eine Unterstützung, kein Ersatz für Rechtsberatung. Bei kritischen Verträgen empfehlen wir immer zusätzlich einen Fachanwalt.',
+      category: 'general'
+    },
+    {
+      question: 'Kann ich Contract AI auf dem Handy nutzen?',
+      answer: 'JA! Die Web-App ist vollständig responsive und funktioniert perfekt auf Smartphone und Tablet. Sie können Verträge fotografieren und direkt hochladen. Eine native App für iOS/Android ist in Planung.',
+      category: 'technical'
+    },
+    {
+      question: 'Was ist Better Contracts?',
+      answer: 'Better Contracts ist unser KI-Feature zur automatischen Vertragsverbesserung. Laden Sie einen bestehenden Vertrag hoch → die KI findet Schwachstellen und schlägt bessere Formulierungen vor → Sie entscheiden, was übernommen wird → Download des verbesserten Vertrags.',
+      category: 'general'
+    },
+    {
+      question: 'Wie kann ich Feedback geben oder Features vorschlagen?',
+      answer: 'Wir freuen uns über Feedback! 1) E-Mail an feedback@contract-ai.de, 2) Im Dashboard unter "Feedback geben", 3) Beta-Programm beitreten für frühen Zugang zu neuen Features. Die besten Vorschläge werden umgesetzt!',
+      category: 'general'
     }
   ];
 
-  // 🔍 FILTER & SEARCH LOGIC
+  // 🔍 FILTER & SEARCH LOGIC (nur Suche, Kategorien werden gruppiert angezeigt)
   const filteredGuides = useMemo(() => {
-    let filtered = guides;
+    if (!searchTerm.trim()) return guides;
 
-    // Category filter
-    if (selectedCategory !== 'all') {
-      filtered = filtered.filter(g => g.category === selectedCategory);
-    }
-
-    // Search filter
-    if (searchTerm.trim()) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(g =>
-        g.title.toLowerCase().includes(term) ||
-        g.description.toLowerCase().includes(term) ||
-        g.steps.some(step =>
-          step.title.toLowerCase().includes(term) ||
-          step.description.toLowerCase().includes(term)
-        )
-      );
-    }
-
-    return filtered;
-  }, [selectedCategory, searchTerm, guides]);
+    const term = searchTerm.toLowerCase();
+    return guides.filter(g =>
+      g.title.toLowerCase().includes(term) ||
+      g.description.toLowerCase().includes(term) ||
+      g.steps.some(step =>
+        step.title.toLowerCase().includes(term) ||
+        step.description.toLowerCase().includes(term)
+      )
+    );
+  }, [searchTerm, guides]);
 
   const filteredFAQs = useMemo(() => {
     if (!searchTerm.trim()) return faqItems;
@@ -784,109 +1214,252 @@ const HelpCenter: React.FC = () => {
             {/* GUIDES TAB */}
             {activeTab === 'guides' && (
               <div className={styles.tabContent}>
-                {/* Category Filter */}
-                <div className={styles.categoryFilter}>
-                  <button
-                    className={`${styles.categoryBtn} ${selectedCategory === 'all' ? styles.active : ''}`}
-                    onClick={() => setSelectedCategory('all')}
-                  >
-                    Alle
-                  </button>
-                  <button
-                    className={`${styles.categoryBtn} ${selectedCategory === 'basics' ? styles.active : ''}`}
-                    onClick={() => setSelectedCategory('basics')}
-                  >
-                    Grundlagen
-                  </button>
-                  <button
-                    className={`${styles.categoryBtn} ${selectedCategory === 'features' ? styles.active : ''}`}
-                    onClick={() => setSelectedCategory('features')}
-                  >
-                    Features
-                  </button>
-                  <button
-                    className={`${styles.categoryBtn} ${selectedCategory === 'premium' ? styles.active : ''}`}
-                    onClick={() => setSelectedCategory('premium')}
-                  >
-                    Premium
-                  </button>
-                  <button
-                    className={`${styles.categoryBtn} ${selectedCategory === 'settings' ? styles.active : ''}`}
-                    onClick={() => setSelectedCategory('settings')}
-                  >
-                    Einstellungen
-                  </button>
-                </div>
-
-                <h2 className={styles.sectionTitle}>
-                  {selectedCategory === 'all' ? 'Alle Anleitungen' :
-                   selectedCategory === 'basics' ? 'Grundlagen' :
-                   selectedCategory === 'features' ? 'Features' :
-                   selectedCategory === 'premium' ? 'Premium-Features' :
-                   'Einstellungen'}
-                </h2>
+                <h2 className={styles.sectionTitle}>Anleitungen</h2>
                 <p className={styles.sectionSubtitle}>
-                  {filteredGuides.length} {filteredGuides.length === 1 ? 'Anleitung' : 'Anleitungen'} gefunden
+                  {filteredGuides.length} {filteredGuides.length === 1 ? 'Anleitung' : 'Anleitungen'} verfügbar
                 </p>
 
-                <div className={styles.guidesContainer}>
-                  {filteredGuides.map((guide) => (
-                    <div key={guide.id} className={styles.guideCard}>
-                      <div className={styles.guideHeader} onClick={() => handleGuideToggle(guide.id)}>
-                        <div className={styles.guideIcon}>
-                          {guide.icon}
-                        </div>
-                        <div className={styles.guideInfo}>
-                          <h3 className={styles.guideTitle}>{guide.title}</h3>
-                          <p className={styles.guideDescription}>{guide.description}</p>
-                          {guide.category === 'premium' && (
-                            <span className={styles.premiumBadge}>
-                              <Shield size={14} />
-                              Premium
-                            </span>
+                {/* Grundlagen */}
+                {filteredGuides.filter(g => g.category === 'basics').length > 0 && (
+                  <div className={styles.categorySection}>
+                    <h3 className={styles.categoryHeading}>
+                      <span className={styles.categoryIcon}>
+                        <Layout size={20} />
+                      </span>
+                      Grundlagen
+                    </h3>
+                    <p className={styles.categoryDescription}>Erste Schritte und Basis-Funktionen</p>
+                    <div className={styles.guidesContainer}>
+                      {filteredGuides.filter(g => g.category === 'basics').map((guide) => (
+                        <div key={guide.id} className={styles.guideCard}>
+                          <div className={styles.guideHeader} onClick={() => handleGuideToggle(guide.id)}>
+                            <div className={styles.guideIcon}>
+                              {guide.icon}
+                            </div>
+                            <div className={styles.guideInfo}>
+                              <h3 className={styles.guideTitle}>{guide.title}</h3>
+                              <p className={styles.guideDescription}>{guide.description}</p>
+                            </div>
+                            <ChevronDown
+                              className={`${styles.expandIcon} ${expandedGuide === guide.id ? styles.rotated : ''}`}
+                              size={24}
+                            />
+                          </div>
+                          {expandedGuide === guide.id && (
+                            <div className={styles.guideSteps}>
+                              {guide.steps.map((step, index) => (
+                                <div key={index} className={styles.step}>
+                                  <div className={styles.stepHeader}>
+                                    <div className={styles.stepNumber}>{index + 1}</div>
+                                    <h4 className={styles.stepTitle}>{step.title}</h4>
+                                  </div>
+                                  <p className={styles.stepDescription}>{step.description}</p>
+                                  {step.tips && step.tips.length > 0 && (
+                                    <div className={styles.stepTips}>
+                                      <div className={styles.tipsHeader}>
+                                        <Lightbulb size={16} />
+                                        <span>Tipps:</span>
+                                      </div>
+                                      <ul className={styles.tipsList}>
+                                        {step.tips.map((tip, tipIndex) => (
+                                          <li key={tipIndex}>{tip}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
                           )}
                         </div>
-                        <ChevronDown
-                          className={`${styles.expandIcon} ${expandedGuide === guide.id ? styles.rotated : ''}`}
-                          size={24}
-                        />
-                      </div>
-
-                      {expandedGuide === guide.id && (
-                        <div className={styles.guideSteps}>
-                          {guide.steps.map((step, index) => (
-                            <div key={index} className={styles.step}>
-                              <div className={styles.stepHeader}>
-                                <div className={styles.stepNumber}>{index + 1}</div>
-                                <h4 className={styles.stepTitle}>{step.title}</h4>
-                              </div>
-                              <p className={styles.stepDescription}>{step.description}</p>
-                              {step.tips && step.tips.length > 0 && (
-                                <div className={styles.stepTips}>
-                                  <div className={styles.tipsHeader}>
-                                    <Lightbulb size={16} />
-                                    <span>Tipps:</span>
-                                  </div>
-                                  <ul className={styles.tipsList}>
-                                    {step.tips.map((tip, tipIndex) => (
-                                      <li key={tipIndex}>{tip}</li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
+
+                {/* Features */}
+                {filteredGuides.filter(g => g.category === 'features').length > 0 && (
+                  <div className={styles.categorySection}>
+                    <h3 className={styles.categoryHeading}>
+                      <span className={styles.categoryIcon}>
+                        <Zap size={20} />
+                      </span>
+                      Features
+                    </h3>
+                    <p className={styles.categoryDescription}>Kernfunktionen und Werkzeuge</p>
+                    <div className={styles.guidesContainer}>
+                      {filteredGuides.filter(g => g.category === 'features').map((guide) => (
+                        <div key={guide.id} className={styles.guideCard}>
+                          <div className={styles.guideHeader} onClick={() => handleGuideToggle(guide.id)}>
+                            <div className={styles.guideIcon}>
+                              {guide.icon}
+                            </div>
+                            <div className={styles.guideInfo}>
+                              <h3 className={styles.guideTitle}>{guide.title}</h3>
+                              <p className={styles.guideDescription}>{guide.description}</p>
+                            </div>
+                            <ChevronDown
+                              className={`${styles.expandIcon} ${expandedGuide === guide.id ? styles.rotated : ''}`}
+                              size={24}
+                            />
+                          </div>
+                          {expandedGuide === guide.id && (
+                            <div className={styles.guideSteps}>
+                              {guide.steps.map((step, index) => (
+                                <div key={index} className={styles.step}>
+                                  <div className={styles.stepHeader}>
+                                    <div className={styles.stepNumber}>{index + 1}</div>
+                                    <h4 className={styles.stepTitle}>{step.title}</h4>
+                                  </div>
+                                  <p className={styles.stepDescription}>{step.description}</p>
+                                  {step.tips && step.tips.length > 0 && (
+                                    <div className={styles.stepTips}>
+                                      <div className={styles.tipsHeader}>
+                                        <Lightbulb size={16} />
+                                        <span>Tipps:</span>
+                                      </div>
+                                      <ul className={styles.tipsList}>
+                                        {step.tips.map((tip, tipIndex) => (
+                                          <li key={tipIndex}>{tip}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Premium */}
+                {filteredGuides.filter(g => g.category === 'premium').length > 0 && (
+                  <div className={styles.categorySection}>
+                    <h3 className={styles.categoryHeading}>
+                      <span className={`${styles.categoryIcon} ${styles.premiumIcon}`}>
+                        <Shield size={20} />
+                      </span>
+                      Premium-Features
+                    </h3>
+                    <p className={styles.categoryDescription}>Erweiterte KI-Funktionen für Power-User</p>
+                    <div className={styles.guidesContainer}>
+                      {filteredGuides.filter(g => g.category === 'premium').map((guide) => (
+                        <div key={guide.id} className={styles.guideCard}>
+                          <div className={styles.guideHeader} onClick={() => handleGuideToggle(guide.id)}>
+                            <div className={styles.guideIcon}>
+                              {guide.icon}
+                            </div>
+                            <div className={styles.guideInfo}>
+                              <h3 className={styles.guideTitle}>{guide.title}</h3>
+                              <p className={styles.guideDescription}>{guide.description}</p>
+                              <span className={styles.premiumBadge}>
+                                <Shield size={14} />
+                                Premium
+                              </span>
+                            </div>
+                            <ChevronDown
+                              className={`${styles.expandIcon} ${expandedGuide === guide.id ? styles.rotated : ''}`}
+                              size={24}
+                            />
+                          </div>
+                          {expandedGuide === guide.id && (
+                            <div className={styles.guideSteps}>
+                              {guide.steps.map((step, index) => (
+                                <div key={index} className={styles.step}>
+                                  <div className={styles.stepHeader}>
+                                    <div className={styles.stepNumber}>{index + 1}</div>
+                                    <h4 className={styles.stepTitle}>{step.title}</h4>
+                                  </div>
+                                  <p className={styles.stepDescription}>{step.description}</p>
+                                  {step.tips && step.tips.length > 0 && (
+                                    <div className={styles.stepTips}>
+                                      <div className={styles.tipsHeader}>
+                                        <Lightbulb size={16} />
+                                        <span>Tipps:</span>
+                                      </div>
+                                      <ul className={styles.tipsList}>
+                                        {step.tips.map((tip, tipIndex) => (
+                                          <li key={tipIndex}>{tip}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Einstellungen */}
+                {filteredGuides.filter(g => g.category === 'settings').length > 0 && (
+                  <div className={styles.categorySection}>
+                    <h3 className={styles.categoryHeading}>
+                      <span className={styles.categoryIcon}>
+                        <User size={20} />
+                      </span>
+                      Einstellungen
+                    </h3>
+                    <p className={styles.categoryDescription}>Konto und Abonnement verwalten</p>
+                    <div className={styles.guidesContainer}>
+                      {filteredGuides.filter(g => g.category === 'settings').map((guide) => (
+                        <div key={guide.id} className={styles.guideCard}>
+                          <div className={styles.guideHeader} onClick={() => handleGuideToggle(guide.id)}>
+                            <div className={styles.guideIcon}>
+                              {guide.icon}
+                            </div>
+                            <div className={styles.guideInfo}>
+                              <h3 className={styles.guideTitle}>{guide.title}</h3>
+                              <p className={styles.guideDescription}>{guide.description}</p>
+                            </div>
+                            <ChevronDown
+                              className={`${styles.expandIcon} ${expandedGuide === guide.id ? styles.rotated : ''}`}
+                              size={24}
+                            />
+                          </div>
+                          {expandedGuide === guide.id && (
+                            <div className={styles.guideSteps}>
+                              {guide.steps.map((step, index) => (
+                                <div key={index} className={styles.step}>
+                                  <div className={styles.stepHeader}>
+                                    <div className={styles.stepNumber}>{index + 1}</div>
+                                    <h4 className={styles.stepTitle}>{step.title}</h4>
+                                  </div>
+                                  <p className={styles.stepDescription}>{step.description}</p>
+                                  {step.tips && step.tips.length > 0 && (
+                                    <div className={styles.stepTips}>
+                                      <div className={styles.tipsHeader}>
+                                        <Lightbulb size={16} />
+                                        <span>Tipps:</span>
+                                      </div>
+                                      <ul className={styles.tipsList}>
+                                        {step.tips.map((tip, tipIndex) => (
+                                          <li key={tipIndex}>{tip}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {filteredGuides.length === 0 && (
                   <div className={styles.noResults}>
                     <Info size={48} />
                     <h3>Keine Anleitungen gefunden</h3>
-                    <p>Versuchen Sie einen anderen Suchbegriff oder wählen Sie eine andere Kategorie.</p>
+                    <p>Versuchen Sie einen anderen Suchbegriff.</p>
                   </div>
                 )}
               </div>
@@ -897,30 +1470,156 @@ const HelpCenter: React.FC = () => {
               <div className={styles.tabContent}>
                 <h2 className={styles.sectionTitle}>Häufig gestellte Fragen</h2>
                 <p className={styles.sectionSubtitle}>
-                  {filteredFAQs.length} {filteredFAQs.length === 1 ? 'Frage' : 'Fragen'} gefunden
+                  {filteredFAQs.length} {filteredFAQs.length === 1 ? 'Frage' : 'Fragen'} verfügbar
                 </p>
 
-                <div className={styles.faqList}>
-                  {filteredFAQs.map((faq, index) => (
-                    <div key={index} className={`${styles.faqItem} ${openFAQ === index ? styles.open : ''}`}>
-                      <button
-                        className={styles.faqQuestion}
-                        onClick={() => handleFAQToggle(index)}
-                      >
-                        <span className={styles.faqQuestionText}>{faq.question}</span>
-                        <ChevronDown
-                          className={`${styles.faqToggle} ${openFAQ === index ? styles.rotated : ''}`}
-                          size={20}
-                        />
-                      </button>
-                      {openFAQ === index && (
-                        <div className={styles.faqAnswer}>
-                          <p>{faq.answer}</p>
-                        </div>
-                      )}
+                {/* Allgemeine Fragen */}
+                {filteredFAQs.filter(f => f.category === 'general').length > 0 && (
+                  <div className={styles.faqCategorySection}>
+                    <h3 className={styles.categoryHeading}>
+                      <span className={styles.categoryIcon}>
+                        <Info size={20} />
+                      </span>
+                      Allgemeine Fragen
+                    </h3>
+                    <p className={styles.categoryDescription}>Grundlegende Informationen zu Contract AI</p>
+                    <div className={styles.faqList}>
+                      {filteredFAQs.filter(f => f.category === 'general').map((faq, index) => {
+                        const globalIndex = filteredFAQs.indexOf(faq);
+                        return (
+                          <div key={index} className={`${styles.faqItem} ${openFAQ === globalIndex ? styles.open : ''}`}>
+                            <button
+                              className={styles.faqQuestion}
+                              onClick={() => handleFAQToggle(globalIndex)}
+                            >
+                              <span className={styles.faqQuestionText}>{faq.question}</span>
+                              <ChevronDown
+                                className={`${styles.faqToggle} ${openFAQ === globalIndex ? styles.rotated : ''}`}
+                                size={20}
+                              />
+                            </button>
+                            {openFAQ === globalIndex && (
+                              <div className={styles.faqAnswer}>
+                                <p>{faq.answer}</p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
+
+                {/* Technische Fragen */}
+                {filteredFAQs.filter(f => f.category === 'technical').length > 0 && (
+                  <div className={styles.faqCategorySection}>
+                    <h3 className={styles.categoryHeading}>
+                      <span className={styles.categoryIcon}>
+                        <Zap size={20} />
+                      </span>
+                      Technische Fragen
+                    </h3>
+                    <p className={styles.categoryDescription}>Funktionsweise, Formate und technische Details</p>
+                    <div className={styles.faqList}>
+                      {filteredFAQs.filter(f => f.category === 'technical').map((faq, index) => {
+                        const globalIndex = filteredFAQs.indexOf(faq);
+                        return (
+                          <div key={index} className={`${styles.faqItem} ${openFAQ === globalIndex ? styles.open : ''}`}>
+                            <button
+                              className={styles.faqQuestion}
+                              onClick={() => handleFAQToggle(globalIndex)}
+                            >
+                              <span className={styles.faqQuestionText}>{faq.question}</span>
+                              <ChevronDown
+                                className={`${styles.faqToggle} ${openFAQ === globalIndex ? styles.rotated : ''}`}
+                                size={20}
+                              />
+                            </button>
+                            {openFAQ === globalIndex && (
+                              <div className={styles.faqAnswer}>
+                                <p>{faq.answer}</p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Sicherheit & Datenschutz */}
+                {filteredFAQs.filter(f => f.category === 'security').length > 0 && (
+                  <div className={styles.faqCategorySection}>
+                    <h3 className={styles.categoryHeading}>
+                      <span className={`${styles.categoryIcon} ${styles.securityIcon}`}>
+                        <Shield size={20} />
+                      </span>
+                      Sicherheit & Datenschutz
+                    </h3>
+                    <p className={styles.categoryDescription}>Datensicherheit, DSGVO und Verschlüsselung</p>
+                    <div className={styles.faqList}>
+                      {filteredFAQs.filter(f => f.category === 'security').map((faq, index) => {
+                        const globalIndex = filteredFAQs.indexOf(faq);
+                        return (
+                          <div key={index} className={`${styles.faqItem} ${openFAQ === globalIndex ? styles.open : ''}`}>
+                            <button
+                              className={styles.faqQuestion}
+                              onClick={() => handleFAQToggle(globalIndex)}
+                            >
+                              <span className={styles.faqQuestionText}>{faq.question}</span>
+                              <ChevronDown
+                                className={`${styles.faqToggle} ${openFAQ === globalIndex ? styles.rotated : ''}`}
+                                size={20}
+                              />
+                            </button>
+                            {openFAQ === globalIndex && (
+                              <div className={styles.faqAnswer}>
+                                <p>{faq.answer}</p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Abrechnung & Preise */}
+                {filteredFAQs.filter(f => f.category === 'billing').length > 0 && (
+                  <div className={styles.faqCategorySection}>
+                    <h3 className={styles.categoryHeading}>
+                      <span className={styles.categoryIcon}>
+                        <CreditCard size={20} />
+                      </span>
+                      Abrechnung & Preise
+                    </h3>
+                    <p className={styles.categoryDescription}>Kosten, Abonnements und Zahlungsmethoden</p>
+                    <div className={styles.faqList}>
+                      {filteredFAQs.filter(f => f.category === 'billing').map((faq, index) => {
+                        const globalIndex = filteredFAQs.indexOf(faq);
+                        return (
+                          <div key={index} className={`${styles.faqItem} ${openFAQ === globalIndex ? styles.open : ''}`}>
+                            <button
+                              className={styles.faqQuestion}
+                              onClick={() => handleFAQToggle(globalIndex)}
+                            >
+                              <span className={styles.faqQuestionText}>{faq.question}</span>
+                              <ChevronDown
+                                className={`${styles.faqToggle} ${openFAQ === globalIndex ? styles.rotated : ''}`}
+                                size={20}
+                              />
+                            </button>
+                            {openFAQ === globalIndex && (
+                              <div className={styles.faqAnswer}>
+                                <p>{faq.answer}</p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 {filteredFAQs.length === 0 && (
                   <div className={styles.noResults}>
