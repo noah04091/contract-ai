@@ -57,6 +57,30 @@ class ErrorBoundary extends Component<Props, State> {
       hasError: true
     });
 
+    // 🔄 CHUNK LOADING ERROR - Nach Deployment sind alte Chunks nicht mehr verfügbar
+    // Lösung: Hard Reload der Seite, damit neue Chunks geladen werden
+    if (
+      error.message.includes('Failed to fetch dynamically imported module') ||
+      error.message.includes('Loading chunk') ||
+      error.message.includes('Loading CSS chunk') ||
+      error.message.includes('ChunkLoadError')
+    ) {
+      console.log('🔧 Chunk-Loading-Fehler erkannt - Seite wird neu geladen...');
+
+      // Verhindere Endlos-Reload-Loop
+      const lastReload = sessionStorage.getItem('lastChunkReload');
+      const now = Date.now();
+
+      if (!lastReload || (now - parseInt(lastReload)) > 10000) {
+        // Mehr als 10 Sekunden seit letztem Reload - sicher zu reloaden
+        sessionStorage.setItem('lastChunkReload', now.toString());
+        window.location.reload();
+        return;
+      } else {
+        console.log('⚠️ Zu viele Reloads - zeige Fehlermeldung stattdessen');
+      }
+    }
+
     // 🔄 Auto-Recovery für DOM-Fehler (wie unser removeChild Problem)
     if (error.name === 'NotFoundError' || error.message.includes('removeChild')) {
       console.log('🔧 Auto-Recovery für DOM-Fehler gestartet...');
