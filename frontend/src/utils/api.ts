@@ -1,4 +1,6 @@
 // 📁 src/utils/api.ts - FIXED: PDF-Fehlermeldungen + Duplikat-Handling (NO extractExistingContract)
+import { debug } from './debug';
+
 const API_BASE_URL = "/api"; // Proxy-Pfad für Vercel & devServer (für API-Calls)
 
 // ✅ NEU: Separate Backend-URL für File-Downloads (absolute URLs)
@@ -336,17 +338,16 @@ export const apiCall = async (
   };
 
   try {
-    const retryInfo = retryCount > 0 ? ` (Retry ${retryCount}/${maxRetries})` : '';
-    console.log(`🔄 API-Request: ${options.method || 'GET'} ${API_BASE_URL}${endpoint}${retryInfo}`);
-    
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, mergedOptions);
+    const method = (options.method || 'GET') as string;
+    const url = `${API_BASE_URL}${endpoint}`;
+    const callId = debug.apiRequest(method, url, options.body);
 
-    // 🔍 Enhanced Debugging
-    console.log(`📡 API-Response: ${response.status} ${response.statusText}${retryInfo}`, {
-      url: `${API_BASE_URL}${endpoint}`,
-      headers: Object.fromEntries(response.headers.entries()),
-      ok: response.ok
-    });
+    const response = await fetch(url, mergedOptions);
+
+    // Debug: Response loggen
+    if (response.ok) {
+      debug.apiSuccess(callId, response.status, { statusText: response.statusText }, url);
+    }
 
     // ✅ Prüfe Content-Type für bessere Fehlermeldungen
     const contentType = response.headers.get("content-type");
@@ -452,34 +453,34 @@ export const apiCall = async (
     }
 
   } catch (err) {
-    console.error(`❌ API-Fehler bei [${endpoint}] (Attempt ${retryCount + 1}):`, err);
-    
+    debug.apiError(undefined, 'ERROR', err, `${API_BASE_URL}${endpoint}`);
+
     // ✅ FIXED: TypeScript-sicheres Spezial-Handling für Duplikat-Response
     if (isDuplicateError(err)) {
-      console.log("🔄 Duplikat-Error erkannt in apiCall");
+      debug.info('Duplikat-Error erkannt in apiCall');
       throw err; // Duplikat-Error direkt weiterleiten
     }
-    
+
     // ✅ FIXED: TypeScript-sichere Fehlerbehandlung
     const errorMessage = getErrorMessage(err);
-    
+
     // ✅ Network-Fehler Retry-Logic
     if (isError(err) && err instanceof TypeError && errorMessage.includes('Failed to fetch')) {
       if (retryCount < maxRetries) {
         const delay = Math.pow(2, retryCount) * 1000;
-        console.log(`🔄 Network error - retrying in ${delay}ms...`);
+        debug.warning(`Network error - Retry in ${delay}ms...`);
         await sleep(delay);
         return apiCall(endpoint, options, retryCount + 1);
       } else {
         throw new Error("❌ Netzwerk-Fehler: Server nicht erreichbar (nach mehreren Versuchen)");
       }
     }
-    
+
     // ✅ Spezifische Fehlermeldungen für verschiedene Szenarien
     if (errorMessage.includes('Unexpected token')) {
       throw new Error("❌ Server-Fehler: Unerwartete Antwort (möglicherweise ist die API offline)");
     }
-    
+
     throw err;
   }
 };

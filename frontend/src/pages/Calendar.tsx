@@ -27,6 +27,7 @@ import {
 import axios from "axios";
 import "../styles/AppleCalendar.css";
 import CalendarSyncModal from "../components/CalendarSyncModal";
+import { debug } from "../utils/debug";
 
 // ========== Types ==========
 interface CalendarEvent {
@@ -1739,9 +1740,8 @@ function SnoozeModal({ isOpen, onClose, onSnooze }: SnoozeModalProps) {
 }
 
 // ========== Main Calendar Page ==========
-// DEBUG VERSION - 2025-12-24 - Build-Verification
-const CALENDAR_VERSION = "2025-12-24-DEBUG-V1";
-const DEBUG_COLORS = {
+// Farben für Stats-Karten
+const STAT_COLORS = {
   upcoming: '#10b981',    // Grün
   past: '#9ca3af',        // Grau
   cancelable: '#f59e0b',  // Orange
@@ -1749,13 +1749,10 @@ const DEBUG_COLORS = {
 };
 
 export default function CalendarPage() {
-  // ===== DEBUG: Component Load =====
-  console.log('%c=== CALENDAR DEBUG ===', 'background: #3b82f6; color: white; font-size: 16px; padding: 10px;');
-  console.log('%cVersion: ' + CALENDAR_VERSION, 'color: #10b981; font-weight: bold; font-size: 14px;');
-  console.log('%cDEBUG_COLORS:', 'color: #f59e0b;', DEBUG_COLORS);
-  console.log('%cSnooze Labels: "1 Tag später", "3 Tage später", etc.', 'color: #3b82f6;');
-  console.log('%cDate.UTC Fix: AKTIV', 'color: #10b981;');
-  console.log('==========================================');
+  // Debug: Component Mount
+  useEffect(() => {
+    debug.componentMount('CalendarPage');
+  }, []);
 
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<CalendarEvent[]>([]);
@@ -1782,10 +1779,12 @@ export default function CalendarPage() {
 
   // Fetch Events
   const fetchEvents = useCallback(async () => {
+    debug.info('Lade Kalender-Events...');
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
       if (!token) {
+        debug.warning('Kein Auth-Token vorhanden');
         setLoading(false);
         return;
       }
@@ -1803,9 +1802,10 @@ export default function CalendarPage() {
       if (response.data.success && response.data.events) {
         setEvents(response.data.events);
         setFilteredEvents(response.data.events);
+        debug.eventData('Kalender-Events geladen', response.data.events.length, response.data.events[0]);
       }
     } catch (err) {
-      console.error("Error fetching events:", err);
+      debug.error('Fehler beim Laden der Events', err);
     } finally {
       setLoading(false);
     }
@@ -1825,10 +1825,12 @@ export default function CalendarPage() {
       filtered = filtered.filter(e => e.type === filterType);
     }
     setFilteredEvents(filtered);
+    debug.stateChange('Filter angewendet', { severity: filterSeverity, type: filterType }, { count: filtered.length });
   }, [events, filterSeverity, filterType]);
 
   // Regenerate events
   const handleRegenerateEvents = async () => {
+    debug.userAction('Events neu generieren');
     setRefreshing(true);
     try {
       const token = localStorage.getItem("token");
@@ -1836,8 +1838,9 @@ export default function CalendarPage() {
         headers: { Authorization: `Bearer ${token}` }
       });
       await fetchEvents();
+      debug.success('Events erfolgreich regeneriert');
     } catch (err) {
-      console.error("Error regenerating events:", err);
+      debug.error('Fehler beim Regenerieren der Events', err);
     } finally {
       setRefreshing(false);
     }
@@ -1983,49 +1986,11 @@ export default function CalendarPage() {
     }
   };
 
-  // ===== DEBUG BANNER (sichtbar auf der Seite) =====
-  const showDebugBanner = true; // Auf false setzen um zu deaktivieren
-
   return (
     <>
       <Helmet>
         <title>Vertragskalender | Contract AI</title>
       </Helmet>
-
-      {/* DEBUG BANNER - SICHTBAR AUF DER SEITE! */}
-      {showDebugBanner && (
-        <div style={{
-          position: 'fixed',
-          bottom: '20px',
-          right: '20px',
-          background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-          color: 'white',
-          padding: '16px 24px',
-          borderRadius: '12px',
-          fontSize: '14px',
-          fontFamily: 'monospace',
-          zIndex: 9999,
-          boxShadow: '0 8px 32px rgba(59, 130, 246, 0.4)',
-          maxWidth: '400px',
-          lineHeight: '1.6'
-        }}>
-          <div style={{ fontWeight: 'bold', marginBottom: '8px', fontSize: '16px' }}>
-            DEBUG: {CALENDAR_VERSION}
-          </div>
-          <div style={{ fontSize: '12px', opacity: 0.9 }}>
-            <div>Stats-Farben:</div>
-            <div style={{ display: 'flex', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
-              <span style={{ background: DEBUG_COLORS.upcoming, padding: '2px 8px', borderRadius: '4px' }}>Kommend</span>
-              <span style={{ background: DEBUG_COLORS.past, padding: '2px 8px', borderRadius: '4px' }}>Vergangen</span>
-              <span style={{ background: DEBUG_COLORS.cancelable, padding: '2px 8px', borderRadius: '4px' }}>Kuendbar</span>
-              <span style={{ background: DEBUG_COLORS.autoRenewal, padding: '2px 8px', borderRadius: '4px' }}>Auto-V.</span>
-            </div>
-            <div style={{ marginTop: '8px' }}>View: {currentView} | Events: {events.length}</div>
-            <div>Snooze: 1 Tag spaeter, 3 Tage spaeter...</div>
-            <div>Date.UTC Fix: AKTIV</div>
-          </div>
-        </div>
-      )}
 
       <div className="calendar-page">
         <div className="calendar-page-content">
@@ -2092,7 +2057,7 @@ export default function CalendarPage() {
                       key={view}
                       className={`view-btn ${currentView === view ? 'active' : ''}`}
                       onClick={() => {
-                        console.log('%c[DEBUG] View-Wechsel:', 'color: #3b82f6; font-weight: bold;', view);
+                        debug.userAction('View-Wechsel', { von: currentView, zu: view });
                         setCurrentView(view);
                       }}
                     >
@@ -2183,28 +2148,28 @@ export default function CalendarPage() {
                     console.log('%c[DEBUG] Stats-Karte geklickt: upcoming', 'color: #10b981; font-weight: bold;');
                     handleStatsCardClick('upcoming');
                   }}>
-                    <div className="stat-value" style={{ color: DEBUG_COLORS.upcoming }}>{stats.upcoming}</div>
+                    <div className="stat-value" style={{ color: STAT_COLORS.upcoming }}>{stats.upcoming}</div>
                     <div className="stat-label">Kommende</div>
                   </div>
                   <div className="stat-card clickable" onClick={() => {
                     console.log('%c[DEBUG] Stats-Karte geklickt: past', 'color: #9ca3af; font-weight: bold;');
                     handleStatsCardClick('past');
                   }}>
-                    <div className="stat-value" style={{ color: DEBUG_COLORS.past }}>{stats.past}</div>
+                    <div className="stat-value" style={{ color: STAT_COLORS.past }}>{stats.past}</div>
                     <div className="stat-label">Vergangen</div>
                   </div>
                   <div className="stat-card warning clickable" onClick={() => {
                     console.log('%c[DEBUG] Stats-Karte geklickt: cancelable', 'color: #f59e0b; font-weight: bold;');
                     handleStatsCardClick('cancelable');
                   }}>
-                    <div className="stat-value" style={{ color: DEBUG_COLORS.cancelable }}>{stats.cancelable}</div>
+                    <div className="stat-value" style={{ color: STAT_COLORS.cancelable }}>{stats.cancelable}</div>
                     <div className="stat-label">Kündbar</div>
                   </div>
                   <div className="stat-card clickable" onClick={() => {
                     console.log('%c[DEBUG] Stats-Karte geklickt: autoRenewal', 'color: #3b82f6; font-weight: bold;');
                     handleStatsCardClick('autoRenewal');
                   }}>
-                    <div className="stat-value" style={{ color: DEBUG_COLORS.autoRenewal }}>{stats.autoRenewal}</div>
+                    <div className="stat-value" style={{ color: STAT_COLORS.autoRenewal }}>{stats.autoRenewal}</div>
                     <div className="stat-label">Auto-Verl.</div>
                   </div>
                 </div>
