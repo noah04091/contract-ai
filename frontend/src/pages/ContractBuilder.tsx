@@ -6,7 +6,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import html2pdf from 'html2pdf.js';
-import { useContractBuilderStore } from '../stores/contractBuilderStore';
+import { useContractBuilderStore, Block, Variable } from '../stores/contractBuilderStore';
 import {
   BuilderCanvas,
   BlockToolbar,
@@ -355,7 +355,7 @@ const ContractBuilder: React.FC = () => {
 
       // Variable-Werte als Map
       const varValues = new Map<string, string>();
-      variables.forEach((v: { name: string; value?: string | number | Date }) => {
+      variables.forEach((v: Variable) => {
         if (v.value !== undefined && v.value !== '') {
           const cleanName = v.name.replace(/^\{\{|\}\}$/g, '');
           if (v.value instanceof Date) {
@@ -389,13 +389,13 @@ const ContractBuilder: React.FC = () => {
       // Baue HTML-String aus den Block-Daten
       let htmlContent = '';
 
-      blocks.forEach((block: { type: string; content: Record<string, unknown> }) => {
+      blocks.forEach((block: Block) => {
         const content = block.content || {};
 
         switch (block.type) {
           case 'header': {
-            const title = escapeHtml(replaceVariables(content.title as string || ''));
-            const subtitle = escapeHtml(replaceVariables(content.subtitle as string || ''));
+            const title = escapeHtml(replaceVariables(content.title || ''));
+            const subtitle = escapeHtml(replaceVariables(content.subtitle || ''));
             htmlContent += `
               <div style="text-align: center; margin-bottom: 30px;">
                 <h1 style="font-size: 22pt; font-weight: 700; margin: 0 0 8px 0; color: #1a365d;">
@@ -408,8 +408,8 @@ const ContractBuilder: React.FC = () => {
           }
 
           case 'parties': {
-            const party1 = content.party1 as { role?: string; name?: string; address?: string } || {};
-            const party2 = content.party2 as { role?: string; name?: string; address?: string } || {};
+            const party1 = content.party1 || { role: '', name: '', address: '' };
+            const party2 = content.party2 || { role: '', name: '', address: '' };
             htmlContent += `
               <table style="width: 100%; margin-bottom: 25px; border-collapse: collapse;">
                 <tr>
@@ -431,10 +431,10 @@ const ContractBuilder: React.FC = () => {
           }
 
           case 'clause': {
-            const clauseNum = content.number as string || '';
-            const clauseTitle = escapeHtml(replaceVariables(content.clauseTitle as string || content.title as string || ''));
-            const body = escapeHtml(replaceVariables(content.body as string || ''));
-            const subclauses = content.subclauses as Array<{ number: string; text: string }> || [];
+            const clauseNum = content.number || '';
+            const clauseTitle = escapeHtml(replaceVariables(content.clauseTitle || content.title || ''));
+            const body = escapeHtml(replaceVariables(content.body || ''));
+            const subclauses = content.subclauses || [];
 
             htmlContent += `
               <div style="margin-bottom: 20px;">
@@ -455,7 +455,7 @@ const ContractBuilder: React.FC = () => {
           }
 
           case 'preamble': {
-            const preambleText = escapeHtml(replaceVariables(content.body as string || content.text as string || ''));
+            const preambleText = escapeHtml(replaceVariables(content.body || content.text || ''));
             htmlContent += `
               <div style="margin-bottom: 25px; padding: 15px; background: #f7fafc; border-left: 3px solid #3182ce; font-style: italic;">
                 <p style="margin: 0;">${preambleText}</p>
@@ -465,7 +465,7 @@ const ContractBuilder: React.FC = () => {
           }
 
           case 'signature': {
-            const sigFields = content.signatureFields as Array<{ label: string; showDate?: boolean; showPlace?: boolean }> || [];
+            const sigFields = content.signatureFields || [];
             if (sigFields.length > 0) {
               htmlContent += `
                 <table style="width: 100%; margin-top: 50px; border-collapse: collapse;">
@@ -499,10 +499,10 @@ const ContractBuilder: React.FC = () => {
             break;
 
           case 'logo': {
-            const logoUrl = content.logoUrl as string || content.imageUrl as string || '';
+            const logoUrl = content.logoUrl || '';
             if (logoUrl) {
-              const logoWidth = content.width as number || 150;
-              const alignment = content.alignment as string || 'center';
+              const logoWidth = content.width || 150;
+              const alignment = content.alignment || 'center';
               htmlContent += `
                 <div style="text-align: ${alignment}; margin-bottom: 20px;">
                   <img src="${logoUrl}" style="max-width: ${logoWidth}px; max-height: 100px;" />
@@ -514,7 +514,7 @@ const ContractBuilder: React.FC = () => {
 
           default: {
             // Generischer Block
-            const text = content.body as string || content.text as string;
+            const text = content.body || content.text;
             if (text) {
               htmlContent += `<p style="margin: 0 0 15px 0;">${escapeHtml(replaceVariables(text))}</p>`;
             }
