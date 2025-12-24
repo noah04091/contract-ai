@@ -1789,13 +1789,19 @@
     transform: scale(0.97);
   }
 
-  /* Hide old calendar-nav on mobile */
+  /* Hide old desktop calendar-nav on mobile */
   .calendar-nav {
     display: none;
   }
 
-  .current-month {
+  /* Hide standalone current-month (the one outside calendar-nav-row) */
+  .calendar-header > .current-month {
     display: none;
+  }
+
+  /* But show the one inside calendar-nav-row */
+  .calendar-nav-row .current-month {
+    display: block !important;
   }
 
   /* Row 2: View Switcher - Segmented Control */
