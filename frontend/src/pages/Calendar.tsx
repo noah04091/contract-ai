@@ -2,6 +2,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSwipeable } from "react-swipeable";
 import {
   AlertCircle,
   ChevronRight,
@@ -25,7 +26,9 @@ import {
   ArrowRight,
   BellOff,
   Plus,
-  EyeOff
+  EyeOff,
+  Filter,
+  SlidersHorizontal
 } from "lucide-react";
 import axios from "axios";
 import "../styles/AppleCalendar.css";
@@ -1803,7 +1806,33 @@ export default function CalendarPage() {
   const [showSnoozeModal, setShowSnoozeModal] = useState(false);
   const [snoozeEventId, setSnoozeEventId] = useState<string | null>(null);
 
+  // ===== MOBILE STATE =====
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [showBottomSheet, setShowBottomSheet] = useState(false);
+
   const EVENTS_PER_PAGE = 5;
+
+  // ===== MOBILE: Auto-detect and switch view =====
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+
+      // Auto-switch to day view on mobile, month view on desktop
+      if (mobile && currentView === 'month') {
+        setCurrentView('day');
+      } else if (!mobile && currentView === 'day' && window.innerWidth >= 1024) {
+        // Only auto-switch back on large screens
+        setCurrentView('month');
+      }
+    };
+
+    // Initial check
+    handleResize();
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [currentView]);
 
   // Fetch events on mount (uses cache if available)
   useEffect(() => {
@@ -1890,19 +1919,45 @@ export default function CalendarPage() {
     }
   };
 
-  // Navigation
-  const navigateMonth = (direction: 'prev' | 'next') => {
+  // Navigation - supports all views
+  const navigatePeriod = (direction: 'prev' | 'next') => {
     setCurrentDate(prev => {
       const newDate = new Date(prev);
-      newDate.setMonth(newDate.getMonth() + (direction === 'prev' ? -1 : 1));
+      const offset = direction === 'prev' ? -1 : 1;
+
+      switch (currentView) {
+        case 'day':
+          newDate.setDate(newDate.getDate() + offset);
+          break;
+        case 'week':
+          newDate.setDate(newDate.getDate() + (offset * 7));
+          break;
+        case 'month':
+        default:
+          newDate.setMonth(newDate.getMonth() + offset);
+          break;
+      }
       return newDate;
     });
   };
+
+  // Legacy alias for month navigation
+  const navigateMonth = (direction: 'prev' | 'next') => navigatePeriod(direction);
 
   const goToToday = () => {
     setCurrentDate(new Date());
     setSelectedDate(new Date());
   };
+
+  // ===== SWIPE HANDLERS for mobile navigation =====
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: () => navigatePeriod('next'),
+    onSwipedRight: () => navigatePeriod('prev'),
+    trackMouse: false,
+    preventScrollOnSwipe: true,
+    delta: 50, // Minimum swipe distance
+    swipeDuration: 500
+  });
 
   // Statistics - Kommende, Vergangene, Kündbar, Auto-Verlängerung
   const stats = useMemo(() => {
@@ -2048,8 +2103,16 @@ export default function CalendarPage() {
             gridTemplateColumns: '1fr 340px',
             gap: '24px'
           }}>
-            {/* Calendar Container */}
-            <div className="calendar-container" style={{ gridColumn: '1' }}>
+            {/* Calendar Container - with Swipe Support */}
+            <div className="calendar-container" style={{ gridColumn: '1' }} {...swipeHandlers}>
+              {/* Mobile Swipe Hint */}
+              {isMobile && (
+                <div className="swipe-hint">
+                  <ChevronLeft size={14} style={{ display: 'inline' }} />
+                  <span style={{ margin: '0 8px' }}>Wischen für Navigation</span>
+                  <ChevronRight size={14} style={{ display: 'inline' }} />
+                </div>
+              )}
               {/* Calendar Header */}
               <div className="calendar-header">
                 <div className="calendar-nav">
@@ -2324,6 +2387,161 @@ export default function CalendarPage() {
             </aside>
           </div>
         </div>
+
+        {/* ===== MOBILE: Bottom Sheet Toggle FAB ===== */}
+        {isMobile && (
+          <button
+            className={`mobile-filter-toggle ${showBottomSheet ? 'active' : ''}`}
+            onClick={() => setShowBottomSheet(!showBottomSheet)}
+            aria-label="Filter öffnen"
+          >
+            {showBottomSheet ? <X size={24} /> : <SlidersHorizontal size={24} />}
+          </button>
+        )}
+
+        {/* ===== MOBILE: Bottom Sheet Overlay ===== */}
+        {isMobile && (
+          <div
+            className={`bottom-sheet-overlay ${showBottomSheet ? 'visible' : ''}`}
+            onClick={() => setShowBottomSheet(false)}
+          />
+        )}
+
+        {/* ===== MOBILE: Bottom Sheet ===== */}
+        {isMobile && (
+          <div className={`bottom-sheet ${showBottomSheet ? 'visible' : ''}`}>
+            <div className="bottom-sheet-handle" />
+            <div className="bottom-sheet-header">
+              <span className="bottom-sheet-title">Übersicht & Filter</span>
+              <button className="bottom-sheet-close" onClick={() => setShowBottomSheet(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className="bottom-sheet-content">
+              {/* Stats Grid */}
+              <div className="stats-grid" style={{ marginBottom: '20px' }}>
+                <div className="stat-card clickable" onClick={() => {
+                  handleStatsCardClick('upcoming');
+                  setShowBottomSheet(false);
+                }}>
+                  <div className="stat-value" style={{ color: '#10b981' }}>{stats.upcoming}</div>
+                  <div className="stat-label">Kommende</div>
+                </div>
+                <div className="stat-card clickable" onClick={() => {
+                  handleStatsCardClick('past');
+                  setShowBottomSheet(false);
+                }}>
+                  <div className="stat-value" style={{ color: '#9ca3af' }}>{stats.past}</div>
+                  <div className="stat-label">Vergangen</div>
+                </div>
+                <div className="stat-card warning clickable" onClick={() => {
+                  handleStatsCardClick('cancelable');
+                  setShowBottomSheet(false);
+                }}>
+                  <div className="stat-value" style={{ color: '#f59e0b' }}>{stats.cancelable}</div>
+                  <div className="stat-label">Kündbar</div>
+                </div>
+                <div className="stat-card clickable" onClick={() => {
+                  handleStatsCardClick('autoRenewal');
+                  setShowBottomSheet(false);
+                }}>
+                  <div className="stat-value" style={{ color: '#3b82f6' }}>{stats.autoRenewal}</div>
+                  <div className="stat-label">Auto-Verl.</div>
+                </div>
+              </div>
+
+              {/* Urgent Events - Compact */}
+              {urgentEvents.length > 0 && (
+                <div style={{ marginBottom: '20px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                    <AlertCircle size={16} style={{ color: '#ef4444' }} />
+                    <span style={{ fontWeight: 600, fontSize: '14px' }}>Dringend ({urgentEvents.length})</span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {urgentEvents.slice(0, 3).map(event => (
+                      <div
+                        key={event.id}
+                        onClick={() => {
+                          setShowBottomSheet(false);
+                          setSelectedEvent(event);
+                          setShowQuickActions(true);
+                        }}
+                        style={{
+                          padding: '12px',
+                          background: '#f9fafb',
+                          borderRadius: '10px',
+                          borderLeft: `3px solid ${event.severity === 'critical' ? '#ef4444' : event.severity === 'warning' ? '#f59e0b' : '#3b82f6'}`,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <div style={{ fontWeight: 600, fontSize: '13px', color: '#1f2937' }}>
+                          {formatContractName(event.contractName)}
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>
+                          {event.title} • {getDaysRemaining(event.date).text}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Filters */}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                  <Filter size={16} style={{ color: '#3b82f6' }} />
+                  <span style={{ fontWeight: 600, fontSize: '14px' }}>Filter</span>
+                  {(filterSeverity !== 'all' || filterType !== 'all') && (
+                    <span style={{
+                      fontSize: '11px',
+                      background: '#3b82f6',
+                      color: 'white',
+                      padding: '2px 8px',
+                      borderRadius: '10px'
+                    }}>
+                      aktiv
+                    </span>
+                  )}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', display: 'block', marginBottom: '6px' }}>
+                      Dringlichkeit
+                    </label>
+                    <select
+                      className="filter-select"
+                      value={filterSeverity}
+                      onChange={(e) => setFilterSeverity(e.target.value)}
+                      style={{ width: '100%' }}
+                    >
+                      <option value="all">Alle</option>
+                      <option value="critical">Kritisch</option>
+                      <option value="warning">Warnung</option>
+                      <option value="info">Info</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', display: 'block', marginBottom: '6px' }}>
+                      Ereignistyp
+                    </label>
+                    <select
+                      className="filter-select"
+                      value={filterType}
+                      onChange={(e) => setFilterType(e.target.value)}
+                      style={{ width: '100%' }}
+                    >
+                      <option value="all">Alle</option>
+                      <option value="CANCEL_WINDOW_OPEN">Kündigungsfenster</option>
+                      <option value="LAST_CANCEL_DAY">Letzte Chance</option>
+                      <option value="PRICE_INCREASE">Preiserhöhung</option>
+                      <option value="AUTO_RENEWAL">Auto-Verlängerung</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modals */}
