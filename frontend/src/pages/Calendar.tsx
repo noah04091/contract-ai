@@ -24,7 +24,8 @@ import {
   Sparkles,
   ArrowRight,
   BellOff,
-  Plus
+  Plus,
+  EyeOff
 } from "lucide-react";
 import axios from "axios";
 import "../styles/AppleCalendar.css";
@@ -732,6 +733,37 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange 
                 <span>Später</span>
               </motion.button>
             </div>
+
+            {/* Dismiss Button - Separate Row */}
+            <motion.button
+              onClick={() => {
+                if (window.confirm('Möchten Sie diese Erinnerung wirklich dauerhaft ausblenden?')) {
+                  onAction("dismiss", currentEvent.id);
+                }
+              }}
+              whileHover={{ scale: 1.01, background: '#fef2f2', borderColor: '#fca5a5' }}
+              whileTap={{ scale: 0.99 }}
+              style={{
+                gridColumn: '1 / -1',
+                background: '#fff',
+                color: '#9ca3af',
+                border: '1px solid #e5e7eb',
+                padding: '10px 16px',
+                borderRadius: '8px',
+                fontWeight: 500,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                transition: 'all 0.2s ease',
+                marginTop: '4px'
+              }}
+            >
+              <EyeOff size={16} />
+              <span>Nicht mehr erinnern</span>
+            </motion.button>
           </div>
         </div>
       </motion.div>

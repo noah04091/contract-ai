@@ -17,16 +17,20 @@ router.get("/events", verifyToken, async (req, res) => {
     
     // Build filter
     const filter = { userId };
-    
+
+    // Exclude dismissed events by default
+    filter.status = { $ne: "dismissed" };
+
     if (from || to) {
       filter.date = {};
       if (from) filter.date.$gte = new Date(from);
       if (to) filter.date.$lte = new Date(to);
     }
-    
+
     if (type) filter.type = type;
     if (severity) filter.severity = severity;
-    if (status) filter.status = status;
+    // Only override status filter if explicitly requested
+    if (status && status !== 'all') filter.status = status;
     
     // Fetch events with contract details
     const events = await req.db.collection("contract_events")
