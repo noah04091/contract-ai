@@ -2445,7 +2445,7 @@
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, var(--primary-color), #10b981, #f59e0b, #8b5cf6);
+  background: linear-gradient(90deg, var(--primary-color), #10b981, #f59e0b, #60a5fa);
   opacity: 0;
   transition: opacity var(--transition-smooth);
 }
