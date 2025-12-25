@@ -36,6 +36,7 @@ export interface CalendarEvent {
     daysLeft?: number;
   };
   amount?: number;
+  isManual?: boolean;
 }
 
 interface CalendarState {

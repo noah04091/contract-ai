@@ -56,6 +56,7 @@ interface CalendarEvent {
     daysLeft?: number;
   };
   amount?: number;
+  isManual?: boolean;
 }
 
 interface ApiResponse {
@@ -472,6 +473,9 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange 
   const severityStyle = getSeverityStyle();
   const daysInfo = getDaysRemaining(currentEvent.date);
 
+  // Check if this is a manual event (no contract associated)
+  const isManualEvent = currentEvent.isManual === true || currentEvent.contractName === 'Manuelles Ereignis';
+
   return (
     <motion.div
       className="quick-actions-overlay"
@@ -506,8 +510,8 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange 
               {severityStyle.icon}
             </div>
             <div className="modal-header-text">
-              <h3>{formatContractName(currentEvent.contractName)}</h3>
-              <p>{currentEvent.title}</p>
+              <h3>{isManualEvent ? currentEvent.title : formatContractName(currentEvent.contractName)}</h3>
+              <p>{isManualEvent ? 'Manuelles Ereignis' : currentEvent.title}</p>
             </div>
           </div>
           <button className="modal-close-btn" onClick={onClose}>
@@ -604,32 +608,36 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange 
           </div>
 
           <div className="modal-actions-grid">
-            <motion.button
-              className="action-btn-premium view-contract"
-              onClick={handleViewContract}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              style={{
-                gridColumn: '1 / -1',
-                background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-                color: '#fff',
-                border: 'none',
-                padding: '14px 20px',
-                borderRadius: '12px',
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '10px',
-                cursor: 'pointer'
-              }}
-            >
-              <FileText size={18} />
-              <span>Vertrag anzeigen</span>
-              <ArrowRight size={16} className="action-arrow" />
-            </motion.button>
+            {/* Contract-based events: Show "Vertrag anzeigen" button */}
+            {!isManualEvent && (
+              <motion.button
+                className="action-btn-premium view-contract"
+                onClick={handleViewContract}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                style={{
+                  gridColumn: '1 / -1',
+                  background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '14px 20px',
+                  borderRadius: '12px',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px',
+                  cursor: 'pointer'
+                }}
+              >
+                <FileText size={18} />
+                <span>Vertrag anzeigen</span>
+                <ArrowRight size={16} className="action-arrow" />
+              </motion.button>
+            )}
 
-            {currentEvent.metadata?.suggestedAction === "cancel" && (
+            {/* Cancel button for contract events with cancel suggestion */}
+            {!isManualEvent && currentEvent.metadata?.suggestedAction === "cancel" && (
               <motion.button
                 className="action-btn-premium primary"
                 onClick={() => onAction("cancel", currentEvent.id)}
@@ -656,63 +664,69 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange 
               </motion.button>
             )}
 
-            {/* Secondary Action Buttons - Compact */}
+            {/* Secondary Action Buttons - Different for manual vs contract events */}
             <div style={{
               gridColumn: '1 / -1',
               display: 'flex',
               gap: '8px',
               marginTop: '8px'
             }}>
-              <motion.button
-                onClick={() => onAction("compare", currentEvent.id)}
-                whileHover={{ scale: 1.02, background: '#f0fdf4', borderColor: '#10b981' }}
-                whileTap={{ scale: 0.98 }}
-                style={{
-                  flex: 1,
-                  background: '#f9fafb',
-                  color: '#059669',
-                  border: '1px solid #e5e7eb',
-                  padding: '10px 12px',
-                  borderRadius: '8px',
-                  fontWeight: 500,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <TrendingUp size={16} />
-                <span>Vergleichen</span>
-              </motion.button>
+              {/* Contract-based events: Show Compare & Optimize */}
+              {!isManualEvent && (
+                <>
+                  <motion.button
+                    onClick={() => onAction("compare", currentEvent.id)}
+                    whileHover={{ scale: 1.02, background: '#f0fdf4', borderColor: '#10b981' }}
+                    whileTap={{ scale: 0.98 }}
+                    style={{
+                      flex: 1,
+                      background: '#f9fafb',
+                      color: '#059669',
+                      border: '1px solid #e5e7eb',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      fontWeight: 500,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <TrendingUp size={16} />
+                    <span>Vergleichen</span>
+                  </motion.button>
 
-              <motion.button
-                onClick={() => onAction("optimize", currentEvent.id)}
-                whileHover={{ scale: 1.02, background: '#eef2ff', borderColor: '#3b82f6' }}
-                whileTap={{ scale: 0.98 }}
-                style={{
-                  flex: 1,
-                  background: '#f9fafb',
-                  color: '#3b82f6',
-                  border: '1px solid #e5e7eb',
-                  padding: '10px 12px',
-                  borderRadius: '8px',
-                  fontWeight: 500,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <RefreshCw size={16} />
-                <span>Optimieren</span>
-              </motion.button>
+                  <motion.button
+                    onClick={() => onAction("optimize", currentEvent.id)}
+                    whileHover={{ scale: 1.02, background: '#eef2ff', borderColor: '#3b82f6' }}
+                    whileTap={{ scale: 0.98 }}
+                    style={{
+                      flex: 1,
+                      background: '#f9fafb',
+                      color: '#3b82f6',
+                      border: '1px solid #e5e7eb',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      fontWeight: 500,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <RefreshCw size={16} />
+                    <span>Optimieren</span>
+                  </motion.button>
+                </>
+              )}
 
+              {/* Snooze button - for all events */}
               <motion.button
                 onClick={() => onAction("snooze", currentEvent.id)}
                 whileHover={{ scale: 1.02, background: '#f1f5f9', borderColor: '#64748b' }}
@@ -734,8 +748,8 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange 
                   transition: 'all 0.2s ease'
                 }}
               >
-                <BellOff size={16} />
-                <span>Später</span>
+                <Bell size={16} />
+                <span>Später erinnern</span>
               </motion.button>
             </div>
 
@@ -1184,13 +1198,16 @@ function DayEventsModal({ date, events, onEventClick, onClose }: DayEventsModalP
 interface CreateEventModalProps {
   date: Date;
   onClose: () => void;
-  onEventCreated: () => void;
+  onEventCreated: (event?: CalendarEvent) => void;
 }
 
 function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalProps) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Use Zustand store for optimistic updates
+  const { addEvent } = useCalendarStore();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -1233,7 +1250,16 @@ function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalPro
       console.log('%c[DEBUG] Parsed:', 'color: #f59e0b;', { year, month, day, hours, minutes });
       console.log('%c[DEBUG] Event Date (UTC):', 'color: #10b981;', eventDate.toISOString());
 
-      await axios.post("/api/calendar/events", {
+      interface ApiEventResponse {
+        success: boolean;
+        event: {
+          _id?: string;
+          id?: string;
+          contractId?: string;
+        };
+      }
+
+      const response = await axios.post<ApiEventResponse>("/api/calendar/events", {
         title: formData.title,
         description: formData.description,
         date: eventDate.toISOString(),
@@ -1243,6 +1269,24 @@ function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalPro
         contractName: 'Manuelles Ereignis',
         isManual: true
       }, { headers: { Authorization: `Bearer ${token}` } });
+
+      // Add event directly to store (no reload needed!)
+      if (response.data.success && response.data.event) {
+        const newEvent: CalendarEvent = {
+          id: response.data.event._id?.toString() || response.data.event.id || Date.now().toString(),
+          contractId: response.data.event.contractId || '',
+          contractName: 'Manuelles Ereignis',
+          title: formData.title,
+          description: formData.description,
+          date: eventDate.toISOString(),
+          type: formData.type,
+          severity: formData.severity,
+          status: 'scheduled',
+          isManual: true
+        };
+        addEvent(newEvent);
+        console.log('%c[DEBUG] Event added to store directly!', 'background: #10b981; color: white;');
+      }
 
       onEventCreated();
       onClose();
@@ -2584,7 +2628,10 @@ export default function CalendarPage() {
           <CreateEventModal
             date={showCreateEventModal}
             onClose={() => setShowCreateEventModal(null)}
-            onEventCreated={() => fetchEvents(true)} // Force refresh after creating
+            onEventCreated={() => {
+              // Event is already added to store directly - no reload needed!
+              toast.success('Ereignis erfolgreich erstellt');
+            }}
           />
         )}
       </AnimatePresence>

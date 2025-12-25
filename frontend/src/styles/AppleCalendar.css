@@ -176,6 +176,8 @@
   font-weight: 700;
   color: var(--text-primary);
   margin: 0 4px;
+  min-width: 180px;
+  text-align: center;
 }
 
 .calendar-nav-row .today-btn {
