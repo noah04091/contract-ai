@@ -418,6 +418,26 @@
   background: var(--success);
 }
 
+/* Recurring Events Indicator */
+.event-pill.recurring {
+  position: relative;
+}
+.event-pill .recurring-icon {
+  font-size: 11px;
+  margin-left: 4px;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+.event-pill.critical .recurring-icon {
+  color: #dc2626;
+}
+.event-pill.warning .recurring-icon {
+  color: #d97706;
+}
+.event-pill.info .recurring-icon {
+  color: #3b82f6;
+}
+
 .more-events {
   font-size: 11px;
   color: var(--text-muted);

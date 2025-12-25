@@ -18,6 +18,15 @@ interface ApiResponse {
 // TYPES
 // ============================================
 
+// Recurrence Types
+export interface RecurrencePattern {
+  type: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
+  interval?: number; // Every X days/weeks/months/years
+  endDate?: string | null;
+  count?: number | null;
+  daysOfWeek?: number[] | null; // For weekly: [0-6] (Sun-Sat)
+}
+
 export interface CalendarEvent {
   id: string;
   contractId: string;
@@ -37,6 +46,11 @@ export interface CalendarEvent {
   };
   amount?: number;
   isManual?: boolean;
+  // Recurrence fields
+  recurrence?: RecurrencePattern | null;
+  isRecurringMaster?: boolean;
+  isRecurringInstance?: boolean;
+  masterEventId?: string | null;
 }
 
 interface CalendarState {

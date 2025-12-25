@@ -9,6 +9,63 @@ const { generateICSFeed, generateCalendarLinks } = require("../utils/icsGenerato
 
 const router = express.Router();
 
+/**
+ * Helper: Generiert alle Instanzen eines wiederkehrenden Events im Zeitraum
+ */
+function generateRecurrenceInstances(masterEvent, fromDate, toDate) {
+  const instances = [];
+  const recurrence = masterEvent.recurrence;
+
+  if (!recurrence || !recurrence.type || recurrence.type === 'none') {
+    return instances;
+  }
+
+  const startDate = new Date(masterEvent.date);
+  const endDate = recurrence.endDate ? new Date(recurrence.endDate) : toDate;
+  const maxOccurrences = recurrence.count || 365; // Safety limit
+
+  let currentDate = new Date(startDate);
+  let occurrenceCount = 0;
+
+  while (currentDate <= endDate && currentDate <= toDate && occurrenceCount < maxOccurrences) {
+    // Skip the master event itself (it's already in the list)
+    if (currentDate.getTime() !== startDate.getTime()) {
+      // Only add if within the requested range
+      if (currentDate >= fromDate && currentDate <= toDate) {
+        instances.push({
+          ...masterEvent,
+          _id: `${masterEvent._id}_${currentDate.toISOString().split('T')[0]}`, // Virtual ID
+          date: new Date(currentDate),
+          isRecurringInstance: true,
+          masterEventId: masterEvent._id,
+          occurrenceIndex: occurrenceCount
+        });
+      }
+    }
+
+    // Calculate next occurrence
+    occurrenceCount++;
+    switch (recurrence.type) {
+      case 'daily':
+        currentDate.setDate(currentDate.getDate() + (recurrence.interval || 1));
+        break;
+      case 'weekly':
+        currentDate.setDate(currentDate.getDate() + (7 * (recurrence.interval || 1)));
+        break;
+      case 'monthly':
+        currentDate.setMonth(currentDate.getMonth() + (recurrence.interval || 1));
+        break;
+      case 'yearly':
+        currentDate.setFullYear(currentDate.getFullYear() + (recurrence.interval || 1));
+        break;
+      default:
+        return instances; // Unknown type, stop
+    }
+  }
+
+  return instances;
+}
+
 // GET /api/calendar/events - Alle Events im Zeitraum abrufen
 router.get("/events", verifyToken, async (req, res) => {
   try {
@@ -49,8 +106,24 @@ router.get("/events", verifyToken, async (req, res) => {
       ])
       .toArray();
     
+    // Parse date range for recurrence expansion
+    const fromDate = from ? new Date(from) : new Date();
+    const toDate = to ? new Date(to) : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+
+    // Expand recurring events
+    let allEvents = [...events];
+    for (const event of events) {
+      if (event.isRecurringMaster && event.recurrence) {
+        const instances = generateRecurrenceInstances(event, fromDate, toDate);
+        allEvents = [...allEvents, ...instances];
+      }
+    }
+
+    // Sort all events by date
+    allEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
+
     // Transform for frontend
-    const transformedEvents = events.map(event => ({
+    const transformedEvents = allEvents.map(event => ({
       id: event._id.toString(),
       contractId: event.contractId?.toString(),
       contractName: event.contract?.name || (event.isManual ? event.title : "Unbekannter Vertrag"),
@@ -64,9 +137,14 @@ router.get("/events", verifyToken, async (req, res) => {
       provider: event.metadata?.provider || event.contract?.provider,
       amount: event.contract?.amount,
       suggestedAction: event.metadata?.suggestedAction,
-      isManual: event.isManual === true // Explizit boolean
+      isManual: event.isManual === true, // Explizit boolean
+      // Recurrence fields for frontend
+      recurrence: event.recurrence || null,
+      isRecurringMaster: event.isRecurringMaster || false,
+      isRecurringInstance: event.isRecurringInstance || false,
+      masterEventId: event.masterEventId?.toString() || null
     }));
-    
+
     res.json({
       success: true,
       events: transformedEvents,
@@ -162,7 +240,7 @@ router.patch("/events/:eventId", verifyToken, async (req, res) => {
   try {
     const eventId = new ObjectId(req.params.eventId);
     const userId = new ObjectId(req.user.userId);
-    const { status, notes, snoozeDays, date, title, description, type, severity } = req.body;
+    const { status, notes, snoozeDays, date, title, description, type, severity, recurrence, deleteRecurrence } = req.body;
     
     // Verify event ownership
     const event = await req.db.collection("contract_events").findOne({
@@ -204,6 +282,27 @@ router.patch("/events/:eventId", verifyToken, async (req, res) => {
     if (type !== undefined) updateData.type = type;
     if (severity !== undefined) updateData.severity = severity;
     if (notes !== undefined) updateData.notes = notes;
+
+    // ✅ Recurrence-Updates
+    if (deleteRecurrence) {
+      // Remove recurrence from event
+      updateData.recurrence = null;
+      updateData.isRecurringMaster = false;
+    } else if (recurrence !== undefined) {
+      if (recurrence && recurrence.type && recurrence.type !== 'none') {
+        updateData.recurrence = {
+          type: recurrence.type,
+          interval: recurrence.interval || 1,
+          endDate: recurrence.endDate ? new Date(recurrence.endDate) : null,
+          count: recurrence.count || null,
+          daysOfWeek: recurrence.daysOfWeek || null
+        };
+        updateData.isRecurringMaster = true;
+      } else {
+        updateData.recurrence = null;
+        updateData.isRecurringMaster = false;
+      }
+    }
 
     // ✅ Vertrag zuordnen bei manuellen Events
     if (req.body.contractId !== undefined) {
@@ -253,7 +352,7 @@ router.patch("/events/:eventId", verifyToken, async (req, res) => {
 router.post("/events", verifyToken, async (req, res) => {
   try {
     const userId = new ObjectId(req.user.userId);
-    const { contractId, title, description, date, type, severity, notes } = req.body;
+    const { contractId, title, description, date, type, severity, notes, recurrence } = req.body;
 
     // Validate required fields
     if (!title || !date) {
@@ -290,6 +389,18 @@ router.post("/events", verifyToken, async (req, res) => {
       };
     }
 
+    // Recurrence validation
+    let recurrenceData = null;
+    if (recurrence && recurrence.type && recurrence.type !== 'none') {
+      recurrenceData = {
+        type: recurrence.type, // 'daily', 'weekly', 'monthly', 'yearly'
+        interval: recurrence.interval || 1, // Every X days/weeks/months/years
+        endDate: recurrence.endDate ? new Date(recurrence.endDate) : null,
+        count: recurrence.count || null, // Number of occurrences
+        daysOfWeek: recurrence.daysOfWeek || null // For weekly: [0-6] (Sun-Sat)
+      };
+    }
+
     // Create new event
     const newEvent = {
       userId,
@@ -306,6 +417,9 @@ router.post("/events", verifyToken, async (req, res) => {
       isIndividualReminder: !eventContractId,
       isManual: !eventContractId, // Für Frontend-Logik
       metadata,
+      // Recurrence fields
+      recurrence: recurrenceData,
+      isRecurringMaster: !!recurrenceData, // This is the master event
       createdAt: new Date(),
       updatedAt: new Date()
     };
