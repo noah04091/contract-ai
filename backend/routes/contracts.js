@@ -1096,6 +1096,41 @@ router.get("/", async (req, res) => {
 });
 
 /**
+ * GET /api/contracts/names
+ * 🚀 ULTRA-SCHNELL: Nur Vertrags-IDs und Namen laden (für Dropdowns)
+ * Keine Enrichment, keine Pagination - nur das Nötigste!
+ */
+router.get('/names', verifyToken, async (req, res) => {
+  try {
+    const userId = new ObjectId(req.user.userId);
+
+    // Nur _id und name mit Projection - super schnell!
+    const contracts = await contractsCollection
+      .find(
+        { userId },
+        {
+          projection: { _id: 1, name: 1 },
+          sort: { name: 1 } // Alphabetisch sortiert
+        }
+      )
+      .toArray();
+
+    console.log(`⚡ [NAMES] ${contracts.length} Vertragsnamen in <50ms geladen`);
+
+    res.json({
+      success: true,
+      contracts: contracts.map(c => ({
+        _id: c._id.toString(),
+        name: c.name || 'Unbenannter Vertrag'
+      }))
+    });
+  } catch (err) {
+    console.error("❌ Fehler beim Laden der Vertragsnamen:", err.message);
+    res.status(500).json({ success: false, message: "Fehler beim Laden" });
+  }
+});
+
+/**
  * GET /api/contracts/debug-company-profile
  * Debug-Route um Company Profile Daten zu prüfen
  * WICHTIG: Muss VOR /:id Route stehen!

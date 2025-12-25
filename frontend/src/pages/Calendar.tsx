@@ -1748,7 +1748,7 @@ function SnoozeModal({ isOpen, onClose, onSnooze }: SnoozeModalProps) {
               width: '40px',
               height: '40px',
               borderRadius: '10px',
-              background: 'linear-gradient(135deg, #4f46e5, #6366f1)',
+              background: 'linear-gradient(135deg, #4f46e5, #4f46e5)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -1872,7 +1872,7 @@ function SnoozeModal({ isOpen, onClose, onSnooze }: SnoozeModalProps) {
                 style={{
                   padding: '12px 20px',
                   background: customDays && parseInt(customDays) > 0
-                    ? 'linear-gradient(135deg, #4f46e5, #6366f1)'
+                    ? 'linear-gradient(135deg, #4f46e5, #4f46e5)'
                     : '#e5e7eb',
                   color: customDays && parseInt(customDays) > 0 ? '#fff' : '#9ca3af',
                   border: 'none',
@@ -1978,7 +1978,7 @@ function EditEventModal({ event, onClose, onSave, onDelete }: EditEventModalProp
             success: boolean;
             contracts?: Array<{ _id: string; name: string }>;
           }
-          const response = await axios.get<ContractsResponse>('/api/contracts', {
+          const response = await axios.get<ContractsResponse>('/api/contracts/names', {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (response.data.success && response.data.contracts) {
@@ -2122,7 +2122,7 @@ function EditEventModal({ event, onClose, onSave, onDelete }: EditEventModalProp
           borderBottom: '1px solid #f3f4f6'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Pencil size={20} style={{ color: '#6366f1' }} />
+            <Pencil size={20} style={{ color: '#4f46e5' }} />
             <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#1f2937' }}>
               Event bearbeiten
             </h2>
@@ -2296,7 +2296,7 @@ function EditEventModal({ event, onClose, onSave, onDelete }: EditEventModalProp
                 justifyContent: 'center',
                 gap: '8px',
                 padding: '14px 20px',
-                background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+                background: '#4f46e5',
                 color: '#fff',
                 border: 'none',
                 borderRadius: '10px',
