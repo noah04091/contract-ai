@@ -4,7 +4,7 @@
 const express = require("express");
 const router = express.Router();
 const Contract = require("../models/Contract");
-const xlsx = require("xlsx");
+const ExcelJS = require("exceljs");
 const { ObjectId } = require("mongodb");
 
 // Middleware: Require authentication
@@ -56,114 +56,128 @@ router.get("/export-excel", requireAuth, requireEnterprisePlan, async (req, res)
       return res.status(404).json({ error: "Keine Verträge gefunden" });
     }
 
-    // Daten für Excel aufbereiten
-    const excelData = contracts.map((contract, index) => {
-      // Helper: Sicherer Zugriff auf nested Felder
-      const getName = () => contract.name || contract.title || "Unbenannt";
-      const getType = () => contract.analysis?.contractType || contract.contractType || "-";
-      const getProvider = () => {
-        if (typeof contract.provider === "string") return contract.provider;
-        if (contract.provider && contract.provider.name) return contract.provider.name;
-        if (contract.analysis?.parties?.provider) return contract.analysis.parties.provider;
-        return "-";
-      };
-      const getAmount = () => {
-        const amount = contract.paymentAmount || contract.amount || contract.baseAmount;
-        if (!amount) return "-";
-        return `${parseFloat(amount).toFixed(2)} €`;
-      };
-      const getFrequency = () => {
-        const freq = contract.paymentFrequency;
-        const map = {
-          monthly: "Monatlich",
-          yearly: "Jährlich",
-          weekly: "Wöchentlich",
-          quarterly: "Quartalsweise"
-        };
-        return map[freq] || freq || "-";
-      };
-      const getStatus = () => {
-        const status = contract.status;
-        const map = {
-          active: "Aktiv",
-          expired: "Abgelaufen",
-          cancelled: "Gekündigt",
-          pending: "Ausstehend"
-        };
-        return map[status] || status || "-";
-      };
-      const getFolder = () => contract.folderId?.name || "Keine Zuordnung";
-      const formatDate = (date) => {
-        if (!date) return "-";
-        try {
-          return new Date(date).toLocaleDateString("de-DE");
-        } catch {
-          return "-";
-        }
-      };
+    // ExcelJS Workbook erstellen
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'Contract AI';
+    workbook.created = new Date();
 
-      return {
-        "#": index + 1,
-        "Vertragsname": getName(),
-        "Vertragsart": getType(),
-        "Anbieter": getProvider(),
-        "Status": getStatus(),
-        "Ordner": getFolder(),
-        "Betrag": getAmount(),
-        "Häufigkeit": getFrequency(),
-        "Laufzeit": contract.laufzeit || "-",
-        "Kündigungsfrist": contract.kuendigung || "-",
-        "Ablaufdatum": formatDate(contract.expiryDate),
-        "Vertragsnummer": contract.contractNumber || "-",
-        "Kundennummer": contract.customerNumber || "-",
-        "Vertragsscore": contract.contractScore ? `${contract.contractScore}/100` : "-",
-        "Risiko-Score": contract.legalPulse?.riskScore ? `${contract.legalPulse.riskScore}/100` : "-",
-        "Health-Score": contract.legalPulse?.healthScore ? `${contract.legalPulse.healthScore}/100` : "-",
-        "Analysiert": contract.analyzed ? "Ja" : "Nein",
-        "Hochgeladen am": formatDate(contract.uploadedAt),
-        "Zahlungsstatus": contract.paymentStatus === "paid" ? "Bezahlt" : contract.paymentStatus === "unpaid" ? "Offen" : "-",
-        "Nächste Zahlung": formatDate(contract.paymentDueDate),
-        "Auto-Verlängerung": contract.autoRenewMonths ? `${contract.autoRenewMonths} Monate` : "-",
-        "Notizen": contract.notes || "-"
-      };
+    const worksheet = workbook.addWorksheet('Verträge', {
+      properties: { tabColor: { argb: '3b82f6' } }
     });
 
-    // Excel-Arbeitsmappe erstellen
-    const worksheet = xlsx.utils.json_to_sheet(excelData);
-
-    // Spaltenbreiten optimieren
-    const columnWidths = [
-      { wch: 5 },   // #
-      { wch: 30 },  // Vertragsname
-      { wch: 20 },  // Vertragsart
-      { wch: 25 },  // Anbieter
-      { wch: 12 },  // Status
-      { wch: 20 },  // Ordner
-      { wch: 15 },  // Betrag
-      { wch: 15 },  // Häufigkeit
-      { wch: 15 },  // Laufzeit
-      { wch: 15 },  // Kündigungsfrist
-      { wch: 15 },  // Ablaufdatum
-      { wch: 15 },  // Vertragsnummer
-      { wch: 15 },  // Kundennummer
-      { wch: 15 },  // Vertragsscore
-      { wch: 15 },  // Risiko-Score
-      { wch: 15 },  // Health-Score
-      { wch: 12 },  // Analysiert
-      { wch: 15 },  // Hochgeladen am
-      { wch: 15 },  // Zahlungsstatus
-      { wch: 15 },  // Nächste Zahlung
-      { wch: 18 },  // Auto-Verlängerung
-      { wch: 30 }   // Notizen
+    // Spalten definieren mit Breiten
+    worksheet.columns = [
+      { header: '#', key: 'index', width: 5 },
+      { header: 'Vertragsname', key: 'name', width: 30 },
+      { header: 'Vertragsart', key: 'type', width: 20 },
+      { header: 'Anbieter', key: 'provider', width: 25 },
+      { header: 'Status', key: 'status', width: 12 },
+      { header: 'Ordner', key: 'folder', width: 20 },
+      { header: 'Betrag', key: 'amount', width: 15 },
+      { header: 'Häufigkeit', key: 'frequency', width: 15 },
+      { header: 'Laufzeit', key: 'laufzeit', width: 15 },
+      { header: 'Kündigungsfrist', key: 'kuendigung', width: 15 },
+      { header: 'Ablaufdatum', key: 'expiryDate', width: 15 },
+      { header: 'Vertragsnummer', key: 'contractNumber', width: 15 },
+      { header: 'Kundennummer', key: 'customerNumber', width: 15 },
+      { header: 'Vertragsscore', key: 'contractScore', width: 15 },
+      { header: 'Risiko-Score', key: 'riskScore', width: 15 },
+      { header: 'Health-Score', key: 'healthScore', width: 15 },
+      { header: 'Analysiert', key: 'analyzed', width: 12 },
+      { header: 'Hochgeladen am', key: 'uploadedAt', width: 15 },
+      { header: 'Zahlungsstatus', key: 'paymentStatus', width: 15 },
+      { header: 'Nächste Zahlung', key: 'paymentDueDate', width: 15 },
+      { header: 'Auto-Verlängerung', key: 'autoRenew', width: 18 },
+      { header: 'Notizen', key: 'notes', width: 30 }
     ];
-    worksheet["!cols"] = columnWidths;
 
-    // Arbeitsmappe erstellen
-    const workbook = xlsx.utils.book_new();
-    xlsx.utils.book_append_sheet(workbook, worksheet, "Verträge");
+    // Header-Stil
+    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFF' } };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: '3b82f6' }
+    };
+    worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
+
+    // Helper-Funktionen
+    const formatDate = (date) => {
+      if (!date) return "-";
+      try {
+        return new Date(date).toLocaleDateString("de-DE");
+      } catch {
+        return "-";
+      }
+    };
+
+    const getProvider = (contract) => {
+      if (typeof contract.provider === "string") return contract.provider;
+      if (contract.provider && contract.provider.name) return contract.provider.name;
+      if (contract.analysis?.parties?.provider) return contract.analysis.parties.provider;
+      return "-";
+    };
+
+    const getAmount = (contract) => {
+      const amount = contract.paymentAmount || contract.amount || contract.baseAmount;
+      if (!amount) return "-";
+      return `${parseFloat(amount).toFixed(2)} €`;
+    };
+
+    const frequencyMap = {
+      monthly: "Monatlich",
+      yearly: "Jährlich",
+      weekly: "Wöchentlich",
+      quarterly: "Quartalsweise"
+    };
+
+    const statusMap = {
+      active: "Aktiv",
+      expired: "Abgelaufen",
+      cancelled: "Gekündigt",
+      pending: "Ausstehend"
+    };
+
+    // Daten hinzufügen
+    contracts.forEach((contract, index) => {
+      worksheet.addRow({
+        index: index + 1,
+        name: contract.name || contract.title || "Unbenannt",
+        type: contract.analysis?.contractType || contract.contractType || "-",
+        provider: getProvider(contract),
+        status: statusMap[contract.status] || contract.status || "-",
+        folder: contract.folderId?.name || "Keine Zuordnung",
+        amount: getAmount(contract),
+        frequency: frequencyMap[contract.paymentFrequency] || contract.paymentFrequency || "-",
+        laufzeit: contract.laufzeit || "-",
+        kuendigung: contract.kuendigung || "-",
+        expiryDate: formatDate(contract.expiryDate),
+        contractNumber: contract.contractNumber || "-",
+        customerNumber: contract.customerNumber || "-",
+        contractScore: contract.contractScore ? `${contract.contractScore}/100` : "-",
+        riskScore: contract.legalPulse?.riskScore ? `${contract.legalPulse.riskScore}/100` : "-",
+        healthScore: contract.legalPulse?.healthScore ? `${contract.legalPulse.healthScore}/100` : "-",
+        analyzed: contract.analyzed ? "Ja" : "Nein",
+        uploadedAt: formatDate(contract.uploadedAt),
+        paymentStatus: contract.paymentStatus === "paid" ? "Bezahlt" : contract.paymentStatus === "unpaid" ? "Offen" : "-",
+        paymentDueDate: formatDate(contract.paymentDueDate),
+        autoRenew: contract.autoRenewMonths ? `${contract.autoRenewMonths} Monate` : "-",
+        notes: contract.notes || "-"
+      });
+    });
+
+    // Alternating row colors für bessere Lesbarkeit
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber > 1 && rowNumber % 2 === 0) {
+        row.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'F3F4F6' }
+        };
+      }
+    });
 
     // Excel-Buffer generieren
-    const excelBuffer = xlsx.write(workbook, { type: "buffer", bookType: "xlsx" });
+    const excelBuffer = await workbook.xlsx.writeBuffer();
 
     // Dateinamen mit Datum generieren
     const timestamp = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
