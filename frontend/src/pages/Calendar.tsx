@@ -28,7 +28,10 @@ import {
   Plus,
   EyeOff,
   Filter,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Pencil,
+  Trash2,
+  Save
 } from "lucide-react";
 import axios from "axios";
 import "../styles/AppleCalendar.css";
@@ -388,9 +391,10 @@ interface QuickActionsModalProps {
   onAction: (action: string, eventId: string) => void;
   onClose: () => void;
   onEventChange?: (event: CalendarEvent) => void; // Callback when navigating to different event
+  onEdit?: (event: CalendarEvent) => void; // Callback to open edit modal
 }
 
-function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange }: QuickActionsModalProps) {
+function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange, onEdit }: QuickActionsModalProps) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [currentIndex, setCurrentIndex] = useState(() => {
     if (allEvents && allEvents.length > 1) {
@@ -726,6 +730,37 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange 
                 </>
               )}
 
+              {/* Edit button - for all events */}
+              {onEdit && (
+                <motion.button
+                  onClick={() => {
+                    onEdit(currentEvent);
+                    onClose();
+                  }}
+                  whileHover={{ scale: 1.02, background: '#fef3c7', borderColor: '#f59e0b' }}
+                  whileTap={{ scale: 0.98 }}
+                  style={{
+                    flex: 1,
+                    background: '#f9fafb',
+                    color: '#d97706',
+                    border: '1px solid #e5e7eb',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    fontWeight: 500,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <Pencil size={16} />
+                  <span>Bearbeiten</span>
+                </motion.button>
+              )}
+
               {/* Snooze button - for all events */}
               <motion.button
                 onClick={() => onAction("snooze", currentEvent.id)}
@@ -749,7 +784,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange 
                 }}
               >
                 <Bell size={16} />
-                <span>Später erinnern</span>
+                <span>Erinnern</span>
               </motion.button>
             </div>
 
@@ -1650,6 +1685,8 @@ interface SnoozeModalProps {
 
 function SnoozeModal({ isOpen, onClose, onSnooze }: SnoozeModalProps) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [customDays, setCustomDays] = useState('');
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -1659,18 +1696,22 @@ function SnoozeModal({ isOpen, onClose, onSnooze }: SnoozeModalProps) {
 
   if (!isOpen) return null;
 
-  // ===== DEBUG: Snooze Options =====
-  console.log('%c[DEBUG] SnoozeModal geladen', 'color: #3b82f6; font-weight: bold;');
-
-  const snoozeOptions = [
-    { days: 1, label: '1 Tag später', icon: '📅', description: 'Erinnerung um 1 Tag verschieben' },
-    { days: 3, label: '3 Tage später', icon: '📆', description: 'Erinnerung um 3 Tage verschieben' },
-    { days: 7, label: '1 Woche später', icon: '🗓️', description: 'Erinnerung um 7 Tage verschieben' },
-    { days: 14, label: '2 Wochen später', icon: '📋', description: 'Erinnerung um 14 Tage verschieben' },
-    { days: 30, label: '1 Monat später', icon: '📁', description: 'Erinnerung um 30 Tage verschieben' },
+  // 4 Preset-Optionen wie im Screenshot
+  const snoozePresets = [
+    { days: 7, label: '7 Tage' },
+    { days: 14, label: '14 Tage' },
+    { days: 30, label: '1 Monat' },
+    { days: 365, label: '1 Jahr' }
   ];
 
-  console.log('%c[DEBUG] Snooze Labels:', 'color: #f59e0b;', snoozeOptions.map(o => o.label));
+  const handleCustomSnooze = () => {
+    const days = parseInt(customDays);
+    if (days > 0) {
+      onSnooze(days);
+      setCustomDays('');
+      setShowCustomInput(false);
+    }
+  };
 
   return (
     <motion.div
@@ -1679,110 +1720,195 @@ function SnoozeModal({ isOpen, onClose, onSnooze }: SnoozeModalProps) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={onClose}
-      style={{ padding: isMobile ? 0 : '40px', zIndex: 1002 }}
+      style={{ padding: isMobile ? '16px' : '40px', zIndex: 1002 }}
     >
       <motion.div
-        className="premium-modal"
         initial={{ scale: 0.95, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.95, opacity: 0, y: 20 }}
         onClick={(e) => e.stopPropagation()}
         style={{
-          maxWidth: isMobile ? '100%' : '420px',
-          width: isMobile ? '100%' : '420px',
+          width: isMobile ? '100%' : '400px',
+          maxWidth: '100%',
           background: '#ffffff',
-          borderRadius: isMobile ? '20px 20px 0 0' : '20px',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)',
+          borderRadius: '16px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
           overflow: 'hidden'
         }}
       >
         {/* Header */}
         <div style={{
-          padding: isMobile ? '20px' : '24px',
-          borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
-          background: 'linear-gradient(135deg, rgba(71, 85, 105, 0.08), rgba(100, 116, 139, 0.04))',
+          padding: '20px 24px',
+          borderBottom: '1px solid #f3f4f6',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{
-              width: '44px',
-              height: '44px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #475569, #64748b)',
+              width: '40px',
+              height: '40px',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #4f46e5, #6366f1)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <BellOff size={22} style={{ color: '#fff' }} />
+              <Clock size={20} style={{ color: '#fff' }} />
             </div>
             <div>
-              <h2 style={{ margin: 0, fontSize: isMobile ? '18px' : '20px', fontWeight: 700, color: '#1f2937' }}>
+              <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#1f2937' }}>
                 Später erinnern
               </h2>
               <p style={{ margin: '2px 0 0 0', fontSize: '13px', color: '#6b7280' }}>
-                Wann sollen wir Sie erinnern?
+                Erinnerung verschieben um:
               </p>
             </div>
           </div>
-          <motion.button
+          <button
             onClick={onClose}
-            whileHover={{ scale: 1.1, rotate: 90 }}
-            whileTap={{ scale: 0.9 }}
             style={{
-              background: 'rgba(0, 0, 0, 0.05)',
+              background: 'none',
               border: 'none',
-              borderRadius: '50%',
-              width: '36px',
-              height: '36px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              padding: '4px',
+              color: '#9ca3af'
             }}
           >
             <X size={20} />
-          </motion.button>
+          </button>
         </div>
 
-        {/* Options */}
-        <div style={{ padding: isMobile ? '16px' : '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {snoozeOptions.map((option) => (
+        {/* Preset Buttons - 2x2 Grid */}
+        <div style={{ padding: '20px 24px' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '12px',
+            marginBottom: '16px'
+          }}>
+            {snoozePresets.map((preset) => (
+              <motion.button
+                key={preset.days}
+                onClick={() => onSnooze(preset.days)}
+                whileHover={{ scale: 1.03, borderColor: '#4f46e5' }}
+                whileTap={{ scale: 0.97 }}
+                style={{
+                  padding: '16px',
+                  background: '#f9fafb',
+                  border: '2px solid #e5e7eb',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  color: '#1f2937',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                {preset.label}
+              </motion.button>
+            ))}
+          </div>
+
+          {/* Individuell Option */}
+          {!showCustomInput ? (
             <motion.button
-              key={option.days}
-              onClick={() => onSnooze(option.days)}
-              whileHover={{ scale: 1.02, x: 5 }}
+              onClick={() => setShowCustomInput(true)}
+              whileHover={{ scale: 1.02, background: '#f3f4f6' }}
               whileTap={{ scale: 0.98 }}
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '14px',
-                padding: '16px',
-                background: '#f9fafb',
-                border: '1px solid #e5e7eb',
+                width: '100%',
+                padding: '14px',
+                background: '#fff',
+                border: '2px dashed #d1d5db',
                 borderRadius: '12px',
                 cursor: 'pointer',
-                textAlign: 'left',
+                fontSize: '14px',
+                fontWeight: 500,
+                color: '#6b7280',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
                 transition: 'all 0.2s ease'
               }}
             >
-              <span style={{ fontSize: '24px' }}>{option.icon}</span>
-              <div style={{ flex: 1 }}>
-                <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: '#1f2937' }}>
-                  {option.label}
-                </h3>
-                <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#9ca3af' }}>
-                  {option.description}
-                </p>
-              </div>
-              <ChevronRight size={18} style={{ color: '#9ca3af' }} />
+              <Plus size={18} />
+              Individuell
             </motion.button>
-          ))}
+          ) : (
+            <div style={{
+              display: 'flex',
+              gap: '10px',
+              alignItems: 'center'
+            }}>
+              <input
+                type="number"
+                min="1"
+                value={customDays}
+                onChange={(e) => setCustomDays(e.target.value)}
+                placeholder="Anzahl Tage"
+                autoFocus
+                style={{
+                  flex: 1,
+                  padding: '12px 14px',
+                  border: '2px solid #4f46e5',
+                  borderRadius: '10px',
+                  fontSize: '14px',
+                  outline: 'none'
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleCustomSnooze();
+                  if (e.key === 'Escape') {
+                    setShowCustomInput(false);
+                    setCustomDays('');
+                  }
+                }}
+              />
+              <motion.button
+                onClick={handleCustomSnooze}
+                disabled={!customDays || parseInt(customDays) <= 0}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                style={{
+                  padding: '12px 20px',
+                  background: customDays && parseInt(customDays) > 0
+                    ? 'linear-gradient(135deg, #4f46e5, #6366f1)'
+                    : '#e5e7eb',
+                  color: customDays && parseInt(customDays) > 0 ? '#fff' : '#9ca3af',
+                  border: 'none',
+                  borderRadius: '10px',
+                  fontWeight: 600,
+                  cursor: customDays && parseInt(customDays) > 0 ? 'pointer' : 'not-allowed',
+                  fontSize: '14px'
+                }}
+              >
+                OK
+              </motion.button>
+              <motion.button
+                onClick={() => {
+                  setShowCustomInput(false);
+                  setCustomDays('');
+                }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                style={{
+                  padding: '12px',
+                  background: '#f3f4f6',
+                  color: '#6b7280',
+                  border: 'none',
+                  borderRadius: '10px',
+                  cursor: 'pointer'
+                }}
+              >
+                <X size={18} />
+              </motion.button>
+            </div>
+          )}
         </div>
 
         {/* Cancel Button */}
-        <div style={{ padding: '0 20px 20px 20px' }}>
+        <div style={{ padding: '0 24px 20px 24px' }}>
           <motion.button
             onClick={onClose}
             whileHover={{ scale: 1.02 }}
@@ -1801,6 +1927,406 @@ function SnoozeModal({ isOpen, onClose, onSnooze }: SnoozeModalProps) {
           >
             Abbrechen
           </motion.button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ========== Edit Event Modal (wie im Screenshot) ==========
+interface EditEventModalProps {
+  event: CalendarEvent;
+  onClose: () => void;
+  onSave: (updatedEvent: CalendarEvent) => void;
+  onDelete: (eventId: string) => void;
+}
+
+interface SimpleContract {
+  _id: string;
+  name: string;
+}
+
+function EditEventModal({ event, onClose, onSave, onDelete }: EditEventModalProps) {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [saving, setSaving] = useState(false);
+  const [contracts, setContracts] = useState<SimpleContract[]>([]);
+  const [loadingContracts, setLoadingContracts] = useState(false);
+  const [formData, setFormData] = useState({
+    title: event.title || '',
+    description: event.description || '',
+    date: event.date ? event.date.split('T')[0] : formatLocalDate(new Date()),
+    time: event.date ? new Date(event.date).toTimeString().slice(0, 5) : '09:00',
+    severity: event.severity || 'info' as 'info' | 'warning' | 'critical',
+    notes: '',
+    contractId: event.contractId || '',
+    contractName: event.contractName || ''
+  });
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Fetch contracts for dropdown (nur bei manuellen Events)
+  useEffect(() => {
+    if (event.isManual) {
+      const fetchContracts = async () => {
+        setLoadingContracts(true);
+        try {
+          const token = localStorage.getItem('token');
+          const response = await axios.get('/api/contracts', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (response.data.success && response.data.contracts) {
+            setContracts(response.data.contracts.map((c: { _id: string; name: string }) => ({
+              _id: c._id,
+              name: c.name
+            })));
+          }
+        } catch (err) {
+          console.error('Error fetching contracts:', err);
+        } finally {
+          setLoadingContracts(false);
+        }
+      };
+      fetchContracts();
+    }
+  }, [event.isManual]);
+
+  const handleSave = async () => {
+    if (!formData.title.trim()) {
+      alert('Bitte geben Sie einen Titel ein');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const token = localStorage.getItem("token");
+      const [year, month, day] = formData.date.split('-').map(Number);
+      const [hours, minutes] = formData.time.split(':').map(Number);
+      const eventDate = new Date(Date.UTC(year, month - 1, day, hours, minutes, 0));
+
+      // Include contractId if assigned
+      const updateData: Record<string, unknown> = {
+        title: formData.title,
+        description: formData.description,
+        date: eventDate.toISOString(),
+        severity: formData.severity,
+        notes: formData.notes
+      };
+
+      // If a contract was assigned, include it
+      if (formData.contractId) {
+        updateData.contractId = formData.contractId;
+        updateData.contractName = formData.contractName;
+      }
+
+      await axios.put(`/api/calendar/events/${event.id}`, updateData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      // Create updated event object
+      const updatedEvent: CalendarEvent = {
+        ...event,
+        title: formData.title,
+        description: formData.description,
+        date: eventDate.toISOString(),
+        severity: formData.severity,
+        contractId: formData.contractId || event.contractId,
+        contractName: formData.contractName || event.contractName,
+        // If contract was assigned, it's no longer manual
+        isManual: formData.contractId ? false : event.isManual
+      };
+
+      onSave(updatedEvent);
+      onClose();
+    } catch (err) {
+      console.error("Error updating event:", err);
+      alert('Fehler beim Speichern des Ereignisses');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm('Möchten Sie dieses Ereignis wirklich löschen?')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(`/api/calendar/events/${event.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      onDelete(event.id);
+      onClose();
+    } catch (err) {
+      console.error("Error deleting event:", err);
+      alert('Fehler beim Löschen des Ereignisses');
+    }
+  };
+
+  const inputStyle = {
+    width: '100%',
+    padding: '12px 14px',
+    border: '1px solid #e5e7eb',
+    borderRadius: '10px',
+    fontSize: '14px',
+    outline: 'none',
+    transition: 'border-color 0.2s ease',
+    boxSizing: 'border-box' as const
+  };
+
+  const labelStyle = {
+    display: 'block',
+    fontSize: '13px',
+    fontWeight: 600,
+    color: '#374151',
+    marginBottom: '6px'
+  };
+
+  return (
+    <motion.div
+      className="quick-actions-overlay"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+      style={{ padding: isMobile ? '16px' : '40px', zIndex: 1002 }}
+    >
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: '#fff',
+          borderRadius: '16px',
+          width: isMobile ? '100%' : '480px',
+          maxWidth: '100%',
+          maxHeight: isMobile ? '90vh' : '85vh',
+          overflow: 'hidden',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+        }}
+      >
+        {/* Header */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '20px 24px',
+          borderBottom: '1px solid #f3f4f6'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Pencil size={20} style={{ color: '#6366f1' }} />
+            <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#1f2937' }}>
+              Event bearbeiten
+            </h2>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '4px',
+              color: '#9ca3af'
+            }}
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Form */}
+        <div style={{
+          padding: '24px',
+          overflowY: 'auto',
+          maxHeight: isMobile ? 'calc(90vh - 140px)' : 'calc(85vh - 140px)'
+        }}>
+          {/* Titel */}
+          <div style={{ marginBottom: '20px' }}>
+            <label style={labelStyle}>Titel</label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              placeholder="Titel des Ereignisses"
+              style={inputStyle}
+            />
+          </div>
+
+          {/* Vertrag zuordnen (nur bei manuellen Events) */}
+          {event.isManual && (
+            <div style={{ marginBottom: '20px' }}>
+              <label style={labelStyle}>
+                Vertrag zuordnen
+                <span style={{ fontWeight: 400, color: '#9ca3af', marginLeft: '8px' }}>(optional)</span>
+              </label>
+              <select
+                value={formData.contractId}
+                onChange={(e) => {
+                  const selectedContract = contracts.find(c => c._id === e.target.value);
+                  setFormData({
+                    ...formData,
+                    contractId: e.target.value,
+                    contractName: selectedContract?.name || ''
+                  });
+                }}
+                disabled={loadingContracts}
+                style={{
+                  ...inputStyle,
+                  cursor: loadingContracts ? 'wait' : 'pointer',
+                  appearance: 'none',
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'right 12px center',
+                  backgroundSize: '16px',
+                  paddingRight: '40px',
+                  color: formData.contractId ? '#1f2937' : '#9ca3af'
+                }}
+              >
+                <option value="">
+                  {loadingContracts ? 'Lade Verträge...' : 'Kein Vertrag zugeordnet'}
+                </option>
+                {contracts.map(contract => (
+                  <option key={contract._id} value={contract._id}>
+                    {contract.name}
+                  </option>
+                ))}
+              </select>
+              {formData.contractId && (
+                <p style={{ margin: '6px 0 0 0', fontSize: '12px', color: '#10b981' }}>
+                  Verknüpft mit: {formData.contractName}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Beschreibung */}
+          <div style={{ marginBottom: '20px' }}>
+            <label style={labelStyle}>Beschreibung</label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Beschreibung hinzufügen..."
+              rows={3}
+              style={{
+                ...inputStyle,
+                resize: 'vertical',
+                minHeight: '80px'
+              }}
+            />
+          </div>
+
+          {/* Datum & Uhrzeit */}
+          <div style={{ display: 'flex', gap: '16px', marginBottom: '20px' }}>
+            <div style={{ flex: 1 }}>
+              <label style={labelStyle}>Datum</label>
+              <input
+                type="date"
+                value={formData.date}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                style={inputStyle}
+              />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={labelStyle}>Uhrzeit</label>
+              <input
+                type="time"
+                value={formData.time}
+                onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                style={inputStyle}
+              />
+            </div>
+          </div>
+
+          {/* Priorität */}
+          <div style={{ marginBottom: '20px' }}>
+            <label style={labelStyle}>Priorität</label>
+            <select
+              value={formData.severity}
+              onChange={(e) => setFormData({ ...formData, severity: e.target.value as 'info' | 'warning' | 'critical' })}
+              style={{
+                ...inputStyle,
+                cursor: 'pointer',
+                appearance: 'none',
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 12px center',
+                backgroundSize: '16px',
+                paddingRight: '40px'
+              }}
+            >
+              <option value="info">Info (🔵)</option>
+              <option value="warning">Warnung (🟡)</option>
+              <option value="critical">Kritisch (🔴)</option>
+            </select>
+          </div>
+
+          {/* Notizen */}
+          <div style={{ marginBottom: '24px' }}>
+            <label style={labelStyle}>Notizen</label>
+            <textarea
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              placeholder="Persönliche Notizen..."
+              rows={2}
+              style={{
+                ...inputStyle,
+                resize: 'vertical'
+              }}
+            />
+          </div>
+
+          {/* Action Buttons */}
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <motion.button
+              onClick={handleSave}
+              disabled={saving}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                padding: '14px 20px',
+                background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '10px',
+                fontSize: '15px',
+                fontWeight: 600,
+                cursor: saving ? 'not-allowed' : 'pointer',
+                opacity: saving ? 0.7 : 1
+              }}
+            >
+              <Save size={18} />
+              <span>{saving ? 'Speichern...' : 'Speichern'}</span>
+            </motion.button>
+
+            <motion.button
+              onClick={handleDelete}
+              whileHover={{ scale: 1.05, background: '#fef2f2' }}
+              whileTap={{ scale: 0.95 }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '14px',
+                background: '#fff',
+                color: '#ef4444',
+                border: '1px solid #fecaca',
+                borderRadius: '10px',
+                cursor: 'pointer'
+              }}
+              title="Ereignis löschen"
+            >
+              <Trash2 size={18} />
+            </motion.button>
+          </div>
         </div>
       </motion.div>
     </motion.div>
@@ -1828,7 +2354,9 @@ export default function CalendarPage() {
     loading,
     fetchEvents,
     dismissEvent,
-    snoozeEvent
+    snoozeEvent,
+    updateEvent,
+    removeEvent
   } = useCalendarStore();
 
   // ===== TOAST NOTIFICATIONS =====
@@ -1853,6 +2381,7 @@ export default function CalendarPage() {
   const [allDayEventsForPagination, setAllDayEventsForPagination] = useState<CalendarEvent[]>([]);
   const [showSnoozeModal, setShowSnoozeModal] = useState(false);
   const [snoozeEventId, setSnoozeEventId] = useState<string | null>(null);
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
 
   // ===== MOBILE STATE =====
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -2608,6 +3137,11 @@ export default function CalendarPage() {
               setAllDayEventsForPagination([]);
             }}
             onEventChange={(event) => setSelectedEvent(event)}
+            onEdit={(event) => {
+              setShowQuickActions(false);
+              setSelectedEvent(null);
+              setEditingEvent(event);
+            }}
           />
         )}
         {dayEventsModal && (
@@ -2631,6 +3165,22 @@ export default function CalendarPage() {
             onEventCreated={() => {
               // Event is already added to store directly - no reload needed!
               toast.success('Ereignis erfolgreich erstellt');
+            }}
+          />
+        )}
+        {editingEvent && (
+          <EditEventModal
+            event={editingEvent}
+            onClose={() => setEditingEvent(null)}
+            onSave={(updatedEvent) => {
+              updateEvent(updatedEvent.id, updatedEvent);
+              toast.success('Ereignis erfolgreich aktualisiert');
+              setEditingEvent(null);
+            }}
+            onDelete={(eventId) => {
+              removeEvent(eventId);
+              toast.success('Ereignis erfolgreich gelöscht');
+              setEditingEvent(null);
             }}
           />
         )}
