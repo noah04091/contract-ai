@@ -35,6 +35,7 @@ import "../styles/AppleCalendar.css";
 import CalendarSyncModal from "../components/CalendarSyncModal";
 import { debug } from "../utils/debug";
 import { useCalendarStore } from "../stores/calendarStore";
+import { useToast } from "../context/ToastContext";
 
 // ========== Types ==========
 interface CalendarEvent {
@@ -1786,6 +1787,9 @@ export default function CalendarPage() {
     snoozeEvent
   } = useCalendarStore();
 
+  // ===== TOAST NOTIFICATIONS =====
+  const toast = useToast();
+
   const [filteredEvents, setFilteredEvents] = useState<CalendarEvent[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -1852,8 +1856,10 @@ export default function CalendarPage() {
       });
       await fetchEvents(true); // Force refresh - bypass cache
       debug.success('Events erfolgreich regeneriert');
+      toast.success('Kalender erfolgreich aktualisiert');
     } catch (err) {
       debug.error('Fehler beim Regenerieren der Events', err);
+      toast.error('Fehler beim Aktualisieren. Bitte erneut versuchen.');
     } finally {
       setRefreshing(false);
     }
@@ -1875,6 +1881,7 @@ export default function CalendarPage() {
         setShowQuickActions(false);
         setSelectedEvent(null);
         debug.success('Event ausgeblendet (optimistisch)');
+        toast.success('Erinnerung wurde ausgeblendet');
         return;
       }
 
@@ -1885,6 +1892,7 @@ export default function CalendarPage() {
         setSnoozeEventId(null);
         setSelectedEvent(null);
         debug.success(`Event um ${snoozeDays} Tage verschoben (optimistisch)`);
+        toast.success(`Erinnerung um ${snoozeDays} Tage verschoben`);
         return;
       }
 
@@ -1900,10 +1908,12 @@ export default function CalendarPage() {
         } else {
           setShowQuickActions(false);
           setSelectedEvent(null);
+          toast.success('Aktion erfolgreich ausgeführt');
         }
       }
     } catch (err) {
       console.error("Error executing action:", err);
+      toast.error('Aktion fehlgeschlagen. Bitte erneut versuchen.');
     }
   };
 
