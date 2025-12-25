@@ -164,9 +164,22 @@
   border-bottom: 1px solid var(--border-light);
 }
 
-/* Mobile-only navigation row - hidden on desktop */
+/* Navigation row - visible on both desktop and mobile */
 .calendar-nav-row {
-  display: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.calendar-nav-row .current-month {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 4px;
+}
+
+.calendar-nav-row .today-btn {
+  margin-left: 8px;
 }
 
 .calendar-nav {
@@ -1728,10 +1741,8 @@
     border-bottom: 1px solid var(--border-light);
   }
 
-  /* Row 1: [<] [Monat Jahr] [>] [Heute] - Nur auf Mobile sichtbar */
+  /* Row 1: [<] [Monat Jahr] [>] [Heute] - Mobile-optimierte Styles */
   .calendar-nav-row {
-    display: flex !important;
-    align-items: center;
     gap: 8px;
     width: 100%;
   }
@@ -1792,16 +1803,6 @@
   /* Hide old desktop calendar-nav on mobile */
   .calendar-nav {
     display: none;
-  }
-
-  /* Hide standalone current-month (the one outside calendar-nav-row) */
-  .calendar-header > .current-month {
-    display: none;
-  }
-
-  /* But show the one inside calendar-nav-row */
-  .calendar-nav-row .current-month {
-    display: block !important;
   }
 
   /* Row 2: View Switcher - Segmented Control */
