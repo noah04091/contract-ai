@@ -136,32 +136,13 @@
   background: #3b82f6;
 }
 
-/* Dark mode support */
+/* Dark mode support - DISABLED to keep toasts always light
 @media (prefers-color-scheme: dark) {
   .toast {
     background: #1f2937;
-    box-shadow:
-      0 10px 40px -10px rgba(0, 0, 0, 0.5),
-      0 0 0 1px rgba(255, 255, 255, 0.1);
-  }
-
-  .toastMessage {
-    color: #f9fafb;
-  }
-
-  .toastClose {
-    color: #9ca3af;
-  }
-
-  .toastClose:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #f9fafb;
-  }
-
-  .toastProgressBar {
-    background: rgba(255, 255, 255, 0.1);
   }
 }
+*/
 
 /* Mobile responsive */
 @media (max-width: 640px) {
