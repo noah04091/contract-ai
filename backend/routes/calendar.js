@@ -53,7 +53,7 @@ router.get("/events", verifyToken, async (req, res) => {
     const transformedEvents = events.map(event => ({
       id: event._id.toString(),
       contractId: event.contractId?.toString(),
-      contractName: event.contract?.name || "Unbekannter Vertrag",
+      contractName: event.contract?.name || (event.isManual ? event.title : "Unbekannter Vertrag"),
       title: event.title,
       description: event.description,
       date: event.date,
@@ -63,7 +63,8 @@ router.get("/events", verifyToken, async (req, res) => {
       metadata: event.metadata,
       provider: event.metadata?.provider || event.contract?.provider,
       amount: event.contract?.amount,
-      suggestedAction: event.metadata?.suggestedAction
+      suggestedAction: event.metadata?.suggestedAction,
+      isManual: event.isManual === true // Explizit boolean
     }));
     
     res.json({
@@ -203,6 +204,18 @@ router.patch("/events/:eventId", verifyToken, async (req, res) => {
     if (type !== undefined) updateData.type = type;
     if (severity !== undefined) updateData.severity = severity;
     if (notes !== undefined) updateData.notes = notes;
+
+    // ✅ Vertrag zuordnen bei manuellen Events
+    if (req.body.contractId !== undefined) {
+      if (req.body.contractId) {
+        updateData.contractId = new ObjectId(req.body.contractId);
+        updateData.isManual = false; // Nicht mehr manuell wenn Vertrag zugeordnet
+      } else {
+        // Vertrag entfernen
+        updateData.contractId = null;
+        updateData.isManual = true;
+      }
+    }
     
     await req.db.collection("contract_events").updateOne(
       { _id: eventId },
@@ -291,6 +304,7 @@ router.post("/events", verifyToken, async (req, res) => {
       notes: notes || '',
       manuallyCreated: true,
       isIndividualReminder: !eventContractId,
+      isManual: !eventContractId, // Für Frontend-Logik
       metadata,
       createdAt: new Date(),
       updatedAt: new Date()

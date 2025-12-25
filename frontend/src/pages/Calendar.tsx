@@ -476,8 +476,10 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
   const severityStyle = getSeverityStyle();
   const daysInfo = getDaysRemaining(currentEvent.date);
 
-  // Check if this is a manual event (no contract associated)
-  const isManualEvent = currentEvent.isManual === true || currentEvent.contractName === 'Manuelles Ereignis';
+  // Check if this event has a contract associated
+  // Show "Vertrag anzeigen" if: has contractId AND (isManual is false OR contractName is not 'Manuelles Ereignis')
+  const hasContract = !!currentEvent.contractId && currentEvent.contractId !== '';
+  const isManualEvent = currentEvent.isManual === true && !hasContract;
 
   return (
     <motion.div
@@ -611,8 +613,8 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
           </div>
 
           <div className="modal-actions-grid">
-            {/* Contract-based events: Show "Vertrag anzeigen" button */}
-            {!isManualEvent && (
+            {/* Show "Vertrag anzeigen" if contract is associated */}
+            {hasContract && (
               <motion.button
                 className="action-btn-premium view-contract"
                 onClick={handleViewContract}
@@ -640,7 +642,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
             )}
 
             {/* Cancel button for contract events with cancel suggestion */}
-            {!isManualEvent && currentEvent.metadata?.suggestedAction === "cancel" && (
+            {hasContract && currentEvent.metadata?.suggestedAction === "cancel" && (
               <motion.button
                 className="action-btn-premium primary"
                 onClick={() => onAction("cancel", currentEvent.id)}
@@ -675,7 +677,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
               marginTop: '8px'
             }}>
               {/* Contract-based events: Show Compare & Optimize */}
-              {!isManualEvent && (
+              {hasContract && (
                 <>
                   <motion.button
                     onClick={() => onAction("compare", currentEvent.id)}
@@ -1235,10 +1237,17 @@ interface CreateEventModalProps {
   onEventCreated: (event?: CalendarEvent) => void;
 }
 
+interface SimpleContractForCreate {
+  _id: string;
+  name: string;
+}
+
 function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalProps) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [contracts, setContracts] = useState<SimpleContractForCreate[]>([]);
+  const [loadingContracts, setLoadingContracts] = useState(false);
 
   // Use Zustand store for optimistic updates
   const { addEvent } = useCalendarStore();
@@ -1249,7 +1258,9 @@ function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalPro
     time: '09:00',
     type: 'REMINDER' as 'REMINDER' | 'DEADLINE' | 'CANCEL_WINDOW_OPEN' | 'LAST_CANCEL_DAY' | 'AUTO_RENEWAL',
     severity: 'info' as 'info' | 'warning' | 'critical',
-    notes: ''
+    notes: '',
+    contractId: '',
+    contractName: ''
   });
 
   useEffect(() => {
@@ -1257,6 +1268,33 @@ function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalPro
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Fetch contracts when form is shown
+  useEffect(() => {
+    if (showForm && contracts.length === 0) {
+      const fetchContracts = async () => {
+        setLoadingContracts(true);
+        try {
+          const token = localStorage.getItem('token');
+          interface ContractsResponse {
+            success: boolean;
+            contracts?: Array<{ _id: string; name: string }>;
+          }
+          const response = await axios.get<ContractsResponse>('/api/contracts/names', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (response.data.success && response.data.contracts) {
+            setContracts(response.data.contracts);
+          }
+        } catch (err) {
+          console.error('Error fetching contracts:', err);
+        } finally {
+          setLoadingContracts(false);
+        }
+      };
+      fetchContracts();
+    }
+  }, [showForm, contracts.length]);
 
   const handleUploadContract = () => {
     window.location.href = '/contracts?upload=true';
@@ -1293,30 +1331,41 @@ function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalPro
         };
       }
 
-      const response = await axios.post<ApiEventResponse>("/api/calendar/events", {
+      // Determine if manual or contract-linked
+      const hasContract = !!formData.contractId;
+      const eventPayload: Record<string, unknown> = {
         title: formData.title,
         description: formData.description,
         date: eventDate.toISOString(),
         type: formData.type,
         severity: formData.severity,
         notes: formData.notes,
-        contractName: 'Manuelles Ereignis',
-        isManual: true
-      }, { headers: { Authorization: `Bearer ${token}` } });
+        contractName: hasContract ? formData.contractName : formData.title,
+        isManual: !hasContract
+      };
+
+      // Include contractId if selected
+      if (hasContract) {
+        eventPayload.contractId = formData.contractId;
+      }
+
+      const response = await axios.post<ApiEventResponse>("/api/calendar/events", eventPayload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
       // Add event directly to store (no reload needed!)
       if (response.data.success && response.data.event) {
         const newEvent: CalendarEvent = {
           id: response.data.event._id?.toString() || response.data.event.id || Date.now().toString(),
-          contractId: response.data.event.contractId || '',
-          contractName: 'Manuelles Ereignis',
+          contractId: formData.contractId || '',
+          contractName: hasContract ? formData.contractName : formData.title,
           title: formData.title,
           description: formData.description,
           date: eventDate.toISOString(),
           type: formData.type,
           severity: formData.severity,
           status: 'scheduled',
-          isManual: true
+          isManual: !hasContract
         };
         addEvent(newEvent);
         console.log('%c[DEBUG] Event added to store directly!', 'background: #10b981; color: white;');
@@ -1588,6 +1637,45 @@ function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalPro
                   <option value="critical">Kritisch</option>
                 </select>
               </div>
+            </div>
+
+            {/* Contract Assignment */}
+            <div>
+              <label style={labelStyle}>
+                Vertrag zuordnen
+                <span style={{ fontWeight: 400, color: '#9ca3af', marginLeft: '8px' }}>(optional)</span>
+              </label>
+              <select
+                value={formData.contractId}
+                onChange={(e) => {
+                  const selectedContract = contracts.find(c => c._id === e.target.value);
+                  setFormData({
+                    ...formData,
+                    contractId: e.target.value,
+                    contractName: selectedContract?.name || ''
+                  });
+                }}
+                disabled={loadingContracts}
+                style={{
+                  ...inputStyle,
+                  cursor: loadingContracts ? 'wait' : 'pointer',
+                  color: formData.contractId ? '#1f2937' : '#9ca3af'
+                }}
+              >
+                <option value="">
+                  {loadingContracts ? 'Lade Verträge...' : 'Kein Vertrag (manuelles Ereignis)'}
+                </option>
+                {contracts.map(contract => (
+                  <option key={contract._id} value={contract._id}>
+                    {contract.name}
+                  </option>
+                ))}
+              </select>
+              {formData.contractId && (
+                <p style={{ margin: '6px 0 0 0', fontSize: '12px', color: '#10b981' }}>
+                  Ereignis wird mit diesem Vertrag verknüpft
+                </p>
+              )}
             </div>
 
             {/* Description */}
@@ -2025,7 +2113,7 @@ function EditEventModal({ event, onClose, onSave, onDelete }: EditEventModalProp
         updateData.contractName = formData.contractName;
       }
 
-      await axios.put(`/api/calendar/events/${event.id}`, updateData, {
+      await axios.patch(`/api/calendar/events/${event.id}`, updateData, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
