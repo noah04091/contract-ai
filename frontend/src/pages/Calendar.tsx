@@ -24,7 +24,6 @@ import {
   Info,
   Sparkles,
   ArrowRight,
-  BellOff,
   Plus,
   EyeOff,
   Filter,
@@ -1975,11 +1974,15 @@ function EditEventModal({ event, onClose, onSave, onDelete }: EditEventModalProp
         setLoadingContracts(true);
         try {
           const token = localStorage.getItem('token');
-          const response = await axios.get('/api/contracts', {
+          interface ContractsResponse {
+            success: boolean;
+            contracts?: Array<{ _id: string; name: string }>;
+          }
+          const response = await axios.get<ContractsResponse>('/api/contracts', {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (response.data.success && response.data.contracts) {
-            setContracts(response.data.contracts.map((c: { _id: string; name: string }) => ({
+            setContracts(response.data.contracts.map((c) => ({
               _id: c._id,
               name: c.name
             })));
