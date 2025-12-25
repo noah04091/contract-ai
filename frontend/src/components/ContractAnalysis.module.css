@@ -119,7 +119,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  background: linear-gradient(135deg, #60a5fa, #3b82f6);
   color: white;
   padding: 5px 10px;
   border-radius: 8px;
@@ -168,7 +168,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.875rem 1.5rem;
-  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  background: linear-gradient(135deg, #3b82f6, #3b82f6);
   color: white;
   border: none;
   border-radius: 12px;
@@ -182,7 +182,7 @@
 .analyzeButton:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
-  background: linear-gradient(135deg, #2563eb, #5b21b6);
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
 }
 
 .analyzeButton:disabled {
@@ -562,7 +562,7 @@
 
 .progressFill {
   height: 100%;
-  background: linear-gradient(90deg, #3b82f6, #6366f1);
+  background: linear-gradient(90deg, #3b82f6, #3b82f6);
   border-radius: 3px;
   transition: width 0.5s ease;
 }
@@ -757,7 +757,7 @@
   align-items: center;
   justify-content: center;
   padding: 0.25rem;
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  background: linear-gradient(135deg, #60a5fa, #3b82f6);
   border-radius: 8px;
   color: white;
   margin-right: 0.5rem;
@@ -776,7 +776,7 @@
   align-items: center;
   gap: 0.25rem;
   font-size: 0.75rem;
-  color: #8b5cf6;
+  color: #60a5fa;
   font-weight: 600;
   padding: 0.25rem 0.5rem;
   background: rgba(139, 92, 246, 0.1);
@@ -1125,7 +1125,7 @@
 .blueBullet { background: #3b82f6; }
 .greenBullet { background: #10b981; }
 .yellowBullet { background: #f59e0b; }
-.purpleBullet { background: #8b5cf6; }
+.purpleBullet { background: #60a5fa; }
 
 /* ✅ Usage Info - Kleine Randinformation ganz unten (ohne Umrandung) */
 .usageInfo {
@@ -1226,7 +1226,7 @@
 
 /* Alle Secondary Buttons haben jetzt den gleichen Base-Style */
 .legalPulseButton {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
   color: white !important;
   border: none !important;
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);

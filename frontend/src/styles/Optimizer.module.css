@@ -1240,7 +1240,7 @@ div[class*="flex-wrap"] > button {
 }
 
 [class*="bg-purple-50"] {
-  background: #faf5ff !important;
+  background: #eff6ff !important;
   color: var(--text-primary) !important;
 }
 
@@ -1468,7 +1468,7 @@ html {
   align-items: center;
   gap: 10px;
   padding: 14px 28px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
   border: none;
   border-radius: 12px;

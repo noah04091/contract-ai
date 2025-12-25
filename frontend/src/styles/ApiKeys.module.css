@@ -3,7 +3,7 @@
 
 .container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   padding: 80px 20px 40px;
 }
 
@@ -33,7 +33,7 @@
 }
 
 .headerIcon {
-  color: #667eea;
+  color: #3b82f6;
   flex-shrink: 0;
 }
 
@@ -55,7 +55,7 @@
   align-items: center;
   gap: 8px;
   padding: 12px 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -186,7 +186,7 @@
 }
 
 .keyName svg {
-  color: #667eea;
+  color: #3b82f6;
 }
 
 .deleteButton {
@@ -233,7 +233,7 @@
   border: 1px solid #e5e7eb;
   border-radius: 6px;
   cursor: pointer;
-  color: #667eea;
+  color: #3b82f6;
   transition: background 0.2s;
 }
 
@@ -328,7 +328,7 @@
 
 .input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #3b82f6;
 }
 
 .modalActions {
@@ -357,7 +357,7 @@
 }
 
 .createButton {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
 }
 
@@ -411,7 +411,7 @@
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   cursor: pointer;
-  color: #667eea;
+  color: #3b82f6;
   transition: background 0.2s;
 }
 
@@ -426,7 +426,7 @@
   gap: 8px;
   width: 100%;
   padding: 12px;
-  background: #667eea;
+  background: #3b82f6;
   color: white;
   border: none;
   border-radius: 8px;

@@ -49,3 +49,33 @@
   margin: 0;
   white-space: pre-wrap;
 }
+
+/* Inline Editing Styles */
+.inlineInput {
+  width: 100%;
+  padding: 4px 8px;
+  border: 2px solid #3b82f6;
+  border-radius: 4px;
+  font-size: inherit;
+  font-family: inherit;
+  font-weight: inherit;
+  color: inherit;
+  background: white;
+  outline: none;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+}
+
+.inlineTextarea {
+  width: 100%;
+  padding: 8px;
+  border: 2px solid #3b82f6;
+  border-radius: 4px;
+  font-size: inherit;
+  font-family: inherit;
+  line-height: 1.6;
+  color: inherit;
+  background: white;
+  outline: none;
+  resize: vertical;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+}

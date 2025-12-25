@@ -45,3 +45,37 @@
   margin: 20px auto 0;
   border-radius: 2px;
 }
+
+/* Inline Editing Styles */
+.editable {
+  cursor: text;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+  display: inline-block;
+  min-width: 100px;
+}
+
+.editable:hover {
+  background-color: rgba(59, 130, 246, 0.08);
+}
+
+.inlineInput {
+  width: 100%;
+  max-width: 500px;
+  padding: 4px 12px;
+  border: 2px solid #3b82f6;
+  border-radius: 4px;
+  font-size: inherit;
+  font-weight: inherit;
+  font-family: inherit;
+  color: inherit;
+  background: white;
+  outline: none;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+}
+
+.placeholder {
+  color: #a0aec0;
+  font-style: italic;
+}

@@ -10,6 +10,17 @@
   white-space: pre-wrap;
 }
 
+/* Editierbar (mit onDoubleClick) */
+.editable {
+  cursor: text;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+}
+
+.editable:hover {
+  background-color: rgba(59, 130, 246, 0.08);
+}
+
 .variable {
   display: inline;
   padding: 1px 4px;
@@ -92,9 +103,9 @@
 
 /* Berechnete Variable */
 .variable.computed {
-  background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
-  color: #6b21a8;
-  border: 1px solid #d8b4fe;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  color: #1d4ed8;
+  border: 1px solid #93c5fd;
   cursor: default;
 }
 
@@ -105,14 +116,14 @@
 }
 
 .variable.computed:hover {
-  background: linear-gradient(135deg, #e9d5ff 0%, #d8b4fe 100%);
-  border-color: #c084fc;
+  background: linear-gradient(135deg, #dbeafe 0%, #93c5fd 100%);
+  border-color: #60a5fa;
   transform: none;
 }
 
 /* Computed ohne Wert (Variablen fehlen) */
 .variable.computed.empty {
-  background: linear-gradient(135deg, #fef3c7 0%, #f3e8ff 100%);
-  color: #7c3aed;
-  border: 1px dashed #d8b4fe;
+  background: linear-gradient(135deg, #fef3c7 0%, #eff6ff 100%);
+  color: #3b82f6;
+  border: 1px dashed #93c5fd;
 }

@@ -28,11 +28,11 @@
 }
 
 .headerIcon {
-  color: #667eea;
+  color: #3b82f6;
 }
 
 .spinner {
-  color: #667eea;
+  color: #3b82f6;
   animation: spin 1s linear infinite;
   margin-bottom: 16px;
 }
@@ -83,7 +83,7 @@
 .roleTag {
   display: inline-block;
   padding: 6px 12px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
   border-radius: 20px;
   font-size: 13px;
@@ -122,7 +122,7 @@
 
 .inputGroup input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
@@ -162,14 +162,14 @@
 }
 
 .togglePassword:hover {
-  color: #667eea;
+  color: #3b82f6;
 }
 
 /* Buttons */
 .primaryButton {
   width: 100%;
   padding: 14px 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -198,8 +198,8 @@
   width: 100%;
   padding: 12px 20px;
   background: white;
-  color: #667eea;
-  border: 2px solid #667eea;
+  color: #3b82f6;
+  border: 2px solid #3b82f6;
   border-radius: 8px;
   font-size: 14px;
   font-weight: 600;
@@ -209,7 +209,7 @@
 }
 
 .secondaryButton:hover {
-  background: #667eea;
+  background: #3b82f6;
   color: white;
 }
 
@@ -269,7 +269,7 @@
 }
 
 .terms a {
-  color: #667eea;
+  color: #3b82f6;
   text-decoration: none;
 }
 

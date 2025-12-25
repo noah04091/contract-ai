@@ -29,7 +29,7 @@
 }
 
 .headerIcon {
-  color: #667eea;
+  color: #3b82f6;
 }
 
 .title {
@@ -54,8 +54,8 @@
 .syncButton {
   padding: 12px 20px;
   background: white;
-  color: #667eea;
-  border: 2px solid #667eea;
+  color: #3b82f6;
+  border: 2px solid #3b82f6;
   border-radius: 8px;
   font-size: 14px;
   font-weight: 600;
@@ -64,7 +64,7 @@
 }
 
 .syncButton:hover {
-  background: #667eea;
+  background: #3b82f6;
   color: white;
 }
 
@@ -73,7 +73,7 @@
   align-items: center;
   gap: 8px;
   padding: 12px 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -130,7 +130,7 @@
 
 .createButton {
   padding: 14px 32px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -326,7 +326,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
   display: flex;
   align-items: center;
@@ -352,7 +352,7 @@
 
 .youBadge {
   font-size: 12px;
-  color: #667eea;
+  color: #3b82f6;
   font-weight: 500;
 }
 
@@ -379,12 +379,12 @@
 }
 
 .roleSelect:hover {
-  border-color: #667eea;
+  border-color: #3b82f6;
 }
 
 .roleSelect:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
@@ -479,7 +479,7 @@
 .input:focus,
 .select:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 

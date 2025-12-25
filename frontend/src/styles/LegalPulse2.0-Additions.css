@@ -144,7 +144,7 @@
 }
 
 .feedEvent.type-test {
-  border-left: 4px solid #6366f1;
+  border-left: 4px solid #3b82f6;
 }
 
 .feedEventHeader {
@@ -196,7 +196,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
   border: none;
   border-radius: 6px;

@@ -794,11 +794,11 @@
   gap: 8px;
   margin-top: 12px;
   padding: 10px;
-  background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
-  border: 1px solid #d8b4fe;
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border: 1px solid #93c5fd;
   border-radius: 6px;
   font-size: 11px;
-  color: #6b21a8;
+  color: #1d4ed8;
 }
 
 .computedHint code {

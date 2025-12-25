@@ -72,4 +72,53 @@
 
 .subclauseText {
   color: var(--text-primary, #1a202c);
+  flex: 1;
+}
+
+/* Inline Editing Styles */
+.editable {
+  cursor: text;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+  display: inline-block;
+  min-width: 50px;
+}
+
+.editable:hover {
+  background-color: rgba(59, 130, 246, 0.08);
+}
+
+.inlineInput {
+  width: 100%;
+  padding: 4px 8px;
+  border: 2px solid #3b82f6;
+  border-radius: 4px;
+  font-size: inherit;
+  font-weight: inherit;
+  font-family: inherit;
+  color: inherit;
+  background: white;
+  outline: none;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+}
+
+.inlineTextarea {
+  width: 100%;
+  padding: 8px;
+  border: 2px solid #3b82f6;
+  border-radius: 4px;
+  font-size: inherit;
+  font-family: inherit;
+  color: inherit;
+  background: white;
+  outline: none;
+  resize: vertical;
+  min-height: 60px;
+  line-height: 1.7;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+}
+
+.placeholder {
+  color: #a0aec0;
+  font-style: italic;
 }

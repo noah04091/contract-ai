@@ -176,7 +176,7 @@
 }
 
 .upgradeLink:hover {
-  color: #f3e8ff;
+  color: #dbeafe;
   text-shadow: 0 0 6px rgba(243, 232, 255, 0.8);
   cursor: pointer;
 }

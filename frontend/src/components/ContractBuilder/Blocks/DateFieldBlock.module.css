@@ -33,3 +33,18 @@
   color: var(--text-primary, #1a202c);
   font-weight: 500;
 }
+
+/* Inline Editing Styles */
+.inlineInput {
+  padding: 2px 6px;
+  border: 2px solid #3b82f6;
+  border-radius: 4px;
+  font-size: inherit;
+  font-family: inherit;
+  font-weight: inherit;
+  color: inherit;
+  background: white;
+  outline: none;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+  min-width: 80px;
+}

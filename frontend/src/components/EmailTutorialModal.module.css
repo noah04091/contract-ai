@@ -59,7 +59,7 @@
 }
 
 .icon {
-  color: #667eea;
+  color: #3b82f6;
   margin-bottom: 12px;
 }
 
@@ -80,7 +80,7 @@
 }
 
 .addressBox {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   border-radius: 12px;
   padding: 16px;
   display: flex;
@@ -178,7 +178,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
   display: flex;
   align-items: center;
@@ -201,7 +201,7 @@
 }
 
 .arrow {
-  color: #667eea;
+  color: #3b82f6;
   flex-shrink: 0;
   margin-top: 12px;
 }
@@ -273,7 +273,7 @@
 }
 
 .gotItButton {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
   border: none;
   border-radius: 8px;

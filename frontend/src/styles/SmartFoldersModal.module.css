@@ -46,7 +46,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
   border-radius: 12px;
   flex-shrink: 0;
@@ -146,7 +146,7 @@
 
 .retryBtn {
   padding: 0.625rem 1.5rem;
-  background: #667eea;
+  background: #3b82f6;
   color: white;
   border: none;
   border-radius: 8px;
@@ -248,7 +248,7 @@
 
 .contractMore {
   font-size: 0.8125rem;
-  color: #667eea;
+  color: #3b82f6;
   font-weight: 600;
   margin-top: 0.25rem;
 }
@@ -263,7 +263,7 @@
   border: 1px solid #e0e7ff;
   border-radius: 8px;
   margin-top: 1.5rem;
-  color: #667eea;
+  color: #3b82f6;
 }
 
 .info p {
@@ -307,7 +307,7 @@
 }
 
 .confirmBtn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }

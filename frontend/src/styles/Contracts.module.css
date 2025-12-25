@@ -479,7 +479,7 @@
 
 .actionAnalyze .actionCardIcon {
   background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%);
-  color: #6d28d9;
+  color: #2563eb;
 }
 
 .actionReplace .actionCardIcon {
@@ -662,7 +662,7 @@
 
 .limitBarFill {
   height: 100%;
-  background: linear-gradient(90deg, #3b82f6, #6366f1);
+  background: linear-gradient(90deg, #3b82f6, #3b82f6);
   border-radius: 3px;
   transition: width 0.3s ease;
 }
@@ -946,7 +946,7 @@
 
 .multiFileInfo svg {
   color: white;
-  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #3b82f6 100%);
   padding: 0.75rem;
   border-radius: 14px;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
@@ -977,7 +977,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.875rem 1.5rem;
-  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #3b82f6 50%, #60a5fa 100%);
   color: white;
   border: none;
   border-radius: 14px;
@@ -1154,7 +1154,7 @@
 
 .fileItemProgressBar {
   height: 100%;
-  background: linear-gradient(90deg, #3b82f6, #6366f1);
+  background: linear-gradient(90deg, #3b82f6, #3b82f6);
   transition: width 0.3s ease;
   border-radius: 0 0 10px 10px;
 }
@@ -1268,7 +1268,7 @@
 }
 
 .sidebarNavItem.active {
-  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #3b82f6 100%);
   color: #ffffff;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
@@ -1594,7 +1594,7 @@
 }
 
 .toolbarButton.primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #3b82f6 100%);
   border: none;
   color: #ffffff;
 }
@@ -1765,7 +1765,7 @@
 .gridCardIcon {
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #3b82f6 100%);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -1951,7 +1951,7 @@
 .previewHeaderIcon {
   width: 40px;
   height: 40px;
-  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #3b82f6 100%);
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -2369,7 +2369,7 @@
 }
 
 .previewActionBtn.primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #3b82f6 100%);
   border: none;
   color: #ffffff;
   box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25);
@@ -2601,7 +2601,7 @@
 }
 
 .activeTab {
-  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #3b82f6 50%, #60a5fa 100%);
   color: white;
   box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35), 0 2px 6px rgba(99, 102, 241, 0.2);
   font-weight: 600;
@@ -2625,7 +2625,7 @@
 }
 
 .tabButton:not(.activeTab) .tabBadge {
-  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  background: linear-gradient(135deg, #3b82f6, #3b82f6);
   color: white;
 }
 
@@ -2661,7 +2661,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%);
+  background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 50%, #ec4899 100%);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -2808,7 +2808,7 @@
   justify-content: center;
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #3b82f6 50%, #60a5fa 100%);
   border-radius: 24px;
   align-items: center;
   box-shadow:
@@ -2881,7 +2881,7 @@
 
 .fileIcon {
   color: white;
-  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #3b82f6 100%);
   padding: 1.25rem;
   border-radius: 16px;
   box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3);
@@ -2987,7 +2987,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.25rem;
-  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  background: linear-gradient(135deg, #3b82f6, #3b82f6);
   color: white;
   border: none;
   border-radius: 10px;
@@ -3041,14 +3041,14 @@
 }
 
 .bulkSelectToggle:hover {
-  border-color: #667eea;
+  border-color: #3b82f6;
   background: #f9fafb;
-  color: #667eea;
+  color: #3b82f6;
 }
 
 .bulkSelectToggle.active {
-  border-color: #667eea;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
@@ -3149,7 +3149,7 @@
 }
 
 .sourceTab.activeTab {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
   border-color: transparent;
   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
@@ -3251,7 +3251,7 @@
 }
 
 .activeFilter {
-  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  background: linear-gradient(135deg, #3b82f6, #3b82f6);
   color: white;
   padding: 0.375rem 0.75rem;
   border-radius: 8px;
@@ -3343,7 +3343,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.875rem 1.5rem;
-  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  background: linear-gradient(135deg, #3b82f6, #3b82f6);
   color: white;
   border: none;
   border-radius: 12px;
@@ -3364,7 +3364,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
   color: white;
   border: none;
   border-radius: 10px;
@@ -3378,7 +3378,7 @@
 .loadMoreButton:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
-  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
 }
 
 /* ✅ RESPONSIVE TABLE FIXES - Optimierte Tabelle für alle Geräte */
@@ -3504,7 +3504,7 @@
   align-items: center;
   padding: 0.125rem 0.375rem; /* ✅ Sehr kompakt */
   background: #ede9fe;
-  color: #7c3aed;
+  color: #3b82f6;
   border-radius: 4px;
   font-size: 0.7rem; /* ✅ Sehr kleine Schrift */
   font-weight: 500;
@@ -3737,7 +3737,7 @@
   width: 15px;
   height: 15px;
   cursor: pointer;
-  accent-color: #667eea;
+  accent-color: #3b82f6;
   margin: 0;
   padding: 0;
 }
@@ -3768,7 +3768,7 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  color: #667eea;
+  color: #3b82f6;
   font-weight: 600;
 }
 
@@ -3791,7 +3791,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.625rem 1rem;
-  background: #667eea;
+  background: #3b82f6;
   color: white;
   border: none;
   border-radius: 8px;
@@ -3976,7 +3976,7 @@
 
 .mobileFolderItem.selected {
   background: #f0f4ff;
-  color: #667eea;
+  color: #3b82f6;
 }
 
 .mobileFolderItem .folderIcon {
@@ -3986,7 +3986,7 @@
 
 .mobileFolderItem .checkIcon {
   margin-left: auto;
-  color: #667eea;
+  color: #3b82f6;
   flex-shrink: 0;
 }
 
@@ -4003,8 +4003,8 @@
 
 .actionButton.active {
   background: #f3f4f6;
-  border-color: #667eea;
-  color: #667eea;
+  border-color: #3b82f6;
+  color: #3b82f6;
 }
 
 .folderDropdown {
@@ -4063,7 +4063,7 @@
 
 .folderDropdownItem.selected {
   background: #f0f4ff;
-  color: #667eea;
+  color: #3b82f6;
 }
 
 .folderDropdownItem .folderIcon {
@@ -4078,7 +4078,7 @@
 }
 
 .folderDropdownItem .checkIcon {
-  color: #667eea;
+  color: #3b82f6;
   flex-shrink: 0;
 }
 
@@ -4108,7 +4108,7 @@
   left: 0;
   width: 4px;
   height: 100%;
-  background: linear-gradient(180deg, #3b82f6 0%, #6366f1 100%);
+  background: linear-gradient(180deg, #3b82f6 0%, #3b82f6 100%);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -4151,7 +4151,7 @@
 }
 
 .checkboxChecked {
-  color: #667eea;
+  color: #3b82f6;
 }
 
 .cardIcon {
@@ -5768,7 +5768,7 @@
 }
 
 .limitBadgeUpgrade {
-  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #3b82f6 100%);
   color: white;
   border: none;
   border-radius: 10px;
@@ -5858,7 +5858,7 @@
 
 .mobileSearchInput:focus {
   outline: none;
-  border-color: #6366f1;
+  border-color: #3b82f6;
   background: white;
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
@@ -5912,7 +5912,7 @@
 }
 
 .hasActiveFilters {
-  border-color: #6366f1 !important;
+  border-color: #3b82f6 !important;
   background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%) !important;
 }
 
@@ -6027,7 +6027,7 @@
 
 .mobileFilterGroup select:focus {
   outline: none;
-  border-color: #6366f1;
+  border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
@@ -6065,7 +6065,7 @@
   font-weight: 600;
   border: none;
   border-radius: 12px;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
   color: white;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -6157,7 +6157,7 @@
 
 .uploadTab.active {
   background: white;
-  color: #6366f1;
+  color: #3b82f6;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
@@ -6543,8 +6543,8 @@
 }
 
 .listRowBadge[data-type="email"] {
-  background: #f3e8ff;
-  color: #7c3aed;
+  background: #dbeafe;
+  color: #3b82f6;
 }
 
 .listRowBadge[data-type="unanalyzed"] {
@@ -6772,7 +6772,7 @@
 }
 
 .listRowDropdownItem.highlight {
-  color: #7c3aed;
+  color: #3b82f6;
 }
 
 .listRowDropdownItem.highlight:active {
@@ -7430,7 +7430,7 @@
 }
 
 .swipeAction.lens {
-  background: #8b5cf6;
+  background: #60a5fa;
 }
 
 .swipeAction.delete {

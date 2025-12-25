@@ -62,13 +62,13 @@
 }
 
 .frequencyBtn:hover:not(:disabled) {
-  border-color: #667eea;
+  border-color: #3b82f6;
   background: #f9fafb;
 }
 
 .frequencyBtn.active {
-  background: #667eea;
-  border-color: #667eea;
+  background: #3b82f6;
+  border-color: #3b82f6;
   color: white;
 }
 
@@ -116,13 +116,13 @@
 }
 
 .baseAmountInput:hover:not(:disabled) {
-  border-color: #667eea;
+  border-color: #3b82f6;
   background: white;
 }
 
 .baseAmountInput:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #3b82f6;
   background: white;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
@@ -181,13 +181,13 @@
 }
 
 .startDateInput:hover:not(:disabled) {
-  border-color: #667eea;
+  border-color: #3b82f6;
   background: white;
 }
 
 .startDateInput:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #3b82f6;
   background: white;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
@@ -246,7 +246,7 @@
 .costValue {
   font-size: 1.15rem;
   font-weight: 700;
-  color: #667eea;
+  color: #3b82f6;
 }
 
 /* Compare Button */
@@ -257,7 +257,7 @@
   justify-content: center;
   gap: 0.5rem;
   padding: 0.85rem 1.25rem;
-  background: #667eea;
+  background: #3b82f6;
   color: white;
   border: none;
   border-radius: 8px;

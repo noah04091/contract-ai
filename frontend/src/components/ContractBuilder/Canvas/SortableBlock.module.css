@@ -33,9 +33,11 @@
 }
 
 .sortableBlock.preview {
-  margin: 0;
+  /* WICHTIG: Gleiche Abstände wie im Edit-Modus für konsistente Darstellung! */
+  margin: 8px 0;
   padding: 0;
   border: none;
+  cursor: default;
 }
 
 .sortableBlock.preview:hover {
@@ -144,7 +146,7 @@
 
 .iconBadge[title*="KI"] {
   color: #805ad5;
-  background: #faf5ff;
+  background: #eff6ff;
 }
 
 .iconBadge[title*="Gesperrt"] {
@@ -171,7 +173,8 @@
 }
 
 .sortableBlock.preview .blockContent {
-  padding: 0;
+  /* WICHTIG: Gleiche Padding wie im Edit-Modus für konsistente Darstellung! */
+  padding: 12px;
 }
 
 /* Selection Border */

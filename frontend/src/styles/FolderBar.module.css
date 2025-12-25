@@ -71,7 +71,7 @@
 
 /* Active State */
 .folderChip.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   border-color: transparent;
   color: white;
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
@@ -88,13 +88,13 @@
 
 /* Folder-specific color accent */
 .folderChip:not(.active):not(.unassignedChip):not(.newFolderBtn):not(.smartFoldersBtn) {
-  border-left: 4px solid var(--folder-color, #667eea);
+  border-left: 4px solid var(--folder-color, #3b82f6);
 }
 
 /* Chip Elements */
 .chipIcon {
   flex-shrink: 0;
-  color: #667eea;
+  color: #3b82f6;
   transition: color 0.2s ease;
 }
 
@@ -135,7 +135,7 @@
 }
 
 .dragHandle:hover {
-  color: #667eea;
+  color: #3b82f6;
 }
 
 .dragHandle:active {
@@ -277,7 +277,7 @@
 /* Smart Folders Button */
 .smartFoldersBtn {
   border-color: transparent;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
 }

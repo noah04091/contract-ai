@@ -95,7 +95,7 @@
 
 .field input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
@@ -132,7 +132,7 @@
 
 .iconBtn.active {
   background: white;
-  border-color: #667eea;
+  border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
@@ -268,7 +268,7 @@
 }
 
 .saveBtn {
-  background: #667eea;
+  background: #3b82f6;
   color: white;
 }
 
