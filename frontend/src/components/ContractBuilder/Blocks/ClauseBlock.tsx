@@ -1,24 +1,36 @@
 /**
  * ClauseBlock - Standard-Vertragsklausel mit Nummerierung
+ * Unterstützt Inline-Editing per Doppelklick
  */
 
-import React from 'react';
-import { BlockContent } from '../../../stores/contractBuilderStore';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { BlockContent, useContractBuilderStore } from '../../../stores/contractBuilderStore';
 import { VariableHighlight } from '../Variables/VariableHighlight';
 import styles from './ClauseBlock.module.css';
 
 interface ClauseBlockProps {
+  blockId: string;
   content: BlockContent;
   isSelected: boolean;
   isPreview: boolean;
 }
 
+type EditingField = 'title' | 'body' | `subclause-${number}` | null;
+
 export const ClauseBlock: React.FC<ClauseBlockProps> = ({
+  blockId,
   content,
   isSelected,
   isPreview,
 }) => {
   const { number, clauseTitle, body, subclauses } = content;
+  const updateBlockContent = useContractBuilderStore((state) => state.updateBlockContent);
+  const syncVariables = useContractBuilderStore((state) => state.syncVariables);
+
+  const [editingField, setEditingField] = useState<EditingField>(null);
+  const [editValue, setEditValue] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Paragraphen-Nummer formatieren
   const formatNumber = (num: string | undefined) => {
@@ -26,6 +38,76 @@ export const ClauseBlock: React.FC<ClauseBlockProps> = ({
     if (num.startsWith('§')) return num;
     return `§ ${num}`;
   };
+
+  // Fokus auf Input setzen wenn Editing startet
+  useEffect(() => {
+    if (editingField) {
+      if (editingField === 'body') {
+        textareaRef.current?.focus();
+        textareaRef.current?.select();
+      } else {
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      }
+    }
+  }, [editingField]);
+
+  // Doppelklick-Handler zum Starten des Editings
+  const handleDoubleClick = useCallback((field: EditingField, currentValue: string) => {
+    if (isPreview) return; // Kein Editing im Preview-Modus
+    setEditingField(field);
+    setEditValue(currentValue);
+  }, [isPreview]);
+
+  // Speichern der Änderungen
+  const handleSave = useCallback(() => {
+    if (!editingField) return;
+
+    if (editingField === 'title') {
+      updateBlockContent(blockId, { clauseTitle: editValue });
+    } else if (editingField === 'body') {
+      updateBlockContent(blockId, { body: editValue });
+    } else if (editingField.startsWith('subclause-')) {
+      const index = parseInt(editingField.split('-')[1], 10);
+      const newSubclauses = [...(subclauses || [])];
+      if (newSubclauses[index]) {
+        newSubclauses[index] = { ...newSubclauses[index], text: editValue };
+        updateBlockContent(blockId, { subclauses: newSubclauses });
+      }
+    }
+
+    // Variablen synchronisieren falls neue hinzugefügt wurden
+    syncVariables();
+    setEditingField(null);
+    setEditValue('');
+  }, [editingField, editValue, blockId, subclauses, updateBlockContent, syncVariables]);
+
+  // Abbrechen des Editings
+  const handleCancel = useCallback(() => {
+    setEditingField(null);
+    setEditValue('');
+  }, []);
+
+  // Tastatur-Handler
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSave();
+    } else if (e.key === 'Escape') {
+      handleCancel();
+    }
+  }, [handleSave, handleCancel]);
+
+  // Textarea spezieller Handler (Shift+Enter für neue Zeile)
+  const handleTextareaKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSave();
+    } else if (e.key === 'Escape') {
+      handleCancel();
+    }
+    // Shift+Enter erlaubt neue Zeilen
+  }, [handleSave, handleCancel]);
 
   return (
     <div className={`${styles.clause} ${isSelected ? styles.selected : ''}`}>
@@ -35,24 +117,55 @@ export const ClauseBlock: React.FC<ClauseBlockProps> = ({
           {formatNumber(number)}
         </span>
         <h3 className={styles.clauseTitle}>
-          {isPreview ? (
-            clauseTitle || 'Klauseltitel'
+          {editingField === 'title' ? (
+            <input
+              ref={inputRef}
+              type="text"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={handleSave}
+              onKeyDown={handleKeyDown}
+              className={styles.inlineInput}
+            />
           ) : (
-            <VariableHighlight text={clauseTitle || 'Klauseltitel'} />
+            <VariableHighlight
+              text={clauseTitle || 'Klauseltitel'}
+              isPreview={isPreview}
+              onDoubleClick={() => handleDoubleClick('title', clauseTitle || 'Klauseltitel')}
+            />
           )}
         </h3>
       </div>
 
       {/* Klausel-Body */}
-      {body && (
-        <div className={styles.clauseBody}>
-          {isPreview ? (
-            <p>{body}</p>
-          ) : (
-            <VariableHighlight text={body} multiline />
-          )}
-        </div>
-      )}
+      <div className={styles.clauseBody}>
+        {editingField === 'body' ? (
+          <textarea
+            ref={textareaRef}
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onBlur={handleSave}
+            onKeyDown={handleTextareaKeyDown}
+            className={styles.inlineTextarea}
+            rows={Math.max(3, editValue.split('\n').length)}
+          />
+        ) : body ? (
+          <VariableHighlight
+            text={body}
+            multiline
+            isPreview={isPreview}
+            onDoubleClick={() => handleDoubleClick('body', body)}
+          />
+        ) : (
+          <span
+            className={styles.placeholder}
+            onDoubleClick={() => !isPreview && handleDoubleClick('body', '')}
+            style={{ cursor: !isPreview ? 'text' : 'default' }}
+          >
+            Doppelklick zum Bearbeiten...
+          </span>
+        )}
+      </div>
 
       {/* Unterklauseln */}
       {subclauses && subclauses.length > 0 && (
@@ -63,10 +176,22 @@ export const ClauseBlock: React.FC<ClauseBlockProps> = ({
                 {sub.number || `(${index + 1})`}
               </span>
               <span className={styles.subclauseText}>
-                {isPreview ? (
-                  sub.text
+                {editingField === `subclause-${index}` ? (
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onBlur={handleSave}
+                    onKeyDown={handleKeyDown}
+                    className={styles.inlineInput}
+                  />
                 ) : (
-                  <VariableHighlight text={sub.text || ''} />
+                  <VariableHighlight
+                    text={sub.text || ''}
+                    isPreview={isPreview}
+                    onDoubleClick={() => handleDoubleClick(`subclause-${index}`, sub.text || '')}
+                  />
                 )}
               </span>
             </li>

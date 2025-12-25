@@ -17,6 +17,7 @@ import { AttachmentBlock } from './AttachmentBlock';
 import { DateFieldBlock } from './DateFieldBlock';
 import { CustomBlock } from './CustomBlock';
 import { LogoBlock } from './LogoBlock';
+import { NumberedListBlock } from './NumberedListBlock';
 import styles from './BlockRenderer.module.css';
 
 interface BlockRendererProps {
@@ -68,6 +69,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
       case 'header':
         return (
           <HeaderBlock
+            blockId={block.id}
             content={block.content}
             isSelected={isSelected}
             isPreview={isPreview}
@@ -77,6 +79,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
       case 'parties':
         return (
           <PartiesBlock
+            blockId={block.id}
             content={block.content}
             isSelected={isSelected}
             isPreview={isPreview}
@@ -86,6 +89,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
       case 'preamble':
         return (
           <PreambleBlock
+            blockId={block.id}
             content={block.content}
             isSelected={isSelected}
             isPreview={isPreview}
@@ -95,6 +99,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
       case 'clause':
         return (
           <ClauseBlock
+            blockId={block.id}
             content={block.content}
             isSelected={isSelected}
             isPreview={isPreview}
@@ -104,6 +109,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
       case 'table':
         return (
           <TableBlock
+            blockId={block.id}
             content={block.content}
             isSelected={isSelected}
             isPreview={isPreview}
@@ -113,6 +119,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
       case 'signature':
         return (
           <SignatureBlock
+            blockId={block.id}
             content={block.content}
             isSelected={isSelected}
             isPreview={isPreview}
@@ -122,6 +129,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
       case 'attachment':
         return (
           <AttachmentBlock
+            blockId={block.id}
             content={block.content}
             isSelected={isSelected}
             isPreview={isPreview}
@@ -131,6 +139,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
       case 'date-field':
         return (
           <DateFieldBlock
+            blockId={block.id}
             content={block.content}
             isSelected={isSelected}
             isPreview={isPreview}
@@ -167,6 +176,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
       case 'custom':
         return (
           <CustomBlock
+            blockId={block.id}
             content={block.content}
             isSelected={isSelected}
             isPreview={isPreview}
@@ -176,6 +186,16 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
       case 'logo':
         return (
           <LogoBlock
+            blockId={block.id}
+            content={block.content}
+            isSelected={isSelected}
+            isPreview={isPreview}
+          />
+        );
+
+      case 'numbered-list':
+        return (
+          <NumberedListBlock
             blockId={block.id}
             content={block.content}
             isSelected={isSelected}

@@ -11,6 +11,8 @@ import styles from './VariableHighlight.module.css';
 interface VariableHighlightProps {
   text: string;
   multiline?: boolean;
+  isPreview?: boolean; // Im Preview/PDF-Modus: Keine farbigen Hervorhebungen
+  onDoubleClick?: () => void; // Callback für Inline-Editing
 }
 
 // Regex für {{variable_name}} oder {{berechnung}}
@@ -19,6 +21,8 @@ const VARIABLE_PATTERN = /\{\{([^}]+)\}\}/g;
 export const VariableHighlight: React.FC<VariableHighlightProps> = ({
   text,
   multiline = false,
+  isPreview = false,
+  onDoubleClick,
 }) => {
   const { document: currentDocument, setSelectedVariable } = useContractBuilderStore();
   const variables = currentDocument?.content.variables || [];
@@ -163,7 +167,16 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
       return <span key={index}>{segment.content}</span>;
     }
 
-    // CSS-Klasse basierend auf Typ und Status
+    // Im Preview/PDF-Modus: Einfacher Text ohne Styling
+    if (isPreview) {
+      return (
+        <span key={index}>
+          {segment.isFilled ? segment.value : segment.content}
+        </span>
+      );
+    }
+
+    // CSS-Klasse basierend auf Typ und Status (nur im Edit-Modus)
     const varClass = [
       styles.variable,
       segment.isFilled ? styles.filled : styles.empty,
@@ -189,11 +202,45 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
     );
   });
 
+  // Wrapper mit onDoubleClick für Inline-Editing
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    if (onDoubleClick && !isPreview) {
+      e.stopPropagation();
+      onDoubleClick();
+    }
+  };
+
   if (multiline) {
-    return <div className={styles.multiline}>{content}</div>;
+    const multilineClasses = [
+      styles.multiline,
+      onDoubleClick && !isPreview ? styles.editable : ''
+    ].filter(Boolean).join(' ');
+
+    return (
+      <div
+        className={multilineClasses}
+        onDoubleClick={handleDoubleClick}
+        title={onDoubleClick && !isPreview ? 'Doppelklick zum Bearbeiten' : undefined}
+      >
+        {content}
+      </div>
+    );
   }
 
-  return <span className={styles.inline}>{content}</span>;
+  const inlineClasses = [
+    styles.inline,
+    onDoubleClick && !isPreview ? styles.editable : ''
+  ].filter(Boolean).join(' ');
+
+  return (
+    <span
+      className={inlineClasses}
+      onDoubleClick={handleDoubleClick}
+      title={onDoubleClick && !isPreview ? 'Doppelklick zum Bearbeiten' : undefined}
+    >
+      {content}
+    </span>
+  );
 };
 
 export default VariableHighlight;

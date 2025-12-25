@@ -108,6 +108,9 @@ export interface BlockContent {
   // Divider/Spacer
   height?: number;
   style?: string;
+  // Numbered List
+  items?: string[];
+  listStyle?: 'decimal' | 'alpha' | 'roman';
 }
 
 export interface Block {
@@ -408,35 +411,34 @@ function extractVariablesFromText(text: string): string[] {
   return variables;
 }
 
+// Helper: Rekursiv alle Strings in einem Wert durchsuchen
+function extractVariablesRecursive(value: unknown, allVarNames: string[]): void {
+  if (typeof value === 'string') {
+    const vars = extractVariablesFromText(value);
+    vars.forEach(v => {
+      if (!allVarNames.includes(v)) {
+        allVarNames.push(v);
+      }
+    });
+  } else if (Array.isArray(value)) {
+    // Arrays durchsuchen (z.B. headers, rows, items)
+    value.forEach(item => extractVariablesRecursive(item, allVarNames));
+  } else if (typeof value === 'object' && value !== null) {
+    // Nested objects durchsuchen (z.B. party1, party2, subclauses)
+    Object.values(value).forEach(nestedValue => {
+      extractVariablesRecursive(nestedValue, allVarNames);
+    });
+  }
+}
+
 // Helper: Variablen aus allen Blöcken extrahieren
 function extractVariablesFromBlocks(blocks: Block[]): Variable[] {
   const allVarNames: string[] = [];
 
   blocks.forEach(block => {
     const content = block.content;
-    // Durchsuche alle String-Felder im Content
-    Object.values(content).forEach(value => {
-      if (typeof value === 'string') {
-        const vars = extractVariablesFromText(value);
-        vars.forEach(v => {
-          if (!allVarNames.includes(v)) {
-            allVarNames.push(v);
-          }
-        });
-      } else if (typeof value === 'object' && value !== null) {
-        // Nested objects (z.B. party1, party2)
-        Object.values(value).forEach(nestedValue => {
-          if (typeof nestedValue === 'string') {
-            const vars = extractVariablesFromText(nestedValue);
-            vars.forEach(v => {
-              if (!allVarNames.includes(v)) {
-                allVarNames.push(v);
-              }
-            });
-          }
-        });
-      }
-    });
+    // Rekursiv alle Felder im Content durchsuchen
+    extractVariablesRecursive(content, allVarNames);
   });
 
   // Variablen-Objekte erstellen
