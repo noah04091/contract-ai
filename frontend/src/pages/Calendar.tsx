@@ -1,9 +1,8 @@
 // src/pages/Calendar.tsx - Custom Calendar Redesign
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSwipeable } from "react-swipeable";
-import { DndContext, DragEndEvent, useDraggable, useDroppable, DragOverlay, DragStartEvent } from "@dnd-kit/core";
 import {
   AlertCircle,
   ChevronRight,
@@ -104,101 +103,6 @@ const formatLocalDate = (date: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
-// ========== Draggable Event Pill ==========
-interface DraggableEventPillProps {
-  event: CalendarEvent;
-  onClick: (e: React.MouseEvent) => void;
-}
-
-function DraggableEventPill({ event, onClick }: DraggableEventPillProps) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: event.id,
-    data: { event }
-  });
-
-  return (
-    <div
-      ref={setNodeRef}
-      {...listeners}
-      {...attributes}
-      className={`event-pill ${event.severity} ${event.isRecurringMaster || event.isRecurringInstance ? 'recurring' : ''}`}
-      onClick={onClick}
-      style={{
-        opacity: isDragging ? 0.5 : 1,
-        cursor: isDragging ? 'grabbing' : 'grab',
-        touchAction: 'none'
-      }}
-    >
-      <div className="event-indicator"></div>
-      <span className="event-text">{formatContractName(event.contractName)}</span>
-      {(event.isRecurringMaster || event.isRecurringInstance) && (
-        <span className="recurring-icon" title="Wiederkehrendes Ereignis">↻</span>
-      )}
-    </div>
-  );
-}
-
-// ========== Droppable Day Cell ==========
-interface DroppableDayCellProps {
-  dayInfo: { day: number; type: 'prev' | 'current' | 'next'; events: CalendarEvent[] };
-  year: number;
-  month: number;
-  isToday: boolean;
-  isSelected: boolean;
-  onDateClick: () => void;
-  onEventClick: (event: CalendarEvent) => void;
-  onMoreClick: (date: Date, events: CalendarEvent[]) => void;
-}
-
-function DroppableDayCell({ dayInfo, year, month, isToday, isSelected, onDateClick, onEventClick, onMoreClick }: DroppableDayCellProps) {
-  const dropMonth = dayInfo.type === 'prev' ? month - 1 : dayInfo.type === 'next' ? month + 1 : month;
-  const dropId = `${year}-${dropMonth}-${dayInfo.day}`;
-
-  const { setNodeRef, isOver } = useDroppable({
-    id: dropId,
-    data: { year, month: dropMonth, day: dayInfo.day }
-  });
-
-  return (
-    <div
-      ref={setNodeRef}
-      className={`day-cell ${dayInfo.type === 'current' ? '' : 'other-month'} ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}`}
-      onClick={onDateClick}
-      style={{
-        background: isOver ? 'rgba(59, 130, 246, 0.15)' : undefined,
-        borderColor: isOver ? '#3b82f6' : undefined,
-        transition: 'background 0.2s, border-color 0.2s'
-      }}
-    >
-      <div className="day-number">{dayInfo.day}</div>
-      <div className="day-events">
-        {dayInfo.events.slice(0, 3).map((event) => (
-          <DraggableEventPill
-            key={event.id}
-            event={event}
-            onClick={(e) => {
-              e.stopPropagation();
-              onEventClick(event);
-            }}
-          />
-        ))}
-        {dayInfo.events.length > 3 && (
-          <div
-            className="more-events clickable"
-            onClick={(e) => {
-              e.stopPropagation();
-              const targetDate = new Date(year, month + (dayInfo.type === 'prev' ? -1 : dayInfo.type === 'next' ? 1 : 0), dayInfo.day);
-              onMoreClick(targetDate, dayInfo.events);
-            }}
-          >
-            +{dayInfo.events.length - 3} mehr
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 // ========== Custom Calendar Grid ==========
 interface CalendarGridProps {
   currentDate: Date;
@@ -208,34 +112,9 @@ interface CalendarGridProps {
   onDateClick: (date: Date) => void;
   onEventClick: (event: CalendarEvent) => void;
   onMoreClick: (date: Date, events: CalendarEvent[]) => void;
-  onEventDrop?: (eventId: string, newDate: Date) => void;
 }
 
-function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateClick, onEventClick, onMoreClick, onEventDrop }: CalendarGridProps) {
-  const [activeEvent, setActiveEvent] = useState<CalendarEvent | null>(null);
-
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    const draggedEvent = event.active.data.current?.event as CalendarEvent;
-    if (draggedEvent) {
-      setActiveEvent(draggedEvent);
-    }
-  }, []);
-
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    setActiveEvent(null);
-    const { active, over } = event;
-
-    if (!over || !onEventDrop) return;
-
-    // Get the event ID and target date
-    const eventId = active.id as string;
-    const dropData = over.data.current as { year: number; month: number; day: number } | undefined;
-
-    if (dropData) {
-      const newDate = new Date(dropData.year, dropData.month, dropData.day);
-      onEventDrop(eventId, newDate);
-    }
-  }, [onEventDrop]);
+function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateClick, onEventClick, onMoreClick }: CalendarGridProps) {
   // Get days in month
   const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
 
@@ -439,59 +318,71 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateCli
     );
   }
 
-  // MONTH VIEW (default) - with Drag & Drop support
+  // MONTH VIEW (default)
   return (
-    <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="calendar-grid">
-        {/* Weekday Headers */}
-        {WEEKDAYS.map((day, index) => (
-          <div key={day} className={`weekday-header ${index >= 5 ? 'weekend' : ''}`}>
-            {day}
-          </div>
-        ))}
+    <div className="calendar-grid">
+      {/* Weekday Headers */}
+      {WEEKDAYS.map((day, index) => (
+        <div key={day} className={`weekday-header ${index >= 5 ? 'weekend' : ''}`}>
+          {day}
+        </div>
+      ))}
 
-        {/* Calendar Days with Droppable support */}
-        {calendarDays.map((dayInfo, index) => {
-          const dropMonth = dayInfo.type === 'prev' ? month - 1 : dayInfo.type === 'next' ? month + 1 : month;
-          const dropId = `${year}-${dropMonth}-${dayInfo.day}`;
+      {/* Calendar Days */}
+      {calendarDays.map((dayInfo, index) => {
+        const dayClasses = [
+          'calendar-day',
+          dayInfo.type !== 'current' ? 'other-month' : '',
+          dayInfo.isToday ? 'today' : '',
+          dayInfo.isSelected ? 'selected' : '',
+          dayInfo.isWeekend && dayInfo.type === 'current' ? 'weekend' : ''
+        ].filter(Boolean).join(' ');
 
-          return (
-            <DroppableDayCell
-              key={dropId + '-' + index}
-              dayInfo={dayInfo}
-              year={year}
-              month={month}
-              isToday={dayInfo.isToday || false}
-              isSelected={dayInfo.isSelected || false}
-              onDateClick={() => {
-                if (dayInfo.type === 'current') {
-                  onDateClick(new Date(year, month, dayInfo.day));
-                }
-              }}
-              onEventClick={onEventClick}
-              onMoreClick={onMoreClick}
-            />
-          );
-        })}
-      </div>
-
-      {/* Drag Overlay - shows dragged event preview */}
-      <DragOverlay>
-        {activeEvent ? (
+        return (
           <div
-            className={`event-pill ${activeEvent.severity} dragging`}
-            style={{
-              opacity: 0.9,
-              boxShadow: '0 8px 20px rgba(0, 0, 0, 0.2)',
-              cursor: 'grabbing'
+            key={index}
+            className={dayClasses}
+            onClick={() => {
+              if (dayInfo.type === 'current') {
+                onDateClick(new Date(year, month, dayInfo.day));
+              }
             }}
           >
-            <div className="event-indicator"></div>
-            <span className="event-text">{formatContractName(activeEvent.contractName)}</span>
+            <div className="day-number">{dayInfo.day}</div>
+            <div className="day-events">
+              {dayInfo.events.slice(0, 3).map((event) => (
+                <div
+                  key={event.id}
+                  className={`event-pill ${event.severity} ${event.isRecurringMaster || event.isRecurringInstance ? 'recurring' : ''}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEventClick(event);
+                  }}
+                >
+                  <div className="event-indicator"></div>
+                  <span className="event-text">{formatContractName(event.contractName)}</span>
+                  {(event.isRecurringMaster || event.isRecurringInstance) && (
+                    <span className="recurring-icon" title="Wiederkehrendes Ereignis">↻</span>
+                  )}
+                </div>
+              ))}
+              {dayInfo.events.length > 3 && (
+                <div
+                  className="more-events clickable"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const targetDate = new Date(year, month + (dayInfo.type === 'prev' ? -1 : dayInfo.type === 'next' ? 1 : 0), dayInfo.day);
+                    onMoreClick(targetDate, dayInfo.events);
+                  }}
+                >
+                  +{dayInfo.events.length - 3} mehr
+                </div>
+              )}
+            </div>
           </div>
-        ) : null}
-      </DragOverlay>
-    </DndContext>
+        );
+      })}
+    </div>
   );
 }
 
@@ -2752,43 +2643,6 @@ export default function CalendarPage() {
     }
   };
 
-  // Handle event drag & drop
-  const handleEventDrop = async (eventId: string, newDate: Date) => {
-    const event = events.find(e => e.id === eventId);
-    if (!event) return;
-
-    // Don't allow dropping recurring instances (only master can be moved)
-    if (event.isRecurringInstance) {
-      toast.error('Wiederkehrende Instanzen können nicht verschoben werden');
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem("token");
-
-      // Keep the original time, just change the date
-      const oldDate = new Date(event.date);
-      newDate.setHours(oldDate.getHours(), oldDate.getMinutes(), 0, 0);
-
-      // Optimistic update
-      updateEvent(eventId, { date: newDate.toISOString() });
-
-      // API call
-      await axios.patch(`/api/calendar/events/${eventId}`, {
-        date: newDate.toISOString()
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      toast.success(`Event auf ${newDate.toLocaleDateString('de-DE')} verschoben`);
-    } catch (err) {
-      console.error('Error moving event:', err);
-      toast.error('Fehler beim Verschieben des Events');
-      // Rollback - refetch events
-      fetchEvents(true);
-    }
-  };
-
   // Handle Quick Action - mit optimistischen Updates!
   const handleQuickAction = async (action: string, eventId: string, snoozeDays?: number) => {
     // If snooze action without days, open the snooze modal
@@ -3120,7 +2974,6 @@ export default function CalendarPage() {
                     setShowQuickActions(true);
                   }}
                   onMoreClick={(date, events) => setDayEventsModal({ date, events })}
-                  onEventDrop={handleEventDrop}
                 />
               )}
 

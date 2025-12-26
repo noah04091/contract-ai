@@ -418,23 +418,6 @@
   background: var(--success);
 }
 
-/* Drag & Drop Styles */
-.event-pill[style*="cursor: grabbing"],
-.event-pill.dragging {
-  cursor: grabbing !important;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2) !important;
-  z-index: 1000;
-}
-
-.event-pill:hover {
-  cursor: grab;
-}
-
-.day-cell[style*="background: rgba(59, 130, 246, 0.15)"] {
-  outline: 2px dashed #3b82f6;
-  outline-offset: -2px;
-}
-
 /* Recurring Events Indicator */
 .event-pill.recurring {
   position: relative;
