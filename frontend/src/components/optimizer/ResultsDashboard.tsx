@@ -511,8 +511,7 @@ export default function ResultsDashboard({
                   {/* Content */}
                   <div className={styles.issueContent}>
                     <p className={styles.issueSummary}>
-                      {optimization.reasoning?.slice(0, 150)}
-                      {optimization.reasoning && optimization.reasoning.length > 150 && '...'}
+                      {optimization.reasoning}
                     </p>
 
                     {/* Expandable Details */}

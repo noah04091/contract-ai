@@ -305,7 +305,39 @@ const CONTRACT_TYPES = {
     legalFramework: ['BGB §§ 488-515', 'VerbrKrG', 'PAngV', 'KWG'],
     riskFactors: ['variabler_zins', 'vorfälligkeit', 'sicherheiten_unwirksam', 'bürgschaft', 'verzugszins_zu_hoch']
   },
-  
+
+  factoringvertrag: {
+    name: 'Factoring-Rahmenvertrag',
+    keywords: ['factoring', 'factoringkunde', 'factor', 'forderungskauf', 'forderungsabtretung', 'abtretung', 'debitor', 'debitoren', 'delkredere', 'ankauflimit', 'debitorenlimit', 'sicherungseinbehalt', 'inkasso', 'forderungsverwaltung', 'ankauf', 'grenkefactoring', 'forderung', 'forderungen', 'kaufpreis', 'flatrate', 'rahmenvertrag'],
+    requiredClauses: ['forderungsabtretung', 'ankauflimit', 'debitorenlimit', 'kaufpreisberechnung', 'gebuehren', 'sicherungseinbehalt', 'delkrederehaftung', 'veritaetshaftung', 'kuendigung', 'offenlegung', 'datenschutz', 'zahlungsweiterleitung', 'mahn_inkasso'],
+    jurisdiction: 'DE',
+    legalFramework: ['BGB §§ 398-413 (Abtretung)', 'BGB §§ 433ff (Kaufrecht)', 'HGB', 'KWG', 'GwG', 'DSGVO'],
+    riskFactors: ['abtretungsverbot', 'verität_falsch', 'delkredere_ausschluss', 'limit_ueberschreitung', 'rueckgriff', 'offenlegungspflicht', 'konzentration_debitoren', 'insolvenz_factoringkunde'],
+    specificChecks: {
+      ankauflimit: value => value > 0,
+      sicherungseinbehalt: value => value >= 0 && value <= 20,
+      kuendigungsfrist: value => value >= 2
+    }
+  },
+
+  leasingvertrag: {
+    name: 'Leasingvertrag',
+    keywords: ['leasing', 'leasinggeber', 'leasingnehmer', 'leasingrate', 'leasinggegenstand', 'restwert', 'laufzeit', 'kilometerleasing', 'finanzierungsleasing'],
+    requiredClauses: ['leasinggegenstand', 'leasingrate', 'laufzeit', 'restwert', 'versicherung', 'instandhaltung', 'rueckgabe', 'kuendigung', 'mehr_minderkilometer'],
+    jurisdiction: 'DE',
+    legalFramework: ['BGB §§ 535ff', 'BGB §§ 488ff', 'HGB', 'UStG'],
+    riskFactors: ['restwertrisiko', 'vorzeitige_beendigung', 'schaeden_rueckgabe', 'kilometerueberschreitung', 'totalschaden']
+  },
+
+  buergschaftsvertrag: {
+    name: 'Bürgschaftsvertrag',
+    keywords: ['bürgschaft', 'bürge', 'gläubiger', 'hauptschuldner', 'bürgschaftserklärung', 'selbstschuldnerisch', 'ausfallbürgschaft'],
+    requiredClauses: ['hauptschuld', 'buergschaftshoehe', 'buergschaftsart', 'inanspruchnahme', 'rueckgriff', 'kuendigung', 'verjaehrung'],
+    jurisdiction: 'DE',
+    legalFramework: ['BGB §§ 765-778', 'HGB § 349', 'KWG'],
+    riskFactors: ['sittenwidrigkeit', 'ueberbuergung', 'verzicht_einreden', 'formfehler', 'verjaehrung']
+  },
+
   // ════════════════════════════════════════════════════════════════════
   // WEITERE SPEZIALISIERTE VERTRAGSTYPEN
   // ════════════════════════════════════════════════════════════════════
@@ -2748,9 +2780,10 @@ const createOptimizedPrompt = (contractText, contractType, gaps, fileName, contr
     combinedContextStr += '\n⚠️ WICHTIG: Nutze diese Analyse-Informationen als zusätzlichen Context, aber führe trotzdem deine vollständige eigene Optimierungsanalyse durch!\n';
   }
 
-  // Erstelle spezifische Instruktionen basierend auf Vertragstyp
+  // 🚀 UNIVERSELLER ANSATZ: KI analysiert selbst was relevant ist!
+  // KEINE festen requiredClauses mehr - die KI erkennt selbst was fehlt!
   let typeSpecificInstructions = '';
-  
+
   if (contractInfo.isAmendment) {
     typeSpecificInstructions = `
 🔴 KRITISCH: Dies ist eine ÄNDERUNGSVEREINBARUNG zu einem ${contractInfo.parentType || 'Vertrag'}.
@@ -2764,16 +2797,34 @@ SPEZIELLE PRÜFPUNKTE FÜR ÄNDERUNGSVEREINBARUNGEN:
 
 WICHTIG: Gib KEINE Empfehlungen für Grundklauseln, die im Hauptvertrag stehen sollten!`;
   } else {
+    // 🔥 UNIVERSELLER PROMPT: Keine vordefinierten Checklisten!
+    // Die KI analysiert den INHALT und entscheidet selbst was relevant ist
     typeSpecificInstructions = `
-VERTRAGSTYP: ${typeConfig.name || contractType}
-RECHTSRAHMEN: ${(typeConfig.legalFramework || ['BGB']).join(', ')}
+🎯 UNIVERSELLE VERTRAGSANALYSE - ANALYSIERE DEN INHALT!
+
+⚠️ WICHTIG: Lies den Vertrag VOLLSTÄNDIG und erkenne selbst:
+1. Um welche ART von Vertrag handelt es sich? (Factoring? Leasing? Arbeitsvertrag? etc.)
+2. Was sind die SPEZIFISCHEN Themen dieses Vertrags?
+3. Was fehlt oder ist problematisch IN DIESEM KONKRETEN VERTRAG?
+
+🚫 KEINE GENERISCHEN EMPFEHLUNGEN!
+- Empfehle NUR was ZUM INHALT PASST
+- Wenn es ein Factoring-Vertrag ist → Factoring-relevante Optimierungen
+- Wenn es ein Arbeitsvertrag ist → Arbeitsrecht-relevante Optimierungen
+- Wenn es ein Mietvertrag ist → Mietrecht-relevante Optimierungen
+
+📋 ANALYSE-ANLEITUNG:
+1. Lies den Vertrag und erkenne den ECHTEN Vertragstyp
+2. Identifiziere die HAUPTTHEMEN (z.B. Forderungsabtretung, Delkredere, Ankaufslimit)
+3. Prüfe: Was fehlt SPEZIFISCH für diesen Vertragstyp?
+4. Prüfe: Was ist problematisch formuliert?
+5. Generiere Optimierungen die 100% ZUM INHALT PASSEN
+
+ERKANNTER VERTRAGSTYP VOM SYSTEM: ${typeConfig.name || contractType}
 JURISDICTION: ${contractInfo.jurisdiction || 'DE'}
 
-SPEZIFISCHE PRÜFPUNKTE FÜR ${contractType.toUpperCase()}:
-${typeConfig.requiredClauses.map(c => `✅ ${c.replace(/_/g, ' ')}`).join('\n')}
-
-BEKANNTE RISIKOFAKTOREN:
-${typeConfig.riskFactors.map(r => `⚠️ ${r.replace(/_/g, ' ')}`).join('\n')}`;
+ABER: Wenn du erkennst dass es ein ANDERER Vertragstyp ist, verwende DEINE Erkenntnis!
+Beispiel: System sagt "Sonstiges" aber du siehst es ist ein Factoring-Vertrag → optimiere für Factoring!`;
   }
   
   // Erstelle Lückenanalyse-Zusammenfassung
@@ -2784,11 +2835,17 @@ ${gaps.length > 5 ? `... und ${gaps.length - 5} weitere Lücken` : ''}` : 'Keine
   
   return `🚀 ULTIMATIVE ANWALTSKANZLEI-NIVEAU VERTRAGSOPTIMIERUNG
 
-AUFTRAG: Erstelle ${contractInfo.isAmendment ? '5-8' : '8-12'} PROFESSIONELLE juristische Optimierungen auf höchstem Niveau.
+AUFTRAG: Analysiere den Vertrag und finde ECHTE Probleme und Verbesserungsmöglichkeiten.
+
+⚠️ WICHTIG - QUALITÄT VOR QUANTITÄT:
+- Finde NUR ECHTE Probleme die ZUM VERTRAGSINHALT PASSEN
+- Wenn der Vertrag gut ist, gib WENIGER Optimierungen (auch nur 2-3 sind OK!)
+- Wenn der Vertrag fast perfekt ist, gib das im Health-Score wieder (90+)
+- NIEMALS Optimierungen erfinden nur um auf eine Zahl zu kommen!
+- Typisch: ${contractInfo.isAmendment ? '3-6' : '5-10'} Optimierungen (aber kann weniger sein!)
 
 KONTEXT:
 - Datei: ${fileName}
-- Vertragstyp: ${contractType}
 - Sprache: ${contractInfo.language === 'de' ? 'Deutsch' : 'Englisch'}
 ${typeSpecificInstructions}
 
@@ -2863,12 +2920,13 @@ ${contractType === 'arbeitsvertrag' || contractType.includes('arbeit') ? '✅ "A
 OUTPUT FORMAT (EXAKT EINHALTEN):
 {
   "meta": {
-    "type": "${contractType}",
+    "type": "DEN VON DIR ERKANNTEN VERTRAGSTYP (z.B. 'factoringvertrag', 'arbeitsvertrag', 'mietvertrag', 'dienstvertrag', 'leasingvertrag', etc.)",
     "confidence": 90,
     "jurisdiction": "${contractInfo.jurisdiction || 'DE'}",
     "language": "${contractInfo.language || 'de'}",
     "isAmendment": ${contractInfo.isAmendment || false},
-    "parentType": ${contractInfo.parentType ? `"${contractInfo.parentType}"` : null}
+    "parentType": ${contractInfo.parentType ? `"${contractInfo.parentType}"` : null},
+    "recognizedAs": "BESCHREIBE IN 3-5 WORTEN WAS FÜR EIN VERTRAG DAS IST (z.B. 'Factoring-Rahmenvertrag', 'Arbeitsvertrag mit Tarifbindung', 'Gewerbemietvertrag')"
   },
   "categories": [
     {
@@ -3176,7 +3234,8 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
                 jurisdiction: { type: "string" },
                 language: { type: "string" },
                 isAmendment: { type: "boolean" },
-                parentType: { type: ["string", "null"] }
+                parentType: { type: ["string", "null"] },
+                recognizedAs: { type: "string" }  // 🆕 KI beschreibt den erkannten Vertragstyp
               },
               required: ["type", "confidence", "jurisdiction", "language", "isAmendment"]
             },
@@ -4061,7 +4120,8 @@ router.post("/stream", verifyToken, uploadLimiter, smartRateLimiter, upload.sing
                 jurisdiction: { type: "string" },
                 language: { type: "string" },
                 isAmendment: { type: "boolean" },
-                parentType: { type: ["string", "null"] }
+                parentType: { type: ["string", "null"] },
+                recognizedAs: { type: "string" }  // 🆕 KI beschreibt den erkannten Vertragstyp
               },
               required: ["type", "confidence", "jurisdiction", "language", "isAmendment"]
             },
