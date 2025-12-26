@@ -2672,10 +2672,7 @@ export default function CalendarPage() {
         return d >= now && d <= future;
       })
       .sort((a, b) => {
-        // Sort by severity first (critical > warning > info), then by date
-        const severityOrder: Record<string, number> = { critical: 0, warning: 1, info: 2 };
-        const severityDiff = (severityOrder[a.severity] || 3) - (severityOrder[b.severity] || 3);
-        if (severityDiff !== 0) return severityDiff;
+        // Sort by date only (fewer days remaining = higher priority)
         return new Date(a.date).getTime() - new Date(b.date).getTime();
       });
   }, [filteredEvents]);
