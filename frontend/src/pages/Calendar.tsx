@@ -59,6 +59,15 @@ interface CalendarEvent {
   };
   amount?: number;
   isManual?: boolean;
+  // Recurrence fields
+  recurrence?: {
+    type: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
+    interval?: number;
+    endDate?: string | null;
+  } | null;
+  isRecurringMaster?: boolean;
+  isRecurringInstance?: boolean;
+  masterEventId?: string | null;
 }
 
 interface ApiResponse {
