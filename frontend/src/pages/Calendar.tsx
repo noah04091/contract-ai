@@ -59,15 +59,6 @@ interface CalendarEvent {
   };
   amount?: number;
   isManual?: boolean;
-  // Recurrence fields
-  recurrence?: {
-    type: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
-    interval?: number;
-    endDate?: string | null;
-  } | null;
-  isRecurringMaster?: boolean;
-  isRecurringInstance?: boolean;
-  masterEventId?: string | null;
 }
 
 interface ApiResponse {
@@ -362,7 +353,7 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateCli
               {dayInfo.events.slice(0, 3).map((event) => (
                 <div
                   key={event.id}
-                  className={`event-pill ${event.severity} ${event.isRecurringMaster || event.isRecurringInstance ? 'recurring' : ''}`}
+                  className={`event-pill ${event.severity}`}
                   onClick={(e) => {
                     e.stopPropagation();
                     onEventClick(event);
@@ -370,9 +361,6 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateCli
                 >
                   <div className="event-indicator"></div>
                   <span className="event-text">{formatContractName(event.contractName)}</span>
-                  {(event.isRecurringMaster || event.isRecurringInstance) && (
-                    <span className="recurring-icon" title="Wiederkehrendes Ereignis">↻</span>
-                  )}
                 </div>
               ))}
               {dayInfo.events.length > 3 && (
@@ -528,24 +516,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
             </div>
             <div className="modal-header-text">
               <h3>{isManualEvent ? currentEvent.title : formatContractName(currentEvent.contractName)}</h3>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <p style={{ margin: 0 }}>{isManualEvent ? 'Manuelles Ereignis' : currentEvent.title}</p>
-                {(currentEvent.isRecurringMaster || currentEvent.isRecurringInstance) && (
-                  <span style={{
-                    fontSize: '11px',
-                    padding: '2px 8px',
-                    background: 'rgba(139, 92, 246, 0.15)',
-                    color: '#7c3aed',
-                    borderRadius: '999px',
-                    fontWeight: 600,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px'
-                  }}>
-                    ↻ Wiederkehrend
-                  </span>
-                )}
-              </div>
+              <p>{isManualEvent ? 'Manuelles Ereignis' : currentEvent.title}</p>
             </div>
           </div>
           <button className="modal-close-btn" onClick={onClose}>
@@ -1277,7 +1248,6 @@ function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalPro
   const [saving, setSaving] = useState(false);
   const [contracts, setContracts] = useState<SimpleContractForCreate[]>([]);
   const [loadingContracts, setLoadingContracts] = useState(false);
-  const toast = useToast();
 
   // Use Zustand store for optimistic updates
   const { addEvent } = useCalendarStore();
@@ -1290,11 +1260,7 @@ function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalPro
     severity: 'info' as 'info' | 'warning' | 'critical',
     notes: '',
     contractId: '',
-    contractName: '',
-    // Recurrence fields
-    recurrenceType: 'none' as 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly',
-    recurrenceInterval: 1,
-    recurrenceEndDate: ''
+    contractName: ''
   });
 
   useEffect(() => {
@@ -1337,7 +1303,7 @@ function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalPro
 
   const handleSaveEvent = async () => {
     if (!formData.title.trim()) {
-      toast.error('Bitte geben Sie einen Titel ein');
+      alert('Bitte geben Sie einen Titel ein');
       return;
     }
 
@@ -1383,15 +1349,6 @@ function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalPro
         eventPayload.contractId = formData.contractId;
       }
 
-      // Include recurrence if set
-      if (formData.recurrenceType !== 'none') {
-        eventPayload.recurrence = {
-          type: formData.recurrenceType,
-          interval: formData.recurrenceInterval,
-          endDate: formData.recurrenceEndDate || null
-        };
-      }
-
       const response = await axios.post<ApiEventResponse>("/api/calendar/events", eventPayload, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -1408,14 +1365,7 @@ function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalPro
           type: formData.type,
           severity: formData.severity,
           status: 'scheduled',
-          isManual: !hasContract,
-          // Include recurrence if set
-          recurrence: formData.recurrenceType !== 'none' ? {
-            type: formData.recurrenceType,
-            interval: formData.recurrenceInterval,
-            endDate: formData.recurrenceEndDate || null
-          } : null,
-          isRecurringMaster: formData.recurrenceType !== 'none'
+          isManual: !hasContract
         };
         addEvent(newEvent);
         console.log('%c[DEBUG] Event added to store directly!', 'background: #10b981; color: white;');
@@ -1425,7 +1375,7 @@ function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalPro
       onClose();
     } catch (err) {
       console.error("Error creating event:", err);
-      toast.error('Fehler beim Erstellen des Ereignisses');
+      alert('Fehler beim Erstellen des Ereignisses');
     } finally {
       setSaving(false);
     }
@@ -1724,78 +1674,6 @@ function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalPro
               {formData.contractId && (
                 <p style={{ margin: '6px 0 0 0', fontSize: '12px', color: '#10b981' }}>
                   Ereignis wird mit diesem Vertrag verknüpft
-                </p>
-              )}
-            </div>
-
-            {/* Recurrence Section */}
-            <div style={{
-              padding: '16px',
-              background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(99, 102, 241, 0.03))',
-              borderRadius: '12px',
-              border: '1px solid rgba(139, 92, 246, 0.15)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                <RefreshCw size={16} style={{ color: '#7c3aed' }} />
-                <label style={{ ...labelStyle, margin: 0 }}>Wiederholung</label>
-              </div>
-
-              <select
-                value={formData.recurrenceType}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  recurrenceType: e.target.value as typeof formData.recurrenceType
-                })}
-                style={{ ...inputStyle, cursor: 'pointer', marginBottom: formData.recurrenceType !== 'none' ? '12px' : 0 }}
-              >
-                <option value="none">Keine Wiederholung</option>
-                <option value="daily">Täglich</option>
-                <option value="weekly">Wöchentlich</option>
-                <option value="monthly">Monatlich</option>
-                <option value="yearly">Jährlich</option>
-              </select>
-
-              {formData.recurrenceType !== 'none' && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div>
-                    <label style={{ ...labelStyle, fontSize: '12px' }}>
-                      Alle X {formData.recurrenceType === 'daily' ? 'Tage' :
-                              formData.recurrenceType === 'weekly' ? 'Wochen' :
-                              formData.recurrenceType === 'monthly' ? 'Monate' : 'Jahre'}
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="365"
-                      value={formData.recurrenceInterval}
-                      onChange={(e) => setFormData({
-                        ...formData,
-                        recurrenceInterval: Math.max(1, parseInt(e.target.value) || 1)
-                      })}
-                      style={inputStyle}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ ...labelStyle, fontSize: '12px' }}>
-                      Enddatum (optional)
-                    </label>
-                    <input
-                      type="date"
-                      value={formData.recurrenceEndDate}
-                      onChange={(e) => setFormData({ ...formData, recurrenceEndDate: e.target.value })}
-                      style={inputStyle}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {formData.recurrenceType !== 'none' && (
-                <p style={{ margin: '10px 0 0 0', fontSize: '12px', color: '#7c3aed' }}>
-                  {formData.recurrenceType === 'daily' && `Wiederholt sich alle ${formData.recurrenceInterval === 1 ? '' : formData.recurrenceInterval + ' '}Tag${formData.recurrenceInterval === 1 ? '' : 'e'}`}
-                  {formData.recurrenceType === 'weekly' && `Wiederholt sich alle ${formData.recurrenceInterval === 1 ? '' : formData.recurrenceInterval + ' '}Woche${formData.recurrenceInterval === 1 ? '' : 'n'}`}
-                  {formData.recurrenceType === 'monthly' && `Wiederholt sich alle ${formData.recurrenceInterval === 1 ? '' : formData.recurrenceInterval + ' '}Monat${formData.recurrenceInterval === 1 ? '' : 'e'}`}
-                  {formData.recurrenceType === 'yearly' && `Wiederholt sich alle ${formData.recurrenceInterval === 1 ? '' : formData.recurrenceInterval + ' '}Jahr${formData.recurrenceInterval === 1 ? '' : 'e'}`}
-                  {formData.recurrenceEndDate && ` bis ${new Date(formData.recurrenceEndDate).toLocaleDateString('de-DE')}`}
                 </p>
               )}
             </div>
@@ -2160,7 +2038,6 @@ function EditEventModal({ event, onClose, onSave, onDelete }: EditEventModalProp
   const [saving, setSaving] = useState(false);
   const [contracts, setContracts] = useState<SimpleContract[]>([]);
   const [loadingContracts, setLoadingContracts] = useState(false);
-  const toast = useToast();
   const [formData, setFormData] = useState({
     title: event.title || '',
     description: event.description || '',
@@ -2210,7 +2087,7 @@ function EditEventModal({ event, onClose, onSave, onDelete }: EditEventModalProp
 
   const handleSave = async () => {
     if (!formData.title.trim()) {
-      toast.error('Bitte geben Sie einen Titel ein');
+      alert('Bitte geben Sie einen Titel ein');
       return;
     }
 
@@ -2257,7 +2134,7 @@ function EditEventModal({ event, onClose, onSave, onDelete }: EditEventModalProp
       onClose();
     } catch (err) {
       console.error("Error updating event:", err);
-      toast.error('Fehler beim Speichern des Ereignisses');
+      alert('Fehler beim Speichern des Ereignisses');
     } finally {
       setSaving(false);
     }
@@ -2277,7 +2154,7 @@ function EditEventModal({ event, onClose, onSave, onDelete }: EditEventModalProp
       onClose();
     } catch (err) {
       console.error("Error deleting event:", err);
-      toast.error('Fehler beim Löschen des Ereignisses');
+      alert('Fehler beim Löschen des Ereignisses');
     }
   };
 

@@ -18,15 +18,6 @@ interface ApiResponse {
 // TYPES
 // ============================================
 
-// Recurrence Types
-export interface RecurrencePattern {
-  type: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
-  interval?: number; // Every X days/weeks/months/years
-  endDate?: string | null;
-  count?: number | null;
-  daysOfWeek?: number[] | null; // For weekly: [0-6] (Sun-Sat)
-}
-
 export interface CalendarEvent {
   id: string;
   contractId: string;
@@ -46,18 +37,12 @@ export interface CalendarEvent {
   };
   amount?: number;
   isManual?: boolean;
-  // Recurrence fields
-  recurrence?: RecurrencePattern | null;
-  isRecurringMaster?: boolean;
-  isRecurringInstance?: boolean;
-  masterEventId?: string | null;
 }
 
 interface CalendarState {
   // Data
   events: CalendarEvent[];
   lastFetched: number | null;
-  cachedUserId: string | null; // Track which user the cache belongs to
 
   // UI State
   loading: boolean;
@@ -90,32 +75,14 @@ export const useCalendarStore = create<CalendarState>()(
         // Initial State
         events: [],
         lastFetched: null,
-        cachedUserId: null,
         loading: false,
         error: null,
         cacheMaxAge: 5 * 60 * 1000, // 5 minutes
 
-        // Check if cache is still valid (including user check)
+        // Check if cache is still valid
         isCacheValid: () => {
-          const { lastFetched, cacheMaxAge, events, cachedUserId } = get();
+          const { lastFetched, cacheMaxAge, events } = get();
           if (!lastFetched || events.length === 0) return false;
-
-          // Check if user changed (extract userId from token)
-          try {
-            const token = localStorage.getItem('token');
-            if (token) {
-              const payload = JSON.parse(atob(token.split('.')[1]));
-              const currentUserId = payload.userId || payload.sub;
-              if (cachedUserId && cachedUserId !== currentUserId) {
-                console.log('[CalendarStore] User changed - cache invalid');
-                return false;
-              }
-            }
-          } catch {
-            // If we can't parse token, treat cache as invalid
-            return false;
-          }
-
           return Date.now() - lastFetched < cacheMaxAge;
         },
 
@@ -154,20 +121,9 @@ export const useCalendarStore = create<CalendarState>()(
 
             if (response.data.success && response.data.events) {
               console.log('[CalendarStore] Events loaded:', response.data.events.length);
-
-              // Extract userId from token for cache validation
-              let currentUserId = null;
-              try {
-                const payload = JSON.parse(atob(token.split('.')[1]));
-                currentUserId = payload.userId || payload.sub;
-              } catch {
-                // Ignore parsing errors
-              }
-
               set({
                 events: response.data.events,
                 lastFetched: Date.now(),
-                cachedUserId: currentUserId,
                 loading: false,
                 error: null
               });
@@ -269,18 +225,16 @@ export const useCalendarStore = create<CalendarState>()(
         clearCache: () => {
           set({
             events: [],
-            lastFetched: null,
-            cachedUserId: null
+            lastFetched: null
           });
         }
       }),
       {
         name: 'calendar-store',
-        // Persist events, lastFetched, and cachedUserId (not loading state)
+        // Only persist events and lastFetched, not loading state
         partialize: (state) => ({
           events: state.events,
-          lastFetched: state.lastFetched,
-          cachedUserId: state.cachedUserId
+          lastFetched: state.lastFetched
         })
       }
     ),
