@@ -12,7 +12,7 @@
   /* FIRMENBLAU - Direkte Werte statt Variablen wegen CSS-Spezifitäts-Problemen */
   --primary: #3b82f6 !important;
   --primary-dark: #2563eb !important;
-  --primary-light: #60a5fa !important;
+  --primary-light: #818cf8 !important;
   --primary-bg: rgba(59, 130, 246, 0.08) !important;
   --primary-bg-hover: rgba(59, 130, 246, 0.12) !important;
 
