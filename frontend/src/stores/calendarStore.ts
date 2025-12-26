@@ -39,10 +39,23 @@ export interface CalendarEvent {
   isManual?: boolean;
 }
 
+// Helper: Extract userId from JWT token
+const getUserIdFromToken = (): string | null => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) return null;
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.userId || payload.id || null;
+  } catch {
+    return null;
+  }
+};
+
 interface CalendarState {
   // Data
   events: CalendarEvent[];
   lastFetched: number | null;
+  cachedUserId: string | null;
 
   // UI State
   loading: boolean;
@@ -75,14 +88,23 @@ export const useCalendarStore = create<CalendarState>()(
         // Initial State
         events: [],
         lastFetched: null,
+        cachedUserId: null,
         loading: false,
         error: null,
         cacheMaxAge: 5 * 60 * 1000, // 5 minutes
 
-        // Check if cache is still valid
+        // Check if cache is still valid (also checks if user changed)
         isCacheValid: () => {
-          const { lastFetched, cacheMaxAge, events } = get();
+          const { lastFetched, cacheMaxAge, events, cachedUserId } = get();
           if (!lastFetched || events.length === 0) return false;
+
+          // Invalidate cache if user has changed
+          const currentUserId = getUserIdFromToken();
+          if (currentUserId !== cachedUserId) {
+            console.log('[CalendarStore] User changed, invalidating cache');
+            return false;
+          }
+
           return Date.now() - lastFetched < cacheMaxAge;
         },
 
@@ -124,6 +146,7 @@ export const useCalendarStore = create<CalendarState>()(
               set({
                 events: response.data.events,
                 lastFetched: Date.now(),
+                cachedUserId: getUserIdFromToken(),
                 loading: false,
                 error: null
               });
@@ -231,10 +254,11 @@ export const useCalendarStore = create<CalendarState>()(
       }),
       {
         name: 'calendar-store',
-        // Only persist events and lastFetched, not loading state
+        // Only persist events, lastFetched, and cachedUserId (not loading state)
         partialize: (state) => ({
           events: state.events,
-          lastFetched: state.lastFetched
+          lastFetched: state.lastFetched,
+          cachedUserId: state.cachedUserId
         })
       }
     ),

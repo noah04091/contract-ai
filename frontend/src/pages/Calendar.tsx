@@ -1248,6 +1248,7 @@ function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalPro
   const [saving, setSaving] = useState(false);
   const [contracts, setContracts] = useState<SimpleContractForCreate[]>([]);
   const [loadingContracts, setLoadingContracts] = useState(false);
+  const toast = useToast();
 
   // Use Zustand store for optimistic updates
   const { addEvent } = useCalendarStore();
@@ -1303,7 +1304,7 @@ function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalPro
 
   const handleSaveEvent = async () => {
     if (!formData.title.trim()) {
-      alert('Bitte geben Sie einen Titel ein');
+      toast.error('Bitte geben Sie einen Titel ein');
       return;
     }
 
@@ -1375,7 +1376,7 @@ function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalPro
       onClose();
     } catch (err) {
       console.error("Error creating event:", err);
-      alert('Fehler beim Erstellen des Ereignisses');
+      toast.error('Fehler beim Erstellen des Ereignisses');
     } finally {
       setSaving(false);
     }
@@ -2038,6 +2039,7 @@ function EditEventModal({ event, onClose, onSave, onDelete }: EditEventModalProp
   const [saving, setSaving] = useState(false);
   const [contracts, setContracts] = useState<SimpleContract[]>([]);
   const [loadingContracts, setLoadingContracts] = useState(false);
+  const toast = useToast();
   const [formData, setFormData] = useState({
     title: event.title || '',
     description: event.description || '',
@@ -2087,7 +2089,7 @@ function EditEventModal({ event, onClose, onSave, onDelete }: EditEventModalProp
 
   const handleSave = async () => {
     if (!formData.title.trim()) {
-      alert('Bitte geben Sie einen Titel ein');
+      toast.error('Bitte geben Sie einen Titel ein');
       return;
     }
 
@@ -2134,7 +2136,7 @@ function EditEventModal({ event, onClose, onSave, onDelete }: EditEventModalProp
       onClose();
     } catch (err) {
       console.error("Error updating event:", err);
-      alert('Fehler beim Speichern des Ereignisses');
+      toast.error('Fehler beim Speichern des Ereignisses');
     } finally {
       setSaving(false);
     }
@@ -2154,7 +2156,7 @@ function EditEventModal({ event, onClose, onSave, onDelete }: EditEventModalProp
       onClose();
     } catch (err) {
       console.error("Error deleting event:", err);
-      alert('Fehler beim Löschen des Ereignisses');
+      toast.error('Fehler beim Löschen des Ereignisses');
     }
   };
 
