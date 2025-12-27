@@ -420,7 +420,7 @@ router.post("/events", verifyToken, async (req, res) => {
       notes: notes || '',
       manuallyCreated: true,
       isIndividualReminder: !eventContractId,
-      isManual: !eventContractId, // Für Frontend-Logik
+      isManual: true, // Manuell erstelltes Event (nicht AI-generiert)
       metadata,
       // Recurrence fields
       recurrence: recurrenceData,
