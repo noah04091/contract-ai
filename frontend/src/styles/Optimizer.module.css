@@ -3416,3 +3416,81 @@ html {
     align-items: center;
   }
 }
+
+/* ====================================
+   🆕 PERSPEKTIVEN-AUSWAHL
+   ==================================== */
+
+.perspectiveSelector {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.perspectiveLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.perspectiveLabel svg {
+  color: var(--apple-blue);
+}
+
+.perspectiveOptions {
+  display: flex;
+  gap: 8px;
+}
+
+.perspectiveOption {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.perspectiveOption:hover {
+  background: rgba(0, 122, 255, 0.05);
+  border-color: var(--apple-blue);
+  color: var(--apple-blue);
+}
+
+.perspectiveOption.active {
+  background: linear-gradient(135deg, rgba(0, 122, 255, 0.1), rgba(0, 122, 255, 0.05));
+  border-color: var(--apple-blue);
+  color: var(--apple-blue);
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.15);
+}
+
+.perspectiveOption.active svg {
+  color: var(--apple-blue);
+}
+
+@media (max-width: 640px) {
+  .perspectiveOptions {
+    flex-direction: column;
+  }
+
+  .perspectiveOption {
+    width: 100%;
+  }
+}

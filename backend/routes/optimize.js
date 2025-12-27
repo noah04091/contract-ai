@@ -2679,33 +2679,34 @@ const getCategoryForRisk = (risk) => {
 /**
  * Smart Text Truncation für Token-Limits
  */
-const smartTruncateContract = (text, maxLength = 12000) => { // Increased for better context
+// 🔥 FIX: GPT-4o kann 128k tokens (~400k Zeichen) - wir nutzen das!
+// WICHTIG: Der KOMPLETTE Vertrag muss analysiert werden, sonst werden Klauseln "übersehen"
+const smartTruncateContract = (text, maxLength = 80000) => {
+  // Bei sehr langen Verträgen: Nur kürzen wenn wirklich nötig
   if (text.length <= maxLength) return text;
-  
-  // Nehme Anfang und Ende (wichtigste Teile)
-  const startLength = Math.floor(maxLength * 0.6);
-  const endLength = Math.floor(maxLength * 0.4);
-  
-  // Versuche an Absatzgrenzen zu schneiden
+
+  // 🆕 NEU: Bei Kürzung den USER warnen und trotzdem mehr Text zeigen
+  console.warn(`⚠️ Vertrag sehr lang (${text.length} Zeichen) - wird auf ${maxLength} gekürzt`);
+
+  // Nehme MEHR vom Anfang und Ende (80/20 statt 60/40)
+  // Wichtige Klauseln wie Kündigung sind oft am Ende!
+  const startLength = Math.floor(maxLength * 0.5);
+  const endLength = Math.floor(maxLength * 0.5);
+
   const startText = text.slice(0, startLength);
   const endText = text.slice(-endLength);
-  
-  const lastParagraphInStart = startText.lastIndexOf('\n\n');
-  const firstParagraphInEnd = endText.indexOf('\n\n');
-  
-  const cleanStart = lastParagraphInStart > 0 ? startText.slice(0, lastParagraphInStart) : startText;
-  const cleanEnd = firstParagraphInEnd > 0 ? endText.slice(firstParagraphInEnd) : endText;
-  
-  return cleanStart + 
-         '\n\n[... Mittelteil zur Analyse gekürzt - ${Math.round((text.length - maxLength) / 1000)}k Zeichen ...]\n\n' + 
-         cleanEnd;
+
+  return startText +
+         `\n\n[... ${Math.round((text.length - maxLength) / 1000)}k Zeichen in der Mitte - WICHTIG: Analysiere auch diesen Teil! ...]\n\n` +
+         endText;
 };
 
 /**
  * 🚀 ULTIMATIVER KI-PROMPT für Anwaltskanzlei-Niveau
  */
-const createOptimizedPrompt = (contractText, contractType, gaps, fileName, contractInfo, analysisContext = null, legalPulseContext = null) => {
-  const truncatedText = smartTruncateContract(contractText, 6000);
+const createOptimizedPrompt = (contractText, contractType, gaps, fileName, contractInfo, analysisContext = null, legalPulseContext = null, perspective = 'neutral') => {
+  // 🔥 FIX: 50.000 Zeichen statt 6.000 - damit §19 Kündigungsfristen etc. NICHT abgeschnitten werden!
+  const truncatedText = smartTruncateContract(contractText, 50000);
   const typeConfig = CONTRACT_TYPES[contractType] || CONTRACT_TYPES.sonstiges;
 
   // 🆕 Build analysis context string if available (from ContractAnalysis)
@@ -2799,32 +2800,45 @@ WICHTIG: Gib KEINE Empfehlungen für Grundklauseln, die im Hauptvertrag stehen s
   } else {
     // 🔥 UNIVERSELLER PROMPT: Keine vordefinierten Checklisten!
     // Die KI analysiert den INHALT und entscheidet selbst was relevant ist
+
+    // 🆕 Perspektiven-Text basierend auf Auswahl
+    const perspectiveText = perspective === 'creator'
+      ? '👔 PERSPEKTIVE: Du optimierst FÜR DEN VERTRAGSERSTELLER (die Partei die den Vertrag aufgesetzt hat). Finde Lücken die IHM schaden könnten.'
+      : perspective === 'recipient'
+      ? '🤝 PERSPEKTIVE: Du optimierst FÜR DEN VERTRAGSEMPFÄNGER (die Partei die den Vertrag unterschreiben soll). Finde Klauseln die IHN benachteiligen.'
+      : '⚖️ PERSPEKTIVE: Neutrale Analyse - finde Probleme die BEIDE Seiten betreffen könnten.';
+
     typeSpecificInstructions = `
-🎯 UNIVERSELLE VERTRAGSANALYSE - ANALYSIERE DEN INHALT!
+🎯 INDIVIDUELLE VERTRAGSANALYSE - JEDER VERTRAG IST EINZIGARTIG!
 
-⚠️ WICHTIG: Lies den Vertrag VOLLSTÄNDIG und erkenne selbst:
-1. Um welche ART von Vertrag handelt es sich? (Factoring? Leasing? Arbeitsvertrag? etc.)
-2. Was sind die SPEZIFISCHEN Themen dieses Vertrags?
-3. Was fehlt oder ist problematisch IN DIESEM KONKRETEN VERTRAG?
+${perspectiveText}
 
-🚫 KEINE GENERISCHEN EMPFEHLUNGEN!
-- Empfehle NUR was ZUM INHALT PASST
-- Wenn es ein Factoring-Vertrag ist → Factoring-relevante Optimierungen
-- Wenn es ein Arbeitsvertrag ist → Arbeitsrecht-relevante Optimierungen
-- Wenn es ein Mietvertrag ist → Mietrecht-relevante Optimierungen
+🔴 ABSOLUT KRITISCH - LIES DAS 10x:
+1. Lies den KOMPLETTEN Vertrag Zeile für Zeile
+2. Behaupte NIEMALS dass etwas "fehlt" wenn es im Vertrag steht!
+3. Wenn der Vertrag §19 Kündigungsfristen hat → NICHT sagen "Kündigungsfristen fehlen"!
+4. Suche den TEXT nach Begriffen wie "Kündigung", "Laufzeit", "Frist" etc.
+5. Nur wenn du den Begriff NICHT findest, darfst du sagen es fehlt
 
-📋 ANALYSE-ANLEITUNG:
-1. Lies den Vertrag und erkenne den ECHTEN Vertragstyp
-2. Identifiziere die HAUPTTHEMEN (z.B. Forderungsabtretung, Delkredere, Ankaufslimit)
-3. Prüfe: Was fehlt SPEZIFISCH für diesen Vertragstyp?
-4. Prüfe: Was ist problematisch formuliert?
-5. Generiere Optimierungen die 100% ZUM INHALT PASSEN
+📋 ANALYSE-METHODE:
+1. Erkenne: Um welchen VERTRAGSTYP handelt es sich wirklich?
+2. Lies JEDEN Paragraphen und verstehe was geregelt ist
+3. Identifiziere echte LÜCKEN (was WIRKLICH fehlt)
+4. Identifiziere problematische FORMULIERUNGEN (was schlecht formuliert ist)
+5. Bewerte aus der gewählten PERSPEKTIVE
 
-ERKANNTER VERTRAGSTYP VOM SYSTEM: ${typeConfig.name || contractType}
-JURISDICTION: ${contractInfo.jurisdiction || 'DE'}
+🚫 VERBOTE:
+- KEINE generischen Empfehlungen die nicht zum Inhalt passen
+- KEINE Behauptung "X fehlt" wenn X im Vertrag erwähnt wird
+- KEINE Standard-Checklisten - jeder Vertrag ist individuell!
 
-ABER: Wenn du erkennst dass es ein ANDERER Vertragstyp ist, verwende DEINE Erkenntnis!
-Beispiel: System sagt "Sonstiges" aber du siehst es ist ein Factoring-Vertrag → optimiere für Factoring!`;
+✅ PERFEKTER VERTRAG:
+Wenn der Vertrag bereits gut ist:
+- Health-Score: 90-100
+- Wenige oder KEINE Optimierungen sind OK!
+- Sage klar: "Vertrag ist umfassend" oder "Keine kritischen Mängel"
+
+JURISDICTION: ${contractInfo.jurisdiction || 'DE'}`;
   }
   
   // Erstelle Lückenanalyse-Zusammenfassung
@@ -2833,16 +2847,24 @@ ERKANNTE LÜCKEN (${gaps.length}):
 ${gaps.slice(0, 5).map(g => `- ${g.description} [${g.severity}]`).join('\n')}
 ${gaps.length > 5 ? `... und ${gaps.length - 5} weitere Lücken` : ''}` : 'Keine kritischen Lücken erkannt.';
   
-  return `🚀 ULTIMATIVE ANWALTSKANZLEI-NIVEAU VERTRAGSOPTIMIERUNG
+  return `🚀 PROFESSIONELLE RECHTSANWALT-NIVEAU VERTRAGSOPTIMIERUNG
 
-AUFTRAG: Analysiere den Vertrag und finde ECHTE Probleme und Verbesserungsmöglichkeiten.
+AUFTRAG: Analysiere diesen Vertrag wie ein erfahrener Fachanwalt.
+Lies JEDE ZEILE, JEDEN PARAGRAPHEN, JEDES WORT.
 
-⚠️ WICHTIG - QUALITÄT VOR QUANTITÄT:
-- Finde NUR ECHTE Probleme die ZUM VERTRAGSINHALT PASSEN
-- Wenn der Vertrag gut ist, gib WENIGER Optimierungen (auch nur 2-3 sind OK!)
-- Wenn der Vertrag fast perfekt ist, gib das im Health-Score wieder (90+)
-- NIEMALS Optimierungen erfinden nur um auf eine Zahl zu kommen!
-- Typisch: ${contractInfo.isAmendment ? '3-6' : '5-10'} Optimierungen (aber kann weniger sein!)
+📊 KEINE KÜNSTLICHE BEGRENZUNG:
+- Perfekter Vertrag: 0-2 Optimierungen + hoher Score (90+) + Lob was gut ist
+- Guter Vertrag: 3-5 Optimierungen
+- Durchschnittlicher Vertrag: 6-10 Optimierungen
+- Schlechter Vertrag: 10-20 Optimierungen
+- Katastrophaler Vertrag: 20-50+ Optimierungen - ALLE NENNEN!
+
+🔴 KRITISCH - DU MUSST DEN GANZEN VERTRAG LESEN:
+Bevor du sagst "X fehlt", durchsuche den Text nach:
+- Kündigungsfristen → Suche: "Kündigung", "Laufzeit", "Frist", "§ 19", "Beendigung"
+- Haftung → Suche: "Haftung", "Schadensersatz", "Gewährleistung"
+- Datenschutz → Suche: "Datenschutz", "DSGVO", "personenbezogen"
+Nur wenn du es NICHT findest, darfst du sagen es fehlt!
 
 KONTEXT:
 - Datei: ${fileName}
@@ -3052,6 +3074,10 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
     });
   }
 
+  // 🆕 Extract perspective if provided (creator, recipient, neutral)
+  const perspective = req.body.perspective || 'neutral';
+  console.log(`👁️ [${requestId}] Optimierung aus Perspektive: ${perspective}`);
+
   // 🆕 Extract analysis context if provided (from ContractAnalysis)
   let analysisContext = null;
   if (req.body.analysisContext) {
@@ -3210,7 +3236,8 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
       req.file.originalname,
       contractTypeInfo,
       analysisContext,      // 🆕 Pass analysis context from ContractAnalysis
-      legalPulseContext     // 🆕 Pass Legal Pulse context
+      legalPulseContext,    // 🆕 Pass Legal Pulse context
+      perspective           // 🆕 Pass perspective (creator/recipient/neutral)
     );
 
     // 🔥 PERFECTION MODE: GPT-4o für maximale Qualität & Konsistenz
@@ -3323,7 +3350,7 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
               { role: "user", content: optimizedPrompt }
             ],
             temperature: 0.1, // Sehr konsistent für juristische Präzision
-            max_tokens: 4000, // Genug für ausführliche Klauseln
+            max_tokens: 8000, // Erhöht für bis zu 50+ Optimierungen bei schlechten Verträgen
             top_p: 0.95,
             frequency_penalty: 0.2, // Vermeidet Wiederholungen
             presence_penalty: 0.1,
@@ -3948,6 +3975,10 @@ router.post("/stream", verifyToken, uploadLimiter, smartRateLimiter, upload.sing
     sendProgress(5, "✅ Datei validiert - PDF erkannt");
     tempFilePath = req.file.path;
 
+    // 🆕 Extract perspective if provided (creator, recipient, neutral)
+    const perspective = req.body.perspective || 'neutral';
+    console.log(`👁️ [${requestId}] Optimierung aus Perspektive: ${perspective}`);
+
     // 🆕 Extract analysis context if provided (from ContractAnalysis)
     let analysisContext = null;
     if (req.body.analysisContext) {
@@ -4098,7 +4129,8 @@ router.post("/stream", verifyToken, uploadLimiter, smartRateLimiter, upload.sing
       req.file.originalname,
       contractTypeInfo,
       analysisContext,      // 🆕 Pass analysis context from ContractAnalysis
-      legalPulseContext     // 🆕 Pass Legal Pulse context
+      legalPulseContext,    // 🆕 Pass Legal Pulse context
+      perspective           // 🆕 Pass perspective (creator/recipient/neutral)
     );
 
     const modelToUse = "gpt-4o";
@@ -4185,12 +4217,12 @@ router.post("/stream", verifyToken, uploadLimiter, smartRateLimiter, upload.sing
             messages: [
               {
                 role: "system",
-                content: `Du bist ein Fachanwalt für Vertragsrecht. Analysiere den Vertrag und gib JSON zurück mit 6-8 konkreten Optimierungen. NIEMALS Platzhalter wie "siehe Vereinbarung"!`
+                content: `Du bist ein Fachanwalt für Vertragsrecht. Analysiere den GANZEN Vertrag und finde ALLE echten Probleme. Bei perfekten Verträgen: wenige/keine Optimierungen + hoher Score. NIEMALS behaupten dass etwas fehlt wenn es im Vertrag steht!`
               },
               { role: "user", content: optimizedPrompt }
             ],
             temperature: 0.2,
-            max_tokens: 4000,
+            max_tokens: 8000, // Erhöht für bis zu 50+ Optimierungen
             response_format: strictJsonSchema
           }),
           new Promise((_, reject) =>

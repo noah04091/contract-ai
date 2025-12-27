@@ -687,6 +687,9 @@ export default function Optimizer() {
   const [contractScore, setContractScore] = useState<ContractHealthScore | null>(null);
   const [preloadedContractName, setPreloadedContractName] = useState<string | null>(null);
 
+  // 🆕 Perspektiven-Auswahl: Für wen wird optimiert?
+  const [perspective, setPerspective] = useState<'neutral' | 'creator' | 'recipient'>('neutral');
+
   // 🆕 Legal Pulse Context State
   const [legalPulseContext, setLegalPulseContext] = useState<{
     risks: Array<string | {
@@ -1220,6 +1223,10 @@ export default function Optimizer() {
       console.log('[OPTIMIZER] Adding Legal Pulse context to optimization request');
       formData.append("legalPulseContext", JSON.stringify(legalPulseContext));
     }
+
+    // 🆕 Add perspective (creator/recipient/neutral)
+    console.log('[OPTIMIZER] Optimization perspective:', perspective);
+    formData.append("perspective", perspective);
 
     let finalResult: OptimizationResult | null = null;
     let useStreamingEndpoint = true;
@@ -2589,6 +2596,47 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                     } ${file.size > 10 * 1024 * 1024 ? styles.error : ''}`}
                     style={{ width: `${Math.min((file.size / (10 * 1024 * 1024)) * 100, 100)}%` }}
                   />
+                </div>
+              </motion.div>
+            )}
+
+            {/* 🆕 Perspektiven-Auswahl */}
+            {file && optimizations.length === 0 && (
+              <motion.div
+                className={styles.perspectiveSelector}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <div className={styles.perspectiveLabel}>
+                  <Users size={16} />
+                  <span>Optimierung aus Sicht von:</span>
+                </div>
+                <div className={styles.perspectiveOptions}>
+                  <button
+                    type="button"
+                    className={`${styles.perspectiveOption} ${perspective === 'neutral' ? styles.active : ''}`}
+                    onClick={() => setPerspective('neutral')}
+                  >
+                    <Shield size={16} />
+                    <span>Neutral</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.perspectiveOption} ${perspective === 'creator' ? styles.active : ''}`}
+                    onClick={() => setPerspective('creator')}
+                  >
+                    <Building2 size={16} />
+                    <span>Ersteller</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.perspectiveOption} ${perspective === 'recipient' ? styles.active : ''}`}
+                    onClick={() => setPerspective('recipient')}
+                  >
+                    <User size={16} />
+                    <span>Empfänger</span>
+                  </button>
                 </div>
               </motion.div>
             )}
