@@ -35,7 +35,6 @@ import {
 import axios from "axios";
 import "../styles/AppleCalendar.css";
 import CalendarSyncModal from "../components/CalendarSyncModal";
-import { debug } from "../utils/debug";
 import { useCalendarStore } from "../stores/calendarStore";
 import { useToast } from "../context/ToastContext";
 
