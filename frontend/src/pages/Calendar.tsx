@@ -2530,7 +2530,7 @@ export default function CalendarPage() {
       });
       await fetchEvents(true); // Force refresh - bypass cache
       toast.success('Kalender erfolgreich aktualisiert');
-    } catch (err) {
+    } catch {
       toast.error('Fehler beim Aktualisieren. Bitte erneut versuchen.');
     } finally {
       setRefreshing(false);
