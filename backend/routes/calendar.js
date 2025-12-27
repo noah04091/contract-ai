@@ -69,7 +69,7 @@ function generateRecurrenceInstances(masterEvent, fromDate, toDate) {
 // GET /api/calendar/events - Alle Events im Zeitraum abrufen
 router.get("/events", verifyToken, async (req, res) => {
   try {
-    const { from, to, type, severity, status } = req.query;
+    const { from, to, type, severity, status, contractId } = req.query;
     const userId = new ObjectId(req.user.userId);
     
     // Build filter
@@ -88,7 +88,12 @@ router.get("/events", verifyToken, async (req, res) => {
     if (severity) filter.severity = severity;
     // Only override status filter if explicitly requested
     if (status && status !== 'all') filter.status = status;
-    
+
+    // Filter by contractId if provided
+    if (contractId) {
+      filter.contractId = new ObjectId(contractId);
+    }
+
     // Fetch events with contract details
     const events = await req.db.collection("contract_events")
       .aggregate([

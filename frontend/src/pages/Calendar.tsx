@@ -39,6 +39,18 @@ import { debug } from "../utils/debug";
 import { useCalendarStore } from "../stores/calendarStore";
 import { useToast } from "../context/ToastContext";
 
+// Hook: ESC-Taste schließt Modal
+const useEscapeKey = (onClose: () => void) => {
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
+};
+
+
 // ========== Types ==========
 interface CalendarEvent {
   id: string;
@@ -394,6 +406,7 @@ interface QuickActionsModalProps {
 }
 
 function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange, onEdit }: QuickActionsModalProps) {
+  useEscapeKey(onClose);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [currentIndex, setCurrentIndex] = useState(() => {
     if (allEvents && allEvents.length > 1) {
@@ -836,6 +849,7 @@ interface StatsDetailModalProps {
 }
 
 function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: StatsDetailModalProps) {
+  useEscapeKey(onClose);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -1037,6 +1051,7 @@ interface DayEventsModalProps {
 }
 
 function DayEventsModal({ date, events, onEventClick, onClose }: DayEventsModalProps) {
+  useEscapeKey(onClose);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -1243,6 +1258,7 @@ interface SimpleContractForCreate {
 }
 
 function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalProps) {
+  useEscapeKey(onClose);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -1318,10 +1334,6 @@ function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalPro
       const eventDate = new Date(Date.UTC(year, month - 1, day, hours, minutes, 0));
 
       // ===== DEBUG: Date.UTC Fix =====
-      console.log('%c[DEBUG] CreateEvent - Date.UTC Fix aktiv!', 'background: #10b981; color: white; font-weight: bold; padding: 5px;');
-      console.log('%c[DEBUG] Eingabe:', 'color: #3b82f6;', { date: formData.date, time: formData.time });
-      console.log('%c[DEBUG] Parsed:', 'color: #f59e0b;', { year, month, day, hours, minutes });
-      console.log('%c[DEBUG] Event Date (UTC):', 'color: #10b981;', eventDate.toISOString());
 
       interface ApiEventResponse {
         success: boolean;
@@ -1369,7 +1381,6 @@ function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalPro
           isManual: !hasContract
         };
         addEvent(newEvent);
-        console.log('%c[DEBUG] Event added to store directly!', 'background: #10b981; color: white;');
       }
 
       onEventCreated();
@@ -1772,6 +1783,7 @@ interface SnoozeModalProps {
 }
 
 function SnoozeModal({ isOpen, onClose, onSnooze }: SnoozeModalProps) {
+  useEscapeKey(onClose);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customDays, setCustomDays] = useState('');
@@ -2035,6 +2047,7 @@ interface SimpleContract {
 }
 
 function EditEventModal({ event, onClose, onSave, onDelete }: EditEventModalProps) {
+  useEscapeKey(onClose);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [saving, setSaving] = useState(false);
   const [contracts, setContracts] = useState<SimpleContract[]>([]);
@@ -2438,7 +2451,6 @@ const STAT_COLORS = {
 export default function CalendarPage() {
   // Debug: Component Mount
   useEffect(() => {
-    debug.componentMount('CalendarPage');
   }, []);
 
   // ===== ZUSTAND STORE - Events werden gecacht! =====
@@ -2494,7 +2506,6 @@ export default function CalendarPage() {
 
   // Fetch events on mount (uses cache if available)
   useEffect(() => {
-    debug.info('Kalender geladen - prüfe Cache...');
     fetchEvents(); // Uses cache if valid, otherwise fetches
   }, [fetchEvents]);
 
@@ -2508,12 +2519,10 @@ export default function CalendarPage() {
       filtered = filtered.filter(e => e.type === filterType);
     }
     setFilteredEvents(filtered);
-    debug.stateChange('Filter angewendet', { severity: filterSeverity, type: filterType }, { count: filtered.length });
   }, [events, filterSeverity, filterType]);
 
   // Regenerate events
   const handleRegenerateEvents = async () => {
-    debug.userAction('Events neu generieren');
     setRefreshing(true);
     try {
       const token = localStorage.getItem("token");
@@ -2521,10 +2530,8 @@ export default function CalendarPage() {
         headers: { Authorization: `Bearer ${token}` }
       });
       await fetchEvents(true); // Force refresh - bypass cache
-      debug.success('Events erfolgreich regeneriert');
       toast.success('Kalender erfolgreich aktualisiert');
     } catch (err) {
-      debug.error('Fehler beim Regenerieren der Events', err);
       toast.error('Fehler beim Aktualisieren. Bitte erneut versuchen.');
     } finally {
       setRefreshing(false);
@@ -2546,7 +2553,6 @@ export default function CalendarPage() {
         await dismissEvent(eventId);
         setShowQuickActions(false);
         setSelectedEvent(null);
-        debug.success('Event ausgeblendet (optimistisch)');
         toast.success('Erinnerung wurde ausgeblendet');
         return;
       }
@@ -2557,7 +2563,6 @@ export default function CalendarPage() {
         setShowSnoozeModal(false);
         setSnoozeEventId(null);
         setSelectedEvent(null);
-        debug.success(`Event um ${snoozeDays} Tage verschoben (optimistisch)`);
         toast.success(`Erinnerung um ${snoozeDays} Tage verschoben`);
         return;
       }
@@ -2650,12 +2655,6 @@ export default function CalendarPage() {
     };
 
     // ===== DEBUG: Stats berechnet =====
-    console.log('%c[DEBUG] Stats berechnet:', 'color: #3b82f6; font-weight: bold;', result);
-    console.log('%c[DEBUG] Stats-Farben werden verwendet:', 'color: #f59e0b;');
-    console.log('  - Kommende: #10b981 (Grün)');
-    console.log('  - Vergangen: #9ca3af (Grau)');
-    console.log('  - Kündbar: #f59e0b (Orange)');
-    console.log('  - Auto-Verl: #3b82f6 (Blau)');
 
     return result;
   }, [events]);
@@ -2803,7 +2802,6 @@ export default function CalendarPage() {
                       key={view}
                       className={`view-btn ${currentView === view ? 'active' : ''}`}
                       onClick={() => {
-                        debug.userAction('View-Wechsel', { von: currentView, zu: view });
                         setCurrentView(view);
                       }}
                     >
@@ -2891,28 +2889,24 @@ export default function CalendarPage() {
                 </div>
                 <div className="stats-grid">
                   <div className="stat-card clickable" onClick={() => {
-                    console.log('%c[DEBUG] Stats-Karte geklickt: upcoming', 'color: #10b981; font-weight: bold;');
                     handleStatsCardClick('upcoming');
                   }}>
                     <div className="stat-value" style={{ color: STAT_COLORS.upcoming }}>{stats.upcoming}</div>
                     <div className="stat-label">Kommende</div>
                   </div>
                   <div className="stat-card clickable" onClick={() => {
-                    console.log('%c[DEBUG] Stats-Karte geklickt: past', 'color: #9ca3af; font-weight: bold;');
                     handleStatsCardClick('past');
                   }}>
                     <div className="stat-value" style={{ color: STAT_COLORS.past }}>{stats.past}</div>
                     <div className="stat-label">Vergangen</div>
                   </div>
                   <div className="stat-card warning clickable" onClick={() => {
-                    console.log('%c[DEBUG] Stats-Karte geklickt: cancelable', 'color: #f59e0b; font-weight: bold;');
                     handleStatsCardClick('cancelable');
                   }}>
                     <div className="stat-value" style={{ color: STAT_COLORS.cancelable }}>{stats.cancelable}</div>
                     <div className="stat-label">Kündbar</div>
                   </div>
                   <div className="stat-card clickable" onClick={() => {
-                    console.log('%c[DEBUG] Stats-Karte geklickt: autoRenewal', 'color: #3b82f6; font-weight: bold;');
                     handleStatsCardClick('autoRenewal');
                   }}>
                     <div className="stat-value" style={{ color: STAT_COLORS.autoRenewal }}>{stats.autoRenewal}</div>
