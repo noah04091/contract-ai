@@ -18,6 +18,8 @@ import { DateFieldBlock } from './DateFieldBlock';
 import { CustomBlock } from './CustomBlock';
 import { LogoBlock } from './LogoBlock';
 import { NumberedListBlock } from './NumberedListBlock';
+import { DefinitionsBlock } from './DefinitionsBlock';
+import { NoticeBlock } from './NoticeBlock';
 import styles from './BlockRenderer.module.css';
 
 interface BlockRendererProps {
@@ -38,6 +40,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
     fontFamily: block.style?.fontFamily,
     fontSize: block.style?.fontSize ? `${block.style.fontSize}px` : undefined,
     fontWeight: block.style?.fontWeight,
+    fontStyle: block.style?.fontStyle,
     lineHeight: block.style?.lineHeight,
     letterSpacing: block.style?.letterSpacing ? `${block.style.letterSpacing}px` : undefined,
     textAlign: block.style?.textAlign,
@@ -196,6 +199,26 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
       case 'numbered-list':
         return (
           <NumberedListBlock
+            blockId={block.id}
+            content={block.content}
+            isSelected={isSelected}
+            isPreview={isPreview}
+          />
+        );
+
+      case 'definitions':
+        return (
+          <DefinitionsBlock
+            blockId={block.id}
+            content={block.content}
+            isSelected={isSelected}
+            isPreview={isPreview}
+          />
+        );
+
+      case 'notice':
+        return (
+          <NoticeBlock
             blockId={block.id}
             content={block.content}
             isSelected={isSelected}

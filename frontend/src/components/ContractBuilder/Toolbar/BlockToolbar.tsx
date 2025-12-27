@@ -25,6 +25,8 @@ import {
   Sparkles,
   X,
   Loader2,
+  Book,
+  Info,
 } from 'lucide-react';
 import styles from './BlockToolbar.module.css';
 
@@ -46,6 +48,8 @@ const blockCategories = [
     name: 'Inhalt',
     blocks: [
       { type: 'clause' as BlockType, label: 'Klausel', icon: AlignLeft, description: 'Standard-Vertragsklausel' },
+      { type: 'definitions' as BlockType, label: 'Definitionen', icon: Book, description: 'Begriffsbestimmungen' },
+      { type: 'notice' as BlockType, label: 'Hinweis', icon: Info, description: 'Widerrufsbelehrung, Hinweise' },
       { type: 'numbered-list' as BlockType, label: 'Aufzählung', icon: List, description: 'Nummerierte Liste' },
       { type: 'table' as BlockType, label: 'Tabelle', icon: Table, description: 'Daten in Tabellenform' },
       { type: 'custom' as BlockType, label: 'Freitext', icon: Puzzle, description: 'Benutzerdefinierter Inhalt' },
@@ -354,6 +358,21 @@ function getDefaultContent(type: BlockType): Record<string, unknown> {
         altText: 'Firmenlogo',
         width: 150,
         alignment: 'left',
+      };
+    case 'definitions':
+      return {
+        definitionsTitle: '§ 1 Definitionen',
+        definitions: [
+          { term: 'Vertragsgegenstand', definition: 'bezeichnet die in diesem Vertrag vereinbarten Leistungen.' },
+          { term: 'Vergütung', definition: 'bezeichnet die für die Leistungen zu zahlende Gegenleistung.' },
+        ],
+      };
+    case 'notice':
+      return {
+        noticeType: 'info',
+        noticeTitle: 'Hinweis',
+        noticeText: 'Hier können Sie Ihren Hinweistext eingeben. Doppelklicken zum Bearbeiten.',
+        showNoticeIcon: false,
       };
     default:
       return {};

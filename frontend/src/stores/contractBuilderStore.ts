@@ -26,6 +26,8 @@ export type BlockType =
   | 'spacer'
   | 'logo'
   | 'page-break'
+  | 'definitions'
+  | 'notice'
   | 'custom';
 
 export type VariableType = 'text' | 'date' | 'number' | 'currency' | 'select' | 'computed' | 'email' | 'phone' | 'iban';
@@ -34,6 +36,7 @@ export interface BlockStyle {
   fontFamily?: string;
   fontSize?: number;
   fontWeight?: number;
+  fontStyle?: 'normal' | 'italic';
   lineHeight?: number;
   letterSpacing?: number;
   textAlign?: 'left' | 'center' | 'right' | 'justify';
@@ -74,6 +77,10 @@ export interface BlockContent {
   title?: string;
   subtitle?: string;
   logo?: string;
+  showDivider?: boolean;         // Trennlinie anzeigen (default: true)
+  dividerColor?: string;         // Farbe der Trennlinie
+  titleFontSize?: number;        // Separate Schriftgröße für Titel
+  subtitleFontSize?: number;     // Separate Schriftgröße für Untertitel
   // Logo Block
   logoUrl?: string;
   altText?: string;
@@ -82,6 +89,9 @@ export interface BlockContent {
   // Parties
   party1?: PartyInfo;
   party2?: PartyInfo;
+  showPartyIcons?: boolean;      // Icons bei Parteien einblenden (default: false)
+  // Signature
+  showSignatureIcons?: boolean;  // Icons bei Unterschriften einblenden (default: false)
   // Clause
   number?: string;
   clauseTitle?: string;
@@ -105,12 +115,26 @@ export interface BlockContent {
   // Attachment
   attachmentTitle?: string;
   attachmentDescription?: string;
+  attachmentFile?: string;         // Base64 encoded Datei
+  attachmentFileName?: string;     // Original-Dateiname
+  attachmentFileSize?: number;     // Dateigröße in Bytes
+  attachmentFileType?: string;     // MIME-Type (application/pdf, image/jpeg, etc.)
   // Divider/Spacer
   height?: number;
   style?: string;
   // Numbered List
   items?: string[];
   listStyle?: 'decimal' | 'alpha' | 'roman';
+  // Definitions Block
+  definitionsTitle?: string;
+  definitions?: { term: string; definition: string }[];
+  // Notice/Hinweis Block
+  noticeType?: 'info' | 'warning' | 'important' | 'legal';
+  noticeTitle?: string;
+  noticeText?: string;
+  showNoticeIcon?: boolean;
+  noticeBorderColor?: string;
+  noticeBackgroundColor?: string;
 }
 
 export interface Block {
@@ -736,7 +760,7 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
           let initialVariables: Variable[] = [];
 
           if (template && template.id !== 'individuell') {
-            // Header Block
+            // Header Block - professionelle Defaults
             initialBlocks.push({
               id: crypto.randomUUID(),
               type: 'header',
@@ -744,8 +768,16 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
               content: {
                 title: template.name,
                 subtitle: `${template.parties.party1.role} & ${template.parties.party2.role}`,
+                showDivider: true,
+                dividerColor: '#1a365d', // Dunkelblau - professionell
               },
-              style: {},
+              style: {
+                textAlign: 'center',
+                fontSize: 24,
+                fontWeight: 700,
+                fontFamily: 'Georgia',
+                marginBottom: 24,
+              },
               locked: false,
               aiGenerated: false,
             });
@@ -767,7 +799,10 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
                   address: `{{${template.parties.party2.role.toLowerCase().replace(/\s+/g, '_')}_adresse}}`,
                 },
               },
-              style: {},
+              style: {
+                fontSize: 13,
+                lineHeight: 1.5,
+              },
               locked: false,
               aiGenerated: false,
             });
@@ -780,12 +815,18 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
               content: {
                 preambleText: `Zwischen den Parteien wird folgender ${template.name} geschlossen:`,
               },
-              style: {},
+              style: {
+                fontSize: 13,
+                fontStyle: 'italic',
+                textAlign: 'center',
+                marginTop: 16,
+                marginBottom: 24,
+              },
               locked: false,
               aiGenerated: false,
             });
 
-            // Klauseln aus Template hinzufügen
+            // Klauseln aus Template hinzufügen - mit professionellen Styles
             template.suggestedClauses.forEach((clause, index) => {
               initialBlocks.push({
                 id: crypto.randomUUID(),
@@ -797,7 +838,12 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
                   body: clause.body,
                   subclauses: [],
                 },
-                style: {},
+                style: {
+                  fontSize: 13,
+                  lineHeight: 1.6,
+                  textAlign: 'justify',
+                  marginBottom: 16,
+                },
                 locked: false,
                 aiGenerated: false,
               });

@@ -548,6 +548,8 @@ function getBlockTypeLabel(type: string): string {
     'logo': 'Logo',
     'page-break': 'Seitenumbruch',
     'custom': 'Benutzerdefiniert',
+    'definitions': 'Definitionen',
+    'notice': 'Hinweis',
   };
   return labels[type] || type;
 }
@@ -573,7 +575,15 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
   const content = block.content || {};
 
   switch (block.type) {
-    case 'header':
+    case 'header': {
+      const headerContent = content as {
+        title?: string;
+        subtitle?: string;
+        showDivider?: boolean;
+        dividerColor?: string;
+        titleFontSize?: number;
+        subtitleFontSize?: number;
+      };
       return (
         <>
           <div className={styles.field}>
@@ -581,9 +591,20 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
             <input
               type="text"
               className={styles.input}
-              value={String(content.title || '')}
+              value={String(headerContent.title || '')}
               placeholder="Vertragstitel"
               onChange={(e) => onUpdate({ ...content, title: e.target.value })}
+            />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label}>Titel-Schriftgröße (px)</label>
+            <input
+              type="number"
+              className={styles.input}
+              value={headerContent.titleFontSize || 24}
+              min={12}
+              max={72}
+              onChange={(e) => onUpdate({ ...content, titleFontSize: Number(e.target.value) })}
             />
           </div>
           <div className={styles.field}>
@@ -591,21 +612,73 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
             <input
               type="text"
               className={styles.input}
-              value={String(content.subtitle || '')}
+              value={String(headerContent.subtitle || '')}
               placeholder="Untertitel"
               onChange={(e) => onUpdate({ ...content, subtitle: e.target.value })}
             />
           </div>
+          <div className={styles.field}>
+            <label className={styles.label}>Untertitel-Schriftgröße (px)</label>
+            <input
+              type="number"
+              className={styles.input}
+              value={headerContent.subtitleFontSize || 14}
+              min={10}
+              max={36}
+              onChange={(e) => onUpdate({ ...content, subtitleFontSize: Number(e.target.value) })}
+            />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.checkboxLabel}>
+              <input
+                type="checkbox"
+                checked={headerContent.showDivider !== false}
+                onChange={(e) => onUpdate({ ...content, showDivider: e.target.checked })}
+              />
+              <span>Trennlinie anzeigen</span>
+            </label>
+          </div>
+          {headerContent.showDivider !== false && (
+            <div className={styles.field}>
+              <label className={styles.label}>Trennlinien-Farbe</label>
+              <div className={styles.colorInput}>
+                <input
+                  type="color"
+                  value={headerContent.dividerColor || '#1a365d'}
+                  onChange={(e) => onUpdate({ ...content, dividerColor: e.target.value })}
+                />
+                <input
+                  type="text"
+                  className={styles.input}
+                  value={headerContent.dividerColor || ''}
+                  placeholder="#1a365d"
+                  onChange={(e) => onUpdate({ ...content, dividerColor: e.target.value || undefined })}
+                />
+              </div>
+            </div>
+          )}
         </>
       );
+    }
 
     case 'parties': {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const party1 = (content.party1 || {}) as any;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const party2 = (content.party2 || {}) as any;
+      const showIcons = (content as { showPartyIcons?: boolean }).showPartyIcons;
       return (
         <>
+          <div className={styles.field}>
+            <label className={styles.checkboxLabel}>
+              <input
+                type="checkbox"
+                checked={showIcons === true}
+                onChange={(e) => onUpdate({ ...content, showPartyIcons: e.target.checked })}
+              />
+              <span>Icons einblenden</span>
+            </label>
+          </div>
           <div className={styles.fieldGroup}>
             <label className={styles.groupLabel}>Partei 1 (Auftraggeber)</label>
             <div className={styles.field}>
@@ -894,8 +967,28 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
       );
     }
 
+    case 'signature': {
+      const signatureContent = content as { showSignatureIcons?: boolean };
+      return (
+        <>
+          <div className={styles.field}>
+            <label className={styles.checkboxLabel}>
+              <input
+                type="checkbox"
+                checked={signatureContent.showSignatureIcons === true}
+                onChange={(e) => onUpdate({ ...content, showSignatureIcons: e.target.checked })}
+              />
+              <span>Icons einblenden</span>
+            </label>
+          </div>
+          <p className={styles.noContent}>
+            Bearbeiten Sie die Unterschriftsfelder per Doppelklick direkt im Block.
+          </p>
+        </>
+      );
+    }
+
     case 'page-break':
-    case 'signature':
     case 'table':
     case 'date-field':
       return (
@@ -903,6 +996,133 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
           Dieser Block-Typ hat keine bearbeitbaren Textinhalte.
         </p>
       );
+
+    case 'definitions': {
+      const defsContent = content as {
+        definitionsTitle?: string;
+        definitions?: { term: string; definition: string }[];
+      };
+      return (
+        <>
+          <div className={styles.field}>
+            <label className={styles.label}>Titel</label>
+            <input
+              type="text"
+              className={styles.input}
+              value={String(defsContent.definitionsTitle || '§ 1 Definitionen')}
+              placeholder="§ 1 Definitionen"
+              onChange={(e) => onUpdate({ ...content, definitionsTitle: e.target.value })}
+            />
+          </div>
+          <p className={styles.noContent}>
+            Begriffe und Definitionen können per Doppelklick direkt im Block bearbeitet werden.
+            Nutzen Sie die + / × Buttons um Einträge hinzuzufügen oder zu entfernen.
+          </p>
+        </>
+      );
+    }
+
+    case 'notice': {
+      const noticeContent = content as {
+        noticeType?: 'info' | 'warning' | 'important' | 'legal';
+        noticeTitle?: string;
+        noticeText?: string;
+        showNoticeIcon?: boolean;
+        noticeBorderColor?: string;
+        noticeBackgroundColor?: string;
+      };
+      return (
+        <>
+          <div className={styles.field}>
+            <label className={styles.label}>Hinweis-Typ</label>
+            <select
+              className={styles.select}
+              value={noticeContent.noticeType || 'info'}
+              onChange={(e) => onUpdate({
+                ...content,
+                noticeType: e.target.value,
+                // Reset custom colors when type changes
+                noticeBorderColor: undefined,
+                noticeBackgroundColor: undefined,
+              })}
+            >
+              <option value="info">Info (Blau)</option>
+              <option value="warning">Warnung (Orange)</option>
+              <option value="important">Wichtig (Rot)</option>
+              <option value="legal">Rechtlich (Violett)</option>
+            </select>
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label}>Titel</label>
+            <input
+              type="text"
+              className={styles.input}
+              value={String(noticeContent.noticeTitle || '')}
+              placeholder="Hinweistitel"
+              onChange={(e) => onUpdate({ ...content, noticeTitle: e.target.value })}
+            />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label}>Text</label>
+            <textarea
+              className={styles.textarea}
+              rows={4}
+              value={String(noticeContent.noticeText || '')}
+              placeholder="Hinweistext eingeben..."
+              onChange={(e) => onUpdate({ ...content, noticeText: e.target.value })}
+            />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.checkboxLabel}>
+              <input
+                type="checkbox"
+                checked={noticeContent.showNoticeIcon === true}
+                onChange={(e) => onUpdate({ ...content, showNoticeIcon: e.target.checked })}
+              />
+              <span>Icon anzeigen</span>
+            </label>
+          </div>
+          <div className={styles.fieldRow}>
+            <div className={styles.field}>
+              <label className={styles.label}>Rahmenfarbe</label>
+              <div className={styles.colorInput}>
+                <input
+                  type="color"
+                  value={noticeContent.noticeBorderColor || '#3b82f6'}
+                  onChange={(e) => onUpdate({ ...content, noticeBorderColor: e.target.value })}
+                />
+                <input
+                  type="text"
+                  className={styles.input}
+                  value={noticeContent.noticeBorderColor || ''}
+                  placeholder="Auto"
+                  onChange={(e) => onUpdate({ ...content, noticeBorderColor: e.target.value || undefined })}
+                />
+              </div>
+            </div>
+          </div>
+          <div className={styles.fieldRow}>
+            <div className={styles.field}>
+              <label className={styles.label}>Hintergrundfarbe</label>
+              <div className={styles.colorInput}>
+                <input
+                  type="color"
+                  value={noticeContent.noticeBackgroundColor || '#eff6ff'}
+                  onChange={(e) => onUpdate({ ...content, noticeBackgroundColor: e.target.value })}
+                />
+                <input
+                  type="text"
+                  className={styles.input}
+                  value={noticeContent.noticeBackgroundColor || ''}
+                  placeholder="Auto"
+                  onChange={(e) => onUpdate({ ...content, noticeBackgroundColor: e.target.value || undefined })}
+                />
+              </div>
+            </div>
+          </div>
+        </>
+      );
+    }
 
     default:
       return (

@@ -1,0 +1,155 @@
+/**
+ * DefinitionsBlock Styles
+ */
+
+.definitions {
+  /* Text-Eigenschaften werden vom Wrapper geerbt */
+  text-align: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  margin: 16px 0;
+  padding: 20px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.definitions.selected {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.title {
+  font-size: inherit;
+  font-weight: 600;
+  color: inherit;
+  margin: 0 0 12px;
+}
+
+.intro {
+  font-size: inherit;
+  color: inherit;
+  opacity: 0.8;
+  margin: 0 0 16px;
+  font-style: italic;
+}
+
+.definitionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.definitionItem {
+  padding: 12px 16px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  border-left: 3px solid #3b82f6;
+}
+
+.termRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.termLabel {
+  font-weight: 600;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.termQuote {
+  color: #3b82f6;
+  font-weight: 400;
+}
+
+.definitionText {
+  font-size: inherit;
+  color: inherit;
+  line-height: 1.6;
+  padding-left: 8px;
+}
+
+.removeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: #fee2e2;
+  color: #dc2626;
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.15s ease;
+}
+
+.definitionItem:hover .removeButton {
+  opacity: 1;
+}
+
+.removeButton:hover {
+  background: #fecaca;
+}
+
+.addButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 8px 16px;
+  background: transparent;
+  color: #3b82f6;
+  border: 1px dashed #3b82f6;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.addButton:hover {
+  background: #eff6ff;
+}
+
+/* Inline Editing Styles */
+.inlineInput {
+  width: 100%;
+  padding: 4px 8px;
+  border: 2px solid #3b82f6;
+  border-radius: 4px;
+  font-size: inherit;
+  font-family: inherit;
+  font-weight: inherit;
+  color: inherit;
+  background: white;
+  outline: none;
+  text-align: inherit;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+}
+
+.inlineTextarea {
+  width: 100%;
+  padding: 8px;
+  border: 2px solid #3b82f6;
+  border-radius: 4px;
+  font-size: inherit;
+  font-family: inherit;
+  line-height: inherit;
+  color: inherit;
+  background: white;
+  outline: none;
+  resize: vertical;
+  text-align: inherit;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+}

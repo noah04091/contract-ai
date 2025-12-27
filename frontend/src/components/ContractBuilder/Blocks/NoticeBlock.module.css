@@ -1,0 +1,105 @@
+/**
+ * NoticeBlock Styles
+ */
+
+.notice {
+  /* Text-Eigenschaften werden vom Wrapper geerbt */
+  text-align: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  margin: 16px 0;
+  padding: 16px 20px;
+  border: 2px solid;
+  border-radius: 8px;
+  border-left-width: 4px;
+}
+
+.notice.selected {
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+/* Typ-spezifische Styles (werden von inline-styles überschrieben wenn angepasst) */
+.notice.info {
+  border-color: #3b82f6;
+  background-color: #eff6ff;
+}
+
+.notice.warning {
+  border-color: #f59e0b;
+  background-color: #fffbeb;
+}
+
+.notice.important {
+  border-color: #ef4444;
+  background-color: #fef2f2;
+}
+
+.notice.legal {
+  border-color: #6366f1;
+  background-color: #eef2ff;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.iconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: inherit;
+  font-weight: 600;
+  color: inherit;
+  margin: 0;
+  flex: 1;
+}
+
+.content {
+  font-size: inherit;
+  color: inherit;
+  line-height: 1.6;
+}
+
+/* Inline Editing Styles */
+.inlineInput {
+  width: 100%;
+  padding: 4px 8px;
+  border: 2px solid #3b82f6;
+  border-radius: 4px;
+  font-size: inherit;
+  font-family: inherit;
+  font-weight: inherit;
+  color: inherit;
+  background: white;
+  outline: none;
+  text-align: inherit;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+}
+
+.inlineTextarea {
+  width: 100%;
+  padding: 8px;
+  border: 2px solid #3b82f6;
+  border-radius: 4px;
+  font-size: inherit;
+  font-family: inherit;
+  line-height: inherit;
+  color: inherit;
+  background: white;
+  outline: none;
+  resize: vertical;
+  text-align: inherit;
+  min-height: 80px;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+}
