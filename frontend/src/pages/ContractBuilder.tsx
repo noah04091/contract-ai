@@ -492,28 +492,61 @@ const ContractBuilder: React.FC = () => {
       setZoom(previousZoom);
 
       // === ANLAGEN-MERGE ===
-      // Prüfe ob Anlagen mit Dateien vorhanden sind
-      const attachmentBlocks = currentDocument.content.blocks.filter(
-        (b: Block) => b.type === 'attachment' && b.content.attachmentFile
-      );
+      // Sammle alle Anlagen (sowohl neue Multi-Format als auch Legacy-Single-Format)
+      type AttachmentData = {
+        file: string;
+        fileName: string;
+        fileType: string;
+        title?: string;
+      };
 
-      if (attachmentBlocks.length > 0) {
-        console.log('[PDF Export] Found', attachmentBlocks.length, 'attachment(s) to merge');
+      const allAttachments: AttachmentData[] = [];
+
+      // Alle attachment-Blöcke durchgehen
+      currentDocument.content.blocks.forEach((b: Block) => {
+        if (b.type !== 'attachment') return;
+
+        // Neues Multi-Attachment Format
+        if (b.content.attachments && b.content.attachments.length > 0) {
+          b.content.attachments.forEach(att => {
+            if (att.file) {
+              allAttachments.push({
+                file: att.file,
+                fileName: att.fileName,
+                fileType: att.fileType,
+                title: att.title,
+              });
+            }
+          });
+        }
+        // Legacy Single-Attachment Format
+        else if (b.content.attachmentFile) {
+          allAttachments.push({
+            file: b.content.attachmentFile,
+            fileName: b.content.attachmentFileName || 'Anlage',
+            fileType: b.content.attachmentFileType || 'application/octet-stream',
+            title: b.content.attachmentTitle,
+          });
+        }
+      });
+
+      if (allAttachments.length > 0) {
+        console.log('[PDF Export] Found', allAttachments.length, 'attachment(s) to merge');
 
         // Kategorisiere Anlagen
-        const pdfAttachments = attachmentBlocks.filter(
-          (b: Block) => b.content.attachmentFileType === 'application/pdf'
+        const pdfAttachments = allAttachments.filter(
+          att => att.fileType === 'application/pdf'
         );
-        const imageAttachments = attachmentBlocks.filter(
-          (b: Block) => b.content.attachmentFileType?.startsWith('image/')
+        const imageAttachments = allAttachments.filter(
+          att => att.fileType?.startsWith('image/')
         );
-        const officeAttachments = attachmentBlocks.filter(
-          (b: Block) =>
-            b.content.attachmentFileType?.includes('word') ||
-            b.content.attachmentFileType?.includes('excel') ||
-            b.content.attachmentFileType?.includes('spreadsheet') ||
-            b.content.attachmentFileType?.includes('msword') ||
-            b.content.attachmentFileType?.includes('ms-excel')
+        const officeAttachments = allAttachments.filter(
+          att =>
+            att.fileType?.includes('word') ||
+            att.fileType?.includes('excel') ||
+            att.fileType?.includes('spreadsheet') ||
+            att.fileType?.includes('msword') ||
+            att.fileType?.includes('ms-excel')
         );
 
         // Haupt-PDF als Bytes holen
@@ -531,7 +564,7 @@ const ContractBuilder: React.FC = () => {
         // 2. PDF-Anlagen anhängen
         for (const attachment of pdfAttachments) {
           try {
-            const base64Data = attachment.content.attachmentFile!;
+            const base64Data = attachment.file;
             // Base64 Data-URL zu ArrayBuffer konvertieren
             const base64String = base64Data.split(',')[1] || base64Data;
             const binaryString = atob(base64String);
@@ -543,16 +576,16 @@ const ContractBuilder: React.FC = () => {
             const attachmentDoc = await PDFDocument.load(bytes);
             const attachmentPages = await mergedPdf.copyPages(attachmentDoc, attachmentDoc.getPageIndices());
             attachmentPages.forEach(page => mergedPdf.addPage(page));
-            console.log('[PDF Export] Attached PDF:', attachment.content.attachmentFileName);
+            console.log('[PDF Export] Attached PDF:', attachment.fileName);
           } catch (err) {
-            console.error('[PDF Export] Failed to attach PDF:', attachment.content.attachmentFileName, err);
+            console.error('[PDF Export] Failed to attach PDF:', attachment.fileName, err);
           }
         }
 
         // 3. Bild-Anlagen als PDF-Seiten
         for (const attachment of imageAttachments) {
           try {
-            const base64Data = attachment.content.attachmentFile!;
+            const base64Data = attachment.file;
             const base64String = base64Data.split(',')[1] || base64Data;
             const binaryString = atob(base64String);
             const imageBytes = new Uint8Array(binaryString.length);
@@ -562,7 +595,7 @@ const ContractBuilder: React.FC = () => {
 
             // Bild je nach Typ einbetten
             let image;
-            if (attachment.content.attachmentFileType?.includes('png')) {
+            if (attachment.fileType?.includes('png')) {
               image = await mergedPdf.embedPng(imageBytes);
             } else {
               image = await mergedPdf.embedJpg(imageBytes);
@@ -584,9 +617,9 @@ const ContractBuilder: React.FC = () => {
               width: scaledWidth,
               height: scaledHeight,
             });
-            console.log('[PDF Export] Attached image:', attachment.content.attachmentFileName);
+            console.log('[PDF Export] Attached image:', attachment.fileName);
           } catch (err) {
-            console.error('[PDF Export] Failed to attach image:', attachment.content.attachmentFileName, err);
+            console.error('[PDF Export] Failed to attach image:', attachment.fileName, err);
           }
         }
 
@@ -607,9 +640,9 @@ const ContractBuilder: React.FC = () => {
           const anlagenFolder = zip.folder('Anlagen');
           if (anlagenFolder) {
             for (const attachment of officeAttachments) {
-              const base64Data = attachment.content.attachmentFile!;
+              const base64Data = attachment.file;
               const base64String = base64Data.split(',')[1] || base64Data;
-              anlagenFolder.file(attachment.content.attachmentFileName || 'Anlage', base64String, { base64: true });
+              anlagenFolder.file(attachment.fileName || 'Anlage', base64String, { base64: true });
             }
           }
 

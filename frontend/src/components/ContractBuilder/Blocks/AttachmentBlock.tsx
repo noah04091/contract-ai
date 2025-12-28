@@ -1,5 +1,5 @@
 /**
- * AttachmentBlock - Anlage-Verweis mit Datei-Upload
+ * AttachmentBlock - Mehrere Anlagen pro Block
  * Unterstützt: PDF, Bilder, Word, Excel
  * PDFs und Bilder werden beim Export automatisch angehängt
  */
@@ -16,7 +16,9 @@ import {
   FileSpreadsheet,
   File,
   AlertTriangle,
-  Loader2
+  Loader2,
+  Plus,
+  GripVertical
 } from 'lucide-react';
 import styles from './AttachmentBlock.module.css';
 
@@ -27,7 +29,21 @@ interface AttachmentBlockProps {
   isPreview: boolean;
 }
 
-type EditingField = 'title' | 'description' | null;
+// Typ für einzelne Anlage
+interface Attachment {
+  id: string;
+  title: string;
+  description: string;
+  file: string;
+  fileName: string;
+  fileSize: number;
+  fileType: string;
+}
+
+type EditingState = {
+  attachmentId: string;
+  field: 'title' | 'description';
+} | null;
 
 // Unterstützte Dateitypen
 const SUPPORTED_TYPES = {
@@ -62,12 +78,16 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+// Helper: Eindeutige ID generieren
+function generateId(): string {
+  return `att_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
 // Helper: Titel aus Dateiname extrahieren
-function extractTitleFromFilename(filename: string, existingNumber?: string): string {
+function extractTitleFromFilename(filename: string, index: number): string {
   const nameWithoutExt = filename.replace(/\.[^/.]+$/, '');
   const cleanName = nameWithoutExt.replace(/[_-]/g, ' ');
-  const number = existingNumber || 'Anlage 1';
-  return `${number} - ${cleanName}`;
+  return `Anlage ${index} - ${cleanName}`;
 }
 
 export const AttachmentBlock: React.FC<AttachmentBlockProps> = ({
@@ -76,19 +96,35 @@ export const AttachmentBlock: React.FC<AttachmentBlockProps> = ({
   isSelected,
   isPreview,
 }) => {
-  const {
-    attachmentTitle,
-    attachmentDescription,
-    attachmentFile,
-    attachmentFileName,
-    attachmentFileSize,
-    attachmentFileType
-  } = content;
+  // Legacy-Daten Migration: Alte Einzeldatei zu neuem Array-Format
+  const getAttachments = useCallback((): Attachment[] => {
+    // Wenn neues attachments-Array existiert, verwende es
+    if (content.attachments && content.attachments.length > 0) {
+      return content.attachments;
+    }
+
+    // Legacy-Migration: Einzelne Datei zu Array konvertieren
+    if (content.attachmentFile && content.attachmentFileName) {
+      return [{
+        id: 'legacy_1',
+        title: content.attachmentTitle || 'Anlage 1',
+        description: content.attachmentDescription || '',
+        file: content.attachmentFile,
+        fileName: content.attachmentFileName,
+        fileSize: content.attachmentFileSize || 0,
+        fileType: content.attachmentFileType || 'application/octet-stream',
+      }];
+    }
+
+    return [];
+  }, [content]);
+
+  const attachments = getAttachments();
 
   const updateBlockContent = useContractBuilderStore((state) => state.updateBlockContent);
   const syncVariables = useContractBuilderStore((state) => state.syncVariables);
 
-  const [editingField, setEditingField] = useState<EditingField>(null);
+  const [editingState, setEditingState] = useState<EditingState>(null);
   const [editValue, setEditValue] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -97,9 +133,10 @@ export const AttachmentBlock: React.FC<AttachmentBlockProps> = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Focus auf Input/Textarea wenn Editing startet
   useEffect(() => {
-    if (editingField) {
-      if (editingField === 'description') {
+    if (editingState) {
+      if (editingState.field === 'description') {
         textareaRef.current?.focus();
         textareaRef.current?.select();
       } else {
@@ -107,210 +144,290 @@ export const AttachmentBlock: React.FC<AttachmentBlockProps> = ({
         inputRef.current?.select();
       }
     }
-  }, [editingField]);
+  }, [editingState]);
 
-  const handleDoubleClick = useCallback((field: EditingField, currentValue: string) => {
+  // Attachments im Store aktualisieren
+  const updateAttachments = useCallback((newAttachments: Attachment[]) => {
+    // Lösche Legacy-Felder wenn wir zum neuen Format migrieren
+    updateBlockContent(blockId, {
+      attachments: newAttachments,
+      // Legacy-Felder leeren
+      attachmentFile: undefined,
+      attachmentFileName: undefined,
+      attachmentFileSize: undefined,
+      attachmentFileType: undefined,
+      attachmentTitle: undefined,
+      attachmentDescription: undefined,
+    });
+    syncVariables();
+  }, [blockId, updateBlockContent, syncVariables]);
+
+  // Doppelklick zum Bearbeiten
+  const handleDoubleClick = useCallback((attachmentId: string, field: 'title' | 'description', currentValue: string) => {
     if (isPreview) return;
-    setEditingField(field);
+    setEditingState({ attachmentId, field });
     setEditValue(currentValue);
   }, [isPreview]);
 
+  // Bearbeitung speichern
   const handleSave = useCallback(() => {
-    if (!editingField) return;
+    if (!editingState) return;
 
-    if (editingField === 'title') {
-      updateBlockContent(blockId, { attachmentTitle: editValue });
-    } else if (editingField === 'description') {
-      updateBlockContent(blockId, { attachmentDescription: editValue });
-    }
+    const newAttachments = attachments.map(att => {
+      if (att.id === editingState.attachmentId) {
+        return {
+          ...att,
+          [editingState.field]: editValue,
+        };
+      }
+      return att;
+    });
 
-    syncVariables();
-    setEditingField(null);
+    updateAttachments(newAttachments);
+    setEditingState(null);
     setEditValue('');
-  }, [editingField, editValue, blockId, updateBlockContent, syncVariables]);
+  }, [editingState, editValue, attachments, updateAttachments]);
 
+  // Keyboard Handler
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSave();
     } else if (e.key === 'Escape') {
-      setEditingField(null);
+      setEditingState(null);
       setEditValue('');
     }
   }, [handleSave]);
 
-  // Datei-Upload Handler
+  // Datei-Upload Handler (unterstützt mehrere Dateien)
   const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
     setUploadError(null);
-
-    // Validierung: Dateityp
-    if (!ALL_SUPPORTED_TYPES.includes(file.type)) {
-      setUploadError('Dateityp nicht unterstützt. Erlaubt: PDF, JPG, PNG, WebP, Word, Excel');
-      return;
-    }
-
-    // Validierung: Dateigröße
-    if (file.size > MAX_FILE_SIZE) {
-      setUploadError('Datei zu groß. Maximal 10 MB erlaubt.');
-      return;
-    }
-
     setIsUploading(true);
 
-    try {
-      // Datei als Base64 lesen
-      const reader = new FileReader();
+    const newAttachments: Attachment[] = [...attachments];
+    const errors: string[] = [];
 
-      reader.onload = () => {
-        const base64 = reader.result as string;
+    // Alle ausgewählten Dateien verarbeiten
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
 
-        // Automatischen Titel aus Dateiname extrahieren
-        const currentTitle = attachmentTitle || 'Anlage 1';
-        const numberMatch = currentTitle.match(/^(Anlage \d+)/);
-        const number = numberMatch ? numberMatch[1] : 'Anlage 1';
-        const newTitle = extractTitleFromFilename(file.name, number);
+      // Validierung: Dateityp
+      if (!ALL_SUPPORTED_TYPES.includes(file.type)) {
+        errors.push(`${file.name}: Dateityp nicht unterstützt`);
+        continue;
+      }
 
-        updateBlockContent(blockId, {
-          attachmentFile: base64,
-          attachmentFileName: file.name,
-          attachmentFileSize: file.size,
-          attachmentFileType: file.type,
-          attachmentTitle: newTitle,
+      // Validierung: Dateigröße
+      if (file.size > MAX_FILE_SIZE) {
+        errors.push(`${file.name}: Datei zu groß (max. 10 MB)`);
+        continue;
+      }
+
+      try {
+        // Datei als Base64 lesen
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = () => reject(new Error('Lesefehler'));
+          reader.readAsDataURL(file);
         });
 
-        syncVariables();
-        setIsUploading(false);
-      };
+        // Neue Anlage erstellen
+        const nextIndex = newAttachments.length + 1;
+        const newAttachment: Attachment = {
+          id: generateId(),
+          title: extractTitleFromFilename(file.name, nextIndex),
+          description: '',
+          file: base64,
+          fileName: file.name,
+          fileSize: file.size,
+          fileType: file.type,
+        };
 
-      reader.onerror = () => {
-        setUploadError('Fehler beim Lesen der Datei.');
-        setIsUploading(false);
-      };
-
-      reader.readAsDataURL(file);
-    } catch {
-      setUploadError('Fehler beim Hochladen der Datei.');
-      setIsUploading(false);
+        newAttachments.push(newAttachment);
+      } catch {
+        errors.push(`${file.name}: Fehler beim Hochladen`);
+      }
     }
+
+    // Attachments aktualisieren
+    if (newAttachments.length > attachments.length) {
+      updateAttachments(newAttachments);
+    }
+
+    // Fehler anzeigen
+    if (errors.length > 0) {
+      setUploadError(errors.join(', '));
+    }
+
+    setIsUploading(false);
 
     // Input zurücksetzen
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  }, [blockId, attachmentTitle, updateBlockContent, syncVariables]);
+  }, [attachments, updateAttachments]);
 
-  // Datei entfernen
-  const handleRemoveFile = useCallback(() => {
-    updateBlockContent(blockId, {
-      attachmentFile: undefined,
-      attachmentFileName: undefined,
-      attachmentFileSize: undefined,
-      attachmentFileType: undefined,
+  // Einzelne Anlage entfernen
+  const handleRemoveAttachment = useCallback((attachmentId: string) => {
+    const newAttachments = attachments.filter(att => att.id !== attachmentId);
+    updateAttachments(newAttachments);
+  }, [attachments, updateAttachments]);
+
+  // Titel-Nummer nach oben/unten korrigieren
+  const renumberTitles = useCallback(() => {
+    const newAttachments = attachments.map((att, index) => {
+      // Nur aktualisieren wenn Titel mit "Anlage X" beginnt
+      if (att.title.match(/^Anlage \d+/)) {
+        return {
+          ...att,
+          title: att.title.replace(/^Anlage \d+/, `Anlage ${index + 1}`),
+        };
+      }
+      return att;
     });
-  }, [blockId, updateBlockContent]);
+    updateAttachments(newAttachments);
+  }, [attachments, updateAttachments]);
 
   // Icon basierend auf Dateityp
-  const getFileIcon = () => {
-    if (!attachmentFileType) return <File size={20} />;
-
-    const category = getFileCategory(attachmentFileType);
+  const getFileIcon = (fileType: string) => {
+    const category = getFileCategory(fileType);
     switch (category) {
       case 'pdf':
-        return <FileText size={20} className={styles.iconPdf} />;
+        return <FileText size={18} className={styles.iconPdf} />;
       case 'image':
-        return <ImageIcon size={20} className={styles.iconImage} />;
+        return <ImageIcon size={18} className={styles.iconImage} />;
       case 'word':
-        return <FileText size={20} className={styles.iconWord} />;
+        return <FileText size={18} className={styles.iconWord} />;
       case 'excel':
-        return <FileSpreadsheet size={20} className={styles.iconExcel} />;
+        return <FileSpreadsheet size={18} className={styles.iconExcel} />;
       default:
-        return <File size={20} />;
+        return <File size={18} />;
     }
   };
 
   // Prüfen ob Office-Datei (wird separat exportiert)
-  const isOfficeFile = attachmentFileType &&
-    (SUPPORTED_TYPES.word.includes(attachmentFileType) ||
-     SUPPORTED_TYPES.excel.includes(attachmentFileType));
+  const isOfficeFile = (fileType: string) => {
+    return SUPPORTED_TYPES.word.includes(fileType) || SUPPORTED_TYPES.excel.includes(fileType);
+  };
 
   return (
     <div className={`${styles.attachment} ${isSelected ? styles.selected : ''}`}>
+      {/* Header */}
       <div className={styles.attachmentHeader}>
         <Paperclip size={16} className={styles.icon} />
-        <span className={styles.attachmentLabel}>Anlage</span>
-      </div>
-
-      <h4 className={styles.attachmentTitle}>
-        {editingField === 'title' ? (
-          <input
-            ref={inputRef}
-            type="text"
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-            onBlur={handleSave}
-            onKeyDown={handleKeyDown}
-            className={styles.inlineInput}
-          />
-        ) : (
-          <VariableHighlight
-            text={attachmentTitle || 'Anlage 1'}
-            isPreview={isPreview}
-            onDoubleClick={() => handleDoubleClick('title', attachmentTitle || 'Anlage 1')}
-          />
-        )}
-      </h4>
-
-      <div className={styles.attachmentDescription}>
-        {editingField === 'description' ? (
-          <textarea
-            ref={textareaRef}
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-            onBlur={handleSave}
-            onKeyDown={handleKeyDown}
-            className={styles.inlineTextarea}
-            rows={Math.max(2, editValue.split('\n').length)}
-          />
-        ) : (
-          <VariableHighlight
-            text={attachmentDescription || 'Beschreibung der Anlage...'}
-            multiline
-            isPreview={isPreview}
-            onDoubleClick={() => handleDoubleClick('description', attachmentDescription || '')}
-          />
+        <span className={styles.attachmentLabel}>
+          Anlagen {attachments.length > 0 && `(${attachments.length})`}
+        </span>
+        {!isPreview && attachments.length > 1 && (
+          <button
+            className={styles.renumberButton}
+            onClick={renumberTitles}
+            title="Nummern aktualisieren"
+          >
+            #
+          </button>
         )}
       </div>
 
-      {/* Datei-Info anzeigen wenn vorhanden */}
-      {attachmentFile && attachmentFileName && (
-        <div className={styles.fileInfo}>
-          <div className={styles.fileDetails}>
-            {getFileIcon()}
-            <span className={styles.fileName}>{attachmentFileName}</span>
-            <span className={styles.fileSize}>
-              ({formatFileSize(attachmentFileSize || 0)})
-            </span>
-          </div>
-          {!isPreview && (
-            <button
-              className={styles.removeButton}
-              onClick={handleRemoveFile}
-              title="Datei entfernen"
-            >
-              <X size={16} />
-            </button>
-          )}
+      {/* Liste der Anlagen */}
+      {attachments.length > 0 ? (
+        <div className={styles.attachmentList}>
+          {attachments.map((attachment, index) => (
+            <div key={attachment.id} className={styles.attachmentItem}>
+              {/* Drag Handle (optional für spätere Sortierung) */}
+              {!isPreview && attachments.length > 1 && (
+                <div className={styles.dragHandle}>
+                  <GripVertical size={14} />
+                </div>
+              )}
+
+              {/* Anlage-Inhalt */}
+              <div className={styles.attachmentContent}>
+                {/* Titel */}
+                <div className={styles.attachmentItemTitle}>
+                  {editingState?.attachmentId === attachment.id && editingState.field === 'title' ? (
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      onBlur={handleSave}
+                      onKeyDown={handleKeyDown}
+                      className={styles.inlineInput}
+                    />
+                  ) : (
+                    <VariableHighlight
+                      text={attachment.title || `Anlage ${index + 1}`}
+                      isPreview={isPreview}
+                      onDoubleClick={() => handleDoubleClick(attachment.id, 'title', attachment.title)}
+                    />
+                  )}
+                </div>
+
+                {/* Beschreibung */}
+                <div className={styles.attachmentItemDescription}>
+                  {editingState?.attachmentId === attachment.id && editingState.field === 'description' ? (
+                    <textarea
+                      ref={textareaRef}
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      onBlur={handleSave}
+                      onKeyDown={handleKeyDown}
+                      className={styles.inlineTextarea}
+                      rows={Math.max(2, editValue.split('\n').length)}
+                      placeholder="Beschreibung der Anlage..."
+                    />
+                  ) : (
+                    <VariableHighlight
+                      text={attachment.description || 'Beschreibung hinzufügen...'}
+                      multiline
+                      isPreview={isPreview}
+                      onDoubleClick={() => handleDoubleClick(attachment.id, 'description', attachment.description)}
+                    />
+                  )}
+                </div>
+
+                {/* Datei-Info */}
+                <div className={styles.fileInfo}>
+                  <div className={styles.fileDetails}>
+                    {getFileIcon(attachment.fileType)}
+                    <span className={styles.fileName}>{attachment.fileName}</span>
+                    <span className={styles.fileSize}>
+                      ({formatFileSize(attachment.fileSize)})
+                    </span>
+                  </div>
+
+                  {/* Office-Warnung */}
+                  {isOfficeFile(attachment.fileType) && (
+                    <div className={styles.officeWarning}>
+                      <AlertTriangle size={14} />
+                      <span>Separate Datei</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Entfernen-Button */}
+              {!isPreview && (
+                <button
+                  className={styles.removeButton}
+                  onClick={() => handleRemoveAttachment(attachment.id)}
+                  title="Anlage entfernen"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+          ))}
         </div>
-      )}
-
-      {/* Office-Warnung */}
-      {isOfficeFile && (
-        <div className={styles.officeWarning}>
-          <AlertTriangle size={16} />
-          <span>Wird als separate Datei exportiert (nicht in PDF konvertierbar)</span>
+      ) : (
+        <div className={styles.emptyState}>
+          <Paperclip size={24} className={styles.emptyIcon} />
+          <span>Noch keine Anlagen</span>
         </div>
       )}
 
@@ -324,6 +441,7 @@ export const AttachmentBlock: React.FC<AttachmentBlockProps> = ({
             onChange={handleFileSelect}
             className={styles.fileInput}
             disabled={isUploading}
+            multiple  // Mehrfachauswahl erlauben
           />
           <button
             className={styles.uploadButton}
@@ -335,15 +453,20 @@ export const AttachmentBlock: React.FC<AttachmentBlockProps> = ({
                 <Loader2 size={16} className={styles.spinner} />
                 <span>Wird hochgeladen...</span>
               </>
+            ) : attachments.length > 0 ? (
+              <>
+                <Plus size={16} />
+                <span>Weitere Anlage hinzufügen</span>
+              </>
             ) : (
               <>
                 <Upload size={16} />
-                <span>{attachmentFile ? 'Datei ersetzen' : 'Datei hochladen'}</span>
+                <span>Anlagen hochladen</span>
               </>
             )}
           </button>
           <span className={styles.uploadHint}>
-            PDF, Bilder (JPG, PNG), Word, Excel - max. 10 MB
+            PDF, Bilder (JPG, PNG), Word, Excel - max. 10 MB pro Datei
           </span>
         </div>
       )}
@@ -353,6 +476,12 @@ export const AttachmentBlock: React.FC<AttachmentBlockProps> = ({
         <div className={styles.error}>
           <AlertTriangle size={16} />
           <span>{uploadError}</span>
+          <button
+            className={styles.dismissError}
+            onClick={() => setUploadError(null)}
+          >
+            <X size={14} />
+          </button>
         </div>
       )}
     </div>

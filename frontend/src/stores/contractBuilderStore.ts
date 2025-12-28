@@ -112,13 +112,23 @@ export interface BlockContent {
   witnesses?: number;
   // Preamble
   preambleText?: string;
-  // Attachment
+  // Attachment (Legacy - einzelne Datei, für Abwärtskompatibilität)
   attachmentTitle?: string;
   attachmentDescription?: string;
   attachmentFile?: string;         // Base64 encoded Datei
   attachmentFileName?: string;     // Original-Dateiname
   attachmentFileSize?: number;     // Dateigröße in Bytes
   attachmentFileType?: string;     // MIME-Type (application/pdf, image/jpeg, etc.)
+  // Attachments (NEU - mehrere Dateien pro Block)
+  attachments?: Array<{
+    id: string;                    // Eindeutige ID für jede Anlage
+    title: string;                 // z.B. "Anlage 1 - Lebenslauf"
+    description: string;           // Beschreibung der Anlage
+    file: string;                  // Base64 encoded Datei
+    fileName: string;              // Original-Dateiname
+    fileSize: number;              // Dateigröße in Bytes
+    fileType: string;              // MIME-Type
+  }>;
   // Divider/Spacer
   height?: number;
   style?: string;
