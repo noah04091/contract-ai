@@ -90,6 +90,7 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
   }, [selectedVariableId, variables]);
 
   // SCHRITT 2: Nach Gruppen-Expansion zum Element scrollen (separater Effect!)
+  // WICHTIG: Verwendet MANUELLES Scrolling statt scrollIntoView um Bug zu vermeiden
   useEffect(() => {
     if (pendingScrollToVariable) {
       // Multiple Frames warten, damit React das DOM vollständig aktualisiert hat
@@ -100,8 +101,26 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
         const element = document.querySelector(`[data-variable-id="${pendingScrollToVariable}"]`) as HTMLElement;
 
         if (element) {
-          // Scroll zur Variable (smooth)
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Finde den variablesList Container (hat overflow-y: auto)
+          const variablesListContainer = document.querySelector('[class*="VariablesPanel_variablesList"]') as HTMLElement;
+
+          if (variablesListContainer) {
+            // Berechne die Position relativ zum Container
+            const containerRect = variablesListContainer.getBoundingClientRect();
+            const elementRect = element.getBoundingClientRect();
+
+            // Ziel: Element in der Mitte des sichtbaren Bereichs
+            const targetScrollTop = variablesListContainer.scrollTop +
+              (elementRect.top - containerRect.top) -
+              (containerRect.height / 2) +
+              (elementRect.height / 2);
+
+            // Smooth scroll NUR innerhalb des variablesList Containers
+            variablesListContainer.scrollTo({
+              top: Math.max(0, targetScrollTop),
+              behavior: 'smooth'
+            });
+          }
 
           // Visuelles Feedback durch Highlighting
           element.classList.add(styles.highlight);
@@ -185,6 +204,7 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
   };
 
   // UMGEKEHRTE NAVIGATION: Sidebar-Klick scrollt zum Canvas-Element
+  // WICHTIG: Verwendet MANUELLES Scrolling statt scrollIntoView um Bug zu vermeiden
   const scrollToCanvasVariable = (variable: Variable) => {
     // Variable-Name ohne {{ }} extrahieren
     const varName = variable.name.replace(/^\{\{|\}\}$/g, '');
@@ -195,12 +215,26 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
     ) as HTMLElement;
 
     if (canvasElement) {
-      // Smooth scroll zum Element
-      canvasElement.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-        inline: 'nearest'
-      });
+      // Canvas-Container finden (hat class "canvas" mit overflow-y: auto)
+      const canvasContainer = document.querySelector('[class*="BuilderCanvas_canvas"]') as HTMLElement;
+
+      if (canvasContainer) {
+        // Berechne die Position relativ zum Canvas-Container
+        const containerRect = canvasContainer.getBoundingClientRect();
+        const elementRect = canvasElement.getBoundingClientRect();
+
+        // Ziel: Element in der Mitte des sichtbaren Bereichs
+        const targetScrollTop = canvasContainer.scrollTop +
+          (elementRect.top - containerRect.top) -
+          (containerRect.height / 2) +
+          (elementRect.height / 2);
+
+        // Smooth scroll NUR innerhalb des Canvas-Containers
+        canvasContainer.scrollTo({
+          top: Math.max(0, targetScrollTop),
+          behavior: 'smooth'
+        });
+      }
 
       // Visuelles Highlight im Canvas
       canvasElement.style.transition = 'box-shadow 0.3s ease, transform 0.2s ease';
