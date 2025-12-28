@@ -25,7 +25,7 @@ export const PartiesBlock: React.FC<PartiesBlockProps> = ({
   isSelected,
   isPreview,
 }) => {
-  const { party1, party2 } = content;
+  const { party1, party2, showPartyIcons = false } = content;
   const updateBlockContent = useContractBuilderStore((state) => state.updateBlockContent);
   const syncVariables = useContractBuilderStore((state) => state.syncVariables);
 
@@ -79,6 +79,13 @@ export const PartiesBlock: React.FC<PartiesBlockProps> = ({
     return editingField?.party === party && editingField?.field === field;
   };
 
+  // Prefix für Variablen basierend auf Partei
+  const getVariablePrefix = (partyNum: 1 | 2) => {
+    const p1 = party1?.role?.toLowerCase().replace(/\s+/g, '_') || 'partei1';
+    const p2 = party2?.role?.toLowerCase().replace(/\s+/g, '_') || 'partei2';
+    return partyNum === 1 ? p1 : p2;
+  };
+
   const renderEditableField = (party: 1 | 2, field: PartyField, value: string, defaultValue: string) => {
     if (isEditing(party, field)) {
       return (
@@ -106,12 +113,18 @@ export const PartiesBlock: React.FC<PartiesBlockProps> = ({
   const renderParty = (party: typeof party1, partyNum: 1 | 2) => {
     if (!party) return null;
 
+    // Eindeutige Prefix für Variablen pro Partei
+    const prefix = getVariablePrefix(partyNum);
+
     return (
       <div className={styles.partyCard}>
         <div className={styles.partyHeader}>
-          <div className={styles.partyIcon}>
-            {partyNum === 1 ? <Building2 size={18} /> : <User size={18} />}
-          </div>
+          {/* Icons nur anzeigen wenn explizit aktiviert */}
+          {showPartyIcons && (
+            <div className={styles.partyIcon}>
+              {partyNum === 1 ? <Building2 size={18} /> : <User size={18} />}
+            </div>
+          )}
           <span className={styles.partyRole}>
             {renderEditableField(partyNum, 'role', party.role || '', `Partei ${partyNum}`)}
           </span>
@@ -122,7 +135,7 @@ export const PartiesBlock: React.FC<PartiesBlockProps> = ({
           <div className={styles.detailRow}>
             <span className={styles.detailLabel}>Name:</span>
             <span className={styles.detailValue}>
-              {renderEditableField(partyNum, 'name', party.name || '', '{{name}}')}
+              {renderEditableField(partyNum, 'name', party.name || '', `{{${prefix}_name}}`)}
             </span>
           </div>
 
@@ -130,31 +143,34 @@ export const PartiesBlock: React.FC<PartiesBlockProps> = ({
           <div className={styles.detailRow}>
             <span className={styles.detailLabel}>Adresse:</span>
             <span className={styles.detailValue}>
-              {renderEditableField(partyNum, 'address', party.address || '', '{{adresse}}')}
+              {renderEditableField(partyNum, 'address', party.address || '', `{{${prefix}_adresse}}`)}
             </span>
           </div>
 
           {/* Steuer-ID */}
           <div className={styles.detailRow}>
-            <FileText size={12} className={styles.detailIcon} />
+            {showPartyIcons && <FileText size={12} className={styles.detailIcon} />}
+            {!showPartyIcons && <span className={styles.detailLabel}>Steuer-ID:</span>}
             <span className={styles.detailValue}>
-              {renderEditableField(partyNum, 'taxId', party.taxId || '', '{{steuer_id}}')}
+              {renderEditableField(partyNum, 'taxId', party.taxId || '', `{{${prefix}_steuer_id}}`)}
             </span>
           </div>
 
           {/* E-Mail */}
           <div className={styles.detailRow}>
-            <Mail size={12} className={styles.detailIcon} />
+            {showPartyIcons && <Mail size={12} className={styles.detailIcon} />}
+            {!showPartyIcons && <span className={styles.detailLabel}>E-Mail:</span>}
             <span className={styles.detailValue}>
-              {renderEditableField(partyNum, 'email', party.email || '', '{{email}}')}
+              {renderEditableField(partyNum, 'email', party.email || '', `{{${prefix}_email}}`)}
             </span>
           </div>
 
           {/* Telefon */}
           <div className={styles.detailRow}>
-            <Phone size={12} className={styles.detailIcon} />
+            {showPartyIcons && <Phone size={12} className={styles.detailIcon} />}
+            {!showPartyIcons && <span className={styles.detailLabel}>Telefon:</span>}
             <span className={styles.detailValue}>
-              {renderEditableField(partyNum, 'phone', party.phone || '', '{{telefon}}')}
+              {renderEditableField(partyNum, 'phone', party.phone || '', `{{${prefix}_telefon}}`)}
             </span>
           </div>
         </div>

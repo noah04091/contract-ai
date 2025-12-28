@@ -662,10 +662,6 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
     }
 
     case 'parties': {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const party1 = (content.party1 || {}) as any;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const party2 = (content.party2 || {}) as any;
       const showIcons = (content as { showPartyIcons?: boolean }).showPartyIcons;
       return (
         <>
@@ -679,89 +675,10 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
               <span>Icons einblenden</span>
             </label>
           </div>
-          <div className={styles.fieldGroup}>
-            <label className={styles.groupLabel}>Partei 1 (Auftraggeber)</label>
-            <div className={styles.field}>
-              <label className={styles.label}>Rolle</label>
-              <input
-                type="text"
-                className={styles.input}
-                value={String(party1.role || 'Auftraggeber')}
-                onChange={(e) => onUpdate({
-                  ...content,
-                  party1: { ...party1, role: e.target.value }
-                })}
-              />
-            </div>
-            <div className={styles.field}>
-              <label className={styles.label}>Name / Firma</label>
-              <input
-                type="text"
-                className={styles.input}
-                value={String(party1.name || '')}
-                placeholder="Max Mustermann GmbH"
-                onChange={(e) => onUpdate({
-                  ...content,
-                  party1: { ...party1, name: e.target.value }
-                })}
-              />
-            </div>
-            <div className={styles.field}>
-              <label className={styles.label}>Adresse</label>
-              <textarea
-                className={styles.textarea}
-                rows={2}
-                value={String(party1.address || '')}
-                placeholder="Musterstraße 1, 12345 Musterstadt"
-                onChange={(e) => onUpdate({
-                  ...content,
-                  party1: { ...party1, address: e.target.value }
-                })}
-              />
-            </div>
-          </div>
-
-          <div className={styles.fieldGroup}>
-            <label className={styles.groupLabel}>Partei 2 (Auftragnehmer)</label>
-            <div className={styles.field}>
-              <label className={styles.label}>Rolle</label>
-              <input
-                type="text"
-                className={styles.input}
-                value={String(party2.role || 'Auftragnehmer')}
-                onChange={(e) => onUpdate({
-                  ...content,
-                  party2: { ...party2, role: e.target.value }
-                })}
-              />
-            </div>
-            <div className={styles.field}>
-              <label className={styles.label}>Name / Firma</label>
-              <input
-                type="text"
-                className={styles.input}
-                value={String(party2.name || '')}
-                placeholder="Erika Musterfrau"
-                onChange={(e) => onUpdate({
-                  ...content,
-                  party2: { ...party2, name: e.target.value }
-                })}
-              />
-            </div>
-            <div className={styles.field}>
-              <label className={styles.label}>Adresse</label>
-              <textarea
-                className={styles.textarea}
-                rows={2}
-                value={String(party2.address || '')}
-                placeholder="Beispielweg 2, 54321 Beispielort"
-                onChange={(e) => onUpdate({
-                  ...content,
-                  party2: { ...party2, address: e.target.value }
-                })}
-              />
-            </div>
-          </div>
+          <p className={styles.noContent}>
+            Bearbeiten Sie die Partei-Daten per Doppelklick direkt im Block.
+            Jede Partei hat eigene Variablen (z.B. auftraggeber_email, auftragnehmer_email).
+          </p>
         </>
       );
     }

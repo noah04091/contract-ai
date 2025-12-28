@@ -308,11 +308,17 @@ function getDefaultContent(type: BlockType): Record<string, unknown> {
           role: 'Auftraggeber',
           name: '{{auftraggeber_name}}',
           address: '{{auftraggeber_adresse}}',
+          taxId: '{{auftraggeber_steuer_id}}',
+          email: '{{auftraggeber_email}}',
+          phone: '{{auftraggeber_telefon}}',
         },
         party2: {
           role: 'Auftragnehmer',
           name: '{{auftragnehmer_name}}',
           address: '{{auftragnehmer_adresse}}',
+          taxId: '{{auftragnehmer_steuer_id}}',
+          email: '{{auftragnehmer_email}}',
+          phone: '{{auftragnehmer_telefon}}',
         },
       };
     case 'preamble':
