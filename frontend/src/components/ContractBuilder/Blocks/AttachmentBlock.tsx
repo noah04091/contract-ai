@@ -342,7 +342,7 @@ export const AttachmentBlock: React.FC<AttachmentBlockProps> = ({
       className={`${styles.attachment} ${isSelected ? styles.selected : ''} ${isPreview ? styles.preview : ''}`}
       style={customStyles}
     >
-      {/* Header - nur im Edit-Modus anzeigen */}
+      {/* Header - Edit-Modus: Kleiner Header mit Icon */}
       {!isPreview && (
         <div className={styles.attachmentHeader}>
           <Paperclip size={16} className={styles.icon} />
@@ -361,15 +361,30 @@ export const AttachmentBlock: React.FC<AttachmentBlockProps> = ({
         </div>
       )}
 
+      {/* Header - Preview/PDF-Modus: Professioneller Header wie "UNTERSCHRIFTEN" */}
+      {isPreview && attachments.length > 0 && (
+        <div className={styles.previewHeader}>
+          <div className={styles.previewHeaderLine} />
+          <h3 className={styles.previewHeaderTitle}>ANLAGEN</h3>
+        </div>
+      )}
+
       {/* Liste der Anlagen */}
       {attachments.length > 0 ? (
         <div className={styles.attachmentList}>
           {attachments.map((attachment, index) => (
-            <div key={attachment.id} className={styles.attachmentItem}>
+            <div key={attachment.id} className={`${styles.attachmentItem} ${isPreview ? styles.previewItem : ''}`}>
               {/* Drag Handle (optional für spätere Sortierung) */}
               {!isPreview && attachments.length > 1 && (
                 <div className={styles.dragHandle}>
                   <GripVertical size={14} />
+                </div>
+              )}
+
+              {/* Preview: Nummerierung links */}
+              {isPreview && (
+                <div className={styles.previewNumber}>
+                  {index + 1}
                 </div>
               )}
 

@@ -23,26 +23,87 @@
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
-/* Preview-Modus: Styles bleiben erhalten für schönes PDF */
+/* Preview-Modus: Professionelles PDF-Design */
 .attachment.preview {
-  /* Standard-Styles (Hintergrund, Rahmen) bleiben erhalten */
-  /* Werden durch inline-styles überschrieben wenn vom User angepasst */
+  background: #fafafa;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px 24px;
 }
 
-/* Im Preview: Einzelne Anlage-Items ohne Karten-Look, aber mit klarer Struktur */
-.attachment.preview .attachmentItem {
-  background: transparent;
-  border: none;
-  padding: 8px 0;
-  border-bottom: 1px solid rgba(0,0,0,0.1);
+/* Preview Header - wie "UNTERSCHRIFTEN" */
+.previewHeader {
+  margin-bottom: 16px;
 }
 
-.attachment.preview .attachmentItem:last-child {
-  border-bottom: none;
+.previewHeaderLine {
+  height: 1px;
+  background: linear-gradient(to right, #94a3b8, transparent);
+  margin-bottom: 12px;
 }
 
+.previewHeaderTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  letter-spacing: 0.1em;
+  margin: 0;
+}
+
+/* Preview Items - professionelle Darstellung */
 .attachment.preview .attachmentList {
-  gap: 4px;
+  gap: 0;
+}
+
+.previewItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid #e2e8f0;
+  background: transparent !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-top: none !important;
+  border-radius: 0 !important;
+}
+
+.previewItem:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.previewItem:first-child {
+  padding-top: 0;
+}
+
+/* Nummerierung im Preview */
+.previewNumber {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: #3b82f6;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Titel im Preview fett */
+.previewItem .attachmentItemTitle {
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 4px;
+}
+
+/* Beschreibung im Preview */
+.previewItem .attachmentItemDescription {
+  color: #64748b;
+  font-size: 14px;
+  margin-bottom: 0;
 }
 
 /* Header */
