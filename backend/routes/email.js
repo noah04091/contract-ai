@@ -318,12 +318,12 @@ router.get("/stats", optionalAuth, async (req, res) => {
 
 /**
  * POST /api/email/test
- * Sendet eine Test-E-Mail mit allen neuen Features
- * Body: { email: "test@example.com" }
+ * Sendet Test-E-Mails verschiedener Typen
+ * Body: { email: "test@example.com", type: "calendar|digest|reminder|all" }
  */
 router.post("/test", async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, type = "all" } = req.body;
 
     if (!email) {
       return res.status(400).json({
@@ -336,51 +336,6 @@ router.post("/test", async (req, res) => {
     const generateEmailTemplate = require("../utils/emailTemplate");
     const { generateUnsubscribeUrl, getUnsubscribeHeaders } = require("../services/emailUnsubscribeService");
 
-    // Generiere echten Unsubscribe-Link
-    const unsubscribeUrl = generateUnsubscribeUrl(email, "calendar");
-
-    const html = generateEmailTemplate({
-      title: "🧪 Test-E-Mail - Neue Features",
-      preheader: "Test der neuen E-Mail-Features: Bounce-Handling, Unsubscribe, Digest",
-      body: `
-        <h2 style="color: #1f2937; margin: 0 0 16px 0;">Hallo!</h2>
-        <p style="color: #4b5563; font-size: 15px; line-height: 1.6;">
-          Dies ist eine <strong>Test-E-Mail</strong> um die neuen Features zu testen:
-        </p>
-
-        <div style="background: #f0fdf4; border-left: 4px solid #22c55e; padding: 16px; margin: 20px 0; border-radius: 0 8px 8px 0;">
-          <h3 style="color: #166534; margin: 0 0 8px 0;">✅ Neue Features</h3>
-          <ul style="color: #166534; margin: 0; padding-left: 20px;">
-            <li><strong>Bounce-Handling:</strong> Erkennt ungueltige E-Mails automatisch</li>
-            <li><strong>DSGVO Unsubscribe:</strong> Abmelde-Link im Footer (scroll runter!)</li>
-            <li><strong>Digest-E-Mails:</strong> Taeglich/Woechentlich Zusammenfassungen</li>
-            <li><strong>Pre-Send Checks:</strong> Prueft vor Versand ob User abgemeldet ist</li>
-          </ul>
-        </div>
-
-        <p style="color: #4b5563; font-size: 15px; line-height: 1.6;">
-          <strong>Teste den Abmelde-Link:</strong><br>
-          Scrolle zum Footer dieser E-Mail. Dort findest du den Link
-          "Von E-Mail-Benachrichtigungen abmelden". Klicke darauf um die
-          Abmeldeseite zu sehen.
-        </p>
-
-        <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 20px 0; border-radius: 0 8px 8px 0;">
-          <p style="color: #92400e; margin: 0; font-size: 14px;">
-            <strong>Hinweis:</strong> Der Abmelde-Link ist personalisiert und kryptografisch signiert.
-            Jeder User erhaelt einen einzigartigen Link.
-          </p>
-        </div>
-      `,
-      cta: {
-        text: "Zur Abmeldeseite",
-        url: unsubscribeUrl
-      },
-      recipientEmail: email,
-      emailCategory: "calendar"
-    });
-
-    // DIREKT senden (nicht queueen) fuer sofortiges Testen
     const transporter = nodemailer.createTransport({
       host: process.env.EMAIL_HOST,
       port: parseInt(process.env.EMAIL_PORT) || 587,
@@ -391,20 +346,153 @@ router.post("/test", async (req, res) => {
       }
     });
 
-    // Hole Unsubscribe-Headers
+    const unsubscribeUrl = generateUnsubscribeUrl(email, "calendar");
     const unsubHeaders = getUnsubscribeHeaders(email, "calendar");
+    const results = [];
 
-    await transporter.sendMail({
-      from: process.env.EMAIL_FROM || "Contract AI <noreply@contract-ai.de>",
-      to: email,
-      subject: "🧪 Contract AI - Test der neuen E-Mail-Features",
-      html: html,
-      headers: unsubHeaders
-    });
+    // ========== TYP 1: Kalender-Benachrichtigung (Kuendigungsfrist) ==========
+    if (type === "calendar" || type === "all") {
+      const calendarHtml = generateEmailTemplate({
+        title: "Kuendigungsfrist in 14 Tagen",
+        preheader: "Dein Vertrag 'Telekom Mobilfunk' kann bald gekuendigt werden",
+        body: `
+          <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 0 0 20px 0; border-radius: 0 8px 8px 0;">
+            <p style="color: #92400e; margin: 0; font-weight: 600;">
+              Kuendigungsfenster oeffnet bald
+            </p>
+          </div>
+          <h2 style="color: #1f2937; margin: 0 0 16px 0;">Telekom Mobilfunk</h2>
+          <p style="color: #4b5563; font-size: 15px; line-height: 1.6;">
+            In <strong>14 Tagen</strong> beginnt das Kuendigungsfenster fuer deinen Vertrag.
+          </p>
+          <table style="width: 100%; margin: 20px 0; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 12px; background: #f9fafb; border-radius: 8px 0 0 8px;">
+                <strong style="color: #6b7280;">Kuendigungsfrist</strong><br>
+                <span style="color: #1f2937;">3 Monate zum Vertragsende</span>
+              </td>
+              <td style="padding: 12px; background: #f9fafb; border-radius: 0 8px 8px 0;">
+                <strong style="color: #6b7280;">Vertragsende</strong><br>
+                <span style="color: #1f2937;">31.03.2025</span>
+              </td>
+            </tr>
+          </table>
+          <p style="color: #4b5563; font-size: 14px;">
+            Wenn du nicht kuendigst, verlaengert sich der Vertrag automatisch um 12 Monate.
+          </p>
+        `,
+        cta: {
+          text: "Vertrag anzeigen",
+          url: "https://www.contract-ai.de/contracts"
+        },
+        recipientEmail: email,
+        emailCategory: "calendar"
+      });
+
+      await transporter.sendMail({
+        from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
+        to: email,
+        subject: "Kuendigungsfrist in 14 Tagen: Telekom Mobilfunk",
+        html: calendarHtml,
+        headers: unsubHeaders
+      });
+      results.push("calendar");
+    }
+
+    // ========== TYP 2: Digest-E-Mail (Tages-Zusammenfassung) ==========
+    if (type === "digest" || type === "all") {
+      const digestHtml = generateEmailTemplate({
+        title: "Deine Vertrags-Zusammenfassung",
+        preheader: "3 anstehende Fristen diese Woche",
+        body: `
+          <h2 style="color: #1f2937; margin: 0 0 8px 0;">Guten Morgen!</h2>
+          <p style="color: #6b7280; margin: 0 0 24px 0;">Hier ist deine taegliche Zusammenfassung:</p>
+
+          <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; margin: 0 0 16px 0; border-radius: 0 8px 8px 0;">
+            <p style="color: #991b1b; margin: 0 0 8px 0; font-weight: 600;">1 kritische Frist</p>
+            <p style="color: #991b1b; margin: 0; font-size: 14px;">
+              <strong>Vodafone DSL</strong> - Kuendigung muss HEUTE raus!
+            </p>
+          </div>
+
+          <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 0 0 16px 0; border-radius: 0 8px 8px 0;">
+            <p style="color: #92400e; margin: 0 0 8px 0; font-weight: 600;">2 Erinnerungen</p>
+            <p style="color: #92400e; margin: 0; font-size: 14px;">
+              <strong>Netflix</strong> - Preiserhoehung in 7 Tagen<br>
+              <strong>Fitnessstudio</strong> - Vertrag endet in 30 Tagen
+            </p>
+          </div>
+
+          <p style="color: #4b5563; font-size: 14px; margin-top: 24px;">
+            Du erhaeltst diese E-Mail als taegliche Zusammenfassung.
+            <a href="https://www.contract-ai.de/profile" style="color: #3b82f6;">Einstellungen aendern</a>
+          </p>
+        `,
+        cta: {
+          text: "Zum Kalender",
+          url: "https://www.contract-ai.de/calendar"
+        },
+        recipientEmail: email,
+        emailCategory: "calendar"
+      });
+
+      await transporter.sendMail({
+        from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
+        to: email,
+        subject: "Deine Vertrags-Zusammenfassung: 1 kritische Frist + 2 Erinnerungen",
+        html: digestHtml,
+        headers: unsubHeaders
+      });
+      results.push("digest");
+    }
+
+    // ========== TYP 3: Dringende Erinnerung (LETZTE CHANCE) ==========
+    if (type === "reminder" || type === "all") {
+      const reminderHtml = generateEmailTemplate({
+        title: "LETZTE CHANCE: Heute kuendigen!",
+        preheader: "Vodafone DSL muss HEUTE gekuendigt werden",
+        body: `
+          <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; margin: 0 0 20px 0; border-radius: 0 8px 8px 0;">
+            <p style="color: #991b1b; margin: 0; font-weight: 600; font-size: 16px;">
+              HEUTE ist der letzte Tag!
+            </p>
+          </div>
+          <h2 style="color: #1f2937; margin: 0 0 16px 0;">Vodafone DSL</h2>
+          <p style="color: #4b5563; font-size: 15px; line-height: 1.6;">
+            Die Kuendigungsfrist fuer deinen Vertrag endet <strong>heute</strong>.
+          </p>
+          <p style="color: #4b5563; font-size: 15px; line-height: 1.6;">
+            Wenn du jetzt nicht kuendigst, verlaengert sich der Vertrag automatisch um weitere <strong>24 Monate</strong>.
+          </p>
+          <div style="background: #f9fafb; padding: 16px; border-radius: 8px; margin: 20px 0;">
+            <p style="color: #1f2937; margin: 0; font-size: 14px;">
+              <strong>Monatliche Kosten:</strong> 44,99 EUR<br>
+              <strong>Bei Verlaengerung:</strong> 1.079,76 EUR fuer 24 Monate
+            </p>
+          </div>
+        `,
+        cta: {
+          text: "Jetzt kuendigen",
+          url: "https://www.contract-ai.de/contracts"
+        },
+        recipientEmail: email,
+        emailCategory: "calendar"
+      });
+
+      await transporter.sendMail({
+        from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
+        to: email,
+        subject: "LETZTE CHANCE: Vodafone DSL heute kuendigen!",
+        html: reminderHtml,
+        headers: unsubHeaders
+      });
+      results.push("reminder");
+    }
 
     res.json({
       success: true,
-      message: `Test-E-Mail wurde DIREKT an ${email} gesendet`,
+      message: `${results.length} Test-E-Mail(s) an ${email} gesendet`,
+      types: results,
       unsubscribeUrl: unsubscribeUrl
     });
 
