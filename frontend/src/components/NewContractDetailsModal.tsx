@@ -710,7 +710,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
                     </div>
                   </div>
                   <button
-                    onClick={() => window.location.href = '/calendar'}
+                    onClick={() => window.location.href = `/calendar?eventId=${event._id}`}
                     style={{
                       padding: '0.4rem 0.8rem',
                       fontSize: '0.8rem',

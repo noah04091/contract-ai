@@ -1,5 +1,6 @@
 // src/pages/Calendar.tsx - Custom Calendar Redesign
 import { useEffect, useState, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSwipeable } from "react-swipeable";
@@ -2466,6 +2467,9 @@ export default function CalendarPage() {
   // ===== TOAST NOTIFICATIONS =====
   const toast = useToast();
 
+  // ===== URL PARAMETER: Event direkt öffnen =====
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [filteredEvents, setFilteredEvents] = useState<CalendarEvent[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -2507,6 +2511,23 @@ export default function CalendarPage() {
   useEffect(() => {
     fetchEvents(); // Uses cache if valid, otherwise fetches
   }, [fetchEvents]);
+
+  // ===== URL PARAMETER: Event direkt öffnen wenn eventId in URL =====
+  useEffect(() => {
+    const eventId = searchParams.get('eventId');
+    if (eventId && events.length > 0) {
+      const eventToOpen = events.find(e => e.id === eventId);
+      if (eventToOpen) {
+        console.log('📅 Event aus URL-Parameter öffnen:', eventToOpen);
+        setSelectedEvent(eventToOpen);
+        setShowQuickActions(true);
+        // Navigiere zum Monat des Events
+        setCurrentDate(new Date(eventToOpen.date));
+        // URL-Parameter entfernen nach dem Öffnen
+        setSearchParams({}, { replace: true });
+      }
+    }
+  }, [events, searchParams, setSearchParams]);
 
   // Filter events
   useEffect(() => {
