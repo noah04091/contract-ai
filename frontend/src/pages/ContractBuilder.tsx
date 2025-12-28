@@ -448,29 +448,73 @@ const ContractBuilder: React.FC = () => {
         await new Promise(resolve => setTimeout(resolve, 50));
 
         // ============================================
-        // GARANTIERTER FIX: Farben VOR html2canvas auf SCHWARZ setzen
+        // GARANTIERTER FIX: Graue Farben zu SCHWARZ, Custom-Farben beibehalten
         // Der onclone callback ist unzuverlässig - funktioniert nur manchmal
         // Dieser Ansatz setzt die Farben direkt auf den Original-Elementen
         // ============================================
         const originalStyles: Map<HTMLElement, { color: string; opacity: string }> = new Map();
 
+        // Prüft ob eine Farbe "grau" ist (Standard-Textfarbe die zu schwarz werden soll)
+        // Custom-Farben (blau, rot, grün) werden NICHT geändert
+        const isGrayColor = (color: string): boolean => {
+          // Leere Farbe = erbt von Parent = wahrscheinlich grau
+          if (!color || color === '' || color === 'inherit') return true;
+
+          // RGB-Werte extrahieren
+          const rgbMatch = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+          if (rgbMatch) {
+            const r = parseInt(rgbMatch[1]);
+            const g = parseInt(rgbMatch[2]);
+            const b = parseInt(rgbMatch[3]);
+
+            // Grau = R, G, B sind ähnlich (Differenz < 30)
+            const maxDiff = Math.max(Math.abs(r - g), Math.abs(g - b), Math.abs(r - b));
+            if (maxDiff < 30) return true; // Ist grau/schwarz
+
+            return false; // Ist eine Custom-Farbe (blau, rot, etc.)
+          }
+
+          // Hex-Farben prüfen
+          const hexMatch = color.match(/^#([0-9a-f]{6})$/i);
+          if (hexMatch) {
+            const hex = hexMatch[1];
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+
+            const maxDiff = Math.max(Math.abs(r - g), Math.abs(g - b), Math.abs(r - b));
+            if (maxDiff < 30) return true;
+
+            return false;
+          }
+
+          // Im Zweifel: als grau behandeln
+          return true;
+        };
+
         const setBlackText = (el: Element) => {
           const htmlEl = el as HTMLElement;
           if (htmlEl.style !== undefined) {
+            // Hole die computed color (tatsächlich gerenderte Farbe)
+            const computedColor = window.getComputedStyle(htmlEl).color;
+
             // Speichere Original-Styles
             originalStyles.set(htmlEl, {
               color: htmlEl.style.color,
               opacity: htmlEl.style.opacity
             });
-            // Setze SCHWARZEN Text
-            htmlEl.style.setProperty('color', '#000000', 'important');
+
+            // NUR graue Farben zu Schwarz ändern, Custom-Farben beibehalten
+            if (isGrayColor(computedColor)) {
+              htmlEl.style.setProperty('color', '#000000', 'important');
+            }
             htmlEl.style.setProperty('opacity', '1', 'important');
           }
           // Rekursiv für alle Kinder
           Array.from(el.children).forEach(child => setBlackText(child));
         };
 
-        // Farben auf SCHWARZ setzen
+        // Farben auf SCHWARZ setzen (nur graue)
         setBlackText(content);
 
         // Kurze Pause damit Browser die Styles anwendet
