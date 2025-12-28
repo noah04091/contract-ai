@@ -166,7 +166,6 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
 
     // Falls Variable nicht existiert, automatisch erstellen
     if (!variable) {
-      console.log('[VariableHighlight] Variable existiert nicht, erstelle neu:', variableName);
 
       // Gruppe basierend auf Variablennamen bestimmen
       let group = 'Allgemein';
@@ -212,7 +211,6 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
     }
 
     // Variable gefunden - auswählen und Inline-Editing starten
-    console.log('[VariableHighlight] Variable geklickt:', variable.id, variableName);
     setSelectedVariable(variable.id);
 
     // Inline-Editing starten

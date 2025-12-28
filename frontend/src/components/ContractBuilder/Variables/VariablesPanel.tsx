@@ -69,11 +69,9 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
     if (selectedVariableId) {
       // Finde die Variable und ihre Gruppe
       const variable = variables.find((v: Variable) => v.id === selectedVariableId);
-      console.log('[VariablesPanel] Variable ausgewählt:', selectedVariableId, 'Gefunden:', variable?.displayName);
 
       if (variable) {
         const group = variable.group || 'Allgemein';
-        console.log('[VariablesPanel] Öffne Gruppe:', group);
 
         // Gruppe expandieren
         setExpandedGroups(prev => {
@@ -97,7 +95,6 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
 
       const tryScroll = () => {
         const element = document.querySelector(`[data-variable-id="${pendingScrollToVariable}"]`) as HTMLElement;
-        console.log('[VariablesPanel] Scroll-Versuch', attempts + 1, '- Element gefunden:', !!element);
 
         if (element) {
           // Scroll zur Variable
@@ -122,7 +119,7 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
           attempts++;
           requestAnimationFrame(tryScroll);
         } else {
-          console.warn('[VariablesPanel] Element nicht gefunden nach', maxAttempts, 'Versuchen');
+          // Element nicht gefunden - aufgeben
           setPendingScrollToVariable(null);
         }
       };
@@ -303,13 +300,11 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
             </div>
             <div className={styles.helpStep}>
               <span className={styles.stepNumber}>3</span>
-              <span>Variable erscheint hier → Wert eingeben</span>
+              <span>Auf Variable klicken → direkt Wert eingeben</span>
             </div>
             <div className={styles.helpExampleInline}>
-              <span className={styles.exampleLabel}>Beispiel:</span>
-              <code>{'{{kundenname}}'}</code>
-              <span className={styles.exampleArrowInline}>→</span>
-              <span className={styles.exampleValue}>Max Mustermann</span>
+              <span className={styles.exampleLabel}>Tipp:</span>
+              <span>Variablen lassen sich direkt im Vertrag anklicken und bearbeiten!</span>
             </div>
           </div>
         </div>
