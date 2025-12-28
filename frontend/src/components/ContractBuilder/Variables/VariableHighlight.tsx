@@ -34,7 +34,7 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
   isPreview = false,
   onDoubleClick,
 }) => {
-  const { document: currentDocument, addVariable, syncVariables } = useContractBuilderStore();
+  const { document: currentDocument, addVariable, syncVariables, setSelectedVariable } = useContractBuilderStore();
 
   // Inline-Editing State
   const [editingVarName, setEditingVarName] = useState<string | null>(null);
@@ -197,19 +197,30 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
 
       addVariable(newVar);
 
-      // Nach dem Hinzufügen direkt Inline-Editing starten (OHNE Panel-Scroll)
+      // Nach dem Hinzufügen direkt Inline-Editing starten + Sidebar sync
       setTimeout(() => {
         setEditingVarName(variableName);
         setEditValue(currentValue || '');
+
+        // Neu erstellte Variable in Sidebar auswählen
+        const updatedVars = useContractBuilderStore.getState().document?.content.variables || [];
+        const newVar = updatedVars.find((v: Variable) => v.name === `{{${variableName}}}`);
+        if (newVar) {
+          setSelectedVariable(newVar.id);
+        }
       }, 50);
       return;
     }
 
-    // Variable gefunden - direkt Inline-Editing starten (OHNE Panel-Scroll)
-    // Das vermeidet das "Wackeln" durch Panel-Scrolling
+    // Variable gefunden - Inline-Editing starten + Sidebar synchronisieren
     setEditingVarName(variableName);
     setEditValue(currentValue || (variable.value ? String(variable.value) : ''));
-  }, [variables, syncVariables, addVariable, currentDocument, normalizeUmlauts]);
+
+    // Sidebar mit kurzem Delay synchronisieren (vermeidet Wackeln)
+    setTimeout(() => {
+      setSelectedVariable(variable.id);
+    }, 50);
+  }, [variables, syncVariables, addVariable, currentDocument, normalizeUmlauts, setSelectedVariable]);
 
   // Inline-Edit speichern
   const handleSaveEdit = useCallback(() => {
@@ -234,12 +245,23 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
       pendingClickRef.current = null;
       setEditingVarName(pending.varName);
       setEditValue(pending.value);
+
+      // Sidebar synchronisieren (mit kurzem Delay für flüssige UX)
+      setTimeout(() => {
+        const nextVar = variables.find((v: Variable) => {
+          const cleanName = v.name.replace(/^\{\{|\}\}$/g, '');
+          return cleanName === pending.varName || v.name === `{{${pending.varName}}}`;
+        });
+        if (nextVar) {
+          setSelectedVariable(nextVar.id);
+        }
+      }, 50);
     } else {
       // Kein pending Klick - normal schließen
       setEditingVarName(null);
       setEditValue('');
     }
-  }, [editingVarName, editValue, variables]);
+  }, [editingVarName, editValue, variables, setSelectedVariable]);
 
   // Keyboard Handler für Inline-Edit
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
