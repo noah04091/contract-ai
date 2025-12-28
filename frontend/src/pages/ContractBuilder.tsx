@@ -103,6 +103,7 @@ const ContractBuilder: React.FC = () => {
     aiOperation,
     selectedVariableId,
     selectedBlockId,
+    hasUnsavedChanges,
     loadDocument,
     createDocument,
     createDocumentFromTemplate,
@@ -119,6 +120,20 @@ const ContractBuilder: React.FC = () => {
     optimizeClause,
     calculateLegalScore,
   } = useContractBuilderStore();
+
+  // WARNUNG: Ungespeicherte Änderungen beim Verlassen der Seite
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = 'Sie haben ungespeicherte Änderungen. Möchten Sie die Seite wirklich verlassen?';
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   // Dokument laden oder Typ-Auswahl zeigen
   useEffect(() => {
@@ -336,14 +351,21 @@ const ContractBuilder: React.FC = () => {
 
   // PDF Export - Erfasst nur den Inhalt (kein Leerraum), fügt Seitenzahlen hinzu
   const handleExportPdf = async () => {
+    // VALIDIERUNG: Prüfe ob Dokument existiert und nicht leer ist
+    if (!currentDocument) {
+      alert('Kein Dokument geladen. Bitte erstellen Sie zuerst ein Dokument.');
+      return;
+    }
+
+    if (!currentDocument.content.blocks || currentDocument.content.blocks.length === 0) {
+      alert('Das Dokument ist leer. Bitte fügen Sie mindestens einen Block hinzu bevor Sie exportieren.');
+      return;
+    }
+
     setIsExporting(true);
 
     try {
-      const filename = `${currentDocument?.metadata.name || 'Vertrag'}.pdf`;
-
-      if (!currentDocument) {
-        throw new Error('Kein Dokument geladen');
-      }
+      const filename = `${currentDocument.metadata.name || 'Vertrag'}.pdf`;
 
       console.log('[PDF Export] Starting - optimized export...');
 
@@ -634,10 +656,35 @@ const ContractBuilder: React.FC = () => {
 
   // Mehr-Menü Actions
   const handleDuplicate = async () => {
+    // Warnung bei ungespeicherten Änderungen
+    if (hasUnsavedChanges) {
+      const confirmed = window.confirm(
+        'Sie haben ungespeicherte Änderungen. Diese gehen verloren wenn Sie ein neues Dokument erstellen. Fortfahren?'
+      );
+      if (!confirmed) {
+        setShowMoreMenu(false);
+        return;
+      }
+    }
     setShowMoreMenu(false);
     if (currentDocument) {
       await createDocument(`${currentDocument.metadata.name} (Kopie)`, currentDocument.metadata.contractType);
     }
+  };
+
+  // Sichere Navigation mit Warnung bei ungespeicherten Änderungen
+  const handleCloseDocument = () => {
+    if (hasUnsavedChanges) {
+      const confirmed = window.confirm(
+        'Sie haben ungespeicherte Änderungen. Möchten Sie wirklich schließen?'
+      );
+      if (!confirmed) {
+        setShowMoreMenu(false);
+        return;
+      }
+    }
+    setShowMoreMenu(false);
+    navigate('/contracts');
   };
 
   const handlePrint = () => {
@@ -647,19 +694,51 @@ const ContractBuilder: React.FC = () => {
 
   const handleExportTemplate = () => {
     setShowMoreMenu(false);
-    // Template Export - JSON Download
+    // Template Export - JSON Download mit XSS-Schutz
     if (currentDocument) {
+      // SICHERHEIT: Sanitize alle String-Inhalte
+      const sanitizeString = (str: string | undefined, maxLength = 255): string => {
+        if (!str) return '';
+        return str
+          .substring(0, maxLength)
+          .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Scripts entfernen
+          .replace(/javascript:/gi, '')  // javascript: URLs entfernen
+          .replace(/on\w+\s*=/gi, '');   // Event-Handler entfernen (onclick, onerror, etc.)
+      };
+
+      // Block-Inhalte rekursiv sanitizen
+      const sanitizeBlockContent = (content: Record<string, unknown>): Record<string, unknown> => {
+        const sanitized: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(content)) {
+          if (typeof value === 'string') {
+            sanitized[key] = sanitizeString(value, 10000); // Längere Texte erlauben
+          } else if (typeof value === 'object' && value !== null) {
+            sanitized[key] = sanitizeBlockContent(value as Record<string, unknown>);
+          } else {
+            sanitized[key] = value;
+          }
+        }
+        return sanitized;
+      };
+
       const template = {
-        name: currentDocument.metadata.name,
-        type: currentDocument.metadata.contractType,
-        blocks: currentDocument.content.blocks,
+        name: sanitizeString(currentDocument.metadata.name, 100),
+        type: sanitizeString(currentDocument.metadata.contractType, 50),
+        blocks: currentDocument.content.blocks.map(block => ({
+          ...block,
+          content: sanitizeBlockContent(block.content as Record<string, unknown>),
+        })),
         design: currentDocument.design,
+        exportedAt: new Date().toISOString(),
+        version: '1.0',
       };
       const blob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${currentDocument.metadata.name}_template.json`;
+      // Dateiname auch sanitizen
+      const safeName = sanitizeString(currentDocument.metadata.name, 50).replace(/[^a-zA-Z0-9äöüß_-]/g, '_');
+      a.download = `${safeName}_template.json`;
       a.click();
       URL.revokeObjectURL(url);
     }
@@ -670,6 +749,13 @@ const ContractBuilder: React.FC = () => {
     if (!aiClausePrompt.trim()) return;
 
     setIsGeneratingClause(true);
+
+    // TIMEOUT: Abbruch nach 60 Sekunden
+    const timeoutId = setTimeout(() => {
+      setIsGeneratingClause(false);
+      alert('Die KI-Generierung hat zu lange gedauert (>60 Sekunden). Bitte versuchen Sie es erneut mit einer kürzeren Anfrage.');
+    }, 60000);
+
     try {
       // Echte KI-Generierung über Backend-API
       const result = await generateClause(aiClausePrompt, {
@@ -682,6 +768,9 @@ const ContractBuilder: React.FC = () => {
         riskLevel?: string;
         suggestedVariables?: Array<{ name: string; displayName: string; type: string }>;
       };
+
+      // Timeout aufheben wenn erfolgreich
+      clearTimeout(timeoutId);
 
       // Block mit KI-generiertem Inhalt erstellen
       const generatedClause = {
@@ -712,9 +801,18 @@ const ContractBuilder: React.FC = () => {
         suggestedVariables: result.suggestedVariables,
       });
     } catch (error) {
+      clearTimeout(timeoutId);
       console.error('Fehler bei KI-Generierung:', error);
-      // Fallback: Zeige Fehlermeldung im UI
-      alert('Fehler bei der KI-Generierung. Bitte versuchen Sie es erneut.');
+
+      // Benutzerfreundliche Fehlermeldung
+      const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      if (errorMessage.includes('abgelaufen') || errorMessage.includes('anmelden')) {
+        alert('Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.');
+      } else if (errorMessage.includes('Netzwerk') || errorMessage.includes('fetch')) {
+        alert('Netzwerkfehler. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.');
+      } else {
+        alert(`Fehler bei der KI-Generierung: ${errorMessage}`);
+      }
     } finally {
       setIsGeneratingClause(false);
     }
@@ -1060,7 +1158,7 @@ const ContractBuilder: React.FC = () => {
                   <span>Drucken</span>
                 </button>
                 <div className={styles.menuDivider} />
-                <button onClick={() => { setShowMoreMenu(false); navigate('/contracts'); }} className={styles.dangerItem}>
+                <button onClick={handleCloseDocument} className={styles.dangerItem}>
                   <Trash2 size={14} />
                   <span>Schließen</span>
                 </button>

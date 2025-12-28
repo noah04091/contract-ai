@@ -231,15 +231,47 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
     const currentState = useContractBuilderStore.getState();
     const currentVariables = currentState.document?.content.variables || [];
 
-    // Variable finden und Wert setzen
+    // Variable finden
     const variable = currentVariables.find((v: Variable) => {
       const varNameClean = v.name.replace(/^\{\{|\}\}$/g, '');
       return varNameClean === editingVarName || v.name === `{{${editingVarName}}}`;
     });
 
     if (variable) {
+      const trimmedValue = editValue.trim();
+
+      // VALIDIERUNG: Typ-spezifische Prüfung
+      if (trimmedValue) {
+        // E-Mail Validierung
+        if (variable.type === 'email') {
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(trimmedValue)) {
+            alert('Bitte geben Sie eine gültige E-Mail-Adresse ein (z.B. name@beispiel.de)');
+            return; // Nicht speichern, Edit bleibt offen
+          }
+        }
+
+        // Telefon Validierung (mindestens 6 Ziffern)
+        if (variable.type === 'phone') {
+          const digitsOnly = trimmedValue.replace(/[^0-9]/g, '');
+          if (digitsOnly.length < 6) {
+            alert('Bitte geben Sie eine gültige Telefonnummer ein (mindestens 6 Ziffern)');
+            return; // Nicht speichern, Edit bleibt offen
+          }
+        }
+
+        // IBAN Validierung (beginnt mit 2 Buchstaben, dann mindestens 15 Zeichen)
+        if (variable.type === 'iban') {
+          const ibanClean = trimmedValue.replace(/\s/g, '').toUpperCase();
+          if (!/^[A-Z]{2}[0-9A-Z]{15,32}$/.test(ibanClean)) {
+            alert('Bitte geben Sie eine gültige IBAN ein (z.B. DE89370400440532013000)');
+            return; // Nicht speichern, Edit bleibt offen
+          }
+        }
+      }
+
       // Wert über Store setzen
-      currentState.updateVariable(variable.id, editValue);
+      currentState.updateVariable(variable.id, trimmedValue);
     }
 
     // Prüfe ob ein Klick auf eine andere Variable pending ist

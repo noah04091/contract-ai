@@ -465,8 +465,13 @@ function extractVariablesFromBlocks(blocks: Block[]): Variable[] {
     extractVariablesRecursive(content, allVarNames);
   });
 
+  // SICHERHEIT: Leere Namen filtern und Duplikate entfernen
+  const validUniqueNames = allVarNames
+    .filter(name => name && name.trim().length > 0)  // Leere Namen entfernen
+    .filter((name, index, arr) => arr.indexOf(name) === index);  // Duplikate entfernen
+
   // Variablen-Objekte erstellen
-  return allVarNames.map(name => {
+  return validUniqueNames.map(name => {
     // Gruppe basierend auf Variablennamen bestimmen
     let group = 'Allgemein';
     if (name.includes('auftraggeber')) group = 'Auftraggeber';
@@ -635,19 +640,55 @@ function createLocalDocument(name: string, contractType: string, template?: Cont
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
 
+// Token-Validierung: Prüft ob JWT gültig und nicht abgelaufen ist
+function isTokenValid(token: string | null): boolean {
+  if (!token) return false;
+  try {
+    // JWT besteht aus 3 Teilen: header.payload.signature
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;
+
+    const payload = JSON.parse(atob(parts[1]));
+    // exp ist in Sekunden, Date.now() in Millisekunden
+    if (payload.exp && payload.exp * 1000 < Date.now()) {
+      console.warn('[Auth] Token abgelaufen');
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.warn('[Auth] Token ungültig:', error);
+    return false;
+  }
+}
+
 async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
   // Token-Fallback: authToken (von Login.tsx) ODER token (legacy)
   const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+
+  // SICHERHEIT: Token validieren bevor API-Call
+  if (!isTokenValid(token)) {
+    // Token ungültig oder abgelaufen - aufräumen
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('token');
+    throw new Error('Sitzung abgelaufen. Bitte erneut anmelden.');
+  }
+
   const response = await fetch(`${API_BASE}/api/contract-builder${endpoint}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
+      Authorization: `Bearer ${token}`,
       ...options?.headers,
     },
   });
 
   if (!response.ok) {
+    // Bei 401 auch Token aufräumen
+    if (response.status === 401) {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('token');
+      throw new Error('Sitzung abgelaufen. Bitte erneut anmelden.');
+    }
     const error = await response.json().catch(() => ({ error: 'Unbekannter Fehler' }));
     throw new Error(error.error || 'API-Fehler');
   }
@@ -1255,16 +1296,16 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
             const extractedVars = extractVariablesFromBlocks(state.document.content.blocks);
             const existingVars = state.document.content.variables;
 
+            // PERFORMANCE: Map für O(1) Lookups statt O(n) mit .find()
+            const existingMap = new Map(existingVars.map(v => [v.name, v]));
+
             // Merge: Behalte existierende Werte, füge neue hinzu
+            const processedNames = new Set<string>();
             const mergedVars: Variable[] = [];
 
-            // Set für bereits verarbeitete Variable-Namen
-            const processedNames = new Set<string>();
-
             extractedVars.forEach(extracted => {
-              // WICHTIG: Nach NAME suchen, nicht nach ID!
-              // IDs können unterschiedlich sein (z.B. wenn Variable über VariableHighlight erstellt wurde)
-              const existing = existingVars.find(v => v.name === extracted.name);
+              // O(1) Lookup statt O(n)
+              const existing = existingMap.get(extracted.name);
               if (existing) {
                 // Behalte die existierende Variable MIT ihrem Wert
                 mergedVars.push(existing);
@@ -1276,7 +1317,6 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
             });
 
             // Auch Variablen behalten, die manuell erstellt wurden aber nicht in Blöcken sind
-            // (z.B. Variablen die über das Panel erstellt wurden)
             existingVars.forEach(existing => {
               if (!processedNames.has(existing.name)) {
                 mergedVars.push(existing);
