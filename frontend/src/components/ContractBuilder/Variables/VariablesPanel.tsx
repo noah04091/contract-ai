@@ -592,7 +592,8 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
               </div>
             )}
           </div>
-        ))}
+          );
+        })}
 
         {/* Empty State with Clear CTA */}
         {Object.keys(groupedVariables).length === 0 && (
