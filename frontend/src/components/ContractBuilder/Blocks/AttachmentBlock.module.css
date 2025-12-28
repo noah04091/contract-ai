@@ -23,17 +23,19 @@
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
-/* Preview-Modus: Gleiches Design wie Edit-Modus (warmer gelber Hintergrund) */
+/* Preview/PDF-Modus: Professionelles Design */
 .attachment.preview {
-  /* Behält das Standard-Styling bei */
+  background: #fafafa;
+  border: 1px solid #e5e7eb;
+  padding: 20px;
 }
 
-/* Preview: Keine weißen inneren Boxen - direkt im gelben Block */
+/* Preview: Keine weißen inneren Boxen - direkt im Block */
 .attachment.preview .attachmentItem {
   background: transparent;
   border: none;
   padding: 0;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .attachment.preview .attachmentItem:last-child {
@@ -45,24 +47,39 @@
   box-shadow: none;
 }
 
-/* Preview: Titel braun und fett */
+/* Preview: Titel SCHWARZ und fett - wie restlicher Text */
 .attachment.preview .attachmentItemTitle {
   font-weight: 600;
-  color: #92400e;
+  color: inherit;
   margin-bottom: 4px;
 }
 
-/* Preview: Beschreibung */
+/* Preview: Beschreibung - normale Schriftfarbe */
 .attachment.preview .attachmentItemDescription {
-  color: #92400e;
-  opacity: 0.85;
+  color: inherit;
+  opacity: 0.8;
   margin-bottom: 8px;
 }
 
-/* Preview: Datei-Info Box behält leichten Hintergrund */
+/* Preview: Datei-Info Box dezent */
 .attachment.preview .fileInfo {
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px solid #fcd34d;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+}
+
+/* Preview: Header dezenter */
+.attachment.preview .attachmentHeader {
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.attachment.preview .icon {
+  color: #6b7280;
+}
+
+.attachment.preview .attachmentLabel {
+  color: #374151;
 }
 
 /* Header */
