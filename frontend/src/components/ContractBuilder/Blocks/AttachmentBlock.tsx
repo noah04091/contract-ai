@@ -373,7 +373,7 @@ export const AttachmentBlock: React.FC<AttachmentBlockProps> = ({
 
               {/* Anlage-Inhalt */}
               <div className={styles.attachmentContent}>
-                {/* Titel */}
+                {/* Titel - Bei showFileInfo nur "Anlage X" anzeigen, sonst vollständig */}
                 <div className={styles.attachmentItemTitle}>
                   {editingState?.attachmentId === attachment.id && editingState.field === 'title' ? (
                     <input
@@ -387,7 +387,13 @@ export const AttachmentBlock: React.FC<AttachmentBlockProps> = ({
                     />
                   ) : (
                     <VariableHighlight
-                      text={attachment.title || `Anlage ${index + 1}`}
+                      text={
+                        // Wenn showFileInfo aktiv ist und Titel das "Anlage X - Name" Format hat,
+                        // zeige nur "Anlage X" um Redundanz zu vermeiden (Name steht ja in fileInfo)
+                        content.showFileInfo !== false && attachment.title?.match(/^Anlage \d+\s*-\s*.+/)
+                          ? attachment.title.replace(/^(Anlage \d+)\s*-\s*.+$/, '$1')
+                          : (attachment.title || `Anlage ${index + 1}`)
+                      }
                       isPreview={isPreview}
                       onDoubleClick={() => handleDoubleClick(attachment.id, 'title', attachment.title)}
                     />

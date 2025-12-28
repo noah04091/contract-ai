@@ -125,6 +125,12 @@
   overflow: hidden; /* Überlauf abschneiden - Auto-PageBreak verschiebt Blöcke */
   padding-top: 28px; /* Platz für Block-Controls (Drag-Handles etc.) */
   margin-top: -28px; /* Kompensiere das Padding nach oben */
+
+  /* WICHTIG: Explizite Farbe für konsistentes PDF-Rendering */
+  /* CSS Custom Properties werden von html2canvas nicht immer korrekt aufgelöst */
+  color: #1a202c;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .pageFooter {

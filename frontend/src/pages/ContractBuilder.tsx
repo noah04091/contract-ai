@@ -441,6 +441,13 @@ const ContractBuilder: React.FC = () => {
 
         console.log(`[PDF Export] Capturing section ${i + 1}/${contentElements.length}...`);
 
+        // WICHTIG: Element in den sichtbaren Bereich scrollen
+        // html2canvas kann Elemente außerhalb des Viewports anders rendern
+        content.scrollIntoView({ behavior: 'instant', block: 'start' });
+
+        // Kurze Pause für Repaint/Reflow
+        await new Promise(resolve => setTimeout(resolve, 100));
+
         // html2canvas mit optimierten Einstellungen (JPEG, scale 1.5)
         const canvas = await html2canvas(content, {
           scale: 1.5, // Reduziert von 2 auf 1.5 für kleinere Dateien
@@ -448,6 +455,14 @@ const ContractBuilder: React.FC = () => {
           allowTaint: true,
           backgroundColor: '#ffffff',
           logging: false,
+          // WICHTIG: Explizite Farbe setzen um konsistentes Rendering sicherzustellen
+          onclone: (clonedDoc) => {
+            // Setze explizite Textfarbe auf alle Elemente im geklonten Dokument
+            const clonedContent = clonedDoc.querySelector('[class*="pageContent_"]');
+            if (clonedContent) {
+              (clonedContent as HTMLElement).style.color = '#1a202c';
+            }
+          },
           ignoreElements: (element) => {
             let classes = '';
             if (typeof element.className === 'string') {
