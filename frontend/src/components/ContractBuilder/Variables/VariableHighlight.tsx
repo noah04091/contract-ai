@@ -40,6 +40,7 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
   const [editingVarName, setEditingVarName] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const pendingClickRef = useRef<{varName: string; value: string} | null>(null);
   const variables = currentDocument?.content.variables || [];
 
   // Variable-Werte als Map für Berechnungen
@@ -226,8 +227,18 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
       updateVariable(variable.id, editValue);
     }
 
-    setEditingVarName(null);
-    setEditValue('');
+    // Prüfe ob ein Klick auf eine andere Variable pending ist
+    const pending = pendingClickRef.current;
+    if (pending) {
+      // Wechsle direkt zur nächsten Variable ohne zu schließen
+      pendingClickRef.current = null;
+      setEditingVarName(pending.varName);
+      setEditValue(pending.value);
+    } else {
+      // Kein pending Klick - normal schließen
+      setEditingVarName(null);
+      setEditValue('');
+    }
   }, [editingVarName, editValue, variables]);
 
   // Keyboard Handler für Inline-Edit
@@ -308,9 +319,28 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
       <span
         key={index}
         className={varClass}
-        onClick={(e) => {
+        onMouseDown={(e) => {
+          // MouseDown feuert VOR blur - so können wir den pending Klick setzen
+          if (segment.varType === 'system' || segment.varType === 'computed') return;
           e.stopPropagation();
-          handleVariableClick(segment.variableName!, segment.varType, segment.value);
+          e.preventDefault();
+
+          // Wert aus Store holen (nicht aus segment, da das veraltet sein kann)
+          const storeVar = variables.find((v: Variable) => {
+            const cleanName = v.name.replace(/^\{\{|\}\}$/g, '');
+            return cleanName === segment.variableName || v.name === `{{${segment.variableName}}}`;
+          });
+          const currentVal = storeVar?.value ? String(storeVar.value) : '';
+
+          // Wenn gerade editiert wird, setze pending für nahtlosen Wechsel
+          if (editingVarName && editingVarName !== segment.variableName) {
+            pendingClickRef.current = { varName: segment.variableName!, value: currentVal };
+            // Blur wird automatisch getriggert und handleSaveEdit übernimmt
+            inputRef.current?.blur();
+          } else if (!editingVarName) {
+            // Keine aktive Bearbeitung - direkt öffnen
+            handleVariableClick(segment.variableName!, segment.varType, segment.value);
+          }
         }}
         title={getTooltip(segment)}
         style={{
