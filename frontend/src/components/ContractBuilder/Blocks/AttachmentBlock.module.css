@@ -23,6 +23,14 @@
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
+/* Preview-Modus: Sauberes Aussehen für PDF */
+.attachment.preview {
+  background: transparent;
+  border: none;
+  padding: 8px 0;
+  margin: 8px 0;
+}
+
 /* Header */
 .attachmentHeader {
   display: flex;

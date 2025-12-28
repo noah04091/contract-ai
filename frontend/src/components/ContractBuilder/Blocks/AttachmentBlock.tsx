@@ -27,6 +27,16 @@ interface AttachmentBlockProps {
   content: BlockContent;
   isSelected: boolean;
   isPreview: boolean;
+  style?: {
+    backgroundColor?: string;
+    borderColor?: string;
+    borderWidth?: number;
+    borderRadius?: number;
+    paddingTop?: number;
+    paddingRight?: number;
+    paddingBottom?: number;
+    paddingLeft?: number;
+  };
 }
 
 // Typ für einzelne Anlage
@@ -95,6 +105,7 @@ export const AttachmentBlock: React.FC<AttachmentBlockProps> = ({
   content,
   isSelected,
   isPreview,
+  style: blockStyle,
 }) => {
   // Legacy-Daten Migration: Alte Einzeldatei zu neuem Array-Format
   const getAttachments = useCallback((): Attachment[] => {
@@ -314,24 +325,41 @@ export const AttachmentBlock: React.FC<AttachmentBlockProps> = ({
     return SUPPORTED_TYPES.word.includes(fileType) || SUPPORTED_TYPES.excel.includes(fileType);
   };
 
+  // Inline-Styles aus Block-Eigenschaften
+  const customStyles: React.CSSProperties = {
+    ...(blockStyle?.backgroundColor && { backgroundColor: blockStyle.backgroundColor }),
+    ...(blockStyle?.borderColor && { borderColor: blockStyle.borderColor }),
+    ...(blockStyle?.borderWidth !== undefined && { borderWidth: `${blockStyle.borderWidth}px` }),
+    ...(blockStyle?.borderRadius !== undefined && { borderRadius: `${blockStyle.borderRadius}px` }),
+    ...(blockStyle?.paddingTop !== undefined && { paddingTop: `${blockStyle.paddingTop}px` }),
+    ...(blockStyle?.paddingRight !== undefined && { paddingRight: `${blockStyle.paddingRight}px` }),
+    ...(blockStyle?.paddingBottom !== undefined && { paddingBottom: `${blockStyle.paddingBottom}px` }),
+    ...(blockStyle?.paddingLeft !== undefined && { paddingLeft: `${blockStyle.paddingLeft}px` }),
+  };
+
   return (
-    <div className={`${styles.attachment} ${isSelected ? styles.selected : ''}`}>
-      {/* Header */}
-      <div className={styles.attachmentHeader}>
-        <Paperclip size={16} className={styles.icon} />
-        <span className={styles.attachmentLabel}>
-          Anlagen {attachments.length > 0 && `(${attachments.length})`}
-        </span>
-        {!isPreview && attachments.length > 1 && (
-          <button
-            className={styles.renumberButton}
-            onClick={renumberTitles}
-            title="Nummern aktualisieren"
-          >
-            #
-          </button>
-        )}
-      </div>
+    <div
+      className={`${styles.attachment} ${isSelected ? styles.selected : ''} ${isPreview ? styles.preview : ''}`}
+      style={customStyles}
+    >
+      {/* Header - nur im Edit-Modus anzeigen */}
+      {!isPreview && (
+        <div className={styles.attachmentHeader}>
+          <Paperclip size={16} className={styles.icon} />
+          <span className={styles.attachmentLabel}>
+            Anlagen {attachments.length > 0 && `(${attachments.length})`}
+          </span>
+          {attachments.length > 1 && (
+            <button
+              className={styles.renumberButton}
+              onClick={renumberTitles}
+              title="Nummern aktualisieren"
+            >
+              #
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Liste der Anlagen */}
       {attachments.length > 0 ? (
@@ -368,47 +396,51 @@ export const AttachmentBlock: React.FC<AttachmentBlockProps> = ({
                   )}
                 </div>
 
-                {/* Beschreibung */}
-                <div className={styles.attachmentItemDescription}>
-                  {editingState?.attachmentId === attachment.id && editingState.field === 'description' ? (
-                    <textarea
-                      ref={textareaRef}
-                      value={editValue}
-                      onChange={(e) => setEditValue(e.target.value)}
-                      onBlur={handleSave}
-                      onKeyDown={handleKeyDown}
-                      className={styles.inlineTextarea}
-                      rows={Math.max(2, editValue.split('\n').length)}
-                      placeholder="Beschreibung der Anlage..."
-                    />
-                  ) : (
-                    <VariableHighlight
-                      text={attachment.description || 'Beschreibung hinzufügen...'}
-                      multiline
-                      isPreview={isPreview}
-                      onDoubleClick={() => handleDoubleClick(attachment.id, 'description', attachment.description)}
-                    />
-                  )}
-                </div>
-
-                {/* Datei-Info */}
-                <div className={styles.fileInfo}>
-                  <div className={styles.fileDetails}>
-                    {getFileIcon(attachment.fileType)}
-                    <span className={styles.fileName}>{attachment.fileName}</span>
-                    <span className={styles.fileSize}>
-                      ({formatFileSize(attachment.fileSize)})
-                    </span>
+                {/* Beschreibung - nur anzeigen wenn vorhanden oder im Edit-Modus */}
+                {(attachment.description || !isPreview) && (
+                  <div className={styles.attachmentItemDescription}>
+                    {editingState?.attachmentId === attachment.id && editingState.field === 'description' ? (
+                      <textarea
+                        ref={textareaRef}
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        onBlur={handleSave}
+                        onKeyDown={handleKeyDown}
+                        className={styles.inlineTextarea}
+                        rows={Math.max(2, editValue.split('\n').length)}
+                        placeholder="Beschreibung der Anlage..."
+                      />
+                    ) : (
+                      <VariableHighlight
+                        text={attachment.description || 'Beschreibung hinzufügen...'}
+                        multiline
+                        isPreview={isPreview}
+                        onDoubleClick={() => handleDoubleClick(attachment.id, 'description', attachment.description)}
+                      />
+                    )}
                   </div>
+                )}
 
-                  {/* Office-Warnung */}
-                  {isOfficeFile(attachment.fileType) && (
-                    <div className={styles.officeWarning}>
-                      <AlertTriangle size={14} />
-                      <span>Separate Datei</span>
+                {/* Datei-Info - nur im Edit-Modus anzeigen */}
+                {!isPreview && (
+                  <div className={styles.fileInfo}>
+                    <div className={styles.fileDetails}>
+                      {getFileIcon(attachment.fileType)}
+                      <span className={styles.fileName}>{attachment.fileName}</span>
+                      <span className={styles.fileSize}>
+                        ({formatFileSize(attachment.fileSize)})
+                      </span>
                     </div>
-                  )}
-                </div>
+
+                    {/* Office-Warnung */}
+                    {isOfficeFile(attachment.fileType) && (
+                      <div className={styles.officeWarning}>
+                        <AlertTriangle size={14} />
+                        <span>Separate Datei</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Entfernen-Button */}

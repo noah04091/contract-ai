@@ -136,6 +136,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
             content={block.content}
             isSelected={isSelected}
             isPreview={isPreview}
+            style={block.style}
           />
         );
 

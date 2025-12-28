@@ -759,28 +759,11 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
 
     case 'attachment':
       return (
-        <>
-          <div className={styles.field}>
-            <label className={styles.label}>Anlagentitel</label>
-            <input
-              type="text"
-              className={styles.input}
-              value={String(content.attachmentTitle || '')}
-              placeholder="Anlage 1"
-              onChange={(e) => onUpdate({ ...content, attachmentTitle: e.target.value })}
-            />
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label}>Beschreibung</label>
-            <textarea
-              className={styles.textarea}
-              rows={3}
-              value={String(content.attachmentDescription || '')}
-              placeholder="Beschreibung der Anlage..."
-              onChange={(e) => onUpdate({ ...content, attachmentDescription: e.target.value })}
-            />
-          </div>
-        </>
+        <div className={styles.fieldNote}>
+          <strong>Anlagen-Block</strong><br />
+          Titel und Beschreibung per Doppelklick direkt im Canvas bearbeiten.<br /><br />
+          Styling-Optionen (Hintergrund, Rahmen, Abstände) findest du in den Sektionen unten.
+        </div>
       );
 
     case 'spacer':
