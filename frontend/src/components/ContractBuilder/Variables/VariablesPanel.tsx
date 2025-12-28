@@ -97,17 +97,14 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
         const element = document.querySelector(`[data-variable-id="${pendingScrollToVariable}"]`) as HTMLElement;
 
         if (element) {
-          // Scroll zur Variable
+          // Scroll zur Variable (smooth)
           element.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
           // Visuelles Feedback durch Highlighting
           element.classList.add(styles.highlight);
 
-          // Input-Feld finden und fokussieren
-          const input = element.querySelector('input, select') as HTMLInputElement;
-          if (input) {
-            setTimeout(() => input.focus(), 100);
-          }
+          // WICHTIG: Kein auto-focus! Das würde den Canvas-Input-Fokus stehlen.
+          // User kann im Panel klicken wenn er dort editieren will.
 
           // Highlight nach 3 Sekunden entfernen
           setTimeout(() => element.classList.remove(styles.highlight), 3000);
