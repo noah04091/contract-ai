@@ -152,15 +152,19 @@ export default function ContractDetails() {
       setLoadingEvents(true);
       try {
         const token = localStorage.getItem('token');
-        const API_BASE = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
-        const res = await fetch(`${API_BASE}/api/calendar/events?contractId=${id}`, {
+        // Verwende relativen Pfad für konsistentes Verhalten mit Vercel Proxy
+        const res = await fetch(`/api/calendar/events?contractId=${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
+        console.log('📅 Calendar Events API Response Status:', res.status);
         if (res.ok) {
           const data = await res.json();
+          console.log('📅 Calendar Events für Vertrag:', data);
           if (data.success && data.events) {
             setCalendarEvents(data.events);
           }
+        } else {
+          console.error('📅 Calendar Events API Error:', res.status, res.statusText);
         }
       } catch (err) {
         console.error('Error fetching calendar events:', err);
@@ -476,15 +480,22 @@ export default function ContractDetails() {
           )}
 
           {/* 🔔 Kalendererinnerungen für diesen Vertrag */}
-          {(calendarEvents.length > 0 || loadingEvents) && (
-            <div className={styles.section} style={{ marginTop: '2rem' }}>
-              <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                <span style={{ fontSize: '1.2rem' }}>🔔</span> Kalendererinnerungen
-              </h3>
-              {loadingEvents ? (
-                <p style={{ color: '#666', fontStyle: 'italic' }}>Lade Erinnerungen...</p>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div className={styles.section} style={{ marginTop: '2rem' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+              <span style={{ fontSize: '1.2rem' }}>🔔</span> Kalendererinnerungen
+            </h3>
+            {loadingEvents ? (
+              <p style={{ color: '#666', fontStyle: 'italic' }}>Lade Erinnerungen...</p>
+            ) : calendarEvents.length === 0 ? (
+              <p style={{ color: '#888', fontSize: '0.9rem' }}>
+                Keine Kalendererinnerungen für diesen Vertrag vorhanden.
+                <br />
+                <span style={{ fontSize: '0.85rem', color: '#aaa' }}>
+                  Erstelle im Kalender ein Ereignis und verknüpfe es mit diesem Vertrag.
+                </span>
+              </p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   {calendarEvents.map((event) => {
                     const eventDate = new Date(event.date);
                     const today = new Date();
@@ -540,8 +551,7 @@ export default function ContractDetails() {
                   })}
                 </div>
               )}
-            </div>
-          )}
+          </div>
 
           {/* ✅ NEU: Contract Content Viewer - Zeigt den vollständigen Vertragsinhalt */}
           <ContractContentViewer contract={contract} />
