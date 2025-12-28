@@ -23,12 +23,26 @@
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
-/* Preview-Modus: Sauberes Aussehen für PDF */
+/* Preview-Modus: Styles bleiben erhalten für schönes PDF */
 .attachment.preview {
+  /* Standard-Styles (Hintergrund, Rahmen) bleiben erhalten */
+  /* Werden durch inline-styles überschrieben wenn vom User angepasst */
+}
+
+/* Im Preview: Einzelne Anlage-Items ohne Karten-Look, aber mit klarer Struktur */
+.attachment.preview .attachmentItem {
   background: transparent;
   border: none;
   padding: 8px 0;
-  margin: 8px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.attachment.preview .attachmentItem:last-child {
+  border-bottom: none;
+}
+
+.attachment.preview .attachmentList {
+  gap: 4px;
 }
 
 /* Header */
