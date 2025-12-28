@@ -34,7 +34,7 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
   isPreview = false,
   onDoubleClick,
 }) => {
-  const { document: currentDocument, setSelectedVariable, addVariable, syncVariables } = useContractBuilderStore();
+  const { document: currentDocument, addVariable, syncVariables } = useContractBuilderStore();
 
   // Inline-Editing State
   const [editingVarName, setEditingVarName] = useState<string | null>(null);
@@ -196,27 +196,19 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
 
       addVariable(newVar);
 
-      // Nach dem Hinzufügen nochmal suchen
+      // Nach dem Hinzufügen direkt Inline-Editing starten (OHNE Panel-Scroll)
       setTimeout(() => {
-        const updatedVars = currentDocument?.content.variables || [];
-        const newlyAddedVar = updatedVars.find((v: Variable) => v.name === `{{${variableName}}}`);
-        if (newlyAddedVar) {
-          setSelectedVariable(newlyAddedVar.id);
-          // Inline-Editing starten
-          setEditingVarName(variableName);
-          setEditValue(currentValue || '');
-        }
+        setEditingVarName(variableName);
+        setEditValue(currentValue || '');
       }, 50);
       return;
     }
 
-    // Variable gefunden - auswählen und Inline-Editing starten
-    setSelectedVariable(variable.id);
-
-    // Inline-Editing starten
+    // Variable gefunden - direkt Inline-Editing starten (OHNE Panel-Scroll)
+    // Das vermeidet das "Wackeln" durch Panel-Scrolling
     setEditingVarName(variableName);
     setEditValue(currentValue || (variable.value ? String(variable.value) : ''));
-  }, [variables, syncVariables, addVariable, setSelectedVariable, currentDocument, normalizeUmlauts]);
+  }, [variables, syncVariables, addVariable, currentDocument, normalizeUmlauts]);
 
   // Inline-Edit speichern
   const handleSaveEdit = useCallback(() => {

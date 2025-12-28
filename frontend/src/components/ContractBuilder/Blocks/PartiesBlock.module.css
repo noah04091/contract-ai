@@ -109,21 +109,26 @@
   letter-spacing: 0.1em;
 }
 
-/* Inline Editing Styles */
+/* Inline Editing Styles - flüssig und professionell */
 .inlineInput {
-  padding: 2px 6px;
+  padding: 4px 8px;
   border: 2px solid #3b82f6;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: inherit;
   font-family: inherit;
   font-weight: inherit;
-  color: inherit;
+  color: #1a202c;
   background: white;
   outline: none;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
-  min-width: 100px;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+  min-width: 120px;
   width: 100%;
   text-align: inherit;
+}
+
+.inlineInput:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15), 0 4px 12px rgba(59, 130, 246, 0.25);
 }
 
 @media (max-width: 600px) {

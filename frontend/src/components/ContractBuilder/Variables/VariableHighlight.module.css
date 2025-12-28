@@ -30,23 +30,25 @@
   font-family: inherit;
 }
 
-/* Leere Variable - sieht aus wie Placeholder/Formularfeld */
+/* Leere Variable - dezent farbig, einladend zum Ausfüllen */
 .variable.empty {
-  background: #f8fafc;
-  color: #64748b;
-  border: 1px dashed #cbd5e1;
+  background: linear-gradient(135deg, #fef3c7 0%, #fef9c3 100%);
+  color: #92400e;
+  border: 1px dashed #fbbf24;
   border-radius: 4px;
   font-family: inherit;
   font-size: inherit;
   font-style: italic;
   padding: 2px 8px;
+  transition: all 0.15s ease;
 }
 
 .variable.empty:hover {
-  background: #f1f5f9;
-  border-color: #3b82f6;
+  background: linear-gradient(135deg, #fde68a 0%, #fef08a 100%);
+  border-color: #f59e0b;
   border-style: solid;
-  color: #3b82f6;
+  color: #78350f;
+  cursor: pointer;
 }
 
 /* Gefüllte Variable - sieht aus wie normaler Text mit Hintergrund */
@@ -127,40 +129,29 @@
   border: 1px dashed #93c5fd;
 }
 
-/* Inline-Edit Input */
+/* Inline-Edit Input - sofort sichtbar, kein Delay */
 .inlineEdit {
   display: inline-block;
-  padding: 2px 8px;
+  padding: 4px 10px;
   border: 2px solid #3b82f6;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: inherit;
   font-family: inherit;
   background: white;
   color: #1a202c;
   outline: none;
-  min-width: 120px;
-  max-width: 300px;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
-  animation: fadeIn 0.15s ease;
+  min-width: 150px;
+  max-width: 350px;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+  /* Kein Animation-Delay für sofortige Reaktion */
 }
 
 .inlineEdit:focus {
   border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15), 0 2px 8px rgba(59, 130, 246, 0.25);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15), 0 4px 12px rgba(59, 130, 246, 0.25);
 }
 
 .inlineEdit::placeholder {
   color: #9ca3af;
   font-style: italic;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
 }
