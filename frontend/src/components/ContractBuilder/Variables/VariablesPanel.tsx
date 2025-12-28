@@ -25,6 +25,7 @@ import {
   Zap,
   Copy,
   Clock,
+  Edit3,
 } from 'lucide-react';
 import styles from './VariablesPanel.module.css';
 
@@ -51,6 +52,8 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
   const [showHelp, setShowHelp] = useState(false);
   const [showSystemVars, setShowSystemVars] = useState(false);
   const [copiedVar, setCopiedVar] = useState<string | null>(null);
+  const [quickFillGroup, setQuickFillGroup] = useState<string | null>(null);
+  const [quickFillValues, setQuickFillValues] = useState<Record<string, string>>({});
 
   const {
     document: currentDocument,
@@ -179,6 +182,70 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
   // Variable bearbeiten
   const handleValueChange = (variableId: string, value: string) => {
     updateVariable(variableId, value);
+  };
+
+  // UMGEKEHRTE NAVIGATION: Sidebar-Klick scrollt zum Canvas-Element
+  const scrollToCanvasVariable = (variable: Variable) => {
+    // Variable-Name ohne {{ }} extrahieren
+    const varName = variable.name.replace(/^\{\{|\}\}$/g, '');
+
+    // Element im Canvas finden (hat data-variable-name Attribut)
+    const canvasElement = document.querySelector(
+      `[data-variable-name="${varName}"]`
+    ) as HTMLElement;
+
+    if (canvasElement) {
+      // Smooth scroll zum Element
+      canvasElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'nearest'
+      });
+
+      // Visuelles Highlight im Canvas
+      canvasElement.style.transition = 'box-shadow 0.3s ease, transform 0.2s ease';
+      canvasElement.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.5)';
+      canvasElement.style.transform = 'scale(1.05)';
+      canvasElement.style.borderRadius = '4px';
+
+      // Highlight nach 2 Sekunden entfernen
+      setTimeout(() => {
+        canvasElement.style.boxShadow = '';
+        canvasElement.style.transform = '';
+      }, 2000);
+    }
+  };
+
+  // SCHNELL-AUSFÜLLEN: Alle Variablen einer Gruppe auf einmal
+  const startQuickFill = (group: string, vars: Variable[]) => {
+    // Nur leere Variablen zum Ausfüllen vorbereiten
+    const emptyVars = vars.filter(v => !v.value || v.value === '');
+    if (emptyVars.length === 0) return;
+
+    // Initiale Werte setzen
+    const initialValues: Record<string, string> = {};
+    emptyVars.forEach(v => {
+      initialValues[v.id] = '';
+    });
+    setQuickFillValues(initialValues);
+    setQuickFillGroup(group);
+  };
+
+  const applyQuickFill = () => {
+    // Alle Werte anwenden
+    Object.entries(quickFillValues).forEach(([id, value]) => {
+      if (value.trim()) {
+        updateVariable(id, value);
+      }
+    });
+    // Quick-Fill beenden
+    setQuickFillGroup(null);
+    setQuickFillValues({});
+  };
+
+  const cancelQuickFill = () => {
+    setQuickFillGroup(null);
+    setQuickFillValues({});
   };
 
   // Input-Typ basierend auf Variable-Typ
@@ -392,28 +459,88 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
 
       {/* Variables List */}
       <div className={styles.variablesList}>
-        {Object.entries(groupedVariables).map(([group, vars]) => (
+        {Object.entries(groupedVariables).map(([group, vars]) => {
+          const emptyVars = vars.filter(v => !v.value || v.value === '');
+          const hasEmptyVars = emptyVars.length > 0;
+          const isQuickFillActive = quickFillGroup === group;
+
+          return (
           <div key={group} className={styles.group}>
             {/* Group Header */}
-            <button
-              className={styles.groupHeader}
-              onClick={() => toggleGroup(group)}
-            >
-              {expandedGroups.has(group) ? (
-                <ChevronDown size={14} />
-              ) : (
-                <ChevronRight size={14} />
+            <div className={styles.groupHeaderRow}>
+              <button
+                className={styles.groupHeader}
+                onClick={() => toggleGroup(group)}
+              >
+                {expandedGroups.has(group) ? (
+                  <ChevronDown size={14} />
+                ) : (
+                  <ChevronRight size={14} />
+                )}
+                <span className={styles.groupName}>{group}</span>
+                <span className={styles.groupCount}>{vars.length}</span>
+              </button>
+              {/* Quick-Fill Button */}
+              {hasEmptyVars && !isQuickFillActive && (
+                <button
+                  className={styles.quickFillButton}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    startQuickFill(group, vars);
+                  }}
+                  title={`${emptyVars.length} leere Felder schnell ausfüllen`}
+                >
+                  <Edit3 size={12} />
+                  <span>{emptyVars.length}</span>
+                </button>
               )}
-              <span className={styles.groupName}>{group}</span>
-              <span className={styles.groupCount}>{vars.length}</span>
-            </button>
+            </div>
 
-            {/* Group Content */}
-            {expandedGroups.has(group) && (
+            {/* Quick-Fill Mode */}
+            {isQuickFillActive && (
+              <div className={styles.quickFillForm}>
+                <div className={styles.quickFillHeader}>
+                  <span>Schnell-Ausfüllen: {group}</span>
+                  <button onClick={cancelQuickFill} className={styles.quickFillClose}>
+                    <X size={14} />
+                  </button>
+                </div>
+                <div className={styles.quickFillFields}>
+                  {emptyVars.map(variable => (
+                    <div key={variable.id} className={styles.quickFillField}>
+                      <label>{variable.displayName}</label>
+                      <input
+                        type="text"
+                        value={quickFillValues[variable.id] || ''}
+                        onChange={(e) => setQuickFillValues(prev => ({
+                          ...prev,
+                          [variable.id]: e.target.value
+                        }))}
+                        placeholder={`${variable.displayName} eingeben...`}
+                        autoFocus={emptyVars.indexOf(variable) === 0}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className={styles.quickFillActions}>
+                  <button onClick={cancelQuickFill} className={styles.quickFillCancel}>
+                    Abbrechen
+                  </button>
+                  <button onClick={applyQuickFill} className={styles.quickFillApply}>
+                    <CheckCircle size={14} />
+                    Alle übernehmen
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Group Content - nur anzeigen wenn nicht im Quick-Fill Modus */}
+            {expandedGroups.has(group) && !isQuickFillActive && (
               <div className={styles.groupContent}>
                 {vars.map(variable => {
                   const isFilled = variable.value !== undefined && variable.value !== '';
                   const isSelected = selectedVariableId === variable.id;
+                  const isEmptyRequired = variable.required && !isFilled;
 
                   return (
                     <div
@@ -423,8 +550,12 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
                         ${styles.variableItem}
                         ${isSelected ? styles.selected : ''}
                         ${isFilled ? styles.filled : ''}
+                        ${isEmptyRequired ? styles.emptyRequired : ''}
                       `}
-                      onClick={() => setSelectedVariable(variable.id)}
+                      onClick={() => {
+                        setSelectedVariable(variable.id);
+                        scrollToCanvasVariable(variable);
+                      }}
                     >
                       {/* Variable Header */}
                       <div className={styles.variableHeader}>

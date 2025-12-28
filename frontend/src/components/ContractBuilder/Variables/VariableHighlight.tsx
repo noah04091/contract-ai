@@ -365,6 +365,7 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
           }
         }}
         title={getTooltip(segment)}
+        data-variable-name={segment.variableName}
         style={{
           cursor: segment.varType === 'system' || segment.varType === 'computed' ? 'default' : 'pointer'
         }}
