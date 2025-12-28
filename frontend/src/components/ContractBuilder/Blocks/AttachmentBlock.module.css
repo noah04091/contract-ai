@@ -28,10 +28,41 @@
   /* Behält das Standard-Styling bei */
 }
 
-/* Preview: Titel etwas fetter und brauner */
+/* Preview: Keine weißen inneren Boxen - direkt im gelben Block */
+.attachment.preview .attachmentItem {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin-bottom: 16px;
+}
+
+.attachment.preview .attachmentItem:last-child {
+  margin-bottom: 0;
+}
+
+.attachment.preview .attachmentItem:hover {
+  border: none;
+  box-shadow: none;
+}
+
+/* Preview: Titel braun und fett */
 .attachment.preview .attachmentItemTitle {
   font-weight: 600;
   color: #92400e;
+  margin-bottom: 4px;
+}
+
+/* Preview: Beschreibung */
+.attachment.preview .attachmentItemDescription {
+  color: #92400e;
+  opacity: 0.85;
+  margin-bottom: 8px;
+}
+
+/* Preview: Datei-Info Box behält leichten Hintergrund */
+.attachment.preview .fileInfo {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid #fcd34d;
 }
 
 /* Header */
