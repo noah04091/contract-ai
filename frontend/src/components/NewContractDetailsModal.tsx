@@ -220,7 +220,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
 
   // 🔔 Kalendererinnerungen für diesen Vertrag
   const [calendarEvents, setCalendarEvents] = useState<Array<{
-    _id: string;
+    id: string;  // Backend transformiert _id zu id
     title: string;
     date: string;
     type: string;
@@ -689,7 +689,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
 
               return (
                 <div
-                  key={event._id}
+                  key={event.id}
                   style={{
                     padding: '0.75rem 1rem',
                     borderRadius: '8px',
@@ -710,7 +710,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
                     </div>
                   </div>
                   <button
-                    onClick={() => window.location.href = `/calendar?eventId=${event._id}`}
+                    onClick={() => window.location.href = `/calendar?eventId=${event.id}`}
                     style={{
                       padding: '0.4rem 0.8rem',
                       fontSize: '0.8rem',
