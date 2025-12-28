@@ -347,7 +347,9 @@ router.post("/test", async (req, res) => {
     });
 
     const unsubscribeUrl = generateUnsubscribeUrl(email, "calendar");
-    const unsubHeaders = getUnsubscribeHeaders(email, "calendar");
+    // TEMPORÄR DEAKTIVIERT zum Testen - prüfen ob Headers das Spam-Problem verursachen
+    // const unsubHeaders = getUnsubscribeHeaders(email, "calendar");
+    const unsubHeaders = {}; // Leere Headers zum Testen
     const results = [];
 
     // ========== TYP 1: Kalender-Benachrichtigung (Kuendigungsfrist) ==========
