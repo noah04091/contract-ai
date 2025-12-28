@@ -110,11 +110,13 @@ function generateEmailTemplate({
                 <span style="color: #cccccc; margin: 0 8px;">|</span>
                 <a href="https://www.contract-ai.de/agb" style="color: #888888; text-decoration: none;">AGB</a>
               </p>
-              <!-- DSGVO-konformer Unsubscribe Link -->
+              <!-- DSGVO Unsubscribe Link - TEMPORÄR DEAKTIVIERT zum Spam-Debug -->
+              <!--
               <p style="margin: 0; padding-top: 12px; border-top: 1px solid #e8e8e8; font-size: 11px; color: #aaaaaa;">
                 ${recipientEmail ? 'Diese E-Mail wurde an <strong>' + recipientEmail + '</strong> gesendet.<br>' : ''}
                 <a href="${actualUnsubscribeUrl}" style="color: #888888; text-decoration: underline;">Von E-Mail-Benachrichtigungen abmelden</a>
               </p>
+              -->
             </td>
           </tr>
 
