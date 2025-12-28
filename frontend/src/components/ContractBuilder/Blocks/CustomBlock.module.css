@@ -3,6 +3,14 @@
  */
 
 .custom {
+  /* Text-Eigenschaften werden vom Wrapper geerbt */
+  text-align: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  color: inherit;
   position: relative;
   margin: 16px 0;
   padding: 16px;
@@ -33,16 +41,17 @@
 }
 
 .customTitle {
-  font-size: 14px;
+  font-size: inherit;
   font-weight: 600;
-  color: var(--text-primary, #1a202c);
+  color: inherit;
   margin: 0 0 8px;
 }
 
 .customContent {
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--text-primary, #1a202c);
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+  text-align: inherit;
 }
 
 .customContent p {
@@ -62,6 +71,7 @@
   color: inherit;
   background: white;
   outline: none;
+  text-align: inherit;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
 }
 
@@ -72,10 +82,11 @@
   border-radius: 4px;
   font-size: inherit;
   font-family: inherit;
-  line-height: 1.6;
+  line-height: inherit;
   color: inherit;
   background: white;
   outline: none;
   resize: vertical;
+  text-align: inherit;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
 }

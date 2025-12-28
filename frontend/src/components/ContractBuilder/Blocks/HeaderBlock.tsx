@@ -23,7 +23,15 @@ export const HeaderBlock: React.FC<HeaderBlockProps> = ({
   isSelected,
   isPreview,
 }) => {
-  const { title, subtitle, logo } = content;
+  const {
+    title,
+    subtitle,
+    logo,
+    showDivider = true,
+    dividerColor,
+    titleFontSize = 24,
+    subtitleFontSize = 14
+  } = content;
   const updateBlockContent = useContractBuilderStore((state) => state.updateBlockContent);
   const syncVariables = useContractBuilderStore((state) => state.syncVariables);
 
@@ -82,7 +90,7 @@ export const HeaderBlock: React.FC<HeaderBlockProps> = ({
       )}
 
       {/* Titel */}
-      <h1 className={styles.title}>
+      <h1 className={styles.title} style={{ fontSize: `${titleFontSize}px` }}>
         {editingField === 'title' ? (
           <input
             ref={inputRef}
@@ -92,6 +100,7 @@ export const HeaderBlock: React.FC<HeaderBlockProps> = ({
             onBlur={handleSave}
             onKeyDown={handleKeyDown}
             className={styles.inlineInput}
+            style={{ fontSize: `${titleFontSize}px` }}
           />
         ) : (
           <VariableHighlight
@@ -103,7 +112,7 @@ export const HeaderBlock: React.FC<HeaderBlockProps> = ({
       </h1>
 
       {/* Untertitel */}
-      <p className={styles.subtitle}>
+      <p className={styles.subtitle} style={{ fontSize: `${subtitleFontSize}px` }}>
         {editingField === 'subtitle' ? (
           <input
             ref={inputRef}
@@ -113,6 +122,7 @@ export const HeaderBlock: React.FC<HeaderBlockProps> = ({
             onBlur={handleSave}
             onKeyDown={handleKeyDown}
             className={styles.inlineInput}
+            style={{ fontSize: `${subtitleFontSize}px` }}
           />
         ) : subtitle ? (
           <VariableHighlight
@@ -131,8 +141,13 @@ export const HeaderBlock: React.FC<HeaderBlockProps> = ({
         ) : null}
       </p>
 
-      {/* Decorative Line */}
-      <div className={styles.decorativeLine} />
+      {/* Decorative Line - optional */}
+      {showDivider && (
+        <div
+          className={styles.decorativeLine}
+          style={dividerColor ? { backgroundColor: dividerColor } : undefined}
+        />
+      )}
     </div>
   );
 };

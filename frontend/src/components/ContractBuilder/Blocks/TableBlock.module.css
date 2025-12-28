@@ -3,6 +3,14 @@
  */
 
 .tableWrapper {
+  /* Text-Eigenschaften werden vom Wrapper geerbt */
+  text-align: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  color: inherit;
   margin: 16px 0;
   overflow-x: auto;
 }
@@ -17,14 +25,15 @@
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: inherit;
+  color: inherit;
 }
 
 .headerCell {
   padding: 10px 12px;
-  text-align: left;
+  text-align: inherit;
   font-weight: 600;
-  color: var(--text-primary, #1a202c);
+  color: inherit;
   background: #f7fafc;
   border-bottom: 2px solid var(--primary-color, #1a365d);
 }
@@ -36,13 +45,16 @@
 .tableCell {
   padding: 10px 12px;
   border-bottom: 1px solid #e2e8f0;
-  color: var(--text-primary, #1a202c);
+  color: inherit;
+  font-size: inherit;
+  text-align: inherit;
 }
 
 .footerCell {
   padding: 10px 12px;
-  font-size: 12px;
-  color: var(--text-secondary, #4a5568);
+  font-size: inherit;
+  color: inherit;
+  opacity: 0.7;
   background: #f7fafc;
   border-top: 2px solid #e2e8f0;
 }
@@ -70,5 +82,6 @@
   color: inherit;
   background: white;
   outline: none;
+  text-align: inherit;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.2);
 }

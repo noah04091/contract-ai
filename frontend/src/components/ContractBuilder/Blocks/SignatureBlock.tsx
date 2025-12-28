@@ -24,7 +24,7 @@ export const SignatureBlock: React.FC<SignatureBlockProps> = ({
   isSelected,
   isPreview,
 }) => {
-  const { signatureFields, witnesses } = content;
+  const { signatureFields, witnesses, showSignatureIcons = false } = content;
   const updateBlockContent = useContractBuilderStore((state) => state.updateBlockContent);
   const syncVariables = useContractBuilderStore((state) => state.syncVariables);
 
@@ -87,7 +87,7 @@ export const SignatureBlock: React.FC<SignatureBlockProps> = ({
   return (
     <div className={`${styles.signature} ${isSelected ? styles.selected : ''}`}>
       <div className={styles.signatureHeader}>
-        <PenTool size={16} />
+        {showSignatureIcons && <PenTool size={16} />}
         <span>Unterschriften</span>
       </div>
 
@@ -99,14 +99,14 @@ export const SignatureBlock: React.FC<SignatureBlockProps> = ({
               <div className={styles.placeDateRow}>
                 {field.showPlace && (
                   <div className={styles.placeField}>
-                    <MapPin size={12} className={styles.fieldIcon} />
+                    {showSignatureIcons && <MapPin size={12} className={styles.fieldIcon} />}
                     <span className={styles.fieldLabel}>Ort</span>
                     <div className={styles.fieldLine} />
                   </div>
                 )}
                 {field.showDate && (
                   <div className={styles.dateField}>
-                    <Calendar size={12} className={styles.fieldIcon} />
+                    {showSignatureIcons && <Calendar size={12} className={styles.fieldIcon} />}
                     <span className={styles.fieldLabel}>Datum</span>
                     <div className={styles.fieldLine} />
                   </div>
@@ -121,7 +121,7 @@ export const SignatureBlock: React.FC<SignatureBlockProps> = ({
 
             {/* Label */}
             <div className={styles.signatureLabel}>
-              <User size={12} className={styles.labelIcon} />
+              {showSignatureIcons && <User size={12} className={styles.labelIcon} />}
               {isEditingLabel(index) ? (
                 <input
                   ref={inputRef}

@@ -3,6 +3,14 @@
  */
 
 .dateField {
+  /* Text-Eigenschaften werden vom Wrapper geerbt */
+  text-align: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  color: inherit;
   margin: 12px 0;
 }
 
@@ -17,20 +25,22 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: inherit;
 }
 
 .icon {
-  color: var(--text-secondary, #4a5568);
+  color: inherit;
+  opacity: 0.7;
 }
 
 .dateLabel {
-  color: var(--text-secondary, #4a5568);
+  color: inherit;
+  opacity: 0.7;
   font-weight: 500;
 }
 
 .dateValue {
-  color: var(--text-primary, #1a202c);
+  color: inherit;
   font-weight: 500;
 }
 
@@ -45,6 +55,7 @@
   color: inherit;
   background: white;
   outline: none;
+  text-align: inherit;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
   min-width: 80px;
 }

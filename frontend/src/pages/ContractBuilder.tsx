@@ -7,7 +7,9 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { useContractBuilderStore } from '../stores/contractBuilderStore';
+import { PDFDocument } from 'pdf-lib';
+import JSZip from 'jszip';
+import { useContractBuilderStore, Block } from '../stores/contractBuilderStore';
 import {
   BuilderCanvas,
   BlockToolbar,
@@ -467,8 +469,153 @@ const ContractBuilder: React.FC = () => {
       setView(previousView);
       setZoom(previousZoom);
 
-      // PDF speichern
-      pdf.save(filename);
+      // === ANLAGEN-MERGE ===
+      // Prüfe ob Anlagen mit Dateien vorhanden sind
+      const attachmentBlocks = currentDocument.content.blocks.filter(
+        (b: Block) => b.type === 'attachment' && b.content.attachmentFile
+      );
+
+      if (attachmentBlocks.length > 0) {
+        console.log('[PDF Export] Found', attachmentBlocks.length, 'attachment(s) to merge');
+
+        // Kategorisiere Anlagen
+        const pdfAttachments = attachmentBlocks.filter(
+          (b: Block) => b.content.attachmentFileType === 'application/pdf'
+        );
+        const imageAttachments = attachmentBlocks.filter(
+          (b: Block) => b.content.attachmentFileType?.startsWith('image/')
+        );
+        const officeAttachments = attachmentBlocks.filter(
+          (b: Block) =>
+            b.content.attachmentFileType?.includes('word') ||
+            b.content.attachmentFileType?.includes('excel') ||
+            b.content.attachmentFileType?.includes('spreadsheet') ||
+            b.content.attachmentFileType?.includes('msword') ||
+            b.content.attachmentFileType?.includes('ms-excel')
+        );
+
+        // Haupt-PDF als Bytes holen
+        const mainPdfBytes = pdf.output('arraybuffer');
+
+        // Neues PDF mit pdf-lib erstellen
+        const mergedPdf = await PDFDocument.create();
+
+        // 1. Hauptvertrag-Seiten kopieren
+        const mainDoc = await PDFDocument.load(mainPdfBytes);
+        const mainPages = await mergedPdf.copyPages(mainDoc, mainDoc.getPageIndices());
+        mainPages.forEach(page => mergedPdf.addPage(page));
+        console.log('[PDF Export] Added', mainPages.length, 'main contract page(s)');
+
+        // 2. PDF-Anlagen anhängen
+        for (const attachment of pdfAttachments) {
+          try {
+            const base64Data = attachment.content.attachmentFile!;
+            // Base64 Data-URL zu ArrayBuffer konvertieren
+            const base64String = base64Data.split(',')[1] || base64Data;
+            const binaryString = atob(base64String);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+              bytes[i] = binaryString.charCodeAt(i);
+            }
+
+            const attachmentDoc = await PDFDocument.load(bytes);
+            const attachmentPages = await mergedPdf.copyPages(attachmentDoc, attachmentDoc.getPageIndices());
+            attachmentPages.forEach(page => mergedPdf.addPage(page));
+            console.log('[PDF Export] Attached PDF:', attachment.content.attachmentFileName);
+          } catch (err) {
+            console.error('[PDF Export] Failed to attach PDF:', attachment.content.attachmentFileName, err);
+          }
+        }
+
+        // 3. Bild-Anlagen als PDF-Seiten
+        for (const attachment of imageAttachments) {
+          try {
+            const base64Data = attachment.content.attachmentFile!;
+            const base64String = base64Data.split(',')[1] || base64Data;
+            const binaryString = atob(base64String);
+            const imageBytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+              imageBytes[i] = binaryString.charCodeAt(i);
+            }
+
+            // Bild je nach Typ einbetten
+            let image;
+            if (attachment.content.attachmentFileType?.includes('png')) {
+              image = await mergedPdf.embedPng(imageBytes);
+            } else {
+              image = await mergedPdf.embedJpg(imageBytes);
+            }
+
+            // Neue A4-Seite erstellen
+            const page = mergedPdf.addPage([595.28, 841.89]); // A4 in Points
+
+            // Bild zentriert und skaliert einfügen
+            const maxWidth = 500;
+            const maxHeight = 750;
+            const scale = Math.min(maxWidth / image.width, maxHeight / image.height, 1);
+            const scaledWidth = image.width * scale;
+            const scaledHeight = image.height * scale;
+
+            page.drawImage(image, {
+              x: (595.28 - scaledWidth) / 2,
+              y: (841.89 - scaledHeight) / 2,
+              width: scaledWidth,
+              height: scaledHeight,
+            });
+            console.log('[PDF Export] Attached image:', attachment.content.attachmentFileName);
+          } catch (err) {
+            console.error('[PDF Export] Failed to attach image:', attachment.content.attachmentFileName, err);
+          }
+        }
+
+        // 4. Finale PDF speichern
+        const finalPdfBytes = await mergedPdf.save();
+
+        // 5. Download - entweder PDF oder ZIP (wenn Office-Dateien vorhanden)
+        if (officeAttachments.length > 0) {
+          console.log('[PDF Export] Creating ZIP with', officeAttachments.length, 'Office file(s)');
+
+          const zip = new JSZip();
+          const contractName = currentDocument.metadata.name || 'Vertrag';
+
+          // Vertrag-PDF hinzufügen
+          zip.file(`${contractName}.pdf`, finalPdfBytes);
+
+          // Anlagen-Ordner erstellen
+          const anlagenFolder = zip.folder('Anlagen');
+          if (anlagenFolder) {
+            for (const attachment of officeAttachments) {
+              const base64Data = attachment.content.attachmentFile!;
+              const base64String = base64Data.split(',')[1] || base64Data;
+              anlagenFolder.file(attachment.content.attachmentFileName || 'Anlage', base64String, { base64: true });
+            }
+          }
+
+          // ZIP generieren und downloaden
+          const zipBlob = await zip.generateAsync({ type: 'blob' });
+          const url = URL.createObjectURL(zipBlob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${contractName}_mit_Anlagen.zip`;
+          a.click();
+          URL.revokeObjectURL(url);
+          console.log('[PDF Export] ZIP download complete');
+        } else {
+          // Nur PDF download
+          const blob = new Blob([finalPdfBytes], { type: 'application/pdf' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          a.click();
+          URL.revokeObjectURL(url);
+          console.log('[PDF Export] PDF with attachments download complete');
+        }
+      } else {
+        // Keine Anlagen - normaler PDF-Export
+        pdf.save(filename);
+      }
+
       console.log('[PDF Export] Success!');
 
     } catch (error) {

@@ -3,6 +3,14 @@
  */
 
 .preamble {
+  /* Text-Eigenschaften werden vom Wrapper geerbt */
+  text-align: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  color: inherit;
   margin: 20px 0;
   padding: 16px;
   background: #f8fafc;
@@ -27,9 +35,14 @@
 }
 
 .preambleContent {
-  font-size: 13px;
-  line-height: 1.7;
-  color: var(--text-primary, #1a202c);
+  /* Erbt vom Parent */
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  font-family: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  text-align: inherit;
   font-style: italic;
 }
 
@@ -63,6 +76,7 @@
   outline: none;
   resize: vertical;
   min-height: 80px;
-  line-height: 1.7;
+  line-height: inherit;
+  text-align: inherit;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
 }

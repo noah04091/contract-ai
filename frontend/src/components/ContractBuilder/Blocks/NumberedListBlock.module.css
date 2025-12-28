@@ -3,6 +3,14 @@
  */
 
 .numberedList {
+  /* Text-Eigenschaften werden vom Wrapper geerbt */
+  text-align: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  color: inherit;
   padding: 8px 0;
 }
 
@@ -12,9 +20,9 @@
 }
 
 .listTitle {
-  font-size: 14px;
+  font-size: inherit;
   font-weight: 600;
-  color: #1a202c;
+  color: inherit;
   margin-bottom: 8px;
   padding-left: 4px;
 }
@@ -22,18 +30,20 @@
 .list {
   margin: 0;
   padding-left: 24px;
-  color: #2d3748;
+  color: inherit;
 }
 
 .listItem {
-  font-size: 13px;
-  line-height: 1.7;
+  font-size: inherit;
+  line-height: inherit;
   padding: 4px 0;
   padding-left: 4px;
+  color: inherit;
 }
 
 .listItem::marker {
-  color: #4a5568;
+  color: inherit;
+  opacity: 0.7;
   font-weight: 500;
 }
 
@@ -60,6 +70,7 @@
   color: inherit;
   background: white;
   outline: none;
+  text-align: inherit;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
 }
 

@@ -3,6 +3,14 @@
  */
 
 .signature {
+  /* Text-Eigenschaften werden vom Wrapper geerbt */
+  text-align: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  color: inherit;
   margin: 40px 0 20px;
   padding-top: 20px;
   border-top: 1px solid #e2e8f0;
@@ -19,8 +27,9 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--text-secondary, #4a5568);
-  font-size: 12px;
+  color: inherit;
+  opacity: 0.7;
+  font-size: inherit;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -53,12 +62,14 @@
 }
 
 .fieldIcon {
-  color: var(--text-secondary, #4a5568);
+  color: inherit;
+  opacity: 0.7;
 }
 
 .fieldLabel {
-  font-size: 11px;
-  color: var(--text-secondary, #4a5568);
+  font-size: inherit;
+  color: inherit;
+  opacity: 0.7;
   flex-shrink: 0;
 }
 
@@ -75,20 +86,21 @@
 
 .signatureLineInner {
   height: 1px;
-  background: #1a202c;
+  background: currentColor;
 }
 
 .signatureLabel {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
-  color: var(--text-secondary, #4a5568);
+  font-size: inherit;
+  color: inherit;
+  opacity: 0.7;
   margin-top: 4px;
 }
 
 .labelIcon {
-  color: var(--text-secondary, #4a5568);
+  color: inherit;
 }
 
 /* Zeugen */
@@ -99,9 +111,10 @@
 }
 
 .witnessHeader {
-  font-size: 12px;
+  font-size: inherit;
   font-weight: 500;
-  color: var(--text-secondary, #4a5568);
+  color: inherit;
+  opacity: 0.7;
   margin-bottom: 16px;
 }
 
@@ -118,8 +131,9 @@
 }
 
 .witnessLabel {
-  font-size: 11px;
-  color: var(--text-secondary, #4a5568);
+  font-size: inherit;
+  color: inherit;
+  opacity: 0.7;
 }
 
 /* Inline Editing Styles */
@@ -132,6 +146,7 @@
   color: inherit;
   background: white;
   outline: none;
+  text-align: inherit;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
   min-width: 80px;
 }
