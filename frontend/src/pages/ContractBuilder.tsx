@@ -456,7 +456,7 @@ const ContractBuilder: React.FC = () => {
           backgroundColor: '#ffffff',
           logging: false,
           // WICHTIG: Erzwinge SCHWARZEN Text für PDF-Export
-          onclone: (clonedDoc, element) => {
+          onclone: (_clonedDoc, element) => {
             // Rekursiv alle Text-Elemente auf reines Schwarz setzen
             const forceBlackText = (el: Element) => {
               const htmlEl = el as HTMLElement;
