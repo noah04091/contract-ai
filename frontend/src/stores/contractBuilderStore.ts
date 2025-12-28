@@ -1258,14 +1258,28 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
             // Merge: Behalte existierende Werte, füge neue hinzu
             const mergedVars: Variable[] = [];
 
+            // Set für bereits verarbeitete Variable-Namen
+            const processedNames = new Set<string>();
+
             extractedVars.forEach(extracted => {
-              const existing = existingVars.find(v => v.id === extracted.id);
+              // WICHTIG: Nach NAME suchen, nicht nach ID!
+              // IDs können unterschiedlich sein (z.B. wenn Variable über VariableHighlight erstellt wurde)
+              const existing = existingVars.find(v => v.name === extracted.name);
               if (existing) {
-                // Behalte den existierenden Wert
+                // Behalte die existierende Variable MIT ihrem Wert
                 mergedVars.push(existing);
               } else {
                 // Neue Variable
                 mergedVars.push(extracted);
+              }
+              processedNames.add(extracted.name);
+            });
+
+            // Auch Variablen behalten, die manuell erstellt wurden aber nicht in Blöcken sind
+            // (z.B. Variablen die über das Panel erstellt wurden)
+            existingVars.forEach(existing => {
+              if (!processedNames.has(existing.name)) {
+                mergedVars.push(existing);
               }
             });
 
