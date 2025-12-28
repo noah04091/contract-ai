@@ -33,7 +33,7 @@ const createCheckSubscription = require("./middleware/checkSubscription");
 
 // ✅ CALENDAR INTEGRATION IMPORTS
 const { onContractChange } = require("./services/calendarEvents");
-const { checkAndSendNotifications } = require("./services/calendarNotifier");
+const { checkAndSendNotifications, processEmailQueue } = require("./services/calendarNotifier");
 
 // 🔄 CRON JOBS - Monatlicher analysisCount Reset
 require("./cron/resetAnalysisCount");
@@ -1480,6 +1480,18 @@ const connectDB = async () => {
           await checkAndSendNotifications(db);
         } catch (error) {
           console.error("❌ Reminder/Calendar Cron Error:", error);
+        }
+      });
+
+      // 📧 NEU: E-Mail Queue Retry (alle 15 Minuten)
+      cron.schedule("*/15 * * * *", async () => {
+        try {
+          const stats = await processEmailQueue(db);
+          if (stats.processed > 0) {
+            console.log();
+          }
+        } catch (error) {
+          console.error("❌ Email Queue Retry Cron Error:", error);
         }
       });
 
