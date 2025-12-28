@@ -448,20 +448,30 @@ const ContractBuilder: React.FC = () => {
         // Kurze Pause für Repaint/Reflow
         await new Promise(resolve => setTimeout(resolve, 100));
 
-        // html2canvas mit optimierten Einstellungen (JPEG, scale 1.5)
+        // html2canvas mit optimierten Einstellungen
         const canvas = await html2canvas(content, {
-          scale: 1.5, // Reduziert von 2 auf 1.5 für kleinere Dateien
+          scale: 2, // Höhere Auflösung für bessere Qualität
           useCORS: true,
           allowTaint: true,
           backgroundColor: '#ffffff',
           logging: false,
-          // WICHTIG: Explizite Farbe setzen um konsistentes Rendering sicherzustellen
-          onclone: (clonedDoc) => {
-            // Setze explizite Textfarbe auf alle Elemente im geklonten Dokument
-            const clonedContent = clonedDoc.querySelector('[class*="pageContent_"]');
-            if (clonedContent) {
-              (clonedContent as HTMLElement).style.color = '#1a202c';
-            }
+          // WICHTIG: Erzwinge SCHWARZEN Text für PDF-Export
+          onclone: (clonedDoc, element) => {
+            // Rekursiv alle Text-Elemente auf reines Schwarz setzen
+            const forceBlackText = (el: Element) => {
+              const htmlEl = el as HTMLElement;
+              if (htmlEl.style) {
+                // Erzwinge schwarzen Text (nicht dunkelgrau #1a202c!)
+                htmlEl.style.color = '#000000';
+                // Entferne jegliche Opacity die Text verwaschen könnte
+                htmlEl.style.opacity = '1';
+              }
+              // Rekursiv für alle Kinder
+              Array.from(el.children).forEach(child => forceBlackText(child));
+            };
+
+            // Auf das geklonte Element anwenden
+            forceBlackText(element);
           },
           ignoreElements: (element) => {
             let classes = '';
@@ -492,8 +502,8 @@ const ContractBuilder: React.FC = () => {
           currentY = margin;
         }
 
-        // Canvas als JPEG (viel kleiner als PNG!)
-        const imgData = canvas.toDataURL('image/jpeg', 0.85);
+        // Canvas als JPEG mit hoher Qualität für scharfen Text
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
 
         // Bild zur PDF hinzufügen
         pdf.addImage(imgData, 'JPEG', margin, currentY, imgWidth, Math.min(imgHeight, usableHeight));
