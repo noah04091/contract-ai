@@ -442,37 +442,47 @@ const ContractBuilder: React.FC = () => {
         console.log(`[PDF Export] Capturing section ${i + 1}/${contentElements.length}...`);
 
         // WICHTIG: Element in den sichtbaren Bereich scrollen
-        // html2canvas kann Elemente außerhalb des Viewports anders rendern
         content.scrollIntoView({ behavior: 'instant', block: 'start' });
 
         // Kurze Pause für Repaint/Reflow
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 50));
+
+        // ============================================
+        // GARANTIERTER FIX: Farben VOR html2canvas auf SCHWARZ setzen
+        // Der onclone callback ist unzuverlässig - funktioniert nur manchmal
+        // Dieser Ansatz setzt die Farben direkt auf den Original-Elementen
+        // ============================================
+        const originalStyles: Map<HTMLElement, { color: string; opacity: string }> = new Map();
+
+        const setBlackText = (el: Element) => {
+          const htmlEl = el as HTMLElement;
+          if (htmlEl.style !== undefined) {
+            // Speichere Original-Styles
+            originalStyles.set(htmlEl, {
+              color: htmlEl.style.color,
+              opacity: htmlEl.style.opacity
+            });
+            // Setze SCHWARZEN Text
+            htmlEl.style.setProperty('color', '#000000', 'important');
+            htmlEl.style.setProperty('opacity', '1', 'important');
+          }
+          // Rekursiv für alle Kinder
+          Array.from(el.children).forEach(child => setBlackText(child));
+        };
+
+        // Farben auf SCHWARZ setzen
+        setBlackText(content);
+
+        // Kurze Pause damit Browser die Styles anwendet
+        await new Promise(resolve => setTimeout(resolve, 50));
 
         // html2canvas mit optimierten Einstellungen
         const canvas = await html2canvas(content, {
-          scale: 2, // Höhere Auflösung für bessere Qualität
+          scale: 2,
           useCORS: true,
           allowTaint: true,
           backgroundColor: '#ffffff',
           logging: false,
-          // WICHTIG: Erzwinge SCHWARZEN Text für PDF-Export
-          onclone: (_clonedDoc, element) => {
-            // Rekursiv alle Text-Elemente auf reines Schwarz setzen
-            const forceBlackText = (el: Element) => {
-              const htmlEl = el as HTMLElement;
-              if (htmlEl.style) {
-                // Erzwinge schwarzen Text (nicht dunkelgrau #1a202c!)
-                htmlEl.style.color = '#000000';
-                // Entferne jegliche Opacity die Text verwaschen könnte
-                htmlEl.style.opacity = '1';
-              }
-              // Rekursiv für alle Kinder
-              Array.from(el.children).forEach(child => forceBlackText(child));
-            };
-
-            // Auf das geklonte Element anwenden
-            forceBlackText(element);
-          },
           ignoreElements: (element) => {
             let classes = '';
             if (typeof element.className === 'string') {
@@ -485,8 +495,16 @@ const ContractBuilder: React.FC = () => {
                    classes.includes('zoomIndicator') ||
                    classes.includes('blockControls') ||
                    classes.includes('dragHandle') ||
-                   classes.includes('pageNumber'); // Entferne alte Seitenzahlen
+                   classes.includes('pageNumber');
           },
+        });
+
+        // ============================================
+        // Original-Styles wiederherstellen
+        // ============================================
+        originalStyles.forEach((styles, el) => {
+          el.style.color = styles.color;
+          el.style.opacity = styles.opacity;
         });
 
         // Berechne die Bildgröße proportional
