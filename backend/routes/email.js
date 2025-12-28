@@ -313,6 +313,98 @@ router.get("/stats", optionalAuth, async (req, res) => {
 });
 
 // ===================================================================
+// TEST ENDPOINT (nur fuer Entwicklung)
+// ===================================================================
+
+/**
+ * POST /api/email/test
+ * Sendet eine Test-E-Mail mit allen neuen Features
+ * Body: { email: "test@example.com" }
+ */
+router.post("/test", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        error: "E-Mail-Adresse erforderlich"
+      });
+    }
+
+    const { queueEmail } = require("../services/emailRetryService");
+    const generateEmailTemplate = require("../utils/emailTemplate");
+    const { generateUnsubscribeUrl } = require("../services/emailUnsubscribeService");
+
+    // Generiere echten Unsubscribe-Link
+    const unsubscribeUrl = generateUnsubscribeUrl(email, "calendar");
+
+    const html = generateEmailTemplate({
+      title: "🧪 Test-E-Mail - Neue Features",
+      preheader: "Test der neuen E-Mail-Features: Bounce-Handling, Unsubscribe, Digest",
+      body: `
+        <h2 style="color: #1f2937; margin: 0 0 16px 0;">Hallo!</h2>
+        <p style="color: #4b5563; font-size: 15px; line-height: 1.6;">
+          Dies ist eine <strong>Test-E-Mail</strong> um die neuen Features zu testen:
+        </p>
+
+        <div style="background: #f0fdf4; border-left: 4px solid #22c55e; padding: 16px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+          <h3 style="color: #166534; margin: 0 0 8px 0;">✅ Neue Features</h3>
+          <ul style="color: #166534; margin: 0; padding-left: 20px;">
+            <li><strong>Bounce-Handling:</strong> Erkennt ungueltige E-Mails automatisch</li>
+            <li><strong>DSGVO Unsubscribe:</strong> Abmelde-Link im Footer (scroll runter!)</li>
+            <li><strong>Digest-E-Mails:</strong> Taeglich/Woechentlich Zusammenfassungen</li>
+            <li><strong>Pre-Send Checks:</strong> Prueft vor Versand ob User abgemeldet ist</li>
+          </ul>
+        </div>
+
+        <p style="color: #4b5563; font-size: 15px; line-height: 1.6;">
+          <strong>Teste den Abmelde-Link:</strong><br>
+          Scrolle zum Footer dieser E-Mail. Dort findest du den Link
+          "Von E-Mail-Benachrichtigungen abmelden". Klicke darauf um die
+          Abmeldeseite zu sehen.
+        </p>
+
+        <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+          <p style="color: #92400e; margin: 0; font-size: 14px;">
+            <strong>Hinweis:</strong> Der Abmelde-Link ist personalisiert und kryptografisch signiert.
+            Jeder User erhaelt einen einzigartigen Link.
+          </p>
+        </div>
+      `,
+      cta: {
+        text: "Zur Abmeldeseite",
+        url: unsubscribeUrl
+      },
+      recipientEmail: email,
+      emailCategory: "calendar"
+    });
+
+    // E-Mail in Queue einfuegen
+    await queueEmail(req.db, {
+      to: email,
+      subject: "🧪 Contract AI - Test der neuen E-Mail-Features",
+      html: html,
+      emailType: "test",
+      priority: 10 // Hohe Prioritaet fuer sofortigen Versand
+    });
+
+    res.json({
+      success: true,
+      message: `Test-E-Mail wurde an ${email} in die Queue gestellt`,
+      unsubscribeUrl: unsubscribeUrl
+    });
+
+  } catch (error) {
+    console.error("Test Email Error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Fehler beim Senden der Test-E-Mail: " + error.message
+    });
+  }
+});
+
+// ===================================================================
 // HELPER FUNCTIONS
 // ===================================================================
 
