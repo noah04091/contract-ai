@@ -226,16 +226,20 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
   const handleSaveEdit = useCallback(() => {
     if (!editingVarName) return;
 
+    // WICHTIG: Aktuelle Variables aus dem Store holen, NICHT aus der Closure!
+    // Die Closure hat möglicherweise veraltete Daten wenn eine Variable gerade erstellt wurde
+    const currentState = useContractBuilderStore.getState();
+    const currentVariables = currentState.document?.content.variables || [];
+
     // Variable finden und Wert setzen
-    const variable = variables.find((v: Variable) => {
+    const variable = currentVariables.find((v: Variable) => {
       const varNameClean = v.name.replace(/^\{\{|\}\}$/g, '');
       return varNameClean === editingVarName || v.name === `{{${editingVarName}}}`;
     });
 
     if (variable) {
       // Wert über Store setzen
-      const { updateVariable } = useContractBuilderStore.getState();
-      updateVariable(variable.id, editValue);
+      currentState.updateVariable(variable.id, editValue);
     }
 
     // Prüfe ob ein Klick auf eine andere Variable pending ist
@@ -248,7 +252,8 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
 
       // Sidebar synchronisieren (mit kurzem Delay für flüssige UX)
       setTimeout(() => {
-        const nextVar = variables.find((v: Variable) => {
+        const latestVars = useContractBuilderStore.getState().document?.content.variables || [];
+        const nextVar = latestVars.find((v: Variable) => {
           const cleanName = v.name.replace(/^\{\{|\}\}$/g, '');
           return cleanName === pending.varName || v.name === `{{${pending.varName}}}`;
         });
@@ -261,7 +266,7 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
       setEditingVarName(null);
       setEditValue('');
     }
-  }, [editingVarName, editValue, variables, setSelectedVariable]);
+  }, [editingVarName, editValue, setSelectedVariable]);
 
   // Keyboard Handler für Inline-Edit
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
