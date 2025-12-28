@@ -1,9 +1,11 @@
 /**
  * VariableHighlight - Hebt {{variablen}} im Text hervor
  * Unterstützt: System-Variablen ({{heute}}), Berechnungen ({{preis * 1.19}})
+ *
+ * UX-Verbesserung: Zeigt lesbare Namen statt {{syntax}} an
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { useContractBuilderStore, Variable } from '../../../stores/contractBuilderStore';
 import { resolveSmartVariable } from '../../../utils/smartVariables';
 import styles from './VariableHighlight.module.css';
@@ -18,13 +20,26 @@ interface VariableHighlightProps {
 // Regex für {{variable_name}} oder {{berechnung}}
 const VARIABLE_PATTERN = /\{\{([^}]+)\}\}/g;
 
+// Variable-Name zu lesbarem Label konvertieren
+const toReadableLabel = (varName: string): string => {
+  return varName
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 export const VariableHighlight: React.FC<VariableHighlightProps> = ({
   text,
   multiline = false,
   isPreview = false,
   onDoubleClick,
 }) => {
-  const { document: currentDocument, setSelectedVariable } = useContractBuilderStore();
+  const { document: currentDocument, setSelectedVariable, addVariable, syncVariables } = useContractBuilderStore();
+
+  // Inline-Editing State
+  const [editingVarName, setEditingVarName] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
   const variables = currentDocument?.content.variables || [];
 
   // Variable-Werte als Map für Berechnungen
@@ -120,17 +135,28 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
       .replace(/ß/g, 'ss');
   };
 
-  // Variable auswählen (nur für User-Variablen)
-  const handleVariableClick = (variableName: string, varType?: string) => {
+  // Focus Input wenn Editing startet
+  useEffect(() => {
+    if (editingVarName && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [editingVarName]);
+
+  // Variable auswählen und Inline-Editing starten
+  const handleVariableClick = useCallback((variableName: string, varType?: string, currentValue?: string) => {
     // System-Variablen sind nicht editierbar
     if (varType === 'system' || varType === 'computed') return;
+
+    // Zuerst syncVariables aufrufen, um sicherzustellen, dass alle Variablen existieren
+    syncVariables();
 
     // Normalisiere den gesuchten Namen für Umlaut-Toleranz
     const normalizedSearch = normalizeUmlauts(variableName);
 
     // Finde die Variable - mit Umlaut-Normalisierung
-    const variable = variables.find((v: Variable) => {
-      const varNameClean = v.name.replace(/^\{\{|\}\}$/g, ''); // Entferne {{ }}
+    let variable = variables.find((v: Variable) => {
+      const varNameClean = v.name.replace(/^\{\{|\}\}$/g, '');
       const normalizedVarName = normalizeUmlauts(varNameClean);
 
       return normalizedVarName === normalizedSearch ||
@@ -138,13 +164,92 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
              v.name === variableName;
     });
 
-    if (variable) {
-      console.log('[VariableHighlight] Variable geklickt:', variable.id, variableName);
-      setSelectedVariable(variable.id);
-    } else {
-      console.warn('[VariableHighlight] Variable nicht gefunden:', variableName, 'Verfügbare:', variables.map(v => v.name));
+    // Falls Variable nicht existiert, automatisch erstellen
+    if (!variable) {
+      console.log('[VariableHighlight] Variable existiert nicht, erstelle neu:', variableName);
+
+      // Gruppe basierend auf Variablennamen bestimmen
+      let group = 'Allgemein';
+      const lowerName = variableName.toLowerCase();
+      if (lowerName.includes('auftraggeber') || lowerName.includes('verkaeufer') || lowerName.includes('kaeufer')) {
+        group = lowerName.includes('auftraggeber') || lowerName.includes('verkaeufer') ? 'Auftraggeber' : 'Auftragnehmer';
+      } else if (lowerName.includes('auftragnehmer')) {
+        group = 'Auftragnehmer';
+      } else if (lowerName.includes('preis') || lowerName.includes('betrag')) {
+        group = 'Finanzen';
+      }
+
+      // Typ basierend auf Variablennamen
+      let type: 'text' | 'email' | 'phone' | 'date' | 'currency' = 'text';
+      if (lowerName.includes('email') || lowerName.includes('mail')) type = 'email';
+      else if (lowerName.includes('telefon') || lowerName.includes('phone')) type = 'phone';
+      else if (lowerName.includes('datum')) type = 'date';
+      else if (lowerName.includes('preis') || lowerName.includes('betrag')) type = 'currency';
+
+      const newVar = {
+        name: `{{${variableName}}}`,
+        displayName: toReadableLabel(variableName),
+        type,
+        required: true,
+        group,
+        linkedBlocks: [],
+      };
+
+      addVariable(newVar);
+
+      // Nach dem Hinzufügen nochmal suchen
+      setTimeout(() => {
+        const updatedVars = currentDocument?.content.variables || [];
+        const newlyAddedVar = updatedVars.find((v: Variable) => v.name === `{{${variableName}}}`);
+        if (newlyAddedVar) {
+          setSelectedVariable(newlyAddedVar.id);
+          // Inline-Editing starten
+          setEditingVarName(variableName);
+          setEditValue(currentValue || '');
+        }
+      }, 50);
+      return;
     }
-  };
+
+    // Variable gefunden - auswählen und Inline-Editing starten
+    console.log('[VariableHighlight] Variable geklickt:', variable.id, variableName);
+    setSelectedVariable(variable.id);
+
+    // Inline-Editing starten
+    setEditingVarName(variableName);
+    setEditValue(currentValue || (variable.value ? String(variable.value) : ''));
+  }, [variables, syncVariables, addVariable, setSelectedVariable, currentDocument, normalizeUmlauts]);
+
+  // Inline-Edit speichern
+  const handleSaveEdit = useCallback(() => {
+    if (!editingVarName) return;
+
+    // Variable finden und Wert setzen
+    const variable = variables.find((v: Variable) => {
+      const varNameClean = v.name.replace(/^\{\{|\}\}$/g, '');
+      return varNameClean === editingVarName || v.name === `{{${editingVarName}}}`;
+    });
+
+    if (variable) {
+      // Wert über Store setzen
+      const { updateVariable } = useContractBuilderStore.getState();
+      updateVariable(variable.id, editValue);
+    }
+
+    setEditingVarName(null);
+    setEditValue('');
+  }, [editingVarName, editValue, variables]);
+
+  // Keyboard Handler für Inline-Edit
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSaveEdit();
+    } else if (e.key === 'Escape') {
+      setEditingVarName(null);
+      setEditValue('');
+    }
+  }, [handleSaveEdit]);
 
   // Tooltip-Text basierend auf Typ
   const getTooltip = (segment: typeof segments[0]) => {
@@ -176,6 +281,26 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
       );
     }
 
+    const isCurrentlyEditing = editingVarName === segment.variableName;
+
+    // Inline-Editing Input
+    if (isCurrentlyEditing) {
+      return (
+        <input
+          key={index}
+          ref={inputRef}
+          type="text"
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onBlur={handleSaveEdit}
+          onKeyDown={handleKeyDown}
+          className={styles.inlineEdit}
+          placeholder={toReadableLabel(segment.variableName || '')}
+          onClick={(e) => e.stopPropagation()}
+        />
+      );
+    }
+
     // CSS-Klasse basierend auf Typ und Status (nur im Edit-Modus)
     const varClass = [
       styles.variable,
@@ -184,20 +309,25 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
       segment.varType === 'computed' ? styles.computed : '',
     ].filter(Boolean).join(' ');
 
+    // Anzeige: Wenn Wert vorhanden → Wert, sonst lesbare Label
+    const displayText = segment.isFilled
+      ? segment.value
+      : toReadableLabel(segment.variableName || '');
+
     return (
       <span
         key={index}
         className={varClass}
         onClick={(e) => {
           e.stopPropagation();
-          handleVariableClick(segment.variableName!, segment.varType);
+          handleVariableClick(segment.variableName!, segment.varType, segment.value);
         }}
         title={getTooltip(segment)}
         style={{
           cursor: segment.varType === 'system' || segment.varType === 'computed' ? 'default' : 'pointer'
         }}
       >
-        {segment.isFilled ? segment.value : segment.content}
+        {displayText}
       </span>
     );
   });

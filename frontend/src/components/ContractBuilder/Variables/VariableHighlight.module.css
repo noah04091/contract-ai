@@ -127,3 +127,41 @@
   color: #3b82f6;
   border: 1px dashed #93c5fd;
 }
+
+/* Inline-Edit Input */
+.inlineEdit {
+  display: inline-block;
+  padding: 2px 8px;
+  border: 2px solid #3b82f6;
+  border-radius: 4px;
+  font-size: inherit;
+  font-family: inherit;
+  background: white;
+  color: #1a202c;
+  outline: none;
+  min-width: 120px;
+  max-width: 300px;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+  animation: fadeIn 0.15s ease;
+}
+
+.inlineEdit:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15), 0 2px 8px rgba(59, 130, 246, 0.25);
+}
+
+.inlineEdit::placeholder {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
