@@ -155,7 +155,7 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
     const normalizedSearch = normalizeUmlauts(variableName);
 
     // Finde die Variable - mit Umlaut-Normalisierung
-    let variable = variables.find((v: Variable) => {
+    const variable = variables.find((v: Variable) => {
       const varNameClean = v.name.replace(/^\{\{|\}\}$/g, '');
       const normalizedVarName = normalizeUmlauts(varNameClean);
 
