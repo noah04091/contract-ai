@@ -365,6 +365,38 @@ router.post("/test", async (req, res) => {
       });
     }
 
+    // ========== TYP: SIMPLE HTML (sauberes HTML ohne viel Styling) ==========
+    if (type === "simple") {
+      const simpleHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+</head>
+<body style="font-family: Arial, sans-serif; padding: 20px;">
+  <h2>Erinnerung: Telekom Mobilfunk</h2>
+  <p>Hallo,</p>
+  <p>in 14 Tagen beginnt das Kuendigungsfenster fuer deinen Vertrag.</p>
+  <p><strong>Kuendigungsfrist:</strong> 3 Monate zum Vertragsende</p>
+  <p><strong>Vertragsende:</strong> 31.03.2025</p>
+  <p>Wenn du nicht kuendigst, verlaengert sich der Vertrag automatisch.</p>
+  <p>Mit freundlichen Gruessen<br>Contract AI</p>
+</body>
+</html>`;
+
+      await transporter.sendMail({
+        from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
+        to: email,
+        subject: "Erinnerung: Telekom Mobilfunk - Kuendigungsfrist in 14 Tagen",
+        html: simpleHtml
+      });
+      return res.json({
+        success: true,
+        message: "Simple HTML Test gesendet",
+        types: ["simple"]
+      });
+    }
+
     // ========== TYP 1: Kalender-Benachrichtigung (Kuendigungsfrist) ==========
     if (type === "calendar" || type === "all") {
       const calendarHtml = generateEmailTemplate({
