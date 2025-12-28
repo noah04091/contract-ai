@@ -759,11 +759,22 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
 
     case 'attachment':
       return (
-        <div className={styles.fieldNote}>
-          <strong>Anlagen-Block</strong><br />
-          Titel und Beschreibung per Doppelklick direkt im Canvas bearbeiten.<br /><br />
-          Styling-Optionen (Hintergrund, Rahmen, Abstände) findest du in den Sektionen unten.
-        </div>
+        <>
+          <div className={styles.fieldNote}>
+            <strong>Anlagen-Block</strong><br />
+            Titel und Beschreibung per Doppelklick direkt im Canvas bearbeiten.
+          </div>
+          <div className={styles.field}>
+            <label className={styles.checkboxLabel}>
+              <input
+                type="checkbox"
+                checked={content.showFileInfo !== false}
+                onChange={(e) => onUpdate({ ...content, showFileInfo: e.target.checked })}
+              />
+              Datei-Info anzeigen (Name, Größe, Icon)
+            </label>
+          </div>
+        </>
       );
 
     case 'spacer':

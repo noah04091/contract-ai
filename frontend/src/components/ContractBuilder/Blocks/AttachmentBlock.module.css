@@ -12,9 +12,10 @@
   letter-spacing: inherit;
   color: inherit;
   margin: 16px 0;
-  padding: 16px;
-  background: #fffbeb;
-  border: 1px solid #fcd34d;
+  padding: 20px;
+  /* Gleiches Design wie PDF - professionell grau */
+  background: #fafafa;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
 }
 
@@ -87,17 +88,19 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .icon {
-  color: #d97706;
+  color: #6b7280;
 }
 
 .attachmentLabel {
   font-size: 11px;
   font-weight: 600;
-  color: #92400e;
+  color: #374151;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   flex: 1;
@@ -109,9 +112,9 @@
   justify-content: center;
   width: 24px;
   height: 24px;
-  border: 1px solid #fcd34d;
+  border: 1px solid #e5e7eb;
   background: white;
-  color: #92400e;
+  color: #374151;
   border-radius: 4px;
   font-size: 12px;
   font-weight: 700;
@@ -120,8 +123,8 @@
 }
 
 .renumberButton:hover {
-  background: #fef3c7;
-  border-color: #d97706;
+  background: #f3f4f6;
+  border-color: #d1d5db;
 }
 
 /* Empty State */
@@ -133,9 +136,9 @@
   gap: 8px;
   padding: 24px;
   background: rgba(255, 255, 255, 0.5);
-  border: 2px dashed #fcd34d;
+  border: 2px dashed #d1d5db;
   border-radius: 8px;
-  color: #92400e;
+  color: #6b7280;
   opacity: 0.8;
 }
 
@@ -163,7 +166,7 @@
 }
 
 .attachmentItem:hover {
-  border-color: #fcd34d;
+  border-color: #d1d5db;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
@@ -315,7 +318,7 @@
   gap: 8px;
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px dashed #fcd34d;
+  border-top: 1px dashed #d1d5db;
 }
 
 .fileInput {

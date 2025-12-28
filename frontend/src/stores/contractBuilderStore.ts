@@ -129,6 +129,7 @@ export interface BlockContent {
     fileSize: number;              // Dateigröße in Bytes
     fileType: string;              // MIME-Type
   }>;
+  showFileInfo?: boolean;          // Datei-Info (Name, Größe, Icon) anzeigen (default: true)
   // Divider/Spacer
   height?: number;
   style?: string;

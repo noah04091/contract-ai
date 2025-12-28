@@ -419,24 +419,26 @@ export const AttachmentBlock: React.FC<AttachmentBlockProps> = ({
                   </div>
                 )}
 
-                {/* Datei-Info - sowohl Edit als auch Preview */}
-                <div className={styles.fileInfo}>
-                  <div className={styles.fileDetails}>
-                    {getFileIcon(attachment.fileType)}
-                    <span className={styles.fileName}>{attachment.fileName}</span>
-                    <span className={styles.fileSize}>
-                      ({formatFileSize(attachment.fileSize)})
-                    </span>
-                  </div>
-
-                  {/* Office-Warnung - nur im Edit-Modus */}
-                  {!isPreview && isOfficeFile(attachment.fileType) && (
-                    <div className={styles.officeWarning}>
-                      <AlertTriangle size={14} />
-                      <span>Separate Datei</span>
+                {/* Datei-Info - nur wenn showFileInfo !== false (default: true) */}
+                {content.showFileInfo !== false && (
+                  <div className={styles.fileInfo}>
+                    <div className={styles.fileDetails}>
+                      {getFileIcon(attachment.fileType)}
+                      <span className={styles.fileName}>{attachment.fileName}</span>
+                      <span className={styles.fileSize}>
+                        ({formatFileSize(attachment.fileSize)})
+                      </span>
                     </div>
-                  )}
-                </div>
+
+                    {/* Office-Warnung - nur im Edit-Modus */}
+                    {!isPreview && isOfficeFile(attachment.fileType) && (
+                      <div className={styles.officeWarning}>
+                        <AlertTriangle size={14} />
+                        <span>Separate Datei</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Entfernen-Button - nur im Edit-Modus */}
