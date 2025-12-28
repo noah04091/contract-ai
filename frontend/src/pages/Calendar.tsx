@@ -1849,7 +1849,7 @@ function SnoozeModal({ isOpen, onClose, onSnooze }: SnoozeModalProps) {
               width: '40px',
               height: '40px',
               borderRadius: '10px',
-              background: 'linear-gradient(135deg, #4f46e5, #4f46e5)',
+              background: 'linear-gradient(135deg, #3B82F6, #3B82F6)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -1891,7 +1891,7 @@ function SnoozeModal({ isOpen, onClose, onSnooze }: SnoozeModalProps) {
               <motion.button
                 key={preset.days}
                 onClick={() => onSnooze(preset.days)}
-                whileHover={{ scale: 1.03, borderColor: '#4f46e5' }}
+                whileHover={{ scale: 1.03, borderColor: '#3B82F6' }}
                 whileTap={{ scale: 0.97 }}
                 style={{
                   padding: '16px',
@@ -1952,7 +1952,7 @@ function SnoozeModal({ isOpen, onClose, onSnooze }: SnoozeModalProps) {
                 style={{
                   flex: 1,
                   padding: '12px 14px',
-                  border: '2px solid #4f46e5',
+                  border: '2px solid #3B82F6',
                   borderRadius: '10px',
                   fontSize: '14px',
                   outline: 'none'
@@ -1973,7 +1973,7 @@ function SnoozeModal({ isOpen, onClose, onSnooze }: SnoozeModalProps) {
                 style={{
                   padding: '12px 20px',
                   background: customDays && parseInt(customDays) > 0
-                    ? 'linear-gradient(135deg, #4f46e5, #4f46e5)'
+                    ? 'linear-gradient(135deg, #3B82F6, #3B82F6)'
                     : '#e5e7eb',
                   color: customDays && parseInt(customDays) > 0 ? '#fff' : '#9ca3af',
                   border: 'none',
@@ -2225,7 +2225,7 @@ function EditEventModal({ event, onClose, onSave, onDelete }: EditEventModalProp
           borderBottom: '1px solid #f3f4f6'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Pencil size={20} style={{ color: '#4f46e5' }} />
+            <Pencil size={20} style={{ color: '#3B82F6' }} />
             <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#1f2937' }}>
               Event bearbeiten
             </h2>
@@ -2399,7 +2399,7 @@ function EditEventModal({ event, onClose, onSave, onDelete }: EditEventModalProp
                 justifyContent: 'center',
                 gap: '8px',
                 padding: '14px 20px',
-                background: '#4f46e5',
+                background: '#3B82F6',
                 color: '#fff',
                 border: 'none',
                 borderRadius: '10px',
