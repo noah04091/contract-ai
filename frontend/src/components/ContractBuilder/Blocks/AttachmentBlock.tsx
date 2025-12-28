@@ -342,49 +342,32 @@ export const AttachmentBlock: React.FC<AttachmentBlockProps> = ({
       className={`${styles.attachment} ${isSelected ? styles.selected : ''} ${isPreview ? styles.preview : ''}`}
       style={customStyles}
     >
-      {/* Header - Edit-Modus: Kleiner Header mit Icon */}
-      {!isPreview && (
-        <div className={styles.attachmentHeader}>
-          <Paperclip size={16} className={styles.icon} />
-          <span className={styles.attachmentLabel}>
-            Anlagen {attachments.length > 0 && `(${attachments.length})`}
-          </span>
-          {attachments.length > 1 && (
-            <button
-              className={styles.renumberButton}
-              onClick={renumberTitles}
-              title="Nummern aktualisieren"
-            >
-              #
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Header - Preview/PDF-Modus: Professioneller Header wie "UNTERSCHRIFTEN" */}
-      {isPreview && attachments.length > 0 && (
-        <div className={styles.previewHeader}>
-          <div className={styles.previewHeaderLine} />
-          <h3 className={styles.previewHeaderTitle}>ANLAGEN</h3>
-        </div>
-      )}
+      {/* Header mit Icon - sowohl Edit als auch Preview */}
+      <div className={styles.attachmentHeader}>
+        <Paperclip size={16} className={styles.icon} />
+        <span className={styles.attachmentLabel}>
+          {isPreview ? 'ANLAGE' : `Anlagen ${attachments.length > 0 ? `(${attachments.length})` : ''}`}
+        </span>
+        {!isPreview && attachments.length > 1 && (
+          <button
+            className={styles.renumberButton}
+            onClick={renumberTitles}
+            title="Nummern aktualisieren"
+          >
+            #
+          </button>
+        )}
+      </div>
 
       {/* Liste der Anlagen */}
       {attachments.length > 0 ? (
         <div className={styles.attachmentList}>
           {attachments.map((attachment, index) => (
-            <div key={attachment.id} className={`${styles.attachmentItem} ${isPreview ? styles.previewItem : ''}`}>
+            <div key={attachment.id} className={styles.attachmentItem}>
               {/* Drag Handle (optional für spätere Sortierung) */}
               {!isPreview && attachments.length > 1 && (
                 <div className={styles.dragHandle}>
                   <GripVertical size={14} />
-                </div>
-              )}
-
-              {/* Preview: Nummerierung links */}
-              {isPreview && (
-                <div className={styles.previewNumber}>
-                  {index + 1}
                 </div>
               )}
 
@@ -436,29 +419,27 @@ export const AttachmentBlock: React.FC<AttachmentBlockProps> = ({
                   </div>
                 )}
 
-                {/* Datei-Info - nur im Edit-Modus anzeigen */}
-                {!isPreview && (
-                  <div className={styles.fileInfo}>
-                    <div className={styles.fileDetails}>
-                      {getFileIcon(attachment.fileType)}
-                      <span className={styles.fileName}>{attachment.fileName}</span>
-                      <span className={styles.fileSize}>
-                        ({formatFileSize(attachment.fileSize)})
-                      </span>
-                    </div>
-
-                    {/* Office-Warnung */}
-                    {isOfficeFile(attachment.fileType) && (
-                      <div className={styles.officeWarning}>
-                        <AlertTriangle size={14} />
-                        <span>Separate Datei</span>
-                      </div>
-                    )}
+                {/* Datei-Info - sowohl Edit als auch Preview */}
+                <div className={styles.fileInfo}>
+                  <div className={styles.fileDetails}>
+                    {getFileIcon(attachment.fileType)}
+                    <span className={styles.fileName}>{attachment.fileName}</span>
+                    <span className={styles.fileSize}>
+                      ({formatFileSize(attachment.fileSize)})
+                    </span>
                   </div>
-                )}
+
+                  {/* Office-Warnung - nur im Edit-Modus */}
+                  {!isPreview && isOfficeFile(attachment.fileType) && (
+                    <div className={styles.officeWarning}>
+                      <AlertTriangle size={14} />
+                      <span>Separate Datei</span>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Entfernen-Button */}
+              {/* Entfernen-Button - nur im Edit-Modus */}
               {!isPreview && (
                 <button
                   className={styles.removeButton}
