@@ -347,10 +347,23 @@ router.post("/test", async (req, res) => {
     });
 
     const unsubscribeUrl = generateUnsubscribeUrl(email, "calendar");
-    // TEMPORÄR DEAKTIVIERT zum Testen - prüfen ob Headers das Spam-Problem verursachen
-    // const unsubHeaders = getUnsubscribeHeaders(email, "calendar");
-    const unsubHeaders = {}; // Leere Headers zum Testen
+    const unsubHeaders = {};
     const results = [];
+
+    // ========== TYP 0: MINIMAL TEST (Plain Text) ==========
+    if (type === "minimal") {
+      await transporter.sendMail({
+        from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
+        to: email,
+        subject: "Erinnerung: Vertragsfrist",
+        text: "Hallo,\n\ndies ist eine Erinnerung an eine bevorstehende Vertragsfrist.\n\nMit freundlichen Gruessen\nContract AI"
+      });
+      return res.json({
+        success: true,
+        message: "Minimal-Test gesendet (Plain Text)",
+        types: ["minimal"]
+      });
+    }
 
     // ========== TYP 1: Kalender-Benachrichtigung (Kuendigungsfrist) ==========
     if (type === "calendar" || type === "all") {
