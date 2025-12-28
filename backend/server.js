@@ -34,6 +34,7 @@ const createCheckSubscription = require("./middleware/checkSubscription");
 // ✅ CALENDAR INTEGRATION IMPORTS
 const { onContractChange } = require("./services/calendarEvents");
 const { checkAndSendNotifications, processEmailQueue } = require("./services/calendarNotifier");
+const { processDigests } = require("./services/calendarDigestService");
 
 // 🔄 CRON JOBS - Monatlicher analysisCount Reset
 require("./cron/resetAnalysisCount");
@@ -432,6 +433,15 @@ const connectDB = async () => {
       console.log("✅ E-Mail-Verifizierungs-Routen geladen unter /api/email-verification");
     } catch (err) {
       console.error("❌ Fehler beim Laden der E-Mail-Verifizierungs-Routen:", err);
+    }
+
+    // ✅ 2.6 E-MAIL MANAGEMENT ROUTES (Unsubscribe, Bounce-Handling)
+    try {
+      const emailRoutes = require("./routes/email");
+      app.use("/api/email", emailRoutes);
+      console.log("📧 E-Mail-Management-Routen geladen unter /api/email");
+    } catch (err) {
+      console.error("❌ Fehler beim Laden der E-Mail-Routen:", err);
     }
 
     // ✅ 2.5 ADMIN ROUTES - 🔐 Admin Statistics & Monitoring
@@ -1516,6 +1526,18 @@ const connectDB = async () => {
           console.log(`✅ Notification Queue abgeschlossen:`, result);
         } catch (error) {
           console.error("❌ Notification Queue Cron Error:", error);
+        }
+      });
+
+      // 📬 NEU: Digest-E-Mails (täglich um 7 Uhr morgens)
+      // Sammelt alle Events eines Users und sendet EINE zusammenfassende E-Mail
+      cron.schedule("0 7 * * *", async () => {
+        console.log("📬 Starte Digest-E-Mail Verarbeitung...");
+        try {
+          const stats = await processDigests(db);
+          console.log(`📬 Digest-Verarbeitung: ${stats.users} User, ${stats.events} Events, ${stats.errors} Fehler`);
+        } catch (error) {
+          console.error("❌ Digest Cron Error:", error);
         }
       });
 

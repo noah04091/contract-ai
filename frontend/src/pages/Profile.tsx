@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
-import { User, Key, CreditCard, Trash2, AlertCircle, CheckCircle, LogOut, FileText, Download, MessageSquare, Users, Link2 } from "lucide-react";
+import { User, Key, CreditCard, Trash2, AlertCircle, CheckCircle, LogOut, FileText, Download, MessageSquare, Users, Link2, Mail } from "lucide-react";
 import styles from "../styles/Profile.module.css";
 import { useAuth } from "../hooks/useAuth";;
 
@@ -56,6 +56,11 @@ export default function Profile() {
     return saved === null ? true : saved === 'true';
   });
 
+  // E-Mail-Präferenzen State
+  const [emailDigestMode, setEmailDigestMode] = useState<'instant' | 'daily' | 'weekly'>('instant');
+  const [isEmailPrefsLoading, setIsEmailPrefsLoading] = useState(false);
+  const [isPremiumOrHigher, setIsPremiumOrHigher] = useState(false);
+
   useEffect(() => {
     if (user) {
       const fetchInvoices = async () => {
@@ -85,8 +90,59 @@ export default function Profile() {
       };
       
       fetchInvoices();
+
+      // Fetch email preferences
+      const fetchEmailPrefs = async () => {
+        try {
+          const res = await fetch('/api/calendar/email-preferences', {
+            credentials: 'include',
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setEmailDigestMode(data.emailDigestMode || 'instant');
+            setIsPremiumOrHigher(data.isPremiumOrHigher || false);
+          }
+        } catch (error) {
+          console.error("Fehler beim Laden der E-Mail-Einstellungen:", error);
+        }
+      };
+      fetchEmailPrefs();
     }
   }, [user]);
+
+  const handleEmailPrefsChange = async (mode: 'instant' | 'daily' | 'weekly') => {
+    setIsEmailPrefsLoading(true);
+    try {
+      const res = await fetch('/api/calendar/email-preferences', {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emailDigestMode: mode })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setEmailDigestMode(mode);
+        setNotification({
+          message: data.message || "E-Mail-Einstellungen gespeichert",
+          type: "success"
+        });
+      } else {
+        setNotification({
+          message: data.error || "Fehler beim Speichern",
+          type: "error"
+        });
+      }
+    } catch {
+      setNotification({
+        message: "Fehler beim Speichern der E-Mail-Einstellungen",
+        type: "error"
+      });
+    } finally {
+      setIsEmailPrefsLoading(false);
+    }
+  };
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
@@ -561,6 +617,42 @@ export default function Profile() {
                     />
                     <span className={styles.toggleSlider}></span>
                   </label>
+                </div>
+              </motion.div>
+
+              {/* E-Mail Benachrichtigungen Section */}
+              <motion.div
+                className={styles.section}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.58 }}
+              >
+                <div className={styles.sectionHeader}>
+                  <Mail size={18} className={styles.sectionIcon} />
+                  <h2 className={styles.sectionTitle}>E-Mail Benachrichtigungen</h2>
+                </div>
+
+                <div className={styles.settingRow}>
+                  <div className={styles.settingInfo}>
+                    <h3 className={styles.settingLabel}>Kalender-Erinnerungen</h3>
+                    <p className={styles.settingDescription}>
+                      Wähle, wie du E-Mail-Erinnerungen erhalten möchtest
+                    </p>
+                  </div>
+                  <select
+                    className={styles.emailPrefsDropdown}
+                    value={emailDigestMode}
+                    onChange={(e) => handleEmailPrefsChange(e.target.value as 'instant' | 'daily' | 'weekly')}
+                    disabled={isEmailPrefsLoading}
+                  >
+                    <option value="instant">⚡ Sofort (einzeln)</option>
+                    <option value="daily" disabled={!isPremiumOrHigher}>
+                      📅 Täglich (7 Uhr){!isPremiumOrHigher ? ' 🔒' : ''}
+                    </option>
+                    <option value="weekly" disabled={!isPremiumOrHigher}>
+                      📆 Wöchentlich{!isPremiumOrHigher ? ' 🔒' : ''}
+                    </option>
+                  </select>
                 </div>
               </motion.div>
 

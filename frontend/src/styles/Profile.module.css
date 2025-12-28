@@ -996,3 +996,38 @@
     font-size: 0.9rem;
   }
 }
+
+/* ======================================
+   E-Mail Präferenzen Styles
+   ====================================== */
+
+.emailPrefsDropdown {
+  padding: 10px 14px;
+  font-size: 14px;
+  border: 1px solid var(--apple-gray-200);
+  border-radius: 8px;
+  background: white;
+  color: var(--apple-gray-800);
+  cursor: pointer;
+  min-width: 180px;
+  transition: border-color 0.2s ease;
+}
+
+.emailPrefsDropdown:hover {
+  border-color: var(--apple-blue);
+}
+
+.emailPrefsDropdown:focus {
+  outline: none;
+  border-color: var(--apple-blue);
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.1);
+}
+
+.emailPrefsDropdown:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.emailPrefsDropdown option:disabled {
+  color: var(--apple-gray-300);
+}

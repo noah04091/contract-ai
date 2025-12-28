@@ -31,6 +31,7 @@ import AGB from "./pages/AGB";
 // 🔧 FIX: Direct import für ForgotPassword & ResetPassword - verhindert CSS-Preload-Fehler
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import Unsubscribe from "./pages/Unsubscribe"; // 📧 E-Mail-Abmeldung (DSGVO)
 
 // 🔓 Öffentliche Seiten - Lazy Loading
 const Register = lazy(() => import("./pages/Register"));
@@ -168,6 +169,7 @@ function AppWithLoader() {
             <Route path="/success" element={<Success />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/abmelden" element={<Unsubscribe />} /> {/* 📧 E-Mail-Abmeldung (DSGVO) */}
             <Route path="/impressum" element={<Impressum />} />
             <Route path="/datenschutz" element={<Datenschutz />} />
             <Route path="/agb" element={<AGB />} />

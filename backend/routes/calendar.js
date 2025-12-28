@@ -963,4 +963,109 @@ async function triggerCancellation(db, contractId, userId) {
   }
 }
 
+// ==============================================================================
+// E-MAIL PRÄFERENZEN
+// ==============================================================================
+
+// GET /api/calendar/email-preferences - Aktuelle E-Mail-Einstellungen abrufen
+router.get("/email-preferences", verifyToken, async (req, res) => {
+  try {
+    const userId = new ObjectId(req.user.userId);
+
+    const user = await req.db.collection("users").findOne(
+      { _id: userId },
+      { projection: { emailDigestMode: 1, subscriptionPlan: 1, subscriptionActive: 1 } }
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "Benutzer nicht gefunden"
+      });
+    }
+
+    // Digest-Modus ist für alle zahlenden User verfügbar (Premium, Business, Enterprise, Legendary)
+    const paidPlans = ["premium", "business", "enterprise", "legendary"];
+    const isPremiumOrHigher = user.subscriptionActive && paidPlans.includes(user.subscriptionPlan);
+
+    res.json({
+      success: true,
+      emailDigestMode: user.emailDigestMode || "instant", // instant, daily, weekly
+      isPremiumOrHigher,
+      availableModes: isPremiumOrHigher
+        ? ["instant", "daily", "weekly"]
+        : ["instant"]
+    });
+
+  } catch (error) {
+    console.error("❌ Error fetching email preferences:", error);
+    res.status(500).json({
+      success: false,
+      error: "Fehler beim Abrufen der E-Mail-Einstellungen"
+    });
+  }
+});
+
+// PUT /api/calendar/email-preferences - E-Mail-Einstellungen aktualisieren
+router.put("/email-preferences", verifyToken, async (req, res) => {
+  try {
+    const userId = new ObjectId(req.user.userId);
+    const { emailDigestMode } = req.body;
+
+    // Validate mode
+    const validModes = ["instant", "daily", "weekly"];
+    if (!validModes.includes(emailDigestMode)) {
+      return res.status(400).json({
+        success: false,
+        error: "Ungültiger Modus. Erlaubt: instant, daily, weekly"
+      });
+    }
+
+    // Check subscription for digest modes
+    if (emailDigestMode !== "instant") {
+      const user = await req.db.collection("users").findOne(
+        { _id: userId },
+        { projection: { subscriptionPlan: 1 } }
+      );
+
+      if (!user || user.subscriptionPlan === "free") {
+        return res.status(403).json({
+          success: false,
+          error: "Digest-Modus erfordert ein Premium-Abo oder höher"
+        });
+      }
+    }
+
+    // Update user preferences
+    await req.db.collection("users").updateOne(
+      { _id: userId },
+      {
+        $set: {
+          emailDigestMode,
+          emailPreferencesUpdatedAt: new Date()
+        }
+      }
+    );
+
+    console.log(`📧 E-Mail-Präferenz aktualisiert: User ${userId} -> ${emailDigestMode}`);
+
+    res.json({
+      success: true,
+      emailDigestMode,
+      message: emailDigestMode === "instant"
+        ? "Du erhältst jetzt E-Mails sofort bei jedem Event."
+        : emailDigestMode === "daily"
+        ? "Du erhältst jetzt eine tägliche Zusammenfassung um 7 Uhr."
+        : "Du erhältst jetzt eine wöchentliche Zusammenfassung."
+    });
+
+  } catch (error) {
+    console.error("❌ Error updating email preferences:", error);
+    res.status(500).json({
+      success: false,
+      error: "Fehler beim Aktualisieren der E-Mail-Einstellungen"
+    });
+  }
+});
+
 module.exports = router;

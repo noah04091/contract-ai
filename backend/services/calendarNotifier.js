@@ -68,6 +68,13 @@ async function checkAndSendNotifications(db) {
         continue;
       }
 
+      // Skip users with digest mode - they get a combined email instead
+      const digestMode = event.user?.emailDigestMode;
+      if (digestMode === "daily" || digestMode === "weekly") {
+        // These users are handled by calendarDigestService
+        continue;
+      }
+
       try {
         // Fuege E-Mail zur Queue hinzu (mit Retry-Mechanismus)
         await queueEventNotification(event, db);
@@ -191,7 +198,7 @@ async function queueEventNotification(event, db) {
     content: emailContent,
     ctaButtons: ctaButtons,
     quickActions: generateQuickActionLinks(event, actionToken, baseUrl),
-    unsubscribeUrl: `${baseUrl}/settings/notifications?token=${event.user._id}`
+    recipientEmail: event.user.email  // Fuer personalisierte Unsubscribe-Links
   });
 
   // Zur Queue hinzufuegen (mit Retry-Mechanismus)
@@ -301,7 +308,7 @@ function generateQuickActionLinks(event, token, baseUrl) {
 }
 
 function generateCalendarEmailTemplate(params) {
-  const { title, preheader, eventType, severity, content, ctaButtons, quickActions, unsubscribeUrl } = params;
+  const { title, preheader, eventType, severity, content, ctaButtons, quickActions, recipientEmail } = params;
   const severityColors = { info: "#3b82f6", warning: "#ff9500", critical: "#ff3b30" };
   const primaryColor = severityColors[severity] || "#3b82f6";
 
@@ -339,7 +346,8 @@ function generateCalendarEmailTemplate(params) {
         <div style="margin: 15px 0;">${quickActionsHtml}</div>
       </div>
     `,
-    unsubscribeUrl: unsubscribeUrl
+    recipientEmail: recipientEmail,
+    emailCategory: 'calendar'
   });
 }
 

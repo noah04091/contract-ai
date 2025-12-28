@@ -1,15 +1,30 @@
 // 📁 backend/utils/emailTemplate.js
-// ✅ V4 Design - Clean, Modern, Professional
+// ✅ V5 Design - Clean, Modern, Professional + DSGVO-konformer Unsubscribe
 
 const logoUrl = 'https://www.contract-ai.de/logo.png';
+
+// Import Unsubscribe-Service (optional, fuer dynamische URLs)
+let generateUnsubscribeUrl;
+try {
+  const unsubService = require('../services/emailUnsubscribeService');
+  generateUnsubscribeUrl = unsubService.generateUnsubscribeUrl;
+} catch (e) {
+  // Fallback wenn Service nicht verfuegbar
+  generateUnsubscribeUrl = () => 'https://www.contract-ai.de/abmelden';
+}
 
 function generateEmailTemplate({
   title,
   body,
   preheader = '',
   cta = null,
-  unsubscribeUrl = 'https://www.contract-ai.de/abmelden'
+  recipientEmail = null,
+  emailCategory = 'calendar',
+  unsubscribeUrl = null
 }) {
+  // Generiere dynamische Unsubscribe-URL wenn E-Mail bekannt
+  const actualUnsubscribeUrl = unsubscribeUrl ||
+    (recipientEmail ? generateUnsubscribeUrl(recipientEmail, emailCategory) : 'https://www.contract-ai.de/abmelden');
 
   const ctaHtml = cta ? `
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
@@ -88,12 +103,17 @@ function generateEmailTemplate({
               <p style="margin: 0 0 8px 0; font-size: 13px; color: #999999;">
                 © ${new Date().getFullYear()} Contract AI. Alle Rechte vorbehalten.
               </p>
-              <p style="margin: 0; font-size: 12px;">
+              <p style="margin: 0 0 12px 0; font-size: 12px;">
                 <a href="https://www.contract-ai.de/datenschutz" style="color: #888888; text-decoration: none;">Datenschutz</a>
                 <span style="color: #cccccc; margin: 0 8px;">|</span>
                 <a href="https://www.contract-ai.de/impressum" style="color: #888888; text-decoration: none;">Impressum</a>
                 <span style="color: #cccccc; margin: 0 8px;">|</span>
                 <a href="https://www.contract-ai.de/agb" style="color: #888888; text-decoration: none;">AGB</a>
+              </p>
+              <!-- DSGVO-konformer Unsubscribe Link -->
+              <p style="margin: 0; padding-top: 12px; border-top: 1px solid #e8e8e8; font-size: 11px; color: #aaaaaa;">
+                ${recipientEmail ? 'Diese E-Mail wurde an <strong>' + recipientEmail + '</strong> gesendet.<br>' : ''}
+                <a href="${actualUnsubscribeUrl}" style="color: #888888; text-decoration: underline;">Von E-Mail-Benachrichtigungen abmelden</a>
               </p>
             </td>
           </tr>

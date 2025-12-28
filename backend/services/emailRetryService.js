@@ -2,6 +2,8 @@
 // Robuster E-Mail-Versand mit Retry-Mechanismus und exponential Backoff
 
 const nodemailer = require("nodemailer");
+const { analyzeBounce, recordBounce, isEmailActive } = require("./emailBounceService");
+const { isUnsubscribed, getUnsubscribeHeaders, EMAIL_CATEGORIES } = require("./emailUnsubscribeService");
 
 /**
  * Konfiguration für Retry-Mechanismus
@@ -100,6 +102,27 @@ async function processEmailQueue(db) {
   for (const email of pendingEmails) {
     stats.processed++;
 
+    // PRE-SEND CHECKS: Bounce-Status und Unsubscribe pruefen
+    const emailActive = await isEmailActive(db, email.to);
+    if (!emailActive) {
+      console.log(`⏩ Ueberspringe inaktive E-Mail (Bounce): ${email.to}`);
+      await db.collection("email_queue").updateOne(
+        { _id: email._id },
+        { $set: { status: "skipped", skipReason: "email_inactive_bounce", skippedAt: new Date() } }
+      );
+      continue;
+    }
+
+    const unsubscribed = await isUnsubscribed(db, email.to, email.emailType === "calendar_notification" ? EMAIL_CATEGORIES.CALENDAR : EMAIL_CATEGORIES.ALL);
+    if (unsubscribed) {
+      console.log(`⏩ Ueberspringe abgemeldete E-Mail: ${email.to}`);
+      await db.collection("email_queue").updateOne(
+        { _id: email._id },
+        { $set: { status: "skipped", skipReason: "unsubscribed", skippedAt: new Date() } }
+      );
+      continue;
+    }
+
     // Markiere als "processing" um Duplikate zu vermeiden
     await db.collection("email_queue").updateOne(
       { _id: email._id },
@@ -107,12 +130,16 @@ async function processEmailQueue(db) {
     );
 
     try {
-      // Versende E-Mail
+      // Hole Unsubscribe-Headers fuer RFC 8058 Compliance
+      const unsubHeaders = getUnsubscribeHeaders(email.to, EMAIL_CATEGORIES.CALENDAR);
+
+      // Versende E-Mail mit Unsubscribe-Headers
       await transporter.sendMail({
         from: email.from,
         to: email.to,
         subject: email.subject,
-        html: email.html
+        html: email.html,
+        headers: unsubHeaders
       });
 
       // Erfolg! Markiere als gesendet
@@ -138,13 +165,41 @@ async function processEmailQueue(db) {
     } catch (error) {
       console.error(`❌ E-Mail-Versand fehlgeschlagen: ${email.subject}`, error.message);
 
+      // BOUNCE-ANALYSE: Bestimme Bounce-Typ und speichere
+      const bounceInfo = analyzeBounce(error);
+      await recordBounce(db, email.to, bounceInfo, {
+        subject: email.subject,
+        emailType: email.emailType,
+        userId: email.userId
+      });
+
       const newRetryCount = email.retryCount + 1;
       const errorInfo = {
         attempt: newRetryCount,
         timestamp: new Date(),
         message: error.message,
-        code: error.code || "UNKNOWN"
+        code: error.code || "UNKNOWN",
+        bounceType: bounceInfo.type
       };
+
+      // Bei Hard Bounce: Sofort als failed markieren (kein Retry)
+      if (bounceInfo.isHard || bounceInfo.isSpam) {
+        console.log(`🚫 Hard Bounce erkannt - kein Retry: ${email.to}`);
+        await db.collection("email_queue").updateOne(
+          { _id: email._id },
+          {
+            $set: {
+              status: "failed",
+              failedAt: new Date(),
+              lastError: error.message,
+              bounceType: bounceInfo.type
+            },
+            $push: { errors: errorInfo }
+          }
+        );
+        stats.failed++;
+        continue;
+      }
 
       if (newRetryCount >= RETRY_CONFIG.maxRetries) {
         // Maximale Versuche erreicht - als "failed" markieren
