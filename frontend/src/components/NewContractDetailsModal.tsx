@@ -218,10 +218,50 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   const [originalPdfUrl, setOriginalPdfUrl] = useState<string | null>(null);
   const [signedPdfUrl, setSignedPdfUrl] = useState<string | null>(null);
 
+  // 🔔 Kalendererinnerungen für diesen Vertrag
+  const [calendarEvents, setCalendarEvents] = useState<Array<{
+    _id: string;
+    title: string;
+    date: string;
+    type: string;
+    severity: 'info' | 'warning' | 'critical';
+    isManual?: boolean;
+  }>>([]);
+  const [loadingEvents, setLoadingEvents] = useState(false);
+
   // Update contract when prop changes
   useEffect(() => {
     setContract(initialContract);
   }, [initialContract]);
+
+  // 🔔 Kalendererinnerungen für diesen Vertrag laden
+  useEffect(() => {
+    const fetchCalendarEvents = async () => {
+      if (!contract._id) return;
+      setLoadingEvents(true);
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/calendar/events?contractId=${contract._id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        console.log('📅 Calendar Events API Response Status:', res.status);
+        if (res.ok) {
+          const data = await res.json();
+          console.log('📅 Calendar Events für Vertrag:', data);
+          if (data.success && data.events) {
+            setCalendarEvents(data.events);
+          }
+        } else {
+          console.error('📅 Calendar Events API Error:', res.status, res.statusText);
+        }
+      } catch (err) {
+        console.error('Error fetching calendar events:', err);
+      } finally {
+        setLoadingEvents(false);
+      }
+    };
+    fetchCalendarEvents();
+  }, [contract._id]);
 
   // ✅ BUG FIX: Update showEditModal when openEditModalDirectly prop changes
   useEffect(() => {
@@ -615,6 +655,80 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
           />
         </div>
       )}
+
+      {/* 🔔 Kalendererinnerungen für diesen Vertrag */}
+      <div className={styles.section}>
+        <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+          <span style={{ fontSize: '1.2rem' }}>🔔</span> Kalendererinnerungen
+        </h3>
+        {loadingEvents ? (
+          <p style={{ color: '#666', fontStyle: 'italic' }}>Lade Erinnerungen...</p>
+        ) : calendarEvents.length === 0 ? (
+          <p style={{ color: '#888', fontSize: '0.9rem' }}>
+            Keine Kalendererinnerungen für diesen Vertrag vorhanden.
+            <br />
+            <span style={{ fontSize: '0.85rem', color: '#aaa' }}>
+              Erstelle im Kalender ein Ereignis und verknüpfe es mit diesem Vertrag.
+            </span>
+          </p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {calendarEvents.map((event) => {
+              const eventDate = new Date(event.date);
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              const daysUntil = Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+              const isPast = daysUntil < 0;
+
+              const severityColors = {
+                critical: { bg: '#fee2e2', border: '#ef4444', text: '#b91c1c' },
+                warning: { bg: '#fef3c7', border: '#f59e0b', text: '#b45309' },
+                info: { bg: '#e0e7ff', border: '#4f46e5', text: '#4338ca' }
+              };
+              const colors = severityColors[event.severity] || severityColors.info;
+
+              return (
+                <div
+                  key={event._id}
+                  style={{
+                    padding: '0.75rem 1rem',
+                    borderRadius: '8px',
+                    backgroundColor: colors.bg,
+                    borderLeft: `4px solid ${colors.border}`,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    opacity: isPast ? 0.6 : 1
+                  }}
+                >
+                  <div>
+                    <div style={{ fontWeight: 500, color: colors.text }}>{event.title}</div>
+                    <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.25rem' }}>
+                      {eventDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                      {' • '}
+                      {isPast ? `vor ${Math.abs(daysUntil)} Tagen` : daysUntil === 0 ? 'Heute' : daysUntil === 1 ? 'Morgen' : `in ${daysUntil} Tagen`}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => window.location.href = '/calendar'}
+                    style={{
+                      padding: '0.4rem 0.8rem',
+                      fontSize: '0.8rem',
+                      background: 'white',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '6px',
+                      color: colors.text,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Zum Kalender
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       {/* 📊 QuickFacts - Dynamische Eckdaten */}
       {contract.quickFacts && contract.quickFacts.length > 0 && (
