@@ -683,7 +683,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
               const severityColors = {
                 critical: { bg: '#fee2e2', border: '#ef4444', text: '#b91c1c' },
                 warning: { bg: '#fef3c7', border: '#f59e0b', text: '#b45309' },
-                info: { bg: '#e0e7ff', border: '#4f46e5', text: '#4338ca' }
+                info: { bg: '#e0f2fe', border: '#4f46e5', text: '#1e40af' }  // Firmenblau
               };
               const colors = severityColors[event.severity] || severityColors.info;
 
