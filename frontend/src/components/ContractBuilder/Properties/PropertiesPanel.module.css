@@ -6,6 +6,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  max-height: calc(100vh - 56px); /* TopBar-Höhe abziehen */
   background: white;
   border-left: 1px solid #e2e8f0;
   width: 280px;
