@@ -332,9 +332,9 @@ router.post("/test", async (req, res) => {
       });
     }
 
-    const { queueEmail } = require("../services/emailRetryService");
+    const nodemailer = require("nodemailer");
     const generateEmailTemplate = require("../utils/emailTemplate");
-    const { generateUnsubscribeUrl } = require("../services/emailUnsubscribeService");
+    const { generateUnsubscribeUrl, getUnsubscribeHeaders } = require("../services/emailUnsubscribeService");
 
     // Generiere echten Unsubscribe-Link
     const unsubscribeUrl = generateUnsubscribeUrl(email, "calendar");
@@ -380,18 +380,31 @@ router.post("/test", async (req, res) => {
       emailCategory: "calendar"
     });
 
-    // E-Mail in Queue einfuegen
-    await queueEmail(req.db, {
+    // DIREKT senden (nicht queueen) fuer sofortiges Testen
+    const transporter = nodemailer.createTransport({
+      host: process.env.EMAIL_HOST,
+      port: parseInt(process.env.EMAIL_PORT) || 587,
+      secure: false,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
+    // Hole Unsubscribe-Headers
+    const unsubHeaders = getUnsubscribeHeaders(email, "calendar");
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_FROM || "Contract AI <noreply@contract-ai.de>",
       to: email,
       subject: "🧪 Contract AI - Test der neuen E-Mail-Features",
       html: html,
-      emailType: "test",
-      priority: 10 // Hohe Prioritaet fuer sofortigen Versand
+      headers: unsubHeaders
     });
 
     res.json({
       success: true,
-      message: `Test-E-Mail wurde an ${email} in die Queue gestellt`,
+      message: `Test-E-Mail wurde DIREKT an ${email} gesendet`,
       unsubscribeUrl: unsubscribeUrl
     });
 
