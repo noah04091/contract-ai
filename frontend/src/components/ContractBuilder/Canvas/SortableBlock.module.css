@@ -154,6 +154,59 @@
   background: #fffaf0;
 }
 
+/* Separator */
+.separator {
+  width: 1px;
+  height: 16px;
+  background: #e2e8f0;
+  margin: 0 4px;
+}
+
+/* Quick Actions */
+.quickActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #718096;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.actionButton:hover {
+  background: #edf2f7;
+  border-color: #e2e8f0;
+  color: #4a5568;
+}
+
+.actionButton.active {
+  background: #fffaf0;
+  border-color: #fbd38d;
+  color: #dd6b20;
+}
+
+.actionButton.deleteButton:hover:not(:disabled) {
+  background: #fed7d7;
+  border-color: #fc8181;
+  color: #c53030;
+}
+
+.actionButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 /* Risk Indicator */
 .riskIndicator {
   position: absolute;
@@ -218,5 +271,18 @@
 
   .blockContent {
     padding: 8px;
+  }
+
+  .actionButton {
+    width: 22px;
+    height: 22px;
+  }
+
+  .separator {
+    margin: 0 2px;
+  }
+
+  .statusIcons {
+    display: none; /* Status-Icons auf Mobile ausblenden */
   }
 }

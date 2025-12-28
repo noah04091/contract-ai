@@ -5,9 +5,9 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Block } from '../../../stores/contractBuilderStore';
+import { Block, useContractBuilderStore } from '../../../stores/contractBuilderStore';
 import { BlockRenderer } from '../Blocks/BlockRenderer';
-import { GripVertical, Lock, Sparkles, AlertTriangle } from 'lucide-react';
+import { GripVertical, Lock, Unlock, Sparkles, AlertTriangle, Copy, Trash2 } from 'lucide-react';
 import styles from './SortableBlock.module.css';
 
 interface SortableBlockProps {
@@ -27,6 +27,9 @@ export const SortableBlock: React.FC<SortableBlockProps> = ({
   onClick,
   pageNumber = 1,
 }) => {
+  // Store Actions
+  const { deleteBlock, duplicateBlock, updateBlock } = useContractBuilderStore();
+
   const {
     attributes,
     listeners,
@@ -38,6 +41,24 @@ export const SortableBlock: React.FC<SortableBlockProps> = ({
     id: block.id,
     disabled: block.locked || isPreview,
   });
+
+  // Quick Actions
+  const handleDuplicate = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    duplicateBlock(block.id);
+  };
+
+  const handleToggleLock = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    updateBlock(block.id, { locked: !block.locked });
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm('Block wirklich löschen?')) {
+      deleteBlock(block.id);
+    }
+  };
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -115,6 +136,35 @@ export const SortableBlock: React.FC<SortableBlockProps> = ({
                 <AlertTriangle size={12} />
               </span>
             )}
+          </div>
+
+          {/* Separator */}
+          <div className={styles.separator} />
+
+          {/* Quick Actions */}
+          <div className={styles.quickActions}>
+            <button
+              className={styles.actionButton}
+              onClick={handleDuplicate}
+              title="Duplizieren"
+            >
+              <Copy size={14} />
+            </button>
+            <button
+              className={`${styles.actionButton} ${block.locked ? styles.active : ''}`}
+              onClick={handleToggleLock}
+              title={block.locked ? 'Entsperren' : 'Sperren'}
+            >
+              {block.locked ? <Lock size={14} /> : <Unlock size={14} />}
+            </button>
+            <button
+              className={`${styles.actionButton} ${styles.deleteButton}`}
+              onClick={handleDelete}
+              title="Löschen"
+              disabled={block.locked}
+            >
+              <Trash2 size={14} />
+            </button>
           </div>
         </div>
       )}

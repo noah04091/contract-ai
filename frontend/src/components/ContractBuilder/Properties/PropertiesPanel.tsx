@@ -899,6 +899,43 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
       );
     }
 
+    case 'numbered-list': {
+      const listContent = content as {
+        title?: string;
+        items?: string[];
+        listStyle?: 'decimal' | 'alpha' | 'roman';
+      };
+      return (
+        <>
+          <div className={styles.field}>
+            <label className={styles.label}>Titel (optional)</label>
+            <input
+              type="text"
+              className={styles.input}
+              value={String(listContent.title || '')}
+              placeholder="z.B. Leistungsumfang"
+              onChange={(e) => onUpdate({ ...content, title: e.target.value })}
+            />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label}>Nummerierungsstil</label>
+            <select
+              className={styles.select}
+              value={listContent.listStyle || 'decimal'}
+              onChange={(e) => onUpdate({ ...content, listStyle: e.target.value })}
+            >
+              <option value="decimal">1, 2, 3...</option>
+              <option value="alpha">a, b, c...</option>
+              <option value="roman">i, ii, iii...</option>
+            </select>
+          </div>
+          <p className={styles.noContent}>
+            Listenelemente per Doppelklick direkt im Block bearbeiten.
+          </p>
+        </>
+      );
+    }
+
     case 'page-break':
     case 'table':
     case 'date-field':

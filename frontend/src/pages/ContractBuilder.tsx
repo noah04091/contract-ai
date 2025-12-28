@@ -179,7 +179,6 @@ const ContractBuilder: React.FC = () => {
   // Automatisch zum Variables-Panel wechseln wenn eine Variable ausgewählt wird
   useEffect(() => {
     if (selectedVariableId) {
-      console.log('[ContractBuilder] Variable ausgewählt:', selectedVariableId, '→ Wechsle zu Variables-Panel');
       setRightPanel('variables');
     }
   }, [selectedVariableId]);
@@ -208,7 +207,6 @@ const ContractBuilder: React.FC = () => {
     }
 
     legalScoreTimerRef.current = setTimeout(() => {
-      console.log('[ContractBuilder] Auto-Calculate Legal Score (nach Änderung)');
       calculateLegalScore();
     }, 5000);
 
@@ -367,8 +365,6 @@ const ContractBuilder: React.FC = () => {
     try {
       const filename = `${currentDocument.metadata.name || 'Vertrag'}.pdf`;
 
-      console.log('[PDF Export] Starting - optimized export...');
-
       // Speichere aktuellen View-Modus und Zoom
       const previousView = view;
       const previousZoom = zoom;
@@ -396,8 +392,6 @@ const ContractBuilder: React.FC = () => {
           contentElements.push(el as HTMLElement);
         }
       });
-
-      console.log('[PDF Export] Found content sections:', contentElements.length);
 
       if (contentElements.length === 0) {
         throw new Error('Kein Inhalt gefunden');
@@ -435,11 +429,8 @@ const ContractBuilder: React.FC = () => {
 
         // Überspringe leere Inhalte
         if (content.children.length === 0) {
-          console.log(`[PDF Export] Skipping empty section ${i + 1}`);
           continue;
         }
-
-        console.log(`[PDF Export] Capturing section ${i + 1}/${contentElements.length}...`);
 
         // WICHTIG: Element in den sichtbaren Bereich scrollen
         content.scrollIntoView({ behavior: 'instant', block: 'start' });
@@ -618,8 +609,6 @@ const ContractBuilder: React.FC = () => {
       });
 
       if (allAttachments.length > 0) {
-        console.log('[PDF Export] Found', allAttachments.length, 'attachment(s) to merge');
-
         // Kategorisiere Anlagen
         const pdfAttachments = allAttachments.filter(
           att => att.fileType === 'application/pdf'
@@ -646,7 +635,6 @@ const ContractBuilder: React.FC = () => {
         const mainDoc = await PDFDocument.load(mainPdfBytes);
         const mainPages = await mergedPdf.copyPages(mainDoc, mainDoc.getPageIndices());
         mainPages.forEach(page => mergedPdf.addPage(page));
-        console.log('[PDF Export] Added', mainPages.length, 'main contract page(s)');
 
         // 2. PDF-Anlagen anhängen
         for (const attachment of pdfAttachments) {
@@ -663,7 +651,6 @@ const ContractBuilder: React.FC = () => {
             const attachmentDoc = await PDFDocument.load(bytes);
             const attachmentPages = await mergedPdf.copyPages(attachmentDoc, attachmentDoc.getPageIndices());
             attachmentPages.forEach(page => mergedPdf.addPage(page));
-            console.log('[PDF Export] Attached PDF:', attachment.fileName);
           } catch (err) {
             console.error('[PDF Export] Failed to attach PDF:', attachment.fileName, err);
           }
@@ -704,7 +691,6 @@ const ContractBuilder: React.FC = () => {
               width: scaledWidth,
               height: scaledHeight,
             });
-            console.log('[PDF Export] Attached image:', attachment.fileName);
           } catch (err) {
             console.error('[PDF Export] Failed to attach image:', attachment.fileName, err);
           }
@@ -715,8 +701,6 @@ const ContractBuilder: React.FC = () => {
 
         // 5. Download - entweder PDF oder ZIP (wenn Office-Dateien vorhanden)
         if (officeAttachments.length > 0) {
-          console.log('[PDF Export] Creating ZIP with', officeAttachments.length, 'Office file(s)');
-
           const zip = new JSZip();
           const contractName = currentDocument.metadata.name || 'Vertrag';
 
@@ -741,7 +725,6 @@ const ContractBuilder: React.FC = () => {
           a.download = `${contractName}_mit_Anlagen.zip`;
           a.click();
           URL.revokeObjectURL(url);
-          console.log('[PDF Export] ZIP download complete');
         } else {
           // Nur PDF download
           const blob = new Blob([finalPdfBytes], { type: 'application/pdf' });
@@ -751,14 +734,11 @@ const ContractBuilder: React.FC = () => {
           a.download = filename;
           a.click();
           URL.revokeObjectURL(url);
-          console.log('[PDF Export] PDF with attachments download complete');
         }
       } else {
         // Keine Anlagen - normaler PDF-Export
         pdf.save(filename);
       }
-
-      console.log('[PDF Export] Success!');
 
     } catch (error) {
       console.error('[PDF Export] Failed:', error);
@@ -912,14 +892,6 @@ const ContractBuilder: React.FC = () => {
       addBlock(generatedClause);
       setShowAiClauseModal(false);
       setAiClausePrompt('');
-
-      // Optional: Vorgeschlagene Variablen könnten hier zum Dokument hinzugefügt werden
-      console.log('[ContractBuilder] KI-Klausel generiert:', {
-        title: generatedClause.content.clauseTitle,
-        legalBasis: result.legalBasis,
-        riskLevel: result.riskLevel,
-        suggestedVariables: result.suggestedVariables,
-      });
     } catch (error) {
       clearTimeout(timeoutId);
       console.error('Fehler bei KI-Generierung:', error);
