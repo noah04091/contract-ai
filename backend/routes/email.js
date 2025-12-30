@@ -397,6 +397,94 @@ router.post("/test", async (req, res) => {
       });
     }
 
+    // ========== TYP: CLEAN - Professionell aber Spam-sicher ==========
+    if (type === "clean") {
+      const cleanHtml = `
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px;">
+
+          <!-- Header -->
+          <tr>
+            <td style="padding: 30px 40px; border-bottom: 1px solid #eee;">
+              <span style="font-size: 20px; font-weight: 600; color: #333;">Contract AI</span>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px;">
+              <h1 style="margin: 0 0 20px 0; font-size: 22px; color: #333; font-weight: 600;">
+                Kuendigungsfrist in 14 Tagen
+              </h1>
+
+              <p style="margin: 0 0 20px 0; font-size: 15px; line-height: 1.6; color: #555;">
+                Hallo,
+              </p>
+
+              <p style="margin: 0 0 20px 0; font-size: 15px; line-height: 1.6; color: #555;">
+                dein Vertrag <strong style="color: #333;">Telekom Mobilfunk</strong> kann bald gekuendigt werden.
+              </p>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8f9fa; border-radius: 6px; margin: 25px 0;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 8px 0; font-size: 14px; color: #666;">Kuendigungsfrist</p>
+                    <p style="margin: 0 0 15px 0; font-size: 16px; color: #333; font-weight: 500;">3 Monate zum Vertragsende</p>
+                    <p style="margin: 0 0 8px 0; font-size: 14px; color: #666;">Vertragsende</p>
+                    <p style="margin: 0; font-size: 16px; color: #333; font-weight: 500;">31. Maerz 2025</p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0 0 25px 0; font-size: 15px; line-height: 1.6; color: #555;">
+                Wenn du nicht kuendigst, verlaengert sich der Vertrag automatisch um weitere 12 Monate.
+              </p>
+
+              <a href="https://www.contract-ai.de/contracts" style="display: inline-block; padding: 12px 28px; background-color: #3B82F6; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 15px; font-weight: 500;">
+                Vertrag anzeigen
+              </a>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 25px 40px; background-color: #f8f9fa; border-top: 1px solid #eee; border-radius: 0 0 8px 8px;">
+              <p style="margin: 0; font-size: 13px; color: #888; text-align: center;">
+                Contract AI - Vertragsmanagement<br>
+                <a href="https://www.contract-ai.de" style="color: #3B82F6; text-decoration: none;">www.contract-ai.de</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+      await transporter.sendMail({
+        from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
+        to: email,
+        subject: "Erinnerung: Telekom Mobilfunk - Kuendigungsfrist in 14 Tagen",
+        html: cleanHtml
+      });
+      return res.json({
+        success: true,
+        message: "Clean Template Test gesendet",
+        types: ["clean"]
+      });
+    }
+
     // ========== TYP 1: Kalender-Benachrichtigung (Kuendigungsfrist) ==========
     if (type === "calendar" || type === "all") {
       const calendarHtml = generateEmailTemplate({
