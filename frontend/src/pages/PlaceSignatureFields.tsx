@@ -184,8 +184,8 @@ export default function PlaceSignatureFields() {
         alert(`✅ Signaturanfrage erfolgreich versendet!\n\nE-Mail-Einladungen wurden gesendet an:\n${envelope.signers.map(s => `- ${s.name} (${s.email})`).join('\n')}`);
       }
 
-      // Navigate back to contracts or envelopes dashboard
-      navigate('/contracts');
+      // Navigate back to envelopes dashboard
+      navigate('/envelopes');
     } catch (err) {
       console.error('❌ Error saving fields:', err);
       const errorMessage = err instanceof Error ? err.message : 'Unbekannter Fehler';
@@ -216,10 +216,10 @@ export default function PlaceSignatureFields() {
           <p>{error || 'Envelope nicht gefunden'}</p>
           <button
             className={styles.backButton}
-            onClick={() => navigate('/contracts')}
+            onClick={() => navigate('/envelopes')}
           >
             <ArrowLeft size={16} />
-            Zurück zu Verträgen
+            Zurück zu Signaturen
           </button>
         </div>
       </div>
@@ -232,8 +232,8 @@ export default function PlaceSignatureFields() {
       <div className={styles.header}>
         <button
           className={styles.backButton}
-          onClick={() => navigate('/contracts')}
-          title="Zurück"
+          onClick={() => navigate('/envelopes')}
+          title="Zurück zu Signaturen"
         >
           <ArrowLeft size={18} />
           <span>Zurück</span>
