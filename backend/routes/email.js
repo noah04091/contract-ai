@@ -1007,29 +1007,32 @@ router.post("/test", async (req, res) => {
       });
     }
 
-    // ========== TYP: V10 - Test der neuen generateEmailTemplate() ==========
-    // Testet ob V10 (ohne Template-Literals) funktioniert
-    if (type === "v10") {
-      var v10Html = generateEmailTemplate({
-        title: 'V10 Template Test',
-        body: '<p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 16px;">Dies ist ein Test der V10 generateEmailTemplate() Funktion.</p><p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 16px;">V10 verwendet KEINE Template-Literals (Backticks) sondern nur String-Concatenation.</p><p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 16px;">Wenn diese E-Mail im Postfach landet (nicht Spam), funktioniert V10!</p>',
-        badge: 'V10 Test',
+    // ========== TYP: V11 - Test generateEmailTemplate() mit Template Literals ==========
+    if (type === "v11") {
+      const v11Html = generateEmailTemplate({
+        title: 'Kündigungsfrist in 14 Tagen',
+        body: `<p style="margin: 0 0 28px 0; font-size: 15px; color: #64748b;">Telekom Mobilfunk</p>
+              <p style="margin: 0 0 28px 0; font-size: 15px; line-height: 1.7; color: #334155;">
+                Hallo,<br><br>
+                dein Vertrag kann bald gekündigt werden. Dies ist ein Test der V11 generateEmailTemplate() Funktion.
+              </p>`,
+        badge: 'Erinnerung',
         cta: {
-          text: 'Zum Dashboard',
-          url: 'https://www.contract-ai.de/dashboard'
+          text: 'Vertrag anzeigen',
+          url: 'https://www.contract-ai.de/contracts'
         }
       });
 
       await transporter.sendMail({
         from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
         to: email,
-        subject: "V10 Template Test - generateEmailTemplate()",
-        html: v10Html
+        subject: "Erinnerung: Telekom Mobilfunk - Kuendigungsfrist in 14 Tagen",
+        html: v11Html
       });
       return res.json({
         success: true,
-        message: "V10 generateEmailTemplate() Test gesendet",
-        types: ["v10"]
+        message: "V11 generateEmailTemplate() Test gesendet",
+        types: ["v11"]
       });
     }
 
