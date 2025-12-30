@@ -543,7 +543,12 @@ router.post("/test", async (req, res) => {
         from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
         to: email,
         subject: "Erinnerung: Telekom Mobilfunk - Kündigungsfrist in 14 Tagen",
-        html: clean3Html
+        html: clean3Html,
+        encoding: 'utf-8',
+        textEncoding: 'quoted-printable',
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8'
+        }
       });
       return res.json({
         success: true,
