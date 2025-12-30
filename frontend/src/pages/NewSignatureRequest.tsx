@@ -19,34 +19,13 @@ import {
   Loader,
   PenTool,
   Send,
-  Shield,
-  FolderOpen,
-  X
+  Shield
 } from "lucide-react";
 import styles from "../styles/NewSignatureRequest.module.css";
 
 interface Signer {
   email: string;
   name: string;
-}
-
-interface TemplateField {
-  page: number;
-  nx: number;
-  ny: number;
-  nwidth: number;
-  nheight: number;
-  type: string;
-  assigneeRole: string;
-}
-
-interface Template {
-  _id: string;
-  name: string;
-  description?: string;
-  signerRoles: Array<{ role: string; label: string }>;
-  fields: TemplateField[];
-  createdAt: string;
 }
 
 type SignatureMode = "RECIPIENT_ONLY" | "BOTH_PARTIES";
@@ -75,12 +54,6 @@ export default function NewSignatureRequest() {
   const [signingMode, setSigningMode] = useState<SigningMode>("PARALLEL"); // Sequential or Parallel signing
   const [currentUser, setCurrentUser] = useState<{ name: string; email: string } | null>(null);
 
-  // Templates
-  const [templates, setTemplates] = useState<Template[]>([]);
-  const [showTemplateModal, setShowTemplateModal] = useState(false);
-  const [loadingTemplates, setLoadingTemplates] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
-
   // Load current user info
   useEffect(() => {
     const loadUserInfo = async () => {
@@ -108,58 +81,6 @@ export default function NewSignatureRequest() {
 
     loadUserInfo();
   }, []);
-
-  // Load templates
-  const loadTemplates = async () => {
-    setLoadingTemplates(true);
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("/api/envelope-templates", {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        credentials: "include"
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setTemplates(data.templates || []);
-      }
-    } catch (err) {
-      console.error("Failed to load templates:", err);
-    } finally {
-      setLoadingTemplates(false);
-    }
-  };
-
-  // Load templates when modal opens
-  useEffect(() => {
-    if (showTemplateModal && templates.length === 0) {
-      loadTemplates();
-    }
-  }, [showTemplateModal]);
-
-  // Apply template to current envelope
-  const applyTemplate = (template: Template) => {
-    setSelectedTemplate(template);
-
-    // Reset signers based on template roles
-    const newSigners: Signer[] = template.signerRoles.map(role => ({
-      email: "",
-      name: role.label || role.role
-    }));
-
-    // Only keep first signer as placeholder with role name
-    if (newSigners.length > 0) {
-      setSigners([]);
-    }
-
-    setShowTemplateModal(false);
-
-    // Show info about template
-    alert(`Vorlage "${template.name}" ausgewählt!\n\nBenötigte Unterzeichner:\n${template.signerRoles.map((r, i) => `${i + 1}. ${r.label || r.role}`).join("\n")}\n\nBitte fügen Sie die entsprechenden Unterzeichner hinzu.`);
-  };
 
   // Handle file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -384,14 +305,6 @@ export default function NewSignatureRequest() {
               </p>
             </div>
           </div>
-          <button
-            className={styles.templateButton}
-            onClick={() => setShowTemplateModal(true)}
-            title="Aus Vorlage laden"
-          >
-            <FolderOpen size={18} />
-            <span>Vorlage</span>
-          </button>
         </div>
 
         {/* Progress Steps */}
@@ -794,93 +707,6 @@ export default function NewSignatureRequest() {
           <Shield size={16} />
           <span>Ihre Dokumente werden sicher verschlüsselt übertragen</span>
         </div>
-
-        {/* Template Modal */}
-        <AnimatePresence>
-          {showTemplateModal && (
-            <motion.div
-              className={styles.modalOverlay}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowTemplateModal(false)}
-            >
-              <motion.div
-                className={styles.modalContent}
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className={styles.modalHeader}>
-                  <h2>
-                    <FolderOpen size={20} />
-                    Vorlage auswählen
-                  </h2>
-                  <button
-                    className={styles.modalCloseBtn}
-                    onClick={() => setShowTemplateModal(false)}
-                  >
-                    <X size={20} />
-                  </button>
-                </div>
-
-                <div className={styles.modalBody}>
-                  {loadingTemplates ? (
-                    <div className={styles.loadingState}>
-                      <Loader size={24} className={styles.spinner} />
-                      <p>Lade Vorlagen...</p>
-                    </div>
-                  ) : templates.length === 0 ? (
-                    <div className={styles.emptyState}>
-                      <FolderOpen size={48} />
-                      <p>Keine Vorlagen vorhanden</p>
-                      <span>Erstellen Sie Vorlagen, indem Sie beim Platzieren von Signaturfeldern auf "Als Vorlage speichern" klicken.</span>
-                    </div>
-                  ) : (
-                    <div className={styles.templateList}>
-                      {templates.map((template) => (
-                        <div
-                          key={template._id}
-                          className={styles.templateItem}
-                          onClick={() => applyTemplate(template)}
-                        >
-                          <div className={styles.templateIcon}>
-                            <FileText size={24} />
-                          </div>
-                          <div className={styles.templateInfo}>
-                            <h3>{template.name}</h3>
-                            {template.description && (
-                              <p className={styles.templateDesc}>{template.description}</p>
-                            )}
-                            <div className={styles.templateMeta}>
-                              <span>
-                                <Users size={14} />
-                                {template.signerRoles.length} Unterzeichner
-                              </span>
-                              <span>
-                                <PenTool size={14} />
-                                {template.fields.length} Felder
-                              </span>
-                            </div>
-                          </div>
-                          <ArrowRight size={18} className={styles.templateArrow} />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {selectedTemplate && (
-                  <div className={styles.selectedTemplateBanner}>
-                    <CheckCircle size={16} />
-                    <span>Vorlage "{selectedTemplate.name}" ausgewählt</span>
-                  </div>
-                )}
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
     </div>
   );
