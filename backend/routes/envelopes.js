@@ -236,7 +236,7 @@ async function sendSignatureInvitation(signer, envelope, ownerEmail) {
   const htmlContent = generateSignatureInvitationHTML(templateData);
   const textContent = generateSignatureInvitationText(templateData);
 
-  const subject = `📝 Signaturanfrage: ${envelope.title}`;
+  const subject = `${envelope.title} - Signaturanfrage`;
 
   try {
     await sendEmail(signer.email, subject, textContent, htmlContent);
@@ -252,7 +252,7 @@ async function sendSignatureInvitation(signer, envelope, ownerEmail) {
  * Send completion notification to owner
  */
 async function sendCompletionNotification(envelope, recipientEmail) {
-  const subject = `✅ Dokument vollständig signiert: ${envelope.title}`;
+  const subject = `${envelope.title} - Signatur abgeschlossen`;
 
   // 🆕 Generate direct download link for signed PDF (valid 24 hours)
   let downloadLink = (process.env.FRONTEND_URL || 'http://localhost:5173') + '/contracts';
