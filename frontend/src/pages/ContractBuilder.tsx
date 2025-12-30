@@ -37,6 +37,7 @@ import {
   Check,
   Copy,
   FileOutput,
+  FolderPlus,
   Printer,
   Trash2,
   X,
@@ -46,6 +47,7 @@ import {
   CheckCircle,
   TrendingUp,
 } from 'lucide-react';
+import { createUserTemplate } from '../services/userTemplatesAPI';
 import styles from '../styles/ContractBuilder.module.css';
 
 type RightPanel = 'properties' | 'variables' | null;
@@ -91,6 +93,10 @@ const ContractBuilder: React.FC = () => {
   const [isLoadingDrafts, setIsLoadingDrafts] = useState(false);
   const [lastAutoSaved, setLastAutoSaved] = useState<Date | null>(null);
   const [isAutoSaving, setIsAutoSaving] = useState(false);
+  const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false);
+  const [templateName, setTemplateName] = useState('');
+  const [templateDescription, setTemplateDescription] = useState('');
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
 
   const {
     document: currentDocument,
@@ -873,6 +879,55 @@ const ContractBuilder: React.FC = () => {
     }
   };
 
+  // Als Vorlage auf Server speichern
+  const handleOpenSaveTemplateModal = () => {
+    setShowMoreMenu(false);
+    if (currentDocument) {
+      // Name vorausfüllen
+      setTemplateName(currentDocument.metadata.name || 'Meine Vorlage');
+      setTemplateDescription('');
+      setShowSaveTemplateModal(true);
+    }
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!currentDocument || !templateName.trim()) return;
+
+    setIsSavingTemplate(true);
+    try {
+      // Template-Daten zusammenstellen
+      const templateData = {
+        name: templateName.trim(),
+        description: templateDescription.trim(),
+        contractType: currentDocument.metadata.contractType || 'Sonstige',
+        defaultValues: {
+          blocks: currentDocument.content.blocks,
+          design: currentDocument.design,
+          variables: currentDocument.content.variables,
+          metadata: {
+            contractType: currentDocument.metadata.contractType,
+          },
+          version: '1.0',
+        },
+      };
+
+      await createUserTemplate(templateData);
+
+      setShowSaveTemplateModal(false);
+      setTemplateName('');
+      setTemplateDescription('');
+
+      // Erfolgsmeldung
+      alert('Vorlage erfolgreich gespeichert!');
+    } catch (error) {
+      console.error('Fehler beim Speichern der Vorlage:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      alert(`Fehler beim Speichern der Vorlage: ${errorMessage}`);
+    } finally {
+      setIsSavingTemplate(false);
+    }
+  };
+
   // KI-Klausel generieren
   const handleGenerateClause = async () => {
     if (!aiClausePrompt.trim()) return;
@@ -1403,6 +1458,10 @@ const ContractBuilder: React.FC = () => {
                   <Copy size={14} />
                   <span>Dokument duplizieren</span>
                 </button>
+                <button onClick={handleOpenSaveTemplateModal}>
+                  <FolderPlus size={14} />
+                  <span>Als Vorlage speichern</span>
+                </button>
                 <button onClick={handleExportTemplate}>
                   <FileOutput size={14} />
                   <span>Als Vorlage exportieren</span>
@@ -1903,6 +1962,83 @@ const ContractBuilder: React.FC = () => {
                 <CheckCircle size={16} />
                 <span>Änderung übernehmen</span>
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Als Vorlage speichern Modal */}
+      {showSaveTemplateModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowSaveTemplateModal(false)}>
+          <div className={`${styles.modal} ${styles.saveTemplateModal}`} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <div className={styles.modalTitle}>
+                <FolderPlus size={20} />
+                <span>Als Vorlage speichern</span>
+              </div>
+              <button
+                className={styles.modalClose}
+                onClick={() => setShowSaveTemplateModal(false)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className={styles.saveTemplateContent}>
+              <p className={styles.saveTemplateInfo}>
+                Speichern Sie dieses Dokument als wiederverwendbare Vorlage.
+              </p>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="templateName">Vorlagen-Name *</label>
+                <input
+                  id="templateName"
+                  type="text"
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                  placeholder="z.B. Dienstleistungsvertrag Standard"
+                  maxLength={100}
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="templateDescription">Beschreibung (optional)</label>
+                <textarea
+                  id="templateDescription"
+                  value={templateDescription}
+                  onChange={(e) => setTemplateDescription(e.target.value)}
+                  placeholder="Wofür wird diese Vorlage verwendet?"
+                  rows={3}
+                  maxLength={500}
+                />
+              </div>
+
+              <div className={styles.saveTemplateFooter}>
+                <button
+                  className={styles.cancelButton}
+                  onClick={() => setShowSaveTemplateModal(false)}
+                  disabled={isSavingTemplate}
+                >
+                  Abbrechen
+                </button>
+                <button
+                  className={styles.saveButton}
+                  onClick={handleSaveTemplate}
+                  disabled={isSavingTemplate || !templateName.trim()}
+                >
+                  {isSavingTemplate ? (
+                    <>
+                      <Loader2 size={16} className={styles.spinner} />
+                      <span>Speichere...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FolderPlus size={16} />
+                      <span>Vorlage speichern</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
