@@ -827,7 +827,27 @@ router.post("/envelopes/:id/remind", verifyToken, async (req, res) => {
       });
     }
 
-    // Send reminders to all pending signers
+    // 🔄 Refresh tokens for all pending signers (in case they expired)
+    const newExpiresAt = new Date();
+    newExpiresAt.setDate(newExpiresAt.getDate() + 7); // 7 days from now
+
+    for (const signer of pendingSigners) {
+      // Generate new token if expired or about to expire (< 1 day left)
+      const tokenExpiresDate = new Date(signer.tokenExpires);
+      const oneDayFromNow = new Date();
+      oneDayFromNow.setDate(oneDayFromNow.getDate() + 1);
+
+      if (tokenExpiresDate < oneDayFromNow) {
+        signer.token = generateSignerToken();
+        signer.tokenExpires = newExpiresAt;
+        console.log(`🔄 Token refreshed for ${signer.email}`);
+      }
+    }
+
+    // Save the updated tokens
+    await envelope.save();
+
+    // Send reminders to all pending signers (with fresh tokens)
     const sendResults = await Promise.allSettled(
       pendingSigners.map(signer =>
         sendSignatureInvitation(signer, envelope, req.user.email)
@@ -923,7 +943,22 @@ router.post("/envelopes/:id/resend", verifyToken, async (req, res) => {
 
     console.log(`🔔 Resending invitation to: ${signerEmail}`);
 
-    // Send reminder
+    // 🔄 Refresh token if expired or about to expire (< 1 day left)
+    const tokenExpiresDate = new Date(signer.tokenExpires);
+    const oneDayFromNow = new Date();
+    oneDayFromNow.setDate(oneDayFromNow.getDate() + 1);
+
+    if (tokenExpiresDate < oneDayFromNow) {
+      const newExpiresAt = new Date();
+      newExpiresAt.setDate(newExpiresAt.getDate() + 7); // 7 days from now
+
+      signer.token = generateSignerToken();
+      signer.tokenExpires = newExpiresAt;
+      await envelope.save();
+      console.log(`🔄 Token refreshed for ${signer.email}`);
+    }
+
+    // Send reminder (with fresh token if refreshed)
     const sent = await sendSignatureInvitation(signer, envelope, req.user.email);
 
     if (sent) {
