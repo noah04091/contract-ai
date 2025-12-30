@@ -1,25 +1,25 @@
 // 📁 backend/utils/emailTemplate.js
-// ✅ V11 - Template Literal wie clean3 (das funktioniert!)
+// ✅ V12 - Premium Enterprise Design (Stripe/Linear/Notion Style)
 
 /**
- * Generiert E-Mail HTML basierend auf dem clean3 Template
- * V11: Verwendet Template-Literal wie clean3 (das funktioniert!)
+ * Generiert Premium E-Mail HTML
+ * V12: Enterprise-Grade Design wie Top-Tier SaaS
  */
 function generateEmailTemplate(options) {
   const title = options.title || '';
   const body = options.body || '';
   const cta = options.cta || null;
-  const badge = options.badge || 'Erinnerung';
+  const badge = options.badge || 'Benachrichtigung';
+  const subtitle = options.subtitle || '';
 
-  // CTA Button HTML
+  // Premium CTA Button
   let ctaHtml = '';
   if (cta && cta.url && cta.text) {
     ctaHtml = `
-              <!-- Button -->
-              <table cellpadding="0" cellspacing="0">
+              <table cellpadding="0" cellspacing="0" style="margin-top: 32px;">
                 <tr>
-                  <td style="background-color: #3b82f6; border-radius: 8px;">
-                    <a href="${cta.url}" style="display: inline-block; padding: 14px 32px; color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 600;">
+                  <td style="background: linear-gradient(135deg, #0066FF 0%, #0052CC 100%); border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);">
+                    <a href="${cta.url}" style="display: inline-block; padding: 12px 24px; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 500; letter-spacing: 0.01em;">
                       ${cta.text}
                     </a>
                   </td>
@@ -27,89 +27,86 @@ function generateEmailTemplate(options) {
               </table>`;
   }
 
-  // EXAKT wie clean3 - als Template Literal!
+  // Subtitle HTML
+  const subtitleHtml = subtitle ? `
+              <p style="margin: 0 0 24px 0; font-size: 15px; color: #6B7280; font-weight: 400;">
+                ${subtitle}
+              </p>` : '';
+
   const html = `<!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
 </head>
-<body style="margin: 0; padding: 0; background-color: #f0f4f8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f4f8; padding: 40px 20px;">
+<body style="margin: 0; padding: 0; background-color: #F9FAFB; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #F9FAFB;">
     <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden;">
+      <td style="padding: 48px 24px;">
+        <table align="center" width="100%" cellpadding="0" cellspacing="0" style="max-width: 520px; margin: 0 auto;">
 
-          <!-- Blauer Akzent-Streifen oben -->
+          <!-- Logo Header -->
           <tr>
-            <td style="height: 4px; background-color: #3b82f6;"></td>
-          </tr>
-
-          <!-- Header -->
-          <tr>
-            <td style="padding: 28px 40px 24px 40px;">
+            <td style="padding-bottom: 32px;">
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td>
-                    <span style="font-size: 22px; font-weight: 700; color: #1e293b; letter-spacing: -0.5px;">Contract AI</span>
+                    <div style="display: inline-block; background: linear-gradient(135deg, #0066FF 0%, #0052CC 100%); width: 36px; height: 36px; border-radius: 8px; text-align: center; line-height: 36px; vertical-align: middle;">
+                      <span style="color: #ffffff; font-size: 18px; font-weight: 700;">C</span>
+                    </div>
+                    <span style="display: inline-block; vertical-align: middle; margin-left: 12px; font-size: 17px; font-weight: 600; color: #111827; letter-spacing: -0.02em;">Contract AI</span>
                   </td>
-                  <td align="right">
-                    <span style="display: inline-block; padding: 6px 12px; background-color: #dbeafe; color: #1d4ed8; font-size: 11px; font-weight: 600; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;">${badge}</span>
+                  <td align="right" style="vertical-align: middle;">
+                    <span style="display: inline-block; padding: 4px 10px; background-color: #F3F4F6; color: #6B7280; font-size: 11px; font-weight: 500; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.05em;">${badge}</span>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
 
-          <!-- Trennlinie -->
+          <!-- Main Card -->
           <tr>
-            <td style="padding: 0 40px;">
-              <table width="100%" cellpadding="0" cellspacing="0">
-                <tr><td style="border-bottom: 1px solid #e2e8f0;"></td></tr>
+            <td>
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04); border: 1px solid #E5E7EB;">
+                <tr>
+                  <td style="padding: 40px;">
+
+                    <!-- Title -->
+                    <h1 style="margin: 0 0 8px 0; font-size: 22px; font-weight: 600; color: #111827; letter-spacing: -0.02em; line-height: 1.3;">
+                      ${title}
+                    </h1>
+
+                    ${subtitleHtml}
+
+                    <!-- Body Content -->
+                    <div style="color: #374151; font-size: 15px; line-height: 1.7;">
+                      ${body}
+                    </div>
+
+                    ${ctaHtml}
+
+                  </td>
+                </tr>
               </table>
-            </td>
-          </tr>
-
-          <!-- Content -->
-          <tr>
-            <td style="padding: 32px 40px 40px 40px;">
-              <h1 style="margin: 0 0 8px 0; font-size: 24px; color: #0f172a; font-weight: 700; line-height: 1.3;">
-                ${title}
-              </h1>
-
-              ${body}
-
-              ${ctaHtml}
             </td>
           </tr>
 
           <!-- Footer -->
           <tr>
-            <td style="padding: 0 40px;">
-              <table width="100%" cellpadding="0" cellspacing="0">
-                <tr><td style="border-top: 1px solid #e2e8f0;"></td></tr>
-              </table>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 24px 40px 28px 40px;">
-              <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td>
-                    <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #1e293b;">Contract AI</p>
-                    <p style="margin: 0 0 12px 0; font-size: 13px; color: #64748b; line-height: 1.5;">
-                      Intelligentes Vertragsmanagement
-                    </p>
-                    <p style="margin: 0; font-size: 12px;">
-                      <a href="https://www.contract-ai.de" style="color: #3b82f6; text-decoration: none; font-weight: 500;">Website</a>
-                      <span style="color: #cbd5e1; margin: 0 10px;">|</span>
-                      <a href="https://www.contract-ai.de/datenschutz" style="color: #64748b; text-decoration: none;">Datenschutz</a>
-                      <span style="color: #cbd5e1; margin: 0 10px;">|</span>
-                      <a href="https://www.contract-ai.de/impressum" style="color: #64748b; text-decoration: none;">Impressum</a>
-                    </p>
-                  </td>
-                </tr>
-              </table>
+            <td style="padding-top: 32px; text-align: center;">
+              <p style="margin: 0 0 8px 0; font-size: 13px; color: #9CA3AF;">
+                Contract AI GmbH · Intelligentes Vertragsmanagement
+              </p>
+              <p style="margin: 0; font-size: 12px;">
+                <a href="https://www.contract-ai.de" style="color: #6B7280; text-decoration: none;">Website</a>
+                <span style="color: #D1D5DB; margin: 0 8px;">·</span>
+                <a href="https://www.contract-ai.de/datenschutz" style="color: #6B7280; text-decoration: none;">Datenschutz</a>
+                <span style="color: #D1D5DB; margin: 0 8px;">·</span>
+                <a href="https://www.contract-ai.de/impressum" style="color: #6B7280; text-decoration: none;">Impressum</a>
+              </p>
             </td>
           </tr>
 
@@ -117,6 +114,7 @@ function generateEmailTemplate(options) {
       </td>
     </tr>
   </table>
+
 </body>
 </html>`;
 
@@ -124,39 +122,56 @@ function generateEmailTemplate(options) {
 }
 
 /**
- * Generiert eine Info-Box mit linkem blauen Akzent
+ * Premium Info-Box mit Icon
  */
 function generateInfoBox(items) {
   if (!items || items.length === 0) return '';
 
-  let itemsHtml = '';
-  items.forEach((item, index) => {
-    const isFirst = index === 0;
-    const isLast = index === items.length - 1;
-    let style = '';
-    if (isFirst && !isLast) style = 'padding-bottom: 16px;';
-    else if (!isFirst && isLast) style = 'border-top: 1px solid #e2e8f0; padding-top: 16px;';
-    else if (!isFirst && !isLast) style = 'border-top: 1px solid #e2e8f0; padding-top: 16px; padding-bottom: 16px;';
-
-    itemsHtml += `
-                            <tr>
-                              <td style="${style}">
-                                <p style="margin: 0 0 2px 0; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">${item.label}</p>
-                                <p style="margin: 0; font-size: 17px; color: #0f172a; font-weight: 600;">${item.value}</p>
-                              </td>
-                            </tr>`;
-  });
+  let itemsHtml = items.map((item, index) => {
+    const borderTop = index > 0 ? 'border-top: 1px solid #F3F4F6; padding-top: 16px; margin-top: 16px;' : '';
+    return `
+      <div style="${borderTop}">
+        <p style="margin: 0 0 4px 0; font-size: 11px; font-weight: 500; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.05em;">${item.label}</p>
+        <p style="margin: 0; font-size: 16px; font-weight: 600; color: #111827;">${item.value}</p>
+      </div>`;
+  }).join('');
 
   return `
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
                 <tr>
-                  <td style="background-color: #f8fafc; border-radius: 8px; border-left: 3px solid #3b82f6;">
-                    <table width="100%" cellpadding="0" cellspacing="0">
+                  <td style="background-color: #F9FAFB; border-radius: 8px; padding: 20px; border: 1px solid #E5E7EB;">
+                    ${itemsHtml}
+                  </td>
+                </tr>
+              </table>`;
+}
+
+/**
+ * Premium Alert-Box
+ */
+function generateAlertBox(text, type = 'warning') {
+  const styles = {
+    critical: { bg: '#FEF2F2', border: '#FCA5A5', icon: '●', iconColor: '#DC2626', textColor: '#991B1B' },
+    warning: { bg: '#FFFBEB', border: '#FCD34D', icon: '●', iconColor: '#F59E0B', textColor: '#92400E' },
+    info: { bg: '#EFF6FF', border: '#93C5FD', icon: '●', iconColor: '#3B82F6', textColor: '#1E40AF' },
+    success: { bg: '#ECFDF5', border: '#6EE7B7', icon: '●', iconColor: '#10B981', textColor: '#065F46' }
+  };
+
+  const s = styles[type] || styles.info;
+
+  return `
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 16px 0;">
+                <tr>
+                  <td style="background: ${s.bg}; border: 1px solid ${s.border}; padding: 16px 20px; border-radius: 8px;">
+                    <table cellpadding="0" cellspacing="0">
                       <tr>
-                        <td style="padding: 20px 24px;">
-                          <table width="100%" cellpadding="0" cellspacing="0">
-                            ${itemsHtml}
-                          </table>
+                        <td style="vertical-align: top; padding-right: 12px;">
+                          <span style="color: ${s.iconColor}; font-size: 8px;">${s.icon}</span>
+                        </td>
+                        <td>
+                          <p style="color: ${s.textColor}; margin: 0; font-size: 14px; font-weight: 500; line-height: 1.5;">
+                            ${text}
+                          </p>
                         </td>
                       </tr>
                     </table>
@@ -166,40 +181,79 @@ function generateInfoBox(items) {
 }
 
 /**
- * Generiert eine Alert-Box (rot für kritisch, gelb für Warnung)
+ * Premium Paragraph
  */
-function generateAlertBox(text, type = 'warning') {
-  const colors = {
-    critical: { bg: '#fef2f2', border: '#ef4444', textColor: '#991b1b' },
-    warning: { bg: '#fef3c7', border: '#f59e0b', textColor: '#92400e' },
-    info: { bg: '#dbeafe', border: '#3b82f6', textColor: '#1d4ed8' },
-    success: { bg: '#d1fae5', border: '#10b981', textColor: '#065f46' }
-  };
+function generateParagraph(text) {
+  return `<p style="color: #374151; font-size: 15px; line-height: 1.7; margin: 0 0 16px 0;">${text}</p>`;
+}
 
-  const c = colors[type] || colors.warning;
+/**
+ * Premium Divider
+ */
+function generateDivider() {
+  return `<hr style="border: none; border-top: 1px solid #E5E7EB; margin: 24px 0;">`;
+}
+
+/**
+ * Premium Stats Row (für Digest)
+ */
+function generateStatsRow(stats) {
+  const statsHtml = stats.map(stat => `
+    <td style="text-align: center; padding: 16px;">
+      <p style="margin: 0 0 4px 0; font-size: 28px; font-weight: 600; color: ${stat.color || '#111827'};">${stat.value}</p>
+      <p style="margin: 0; font-size: 12px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em;">${stat.label}</p>
+    </td>
+  `).join('');
 
   return `
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 16px 0;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0; background: #F9FAFB; border-radius: 8px; border: 1px solid #E5E7EB;">
                 <tr>
-                  <td style="background: ${c.bg}; border-left: 4px solid ${c.border}; padding: 16px; border-radius: 0 8px 8px 0;">
-                    <p style="color: ${c.textColor}; margin: 0; font-weight: 600;">
-                      ${text}
-                    </p>
-                  </td>
+                  ${statsHtml}
                 </tr>
               </table>`;
 }
 
 /**
- * Generiert einen Text-Absatz
+ * Premium Event Card (für Digest/Calendar)
  */
-function generateParagraph(text, style = 'color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 16px;') {
-  return `<p style="${style}">${text}</p>`;
+function generateEventCard(options) {
+  const { title, subtitle, badge, badgeColor, url } = options;
+
+  const badgeColors = {
+    critical: { bg: '#FEE2E2', text: '#DC2626' },
+    warning: { bg: '#FEF3C7', text: '#D97706' },
+    info: { bg: '#DBEAFE', text: '#2563EB' },
+    success: { bg: '#D1FAE5', text: '#059669' }
+  };
+
+  const bc = badgeColors[badgeColor] || badgeColors.info;
+
+  return `
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 12px 0;">
+                <tr>
+                  <td style="background: #ffffff; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px 20px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td>
+                          <p style="margin: 0 0 4px 0; font-size: 15px; font-weight: 600; color: #111827;">${title}</p>
+                          <p style="margin: 0; font-size: 13px; color: #6B7280;">${subtitle}</p>
+                        </td>
+                        <td align="right" style="vertical-align: middle;">
+                          <span style="display: inline-block; padding: 4px 10px; background: ${bc.bg}; color: ${bc.text}; font-size: 11px; font-weight: 600; border-radius: 100px;">${badge}</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>`;
 }
 
 module.exports = {
   generateEmailTemplate,
   generateInfoBox,
   generateAlertBox,
-  generateParagraph
+  generateParagraph,
+  generateDivider,
+  generateStatsRow,
+  generateEventCard
 };

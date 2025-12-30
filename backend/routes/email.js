@@ -1035,18 +1035,17 @@ router.post("/test", async (req, res) => {
     if (type === "calendar" || type === "all") {
       const calendarHtml = generateEmailTemplate({
         title: "Kündigungsfrist in 14 Tagen",
+        subtitle: "Telekom Mobilfunk",
         badge: "Erinnerung",
         body: `
-          <p style="margin: 0 0 28px 0; font-size: 15px; color: #64748b;">Telekom Mobilfunk</p>
-          <p style="margin: 0 0 28px 0; font-size: 15px; line-height: 1.7; color: #334155;">
-            Hallo,<br><br>
-            dein Vertrag kann bald gekündigt werden. Hier sind die wichtigen Details auf einen Blick:
+          <p style="margin: 0 0 20px 0;">
+            Dein Vertrag nähert sich dem Kündigungsfenster. Hier sind die wichtigsten Details:
           </p>
           ${generateInfoBox([
             { label: "Kündigungsfrist", value: "3 Monate zum Vertragsende" },
             { label: "Vertragsende", value: "31. März 2025" }
           ])}
-          <p style="margin: 0 0 32px 0; font-size: 14px; line-height: 1.6; color: #64748b;">
+          <p style="margin: 0; font-size: 14px; color: #6B7280;">
             Ohne Kündigung verlängert sich der Vertrag automatisch um weitere 12 Monate.
           </p>
         `,
@@ -1056,7 +1055,7 @@ router.post("/test", async (req, res) => {
       await transporter.sendMail({
         from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
         to: email,
-        subject: "Erinnerung: Telekom Mobilfunk - Kündigungsfrist in 14 Tagen",
+        subject: "Kündigungsfrist in 14 Tagen: Telekom Mobilfunk",
         html: calendarHtml
       });
       results.push("calendar");
@@ -1064,27 +1063,30 @@ router.post("/test", async (req, res) => {
 
     // ========== TYP 2: Digest-E-Mail ==========
     if (type === "digest" || type === "all") {
+      const { generateStatsRow } = require("../utils/emailTemplate");
       const digestHtml = generateEmailTemplate({
-        title: "Deine Vertrags-Zusammenfassung",
-        badge: "Digest",
+        title: "Deine Vertrags-Übersicht",
+        subtitle: "Tägliche Zusammenfassung",
+        badge: "Übersicht",
         body: `
-          <p style="margin: 0 0 28px 0; font-size: 15px; line-height: 1.7; color: #334155;">
-            Guten Morgen!<br><br>
-            Hier ist deine tägliche Zusammenfassung:
-          </p>
-          ${generateAlertBox("1 kritische Frist: Vodafone DSL - Kündigung heute!", "critical")}
-          ${generateAlertBox("2 Erinnerungen: Netflix (7 Tage), Fitnessstudio (30 Tage)", "warning")}
-          <p style="margin: 0 0 32px 0; font-size: 14px; line-height: 1.6; color: #64748b;">
-            Du erhältst diese E-Mail als tägliche Zusammenfassung.
+          ${generateStatsRow([
+            { value: "3", label: "Verträge", color: "#111827" },
+            { value: "1", label: "Kritisch", color: "#DC2626" },
+            { value: "2", label: "Bald fällig", color: "#F59E0B" }
+          ])}
+          ${generateAlertBox("Vodafone DSL — Kündigung läuft heute ab", "critical")}
+          ${generateAlertBox("Netflix, Fitnessstudio — Frist in 7-30 Tagen", "warning")}
+          <p style="margin: 24px 0 0 0; font-size: 13px; color: #9CA3AF;">
+            Diese Zusammenfassung wird täglich um 8:00 Uhr versendet.
           </p>
         `,
-        cta: { text: "Zum Kalender", url: "https://www.contract-ai.de/calendar" }
+        cta: { text: "Alle Verträge anzeigen", url: "https://www.contract-ai.de/calendar" }
       });
 
       await transporter.sendMail({
         from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
         to: email,
-        subject: "Deine Vertrags-Zusammenfassung",
+        subject: "Deine Vertrags-Übersicht — 1 kritisch, 2 bald fällig",
         html: digestHtml
       });
       results.push("digest");
@@ -1093,19 +1095,18 @@ router.post("/test", async (req, res) => {
     // ========== TYP 3: Reminder-E-Mail ==========
     if (type === "reminder" || type === "all") {
       const reminderHtml = generateEmailTemplate({
-        title: "Erinnerung: Kündigungsfrist endet heute",
+        title: "Kündigungsfrist endet heute",
+        subtitle: "Vodafone DSL",
         badge: "Dringend",
         body: `
-          <p style="margin: 0 0 28px 0; font-size: 15px; color: #64748b;">Vodafone DSL</p>
-          <p style="margin: 0 0 28px 0; font-size: 15px; line-height: 1.7; color: #334155;">
-            Hallo,<br><br>
-            die Kündigungsfrist für deinen Vertrag endet heute.
-            Wenn du jetzt nicht kündigst, verlängert sich der Vertrag automatisch um weitere 24 Monate.
-          </p>
+          ${generateAlertBox("Ohne Kündigung verlängert sich dein Vertrag automatisch um 24 Monate.", "critical")}
           ${generateInfoBox([
-            { label: "Monatliche Kosten", value: "44,99 EUR" },
-            { label: "Bei Verlängerung", value: "1.079,76 EUR für 24 Monate" }
+            { label: "Monatliche Kosten", value: "44,99 €" },
+            { label: "Kosten bei Verlängerung", value: "1.079,76 € (24 Monate)" }
           ])}
+          <p style="margin: 0; font-size: 14px; color: #6B7280;">
+            Du kannst den Vertrag direkt über Contract AI kündigen.
+          </p>
         `,
         cta: { text: "Jetzt kündigen", url: "https://www.contract-ai.de/contracts" }
       });
@@ -1113,7 +1114,7 @@ router.post("/test", async (req, res) => {
       await transporter.sendMail({
         from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
         to: email,
-        subject: "Erinnerung: Vodafone DSL - Kündigungsfrist endet heute",
+        subject: "Heute handeln: Vodafone DSL Kündigungsfrist",
         html: reminderHtml
       });
       results.push("reminder");
