@@ -1384,8 +1384,13 @@ const normalizeAndValidateOutput = (aiOutput, contractType) => {
         isAmendment: parsed?.meta?.isAmendment || false,
         parentType: parsed?.meta?.parentType || null,
         analysisMethod: 'ai_enhanced_with_legal_templates',
-        legalFramework: CONTRACT_TYPES[parsed?.meta?.type || contractType]?.legalFramework || ['BGB']
+        legalFramework: CONTRACT_TYPES[parsed?.meta?.type || contractType]?.legalFramework || ['BGB'],
+        // 🆕 v2.0: Decision-First Meta-Felder
+        recognizedAs: parsed?.meta?.recognizedAs || null,
+        maturity: parsed?.meta?.maturity || null
       },
+      // 🆕 v2.0: Assessment-Block für Decision-First Architecture
+      assessment: parsed?.assessment || null,
       categories: [],
       score: {
         health: parsed?.score?.health || 75
@@ -1434,7 +1439,12 @@ const normalizeAndValidateOutput = (aiOutput, contractType) => {
             confidence: parseInt(issue.confidence) || 85,
             difficulty: issue.difficulty || 'Mittel',
             benchmark: issue.benchmark || issue.marketBenchmark || generateBenchmark(cat.tag, contractType),
-            legalReferences: extractLegalReferences(issue.legalReasoning || '')
+            legalReferences: extractLegalReferences(issue.legalReasoning || ''),
+            // 🆕 v2.0: Anti-Bullshit Decision-First Felder
+            evidence: issue.evidence || [],
+            whyItMatters: issue.whyItMatters || '',
+            whyNotIntentional: issue.whyNotIntentional || '',
+            whenToIgnore: issue.whenToIgnore || ''
           };
         }) : []
       }));
