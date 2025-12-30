@@ -1220,7 +1220,7 @@ router.post("/users/:userId/send-reset", verifyToken, verifyAdmin, async (req, r
 
     // Send email
     const sendEmail = require("../utils/sendEmail");
-    const generateEmailTemplate = require("../utils/emailTemplate");
+    const { generateEmailTemplate } = require("../utils/emailTemplate");
 
     const resetLink = `https://www.contract-ai.de/reset-password?token=${resetToken}`;
 

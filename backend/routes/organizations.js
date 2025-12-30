@@ -9,7 +9,7 @@ const OrganizationMember = require('../models/OrganizationMember');
 const OrganizationInvitation = require('../models/OrganizationInvitation');
 const verifyToken = require('../middleware/verifyToken');
 const nodemailer = require('nodemailer');
-const generateEmailTemplate = require('../utils/emailTemplate'); // 📧 V4 Email Template
+const { generateEmailTemplate } = require('../utils/emailTemplate');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 

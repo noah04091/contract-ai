@@ -1,7 +1,7 @@
 // 📧 Signature Email Templates - V4 Design
 // Clean, Modern, Professional - Consistent with Contract AI branding
 
-const generateEmailTemplate = require('../utils/emailTemplate');
+const { generateEmailTemplate } = require('../utils/emailTemplate');
 
 const logoUrl = 'https://www.contract-ai.de/logo.png';
 

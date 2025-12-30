@@ -333,7 +333,7 @@ router.post("/test", async (req, res) => {
     }
 
     const nodemailer = require("nodemailer");
-    const generateEmailTemplate = require("../utils/emailTemplate");
+    const { generateEmailTemplate } = require("../utils/emailTemplate");
     const { generateUnsubscribeUrl, getUnsubscribeHeaders } = require("../services/emailUnsubscribeService");
 
     const transporter = nodemailer.createTransport({

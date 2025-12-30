@@ -3,7 +3,7 @@
 
 const PulseNotification = require("../models/PulseNotification");
 const nodemailer = require("nodemailer");
-const generateEmailTemplate = require("../utils/emailTemplate"); // 📧 V4 Email Template
+const { generateEmailTemplate } = require("../utils/emailTemplate");
 
 class PulseNotificationService {
   constructor() {

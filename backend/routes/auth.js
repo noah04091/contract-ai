@@ -8,7 +8,7 @@ const { ObjectId } = require("mongodb");
 const verifyToken = require("../middleware/verifyToken");
 const verifyAdmin = require("../middleware/verifyAdmin"); // 🔐 Admin-only access
 const sendEmail = require("../utils/sendEmail");
-const generateEmailTemplate = require("../utils/emailTemplate"); // 📧 V4 Email Template
+const { generateEmailTemplate } = require("../utils/emailTemplate");
 const { normalizeEmail } = require("../utils/normalizeEmail");
 require("dotenv").config();
 

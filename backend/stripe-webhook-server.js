@@ -42,7 +42,7 @@ const sendEmail = async ({ to, subject, html, attachments = [] }) => {
     throw error;
   }
 };
-const generateEmailTemplate = require('./utils/emailTemplate');
+const { generateEmailTemplate } = require('./utils/emailTemplate');
 const generateInvoicePdf = require('./utils/generateInvoicePdf');
 // Importiere die neue Funktion
 const generateInvoiceNumber = require('./utils/generateInvoiceNumber');

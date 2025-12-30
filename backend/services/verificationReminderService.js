@@ -3,7 +3,7 @@
 
 const { MongoClient } = require("mongodb");
 const sendEmail = require("../utils/sendEmail");
-const generateEmailTemplate = require("../utils/emailTemplate");
+const { generateEmailTemplate } = require("../utils/emailTemplate");
 require("dotenv").config();
 
 /**

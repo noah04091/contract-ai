@@ -1,6 +1,6 @@
 // 📧 services/statusNotifier.js - Smart Status Change Notifications
 const nodemailer = require("nodemailer");
-const generateEmailTemplate = require("../utils/emailTemplate");
+const { generateEmailTemplate } = require("../utils/emailTemplate");
 require("dotenv").config();
 
 const transporter = nodemailer.createTransport({

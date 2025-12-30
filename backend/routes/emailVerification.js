@@ -7,7 +7,7 @@ const router = express.Router();
 
 // E-Mail-Templates und Utilities importieren
 const sendEmailHtml = require("../utils/sendEmailHtml");
-const generateEmailTemplate = require("../utils/emailTemplate");
+const { generateEmailTemplate } = require("../utils/emailTemplate");
 const { normalizeEmail } = require("../utils/normalizeEmail");
 
 module.exports = function(db) {

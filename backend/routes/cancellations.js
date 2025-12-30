@@ -3,7 +3,7 @@ const express = require("express");
 const { ObjectId } = require("mongodb");
 const verifyToken = require("../middleware/verifyToken");
 const nodemailer = require("nodemailer");
-const generateEmailTemplate = require("../utils/emailTemplate");
+const { generateEmailTemplate } = require("../utils/emailTemplate");
 const { logStatusChange } = require("../services/smartStatusUpdater"); // 🧠 NEU
 
 const router = express.Router();

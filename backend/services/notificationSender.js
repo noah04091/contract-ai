@@ -217,7 +217,7 @@ async function sendNotificationEmail(userEmail, contract, notification) {
  * Versendet gruppierte E-Mail mit mehreren Updates
  */
 async function sendGroupedEmail(userEmail, contractDetails) {
-  const generateEmailTemplate = require("../utils/emailTemplate");
+  const { generateEmailTemplate } = require("../utils/emailTemplate");
   const nodemailer = require("nodemailer");
 
   const transporter = nodemailer.createTransport({
