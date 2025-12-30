@@ -23,7 +23,7 @@ export const ClauseBlock: React.FC<ClauseBlockProps> = ({
   isSelected,
   isPreview,
 }) => {
-  const { number, clauseTitle, body, subclauses } = content;
+  const { number, clauseTitle, body, subclauses, clauseLayout = 'standard' } = content;
   const updateBlockContent = useContractBuilderStore((state) => state.updateBlockContent);
   const syncVariables = useContractBuilderStore((state) => state.syncVariables);
 
@@ -109,8 +109,13 @@ export const ClauseBlock: React.FC<ClauseBlockProps> = ({
     // Shift+Enter erlaubt neue Zeilen
   }, [handleSave, handleCancel]);
 
+  // Layout-Klasse bestimmen
+  const layoutClass = clauseLayout === 'indented' ? styles.indented
+    : clauseLayout === 'boxed' ? styles.boxed
+    : '';
+
   return (
-    <div className={`${styles.clause} ${isSelected ? styles.selected : ''}`}>
+    <div className={`${styles.clause} ${layoutClass} ${isSelected ? styles.selected : ''}`}>
       {/* Klausel-Header */}
       <div className={styles.clauseHeader}>
         <span className={styles.clauseNumber}>

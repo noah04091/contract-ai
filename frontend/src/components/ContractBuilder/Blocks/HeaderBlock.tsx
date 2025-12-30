@@ -30,7 +30,8 @@ export const HeaderBlock: React.FC<HeaderBlockProps> = ({
     showDivider = true,
     dividerColor,
     titleFontSize = 24,
-    subtitleFontSize = 14
+    subtitleFontSize = 14,
+    headerLayout = 'centered'
   } = content;
   const updateBlockContent = useContractBuilderStore((state) => state.updateBlockContent);
   const syncVariables = useContractBuilderStore((state) => state.syncVariables);
@@ -76,78 +77,119 @@ export const HeaderBlock: React.FC<HeaderBlockProps> = ({
     }
   }, [handleSave]);
 
-  return (
-    <div className={`${styles.header} ${isSelected ? styles.selected : ''}`}>
-      {/* Logo */}
+  // Titel-Komponente (wiederverwendbar)
+  const renderTitle = () => (
+    <h1 className={styles.title} style={{ fontSize: `${titleFontSize}px` }}>
+      {editingField === 'title' ? (
+        <input
+          ref={inputRef}
+          type="text"
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onBlur={handleSave}
+          onKeyDown={handleKeyDown}
+          className={styles.inlineInput}
+          style={{ fontSize: `${titleFontSize}px` }}
+        />
+      ) : (
+        <VariableHighlight
+          text={title || 'Vertragstitel'}
+          isPreview={isPreview}
+          onDoubleClick={() => handleDoubleClick('title', title || 'Vertragstitel')}
+        />
+      )}
+    </h1>
+  );
+
+  // Untertitel-Komponente (wiederverwendbar)
+  const renderSubtitle = () => (
+    <p className={styles.subtitle} style={{ fontSize: `${subtitleFontSize}px` }}>
+      {editingField === 'subtitle' ? (
+        <input
+          ref={inputRef}
+          type="text"
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onBlur={handleSave}
+          onKeyDown={handleKeyDown}
+          className={styles.inlineInput}
+          style={{ fontSize: `${subtitleFontSize}px` }}
+        />
+      ) : subtitle ? (
+        <VariableHighlight
+          text={subtitle}
+          isPreview={isPreview}
+          onDoubleClick={() => handleDoubleClick('subtitle', subtitle)}
+        />
+      ) : !isPreview ? (
+        <span
+          className={styles.placeholder}
+          onDoubleClick={() => handleDoubleClick('subtitle', '')}
+          style={{ cursor: 'text' }}
+        >
+          Untertitel hinzufügen...
+        </span>
+      ) : null}
+    </p>
+  );
+
+  // Zentriertes Layout (Standard)
+  const renderCenteredLayout = () => (
+    <>
       {logo && (
         <div className={styles.logoWrapper}>
-          <img
-            src={logo}
-            alt="Logo"
-            className={styles.logo}
-          />
+          <img src={logo} alt="Logo" className={styles.logo} />
         </div>
       )}
-
-      {/* Titel */}
-      <h1 className={styles.title} style={{ fontSize: `${titleFontSize}px` }}>
-        {editingField === 'title' ? (
-          <input
-            ref={inputRef}
-            type="text"
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-            onBlur={handleSave}
-            onKeyDown={handleKeyDown}
-            className={styles.inlineInput}
-            style={{ fontSize: `${titleFontSize}px` }}
-          />
-        ) : (
-          <VariableHighlight
-            text={title || 'Vertragstitel'}
-            isPreview={isPreview}
-            onDoubleClick={() => handleDoubleClick('title', title || 'Vertragstitel')}
-          />
-        )}
-      </h1>
-
-      {/* Untertitel */}
-      <p className={styles.subtitle} style={{ fontSize: `${subtitleFontSize}px` }}>
-        {editingField === 'subtitle' ? (
-          <input
-            ref={inputRef}
-            type="text"
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-            onBlur={handleSave}
-            onKeyDown={handleKeyDown}
-            className={styles.inlineInput}
-            style={{ fontSize: `${subtitleFontSize}px` }}
-          />
-        ) : subtitle ? (
-          <VariableHighlight
-            text={subtitle}
-            isPreview={isPreview}
-            onDoubleClick={() => handleDoubleClick('subtitle', subtitle)}
-          />
-        ) : !isPreview ? (
-          <span
-            className={styles.placeholder}
-            onDoubleClick={() => handleDoubleClick('subtitle', '')}
-            style={{ cursor: 'text' }}
-          >
-            Untertitel hinzufügen...
-          </span>
-        ) : null}
-      </p>
-
-      {/* Decorative Line - optional */}
+      {renderTitle()}
+      {renderSubtitle()}
       {showDivider && (
         <div
           className={styles.decorativeLine}
           style={dividerColor ? { backgroundColor: dividerColor } : undefined}
         />
       )}
+    </>
+  );
+
+  // Logo Links Layout
+  const renderLeftLogoLayout = () => (
+    <div className={styles.leftLogoLayout}>
+      {logo && (
+        <div className={styles.leftLogoWrapper}>
+          <img src={logo} alt="Logo" className={styles.leftLogo} />
+        </div>
+      )}
+      <div className={styles.leftLogoText}>
+        {renderTitle()}
+        {renderSubtitle()}
+      </div>
+    </div>
+  );
+
+  // Minimal Layout (nur Text, kein Logo, keine Linie)
+  const renderMinimalLayout = () => (
+    <div className={styles.minimalLayout}>
+      {renderTitle()}
+      {renderSubtitle()}
+    </div>
+  );
+
+  // Layout auswählen
+  const renderLayout = () => {
+    switch (headerLayout) {
+      case 'left-logo':
+        return renderLeftLogoLayout();
+      case 'minimal':
+        return renderMinimalLayout();
+      default:
+        return renderCenteredLayout();
+    }
+  };
+
+  return (
+    <div className={`${styles.header} ${isSelected ? styles.selected : ''} ${styles[headerLayout] || ''}`}>
+      {renderLayout()}
     </div>
   );
 };

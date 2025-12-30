@@ -162,3 +162,73 @@
     gap: 8px;
   }
 }
+
+/* ============================================
+   KLASSISCHES LAYOUT (Traditionell/Juristisch)
+   ============================================ */
+
+.classicLayout {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+
+.classicSignatureField {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 350px;
+}
+
+.classicPlaceDateRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.classicLabel {
+  font-size: inherit;
+  color: inherit;
+  opacity: 0.8;
+  flex-shrink: 0;
+  padding-bottom: 2px;
+}
+
+.classicLine {
+  flex: 1;
+  height: 1px;
+  background: currentColor;
+  min-width: 150px;
+}
+
+.classicSignatureRow {
+  padding-top: 32px;
+}
+
+.classicNameLabel {
+  font-size: inherit;
+  color: inherit;
+  opacity: 0.7;
+  font-style: italic;
+  margin-top: 4px;
+  text-align: left;
+}
+
+.classicWitnessSection {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.classicWitnessTitle {
+  font-size: inherit;
+  font-weight: 500;
+  color: inherit;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 600px) {
+  .classicSignatureField {
+    max-width: 100%;
+  }
+}

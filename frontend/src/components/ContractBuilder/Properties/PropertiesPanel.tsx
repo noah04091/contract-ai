@@ -598,9 +598,30 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
         dividerColor?: string;
         titleFontSize?: number;
         subtitleFontSize?: number;
+        headerLayout?: 'centered' | 'left-logo' | 'minimal';
       };
+      const hdrLayout = headerContent.headerLayout || 'centered';
       return (
         <>
+          {/* Layout-Auswahl */}
+          <div className={styles.field}>
+            <label className={styles.label}>Layout</label>
+            <select
+              className={styles.select}
+              value={hdrLayout}
+              onChange={(e) => onUpdate({ ...content, headerLayout: e.target.value as 'centered' | 'left-logo' | 'minimal' })}
+            >
+              <option value="centered">Zentriert</option>
+              <option value="left-logo">Logo Links</option>
+              <option value="minimal">Minimal</option>
+            </select>
+            <p className={styles.fieldHint}>
+              {hdrLayout === 'centered' && 'Zentrierter Titel mit optionalem Logo darüber'}
+              {hdrLayout === 'left-logo' && 'Logo links, Titel und Untertitel rechts'}
+              {hdrLayout === 'minimal' && 'Nur Titel und Untertitel, linksbündig'}
+            </p>
+          </div>
+
           <div className={styles.field}>
             <label className={styles.label}>Titel</label>
             <input
@@ -643,34 +664,40 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
               onChange={(e) => onUpdate({ ...content, subtitleFontSize: Number(e.target.value) })}
             />
           </div>
-          <div className={styles.field}>
-            <label className={styles.checkboxLabel}>
-              <input
-                type="checkbox"
-                checked={headerContent.showDivider !== false}
-                onChange={(e) => onUpdate({ ...content, showDivider: e.target.checked })}
-              />
-              <span>Trennlinie anzeigen</span>
-            </label>
-          </div>
-          {headerContent.showDivider !== false && (
-            <div className={styles.field}>
-              <label className={styles.label}>Trennlinien-Farbe</label>
-              <div className={styles.colorInput}>
-                <input
-                  type="color"
-                  value={headerContent.dividerColor || '#1a365d'}
-                  onChange={(e) => onUpdate({ ...content, dividerColor: e.target.value })}
-                />
-                <input
-                  type="text"
-                  className={styles.input}
-                  value={headerContent.dividerColor || ''}
-                  placeholder="#1a365d"
-                  onChange={(e) => onUpdate({ ...content, dividerColor: e.target.value || undefined })}
-                />
+
+          {/* Trennlinie nur bei centered Layout */}
+          {hdrLayout === 'centered' && (
+            <>
+              <div className={styles.field}>
+                <label className={styles.checkboxLabel}>
+                  <input
+                    type="checkbox"
+                    checked={headerContent.showDivider !== false}
+                    onChange={(e) => onUpdate({ ...content, showDivider: e.target.checked })}
+                  />
+                  <span>Trennlinie anzeigen</span>
+                </label>
               </div>
-            </div>
+              {headerContent.showDivider !== false && (
+                <div className={styles.field}>
+                  <label className={styles.label}>Trennlinien-Farbe</label>
+                  <div className={styles.colorInput}>
+                    <input
+                      type="color"
+                      value={headerContent.dividerColor || '#1a365d'}
+                      onChange={(e) => onUpdate({ ...content, dividerColor: e.target.value })}
+                    />
+                    <input
+                      type="text"
+                      className={styles.input}
+                      value={headerContent.dividerColor || ''}
+                      placeholder="#1a365d"
+                      onChange={(e) => onUpdate({ ...content, dividerColor: e.target.value || undefined })}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </>
       );
@@ -735,9 +762,30 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
         </div>
       );
 
-    case 'clause':
+    case 'clause': {
+      const clauseContent = content as { clauseLayout?: 'standard' | 'indented' | 'boxed' };
+      const clsLayout = clauseContent.clauseLayout || 'standard';
       return (
         <>
+          {/* Layout-Auswahl */}
+          <div className={styles.field}>
+            <label className={styles.label}>Layout</label>
+            <select
+              className={styles.select}
+              value={clsLayout}
+              onChange={(e) => onUpdate({ ...content, clauseLayout: e.target.value as 'standard' | 'indented' | 'boxed' })}
+            >
+              <option value="standard">Standard</option>
+              <option value="indented">Eingerückt</option>
+              <option value="boxed">Mit Rahmen</option>
+            </select>
+            <p className={styles.fieldHint}>
+              {clsLayout === 'standard' && 'Klassisches Layout ohne besondere Formatierung'}
+              {clsLayout === 'indented' && 'Klauseltext wird eingerückt mit linker Linie'}
+              {clsLayout === 'boxed' && 'Klausel in einem Rahmen mit Hintergrund'}
+            </p>
+          </div>
+
           <div className={styles.field}>
             <label className={styles.label}>Klauseltitel</label>
             <input
@@ -794,6 +842,7 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
           )}
         </>
       );
+    }
 
     case 'attachment':
       return (
@@ -917,19 +966,43 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
     }
 
     case 'signature': {
-      const signatureContent = content as { showSignatureIcons?: boolean };
+      const signatureContent = content as { showSignatureIcons?: boolean; signatureLayout?: 'modern' | 'classic' };
+      const sigLayout = signatureContent.signatureLayout || 'modern';
       return (
         <>
+          {/* Layout-Auswahl */}
           <div className={styles.field}>
-            <label className={styles.checkboxLabel}>
-              <input
-                type="checkbox"
-                checked={signatureContent.showSignatureIcons === true}
-                onChange={(e) => onUpdate({ ...content, showSignatureIcons: e.target.checked })}
-              />
-              <span>Icons einblenden</span>
-            </label>
+            <label className={styles.label}>Layout</label>
+            <select
+              className={styles.select}
+              value={sigLayout}
+              onChange={(e) => onUpdate({ ...content, signatureLayout: e.target.value as 'modern' | 'classic' })}
+            >
+              <option value="modern">Modern (Karten)</option>
+              <option value="classic">Klassisch (Linien)</option>
+            </select>
+            <p className={styles.fieldHint}>
+              {sigLayout === 'modern'
+                ? 'Modernes Layout mit separaten Ort/Datum Feldern und Karten'
+                : 'Traditionelles Layout mit "Ort, Datum ___" und Unterschriftslinien'
+              }
+            </p>
           </div>
+
+          {/* Icons nur bei modernem Layout */}
+          {sigLayout === 'modern' && (
+            <div className={styles.field}>
+              <label className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={signatureContent.showSignatureIcons === true}
+                  onChange={(e) => onUpdate({ ...content, showSignatureIcons: e.target.checked })}
+                />
+                <span>Icons einblenden</span>
+              </label>
+            </div>
+          )}
+
           <p className={styles.noContent}>
             Bearbeiten Sie die Unterschriftsfelder per Doppelklick direkt im Block.
           </p>

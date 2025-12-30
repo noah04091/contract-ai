@@ -93,6 +93,11 @@ export interface BlockContent {
   partiesLayout?: 'modern' | 'classic';  // Layout-Variante: modern (side-by-side) oder classic (vertikal)
   // Signature
   showSignatureIcons?: boolean;  // Icons bei Unterschriften einblenden (default: false)
+  signatureLayout?: 'modern' | 'classic';  // Layout: modern (Karten) oder classic (Linien)
+  // Header
+  headerLayout?: 'centered' | 'left-logo' | 'minimal';  // Layout: zentriert, Logo links, nur Titel
+  // Clause
+  clauseLayout?: 'standard' | 'indented' | 'boxed';  // Layout: Standard, eingerückt, mit Rahmen
   // Clause
   number?: string;
   clauseTitle?: string;

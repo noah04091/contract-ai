@@ -24,7 +24,7 @@ export const SignatureBlock: React.FC<SignatureBlockProps> = ({
   isSelected,
   isPreview,
 }) => {
-  const { signatureFields, witnesses, showSignatureIcons = false } = content;
+  const { signatureFields, witnesses, showSignatureIcons = false, signatureLayout = 'modern' } = content;
   const updateBlockContent = useContractBuilderStore((state) => state.updateBlockContent);
   const syncVariables = useContractBuilderStore((state) => state.syncVariables);
 
@@ -84,8 +84,9 @@ export const SignatureBlock: React.FC<SignatureBlockProps> = ({
     return editingField?.type === 'label' && editingField.index === index;
   };
 
-  return (
-    <div className={`${styles.signature} ${isSelected ? styles.selected : ''}`}>
+  // Modernes Layout - Karten mit separaten Ort/Datum Feldern
+  const renderModernLayout = () => (
+    <>
       <div className={styles.signatureHeader}>
         {showSignatureIcons && <PenTool size={16} />}
         <span>Unterschriften</span>
@@ -162,6 +163,72 @@ export const SignatureBlock: React.FC<SignatureBlockProps> = ({
           </div>
         </div>
       )}
+    </>
+  );
+
+  // Klassisches Layout - traditionelle Unterschriftslinien
+  const renderClassicLayout = () => (
+    <div className={styles.classicLayout}>
+      {fields.map((field, index) => (
+        <div key={index} className={styles.classicSignatureField}>
+          {/* Ort, Datum Zeile */}
+          <div className={styles.classicPlaceDateRow}>
+            <span className={styles.classicLabel}>Ort, Datum</span>
+            <div className={styles.classicLine} />
+          </div>
+
+          {/* Unterschrift Zeile */}
+          <div className={styles.classicSignatureRow}>
+            <div className={styles.classicLine} />
+          </div>
+
+          {/* Label unter der Linie */}
+          <div className={styles.classicNameLabel}>
+            {isEditingLabel(index) ? (
+              <input
+                ref={inputRef}
+                type="text"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onBlur={handleSave}
+                onKeyDown={handleKeyDown}
+                className={styles.inlineInput}
+              />
+            ) : (
+              <VariableHighlight
+                text={field.label || `(${index === 0 ? 'Auftraggeber' : 'Auftragnehmer'})`}
+                isPreview={isPreview}
+                onDoubleClick={() => handleDoubleClick({ type: 'label', index }, field.label || `(${index === 0 ? 'Auftraggeber' : 'Auftragnehmer'})`)}
+              />
+            )}
+          </div>
+        </div>
+      ))}
+
+      {/* Zeugen klassisch */}
+      {witnesses !== undefined && witnesses > 0 && (
+        <div className={styles.classicWitnessSection}>
+          <div className={styles.classicWitnessTitle}>Zeugen:</div>
+          {Array.from({ length: witnesses }).map((_, index) => (
+            <div key={index} className={styles.classicSignatureField}>
+              <div className={styles.classicPlaceDateRow}>
+                <span className={styles.classicLabel}>Ort, Datum</span>
+                <div className={styles.classicLine} />
+              </div>
+              <div className={styles.classicSignatureRow}>
+                <div className={styles.classicLine} />
+              </div>
+              <div className={styles.classicNameLabel}>(Zeuge {index + 1})</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className={`${styles.signature} ${isSelected ? styles.selected : ''}`}>
+      {signatureLayout === 'classic' ? renderClassicLayout() : renderModernLayout()}
     </div>
   );
 };
