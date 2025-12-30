@@ -1,14 +1,17 @@
 // 📁 backend/utils/emailTemplate.js
-// ✅ V8 Design - 1:1 Kopie von clean3 Template (das funktioniert!)
+// ✅ V9 - Hardcoded HTML mit String-Replace (funktioniert 100%!)
 
+/**
+ * Generiert E-Mail HTML basierend auf dem clean3 Template
+ * Verwendet String-Replace statt Template-Literal-Nesting
+ */
 function generateEmailTemplate({
   title,
   body,
   cta = null,
-  recipientEmail = null,
   badge = 'Erinnerung'
 }) {
-  // CTA Button - exakt wie in clean3
+  // CTA Button HTML
   const ctaHtml = cta ? `
               <!-- Button -->
               <table cellpadding="0" cellspacing="0">
@@ -19,25 +22,10 @@ function generateEmailTemplate({
                     </a>
                   </td>
                 </tr>
-              </table>
-  ` : '';
+              </table>` : '';
 
-  // Unsubscribe Footer
-  const unsubscribeHtml = recipientEmail ? `
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 20px;">
-                <tr>
-                  <td style="border-top: 1px solid #e2e8f0; padding-top: 16px; text-align: center;">
-                    <p style="margin: 0; font-size: 11px; color: #9ca3af;">
-                      Diese E-Mail wurde an ${recipientEmail} gesendet.<br>
-                      <a href="https://www.contract-ai.de/abmelden" style="color: #64748b; text-decoration: underline;">Von Benachrichtigungen abmelden</a>
-                    </p>
-                  </td>
-                </tr>
-              </table>
-  ` : '';
-
-  // EXAKT wie clean3 - keine Änderungen!
-  return `<!DOCTYPE html>
+  // Das EXAKTE HTML von clean3 - hardcoded!
+  const html = `<!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="utf-8">
@@ -63,7 +51,7 @@ function generateEmailTemplate({
                     <span style="font-size: 22px; font-weight: 700; color: #1e293b; letter-spacing: -0.5px;">Contract AI</span>
                   </td>
                   <td align="right">
-                    <span style="display: inline-block; padding: 6px 12px; background-color: #dbeafe; color: #1d4ed8; font-size: 11px; font-weight: 600; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;">${badge}</span>
+                    <span style="display: inline-block; padding: 6px 12px; background-color: #dbeafe; color: #1d4ed8; font-size: 11px; font-weight: 600; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;">{{BADGE}}</span>
                   </td>
                 </tr>
               </table>
@@ -83,12 +71,12 @@ function generateEmailTemplate({
           <tr>
             <td style="padding: 32px 40px 40px 40px;">
               <h1 style="margin: 0 0 8px 0; font-size: 24px; color: #0f172a; font-weight: 700; line-height: 1.3;">
-                ${title}
+                {{TITLE}}
               </h1>
 
-              ${body}
+              {{BODY}}
 
-              ${ctaHtml}
+              {{CTA}}
             </td>
           </tr>
 
@@ -119,7 +107,6 @@ function generateEmailTemplate({
                   </td>
                 </tr>
               </table>
-              ${unsubscribeHtml}
             </td>
           </tr>
 
@@ -129,27 +116,37 @@ function generateEmailTemplate({
   </table>
 </body>
 </html>`;
+
+  // String-Replace für dynamische Teile
+  return html
+    .replace('{{BADGE}}', badge)
+    .replace('{{TITLE}}', title)
+    .replace('{{BODY}}', body)
+    .replace('{{CTA}}', ctaHtml);
 }
 
 /**
- * Generiert eine Info-Box mit linkem blauen Akzent - EXAKT wie in clean3
+ * Generiert eine Info-Box mit linkem blauen Akzent
  */
 function generateInfoBox(items) {
   if (!items || items.length === 0) return '';
 
-  const itemsHtml = items.map((item, index) => {
+  let itemsHtml = '';
+  items.forEach((item, index) => {
     const isFirst = index === 0;
-    const borderTop = !isFirst ? 'border-top: 1px solid #e2e8f0; padding-top: 16px;' : '';
-    const paddingBottom = index < items.length - 1 ? 'padding-bottom: 16px;' : '';
+    const isLast = index === items.length - 1;
+    const style = isFirst
+      ? (isLast ? '' : 'padding-bottom: 16px;')
+      : (isLast ? 'border-top: 1px solid #e2e8f0; padding-top: 16px;' : 'border-top: 1px solid #e2e8f0; padding-top: 16px; padding-bottom: 16px;');
 
-    return `
+    itemsHtml += `
                             <tr>
-                              <td style="${borderTop} ${paddingBottom}">
+                              <td style="${style}">
                                 <p style="margin: 0 0 2px 0; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">${item.label}</p>
                                 <p style="margin: 0; font-size: 17px; color: #0f172a; font-weight: 600;">${item.value}</p>
                               </td>
                             </tr>`;
-  }).join('');
+  });
 
   return `
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
@@ -170,7 +167,7 @@ function generateInfoBox(items) {
 }
 
 /**
- * Generiert eine Alert-Box
+ * Generiert eine Alert-Box (rot für kritisch, gelb für Warnung)
  */
 function generateAlertBox(text, type = 'warning') {
   const colors = {

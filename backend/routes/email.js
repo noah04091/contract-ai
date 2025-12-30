@@ -1165,6 +1165,7 @@ router.post("/test", async (req, res) => {
     }
 
     // ========== TYP 2: Digest-E-Mail (Tages-Zusammenfassung) ==========
+    // Verwendet V9 generateEmailTemplate mit String-Replace
     if (type === "digest" || type === "all") {
       const digestHtml = generateEmailTemplate({
         title: "Deine Vertrags-Zusammenfassung",
@@ -1204,8 +1205,7 @@ router.post("/test", async (req, res) => {
         cta: {
           text: "Zum Kalender",
           url: "https://www.contract-ai.de/calendar"
-        },
-        recipientEmail: email
+        }
       });
 
       await transporter.sendMail({
@@ -1224,6 +1224,7 @@ router.post("/test", async (req, res) => {
     }
 
     // ========== TYP 3: Dringende Erinnerung ==========
+    // Verwendet V9 generateEmailTemplate mit String-Replace
     if (type === "reminder" || type === "all") {
       const reminderHtml = generateEmailTemplate({
         title: "Erinnerung: Kündigungsfrist endet heute",
@@ -1270,8 +1271,7 @@ router.post("/test", async (req, res) => {
         cta: {
           text: "Jetzt kündigen",
           url: "https://www.contract-ai.de/contracts"
-        },
-        recipientEmail: email
+        }
       });
 
       await transporter.sendMail({
