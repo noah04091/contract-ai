@@ -88,51 +88,62 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
     }
   }, []);
 
-  // Scroll-basiertes Auto-Aktivieren der sichtbaren Seite
-  useEffect(() => {
-    if (view === 'preview') return; // Nur im Edit-Modus
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        // Finde die Seite mit der größten Sichtbarkeit
-        let maxVisibility = 0;
-        let mostVisiblePage = -1;
-
-        entries.forEach((entry) => {
-          const pageIndex = parseInt(entry.target.getAttribute('data-page-index') || '-1');
-          if (pageIndex >= 0 && entry.intersectionRatio > maxVisibility) {
-            maxVisibility = entry.intersectionRatio;
-            mostVisiblePage = pageIndex;
-          }
-        });
-
-        // Aktiviere die am meisten sichtbare Seite (nur wenn >30% sichtbar)
-        if (mostVisiblePage >= 0 && maxVisibility > 0.3) {
-          setActivePage(mostVisiblePage);
-        }
-      },
-      {
-        root: canvasRef.current,
-        threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
-        rootMargin: '-10% 0px -10% 0px', // Etwas Puffer oben und unten
-      }
-    );
-
-    // Beobachte alle Seiten
-    pageRefs.current.forEach((el) => {
-      observer.observe(el);
-    });
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [view, setActivePage]);
-
   const blocks = currentDocument?.content.blocks || [];
   const design = currentDocument?.design;
 
   // Blöcke nach Seiten gruppieren
   const pages = useMemo(() => groupBlocksByPage(blocks), [blocks]);
+
+  // Scroll-basiertes Auto-Aktivieren der sichtbaren Seite
+  useEffect(() => {
+    if (view === 'preview') return; // Nur im Edit-Modus
+    if (pages.length === 0) return; // Keine Seiten vorhanden
+
+    // Kurze Verzögerung damit Refs gesetzt werden können
+    const timeoutId = setTimeout(() => {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          // Finde die Seite mit der größten Sichtbarkeit
+          let maxVisibility = 0;
+          let mostVisiblePage = -1;
+
+          entries.forEach((entry) => {
+            const pageIndex = parseInt(entry.target.getAttribute('data-page-index') || '-1');
+            if (pageIndex >= 0 && entry.intersectionRatio > maxVisibility) {
+              maxVisibility = entry.intersectionRatio;
+              mostVisiblePage = pageIndex;
+            }
+          });
+
+          // Aktiviere die am meisten sichtbare Seite (nur wenn >30% sichtbar)
+          if (mostVisiblePage >= 0 && maxVisibility > 0.3) {
+            setActivePage(mostVisiblePage);
+          }
+        },
+        {
+          root: canvasRef.current,
+          threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+          rootMargin: '-10% 0px -10% 0px', // Etwas Puffer oben und unten
+        }
+      );
+
+      // Beobachte alle Seiten
+      pageRefs.current.forEach((el) => {
+        if (el) observer.observe(el);
+      });
+
+      // Speichere Observer für Cleanup
+      (window as unknown as { __pageObserver?: IntersectionObserver }).__pageObserver = observer;
+    }, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+      const obs = (window as unknown as { __pageObserver?: IntersectionObserver }).__pageObserver;
+      if (obs) {
+        obs.disconnect();
+      }
+    };
+  }, [view, setActivePage, pages.length]);
 
   // Überlauf-Erkennung und automatischer Seitenumbruch
   useEffect(() => {
