@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { FolderOpen, CheckCircle, Clock, FileText, Shield, Zap, Target } from "lucide-react";
+import { FolderOpen, CheckCircle, Clock, FileText, Shield, Zap, Target, ArrowRight } from "lucide-react";
 
 const Vertragsverwaltung: React.FC = () => {
   const { user } = useAuth();
@@ -383,6 +383,39 @@ const Vertragsverwaltung: React.FC = () => {
                 </summary>
                 <p className={styles.faqAnswer}>Ja, Sie können Verträge jederzeit dauerhaft löschen – inklusive aller Backups. Sie behalten volle Kontrolle über Ihre Daten.</p>
               </details>
+            </div>
+          </section>
+
+          {/* RELATED FEATURES */}
+          <section className={styles.relatedSection}>
+            <div className={styles.contentContainer}>
+              <h2 className={styles.sectionTitle}>Verwandte Funktionen</h2>
+              <div className={styles.relatedGrid}>
+                <Link to="/features/fristen" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>📅</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>Fristenkalender</div>
+                    <div className={styles.relatedDescription}>Automatische Erkennung und Erinnerungen für alle Fristen</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+                <Link to="/features/email-upload" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>📧</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>E-Mail Upload</div>
+                    <div className={styles.relatedDescription}>Verträge per E-Mail hochladen – automatisch importiert</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+                <Link to="/features/digitalesignatur" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>✍️</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>Digitale Signatur</div>
+                    <div className={styles.relatedDescription}>Unterschreiben Sie Ihre Verträge rechtsgültig digital</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+              </div>
             </div>
           </section>
 

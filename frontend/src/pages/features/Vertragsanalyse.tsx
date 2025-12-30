@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { Search, Target, CheckCircle, AlertTriangle, FileText, Shield, Zap, Briefcase } from "lucide-react";
+import { Search, Target, CheckCircle, AlertTriangle, FileText, Shield, Zap, Briefcase, ArrowRight } from "lucide-react";
 
 const Vertragsanalyse: React.FC = () => {
   const { user } = useAuth();
@@ -383,6 +383,39 @@ const Vertragsanalyse: React.FC = () => {
                 </summary>
                 <p className={styles.faqAnswer}>In der Regel unter 60 Sekunden nach dem Upload. Bei sehr umfangreichen Verträgen kann es bis zu 2 Minuten dauern.</p>
               </details>
+            </div>
+          </section>
+
+          {/* RELATED FEATURES */}
+          <section className={styles.relatedSection}>
+            <div className={styles.contentContainer}>
+              <h2 className={styles.sectionTitle}>Verwandte Funktionen</h2>
+              <div className={styles.relatedGrid}>
+                <Link to="/features/optimierung" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>✨</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>Vertragsoptimierung</div>
+                    <div className={styles.relatedDescription}>Nach der Analyse: KI-Vorschläge zur Verbesserung problematischer Klauseln</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+                <Link to="/features/legal-lens" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>🔍</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>Legal Lens</div>
+                    <div className={styles.relatedDescription}>Klauseln anklicken und sofort verstehen – interaktive Vertragsansicht</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+                <Link to="/features/legalpulse" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>⚖️</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>Legal Pulse</div>
+                    <div className={styles.relatedDescription}>Automatische Überwachung auf Gesetzesänderungen die Ihre Verträge betreffen</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+              </div>
             </div>
           </section>
 

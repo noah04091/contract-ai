@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { PenTool, CheckCircle, Mail, FileText, Shield, Zap } from "lucide-react";
+import { PenTool, CheckCircle, Mail, FileText, Shield, Zap, ArrowRight } from "lucide-react";
 
 const DigitaleSignatur: React.FC = () => {
   const { user } = useAuth();
@@ -383,6 +383,39 @@ const DigitaleSignatur: React.FC = () => {
                 </summary>
                 <p className={styles.faqAnswer}>Das versiegelte PDF enthält alle Signaturen, einen vollständigen Audit Trail auf der letzten Seite und ein digitales Siegel. Es ist rechtlich beweiskräftig und kann nicht nachträglich verändert werden.</p>
               </details>
+            </div>
+          </section>
+
+          {/* RELATED FEATURES */}
+          <section className={styles.relatedSection}>
+            <div className={styles.contentContainer}>
+              <h2 className={styles.sectionTitle}>Verwandte Funktionen</h2>
+              <div className={styles.relatedGrid}>
+                <Link to="/features/generator" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>📝</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>Vertragsgenerator</div>
+                    <div className={styles.relatedDescription}>Erstellen Sie Verträge mit KI – unterschriftsreif in Minuten</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+                <Link to="/features/contract-builder" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>🔧</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>Contract Builder</div>
+                    <div className={styles.relatedDescription}>Visueller Editor für individuelle Vertragsgestaltung</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+                <Link to="/features/vertragsverwaltung" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>📁</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>Vertragsverwaltung</div>
+                    <div className={styles.relatedDescription}>Alle signierten Verträge zentral organisieren</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+              </div>
             </div>
           </section>
 

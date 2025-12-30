@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { GitCompare, Target, BarChart3, AlertTriangle, FileText, Shield, CheckCircle } from "lucide-react";
+import { GitCompare, Target, BarChart3, AlertTriangle, FileText, Shield, CheckCircle, ArrowRight } from "lucide-react";
 
 const Vergleich: React.FC = () => {
   const { user } = useAuth();
@@ -347,6 +347,39 @@ const Vergleich: React.FC = () => {
                 </summary>
                 <p className={styles.faqAnswer}>Verschlüsselte Übertragung und Verarbeitung ausschließlich auf EU-Servern. Speicherung nur für Verlaufsanzeige, jederzeit löschbar. Keine Weitergabe an Dritte.</p>
               </details>
+            </div>
+          </section>
+
+          {/* RELATED FEATURES */}
+          <section className={styles.relatedSection}>
+            <div className={styles.contentContainer}>
+              <h2 className={styles.sectionTitle}>Verwandte Funktionen</h2>
+              <div className={styles.relatedGrid}>
+                <Link to="/features/optimierung" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>✨</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>Optimierung</div>
+                    <div className={styles.relatedDescription}>KI-Vorschläge zur Verbesserung Ihrer Vertragsklauseln</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+                <Link to="/features/vertragsanalyse" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>🔍</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>Vertragsanalyse</div>
+                    <div className={styles.relatedDescription}>Komplette Analyse mit Risiko-Score und Handlungsempfehlungen</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+                <Link to="/features/legal-lens" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>👁️</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>Legal Lens</div>
+                    <div className={styles.relatedDescription}>Klauseln anklicken und sofort verstehen</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+              </div>
             </div>
           </section>
 

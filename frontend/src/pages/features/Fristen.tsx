@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { Calendar, Clock, AlertCircle, Mail, Shield, CheckCircle } from "lucide-react";
+import { Calendar, Clock, AlertCircle, Mail, Shield, CheckCircle, ArrowRight } from "lucide-react";
 
 const Fristen: React.FC = () => {
   const { user } = useAuth();
@@ -347,6 +347,39 @@ const Fristen: React.FC = () => {
                 </summary>
                 <p className={styles.faqAnswer}>Ja, Sie können Fristen an Teammitglieder zuweisen, Verantwortlichkeiten definieren und gemeinsame Kalender erstellen. Ideal für Unternehmen mit vielen Verträgen.</p>
               </details>
+            </div>
+          </section>
+
+          {/* RELATED FEATURES */}
+          <section className={styles.relatedSection}>
+            <div className={styles.contentContainer}>
+              <h2 className={styles.sectionTitle}>Verwandte Funktionen</h2>
+              <div className={styles.relatedGrid}>
+                <Link to="/features/vertragsverwaltung" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>📁</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>Vertragsverwaltung</div>
+                    <div className={styles.relatedDescription}>Alle Verträge zentral organisieren, kategorisieren und durchsuchen</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+                <Link to="/features/email-upload" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>📧</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>E-Mail Upload</div>
+                    <div className={styles.relatedDescription}>Verträge per E-Mail hochladen – automatisch erkannt und importiert</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+                <Link to="/features/legalpulse" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>📊</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>Legal Pulse</div>
+                    <div className={styles.relatedDescription}>Marktdaten und Benchmarks zu Ihren Vertragskonditionen</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+              </div>
             </div>
           </section>
 

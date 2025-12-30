@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { Eye, MousePointer, MessageCircle, AlertTriangle, Scale, Lightbulb, CheckCircle, Shield, FileText } from "lucide-react";
+import { Eye, MousePointer, MessageCircle, AlertTriangle, Scale, Lightbulb, CheckCircle, Shield, FileText, ArrowRight } from "lucide-react";
 
 const LegalLens: React.FC = () => {
   const { user } = useAuth();
@@ -407,6 +407,39 @@ const LegalLens: React.FC = () => {
                 </summary>
                 <p className={styles.faqAnswer}>Legal Lens ist in allen Premium-Plänen enthalten. Im Free-Tier können Sie es mit eingeschränkten Funktionen testen.</p>
               </details>
+            </div>
+          </section>
+
+          {/* RELATED FEATURES */}
+          <section className={styles.relatedSection}>
+            <div className={styles.contentContainer}>
+              <h2 className={styles.sectionTitle}>Verwandte Funktionen</h2>
+              <div className={styles.relatedGrid}>
+                <Link to="/features/vertragsanalyse" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>🔍</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>Vertragsanalyse</div>
+                    <div className={styles.relatedDescription}>Komplette Analyse Ihres Vertrags mit Risiko-Score und Handlungsempfehlungen</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+                <Link to="/features/optimierung" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>✨</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>Optimierung</div>
+                    <div className={styles.relatedDescription}>KI-Vorschläge zur Verbesserung problematischer Klauseln</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+                <Link to="/features/legalpulse" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>📊</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>Legal Pulse</div>
+                    <div className={styles.relatedDescription}>Marktdaten und Benchmarks zu Vertragsklauseln</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+              </div>
             </div>
           </section>
 

@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { Mail, CheckCircle, FileText, Shield, Zap } from "lucide-react";
+import { Mail, CheckCircle, FileText, Shield, Zap, ArrowRight } from "lucide-react";
 
 const EmailUpload: React.FC = () => {
   const { user } = useAuth();
@@ -398,6 +398,39 @@ const EmailUpload: React.FC = () => {
                 </summary>
                 <p className={styles.faqAnswer}>Ja, abhängig von Ihrem Plan: Free (1 E-Mail/Stunde), Premium (10 E-Mails/Stunde), Business (20 E-Mails/Stunde). Einzelne PDFs dürfen max. 15 MB groß sein.</p>
               </details>
+            </div>
+          </section>
+
+          {/* RELATED FEATURES */}
+          <section className={styles.relatedSection}>
+            <div className={styles.contentContainer}>
+              <h2 className={styles.sectionTitle}>Verwandte Funktionen</h2>
+              <div className={styles.relatedGrid}>
+                <Link to="/features/vertragsverwaltung" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>📁</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>Vertragsverwaltung</div>
+                    <div className={styles.relatedDescription}>Alle hochgeladenen Verträge zentral organisieren</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+                <Link to="/features/fristen" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>📅</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>Fristenkalender</div>
+                    <div className={styles.relatedDescription}>Automatische Erinnerungen für alle Ihre Verträge</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+                <Link to="/features/vertragsanalyse" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>🔍</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>Vertragsanalyse</div>
+                    <div className={styles.relatedDescription}>Hochgeladene Verträge automatisch analysieren lassen</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+              </div>
             </div>
           </section>
 

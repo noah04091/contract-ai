@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { Wrench, Target, CheckCircle, AlertTriangle, FileText, Shield, Zap } from "lucide-react";
+import { Wrench, Target, CheckCircle, AlertTriangle, FileText, Shield, Zap, ArrowRight } from "lucide-react";
 
 const Optimierung: React.FC = () => {
   const { user } = useAuth();
@@ -384,6 +384,39 @@ const Optimierung: React.FC = () => {
                 </summary>
                 <p className={styles.faqAnswer}>Ja, alle Vorschläge sind so formuliert, dass Sie sie Abschnitt für Abschnitt in Ihren Vertrag übernehmen können. Mit Änderungsmarkierungen und Export-Funktion.</p>
               </details>
+            </div>
+          </section>
+
+          {/* RELATED FEATURES */}
+          <section className={styles.relatedSection}>
+            <div className={styles.contentContainer}>
+              <h2 className={styles.sectionTitle}>Verwandte Funktionen</h2>
+              <div className={styles.relatedGrid}>
+                <Link to="/features/vertragsanalyse" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>🔍</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>Vertragsanalyse</div>
+                    <div className={styles.relatedDescription}>Erst analysieren, dann optimieren: Risiken und Schwachstellen erkennen</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+                <Link to="/features/vergleich" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>📊</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>Vertragsvergleich</div>
+                    <div className={styles.relatedDescription}>Zwei Versionen vergleichen und die bessere Variante finden</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+                <Link to="/features/generator" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>📝</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>Vertragsgenerator</div>
+                    <div className={styles.relatedDescription}>Komplett neue Verträge mit optimierten Klauseln erstellen</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+              </div>
             </div>
           </section>
 

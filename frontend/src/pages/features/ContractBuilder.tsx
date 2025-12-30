@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { Wrench, Layers, MousePointer, Variable, Sparkles, FileDown, CheckCircle, Shield, FileText } from "lucide-react";
+import { Wrench, Layers, MousePointer, Variable, Sparkles, FileDown, CheckCircle, Shield, FileText, ArrowRight } from "lucide-react";
 
 const ContractBuilder: React.FC = () => {
   const { user } = useAuth();
@@ -415,6 +415,39 @@ const ContractBuilder: React.FC = () => {
                 </summary>
                 <p className={styles.faqAnswer}>Die Team-Funktion ist für Business-Nutzer verfügbar. Erstellen und teilen Sie Vorlagen innerhalb Ihrer Organisation.</p>
               </details>
+            </div>
+          </section>
+
+          {/* RELATED FEATURES */}
+          <section className={styles.relatedSection}>
+            <div className={styles.contentContainer}>
+              <h2 className={styles.sectionTitle}>Verwandte Funktionen</h2>
+              <div className={styles.relatedGrid}>
+                <Link to="/features/generator" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>📝</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>Vertragsgenerator</div>
+                    <div className={styles.relatedDescription}>Lassen Sie komplette Verträge von der KI erstellen – basierend auf Ihren Vorgaben</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+                <Link to="/features/digitalesignatur" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>✍️</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>Digitale Signatur</div>
+                    <div className={styles.relatedDescription}>Unterschreiben Sie Ihre erstellten Verträge rechtsgültig digital</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+                <Link to="/features/legal-lens" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>🔍</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>Legal Lens</div>
+                    <div className={styles.relatedDescription}>Verstehen Sie jede Klausel – klicken Sie auf Textpassagen für Erklärungen</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+              </div>
             </div>
           </section>
 

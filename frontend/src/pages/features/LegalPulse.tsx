@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { Activity, TrendingUp, AlertTriangle, Bell, Shield, CheckCircle } from "lucide-react";
+import { Activity, TrendingUp, AlertTriangle, Bell, Shield, CheckCircle, ArrowRight } from "lucide-react";
 
 const LegalPulse: React.FC = () => {
   const { user } = useAuth();
@@ -347,6 +347,39 @@ const LegalPulse: React.FC = () => {
                 </summary>
                 <p className={styles.faqAnswer}>Legal Pulse ist ab dem Business-Plan (49€/Monat) enthalten. Free- und Premium-Nutzer erhalten monatliche Zusammenfassungen der wichtigsten Änderungen.</p>
               </details>
+            </div>
+          </section>
+
+          {/* RELATED FEATURES */}
+          <section className={styles.relatedSection}>
+            <div className={styles.contentContainer}>
+              <h2 className={styles.sectionTitle}>Verwandte Funktionen</h2>
+              <div className={styles.relatedGrid}>
+                <Link to="/features/vertragsanalyse" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>🔍</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>Vertragsanalyse</div>
+                    <div className={styles.relatedDescription}>Komplette Analyse Ihrer Verträge mit Risiko-Score</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+                <Link to="/features/fristen" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>📅</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>Fristenkalender</div>
+                    <div className={styles.relatedDescription}>Automatische Erkennung und Erinnerungen für alle Fristen</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+                <Link to="/features/vertragsverwaltung" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>📁</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>Vertragsverwaltung</div>
+                    <div className={styles.relatedDescription}>Alle Verträge zentral organisieren und durchsuchen</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+              </div>
             </div>
           </section>
 

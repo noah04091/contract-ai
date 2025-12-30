@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { FileText, Zap, Shield, PenTool, Target, CheckCircle } from "lucide-react";
+import { FileText, Zap, Shield, PenTool, Target, CheckCircle, ArrowRight } from "lucide-react";
 
 const Generator: React.FC = () => {
   const { user } = useAuth();
@@ -355,6 +355,39 @@ const Generator: React.FC = () => {
                 </summary>
                 <p className={styles.faqAnswer}>Individuelle Konfiguration statt starrer Vorlagen, immer aktuelle Klauseln, Konsistenz-Checks und nahtlose Integration in Ihren Workflow.</p>
               </details>
+            </div>
+          </section>
+
+          {/* RELATED FEATURES */}
+          <section className={styles.relatedSection}>
+            <div className={styles.contentContainer}>
+              <h2 className={styles.sectionTitle}>Verwandte Funktionen</h2>
+              <div className={styles.relatedGrid}>
+                <Link to="/features/contract-builder" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>🔧</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>Contract Builder</div>
+                    <div className={styles.relatedDescription}>Visueller Editor mit Drag & Drop für individuelle Vertragsgestaltung</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+                <Link to="/features/digitalesignatur" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>✍️</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>Digitale Signatur</div>
+                    <div className={styles.relatedDescription}>Unterschreiben Sie generierte Verträge rechtsgültig digital</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+                <Link to="/features/optimierung" className={styles.relatedCard}>
+                  <span className={styles.relatedIcon}>✨</span>
+                  <div className={styles.relatedContent}>
+                    <div className={styles.relatedTitle}>Optimierung</div>
+                    <div className={styles.relatedDescription}>KI-Vorschläge zur Verbesserung Ihrer Vertragsklauseln</div>
+                  </div>
+                  <ArrowRight size={20} className={styles.relatedArrow} />
+                </Link>
+              </div>
             </div>
           </section>
 
