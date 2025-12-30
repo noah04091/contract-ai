@@ -20,7 +20,7 @@ const transporter = nodemailer.createTransport({
  */
 async function sendEmail(to, subject, text, html = null) {
   const mailOptions = {
-    from: `"Contract AI Signaturservice" <${process.env.EMAIL_USER}>`,
+    from: process.env.EMAIL_FROM || `"Contract AI Signaturservice" <noreply@contract-ai.de>`,
     to,
     subject,
     text,
