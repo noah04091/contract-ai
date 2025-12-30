@@ -599,8 +599,29 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
         titleFontSize?: number;
         subtitleFontSize?: number;
         headerLayout?: 'centered' | 'left-logo' | 'minimal';
+        logo?: string;
       };
       const hdrLayout = headerContent.headerLayout || 'centered';
+
+      // Logo-Upload Handler
+      const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Max 2MB
+        if (file.size > 2 * 1024 * 1024) {
+          alert('Logo darf maximal 2MB groß sein');
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const base64 = event.target?.result as string;
+          onUpdate({ ...content, logo: base64 });
+        };
+        reader.readAsDataURL(file);
+      };
+
       return (
         <>
           {/* Layout-Auswahl */}
@@ -621,6 +642,42 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
               {hdrLayout === 'minimal' && 'Nur Titel und Untertitel, linksbündig'}
             </p>
           </div>
+
+          {/* Logo-Upload - nur bei centered und left-logo */}
+          {hdrLayout !== 'minimal' && (
+            <div className={styles.field}>
+              <label className={styles.label}>Firmenlogo</label>
+              {headerContent.logo ? (
+                <div className={styles.fieldGroup}>
+                  <img
+                    src={headerContent.logo}
+                    alt="Logo Vorschau"
+                    style={{ maxWidth: '100%', maxHeight: '60px', objectFit: 'contain', marginBottom: '8px' }}
+                  />
+                  <button
+                    type="button"
+                    className={styles.actionButton}
+                    onClick={() => onUpdate({ ...content, logo: undefined })}
+                    style={{ width: '100%', justifyContent: 'center' }}
+                  >
+                    Logo entfernen
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoUpload}
+                    style={{ fontSize: '12px' }}
+                  />
+                  <p className={styles.fieldHint}>
+                    PNG, JPG oder SVG (max. 2MB)
+                  </p>
+                </>
+              )}
+            </div>
+          )}
 
           <div className={styles.field}>
             <label className={styles.label}>Titel</label>
