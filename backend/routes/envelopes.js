@@ -154,6 +154,7 @@ function validateEnvelopeSubmission(envelope, signatures, signerEmail) {
     switch (field.type) {
       case 'signature':
       case 'initials':
+      case 'initial': // Backend model uses singular
         // Already validated by validateSignature() function
         break;
 
@@ -1558,7 +1559,7 @@ router.post("/sign/:token/submit", signatureSubmitLimiter, async (req, res) => {
       const field = envelope.signatureFields.id(sig.fieldId);
 
       // Only validate signature/initials fields (not text/date)
-      if (field && (field.type === 'signature' || field.type === 'initials')) {
+      if (field && (field.type === 'signature' || field.type === 'initials' || field.type === 'initial')) {
         const validation = validateSignature(sig.value);
         if (!validation.valid) {
           return res.status(400).json({

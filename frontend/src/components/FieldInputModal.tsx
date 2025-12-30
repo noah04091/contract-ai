@@ -19,7 +19,7 @@ import styles from "../styles/FieldInputModal.module.css";
 
 // ===== TYPES =====
 
-export type FieldType = "signature" | "initials" | "date" | "text" | "location";
+export type FieldType = "signature" | "initials" | "initial" | "date" | "text" | "location";
 
 export interface SignatureField {
   _id: string;
@@ -55,6 +55,7 @@ export interface FieldInputModalProps {
 const FIELD_ICONS: Record<FieldType, typeof PenTool> = {
   signature: PenTool,
   initials: FileSignature,
+  initial: FileSignature, // Backend uses singular
   date: Calendar,
   text: Type,
   location: MapPin
@@ -63,6 +64,7 @@ const FIELD_ICONS: Record<FieldType, typeof PenTool> = {
 const FIELD_LABELS: Record<FieldType, string> = {
   signature: "Signatur",
   initials: "Initialen",
+  initial: "Initialen", // Backend uses singular
   date: "Datum",
   text: "Text",
   location: "Ort"
@@ -188,7 +190,7 @@ export default function FieldInputModal({
 
   // Make signature canvas DPI-aware for accurate touch/pen input
   useEffect(() => {
-    if (!isOpen || !field || (field.type !== "signature" && field.type !== "initials")) return;
+    if (!isOpen || !field || (field.type !== "signature" && field.type !== "initials" && field.type !== "initial")) return;
     if (!sigPadRef.current) return;
 
     // Wait for canvas to be mounted
@@ -366,7 +368,8 @@ export default function FieldInputModal({
   const renderContent = () => {
     switch (field.type) {
       case "signature":
-      case "initials": {
+      case "initials":
+      case "initial": { // Backend uses singular
         const canvasWidth = field.type === "signature" ? 600 : 300;
         const canvasHeight = field.type === "signature" ? 180 : 120;
 
@@ -496,7 +499,7 @@ export default function FieldInputModal({
   };
 
   const handleConfirm = () => {
-    if (field.type === "signature" || field.type === "initials") {
+    if (field.type === "signature" || field.type === "initials" || field.type === "initial") {
       handleConfirmSignature();
     } else if (field.type === "date") {
       handleConfirmDate();

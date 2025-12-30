@@ -6,7 +6,7 @@ import styles from "../styles/FieldSidebar.module.css";
 
 // ===== TYPES =====
 
-export type FieldType = "signature" | "initials" | "date" | "text" | "location";
+export type FieldType = "signature" | "initials" | "initial" | "date" | "text" | "location";
 export type FieldStatus = "pending" | "active" | "completed" | "invalid";
 
 export interface SignatureField {
@@ -45,6 +45,7 @@ export interface FieldSidebarProps {
 const FIELD_ICONS: Record<FieldType, typeof PenTool> = {
   signature: PenTool,
   initials: FileSignature,
+  initial: FileSignature, // Backend uses singular
   date: Calendar,
   text: Type,
   location: MapPin
@@ -53,6 +54,7 @@ const FIELD_ICONS: Record<FieldType, typeof PenTool> = {
 const FIELD_LABELS: Record<FieldType, string> = {
   signature: "Signatur",
   initials: "Initialen",
+  initial: "Initialen", // Backend uses singular
   date: "Datum",
   text: "Text",
   location: "Ort"

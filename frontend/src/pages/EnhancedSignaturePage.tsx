@@ -43,7 +43,7 @@ interface SignerInfo {
 interface SignatureField {
   _id: string;
   assigneeEmail: string;
-  type: "signature" | "initials" | "date" | "text" | "location";
+  type: "signature" | "initials" | "initial" | "date" | "text" | "location";
   required: boolean;
   page: number;
   x: number;

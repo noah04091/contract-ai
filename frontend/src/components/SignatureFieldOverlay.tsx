@@ -9,7 +9,7 @@ import styles from "../styles/SignatureFieldOverlay.module.css";
 
 interface SignatureField {
   _id: string;
-  type: "signature" | "initials" | "date" | "text" | "location";
+  type: "signature" | "initials" | "initial" | "date" | "text" | "location";
   page: number;
 
   // Legacy pixel coordinates (deprecated)
@@ -64,19 +64,21 @@ interface SignatureFieldOverlayProps {
   signerColor?: string;
 }
 
-// Field type icons
-const FIELD_ICONS = {
+// Field type icons (initial + initials for backend compatibility)
+const FIELD_ICONS: Record<string, typeof PenTool> = {
   signature: PenTool,
   initials: FileSignature,
+  initial: FileSignature, // Backend uses singular
   date: Calendar,
   text: Type,
   location: MapPin
 };
 
-// Field type labels
-const FIELD_LABELS = {
+// Field type labels (initial + initials for backend compatibility)
+const FIELD_LABELS: Record<string, string> = {
   signature: "Signatur",
   initials: "Initialen",
+  initial: "Initialen", // Backend uses singular
   date: "Datum",
   text: "Text",
   location: "Ort"
