@@ -1008,34 +1008,58 @@ router.post("/test", async (req, res) => {
     }
 
     // ========== TYP 1: Kalender-Benachrichtigung (Kündigungsfrist) ==========
+    // Body EXAKT wie in clean3 Template
     if (type === "calendar" || type === "all") {
-      const { generateInfoBox } = require("../utils/emailTemplate");
-
       const calendarHtml = generateEmailTemplate({
         title: "Kündigungsfrist in 14 Tagen",
         badge: "Erinnerung",
         body: `
-          <p style="margin: 0 0 28px 0; font-size: 15px; color: #64748b;">
-            Telekom Mobilfunk
-          </p>
-          <p style="margin: 0 0 28px 0; font-size: 15px; line-height: 1.7; color: #334155;">
-            Hallo,<br><br>
-            dein Vertrag kann bald gekündigt werden. Hier sind die wichtigen Details auf einen Blick:
-          </p>
-          ${generateInfoBox([
-            { label: "Kündigungsfrist", value: "3 Monate zum Vertragsende" },
-            { label: "Vertragsende", value: "31. März 2025" }
-          ])}
-          <p style="margin: 0 0 0 0; font-size: 14px; line-height: 1.6; color: #64748b;">
-            Ohne Kündigung verlängert sich der Vertrag automatisch um weitere 12 Monate.
-          </p>
+              <p style="margin: 0 0 28px 0; font-size: 15px; color: #64748b;">
+                Telekom Mobilfunk
+              </p>
+
+              <p style="margin: 0 0 28px 0; font-size: 15px; line-height: 1.7; color: #334155;">
+                Hallo,<br><br>
+                dein Vertrag kann bald gekündigt werden. Hier sind die wichtigen Details auf einen Blick:
+              </p>
+
+              <!-- Info Box mit linkem Akzent -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
+                <tr>
+                  <td style="background-color: #f8fafc; border-radius: 8px; border-left: 3px solid #3b82f6;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding: 20px 24px;">
+                          <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td style="padding-bottom: 16px;">
+                                <p style="margin: 0 0 2px 0; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Kündigungsfrist</p>
+                                <p style="margin: 0; font-size: 17px; color: #0f172a; font-weight: 600;">3 Monate zum Vertragsende</p>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="border-top: 1px solid #e2e8f0; padding-top: 16px;">
+                                <p style="margin: 0 0 2px 0; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Vertragsende</p>
+                                <p style="margin: 0; font-size: 17px; color: #0f172a; font-weight: 600;">31. März 2025</p>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0 0 32px 0; font-size: 14px; line-height: 1.6; color: #64748b;">
+                Ohne Kündigung verlängert sich der Vertrag automatisch um weitere 12 Monate.
+              </p>
         `,
         cta: {
           text: "Vertrag anzeigen",
           url: "https://www.contract-ai.de/contracts"
         },
-        recipientEmail: email,
-        emailCategory: "calendar"
+        recipientEmail: email
       });
 
       await transporter.sendMail({
@@ -1055,28 +1079,46 @@ router.post("/test", async (req, res) => {
 
     // ========== TYP 2: Digest-E-Mail (Tages-Zusammenfassung) ==========
     if (type === "digest" || type === "all") {
-      const { generateAlertBox } = require("../utils/emailTemplate");
-
       const digestHtml = generateEmailTemplate({
         title: "Deine Vertrags-Zusammenfassung",
         badge: "Digest",
         body: `
-          <p style="margin: 0 0 24px 0; font-size: 15px; line-height: 1.7; color: #334155;">
-            Guten Morgen!<br><br>
-            Hier ist deine tägliche Zusammenfassung:
-          </p>
-          ${generateAlertBox("1 kritische Frist: Vodafone DSL - Kündigung muss HEUTE raus!", "critical")}
-          ${generateAlertBox("2 Erinnerungen: Netflix (7 Tage), Fitnessstudio (30 Tage)", "warning")}
-          <p style="margin: 24px 0 0 0; font-size: 14px; line-height: 1.6; color: #64748b;">
-            Du erhältst diese E-Mail als tägliche Zusammenfassung.
-          </p>
+              <p style="margin: 0 0 28px 0; font-size: 15px; line-height: 1.7; color: #334155;">
+                Guten Morgen!<br><br>
+                Hier ist deine tägliche Zusammenfassung:
+              </p>
+
+              <!-- Kritische Frist -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 16px;">
+                <tr>
+                  <td style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; border-radius: 0 8px 8px 0;">
+                    <p style="color: #991b1b; margin: 0; font-weight: 600;">
+                      1 kritische Frist: Vodafone DSL - Kündigung heute!
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Erinnerungen -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
+                <tr>
+                  <td style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 0 8px 8px 0;">
+                    <p style="color: #92400e; margin: 0; font-weight: 600;">
+                      2 Erinnerungen: Netflix (7 Tage), Fitnessstudio (30 Tage)
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0 0 32px 0; font-size: 14px; line-height: 1.6; color: #64748b;">
+                Du erhältst diese E-Mail als tägliche Zusammenfassung.
+              </p>
         `,
         cta: {
           text: "Zum Kalender",
           url: "https://www.contract-ai.de/calendar"
         },
-        recipientEmail: email,
-        emailCategory: "calendar"
+        recipientEmail: email
       });
 
       await transporter.sendMail({
@@ -1094,33 +1136,55 @@ router.post("/test", async (req, res) => {
       results.push("digest");
     }
 
-    // ========== TYP 3: Dringende Erinnerung (LETZTE CHANCE) ==========
+    // ========== TYP 3: Dringende Erinnerung ==========
     if (type === "reminder" || type === "all") {
-      const { generateAlertBox, generateInfoBox } = require("../utils/emailTemplate");
-
       const reminderHtml = generateEmailTemplate({
-        title: "Letzte Chance: Heute kündigen!",
+        title: "Erinnerung: Kündigungsfrist endet heute",
         badge: "Dringend",
         body: `
-          ${generateAlertBox("HEUTE ist der letzte Tag!", "critical")}
-          <p style="margin: 0 0 28px 0; font-size: 15px; color: #64748b;">
-            Vodafone DSL
-          </p>
-          <p style="margin: 0 0 24px 0; font-size: 15px; line-height: 1.7; color: #334155;">
-            Die Kündigungsfrist für deinen Vertrag endet heute.
-            Wenn du jetzt nicht kündigst, verlängert sich der Vertrag automatisch um weitere 24 Monate.
-          </p>
-          ${generateInfoBox([
-            { label: "Monatliche Kosten", value: "44,99 EUR" },
-            { label: "Bei Verlängerung", value: "1.079,76 EUR für 24 Monate" }
-          ])}
+              <p style="margin: 0 0 28px 0; font-size: 15px; color: #64748b;">
+                Vodafone DSL
+              </p>
+
+              <p style="margin: 0 0 28px 0; font-size: 15px; line-height: 1.7; color: #334155;">
+                Hallo,<br><br>
+                die Kündigungsfrist für deinen Vertrag endet heute.
+                Wenn du jetzt nicht kündigst, verlängert sich der Vertrag automatisch um weitere 24 Monate.
+              </p>
+
+              <!-- Info Box -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
+                <tr>
+                  <td style="background-color: #f8fafc; border-radius: 8px; border-left: 3px solid #3b82f6;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding: 20px 24px;">
+                          <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td style="padding-bottom: 16px;">
+                                <p style="margin: 0 0 2px 0; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Monatliche Kosten</p>
+                                <p style="margin: 0; font-size: 17px; color: #0f172a; font-weight: 600;">44,99 EUR</p>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="border-top: 1px solid #e2e8f0; padding-top: 16px;">
+                                <p style="margin: 0 0 2px 0; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Bei Verlängerung</p>
+                                <p style="margin: 0; font-size: 17px; color: #0f172a; font-weight: 600;">1.079,76 EUR für 24 Monate</p>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
         `,
         cta: {
           text: "Jetzt kündigen",
           url: "https://www.contract-ai.de/contracts"
         },
-        recipientEmail: email,
-        emailCategory: "calendar"
+        recipientEmail: email
       });
 
       await transporter.sendMail({

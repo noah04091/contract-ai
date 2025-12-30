@@ -1,33 +1,16 @@
 // 📁 backend/utils/emailTemplate.js
-// ✅ V7 Design - EXAKT wie clean3 Template (100% Spam-sicher)
-// WICHTIG: Keine hidden divs, keine title tags, keine max-width
-
-// Import Unsubscribe-Service (optional, für dynamische URLs)
-let generateUnsubscribeUrl;
-try {
-  const unsubService = require('../services/emailUnsubscribeService');
-  generateUnsubscribeUrl = unsubService.generateUnsubscribeUrl;
-} catch (e) {
-  // Fallback wenn Service nicht verfügbar
-  generateUnsubscribeUrl = () => 'https://www.contract-ai.de/abmelden';
-}
+// ✅ V8 Design - 1:1 Kopie von clean3 Template (das funktioniert!)
 
 function generateEmailTemplate({
   title,
   body,
-  preheader = '',
   cta = null,
   recipientEmail = null,
-  emailCategory = 'calendar',
-  unsubscribeUrl = null,
   badge = 'Erinnerung'
 }) {
-  // Generiere dynamische Unsubscribe-URL wenn E-Mail bekannt
-  const actualUnsubscribeUrl = unsubscribeUrl ||
-    (recipientEmail ? generateUnsubscribeUrl(recipientEmail, emailCategory) : 'https://www.contract-ai.de/abmelden');
-
-  // CTA Button HTML (exakt wie clean3)
+  // CTA Button - exakt wie in clean3
   const ctaHtml = cta ? `
+              <!-- Button -->
               <table cellpadding="0" cellspacing="0">
                 <tr>
                   <td style="background-color: #3b82f6; border-radius: 8px;">
@@ -39,21 +22,21 @@ function generateEmailTemplate({
               </table>
   ` : '';
 
-  // Unsubscribe Footer (DSGVO-konform)
+  // Unsubscribe Footer
   const unsubscribeHtml = recipientEmail ? `
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 20px;">
                 <tr>
                   <td style="border-top: 1px solid #e2e8f0; padding-top: 16px; text-align: center;">
                     <p style="margin: 0; font-size: 11px; color: #9ca3af;">
                       Diese E-Mail wurde an ${recipientEmail} gesendet.<br>
-                      <a href="${actualUnsubscribeUrl}" style="color: #64748b; text-decoration: underline;">Von Benachrichtigungen abmelden</a>
+                      <a href="https://www.contract-ai.de/abmelden" style="color: #64748b; text-decoration: underline;">Von Benachrichtigungen abmelden</a>
                     </p>
                   </td>
                 </tr>
               </table>
   ` : '';
 
-  // Template EXAKT wie clean3 - ohne hidden divs, ohne title tag
+  // EXAKT wie clean3 - keine Änderungen!
   return `<!DOCTYPE html>
 <html lang="de">
 <head>
@@ -87,7 +70,7 @@ function generateEmailTemplate({
             </td>
           </tr>
 
-          <!-- Trennlinie (als Table, nicht div!) -->
+          <!-- Trennlinie -->
           <tr>
             <td style="padding: 0 40px;">
               <table width="100%" cellpadding="0" cellspacing="0">
@@ -103,13 +86,9 @@ function generateEmailTemplate({
                 ${title}
               </h1>
 
-              <div style="font-size: 15px; line-height: 1.7; color: #334155; margin-top: 16px;">
-                ${body}
-              </div>
+              ${body}
 
-              <div style="margin-top: 28px;">
-                ${ctaHtml}
-              </div>
+              ${ctaHtml}
             </td>
           </tr>
 
@@ -153,13 +132,14 @@ function generateEmailTemplate({
 }
 
 /**
- * Generiert eine Info-Box mit linkem blauen Akzent (exakt wie clean3)
+ * Generiert eine Info-Box mit linkem blauen Akzent - EXAKT wie in clean3
  */
 function generateInfoBox(items) {
   if (!items || items.length === 0) return '';
 
   const itemsHtml = items.map((item, index) => {
-    const borderTop = index > 0 ? 'border-top: 1px solid #e2e8f0; padding-top: 16px;' : '';
+    const isFirst = index === 0;
+    const borderTop = !isFirst ? 'border-top: 1px solid #e2e8f0; padding-top: 16px;' : '';
     const paddingBottom = index < items.length - 1 ? 'padding-bottom: 16px;' : '';
 
     return `
@@ -168,12 +148,11 @@ function generateInfoBox(items) {
                                 <p style="margin: 0 0 2px 0; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">${item.label}</p>
                                 <p style="margin: 0; font-size: 17px; color: #0f172a; font-weight: 600;">${item.value}</p>
                               </td>
-                            </tr>
-    `;
+                            </tr>`;
   }).join('');
 
   return `
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
                 <tr>
                   <td style="background-color: #f8fafc; border-radius: 8px; border-left: 3px solid #3b82f6;">
                     <table width="100%" cellpadding="0" cellspacing="0">
@@ -187,23 +166,11 @@ function generateInfoBox(items) {
                     </table>
                   </td>
                 </tr>
-              </table>
-  `;
+              </table>`;
 }
 
 /**
- * Generiert eine Warnung/Hinweis-Box
- */
-function generateWarningText(text) {
-  return `
-              <p style="margin: 20px 0 0 0; padding: 12px 16px; background-color: #fef3c7; border-radius: 6px; font-size: 13px; color: #92400e;">
-                ${text}
-              </p>
-  `;
-}
-
-/**
- * Generiert eine Alert-Box (rot für kritisch, gelb für Warnung)
+ * Generiert eine Alert-Box
  */
 function generateAlertBox(text, type = 'warning') {
   const colors = {
@@ -224,13 +191,11 @@ function generateAlertBox(text, type = 'warning') {
                     </p>
                   </td>
                 </tr>
-              </table>
-  `;
+              </table>`;
 }
 
 module.exports = {
   generateEmailTemplate,
   generateInfoBox,
-  generateWarningText,
   generateAlertBox
 };
