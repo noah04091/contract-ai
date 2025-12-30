@@ -543,12 +543,7 @@ router.post("/test", async (req, res) => {
         from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
         to: email,
         subject: "Erinnerung: Telekom Mobilfunk - Kündigungsfrist in 14 Tagen",
-        html: clean3Html,
-        encoding: 'utf-8',
-        textEncoding: 'quoted-printable',
-        headers: {
-          'Content-Type': 'text/html; charset=utf-8'
-        }
+        html: clean3Html
       });
       return res.json({
         success: true,
@@ -1183,12 +1178,7 @@ router.post("/test", async (req, res) => {
         from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
         to: email,
         subject: "Erinnerung: Telekom Mobilfunk - Kündigungsfrist in 14 Tagen",
-        html: calendarHtml,
-        encoding: 'utf-8',
-        textEncoding: 'quoted-printable',
-        headers: {
-          'Content-Type': 'text/html; charset=utf-8'
-        }
+        html: calendarHtml
       });
       results.push("calendar");
     }
@@ -1311,12 +1301,7 @@ router.post("/test", async (req, res) => {
         from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
         to: email,
         subject: "Deine Vertrags-Zusammenfassung",
-        html: digestHtml,
-        encoding: 'utf-8',
-        textEncoding: 'quoted-printable',
-        headers: {
-          'Content-Type': 'text/html; charset=utf-8'
-        }
+        html: digestHtml
       });
       results.push("digest");
     }
@@ -1448,12 +1433,7 @@ router.post("/test", async (req, res) => {
         from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
         to: email,
         subject: "Erinnerung: Vodafone DSL - Kündigungsfrist endet heute",
-        html: reminderHtml,
-        encoding: 'utf-8',
-        textEncoding: 'quoted-printable',
-        headers: {
-          'Content-Type': 'text/html; charset=utf-8'
-        }
+        html: reminderHtml
       });
       results.push("reminder");
     }
