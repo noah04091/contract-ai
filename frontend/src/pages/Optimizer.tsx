@@ -114,6 +114,11 @@ interface ContractMeta {
   analysisVersion?: string;
   gapsFound?: number;
   categoriesGenerated?: number;
+  // 🆕 v2.0: Decision-First Felder
+  recognizedAs?: string;
+  maturity?: 'high' | 'medium' | 'low';
+  isAmendment?: boolean;
+  parentType?: string | null;
 }
 
 interface OptimizationIssue {
@@ -127,6 +132,11 @@ interface OptimizationIssue {
   impact: number;
   confidence: number;
   difficulty: 'Einfach' | 'Mittel' | 'Komplex';
+  // 🆕 v2.0: Anti-Bullshit Felder (Decision-First)
+  evidence?: string[];
+  whyItMatters?: string;
+  whyNotIntentional?: string;
+  whenToIgnore?: string;
 }
 
 interface RevolutionaryCategory {
@@ -138,6 +148,13 @@ interface RevolutionaryCategory {
 
 interface OptimizationResult {
   meta?: ContractMeta;
+  // 🆕 v2.0: Assessment-Block für Decision-First
+  assessment?: {
+    overall: string;
+    optimizationNeeded: boolean;
+    reasoning: string;
+    intentionalClauses: string[];
+  };
   categories?: RevolutionaryCategory[];
   score?: {
     health: number;
@@ -392,6 +409,7 @@ const parseOptimizationResult = (data: OptimizationResult, fileName: string): Op
         
         mappedCategory = categoryMap[category.tag] || 'clarity';
         
+        // 🆕 v2.0: Erweiterte Felder für Anti-Bullshit-Firewall
         let suggestion: OptimizationSuggestion = {
           id: issue.id,
           category: mappedCategory,
@@ -408,7 +426,12 @@ const parseOptimizationResult = (data: OptimizationResult, fileName: string): Op
           marketBenchmark: issue.benchmark || `Basierend auf ${fileName} Analyse`,
           implemented: false,
           aiInsight: `KI-Vertrauen ${issue.confidence}%: ${issue.summary}`,
-          relatedClauses: [`Kategorie: ${category.label}`, `Priorität: ${issue.risk >= 8 ? 'kritisch' : 'hoch'}`]
+          relatedClauses: [`Kategorie: ${category.label}`, `Priorität: ${issue.risk >= 8 ? 'kritisch' : 'hoch'}`],
+          // 🆕 v2.0: Neue Anti-Bullshit Felder
+          evidence: issue.evidence || [],
+          whyItMatters: issue.whyItMatters || '',
+          whyNotIntentional: issue.whyNotIntentional || '',
+          whenToIgnore: issue.whenToIgnore || ''
         };
         
         // ERWEITERE kurze oder fehlende Klauseln mit professionellem Content (DEAKTIVIERT - Backend hat Kontrolle)
@@ -2859,8 +2882,8 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                   </motion.div>
                 )}
 
-                {/* 🚀 NEW: Modern Results Dashboard v2.0 */}
-                {useModernDashboard && contractScore && optimizations.length > 0 ? (
+                {/* 🚀 NEW: Modern Results Dashboard v2.0 - Auch bei 0 Optimierungen! */}
+                {useModernDashboard && contractScore ? (
                   <ResultsDashboard
                     optimizations={optimizations}
                     contractScore={contractScore}
@@ -2872,6 +2895,10 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                     onExport={(format) => handleExport(format)}
                     isGenerating={isGeneratingContract}
                     isPremium={isPremium}
+                    // 🆕 v2.0: Decision-First Props
+                    assessment={optimizationResult?.assessment}
+                    contractMaturity={optimizationResult?.meta?.maturity}
+                    recognizedAs={optimizationResult?.meta?.recognizedAs}
                   />
                 ) : (
                   <>

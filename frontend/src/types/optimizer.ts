@@ -16,6 +16,31 @@ export interface OptimizationSuggestion {
   implemented: boolean;
   aiInsight: string;
   relatedClauses?: string[];
+  // 🆕 v2.0: Anti-Bullshit Felder (Decision-First)
+  evidence?: string[]; // Konkrete Textstellen aus dem Vertrag
+  whyItMatters?: string; // Konkreter juristischer/wirtschaftlicher Nachteil
+  whyNotIntentional?: string; // Warum ist das NICHT bewusst so gewollt?
+  whenToIgnore?: string; // Wann wäre diese Optimierung NICHT sinnvoll?
+}
+
+// 🆕 v2.0: Assessment-Block für Decision-First Logik
+export interface ContractAssessment {
+  overall: string;
+  optimizationNeeded: boolean;
+  reasoning: string;
+  intentionalClauses: string[];
+}
+
+// 🆕 v2.0: Erweiterte Meta-Daten
+export interface ContractMeta {
+  type: string;
+  confidence: number;
+  jurisdiction: string;
+  language: string;
+  isAmendment: boolean;
+  parentType: string | null;
+  recognizedAs: string;
+  maturity: 'high' | 'medium' | 'low';
 }
 
 export interface ContractHealthScore {

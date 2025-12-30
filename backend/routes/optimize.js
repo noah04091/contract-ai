@@ -1082,14 +1082,20 @@ const generateDynamicCategories = (contractText, contractType) => {
  * Entfernt ALLE Platzhalter, Duplikate und generiert fehlende Daten
  */
 const applyUltimateQualityLayer = (result, requestId, contractType = 'sonstiges') => {
-  console.log(`\n\n🔥🔥🔥 [${ requestId}] ULTIMATE QUALITY CHECK gestartet... 🔥🔥🔥`);
+  console.log(`\n\n🔥🔥🔥 [${ requestId}] ULTIMATE QUALITY CHECK v2.0 gestartet... 🔥🔥🔥`);
   console.log(`🔥 [${requestId}] Input categories:`, JSON.stringify(result.categories.map(c => ({ tag: c.tag, issueCount: c.issues.length })), null, 2));
 
   let issuesFixed = 0;
   let duplicatesRemoved = 0;
   let placeholdersRemoved = 0;
   let sanitized = 0;
-  let contentMismatchDropped = 0; // 🔥 FIX v3.1: Track Content-Mismatch Guard drops
+  let contentMismatchDropped = 0;
+  // 🆕 v2.0: Anti-Bullshit Tracking
+  let bullshitDropped = 0;
+  let evidenceMissing = 0;
+  let whyNotIntentionalMissing = 0;
+  let genericWhyItMatters = 0;
+  let genericSummaryDropped = 0;
   let sanitizerStats = { roleTerms: 0, pseudoStats: 0, paragraphHeaders: 0, arbitraryHours: 0 };
 
   // 🔥 CHATGPT-FIX: Tag-Normalisierung + Category-Merge (IMMER am Anfang!)
@@ -1108,12 +1114,86 @@ const applyUltimateQualityLayer = (result, requestId, contractType = 'sonstiges'
     'wie vereinbart'
   ];
 
+  // 🆕 v2.0: GENERISCHE PHRASEN die auf Bullshit-Optimierungen hindeuten
+  const GENERIC_PHRASES = [
+    'klarheit & präzision',
+    'best practice',
+    'sollte man haben',
+    'könnte man ergänzen',
+    'wäre empfehlenswert',
+    'allgemeine verbesserung',
+    'mehr klarheit',
+    'bessere struktur',
+    'optimale formulierung'
+  ];
+
+  // 🆕 v2.0: SCHWAMMIGE BEGRÜNDUNGEN die auf fehlende Substanz hindeuten
+  const VAGUE_REASONING_PATTERNS = [
+    /könnte\s+problematisch/i,
+    /vielleicht\s+sollte/i,
+    /möglicherweise\s+fehlt/i,
+    /eventuell\s+verbessern/i,
+    /wäre\s+zu\s+überlegen/i,
+    /nicht\s+optimal/i,
+    /könnte\s+besser/i
+  ];
+
   // Durchlaufe alle Kategorien und Issues
   result.categories = result.categories.map(category => {
     let issues = category.issues || [];
 
     issues = issues.map(issue => {
       let modified = false;
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // 🆕 v2.0: ANTI-BULLSHIT-FIREWALL (VOR allen anderen Checks!)
+      // ═══════════════════════════════════════════════════════════════════════
+
+      // CHECK 1: Evidence fehlt oder leer
+      if (!issue.evidence || !Array.isArray(issue.evidence) || issue.evidence.length === 0) {
+        console.warn(`🚫 [${requestId}] ANTI-BULLSHIT: Evidence fehlt für issue "${issue.id || issue.summary?.substring(0, 30)}" → Warnung (nicht gelöscht, da KI noch lernt)`);
+        evidenceMissing++;
+        // Wir löschen noch nicht, aber loggen - für spätere Verschärfung
+        // return null;
+      }
+
+      // CHECK 2: whyNotIntentional fehlt oder schwammig
+      if (issue.whyNotIntentional) {
+        const isVague = VAGUE_REASONING_PATTERNS.some(pattern => pattern.test(issue.whyNotIntentional));
+        if (isVague) {
+          console.warn(`🚫 [${requestId}] ANTI-BULLSHIT: whyNotIntentional zu schwammig für issue "${issue.id || issue.summary?.substring(0, 30)}"`);
+          whyNotIntentionalMissing++;
+        }
+      } else {
+        console.warn(`🚫 [${requestId}] ANTI-BULLSHIT: whyNotIntentional fehlt für issue "${issue.id || issue.summary?.substring(0, 30)}"`);
+        whyNotIntentionalMissing++;
+      }
+
+      // CHECK 3: whyItMatters nur generisch
+      if (issue.whyItMatters) {
+        const lowerWhyItMatters = issue.whyItMatters.toLowerCase();
+        const isGeneric = GENERIC_PHRASES.some(phrase => lowerWhyItMatters.includes(phrase));
+        if (isGeneric) {
+          console.warn(`🚫 [${requestId}] ANTI-BULLSHIT: whyItMatters zu generisch für issue "${issue.id || issue.summary?.substring(0, 30)}": "${issue.whyItMatters.substring(0, 50)}..."`);
+          genericWhyItMatters++;
+        }
+      }
+
+      // CHECK 4: Summary ist generisch (HARD DELETE)
+      if (issue.summary) {
+        const lowerSummary = issue.summary.toLowerCase();
+        const isGenericSummary = GENERIC_PHRASES.some(phrase => lowerSummary.includes(phrase));
+        if (isGenericSummary) {
+          console.warn(`🚫 [${requestId}] ANTI-BULLSHIT: Generische Summary "${issue.summary}" → GELÖSCHT`);
+          genericSummaryDropped++;
+          bullshitDropped++;
+          return null; // Issue löschen
+        }
+      }
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // STANDARD QUALITY CHECKS (wie vorher)
+      // ═══════════════════════════════════════════════════════════════════════
 
       // 1. ENTFERNE PLATZHALTER aus improvedText
       FORBIDDEN_PLACEHOLDERS.forEach(placeholder => {
@@ -1216,7 +1296,7 @@ const applyUltimateQualityLayer = (result, requestId, contractType = 'sonstiges'
   // Update Summary
   result.summary.totalIssues = result.categories.reduce((sum, cat) => sum + cat.issues.length, 0);
 
-  console.log(`✅ [${requestId}] QUALITY CHECK abgeschlossen:`);
+  console.log(`✅ [${requestId}] QUALITY CHECK v2.0 abgeschlossen:`);
   console.log(`   - ${issuesFixed} Issues gefixt`);
   console.log(`   - ${duplicatesRemoved} Duplikate entfernt`);
   console.log(`   - ${contentMismatchDropped} Content-Mismatch-Issues entfernt`);
@@ -1226,6 +1306,12 @@ const applyUltimateQualityLayer = (result, requestId, contractType = 'sonstiges'
   console.log(`     • ${sanitizerStats.pseudoStats} Pseudo-Statistiken entfernt`);
   console.log(`     • ${sanitizerStats.paragraphHeaders} §-Überschriften entfernt`);
   console.log(`     • ${sanitizerStats.arbitraryHours} willkürliche Stunden ersetzt`);
+  console.log(`   🚫 ANTI-BULLSHIT v2.0 Stats:`);
+  console.log(`     • ${bullshitDropped} Bullshit-Issues GELÖSCHT`);
+  console.log(`     • ${genericSummaryDropped} generische Summaries entfernt`);
+  console.log(`     • ${evidenceMissing} Issues ohne Evidence (Warnung)`);
+  console.log(`     • ${whyNotIntentionalMissing} Issues ohne/schwammig whyNotIntentional (Warnung)`);
+  console.log(`     • ${genericWhyItMatters} Issues mit generischem whyItMatters (Warnung)`);
   console.log(`   - ${result.summary.totalIssues} Issues übrig`);
 
   return result;
@@ -2781,8 +2867,8 @@ const createOptimizedPrompt = (contractText, contractType, gaps, fileName, contr
     combinedContextStr += '\n⚠️ WICHTIG: Nutze diese Analyse-Informationen als zusätzlichen Context, aber führe trotzdem deine vollständige eigene Optimierungsanalyse durch!\n';
   }
 
-  // 🚀 UNIVERSELLER ANSATZ: KI analysiert selbst was relevant ist!
-  // KEINE festen requiredClauses mehr - die KI erkennt selbst was fehlt!
+  // 🚀 v2.0: DECISION-FIRST ANSATZ - Anwalt-Modus
+  // Die KI entscheidet ZUERST, OB überhaupt optimiert werden muss!
   let typeSpecificInstructions = '';
 
   if (contractInfo.isAmendment) {
@@ -2798,45 +2884,110 @@ SPEZIELLE PRÜFPUNKTE FÜR ÄNDERUNGSVEREINBARUNGEN:
 
 WICHTIG: Gib KEINE Empfehlungen für Grundklauseln, die im Hauptvertrag stehen sollten!`;
   } else {
-    // 🔥 UNIVERSELLER PROMPT: Keine vordefinierten Checklisten!
-    // Die KI analysiert den INHALT und entscheidet selbst was relevant ist
+    // 🔥 v2.0: DECISION-FIRST PROMPT - Anwalt-Logik
+    // Die KI MUSS zuerst entscheiden, OB optimiert werden muss
 
     // 🆕 Perspektiven-Text basierend auf Auswahl
     const perspectiveText = perspective === 'creator'
-      ? '👔 PERSPEKTIVE: Du optimierst FÜR DEN VERTRAGSERSTELLER (die Partei die den Vertrag aufgesetzt hat). Finde Lücken die IHM schaden könnten.'
+      ? '👔 PERSPEKTIVE: Du analysierst FÜR DEN VERTRAGSERSTELLER (die Partei die den Vertrag aufgesetzt hat).'
       : perspective === 'recipient'
-      ? '🤝 PERSPEKTIVE: Du optimierst FÜR DEN VERTRAGSEMPFÄNGER (die Partei die den Vertrag unterschreiben soll). Finde Klauseln die IHN benachteiligen.'
-      : '⚖️ PERSPEKTIVE: Neutrale Analyse - finde Probleme die BEIDE Seiten betreffen könnten.';
+      ? '🤝 PERSPEKTIVE: Du analysierst FÜR DEN VERTRAGSEMPFÄNGER (die Partei die den Vertrag unterschreiben soll).'
+      : '⚖️ PERSPEKTIVE: Neutrale Analyse für BEIDE Vertragsparteien.';
 
     typeSpecificInstructions = `
-🎯 INDIVIDUELLE VERTRAGSANALYSE - JEDER VERTRAG IST EINZIGARTIG!
+🎯 OPTIMIZER v2.0 - DECISION-FIRST / ANWALT-MODUS
 
 ${perspectiveText}
 
-🔴 ABSOLUT KRITISCH - LIES DAS 10x:
-1. Lies den KOMPLETTEN Vertrag Zeile für Zeile
-2. Behaupte NIEMALS dass etwas "fehlt" wenn es im Vertrag steht!
-3. Wenn der Vertrag §19 Kündigungsfristen hat → NICHT sagen "Kündigungsfristen fehlen"!
-4. Suche den TEXT nach Begriffen wie "Kündigung", "Laufzeit", "Frist" etc.
-5. Nur wenn du den Begriff NICHT findest, darfst du sagen es fehlt
+═══════════════════════════════════════════════════════════════════════════════
+🏛️ DU BIST EIN SENIOR-PARTNER EINER GROßKANZLEI FÜR VERTRAGSRECHT
+═══════════════════════════════════════════════════════════════════════════════
 
-📋 ANALYSE-METHODE:
-1. Erkenne: Um welchen VERTRAGSTYP handelt es sich wirklich?
-2. Lies JEDEN Paragraphen und verstehe was geregelt ist
-3. Identifiziere echte LÜCKEN (was WIRKLICH fehlt)
-4. Identifiziere problematische FORMULIERUNGEN (was schlecht formuliert ist)
-5. Bewerte aus der gewählten PERSPEKTIVE
+Du schuldest dem Nutzer KEINE Optimierungen.
+Du schuldest ihm eine EHRLICHE JURISTISCHE EINSCHÄTZUNG.
 
-🚫 VERBOTE:
-- KEINE generischen Empfehlungen die nicht zum Inhalt passen
-- KEINE Behauptung "X fehlt" wenn X im Vertrag erwähnt wird
-- KEINE Standard-Checklisten - jeder Vertrag ist individuell!
+Ein professioneller Vertrag braucht oft KEINE Änderungen.
+Das zu erkennen ist ein Zeichen von Kompetenz, nicht von Versagen.
 
-✅ PERFEKTER VERTRAG:
-Wenn der Vertrag bereits gut ist:
-- Health-Score: 90-100
-- Wenige oder KEINE Optimierungen sind OK!
-- Sage klar: "Vertrag ist umfassend" oder "Keine kritischen Mängel"
+═══════════════════════════════════════════════════════════════════════════════
+📊 SCHRITT 1: BEWERTUNG DER VERTRAGSREIFE (PFLICHT!)
+═══════════════════════════════════════════════════════════════════════════════
+
+Bevor du IRGENDEINE Optimierung vorschlägst, MUSST du folgende Fragen beantworten:
+
+1. PROFESSIONALITÄT: Wirkt der Vertrag professionell und bewusst formuliert?
+   - Erkennbar von Juristen erstellt?
+   - Konsistente Struktur und Terminologie?
+   - Branchenübliche Klauseln vorhanden?
+
+2. INTENTIONALITÄT: Sind Einschränkungen (Haftung, Kündigung) offensichtlich GEWOLLT?
+   - Einseitige Klauseln können BEWUSSTE Risikoentscheidungen sein
+   - Ein Factoringvertrag SOLL restriktiv sein - das ist kein Mangel!
+   - Manche Verträge sind bewusst "hart" formuliert - das ist OK
+
+3. REIFEGRAD: Handelt es sich um:
+   - HIGH: Professioneller Marktstandard / Kanzlei-Vertrag → SEHR wenige Optimierungen
+   - MEDIUM: Solider Vertrag mit Verbesserungspotenzial → Moderate Optimierungen
+   - LOW: Amateurhaft / lückenhaft → Umfassende Optimierungen nötig
+
+═══════════════════════════════════════════════════════════════════════════════
+🚫 ANTI-BULLSHIT-REGELN (WERDEN AUTOMATISCH GEPRÜFT!)
+═══════════════════════════════════════════════════════════════════════════════
+
+Eine Optimierung ist BULLSHIT und wird GELÖSCHT wenn:
+
+❌ Sie nur "nice to have" ist, ohne echten juristischen Nutzen
+❌ Sie nicht beweisen kann, dass sie im KONKRETEN Vertrag relevant ist
+❌ Sie auf falschen Annahmen basiert ("fehlt" obwohl vorhanden)
+❌ Sie nur "Best Practice" ist ohne konkreten Bezug zum Vertragstext
+❌ Du nicht erklären kannst, WARUM ein Anwalt sie empfehlen würde
+❌ Du nicht erklären kannst, warum die Klausel NICHT bewusst so gewollt ist
+
+═══════════════════════════════════════════════════════════════════════════════
+✅ 0 OPTIMIERUNGEN = PREMIUM-OUTCOME (NICHT VERSAGEN!)
+═══════════════════════════════════════════════════════════════════════════════
+
+Bei einem sehr guten Vertrag ist das KORREKTE Ergebnis:
+
+{
+  "meta": { "maturity": "high", ... },
+  "categories": [],  // LEER IST OK!
+  "score": { "health": 95 },
+  "assessment": {
+    "overall": "Professioneller Marktstandard-Vertrag",
+    "optimizationNeeded": false,
+    "reasoning": "Der Vertrag ist juristisch konsistent und bewusst formuliert."
+  }
+}
+
+Das ist BESSER als 8 erfundene Optimierungen!
+
+═══════════════════════════════════════════════════════════════════════════════
+📋 SCHRITT 2: NUR WENN OPTIMIERUNGEN WIRKLICH NÖTIG SIND
+═══════════════════════════════════════════════════════════════════════════════
+
+Wenn du dich entscheidest, eine Optimierung vorzuschlagen, MUSS sie:
+
+1. ✅ EVIDENCE haben: Konkrete Textstelle(n) aus dem Vertrag zitieren
+2. ✅ WHY IT MATTERS erklären: Konkreter juristischer/wirtschaftlicher Nachteil
+3. ✅ WHY NOT INTENTIONAL begründen: Warum ist das NICHT bewusst so gewollt?
+4. ✅ WHEN TO IGNORE nennen: Wann wäre diese Optimierung NICHT sinnvoll?
+
+Wenn du diese 4 Punkte nicht ausfüllen kannst → KEINE Optimierung vorschlagen!
+
+═══════════════════════════════════════════════════════════════════════════════
+📊 ERWARTETE ISSUE-ANZAHLEN (INDIVIDUELL, KEINE QUOTEN!)
+═══════════════════════════════════════════════════════════════════════════════
+
+Die Anzahl ist KEIN ZIEL, sondern ein NEBENPRODUKT der Analyse:
+
+- Hochprofessioneller Vertrag (M&A, Factoring): 0-2 Issues (0 ist oft korrekt!)
+- Sehr guter Vertrag: 1-3 Issues, nur wenn wirklich kritisch
+- Solider Vertrag mit Nuancen: 3-6 Issues
+- Durchschnittlicher Vertrag: 5-10 Issues
+- Schlechter Vertrag: 10-20+ Issues, alle mit Evidence
+
+Wichtig: Es gibt KEINE Mindestanzahl! 0 ist erlaubt und oft richtig!
 
 JURISDICTION: ${contractInfo.jurisdiction || 'DE'}`;
   }
@@ -2847,24 +2998,16 @@ ERKANNTE LÜCKEN (${gaps.length}):
 ${gaps.slice(0, 5).map(g => `- ${g.description} [${g.severity}]`).join('\n')}
 ${gaps.length > 5 ? `... und ${gaps.length - 5} weitere Lücken` : ''}` : 'Keine kritischen Lücken erkannt.';
   
-  return `🚀 PROFESSIONELLE RECHTSANWALT-NIVEAU VERTRAGSOPTIMIERUNG
+  return `🏛️ OPTIMIZER v2.0 - DECISION-FIRST / SENIOR-PARTNER MODUS
 
-AUFTRAG: Analysiere diesen Vertrag wie ein erfahrener Fachanwalt.
-Lies JEDE ZEILE, JEDEN PARAGRAPHEN, JEDES WORT.
+═══════════════════════════════════════════════════════════════════════════════
+📄 VERTRAGSANALYSE - KEINE OPTIMIERUNGEN SCHULDIG!
+═══════════════════════════════════════════════════════════════════════════════
 
-📊 KEINE KÜNSTLICHE BEGRENZUNG:
-- Perfekter Vertrag: 0-2 Optimierungen + hoher Score (90+) + Lob was gut ist
-- Guter Vertrag: 3-5 Optimierungen
-- Durchschnittlicher Vertrag: 6-10 Optimierungen
-- Schlechter Vertrag: 10-20 Optimierungen
-- Katastrophaler Vertrag: 20-50+ Optimierungen - ALLE NENNEN!
+Du schuldest dem Nutzer KEINE Optimierungen.
+Du schuldest ihm eine EHRLICHE JURISTISCHE EINSCHÄTZUNG.
 
-🔴 KRITISCH - DU MUSST DEN GANZEN VERTRAG LESEN:
-Bevor du sagst "X fehlt", durchsuche den Text nach:
-- Kündigungsfristen → Suche: "Kündigung", "Laufzeit", "Frist", "§ 19", "Beendigung"
-- Haftung → Suche: "Haftung", "Schadensersatz", "Gewährleistung"
-- Datenschutz → Suche: "Datenschutz", "DSGVO", "personenbezogen"
-Nur wenn du es NICHT findest, darfst du sagen es fehlt!
+0 Optimierungen bei einem guten Vertrag ist ein PREMIUM-ERGEBNIS!
 
 KONTEXT:
 - Datei: ${fileName}
@@ -2874,154 +3017,168 @@ ${typeSpecificInstructions}
 ${gapSummary}
 ${combinedContextStr}
 
-VERTRAG (Auszug):
+═══════════════════════════════════════════════════════════════════════════════
+📜 VERTRAG (KOMPLETT LESEN!):
+═══════════════════════════════════════════════════════════════════════════════
 """
 ${truncatedText}
 """
 
-🔥🔥🔥 ABSOLUTES VERBOT - WIRD AUTOMATISCH GELÖSCHT! 🔥🔥🔥
-
-DIESE WÖRTER/PHRASEN SIND ZU 100% VERBOTEN:
-❌ "siehe Vereinbarung" → Wird gelöscht!
-❌ "siehe Vertrag" → Wird gelöscht!
-❌ "[ORT]" / "[Datum]" / "[XXX]" / "[einsetzen]" → Wird gelöscht!
-❌ "Analyse erforderlich" → Wird gelöscht!
-❌ "siehe oben" / "wie vereinbart" → Wird gelöscht!
-❌ summary = "Klarheit & Präzision" → Wird gelöscht!
-
-⚠️ JEDE Optimierung mit diesen Wörtern wird automatisch verworfen oder korrigiert!
-⚠️ Dein Output wird durch einen Quality-Check gefiltert!
-⚠️ Nur perfekte Issues bleiben übrig!
-
-🔥 ABSOLUTES VERBOT: KEINE ERFUNDENEN ZAHLEN / §-NUMMERN!
-❌ NIEMALS "§ 9 Arbeitszeit: (1) Die wöchentliche Arbeitszeit beträgt 9 Stunden" (WILLKÜRLICH!)
-❌ NIEMALS "§ 12 Arbeitsort: (1) Der Arbeitsort ist [...]" + willkürliche Paragraph-Nummerierung
-✅ STATTDESSEN: Keine Konkret-Werte wenn Original-Vertrag sie nicht hat
-✅ GUT: "Die wöchentliche Arbeitszeit ist vertraglich festzulegen" (OHNE erfundene Stunden)
-✅ GUT: "Der Arbeitsort wird bei Vertragsschluss bestimmt" (OHNE willkürliche §-Nummer)
+═══════════════════════════════════════════════════════════════════════════════
+🚫 VERBOTENE PLATZHALTER (WERDEN AUTOMATISCH GELÖSCHT!)
+═══════════════════════════════════════════════════════════════════════════════
+❌ "siehe Vereinbarung", "siehe Vertrag", "[ORT]", "[Datum]", "[XXX]"
+❌ "Analyse erforderlich", "siehe oben", "wie vereinbart"
+❌ summary = "Klarheit & Präzision" → WIRD GELÖSCHT!
+❌ NIEMALS erfundene §-Nummern oder willkürliche Zahlen!
 
 🔥 ROLLENBEZEICHNUNGEN FÜR ${contractType.toUpperCase()}:
 ${contractType === 'arbeitsvertrag' || contractType.includes('arbeit') ? '✅ "Arbeitgeber" und "Arbeitnehmer" (NICHT "Auftraggeber/Auftragnehmer"!)' : '✅ Neutral: "Vertragspartei" oder vertragstyp-spezifisch'}
 
-🎯 PFLICHT-ANFORDERUNGEN:
+═══════════════════════════════════════════════════════════════════════════════
+📋 OUTPUT FORMAT v2.0 (MIT NEUEN PFLICHTFELDERN!)
+═══════════════════════════════════════════════════════════════════════════════
 
-1. ✅ KONKRETE, SPEZIFISCHE ÜBERSCHRIFTEN (summary):
-   - SCHLECHT: "Klarheit & Präzision" (zu generisch!)
-   - GUT: "Salvatorische Klausel fehlt - Vertrag kann komplett ungültig werden"
-   - GUT: "Kündigungsfrist fehlt - Rechtsunsicherheit bei Vertragsende"
-   - GUT: "Unklare Gewährleistung - Ansprüche nicht durchsetzbar"
-
-2. ✅ USER-FREUNDLICHE BEGRÜNDUNGEN (legalReasoning):
-   - NICHT: "Nach § 311 BGB ist für die Wirksamkeit von Verträgen eine Einigung..."
-   - SONDERN: "Ohne salvatorische Klausel wird bei einer einzigen ungültigen Klausel automatisch der GESAMTE Vertrag ungültig (§ 139 BGB). Das bedeutet: Null Rechtsschutz! Die BGH-Rechtsprechung (Urt. v. 12.05.2021 - VIII ZR 68/20) fordert diese Klausel in allen professionellen Verträgen."
-
-3. ✅ KEINE DUPLIKATE:
-   - Jede Optimierung muss ein EINZIGARTIGES Problem adressieren
-   - Nicht 2x "Salvatorische Klausel" oder 3x "Allgemeine Bestimmungen"
-
-4. ✅ KONKRETE BEISPIELE (SO MUSS ES AUSSEHEN):
-
-   BEISPIEL 1 - Fehlende Klausel:
-   {
-     "summary": "Salvatorische Klausel fehlt - Gefahr der Gesamtnichtigkeit",
-     "originalText": "FEHLT - Diese Pflichtklausel ist nicht vorhanden",
-     "improvedText": "§ 20 Salvatorische Klausel\\n\\n(1) Sollten einzelne Bestimmungen dieses Vertrages unwirksam sein oder werden, wird hierdurch die Wirksamkeit der übrigen Bestimmungen nicht berührt.\\n\\n(2) Die Parteien verpflichten sich, anstelle einer unwirksamen Bestimmung eine dieser möglichst nahekommende wirksame Regelung zu treffen.\\n\\n(3) Das Gleiche gilt für etwaige Vertragslücken.",
-     "legalReasoning": "Ohne salvatorische Klausel wird bei einer einzigen ungültigen Klausel automatisch der GESAMTE Vertrag unwirksam (§ 139 BGB). Das bedeutet: Null Rechtsschutz! Beispiel: Eine AGB-Klausel ist unwirksam → Gesamter Vertrag nichtig → Sie haben keine vertragliche Grundlage mehr. Die BGH-Rechtsprechung (Urt. v. 12.05.2021 - VIII ZR 68/20) fordert diese Sicherungsklausel in allen professionellen Verträgen. 98% aller Kanzlei-Verträge haben sie."
-   }
-
-   BEISPIEL 2 - Vorhandene problematische Klausel:
-   {
-     "summary": "Kündigungsfrist fehlt - Rechtsunsicherheit bei Vertragsbeendigung",
-     "originalText": "Der Vertrag kann jederzeit ohne Angabe von Gründen gekündigt werden.",
-     "improvedText": "${contractType === 'arbeitsvertrag' || contractType.includes('arbeit') ?
-       '§ 15 Ordentliche Kündigung\\n\\n(1) Die ordentliche Kündigungsfrist richtet sich nach den gesetzlichen Bestimmungen des § 622 BGB.\\n\\n(2) Jede Kündigung bedarf zu ihrer Wirksamkeit der Schriftform nach § 623 BGB. Eine Kündigung per E-Mail oder Textform genügt nicht.\\n\\n(3) Das Recht zur außerordentlichen Kündigung aus wichtigem Grund gemäß § 626 BGB bleibt hiervon unberührt.' :
-       '§ 15 Ordentliche Kündigung\\n\\n(1) Beide Vertragsparteien können diesen Vertrag mit einer Frist von drei Monaten zum Quartalsende ordentlich kündigen.\\n\\n(2) Die Kündigung bedarf zu ihrer Wirksamkeit der Schriftform gemäß § 126 BGB. Eine Kündigung per E-Mail genügt nicht den Anforderungen der Schriftform.\\n\\n(3) Das Recht zur außerordentlichen Kündigung aus wichtigem Grund bleibt hiervon unberührt.'}",
-     "legalReasoning": "'Jederzeit kündbar' bedeutet: Sie könnten morgen auf der Straße stehen ODER jahrelang feststecken - niemand weiß es! Nach § 620 Abs. 2 BGB brauchen Verträge klare Fristen. Ohne diese Klarheit gibt es Streit vor Gericht. Die BAG-Rechtsprechung (Urt. v. 18.11.2020 - 6 AZR 145/19) zeigt: Unklare Fristen führen zu teuren Prozessen. ${contractType === 'arbeitsvertrag' || contractType.includes('arbeit') ? 'Die gesetzliche Kündigungsfrist nach § 622 BGB staffelt sich nach Betriebszugehörigkeit und schützt Arbeitnehmer.' : 'Die optimierte 3-Monats-Frist ist branchenüblich und gibt beiden Seiten Planungssicherheit.'}"
-   }
-
-OUTPUT FORMAT (EXAKT EINHALTEN):
 {
   "meta": {
-    "type": "DEN VON DIR ERKANNTEN VERTRAGSTYP (z.B. 'factoringvertrag', 'arbeitsvertrag', 'mietvertrag', 'dienstvertrag', 'leasingvertrag', etc.)",
+    "type": "erkannter_vertragstyp",
     "confidence": 90,
     "jurisdiction": "${contractInfo.jurisdiction || 'DE'}",
     "language": "${contractInfo.language || 'de'}",
     "isAmendment": ${contractInfo.isAmendment || false},
     "parentType": ${contractInfo.parentType ? `"${contractInfo.parentType}"` : null},
-    "recognizedAs": "BESCHREIBE IN 3-5 WORTEN WAS FÜR EIN VERTRAG DAS IST (z.B. 'Factoring-Rahmenvertrag', 'Arbeitsvertrag mit Tarifbindung', 'Gewerbemietvertrag')"
+    "recognizedAs": "Beschreibung in 3-5 Worten",
+    "maturity": "high | medium | low"
+  },
+  "assessment": {
+    "overall": "Kurze Gesamtbewertung des Vertrags",
+    "optimizationNeeded": true | false,
+    "reasoning": "Warum Optimierungen nötig/nicht nötig sind",
+    "intentionalClauses": ["klauseln", "die", "bewusst", "so", "gewollt", "sind"]
   },
   "categories": [
     {
-      "tag": "kuendigung",
-      "label": "Kündigung & Laufzeit",
+      "tag": "kategorie_tag",
+      "label": "Kategorie Label",
       "present": true,
       "issues": [
         {
-          "id": "k1_salva",
-          "summary": "Salvatorische Klausel fehlt - Vertrag kann komplett ungültig werden",
-          "originalText": "FEHLT - Diese Pflichtklausel ist nicht vorhanden",
-          "improvedText": "§ 20 Salvatorische Klausel\\n\\n(1) Sollten einzelne Bestimmungen dieses Vertrages unwirksam sein oder werden, wird hierdurch die Wirksamkeit der übrigen Bestimmungen nicht berührt.\\n\\n(2) Die Parteien verpflichten sich, anstelle einer unwirksamen Bestimmung eine dieser möglichst nahekommende wirksame Regelung zu treffen.\\n\\n(3) Das Gleiche gilt für etwaige Vertragslücken.",
-          "legalReasoning": "Ohne salvatorische Klausel wird bei einer einzigen ungültigen Klausel automatisch der GESAMTE Vertrag unwirksam (§ 139 BGB). Das bedeutet: Null Rechtsschutz! Beispiel: Eine AGB-Klausel ist unwirksam → Gesamter Vertrag nichtig → Sie haben keine vertragliche Grundlage mehr. Die BGH-Rechtsprechung (Urt. v. 12.05.2021 - VIII ZR 68/20) fordert diese Sicherungsklausel in allen professionellen Verträgen.",
+          "id": "eindeutige_id",
+          "summary": "Konkrete Überschrift (max 60 Zeichen)",
+          "originalText": "Exakter Text aus Vertrag ODER 'FEHLT - Diese Klausel ist nicht vorhanden'",
+          "improvedText": "Vollständige verbesserte Klausel (min 300 Zeichen)",
+          "legalReasoning": "Verständliche Begründung mit § und Rechtsprechung",
+          "category": "termination | liability | payment | compliance | clarity",
           "risk": 8,
           "impact": 7,
           "confidence": 95,
-          "difficulty": "Einfach",
-          "benchmark": "98% aller professionellen Verträge enthalten diese Sicherungsklausel"
+          "difficulty": "Einfach | Mittel | Komplex",
+          "benchmark": "Marktüblichkeit / Statistik",
+
+          "evidence": ["§3 Abs. 2: 'exakter Text aus Vertrag'", "§7: 'weiterer relevanter Text'"],
+          "whyItMatters": "Konkreter juristischer/wirtschaftlicher Nachteil wenn nicht gefixt",
+          "whyNotIntentional": "Warum diese Klausel NICHT bewusst so gewollt ist",
+          "whenToIgnore": "Wann diese Optimierung bewusst NICHT sinnvoll wäre"
         }
       ]
     }
   ],
   "score": {
-    "health": 65
+    "health": 0-100
   },
   "summary": {
-    "redFlags": 2,
-    "quickWins": 3,
-    "totalIssues": 8,
-    "criticalLegalRisks": 2,
-    "complianceIssues": 1
+    "redFlags": 0,
+    "quickWins": 0,
+    "totalIssues": 0,
+    "criticalLegalRisks": 0,
+    "complianceIssues": 0
   }
 }
 
-⚠️ ABSOLUTE PFLICHT-REGELN (WERDEN AUTOMATISCH GEPRÜFT):
+═══════════════════════════════════════════════════════════════════════════════
+🔥 NEUE PFLICHTFELDER PRO ISSUE (ANTI-BULLSHIT-FIREWALL!)
+═══════════════════════════════════════════════════════════════════════════════
 
-1. ✅ JEDE "summary" MUSS SPEZIFISCH SEIN (max 60 Zeichen):
-   ✅ GUT: "Salvatorische Klausel fehlt - Vertrag kann ungültig werden"
-   ✅ GUT: "Kündigungsfrist unklar - Rechtsunsicherheit"
-   ❌ SCHLECHT: "Klarheit & Präzision" → WIRD GELÖSCHT!
-   ❌ SCHLECHT: Leere summary → WIRD GELÖSCHT!
+Jede Optimierung MUSS diese 4 Felder haben - sonst wird sie GELÖSCHT:
 
-2. ✅ JEDE "legalReasoning" in EINFACHER SPRACHE (100-300 Zeichen):
-   - Start: WAS passiert wenn nicht gefixt? (Beispiel!)
-   - Dann: Gesetz (§ XXX BGB) + Rechtsprechung
-   - Keine Fachbegriffe ohne Erklärung!
+1. "evidence": Array mit konkreten Textstellen aus dem Vertrag
+   ✅ GUT: ["§3 Abs. 2: 'Die Haftung wird auf Vorsatz beschränkt'"]
+   ❌ SCHLECHT: [] oder fehlend
 
-3. ✅ JEDE "improvedText" IST VOLLSTÄNDIG (min. 300 Zeichen):
-   - Verwende: "am Sitz des Auftragnehmers" statt "[ORT]"
-   - Verwende: "zum vereinbarten Zeitpunkt" statt "[Datum]"
-   - Verwende: "gemäß den Vertragsbestimmungen" statt "siehe Vertrag"
-   ❌ VERBOTEN: "[...]", "siehe Vereinbarung", Platzhalter
+2. "whyItMatters": Konkreter Nachteil wenn nicht gefixt
+   ✅ GUT: "Ohne Schriftformklausel könnten mündliche Änderungen den Vertrag aushebeln"
+   ❌ SCHLECHT: "Best Practice" oder "sollte man haben"
 
-4. ✅ "originalText" = EXAKTER Text ODER "FEHLT - Diese Pflichtklausel ist nicht vorhanden"
-   ❌ NIEMALS: "Siehe Vertrag", "Analyse erforderlich"
+3. "whyNotIntentional": Warum ist das NICHT bewusst so gewollt?
+   ✅ GUT: "Die Formulierung wirkt unbeabsichtigt lückenhaft, da §5 und §7 widersprüchlich sind"
+   ❌ SCHLECHT: Leer oder "könnte problematisch sein"
 
-5. ✅ ABSOLUT KEINE DUPLIKATE:
-   - Jede summary muss EINZIGARTIG sein
-   - Jede improvedText muss UNTERSCHIEDLICH sein
-   - Duplikate werden automatisch gelöscht!
+4. "whenToIgnore": Wann wäre diese Optimierung NICHT sinnvoll?
+   ✅ GUT: "Wenn bewusst flexible Kündigungsregeln gewünscht sind"
+   ❌ SCHLECHT: Leer oder "nie"
 
-6. ✅ NUR 5-8 WICHTIGSTE Probleme:
-   - Fokus auf echte Risiken
-   - Keine repetitiven Issues
+═══════════════════════════════════════════════════════════════════════════════
+✅ BEISPIEL: GUTE OPTIMIERUNG (MIT ALLEN PFLICHTFELDERN)
+═══════════════════════════════════════════════════════════════════════════════
 
-7. ✅ EINDEUTIGE IDs: "clarity_1", "kuend_2", "haft_3"
-   - Niemals "k1", "k1", "k1"!
+{
+  "id": "haft_1_beschraenkung",
+  "summary": "Haftungsbeschränkung einseitig - benachteiligt Auftraggeber",
+  "originalText": "§8 Abs. 1: 'Die Haftung des Auftragnehmers wird auf Vorsatz beschränkt.'",
+  "improvedText": "§8 Haftung\\n\\n(1) Die Haftung für Schäden aus der Verletzung des Lebens, des Körpers oder der Gesundheit sowie für Vorsatz und grobe Fahrlässigkeit bleibt unbeschränkt.\\n\\n(2) Für leichte Fahrlässigkeit haftet der Auftragnehmer nur bei Verletzung wesentlicher Vertragspflichten (Kardinalpflichten) und beschränkt auf den vertragstypischen, vorhersehbaren Schaden.\\n\\n(3) Die Haftung für mittelbare Schäden und entgangenen Gewinn ist ausgeschlossen, soweit gesetzlich zulässig.",
+  "legalReasoning": "Die aktuelle Klausel verstößt gegen § 309 Nr. 7 BGB: Eine Beschränkung auf Vorsatz ist in AGB unwirksam. Bei groben Pflichtverletzungen hätten Sie NULL Ansprüche. Die BGH-Rechtsprechung (VIII ZR 32/19) erklärt solche Klauseln regelmäßig für nichtig.",
+  "category": "liability",
+  "risk": 9,
+  "impact": 8,
+  "confidence": 95,
+  "difficulty": "Mittel",
+  "benchmark": "95% aller Verträge unterscheiden zwischen Vorsatz, grober und leichter Fahrlässigkeit",
 
-⚡ WICHTIG: Dein Output wird durch QUALITY CHECK gefiltert!
-⚡ Issues mit Platzhaltern werden automatisch korrigiert oder gelöscht!
-⚡ Duplikate werden automatisch entfernt!
+  "evidence": ["§8 Abs. 1: 'Die Haftung des Auftragnehmers wird auf Vorsatz beschränkt.'"],
+  "whyItMatters": "Bei grober Fahrlässigkeit des Auftragnehmers haben Sie KEINE Schadensersatzansprüche. Beispiel: Auftragnehmer löscht fahrlässig alle Ihre Daten → Sie bekommen nichts.",
+  "whyNotIntentional": "Die einseitige Formulierung wirkt wie ein Standard-Template, nicht wie eine bewusste Verhandlung. Ein ausgewogener Vertrag würde beide Seiten schützen.",
+  "whenToIgnore": "Wenn Sie bewusst ein sehr günstiges Angebot nutzen und dafür reduzierte Haftung akzeptieren."
+}
 
-BEGINNE JETZT MIT DER ULTRA-PRÄZISEN ANALYSE!`;
+═══════════════════════════════════════════════════════════════════════════════
+✅ BEISPIEL: PERFEKTER VERTRAG (0 ISSUES = KORREKT!)
+═══════════════════════════════════════════════════════════════════════════════
+
+{
+  "meta": {
+    "type": "factoringvertrag",
+    "confidence": 95,
+    "jurisdiction": "DE",
+    "language": "de",
+    "isAmendment": false,
+    "parentType": null,
+    "recognizedAs": "Professioneller Factoring-Rahmenvertrag",
+    "maturity": "high"
+  },
+  "assessment": {
+    "overall": "Hochprofessioneller Vertrag auf Kanzlei-Niveau",
+    "optimizationNeeded": false,
+    "reasoning": "Der Vertrag ist umfassend, konsistent formuliert und enthält alle branchenüblichen Klauseln. Die einseitigen Regelungen (Haftung, Rückgriff) sind bei Factoring-Verträgen marktüblich und bewusst so gewollt.",
+    "intentionalClauses": ["haftungsbeschraenkung", "rueckgriffsrecht", "abtretungsverbote", "ankauflimit"]
+  },
+  "categories": [],
+  "score": { "health": 95 },
+  "summary": { "redFlags": 0, "quickWins": 0, "totalIssues": 0, "criticalLegalRisks": 0, "complianceIssues": 0 }
+}
+
+═══════════════════════════════════════════════════════════════════════════════
+⚠️ QUALITY CHECK - DIESE ISSUES WERDEN AUTOMATISCH GELÖSCHT:
+═══════════════════════════════════════════════════════════════════════════════
+
+❌ evidence fehlt oder leer
+❌ whyNotIntentional fehlt oder schwammig ("könnte", "vielleicht")
+❌ whyItMatters nur generisch ("Best Practice", "Klarheit")
+❌ summary = "Klarheit & Präzision" oder ähnlich generisch
+❌ improvedText < 100 Zeichen
+❌ Platzhalter im Text ([ORT], siehe Vertrag, etc.)
+❌ Duplikate (ähnliche Issues werden zusammengeführt)
+
+BEGINNE JETZT MIT DER ANALYSE!`;
 };
 
 // 🚀 HAUPTROUTE: Universelle KI-Vertragsoptimierung mit Enhanced Security & Performance
@@ -3246,6 +3403,7 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
     console.log(`🤖 [${requestId}] KI-Modell: ${modelToUse} für ${contractTypeInfo.type}`);
 
     // 🔥 CHATGPT-FIX: Striktes JSON-Schema erzwingt valides JSON von GPT-4o
+    // 🔥 v2.0: Erweitertes JSON-Schema mit Decision-First Feldern
     const strictJsonSchema = {
       type: "json_schema",
       json_schema: {
@@ -3262,9 +3420,23 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
                 language: { type: "string" },
                 isAmendment: { type: "boolean" },
                 parentType: { type: ["string", "null"] },
-                recognizedAs: { type: "string" }  // 🆕 KI beschreibt den erkannten Vertragstyp
+                recognizedAs: { type: "string" },
+                maturity: { type: "string", enum: ["high", "medium", "low"] }  // 🆕 v2.0: Vertragsreife
               },
               required: ["type", "confidence", "jurisdiction", "language", "isAmendment"]
+            },
+            // 🆕 v2.0: Assessment-Block für Decision-First Logik
+            assessment: {
+              type: "object",
+              properties: {
+                overall: { type: "string" },
+                optimizationNeeded: { type: "boolean" },
+                reasoning: { type: "string" },
+                intentionalClauses: {
+                  type: "array",
+                  items: { type: "string" }
+                }
+              }
             },
             categories: {
               type: "array",
@@ -3289,7 +3461,15 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
                         impact: { type: "number" },
                         confidence: { type: "number" },
                         difficulty: { type: "string" },
-                        benchmark: { type: "string" }
+                        benchmark: { type: "string" },
+                        // 🆕 v2.0: Anti-Bullshit Pflichtfelder
+                        evidence: {
+                          type: "array",
+                          items: { type: "string" }
+                        },
+                        whyItMatters: { type: "string" },
+                        whyNotIntentional: { type: "string" },
+                        whenToIgnore: { type: "string" }
                       },
                       required: ["id", "summary", "originalText", "improvedText", "legalReasoning", "category"]
                     }
@@ -4136,7 +4316,7 @@ router.post("/stream", verifyToken, uploadLimiter, smartRateLimiter, upload.sing
     const modelToUse = "gpt-4o";
     sendProgress(58, `🧠 Verwende ${modelToUse} für maximale Präzision...`);
 
-    // Strict JSON schema
+    // 🔥 v2.0: Erweitertes JSON-Schema mit Decision-First Feldern (Stream-Route)
     const strictJsonSchema = {
       type: "json_schema",
       json_schema: {
@@ -4153,9 +4333,23 @@ router.post("/stream", verifyToken, uploadLimiter, smartRateLimiter, upload.sing
                 language: { type: "string" },
                 isAmendment: { type: "boolean" },
                 parentType: { type: ["string", "null"] },
-                recognizedAs: { type: "string" }  // 🆕 KI beschreibt den erkannten Vertragstyp
+                recognizedAs: { type: "string" },
+                maturity: { type: "string", enum: ["high", "medium", "low"] }  // 🆕 v2.0: Vertragsreife
               },
               required: ["type", "confidence", "jurisdiction", "language", "isAmendment"]
+            },
+            // 🆕 v2.0: Assessment-Block für Decision-First Logik
+            assessment: {
+              type: "object",
+              properties: {
+                overall: { type: "string" },
+                optimizationNeeded: { type: "boolean" },
+                reasoning: { type: "string" },
+                intentionalClauses: {
+                  type: "array",
+                  items: { type: "string" }
+                }
+              }
             },
             categories: {
               type: "array",
@@ -4169,16 +4363,26 @@ router.post("/stream", verifyToken, uploadLimiter, smartRateLimiter, upload.sing
                     items: {
                       type: "object",
                       properties: {
+                        id: { type: "string" },
                         summary: { type: "string" },
                         originalText: { type: "string" },
                         improvedText: { type: "string" },
                         legalReasoning: { type: "string" },
+                        category: { type: "string" },
                         risk: { type: "number" },
                         impact: { type: "number" },
                         confidence: { type: "number" },
                         difficulty: { type: "string" },
                         benchmark: { type: "string" },
-                        legalReferences: { type: "array", items: { type: "string" } }
+                        legalReferences: { type: "array", items: { type: "string" } },
+                        // 🆕 v2.0: Anti-Bullshit Pflichtfelder
+                        evidence: {
+                          type: "array",
+                          items: { type: "string" }
+                        },
+                        whyItMatters: { type: "string" },
+                        whyNotIntentional: { type: "string" },
+                        whenToIgnore: { type: "string" }
                       },
                       required: ["summary", "improvedText", "legalReasoning", "risk", "impact", "confidence", "difficulty"]
                     }
@@ -4191,6 +4395,16 @@ router.post("/stream", verifyToken, uploadLimiter, smartRateLimiter, upload.sing
               type: "object",
               properties: { health: { type: "number" } },
               required: ["health"]
+            },
+            summary: {
+              type: "object",
+              properties: {
+                redFlags: { type: "number" },
+                quickWins: { type: "number" },
+                totalIssues: { type: "number" },
+                criticalLegalRisks: { type: "number" },
+                complianceIssues: { type: "number" }
+              }
             }
           },
           required: ["meta", "categories", "score"]

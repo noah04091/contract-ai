@@ -44,6 +44,14 @@ const PITCH_STYLES = [
   { id: 'simple', name: 'Verständlich', icon: <MessageSquare size={18} />, description: 'Einfach & klar' },
 ];
 
+// 🆕 v2.0: Assessment Interface für Decision-First
+interface ContractAssessment {
+  overall: string;
+  optimizationNeeded: boolean;
+  reasoning: string;
+  intentionalClauses: string[];
+}
+
 interface ResultsDashboardProps {
   optimizations: OptimizationSuggestion[];
   contractScore: ContractHealthScore;
@@ -55,6 +63,10 @@ interface ResultsDashboardProps {
   onExport?: (format: string) => void;
   isGenerating?: boolean;
   isPremium?: boolean;
+  // 🆕 v2.0: Decision-First Props
+  assessment?: ContractAssessment;
+  contractMaturity?: 'high' | 'medium' | 'low';
+  recognizedAs?: string;
 }
 
 // Category configuration
@@ -94,7 +106,11 @@ export default function ResultsDashboard({
   onGeneratePitch,
   onExport,
   isGenerating = false,
-  isPremium = true
+  isPremium = true,
+  // 🆕 v2.0: Decision-First Props
+  assessment,
+  contractMaturity,
+  recognizedAs
 }: ResultsDashboardProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
@@ -191,6 +207,167 @@ export default function ResultsDashboard({
     }
   };
   void _getTrendIcon; // Mark as intentionally unused for now
+
+  // 🆕 v2.0: Perfect Contract State - Wenn 0 Optimierungen (Premium Ergebnis!)
+  if (optimizations.length === 0) {
+    return (
+      <div className={styles.resultsDashboard}>
+        {/* 🏆 Perfect Contract Hero */}
+        <motion.div
+          className={`${styles.heroScoreCard} ${styles.perfectContract}`}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.2, 0.8, 0.2, 1] }}
+        >
+          {/* Score Circle - Perfect State */}
+          <div className={styles.scoreCircleWrapper}>
+            <div
+              className={`${styles.scoreCircle} ${styles.perfect}`}
+              style={{ '--score-percent': contractScore.overall } as React.CSSProperties}
+            >
+              <div className={styles.scoreValue}>
+                {contractScore.overall}<span>/100</span>
+              </div>
+            </div>
+            <div className={`${styles.scoreTrend} ${styles.perfect}`}>
+              <CheckCircle size={14} />
+              <span>Exzellent</span>
+            </div>
+          </div>
+
+          {/* Perfect Contract Info */}
+          <div className={styles.scoreInfo}>
+            <h2 className={styles.scoreTitle}>
+              <CheckCircle size={24} style={{ color: 'var(--apple-green)', marginRight: '8px' }} />
+              Professioneller Vertrag
+            </h2>
+            <p className={styles.scoreSubtitle}>
+              <strong>Keine Optimierungen erforderlich.</strong> "{fileName}" erfüllt professionelle Standards.
+            </p>
+
+            {/* Assessment Details */}
+            {assessment && (
+              <div className={styles.assessmentBox}>
+                <div className={styles.assessmentHeader}>
+                  <Shield size={16} />
+                  <span>Juristische Einschätzung</span>
+                </div>
+                <p className={styles.assessmentText}>{assessment.reasoning}</p>
+                {assessment.intentionalClauses && assessment.intentionalClauses.length > 0 && (
+                  <div className={styles.intentionalClauses}>
+                    <strong>Als beabsichtigt erkannt:</strong>
+                    <ul>
+                      {assessment.intentionalClauses.map((clause, idx) => (
+                        <li key={idx}>{clause}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Contract Meta Info */}
+            <div className={styles.perfectMetrics}>
+              {recognizedAs && (
+                <div className={styles.metricBadge}>
+                  <FileText size={14} />
+                  <span>{recognizedAs}</span>
+                </div>
+              )}
+              {contractMaturity && (
+                <div className={`${styles.metricBadge} ${styles[`maturity${contractMaturity.charAt(0).toUpperCase() + contractMaturity.slice(1)}`]}`}>
+                  <Shield size={14} />
+                  <span>Reife: {contractMaturity === 'high' ? 'Hoch' : contractMaturity === 'medium' ? 'Mittel' : 'Niedrig'}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Export Actions - Auch bei 0 Optimierungen verfügbar */}
+          <div className={styles.heroActions}>
+            {onExport && (
+              <div className={styles.dropdownWrapper}>
+                <motion.button
+                  className={`${styles.heroActionBtn} ${styles.secondary}`}
+                  onClick={() => setShowExportMenu(!showExportMenu)}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Download size={18} />
+                  <span>Bericht exportieren</span>
+                  <ChevronDown size={14} className={showExportMenu ? styles.rotated : ''} />
+                </motion.button>
+                <AnimatePresence>
+                  {showExportMenu && (
+                    <>
+                      <motion.div
+                        className={styles.dropdownBackdrop}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setShowExportMenu(false)}
+                      />
+                      <motion.div
+                        className={styles.dropdownMenu}
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                      >
+                        <button onClick={() => { onExport('pdf'); setShowExportMenu(false); }}>
+                          <FileText size={16} />
+                          <span>PDF Report</span>
+                        </button>
+                        <button onClick={() => { onExport('word'); setShowExportMenu(false); }}>
+                          <FileText size={16} />
+                          <span>Word Dokument</span>
+                        </button>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+          </div>
+        </motion.div>
+
+        {/* 📊 Summary Cards für Perfect Contract */}
+        <div className={styles.perfectSummary}>
+          <motion.div
+            className={styles.perfectSummaryCard}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <div className={styles.perfectIcon}>
+              <CheckCircle size={32} />
+            </div>
+            <div className={styles.perfectCardContent}>
+              <h3>Kein Handlungsbedarf</h3>
+              <p>Dieser Vertrag wurde professionell erstellt und enthält keine kritischen Lücken oder risikoreichen Klauseln.</p>
+            </div>
+          </motion.div>
+
+          <motion.div
+            className={styles.perfectSummaryCard}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <div className={styles.perfectIcon} style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)' }}>
+              <Lightbulb size={32} />
+            </div>
+            <div className={styles.perfectCardContent}>
+              <h3>Warum 0 Optimierungen?</h3>
+              <p>
+                Unser KI-System optimiert nur, wenn echte juristische oder wirtschaftliche Risiken bestehen.
+                "Keine Optimierungen" bedeutet: Sie haben einen gut durchdachten Vertrag.
+              </p>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.resultsDashboard}>
