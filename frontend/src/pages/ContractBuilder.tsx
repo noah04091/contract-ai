@@ -1431,15 +1431,25 @@ const ContractBuilder: React.FC = () => {
           </aside>
         )}
 
-        {/* Panel Toggle Button - außerhalb der Sidebar für korrektes Rendering */}
-        {view === 'edit' && (
+        {/* Panel Toggle Button - positioniert am rechten Rand der Sidebar */}
+        {view === 'edit' && showLeftPanel && (
           <button
-            className={showLeftPanel ? styles.panelToggle : styles.showPanelButton}
-            onClick={() => setShowLeftPanel(!showLeftPanel)}
-            title={showLeftPanel ? "Panel schließen" : "Blöcke anzeigen"}
-            style={showLeftPanel ? { left: '220px' } : { left: '0' }}
+            className={styles.panelToggle}
+            onClick={() => setShowLeftPanel(false)}
+            title="Panel schließen"
           >
-            <PanelLeftClose size={16} style={!showLeftPanel ? { transform: 'rotate(180deg)' } : undefined} />
+            <PanelLeftClose size={16} />
+          </button>
+        )}
+
+        {/* Show Panel Button - wenn Sidebar geschlossen */}
+        {view === 'edit' && !showLeftPanel && (
+          <button
+            className={styles.showPanelButton}
+            onClick={() => setShowLeftPanel(true)}
+            title="Blöcke anzeigen"
+          >
+            <PanelLeftClose size={16} style={{ transform: 'rotate(180deg)' }} />
           </button>
         )}
 

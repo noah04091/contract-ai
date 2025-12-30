@@ -442,7 +442,7 @@
 
 .panelToggle {
   position: absolute;
-  left: 220px; /* Breite der Sidebar */
+  left: 259px; /* Breite der Sidebar (260px) minus 1px für nahtlosen Übergang */
   top: 50%;
   transform: translateY(-50%);
   width: 24px;
