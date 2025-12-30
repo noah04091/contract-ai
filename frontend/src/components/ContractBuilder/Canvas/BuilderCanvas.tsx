@@ -60,6 +60,7 @@ const PAGE_CONTENT_HEIGHT = 1050; // STARK ERHÖHT - nutzt max. A4 Platz
 export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const pageContentRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map()); // Refs für Intersection Observer
   const blockRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [activeId, setActiveId] = useState<string | null>(null);
   const [overflowPages, setOverflowPages] = useState<Set<number>>(new Set());
@@ -77,6 +78,55 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
     setDragState,
     autoInsertPageBreak,
   } = useContractBuilderStore();
+
+  // Ref-Callback für Page Elemente (für Intersection Observer)
+  const setPageRef = useCallback((pageIndex: number) => (el: HTMLDivElement | null) => {
+    if (el) {
+      pageRefs.current.set(pageIndex, el);
+    } else {
+      pageRefs.current.delete(pageIndex);
+    }
+  }, []);
+
+  // Scroll-basiertes Auto-Aktivieren der sichtbaren Seite
+  useEffect(() => {
+    if (view === 'preview') return; // Nur im Edit-Modus
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Finde die Seite mit der größten Sichtbarkeit
+        let maxVisibility = 0;
+        let mostVisiblePage = -1;
+
+        entries.forEach((entry) => {
+          const pageIndex = parseInt(entry.target.getAttribute('data-page-index') || '-1');
+          if (pageIndex >= 0 && entry.intersectionRatio > maxVisibility) {
+            maxVisibility = entry.intersectionRatio;
+            mostVisiblePage = pageIndex;
+          }
+        });
+
+        // Aktiviere die am meisten sichtbare Seite (nur wenn >30% sichtbar)
+        if (mostVisiblePage >= 0 && maxVisibility > 0.3) {
+          setActivePage(mostVisiblePage);
+        }
+      },
+      {
+        root: canvasRef.current,
+        threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+        rootMargin: '-10% 0px -10% 0px', // Etwas Puffer oben und unten
+      }
+    );
+
+    // Beobachte alle Seiten
+    pageRefs.current.forEach((el) => {
+      observer.observe(el);
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [view, setActivePage]);
 
   const blocks = currentDocument?.content.blocks || [];
   const design = currentDocument?.design;
@@ -310,6 +360,7 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
               pages.map((pageBlocks, pageIndex) => (
                 <div key={pageIndex} className={styles.paperWrapper}>
                   <div
+                    ref={setPageRef(pageIndex)}
                     className={`
                       ${styles.paper}
                       ${view === 'preview' ? styles.previewMode : ''}
@@ -317,6 +368,7 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
                     `}
                     style={pageStyles}
                     data-page={pageIndex + 1}
+                    data-page-index={pageIndex}
                     onClick={(e) => handlePageClick(pageIndex, e)}
                   >
                     {/* Aktive Seite Indikator */}
@@ -344,7 +396,7 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
                           <span className={styles.emptyPageHint}>
                             {activePageIndex === pageIndex
                               ? 'Blöcke werden hier eingefügt'
-                              : 'Klicken um diese Seite zu aktivieren'}
+                              : 'Hierher scrollen um Blöcke einzufügen'}
                           </span>
                         </div>
                       ) : (
