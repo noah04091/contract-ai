@@ -10,6 +10,13 @@
   margin-bottom: 12px;
 }
 
+/* Wenn in Section eingebettet (kein eigener Header) */
+.notesContainer.noHeader {
+  padding: 0;
+  background: transparent;
+  margin-bottom: 0;
+}
+
 .header {
   display: flex;
   align-items: center;

@@ -16,6 +16,7 @@ interface BlockNotesProps {
   onDeleteNote: (blockId: string, noteId: string) => void;
   onResolveNote: (blockId: string, noteId: string, resolved: boolean) => void;
   isPreview?: boolean;
+  hideHeader?: boolean; // Header ausblenden wenn in Section verwendet
 }
 
 export const BlockNotes: React.FC<BlockNotesProps> = ({
@@ -26,6 +27,7 @@ export const BlockNotes: React.FC<BlockNotesProps> = ({
   onDeleteNote,
   onResolveNote,
   isPreview = false,
+  hideHeader = false,
 }) => {
   const [newNoteText, setNewNoteText] = useState('');
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
@@ -68,14 +70,16 @@ export const BlockNotes: React.FC<BlockNotesProps> = ({
   };
 
   return (
-    <div className={styles.notesContainer}>
-      <div className={styles.header}>
-        <MessageSquare size={14} />
-        <span>Notizen</span>
-        <span className={styles.count}>
-          {activeNotes.length}{resolvedNotes.length > 0 && ` (${resolvedNotes.length} erledigt)`}
-        </span>
-      </div>
+    <div className={`${styles.notesContainer} ${hideHeader ? styles.noHeader : ''}`}>
+      {!hideHeader && (
+        <div className={styles.header}>
+          <MessageSquare size={14} />
+          <span>Notizen</span>
+          <span className={styles.count}>
+            {activeNotes.length}{resolvedNotes.length > 0 && ` (${resolvedNotes.length} erledigt)`}
+          </span>
+        </div>
+      )}
 
       {/* Neue Notiz hinzufügen */}
       <div className={styles.addNote}>

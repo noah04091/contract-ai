@@ -20,6 +20,7 @@ import {
   FileText,
   Wand2,
   Loader2,
+  MessageSquare,
 } from 'lucide-react';
 import { BlockNotes } from '../Notes/BlockNotes';
 import styles from './PropertiesPanel.module.css';
@@ -28,7 +29,7 @@ interface PropertiesPanelProps {
   className?: string;
 }
 
-type SectionType = 'content' | 'typography' | 'colors' | 'spacing' | 'border' | 'advanced';
+type SectionType = 'content' | 'typography' | 'colors' | 'spacing' | 'border' | 'advanced' | 'notes';
 
 export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className }) => {
   const [expandedSections, setExpandedSections] = useState<Set<SectionType>>(
@@ -155,16 +156,6 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className }) =
           <span>KI-generiert</span>
         </div>
       )}
-
-      {/* Block Notes */}
-      <BlockNotes
-        blockId={selectedBlock.id}
-        notes={selectedBlock.notes || []}
-        onAddNote={addBlockNote}
-        onUpdateNote={updateBlockNote}
-        onDeleteNote={deleteBlockNote}
-        onResolveNote={resolveBlockNote}
-      />
 
       {/* Sections */}
       <div className={styles.sections}>
@@ -512,6 +503,24 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className }) =
               {Math.round((selectedBlock.style?.opacity ?? 1) * 100)}%
             </span>
           </div>
+        </Section>
+
+        {/* Notes */}
+        <Section
+          title={`Notizen${(selectedBlock.notes?.filter(n => !n.resolved)?.length || 0) > 0 ? ` (${selectedBlock.notes?.filter(n => !n.resolved)?.length})` : ''}`}
+          icon={<MessageSquare size={14} />}
+          isExpanded={expandedSections.has('notes')}
+          onToggle={() => toggleSection('notes')}
+        >
+          <BlockNotes
+            blockId={selectedBlock.id}
+            notes={selectedBlock.notes || []}
+            onAddNote={addBlockNote}
+            onUpdateNote={updateBlockNote}
+            onDeleteNote={deleteBlockNote}
+            onResolveNote={resolveBlockNote}
+            hideHeader
+          />
         </Section>
       </div>
     </div>
