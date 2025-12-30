@@ -155,6 +155,10 @@ export default function FieldInputModal({
   const firstInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Mobile detection for optimized pen settings
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+
   // Reset state when modal opens/closes or field changes
   useEffect(() => {
     if (isOpen && field) {
@@ -370,13 +374,34 @@ export default function FieldInputModal({
       case "signature":
       case "initials":
       case "initial": { // Backend uses singular
-        const canvasWidth = field.type === "signature" ? 600 : 300;
-        const canvasHeight = field.type === "signature" ? 180 : 120;
+        // Responsive canvas sizing
+        const baseWidth = field.type === "signature" ? 600 : 300;
+        const baseHeight = field.type === "signature" ? 180 : 120;
+
+        // On mobile, use more of the available width
+        const availableWidth = isMobile ? window.innerWidth - 32 : window.innerWidth - 100;
+        const canvasWidth = Math.min(baseWidth, availableWidth);
+        // Maintain aspect ratio
+        const canvasHeight = isMobile ? Math.min(baseHeight * 1.2, 220) : baseHeight;
+
+        // Thicker pen strokes on touch devices for better visibility
+        const minPenWidth = isTouchDevice ? 1.5 : 1;
+        const maxPenWidth = isTouchDevice ? 3.5 : 2.5;
 
         return (
           <div className={styles.signatureContainer}>
             <p className={styles.helperText}>
-              Zeichnen Sie mit Maus oder Finger
+              {isMobile ? (
+                <>
+                  Für beste Ergebnisse: Telefon quer halten
+                  <br />
+                  <span style={{ fontSize: '12px', opacity: 0.8 }}>
+                    Zeichnen Sie mit dem Finger
+                  </span>
+                </>
+              ) : (
+                "Zeichnen Sie mit Maus oder Finger"
+              )}
             </p>
 
             <div className={styles.canvasWrapper}>
@@ -384,13 +409,14 @@ export default function FieldInputModal({
                 ref={sigPadRef}
                 canvasProps={{
                   className: styles.signatureCanvas,
-                  width: Math.min(canvasWidth, window.innerWidth - 100),
+                  width: canvasWidth,
                   height: canvasHeight
                 }}
                 backgroundColor="#ffffff"
                 penColor="#000000"
-                minWidth={1}
-                maxWidth={2.5}
+                minWidth={minPenWidth}
+                maxWidth={maxPenWidth}
+                velocityFilterWeight={isTouchDevice ? 0.6 : 0.7}
                 onEnd={handleSignatureChange}
               />
             </div>

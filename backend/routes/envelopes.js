@@ -1430,6 +1430,23 @@ router.get("/sign/:token", async (req, res) => {
       });
     }
 
+    // 🔄 SEQUENTIAL SIGNING: Check if it's this signer's turn
+    let waitingForSigners = null;
+    if (envelope.signingMode === 'SEQUENTIAL') {
+      const sortedSigners = [...envelope.signers].sort((a, b) => a.order - b.order);
+      const previousUnsignedSigners = sortedSigners.filter(
+        s => s.order < signer.order && s.status !== 'SIGNED'
+      );
+
+      if (previousUnsignedSigners.length > 0) {
+        waitingForSigners = previousUnsignedSigners.map(s => ({
+          name: s.name,
+          order: s.order
+        }));
+        console.log(`⏳ Sequential mode: ${signer.email} must wait for ${waitingForSigners.length} signer(s)`);
+      }
+    }
+
     // Log opened event
     await Envelope.updateOne(
       { _id: envelope._id },
@@ -1475,14 +1492,18 @@ router.get("/sign/:token", async (req, res) => {
         message: envelope.message,
         s3Key: envelope.s3Key,
         pdfUrl, // 📄 NEU: Presigned URL für PDF-Vorschau
-        expiresAt: envelope.expiresAt
+        expiresAt: envelope.expiresAt,
+        signingMode: envelope.signingMode // 🔄 Sequential or Parallel
       },
       signer: {
         name: signer.name,
         email: signer.email,
-        role: signer.role
+        role: signer.role,
+        order: signer.order // 🔄 Signer order for sequential mode
       },
-      signatureFields: myFields
+      signatureFields: myFields,
+      // 🔄 SEQUENTIAL: If waiting for other signers
+      waitingForSigners: waitingForSigners
     });
 
   } catch (error) {
@@ -1574,6 +1595,32 @@ router.post("/sign/:token/submit", signatureSubmitLimiter, async (req, res) => {
         success: false,
         message: "Signatur kann nicht mehr hinzugefügt werden"
       });
+    }
+
+    // 🔄 SEQUENTIAL SIGNING: Check if it's this signer's turn
+    if (envelope.signingMode === 'SEQUENTIAL') {
+      // Sort signers by order
+      const sortedSigners = [...envelope.signers].sort((a, b) => a.order - b.order);
+
+      // Find all signers with lower order that haven't signed yet
+      const previousUnsignedSigners = sortedSigners.filter(
+        s => s.order < signer.order && s.status !== 'SIGNED'
+      );
+
+      if (previousUnsignedSigners.length > 0) {
+        const waitingFor = previousUnsignedSigners.map(s => s.name).join(', ');
+        console.log(`⏳ Sequential mode: ${signer.email} must wait for: ${waitingFor}`);
+
+        return res.status(403).json({
+          success: false,
+          message: `Sie sind noch nicht an der Reihe. Bitte warten Sie bis ${waitingFor} unterschrieben hat.`,
+          waitingFor: previousUnsignedSigners.map(s => ({
+            name: s.name,
+            email: s.email,
+            order: s.order
+          }))
+        });
+      }
     }
 
     console.log(`✅ Processing ${signatures.length} signatures for: ${signer.email}`);

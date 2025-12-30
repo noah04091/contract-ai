@@ -108,6 +108,9 @@ export default function EnhancedSignaturePage() {
   // UI State
   const [showHelpModal, setShowHelpModal] = useState(false);
 
+  // 🔄 Sequential Signing: Waiting for other signers
+  const [waitingForSigners, setWaitingForSigners] = useState<Array<{ name: string; order: number }> | null>(null);
+
   // Refs
   const pdfContainerRef = useRef<HTMLDivElement>(null);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -212,6 +215,12 @@ export default function EnhancedSignaturePage() {
 
       setEnvelope(data.envelope);
       setSigner(data.signer);
+
+      // 🔄 SEQUENTIAL: Check if waiting for other signers
+      if (data.waitingForSigners && Array.isArray(data.waitingForSigners) && data.waitingForSigners.length > 0) {
+        setWaitingForSigners(data.waitingForSigners);
+        console.log(`⏳ Sequential mode: Waiting for ${data.waitingForSigners.length} signer(s)`);
+      }
 
       if (data.signatureFields && Array.isArray(data.signatureFields)) {
         setSignatureFields(data.signatureFields);
@@ -784,6 +793,47 @@ export default function EnhancedSignaturePage() {
           <h2>Bereits signiert</h2>
           <p>Sie haben dieses Dokument bereits signiert.</p>
         </div>
+      </div>
+    );
+  }
+
+  // 🔄 SEQUENTIAL: Check if waiting for other signers
+  if (waitingForSigners && waitingForSigners.length > 0) {
+    return (
+      <div className={styles.container}>
+        <motion.div
+          className={styles.infoCard}
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <Clock size={64} className={styles.infoIcon} />
+          <h2>Sie sind noch nicht an der Reihe</h2>
+          <p style={{ marginBottom: '1rem' }}>
+            Dieses Dokument wird nacheinander unterschrieben.
+          </p>
+          <div style={{
+            background: '#f8fafc',
+            borderRadius: '8px',
+            padding: '1rem',
+            marginTop: '1rem',
+            textAlign: 'left'
+          }}>
+            <p style={{ fontWeight: 500, marginBottom: '0.5rem' }}>
+              Warten auf:
+            </p>
+            <ul style={{ paddingLeft: '1.25rem', margin: 0 }}>
+              {waitingForSigners.map((ws, idx) => (
+                <li key={idx} style={{ marginBottom: '0.25rem' }}>
+                  {ws.name}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <p style={{ marginTop: '1.5rem', color: '#64748b', fontSize: '0.9rem' }}>
+            Sie erhalten eine E-Mail, sobald Sie unterschreiben können.
+          </p>
+        </motion.div>
       </div>
     );
   }

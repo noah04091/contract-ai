@@ -30,6 +30,7 @@ interface Signer {
 
 type SignatureMode = "RECIPIENT_ONLY" | "BOTH_PARTIES";
 type SigningOrder = "SENDER_FIRST" | "RECIPIENT_FIRST";
+type SigningMode = "PARALLEL" | "SEQUENTIAL"; // Backend: alle gleichzeitig oder nacheinander
 
 export default function NewSignatureRequest() {
   const navigate = useNavigate();
@@ -50,6 +51,7 @@ export default function NewSignatureRequest() {
   // Multi-Signer Settings
   const [signatureMode, setSignatureMode] = useState<SignatureMode>("RECIPIENT_ONLY");
   const [signingOrder, setSigningOrder] = useState<SigningOrder>("RECIPIENT_FIRST");
+  const [signingMode, setSigningMode] = useState<SigningMode>("PARALLEL"); // Sequential or Parallel signing
   const [currentUser, setCurrentUser] = useState<{ name: string; email: string } | null>(null);
 
   // Load current user info
@@ -256,7 +258,8 @@ export default function NewSignatureRequest() {
           s3Key,
           contractId, // Link envelope to contract for Signierprozess tab
           signers: allSigners,
-          signatureFields: [] // Will be added in next step
+          signatureFields: [], // Will be added in next step
+          signingMode: signers.length > 1 ? signingMode : "PARALLEL" // Only relevant for multiple signers
         })
       });
 
@@ -530,6 +533,44 @@ export default function NewSignatureRequest() {
                         <div className={styles.radioContent}>
                           <span className={styles.radioTitle}>Ich zuerst</span>
                           <span className={styles.radioDesc}>Sie unterschreiben als Erster</span>
+                        </div>
+                      </label>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Sequential Signing Mode (only if multiple signers) */}
+              <AnimatePresence>
+                {signers.length > 1 && (
+                  <motion.div
+                    className={styles.orderSection}
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                  >
+                    <label className={styles.sectionLabel}>Signatur-Modus bei mehreren Unterzeichnern</label>
+                    <div className={styles.orderOptions}>
+                      <label className={`${styles.radioOption} ${signingMode === "PARALLEL" ? styles.radioOptionActive : ""}`}>
+                        <input
+                          type="radio"
+                          checked={signingMode === "PARALLEL"}
+                          onChange={() => setSigningMode("PARALLEL")}
+                        />
+                        <div className={styles.radioContent}>
+                          <span className={styles.radioTitle}>Alle gleichzeitig</span>
+                          <span className={styles.radioDesc}>Alle Unterzeichner können sofort unterschreiben</span>
+                        </div>
+                      </label>
+                      <label className={`${styles.radioOption} ${signingMode === "SEQUENTIAL" ? styles.radioOptionActive : ""}`}>
+                        <input
+                          type="radio"
+                          checked={signingMode === "SEQUENTIAL"}
+                          onChange={() => setSigningMode("SEQUENTIAL")}
+                        />
+                        <div className={styles.radioContent}>
+                          <span className={styles.radioTitle}>Nacheinander</span>
+                          <span className={styles.radioDesc}>Jeder muss warten, bis der vorherige unterschrieben hat</span>
                         </div>
                       </label>
                     </div>

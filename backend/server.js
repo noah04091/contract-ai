@@ -961,6 +961,15 @@ const connectDB = async () => {
       console.error("❌ Fehler bei Envelope-Routen:", err);
     }
 
+    // ✅ 📋 ENVELOPE TEMPLATE ROUTES - Reusable Signature Templates
+    try {
+      const envelopeTemplateRoutes = require("./routes/envelopeTemplates");
+      app.use("/api", envelopeTemplateRoutes);
+      console.log("✅ Envelope-Template-Routen geladen unter /api/envelope-templates");
+    } catch (err) {
+      console.error("❌ Fehler bei Envelope-Template-Routen:", err);
+    }
+
     // ✅ 12. WEITERE ROUTEN - ALLE MIT /api PREFIX
     try {
       app.use("/api/compare", verifyToken, checkSubscription, require("./routes/compare"));
