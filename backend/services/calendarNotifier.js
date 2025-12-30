@@ -301,7 +301,7 @@ function generateGenericEmail(event, token, baseUrl) {
 
 function generateQuickActionLinks(event, token, baseUrl) {
   return [
-    { icon: "", text: "Im Kalender anzeigen", url: `${baseUrl}/calendar?highlight=${event._id}` },
+    { icon: "", text: "Im Kalender anzeigen", url: `${baseUrl}/calendar?eventId=${event._id}` },
     { icon: "", text: "Erinnern in 7 Tagen", url: `${baseUrl}/api/calendar/quick-action?token=${token}&action=snooze&days=7` },
     { icon: "", text: "Erinnerung ausschalten", url: `${baseUrl}/api/calendar/quick-action?token=${token}&action=dismiss` }
   ];
