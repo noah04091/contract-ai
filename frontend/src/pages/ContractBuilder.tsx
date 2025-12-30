@@ -1178,19 +1178,32 @@ const ContractBuilder: React.FC = () => {
       <header className={styles.topBar}>
         {/* Left Section */}
         <div className={styles.topBarLeft}>
+          {/* Zurück zum Dashboard */}
           <button
             className={styles.backButton}
             onClick={() => {
-              // Zurück-Button zeigt Modal statt zum Dashboard zu navigieren
-              setShowTypeSelector(true);
+              if (hasUnsavedChanges) {
+                const confirmed = window.confirm(
+                  'Sie haben ungespeicherte Änderungen. Möchten Sie wirklich zum Dashboard zurückkehren?'
+                );
+                if (!confirmed) return;
+              }
+              navigate('/dashboard');
             }}
-            title="Vorlage wechseln"
+            title="Zurück zum Dashboard"
           >
             <ChevronLeft size={18} />
           </button>
 
           <div className={styles.documentInfo}>
-            <FileText size={16} className={styles.documentIcon} />
+            {/* Vorlagen-Button */}
+            <button
+              className={styles.templateButton}
+              onClick={() => setShowTypeSelector(true)}
+              title="Vorlage wechseln"
+            >
+              <FileText size={16} />
+            </button>
             <input
               type="text"
               className={styles.documentTitle}

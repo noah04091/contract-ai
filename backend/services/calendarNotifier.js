@@ -167,7 +167,7 @@ async function queueEventNotification(event, db) {
       emailContent = generateAutoRenewalEmail(event, actionToken, baseUrl);
       ctaButtons = [
         { text: "Verlaengerung stoppen", url: `${baseUrl}/cancel/${event.contractId}?token=${actionToken}&action=cancel`, style: "warning" },
-        { text: "Vertrag pruefen", url: `${baseUrl}/contracts/${event.contractId}`, style: "secondary" }
+        { text: "Vertrag prüfen", url: `${baseUrl}/contracts?view=${event.contractId}`, style: "secondary" }
       ];
       break;
 
@@ -184,7 +184,7 @@ async function queueEventNotification(event, db) {
       subject = `Vertragserinnerung: ${event.title}`;
       emailContent = generateGenericEmail(event, actionToken, baseUrl);
       ctaButtons = [
-        { text: "Details anzeigen", url: `${baseUrl}/contracts/${event.contractId}`, style: "primary" }
+        { text: "Details anzeigen", url: `${baseUrl}/contracts?view=${event.contractId}`, style: "primary" }
       ];
   }
 

@@ -140,10 +140,13 @@ function AppWithLoader() {
     return () => clearTimeout(timer);
   }, [location.pathname]); // Nur pathname, nicht location.search!
 
-  // Seiten ohne Navbar (Auth-Seiten mit Split-Screen Design + Dashboard mit eigener Sidebar)
+  // Seiten ohne Navbar (Auth-Seiten mit Split-Screen Design + Dashboard mit eigener Sidebar + Fullscreen-Apps)
   const hideNavbarRoutes = ['/login', '/register', '/verify-success', '/dashboard'];
-  // Auch /verify/:id soll keine Navbar haben, und /dashboard hat eigene Sidebar
-  const shouldHideNavbar = hideNavbarRoutes.includes(location.pathname) || location.pathname.startsWith('/verify/') || location.pathname.startsWith('/dashboard');
+  // Auch /verify/:id soll keine Navbar haben, /dashboard hat eigene Sidebar, /contract-builder ist Fullscreen-App
+  const shouldHideNavbar = hideNavbarRoutes.includes(location.pathname) ||
+    location.pathname.startsWith('/verify/') ||
+    location.pathname.startsWith('/dashboard') ||
+    location.pathname.startsWith('/contract-builder');
 
   return (
     <ErrorBoundary>

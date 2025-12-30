@@ -206,7 +206,7 @@ function generateEventCard(event, severity, baseUrl) {
         ${event.title || event.type}
       </p>
       <div style="display: flex; gap: 12px;">
-        <a href="${baseUrl}/contracts/${event.contractId}" style="color: ${c.border}; font-size: 13px; text-decoration: none; font-weight: 500;">
+        <a href="${baseUrl}/contracts?view=${event.contractId}" style="color: ${c.border}; font-size: 13px; text-decoration: none; font-weight: 500;">
           Details →
         </a>
         <a href="${baseUrl}/calendar?eventId=${event._id}" style="color: #6b7280; font-size: 13px; text-decoration: none;">

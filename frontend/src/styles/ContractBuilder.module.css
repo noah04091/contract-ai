@@ -65,6 +65,26 @@
   color: #3182ce;
 }
 
+.templateButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #3b82f6;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.templateButton:hover {
+  background: #eff6ff;
+  border-color: #3b82f6;
+}
+
 .documentTitle {
   border: none;
   background: transparent;
