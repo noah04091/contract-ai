@@ -137,6 +137,14 @@
   line-height: 1.4;
 }
 
+.fieldHint {
+  font-size: 11px;
+  color: #718096;
+  margin-top: 4px;
+  margin-bottom: 0;
+  line-height: 1.4;
+}
+
 .fieldRow {
   display: grid;
   grid-template-columns: 1fr 1fr;

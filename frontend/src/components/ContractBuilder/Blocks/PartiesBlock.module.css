@@ -141,3 +141,68 @@
     padding: 10px 0;
   }
 }
+
+/* ============================================
+   KLASSISCHES LAYOUT (Traditionell/Juristisch)
+   ============================================ */
+
+.classicLayout {
+  text-align: left;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  line-height: 1.6;
+}
+
+.classicIntro {
+  font-size: inherit;
+  color: inherit;
+  margin-bottom: 1.5em;
+}
+
+.classicParty {
+  margin-bottom: 1.5em;
+}
+
+.classicName {
+  font-weight: 600;
+  font-size: inherit;
+  color: inherit;
+  margin-bottom: 0.25em;
+}
+
+.classicAddress {
+  font-size: inherit;
+  color: inherit;
+  margin-bottom: 0.25em;
+}
+
+.classicDesignation {
+  font-size: inherit;
+  color: inherit;
+  font-style: italic;
+  opacity: 0.85;
+  margin-top: 0.25em;
+}
+
+.classicRole {
+  font-style: normal;
+  font-weight: 500;
+}
+
+.classicConnector {
+  font-size: inherit;
+  color: inherit;
+  margin: 1.5em 0;
+}
+
+/* PDF Export: Klassisches Layout */
+@media print {
+  .classicLayout {
+    page-break-inside: avoid;
+  }
+
+  .classicParty {
+    page-break-inside: avoid;
+  }
+}

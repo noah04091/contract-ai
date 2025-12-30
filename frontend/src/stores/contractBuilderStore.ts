@@ -90,6 +90,7 @@ export interface BlockContent {
   party1?: PartyInfo;
   party2?: PartyInfo;
   showPartyIcons?: boolean;      // Icons bei Parteien einblenden (default: false)
+  partiesLayout?: 'modern' | 'classic';  // Layout-Variante: modern (side-by-side) oder classic (vertikal)
   // Signature
   showSignatureIcons?: boolean;  // Icons bei Unterschriften einblenden (default: false)
   // Clause

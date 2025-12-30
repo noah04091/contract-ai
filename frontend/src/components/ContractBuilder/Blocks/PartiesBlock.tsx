@@ -25,7 +25,7 @@ export const PartiesBlock: React.FC<PartiesBlockProps> = ({
   isSelected,
   isPreview,
 }) => {
-  const { party1, party2, showPartyIcons = false } = content;
+  const { party1, party2, showPartyIcons = false, partiesLayout = 'modern' } = content;
   const updateBlockContent = useContractBuilderStore((state) => state.updateBlockContent);
   const syncVariables = useContractBuilderStore((state) => state.syncVariables);
 
@@ -182,8 +182,53 @@ export const PartiesBlock: React.FC<PartiesBlockProps> = ({
   const defaultParty1 = party1 || { role: 'Auftraggeber', name: '{{auftraggeber_name}}', address: '{{auftraggeber_adresse}}' };
   const defaultParty2 = party2 || { role: 'Auftragnehmer', name: '{{auftragnehmer_name}}', address: '{{auftragnehmer_adresse}}' };
 
-  return (
-    <div className={`${styles.parties} ${isSelected ? styles.selected : ''}`}>
+  // Klassisches Layout rendern (vertikal, traditionell)
+  const renderClassicLayout = () => {
+    const p1 = defaultParty1;
+    const p2 = defaultParty2;
+    const prefix1 = getVariablePrefix(1);
+    const prefix2 = getVariablePrefix(2);
+
+    return (
+      <div className={styles.classicLayout}>
+        <div className={styles.classicIntro}>zwischen</div>
+
+        <div className={styles.classicParty}>
+          <div className={styles.classicName}>
+            {renderEditableField(1, 'name', p1.name || '', `{{${prefix1}_name}}`)}
+          </div>
+          <div className={styles.classicAddress}>
+            {renderEditableField(1, 'address', p1.address || '', `{{${prefix1}_adresse}}`)}
+          </div>
+          <div className={styles.classicDesignation}>
+            - nachfolgend "<span className={styles.classicRole}>
+              {renderEditableField(1, 'role', p1.role || '', 'Auftraggeber')}
+            </span>" genannt -
+          </div>
+        </div>
+
+        <div className={styles.classicConnector}>und</div>
+
+        <div className={styles.classicParty}>
+          <div className={styles.classicName}>
+            {renderEditableField(2, 'name', p2.name || '', `{{${prefix2}_name}}`)}
+          </div>
+          <div className={styles.classicAddress}>
+            {renderEditableField(2, 'address', p2.address || '', `{{${prefix2}_adresse}}`)}
+          </div>
+          <div className={styles.classicDesignation}>
+            - nachfolgend "<span className={styles.classicRole}>
+              {renderEditableField(2, 'role', p2.role || '', 'Auftragnehmer')}
+            </span>" genannt -
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Modernes Layout rendern (side-by-side)
+  const renderModernLayout = () => {
+    return (
       <div className={styles.partiesGrid}>
         {renderParty(defaultParty1, 1)}
         <div className={styles.partiesDivider}>
@@ -191,6 +236,12 @@ export const PartiesBlock: React.FC<PartiesBlockProps> = ({
         </div>
         {renderParty(defaultParty2, 2)}
       </div>
+    );
+  };
+
+  return (
+    <div className={`${styles.parties} ${isSelected ? styles.selected : ''}`}>
+      {partiesLayout === 'classic' ? renderClassicLayout() : renderModernLayout()}
     </div>
   );
 };

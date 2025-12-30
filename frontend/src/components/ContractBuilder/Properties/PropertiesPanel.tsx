@@ -678,21 +678,44 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
 
     case 'parties': {
       const showIcons = (content as { showPartyIcons?: boolean }).showPartyIcons;
+      const partiesLayout = (content as { partiesLayout?: 'modern' | 'classic' }).partiesLayout || 'modern';
       return (
         <>
+          {/* Layout-Auswahl */}
           <div className={styles.field}>
-            <label className={styles.checkboxLabel}>
-              <input
-                type="checkbox"
-                checked={showIcons === true}
-                onChange={(e) => onUpdate({ ...content, showPartyIcons: e.target.checked })}
-              />
-              <span>Icons einblenden</span>
-            </label>
+            <label className={styles.label}>Layout</label>
+            <select
+              className={styles.select}
+              value={partiesLayout}
+              onChange={(e) => onUpdate({ ...content, partiesLayout: e.target.value as 'modern' | 'classic' })}
+            >
+              <option value="modern">Modern (Side-by-Side)</option>
+              <option value="classic">Klassisch (Vertikal)</option>
+            </select>
+            <p className={styles.fieldHint}>
+              {partiesLayout === 'modern'
+                ? 'Modernes Layout mit zwei Spalten und Karten-Design'
+                : 'Traditionelles Vertragslayout mit "zwischen... und..."'
+              }
+            </p>
           </div>
+
+          {/* Icons nur bei modernem Layout anzeigen */}
+          {partiesLayout === 'modern' && (
+            <div className={styles.field}>
+              <label className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={showIcons === true}
+                  onChange={(e) => onUpdate({ ...content, showPartyIcons: e.target.checked })}
+                />
+                <span>Icons einblenden</span>
+              </label>
+            </div>
+          )}
+
           <p className={styles.noContent}>
             Bearbeiten Sie die Partei-Daten per Doppelklick direkt im Block.
-            Jede Partei hat eigene Variablen (z.B. auftraggeber_email, auftragnehmer_email).
           </p>
         </>
       );
