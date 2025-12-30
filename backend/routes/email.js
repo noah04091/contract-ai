@@ -333,7 +333,7 @@ router.post("/test", async (req, res) => {
     }
 
     const nodemailer = require("nodemailer");
-    const { generateEmailTemplate, generateInfoBox, generateAlertBox } = require("../utils/emailTemplate");
+    const { generateEmailTemplate, generateInfoBox, generateAlertBox, generateActionBox } = require("../utils/emailTemplate");
     const { generateUnsubscribeUrl, getUnsubscribeHeaders } = require("../services/emailUnsubscribeService");
 
     const transporter = nodemailer.createTransport({
@@ -1118,6 +1118,123 @@ router.post("/test", async (req, res) => {
         html: reminderHtml
       });
       results.push("reminder");
+    }
+
+    // ========== TYP 4: Bald ablaufend (Status-Änderung) ==========
+    if (type === "expiring" || type === "all") {
+      const expiringHtml = generateEmailTemplate({
+        title: "Vertrag läuft bald ab",
+        badge: "Warnung",
+        body: `
+          <p>Dein Vertrag <strong>"Telekom Mobilfunk"</strong> läuft bald ab.</p>
+          ${generateInfoBox([
+            { label: "Vertrag", value: "Telekom Mobilfunk" },
+            { label: "Ablaufdatum", value: "31. März 2025" },
+            { label: "Verbleibende Tage", value: "30 Tage" }
+          ], { title: "Ablauf-Details" })}
+          ${generateActionBox([
+            "Vertrag prüfen und entscheiden: Verlängern oder kündigen?",
+            "Konditionen vergleichen und bessere Angebote finden",
+            "Bei Kündigung: Fristgerecht über Contract AI kündigen"
+          ])}
+          <p style="margin-top: 20px; font-size: 14px; color: #64748b;">
+            <strong>Wichtig:</strong> Verpasste Kündigungsfristen können zu automatischen Vertragsverlängerungen führen.
+          </p>
+        `,
+        cta: { text: "Vertrag verwalten", url: "https://www.contract-ai.de/contracts" }
+      });
+
+      await transporter.sendMail({
+        from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
+        to: email,
+        subject: "Telekom Mobilfunk läuft in 30 Tagen ab",
+        html: expiringHtml
+      });
+      results.push("expiring");
+    }
+
+    // ========== TYP 5: Abgelaufen (Status-Änderung) ==========
+    if (type === "expired" || type === "all") {
+      const expiredHtml = generateEmailTemplate({
+        title: "Vertrag ist abgelaufen",
+        badge: "Abgelaufen",
+        body: `
+          <p>Dein Vertrag <strong>"Netflix Premium"</strong> ist am <strong>15. Dezember 2024</strong> abgelaufen.</p>
+          ${generateAlertBox("Der Vertrag wurde nicht verlängert und ist jetzt inaktiv.", "warning")}
+          ${generateInfoBox([
+            { label: "Vertrag", value: "Netflix Premium" },
+            { label: "Abgelaufen am", value: "15. Dezember 2024" },
+            { label: "Neuer Status", value: "Abgelaufen" }
+          ])}
+          ${generateActionBox([
+            "Prüfen, ob eine automatische Verlängerung stattgefunden hat",
+            "Anbieter kontaktieren für Klärung des Status",
+            "Vertrag in Contract AI archivieren"
+          ], { title: "Was du jetzt tun solltest" })}
+        `,
+        cta: { text: "Verträge verwalten", url: "https://www.contract-ai.de/contracts" }
+      });
+
+      await transporter.sendMail({
+        from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
+        to: email,
+        subject: "Vertrag abgelaufen: Netflix Premium",
+        html: expiredHtml
+      });
+      results.push("expired");
+    }
+
+    // ========== TYP 6: Willkommen ==========
+    if (type === "welcome" || type === "all") {
+      const welcomeHtml = generateEmailTemplate({
+        title: "Willkommen bei Contract AI!",
+        badge: "Neu",
+        body: `
+          <p>Schön, dass du dabei bist! Mit Contract AI behältst du den Überblick über alle deine Verträge.</p>
+          ${generateInfoBox([
+            { label: "Account", value: email },
+            { label: "Plan", value: "Premium" },
+            { label: "Status", value: "Aktiv" }
+          ], { title: "Dein Account" })}
+          ${generateActionBox([
+            "Lade deinen ersten Vertrag hoch",
+            "Aktiviere Kalender-Erinnerungen",
+            "Entdecke die KI-Analyse"
+          ], { icon: "🚀", title: "Erste Schritte" })}
+        `,
+        cta: { text: "Jetzt starten", url: "https://www.contract-ai.de/dashboard" }
+      });
+
+      await transporter.sendMail({
+        from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
+        to: email,
+        subject: "Willkommen bei Contract AI!",
+        html: welcomeHtml
+      });
+      results.push("welcome");
+    }
+
+    // ========== TYP 7: Email-Verifizierung ==========
+    if (type === "verification" || type === "all") {
+      const verificationHtml = generateEmailTemplate({
+        title: "Bestätige deine E-Mail-Adresse",
+        body: `
+          <p>Bitte bestätige deine E-Mail-Adresse, um deinen Contract AI Account zu aktivieren.</p>
+          ${generateAlertBox("Dieser Link ist 24 Stunden gültig.", "info")}
+          <p style="margin-top: 20px; font-size: 14px; color: #64748b;">
+            Falls du diesen Account nicht erstellt hast, kannst du diese E-Mail ignorieren.
+          </p>
+        `,
+        cta: { text: "E-Mail bestätigen", url: "https://www.contract-ai.de/verify?token=test123" }
+      });
+
+      await transporter.sendMail({
+        from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
+        to: email,
+        subject: "Bestätige deine E-Mail-Adresse",
+        html: verificationHtml
+      });
+      results.push("verification");
     }
 
     res.json({
