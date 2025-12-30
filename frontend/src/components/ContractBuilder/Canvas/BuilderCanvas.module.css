@@ -102,6 +102,7 @@
   --heading-font: 'Inter', sans-serif;
 
   font-family: var(--font-family);
+  font-size: 13px; /* Standard-Schriftgröße für alle Blöcke */
   color: var(--text-primary);
 }
 

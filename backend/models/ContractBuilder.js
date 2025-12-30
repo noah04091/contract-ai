@@ -59,6 +59,29 @@ const BlockContentSchema = new mongoose.Schema({
   // Attachment Block
   attachmentTitle: String,
   attachmentDescription: String,
+  attachmentFile: String,        // Base64-codierte Datei
+  attachmentFileName: String,    // Original-Dateiname
+  attachmentFileType: String,    // MIME-Type
+
+  // Definitions Block
+  definitionsTitle: String,
+  definitions: [{
+    term: String,
+    definition: String
+  }],
+
+  // Notice Block
+  noticeType: { type: String, enum: ['info', 'warning', 'legal'] },
+  noticeTitle: String,
+  noticeText: String,
+  showNoticeIcon: Boolean,
+
+  // Logo Block
+  logoUrl: String,
+  logoData: String,              // Base64-codiertes Bild
+  altText: String,
+  width: Number,
+  alignment: String,
 
   // Divider/Spacer
   height: Number,
@@ -71,6 +94,7 @@ const BlockStyleSchema = new mongoose.Schema({
   fontFamily: String,
   fontSize: Number,
   fontWeight: Number,
+  fontStyle: { type: String, enum: ['normal', 'italic'] },
   lineHeight: Number,
   letterSpacing: Number,
   textAlign: { type: String, enum: ['left', 'center', 'right', 'justify'] },
@@ -111,6 +135,8 @@ const BlockSchema = new mongoose.Schema({
       'parties',          // Vertragsparteien
       'preamble',         // Präambel
       'clause',           // Standard-Klausel
+      'definitions',      // Begriffsbestimmungen
+      'notice',           // Hinweis/Widerrufsbelehrung
       'numbered-list',    // Nummerierte Aufzählung
       'table',            // Tabelle
       'signature',        // Unterschriftenblock
