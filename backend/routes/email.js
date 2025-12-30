@@ -1007,6 +1007,32 @@ router.post("/test", async (req, res) => {
       });
     }
 
+    // ========== TYP: V10 - Test der neuen generateEmailTemplate() ==========
+    // Testet ob V10 (ohne Template-Literals) funktioniert
+    if (type === "v10") {
+      var v10Html = generateEmailTemplate({
+        title: 'V10 Template Test',
+        body: '<p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 16px;">Dies ist ein Test der V10 generateEmailTemplate() Funktion.</p><p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 16px;">V10 verwendet KEINE Template-Literals (Backticks) sondern nur String-Concatenation.</p><p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 16px;">Wenn diese E-Mail im Postfach landet (nicht Spam), funktioniert V10!</p>',
+        badge: 'V10 Test',
+        cta: {
+          text: 'Zum Dashboard',
+          url: 'https://www.contract-ai.de/dashboard'
+        }
+      });
+
+      await transporter.sendMail({
+        from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
+        to: email,
+        subject: "V10 Template Test - generateEmailTemplate()",
+        html: v10Html
+      });
+      return res.json({
+        success: true,
+        message: "V10 generateEmailTemplate() Test gesendet",
+        types: ["v10"]
+      });
+    }
+
     // ========== TYP 1: Kalender-Benachrichtigung ==========
     // EXAKT gleicher Code wie clean3 - 1:1 Copy-Paste!
     if (type === "calendar" || type === "all") {
