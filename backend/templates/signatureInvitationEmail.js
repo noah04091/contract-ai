@@ -35,12 +35,12 @@ function generateSignatureInvitationHTML(data) {
 
   const totalFields = signatureFields.length;
 
-  // Field type labels
+  // Field type labels (keine Emojis für bessere E-Mail-Zustellung)
   const fieldLabels = {
-    signature: { icon: '✍️', label: 'Signatur' },
-    initial: { icon: '🔤', label: 'Initialen' },
-    date: { icon: '📅', label: 'Datum' },
-    text: { icon: '📝', label: 'Textfeld' }
+    signature: { icon: '', label: 'Signatur' },
+    initial: { icon: '', label: 'Initialen' },
+    date: { icon: '', label: 'Datum' },
+    text: { icon: '', label: 'Textfeld' }
   };
 
   // Build field summary
@@ -79,7 +79,7 @@ function generateSignatureInvitationHTML(data) {
     <!-- Document Card -->
     <div style="background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 20px; margin: 25px 0;">
       <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">
-        📄 ${envelope.title}
+        ${envelope.title}
       </p>
       <p style="margin: 0; font-size: 14px; color: #666666;">
         Absender: ${ownerEmail}
@@ -87,7 +87,7 @@ function generateSignatureInvitationHTML(data) {
       ${envelope.message ? `
         <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e9ecef;">
           <p style="margin: 0; font-size: 14px; color: #555555;">
-            <strong>💬 Nachricht:</strong><br>
+            <strong>Nachricht:</strong><br>
             ${envelope.message}
           </p>
         </div>
@@ -108,7 +108,7 @@ function generateSignatureInvitationHTML(data) {
     <!-- Info Box -->
     <div style="background-color: #fff8e6; border: 1px solid #ffe066; border-radius: 12px; padding: 16px; margin: 25px 0;">
       <p style="margin: 0 0 8px 0; font-weight: 600; color: #8a6d00; font-size: 14px;">
-        ⏰ Wichtige Hinweise
+        Wichtige Hinweise
       </p>
       <p style="margin: 0; font-size: 13px; color: #8a6d00; line-height: 1.6;">
         • Link gültig bis: <strong>${formattedExpiryDate}</strong><br>
@@ -150,7 +150,7 @@ function generateCompletionNotificationHTML(data) {
 
     return `
       <div style="display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0;">
-        <span style="color: #22c55e; margin-right: 10px;">✓</span>
+        <span style="color: #22c55e; margin-right: 10px;">•</span>
         <span style="flex: 1;">
           <strong>${s.name}</strong><br>
           <span style="font-size: 13px; color: #666666;">${s.email} • ${signedDate}</span>
@@ -175,14 +175,14 @@ function generateCompletionNotificationHTML(data) {
     <!-- Success Badge -->
     <div style="text-align: center; margin: 25px 0;">
       <span style="display: inline-block; background-color: #dcfce7; color: #16a34a; padding: 8px 20px; border-radius: 20px; font-size: 14px; font-weight: 600;">
-        ✓ Vollständig signiert
+        Vollständig signiert
       </span>
     </div>
 
     <!-- Document Card -->
     <div style="background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 20px; margin: 25px 0;">
       <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">
-        📄 ${envelope.title}
+        ${envelope.title}
       </p>
       <p style="margin: 0; font-size: 14px; color: #666666;">
         Abgeschlossen am: ${completedDate}
@@ -200,7 +200,7 @@ function generateCompletionNotificationHTML(data) {
     <!-- Download Info -->
     <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 16px; margin: 25px 0; text-align: center;">
       <p style="margin: 0; font-size: 14px; color: #1e40af;">
-        📥 Das signierte Dokument steht zum Download bereit.<br>
+        Das signierte Dokument steht zum Download bereit.<br>
         <span style="font-size: 12px; color: #3b82f6;">(Link 24 Stunden gültig)</span>
       </p>
     </div>
@@ -343,7 +343,7 @@ function generateCompletionNotificationText(data) {
       hour: '2-digit',
       minute: '2-digit'
     }) : 'Ausstehend';
-    return `  ✓ ${s.name} (${s.email}) - ${signedDate}`;
+    return `  - ${s.name} (${s.email}) - ${signedDate}`;
   }).join('\n');
 
   return `
@@ -364,7 +364,7 @@ ${signersList}
 
 ═══════════════════════════════════════════════════
 
-📥 SIGNIERTES DOKUMENT HERUNTERLADEN:
+SIGNIERTES DOKUMENT HERUNTERLADEN:
 
 ${downloadLink}
 
