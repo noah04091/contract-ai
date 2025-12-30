@@ -1114,7 +1114,7 @@ router.post("/test", async (req, res) => {
       await transporter.sendMail({
         from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
         to: email,
-        subject: "Erinnerung: Vodafone DSL Kündigungsfrist",
+        subject: "Vodafone DSL - Vertragsinformation",
         html: reminderHtml
       });
       results.push("reminder");
@@ -1234,7 +1234,7 @@ router.post("/test", async (req, res) => {
       await transporter.sendMail({
         from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
         to: email,
-        subject: "Contract AI: E-Mail-Adresse bestätigen",
+        subject: "Dein Contract AI Account",
         html: verificationHtml
       });
       results.push("verification");
