@@ -394,7 +394,6 @@
   z-index: 10;
   height: 100%;
   overflow-y: auto;
-  overflow-x: visible; /* Erlaubt dem Toggle-Button außerhalb sichtbar zu sein */
 }
 
 .rightSidebar {
@@ -443,7 +442,7 @@
 
 .panelToggle {
   position: absolute;
-  right: -12px;
+  left: 220px; /* Breite der Sidebar */
   top: 50%;
   transform: translateY(-50%);
   width: 24px;
@@ -451,6 +450,7 @@
   padding: 0;
   background: white;
   border: 1px solid #e2e8f0;
+  border-left: none;
   border-radius: 0 6px 6px 0;
   color: #718096;
   cursor: pointer;

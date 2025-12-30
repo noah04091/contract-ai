@@ -262,11 +262,6 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
       className={`${styles.canvas} ${className || ''}`}
       onClick={handleCanvasClick}
     >
-      {/* Zoom Indicator */}
-      <div className={styles.zoomIndicator}>
-        {zoom}%
-      </div>
-
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
