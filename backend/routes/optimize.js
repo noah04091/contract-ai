@@ -3663,6 +3663,28 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
     // 🚀 STAGE 5: Normalisierung und Qualitätssicherung
     let normalizedResult = normalizeAndValidateOutput(aiOutput, contractTypeInfo.type);
 
+    // 🆕 v2.0 DECISION-FIRST: Bei optimizationNeeded=false, alle Issues entfernen
+    if (normalizedResult.assessment?.optimizationNeeded === false) {
+      const originalIssueCount = normalizedResult.categories.reduce((sum, cat) => sum + (cat.issues?.length || 0), 0);
+      console.log(`🎯 [${requestId}] DECISION-FIRST: Clearing ${originalIssueCount} GPT-generated issues (assessment.optimizationNeeded = false)`);
+
+      // Behalte nur Categories mit intentionalClauses Hinweisen
+      normalizedResult.categories = normalizedResult.categories.map(cat => ({
+        ...cat,
+        issues: [] // Alle Issues entfernen - Vertrag ist bereits optimal
+      })).filter(cat => cat.issues.length > 0 || cat.present); // Leere entfernen
+
+      // Summary zurücksetzen
+      normalizedResult.summary = {
+        ...normalizedResult.summary,
+        redFlags: 0,
+        quickWins: 0,
+        totalIssues: 0,
+        criticalLegalRisks: 0,
+        complianceIssues: 0
+      };
+    }
+
     // 🔥 STAGE 5.1: Category Repair Pass (ChatGPT v2 - 3-Tier Fix)
     // Enforce category auf ALLEN Issues nach dem Parse, BEVOR Quality Layer
     for (const cat of normalizedResult.categories ?? []) {
