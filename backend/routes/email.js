@@ -397,6 +397,174 @@ router.post("/test", async (req, res) => {
       });
     }
 
+    // ========== TYP: PREMIUM - Hochwertig und Spam-sicher ==========
+    if (type === "premium") {
+      const premiumHtml = `
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #f0f4f8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f4f8;">
+    <tr>
+      <td style="padding: 40px 20px;">
+        <table width="600" cellpadding="0" cellspacing="0" align="center" style="background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
+
+          <!-- Header mit Logo -->
+          <tr>
+            <td style="padding: 32px 40px; background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); border-radius: 16px 16px 0 0;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <span style="font-size: 24px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px;">Contract AI</span>
+                  </td>
+                  <td align="right">
+                    <span style="font-size: 13px; color: rgba(255,255,255,0.7);">Vertragsmanagement</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Notification Badge -->
+          <tr>
+            <td style="padding: 0 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: -20px;">
+                <tr>
+                  <td>
+                    <span style="display: inline-block; padding: 8px 16px; background-color: #fbbf24; color: #78350f; font-size: 12px; font-weight: 600; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">
+                      Erinnerung
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Main Content -->
+          <tr>
+            <td style="padding: 30px 40px 40px 40px;">
+              <h1 style="margin: 0 0 8px 0; font-size: 26px; color: #1e293b; font-weight: 700; line-height: 1.3;">
+                Kuendigungsfrist in 14 Tagen
+              </h1>
+              <p style="margin: 0 0 28px 0; font-size: 15px; color: #64748b;">
+                Telekom Mobilfunk
+              </p>
+
+              <p style="margin: 0 0 24px 0; font-size: 15px; line-height: 1.7; color: #475569;">
+                Hallo,<br><br>
+                dein Vertrag kann bald gekuendigt werden. Hier sind die wichtigsten Details:
+              </p>
+
+              <!-- Info Cards -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
+                <tr>
+                  <td width="48%" style="background-color: #f8fafc; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0;">
+                    <p style="margin: 0 0 4px 0; font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Kuendigungsfrist</p>
+                    <p style="margin: 0; font-size: 18px; color: #1e293b; font-weight: 600;">3 Monate</p>
+                    <p style="margin: 4px 0 0 0; font-size: 13px; color: #64748b;">zum Vertragsende</p>
+                  </td>
+                  <td width="4%"></td>
+                  <td width="48%" style="background-color: #f8fafc; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0;">
+                    <p style="margin: 0 0 4px 0; font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Vertragsende</p>
+                    <p style="margin: 0; font-size: 18px; color: #1e293b; font-weight: 600;">31. Maerz 2025</p>
+                    <p style="margin: 4px 0 0 0; font-size: 13px; color: #64748b;">in 98 Tagen</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Warning Box -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
+                <tr>
+                  <td style="background-color: #fef3c7; border-radius: 12px; padding: 16px 20px; border-left: 4px solid #f59e0b;">
+                    <p style="margin: 0; font-size: 14px; color: #92400e; line-height: 1.6;">
+                      Ohne Kuendigung verlaengert sich der Vertrag automatisch um weitere 12 Monate.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <a href="https://www.contract-ai.de/contracts" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 15px; font-weight: 600; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);">
+                      Vertrag anzeigen
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Divider -->
+          <tr>
+            <td style="padding: 0 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="border-top: 1px solid #e2e8f0;"></td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 28px 40px 32px 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600; color: #1e293b;">Contract AI</p>
+                    <p style="margin: 0 0 16px 0; font-size: 13px; color: #64748b; line-height: 1.6;">
+                      Intelligentes Vertragsmanagement fuer Unternehmen und Privatpersonen.
+                    </p>
+                    <p style="margin: 0; font-size: 13px;">
+                      <a href="https://www.contract-ai.de" style="color: #3b82f6; text-decoration: none; font-weight: 500;">Website</a>
+                      <span style="color: #cbd5e1; margin: 0 12px;">|</span>
+                      <a href="https://www.contract-ai.de/datenschutz" style="color: #64748b; text-decoration: none;">Datenschutz</a>
+                      <span style="color: #cbd5e1; margin: 0 12px;">|</span>
+                      <a href="https://www.contract-ai.de/impressum" style="color: #64748b; text-decoration: none;">Impressum</a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+        </table>
+
+        <!-- Sub-Footer -->
+        <table width="600" cellpadding="0" cellspacing="0" align="center" style="margin-top: 24px;">
+          <tr>
+            <td align="center">
+              <p style="margin: 0; font-size: 12px; color: #94a3b8;">
+                Diese E-Mail wurde automatisch generiert.
+              </p>
+            </td>
+          </tr>
+        </table>
+
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+      await transporter.sendMail({
+        from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
+        to: email,
+        subject: "Erinnerung: Telekom Mobilfunk - Kuendigungsfrist in 14 Tagen",
+        html: premiumHtml
+      });
+      return res.json({
+        success: true,
+        message: "Premium Template Test gesendet",
+        types: ["premium"]
+      });
+    }
+
     // ========== TYP: CLEAN - Professionell aber Spam-sicher ==========
     if (type === "clean") {
       const cleanHtml = `
