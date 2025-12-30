@@ -59,8 +59,18 @@ const Vertragsverwaltung: React.FC = () => {
 
         {/* Open Graph */}
         <meta property="og:title" content="Vertragsverwaltung - Alle Verträge zentral & sicher organisieren" />
-        <meta property="og:description" content="📂 Zentrale Vertragsverwaltung in der Cloud. Ordner, Suche, Erinnerungen – alles DSGVO-konform. Jetzt testen!" />
+        <meta property="og:description" content="Zentrale Vertragsverwaltung in der Cloud. Ordner, Suche, Erinnerungen – alles DSGVO-konform. Jetzt testen!" />
         <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://www.contract-ai.de/features/vertragsverwaltung" />
+        <meta property="og:image" content="https://www.contract-ai.de/og-vertragsverwaltung.png" />
+        <meta property="og:locale" content="de_DE" />
+        <meta property="og:site_name" content="Contract AI" />
+
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Vertragsverwaltung - Alle Verträge zentral & sicher organisieren" />
+        <meta name="twitter:description" content="Zentrale Vertragsverwaltung in der Cloud. Ordner, Suche, Erinnerungen – DSGVO-konform." />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og-vertragsverwaltung.png" />
 
         {/* Schema.org FAQ Data */}
         <script type="application/ld+json">

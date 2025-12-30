@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
@@ -13,45 +14,34 @@ const Fristen: React.FC = () => {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    document.title = "Fristenkalender – Contract AI | Verträge verstehen, optimieren, absichern";
-    
-    const metaDescription = document.querySelector('meta[name="description"]');
-    if (metaDescription) {
-      metaDescription.setAttribute('content', 'Nie wieder Kündigungsfristen verpassen. KI erkennt Fristen automatisch, erinnert rechtzeitig. DSGVO-konform, Server in Frankfurt. Jetzt testen.');
-    } else {
-      const meta = document.createElement('meta');
-      meta.name = 'description';
-      meta.content = 'Nie wieder Kündigungsfristen verpassen. KI erkennt Fristen automatisch, erinnert rechtzeitig. DSGVO-konform, Server in Frankfurt. Jetzt testen.';
-      document.head.appendChild(meta);
-    }
-
-    // Add canonical link
-    const canonical = document.querySelector('link[rel="canonical"]');
-    if (canonical) {
-      canonical.setAttribute('href', 'https://www.contract-ai.de/features/fristenkalender');
-    } else {
-      const link = document.createElement('link');
-      link.rel = 'canonical';
-      link.href = 'https://www.contract-ai.de/features/fristenkalender';
-      document.head.appendChild(link);
-    }
-
-    // Add robots meta
-    const robots = document.querySelector('meta[name="robots"]');
-    if (!robots) {
-      const meta = document.createElement('meta');
-      meta.name = 'robots';
-      meta.content = 'index,follow';
-      document.head.appendChild(meta);
-    }
-
-    return () => {
-      document.title = 'Contract AI';
-    };
   }, []);
 
   return (
     <>
+      <Helmet>
+        <title>Fristenkalender mit KI - Nie wieder Kündigungsfristen verpassen | Contract AI</title>
+        <meta name="description" content="Nie wieder Kündigungsfristen verpassen. KI erkennt Fristen automatisch, erinnert rechtzeitig per E-Mail. DSGVO-konform, Server in Frankfurt. Jetzt testen!" />
+        <meta name="keywords" content="Fristenkalender, Kündigungsfristen, Vertragsfristen, KI, Erinnerungen, Contract AI, Fristenverwaltung" />
+
+        <link rel="canonical" href="https://www.contract-ai.de/features/fristen" />
+        <meta name="robots" content="index,follow" />
+
+        {/* Open Graph */}
+        <meta property="og:title" content="Fristenkalender mit KI - Nie wieder Kündigungsfristen verpassen" />
+        <meta property="og:description" content="KI erkennt Fristen automatisch, erinnert rechtzeitig per E-Mail. DSGVO-konform, Server in Frankfurt." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://www.contract-ai.de/features/fristen" />
+        <meta property="og:image" content="https://www.contract-ai.de/og-fristen.png" />
+        <meta property="og:locale" content="de_DE" />
+        <meta property="og:site_name" content="Contract AI" />
+
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Fristenkalender mit KI - Nie wieder Kündigungsfristen verpassen" />
+        <meta name="twitter:description" content="KI erkennt Fristen automatisch, erinnert rechtzeitig per E-Mail. DSGVO-konform." />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og-fristen.png" />
+      </Helmet>
+
       <div className={styles.pageBackground}>
         {/* Dots Pattern */}
         <div className={styles.dotsPattern} />

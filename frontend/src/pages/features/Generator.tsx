@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
@@ -13,45 +14,34 @@ const Generator: React.FC = () => {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    document.title = "Generator – Contract AI | Verträge verstehen, optimieren, absichern";
-    
-    const metaDescription = document.querySelector('meta[name="description"]');
-    if (metaDescription) {
-      metaDescription.setAttribute('content', 'Contract Generator: Neue Verträge aus Bausteinen erstellen. Individuell anpassbar, rechtssicher, sofort einsatzbereit. DSGVO-konform, Frankfurt. Jetzt testen.');
-    } else {
-      const meta = document.createElement('meta');
-      meta.name = 'description';
-      meta.content = 'Contract Generator: Neue Verträge aus Bausteinen erstellen. Individuell anpassbar, rechtssicher, sofort einsatzbereit. DSGVO-konform, Frankfurt. Jetzt testen.';
-      document.head.appendChild(meta);
-    }
-
-    // Add canonical link
-    const canonical = document.querySelector('link[rel="canonical"]');
-    if (canonical) {
-      canonical.setAttribute('href', 'https://www.contract-ai.de/features/generator');
-    } else {
-      const link = document.createElement('link');
-      link.rel = 'canonical';
-      link.href = 'https://www.contract-ai.de/features/generator';
-      document.head.appendChild(link);
-    }
-
-    // Add robots meta
-    const robots = document.querySelector('meta[name="robots"]');
-    if (!robots) {
-      const meta = document.createElement('meta');
-      meta.name = 'robots';
-      meta.content = 'index,follow';
-      document.head.appendChild(meta);
-    }
-
-    return () => {
-      document.title = 'Contract AI';
-    };
   }, []);
 
   return (
     <>
+      <Helmet>
+        <title>Vertragsgenerator mit KI - Neue Verträge in Minuten erstellen | Contract AI</title>
+        <meta name="description" content="Contract Generator: Neue Verträge aus Bausteinen erstellen. Individuell anpassbar, rechtssicher, sofort einsatzbereit. DSGVO-konform. Jetzt testen!" />
+        <meta name="keywords" content="Vertragsgenerator, Verträge erstellen, KI, Vorlagen, Contract AI, rechtssicher, LegalTech" />
+
+        <link rel="canonical" href="https://www.contract-ai.de/features/generator" />
+        <meta name="robots" content="index,follow" />
+
+        {/* Open Graph */}
+        <meta property="og:title" content="Vertragsgenerator mit KI - Neue Verträge in Minuten erstellen" />
+        <meta property="og:description" content="Neue Verträge aus Bausteinen erstellen. Individuell anpassbar, rechtssicher, sofort einsatzbereit." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://www.contract-ai.de/features/generator" />
+        <meta property="og:image" content="https://www.contract-ai.de/og-generator.png" />
+        <meta property="og:locale" content="de_DE" />
+        <meta property="og:site_name" content="Contract AI" />
+
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Vertragsgenerator mit KI - Neue Verträge in Minuten erstellen" />
+        <meta name="twitter:description" content="Neue Verträge aus Bausteinen erstellen. Individuell anpassbar, rechtssicher." />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og-generator.png" />
+      </Helmet>
+
       <div className={styles.pageBackground}>
         {/* Dots Pattern */}
         <div className={styles.dotsPattern} />
