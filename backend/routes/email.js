@@ -1095,26 +1095,26 @@ router.post("/test", async (req, res) => {
     // ========== TYP 3: Reminder-E-Mail ==========
     if (type === "reminder" || type === "all") {
       const reminderHtml = generateEmailTemplate({
-        title: "Kündigungsfrist endet heute",
-        subtitle: "Vodafone DSL",
-        badge: "Dringend",
+        title: "Kündigungsfrist endet bald",
+        badge: "Erinnerung",
         body: `
-          ${generateAlertBox("Ohne Kündigung verlängert sich dein Vertrag automatisch um 24 Monate.", "critical")}
+          <p>Die Kündigungsfrist für <strong>Vodafone DSL</strong> endet heute.</p>
           ${generateInfoBox([
+            { label: "Vertrag", value: "Vodafone DSL" },
             { label: "Monatliche Kosten", value: "44,99 €" },
-            { label: "Kosten bei Verlängerung", value: "1.079,76 € (24 Monate)" }
+            { label: "Kündigungsfrist", value: "Endet heute" }
           ])}
-          <p style="margin: 0; font-size: 14px; color: #6B7280;">
-            Du kannst den Vertrag direkt über Contract AI kündigen.
+          <p style="margin: 20px 0 0 0; font-size: 14px; color: #64748b;">
+            Ohne Kündigung verlängert sich der Vertrag automatisch.
           </p>
         `,
-        cta: { text: "Jetzt kündigen", url: "https://www.contract-ai.de/contracts" }
+        cta: { text: "Vertrag ansehen", url: "https://www.contract-ai.de/contracts" }
       });
 
       await transporter.sendMail({
         from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
         to: email,
-        subject: "Heute handeln: Vodafone DSL Kündigungsfrist",
+        subject: "Erinnerung: Vodafone DSL Kündigungsfrist",
         html: reminderHtml
       });
       results.push("reminder");
@@ -1217,21 +1217,24 @@ router.post("/test", async (req, res) => {
     // ========== TYP 7: Email-Verifizierung ==========
     if (type === "verification" || type === "all") {
       const verificationHtml = generateEmailTemplate({
-        title: "Bestätige deine E-Mail-Adresse",
+        title: "E-Mail-Adresse bestätigen",
         body: `
           <p>Bitte bestätige deine E-Mail-Adresse, um deinen Contract AI Account zu aktivieren.</p>
-          ${generateAlertBox("Dieser Link ist 24 Stunden gültig.", "info")}
+          ${generateInfoBox([
+            { label: "Account", value: email },
+            { label: "Status", value: "Warte auf Bestätigung" }
+          ])}
           <p style="margin-top: 20px; font-size: 14px; color: #64748b;">
             Falls du diesen Account nicht erstellt hast, kannst du diese E-Mail ignorieren.
           </p>
         `,
-        cta: { text: "E-Mail bestätigen", url: "https://www.contract-ai.de/verify?token=test123" }
+        cta: { text: "E-Mail bestätigen", url: "https://www.contract-ai.de/verify" }
       });
 
       await transporter.sendMail({
         from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
         to: email,
-        subject: "Bestätige deine E-Mail-Adresse",
+        subject: "Contract AI: E-Mail-Adresse bestätigen",
         html: verificationHtml
       });
       results.push("verification");
