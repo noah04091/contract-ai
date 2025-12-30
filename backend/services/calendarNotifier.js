@@ -137,10 +137,10 @@ async function queueEventNotification(event, db) {
       break;
 
     case "LAST_CANCEL_DAY":
-      subject = `LETZTE CHANCE: ${event.metadata.contractName} heute kuendigen!`;
+      subject = `Erinnerung: ${event.metadata.contractName} - Kündigungsfrist endet heute`;
       emailContent = generateLastCancelDayEmail(event, actionToken, baseUrl);
       ctaButtons = [
-        { text: "SOFORT KUENDIGEN", url: `${baseUrl}/cancel/${event.contractId}?token=${actionToken}&action=cancel&urgent=true`, style: "urgent" }
+        { text: "Jetzt kündigen", url: `${baseUrl}/cancel/${event.contractId}?token=${actionToken}&action=cancel&urgent=true`, style: "urgent" }
       ];
       break;
 
@@ -252,13 +252,15 @@ function generateCancelWindowEmail(event, token, baseUrl) {
 
 function generateLastCancelDayEmail(event, token, baseUrl) {
   return `
-    <h2 style="color: #ff3b30;">DRINGEND: Letzte Chance!</h2>
-    <p style="font-size: 18px; color: #ff3b30;"><strong>HEUTE ist der letzte Tag</strong>, um "${event.metadata.contractName}" zu kuendigen!</p>
-    <div style="background: #fef2f2; border: 2px solid #ff3b30; padding: 20px; margin: 20px 0; border-radius: 8px;">
-      <h3 style="color: #ff3b30; margin-top: 0;">Was passiert, wenn Sie nicht handeln:</h3>
-      <ul style="color: #991b1b;">
-        <li>Der Vertrag verlaengert sich automatisch um <strong>${event.metadata.autoRenewMonths || 12} Monate</strong></li>
-        <li>Sie sind weitere ${event.metadata.autoRenewMonths || 12} Monate gebunden</li>
+    <h2 style="color: #991b1b;">Wichtige Erinnerung</h2>
+    <p style="font-size: 15px; line-height: 1.7; color: #334155;">
+      Heute ist der letzte Tag, um <strong>"${event.metadata.contractName}"</strong> zu kündigen.
+    </p>
+    <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+      <p style="color: #991b1b; margin: 0; font-weight: 600;">Was passiert ohne Kündigung:</p>
+      <ul style="color: #991b1b; margin: 12px 0 0 0; padding-left: 20px;">
+        <li>Automatische Verlängerung um ${event.metadata.autoRenewMonths || 12} Monate</li>
+        <li>Bindung für weitere ${event.metadata.autoRenewMonths || 12} Monate</li>
       </ul>
     </div>
   `;

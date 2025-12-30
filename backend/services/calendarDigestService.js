@@ -34,14 +34,14 @@ async function createDigestEmail(db, userId, events, user) {
   // Generiere HTML-Content
   const htmlContent = generateDigestHtml(sortedEvents, critical, warning, info, user);
 
-  // Betreffzeile basierend auf Inhalt
+  // Betreffzeile basierend auf Inhalt (ohne CAPS, ohne aggressive Sprache)
   let subject = "";
   if (critical.length > 0) {
-    subject = `🚨 DRINGEND: ${critical.length} kritische Frist${critical.length > 1 ? "en" : ""} + ${warning.length + info.length} weitere`;
+    subject = `Deine Vertrags-Zusammenfassung: ${critical.length} dringende Frist${critical.length > 1 ? "en" : ""} + ${warning.length + info.length} weitere`;
   } else if (warning.length > 0) {
-    subject = `⚠️ ${warning.length} wichtige Erinnerung${warning.length > 1 ? "en" : ""} + ${info.length} weitere`;
+    subject = `Deine Vertrags-Zusammenfassung: ${warning.length} Erinnerung${warning.length > 1 ? "en" : ""} + ${info.length} weitere`;
   } else {
-    subject = `📅 ${info.length} Vertragserinnerung${info.length > 1 ? "en" : ""} fuer heute`;
+    subject = `Deine Vertrags-Zusammenfassung: ${info.length} Erinnerung${info.length > 1 ? "en" : ""}`;
   }
 
   // Zur Queue hinzufuegen
@@ -74,11 +74,11 @@ function generateDigestHtml(allEvents, critical, warning, info, user) {
   const baseUrl = process.env.FRONTEND_URL || "https://contract-ai.de";
   const userName = user.name || user.email.split("@")[0];
 
-  // Kritische Events Section
+  // Kritische Events Section (keine CAPS, keine aggressiven Emojis)
   const criticalHtml = critical.length > 0 ? `
     <div style="margin-bottom: 32px;">
-      <h2 style="color: #dc2626; margin: 0 0 16px; font-size: 18px; display: flex; align-items: center;">
-        🚨 KRITISCH - Heute handeln! (${critical.length})
+      <h2 style="color: #dc2626; margin: 0 0 16px; font-size: 18px;">
+        Dringend - Heute handeln (${critical.length})
       </h2>
       ${critical.map(event => generateEventCard(event, "critical", baseUrl)).join("")}
     </div>
@@ -88,7 +88,7 @@ function generateDigestHtml(allEvents, critical, warning, info, user) {
   const warningHtml = warning.length > 0 ? `
     <div style="margin-bottom: 32px;">
       <h2 style="color: #f59e0b; margin: 0 0 16px; font-size: 18px;">
-        ⚠️ Wichtig - Bald faellig (${warning.length})
+        Wichtig - Bald fällig (${warning.length})
       </h2>
       ${warning.map(event => generateEventCard(event, "warning", baseUrl)).join("")}
     </div>
@@ -177,7 +177,7 @@ function generateEventCard(event, severity, baseUrl) {
 
   let daysText = "";
   if (daysUntil === 0) {
-    daysText = "HEUTE";
+    daysText = "Heute";
   } else if (daysUntil === 1) {
     daysText = "Morgen";
   } else if (daysUntil < 0) {

@@ -1,13 +1,14 @@
 // 📁 backend/utils/emailTemplate.js
-// ✅ V6 Design - Clean3 Style (Spam-sicher + Professionell)
+// ✅ V7 Design - EXAKT wie clean3 Template (100% Spam-sicher)
+// WICHTIG: Keine hidden divs, keine title tags, keine max-width
 
-// Import Unsubscribe-Service (optional, fuer dynamische URLs)
+// Import Unsubscribe-Service (optional, für dynamische URLs)
 let generateUnsubscribeUrl;
 try {
   const unsubService = require('../services/emailUnsubscribeService');
   generateUnsubscribeUrl = unsubService.generateUnsubscribeUrl;
 } catch (e) {
-  // Fallback wenn Service nicht verfuegbar
+  // Fallback wenn Service nicht verfügbar
   generateUnsubscribeUrl = () => 'https://www.contract-ai.de/abmelden';
 }
 
@@ -25,12 +26,14 @@ function generateEmailTemplate({
   const actualUnsubscribeUrl = unsubscribeUrl ||
     (recipientEmail ? generateUnsubscribeUrl(recipientEmail, emailCategory) : 'https://www.contract-ai.de/abmelden');
 
-  // CTA Button HTML
+  // CTA Button HTML (exakt wie clean3)
   const ctaHtml = cta ? `
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 28px;">
+              <table cellpadding="0" cellspacing="0">
                 <tr>
-                  <td>
-                    <a href="${cta.url}" style="display: inline-block; padding: 14px 32px; background-color: #3b82f6; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px;">${cta.text}</a>
+                  <td style="background-color: #3b82f6; border-radius: 8px;">
+                    <a href="${cta.url}" style="display: inline-block; padding: 14px 32px; color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 600;">
+                      ${cta.text}
+                    </a>
                   </td>
                 </tr>
               </table>
@@ -38,43 +41,37 @@ function generateEmailTemplate({
 
   // Unsubscribe Footer (DSGVO-konform)
   const unsubscribeHtml = recipientEmail ? `
-              <!-- Unsubscribe -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 20px;">
                 <tr>
-                  <td style="text-align: center;">
+                  <td style="border-top: 1px solid #e2e8f0; padding-top: 16px; text-align: center;">
                     <p style="margin: 0; font-size: 11px; color: #9ca3af;">
                       Diese E-Mail wurde an ${recipientEmail} gesendet.<br>
-                      <a href="${actualUnsubscribeUrl}" style="color: #6b7280; text-decoration: underline;">Von Benachrichtigungen abmelden</a>
+                      <a href="${actualUnsubscribeUrl}" style="color: #64748b; text-decoration: underline;">Von Benachrichtigungen abmelden</a>
                     </p>
                   </td>
                 </tr>
               </table>
   ` : '';
 
+  // Template EXAKT wie clean3 - ohne hidden divs, ohne title tag
   return `<!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>${title}</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #f0f4f8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;">
-
-  <!-- Preheader -->
-  <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;">${preheader || title}</div>
-
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f4f8; padding: 40px 20px;">
     <tr>
       <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; overflow: hidden;">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden;">
 
           <!-- Blauer Akzent-Streifen oben -->
           <tr>
             <td style="height: 4px; background-color: #3b82f6;"></td>
           </tr>
 
-          <!-- Header mit Logo-Text und Badge -->
+          <!-- Header -->
           <tr>
             <td style="padding: 28px 40px 24px 40px;">
               <table width="100%" cellpadding="0" cellspacing="0">
@@ -90,46 +87,55 @@ function generateEmailTemplate({
             </td>
           </tr>
 
-          <!-- Trennlinie -->
+          <!-- Trennlinie (als Table, nicht div!) -->
           <tr>
             <td style="padding: 0 40px;">
-              <div style="height: 1px; background-color: #e5e7eb;"></div>
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr><td style="border-bottom: 1px solid #e2e8f0;"></td></tr>
+              </table>
             </td>
           </tr>
 
-          <!-- Main Content -->
+          <!-- Content -->
           <tr>
             <td style="padding: 32px 40px 40px 40px;">
-
-              <!-- Titel -->
-              <h1 style="margin: 0 0 8px 0; font-size: 22px; font-weight: 700; color: #1e293b; line-height: 1.3;">
+              <h1 style="margin: 0 0 8px 0; font-size: 24px; color: #0f172a; font-weight: 700; line-height: 1.3;">
                 ${title}
               </h1>
 
-              <!-- Body Content -->
-              <div style="font-size: 15px; color: #4b5563; line-height: 1.6; margin-top: 16px;">
+              <div style="font-size: 15px; line-height: 1.7; color: #334155; margin-top: 16px;">
                 ${body}
               </div>
 
-              ${ctaHtml}
-
+              <div style="margin-top: 28px;">
+                ${ctaHtml}
+              </div>
             </td>
           </tr>
 
           <!-- Footer -->
           <tr>
-            <td style="padding: 24px 40px 28px 40px; background-color: #f8fafc; border-top: 1px solid #e5e7eb;">
+            <td style="padding: 0 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr><td style="border-top: 1px solid #e2e8f0;"></td></tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 24px 40px 28px 40px;">
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td>
-                    <p style="margin: 0 0 4px 0; font-size: 14px; font-weight: 600; color: #1e293b;">Contract AI</p>
-                    <p style="margin: 0 0 12px 0; font-size: 13px; color: #6b7280;">Intelligentes Vertragsmanagement</p>
+                    <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #1e293b;">Contract AI</p>
+                    <p style="margin: 0 0 12px 0; font-size: 13px; color: #64748b; line-height: 1.5;">
+                      Intelligentes Vertragsmanagement
+                    </p>
                     <p style="margin: 0; font-size: 12px;">
-                      <a href="https://www.contract-ai.de" style="color: #3b82f6; text-decoration: none;">Website</a>
-                      <span style="color: #d1d5db; margin: 0 8px;">|</span>
-                      <a href="https://www.contract-ai.de/datenschutz" style="color: #6b7280; text-decoration: none;">Datenschutz</a>
-                      <span style="color: #d1d5db; margin: 0 8px;">|</span>
-                      <a href="https://www.contract-ai.de/impressum" style="color: #6b7280; text-decoration: none;">Impressum</a>
+                      <a href="https://www.contract-ai.de" style="color: #3b82f6; text-decoration: none; font-weight: 500;">Website</a>
+                      <span style="color: #cbd5e1; margin: 0 10px;">|</span>
+                      <a href="https://www.contract-ai.de/datenschutz" style="color: #64748b; text-decoration: none;">Datenschutz</a>
+                      <span style="color: #cbd5e1; margin: 0 10px;">|</span>
+                      <a href="https://www.contract-ai.de/impressum" style="color: #64748b; text-decoration: none;">Impressum</a>
                     </p>
                   </td>
                 </tr>
@@ -142,33 +148,42 @@ function generateEmailTemplate({
       </td>
     </tr>
   </table>
-
 </body>
 </html>`;
 }
 
 /**
- * Generiert eine Info-Box mit linkem blauen Akzent
- * Nutzbar im body-Parameter
+ * Generiert eine Info-Box mit linkem blauen Akzent (exakt wie clean3)
  */
 function generateInfoBox(items) {
   if (!items || items.length === 0) return '';
 
-  const itemsHtml = items.map(item => `
-                    <tr>
-                      <td style="padding: 12px 0; border-bottom: 1px solid #e5e7eb;">
-                        <p style="margin: 0 0 2px 0; font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">${item.label}</p>
-                        <p style="margin: 0; font-size: 16px; font-weight: 600; color: #1e293b;">${item.value}</p>
-                      </td>
-                    </tr>
-  `).join('');
+  const itemsHtml = items.map((item, index) => {
+    const borderTop = index > 0 ? 'border-top: 1px solid #e2e8f0; padding-top: 16px;' : '';
+    const paddingBottom = index < items.length - 1 ? 'padding-bottom: 16px;' : '';
+
+    return `
+                            <tr>
+                              <td style="${borderTop} ${paddingBottom}">
+                                <p style="margin: 0 0 2px 0; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">${item.label}</p>
+                                <p style="margin: 0; font-size: 17px; color: #0f172a; font-weight: 600;">${item.value}</p>
+                              </td>
+                            </tr>
+    `;
+  }).join('');
 
   return `
               <table width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
                 <tr>
-                  <td style="background-color: #f8fafc; border-radius: 8px; border-left: 3px solid #3b82f6; padding: 4px 20px;">
+                  <td style="background-color: #f8fafc; border-radius: 8px; border-left: 3px solid #3b82f6;">
                     <table width="100%" cellpadding="0" cellspacing="0">
-                      ${itemsHtml}
+                      <tr>
+                        <td style="padding: 20px 24px;">
+                          <table width="100%" cellpadding="0" cellspacing="0">
+                            ${itemsHtml}
+                          </table>
+                        </td>
+                      </tr>
                     </table>
                   </td>
                 </tr>
@@ -182,13 +197,40 @@ function generateInfoBox(items) {
 function generateWarningText(text) {
   return `
               <p style="margin: 20px 0 0 0; padding: 12px 16px; background-color: #fef3c7; border-radius: 6px; font-size: 13px; color: #92400e;">
-                ⚠️ ${text}
+                ${text}
               </p>
+  `;
+}
+
+/**
+ * Generiert eine Alert-Box (rot für kritisch, gelb für Warnung)
+ */
+function generateAlertBox(text, type = 'warning') {
+  const colors = {
+    critical: { bg: '#fef2f2', border: '#ef4444', text: '#991b1b' },
+    warning: { bg: '#fef3c7', border: '#f59e0b', text: '#92400e' },
+    info: { bg: '#dbeafe', border: '#3b82f6', text: '#1d4ed8' },
+    success: { bg: '#d1fae5', border: '#10b981', text: '#065f46' }
+  };
+
+  const c = colors[type] || colors.warning;
+
+  return `
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 16px 0;">
+                <tr>
+                  <td style="background: ${c.bg}; border-left: 4px solid ${c.border}; padding: 16px; border-radius: 0 8px 8px 0;">
+                    <p style="color: ${c.text}; margin: 0; font-weight: 600;">
+                      ${text}
+                    </p>
+                  </td>
+                </tr>
+              </table>
   `;
 }
 
 module.exports = {
   generateEmailTemplate,
   generateInfoBox,
-  generateWarningText
+  generateWarningText,
+  generateAlertBox
 };
