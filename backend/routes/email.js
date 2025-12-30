@@ -1007,25 +1007,25 @@ router.post("/test", async (req, res) => {
       });
     }
 
-    // ========== TYP 1: Kalender-Benachrichtigung (Kuendigungsfrist) ==========
+    // ========== TYP 1: Kalender-Benachrichtigung (Kündigungsfrist) ==========
     if (type === "calendar" || type === "all") {
       const calendarHtml = generateEmailTemplate({
-        title: "Kuendigungsfrist in 14 Tagen",
-        preheader: "Dein Vertrag 'Telekom Mobilfunk' kann bald gekuendigt werden",
+        title: "Kündigungsfrist in 14 Tagen",
+        preheader: "Dein Vertrag 'Telekom Mobilfunk' kann bald gekündigt werden",
         body: `
           <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 0 0 20px 0; border-radius: 0 8px 8px 0;">
             <p style="color: #92400e; margin: 0; font-weight: 600;">
-              Kuendigungsfenster oeffnet bald
+              Kündigungsfenster öffnet bald
             </p>
           </div>
           <h2 style="color: #1f2937; margin: 0 0 16px 0;">Telekom Mobilfunk</h2>
           <p style="color: #4b5563; font-size: 15px; line-height: 1.6;">
-            In <strong>14 Tagen</strong> beginnt das Kuendigungsfenster fuer deinen Vertrag.
+            In <strong>14 Tagen</strong> beginnt das Kündigungsfenster für deinen Vertrag.
           </p>
           <table style="width: 100%; margin: 20px 0; border-collapse: collapse;">
             <tr>
               <td style="padding: 12px; background: #f9fafb; border-radius: 8px 0 0 8px;">
-                <strong style="color: #6b7280;">Kuendigungsfrist</strong><br>
+                <strong style="color: #6b7280;">Kündigungsfrist</strong><br>
                 <span style="color: #1f2937;">3 Monate zum Vertragsende</span>
               </td>
               <td style="padding: 12px; background: #f9fafb; border-radius: 0 8px 8px 0;">
@@ -1035,7 +1035,7 @@ router.post("/test", async (req, res) => {
             </tr>
           </table>
           <p style="color: #4b5563; font-size: 14px;">
-            Wenn du nicht kuendigst, verlaengert sich der Vertrag automatisch um 12 Monate.
+            Wenn du nicht kündigst, verlängert sich der Vertrag automatisch um 12 Monate.
           </p>
         `,
         cta: {
@@ -1049,9 +1049,14 @@ router.post("/test", async (req, res) => {
       await transporter.sendMail({
         from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
         to: email,
-        subject: "Kuendigungsfrist in 14 Tagen: Telekom Mobilfunk",
+        subject: "Kündigungsfrist in 14 Tagen: Telekom Mobilfunk",
         html: calendarHtml,
-        headers: unsubHeaders
+        encoding: 'utf-8',
+        textEncoding: 'quoted-printable',
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          ...unsubHeaders
+        }
       });
       results.push("calendar");
     }
@@ -1063,26 +1068,26 @@ router.post("/test", async (req, res) => {
         preheader: "3 anstehende Fristen diese Woche",
         body: `
           <h2 style="color: #1f2937; margin: 0 0 8px 0;">Guten Morgen!</h2>
-          <p style="color: #6b7280; margin: 0 0 24px 0;">Hier ist deine taegliche Zusammenfassung:</p>
+          <p style="color: #6b7280; margin: 0 0 24px 0;">Hier ist deine tägliche Zusammenfassung:</p>
 
           <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; margin: 0 0 16px 0; border-radius: 0 8px 8px 0;">
             <p style="color: #991b1b; margin: 0 0 8px 0; font-weight: 600;">1 kritische Frist</p>
             <p style="color: #991b1b; margin: 0; font-size: 14px;">
-              <strong>Vodafone DSL</strong> - Kuendigung muss HEUTE raus!
+              <strong>Vodafone DSL</strong> - Kündigung muss HEUTE raus!
             </p>
           </div>
 
           <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 0 0 16px 0; border-radius: 0 8px 8px 0;">
             <p style="color: #92400e; margin: 0 0 8px 0; font-weight: 600;">2 Erinnerungen</p>
             <p style="color: #92400e; margin: 0; font-size: 14px;">
-              <strong>Netflix</strong> - Preiserhoehung in 7 Tagen<br>
+              <strong>Netflix</strong> - Preiserhöhung in 7 Tagen<br>
               <strong>Fitnessstudio</strong> - Vertrag endet in 30 Tagen
             </p>
           </div>
 
           <p style="color: #4b5563; font-size: 14px; margin-top: 24px;">
-            Du erhaeltst diese E-Mail als taegliche Zusammenfassung.
-            <a href="https://www.contract-ai.de/profile" style="color: #3b82f6;">Einstellungen aendern</a>
+            Du erhältst diese E-Mail als tägliche Zusammenfassung.
+            <a href="https://www.contract-ai.de/profile" style="color: #3b82f6;">Einstellungen ändern</a>
           </p>
         `,
         cta: {
@@ -1098,7 +1103,12 @@ router.post("/test", async (req, res) => {
         to: email,
         subject: "Deine Vertrags-Zusammenfassung: 1 kritische Frist + 2 Erinnerungen",
         html: digestHtml,
-        headers: unsubHeaders
+        encoding: 'utf-8',
+        textEncoding: 'quoted-printable',
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          ...unsubHeaders
+        }
       });
       results.push("digest");
     }
@@ -1106,8 +1116,8 @@ router.post("/test", async (req, res) => {
     // ========== TYP 3: Dringende Erinnerung (LETZTE CHANCE) ==========
     if (type === "reminder" || type === "all") {
       const reminderHtml = generateEmailTemplate({
-        title: "LETZTE CHANCE: Heute kuendigen!",
-        preheader: "Vodafone DSL muss HEUTE gekuendigt werden",
+        title: "LETZTE CHANCE: Heute kündigen!",
+        preheader: "Vodafone DSL muss HEUTE gekündigt werden",
         body: `
           <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; margin: 0 0 20px 0; border-radius: 0 8px 8px 0;">
             <p style="color: #991b1b; margin: 0; font-weight: 600; font-size: 16px;">
@@ -1116,20 +1126,20 @@ router.post("/test", async (req, res) => {
           </div>
           <h2 style="color: #1f2937; margin: 0 0 16px 0;">Vodafone DSL</h2>
           <p style="color: #4b5563; font-size: 15px; line-height: 1.6;">
-            Die Kuendigungsfrist fuer deinen Vertrag endet <strong>heute</strong>.
+            Die Kündigungsfrist für deinen Vertrag endet <strong>heute</strong>.
           </p>
           <p style="color: #4b5563; font-size: 15px; line-height: 1.6;">
-            Wenn du jetzt nicht kuendigst, verlaengert sich der Vertrag automatisch um weitere <strong>24 Monate</strong>.
+            Wenn du jetzt nicht kündigst, verlängert sich der Vertrag automatisch um weitere <strong>24 Monate</strong>.
           </p>
           <div style="background: #f9fafb; padding: 16px; border-radius: 8px; margin: 20px 0;">
             <p style="color: #1f2937; margin: 0; font-size: 14px;">
               <strong>Monatliche Kosten:</strong> 44,99 EUR<br>
-              <strong>Bei Verlaengerung:</strong> 1.079,76 EUR fuer 24 Monate
+              <strong>Bei Verlängerung:</strong> 1.079,76 EUR für 24 Monate
             </p>
           </div>
         `,
         cta: {
-          text: "Jetzt kuendigen",
+          text: "Jetzt kündigen",
           url: "https://www.contract-ai.de/contracts"
         },
         recipientEmail: email,
@@ -1139,9 +1149,14 @@ router.post("/test", async (req, res) => {
       await transporter.sendMail({
         from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
         to: email,
-        subject: "LETZTE CHANCE: Vodafone DSL heute kuendigen!",
+        subject: "LETZTE CHANCE: Vodafone DSL heute kündigen!",
         html: reminderHtml,
-        headers: unsubHeaders
+        encoding: 'utf-8',
+        textEncoding: 'quoted-printable',
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          ...unsubHeaders
+        }
       });
       results.push("reminder");
     }
