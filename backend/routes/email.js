@@ -1058,14 +1058,14 @@ router.post("/test", async (req, res) => {
         cta: {
           text: "Vertrag anzeigen",
           url: "https://www.contract-ai.de/contracts"
-        },
-        recipientEmail: email
+        }
+        // KEIN recipientEmail = KEIN Unsubscribe-Footer (Test!)
       });
 
       await transporter.sendMail({
         from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
         to: email,
-        subject: "Kündigungsfrist in 14 Tagen: Telekom Mobilfunk",
+        subject: "Erinnerung: Telekom Mobilfunk - Kündigungsfrist in 14 Tagen",
         html: calendarHtml,
         encoding: 'utf-8',
         textEncoding: 'quoted-printable',
