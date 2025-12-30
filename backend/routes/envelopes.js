@@ -178,6 +178,7 @@ function validateEnvelopeSubmission(envelope, signatures, signerEmail) {
         break;
 
       case 'text':
+      case 'location': // Ortsfeld wie Textfeld behandeln
         // Validate text field (max 500 chars, no empty required fields)
         if (!sig.value || typeof sig.value !== 'string') {
           if (field.required) {
@@ -189,7 +190,8 @@ function validateEnvelopeSubmission(envelope, signatures, signerEmail) {
         break;
 
       default:
-        errors.push(`Unbekannter Feldtyp: ${field.type} für Feld ${sig.fieldId}`);
+        // Unbekannte Feldtypen als Text behandeln (statt Fehler)
+        console.warn(`⚠️ Unbekannter Feldtyp: ${field.type} für Feld ${sig.fieldId} - wird als Text behandelt`);
     }
   }
 
