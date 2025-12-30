@@ -2808,11 +2808,11 @@ a {
   margin-top: 0;
 }
 
-/* Feature Grid: 4 Spalten für 8 Cards (4-4 Layout auf Desktop) */
+/* Feature Grid: 5 Spalten für 10 Cards (5-5 Layout auf Desktop) */
 .features-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 30px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 24px;
   width: 100%;
   box-sizing: border-box;
 }
