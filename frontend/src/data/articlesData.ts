@@ -17,6 +17,290 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: 17,
+    slug: 'legal-lens-vertragsklauseln-verstehen',
+    title: 'Legal Lens: So verstehst du jede Vertragsklausel – ohne Jurastudium',
+    subtitle: 'Juristische Fachsprache war gestern. Mit Legal Lens klickst du auf jede Klausel und bekommst sofort eine verständliche Erklärung.',
+    excerpt: 'Juristische Fachsprache war gestern. Mit Legal Lens klickst du auf jede Klausel und bekommst sofort eine verständliche Erklärung – direkt im Vertrag.',
+    category: 'tipps',
+    date: '30. Dezember 2025',
+    readTime: '6 Min. Lesezeit',
+    author: 'Contract AI Team',
+    icon: '🔍',
+    image: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800&q=80',
+    content: `
+      <p>Kennst du das? Du liest einen Vertrag und verstehst nur Bahnhof. "Salvatorische Klausel", "Gerichtsstandsvereinbarung", "Haftungsfreistellung" – alles klingt wichtig, aber was bedeutet es eigentlich? Und vor allem: Ist es gut oder schlecht für dich?</p>
+
+      <p>Mit Legal Lens ist Schluss mit dem Rätselraten. Die neue Funktion von Contract AI macht juristische Sprache für jeden verständlich – interaktiv und in Echtzeit.</p>
+
+      <h2>Das Problem: Verträge sind absichtlich kompliziert</h2>
+
+      <p>Seien wir ehrlich: Viele Verträge sind nicht zufällig schwer verständlich. Komplizierte Formulierungen verschleiern oft:</p>
+
+      <ul>
+        <li><strong>Einseitige Vorteile:</strong> Klauseln, die nur dem Anbieter nutzen</li>
+        <li><strong>Versteckte Risiken:</strong> Haftungsausschlüsse im Kleingedruckten</li>
+        <li><strong>Fallen:</strong> Automatische Verlängerungen, Preiserhöhungen</li>
+        <li><strong>Rechtsverzichte:</strong> Aufgabe von Verbraucherrechten</li>
+      </ul>
+
+      <p>Wer nicht versteht, was er unterschreibt, kann später böse Überraschungen erleben. Aber wer hat schon Zeit und Geld, jeden Vertrag vom Anwalt erklären zu lassen?</p>
+
+      <div class="highlight-box">
+        <h4>Die Realität</h4>
+        <p>Laut einer Studie verstehen nur 12% der Verbraucher alle Klauseln in ihren Verträgen. 88% unterschreiben Dinge, die sie nicht vollständig verstehen.</p>
+      </div>
+
+      <h2>Die Lösung: Legal Lens – Klick, Erklärung, Verstanden</h2>
+
+      <p>Legal Lens funktioniert denkbar einfach:</p>
+
+      <ol>
+        <li><strong>Vertrag hochladen:</strong> PDF oder Word-Dokument in Contract AI laden</li>
+        <li><strong>Legal Lens aktivieren:</strong> Mit einem Klick die interaktive Ansicht öffnen</li>
+        <li><strong>Klauseln anklicken:</strong> Einfach auf jede Textpassage klicken, die du nicht verstehst</li>
+        <li><strong>Sofort verstehen:</strong> Die KI erklärt dir in einfacher Sprache, was die Klausel bedeutet</li>
+      </ol>
+
+      <p>Keine Wartezeiten, keine Terminvereinbarungen, keine Kosten pro Erklärung. Du fragst, Legal Lens antwortet – sofort.</p>
+
+      <h2>Was Legal Lens für dich übersetzt</h2>
+
+      <p>Legal Lens erklärt dir nicht nur, was eine Klausel bedeutet, sondern auch:</p>
+
+      <ul>
+        <li><strong>Praktische Auswirkungen:</strong> Was heißt das konkret für dich?</li>
+        <li><strong>Risikobewertung:</strong> Ist diese Klausel fair oder problematisch?</li>
+        <li><strong>Vergleich:</strong> Ist das marktüblich oder ungewöhnlich?</li>
+        <li><strong>Handlungsempfehlung:</strong> Solltest du nachverhandeln?</li>
+      </ul>
+
+      <div class="highlight-box">
+        <h4>Beispiel: Salvatorische Klausel</h4>
+        <p><strong>Juristisch:</strong> "Sollten einzelne Bestimmungen dieses Vertrages unwirksam sein, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt."</p>
+        <p><strong>Legal Lens:</strong> "Wenn ein Teil des Vertrags ungültig ist (z.B. weil ein Gericht es so entscheidet), gilt der Rest trotzdem weiter. Das ist eine Standardklausel und für dich neutral."</p>
+      </div>
+
+      <h2>Typische Klauseln, die Legal Lens entschlüsselt</h2>
+
+      <h3>1. Haftungsausschlüsse</h3>
+      <p>"Der Anbieter haftet nicht für mittelbare Schäden oder entgangenen Gewinn."</p>
+      <p><strong>Legal Lens sagt:</strong> Der Anbieter übernimmt keine Verantwortung, wenn dir durch seine Fehler Folgeschäden entstehen. Das ist kritisch – bei wichtigen Verträgen nachverhandeln!</p>
+
+      <h3>2. Gerichtsstandsvereinbarungen</h3>
+      <p>"Als Gerichtsstand wird München vereinbart."</p>
+      <p><strong>Legal Lens sagt:</strong> Bei Streit musst du nach München vor Gericht. Wenn du woanders wohnst, kann das teuer und umständlich werden.</p>
+
+      <h3>3. Automatische Verlängerungen</h3>
+      <p>"Der Vertrag verlängert sich automatisch um 12 Monate, wenn nicht 3 Monate vor Ende gekündigt wird."</p>
+      <p><strong>Legal Lens sagt:</strong> Achtung! Du musst 9 Monate vor Vertragsende kündigen, sonst sitzt du ein weiteres Jahr fest. Setz dir eine Erinnerung!</p>
+
+      <h2>Für wen ist Legal Lens gedacht?</h2>
+
+      <ul>
+        <li><strong>Verbraucher:</strong> Mietverträge, Handyverträge, Versicherungen endlich verstehen</li>
+        <li><strong>Freelancer:</strong> Dienstleistungsverträge und NDAs durchschauen</li>
+        <li><strong>Gründer:</strong> Investorenverträge und Gesellschaftsverträge entschlüsseln</li>
+        <li><strong>Angestellte:</strong> Arbeitsverträge und Aufhebungsverträge verstehen</li>
+        <li><strong>Unternehmer:</strong> Lieferanten- und Kundenverträge analysieren</li>
+      </ul>
+
+      <h2>Legal Lens vs. Anwalt: Wann was?</h2>
+
+      <p><strong>Legal Lens ist perfekt für:</strong></p>
+      <ul>
+        <li>Schnelles Grundverständnis jedes Vertrags</li>
+        <li>Identifikation kritischer Stellen</li>
+        <li>Alltagsverträge (Miete, Handy, Versicherung)</li>
+        <li>Erste Einschätzung vor dem Anwaltstermin</li>
+      </ul>
+
+      <p><strong>Anwalt zusätzlich bei:</strong></p>
+      <ul>
+        <li>Verträgen über 50.000€</li>
+        <li>Komplexen Verhandlungen</li>
+        <li>Gerichtsverfahren</li>
+        <li>Individueller Vertragsgestaltung</li>
+      </ul>
+
+      <div class="highlight-box">
+        <h4>Smart kombinieren</h4>
+        <p>Nutze Legal Lens als Vorbereitung: So weißt du beim Anwalt schon, welche Punkte kritisch sind, und sparst teure Beratungszeit.</p>
+      </div>
+
+      <h2>Fazit: Nie wieder blind unterschreiben</h2>
+
+      <p>Legal Lens demokratisiert juristisches Wissen. Du musst kein Jura studiert haben, um zu verstehen, was du unterschreibst. Mit einem Klick auf jede Klausel bekommst du sofort eine verständliche Erklärung – mit Risikobewertung und Handlungsempfehlung.</p>
+
+      <p>Das Ergebnis: Du unterschreibst nur noch Verträge, die du wirklich verstehst. Und das gibt dir die Sicherheit, die du verdienst.</p>
+
+      <div class="highlight-box">
+        <h4>Jetzt ausprobieren</h4>
+        <p>Lade deinen nächsten Vertrag in Contract AI hoch und aktiviere Legal Lens. Du wirst überrascht sein, was du bisher alles übersehen hast.</p>
+      </div>
+    `
+  },
+  {
+    id: 16,
+    slug: 'contract-builder-vertraege-selbst-erstellen',
+    title: 'Contract Builder: So erstellst du professionelle Verträge per Drag & Drop',
+    subtitle: 'Verträge selbst erstellen wie ein Profi – ohne Vorlagen kopieren oder teure Anwälte. Der Contract Builder macht es möglich.',
+    excerpt: 'Verträge selbst erstellen wie ein Profi – ohne Vorlagen kopieren oder teure Anwälte. Der Contract Builder macht es möglich.',
+    category: 'tipps',
+    date: '30. Dezember 2025',
+    readTime: '7 Min. Lesezeit',
+    author: 'Contract AI Team',
+    icon: '🔧',
+    image: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=800&q=80',
+    content: `
+      <p>Du brauchst einen Vertrag, aber Vorlagen aus dem Internet passen nie richtig? Der Anwalt ist zu teuer für einen "einfachen" Vertrag? Dann ist der Contract Builder von Contract AI genau das Richtige für dich.</p>
+
+      <p>Mit dem visuellen Vertragseditor erstellst du professionelle, rechtssichere Verträge – so einfach wie eine PowerPoint-Präsentation.</p>
+
+      <h2>Das Problem mit Standard-Vorlagen</h2>
+
+      <p>Kostenlose Vertragsvorlagen aus dem Internet haben gravierende Nachteile:</p>
+
+      <ul>
+        <li><strong>Veraltet:</strong> Oft nicht an aktuelle Rechtslage angepasst</li>
+        <li><strong>Nicht individuell:</strong> Dein Fall passt nie 100% zur Vorlage</li>
+        <li><strong>Lücken:</strong> Wichtige Klauseln fehlen oder sind unvollständig</li>
+        <li><strong>Copy-Paste-Fehler:</strong> Namen und Daten werden vergessen</li>
+        <li><strong>Keine Qualitätskontrolle:</strong> Wer hat die Vorlage erstellt?</li>
+      </ul>
+
+      <div class="highlight-box">
+        <h4>Die Realität</h4>
+        <p>Über 60% der Streitigkeiten bei Verträgen entstehen durch mangelhafte oder unklare Formulierungen – oft aus kopierten Vorlagen.</p>
+      </div>
+
+      <h2>Die Lösung: Contract Builder</h2>
+
+      <p>Der Contract Builder ist ein visueller Editor, mit dem du Verträge aus Bausteinen zusammenstellst. Jeder Baustein ist rechtlich geprüft und an aktuelle Gesetze angepasst.</p>
+
+      <h3>So funktioniert es:</h3>
+
+      <ol>
+        <li><strong>Struktur wählen:</strong> Grundgerüst per Drag & Drop zusammenstellen</li>
+        <li><strong>Bausteine hinzufügen:</strong> Klauseln aus der Bibliothek einfügen</li>
+        <li><strong>Variablen ausfüllen:</strong> Namen, Daten, Beträge eingeben</li>
+        <li><strong>Vorschau prüfen:</strong> Live-Vorschau des fertigen Vertrags</li>
+        <li><strong>Exportieren:</strong> PDF zum Unterschreiben generieren</li>
+      </ol>
+
+      <h2>Die wichtigsten Bausteine</h2>
+
+      <h3>📋 Kopf & Parteien</h3>
+      <p>Vertragsparteien, Datum, Überschrift – automatisch formatiert mit allen erforderlichen Angaben.</p>
+
+      <h3>📝 Klauseln</h3>
+      <p>Hunderte vorgefertigte Klauseln für alle Vertragstypen: Leistung, Vergütung, Haftung, Kündigung, Datenschutz, und mehr.</p>
+
+      <h3>🖼️ Logo & Branding</h3>
+      <p>Dein Firmenlogo und Corporate Design – für professionelle Außenwirkung.</p>
+
+      <h3>✍️ Unterschriften</h3>
+      <p>Signaturfelder für alle Parteien, optional mit digitaler Signatur-Integration.</p>
+
+      <h3>📎 Anlagen</h3>
+      <p>Anhänge wie Leistungsbeschreibungen, Preislisten oder technische Spezifikationen.</p>
+
+      <div class="highlight-box">
+        <h4>Intelligente Variablen</h4>
+        <p>Einmal "Auftraggeber-Name" eingeben, überall automatisch einsetzen. Keine Copy-Paste-Fehler mehr!</p>
+      </div>
+
+      <h2>Welche Verträge kannst du erstellen?</h2>
+
+      <ul>
+        <li><strong>Dienstleistungsverträge:</strong> Beratung, Design, IT-Services, Marketing</li>
+        <li><strong>Freelancer-Verträge:</strong> Projektbasis, Stundenbasis, Rahmenverträge</li>
+        <li><strong>NDAs:</strong> Einseitig, gegenseitig, mit Vertragsstrafe</li>
+        <li><strong>Kaufverträge:</strong> Waren, Fahrzeuge, gebrauchte Gegenstände</li>
+        <li><strong>Kooperationsverträge:</strong> Partnerschaften, Joint Ventures, Affiliate</li>
+        <li><strong>Mietverträge:</strong> Wohnung, Gewerbe, Geräte</li>
+        <li><strong>Arbeitsverträge:</strong> Vollzeit, Teilzeit, Minijob (nur als Basis)</li>
+      </ul>
+
+      <h2>Der KI-Assistent im Contract Builder</h2>
+
+      <p>Während du baust, hilft dir die KI:</p>
+
+      <ul>
+        <li><strong>Rechtsprüfung:</strong> Automatische Prüfung auf Vollständigkeit und Risiken</li>
+        <li><strong>Formulierungs-Optimierung:</strong> Verbesserungsvorschläge für jede Klausel</li>
+        <li><strong>Konsistenz-Check:</strong> Keine widersprüchlichen Klauseln</li>
+        <li><strong>Erklärungen:</strong> Jede Klausel wird verständlich erklärt</li>
+        <li><strong>Empfehlungen:</strong> "Für diesen Vertragstyp fehlt meist noch..."</li>
+      </ul>
+
+      <h2>Contract Builder vs. Vertragsgenerator</h2>
+
+      <p>Was ist der Unterschied?</p>
+
+      <h3>Vertragsgenerator</h3>
+      <ul>
+        <li>Fragen beantworten, Vertrag wird generiert</li>
+        <li>Schneller für Standard-Fälle</li>
+        <li>Weniger Kontrolle über Details</li>
+      </ul>
+
+      <h3>Contract Builder</h3>
+      <ul>
+        <li>Visuell bauen, volle Kontrolle</li>
+        <li>Flexibler für individuelle Anforderungen</li>
+        <li>Mehr Anpassungsmöglichkeiten</li>
+        <li>Ideal für wiederkehrende Vertragstypen</li>
+      </ul>
+
+      <div class="highlight-box">
+        <h4>Unser Tipp</h4>
+        <p>Für einmalige Standard-Verträge nutze den Generator. Für wiederkehrende Verträge oder individuelle Anforderungen nimm den Contract Builder.</p>
+      </div>
+
+      <h2>Schritt-für-Schritt: Dein erster Vertrag</h2>
+
+      <h3>1. Neues Projekt starten</h3>
+      <p>Öffne den Contract Builder und wähle "Neuer Vertrag". Du kannst mit einer leeren Seite starten oder eine Vorlage als Basis wählen.</p>
+
+      <h3>2. Struktur aufbauen</h3>
+      <p>Ziehe die Bausteine aus der linken Leiste auf dein Dokument: Kopf, Parteien, Präambel, Klauseln, Unterschriften.</p>
+
+      <h3>3. Klauseln auswählen</h3>
+      <p>Durchsuche die Klauselbibliothek nach Thema oder nutze die Empfehlungen. Klicke auf eine Klausel, um die Erklärung zu sehen.</p>
+
+      <h3>4. Variablen ausfüllen</h3>
+      <p>Alle gelb markierten Felder sind Variablen. Klicke darauf und gib deine Daten ein – sie werden automatisch überall eingesetzt.</p>
+
+      <h3>5. Vorschau und Export</h3>
+      <p>Prüfe die Live-Vorschau, starte den KI-Check und exportiere als PDF. Fertig!</p>
+
+      <h2>Vorteile auf einen Blick</h2>
+
+      <ul>
+        <li>✅ Rechtlich geprüfte Bausteine</li>
+        <li>✅ Immer aktuelle Rechtslage</li>
+        <li>✅ Keine Copy-Paste-Fehler</li>
+        <li>✅ Professionelles Design</li>
+        <li>✅ KI-Unterstützung während du baust</li>
+        <li>✅ Vorlagen speichern und wiederverwenden</li>
+        <li>✅ Export als PDF oder Word</li>
+        <li>✅ Digitale Signatur integriert</li>
+      </ul>
+
+      <h2>Fazit: Verträge erstellen wie ein Profi</h2>
+
+      <p>Der Contract Builder macht Vertragserststellung zugänglich – für jeden, der keinen Anwalt für jeden Vertrag bezahlen kann oder will. Du behältst die volle Kontrolle, nutzt aber rechtlich geprüfte Bausteine und KI-Unterstützung.</p>
+
+      <p>Das Ergebnis: Professionelle Verträge in Minuten statt Tagen, für einen Bruchteil der Anwaltskosten.</p>
+
+      <div class="highlight-box">
+        <h4>Jetzt starten</h4>
+        <p>Öffne den Contract Builder und erstelle deinen ersten Vertrag. Du wirst überrascht sein, wie einfach es ist!</p>
+      </div>
+    `
+  },
+  {
     id: 15,
     slug: 'dsgvo-fallen-vertraege-bussgelder-vermeiden',
     title: 'DSGVO-Fallen in Verträgen: So vermeidest du Millionen-Bußgelder',
