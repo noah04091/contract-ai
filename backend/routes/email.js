@@ -1164,19 +1164,53 @@ router.post("/test", async (req, res) => {
       results.push("calendar");
     }
 
-    // ========== TYP 2: Digest-E-Mail (Tages-Zusammenfassung) ==========
-    // Verwendet V9 generateEmailTemplate mit String-Replace
+    // ========== TYP 2: Digest-E-Mail ==========
+    // 100% hardcoded HTML wie calendar!
     if (type === "digest" || type === "all") {
-      const digestHtml = generateEmailTemplate({
-        title: "Deine Vertrags-Zusammenfassung",
-        badge: "Digest",
-        body: `
+      const digestHtml = `<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #f0f4f8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f4f8; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden;">
+          <tr>
+            <td style="height: 4px; background-color: #3b82f6;"></td>
+          </tr>
+          <tr>
+            <td style="padding: 28px 40px 24px 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <span style="font-size: 22px; font-weight: 700; color: #1e293b; letter-spacing: -0.5px;">Contract AI</span>
+                  </td>
+                  <td align="right">
+                    <span style="display: inline-block; padding: 6px 12px; background-color: #dbeafe; color: #1d4ed8; font-size: 11px; font-weight: 600; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;">Digest</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 0 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr><td style="border-bottom: 1px solid #e2e8f0;"></td></tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px 40px 40px 40px;">
+              <h1 style="margin: 0 0 8px 0; font-size: 24px; color: #0f172a; font-weight: 700; line-height: 1.3;">
+                Deine Vertrags-Zusammenfassung
+              </h1>
               <p style="margin: 0 0 28px 0; font-size: 15px; line-height: 1.7; color: #334155;">
                 Guten Morgen!<br><br>
                 Hier ist deine tägliche Zusammenfassung:
               </p>
-
-              <!-- Kritische Frist -->
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 16px;">
                 <tr>
                   <td style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; border-radius: 0 8px 8px 0;">
@@ -1186,8 +1220,6 @@ router.post("/test", async (req, res) => {
                   </td>
                 </tr>
               </table>
-
-              <!-- Erinnerungen -->
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
                 <tr>
                   <td style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 0 8px 8px 0;">
@@ -1197,50 +1229,120 @@ router.post("/test", async (req, res) => {
                   </td>
                 </tr>
               </table>
-
               <p style="margin: 0 0 32px 0; font-size: 14px; line-height: 1.6; color: #64748b;">
                 Du erhältst diese E-Mail als tägliche Zusammenfassung.
               </p>
-        `,
-        cta: {
-          text: "Zum Kalender",
-          url: "https://www.contract-ai.de/calendar"
-        }
-      });
+              <table cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="background-color: #3b82f6; border-radius: 8px;">
+                    <a href="https://www.contract-ai.de/calendar" style="display: inline-block; padding: 14px 32px; color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 600;">
+                      Zum Kalender
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 0 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr><td style="border-top: 1px solid #e2e8f0;"></td></tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 24px 40px 28px 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #1e293b;">Contract AI</p>
+                    <p style="margin: 0 0 12px 0; font-size: 13px; color: #64748b; line-height: 1.5;">
+                      Intelligentes Vertragsmanagement
+                    </p>
+                    <p style="margin: 0; font-size: 12px;">
+                      <a href="https://www.contract-ai.de" style="color: #3b82f6; text-decoration: none; font-weight: 500;">Website</a>
+                      <span style="color: #cbd5e1; margin: 0 10px;">|</span>
+                      <a href="https://www.contract-ai.de/datenschutz" style="color: #64748b; text-decoration: none;">Datenschutz</a>
+                      <span style="color: #cbd5e1; margin: 0 10px;">|</span>
+                      <a href="https://www.contract-ai.de/impressum" style="color: #64748b; text-decoration: none;">Impressum</a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
 
       await transporter.sendMail({
         from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
         to: email,
-        subject: "Deine Vertrags-Zusammenfassung: 1 kritische Frist + 2 Erinnerungen",
+        subject: "Deine Vertrags-Zusammenfassung",
         html: digestHtml,
         encoding: 'utf-8',
         textEncoding: 'quoted-printable',
         headers: {
-          'Content-Type': 'text/html; charset=utf-8',
-          ...unsubHeaders
+          'Content-Type': 'text/html; charset=utf-8'
         }
       });
       results.push("digest");
     }
 
-    // ========== TYP 3: Dringende Erinnerung ==========
-    // Verwendet V9 generateEmailTemplate mit String-Replace
+    // ========== TYP 3: Reminder-E-Mail ==========
+    // 100% hardcoded HTML wie calendar!
     if (type === "reminder" || type === "all") {
-      const reminderHtml = generateEmailTemplate({
-        title: "Erinnerung: Kündigungsfrist endet heute",
-        badge: "Dringend",
-        body: `
+      const reminderHtml = `<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #f0f4f8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f4f8; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden;">
+          <tr>
+            <td style="height: 4px; background-color: #3b82f6;"></td>
+          </tr>
+          <tr>
+            <td style="padding: 28px 40px 24px 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <span style="font-size: 22px; font-weight: 700; color: #1e293b; letter-spacing: -0.5px;">Contract AI</span>
+                  </td>
+                  <td align="right">
+                    <span style="display: inline-block; padding: 6px 12px; background-color: #dbeafe; color: #1d4ed8; font-size: 11px; font-weight: 600; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;">Dringend</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 0 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr><td style="border-bottom: 1px solid #e2e8f0;"></td></tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px 40px 40px 40px;">
+              <h1 style="margin: 0 0 8px 0; font-size: 24px; color: #0f172a; font-weight: 700; line-height: 1.3;">
+                Erinnerung: Kündigungsfrist endet heute
+              </h1>
               <p style="margin: 0 0 28px 0; font-size: 15px; color: #64748b;">
                 Vodafone DSL
               </p>
-
               <p style="margin: 0 0 28px 0; font-size: 15px; line-height: 1.7; color: #334155;">
                 Hallo,<br><br>
                 die Kündigungsfrist für deinen Vertrag endet heute.
                 Wenn du jetzt nicht kündigst, verlängert sich der Vertrag automatisch um weitere 24 Monate.
               </p>
-
-              <!-- Info Box -->
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
                 <tr>
                   <td style="background-color: #f8fafc; border-radius: 8px; border-left: 3px solid #3b82f6;">
@@ -1267,12 +1369,51 @@ router.post("/test", async (req, res) => {
                   </td>
                 </tr>
               </table>
-        `,
-        cta: {
-          text: "Jetzt kündigen",
-          url: "https://www.contract-ai.de/contracts"
-        }
-      });
+              <table cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="background-color: #3b82f6; border-radius: 8px;">
+                    <a href="https://www.contract-ai.de/contracts" style="display: inline-block; padding: 14px 32px; color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 600;">
+                      Jetzt kündigen
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 0 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr><td style="border-top: 1px solid #e2e8f0;"></td></tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 24px 40px 28px 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #1e293b;">Contract AI</p>
+                    <p style="margin: 0 0 12px 0; font-size: 13px; color: #64748b; line-height: 1.5;">
+                      Intelligentes Vertragsmanagement
+                    </p>
+                    <p style="margin: 0; font-size: 12px;">
+                      <a href="https://www.contract-ai.de" style="color: #3b82f6; text-decoration: none; font-weight: 500;">Website</a>
+                      <span style="color: #cbd5e1; margin: 0 10px;">|</span>
+                      <a href="https://www.contract-ai.de/datenschutz" style="color: #64748b; text-decoration: none;">Datenschutz</a>
+                      <span style="color: #cbd5e1; margin: 0 10px;">|</span>
+                      <a href="https://www.contract-ai.de/impressum" style="color: #64748b; text-decoration: none;">Impressum</a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
 
       await transporter.sendMail({
         from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
@@ -1282,8 +1423,7 @@ router.post("/test", async (req, res) => {
         encoding: 'utf-8',
         textEncoding: 'quoted-printable',
         headers: {
-          'Content-Type': 'text/html; charset=utf-8',
-          ...unsubHeaders
+          'Content-Type': 'text/html; charset=utf-8'
         }
       });
       results.push("reminder");
