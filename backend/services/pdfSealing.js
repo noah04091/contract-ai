@@ -201,6 +201,7 @@ async function renderSignatureFields(pdfDoc, signatureFields) {
           break;
 
         case 'text':
+        case 'location': // Ortsfeld wie Text rendern
           // Text rendern
           page.drawText(field.value || '', {
             x: coords.x + 5,
@@ -210,11 +211,22 @@ async function renderSignatureFields(pdfDoc, signatureFields) {
             color: rgb(0, 0, 0)
           });
           renderedCount++;
-          console.log(`✅ Rendered text: "${field.value}"`);
+          console.log(`✅ Rendered ${field.type}: "${field.value}"`);
           break;
 
         default:
-          console.warn(`⚠️ Unknown field type: ${field.type}`);
+          console.warn(`⚠️ Unknown field type: ${field.type} - attempting text render`);
+          // Fallback: Als Text rendern
+          if (field.value) {
+            page.drawText(field.value, {
+              x: coords.x + 5,
+              y: coords.y + (coords.height / 2) - 3,
+              size: Math.min(12, coords.height * 0.6),
+              font: font,
+              color: rgb(0, 0, 0)
+            });
+            renderedCount++;
+          }
       }
     }
 
