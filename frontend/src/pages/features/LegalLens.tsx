@@ -43,6 +43,30 @@ const LegalLens: React.FC = () => {
           "@type": "Answer",
           "text": "Legal Lens ist für jeden geeignet, der Verträge verstehen möchte - Privatpersonen, Freiberufler, Unternehmer. Keine juristischen Vorkenntnisse nötig. Die KI erklärt alles in einfacher Sprache."
         }
+      },
+      {
+        "@type": "Question",
+        "name": "Muss ich den Vertrag vorher analysieren lassen?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Legal Lens funktioniert mit allen bereits hochgeladenen Verträgen. Die Klausel-Analyse erfolgt on-demand beim Klick."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Ersetzt Legal Lens eine anwaltliche Beratung?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Legal Lens hilft beim Verstehen, ersetzt aber keine Rechtsberatung. Bei kritischen Verträgen empfehlen wir zusätzlich einen Anwalt."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Welche Vertragstypen werden unterstützt?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Alle deutschen Vertragstypen: Arbeitsverträge, Mietverträge, Kaufverträge, NDAs, Dienstleistungsverträge, AGB und mehr."
+        }
       }
     ]
   };
@@ -61,6 +85,16 @@ const LegalLens: React.FC = () => {
         <meta property="og:title" content="Legal Lens - Vertragsklauseln verstehen mit einem Klick" />
         <meta property="og:description" content="Klicken Sie auf jede Klausel und verstehen Sie sofort, was sie bedeutet. Risikobewertung, Erklärungen, Verhandlungstipps." />
         <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://www.contract-ai.de/features/legal-lens" />
+        <meta property="og:image" content="https://www.contract-ai.de/og-legal-lens.png" />
+        <meta property="og:locale" content="de_DE" />
+        <meta property="og:site_name" content="Contract AI" />
+
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Legal Lens - Vertragsklauseln verstehen mit einem Klick" />
+        <meta name="twitter:description" content="Klicken Sie auf jede Klausel und verstehen Sie sofort, was sie bedeutet. Risikobewertung, Erklärungen, Verhandlungstipps." />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og-legal-lens.png" />
 
         {/* Schema.org FAQ Data */}
         <script type="application/ld+json">

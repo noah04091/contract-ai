@@ -43,6 +43,30 @@ const ContractBuilder: React.FC = () => {
           "@type": "Answer",
           "text": "Exportieren Sie Ihre Verträge als professionelles PDF mit Ihrem Branding, als Word-Dokument zur weiteren Bearbeitung, oder nutzen Sie die integrierte Druckfunktion."
         }
+      },
+      {
+        "@type": "Question",
+        "name": "Brauche ich juristische Vorkenntnisse?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Nein, der Contract Builder ist für jeden bedienbar. Die Bausteine enthalten bereits rechtlich geprüfte Formulierungen. Die KI hilft bei Anpassungen."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Kann ich eigene Klauseln hinzufügen?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ja, Sie können jederzeit eigene Texte eingeben oder von der KI generieren lassen. Alle Bausteine sind vollständig anpassbar."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Wie funktionieren Smart Variables?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Definieren Sie Variablen wie {{name}} oder {{adresse}} einmal und sie werden automatisch überall im Dokument eingesetzt, wo sie verwendet werden."
+        }
       }
     ]
   };
@@ -61,6 +85,16 @@ const ContractBuilder: React.FC = () => {
         <meta property="og:title" content="Contract Builder - Verträge visuell erstellen mit Drag & Drop" />
         <meta property="og:description" content="Erstellen Sie professionelle Verträge per Drag & Drop. Smart Variables, KI-Unterstützung, PDF-Export. Jetzt kostenlos testen!" />
         <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://www.contract-ai.de/features/contract-builder" />
+        <meta property="og:image" content="https://www.contract-ai.de/og-contract-builder.png" />
+        <meta property="og:locale" content="de_DE" />
+        <meta property="og:site_name" content="Contract AI" />
+
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Contract Builder - Verträge visuell erstellen mit Drag & Drop" />
+        <meta name="twitter:description" content="Erstellen Sie professionelle Verträge per Drag & Drop. Smart Variables, KI-Unterstützung, PDF-Export." />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og-contract-builder.png" />
 
         {/* Schema.org FAQ Data */}
         <script type="application/ld+json">
