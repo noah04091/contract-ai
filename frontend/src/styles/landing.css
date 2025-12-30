@@ -2900,6 +2900,16 @@ a {
   box-shadow: 0 10px 15px rgba(251, 191, 36, 0.2);
 }
 
+.feature-icon-wrapper.indigo {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  box-shadow: 0 10px 15px rgba(99, 102, 241, 0.2);
+}
+
+.feature-icon-wrapper.cyan {
+  background: linear-gradient(135deg, #22d3ee, #06b6d4);
+  box-shadow: 0 10px 15px rgba(34, 211, 238, 0.2);
+}
+
 .feature-icon {
   color: white;
   line-height: 0;
@@ -3715,6 +3725,14 @@ a {
 
 .showcase-label.red-label {
   background-color: #ff4757;
+}
+
+.showcase-label.indigo-label {
+  background-color: #6366f1;
+}
+
+.showcase-label.cyan-label {
+  background-color: #06b6d4;
 }
 
 .showcase-content {

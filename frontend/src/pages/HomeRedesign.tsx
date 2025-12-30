@@ -918,8 +918,30 @@ const HomeRedesign = () => {
                 </Link>
               </div>
 
-              {/* Generator Card */}
+              {/* Legal Lens Card - Position 4 (Ende Reihe 1) */}
               <div className="feature-card reveal-card" style={{"--animation-order": 4} as React.CSSProperties}>
+                <div className="feature-icon-wrapper cyan">
+                  <div className="feature-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      {/* Auge mit Lupe - "Deep Vision" */}
+                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  </div>
+                </div>
+                <h3>Legal Lens</h3>
+                <p>Interaktive Vertragsanalyse mit Risk Score, Smart Summary & Verhandlungs-Empfehlungen.</p>
+                <Link to="/features/legal-lens" className="feature-link">
+                  Mehr erfahren
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14"></path>
+                    <path d="m12 5 7 7-7 7"></path>
+                  </svg>
+                </Link>
+              </div>
+
+              {/* Generator Card - Position 5 (Anfang Reihe 2) */}
+              <div className="feature-card reveal-card" style={{"--animation-order": 5} as React.CSSProperties}>
                 <div className="feature-icon-wrapper green">
                   <div className="feature-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -943,7 +965,7 @@ const HomeRedesign = () => {
               </div>
 
               {/* Legal Pulse Card */}
-              <div className="feature-card reveal-card" style={{"--animation-order": 5} as React.CSSProperties}>
+              <div className="feature-card reveal-card" style={{"--animation-order": 6} as React.CSSProperties}>
                 <div className="feature-icon-wrapper red">
                   <div className="feature-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -963,7 +985,7 @@ const HomeRedesign = () => {
               </div>
 
               {/* Digitale Signatur Card */}
-              <div className="feature-card reveal-card" style={{"--animation-order": 6} as React.CSSProperties}>
+              <div className="feature-card reveal-card" style={{"--animation-order": 7} as React.CSSProperties}>
                 <div className="feature-icon-wrapper teal">
                   <div className="feature-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -987,7 +1009,7 @@ const HomeRedesign = () => {
               </div>
 
               {/* Vertragsverwaltung Card */}
-              <div className="feature-card reveal-card" style={{"--animation-order": 7} as React.CSSProperties}>
+              <div className="feature-card reveal-card" style={{"--animation-order": 8} as React.CSSProperties}>
                 <div className="feature-icon-wrapper yellow">
                   <div className="feature-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -998,6 +1020,30 @@ const HomeRedesign = () => {
                 <h3>Vertragsverwaltung</h3>
                 <p>Alle Verträge zentral verwalten, Ordner organisieren & mit intelligenter Suche sofort finden.</p>
                 <Link to="/features/vertragsverwaltung" className="feature-link">
+                  Mehr erfahren
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14"></path>
+                    <path d="m12 5 7 7-7 7"></path>
+                  </svg>
+                </Link>
+              </div>
+
+              {/* Contract Builder Card - Position 9 (Ende Reihe 2) */}
+              <div className="feature-card reveal-card" style={{"--animation-order": 9} as React.CSSProperties}>
+                <div className="feature-icon-wrapper indigo">
+                  <div className="feature-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      {/* Dokument mit Stift - "Builder/Editor" */}
+                      <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                      <polyline points="14 2 14 8 20 8"></polyline>
+                      <path d="M12 18v-6"></path>
+                      <path d="m9 15 3 3 3-3"></path>
+                    </svg>
+                  </div>
+                </div>
+                <h3>Contract Builder</h3>
+                <p>Verträge visuell erstellen mit Drag & Drop, Smart Variables und KI-Unterstützung.</p>
+                <Link to="/features/contract-builder" className="feature-link">
                   Mehr erfahren
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14"></path>
@@ -1778,6 +1824,106 @@ const HomeRedesign = () => {
                       <AutoPlayVideo
                         src={signaturVideo}
                         alt="Digitale Signatur"
+                      />
+                      <div className="image-shine"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* New Feature 8: Contract Builder */}
+              <div className="showcase-item reverse reveal-block">
+                <div className="showcase-content">
+                  <div className="showcase-label indigo-label">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+                      <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+                      <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+                    </svg>
+                    Visuell
+                  </div>
+                  <h3>Contract Builder: Verträge visuell erstellen</h3>
+                  <p>Erstellen Sie professionelle Verträge per Drag & Drop. Mit Smart Variables, KI-Klauselgenerierung und automatischem Seitenumbruch — ohne juristische Vorkenntnisse.</p>
+                  <ul className="feature-list">
+                    <li>Drag & Drop Baukasten-Editor</li>
+                    <li>Smart Variables mit Auto-Ausfüllung</li>
+                    <li>KI-generierte Klauseln auf Knopfdruck</li>
+                  </ul>
+                  <Link to="/features/contract-builder" className="showcase-link">
+                    Zum Contract Builder
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12h14"></path>
+                      <path d="m12 5 7 7-7 7"></path>
+                    </svg>
+                  </Link>
+                </div>
+                <div className="showcase-image">
+                  <div className="image-mac-frame">
+                    <div className="image-mac-topbar">
+                      <div className="image-mac-buttons">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                      </div>
+                    </div>
+                    <div className="image-container">
+                      <img
+                        src="/images/contract-builder-preview.png"
+                        alt="Contract Builder"
+                        loading="lazy"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = generatorImg;
+                        }}
+                      />
+                      <div className="image-shine"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* New Feature 9: Legal Lens */}
+              <div className="showcase-item reveal-block">
+                <div className="showcase-content">
+                  <div className="showcase-label cyan-label">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <circle cx="11" cy="11" r="3"></circle>
+                      <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    Deep Dive
+                  </div>
+                  <h3>Legal Lens: Interaktive Tiefenanalyse</h3>
+                  <p>Tauchen Sie tief in Ihre Verträge ein. Mit Risk Score, Smart Summary und Verhandlungs-Checkliste — verstehen Sie jeden Vertrag wie ein Profi.</p>
+                  <ul className="feature-list">
+                    <li>Risk Score mit Finanz-, Legal- & Operational-Breakdown</li>
+                    <li>Top-Risiken mit Worst-Case-Szenarien</li>
+                    <li>Verhandlungs-Empfehlungen für bessere Deals</li>
+                  </ul>
+                  <Link to="/features/legal-lens" className="showcase-link">
+                    Zu Legal Lens
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12h14"></path>
+                      <path d="m12 5 7 7-7 7"></path>
+                    </svg>
+                  </Link>
+                </div>
+                <div className="showcase-image">
+                  <div className="image-mac-frame">
+                    <div className="image-mac-topbar">
+                      <div className="image-mac-buttons">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                      </div>
+                    </div>
+                    <div className="image-container">
+                      <img
+                        src="/images/legal-lens-preview.png"
+                        alt="Legal Lens"
+                        loading="lazy"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = analyseImg;
+                        }}
                       />
                       <div className="image-shine"></div>
                     </div>
