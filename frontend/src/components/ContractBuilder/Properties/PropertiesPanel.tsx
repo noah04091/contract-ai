@@ -21,6 +21,7 @@ import {
   Wand2,
   Loader2,
 } from 'lucide-react';
+import { BlockNotes } from '../Notes/BlockNotes';
 import styles from './PropertiesPanel.module.css';
 
 interface PropertiesPanelProps {
@@ -42,6 +43,10 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className }) =
     deleteBlock,
     duplicateBlock,
     optimizeClause,
+    addBlockNote,
+    updateBlockNote,
+    deleteBlockNote,
+    resolveBlockNote,
   } = useContractBuilderStore();
 
   const [isOptimizing, setIsOptimizing] = useState(false);
@@ -150,6 +155,16 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className }) =
           <span>KI-generiert</span>
         </div>
       )}
+
+      {/* Block Notes */}
+      <BlockNotes
+        blockId={selectedBlock.id}
+        notes={selectedBlock.notes || []}
+        onAddNote={addBlockNote}
+        onUpdateNote={updateBlockNote}
+        onDeleteNote={deleteBlockNote}
+        onResolveNote={resolveBlockNote}
+      />
 
       {/* Sections */}
       <div className={styles.sections}>

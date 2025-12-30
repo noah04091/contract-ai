@@ -89,6 +89,8 @@ const ContractBuilder: React.FC = () => {
   } | null>(null);
   const [savedDrafts, setSavedDrafts] = useState<SavedDraft[]>([]);
   const [isLoadingDrafts, setIsLoadingDrafts] = useState(false);
+  const [lastAutoSaved, setLastAutoSaved] = useState<Date | null>(null);
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
 
   const {
     document: currentDocument,
@@ -119,6 +121,9 @@ const ContractBuilder: React.FC = () => {
     generateClause,
     optimizeClause,
     calculateLegalScore,
+    deleteBlock,
+    duplicateBlock,
+    selectBlock,
   } = useContractBuilderStore();
 
   // WARNUNG: Ungespeicherte Änderungen beim Verlassen der Seite
@@ -134,6 +139,30 @@ const ContractBuilder: React.FC = () => {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges]);
+
+  // AUTO-SAVE: Alle 30 Sekunden automatisch speichern
+  useEffect(() => {
+    // Nur auto-speichern wenn: Dokument existiert UND ungespeicherte Änderungen vorhanden
+    if (!currentDocument || !hasUnsavedChanges) return;
+
+    const autoSaveInterval = setInterval(async () => {
+      // Nicht speichern wenn bereits manuell oder auto gespeichert wird
+      if (isSaving || isAutoSaving) return;
+
+      setIsAutoSaving(true);
+      try {
+        await saveDocument();
+        setLastAutoSaved(new Date());
+      } catch (error) {
+        console.error('[Auto-Save] Fehler:', error);
+        // Stille Fehlerbehandlung - User nicht mit Auto-Save Fehlern nerven
+      } finally {
+        setIsAutoSaving(false);
+      }
+    }, 30000); // 30 Sekunden
+
+    return () => clearInterval(autoSaveInterval);
+  }, [currentDocument, hasUnsavedChanges, isSaving, isAutoSaving, saveDocument]);
 
   // Dokument laden oder Typ-Auswahl zeigen
   useEffect(() => {
@@ -983,10 +1012,18 @@ const ContractBuilder: React.FC = () => {
   // Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Prüfe ob wir in einem Input/Textarea sind - dann keine Shortcuts außer Escape
+      const target = e.target as HTMLElement;
+      const isInputFocused = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+
+      // Ctrl+S: Speichern (immer aktiv)
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
         handleSave();
+        return;
       }
+
+      // Ctrl+Z: Undo (immer aktiv)
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
         e.preventDefault();
         if (e.shiftKey) {
@@ -994,27 +1031,126 @@ const ContractBuilder: React.FC = () => {
         } else {
           undo();
         }
+        return;
       }
+
+      // Ctrl+Y: Redo (immer aktiv)
       if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
         e.preventDefault();
         redo();
+        return;
       }
-      // Ctrl+/ oder Ctrl+? für Shortcuts Modal
+
+      // Ctrl+/ oder Ctrl+?: Shortcuts Modal (immer aktiv)
       if ((e.ctrlKey || e.metaKey) && (e.key === '/' || e.key === '?')) {
         e.preventDefault();
         setShowShortcutsModal(prev => !prev);
+        return;
       }
-      // Escape zum Schließen von Modals
+
+      // Escape: Modals schließen (immer aktiv)
       if (e.key === 'Escape') {
         setShowShortcutsModal(false);
         setShowAiClauseModal(false);
         setShowMoreMenu(false);
+        setShowLegalScoreModal(false);
+        setShowOptimizeModal(false);
+        return;
+      }
+
+      // Ab hier: Shortcuts nur wenn NICHT in Input/Textarea
+      if (isInputFocused) return;
+
+      // Ctrl+P: Preview/Edit umschalten
+      if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+        e.preventDefault();
+        setView(view === 'preview' ? 'edit' : 'preview');
+        return;
+      }
+
+      // Ctrl+D: Block duplizieren
+      if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+        e.preventDefault();
+        if (selectedBlockId) {
+          duplicateBlock(selectedBlockId);
+        }
+        return;
+      }
+
+      // Delete/Backspace: Block löschen
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedBlockId) {
+        e.preventDefault();
+        const blockToDelete = currentDocument?.content.blocks.find(b => b.id === selectedBlockId);
+        if (blockToDelete && !blockToDelete.locked) {
+          deleteBlock(selectedBlockId);
+        }
+        return;
+      }
+
+      // Pfeiltasten: Zwischen Blöcken navigieren
+      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        if (!currentDocument?.content.blocks.length) return;
+        e.preventDefault();
+
+        const blocks = currentDocument.content.blocks;
+        const currentIndex = selectedBlockId
+          ? blocks.findIndex(b => b.id === selectedBlockId)
+          : -1;
+
+        let newIndex: number;
+        if (e.key === 'ArrowUp') {
+          newIndex = currentIndex > 0 ? currentIndex - 1 : blocks.length - 1;
+        } else {
+          newIndex = currentIndex < blocks.length - 1 ? currentIndex + 1 : 0;
+        }
+
+        selectBlock(blocks[newIndex].id);
+        return;
+      }
+
+      // Ctrl+B: Neuen Klausel-Block hinzufügen
+      if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+        e.preventDefault();
+        addBlock({
+          type: 'clause',
+          content: {
+            number: 'auto',
+            clauseTitle: 'Neue Klausel',
+            body: 'Klauseltext hier eingeben...',
+            subclauses: [],
+          },
+          style: {},
+          locked: false,
+          aiGenerated: false,
+        });
+        return;
+      }
+
+      // Ctrl+Plus: Zoom In
+      if ((e.ctrlKey || e.metaKey) && (e.key === '+' || e.key === '=')) {
+        e.preventDefault();
+        setZoom(Math.min(200, zoom + 10));
+        return;
+      }
+
+      // Ctrl+Minus: Zoom Out
+      if ((e.ctrlKey || e.metaKey) && e.key === '-') {
+        e.preventDefault();
+        setZoom(Math.max(50, zoom - 10));
+        return;
+      }
+
+      // Ctrl+0: Zoom Reset
+      if ((e.ctrlKey || e.metaKey) && e.key === '0') {
+        e.preventDefault();
+        setZoom(100);
+        return;
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [undo, redo]);
+  }, [undo, redo, view, selectedBlockId, currentDocument, zoom, duplicateBlock, deleteBlock, selectBlock, addBlock, setView, setZoom]);
 
   // Loading State - nur anzeigen wenn NICHT das TypeSelector Modal offen ist
   if (isLoading && !currentDocument && !showTypeSelector) {
@@ -1071,6 +1207,19 @@ const ContractBuilder: React.FC = () => {
               <span className={styles.localModeBadge} title="Offline-Modus: Dokument wird lokal gespeichert">
                 <CloudOff size={12} />
                 <span>Lokal</span>
+              </span>
+            )}
+            {/* Auto-Save Indikator */}
+            {isAutoSaving && (
+              <span className={styles.autoSaveBadge} title="Automatisches Speichern...">
+                <Loader2 size={12} className={styles.spinner} />
+                <span>Speichert...</span>
+              </span>
+            )}
+            {lastAutoSaved && !isAutoSaving && !hasUnsavedChanges && (
+              <span className={styles.autoSavedBadge} title={`Zuletzt gespeichert: ${lastAutoSaved.toLocaleTimeString('de-DE')}`}>
+                <Check size={12} />
+                <span>Gespeichert</span>
               </span>
             )}
           </div>
@@ -1491,6 +1640,10 @@ const ContractBuilder: React.FC = () => {
                   <span className={styles.shortcutDesc}>Tastenkürzel anzeigen</span>
                 </div>
                 <div className={styles.shortcutRow}>
+                  <span className={styles.shortcutKeys}><kbd>Strg</kbd> + <kbd>P</kbd></span>
+                  <span className={styles.shortcutDesc}>Vorschau/Bearbeiten umschalten</span>
+                </div>
+                <div className={styles.shortcutRow}>
                   <span className={styles.shortcutKeys}><kbd>Esc</kbd></span>
                   <span className={styles.shortcutDesc}>Modal/Menü schließen</span>
                 </div>
@@ -1507,8 +1660,12 @@ const ContractBuilder: React.FC = () => {
                   <span className={styles.shortcutDesc}>Wiederherstellen</span>
                 </div>
                 <div className={styles.shortcutRow}>
-                  <span className={styles.shortcutKeys}><kbd>Strg</kbd> + <kbd>Y</kbd></span>
-                  <span className={styles.shortcutDesc}>Wiederherstellen</span>
+                  <span className={styles.shortcutKeys}><kbd>Strg</kbd> + <kbd>B</kbd></span>
+                  <span className={styles.shortcutDesc}>Neue Klausel hinzufügen</span>
+                </div>
+                <div className={styles.shortcutRow}>
+                  <span className={styles.shortcutKeys}><kbd>Strg</kbd> + <kbd>D</kbd></span>
+                  <span className={styles.shortcutDesc}>Block duplizieren</span>
                 </div>
               </div>
 
@@ -1521,6 +1678,22 @@ const ContractBuilder: React.FC = () => {
                 <div className={styles.shortcutRow}>
                   <span className={styles.shortcutKeys}><kbd>Entf</kbd></span>
                   <span className={styles.shortcutDesc}>Ausgewählten Block löschen</span>
+                </div>
+              </div>
+
+              <div className={styles.shortcutsCategory}>
+                <h4>Zoom</h4>
+                <div className={styles.shortcutRow}>
+                  <span className={styles.shortcutKeys}><kbd>Strg</kbd> + <kbd>+</kbd></span>
+                  <span className={styles.shortcutDesc}>Vergrößern</span>
+                </div>
+                <div className={styles.shortcutRow}>
+                  <span className={styles.shortcutKeys}><kbd>Strg</kbd> + <kbd>-</kbd></span>
+                  <span className={styles.shortcutDesc}>Verkleinern</span>
+                </div>
+                <div className={styles.shortcutRow}>
+                  <span className={styles.shortcutKeys}><kbd>Strg</kbd> + <kbd>0</kbd></span>
+                  <span className={styles.shortcutDesc}>Zoom zurücksetzen</span>
                 </div>
               </div>
 

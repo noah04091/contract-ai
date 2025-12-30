@@ -1,0 +1,279 @@
+/**
+ * BlockNotes Styles
+ * Kommentare/Notizen für einzelne Blöcke
+ */
+
+.notesContainer {
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 10px;
+}
+
+.header svg {
+  color: #3b82f6;
+}
+
+.count {
+  margin-left: auto;
+  font-weight: 400;
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+/* Neue Notiz hinzufügen */
+.addNote {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.addNote input {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 12px;
+  background: white;
+  transition: all 0.15s ease;
+}
+
+.addNote input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.addNote input::placeholder {
+  color: #94a3b8;
+}
+
+.addNote button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: #3b82f6;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.addNote button:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.addNote button:disabled {
+  background: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+/* Notizen-Liste */
+.notesList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 16px;
+  color: #94a3b8;
+  font-size: 12px;
+  font-style: italic;
+}
+
+/* Einzelne Notiz */
+.noteItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+.noteItem:hover {
+  border-color: #cbd5e1;
+}
+
+.noteItem.resolved {
+  opacity: 0.6;
+  background: #f8fafc;
+}
+
+.noteItem.resolved .noteText {
+  text-decoration: line-through;
+}
+
+.resolveBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.resolveBtn:hover {
+  color: #22c55e;
+  background: #dcfce7;
+}
+
+.resolved .resolveBtn {
+  color: #22c55e;
+}
+
+.resolved .resolveBtn:hover {
+  color: #94a3b8;
+  background: #f1f5f9;
+}
+
+.noteContent {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.noteText {
+  display: block;
+  font-size: 12px;
+  color: #334155;
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+.noteDate {
+  display: block;
+  font-size: 10px;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
+.deleteBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  opacity: 0;
+  margin-top: 2px;
+}
+
+.noteItem:hover .deleteBtn {
+  opacity: 1;
+}
+
+.deleteBtn:hover {
+  color: #ef4444;
+  background: #fef2f2;
+}
+
+/* Edit Area */
+.editArea {
+  flex: 1;
+  display: flex;
+  gap: 6px;
+}
+
+.editArea input {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid #3b82f6;
+  border-radius: 4px;
+  font-size: 12px;
+  background: white;
+}
+
+.editArea input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.editArea button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: #22c55e;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+}
+
+.editArea button:hover {
+  background: #16a34a;
+}
+
+/* Erledigte Notizen Section */
+.resolvedSection {
+  margin-top: 10px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 10px;
+}
+
+.toggleResolved {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 8px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.toggleResolved:hover {
+  background: #f1f5f9;
+}
+
+.toggleResolved svg {
+  color: #22c55e;
+}
+
+.resolvedList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}

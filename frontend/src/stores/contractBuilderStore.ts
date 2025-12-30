@@ -148,6 +148,14 @@ export interface BlockContent {
   noticeBackgroundColor?: string;
 }
 
+export interface BlockNote {
+  id: string;
+  text: string;
+  author?: string;
+  createdAt: Date;
+  resolved?: boolean;
+}
+
 export interface Block {
   id: string;
   type: BlockType;
@@ -159,6 +167,7 @@ export interface Block {
   aiPrompt?: string;
   legalBasis?: string[];
   riskLevel?: 'low' | 'medium' | 'high';
+  notes?: BlockNote[];  // Kommentare/Notizen für diesen Block
 }
 
 export interface Variable {
@@ -255,6 +264,27 @@ export interface DropTarget {
   position: 'before' | 'after';
 }
 
+// Collaboration Types (Multi-User Editing)
+export interface Collaborator {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  color: string;  // Unique color for cursor/selection
+  isOnline: boolean;
+  lastSeen: Date;
+  currentBlockId?: string;  // Which block they're editing
+  cursorPosition?: { line: number; column: number };
+}
+
+export interface CollaborationState {
+  isEnabled: boolean;
+  sessionId: string | null;
+  collaborators: Collaborator[];
+  myId: string | null;
+  connectionStatus: 'disconnected' | 'connecting' | 'connected';
+}
+
 // ============================================
 // STORE STATE
 // ============================================
@@ -288,6 +318,9 @@ interface ContractBuilderState {
   historyIndex: number;
   canUndo: boolean;
   canRedo: boolean;
+
+  // Collaboration (Multi-User)
+  collaboration: CollaborationState;
 
   // AI State
   isAiGenerating: boolean;
@@ -325,6 +358,12 @@ interface ContractBuilderActions {
   lockBlock: (blockId: string, locked: boolean) => void;
   autoInsertPageBreak: (beforeBlockId: string) => void;
 
+  // Block Notes Actions
+  addBlockNote: (blockId: string, text: string, author?: string) => void;
+  updateBlockNote: (blockId: string, noteId: string, text: string) => void;
+  deleteBlockNote: (blockId: string, noteId: string) => void;
+  resolveBlockNote: (blockId: string, noteId: string, resolved: boolean) => void;
+
   // Selection Actions
   selectBlock: (blockId: string | null) => void;
   setSelectedBlock: (blockId: string | null) => void; // Alias for selectBlock
@@ -361,6 +400,14 @@ interface ContractBuilderActions {
   undo: () => void;
   redo: () => void;
   pushToHistory: () => void;
+
+  // Collaboration Actions
+  enableCollaboration: (sessionId: string, myId: string) => void;
+  disableCollaboration: () => void;
+  updateCollaborator: (collaborator: Collaborator) => void;
+  removeCollaborator: (collaboratorId: string) => void;
+  setMyEditingBlock: (blockId: string | null) => void;
+  getBlockEditor: (blockId: string) => Collaborator | null;
 
   // AI Actions
   generateClause: (description: string, preferences?: object) => Promise<object>;
@@ -425,6 +472,13 @@ const initialState: ContractBuilderState = {
   historyIndex: -1,
   canUndo: false,
   canRedo: false,
+  collaboration: {
+    isEnabled: false,
+    sessionId: null,
+    collaborators: [],
+    myId: null,
+    connectionStatus: 'disconnected',
+  },
   isAiGenerating: false,
   aiOperation: null,
   copilotSuggestion: null,
@@ -1187,6 +1241,69 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
           });
         },
 
+        // Block Notes Actions
+        addBlockNote: (blockId, text, author) => {
+          set((state) => {
+            if (!state.document) return;
+            const block = state.document.content.blocks.find((b) => b.id === blockId);
+            if (block) {
+              if (!block.notes) block.notes = [];
+              block.notes.push({
+                id: crypto.randomUUID(),
+                text,
+                author,
+                createdAt: new Date(),
+                resolved: false,
+              });
+              state.hasUnsavedChanges = true;
+            }
+          });
+          get().pushToHistory();
+        },
+
+        updateBlockNote: (blockId, noteId, text) => {
+          set((state) => {
+            if (!state.document) return;
+            const block = state.document.content.blocks.find((b) => b.id === blockId);
+            if (block?.notes) {
+              const note = block.notes.find((n) => n.id === noteId);
+              if (note) {
+                note.text = text;
+                state.hasUnsavedChanges = true;
+              }
+            }
+          });
+        },
+
+        deleteBlockNote: (blockId, noteId) => {
+          set((state) => {
+            if (!state.document) return;
+            const block = state.document.content.blocks.find((b) => b.id === blockId);
+            if (block?.notes) {
+              const index = block.notes.findIndex((n) => n.id === noteId);
+              if (index !== -1) {
+                block.notes.splice(index, 1);
+                state.hasUnsavedChanges = true;
+              }
+            }
+          });
+          get().pushToHistory();
+        },
+
+        resolveBlockNote: (blockId, noteId, resolved) => {
+          set((state) => {
+            if (!state.document) return;
+            const block = state.document.content.blocks.find((b) => b.id === blockId);
+            if (block?.notes) {
+              const note = block.notes.find((n) => n.id === noteId);
+              if (note) {
+                note.resolved = resolved;
+                state.hasUnsavedChanges = true;
+              }
+            }
+          });
+        },
+
         autoInsertPageBreak: (beforeBlockId) => {
           set((state) => {
             if (!state.document) return;
@@ -1485,6 +1602,76 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
               state.hasUnsavedChanges = true;
             }
           });
+        },
+
+        // ============================================
+        // COLLABORATION ACTIONS
+        // ============================================
+
+        enableCollaboration: (sessionId, myId) => {
+          set((state) => {
+            state.collaboration = {
+              isEnabled: true,
+              sessionId,
+              myId,
+              collaborators: [],
+              connectionStatus: 'connected',
+            };
+          });
+        },
+
+        disableCollaboration: () => {
+          set((state) => {
+            state.collaboration = {
+              isEnabled: false,
+              sessionId: null,
+              myId: null,
+              collaborators: [],
+              connectionStatus: 'disconnected',
+            };
+          });
+        },
+
+        updateCollaborator: (collaborator) => {
+          set((state) => {
+            const index = state.collaboration.collaborators.findIndex(
+              (c) => c.id === collaborator.id
+            );
+            if (index !== -1) {
+              state.collaboration.collaborators[index] = collaborator;
+            } else {
+              state.collaboration.collaborators.push(collaborator);
+            }
+          });
+        },
+
+        removeCollaborator: (collaboratorId) => {
+          set((state) => {
+            state.collaboration.collaborators = state.collaboration.collaborators.filter(
+              (c) => c.id !== collaboratorId
+            );
+          });
+        },
+
+        setMyEditingBlock: (blockId) => {
+          set((state) => {
+            const myId = state.collaboration.myId;
+            if (myId) {
+              const me = state.collaboration.collaborators.find((c) => c.id === myId);
+              if (me) {
+                me.currentBlockId = blockId || undefined;
+              }
+            }
+          });
+          // TODO: Broadcast to other collaborators via WebSocket
+        },
+
+        getBlockEditor: (blockId) => {
+          const { collaboration } = get();
+          if (!collaboration.isEnabled) return null;
+          return collaboration.collaborators.find(
+            (c) => c.currentBlockId === blockId && c.id !== collaboration.myId
+          ) || null;
         },
 
         // ============================================

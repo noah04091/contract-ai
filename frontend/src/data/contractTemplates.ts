@@ -716,6 +716,320 @@ export const contractTemplates: ContractTemplate[] = [
       { name: 'kuendigungsfrist', displayName: 'Kündigungsfrist', type: 'select', group: 'Kündigung', options: ['1 Monat', '3 Monate', '6 Monate'] },
     ],
   },
+
+  // =============================================
+  // PRAKTIKUMSVERTRAG
+  // =============================================
+  {
+    id: 'praktikumsvertrag',
+    name: 'Praktikumsvertrag',
+    description: 'Vertrag für Praktikanten (Pflicht- oder freiwilliges Praktikum)',
+    icon: 'GraduationCap',
+    category: 'employment',
+    parties: {
+      party1: { role: 'Praktikumsgeber', defaultName: '{{praktikumsgeber_name}}' },
+      party2: { role: 'Praktikant/in', defaultName: '{{praktikant_name}}' },
+    },
+    suggestedClauses: [
+      {
+        title: 'Art des Praktikums',
+        body: 'Es handelt sich um ein {{praktikumsart}}. Das Praktikum dient der Berufsorientierung und Qualifizierung des Praktikanten.',
+      },
+      {
+        title: 'Dauer und Arbeitszeit',
+        body: 'Das Praktikum beginnt am {{praktikumsbeginn}} und endet am {{praktikumsende}}. Die wöchentliche Arbeitszeit beträgt {{wochenarbeitszeit}} Stunden.',
+      },
+      {
+        title: 'Tätigkeitsbereich',
+        body: 'Der Praktikant wird im Bereich {{einsatzbereich}} eingesetzt. Die Tätigkeiten umfassen: {{taetigkeiten}}.',
+      },
+      {
+        title: 'Vergütung',
+        body: 'Das Praktikum wird {{verguetungsart}}. {{verguetungsdetails}}',
+      },
+      {
+        title: 'Urlaub',
+        body: 'Der Praktikant hat Anspruch auf {{urlaubstage}} Urlaubstage während der Praktikumsdauer.',
+      },
+      {
+        title: 'Betreuung',
+        body: 'Als Ansprechpartner und Betreuer steht {{betreuer}} zur Verfügung.',
+      },
+      {
+        title: 'Zeugnis',
+        body: 'Der Praktikant erhält nach Beendigung des Praktikums ein qualifiziertes Praktikumszeugnis.',
+      },
+      {
+        title: 'Vorzeitige Beendigung',
+        body: 'Das Praktikum kann von beiden Seiten mit einer Frist von {{kuendigungsfrist}} vorzeitig beendet werden.',
+      },
+    ],
+    defaultVariables: [
+      { name: 'praktikumsgeber_name', displayName: 'Praktikumsgeber', type: 'text', group: 'Parteien', required: true },
+      { name: 'praktikant_name', displayName: 'Praktikant/in', type: 'text', group: 'Parteien', required: true },
+      { name: 'praktikumsart', displayName: 'Art des Praktikums', type: 'select', group: 'Praktikum', options: ['Pflichtpraktikum (im Rahmen des Studiums)', 'freiwilliges Praktikum', 'Orientierungspraktikum', 'Schülerpraktikum'], required: true },
+      { name: 'praktikumsbeginn', displayName: 'Beginn', type: 'date', group: 'Dauer', required: true },
+      { name: 'praktikumsende', displayName: 'Ende', type: 'date', group: 'Dauer', required: true },
+      { name: 'wochenarbeitszeit', displayName: 'Wochenstunden', type: 'number', group: 'Arbeitszeit' },
+      { name: 'einsatzbereich', displayName: 'Einsatzbereich', type: 'text', group: 'Tätigkeit', required: true },
+      { name: 'taetigkeiten', displayName: 'Tätigkeiten', type: 'text', group: 'Tätigkeit' },
+      { name: 'verguetungsart', displayName: 'Vergütung', type: 'select', group: 'Finanzen', options: ['mit einer Vergütung von {{praktikumsverguetung}} Euro monatlich vergütet', 'unvergütet durchgeführt'] },
+      { name: 'praktikumsverguetung', displayName: 'Monatliche Vergütung (€)', type: 'currency', group: 'Finanzen' },
+      { name: 'verguetungsdetails', displayName: 'Weitere Vergütungsdetails', type: 'text', group: 'Finanzen' },
+      { name: 'urlaubstage', displayName: 'Urlaubstage', type: 'number', group: 'Urlaub' },
+      { name: 'betreuer', displayName: 'Betreuer/in', type: 'text', group: 'Betreuung' },
+      { name: 'kuendigungsfrist', displayName: 'Kündigungsfrist', type: 'select', group: 'Beendigung', options: ['2 Wochen', '1 Woche', '4 Wochen'] },
+    ],
+  },
+
+  // =============================================
+  // AUFHEBUNGSVERTRAG
+  // =============================================
+  {
+    id: 'aufhebungsvertrag',
+    name: 'Aufhebungsvertrag',
+    description: 'Einvernehmliche Beendigung eines Arbeitsverhältnisses',
+    icon: 'FileX',
+    category: 'employment',
+    parties: {
+      party1: { role: 'Arbeitgeber', defaultName: '{{arbeitgeber_name}}' },
+      party2: { role: 'Arbeitnehmer', defaultName: '{{arbeitnehmer_name}}' },
+    },
+    suggestedClauses: [
+      {
+        title: 'Beendigung des Arbeitsverhältnisses',
+        body: 'Die Parteien sind sich einig, dass das zwischen ihnen bestehende Arbeitsverhältnis einvernehmlich zum {{beendigungsdatum}} endet.',
+      },
+      {
+        title: 'Grund der Beendigung',
+        body: 'Die Beendigung erfolgt {{beendigungsgrund}}.',
+      },
+      {
+        title: 'Abfindung',
+        body: 'Der Arbeitnehmer erhält eine Abfindung in Höhe von {{abfindung}} Euro brutto. Die Zahlung erfolgt mit der letzten Gehaltsabrechnung.',
+      },
+      {
+        title: 'Freistellung',
+        body: 'Der Arbeitnehmer wird ab dem {{freistellungsdatum}} unwiderruflich von der Arbeit freigestellt. Die Freistellung erfolgt unter Fortzahlung der Vergütung und unter Anrechnung {{urlaubsanrechnung}}.',
+      },
+      {
+        title: 'Arbeitszeugnis',
+        body: 'Der Arbeitgeber erteilt dem Arbeitnehmer ein wohlwollendes qualifiziertes Arbeitszeugnis mit der Note "{{zeugnisnote}}".',
+      },
+      {
+        title: 'Rückgabe von Arbeitsmitteln',
+        body: 'Der Arbeitnehmer verpflichtet sich, alle ihm überlassenen Arbeitsmittel (insbesondere: {{arbeitsmittel}}) bis zum {{rueckgabedatum}} zurückzugeben.',
+      },
+      {
+        title: 'Verschwiegenheit',
+        body: 'Die Parteien verpflichten sich, über den Inhalt dieser Vereinbarung Stillschweigen zu bewahren.',
+      },
+      {
+        title: 'Ausgleichsklausel',
+        body: 'Mit Erfüllung dieses Aufhebungsvertrages sind alle wechselseitigen Ansprüche aus dem Arbeitsverhältnis abgegolten, soweit sie nicht in dieser Vereinbarung geregelt sind.',
+      },
+    ],
+    defaultVariables: [
+      { name: 'arbeitgeber_name', displayName: 'Arbeitgeber', type: 'text', group: 'Parteien', required: true },
+      { name: 'arbeitnehmer_name', displayName: 'Arbeitnehmer', type: 'text', group: 'Parteien', required: true },
+      { name: 'beendigungsdatum', displayName: 'Beendigungsdatum', type: 'date', group: 'Beendigung', required: true },
+      { name: 'beendigungsgrund', displayName: 'Beendigungsgrund', type: 'select', group: 'Beendigung', options: ['auf Wunsch des Arbeitnehmers', 'aus betrieblichen Gründen', 'im gegenseitigen Einvernehmen'] },
+      { name: 'abfindung', displayName: 'Abfindung (€ brutto)', type: 'currency', group: 'Abfindung' },
+      { name: 'freistellungsdatum', displayName: 'Freistellung ab', type: 'date', group: 'Freistellung' },
+      { name: 'urlaubsanrechnung', displayName: 'Urlaubsanrechnung', type: 'select', group: 'Freistellung', options: ['des Resturlaubs', 'ohne Anrechnung von Urlaub'] },
+      { name: 'zeugnisnote', displayName: 'Zeugnisnote', type: 'select', group: 'Zeugnis', options: ['sehr gut', 'gut', 'befriedigend'] },
+      { name: 'arbeitsmittel', displayName: 'Arbeitsmittel', type: 'text', group: 'Rückgabe' },
+      { name: 'rueckgabedatum', displayName: 'Rückgabe bis', type: 'date', group: 'Rückgabe' },
+    ],
+  },
+
+  // =============================================
+  // DATENSCHUTZVEREINBARUNG (AVV)
+  // =============================================
+  {
+    id: 'datenschutzvereinbarung',
+    name: 'Auftragsverarbeitung (AVV)',
+    description: 'DSGVO-konforme Vereinbarung zur Auftragsverarbeitung',
+    icon: 'Shield',
+    category: 'business',
+    parties: {
+      party1: { role: 'Verantwortlicher', defaultName: '{{verantwortlicher_name}}' },
+      party2: { role: 'Auftragsverarbeiter', defaultName: '{{auftragsverarbeiter_name}}' },
+    },
+    suggestedClauses: [
+      {
+        title: 'Gegenstand und Dauer',
+        body: 'Der Auftragsverarbeiter verarbeitet personenbezogene Daten im Auftrag des Verantwortlichen. Gegenstand der Verarbeitung: {{verarbeitungsgegenstand}}. Dauer: {{verarbeitungsdauer}}.',
+      },
+      {
+        title: 'Art und Zweck der Verarbeitung',
+        body: 'Art der Verarbeitung: {{verarbeitungsart}}. Zweck der Verarbeitung: {{verarbeitungszweck}}.',
+      },
+      {
+        title: 'Art der personenbezogenen Daten',
+        body: 'Folgende Datenkategorien werden verarbeitet: {{datenkategorien}}.',
+      },
+      {
+        title: 'Kategorien betroffener Personen',
+        body: 'Kategorien betroffener Personen: {{betroffene_kategorien}}.',
+      },
+      {
+        title: 'Pflichten des Auftragsverarbeiters',
+        body: 'Der Auftragsverarbeiter verarbeitet die Daten ausschließlich auf dokumentierte Weisung des Verantwortlichen. Er gewährleistet, dass die mit der Verarbeitung beauftragten Personen zur Vertraulichkeit verpflichtet sind.',
+      },
+      {
+        title: 'Technische und organisatorische Maßnahmen',
+        body: 'Der Auftragsverarbeiter trifft alle gemäß Art. 32 DSGVO erforderlichen technischen und organisatorischen Maßnahmen. Diese sind in Anlage 1 beschrieben.',
+      },
+      {
+        title: 'Unterauftragsverarbeiter',
+        body: 'Die Einschaltung von Unterauftragsverarbeitern ist {{unterauftragsverarbeiter}}.',
+      },
+      {
+        title: 'Rechte der Betroffenen',
+        body: 'Der Auftragsverarbeiter unterstützt den Verantwortlichen bei der Erfüllung der Betroffenenrechte nach Art. 15-22 DSGVO.',
+      },
+      {
+        title: 'Löschung und Rückgabe',
+        body: 'Nach Beendigung des Auftrags werden alle Daten {{loeschung_rueckgabe}}.',
+      },
+      {
+        title: 'Kontrollrechte',
+        body: 'Der Verantwortliche ist berechtigt, die Einhaltung der Datenschutzvorschriften zu kontrollieren.',
+      },
+    ],
+    defaultVariables: [
+      { name: 'verantwortlicher_name', displayName: 'Verantwortlicher', type: 'text', group: 'Parteien', required: true },
+      { name: 'auftragsverarbeiter_name', displayName: 'Auftragsverarbeiter', type: 'text', group: 'Parteien', required: true },
+      { name: 'verarbeitungsgegenstand', displayName: 'Gegenstand der Verarbeitung', type: 'text', group: 'Verarbeitung', required: true },
+      { name: 'verarbeitungsdauer', displayName: 'Dauer', type: 'select', group: 'Verarbeitung', options: ['unbefristet / Laufzeit des Hauptvertrags', '1 Jahr', '2 Jahre', 'projektbezogen'] },
+      { name: 'verarbeitungsart', displayName: 'Art der Verarbeitung', type: 'text', group: 'Verarbeitung' },
+      { name: 'verarbeitungszweck', displayName: 'Zweck der Verarbeitung', type: 'text', group: 'Verarbeitung' },
+      { name: 'datenkategorien', displayName: 'Datenkategorien', type: 'text', group: 'Daten' },
+      { name: 'betroffene_kategorien', displayName: 'Betroffene Personen', type: 'text', group: 'Daten' },
+      { name: 'unterauftragsverarbeiter', displayName: 'Unterauftragsverarbeiter', type: 'select', group: 'Unterauftrag', options: ['nur mit vorheriger Zustimmung gestattet', 'generell gestattet', 'nicht gestattet'] },
+      { name: 'loeschung_rueckgabe', displayName: 'Nach Auftragsende', type: 'select', group: 'Beendigung', options: ['gelöscht und dies bestätigt', 'zurückgegeben und gelöscht', 'nach Weisung des Verantwortlichen behandelt'] },
+    ],
+  },
+
+  // =============================================
+  // LEIHVERTRAG
+  // =============================================
+  {
+    id: 'leihvertrag',
+    name: 'Leihvertrag',
+    description: 'Unentgeltliche Überlassung von Gegenständen',
+    icon: 'Repeat',
+    category: 'personal',
+    parties: {
+      party1: { role: 'Verleiher', defaultName: '{{verleiher_name}}' },
+      party2: { role: 'Entleiher', defaultName: '{{entleiher_name}}' },
+    },
+    suggestedClauses: [
+      {
+        title: 'Leihgegenstand',
+        body: 'Der Verleiher überlässt dem Entleiher folgenden Gegenstand zur unentgeltlichen Nutzung: {{leihgegenstand}}. Zustand bei Übergabe: {{zustand_uebergabe}}.',
+      },
+      {
+        title: 'Leihdauer',
+        body: 'Die Leihe beginnt am {{leihbeginn}} und endet am {{leihende}}. {{verlaengerung}}',
+      },
+      {
+        title: 'Verwendungszweck',
+        body: 'Der Leihgegenstand darf ausschließlich zu folgendem Zweck verwendet werden: {{verwendungszweck}}.',
+      },
+      {
+        title: 'Sorgfaltspflicht',
+        body: 'Der Entleiher verpflichtet sich, den Leihgegenstand pfleglich zu behandeln und nur bestimmungsgemäß zu nutzen.',
+      },
+      {
+        title: 'Unterhaltung und Kosten',
+        body: 'Die gewöhnlichen Kosten der Erhaltung trägt {{kostentraeger}}. Außergewöhnliche Kosten sind vom Verleiher zu erstatten.',
+      },
+      {
+        title: 'Überlassung an Dritte',
+        body: 'Eine Überlassung des Leihgegenstands an Dritte ist {{drittnutzung}}.',
+      },
+      {
+        title: 'Haftung',
+        body: 'Der Entleiher haftet für Schäden, die durch unsachgemäße Nutzung entstehen. Bei Verlust ist der Zeitwert zu ersetzen.',
+      },
+      {
+        title: 'Rückgabe',
+        body: 'Der Leihgegenstand ist am Ende der Leihdauer in gleichem Zustand (abzüglich normaler Abnutzung) zurückzugeben.',
+      },
+    ],
+    defaultVariables: [
+      { name: 'verleiher_name', displayName: 'Verleiher', type: 'text', group: 'Parteien', required: true },
+      { name: 'entleiher_name', displayName: 'Entleiher', type: 'text', group: 'Parteien', required: true },
+      { name: 'leihgegenstand', displayName: 'Leihgegenstand', type: 'text', group: 'Gegenstand', required: true },
+      { name: 'zustand_uebergabe', displayName: 'Zustand bei Übergabe', type: 'text', group: 'Gegenstand' },
+      { name: 'leihbeginn', displayName: 'Leihbeginn', type: 'date', group: 'Leihdauer', required: true },
+      { name: 'leihende', displayName: 'Leihende', type: 'date', group: 'Leihdauer' },
+      { name: 'verlaengerung', displayName: 'Verlängerung', type: 'select', group: 'Leihdauer', options: ['Eine Verlängerung ist nach Absprache möglich.', 'Eine Verlängerung ist nicht möglich.', ''] },
+      { name: 'verwendungszweck', displayName: 'Verwendungszweck', type: 'text', group: 'Nutzung' },
+      { name: 'kostentraeger', displayName: 'Kostenträger', type: 'select', group: 'Kosten', options: ['der Entleiher', 'der Verleiher'] },
+      { name: 'drittnutzung', displayName: 'Überlassung an Dritte', type: 'select', group: 'Nutzung', options: ['nicht gestattet', 'nur mit Zustimmung gestattet', 'gestattet'] },
+    ],
+  },
+
+  // =============================================
+  // VOLLMACHT
+  // =============================================
+  {
+    id: 'vollmacht',
+    name: 'Vollmacht',
+    description: 'Bevollmächtigung zur Vertretung',
+    icon: 'Stamp',
+    category: 'personal',
+    parties: {
+      party1: { role: 'Vollmachtgeber', defaultName: '{{vollmachtgeber_name}}' },
+      party2: { role: 'Bevollmächtigter', defaultName: '{{bevollmaechtigter_name}}' },
+    },
+    suggestedClauses: [
+      {
+        title: 'Erteilung der Vollmacht',
+        body: 'Der Vollmachtgeber erteilt dem Bevollmächtigten hiermit Vollmacht, ihn in {{vollmachtsumfang}} zu vertreten.',
+      },
+      {
+        title: 'Umfang der Vollmacht',
+        body: 'Die Vollmacht berechtigt zu folgenden Rechtshandlungen: {{rechtshandlungen}}.',
+      },
+      {
+        title: 'Geltungsbereich',
+        body: 'Die Vollmacht gilt {{geltungsbereich}}.',
+      },
+      {
+        title: 'Geltungsdauer',
+        body: 'Die Vollmacht gilt {{geltungsdauer}}.',
+      },
+      {
+        title: 'Untervollmacht',
+        body: 'Die Erteilung einer Untervollmacht ist {{untervollmacht}}.',
+      },
+      {
+        title: 'Widerruf',
+        body: 'Die Vollmacht kann jederzeit ohne Angabe von Gründen widerrufen werden. Der Widerruf ist dem Bevollmächtigten schriftlich mitzuteilen.',
+      },
+      {
+        title: 'Haftung',
+        body: 'Der Bevollmächtigte haftet für Schäden, die durch vorsätzliche oder grob fahrlässige Pflichtverletzung entstehen.',
+      },
+    ],
+    defaultVariables: [
+      { name: 'vollmachtgeber_name', displayName: 'Vollmachtgeber', type: 'text', group: 'Parteien', required: true },
+      { name: 'vollmachtgeber_adresse', displayName: 'Adresse Vollmachtgeber', type: 'text', group: 'Parteien' },
+      { name: 'vollmachtgeber_geburtsdatum', displayName: 'Geburtsdatum Vollmachtgeber', type: 'date', group: 'Parteien' },
+      { name: 'bevollmaechtigter_name', displayName: 'Bevollmächtigter', type: 'text', group: 'Parteien', required: true },
+      { name: 'bevollmaechtigter_adresse', displayName: 'Adresse Bevollmächtigter', type: 'text', group: 'Parteien' },
+      { name: 'vollmachtsumfang', displayName: 'Umfang', type: 'select', group: 'Vollmacht', options: ['allen Angelegenheiten (Generalvollmacht)', 'bestimmten Angelegenheiten', 'Vermögensangelegenheiten', 'Gesundheitsangelegenheiten'], required: true },
+      { name: 'rechtshandlungen', displayName: 'Berechtigte Handlungen', type: 'text', group: 'Vollmacht' },
+      { name: 'geltungsbereich', displayName: 'Geltungsbereich', type: 'select', group: 'Geltung', options: ['gegenüber jedermann', 'nur gegenüber bestimmten Stellen', 'nur im Inland'] },
+      { name: 'geltungsdauer', displayName: 'Geltungsdauer', type: 'select', group: 'Geltung', options: ['unbefristet bis zum Widerruf', 'bis zum {{vollmacht_ende}}', 'für die Dauer des Projekts'] },
+      { name: 'vollmacht_ende', displayName: 'Ende der Vollmacht', type: 'date', group: 'Geltung' },
+      { name: 'untervollmacht', displayName: 'Untervollmacht', type: 'select', group: 'Rechte', options: ['gestattet', 'nicht gestattet'] },
+    ],
+  },
 ];
 
 // Helper: Get template by ID
