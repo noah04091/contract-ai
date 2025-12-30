@@ -76,7 +76,7 @@ const blockCategories = [
 
 export const BlockToolbar: React.FC<BlockToolbarProps> = ({ className }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandedCategory, setExpandedCategory] = useState<string | null>('Inhalt');
+  const [expandedCategory, setExpandedCategory] = useState<string | null>('Struktur');
   const [showAiModal, setShowAiModal] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
