@@ -39,6 +39,9 @@ const Footer: React.FC = () => {
                 <li><Link to="/features/legalpulse">Legal Pulse</Link></li>
                 <li><Link to="/features/vertragsverwaltung">Vertragsverwaltung</Link></li>
                 <li><Link to="/features/digitalesignatur">Digitale Signatur</Link></li>
+                <li><Link to="/features/email-upload">E-Mail Upload</Link></li>
+                <li><Link to="/features/contract-builder">Contract Builder</Link></li>
+                <li><Link to="/features/legal-lens">Legal Lens</Link></li>
               </ul>
             </div>
             

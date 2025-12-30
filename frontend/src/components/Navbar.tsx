@@ -58,7 +58,14 @@ const featureCategories = [
     title: "Erstellung & Signatur",
     features: [
       { name: "Vertragsgenerator", description: "Verträge mit KI erstellen", icon: "📝", path: "/features/generator" },
+      { name: "Contract Builder", description: "Verträge per Drag & Drop bauen", icon: "🔧", path: "/features/contract-builder" },
       { name: "Digitale Signatur", description: "Rechtsgültig digital unterschreiben", icon: "✍️", path: "/features/digitalesignatur" },
+    ]
+  },
+  {
+    title: "Verständnis & Einblick",
+    features: [
+      { name: "Legal Lens", description: "Klauseln anklicken und verstehen", icon: "🔍", path: "/features/legal-lens" },
     ]
   }
 ];
