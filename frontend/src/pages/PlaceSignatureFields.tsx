@@ -1,7 +1,7 @@
 // 📝 PlaceSignatureFields.tsx - Feld-Platzierung für bestehende Envelopes
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send, Loader, ExternalLink, HelpCircle, X, Save, Check } from 'lucide-react';
+import { ArrowLeft, Send, Loader, ExternalLink, HelpCircle, X } from 'lucide-react';
 import PDFFieldPlacementEditor, { SignatureField, Signer } from '../components/PDFFieldPlacementEditor';
 import styles from '../styles/PlaceSignatureFields.module.css';
 
@@ -30,12 +30,6 @@ export default function PlaceSignatureFields() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState(false);
-
-  // Template saving
-  const [showSaveTemplate, setShowSaveTemplate] = useState(false);
-  const [templateName, setTemplateName] = useState('');
-  const [templateDescription, setTemplateDescription] = useState('');
-  const [savingTemplate, setSavingTemplate] = useState(false);
 
   // Signer Colors (optimized for maximum contrast between first 2 colors)
   const SIGNER_COLORS = [
@@ -120,54 +114,6 @@ export default function PlaceSignatureFields() {
   const handleFieldsChange = useCallback((newFields: SignatureField[]) => {
     setFields(newFields);
   }, []);
-
-  // Save as template
-  const handleSaveAsTemplate = async () => {
-    if (!envelope || !envelopeId || fields.length === 0) {
-      alert('Bitte platzieren Sie zuerst mindestens ein Feld.');
-      return;
-    }
-
-    if (!templateName.trim()) {
-      alert('Bitte geben Sie einen Namen für die Vorlage ein.');
-      return;
-    }
-
-    setSavingTemplate(true);
-
-    try {
-      const token = localStorage.getItem('token');
-
-      const response = await fetch(`/api/envelope-templates/from-envelope/${envelopeId}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          name: templateName.trim(),
-          description: templateDescription.trim()
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Fehler beim Speichern der Vorlage');
-      }
-
-      alert(`Vorlage "${templateName}" wurde erfolgreich gespeichert!`);
-      setShowSaveTemplate(false);
-      setTemplateName('');
-      setTemplateDescription('');
-    } catch (err) {
-      console.error('Error saving template:', err);
-      alert(`Fehler: ${err instanceof Error ? err.message : 'Unbekannter Fehler'}`);
-    } finally {
-      setSavingTemplate(false);
-    }
-  };
 
   // Save fields and send invitations
   const handleSaveAndSend = async () => {
@@ -310,15 +256,6 @@ export default function PlaceSignatureFields() {
         </button>
 
         <button
-          className={styles.iconButton}
-          onClick={() => setShowSaveTemplate(true)}
-          disabled={fields.length === 0}
-          title="Als Vorlage speichern"
-        >
-          <Save size={18} />
-        </button>
-
-        <button
           className={styles.sendButton}
           onClick={handleSaveAndSend}
           disabled={saving || fields.length === 0}
@@ -359,109 +296,6 @@ export default function PlaceSignatureFields() {
               <li>Jeder Unterzeichner braucht mindestens ein Signaturfeld</li>
               <li>Tippen Sie auf "Speichern & Absenden" zum Versenden</li>
             </ul>
-          </div>
-        </div>
-      )}
-
-      {/* Save Template Modal */}
-      {showSaveTemplate && (
-        <div className={styles.helpOverlay} onClick={() => setShowSaveTemplate(false)}>
-          <div className={styles.helpModal} onClick={e => e.stopPropagation()}>
-            <div className={styles.helpHeader}>
-              <h3>Als Vorlage speichern</h3>
-              <button
-                className={styles.helpCloseBtn}
-                onClick={() => setShowSaveTemplate(false)}
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <div style={{ padding: '1rem' }}>
-              <p style={{ marginBottom: '1rem', color: '#64748b', fontSize: '0.9rem' }}>
-                Speichern Sie diese Feld-Konfiguration als Vorlage für zukünftige Signaturanfragen.
-              </p>
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>
-                  Vorlagenname *
-                </label>
-                <input
-                  type="text"
-                  value={templateName}
-                  onChange={(e) => setTemplateName(e.target.value)}
-                  placeholder="z.B. Arbeitsvertrag Standard"
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    fontSize: '1rem'
-                  }}
-                />
-              </div>
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>
-                  Beschreibung (optional)
-                </label>
-                <textarea
-                  value={templateDescription}
-                  onChange={(e) => setTemplateDescription(e.target.value)}
-                  placeholder="Kurze Beschreibung der Vorlage..."
-                  rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    fontSize: '1rem',
-                    resize: 'vertical'
-                  }}
-                />
-              </div>
-              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-                <button
-                  onClick={() => setShowSaveTemplate(false)}
-                  style={{
-                    padding: '0.75rem 1.5rem',
-                    background: '#f1f5f9',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontWeight: 500
-                  }}
-                >
-                  Abbrechen
-                </button>
-                <button
-                  onClick={handleSaveAsTemplate}
-                  disabled={savingTemplate || !templateName.trim()}
-                  style={{
-                    padding: '0.75rem 1.5rem',
-                    background: '#3B82F6',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontWeight: 500,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    opacity: savingTemplate || !templateName.trim() ? 0.6 : 1
-                  }}
-                >
-                  {savingTemplate ? (
-                    <>
-                      <Loader size={16} className={styles.spinner} />
-                      Speichern...
-                    </>
-                  ) : (
-                    <>
-                      <Check size={16} />
-                      Vorlage speichern
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       )}
