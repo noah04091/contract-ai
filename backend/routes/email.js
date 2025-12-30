@@ -446,7 +446,7 @@ router.post("/test", async (req, res) => {
           <tr>
             <td style="padding: 32px 40px 40px 40px;">
               <h1 style="margin: 0 0 8px 0; font-size: 24px; color: #0f172a; font-weight: 700; line-height: 1.3;">
-                Kuendigungsfrist in 14 Tagen
+                Kündigungsfrist in 14 Tagen
               </h1>
               <p style="margin: 0 0 28px 0; font-size: 15px; color: #64748b;">
                 Telekom Mobilfunk
@@ -454,7 +454,7 @@ router.post("/test", async (req, res) => {
 
               <p style="margin: 0 0 28px 0; font-size: 15px; line-height: 1.7; color: #334155;">
                 Hallo,<br><br>
-                dein Vertrag kann bald gekuendigt werden. Hier sind die wichtigen Details auf einen Blick:
+                dein Vertrag kann bald gekündigt werden. Hier sind die wichtigen Details auf einen Blick:
               </p>
 
               <!-- Info Box mit linkem Akzent -->
@@ -467,14 +467,14 @@ router.post("/test", async (req, res) => {
                           <table width="100%" cellpadding="0" cellspacing="0">
                             <tr>
                               <td style="padding-bottom: 16px;">
-                                <p style="margin: 0 0 2px 0; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Kuendigungsfrist</p>
+                                <p style="margin: 0 0 2px 0; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Kündigungsfrist</p>
                                 <p style="margin: 0; font-size: 17px; color: #0f172a; font-weight: 600;">3 Monate zum Vertragsende</p>
                               </td>
                             </tr>
                             <tr>
                               <td style="border-top: 1px solid #e2e8f0; padding-top: 16px;">
                                 <p style="margin: 0 0 2px 0; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Vertragsende</p>
-                                <p style="margin: 0; font-size: 17px; color: #0f172a; font-weight: 600;">31. Maerz 2025</p>
+                                <p style="margin: 0; font-size: 17px; color: #0f172a; font-weight: 600;">31. März 2025</p>
                               </td>
                             </tr>
                           </table>
@@ -486,7 +486,7 @@ router.post("/test", async (req, res) => {
               </table>
 
               <p style="margin: 0 0 32px 0; font-size: 14px; line-height: 1.6; color: #64748b;">
-                Ohne Kuendigung verlaengert sich der Vertrag automatisch um weitere 12 Monate.
+                Ohne Kündigung verlängert sich der Vertrag automatisch um weitere 12 Monate.
               </p>
 
               <!-- Button -->
@@ -542,7 +542,7 @@ router.post("/test", async (req, res) => {
       await transporter.sendMail({
         from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
         to: email,
-        subject: "Erinnerung: Telekom Mobilfunk - Kuendigungsfrist in 14 Tagen",
+        subject: "Erinnerung: Telekom Mobilfunk - Kündigungsfrist in 14 Tagen",
         html: clean3Html
       });
       return res.json({
