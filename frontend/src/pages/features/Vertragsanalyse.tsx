@@ -62,7 +62,7 @@ const Vertragsanalyse: React.FC = () => {
         <meta property="og:description" content="🔍 KI analysiert Ihren Vertrag in 60 Sekunden → Chancen-Risiken-Score, kritische Klauseln, Handlungsempfehlungen. Jetzt kostenlos testen!" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.contract-ai.de/features/vertragsanalyse" />
-        <meta property="og:image" content="https://www.contract-ai.de/og-vertragsanalyse.png" />
+        <meta property="og:image" content="https://www.contract-ai.de/og/og-vertragsanalyse.png" />
         <meta property="og:locale" content="de_DE" />
         <meta property="og:site_name" content="Contract AI" />
 
@@ -70,7 +70,7 @@ const Vertragsanalyse: React.FC = () => {
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Vertragsanalyse mit KI - Versteckte Risiken in 60 Sekunden aufdecken" />
         <meta name="twitter:description" content="KI analysiert Ihren Vertrag in 60 Sekunden. Chancen-Risiken-Score, kritische Klauseln, Handlungsempfehlungen." />
-        <meta name="twitter:image" content="https://www.contract-ai.de/og-vertragsanalyse.png" />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og/og-vertragsanalyse.png" />
 
         {/* Schema.org FAQ Data */}
         <script type="application/ld+json">

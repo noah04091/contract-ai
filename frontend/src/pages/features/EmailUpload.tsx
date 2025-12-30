@@ -62,7 +62,7 @@ const EmailUpload: React.FC = () => {
         <meta property="og:description" content="Verträge per E-Mail hochladen – vollautomatisch! Einfach weiterleiten, automatisch verarbeitet und sicher gespeichert." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.contract-ai.de/features/email-upload" />
-        <meta property="og:image" content="https://www.contract-ai.de/og-email-upload.png" />
+        <meta property="og:image" content="https://www.contract-ai.de/og/og-email-upload.png" />
         <meta property="og:locale" content="de_DE" />
         <meta property="og:site_name" content="Contract AI" />
 
@@ -70,7 +70,7 @@ const EmailUpload: React.FC = () => {
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Automatischer E-Mail-Upload - Verträge per E-Mail hochladen" />
         <meta name="twitter:description" content="Verträge per E-Mail hochladen – vollautomatisch! Einfach weiterleiten, sicher gespeichert." />
-        <meta name="twitter:image" content="https://www.contract-ai.de/og-email-upload.png" />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og/og-email-upload.png" />
 
         {/* Schema.org FAQ Data */}
         <script type="application/ld+json">

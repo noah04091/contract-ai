@@ -31,7 +31,7 @@ const Generator: React.FC = () => {
         <meta property="og:description" content="Neue Verträge aus Bausteinen erstellen. Individuell anpassbar, rechtssicher, sofort einsatzbereit." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.contract-ai.de/features/generator" />
-        <meta property="og:image" content="https://www.contract-ai.de/og-generator.png" />
+        <meta property="og:image" content="https://www.contract-ai.de/og/og-generator.png" />
         <meta property="og:locale" content="de_DE" />
         <meta property="og:site_name" content="Contract AI" />
 
@@ -39,7 +39,7 @@ const Generator: React.FC = () => {
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Vertragsgenerator mit KI - Neue Verträge in Minuten erstellen" />
         <meta name="twitter:description" content="Neue Verträge aus Bausteinen erstellen. Individuell anpassbar, rechtssicher." />
-        <meta name="twitter:image" content="https://www.contract-ai.de/og-generator.png" />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og/og-generator.png" />
       </Helmet>
 
       <div className={styles.pageBackground}>

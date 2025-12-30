@@ -1,0 +1,50 @@
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e3a5f"/>
+      <stop offset="100%" style="stop-color:#0f172a"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#3B82F6"/>
+      <stop offset="100%" style="stop-color:#60a5fa"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Accent bar -->
+  <rect x="0" y="0" width="1200" height="6" fill="url(#accent)"/>
+
+  <!-- Pattern decoration -->
+  <g opacity="0.05">
+    <circle cx="1100" cy="100" r="200" fill="#3B82F6"/>
+    <circle cx="100" cy="530" r="150" fill="#3B82F6"/>
+  </g>
+
+  <!-- Logo area -->
+  <text x="80" y="100" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="600" fill="#3B82F6">Contract AI</text>
+
+  <!-- Main title -->
+  <text x="80" y="280" font-family="system-ui, -apple-system, sans-serif" font-size="64" font-weight="700" fill="#ffffff">Vertragsanalyse mit KI</text>
+
+  <!-- Subtitle -->
+  <text x="80" y="360" font-family="system-ui, -apple-system, sans-serif" font-size="32" fill="#94a3b8">Versteckte Risiken in 60 Sekunden aufdecken</text>
+
+  <!-- Features -->
+  <g font-family="system-ui, -apple-system, sans-serif" font-size="22" fill="#64748b">
+    <text x="80" y="460">Chancen-Risiken-Score</text>
+    <text x="80" y="500">Kritische Klauseln erkennen</text>
+    <text x="80" y="540">Handlungsempfehlungen</text>
+  </g>
+
+  <!-- Checkmarks -->
+  <g fill="#3B82F6">
+    <circle cx="60" cy="453" r="8"/>
+    <circle cx="60" cy="493" r="8"/>
+    <circle cx="60" cy="533" r="8"/>
+  </g>
+
+  <!-- Website -->
+  <text x="1120" y="590" font-family="system-ui, -apple-system, sans-serif" font-size="18" fill="#64748b" text-anchor="end">www.contract-ai.de</text>
+</svg>

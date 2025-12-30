@@ -62,7 +62,7 @@ const Optimierung: React.FC = () => {
         <meta property="og:description" content="🔧 KI findet problematische Klauseln und schlägt sofort bessere Formulierungen vor → Faire Verträge, verhandlungsfertig. Jetzt kostenlos testen!" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.contract-ai.de/features/optimierung" />
-        <meta property="og:image" content="https://www.contract-ai.de/og-optimierung.png" />
+        <meta property="og:image" content="https://www.contract-ai.de/og/og-optimierung.png" />
         <meta property="og:locale" content="de_DE" />
         <meta property="og:site_name" content="Contract AI" />
 
@@ -70,7 +70,7 @@ const Optimierung: React.FC = () => {
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Vertragsoptimierung mit KI - Schwache Klauseln automatisch verbessern" />
         <meta name="twitter:description" content="KI findet problematische Klauseln und schlägt sofort bessere Formulierungen vor. Faire Verträge, verhandlungsfertig." />
-        <meta name="twitter:image" content="https://www.contract-ai.de/og-optimierung.png" />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og/og-optimierung.png" />
 
         {/* Schema.org FAQ Data */}
         <script type="application/ld+json">

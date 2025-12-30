@@ -31,7 +31,7 @@ const Vergleich: React.FC = () => {
         <meta property="og:description" content="KI-basierter Vertragsvergleich mit Diff-Ansicht, Fairness-Score und klarer Empfehlung." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.contract-ai.de/features/vergleich" />
-        <meta property="og:image" content="https://www.contract-ai.de/og-vergleich.png" />
+        <meta property="og:image" content="https://www.contract-ai.de/og/og-vergleich.png" />
         <meta property="og:locale" content="de_DE" />
         <meta property="og:site_name" content="Contract AI" />
 
@@ -39,7 +39,7 @@ const Vergleich: React.FC = () => {
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Vertragsvergleich mit KI - Zwei Verträge intelligent vergleichen" />
         <meta name="twitter:description" content="KI-basierter Vertragsvergleich mit Diff-Ansicht, Fairness-Score und klarer Empfehlung." />
-        <meta name="twitter:image" content="https://www.contract-ai.de/og-vergleich.png" />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og/og-vergleich.png" />
       </Helmet>
 
       <div className={styles.pageBackground}>

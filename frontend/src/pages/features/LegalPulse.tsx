@@ -31,7 +31,7 @@ const LegalPulse: React.FC = () => {
         <meta property="og:description" content="Regelmäßige Checks, Risiko-Alerts, konkrete Empfehlungen für Ihre Verträge." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.contract-ai.de/features/legalpulse" />
-        <meta property="og:image" content="https://www.contract-ai.de/og-legalpulse.png" />
+        <meta property="og:image" content="https://www.contract-ai.de/og/og-legalpulse.png" />
         <meta property="og:locale" content="de_DE" />
         <meta property="og:site_name" content="Contract AI" />
 
@@ -39,7 +39,7 @@ const LegalPulse: React.FC = () => {
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Legal Pulse - Frühwarnsystem für Vertragsrisiken" />
         <meta name="twitter:description" content="Regelmäßige Checks, Risiko-Alerts, konkrete Empfehlungen für Ihre Verträge." />
-        <meta name="twitter:image" content="https://www.contract-ai.de/og-legalpulse.png" />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og/og-legalpulse.png" />
       </Helmet>
 
       <div className={styles.pageBackground}>

@@ -86,7 +86,7 @@ const ContractBuilder: React.FC = () => {
         <meta property="og:description" content="Erstellen Sie professionelle Verträge per Drag & Drop. Smart Variables, KI-Unterstützung, PDF-Export. Jetzt kostenlos testen!" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.contract-ai.de/features/contract-builder" />
-        <meta property="og:image" content="https://www.contract-ai.de/og-contract-builder.png" />
+        <meta property="og:image" content="https://www.contract-ai.de/og/og-contract-builder.png" />
         <meta property="og:locale" content="de_DE" />
         <meta property="og:site_name" content="Contract AI" />
 
@@ -94,7 +94,7 @@ const ContractBuilder: React.FC = () => {
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Contract Builder - Verträge visuell erstellen mit Drag & Drop" />
         <meta name="twitter:description" content="Erstellen Sie professionelle Verträge per Drag & Drop. Smart Variables, KI-Unterstützung, PDF-Export." />
-        <meta name="twitter:image" content="https://www.contract-ai.de/og-contract-builder.png" />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og/og-contract-builder.png" />
 
         {/* Schema.org FAQ Data */}
         <script type="application/ld+json">

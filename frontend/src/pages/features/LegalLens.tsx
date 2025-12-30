@@ -86,7 +86,7 @@ const LegalLens: React.FC = () => {
         <meta property="og:description" content="Klicken Sie auf jede Klausel und verstehen Sie sofort, was sie bedeutet. Risikobewertung, Erklärungen, Verhandlungstipps." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.contract-ai.de/features/legal-lens" />
-        <meta property="og:image" content="https://www.contract-ai.de/og-legal-lens.png" />
+        <meta property="og:image" content="https://www.contract-ai.de/og/og-legal-lens.png" />
         <meta property="og:locale" content="de_DE" />
         <meta property="og:site_name" content="Contract AI" />
 
@@ -94,7 +94,7 @@ const LegalLens: React.FC = () => {
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Legal Lens - Vertragsklauseln verstehen mit einem Klick" />
         <meta name="twitter:description" content="Klicken Sie auf jede Klausel und verstehen Sie sofort, was sie bedeutet. Risikobewertung, Erklärungen, Verhandlungstipps." />
-        <meta name="twitter:image" content="https://www.contract-ai.de/og-legal-lens.png" />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og/og-legal-lens.png" />
 
         {/* Schema.org FAQ Data */}
         <script type="application/ld+json">

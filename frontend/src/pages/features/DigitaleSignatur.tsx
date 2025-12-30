@@ -62,7 +62,7 @@ const DigitaleSignatur: React.FC = () => {
         <meta property="og:description" content="Verträge rechtssicher digital signieren lassen. E-Mail, Tracking, Audit Trail. eIDAS-konform. Jetzt testen!" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.contract-ai.de/features/digitalesignatur" />
-        <meta property="og:image" content="https://www.contract-ai.de/og-digitalesignatur.png" />
+        <meta property="og:image" content="https://www.contract-ai.de/og/og-digitalesignatur.png" />
         <meta property="og:locale" content="de_DE" />
         <meta property="og:site_name" content="Contract AI" />
 
@@ -70,7 +70,7 @@ const DigitaleSignatur: React.FC = () => {
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Digitale Signatur - Verträge rechtssicher online signieren" />
         <meta name="twitter:description" content="Verträge rechtssicher digital signieren. E-Mail, Tracking, Audit Trail. eIDAS-konform." />
-        <meta name="twitter:image" content="https://www.contract-ai.de/og-digitalesignatur.png" />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og/og-digitalesignatur.png" />
 
         {/* Schema.org FAQ Data */}
         <script type="application/ld+json">

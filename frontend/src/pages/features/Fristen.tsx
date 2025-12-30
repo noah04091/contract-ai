@@ -31,7 +31,7 @@ const Fristen: React.FC = () => {
         <meta property="og:description" content="KI erkennt Fristen automatisch, erinnert rechtzeitig per E-Mail. DSGVO-konform, Server in Frankfurt." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.contract-ai.de/features/fristen" />
-        <meta property="og:image" content="https://www.contract-ai.de/og-fristen.png" />
+        <meta property="og:image" content="https://www.contract-ai.de/og/og-fristen.png" />
         <meta property="og:locale" content="de_DE" />
         <meta property="og:site_name" content="Contract AI" />
 
@@ -39,7 +39,7 @@ const Fristen: React.FC = () => {
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Fristenkalender mit KI - Nie wieder Kündigungsfristen verpassen" />
         <meta name="twitter:description" content="KI erkennt Fristen automatisch, erinnert rechtzeitig per E-Mail. DSGVO-konform." />
-        <meta name="twitter:image" content="https://www.contract-ai.de/og-fristen.png" />
+        <meta name="twitter:image" content="https://www.contract-ai.de/og/og-fristen.png" />
       </Helmet>
 
       <div className={styles.pageBackground}>
