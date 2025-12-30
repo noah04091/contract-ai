@@ -1689,7 +1689,7 @@ const connectDB = async () => {
               await transporter.sendMail({
                 from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
                 to: user.email,
-                subject: "🎁 Wie gefällt dir Contract AI? Wir freuen uns auf dein Feedback!",
+                subject: "Contract AI - Dein Feedback ist gefragt",
                 html: reminderHtml,
               });
 
@@ -1793,7 +1793,7 @@ const connectDB = async () => {
               await transporter.sendMail({
                 from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
                 to: user.email,
-                subject: "💬 Kurze Frage: Wie findest du Contract AI bisher?",
+                subject: "Contract AI - Kurze Frage an dich",
                 html: secondReminderHtml,
               });
 

@@ -2882,7 +2882,7 @@ router.post("/email-import", verifyEmailImportKey, async (req, res) => {
           await emailTransporter.sendMail({
             from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
             to: user.email,
-            subject: "⚠️ Email-Upload Limit erreicht - Jetzt upgraden",
+            subject: "Contract AI - Upload-Limit erreicht",
             html: emailHtml
           });
 
@@ -3098,7 +3098,7 @@ router.post("/email-import", verifyEmailImportKey, async (req, res) => {
         await emailTransporter.sendMail({
           from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
           to: user.email,
-          subject: `✅ ${successCount} ${successCount === 1 ? 'Vertrag' : 'Verträge'} erfolgreich importiert`,
+          subject: `Contract AI - ${successCount} ${successCount === 1 ? 'Vertrag' : 'Vertraege'} importiert`,
           html: successEmailHtml
         });
 
@@ -3141,7 +3141,7 @@ router.post("/email-import", verifyEmailImportKey, async (req, res) => {
         await emailTransporter.sendMail({
           from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
           to: user.email,
-          subject: `⚠️ Email-Import fehlgeschlagen: ${errors.length} ${errors.length === 1 ? 'Datei' : 'Dateien'}`,
+          subject: `Contract AI - Import-Status`,
           html: errorEmailHtml
         });
 

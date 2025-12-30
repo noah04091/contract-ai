@@ -2133,14 +2133,17 @@ const HomeRedesign = () => {
                 <div className="footer-column">
                   <h4>Funktionen</h4>
                   <ul>
-                    <li><Link to="/contracts">Vertragsanalyse</Link></li>
-                    <li><Link to="/optimizer">Optimierung</Link></li>
-                    <li><Link to="/calendar">Fristen</Link></li>
-                    <li><Link to="/compare">Vergleich</Link></li>
-                    <li><Link to="/generate">Generator</Link></li>
-                    <li><Link to="/legalpulse">Legal Pulse</Link></li>
-                    <li><Link to="/features/digitalesignatur">Digitale Signatur</Link></li>
+                    <li><Link to="/features/vertragsanalyse">Vertragsanalyse</Link></li>
+                    <li><Link to="/features/optimierung">Optimierung</Link></li>
+                    <li><Link to="/features/fristen">Fristen</Link></li>
+                    <li><Link to="/features/vergleich">Vergleich</Link></li>
+                    <li><Link to="/features/generator">Generator</Link></li>
+                    <li><Link to="/features/legalpulse">Legal Pulse</Link></li>
                     <li><Link to="/features/vertragsverwaltung">Vertragsverwaltung</Link></li>
+                    <li><Link to="/features/digitalesignatur">Digitale Signatur</Link></li>
+                    <li><Link to="/features/email-upload">E-Mail Upload</Link></li>
+                    <li><Link to="/features/contract-builder">Contract Builder</Link></li>
+                    <li><Link to="/features/legal-lens">Legal Lens</Link></li>
                   </ul>
                 </div>
                 

@@ -128,63 +128,63 @@ async function queueEventNotification(event, db) {
 
   switch (event.type) {
     case "CANCEL_WINDOW_OPEN":
-      subject = `Kuendigungsfenster offen: ${event.metadata.contractName}`;
+      subject = `${event.metadata.contractName} - Vertragsinformation`;
       emailContent = generateCancelWindowEmail(event, actionToken, baseUrl);
       ctaButtons = [
-        { text: "Jetzt kuendigen", url: `${baseUrl}/cancel/${event.contractId}?token=${actionToken}&action=cancel`, style: "primary" },
-        { text: "Alternativen pruefen", url: `${baseUrl}/compare?contractId=${event.contractId}`, style: "secondary" }
+        { text: "Vertrag ansehen", url: `${baseUrl}/cancel/${event.contractId}?token=${actionToken}&action=cancel`, style: "primary" },
+        { text: "Alternativen ansehen", url: `${baseUrl}/compare?contractId=${event.contractId}`, style: "secondary" }
       ];
       break;
 
     case "LAST_CANCEL_DAY":
-      subject = `Erinnerung: ${event.metadata.contractName} - Kündigungsfrist endet heute`;
+      subject = `${event.metadata.contractName} - Frist heute`;
       emailContent = generateLastCancelDayEmail(event, actionToken, baseUrl);
       ctaButtons = [
-        { text: "Jetzt kündigen", url: `${baseUrl}/cancel/${event.contractId}?token=${actionToken}&action=cancel&urgent=true`, style: "urgent" }
+        { text: "Vertrag ansehen", url: `${baseUrl}/cancel/${event.contractId}?token=${actionToken}&action=cancel`, style: "primary" }
       ];
       break;
 
     case "CANCEL_WARNING":
-      subject = `Nur noch ${event.metadata.daysLeft} Tage: ${event.metadata.contractName}`;
+      subject = `${event.metadata.contractName} - Frist in ${event.metadata.daysLeft} Tagen`;
       emailContent = generateCancelWarningEmail(event, actionToken, baseUrl);
       ctaButtons = [
-        { text: "Zur Kuendigung", url: `${baseUrl}/cancel/${event.contractId}?token=${actionToken}&action=cancel`, style: "warning" },
+        { text: "Vertrag ansehen", url: `${baseUrl}/cancel/${event.contractId}?token=${actionToken}&action=cancel`, style: "primary" },
         { text: "Optimieren", url: `${baseUrl}/optimize/${event.contractId}`, style: "secondary" }
       ];
       break;
 
     case "PRICE_INCREASE":
-      subject = `Preiserhoehung: ${event.metadata.contractName}`;
+      subject = `${event.metadata.contractName} - Preisanpassung`;
       emailContent = generatePriceIncreaseEmail(event, actionToken, baseUrl);
       ctaButtons = [
-        { text: "Guenstigere Angebote finden", url: `${baseUrl}/compare?contractId=${event.contractId}&reason=price_increase`, style: "primary" },
-        { text: "Kuendigung vorbereiten", url: `${baseUrl}/cancel/${event.contractId}?token=${actionToken}`, style: "secondary" }
+        { text: "Angebote vergleichen", url: `${baseUrl}/compare?contractId=${event.contractId}&reason=price_increase`, style: "primary" },
+        { text: "Vertrag ansehen", url: `${baseUrl}/cancel/${event.contractId}?token=${actionToken}`, style: "secondary" }
       ];
       break;
 
     case "AUTO_RENEWAL":
-      subject = `Automatische Verlaengerung: ${event.metadata.contractName}`;
+      subject = `${event.metadata.contractName} - Vertragsverlaengerung`;
       emailContent = generateAutoRenewalEmail(event, actionToken, baseUrl);
       ctaButtons = [
-        { text: "Verlaengerung stoppen", url: `${baseUrl}/cancel/${event.contractId}?token=${actionToken}&action=cancel`, style: "warning" },
-        { text: "Vertrag prüfen", url: `${baseUrl}/contracts?view=${event.contractId}`, style: "secondary" }
+        { text: "Details ansehen", url: `${baseUrl}/cancel/${event.contractId}?token=${actionToken}&action=cancel`, style: "primary" },
+        { text: "Vertrag ansehen", url: `${baseUrl}/contracts?view=${event.contractId}`, style: "secondary" }
       ];
       break;
 
     case "REVIEW":
-      subject = `Zeit fuer einen Check: ${event.metadata.contractName}`;
+      subject = `${event.metadata.contractName} - Vertragsinfo`;
       emailContent = generateReviewEmail(event, actionToken, baseUrl);
       ctaButtons = [
-        { text: "Jetzt optimieren", url: `${baseUrl}/optimize/${event.contractId}`, style: "primary" },
-        { text: "Markt vergleichen", url: `${baseUrl}/compare?contractId=${event.contractId}`, style: "secondary" }
+        { text: "Optimieren", url: `${baseUrl}/optimize/${event.contractId}`, style: "primary" },
+        { text: "Vergleichen", url: `${baseUrl}/compare?contractId=${event.contractId}`, style: "secondary" }
       ];
       break;
 
     default:
-      subject = `Vertragserinnerung: ${event.title}`;
+      subject = `${event.metadata?.contractName || event.title} - Vertragsinformation`;
       emailContent = generateGenericEmail(event, actionToken, baseUrl);
       ctaButtons = [
-        { text: "Details anzeigen", url: `${baseUrl}/contracts?view=${event.contractId}`, style: "primary" }
+        { text: "Details ansehen", url: `${baseUrl}/contracts?view=${event.contractId}`, style: "primary" }
       ];
   }
 

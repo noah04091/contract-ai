@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Calendar, Clock, User, Share2, Twitter, Linkedin, Link2, ArrowRight } from 'lucide-react';
 import { Helmet } from "react-helmet-async";
 import styles from '../styles/BlogPost.module.css';
+import Footer from '../components/Footer';
 
 // ✅ Import der zentralen Artikel-Daten
 import { articles, getArticleBySlug } from '../data/articlesData';
@@ -405,6 +406,9 @@ const BlogPost: React.FC<BlogPostProps> = ({ article }) => {
             </button>
           </div>
         </section>
+
+        {/* Footer */}
+        <Footer />
       </div>
     </>
   );

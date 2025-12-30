@@ -150,7 +150,7 @@ class PulseNotificationService {
       const mailOptions = {
         from: `"Legal Pulse" <${process.env.EMAIL_USER}>`,
         to: user.email,
-        subject: `🔔 ${notification.title}`,
+        subject: `Legal Pulse - ${notification.title}`,
         html: emailHtml
       };
 

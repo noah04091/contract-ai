@@ -248,7 +248,7 @@ async function handleStripeEvent(event) {
         try {
           await sendEmail({
             to: customerEmail,
-            subject: `💳 Zahlungsbestätigung - Vielen Dank für Ihren Einkauf!`,
+            subject: `Contract AI - Zahlungsbestaetigung`,
             html: paymentTemplate({
               amount,
               date: paidAt,
@@ -411,7 +411,7 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
       try {
         await sendEmail({
           to: email,
-          subject: "✅ Dein Abo ist aktiv – Willkommen bei Contract AI!",
+          subject: "Willkommen bei Contract AI",
           html: generateEmailTemplate({
             title: "Willkommen bei Contract AI!",
             body: `
@@ -514,7 +514,7 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
 
     await sendEmail({
       to: email,
-      subject: "✅ Deine Abo-Rechnung bei Contract AI",
+      subject: "Contract AI - Deine Rechnung",
       html: generateEmailTemplate({
         title: "Deine Rechnung",
         body: `
@@ -570,7 +570,7 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
 
     await sendEmail({
       to: user.email,
-      subject: "❌ Dein Abo wurde gekündigt",
+      subject: "Contract AI - Abo-Status",
       html: generateEmailTemplate({
         title: "Abo gekündigt",
         body: `
@@ -597,7 +597,7 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
 
     await sendEmail({
       to: email,
-      subject: "⚠️ Zahlung fehlgeschlagen",
+      subject: "Contract AI - Zahlung pruefen",
       html: generateEmailTemplate({
         title: "Zahlung fehlgeschlagen",
         body: `

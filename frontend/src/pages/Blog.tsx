@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Helmet } from "react-helmet-async";
 import { Search, Calendar, Clock, ArrowRight, Sparkles, Mail, TrendingUp } from 'lucide-react';
 import styles from '../styles/Blog.module.css';
+import Footer from '../components/Footer';
 
 // ✅ Import der zentralen Artikel-Daten
 import { getArticlesByCategory, searchArticles, Article, articles } from '../data/articlesData';
@@ -365,6 +366,9 @@ const Blog: React.FC = () => {
             </button>
           </div>
         </section>
+
+        {/* Footer */}
+        <Footer />
       </div>
     </>
   );

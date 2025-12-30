@@ -394,7 +394,7 @@ async function sendCancellationCopy(customerEmail, contractName, provider, lette
   await transporter.sendMail({
     from: `"Contract AI" <${process.env.EMAIL_USER}>`,
     to: customerEmail,
-    subject: `✅ Kündigungsbestätigung: ${contractName}`,
+    subject: `${contractName} - Kuendigung bestaetigt`,
     html: htmlContent
   });
 }

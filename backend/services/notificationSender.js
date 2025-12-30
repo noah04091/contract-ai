@@ -292,7 +292,7 @@ async function sendGroupedEmail(userEmail, contractDetails) {
   await transporter.sendMail({
     from: `"Contract AI" <${process.env.EMAIL_USER}>`,
     to: userEmail,
-    subject: `📊 ${contractDetails.length} wichtige Vertrags-Updates`,
+    subject: `Deine Vertraege - ${contractDetails.length} Updates`,
     html: htmlContent
   });
 }

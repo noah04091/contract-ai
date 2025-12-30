@@ -37,11 +37,11 @@ async function createDigestEmail(db, userId, events, user) {
   // Betreffzeile basierend auf Inhalt (ohne CAPS, ohne aggressive Sprache)
   let subject = "";
   if (critical.length > 0) {
-    subject = `Deine Vertrags-Zusammenfassung: ${critical.length} dringende Frist${critical.length > 1 ? "en" : ""} + ${warning.length + info.length} weitere`;
+    subject = `Deine Vertraege - ${critical.length + warning.length + info.length} Updates`;
   } else if (warning.length > 0) {
-    subject = `Deine Vertrags-Zusammenfassung: ${warning.length} Erinnerung${warning.length > 1 ? "en" : ""} + ${info.length} weitere`;
+    subject = `Deine Vertraege - ${warning.length + info.length} Updates`;
   } else {
-    subject = `Deine Vertrags-Zusammenfassung: ${info.length} Erinnerung${info.length > 1 ? "en" : ""}`;
+    subject = `Deine Vertraege - ${info.length} Update${info.length > 1 ? "s" : ""}`;
   }
 
   // Zur Queue hinzufuegen
