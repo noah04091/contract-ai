@@ -3,7 +3,7 @@
 
 const nodemailer = require("nodemailer");
 const { ObjectId } = require("mongodb");
-const generateEmailTemplate = require("../utils/emailTemplate");
+const { generateEmailTemplate } = require("../utils/emailTemplate");
 const { queueEmail, processEmailQueue } = require("./emailRetryService");
 
 /**

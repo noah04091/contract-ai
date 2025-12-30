@@ -1,7 +1,5 @@
 // 📁 backend/utils/emailTemplate.js
-// ✅ V5 Design - Clean, Modern, Professional + DSGVO-konformer Unsubscribe
-
-const logoUrl = 'https://www.contract-ai.de/logo.png';
+// ✅ V6 Design - Clean3 Style (Spam-sicher + Professionell)
 
 // Import Unsubscribe-Service (optional, fuer dynamische URLs)
 let generateUnsubscribeUrl;
@@ -20,75 +18,96 @@ function generateEmailTemplate({
   cta = null,
   recipientEmail = null,
   emailCategory = 'calendar',
-  unsubscribeUrl = null
+  unsubscribeUrl = null,
+  badge = 'Erinnerung'
 }) {
   // Generiere dynamische Unsubscribe-URL wenn E-Mail bekannt
   const actualUnsubscribeUrl = unsubscribeUrl ||
     (recipientEmail ? generateUnsubscribeUrl(recipientEmail, emailCategory) : 'https://www.contract-ai.de/abmelden');
 
+  // CTA Button HTML
   const ctaHtml = cta ? `
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-      <tr>
-        <td style="text-align: center; padding: 10px 0 30px 0;">
-          <a href="${cta.url}"
-             style="display: inline-block;
-                    background-color: #0066ff;
-                    color: #ffffff !important;
-                    padding: 17px 52px;
-                    border-radius: 14px;
-                    font-size: 16px;
-                    font-weight: 600;
-                    text-decoration: none;">
-            <span style="color: #ffffff !important;">${cta.text}</span>
-          </a>
-        </td>
-      </tr>
-    </table>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 28px;">
+                <tr>
+                  <td>
+                    <a href="${cta.url}" style="display: inline-block; padding: 14px 32px; background-color: #3b82f6; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px;">${cta.text}</a>
+                  </td>
+                </tr>
+              </table>
+  ` : '';
+
+  // Unsubscribe Footer (DSGVO-konform)
+  const unsubscribeHtml = recipientEmail ? `
+              <!-- Unsubscribe -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
+                <tr>
+                  <td style="text-align: center;">
+                    <p style="margin: 0; font-size: 11px; color: #9ca3af;">
+                      Diese E-Mail wurde an ${recipientEmail} gesendet.<br>
+                      <a href="${actualUnsubscribeUrl}" style="color: #6b7280; text-decoration: underline;">Von Benachrichtigungen abmelden</a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
   ` : '';
 
   return `<!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>${title}</title>
-  <style>
-    @media screen and (max-width: 600px) {
-      .email-container { width: 100% !important; }
-      .content-padding { padding: 30px 25px !important; }
-      .header-padding { padding: 35px 25px 25px 25px !important; }
-      .footer-padding { padding: 20px 25px !important; }
-    }
-  </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f8f9fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+<body style="margin: 0; padding: 0; background-color: #f0f4f8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;">
 
   <!-- Preheader -->
-  <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;">${preheader}</div>
+  <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;">${preheader || title}</div>
 
-  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f4f8; padding: 40px 20px;">
     <tr>
-      <td style="padding: 50px 20px;">
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; overflow: hidden;">
 
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="560" align="center" class="email-container" style="max-width: 560px; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);">
-
-          <!-- Header mit Logo -->
+          <!-- Blauer Akzent-Streifen oben -->
           <tr>
-            <td class="header-padding" style="padding: 45px 50px 35px 50px; text-align: center; border-bottom: 1px solid #f0f0f0;">
-              <img src="${logoUrl}" alt="Contract AI" width="220" style="display: block; margin: 0 auto; max-width: 220px; height: auto;">
+            <td style="height: 4px; background-color: #3b82f6;"></td>
+          </tr>
+
+          <!-- Header mit Logo-Text und Badge -->
+          <tr>
+            <td style="padding: 28px 40px 24px 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <span style="font-size: 22px; font-weight: 700; color: #1e293b; letter-spacing: -0.5px;">Contract AI</span>
+                  </td>
+                  <td align="right">
+                    <span style="display: inline-block; padding: 6px 12px; background-color: #dbeafe; color: #1d4ed8; font-size: 11px; font-weight: 600; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;">${badge}</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Trennlinie -->
+          <tr>
+            <td style="padding: 0 40px;">
+              <div style="height: 1px; background-color: #e5e7eb;"></div>
             </td>
           </tr>
 
           <!-- Main Content -->
           <tr>
-            <td class="content-padding" style="padding: 45px 50px 50px 50px;">
+            <td style="padding: 32px 40px 40px 40px;">
 
-              <h1 style="margin: 0 0 20px 0; font-size: 26px; font-weight: 700; color: #1a1a1a; text-align: center; line-height: 1.35; letter-spacing: -0.5px;">
+              <!-- Titel -->
+              <h1 style="margin: 0 0 8px 0; font-size: 22px; font-weight: 700; color: #1e293b; line-height: 1.3;">
                 ${title}
               </h1>
 
-              <div style="font-size: 16px; color: #555555; line-height: 1.7;">
+              <!-- Body Content -->
+              <div style="font-size: 15px; color: #4b5563; line-height: 1.6; margin-top: 16px;">
                 ${body}
               </div>
 
@@ -99,29 +118,27 @@ function generateEmailTemplate({
 
           <!-- Footer -->
           <tr>
-            <td class="footer-padding" style="background-color: #fafafa; padding: 28px 50px; text-align: center; border-top: 1px solid #f0f0f0;">
-              <p style="margin: 0 0 8px 0; font-size: 13px; color: #999999;">
-                © ${new Date().getFullYear()} Contract AI. Alle Rechte vorbehalten.
-              </p>
-              <p style="margin: 0 0 12px 0; font-size: 12px;">
-                <a href="https://www.contract-ai.de/datenschutz" style="color: #888888; text-decoration: none;">Datenschutz</a>
-                <span style="color: #cccccc; margin: 0 8px;">|</span>
-                <a href="https://www.contract-ai.de/impressum" style="color: #888888; text-decoration: none;">Impressum</a>
-                <span style="color: #cccccc; margin: 0 8px;">|</span>
-                <a href="https://www.contract-ai.de/agb" style="color: #888888; text-decoration: none;">AGB</a>
-              </p>
-              <!-- DSGVO Unsubscribe Link - TEMPORÄR DEAKTIVIERT zum Spam-Debug -->
-              <!--
-              <p style="margin: 0; padding-top: 12px; border-top: 1px solid #e8e8e8; font-size: 11px; color: #aaaaaa;">
-                ${recipientEmail ? 'Diese E-Mail wurde an <strong>' + recipientEmail + '</strong> gesendet.<br>' : ''}
-                <a href="${actualUnsubscribeUrl}" style="color: #888888; text-decoration: underline;">Von E-Mail-Benachrichtigungen abmelden</a>
-              </p>
-              -->
+            <td style="padding: 24px 40px 28px 40px; background-color: #f8fafc; border-top: 1px solid #e5e7eb;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 4px 0; font-size: 14px; font-weight: 600; color: #1e293b;">Contract AI</p>
+                    <p style="margin: 0 0 12px 0; font-size: 13px; color: #6b7280;">Intelligentes Vertragsmanagement</p>
+                    <p style="margin: 0; font-size: 12px;">
+                      <a href="https://www.contract-ai.de" style="color: #3b82f6; text-decoration: none;">Website</a>
+                      <span style="color: #d1d5db; margin: 0 8px;">|</span>
+                      <a href="https://www.contract-ai.de/datenschutz" style="color: #6b7280; text-decoration: none;">Datenschutz</a>
+                      <span style="color: #d1d5db; margin: 0 8px;">|</span>
+                      <a href="https://www.contract-ai.de/impressum" style="color: #6b7280; text-decoration: none;">Impressum</a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              ${unsubscribeHtml}
             </td>
           </tr>
 
         </table>
-
       </td>
     </tr>
   </table>
@@ -130,4 +147,48 @@ function generateEmailTemplate({
 </html>`;
 }
 
-module.exports = generateEmailTemplate;
+/**
+ * Generiert eine Info-Box mit linkem blauen Akzent
+ * Nutzbar im body-Parameter
+ */
+function generateInfoBox(items) {
+  if (!items || items.length === 0) return '';
+
+  const itemsHtml = items.map(item => `
+                    <tr>
+                      <td style="padding: 12px 0; border-bottom: 1px solid #e5e7eb;">
+                        <p style="margin: 0 0 2px 0; font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">${item.label}</p>
+                        <p style="margin: 0; font-size: 16px; font-weight: 600; color: #1e293b;">${item.value}</p>
+                      </td>
+                    </tr>
+  `).join('');
+
+  return `
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
+                <tr>
+                  <td style="background-color: #f8fafc; border-radius: 8px; border-left: 3px solid #3b82f6; padding: 4px 20px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      ${itemsHtml}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+  `;
+}
+
+/**
+ * Generiert eine Warnung/Hinweis-Box
+ */
+function generateWarningText(text) {
+  return `
+              <p style="margin: 20px 0 0 0; padding: 12px 16px; background-color: #fef3c7; border-radius: 6px; font-size: 13px; color: #92400e;">
+                ⚠️ ${text}
+              </p>
+  `;
+}
+
+module.exports = {
+  generateEmailTemplate,
+  generateInfoBox,
+  generateWarningText
+};

@@ -3,7 +3,7 @@
 
 const { ObjectId } = require("mongodb");
 const { queueEmail } = require("./emailRetryService");
-const generateEmailTemplate = require("../utils/emailTemplate");
+const { generateEmailTemplate } = require("../utils/emailTemplate");
 const { generateUnsubscribeUrl } = require("./emailUnsubscribeService");
 
 /**
