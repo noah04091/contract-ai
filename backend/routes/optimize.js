@@ -3682,8 +3682,17 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
     
     // 🚀 STAGE 6: Anreicherung mit generierten professionellen Klauseln
     let enhancedIssueCount = 0;
-    
+
+    // 🆕 v2.0 DECISION-FIRST: Skip gap-based issues if GPT says "no optimization needed"
+    const skipGapIssues = normalizedResult.assessment?.optimizationNeeded === false;
+    if (skipGapIssues) {
+      console.log(`🎯 [${requestId}] DECISION-FIRST: Skipping ${gapAnalysis.gaps.length} gap-based issues (assessment.optimizationNeeded = false)`);
+    }
+
     gapAnalysis.gaps.forEach(gap => {
+      // 🆕 v2.0: Respektiere Assessment - wenn optimizationNeeded=false, keine Gap-Issues hinzufügen
+      if (skipGapIssues) return;
+
       if (gap.type === 'missing_clause' && generatedClauses[gap.clause]) {
         const categoryTag = getCategoryForClause(gap.clause);
         let category = normalizedResult.categories.find(c => c.tag === categoryTag);
@@ -3737,11 +3746,26 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
     normalizedResult = applyUltimateQualityLayer(normalizedResult, requestId, contractTypeInfo.type);
 
     // 🔥 STAGE 6.7: TOP-UP-PASS - Garantiere Minimum 6-8 Findings
-    console.log(`🎯 [${requestId}] Checking if Top-Up needed...`);
-    normalizedResult = await topUpFindingsIfNeeded(normalizedResult, contractText, contractTypeInfo.type, openai, requestId);
+    // 🆕 v2.0 DECISION-FIRST: Skip Top-Up if assessment says no optimization needed
+    if (normalizedResult.assessment?.optimizationNeeded === false) {
+      console.log(`🎯 [${requestId}] DECISION-FIRST: Skipping Top-Up (assessment.optimizationNeeded = false)`);
+    } else {
+      console.log(`🎯 [${requestId}] Checking if Top-Up needed...`);
+      normalizedResult = await topUpFindingsIfNeeded(normalizedResult, contractText, contractTypeInfo.type, openai, requestId);
+    }
 
     // 🚀 STAGE 7: Finale Health-Score-Berechnung
-    const healthScore = calculateHealthScore(gapAnalysis.gaps, normalizedResult.categories.flatMap(c => c.issues));
+    // 🆕 v2.0 DECISION-FIRST: Bei optimizationNeeded=false, hoher Score
+    let healthScore;
+    if (normalizedResult.assessment?.optimizationNeeded === false) {
+      // Professioneller Vertrag ohne nötige Optimierungen → Hoher Score
+      const issueCount = normalizedResult.categories.flatMap(c => c.issues).length;
+      healthScore = issueCount === 0 ? 98 : Math.max(85, 95 - issueCount * 2);
+      console.log(`🎯 [${requestId}] DECISION-FIRST: High score ${healthScore} (optimizationNeeded=false, ${issueCount} issues)`);
+    } else {
+      // Normaler Score-Algorithmus
+      healthScore = calculateHealthScore(gapAnalysis.gaps, normalizedResult.categories.flatMap(c => c.issues));
+    }
     normalizedResult.score.health = healthScore;
     
     // 🚀 STAGE 8: Metadaten-Anreicherung
