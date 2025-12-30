@@ -67,6 +67,8 @@ const LegalPulsePage = lazy(() => import("./pages/features/LegalPulse"));
 const Vertragsverwaltung = lazy(() => import("./pages/features/Vertragsverwaltung"));
 const DigitaleSignatur = lazy(() => import("./pages/features/DigitaleSignatur"));
 const EmailUpload = lazy(() => import("./pages/features/EmailUpload"));
+const ContractBuilderFeature = lazy(() => import("./pages/features/ContractBuilder"));
+const LegalLensFeature = lazy(() => import("./pages/features/LegalLens"));
 
 // 🔒 Geschützte Seiten - Lazy Loading
 const Dashboard = lazy(() => import("./pages/DashboardV2")); // ✅ Neues Premium Dashboard
@@ -192,6 +194,8 @@ function AppWithLoader() {
             <Route path="/features/vertragsverwaltung" element={<Vertragsverwaltung />} />
             <Route path="/features/digitalesignatur" element={<DigitaleSignatur />} />
             <Route path="/features/email-upload" element={<EmailUpload />} />
+            <Route path="/features/contract-builder" element={<ContractBuilderFeature />} />
+            <Route path="/features/legal-lens" element={<LegalLensFeature />} />
 
             {/* 🔄 SEO Redirects für alte/falsche URLs (301 Redirects) */}
             <Route path="/features/legal-pulse" element={<Navigate to="/features/legalpulse" replace />} />
