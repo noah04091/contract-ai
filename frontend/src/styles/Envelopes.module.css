@@ -186,6 +186,27 @@
   box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
 }
 
+/* Cancelled Tab - Roter Akzent */
+.filterTabCancelled {
+  color: #ef4444;
+}
+
+.filterTabCancelled:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.filterTabCancelled.filterTabActive {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border-color: #ef4444;
+  color: white;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.filterTabCancelled.filterTabActive:hover {
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+}
+
 /* ===== SECTION ===== */
 .section {
   background: white;
@@ -2166,6 +2187,20 @@
   background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   border-color: #2563eb;
   box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+}
+
+/* Danger Quick Action (für Endgültig löschen) */
+.quickActionDanger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border-color: #ef4444;
+  color: white;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+}
+
+.quickActionDanger:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  border-color: #dc2626;
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
 }
 
 /* ===== MODAL OVERLAY (für QR-Code, Edit, etc.) ===== */

@@ -537,7 +537,14 @@ router.get("/envelopes", verifyToken, async (req, res) => {
       archived: true
     });
 
-    console.log(`✅ Loaded ${envelopes.length} envelopes (total: ${total}, archived: ${archivedCount})`);
+    // Count voided (cancelled) envelopes for the "Storniert" tab
+    const voidedCount = await Envelope.countDocuments({
+      ownerId: req.user.userId,
+      status: "VOIDED",
+      archived: { $ne: true }
+    });
+
+    console.log(`✅ Loaded ${envelopes.length} envelopes (total: ${total}, archived: ${archivedCount}, voided: ${voidedCount})`);
 
     res.json({
       success: true,
@@ -562,7 +569,8 @@ router.get("/envelopes", verifyToken, async (req, res) => {
         offset: parseInt(offset),
         hasMore: parseInt(offset) + envelopes.length < total
       },
-      archivedCount // For showing/hiding archive tab
+      archivedCount, // For showing/hiding archive tab
+      voidedCount // For showing/hiding "Storniert" tab
     });
 
   } catch (error) {
@@ -1316,7 +1324,8 @@ router.post("/envelopes/unarchive", verifyToken, async (req, res) => {
 });
 
 /**
- * DELETE /api/envelopes/bulk - Permanently delete multiple envelopes (only archived ones)
+ * DELETE /api/envelopes/bulk - Permanently delete multiple envelopes
+ * Safety: Only archived OR voided envelopes can be deleted
  */
 router.delete("/envelopes/bulk", verifyToken, async (req, res) => {
   try {
@@ -1331,11 +1340,14 @@ router.delete("/envelopes/bulk", verifyToken, async (req, res) => {
 
     console.log(`🗑️ Deleting ${envelopeIds.length} envelopes for user: ${req.user.userId}`);
 
-    // Only allow deletion of archived envelopes
+    // Safety: Only allow deletion of archived OR voided envelopes
     const result = await Envelope.deleteMany({
       _id: { $in: envelopeIds },
       ownerId: req.user.userId,
-      archived: true // Safety: only delete archived envelopes
+      $or: [
+        { archived: true },
+        { status: "VOIDED" }
+      ]
     });
 
     console.log(`✅ Deleted ${result.deletedCount} envelopes`);

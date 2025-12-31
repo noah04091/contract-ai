@@ -80,7 +80,7 @@ interface Envelope {
   archivedAt?: string;
 }
 
-type FilterTab = "all" | "open" | "completed" | "archived";
+type FilterTab = "all" | "open" | "completed" | "cancelled" | "archived";
 
 export default function Envelopes() {
   const navigate = useNavigate();
@@ -109,6 +109,7 @@ export default function Envelopes() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [archivedCount, setArchivedCount] = useState(0);
+  const [voidedCount, setVoidedCount] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [offset, setOffset] = useState(0);
@@ -240,6 +241,7 @@ export default function Envelopes() {
       setOffset(newOffset);
       setHasMore(data.pagination?.hasMore || false);
       setArchivedCount(data.archivedCount || 0);
+      setVoidedCount(data.voidedCount || 0);
       setLastUpdated(new Date());
 
       // Update selected envelope if it's currently open
@@ -276,9 +278,12 @@ export default function Envelopes() {
   const filteredEnvelopes = envelopes.filter(env => {
     // Archived is handled by API, so if activeFilter is "archived", show all returned envelopes
     if (activeFilter === "archived") return true;
-    if (activeFilter === "all") return true;
+    // "Alle" zeigt KEINE stornierten (VOIDED) Envelopes
+    if (activeFilter === "all") return env.status !== "VOIDED";
     if (activeFilter === "open") return env.status !== "COMPLETED" && env.status !== "VOIDED";
     if (activeFilter === "completed") return env.status === "COMPLETED";
+    // "Storniert" Tab zeigt NUR VOIDED Envelopes
+    if (activeFilter === "cancelled") return env.status === "VOIDED";
     return true;
   });
 
@@ -441,6 +446,45 @@ export default function Envelopes() {
 
           toast.success("Signaturanfrage storniert");
           loadEnvelopes(); // Reload list
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : "Unbekannter Fehler";
+          toast.error(`Fehler: ${errorMessage}`);
+        }
+        setConfirmDialog(null);
+      }
+    });
+  };
+
+  // Hard delete (endgültig löschen) - nur für VOIDED envelopes
+  const handleHardDelete = (envelopeId: string, envelopeTitle: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: "Endgültig löschen?",
+      message: `Möchten Sie "${envelopeTitle}" wirklich endgültig löschen? Diese Aktion kann nicht rückgängig gemacht werden.`,
+      confirmText: "Endgültig löschen",
+      confirmStyle: "danger",
+      onConfirm: async () => {
+        try {
+          const token = localStorage.getItem("token");
+
+          const response = await fetch("/api/envelopes/bulk", {
+            method: "DELETE",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json"
+            },
+            credentials: "include",
+            body: JSON.stringify({ envelopeIds: [envelopeId] })
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || "Fehler beim Löschen");
+          }
+
+          toast.success("Signaturanfrage endgültig gelöscht");
+          loadEnvelopes(true, 0); // Reload list
         } catch (err) {
           const errorMessage = err instanceof Error ? err.message : "Unbekannter Fehler";
           toast.error(`Fehler: ${errorMessage}`);
@@ -1268,6 +1312,16 @@ export default function Envelopes() {
                 <CheckCircle size={16} />
                 <span>Abgeschlossen</span>
               </button>
+              {/* Storniert Tab - nur anzeigen wenn stornierte Envelopes existieren */}
+              {voidedCount > 0 && (
+                <button
+                  className={`${styles.filterTab} ${styles.filterTabCancelled} ${activeFilter === "cancelled" ? styles.filterTabActive : ""}`}
+                  onClick={() => { setActiveFilter("cancelled"); setSelectedEnvelopeIds([]); }}
+                >
+                  <XCircle size={16} />
+                  <span>Storniert ({voidedCount})</span>
+                </button>
+              )}
               {/* Archive Tab - nur anzeigen wenn archivierte Envelopes existieren */}
               {archivedCount > 0 && (
                 <button
@@ -1981,6 +2035,20 @@ export default function Envelopes() {
                                     <Trash2 size={14} />
                                   </button>
                                 </>
+                              ) : envelope.status === "VOIDED" ? (
+                                <>
+                                  {/* Storniert: Endgültig löschen */}
+                                  <button
+                                    className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleHardDelete(envelope._id, envelope.title);
+                                    }}
+                                    title="Endgültig löschen"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </>
                               ) : (
                                 <>
                                   {/* Ausstehend: Link-Buttons für PENDING signers */}
@@ -2117,6 +2185,17 @@ export default function Envelopes() {
                       >
                         <Edit size={20} />
                         <span>Weiter bearbeiten</span>
+                      </button>
+                    )}
+                    {/* Endgültig löschen - nur bei Stornierten */}
+                    {selectedEnvelope.status === "VOIDED" && (
+                      <button
+                        className={`${styles.quickActionBtn} ${styles.quickActionDanger}`}
+                        onClick={() => handleHardDelete(selectedEnvelope._id, selectedEnvelope.title)}
+                        title="Endgültig löschen"
+                      >
+                        <Trash2 size={20} />
+                        <span>Endgültig löschen</span>
                       </button>
                     )}
                     <button
