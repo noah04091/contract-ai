@@ -187,7 +187,7 @@ Basiere deine Analyse auf typischen Risiken für diese Art von Vertrag.`;
 
     try {
       const response = await this.openai.chat.completions.create({
-        model: "gpt-4",
+        model: "gpt-4o-mini", // Cost-optimized: 95% günstiger als GPT-4
         messages: [
           {
             role: "system",
@@ -257,7 +257,7 @@ ${this.prompts.riskAnalysis}`;
 
     try {
       const response = await this.openai.chat.completions.create({
-        model: "gpt-4",
+        model: "gpt-4o-mini", // Cost-optimized: 95% günstiger als GPT-4
         messages: [
           {
             role: "system",

@@ -351,6 +351,38 @@ class LegalPulseMonitor {
         return false;
       }
 
+      // 🚫 COST OPTIMIZATION: Skip test accounts
+      const EXCLUDED_EMAILS = ['noahboa13@web.de'];
+      if (EXCLUDED_EMAILS.includes(user.email?.toLowerCase())) {
+        console.log(`   ⏭️  Skipping test account: ${user.email}`);
+        return false;
+      }
+
+      // 🚫 COST OPTIMIZATION: Load contract and check if active + not too old
+      const contractsCollection = this.db.collection("contracts");
+      const fullContract = await contractsCollection.findOne({
+        _id: new ObjectId(contract.contractId)
+      });
+
+      if (fullContract) {
+        // Skip inactive contracts (Abgelaufen, Gekündigt, Beendet, etc.)
+        const INACTIVE_STATUSES = ['Abgelaufen', 'Gekündigt', 'Beendet', 'Storniert', 'Archiviert'];
+        if (INACTIVE_STATUSES.includes(fullContract.status)) {
+          console.log(`   ⏭️  Skipping inactive contract: ${contract.contractName} (Status: ${fullContract.status})`);
+          return false;
+        }
+
+        // Skip contracts older than 5 years
+        const contractDate = fullContract.uploadedAt || fullContract.createdAt;
+        if (contractDate) {
+          const ageInYears = (Date.now() - new Date(contractDate).getTime()) / (1000 * 60 * 60 * 24 * 365);
+          if (ageInYears > 5) {
+            console.log(`   ⏭️  Skipping old contract: ${contract.contractName} (${ageInYears.toFixed(1)} years old)`);
+            return false;
+          }
+        }
+      }
+
       // 🆕 Check user's Legal Pulse settings
       const settings = user.legalPulseSettings || {
         enabled: true,

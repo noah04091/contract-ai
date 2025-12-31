@@ -45,17 +45,34 @@ class AutoTriggerService {
         };
       }
 
-      // 2. Get all active contracts
+      // 2. Get all active contracts (with cost optimization filters)
       const client = new MongoClient(process.env.MONGO_URI);
       await client.connect();
+
+      // 🚫 COST OPTIMIZATION: Get excluded user IDs
+      const excludedUsers = await client.db('contract_ai')
+        .collection('users')
+        .find({ email: { $in: ['noahboa13@web.de'] } })
+        .project({ _id: 1 })
+        .toArray();
+      const excludedUserIds = excludedUsers.map(u => u._id);
+
+      // Calculate 5 years ago
+      const fiveYearsAgo = new Date();
+      fiveYearsAgo.setFullYear(fiveYearsAgo.getFullYear() - 5);
 
       const contracts = await client.db('contract_ai')
         .collection('contracts')
         .find({
-          // Only active contracts
+          // Only active contracts (exclude inactive statuses)
+          status: { $nin: ['Abgelaufen', 'Gekündigt', 'Beendet', 'Storniert', 'Archiviert'] },
+          // Exclude test accounts
+          userId: { $nin: excludedUserIds },
+          // Only contracts from last 5 years
           $or: [
-            { status: { $ne: 'Abgelaufen' } },
-            { status: { $exists: false } }
+            { uploadedAt: { $gte: fiveYearsAgo } },
+            { createdAt: { $gte: fiveYearsAgo } },
+            { uploadedAt: { $exists: false }, createdAt: { $exists: false } }
           ]
         })
         .toArray();
