@@ -47,7 +47,7 @@ import {
   CheckCircle,
   TrendingUp,
 } from 'lucide-react';
-import { createUserTemplate } from '../services/userTemplatesAPI';
+import { createUserTemplate, UserTemplate } from '../services/userTemplatesAPI';
 import styles from '../styles/ContractBuilder.module.css';
 
 type RightPanel = 'properties' | 'variables' | null;
@@ -272,6 +272,54 @@ const ContractBuilder: React.FC = () => {
       setShowTypeSelector(false);
     } catch (err) {
       console.error('Fehler beim Laden des Entwurfs:', err);
+    }
+  };
+
+  // Handler für User-Vorlage auswählen
+  const handleSelectUserTemplate = async (template: UserTemplate) => {
+    try {
+      // Neues Dokument aus der Vorlage erstellen
+      const templateData = template.defaultValues as {
+        blocks?: Block[];
+        design?: typeof currentDocument extends { design: infer D } ? D : never;
+        variables?: typeof currentDocument extends { content: { variables: infer V } } ? V : never;
+        metadata?: { contractType?: string };
+      };
+
+      // Erst ein neues Dokument erstellen
+      await createDocument(
+        template.name,
+        templateData.metadata?.contractType || template.contractType || 'individuell'
+      );
+
+      // Dann mit Template-Daten füllen
+      // Die Blöcke werden vom createDocument erstellt, wir müssen sie durch die Template-Blöcke ersetzen
+      if (templateData.blocks && templateData.blocks.length > 0) {
+        // Bestehende Blöcke löschen und Template-Blöcke hinzufügen
+        const store = useContractBuilderStore.getState();
+        const currentBlocks = store.document?.content.blocks || [];
+
+        // Alle bestehenden Blöcke löschen
+        currentBlocks.forEach(block => {
+          store.deleteBlock(block.id);
+        });
+
+        // Template-Blöcke hinzufügen
+        templateData.blocks.forEach((block, index) => {
+          store.addBlock({
+            type: block.type,
+            content: block.content,
+            style: block.style || {},
+            locked: block.locked || false,
+            aiGenerated: block.aiGenerated || false,
+          }, index);
+        });
+      }
+
+      setShowTypeSelector(false);
+    } catch (err) {
+      console.error('Fehler beim Laden der Vorlage:', err);
+      alert('Fehler beim Laden der Vorlage');
     }
   };
 
@@ -2056,6 +2104,7 @@ const ContractBuilder: React.FC = () => {
           }
         }}
         onSelect={handleTemplateSelect}
+        onSelectUserTemplate={handleSelectUserTemplate}
         savedDrafts={savedDrafts}
         isLoadingDrafts={isLoadingDrafts}
         onLoadDraft={handleLoadDraft}

@@ -2,7 +2,7 @@
  * ContractTypeSelector - Modal zur Auswahl des Vertragstyps
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Briefcase,
   Handshake,
@@ -29,8 +29,10 @@ import {
   Trash2,
   Copy,
   MoreVertical,
+  Star,
 } from 'lucide-react';
 import { contractTemplates, templateCategories, ContractTemplate } from '../../data/contractTemplates';
+import { fetchUserTemplates, deleteUserTemplate, UserTemplate } from '../../services/userTemplatesAPI';
 import styles from './ContractTypeSelector.module.css';
 
 interface SavedDraft {
@@ -48,6 +50,7 @@ interface ContractTypeSelectorProps {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (templateId: string) => void;
+  onSelectUserTemplate?: (template: UserTemplate) => void;
   savedDrafts?: SavedDraft[];
   isLoadingDrafts?: boolean;
   onLoadDraft?: (draftId: string) => void;
@@ -78,6 +81,7 @@ export const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
   isOpen,
   onClose,
   onSelect,
+  onSelectUserTemplate,
   savedDrafts = [],
   isLoadingDrafts = false,
   onLoadDraft,
@@ -89,7 +93,42 @@ export const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [hoveredTemplate, setHoveredTemplate] = useState<ContractTemplate | null>(null);
   const [showDrafts, setShowDrafts] = useState(false);
+  const [showUserTemplates, setShowUserTemplates] = useState(false);
   const [activeDraftMenu, setActiveDraftMenu] = useState<string | null>(null);
+  const [activeUserTemplateMenu, setActiveUserTemplateMenu] = useState<string | null>(null);
+  const [userTemplates, setUserTemplates] = useState<UserTemplate[]>([]);
+  const [isLoadingUserTemplates, setIsLoadingUserTemplates] = useState(false);
+
+  // Fetch user templates when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      loadUserTemplates();
+    }
+  }, [isOpen]);
+
+  const loadUserTemplates = async () => {
+    setIsLoadingUserTemplates(true);
+    try {
+      const templates = await fetchUserTemplates();
+      setUserTemplates(templates);
+    } catch (error) {
+      console.error('Fehler beim Laden der Vorlagen:', error);
+    } finally {
+      setIsLoadingUserTemplates(false);
+    }
+  };
+
+  const handleDeleteUserTemplate = async (templateId: string) => {
+    if (!window.confirm('Vorlage wirklich löschen?')) return;
+    try {
+      await deleteUserTemplate(templateId);
+      setUserTemplates(prev => prev.filter(t => t.id !== templateId));
+      setActiveUserTemplateMenu(null);
+    } catch (error) {
+      console.error('Fehler beim Löschen:', error);
+      alert('Fehler beim Löschen der Vorlage');
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -152,10 +191,19 @@ export const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
           {savedDrafts.length > 0 && (
             <button
               className={`${styles.draftsToggle} ${showDrafts ? styles.active : ''}`}
-              onClick={() => setShowDrafts(!showDrafts)}
+              onClick={() => { setShowDrafts(!showDrafts); setShowUserTemplates(false); }}
             >
               <FolderOpen size={16} />
-              <span>Gespeicherte Entwürfe ({savedDrafts.length})</span>
+              <span>Entwürfe ({savedDrafts.length})</span>
+            </button>
+          )}
+          {(userTemplates.length > 0 || isLoadingUserTemplates) && (
+            <button
+              className={`${styles.draftsToggle} ${showUserTemplates ? styles.active : ''}`}
+              onClick={() => { setShowUserTemplates(!showUserTemplates); setShowDrafts(false); }}
+            >
+              <Star size={16} />
+              <span>Meine Vorlagen {userTemplates.length > 0 ? `(${userTemplates.length})` : ''}</span>
             </button>
           )}
         </div>
@@ -236,6 +284,81 @@ export const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
                               e.stopPropagation();
                               onDeleteDraft?.(draft._id);
                               setActiveDraftMenu(null);
+                            }}
+                          >
+                            <Trash2 size={14} />
+                            <span>Löschen</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* User Templates Section */}
+        {showUserTemplates && (
+          <div className={styles.draftsSection}>
+            <div className={styles.draftsHeader}>
+              <h3>Meine Vorlagen</h3>
+              <button className={styles.closeDrafts} onClick={() => setShowUserTemplates(false)}>
+                <X size={16} />
+              </button>
+            </div>
+            {isLoadingUserTemplates ? (
+              <div className={styles.draftsLoading}>
+                <Loader2 size={20} className={styles.spinner} />
+                <span>Lade Vorlagen...</span>
+              </div>
+            ) : userTemplates.length === 0 ? (
+              <div className={styles.draftsEmpty}>
+                <Star size={24} />
+                <span>Keine eigenen Vorlagen gespeichert</span>
+                <p style={{ fontSize: '12px', marginTop: '8px', color: '#9ca3af' }}>
+                  Erstellen Sie einen Vertrag und speichern Sie ihn als Vorlage
+                </p>
+              </div>
+            ) : (
+              <div className={styles.draftsList}>
+                {userTemplates.map((template) => (
+                  <div key={template.id} className={styles.draftCardWrapper}>
+                    <button
+                      className={styles.draftCard}
+                      onClick={() => onSelectUserTemplate?.(template)}
+                    >
+                      <div className={styles.draftInfo}>
+                        <span className={styles.draftName}>{template.name}</span>
+                        <span className={styles.draftMeta}>
+                          <Clock size={12} />
+                          {formatDate(template.createdAt)}
+                          {template.description && (
+                            <span className={styles.draftBlocks}>{template.description}</span>
+                          )}
+                        </span>
+                      </div>
+                      <ChevronRight size={18} className={styles.draftArrow} />
+                    </button>
+                    <div className={styles.draftActions}>
+                      <button
+                        className={styles.draftActionBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveUserTemplateMenu(activeUserTemplateMenu === template.id ? null : template.id);
+                        }}
+                        title="Aktionen"
+                      >
+                        <MoreVertical size={16} />
+                      </button>
+                      {activeUserTemplateMenu === template.id && (
+                        <div className={styles.draftMenu}>
+                          <button
+                            className={styles.dangerAction}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteUserTemplate(template.id);
                             }}
                           >
                             <Trash2 size={14} />

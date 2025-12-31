@@ -1957,6 +1957,30 @@ export default function Envelopes() {
                                     </button>
                                   )}
                                 </>
+                              ) : envelope.status === "DRAFT" ? (
+                                <>
+                                  {/* Entwurf: Bearbeiten-Button */}
+                                  <button
+                                    className={`${styles.actionBtn} ${styles.actionBtnPrimary}`}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      navigate(`/signature/place-fields/${envelope._id}`);
+                                    }}
+                                    title="Entwurf bearbeiten"
+                                  >
+                                    <Edit size={14} />
+                                  </button>
+                                  <button
+                                    className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleCancel(envelope._id, envelope.title);
+                                    }}
+                                    title="Entwurf löschen"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </>
                               ) : (
                                 <>
                                   {/* Ausstehend: Link-Buttons für PENDING signers */}
@@ -2084,6 +2108,17 @@ export default function Envelopes() {
                     Schnellaktionen
                   </h3>
                   <div className={styles.actionGrid}>
+                    {/* Weiter bearbeiten - nur bei Entwürfen */}
+                    {selectedEnvelope.status === "DRAFT" && (
+                      <button
+                        className={`${styles.quickActionBtn} ${styles.quickActionPrimary}`}
+                        onClick={() => navigate(`/signature/place-fields/${selectedEnvelope._id}`)}
+                        title="Entwurf weiter bearbeiten"
+                      >
+                        <Edit size={20} />
+                        <span>Weiter bearbeiten</span>
+                      </button>
+                    )}
                     <button
                       className={styles.quickActionBtn}
                       onClick={() => handleDownloadPDF(selectedEnvelope, false)}

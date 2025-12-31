@@ -538,6 +538,19 @@
   color: #dc2626;
 }
 
+.actionBtnPrimary {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+}
+
+.actionBtnPrimary:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: white;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
 /* ✅ ICON-ONLY BUTTONS - Garantiert eine Reihe */
 .actionBtnIcon {
   display: inline-flex;
@@ -2139,6 +2152,20 @@
 
 .quickActionBtn svg {
   flex-shrink: 0;
+}
+
+/* Primary Quick Action (für Entwurf bearbeiten) */
+.quickActionPrimary {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-color: #3b82f6;
+  color: white;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+}
+
+.quickActionPrimary:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  border-color: #2563eb;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
 }
 
 /* ===== MODAL OVERLAY (für QR-Code, Edit, etc.) ===== */
