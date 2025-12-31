@@ -1858,7 +1858,19 @@ const connectDB = async () => {
         }
       });
 
-      console.log("✅ Alle Cron Jobs aktiviert (inkl. Calendar Events, Beta Reminder, Admin Notifications & Verification Reminder)");
+      // 🗑️ AUTO-DELETE: Stornierte Envelopes nach 30 Tagen endgültig löschen (täglich um 4 Uhr nachts)
+      cron.schedule("0 4 * * *", async () => {
+        console.log("🗑️ [AUTO-DELETE] Starte Bereinigung alter stornierter Envelopes...");
+        try {
+          const { autoDeleteOldVoidedEnvelopes } = require("./services/cron");
+          const result = await autoDeleteOldVoidedEnvelopes();
+          console.log(`🗑️ [AUTO-DELETE] Ergebnis: ${result.deleted} Envelope(s) gelöscht`);
+        } catch (error) {
+          console.error("❌ [AUTO-DELETE] Cron Error:", error);
+        }
+      });
+
+      console.log("✅ Alle Cron Jobs aktiviert (inkl. Calendar Events, Beta Reminder, Admin Notifications, Verification Reminder & Auto-Delete)");
     } catch (err) {
       console.error("❌ Cron Jobs konnten nicht gestartet werden:", err);
     }

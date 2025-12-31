@@ -384,9 +384,138 @@ Impressum: https://www.contract-ai.de/impressum
   `.trim();
 }
 
+/**
+ * Generate HTML email for void notification (document cancelled)
+ * @param {Object} data - Email data
+ * @param {Object} data.signer - Signer info (name, email)
+ * @param {Object} data.envelope - Envelope info (title)
+ * @param {string} data.ownerEmail - Owner/sender email
+ * @param {string} data.voidReason - Reason for cancellation
+ * @param {Date} data.voidedAt - Cancellation date
+ * @returns {string} HTML email
+ */
+function generateVoidNotificationHTML(data) {
+  const { signer, envelope, ownerEmail, voidReason, voidedAt } = data;
+
+  const formattedDate = new Date(voidedAt).toLocaleString('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  const body = `
+    <p style="margin: 0 0 20px 0; text-align: center;">
+      Die Signaturanfrage wurde vom Absender storniert.
+    </p>
+
+    <!-- Cancel Badge -->
+    <div style="text-align: center; margin: 25px 0;">
+      <span style="display: inline-block; background-color: #fee2e2; color: #dc2626; padding: 8px 20px; border-radius: 20px; font-size: 14px; font-weight: 600;">
+        Storniert
+      </span>
+    </div>
+
+    <!-- Document Card -->
+    <div style="background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 20px; margin: 25px 0;">
+      <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">
+        ${envelope.title}
+      </p>
+      <p style="margin: 0; font-size: 14px; color: #666666;">
+        Absender: ${ownerEmail}
+      </p>
+      <p style="margin: 8px 0 0 0; font-size: 14px; color: #666666;">
+        Storniert am: ${formattedDate}
+      </p>
+    </div>
+
+    <!-- Reason Section -->
+    ${voidReason ? `
+    <div style="margin: 25px 0;">
+      <p style="margin: 0 0 8px 0; font-weight: 600; color: #1a1a1a;">
+        Grund der Stornierung:
+      </p>
+      <p style="margin: 0; padding: 12px 16px; background-color: #fef3c7; border-radius: 8px; font-size: 14px; color: #92400e;">
+        ${voidReason}
+      </p>
+    </div>
+    ` : ''}
+
+    <!-- Info Box -->
+    <div style="background-color: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin: 25px 0;">
+      <p style="margin: 0; font-size: 13px; color: #6b7280; line-height: 1.6;">
+        Der ursprüngliche Signatur-Link ist nicht mehr gültig.<br>
+        Falls Sie Fragen haben, wenden Sie sich bitte an: ${ownerEmail}
+      </p>
+    </div>
+  `;
+
+  return generateEmailTemplate({
+    title: `Signaturanfrage storniert`,
+    preheader: `Die Signaturanfrage für "${envelope.title}" wurde storniert`,
+    body: body
+  });
+}
+
+/**
+ * Generate plain text email for void notification (fallback)
+ */
+function generateVoidNotificationText(data) {
+  const { signer, envelope, ownerEmail, voidReason, voidedAt } = data;
+
+  const formattedDate = new Date(voidedAt).toLocaleString('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  return `
+Hallo ${signer.name},
+
+die Signaturanfrage wurde vom Absender storniert.
+
+═══════════════════════════════════════════════════
+
+DOKUMENT: ${envelope.title}
+ABSENDER: ${ownerEmail}
+STORNIERT AM: ${formattedDate}
+
+═══════════════════════════════════════════════════
+${voidReason ? `
+GRUND DER STORNIERUNG:
+
+${voidReason}
+
+═══════════════════════════════════════════════════
+` : ''}
+HINWEIS:
+
+Der ursprüngliche Signatur-Link ist nicht mehr gültig.
+Falls Sie Fragen haben, wenden Sie sich bitte an: ${ownerEmail}
+
+═══════════════════════════════════════════════════
+
+Mit freundlichen Grüßen
+Contract AI Signaturservice
+
+---
+Diese E-Mail wurde automatisch generiert.
+Bitte antworten Sie nicht auf diese E-Mail.
+
+Website: https://www.contract-ai.de
+Datenschutz: https://www.contract-ai.de/datenschutz
+Impressum: https://www.contract-ai.de/impressum
+  `.trim();
+}
+
 module.exports = {
   generateSignatureInvitationHTML,
   generateSignatureInvitationText,
   generateCompletionNotificationHTML,
-  generateCompletionNotificationText
+  generateCompletionNotificationText,
+  generateVoidNotificationHTML,
+  generateVoidNotificationText
 };

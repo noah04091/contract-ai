@@ -317,6 +317,10 @@ const envelopeSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  previousStatus: {
+    type: String,
+    default: null // Status vor dem Stornieren (für Wiederherstellen)
+  },
   internalNote: {
     type: String,
     default: null,

@@ -7,8 +7,9 @@ const rateLimit = require("express-rate-limit");
 const verifyToken = require("../middleware/verifyToken");
 const sendEmail = require("../services/mailer");
 const { sealPdf } = require("../services/pdfSealing"); // ✉️ PDF-Sealing Service
-const { generateSignedUrl } = require("../services/fileStorage"); // 🆕 For S3 download links
+const { generateSignedUrl, deleteFiles } = require("../services/fileStorage"); // 🆕 For S3 download links + 🗑️ For deletion
 const { generateEventsForEnvelope, markEnvelopeAsCompleted, deleteEnvelopeEvents } = require("../services/envelopeCalendarEvents"); // 📅 Calendar Integration
+const { generateVoidNotificationHTML, generateVoidNotificationText } = require("../templates/signatureInvitationEmail"); // 📧 Void Notification
 const Envelope = require("../models/Envelope");
 const Contract = require("../models/Contract");
 
@@ -1184,8 +1185,10 @@ router.post("/envelopes/:id/void", verifyToken, async (req, res) => {
       });
     }
 
-    console.log(`🚫 Voiding envelope: ${envelope.title}`);
+    console.log(`🚫 Voiding envelope: ${envelope.title} (previous status: ${envelope.status})`);
 
+    // Speichere vorherigen Status für Wiederherstellen-Funktion
+    envelope.previousStatus = envelope.status;
     envelope.status = 'VOIDED';
     envelope.voidedAt = new Date();
     envelope.voidReason = reason || 'Vom Eigentümer storniert';
@@ -1198,6 +1201,9 @@ router.post("/envelopes/:id/void", verifyToken, async (req, res) => {
       details: { reason: envelope.voidReason }
     });
 
+    // 💾 Speichern
+    await envelope.save();
+
     // 📅 KILLER FEATURE: Delete calendar events when envelope is voided
     try {
       await deleteEnvelopeEvents(req.db, envelope._id);
@@ -1207,7 +1213,44 @@ router.post("/envelopes/:id/void", verifyToken, async (req, res) => {
       // Don't block voiding if calendar deletion fails
     }
 
-    console.log(`✅ Envelope voided: ${envelope._id}`);
+    // 📧 Benachrichtige alle Unterzeichner per E-Mail
+    const signersWithEmail = envelope.signers.filter(s => s.email);
+    let emailsSent = 0;
+
+    for (const signer of signersWithEmail) {
+      try {
+        const htmlContent = generateVoidNotificationHTML({
+          signer,
+          envelope: { title: envelope.title },
+          ownerEmail: req.user.email,
+          voidReason: envelope.voidReason,
+          voidedAt: envelope.voidedAt
+        });
+
+        const textContent = generateVoidNotificationText({
+          signer,
+          envelope: { title: envelope.title },
+          ownerEmail: req.user.email,
+          voidReason: envelope.voidReason,
+          voidedAt: envelope.voidedAt
+        });
+
+        await sendEmail(
+          signer.email,
+          `Signaturanfrage storniert: ${envelope.title}`,
+          textContent,
+          htmlContent
+        );
+
+        emailsSent++;
+        console.log(`📧 Void notification sent to: ${signer.email}`);
+      } catch (emailError) {
+        console.error(`⚠️ Could not send void notification to ${signer.email}:`, emailError.message);
+        // Don't block voiding if email fails
+      }
+    }
+
+    console.log(`✅ Envelope voided: ${envelope._id} (${emailsSent}/${signersWithEmail.length} notifications sent)`);
 
     res.json({
       success: true,
@@ -1216,7 +1259,8 @@ router.post("/envelopes/:id/void", verifyToken, async (req, res) => {
         _id: envelope._id,
         status: envelope.status,
         voidedAt: envelope.voidedAt
-      }
+      },
+      notificationsSent: emailsSent
     });
 
   } catch (error) {
@@ -1224,6 +1268,88 @@ router.post("/envelopes/:id/void", verifyToken, async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Fehler beim Stornieren des Envelopes",
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/envelopes/:id/restore - Restore voided envelope
+ * Stellt eine stornierte Signaturanfrage wieder her
+ */
+router.post("/envelopes/:id/restore", verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Ungültige Envelope-ID"
+      });
+    }
+
+    const envelope = await Envelope.findOne({
+      _id: id,
+      ownerId: req.user.userId
+    });
+
+    if (!envelope) {
+      return res.status(404).json({
+        success: false,
+        message: "Envelope nicht gefunden"
+      });
+    }
+
+    // Nur VOIDED Envelopes können wiederhergestellt werden
+    if (envelope.status !== 'VOIDED') {
+      return res.status(400).json({
+        success: false,
+        message: `Nur stornierte Envelopes können wiederhergestellt werden (aktueller Status: ${envelope.status})`
+      });
+    }
+
+    console.log(`🔄 Restoring envelope: ${envelope.title}`);
+
+    // Stelle vorherigen Status wieder her oder setze auf DRAFT
+    const restoreToStatus = envelope.previousStatus || 'DRAFT';
+
+    // Wenn der vorherige Status SENT war, setze auf DRAFT (Tokens könnten abgelaufen sein)
+    // User kann dann erneut versenden
+    const safeRestoreStatus = ['SENT', 'AWAITING_SIGNER_1', 'AWAITING_SIGNER_2', 'AWAITING_SIGNER_3',
+      'AWAITING_SIGNER_4', 'AWAITING_SIGNER_5'].includes(restoreToStatus) ? 'DRAFT' : restoreToStatus;
+
+    envelope.status = safeRestoreStatus === 'DRAFT' ? 'DRAFT' : restoreToStatus;
+    envelope.voidedAt = null;
+    envelope.voidReason = null;
+    envelope.previousStatus = null;
+
+    await envelope.addAuditEvent('RESTORED', {
+      userId: req.user.userId,
+      email: req.user.email,
+      ip: getClientIP(req),
+      userAgent: req.headers['user-agent'],
+      details: { restoredTo: envelope.status }
+    });
+
+    await envelope.save();
+
+    console.log(`✅ Envelope restored to status: ${envelope.status}`);
+
+    res.json({
+      success: true,
+      message: `Envelope wiederhergestellt (Status: ${envelope.status === 'DRAFT' ? 'Entwurf' : envelope.status})`,
+      envelope: {
+        _id: envelope._id,
+        status: envelope.status,
+        title: envelope.title
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ Error restoring envelope:", error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Wiederherstellen des Envelopes",
       error: error.message
     });
   }
@@ -1326,6 +1452,7 @@ router.post("/envelopes/unarchive", verifyToken, async (req, res) => {
 /**
  * DELETE /api/envelopes/bulk - Permanently delete multiple envelopes
  * Safety: Only archived OR voided envelopes can be deleted
+ * 🗑️ Includes S3 file cleanup
  */
 router.delete("/envelopes/bulk", verifyToken, async (req, res) => {
   try {
@@ -1340,23 +1467,93 @@ router.delete("/envelopes/bulk", verifyToken, async (req, res) => {
 
     console.log(`🗑️ Deleting ${envelopeIds.length} envelopes for user: ${req.user.userId}`);
 
-    // Safety: Only allow deletion of archived OR voided envelopes
-    const result = await Envelope.deleteMany({
+    // 🛡️ Prüfe ob COMPLETED Envelopes dabei sind (diese sind geschützt!)
+    const completedEnvelopes = await Envelope.find({
+      _id: { $in: envelopeIds },
+      ownerId: req.user.userId,
+      status: "COMPLETED"
+    }).select("title");
+
+    if (completedEnvelopes.length > 0) {
+      const titles = completedEnvelopes.map(e => e.title).join(", ");
+      console.log(`🛡️ ${completedEnvelopes.length} COMPLETED envelope(s) protected from deletion: ${titles}`);
+
+      // Wenn NUR COMPLETED Envelopes angefragt wurden, blockieren
+      if (completedEnvelopes.length === envelopeIds.length) {
+        return res.status(403).json({
+          success: false,
+          message: "Abgeschlossene Signaturen können nicht gelöscht werden. Diese Dokumente sind rechtlich bindend.",
+          protectedCount: completedEnvelopes.length
+        });
+      }
+    }
+
+    // 1️⃣ Erst die Envelopes finden um S3-Keys zu sammeln (nur archived oder voided)
+    const envelopesToDelete = await Envelope.find({
       _id: { $in: envelopeIds },
       ownerId: req.user.userId,
       $or: [
         { archived: true },
         { status: "VOIDED" }
       ]
+    }).select("s3Key s3KeySealed title");
+
+    if (envelopesToDelete.length === 0) {
+      // Prüfe ob es an geschützten COMPLETED Envelopes liegt
+      if (completedEnvelopes.length > 0) {
+        return res.status(403).json({
+          success: false,
+          message: "Abgeschlossene Signaturen können nicht gelöscht werden. Diese Dokumente sind rechtlich bindend.",
+          protectedCount: completedEnvelopes.length
+        });
+      }
+      return res.json({
+        success: true,
+        message: "Keine löschbaren Envelopes gefunden",
+        deletedCount: 0
+      });
+    }
+
+    // 2️⃣ S3-Keys sammeln
+    const s3KeysToDelete = [];
+    for (const env of envelopesToDelete) {
+      if (env.s3Key) s3KeysToDelete.push(env.s3Key);
+      if (env.s3KeySealed) s3KeysToDelete.push(env.s3KeySealed);
+    }
+
+    console.log(`📦 ${s3KeysToDelete.length} S3-Dateien zu löschen für ${envelopesToDelete.length} Envelope(s)`);
+
+    // 3️⃣ S3-Dateien löschen (vor DB-Löschung, falls S3 fehlschlägt)
+    let s3Result = { deleted: 0, failed: 0 };
+    if (s3KeysToDelete.length > 0) {
+      s3Result = await deleteFiles(s3KeysToDelete);
+      console.log(`📦 S3-Löschung: ${s3Result.deleted} gelöscht, ${s3Result.failed} fehlgeschlagen`);
+    }
+
+    // 4️⃣ Aus der Datenbank löschen
+    const envelopeIdsToDelete = envelopesToDelete.map(e => e._id);
+    const result = await Envelope.deleteMany({
+      _id: { $in: envelopeIdsToDelete }
     });
 
-    console.log(`✅ Deleted ${result.deletedCount} envelopes`);
+    console.log(`✅ Deleted ${result.deletedCount} envelopes + ${s3Result.deleted} S3 files`);
 
-    res.json({
+    // Response mit Info über geschützte Envelopes
+    const response = {
       success: true,
       message: `${result.deletedCount} Envelope(s) endgültig gelöscht`,
-      deletedCount: result.deletedCount
-    });
+      deletedCount: result.deletedCount,
+      s3FilesDeleted: s3Result.deleted,
+      s3FilesFailed: s3Result.failed
+    };
+
+    // 🛡️ Wenn COMPLETED Envelopes übersprungen wurden, informieren
+    if (completedEnvelopes.length > 0) {
+      response.protectedCount = completedEnvelopes.length;
+      response.protectedMessage = `${completedEnvelopes.length} abgeschlossene Signatur(en) wurden geschützt und nicht gelöscht.`;
+    }
+
+    res.json(response);
 
   } catch (error) {
     console.error("❌ Error deleting envelopes:", error);

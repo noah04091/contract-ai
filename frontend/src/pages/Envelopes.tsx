@@ -494,6 +494,45 @@ export default function Envelopes() {
     });
   };
 
+  // Wiederherstellen (restore) - nur für VOIDED envelopes
+  const handleRestore = async (envelopeId: string, envelopeTitle: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: "Wiederherstellen?",
+      message: `Möchten Sie "${envelopeTitle}" wiederherstellen? Die Signaturanfrage wird als Entwurf wiederhergestellt.`,
+      confirmText: "Wiederherstellen",
+      confirmStyle: "primary",
+      onConfirm: async () => {
+        try {
+          const token = localStorage.getItem("token");
+
+          const response = await fetch(`/api/envelopes/${envelopeId}/restore`, {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json"
+            },
+            credentials: "include"
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || data.message || "Fehler beim Wiederherstellen");
+          }
+
+          toast.success("Signaturanfrage wiederhergestellt");
+          setSelectedEnvelope(null);
+          loadEnvelopes(true, 0); // Reload list
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : "Unbekannter Fehler";
+          toast.error(`Fehler: ${errorMessage}`);
+        }
+        setConfirmDialog(null);
+      }
+    });
+  };
+
   // Get status badge color
   const getStatusColor = (status: Envelope["status"]) => {
     switch (status) {
@@ -1580,6 +1619,17 @@ export default function Envelopes() {
           )}
         </AnimatePresence>
 
+        {/* Auto-Delete Info Banner für Storniert-Tab */}
+        {activeFilter === "cancelled" && filteredEnvelopes.length > 0 && (
+          <div className={styles.infoBanner}>
+            <AlertCircle size={18} />
+            <span>
+              Stornierte Anfragen werden nach <strong>30 Tagen</strong> automatisch endgültig gelöscht.
+              Nutzen Sie "Wiederherstellen" um eine Anfrage zu retten.
+            </span>
+          </div>
+        )}
+
         {/* Content Section */}
         <div className={styles.section}>
           {filteredEnvelopes.length === 0 ? (
@@ -1623,6 +1673,19 @@ export default function Envelopes() {
                   <Archive size={64} className={styles.emptyIcon} />
                   <h3>Archiv ist leer</h3>
                   <p>Sie haben noch keine Signaturanfragen archiviert.</p>
+                  <button
+                    className={styles.emptyStateBtn}
+                    onClick={() => setActiveFilter("all")}
+                  >
+                    Alle Anfragen anzeigen
+                  </button>
+                </>
+              ) : activeFilter === "cancelled" ? (
+                // Papierkorb ist leer
+                <>
+                  <Trash2 size={64} className={styles.emptyIcon} />
+                  <h3>Papierkorb ist leer</h3>
+                  <p>Keine stornierten Signaturanfragen vorhanden.</p>
                   <button
                     className={styles.emptyStateBtn}
                     onClick={() => setActiveFilter("all")}
@@ -2037,7 +2100,17 @@ export default function Envelopes() {
                                 </>
                               ) : envelope.status === "VOIDED" ? (
                                 <>
-                                  {/* Storniert: Endgültig löschen */}
+                                  {/* Storniert: Wiederherstellen + Endgültig löschen */}
+                                  <button
+                                    className={`${styles.actionBtn} ${styles.actionBtnPrimary}`}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleRestore(envelope._id, envelope.title);
+                                    }}
+                                    title="Wiederherstellen"
+                                  >
+                                    <RotateCcw size={14} />
+                                  </button>
                                   <button
                                     className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
                                     onClick={(e) => {
@@ -2187,16 +2260,26 @@ export default function Envelopes() {
                         <span>Weiter bearbeiten</span>
                       </button>
                     )}
-                    {/* Endgültig löschen - nur bei Stornierten */}
+                    {/* Wiederherstellen + Endgültig löschen - nur bei Stornierten */}
                     {selectedEnvelope.status === "VOIDED" && (
-                      <button
-                        className={`${styles.quickActionBtn} ${styles.quickActionDanger}`}
-                        onClick={() => handleHardDelete(selectedEnvelope._id, selectedEnvelope.title)}
-                        title="Endgültig löschen"
-                      >
-                        <Trash2 size={20} />
-                        <span>Endgültig löschen</span>
-                      </button>
+                      <>
+                        <button
+                          className={`${styles.quickActionBtn} ${styles.quickActionPrimary}`}
+                          onClick={() => handleRestore(selectedEnvelope._id, selectedEnvelope.title)}
+                          title="Wiederherstellen"
+                        >
+                          <RotateCcw size={20} />
+                          <span>Wiederherstellen</span>
+                        </button>
+                        <button
+                          className={`${styles.quickActionBtn} ${styles.quickActionDanger}`}
+                          onClick={() => handleHardDelete(selectedEnvelope._id, selectedEnvelope.title)}
+                          title="Endgültig löschen"
+                        >
+                          <Trash2 size={20} />
+                          <span>Endgültig löschen</span>
+                        </button>
+                      </>
                     )}
                     <button
                       className={styles.quickActionBtn}
