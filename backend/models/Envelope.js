@@ -165,6 +165,7 @@ const auditEventSchema = new mongoose.Schema({
       "DECLINED",
       "COMPLETED",
       "VOIDED",
+      "RESTORED",  // 🔄 Für Wiederherstellen aus Papierkorb
       "EXPIRED",
       "REMINDER_SENT",
       "LINK_COPIED",
