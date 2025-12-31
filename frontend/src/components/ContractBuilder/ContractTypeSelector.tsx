@@ -30,6 +30,8 @@ import {
   Copy,
   MoreVertical,
   Star,
+  Crown,
+  Zap,
 } from 'lucide-react';
 import { contractTemplates, templateCategories, ContractTemplate } from '../../data/contractTemplates';
 import { fetchUserTemplates, deleteUserTemplate, UserTemplate } from '../../services/userTemplatesAPI';
@@ -57,6 +59,7 @@ interface ContractTypeSelectorProps {
   onDeleteDraft?: (draftId: string) => void;
   onRenameDraft?: (draftId: string, currentName: string) => void;
   onDuplicateDraft?: (draftId: string, originalName: string) => void;
+  userPlan?: string; // 'free' | 'premium' | 'business' | 'enterprise'
 }
 
 // Icon mapping
@@ -88,6 +91,7 @@ export const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
   onDeleteDraft,
   onRenameDraft,
   onDuplicateDraft,
+  userPlan = 'free',
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -98,13 +102,17 @@ export const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
   const [activeUserTemplateMenu, setActiveUserTemplateMenu] = useState<string | null>(null);
   const [userTemplates, setUserTemplates] = useState<UserTemplate[]>([]);
   const [isLoadingUserTemplates, setIsLoadingUserTemplates] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
-  // Fetch user templates when modal opens
+  // Helper: Prüft ob User Premium-Features nutzen kann
+  const isPremiumUser = userPlan === 'premium' || userPlan === 'business' || userPlan === 'enterprise';
+
+  // Fetch user templates when modal opens (nur für Premium+ User)
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && isPremiumUser) {
       loadUserTemplates();
     }
-  }, [isOpen]);
+  }, [isOpen, isPremiumUser]);
 
   const loadUserTemplates = async () => {
     setIsLoadingUserTemplates(true);
@@ -154,7 +162,18 @@ export const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
   });
 
   const handleSelect = (templateId: string) => {
-    // Nur onSelect aufrufen - der Parent ist verantwortlich für das Schließen
+    // "individuell" ist für alle User verfügbar
+    if (templateId === 'individuell') {
+      onSelect(templateId);
+      return;
+    }
+
+    // Alle anderen Templates nur für Premium+ User
+    if (!isPremiumUser) {
+      setShowUpgradeModal(true);
+      return;
+    }
+
     onSelect(templateId);
   };
 
@@ -197,7 +216,8 @@ export const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
               <span>Entwürfe ({savedDrafts.length})</span>
             </button>
           )}
-          {(userTemplates.length > 0 || isLoadingUserTemplates) && (
+          {/* "Meine Vorlagen" nur für Premium+ User anzeigen */}
+          {isPremiumUser && (userTemplates.length > 0 || isLoadingUserTemplates) && (
             <button
               className={`${styles.draftsToggle} ${showUserTemplates ? styles.active : ''}`}
               onClick={() => { setShowUserTemplates(!showUserTemplates); setShowDrafts(false); }}
@@ -403,10 +423,11 @@ export const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
           <div className={styles.templateGrid}>
             {filteredTemplates.map(template => {
               const Icon = iconMap[template.icon] || FileEdit;
+              const isLocked = !isPremiumUser && template.id !== 'individuell';
               return (
                 <button
                   key={template.id}
-                  className={`${styles.templateCard} ${template.id === 'individuell' ? styles.customCard : ''}`}
+                  className={`${styles.templateCard} ${template.id === 'individuell' ? styles.customCard : ''} ${isLocked ? styles.templateLocked : ''}`}
                   onClick={() => handleSelect(template.id)}
                   onMouseEnter={() => setHoveredTemplate(template)}
                   onMouseLeave={() => setHoveredTemplate(null)}
@@ -418,7 +439,13 @@ export const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
                     <h3 className={styles.templateName}>{template.name}</h3>
                     <p className={styles.templateDescription}>{template.description}</p>
                   </div>
-                  <ChevronRight size={18} className={styles.templateArrow} />
+                  {isLocked ? (
+                    <div className={styles.premiumBadge} title="Premium-Funktion">
+                      <Crown size={14} />
+                    </div>
+                  ) : (
+                    <ChevronRight size={18} className={styles.templateArrow} />
+                  )}
                 </button>
               );
             })}
@@ -489,6 +516,58 @@ export const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
             Alle Vorlagen können nach der Auswahl vollständig angepasst werden.
           </p>
         </div>
+
+        {/* Upgrade Modal für Free-User */}
+        {showUpgradeModal && (
+          <div className={styles.upgradeOverlay} onClick={() => setShowUpgradeModal(false)}>
+            <div className={styles.upgradeModal} onClick={(e) => e.stopPropagation()}>
+              <div className={styles.upgradeHeader}>
+                <div className={styles.upgradeCrown}>
+                  <Crown size={32} />
+                </div>
+                <h3>Premium-Funktion</h3>
+                <p>Professionelle Vertragsvorlagen sind nur für zahlende Kunden verfügbar.</p>
+              </div>
+
+              <div className={styles.upgradeFeatures}>
+                <div className={styles.upgradeFeature}>
+                  <Zap size={18} />
+                  <span>15+ professionelle Vertragsvorlagen</span>
+                </div>
+                <div className={styles.upgradeFeature}>
+                  <Star size={18} />
+                  <span>Eigene Vorlagen speichern & wiederverwenden</span>
+                </div>
+                <div className={styles.upgradeFeature}>
+                  <FileEdit size={18} />
+                  <span>Unbegrenzt Verträge erstellen</span>
+                </div>
+              </div>
+
+              <div className={styles.upgradeActions}>
+                <button
+                  className={styles.upgradeButton}
+                  onClick={() => {
+                    window.location.href = '/pricing';
+                  }}
+                >
+                  <Crown size={16} />
+                  Jetzt upgraden
+                </button>
+                <button
+                  className={styles.upgradeLater}
+                  onClick={() => setShowUpgradeModal(false)}
+                >
+                  Später
+                </button>
+              </div>
+
+              <p className={styles.upgradeTip}>
+                <strong>Tipp:</strong> Mit "Individueller Vertrag" können Sie auch ohne Upgrade einen leeren Vertrag von Grund auf erstellen.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

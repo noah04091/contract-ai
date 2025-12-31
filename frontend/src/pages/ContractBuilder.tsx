@@ -48,6 +48,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { createUserTemplate, UserTemplate } from '../services/userTemplatesAPI';
+import { useAuth } from '../hooks/useAuth';
 import styles from '../styles/ContractBuilder.module.css';
 
 type RightPanel = 'properties' | 'variables' | null;
@@ -67,6 +68,15 @@ interface SavedDraft {
 const ContractBuilder: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id?: string }>();
+
+  // User-Daten für Plan-Prüfung
+  const { user } = useAuth();
+  const isPremiumUser = user?.subscriptionActive === true && (
+    user?.subscriptionPlan === 'premium' ||
+    user?.subscriptionPlan === 'business' ||
+    user?.subscriptionPlan === 'enterprise'
+  );
+  const userPlan = user?.subscriptionPlan || 'free';
 
   const [rightPanel, setRightPanel] = useState<RightPanel>('properties');
   const [showLeftPanel, setShowLeftPanel] = useState(true);
@@ -1506,10 +1516,13 @@ const ContractBuilder: React.FC = () => {
                   <Copy size={14} />
                   <span>Dokument duplizieren</span>
                 </button>
-                <button onClick={handleOpenSaveTemplateModal}>
-                  <FolderPlus size={14} />
-                  <span>Als Vorlage speichern</span>
-                </button>
+                {/* "Als Vorlage speichern" nur für Premium+ User */}
+                {isPremiumUser && (
+                  <button onClick={handleOpenSaveTemplateModal}>
+                    <FolderPlus size={14} />
+                    <span>Als Vorlage speichern</span>
+                  </button>
+                )}
                 <button onClick={handleExportTemplate}>
                   <FileOutput size={14} />
                   <span>Als Vorlage exportieren</span>
@@ -2105,6 +2118,7 @@ const ContractBuilder: React.FC = () => {
         }}
         onSelect={handleTemplateSelect}
         onSelectUserTemplate={handleSelectUserTemplate}
+        userPlan={userPlan}
         savedDrafts={savedDrafts}
         isLoadingDrafts={isLoadingDrafts}
         onLoadDraft={handleLoadDraft}
