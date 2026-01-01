@@ -2777,13 +2777,14 @@
 }
 
 .fileInput {
+  /* ✅ FIX: Input versteckt statt als Overlay - verhindert Klick-Interferenz mit Buttons */
   position: absolute;
   opacity: 0;
-  width: 100%;
-  height: 100%;
-  cursor: pointer;
+  width: 1px;
+  height: 1px;
   top: 0;
   left: 0;
+  pointer-events: none;
 }
 
 .uploadPrompt {
