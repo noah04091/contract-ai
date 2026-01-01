@@ -837,9 +837,21 @@
 }
 
 .fullWidthCard .structuredList {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.fullWidthCard .structuredItem {
+  padding: 14px 0;
+}
+
+.fullWidthCard .structuredHeader {
+  gap: 10px;
+}
+
+.fullWidthCard .structuredDescription {
+  padding-left: 26px;
 }
 
 .detailHeader {
@@ -923,10 +935,10 @@
 
 .structuredItem {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 10px 0;
-  border-bottom: 1px solid #f8fafc;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .structuredItem:last-child {
@@ -942,7 +954,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .structuredTitle {
@@ -950,45 +962,64 @@
   font-weight: 600;
   color: #0f172a;
   margin: 0;
+  flex: 1;
 }
 
 .structuredDescription {
   color: #64748b;
-  font-size: 12px;
-  line-height: 1.4;
-  margin: 4px 0 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+  padding-left: 24px;
 }
 
 /* Risk and Priority Badges - Clean */
 .riskBadge, .priorityBadge {
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: 4px;
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.4px;
+  flex-shrink: 0;
 }
 
-.riskHigh, .priorityHigh {
+.riskHigh {
   background: #fef2f2;
   color: #dc2626;
+  border: 1px solid #fecaca;
 }
 
-.riskMedium, .priorityMedium {
+.priorityHigh {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.riskMedium {
   background: #fffbeb;
-  color: #d97706;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.priorityMedium {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
 }
 
 .riskLow, .priorityLow {
   background: #ecfdf5;
   color: #059669;
+  border: 1px solid #a7f3d0;
 }
 
 .riskNeutral, .priorityNeutral {
   background: #f8fafc;
   color: #64748b;
+  border: 1px solid #e2e8f0;
 }
 
 /* Icon Colors */
