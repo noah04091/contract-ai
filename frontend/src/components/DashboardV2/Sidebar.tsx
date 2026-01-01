@@ -10,7 +10,7 @@ import {
   Rocket,
   Scale,
   MessageSquare,
-  Lightbulb,
+  Radar,
   Hammer,
   PenTool,
   BookOpen,
@@ -102,8 +102,10 @@ const navigation: NavSection[] = [
       {
         id: 'legalpulse',
         label: 'Legal Pulse',
-        icon: Lightbulb,
+        icon: Radar,
         href: '/legalpulse',
+        badge: 'LIVE',
+        badgeColor: 'green',
       },
       {
         id: 'better-contracts',

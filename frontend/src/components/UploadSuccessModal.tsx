@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle, FileText, Zap, X } from "lucide-react";
+import { CheckCircle, FileText, Search, Save, X, Radar, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 import styles from "./UploadSuccessModal.module.css";
 
@@ -17,6 +17,7 @@ interface UploadSuccessModalProps {
   onSkip: () => void;
   analysisCount?: number;
   analysisLimit?: number;
+  isPremium?: boolean;
 }
 
 export default function UploadSuccessModal({
@@ -26,7 +27,8 @@ export default function UploadSuccessModal({
   onAnalyze,
   onSkip,
   analysisCount = 0,
-  analysisLimit = 0
+  analysisLimit = 0,
+  isPremium = false
 }: UploadSuccessModalProps) {
   const contractCount = uploadedContracts.length;
   const remainingAnalyses = analysisLimit - analysisCount;
@@ -44,9 +46,9 @@ export default function UploadSuccessModal({
         >
           <motion.div
             className={styles.modal}
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: 20 }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close Button */}
@@ -60,15 +62,15 @@ export default function UploadSuccessModal({
                 className={styles.successIcon}
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: "spring" }}
+                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
               >
-                <CheckCircle size={48} />
+                <CheckCircle size={40} />
               </motion.div>
               <h2 className={styles.title}>
-                ✅ {contractCount} Vertrag{contractCount > 1 ? 'e' : ''} erfolgreich hochgeladen!
+                Erfolgreich hochgeladen!
               </h2>
               <p className={styles.subtitle}>
-                Was möchtest du als Nächstes tun?
+                {contractCount} Vertrag{contractCount > 1 ? 'e' : ''} wurde{contractCount > 1 ? 'n' : ''} gespeichert
               </p>
             </div>
 
@@ -76,7 +78,7 @@ export default function UploadSuccessModal({
             <div className={styles.content}>
               {/* Uploaded Files List */}
               <div className={styles.filesList}>
-                {uploadedContracts.map((contract, index) => (
+                {uploadedContracts.slice(0, 5).map((contract, index) => (
                   <motion.div
                     key={contract._id}
                     className={styles.fileItem}
@@ -84,28 +86,59 @@ export default function UploadSuccessModal({
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.1 * index }}
                   >
-                    <FileText size={16} />
+                    <div className={styles.fileIcon}>
+                      <FileText size={16} />
+                    </div>
                     <span>{contract.name}</span>
                   </motion.div>
                 ))}
+                {uploadedContracts.length > 5 && (
+                  <div className={styles.moreFiles}>
+                    +{uploadedContracts.length - 5} weitere Dateien
+                  </div>
+                )}
               </div>
+
+              {/* Question */}
+              <p className={styles.questionText}>
+                Was möchtest du als Nächstes tun?
+              </p>
 
               {/* Action Cards */}
               <div className={styles.actionsGrid}>
-                {/* Analyze Card */}
+                {/* Analyze Card - Recommended */}
                 <motion.div
                   className={`${styles.actionCard} ${styles.analyzeCard} ${!hasEnoughAnalyses ? styles.disabled : ''}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
+                  whileHover={hasEnoughAnalyses ? { y: -4 } : {}}
                 >
+                  <div className={styles.recommendedBadge}>Empfohlen</div>
                   <div className={styles.cardIcon}>
-                    <Zap size={32} />
+                    <Search size={26} />
                   </div>
-                  <h3 className={styles.cardTitle}>Analysieren</h3>
+                  <h3 className={styles.cardTitle}>KI-Rechtsprüfung</h3>
                   <p className={styles.cardDescription}>
-                    KI-gestützte Analyse starten
+                    Sofortige Analyse wie vom Anwalt
                   </p>
+
+                  {/* Feature List */}
+                  <ul className={styles.featureList}>
+                    <li>
+                      <Check size={14} />
+                      <span>Risiken erkennen</span>
+                    </li>
+                    <li>
+                      <Check size={14} />
+                      <span>Klauseln bewerten</span>
+                    </li>
+                    <li>
+                      <Check size={14} />
+                      <span>Optimierungsvorschläge</span>
+                    </li>
+                  </ul>
+
                   <div className={styles.cardInfo}>
                     <span className={styles.analysisCount}>
                       {contractCount} Analyse{contractCount > 1 ? 'n' : ''} verbraucht
@@ -136,16 +169,34 @@ export default function UploadSuccessModal({
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 }}
+                  whileHover={{ y: -4 }}
                 >
                   <div className={styles.cardIcon}>
-                    <CheckCircle size={32} />
+                    <Save size={26} />
                   </div>
-                  <h3 className={styles.cardTitle}>Fertig</h3>
+                  <h3 className={styles.cardTitle}>Nur speichern</h3>
                   <p className={styles.cardDescription}>
-                    Nur verwalten
+                    Später analysieren
                   </p>
+
+                  {/* Feature List */}
+                  <ul className={styles.featureList}>
+                    <li>
+                      <Check size={14} />
+                      <span>In Verwaltung sehen</span>
+                    </li>
+                    <li>
+                      <Check size={14} />
+                      <span>Fristen tracken</span>
+                    </li>
+                    <li>
+                      <Check size={14} />
+                      <span>Jederzeit prüfbar</span>
+                    </li>
+                  </ul>
+
                   <div className={styles.cardInfo}>
-                    <span className={styles.analysisCount}>
+                    <span className={styles.analysisCountFree}>
                       0 Analysen verbraucht
                     </span>
                   </div>
@@ -157,12 +208,38 @@ export default function UploadSuccessModal({
                   </button>
                 </motion.div>
               </div>
+
+              {/* Legal Pulse Info Banner */}
+              <motion.div
+                className={styles.legalPulseBanner}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+              >
+                <div className={styles.bannerIcon}>
+                  <Radar size={22} />
+                </div>
+                <div className={styles.bannerContent}>
+                  <h5 className={styles.bannerTitle}>Legal Pulse aktiv</h5>
+                  <p className={styles.bannerText}>
+                    {isPremium
+                      ? "Deine Verträge werden automatisch auf Gesetzesänderungen überwacht. Du erhältst Benachrichtigungen bei relevanten Änderungen."
+                      : "Mit Premium werden deine Verträge automatisch auf Gesetzesänderungen überwacht."
+                    }
+                  </p>
+                </div>
+                {!isPremium && (
+                  <Link to="/pricing" className={styles.bannerLink} onClick={onClose}>
+                    Premium
+                  </Link>
+                )}
+              </motion.div>
             </div>
 
             {/* Info Footer */}
             <div className={styles.footer}>
               <p className={styles.footerText}>
-                💡 Du kannst Verträge jederzeit später unter <strong>"Meine Verträge"</strong> analysieren
+                Du kannst Verträge jederzeit später unter <Link to="/contracts" onClick={onClose}><strong>Meine Verträge</strong></Link> analysieren
               </p>
             </div>
           </motion.div>

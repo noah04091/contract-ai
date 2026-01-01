@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contract AI - Upload Flow Mockup</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f7;
+      min-height: 100vh;
+      padding: 40px;
+    }
+
+    .mockup-title {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .mockup-title h1 {
+      font-size: 28px;
+      color: #1d1d1f;
+      margin-bottom: 8px;
+    }
+
+    .mockup-title p {
+      color: #86868b;
+      font-size: 16px;
+    }
+
+    .mockup-container {
+      display: flex;
+      gap: 40px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .mockup-section {
+      background: white;
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      max-width: 500px;
+      width: 100%;
+    }
+
+    .mockup-section h2 {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #86868b;
+      margin-bottom: 16px;
+    }
+
+    .step-indicator {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .step {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .step.active {
+      background: #3B82F6;
+      color: white;
+    }
+
+    .step.completed {
+      background: #10B981;
+      color: white;
+    }
+
+    .step.pending {
+      background: #E5E7EB;
+      color: #9CA3AF;
+    }
+
+    .step-line {
+      flex: 1;
+      height: 2px;
+      background: #E5E7EB;
+    }
+
+    .step-line.completed {
+      background: #10B981;
+    }
+
+    /* Upload Success Modal */
+    .modal {
+      background: #FAFAFA;
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid #E5E7EB;
+    }
+
+    .modal-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .modal-header .icon {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 28px;
+    }
+
+    .modal-header h3 {
+      font-size: 22px;
+      color: #1F2937;
+      margin-bottom: 4px;
+    }
+
+    .modal-header p {
+      color: #6B7280;
+      font-size: 14px;
+    }
+
+    .file-list {
+      background: white;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 24px;
+      border: 1px solid #E5E7EB;
+    }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px;
+    }
+
+    .file-item .icon {
+      width: 36px;
+      height: 36px;
+      background: #FEE2E2;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .file-item span {
+      font-size: 14px;
+      color: #374151;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .option-card {
+      background: white;
+      border: 2px solid #E5E7EB;
+      border-radius: 16px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .option-card:hover {
+      border-color: #3B82F6;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+    }
+
+    .option-card.recommended {
+      border-color: #3B82F6;
+      background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+    }
+
+    .option-card.recommended::before {
+      content: 'Empfohlen';
+      position: absolute;
+      top: -10px;
+      right: 16px;
+      background: #3B82F6;
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
+    .option-card .option-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+
+    .option-card.recommended .option-icon {
+      background: #3B82F6;
+    }
+
+    .option-card:not(.recommended) .option-icon {
+      background: #F3F4F6;
+    }
+
+    .option-card h4 {
+      font-size: 16px;
+      color: #1F2937;
+      margin-bottom: 8px;
+    }
+
+    .option-card .features {
+      list-style: none;
+      margin-bottom: 12px;
+    }
+
+    .option-card .features li {
+      font-size: 13px;
+      color: #6B7280;
+      padding: 4px 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .option-card .features li::before {
+      content: '✓';
+      color: #10B981;
+      font-weight: bold;
+    }
+
+    .option-card .cost {
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 20px;
+      display: inline-block;
+    }
+
+    .option-card.recommended .cost {
+      background: rgba(59, 130, 246, 0.1);
+      color: #2563EB;
+    }
+
+    .option-card:not(.recommended) .cost {
+      background: #F3F4F6;
+      color: #6B7280;
+    }
+
+    .info-banner {
+      background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
+      border: 1px solid #BAE6FD;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .info-banner .icon {
+      font-size: 20px;
+    }
+
+    .info-banner .content h5 {
+      font-size: 14px;
+      color: #0369A1;
+      margin-bottom: 4px;
+    }
+
+    .info-banner .content p {
+      font-size: 13px;
+      color: #0C4A6E;
+      line-height: 1.5;
+    }
+
+    /* Feature Comparison */
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 24px;
+    }
+
+    .comparison-table th {
+      text-align: left;
+      padding: 12px 8px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #6B7280;
+      border-bottom: 2px solid #E5E7EB;
+    }
+
+    .comparison-table td {
+      padding: 12px 8px;
+      font-size: 14px;
+      border-bottom: 1px solid #F3F4F6;
+    }
+
+    .comparison-table td:first-child {
+      color: #374151;
+    }
+
+    .comparison-table .check {
+      color: #10B981;
+      font-weight: bold;
+    }
+
+    .comparison-table .cross {
+      color: #D1D5DB;
+    }
+
+    .comparison-table .highlight {
+      background: #F0F9FF;
+    }
+
+    /* Flow Diagram */
+    .flow-diagram {
+      background: #FAFAFA;
+      border-radius: 16px;
+      padding: 24px;
+      margin-top: 24px;
+    }
+
+    .flow-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .flow-step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 19px;
+      top: 44px;
+      width: 2px;
+      height: calc(100% - 24px);
+      background: #E5E7EB;
+    }
+
+    .flow-step .number {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #3B82F6;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .flow-step .content {
+      flex: 1;
+    }
+
+    .flow-step .content h4 {
+      font-size: 15px;
+      color: #1F2937;
+      margin-bottom: 4px;
+    }
+
+    .flow-step .content p {
+      font-size: 13px;
+      color: #6B7280;
+      line-height: 1.5;
+    }
+
+    .flow-step .badge {
+      display: inline-block;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      margin-top: 8px;
+    }
+
+    .flow-step .badge.auto {
+      background: #D1FAE5;
+      color: #065F46;
+    }
+
+    .flow-step .badge.optional {
+      background: #FEF3C7;
+      color: #92400E;
+    }
+
+    .flow-step .badge.premium {
+      background: #EDE9FE;
+      color: #5B21B6;
+    }
+
+    /* Section Divider */
+    .divider {
+      height: 1px;
+      background: #E5E7EB;
+      margin: 40px 0;
+    }
+
+    /* New Section: Feature Cards */
+    .feature-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 24px;
+    }
+
+    .feature-card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid #E5E7EB;
+    }
+
+    .feature-card .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .feature-card .header .icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+
+    .feature-card.analysis .header .icon {
+      background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    }
+
+    .feature-card.pulse .header .icon {
+      background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+    }
+
+    .feature-card .header h4 {
+      font-size: 16px;
+      color: #1F2937;
+    }
+
+    .feature-card .header span {
+      font-size: 12px;
+      color: #6B7280;
+    }
+
+    .feature-card p {
+      font-size: 14px;
+      color: #4B5563;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .feature-card ul {
+      list-style: none;
+    }
+
+    .feature-card ul li {
+      font-size: 13px;
+      color: #6B7280;
+      padding: 6px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .feature-card ul li .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .feature-card.analysis ul li .dot {
+      background: #3B82F6;
+    }
+
+    .feature-card.pulse ul li .dot {
+      background: #8B5CF6;
+    }
+
+    /* Navigation hint */
+    .nav-hint {
+      background: #1F2937;
+      color: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 24px;
+    }
+
+    .nav-hint h5 {
+      font-size: 14px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-hint .nav-items {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .nav-hint .nav-item {
+      background: rgba(255,255,255,0.1);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-hint .nav-item.active {
+      background: #3B82F6;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="mockup-title">
+    <h1>Contract AI - Upload Flow Redesign</h1>
+    <p>Mockup: Klare Trennung von Hochladen, Analyse und Legal Pulse</p>
+  </div>
+
+  <div class="mockup-container">
+
+    <!-- SECTION 1: New Upload Success Modal -->
+    <div class="mockup-section">
+      <h2>1. Neues Upload-Erfolg Modal</h2>
+
+      <div class="step-indicator">
+        <div class="step completed">1</div>
+        <div class="step-line completed"></div>
+        <div class="step active">2</div>
+        <div class="step-line"></div>
+        <div class="step pending">3</div>
+      </div>
+
+      <div class="modal">
+        <div class="modal-header">
+          <div class="icon">✓</div>
+          <h3>Erfolgreich hochgeladen!</h3>
+          <p>2 Verträge wurden gespeichert</p>
+        </div>
+
+        <div class="file-list">
+          <div class="file-item">
+            <div class="icon">📄</div>
+            <span>Arbeitsvertrag_2024.pdf</span>
+          </div>
+          <div class="file-item">
+            <div class="icon">📄</div>
+            <span>NDA_Kunde.pdf</span>
+          </div>
+        </div>
+
+        <p style="font-size: 15px; color: #374151; margin-bottom: 16px; font-weight: 500;">
+          Was möchtest du als Nächstes tun?
+        </p>
+
+        <div class="options-grid">
+          <div class="option-card recommended">
+            <div class="option-icon">🔍</div>
+            <h4>KI-Rechtsprüfung</h4>
+            <ul class="features">
+              <li>Risiken erkennen</li>
+              <li>Klauseln bewerten</li>
+              <li>Optimierungen</li>
+            </ul>
+            <span class="cost">2 Analysen verbraucht</span>
+          </div>
+
+          <div class="option-card">
+            <div class="option-icon">💾</div>
+            <h4>Nur speichern</h4>
+            <ul class="features">
+              <li>In Verwaltung</li>
+              <li>Später analysieren</li>
+              <li>Fristen tracken</li>
+            </ul>
+            <span class="cost">0 Analysen verbraucht</span>
+          </div>
+        </div>
+
+        <div class="info-banner">
+          <div class="icon">📡</div>
+          <div class="content">
+            <h5>Legal Pulse aktiv</h5>
+            <p>Deine Verträge werden automatisch auf Gesetzesänderungen überwacht. Du erhältst Benachrichtigungen wenn relevante Änderungen auftreten.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: Feature Unterscheidung -->
+    <div class="mockup-section">
+      <h2>2. Klare Feature-Trennung</h2>
+
+      <div class="feature-cards">
+        <div class="feature-card analysis">
+          <div class="header">
+            <div class="icon">🔍</div>
+            <div>
+              <h4>KI-Rechtsprüfung</h4>
+              <span>Einmalige Analyse</span>
+            </div>
+          </div>
+          <p>Wie ein Anwalt: Prüft deinen Vertrag einmal gründlich auf Risiken und Probleme.</p>
+          <ul>
+            <li><span class="dot"></span> Chancen-Risiken-Score</li>
+            <li><span class="dot"></span> Problematische Klauseln</li>
+            <li><span class="dot"></span> Konkrete Empfehlungen</li>
+            <li><span class="dot"></span> Rechtliche Einschätzung</li>
+          </ul>
+        </div>
+
+        <div class="feature-card pulse">
+          <div class="header">
+            <div class="icon">📡</div>
+            <div>
+              <h4>Legal Pulse</h4>
+              <span>Laufende Überwachung</span>
+            </div>
+          </div>
+          <p>Wie ein Radar: Überwacht kontinuierlich Gesetzesänderungen die deine Verträge betreffen.</p>
+          <ul>
+            <li><span class="dot"></span> Gesetzesänderungen</li>
+            <li><span class="dot"></span> Relevante Urteile</li>
+            <li><span class="dot"></span> Automatische Alerts</li>
+            <li><span class="dot"></span> Risk-Score Trends</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Funktion</th>
+            <th>KI-Rechtsprüfung</th>
+            <th>Legal Pulse</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Wann?</td>
+            <td>Einmalig (on-demand)</td>
+            <td>Automatisch (laufend)</td>
+          </tr>
+          <tr>
+            <td>Was wird geprüft?</td>
+            <td>Vertragsinhalt</td>
+            <td>Externe Gesetze</td>
+          </tr>
+          <tr class="highlight">
+            <td>Verbraucht Analyse?</td>
+            <td><span class="check">✓ Ja</span></td>
+            <td><span class="cross">✗ Nein</span></td>
+          </tr>
+          <tr>
+            <td>Premium nötig?</td>
+            <td>Ab Free (3/Monat)</td>
+            <td>Premium+</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SECTION 3: Neuer Flow -->
+    <div class="mockup-section">
+      <h2>3. Empfohlener Neuer Flow</h2>
+
+      <div class="flow-diagram">
+        <div class="flow-step">
+          <div class="number">1</div>
+          <div class="content">
+            <h4>Vertrag hochladen</h4>
+            <p>PDF oder DOCX in die Verwaltung laden. Metadaten werden automatisch erkannt.</p>
+            <span class="badge auto">Automatisch</span>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="number">2</div>
+          <div class="content">
+            <h4>Legal Pulse aktiviert</h4>
+            <p>Vertrag wird automatisch für Gesetzesüberwachung registriert. Keine Aktion nötig.</p>
+            <span class="badge auto">Automatisch</span>
+            <span class="badge premium">Premium</span>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="number">3</div>
+          <div class="content">
+            <h4>KI-Rechtsprüfung</h4>
+            <p>Optional: Tiefe Analyse des Vertragsinhalts. User entscheidet ob jetzt oder später.</p>
+            <span class="badge optional">Optional</span>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="number">4</div>
+          <div class="content">
+            <h4>Ergebnisse nutzen</h4>
+            <p>Analyse-Ergebnisse einsehen, Optimierungen durchführen, Vertrag unterschreiben.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-hint">
+        <h5>📍 Navigation in der Sidebar</h5>
+        <div class="nav-items">
+          <div class="nav-item">📂 Verträge</div>
+          <div class="nav-item active">🔍 KI-Rechtsprüfung</div>
+          <div class="nav-item">📡 Legal Pulse</div>
+          <div class="nav-item">⚡ Optimizer</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: Dashboard Widget -->
+    <div class="mockup-section">
+      <h2>4. Dashboard Widget Idee</h2>
+
+      <div style="background: white; border-radius: 16px; padding: 20px; border: 1px solid #E5E7EB;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h3 style="font-size: 18px; color: #1F2937;">Deine Verträge</h3>
+          <span style="font-size: 14px; color: #6B7280;">12 Verträge</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px;">
+          <div style="background: #F0FDF4; border-radius: 12px; padding: 16px; text-align: center;">
+            <div style="font-size: 28px; font-weight: 700; color: #166534;">8</div>
+            <div style="font-size: 12px; color: #166534;">Analysiert</div>
+          </div>
+          <div style="background: #FEF3C7; border-radius: 12px; padding: 16px; text-align: center;">
+            <div style="font-size: 28px; font-weight: 700; color: #92400E;">3</div>
+            <div style="font-size: 12px; color: #92400E;">Nicht analysiert</div>
+          </div>
+          <div style="background: #FEE2E2; border-radius: 12px; padding: 16px; text-align: center;">
+            <div style="font-size: 28px; font-weight: 700; color: #991B1B;">1</div>
+            <div style="font-size: 12px; color: #991B1B;">Risiko erkannt</div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 12px;">
+          <button style="flex: 1; background: #3B82F6; color: white; border: none; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer;">
+            🔍 Nicht analysierte prüfen
+          </button>
+          <button style="flex: 1; background: white; color: #374151; border: 1px solid #E5E7EB; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer;">
+            📡 Legal Pulse öffnen
+          </button>
+        </div>
+      </div>
+
+      <div style="margin-top: 24px; background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%); border-radius: 16px; padding: 20px; color: white;">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+          <span style="font-size: 24px;">📡</span>
+          <h4 style="font-size: 16px;">Legal Pulse Status</h4>
+        </div>
+        <p style="font-size: 14px; opacity: 0.9; margin-bottom: 16px;">12 Verträge werden überwacht. Letzte Prüfung: vor 2 Tagen</p>
+        <div style="display: flex; gap: 16px;">
+          <div>
+            <div style="font-size: 24px; font-weight: 700;">0</div>
+            <div style="font-size: 12px; opacity: 0.8;">Neue Alerts</div>
+          </div>
+          <div>
+            <div style="font-size: 24px; font-weight: 700;">3</div>
+            <div style="font-size: 12px; opacity: 0.8;">Gesetzesänderungen</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="text-align: center; margin-top: 60px; color: #86868b; font-size: 14px;">
+    <p>Contract AI - Upload Flow Mockup v1.0</p>
+    <p style="margin-top: 8px;">Erstellt am: Januar 2026</p>
+  </div>
+
+</body>
+</html>
