@@ -3997,18 +3997,19 @@ export default function Contracts() {
                       )}
                     </div>
                     
-                    <div 
-                      className={`${styles.uploadArea} ${dragActive ? styles.dragActive : ''} ${!hasAnalysesLeft ? styles.disabledUpload : ''}`} 
+                    <div
+                      className={`${styles.uploadArea} ${dragActive ? styles.dragActive : ''} ${!hasAnalysesLeft ? styles.disabledUpload : ''} ${uploadFiles.length > 0 ? styles.hasFiles : ''}`}
                       onDragEnter={handleDrag}
                       onDragLeave={handleDrag}
                       onDragOver={handleDrag}
                       onDrop={handleDrop}
                       onClick={uploadFiles.length === 0 && hasAnalysesLeft ? activateFileInput : undefined}
+                      style={uploadFiles.length > 0 ? { cursor: 'default', pointerEvents: 'none' } : {}}
                     >
                       {uploadFiles.length > 0 ? (
-                        <div 
+                        <div
                           className={styles.multiFilePreview}
-                          onClick={(e) => e.stopPropagation()}
+                          style={{ pointerEvents: 'auto' }}
                         >
                           <div 
                             className={styles.multiFileHeader}
