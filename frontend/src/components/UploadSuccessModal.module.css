@@ -19,7 +19,7 @@
 .modal {
   background: white;
   border-radius: 24px;
-  max-width: 560px;
+  max-width: 680px;
   width: 100%;
   max-height: 90vh;
   max-height: 90dvh;
@@ -33,7 +33,7 @@
 /* Header */
 .header {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  padding: 32px 32px 28px;
+  padding: 24px 32px 20px;
   text-align: center;
   border-radius: 24px 24px 0 0;
 }
@@ -66,12 +66,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 72px;
-  height: 72px;
+  width: 56px;
+  height: 56px;
   background: rgba(255, 255, 255, 0.2);
   border-radius: 50%;
   color: white;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .title {
@@ -90,7 +90,7 @@
 
 /* Content Area */
 .content {
-  padding: 24px 28px 28px;
+  padding: 20px 28px 24px;
 }
 
 /* Files List */
@@ -170,8 +170,8 @@
 .actionCard {
   background: white;
   border: 2px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 24px 18px 20px;
+  border-radius: 14px;
+  padding: 18px 16px 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -226,13 +226,13 @@
 }
 
 .cardIcon {
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .analyzeCard .cardIcon {
@@ -262,7 +262,7 @@
 /* Feature List */
 .featureList {
   list-style: none;
-  margin: 0 0 14px 0;
+  margin: 0 0 10px 0;
   padding: 0;
   width: 100%;
 }
@@ -270,10 +270,10 @@
 .featureList li {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
+  gap: 6px;
+  font-size: 12px;
   color: #475569;
-  padding: 5px 0;
+  padding: 3px 0;
   justify-content: flex-start;
   text-align: left;
 }
@@ -371,24 +371,24 @@
 .legalPulseBanner {
   background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
   border: 1px solid #c4b5fd;
-  border-radius: 14px;
-  padding: 16px 18px;
+  border-radius: 12px;
+  padding: 12px 14px;
   display: flex;
-  align-items: flex-start;
-  gap: 14px;
+  align-items: center;
+  gap: 12px;
 }
 
 .bannerIcon {
-  width: 42px;
-  height: 42px;
+  width: 36px;
+  height: 36px;
   background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-  border-radius: 10px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
 }
 
 .bannerContent {
@@ -397,20 +397,20 @@
 }
 
 .bannerTitle {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   color: #5b21b6;
-  margin: 0 0 4px 0;
+  margin: 0 0 2px 0;
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
 .bannerText {
-  font-size: 13px;
+  font-size: 12px;
   color: #6d28d9;
   margin: 0;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 .bannerLink {
