@@ -6,9 +6,10 @@ import {
   Download, BarChart3, RefreshCw, WifiOff, Clock,
   Wrench, ArrowRight, AlertTriangle,
   Award, Target, Zap, ChevronDown, ChevronUp,
-  Copy, Eye, X, // ✅ Icons für Duplikat-Modal
-  CheckSquare, XCircle, // ✅ Für Risiko-Level Icons und Features
-  Gavel, Scale, Star // ✅ NEU: Anwalts-Icons
+  Copy, Eye, X,
+  CheckSquare, XCircle,
+  Gavel, Scale, Star,
+  Shield, Lightbulb, TrendingUp, Check // Enterprise Icons
 } from "lucide-react";
 import styles from "./ContractAnalysis.module.css";
 import { uploadAndAnalyze, checkAnalyzeHealth } from "../utils/api";
@@ -295,7 +296,7 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
             return;
           } else {
             console.error("❌ Unvollständige Duplikat-Response:", response);
-            throw new Error("📄 Dieser Vertrag wurde bereits hochgeladen. Bitte prüfe deine Vertragsliste.");
+            throw new Error("Dieser Vertrag wurde bereits hochgeladen. Bitte prüfe deine Vertragsliste.");
           }
         }
 
@@ -342,19 +343,19 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
         const errMsg = err.message;
         
         if (errMsg.includes('nicht erreichbar') || errMsg.includes('Failed to fetch')) {
-          errorMessage = "🌐 Verbindungsfehler: Server ist momentan nicht erreichbar.";
+          errorMessage = "Verbindungsfehler: Server ist momentan nicht erreichbar.";
           canRetry = true;
         } else if (errMsg.includes('Limit erreicht')) {
-          errorMessage = "📊 Analyse-Limit erreicht. Bitte upgrade dein Paket.";
+          errorMessage = "Analyse-Limit erreicht. Bitte upgrade dein Paket.";
           canRetry = false;
         } else if (errMsg.includes('nicht verfügbar') || errMsg.includes('500')) {
-          errorMessage = "🔧 Analyse-Service ist vorübergehend überlastet.";
+          errorMessage = "Analyse-Service ist vorübergehend überlastet.";
           canRetry = true;
         } else if (errMsg.includes('Timeout')) {
-          errorMessage = "⏱️ Analyse-Timeout. Die PDF-Datei ist möglicherweise zu groß.";
+          errorMessage = "Analyse-Timeout. Die PDF-Datei ist möglicherweise zu groß.";
           canRetry = true;
         } else if (errMsg.includes('PDF') || errMsg.includes('Datei')) {
-          errorMessage = "📄 PDF konnte nicht verarbeitet werden. Bitte prüfe das Dateiformat.";
+          errorMessage = "PDF konnte nicht verarbeitet werden. Bitte prüfe das Dateiformat.";
           canRetry = false;
         } else if (errMsg.includes('bereits hochgeladen')) {
           errorMessage = errMsg;
@@ -853,21 +854,20 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
           
           <div className={styles.progressTextContainer}>
             <p className={styles.progressText}>
-              {progress < 30 && "📄 PDF wird verarbeitet..."}
-              {progress >= 30 && progress < 70 && "🏛️ Anwaltliche KI-Analyse läuft..."}
-              {progress >= 70 && progress < 100 && "📊 Rechtsgutachten wird erstellt..."}
-              {progress === 100 && "✅ Anwaltliche Analyse abgeschlossen!"}
+              {progress < 30 && "PDF wird verarbeitet..."}
+              {progress >= 30 && progress < 70 && "Anwaltliche KI-Analyse läuft..."}
+              {progress >= 70 && progress < 100 && "Rechtsgutachten wird erstellt..."}
+              {progress === 100 && "Anwaltliche Analyse abgeschlossen"}
             </p>
           </div>
-          
+
           <div className={styles.progressSteps}>
             {[
-              { icon: "🔍", text: "Text extrahieren", threshold: 10 },
-              { icon: "🏛️", text: "Anwaltliche Analyse", threshold: 30 },
-              { icon: "📊", text: "Rechtsgutachten erstellen", threshold: 70 }
+              { text: "Text extrahieren", threshold: 10 },
+              { text: "Anwaltliche Analyse", threshold: 30 },
+              { text: "Rechtsgutachten erstellen", threshold: 70 }
             ].map((step, index) => (
               <div key={index} className={`${styles.progressStep} ${progress >= step.threshold ? styles.active : ''}`}>
-                <span>{step.icon}</span>
                 <span>{step.text}</span>
               </div>
             ))}
@@ -963,12 +963,12 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
 
               {!canRetryAnalysis && retryCount >= 3 && (
                 <div className={styles.exhaustedRetries}>
-                  <p>❌ Maximale Anzahl Versuche erreicht.</p>
-                  <button 
+                  <p>Maximale Anzahl Versuche erreicht.</p>
+                  <button
                     className={styles.contactSupportButton}
                     onClick={() => window.open('mailto:support@contract-ai.de')}
                   >
-                    📧 Support kontaktieren
+                    Support kontaktieren
                   </button>
                 </div>
               )}
@@ -1068,11 +1068,12 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
 
           {/* ✅ ENHANCED: 7-Punkte-Analyse Details Grid */}
           <div className={styles.detailsGrid}>
-            {/* 1. 📄 Zusammenfassung */}
+            {/* 1. Zusammenfassung */}
             {(result?.summary || initialResult?.summary) && (
               <div className={styles.detailCard}>
                 <div className={styles.detailHeader}>
-                  <h5>📄 Zusammenfassung</h5>
+                  <FileText size={18} className={styles.cardIcon} />
+                  <h5>Zusammenfassung</h5>
                 </div>
                 <div className={styles.cardContent}>
                   <ul className={styles.pointsList}>
@@ -1087,11 +1088,12 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
               </div>
             )}
 
-            {/* 2. 🛡️ Rechtssicherheit */}
+            {/* 2. Rechtssicherheit */}
             {(result?.legalAssessment || initialResult?.legalAssessment) && (
               <div className={styles.detailCard}>
                 <div className={styles.detailHeader}>
-                  <h5>🛡️ Rechtssicherheit</h5>
+                  <Shield size={18} className={styles.cardIcon} />
+                  <h5>Rechtssicherheit</h5>
                 </div>
                 <div className={styles.cardContent}>
                   <ul className={styles.pointsList}>
@@ -1106,11 +1108,12 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
               </div>
             )}
 
-            {/* 3. 💡 Optimierungsvorschläge */}
+            {/* 3. Optimierungsvorschläge */}
             {(result?.suggestions || initialResult?.suggestions) && (
               <div className={styles.detailCard}>
                 <div className={styles.detailHeader}>
-                  <h5>💡 Optimierungsvorschläge</h5>
+                  <Lightbulb size={18} className={styles.cardIcon} />
+                  <h5>Optimierungsvorschläge</h5>
                 </div>
                 <div className={styles.cardContent}>
                   <ul className={styles.pointsList}>
@@ -1125,10 +1128,11 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
               </div>
             )}
 
-            {/* 4. 📊 Marktvergleich */}
+            {/* 4. Marktvergleich */}
             <div className={styles.detailCard}>
               <div className={styles.detailHeader}>
-                <h5>📊 Marktvergleich</h5>
+                <TrendingUp size={18} className={styles.cardIcon} />
+                <h5>Marktvergleich</h5>
               </div>
               <div className={styles.cardContent}>
                 {(result?.comparison || initialResult?.comparison) ? (
@@ -1150,11 +1154,12 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
               </div>
             </div>
 
-            {/* ✅ NEW: 5. ✅ Positive Aspekte */}
+            {/* 5. Positive Aspekte */}
             {(result?.positiveAspects || initialResult?.positiveAspects) && (
               <div className={styles.detailCard}>
                 <div className={styles.detailHeader}>
-                  <h5>✅ Positive Aspekte</h5>
+                  <Check size={18} className={styles.cardIconGreen} />
+                  <h5>Positive Aspekte</h5>
                 </div>
                 <div className={styles.cardContent}>
                   <ul className={styles.structuredList}>
@@ -1172,11 +1177,12 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
               </div>
             )}
 
-            {/* ✅ NEW: 6. ⚠️ Kritische Klauseln & Risiken */}
+            {/* 6. Kritische Klauseln & Risiken */}
             {(result?.criticalIssues || initialResult?.criticalIssues) && (
               <div className={styles.detailCard}>
                 <div className={styles.detailHeader}>
-                  <h5>⚠️ Kritische Klauseln & Risiken</h5>
+                  <AlertTriangle size={18} className={styles.cardIconOrange} />
+                  <h5>Kritische Klauseln & Risiken</h5>
                 </div>
                 <div className={styles.cardContent}>
                   <ul className={styles.structuredList}>
@@ -1199,11 +1205,12 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
             )}
           </div>
 
-          {/* ✅ NEW: 7. 📌 Handlungsempfehlungen (Volle Breite) */}
+          {/* 7. Handlungsempfehlungen (Volle Breite) */}
           {(result?.recommendations || initialResult?.recommendations) && (
             <div className={`${styles.detailCard} ${styles.fullWidthCard}`}>
               <div className={styles.detailHeader}>
-                <h5>📌 Handlungsempfehlungen</h5>
+                <Zap size={18} className={styles.cardIconYellow} />
+                <h5>Handlungsempfehlungen</h5>
               </div>
               <div className={styles.cardContent}>
                 <ul className={styles.structuredList}>
@@ -1240,7 +1247,8 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
                   </div>
                   <div>
                     <h5 className={styles.legalOpinionTitle}>
-                      📋 Ausführliches Rechtsgutachten
+                      <Scale size={18} className={styles.cardIcon} />
+                      Ausführliches Rechtsgutachten
                     </h5>
                     <p className={styles.legalOpinionSubtitle}>
                       Professionelle anwaltliche Gesamtbewertung auf Fachanwaltsniveau
@@ -1275,7 +1283,7 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
                 <div className={styles.headerLeft}>
                   <Zap size={24} className={styles.headerIcon} style={{ color: '#f59e0b' }} />
                   <div>
-                    <h5 className={styles.sectionTitle}>⚡ Legal Pulse Analyse</h5>
+                    <h5 className={styles.sectionTitle}>Legal Pulse Analyse</h5>
                     <p className={styles.sectionSubtitle}>
                       KI-gestützte Risikoanalyse & rechtliche Empfehlungen
                     </p>
@@ -1472,11 +1480,11 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
             </motion.div>
           )}
 
-          {/* ✅ Usage Info - Kleine Randinformation ganz unten */}
+          {/* Usage Info */}
           {(result?.usage || initialResult?.usage) && (
             <div className={styles.usageInfo}>
               <p>
-                📊 Anwaltliche Analyse <strong>{(result?.usage || initialResult?.usage)?.count}</strong> von <strong>{(result?.usage || initialResult?.usage)?.limit === Infinity ? '∞' : (result?.usage || initialResult?.usage)?.limit}</strong>
+                Anwaltliche Analyse <strong>{(result?.usage || initialResult?.usage)?.count}</strong> von <strong>{(result?.usage || initialResult?.usage)?.limit === Infinity ? '∞' : (result?.usage || initialResult?.usage)?.limit}</strong>
                 <span className={styles.planBadge}>
                   {(result?.usage || initialResult?.usage)?.plan}
                 </span>
