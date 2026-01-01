@@ -33,13 +33,9 @@ export default function InlineAnalysisProgress({ progress }: InlineAnalysisProgr
     <div className={styles.container}>
       {/* Header mit Icon und Titel */}
       <div className={styles.header}>
-        <motion.div
-          className={styles.iconWrapper}
-          animate={{ rotate: progress < 100 ? 360 : 0 }}
-          transition={{ duration: 2, repeat: progress < 100 ? Infinity : 0, ease: "linear" }}
-        >
+        <div className={styles.iconWrapper}>
           <CurrentIcon size={20} />
-        </motion.div>
+        </div>
         <div className={styles.info}>
           <span className={styles.title}>
             {progress < 100 ? 'Analyse läuft...' : 'Analyse abgeschlossen'}

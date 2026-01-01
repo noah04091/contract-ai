@@ -22,12 +22,12 @@
 .iconWrapper {
   width: 40px;
   height: 40px;
-  background: #f3f4f6;
+  background: #eff6ff;
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6366f1;
+  color: #3B82F6;
   flex-shrink: 0;
 }
 
@@ -70,7 +70,7 @@
 
 .progressFill {
   height: 100%;
-  background: #6366f1;
+  background: #3B82F6;
   border-radius: 2px;
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -122,8 +122,8 @@
 }
 
 .stepDot.active {
-  background: #6366f1;
-  border-color: #6366f1;
+  background: #3B82F6;
+  border-color: #3B82F6;
   color: white;
 }
 
