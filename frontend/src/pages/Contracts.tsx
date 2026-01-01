@@ -3300,6 +3300,18 @@ export default function Contracts() {
 
   return (
     <>
+      {/* ✅ HIDDEN FILE INPUT - Außerhalb aller Container um Klick-Interferenz zu vermeiden */}
+      <input
+        type="file"
+        onChange={handleMultipleFileChange}
+        style={{ display: 'none' }}
+        accept=".pdf,.doc,.docx"
+        multiple={canMultiUpload}
+        id="contractFile"
+        ref={fileInputRef}
+        disabled={!hasAnalysesLeft}
+      />
+
       <Helmet>
         <title>Verträge mit KI analysieren & optimieren | Contract AI</title>
         <meta name="description" content="Verträge hochladen, Risiken erkennen & direkt optimieren – alles mit KI. Mehr Klarheit, bessere Konditionen, volle Kontrolle. Jetzt ausprobieren!" />
@@ -3993,22 +4005,6 @@ export default function Contracts() {
                       onDrop={handleDrop}
                       onClick={uploadFiles.length === 0 && hasAnalysesLeft ? activateFileInput : undefined}
                     >
-                      {/* ✅ Input-Element - IMMER rendern, aber versteckt */}
-                      <input
-                        type="file"
-                        onChange={handleMultipleFileChange}
-                        onClick={(e) => {
-                          // ✅ CRITICAL FIX: Verhindere Event-Bubbling zum Parent-Div
-                          e.stopPropagation();
-                        }}
-                        className={styles.fileInput}
-                        accept=".pdf,.doc,.docx"
-                        multiple={canMultiUpload}
-                        id="contractFile"
-                        ref={fileInputRef}
-                        disabled={!hasAnalysesLeft}
-                      />
-                      
                       {uploadFiles.length > 0 ? (
                         <div 
                           className={styles.multiFilePreview}
