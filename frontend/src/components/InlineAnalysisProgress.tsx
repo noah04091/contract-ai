@@ -21,7 +21,7 @@ const STEPS = [
 
 export default function InlineAnalysisProgress({ progress }: InlineAnalysisProgressProps) {
   // Finde aktuellen Schritt basierend auf Progress
-  const currentStepIndex = STEPS.findIndex((step, index) => {
+  const currentStepIndex = STEPS.findIndex((_step, index) => {
     const nextStep = STEPS[index + 1];
     return nextStep ? progress < nextStep.threshold : true;
   });
