@@ -32,8 +32,7 @@ import ImportantDatesSection from "../components/ImportantDatesSection"; // 📅
 import { apiCall, uploadAndAnalyze, uploadOnly } from "../utils/api"; // ✅ NEU: uploadOnly hinzugefügt
 import { useFolders } from "../hooks/useFolders"; // 📁 Folder Hook
 import type { FolderType } from "../components/FolderBar"; // 📁 Folder Type
-import AnalysisProgressComponent from "../components/AnalysisProgress"; // 🎨 Premium Analysis Progress
-import { mapLegacyToProgress } from "../utils/analysisAdapter"; // 🔄 Legacy Progress Adapter
+import InlineAnalysisProgress from "../components/InlineAnalysisProgress"; // 🎨 Kompakte Inline-Analyse
 
 interface Contract {
   _id: string;
@@ -4121,13 +4120,10 @@ export default function Contracts() {
                                 </div>
 
                                 {fileItem.status === 'analyzing' && (
-                                  <div className={styles.analysisProgressWrapper}>
-                                    <AnalysisProgressComponent
-                                      progress={mapLegacyToProgress({
-                                        progress: fileItem.progress || 0
-                                      })}
-                                    />
-                                  </div>
+                                  <InlineAnalysisProgress
+                                    progress={fileItem.progress || 0}
+                                    fileName={fileItem.file.name}
+                                  />
                                 )}
                               </motion.div>
                             ))}
