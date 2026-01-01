@@ -1165,9 +1165,14 @@
   border-color: #93c5fd;
 }
 
+.optimizeButton,
 .downloadButton,
 .newAnalysisButton {
   /* Inherit from secondaryButton */
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
 }
 
 /* Legal Opinion Section - Clean & Professional */

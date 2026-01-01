@@ -11,8 +11,6 @@ import logo from "../assets/logo-contractai.png";
 import logoHeader from "../assets/logo-header.png";
 import analyseImg from "../assets/Analyse.png";
 import fristenImg from "../assets/Fristen.png";
-import generatorImg from "../assets/Generator.png";
-import legalPulseImg from "../assets/Legal Pulse.png";
 import optimierungImg from "../assets/Optimierung.png";
 import vergleichImg from "../assets/Vergleich.png";
 import dsgvoBadge from "../assets/dsgvo-badge.png";
@@ -23,9 +21,6 @@ const analyseVideo = "/Videos/analyse.mp4";
 const optimierungVideo = "/Videos/optimierung.mp4";
 const fristenVideo = "/Videos/fristen.mp4";
 const vergleichVideo = "/Videos/vergleich.mp4";
-const generatorVideo = "/Videos/generator.mp4";
-const legalPulseVideo = "/Videos/legalpulse.mp4";
-const signaturVideo = "/Videos/signatur.mp4";
 
 
 
@@ -711,7 +706,7 @@ const HomeRedesign = () => {
               {/* Subheadline with Glass Effect */}
               <div className="subheadline-glass-wrapper">
                 <p className="sophisticated-hero-subheadline sophisticated-fade-up-delay">
-                  Contract AI automatisiert Ihr gesamtes Vertragsmanagement – von der KI-Analyse bis zur digitalen Signatur.
+                  Erkennt versteckte Risiken, erinnert an Fristen und behält alle Verträge im Blick – damit Sie es nicht müssen.
                 </p>
               </div>
               
@@ -822,12 +817,9 @@ const HomeRedesign = () => {
           <span className="floating-paragraph floating-paragraph-2">§</span>
           <span className="floating-paragraph floating-paragraph-3">§</span>
           <div className="section-container">
-            <div className="section-title">
-              <div className="section-title-decoration">
-                <span></span>
-                <span></span>
-              </div>
-              <h2 className="reveal-text">Unsere KI-Tools für Ihre Verträge</h2>
+            <div className="section-title features-title">
+              <span className="section-badge reveal-text">SO FUNKTIONIERT'S</span>
+              <h2 className="reveal-text">Unsere KI-Tools für<br /><span className="text-gradient">Ihre Verträge</span></h2>
               <p className="reveal-text">Erleben Sie die Zukunft des Vertragsmanagements.</p>
             </div>
             
@@ -1055,9 +1047,10 @@ const HomeRedesign = () => {
         {/* Integrations Logo Banner */}
         <section className="integrations-banner-section" aria-label="Integrationen">
           <div className="section-container">
-            <div className="section-title">
-              <h2 className="reveal-text">Nahtlose Integrationen</h2>
-              <p className="reveal-text">Verbinden Sie Contract AI mit Ihren bestehenden Tools</p>
+            <div className="section-title features-title">
+              <span className="section-badge reveal-text">INTEGRATIONEN</span>
+              <h2 className="reveal-text">Passt in <span className="text-gradient">Ihren Workflow</span></h2>
+              <p className="reveal-text">Verbinden Sie Contract AI mit Ihren bestehenden Tools.</p>
             </div>
           </div>
 
@@ -1163,16 +1156,8 @@ const HomeRedesign = () => {
           <div className="section-container">
             <div className="cm-grid">
               <div className="cm-text">
-                <div className="cm-badge reveal-text">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M22 10v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2v1Z"></path>
-                  </svg>
-                  Digitale Vertragsverwaltung
-                </div>
-                <h2 id="contracts-management-title" className="cm-headline reveal-text">
-                  Ihre Verträge.<br />
-                  <span className="text-gradient">Perfekt organisiert.</span>
-                </h2>
+                <span className="section-badge reveal-text">VERTRAGSVERWALTUNG</span>
+                <h2 id="contracts-management-title" className="cm-headline reveal-text">Ihre Verträge.<br /><span className="text-gradient">Perfekt organisiert.</span></h2>
                 <p className="cm-subtext reveal-text">Speichern, organisieren und verwalten Sie all Ihre Verträge sicher in der Contract AI Cloud. Mit automatischen Erinnerungen, schneller Suche und DSGVO-konformer Speicherung.</p>
                 <ul className="cm-bullets reveal-block">
                   <li>
@@ -1417,17 +1402,8 @@ const HomeRedesign = () => {
               </div>
 
               <div className="cm-text">
-                <div className="cm-badge reveal-text">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="4" width="20" height="16" rx="2"></rect>
-                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
-                  </svg>
-                  Automatischer E-Mail-Upload
-                </div>
-                <h2 id="email-upload-title" className="cm-headline reveal-text">
-                  Verträge per E-Mail.<br />
-                  <span className="text-gradient">Automatisch erfasst.</span>
-                </h2>
+                <span className="section-badge reveal-text">E-MAIL UPLOAD</span>
+                <h2 id="email-upload-title" className="cm-headline reveal-text">Verträge per E-Mail.<br /><span className="text-gradient">Automatisch erfasst.</span></h2>
                 <p className="cm-subtext reveal-text">Leiten Sie E-Mails mit Vertragsanhängen einfach an Ihre persönliche Contract AI Adresse weiter. PDFs werden automatisch erkannt, hochgeladen und analysiert.</p>
                 <ul className="cm-bullets reveal-block">
                   <li>
@@ -1494,13 +1470,10 @@ const HomeRedesign = () => {
             <div className="showcase-shape shape-2"></div>
           </div>
           <div className="section-container">
-            <div className="section-title">
-              <div className="section-title-decoration">
-                <span></span>
-                <span></span>
-              </div>
-              <h2 className="reveal-text">Entdecken Sie unsere Funktionen</h2>
-              <p className="reveal-text">Sehen Sie, wie unsere KI-Tools Ihren Vertragsworkflow revolutionieren.</p>
+            <div className="section-title features-title">
+              <span className="section-badge reveal-text">FUNKTIONEN</span>
+              <h2 className="reveal-text">Alles, was Sie für Ihre<br /><span className="text-gradient">Verträge brauchen</span></h2>
+              <p className="reveal-text">Von der Analyse bis zur Unterschrift – unsere KI-Tools automatisieren Ihren kompletten Vertragsworkflow.</p>
             </div>
             
             <div className="showcase-items">
@@ -1691,260 +1664,137 @@ const HomeRedesign = () => {
                 </div>
               </div>
 
-              {/* New Feature 5: Generator */}
-              <div className="showcase-item reveal-block">
-                <div className="showcase-content">
-                  <div className="showcase-label teal-label">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              {/* Und vieles mehr - Compact Feature Grid */}
+            </div>
+
+            {/* More Features Section */}
+            <div className="more-features-section reveal-block">
+              <div className="more-features-header">
+                <h3>Und vieles mehr</h3>
+                <p>Weitere leistungsstarke Tools für Ihr Vertragsmanagement</p>
+              </div>
+
+              <div className="more-features-grid">
+                <Link to="/features/generator" className="more-feature-card">
+                  <div className="more-feature-icon teal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                       <polyline points="14 2 14 8 20 8"></polyline>
                       <line x1="16" y1="13" x2="8" y2="13"></line>
                       <line x1="16" y1="17" x2="8" y2="17"></line>
                     </svg>
-                    Kreativ
                   </div>
-                  <h3>Verträge automatisch erstellen</h3>
-                  <p>Erstellen Sie rechtssichere, individuelle Verträge aus geprüften Vorlagen — in Minuten statt Stunden.</p>
-                  <ul className="feature-list">
-                    <li>Freelancer-, NDA- und Mietverträge</li>
-                    <li>Intelligente Eingabemasken</li>
-                    <li>Sofort exportieren & digital signieren</li>
-                  </ul>
-                  <Link to="/features/generator" className="showcase-link">
-                    Zum Generator
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M5 12h14"></path>
-                      <path d="m12 5 7 7-7 7"></path>
-                    </svg>
-                  </Link>
-                </div>
-                <div className="showcase-image">
-                  <div className="image-mac-frame">
-                    <div className="image-mac-topbar">
-                      <div className="image-mac-buttons">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                      </div>
-                    </div>
-                    <div className="image-container video-container">
-                      <AutoPlayVideo
-                        src={generatorVideo}
-                        poster={generatorImg}
-                        alt="Verträge automatisch erstellen"
-                      />
-                      <div className="image-shine"></div>
-                    </div>
+                  <div className="more-feature-content">
+                    <h4>Vertragsgenerator</h4>
+                    <p>Rechtssichere Verträge aus Vorlagen erstellen</p>
                   </div>
-                </div>
-              </div>
+                  <svg className="more-feature-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </Link>
 
-              {/* New Feature 6: Legal Pulse */}
-              <div className="showcase-item reverse reveal-block">
-                <div className="showcase-content">
-                  <div className="showcase-label red-label">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <Link to="/features/digitalesignatur" className="more-feature-card">
+                  <div className="more-feature-icon green">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                      <path d="m9 12 2 2 4-4"></path>
+                    </svg>
+                  </div>
+                  <div className="more-feature-content">
+                    <h4>Digitale Signatur</h4>
+                    <p>Verträge rechtssicher unterschreiben lassen</p>
+                  </div>
+                  <svg className="more-feature-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </Link>
+
+                <Link to="/features/legalpulse" className="more-feature-card">
+                  <div className="more-feature-icon red">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
                     </svg>
-                    Proaktiv
                   </div>
-                  <h3>Legal Pulse: Frühwarnsystem für Risiken</h3>
-                  <p>Verfolgen Sie rechtliche Änderungen und bleiben Sie immer up to date. Contract AI schützt Sie vor neuen Risiken.</p>
-                  <ul className="feature-list">
-                    <li>Aktuelle Markt- und Gesetzes-Checks</li>
-                    <li>Automatische Risiko-Alerts</li>
-                    <li>Empfehlungen zur Anpassung</li>
-                  </ul>
-                  <Link to="/features/legalpulse" className="showcase-link">
-                    Zum Legal Pulse
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M5 12h14"></path>
-                      <path d="m12 5 7 7-7 7"></path>
-                    </svg>
-                  </Link>
-                </div>
-                <div className="showcase-image">
-                  <div className="image-mac-frame">
-                    <div className="image-mac-topbar">
-                      <div className="image-mac-buttons">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                      </div>
-                    </div>
-                    <div className="image-container video-container">
-                      <AutoPlayVideo
-                        src={legalPulseVideo}
-                        poster={legalPulseImg}
-                        alt="Legal Pulse Frühwarnsystem"
-                      />
-                      <div className="image-shine"></div>
-                    </div>
+                  <div className="more-feature-content">
+                    <h4>Legal Pulse</h4>
+                    <p>Frühwarnsystem für rechtliche Änderungen</p>
                   </div>
-                </div>
-              </div>
+                  <svg className="more-feature-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </Link>
 
-              {/* New Feature 7: Digitale Signatur */}
-              <div className="showcase-item reveal-block">
-                <div className="showcase-content">
-                  <div className="showcase-label teal-label">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 8l-5-5-5 5M12 3v12"></path>
+                <Link to="/features/contract-builder" className="more-feature-card">
+                  <div className="more-feature-icon purple">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="7" height="7"></rect>
+                      <rect x="14" y="3" width="7" height="7"></rect>
+                      <rect x="14" y="14" width="7" height="7"></rect>
+                      <rect x="3" y="14" width="7" height="7"></rect>
                     </svg>
-                    Rechtssicher
                   </div>
-                  <h3>Digitale Signatur: Verträge rechtssicher signieren lassen</h3>
-                  <p>Versenden Sie Verträge zur digitalen Unterschrift, verfolgen Sie den Status in Echtzeit und erhalten Sie versiegelte PDFs mit vollständigem Audit Trail.</p>
-                  <ul className="feature-list">
-                    <li>E-Mail-Benachrichtigung an Unterzeichner</li>
-                    <li>Echtzeit-Status-Tracking mit Audit Trail</li>
-                    <li>Versiegeltes & rechtssicheres PDF</li>
-                  </ul>
-                  <Link to="/features/digitalesignatur" className="showcase-link">
-                    Zur digitalen Signatur
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M5 12h14"></path>
-                      <path d="m12 5 7 7-7 7"></path>
-                    </svg>
-                  </Link>
-                </div>
-                <div className="showcase-image">
-                  <div className="image-mac-frame">
-                    <div className="image-mac-topbar">
-                      <div className="image-mac-buttons">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                      </div>
-                    </div>
-                    <div className="image-container video-container">
-                      <AutoPlayVideo
-                        src={signaturVideo}
-                        alt="Digitale Signatur"
-                      />
-                      <div className="image-shine"></div>
-                    </div>
+                  <div className="more-feature-content">
+                    <h4>Contract Builder</h4>
+                    <p>Verträge per Drag & Drop erstellen</p>
                   </div>
-                </div>
-              </div>
+                  <svg className="more-feature-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </Link>
 
-              {/* New Feature 8: Contract Builder */}
-              <div className="showcase-item reverse reveal-block">
-                <div className="showcase-content">
-                  <div className="showcase-label indigo-label">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
-                    </svg>
-                    Baukasten
-                  </div>
-                  <h3>Contract Builder: Verträge visuell erstellen</h3>
-                  <p>Erstellen Sie professionelle Verträge per Drag & Drop. Mit Smart Variables, KI-Klauselgenerierung und automatischem Seitenumbruch — ohne juristische Vorkenntnisse.</p>
-                  <ul className="feature-list">
-                    <li>Drag & Drop Baukasten-Editor</li>
-                    <li>Smart Variables mit Auto-Ausfüllung</li>
-                    <li>KI-generierte Klauseln auf Knopfdruck</li>
-                  </ul>
-                  <Link to="/features/contract-builder" className="showcase-link">
-                    Zum Contract Builder
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M5 12h14"></path>
-                      <path d="m12 5 7 7-7 7"></path>
-                    </svg>
-                  </Link>
-                </div>
-                <div className="showcase-image">
-                  <div className="image-mac-frame">
-                    <div className="image-mac-topbar">
-                      <div className="image-mac-buttons">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                      </div>
-                    </div>
-                    <div className="image-container">
-                      <img
-                        src="/images/contract-builder-preview.png"
-                        alt="Contract Builder"
-                        loading="lazy"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = generatorImg;
-                        }}
-                      />
-                      <div className="image-shine"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* New Feature 9: Legal Lens */}
-              <div className="showcase-item reveal-block">
-                <div className="showcase-content">
-                  <div className="showcase-label cyan-label">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <Link to="/features/legal-lens" className="more-feature-card">
+                  <div className="more-feature-icon orange">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="11" cy="11" r="8"></circle>
                       <circle cx="11" cy="11" r="3"></circle>
                       <path d="m21 21-4.35-4.35"></path>
                     </svg>
-                    Deep Dive
                   </div>
-                  <h3>Legal Lens: Interaktive Tiefenanalyse</h3>
-                  <p>Tauchen Sie tief in Ihre Verträge ein. Mit Risk Score, Smart Summary und Verhandlungs-Checkliste — verstehen Sie jeden Vertrag wie ein Profi.</p>
-                  <ul className="feature-list">
-                    <li>Risk Score mit Finanz-, Legal- & Operational-Breakdown</li>
-                    <li>Top-Risiken mit Worst-Case-Szenarien</li>
-                    <li>Verhandlungs-Empfehlungen für bessere Deals</li>
-                  </ul>
-                  <Link to="/features/legal-lens" className="showcase-link">
-                    Zu Legal Lens
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M5 12h14"></path>
-                      <path d="m12 5 7 7-7 7"></path>
-                    </svg>
-                  </Link>
-                </div>
-                <div className="showcase-image">
-                  <div className="image-mac-frame">
-                    <div className="image-mac-topbar">
-                      <div className="image-mac-buttons">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                      </div>
-                    </div>
-                    <div className="image-container">
-                      <img
-                        src="/images/legal-lens-preview.png"
-                        alt="Legal Lens"
-                        loading="lazy"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = analyseImg;
-                        }}
-                      />
-                      <div className="image-shine"></div>
-                    </div>
+                  <div className="more-feature-content">
+                    <h4>Legal Lens</h4>
+                    <p>Interaktive Tiefenanalyse jeder Klausel</p>
                   </div>
-                </div>
+                  <svg className="more-feature-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </Link>
+              </div>
+
+              <div className="more-features-cta">
+                <Link to="/features" className="all-features-link">
+                  Alle Funktionen ansehen
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </Link>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Testimonials Section */}
+{/* Testimonials Section */}
         <section className="testimonials-section" ref={(el) => registerSection('testimonials', el)}>
           {/* Contract Theme: Stamp Effects */}
           <div className="stamp-effect stamp-effect-1"></div>
           <div className="stamp-effect stamp-effect-2"></div>
           <div className="section-container">
-            <div className="section-title">
-              <div className="section-title-decoration">
-                <span></span>
-                <span></span>
-              </div>
-              <h2 className="reveal-text">Das sagen unsere Nutzer</h2>
-              <p className="reveal-text">Echte Erfahrungen von Menschen, die Contract AI bereits nutzen.</p>
+            <div className="section-title features-title">
+              <span className="section-badge reveal-text">KUNDENSTIMMEN</span>
+              <h2 className="reveal-text">Von Profis <span className="text-gradient">empfohlen</span></h2>
+              <p className="reveal-text">Warum über 500+ Unternehmen auf Contract AI vertrauen.</p>
             </div>
             
             <TestimonialsMarquee />
+          </div>
+        </section>
+
+        {/* ChatGPT Comparison Section */}
+        <section className="chatgpt-comparison-section">
+          <div className="section-container">
+            <div className="comparison-content">
+              <h2 className="comparison-question reveal-text">
+                „Kann ich nicht einfach ChatGPT benutzen?"
+              </h2>
+              <div className="comparison-answer reveal-text">
+                <p className="answer-intro">Klar – für eine einmalige Frage.</p>
+                <div className="answer-questions">
+                  <p>Aber wer erinnert dich an Fristen?</p>
+                  <p>Wer prüft, ob sich Gesetze geändert haben?</p>
+                  <p>Wer behält 50 Verträge gleichzeitig im Blick?</p>
+                </div>
+                <p className="answer-conclusion">
+                  <span className="checkmark">✓</span> Contract AI. Automatisch. 24/7.
+                </p>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -1999,13 +1849,10 @@ const HomeRedesign = () => {
             <div className="pricing-checkbox pricing-checkbox-5"></div>
           </div>
           <div className="section-container">
-            <div className="section-title">
-              <div className="section-title-decoration">
-                <span></span>
-                <span></span>
-              </div>
-              <h2 className="reveal-text">Transparente Preisgestaltung</h2>
-              <p className="reveal-text">Wählen Sie den Plan, der Ihren Anforderungen entspricht.</p>
+            <div className="section-title features-title">
+              <span className="section-badge reveal-text">PREISE</span>
+              <h2 className="reveal-text">Einfach & <span className="text-gradient">transparent</span></h2>
+              <p className="reveal-text">Wählen Sie den Plan, der zu Ihnen passt. Jederzeit kündbar.</p>
             </div>
             
             <HomePricingCards />

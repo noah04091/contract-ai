@@ -1356,43 +1356,38 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
 
           {/* Action Buttons */}
           <div className={styles.actionButtonsContainer}>
-            {/* Optimize Button */}
-            <motion.button 
-              className={styles.primaryActionButton}
+            {/* Legal Pulse Button - Primary, links */}
+            {(result?.originalContractId || initialResult?.originalContractId) && (
+              <motion.button
+                className={styles.primaryActionButton}
+                onClick={() => window.location.href = `/legalpulse/${result?.originalContractId || initialResult?.originalContractId}`}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <BarChart3 size={20} />
+                <span>Legal Pulse Analyse</span>
+                <ArrowRight size={16} />
+              </motion.button>
+            )}
+
+            {/* Optimize Button - Secondary */}
+            <button
+              className={`${styles.secondaryButton} ${styles.optimizeButton}`}
               onClick={handleOptimize}
               disabled={optimizing}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
             >
               {optimizing ? (
                 <>
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  >
-                    <Loader size={20} />
-                  </motion.div>
+                  <Loader size={18} className={styles.spinner} />
                   <span>Optimiere Vertrag...</span>
                 </>
               ) : (
                 <>
-                  <Wrench size={20} />
+                  <Wrench size={18} />
                   <span>Vertrag jetzt optimieren</span>
-                  <ArrowRight size={16} />
                 </>
               )}
-            </motion.button>
-
-            {/* Legal Pulse Button - Only show if contractId is available */}
-            {(result?.originalContractId || initialResult?.originalContractId) && (
-              <button
-                className={`${styles.secondaryButton} ${styles.legalPulseButton}`}
-                onClick={() => window.location.href = `/legalpulse/${result?.originalContractId || initialResult?.originalContractId}`}
-              >
-                <BarChart3 size={18} />
-                <span>Legal Pulse Analyse</span>
-              </button>
-            )}
+            </button>
 
             {/* PDF Download Button */}
             <button
