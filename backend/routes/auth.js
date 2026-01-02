@@ -7,6 +7,7 @@ const crypto = require("crypto");
 const { ObjectId } = require("mongodb");
 const verifyToken = require("../middleware/verifyToken");
 const verifyAdmin = require("../middleware/verifyAdmin"); // 🔐 Admin-only access
+const { authLimiter } = require("../middleware/rateLimiter"); // 🛡️ Brute-Force-Schutz
 const sendEmail = require("../utils/sendEmail");
 const { generateEmailTemplate } = require("../utils/emailTemplate");
 const { normalizeEmail } = require("../utils/normalizeEmail");
@@ -79,7 +80,8 @@ module.exports = (db) => {
 };
 
 // ✅ Registrierung - ERWEITERT mit Double-Opt-In + Beta-Tester Support + Geräteerkennung
-router.post("/register", async (req, res) => {
+// 🛡️ Rate Limited: Max 5 Versuche pro 15 Minuten (Brute-Force-Schutz)
+router.post("/register", authLimiter, async (req, res) => {
   const { email: rawEmail, password, isBetaTester } = req.body;
   if (!rawEmail || !password)
     return res.status(400).json({ message: "❌ E-Mail und Passwort erforderlich" });
@@ -247,7 +249,8 @@ router.post("/register", async (req, res) => {
 });
 
 // ✅ Login - ERWEITERT mit Double-Opt-In Check + Geräte-Tracking
-router.post("/login", async (req, res) => {
+// 🛡️ Rate Limited: Max 5 Versuche pro 15 Minuten (Brute-Force-Schutz)
+router.post("/login", authLimiter, async (req, res) => {
   const { email: rawEmail, password } = req.body;
   if (!rawEmail || !password)
     return res.status(400).json({ message: "❌ E-Mail und Passwort erforderlich" });
@@ -643,7 +646,8 @@ router.delete("/delete", verifyToken, async (req, res) => {
 });
 
 // 📩 Passwort vergessen
-router.post("/forgot-password", async (req, res) => {
+// 🛡️ Rate Limited: Verhindert Spam-Attacken mit Reset-Mails
+router.post("/forgot-password", authLimiter, async (req, res) => {
   const { email: rawEmail } = req.body;
   if (!rawEmail)
     return res.status(400).json({ message: "❌ E-Mail ist erforderlich" });
@@ -726,7 +730,8 @@ router.get("/validate-reset-token", async (req, res) => {
 });
 
 // 🔁 Passwort zurücksetzen
-router.post("/reset-password", async (req, res) => {
+// 🛡️ Rate Limited: Verhindert Token-Bruteforce
+router.post("/reset-password", authLimiter, async (req, res) => {
   const { token, newPassword } = req.body;
   if (!token || !newPassword)
     return res.status(400).json({ message: "❌ Token und neues Passwort erforderlich" });
