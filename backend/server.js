@@ -39,6 +39,9 @@ const { processDigests } = require("./services/calendarDigestService");
 // 🚨 ERROR MONITORING - Eigenes System für Fehler-Tracking
 const { initErrorCollection, errorHandler, getErrorStats } = require("./services/errorMonitoring");
 
+// 📝 STRUCTURED LOGGING
+const logger = require("./utils/logger");
+
 // 🔄 CRON JOBS - Monatlicher analysisCount Reset
 require("./cron/resetAnalysisCount");
 
@@ -131,6 +134,10 @@ if (helmet) {
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 console.log("✅ JSON-Limit erhöht auf 50MB für große Verträge mit Logos");
+
+// 📝 REQUEST LOGGING - Strukturiertes Logging aller HTTP Requests
+app.use(logger.requestLogger);
+console.log("✅ Structured Request Logger aktiviert");
 
 // 🚀 AUTO-INDEX: Performance-Indexes beim Start sicherstellen (idempotent, non-blocking)
 async function ensurePerformanceIndexes(db) {
@@ -355,9 +362,9 @@ let client = null;
 
 const connectDB = async () => {
   try {
-    console.log("🔗 Verbinde zentral zur MongoDB...");
+    logger.info("Verbinde zentral zur MongoDB...");
     const startTime = Date.now();
-    
+
     client = new MongoClient(MONGO_URI, {
       maxPoolSize: 10,
       serverSelectionTimeoutMS: 5000,
@@ -365,12 +372,13 @@ const connectDB = async () => {
       connectTimeoutMS: 10000,
       maxIdleTimeMS: 30000,
     });
-    
+
     await client.connect();
     db = client.db("contract_ai");
 
     const connectTime = Date.now() - startTime;
-    console.log(`✅ MongoDB zentral verbunden in ${connectTime}ms!`);
+    logger.db.connected();
+    logger.info("MongoDB zentral verbunden", { connectTime: `${connectTime}ms` });
 
     // 📁 Connect Mongoose for Folder Models
     await mongoose.connect(MONGO_URI, {
@@ -379,11 +387,11 @@ const connectDB = async () => {
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
     });
-    console.log("✅ Mongoose verbunden für Folder Models");
+    logger.info("Mongoose verbunden für Folder Models");
 
     return db;
   } catch (error) {
-    console.error("❌ MongoDB-Verbindung fehlgeschlagen:", error);
+    logger.critical("MongoDB-Verbindung fehlgeschlagen", { error: error.message });
     process.exit(1);
   }
 };
@@ -2037,16 +2045,16 @@ const connectDB = async () => {
 
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, async () => {
-      console.log(`🚀 Server läuft auf Port ${PORT}`);
-      console.log(`📁 Static files serviert unter: ${API_BASE_URL}/uploads`);
-      console.log(`📏 JSON-Limit: 50MB für große Verträge`);
+      logger.info("Server gestartet", { port: PORT, env: process.env.NODE_ENV || 'development' });
+      logger.info("Static files serviert", { path: `${API_BASE_URL}/uploads` });
+      logger.debug("Server-Konfiguration", { jsonLimit: '50MB' });
 
       // 🚀 AUTO-INDEX: Performance-Indexes beim Start erstellen (idempotent)
       try {
         await ensurePerformanceIndexes(db);
-        console.log("✅ Performance-Indexes verifiziert");
+        logger.info("Performance-Indexes verifiziert");
       } catch (indexErr) {
-        console.warn("⚠️ Index-Erstellung übersprungen:", indexErr.message);
+        logger.warn("Index-Erstellung übersprungen", { error: indexErr.message });
       }
 
       // ✅ Initialize Legal Pulse Monitoring
@@ -2058,18 +2066,18 @@ const connectDB = async () => {
         // Dev route for manual triggering
         app.post("/api/legalpulse/cron-run", verifyToken, async (req, res) => {
           try {
-            console.log(`🔧 [DEV] Manual monitoring triggered by user ${req.user.userId}`);
+            logger.debug("Manual monitoring triggered", { userId: req.user.userId });
             await legalPulseMonitor.runMonitoring();
             res.json({ success: true, message: "Monitoring triggered successfully" });
           } catch (error) {
-            console.error("❌ Manual monitoring error:", error);
+            logger.error("Manual monitoring error", { error: error.message });
             res.status(500).json({ success: false, error: error.message });
           }
         });
 
-        console.log("✅ Legal Pulse Monitoring initialized");
+        logger.info("Legal Pulse Monitoring initialized");
       } catch (error) {
-        console.error("❌ Failed to initialize Legal Pulse Monitoring:", error);
+        logger.error("Failed to initialize Legal Pulse Monitoring", { error: error.message });
       }
       console.log(`🎉 *** PFAD-CHAOS BEHOBEN - ALLE ROUTEN UNTER /api ***`);
       console.log(`📄 Auth-Route: /api/auth/* (FIXED!)`);
@@ -2092,7 +2100,7 @@ const connectDB = async () => {
     });
 
   } catch (err) {
-    console.error("❌ Fehler beim Serverstart:", err);
+    logger.critical("Fehler beim Serverstart", { error: err.message, stack: err.stack });
     process.exit(1);
   }
 })();
@@ -2101,23 +2109,23 @@ const connectDB = async () => {
 try {
   require("./cron/resetBusinessLimits");
 } catch (err) {
-  console.error("❌ Reset Business Limits konnte nicht geladen werden:", err);
+  logger.error("Reset Business Limits konnte nicht geladen werden", { error: err.message });
 }
 
-// Graceful Shutdown (unchanged)
+// Graceful Shutdown
 process.on('SIGTERM', async () => {
-  console.log('🛑 Received SIGTERM, closing database connection...');
+  logger.warn("Received SIGTERM, closing database connection...");
   if (client) {
     await client.close();
-    console.log('📦 MongoDB connection closed');
+    logger.db.disconnected();
   }
 });
 
 process.on('SIGINT', async () => {
-  console.log('🛑 Received SIGINT, closing server...');
+  logger.warn("Received SIGINT, closing server...");
   if (client) {
     await client.close();
-    console.log('📦 MongoDB connection closed');
+    logger.db.disconnected();
   }
   process.exit(0);
 });
