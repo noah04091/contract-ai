@@ -10,6 +10,7 @@ const verifyAdmin = require("../middleware/verifyAdmin"); // 🔐 Admin-only acc
 const sendEmail = require("../utils/sendEmail");
 const { generateEmailTemplate } = require("../utils/emailTemplate");
 const { normalizeEmail } = require("../utils/normalizeEmail");
+const { validatePassword } = require("../utils/passwordValidator");
 require("dotenv").config();
 
 // 🔐 Konfiguration
@@ -82,6 +83,15 @@ router.post("/register", async (req, res) => {
   const { email: rawEmail, password, isBetaTester } = req.body;
   if (!rawEmail || !password)
     return res.status(400).json({ message: "❌ E-Mail und Passwort erforderlich" });
+
+  // 🔐 Password-Policy Validierung
+  const passwordValidation = validatePassword(password);
+  if (!passwordValidation.valid) {
+    return res.status(400).json({
+      message: "❌ Passwort erfüllt nicht die Sicherheitsanforderungen",
+      errors: passwordValidation.errors
+    });
+  }
 
   const email = normalizeEmail(rawEmail);
 
@@ -525,6 +535,15 @@ router.put("/change-password", verifyToken, async (req, res) => {
   if (!oldPassword || !newPassword)
     return res.status(400).json({ message: "❌ Beide Passwörter erforderlich" });
 
+  // 🔐 Password-Policy Validierung für neues Passwort
+  const passwordValidation = validatePassword(newPassword);
+  if (!passwordValidation.valid) {
+    return res.status(400).json({
+      message: "❌ Neues Passwort erfüllt nicht die Sicherheitsanforderungen",
+      errors: passwordValidation.errors
+    });
+  }
+
   try {
     const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
     if (!user) return res.status(404).json({ message: "❌ Benutzer nicht gefunden" });
@@ -711,6 +730,15 @@ router.post("/reset-password", async (req, res) => {
   const { token, newPassword } = req.body;
   if (!token || !newPassword)
     return res.status(400).json({ message: "❌ Token und neues Passwort erforderlich" });
+
+  // 🔐 Password-Policy Validierung
+  const passwordValidation = validatePassword(newPassword);
+  if (!passwordValidation.valid) {
+    return res.status(400).json({
+      message: "❌ Passwort erfüllt nicht die Sicherheitsanforderungen",
+      errors: passwordValidation.errors
+    });
+  }
 
   try {
     const user = await usersCollection.findOne({ resetToken: token });

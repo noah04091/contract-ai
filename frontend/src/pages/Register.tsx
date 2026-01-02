@@ -91,7 +91,11 @@ export default function Register() {
           setShowEmailVerification(true);
         }
       } else {
-        setNotification({ message: data.message, type: "error" });
+        // Zeige spezifische Passwort-Fehler falls vorhanden
+        const errorMessage = data.errors && data.errors.length > 0
+          ? data.errors.join('. ')
+          : data.message;
+        setNotification({ message: errorMessage, type: "error" });
       }
     } catch {
       setNotification({ message: "Verbindung fehlgeschlagen", type: "error" });
@@ -245,10 +249,14 @@ export default function Register() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className="split-auth-input"
-                      placeholder="Mindestens 6 Zeichen"
+                      placeholder="Sicheres Passwort erstellen"
                       required
                       autoComplete="new-password"
+                      minLength={8}
                     />
+                    <p className="split-auth-password-hint">
+                      Mind. 8 Zeichen, 1 Großbuchstabe, 1 Kleinbuchstabe, 1 Zahl
+                    </p>
                   </div>
 
                   <p className="split-auth-terms">

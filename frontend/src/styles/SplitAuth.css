@@ -457,6 +457,14 @@
   color: #9ca3af;
 }
 
+/* Password Hint */
+.split-auth-password-hint {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 6px;
+  margin-bottom: 0;
+}
+
 /* Terms Text */
 .split-auth-terms {
   font-size: 12px;

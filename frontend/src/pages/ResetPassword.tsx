@@ -124,9 +124,13 @@ export default function ResetPassword() {
         });
         setTimeout(() => navigate("/login"), 2000);
       } else {
-        setNotification({ 
-          message: data.message || "Fehler beim Zurücksetzen des Passworts", 
-          type: "error" 
+        // Zeige spezifische Passwort-Fehler falls vorhanden
+        const errorMessage = data.errors && data.errors.length > 0
+          ? data.errors.join('. ')
+          : (data.message || "Fehler beim Zurücksetzen des Passworts");
+        setNotification({
+          message: errorMessage,
+          type: "error"
         });
       }
     } catch (err) {
@@ -273,7 +277,7 @@ export default function ResetPassword() {
                 </div>
                 
                 <p className={styles.passwordHint}>
-                  Dein Passwort sollte mindestens 8 Zeichen lang sein.
+                  Mind. 8 Zeichen, 1 Großbuchstabe, 1 Kleinbuchstabe, 1 Zahl
                 </p>
                 
                 <motion.button 

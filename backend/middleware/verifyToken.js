@@ -30,15 +30,13 @@ module.exports = function (req, res, next) {
     source = "header";
   }
 
-  // ✅ 3. Fallback: Aus Query-Parameter (optional)
-  else if (req.query?.token) {
-    token = req.query.token;
-    source = "query";
-  }
+  // 🔐 SICHERHEIT: Query-Parameter Token ENTFERNT
+  // Token in URLs sind unsicher (Browser-History, Server-Logs, Referrer-Header)
+  // Nur Cookie und Authorization Header sind sichere Methoden
 
   // ❌ Kein Token gefunden
   if (!token) {
-    console.warn("❌ Kein Auth-Token gefunden (Cookie, Header, Query) - Request:", req.originalUrl);
+    console.warn("❌ Kein Auth-Token gefunden (Cookie, Header) - Request:", req.originalUrl);
     return res.status(401).json({ message: "Nicht autorisiert – bitte einloggen." });
   }
 

@@ -215,8 +215,12 @@ export default function Profile() {
         setNewPassword("");
         setConfirmPassword("");
       } else {
+        // Zeige spezifische Passwort-Fehler falls vorhanden
+        const errorMessage = data.errors && data.errors.length > 0
+          ? data.errors.join('. ')
+          : (data.message || "Fehler beim Passwortwechsel");
         setNotification({
-          message: data.message || "Fehler beim Passwortwechsel",
+          message: errorMessage,
           type: "error"
         });
       }
@@ -689,7 +693,11 @@ export default function Profile() {
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       className={styles.input}
+                      minLength={8}
                     />
+                    <p className={styles.passwordHint}>
+                      Mind. 8 Zeichen, 1 Großbuchstabe, 1 Kleinbuchstabe, 1 Zahl
+                    </p>
                   </div>
                   
                   <div className={styles.inputGroup}>

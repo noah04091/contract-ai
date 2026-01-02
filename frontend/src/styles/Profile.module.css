@@ -337,6 +337,13 @@
   box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.15);
 }
 
+.passwordHint {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 0.375rem;
+  margin-bottom: 0;
+}
+
 .passwordButton {
   background-color: var(--apple-blue);
   color: white;
