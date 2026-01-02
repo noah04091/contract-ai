@@ -2117,6 +2117,17 @@ html {
   transform: translateY(-1px);
 }
 
+.heroActionBtn.outline {
+  background: transparent;
+  color: var(--apple-blue);
+  border: 2px solid var(--apple-blue);
+}
+
+.heroActionBtn.outline:hover {
+  background: rgba(0, 122, 255, 0.08);
+  transform: translateY(-1px);
+}
+
 /* Dropdown Wrapper */
 .dropdownWrapper {
   position: relative;

@@ -67,6 +67,7 @@ interface ResultsDashboardProps {
   assessment?: ContractAssessment;
   contractMaturity?: 'high' | 'medium' | 'low';
   recognizedAs?: string;
+  onNewAnalysis?: () => void; // 🆕 Callback für neue Analyse
 }
 
 // Category configuration
@@ -110,7 +111,8 @@ export default function ResultsDashboard({
   // 🆕 v2.0: Decision-First Props
   assessment,
   contractMaturity,
-  recognizedAs
+  recognizedAs,
+  onNewAnalysis
 }: ResultsDashboardProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
@@ -283,7 +285,7 @@ export default function ResultsDashboard({
             </div>
           </div>
 
-          {/* Export Actions - Auch bei 0 Optimierungen verfügbar */}
+          {/* Actions - Export + Neue Analyse */}
           <div className={styles.heroActions}>
             {onExport && (
               <div className={styles.dropdownWrapper}>
@@ -326,6 +328,19 @@ export default function ResultsDashboard({
                   )}
                 </AnimatePresence>
               </div>
+            )}
+
+            {/* 🆕 Neue Analyse Button */}
+            {onNewAnalysis && (
+              <motion.button
+                className={`${styles.heroActionBtn} ${styles.outline}`}
+                onClick={onNewAnalysis}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Sparkles size={18} />
+                <span>Neuen Vertrag analysieren</span>
+              </motion.button>
             )}
           </div>
         </motion.div>

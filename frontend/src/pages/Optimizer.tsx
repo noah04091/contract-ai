@@ -2623,8 +2623,8 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
               </motion.div>
             )}
 
-            {/* 🆕 Perspektiven-Auswahl */}
-            {file && optimizations.length === 0 && (
+            {/* 🆕 Perspektiven-Auswahl - nur vor der Analyse zeigen */}
+            {file && optimizations.length === 0 && !optimizationResult && (
               <motion.div
                 className={styles.perspectiveSelector}
                 initial={{ opacity: 0, y: 10 }}
@@ -2665,7 +2665,7 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
             )}
 
             {/* Action Buttons - Enhanced - NUR anzeigen wenn noch keine Ergebnisse */}
-            {optimizations.length === 0 && (
+            {optimizations.length === 0 && !optimizationResult && (
               <motion.div className={styles.actionButtonsEnhanced}>
                 <motion.button
                   onClick={handleUpload}
@@ -2819,9 +2819,9 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
             )}
           </AnimatePresence>
 
-          {/* Results Section */}
+          {/* Results Section - 🆕 v2.0: Auch bei 0 Optimierungen zeigen (Perfect Contract UI) */}
           <AnimatePresence>
-            {optimizations.length > 0 && (
+            {(optimizations.length > 0 || (contractScore && optimizationResult)) && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -2899,6 +2899,7 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                     assessment={optimizationResult?.assessment}
                     contractMaturity={optimizationResult?.meta?.maturity}
                     recognizedAs={optimizationResult?.meta?.recognizedAs}
+                    onNewAnalysis={handleReset}
                   />
                 ) : (
                   <>
