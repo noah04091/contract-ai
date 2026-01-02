@@ -386,6 +386,37 @@
   text-overflow: ellipsis;
 }
 
+/* Nav Label mit Subtitle */
+.navLabelGroup {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  gap: 1px;
+}
+
+.navLinkWithSubtitle {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.navLabelGroup .navLabel {
+  flex: none;
+}
+
+.navSubtitle {
+  font-size: 11px;
+  color: var(--gray-400);
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.navLinkActive .navSubtitle {
+  color: var(--primary-400);
+}
+
 /* Badges */
 .navBadge {
   padding: 3px 7px;

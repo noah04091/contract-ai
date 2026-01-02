@@ -28,6 +28,7 @@ import styles from './DashboardLayout.module.css';
 interface NavItem {
   id: string;
   label: string;
+  subtitle?: string;
   icon: LucideIcon;
   href?: string;
   badge?: string;
@@ -94,6 +95,7 @@ const navigation: NavSection[] = [
       {
         id: 'legal-lens',
         label: 'Legal Lens',
+        subtitle: 'Klauseln verstehen',
         icon: Search,
         href: '/legal-lens',
         badge: 'NEU',
@@ -102,6 +104,7 @@ const navigation: NavSection[] = [
       {
         id: 'legalpulse',
         label: 'Legal Pulse',
+        subtitle: 'Laufende Überwachung',
         icon: Radar,
         href: '/legalpulse',
         badge: 'LIVE',
@@ -286,13 +289,18 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
                         // Regular item
                         <Link
                           to={item.href || '#'}
-                          className={`${styles.navLink} ${isActive(item.href) ? styles.navLinkActive : ''}`}
+                          className={`${styles.navLink} ${isActive(item.href) ? styles.navLinkActive : ''} ${item.subtitle ? styles.navLinkWithSubtitle : ''}`}
                           onClick={onClose}
                         >
                           <span className={styles.navIcon}>
                             <IconComponent size={20} strokeWidth={1.75} />
                           </span>
-                          <span className={styles.navLabel}>{item.label}</span>
+                          <span className={styles.navLabelGroup}>
+                            <span className={styles.navLabel}>{item.label}</span>
+                            {item.subtitle && (
+                              <span className={styles.navSubtitle}>{item.subtitle}</span>
+                            )}
+                          </span>
                           {item.badge && (
                             <span className={`${styles.navBadge} ${getBadgeClass(item.badgeColor)}`}>
                               {item.badge}

@@ -35,8 +35,47 @@
   font-weight: 700;
   line-height: 1.1;
   color: #1f2937;
-  margin: 0 0 24px 0;
+  margin: 0;
   letter-spacing: -0.02em;
+}
+
+/* Hero Title Row mit Badge */
+.heroTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+/* Großes Badge für Hero */
+.monitoringBadgeLarge {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  color: #15803d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid #86efac;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Kleines Badge für minimized Hero und Sidebar */
+.monitoringBadge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: #dcfce7;
+  color: #15803d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-left: 8px;
+  vertical-align: middle;
 }
 
 .heroSubtitle {

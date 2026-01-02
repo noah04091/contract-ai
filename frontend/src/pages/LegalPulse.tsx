@@ -1234,11 +1234,14 @@ export default function LegalPulse() {
 
           {/* Original Hero Content */}
           <div className={styles.heroContent}>
-            <h1 className={styles.heroTitle}>
-              Rechtliche Risiken erkennen, bevor sie entstehen.
-            </h1>
+            <div className={styles.heroTitleRow}>
+              <h1 className={styles.heroTitle}>
+                Legal Pulse
+              </h1>
+              <span className={styles.monitoringBadgeLarge}>LAUFENDE ÜBERWACHUNG</span>
+            </div>
             <p className={styles.heroSubtitle}>
-              Legal Pulse analysiert alle Ihre Verträge live, warnt Sie vor Risiken und zeigt Ihnen, wo Sie sofort handeln sollten.
+              Kontinuierliche Überwachung aller Verträge auf rechtliche Risiken und Gesetzesänderungen.
             </p>
             <button className={styles.heroCTA} onClick={() => navigate('/contracts')}>
               Jetzt Risiken prüfen
@@ -1275,8 +1278,8 @@ export default function LegalPulse() {
       ) : (
         <div className={styles.heroMinimized}>
           <div className={styles.heroMinimizedContent}>
-            <h2>Legal Pulse</h2>
-            <p>Rechtliche Risiken erkennen, bevor sie entstehen</p>
+            <h2>Legal Pulse <span className={styles.monitoringBadge}>LAUFEND</span></h2>
+            <p>Kontinuierliche Überwachung Ihrer Verträge</p>
           </div>
           <button className={styles.heroExpandButton} onClick={expandHero}>
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

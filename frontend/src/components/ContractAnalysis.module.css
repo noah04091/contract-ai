@@ -686,6 +686,19 @@
   gap: 8px;
 }
 
+/* Badge für Analyse-Typ (EINMALIG) */
+.analyseTypeBadge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-left: 4px;
+}
+
 .successDetails p {
   color: #64748b;
   margin: 0;

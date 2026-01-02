@@ -985,7 +985,7 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          {/* ✅ ENHANCED: Success Header mit Lawyer-Level Indikator */}
+          {/* ✅ ENHANCED: Success Header mit Rechtsprüfung Badge */}
           <div className={styles.successHeader}>
             <div className={styles.successInfo}>
               <CheckCircle size={28} className={styles.successIcon} />
@@ -996,19 +996,20 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
                       <Gavel size={20} />
                     </span>
                   )}
-                  {initialResult 
-                    ? 'Anwaltliche Analyse bereits verfügbar' 
-                    : result?.isReanalysis 
-                      ? 'Anwaltliche Analyse aktualisiert' 
-                      : 'Anwaltliche Vertragsanalyse abgeschlossen'
+                  {initialResult
+                    ? 'Rechtsprüfung bereits verfügbar'
+                    : result?.isReanalysis
+                      ? 'Rechtsprüfung aktualisiert'
+                      : 'Rechtsprüfung abgeschlossen'
                   }
+                  <span className={styles.analyseTypeBadge}>EINMALIG</span>
                 </h4>
                 <p>
-                  {initialResult 
-                    ? 'Diese Datei wurde bereits auf Anwaltsniveau analysiert - Ergebnisse werden angezeigt'
-                    : result?.isReanalysis 
-                      ? 'Bestehende Anwaltsanalyse wurde erfolgreich überschrieben'
-                      : 'Rechtssichere Vertragseinschätzung auf Fachanwaltsniveau in Sekunden'
+                  {initialResult
+                    ? 'Einmalige juristische Analyse auf Anwaltsniveau - Ergebnisse werden angezeigt'
+                    : result?.isReanalysis
+                      ? 'Bestehende Rechtsprüfung wurde erfolgreich aktualisiert'
+                      : 'Einmalige, detaillierte Vertragsanalyse wie von einem Fachanwalt'
                   }
                 </p>
                 {(result?.lawyerLevelAnalysis || initialResult?.lawyerLevelAnalysis) && (
