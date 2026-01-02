@@ -15,8 +15,6 @@ import SkipNavigation from "./components/SkipNavigation";
 import CookieConsentBanner from "./components/CookieConsentBanner";
 import ScrollToTop from "./components/ScrollToTop";
 import AssistantWidget from "./components/AssistantWidget";
-import OnboardingTour from "./components/OnboardingTour";
-import { useOnboarding } from "./hooks/useOnboarding";
 
 // 🚀 PERFORMANCE: Lazy Loading für alle Seiten (Code Splitting)
 // Homepage, Login, Contracts und Profile werden sofort geladen (kritische Seiten)
@@ -69,6 +67,7 @@ const DigitaleSignatur = lazy(() => import("./pages/features/DigitaleSignatur"))
 const EmailUpload = lazy(() => import("./pages/features/EmailUpload"));
 const ContractBuilderFeature = lazy(() => import("./pages/features/ContractBuilder"));
 const LegalLensFeature = lazy(() => import("./pages/features/LegalLens"));
+const Features = lazy(() => import("./pages/Features")); // 📋 Features Übersichtsseite
 
 // 🔒 Geschützte Seiten - Lazy Loading
 const Dashboard = lazy(() => import("./pages/DashboardV2")); // ✅ Neues Premium Dashboard
@@ -104,7 +103,6 @@ function AppWithLoader() {
   const location = useLocation();
   const [loading, setLoading] = useState(false);
   const { toasts, removeToast } = useToast();
-  const { runTour, finishTour } = useOnboarding();
 
   // 🛡️ DOM Error Handler für removeChild-Fehler
   useEffect(() => {
@@ -183,6 +181,9 @@ function AppWithLoader() {
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/beta" element={<Beta />} /> {/* 🎁 Beta-Tester Landing Page */}
+
+            {/* 📋 Features Übersichtsseite */}
+            <Route path="/features" element={<Features />} />
 
             {/* 🌟 Feature-Landingpages (NEU) */}
             <Route path="/features/vertragsanalyse" element={<Vertragsanalyse />} />
@@ -264,7 +265,6 @@ function AppWithLoader() {
         <CookieConsentBanner />
         <ToastContainer toasts={toasts} onRemove={removeToast} />
         <AssistantWidget />
-        <OnboardingTour run={runTour} onFinish={finishTour} />
       </div>
     </ErrorBoundary>
   );

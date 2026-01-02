@@ -3780,9 +3780,11 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
     // 🆕 v2.0 DECISION-FIRST: Bei optimizationNeeded=false, hoher Score
     let healthScore;
     if (normalizedResult.assessment?.optimizationNeeded === false) {
-      // Professioneller Vertrag ohne nötige Optimierungen → Hoher Score
+      // Professioneller Vertrag ohne nötige Optimierungen → IMMER hoher Score (95-98)
+      // Unabhängig von evtl. übrig gebliebenen Issues aus Quality Layer
       const issueCount = normalizedResult.categories.flatMap(c => c.issues).length;
-      healthScore = issueCount === 0 ? 98 : Math.max(85, 95 - issueCount * 2);
+      // Score: 98 bei 0 Issues, 97 bei 1, 96 bei 2, aber NIEMALS unter 95
+      healthScore = Math.max(95, 98 - issueCount);
       console.log(`🎯 [${requestId}] DECISION-FIRST: High score ${healthScore} (optimizationNeeded=false, ${issueCount} issues)`);
     } else {
       // Normaler Score-Algorithmus

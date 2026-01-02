@@ -88,6 +88,57 @@ const PRIORITY_LABELS = {
   low: 'Niedrig'
 };
 
+// 🆕 Formatter für intentionalClauses: snake_case → Lesbare deutsche Begriffe
+const formatIntentionalClause = (clause: string): string => {
+  // Mapping für bekannte Klauseln
+  const clauseMapping: Record<string, string> = {
+    'haftungsbeschraenkung': 'Haftungsbeschränkung',
+    'rueckgriffsrecht': 'Rückgriffsrecht',
+    'abtretungsverbote': 'Abtretungsverbote',
+    'ankauflimit': 'Ankauflimit',
+    'kuendigungsfristen': 'Kündigungsfristen',
+    'kuendigungsfrist': 'Kündigungsfrist',
+    'vertragsstrafe': 'Vertragsstrafe',
+    'geheimhaltung': 'Geheimhaltung',
+    'wettbewerbsverbot': 'Wettbewerbsverbot',
+    'datenschutz': 'Datenschutz',
+    'gerichtsstand': 'Gerichtsstand',
+    'schriftformerfordernis': 'Schriftformerfordernis',
+    'salvatorische_klausel': 'Salvatorische Klausel',
+    'kuendigungsrecht': 'Kündigungsrecht',
+    'verlaengerungsklausel': 'Verlängerungsklausel',
+    'zahlungsbedingungen': 'Zahlungsbedingungen',
+    'gewaehrleistung': 'Gewährleistung',
+    'schadenersatz': 'Schadenersatz',
+    'hoeheregewalt': 'Höhere Gewalt',
+    'force_majeure': 'Force Majeure',
+    'probezeit': 'Probezeit',
+    'urlaubsanspruch': 'Urlaubsanspruch',
+    'ueberstundenregelung': 'Überstundenregelung',
+    'nebentaetigkeit': 'Nebentätigkeit',
+    'bonusregelung': 'Bonusregelung',
+    'homeoffice': 'Home Office',
+    'dienstwagen': 'Dienstwagen',
+  };
+
+  // Erst im Mapping nachschlagen
+  const lowerClause = clause.toLowerCase().replace(/[-\s]/g, '_');
+  if (clauseMapping[lowerClause]) {
+    return clauseMapping[lowerClause];
+  }
+
+  // Fallback: Automatische Formatierung
+  return clause
+    // ae/oe/ue zu Umlauten
+    .replace(/ae/g, 'ä').replace(/oe/g, 'ö').replace(/ue/g, 'ü')
+    .replace(/Ae/g, 'Ä').replace(/Oe/g, 'Ö').replace(/Ue/g, 'Ü')
+    // snake_case zu Leerzeichen
+    .replace(/_/g, ' ')
+    // Erster Buchstabe groß
+    .replace(/\b\w/g, c => c.toUpperCase())
+    .trim();
+};
+
 // Category labels
 const CATEGORY_LABELS = {
   termination: 'Kündigung',
@@ -260,7 +311,7 @@ export default function ResultsDashboard({
                     <strong>Als beabsichtigt erkannt:</strong>
                     <ul>
                       {assessment.intentionalClauses.map((clause, idx) => (
-                        <li key={idx}>{clause}</li>
+                        <li key={idx}>{formatIntentionalClause(clause)}</li>
                       ))}
                     </ul>
                   </div>
@@ -315,13 +366,25 @@ export default function ResultsDashboard({
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
                       >
-                        <button onClick={() => { onExport('pdf'); setShowExportMenu(false); }}>
-                          <FileText size={16} />
-                          <span>PDF Report</span>
+                        <button
+                          className={styles.dropdownItem}
+                          onClick={() => { onExport('pdf'); setShowExportMenu(false); }}
+                        >
+                          <FileText size={18} />
+                          <div className={styles.dropdownItemText}>
+                            <span className={styles.dropdownItemName}>PDF Export</span>
+                            <span className={styles.dropdownItemDesc}>Vollständiger Bericht</span>
+                          </div>
                         </button>
-                        <button onClick={() => { onExport('word'); setShowExportMenu(false); }}>
-                          <FileText size={16} />
-                          <span>Word Dokument</span>
+                        <button
+                          className={styles.dropdownItem}
+                          onClick={() => { onExport('docx'); setShowExportMenu(false); }}
+                        >
+                          <FileText size={18} />
+                          <div className={styles.dropdownItemText}>
+                            <span className={styles.dropdownItemName}>Word Export</span>
+                            <span className={styles.dropdownItemDesc}>Bearbeitbar</span>
+                          </div>
                         </button>
                       </motion.div>
                     </>

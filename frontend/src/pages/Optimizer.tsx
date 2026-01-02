@@ -1880,24 +1880,48 @@ Freundliche Grüße`
     setShowPitchMenu(false);
   }, [optimizations, optimizationResult, selectedPitchStyle, showToast]);
 
-  // ✅ FIXED: Export Functions with format support
+  // ✅ FIXED: Export Functions with format support (inkl. Perfect Contract Support)
   const handleExport = useCallback(async (format: string = 'txt') => {
     setShowExportMenu(false);
 
     const fileName = file?.name?.replace('.pdf', '') || 'Vertragsanalyse';
     const dateStr = new Date().toISOString().split('T')[0];
+    const isPerfectContract = optimizations.length === 0;
+    const assessment = optimizationResult?.assessment;
+    const score = contractScore?.overall || 0;
 
     // TXT Export (E-Mail-Vorlage)
     if (format === 'txt' || format === 'TXT') {
-      const content = optimizations.map((opt, index) =>
-        `${index + 1}. ${opt.category.toUpperCase()}
+      let content = '';
+
+      if (isPerfectContract) {
+        content = `VERTRAGSANALYSE - ${fileName}
+Datum: ${new Date().toLocaleDateString('de-DE')}
+Score: ${score}/100
+
+═══════════════════════════════════════════════
+✅ PROFESSIONELLER VERTRAG - KEINE OPTIMIERUNGEN ERFORDERLICH
+═══════════════════════════════════════════════
+
+${assessment?.reasoning || 'Der Vertrag erfüllt professionelle Standards.'}
+
+${assessment?.intentionalClauses?.length ? `Als beabsichtigt erkannte Klauseln:
+${assessment.intentionalClauses.map(c => `• ${c}`).join('\n')}` : ''}
+
+---
+Erstellt mit Contract AI - KI-gestützte Vertragsanalyse
+`;
+      } else {
+        content = optimizations.map((opt, index) =>
+          `${index + 1}. ${opt.category.toUpperCase()}
 Original: ${opt.original}
 Verbessert: ${opt.improved}
 Begründung: ${opt.reasoning}
 Benchmark: ${opt.marketBenchmark}
 Impact: ${opt.estimatedSavings}
 Konfidenz: ${opt.confidence}%\n`
-      ).join('\n');
+        ).join('\n');
+      }
 
       const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
       const link = document.createElement('a');
@@ -1912,7 +1936,58 @@ Konfidenz: ${opt.confidence}%\n`
     if (format === 'pdf' || format === 'PDF') {
       try {
         // Erstelle HTML für PDF
-        const htmlContent = `
+        let htmlContent = '';
+
+        if (isPerfectContract) {
+          // Perfect Contract PDF
+          htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Vertragsanalyse - ${fileName}</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
+    h1 { color: #1D1D1F; border-bottom: 2px solid #34C759; padding-bottom: 10px; }
+    .score-badge { display: inline-block; background: linear-gradient(135deg, #34C759, #30D158); color: white; padding: 8px 20px; border-radius: 20px; font-size: 24px; font-weight: bold; margin: 20px 0; }
+    .success-box { background: #E5FFE5; border: 2px solid #34C759; border-radius: 12px; padding: 25px; margin: 20px 0; }
+    .success-title { color: #34C759; font-size: 20px; font-weight: bold; margin-bottom: 15px; }
+    .assessment { color: #333; line-height: 1.6; }
+    .clauses-list { margin-top: 20px; }
+    .clauses-list h3 { color: #666; font-size: 14px; margin-bottom: 10px; }
+    .clauses-list ul { list-style: none; padding: 0; }
+    .clauses-list li { padding: 5px 0; padding-left: 20px; position: relative; }
+    .clauses-list li:before { content: "✓"; color: #34C759; position: absolute; left: 0; }
+    .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; color: #999; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h1>✅ Vertragsanalyse</h1>
+  <p><strong>Dokument:</strong> ${fileName}</p>
+  <p><strong>Datum:</strong> ${new Date().toLocaleDateString('de-DE')}</p>
+  <div class="score-badge">${score}/100 Punkte</div>
+
+  <div class="success-box">
+    <div class="success-title">Professioneller Vertrag - Keine Optimierungen erforderlich</div>
+    <p class="assessment">${assessment?.reasoning || 'Der Vertrag erfüllt professionelle Standards und enthält alle notwendigen Klauseln.'}</p>
+    ${assessment?.intentionalClauses?.length ? `
+    <div class="clauses-list">
+      <h3>Als beabsichtigt erkannte Klauseln:</h3>
+      <ul>
+        ${assessment.intentionalClauses.map(c => `<li>${c}</li>`).join('')}
+      </ul>
+    </div>
+    ` : ''}
+  </div>
+
+  <div class="footer">
+    Erstellt mit Contract AI - KI-gestützte Vertragsanalyse
+  </div>
+</body>
+</html>`;
+        } else {
+          // Standard PDF mit Optimierungen
+          htmlContent = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -1963,6 +2038,7 @@ Konfidenz: ${opt.confidence}%\n`
   </div>
 </body>
 </html>`;
+        }
 
         // Öffne in neuem Tab zum Drucken als PDF
         const printWindow = window.open('', '_blank');
@@ -1982,8 +2058,38 @@ Konfidenz: ${opt.confidence}%\n`
     // DOCX Export (Word mit Kommentaren)
     if (format === 'docx' || format === 'DOCX') {
       try {
-        // Erstelle RTF (wird von Word geöffnet)
-        let rtfContent = `{\\rtf1\\ansi\\deff0
+        let rtfContent = '';
+
+        if (isPerfectContract) {
+          // Perfect Contract RTF
+          rtfContent = `{\\rtf1\\ansi\\deff0
+{\\fonttbl{\\f0 Arial;}}
+{\\colortbl;\\red0\\green0\\blue0;\\red52\\green199\\blue89;\\red0\\green128\\blue0;\\red102\\green102\\blue102;}
+\\f0\\fs24
+
+{\\b\\fs32 Vertragsanalyse - ${fileName}}\\par
+\\par
+{\\b Datum:} ${new Date().toLocaleDateString('de-DE')}\\par
+{\\b Score:} ${score}/100 Punkte\\par
+\\par
+\\line
+\\par
+{\\cf2\\b\\fs28 \\u10003 Professioneller Vertrag}\\par
+\\par
+{\\b Keine Optimierungen erforderlich}\\par
+\\par
+${assessment?.reasoning?.replace(/\n/g, '\\par ') || 'Der Vertrag erf\\u252llt professionelle Standards.'}\\par
+\\par
+${assessment?.intentionalClauses?.length ? `{\\b Als beabsichtigt erkannte Klauseln:}\\par
+${assessment.intentionalClauses.map(c => `\\u8226  ${c}`).join('\\par ')}\\par` : ''}
+\\par
+\\line
+\\par
+{\\cf4\\fs18 Erstellt mit Contract AI - KI-gest\\u252tzte Vertragsanalyse}
+}`;
+        } else {
+          // Standard RTF mit Optimierungen
+          rtfContent = `{\\rtf1\\ansi\\deff0
 {\\fonttbl{\\f0 Arial;}}
 {\\colortbl;\\red0\\green0\\blue0;\\red255\\green0\\blue0;\\red0\\green128\\blue0;\\red0\\green102\\blue204;}
 \\f0\\fs24
@@ -1997,8 +2103,8 @@ Konfidenz: ${opt.confidence}%\n`
 \\par
 `;
 
-        optimizations.forEach((opt, index) => {
-          rtfContent += `{\\b ${index + 1}. ${opt.category.toUpperCase()}} [${opt.priority}]\\par
+          optimizations.forEach((opt, index) => {
+            rtfContent += `{\\b ${index + 1}. ${opt.category.toUpperCase()}} [${opt.priority}]\\par
 \\par
 {\\cf2\\b Original (Problematisch):}\\par
 ${opt.original.replace(/\n/g, '\\par ')}\\par
@@ -2011,9 +2117,10 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
 \\line
 \\par
 `;
-        });
+          });
 
-        rtfContent += `}`;
+          rtfContent += `}`;
+        }
 
         const blob = new Blob([rtfContent], { type: 'application/rtf' });
         const link = document.createElement('a');
