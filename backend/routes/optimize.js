@@ -3779,13 +3779,22 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
     // 🚀 STAGE 7: Finale Health-Score-Berechnung
     // 🆕 v2.0 DECISION-FIRST: Bei optimizationNeeded=false, hoher Score
     let healthScore;
-    if (normalizedResult.assessment?.optimizationNeeded === false) {
+    const totalIssueCount = normalizedResult.categories.flatMap(c => c.issues).length;
+
+    // Robuste Prüfung: optimizationNeeded kann boolean oder string sein
+    const optimizationNeeded = normalizedResult.assessment?.optimizationNeeded;
+    const isOptimizationNotNeeded = optimizationNeeded === false || optimizationNeeded === 'false' || optimizationNeeded === "false";
+
+    // ZUSÄTZLICH: Wenn 0 Issues gefunden wurden, ist es ein guter Vertrag
+    const isPerfectContract = isOptimizationNotNeeded || totalIssueCount === 0;
+
+    console.log(`🔍 [${requestId}] Score-Decision: optimizationNeeded=${optimizationNeeded} (type: ${typeof optimizationNeeded}), totalIssues=${totalIssueCount}, isPerfect=${isPerfectContract}`);
+
+    if (isPerfectContract) {
       // Professioneller Vertrag ohne nötige Optimierungen → IMMER hoher Score (95-98)
-      // Unabhängig von evtl. übrig gebliebenen Issues aus Quality Layer
-      const issueCount = normalizedResult.categories.flatMap(c => c.issues).length;
       // Score: 98 bei 0 Issues, 97 bei 1, 96 bei 2, aber NIEMALS unter 95
-      healthScore = Math.max(95, 98 - issueCount);
-      console.log(`🎯 [${requestId}] DECISION-FIRST: High score ${healthScore} (optimizationNeeded=false, ${issueCount} issues)`);
+      healthScore = Math.max(95, 98 - totalIssueCount);
+      console.log(`🎯 [${requestId}] DECISION-FIRST: High score ${healthScore} (isPerfectContract=true, ${totalIssueCount} issues)`);
     } else {
       // Normaler Score-Algorithmus
       healthScore = calculateHealthScore(gapAnalysis.gaps, normalizedResult.categories.flatMap(c => c.issues));
