@@ -821,6 +821,7 @@ const HomeRedesign = () => {
               <span className="section-badge reveal-text">SO FUNKTIONIERT'S</span>
               <h2 className="reveal-text">Unsere KI-Tools für<br /><span className="text-gradient">Ihre Verträge</span></h2>
               <p className="reveal-text">Erleben Sie die Zukunft des Vertragsmanagements.</p>
+              <p className="features-hint reveal-text">Ein Auszug unserer beliebtesten Funktionen</p>
             </div>
             
             <div className="features-grid">
@@ -956,28 +957,8 @@ const HomeRedesign = () => {
                 </Link>
               </div>
 
-              {/* Legal Pulse Card */}
-              <div className="feature-card reveal-card" style={{"--animation-order": 6} as React.CSSProperties}>
-                <div className="feature-icon-wrapper red">
-                  <div className="feature-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
-                    </svg>
-                  </div>
-                </div>
-                <h3>Legal Pulse</h3>
-                <p>Frühwarnsystem für neue Risiken durch Gesetzesänderungen oder unfaire Formulierungen.</p>
-                <Link to="/features/legalpulse" className="feature-link">
-                  Mehr erfahren
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12h14"></path>
-                    <path d="m12 5 7 7-7 7"></path>
-                  </svg>
-                </Link>
-              </div>
-
               {/* Digitale Signatur Card */}
-              <div className="feature-card reveal-card" style={{"--animation-order": 7} as React.CSSProperties}>
+              <div className="feature-card reveal-card" style={{"--animation-order": 6} as React.CSSProperties}>
                 <div className="feature-icon-wrapper teal">
                   <div className="feature-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1000,18 +981,18 @@ const HomeRedesign = () => {
                 </Link>
               </div>
 
-              {/* Vertragsverwaltung Card */}
-              <div className="feature-card reveal-card" style={{"--animation-order": 8} as React.CSSProperties}>
-                <div className="feature-icon-wrapper yellow">
+              {/* Legal Pulse Card */}
+              <div className="feature-card reveal-card" style={{"--animation-order": 7} as React.CSSProperties}>
+                <div className="feature-icon-wrapper red">
                   <div className="feature-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                      <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
                     </svg>
                   </div>
                 </div>
-                <h3>Vertragsverwaltung</h3>
-                <p>Alle Verträge zentral verwalten, Ordner organisieren & mit intelligenter Suche sofort finden.</p>
-                <Link to="/features/vertragsverwaltung" className="feature-link">
+                <h3>Legal Pulse</h3>
+                <p>Frühwarnsystem für neue Risiken durch Gesetzesänderungen oder unfaire Formulierungen.</p>
+                <Link to="/features/legalpulse" className="feature-link">
                   Mehr erfahren
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14"></path>
@@ -1019,27 +1000,17 @@ const HomeRedesign = () => {
                   </svg>
                 </Link>
               </div>
+            </div>
 
-              {/* Contract Builder Card - Position 9 (Ende Reihe 2) */}
-              <div className="feature-card reveal-card" style={{"--animation-order": 9} as React.CSSProperties}>
-                <div className="feature-icon-wrapper indigo">
-                  <div className="feature-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      {/* Schraubenschlüssel - "Builder Tool" */}
-                      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
-                    </svg>
-                  </div>
-                </div>
-                <h3>Contract Builder</h3>
-                <p>Verträge visuell erstellen mit Drag & Drop, Smart Variables und KI-Unterstützung.</p>
-                <Link to="/features/contract-builder" className="feature-link">
-                  Mehr erfahren
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12h14"></path>
-                    <path d="m12 5 7 7-7 7"></path>
-                  </svg>
-                </Link>
-              </div>
+            {/* "Alle Funktionen" Button */}
+            <div className="features-cta-wrapper">
+              <Link to="/features" className="features-discover-btn">
+                <span>Alle Funktionen entdecken</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14"></path>
+                  <path d="m12 5 7 7-7 7"></path>
+                </svg>
+              </Link>
             </div>
           </div>
         </section>
@@ -1748,7 +1719,20 @@ const HomeRedesign = () => {
                   </div>
                   <svg className="more-feature-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                 </Link>
-              </div>
+              
+                <Link to="/features/vertragsverwaltung" className="more-feature-card">
+                  <div className="more-feature-icon blue">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                      <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                  </div>
+                  <div className="more-feature-content">
+                    <h4>Vertragsverwaltung</h4>
+                    <p>Alle Verträge zentral organisieren</p>
+                  </div>
+                  <svg className="more-feature-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </Link></div>
 
               <div className="more-features-cta">
                 <Link to="/features" className="all-features-link">

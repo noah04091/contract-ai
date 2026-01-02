@@ -233,16 +233,7 @@ html {
 }
 
 .section-title h2::after {
-  content: '';
-  position: absolute;
-  bottom: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 60px;
-  height: 3px;
-  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
-  border-radius: 2px;
-  opacity: 0.7;
+  display: none;
 }
 
 /* CTA Button Enhancements */
@@ -375,6 +366,69 @@ a {
   display: block;
   width: 100%;
 }
+
+/* === MODERN SECTION TITLE STYLES === */
+.section-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, rgba(0, 102, 255, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+  color: #0066FF;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  border-radius: 100px;
+  margin-bottom: 1.25rem;
+  border: 1px solid rgba(0, 102, 255, 0.2);
+}
+
+.features-title h2 {
+  font-size: 3rem;
+  line-height: 1.15;
+  margin-bottom: 1.25rem;
+}
+
+.features-title h2 .text-gradient {
+  background: linear-gradient(135deg, #0052cc 0%, #0066FF 50%, #38bdf8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.features-title p {
+  font-size: 1.2rem;
+  color: #6b7280;
+  max-width: 600px;
+}
+
+.features-hint {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin-top: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+@media (max-width: 768px) {
+  .features-title h2 {
+    font-size: 2rem;
+  }
+  
+  .features-title p {
+    font-size: 1rem;
+  }
+
+  .features-hint {
+    font-size: 0.8rem;
+    margin-top: 8px;
+  }
+
+  .section-badge {
+    font-size: 0.7rem;
+    padding: 0.4rem 0.8rem;
+  }
+}
+
+
 
 /* === ANIMATIONS & EFFECTS === */
 @keyframes fadeInUp {
@@ -2808,13 +2862,50 @@ a {
   margin-top: 0;
 }
 
-/* Feature Grid: 5 Spalten für 10 Cards (5-5 Layout auf Desktop) */
+/* Feature Grid: 4 Spalten für 8 Cards (4-4 Layout auf Desktop) */
 .features-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 20px;
   width: 100%;
   box-sizing: border-box;
+}
+
+/* "Alle Funktionen entdecken" Button */
+.features-cta-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 48px;
+}
+
+.features-discover-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 28px;
+  background: transparent;
+  color: var(--primary-color);
+  font-size: 15px;
+  font-weight: 600;
+  border: 1.5px solid var(--primary-color);
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.features-discover-btn:hover {
+  background: var(--primary-color);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(61, 124, 243, 0.25);
+}
+
+.features-discover-btn svg {
+  transition: transform 0.3s ease;
+}
+
+.features-discover-btn:hover svg {
+  transform: translateX(4px);
 }
 
 .feature-card {
@@ -3078,16 +3169,16 @@ a {
 
 /* Moderne Headline für Sektionen */
 .cm-headline {
-  font-size: 52px;
-  font-weight: 800;
-  line-height: 1.1;
-  margin-bottom: 24px;
-  color: #1a1a2e;
-  letter-spacing: -0.03em;
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 1.25rem;
+  color: var(--text-color, #1a1a2e);
+  letter-spacing: -0.02em;
 }
 
 .cm-headline .text-gradient {
-  background: linear-gradient(135deg, #007aff 0%, #0052cc 50%, #003d99 100%);
+  background: linear-gradient(135deg, #0052cc 0%, #0066FF 50%, #38bdf8 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -3829,36 +3920,13 @@ a {
   transform: rotateY(0) rotateX(0);
 }
 
+/* Mac Topbar - Hidden for cleaner look */
 .image-mac-topbar {
-  background: #f2f2f2;
-  height: 28px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  display: flex;
-  align-items: center;
-  padding: 0 10px;
+  display: none;
 }
 
 .image-mac-buttons {
-  display: flex;
-  gap: 6px;
-}
-
-.image-mac-buttons span {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-}
-
-.image-mac-buttons span:first-child {
-  background-color: #ff5f57;
-}
-
-.image-mac-buttons span:nth-child(2) {
-  background-color: #fdbc2c;
-}
-
-.image-mac-buttons span:last-child {
-  background-color: #28c941;
+  display: none;
 }
 
 .image-container {
@@ -5905,55 +5973,33 @@ a[href*="kontakt"]:hover,
   }
 }
 
-/* ===== FINAL CTA SECTION - PREMIUM REDESIGN WITH AURORA ===== */
+/* ===== FINAL CTA SECTION - ELEGANT LIGHT DESIGN ===== */
 
 .final-cta-section {
   padding: 6rem 2rem 5rem;
   position: relative;
   overflow: hidden;
-  background: #0066FF;
+  background: linear-gradient(180deg, #ffffff 0%, #f0f7ff 40%, #e0edff 100%);
   min-height: 500px;
 }
 
-/* Sanfter Übergang von Weiß zu Blau */
+/* Elegante Trennlinie oben */
 .final-cta-section::before {
   content: '';
   position: absolute;
   top: 0;
-  left: 0;
-  right: 0;
-  height: 200px;
-  background: linear-gradient(180deg,
-    #ffffff 0%,
-    rgba(255, 255, 255, 0.98) 5%,
-    rgba(255, 255, 255, 0.95) 10%,
-    rgba(255, 255, 255, 0.90) 15%,
-    rgba(255, 255, 255, 0.82) 20%,
-    rgba(255, 255, 255, 0.72) 25%,
-    rgba(255, 255, 255, 0.60) 30%,
-    rgba(255, 255, 255, 0.48) 35%,
-    rgba(255, 255, 255, 0.35) 40%,
-    rgba(255, 255, 255, 0.24) 50%,
-    rgba(255, 255, 255, 0.15) 60%,
-    rgba(255, 255, 255, 0.08) 70%,
-    rgba(255, 255, 255, 0.03) 85%,
-    rgba(255, 255, 255, 0) 100%
-  );
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #0066FF);
+  border-radius: 2px;
   z-index: 1;
-  pointer-events: none;
 }
 
-/* Aurora WebGL Background Container */
+/* Aurora WebGL Background Container - hidden */
 .final-cta-aurora-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 0;
-  opacity: 0.7;
-  mask-image: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.3) 15%, rgba(0,0,0,1) 40%);
-  -webkit-mask-image: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.3) 15%, rgba(0,0,0,1) 40%);
+  display: none;
 }
 
 .final-cta-aurora-bg .aurora-container {
@@ -5966,24 +6012,18 @@ a[href*="kontakt"]:hover,
   height: 100% !important;
 }
 
-/* Subtle floating particles effect */
+/* Subtile Dekoration */
 .final-cta-section::after {
   content: '';
   position: absolute;
-  width: 500px;
-  height: 500px;
+  width: 600px;
+  height: 600px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 60%);
-  top: -150px;
-  right: -150px;
-  animation: finalCtaFloatOrb 15s ease-in-out infinite;
-  z-index: 2;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 50%);
+  top: -200px;
+  right: -200px;
+  z-index: 0;
   pointer-events: none;
-}
-
-@keyframes finalCtaFloatOrb {
-  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
-  50% { transform: translate(-40px, 40px) scale(1.15); opacity: 0.8; }
 }
 
 .final-cta-content {
@@ -6012,7 +6052,7 @@ a[href*="kontakt"]:hover,
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border: 3px solid rgba(255, 255, 255, 0.9);
+  border: 3px solid #ffffff;
   margin-left: -12px;
   object-fit: cover;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
@@ -6026,7 +6066,7 @@ a[href*="kontakt"]:hover,
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border: 3px solid rgba(255, 255, 255, 0.9);
+  border: 3px solid #ffffff;
   margin-left: -12px;
   background: linear-gradient(135deg, #0066FF, #0052cc);
   display: flex;
@@ -6056,7 +6096,7 @@ a[href*="kontakt"]:hover,
 
 .final-cta-rating-text {
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: #374151;
   font-weight: 600;
 }
 
@@ -6069,16 +6109,15 @@ a[href*="kontakt"]:hover,
 }
 
 .final-cta-title-gradient {
-  background: linear-gradient(180deg, #ffffff 0%, rgba(255, 255, 255, 0.95) 100%);
+  background: linear-gradient(180deg, #111827 0%, #374151 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 40px rgba(64, 156, 255, 0.3);
 }
 
 .final-cta-subtitle {
   font-size: 1.15rem;
-  color: rgba(255, 255, 255, 0.85);
+  color: #6b7280;
   margin: 0 0 2rem;
   font-weight: 500;
   line-height: 1.7;
@@ -6098,17 +6137,16 @@ a[href*="kontakt"]:hover,
   align-items: center;
   gap: 0.75rem;
   padding: 1.25rem 2.5rem;
-  background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%);
-  color: #0052cc;
+  background: linear-gradient(135deg, #0066FF 0%, #0052cc 100%);
+  color: #ffffff;
   border: none;
   border-radius: 100px;
   font-size: 1.1rem;
   font-weight: 700;
   cursor: pointer;
   box-shadow:
-    0 4px 20px rgba(0, 102, 255, 0.3),
-    0 0 50px rgba(64, 156, 255, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    0 4px 20px rgba(0, 102, 255, 0.35),
+    0 2px 8px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
   letter-spacing: 0.01em;
   text-decoration: none;
@@ -6134,16 +6172,17 @@ a[href*="kontakt"]:hover,
 .final-cta-primary:hover {
   transform: translateY(-3px) scale(1.02);
   box-shadow:
-    0 8px 30px rgba(0, 102, 255, 0.4),
-    0 0 80px rgba(64, 156, 255, 0.35);
-  color: #003d99;
+    0 8px 30px rgba(0, 102, 255, 0.45),
+    0 4px 12px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, #0052cc 0%, #003d99 100%);
+  color: #ffffff;
 }
 
 .final-cta-secondary {
   padding: 0.85rem 1.75rem;
   background: transparent;
-  color: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #4b5563;
+  border: 1px solid #d1d5db;
   border-radius: 100px;
   font-size: 1rem;
   font-weight: 500;
@@ -6153,9 +6192,9 @@ a[href*="kontakt"]:hover,
 }
 
 .final-cta-secondary:hover {
-  color: white;
-  border-color: rgba(255, 255, 255, 0.6);
-  background: rgba(255, 255, 255, 0.1);
+  color: #0066FF;
+  border-color: #0066FF;
+  background: rgba(0, 102, 255, 0.05);
 }
 
 .final-cta-trust-badges {
@@ -6163,32 +6202,30 @@ a[href*="kontakt"]:hover,
   flex-wrap: nowrap;
   justify-content: center;
   align-items: center;
-  gap: 0.5rem;
+  gap: 1.5rem;
 }
 
 .final-cta-trust-badge {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  padding: 0.5rem 1rem;
-  border-radius: 100px;
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  transition: all 0.2s ease;
+  gap: 0.5rem;
+  background: transparent;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  color: #64748b;
+  font-weight: 500;
   white-space: nowrap;
 }
 
 .final-cta-trust-badge:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.25);
+  color: #0066FF;
 }
 
 .final-cta-trust-badge svg {
-  color: #a5f3fc;
+  color: #22c55e;
   flex-shrink: 0;
+  width: 18px;
+  height: 18px;
 }
 
 /* Final CTA Responsive */
@@ -7945,6 +7982,156 @@ main,
 }
 
 /* ============================================
+   💬 CHATGPT COMPARISON SECTION
+   Warum nicht einfach ChatGPT?
+   ============================================ */
+
+.chatgpt-comparison-section {
+  padding: 80px 20px;
+  background: #ffffff;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Schöne Gradient-Trennlinie oben */
+.chatgpt-comparison-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 4px;
+  background: linear-gradient(90deg, #0066FF, #38bdf8);
+  border-radius: 2px;
+}
+
+.comparison-content {
+  max-width: 700px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.comparison-question {
+  font-size: 2.2rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 40px;
+  font-style: italic;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+
+.comparison-answer {
+  font-size: 1.25rem;
+  color: #475569;
+  line-height: 1.8;
+}
+
+.answer-intro {
+  font-size: 1.35rem;
+  color: #64748b;
+  margin-bottom: 32px;
+}
+
+.answer-questions {
+  margin-bottom: 40px;
+}
+
+.answer-questions p {
+  font-size: 1.3rem;
+  color: #334155;
+  margin-bottom: 16px;
+  font-weight: 500;
+}
+
+.answer-questions p:last-child {
+  margin-bottom: 0;
+}
+
+.answer-conclusion {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 40px;
+}
+
+.answer-conclusion .checkmark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+  border-radius: 50%;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+/* ChatGPT Comparison Responsive */
+@media (max-width: 768px) {
+  .chatgpt-comparison-section {
+    padding: 70px 20px;
+  }
+
+  .comparison-question {
+    font-size: 1.6rem;
+    margin-bottom: 30px;
+  }
+
+  .answer-intro {
+    font-size: 1.15rem;
+    margin-bottom: 24px;
+  }
+
+  .answer-questions p {
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+  }
+
+  .answer-conclusion {
+    font-size: 1.25rem;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .chatgpt-comparison-section {
+    padding: 50px 16px;
+  }
+
+  .comparison-question {
+    font-size: 1.35rem;
+    margin-bottom: 24px;
+  }
+
+  .answer-intro {
+    font-size: 1.05rem;
+  }
+
+  .answer-questions p {
+    font-size: 1rem;
+  }
+
+  .answer-conclusion {
+    font-size: 1.1rem;
+  }
+
+  .answer-conclusion .checkmark {
+    width: 28px;
+    height: 28px;
+    font-size: 1rem;
+  }
+}
+
+/* ============================================
    🔗 INTEGRATIONS LOGO BANNER
    Fließender Banner mit Partner-Logos
    ============================================ */
@@ -8194,3 +8381,158 @@ main,
     width: 40px;
   }
 }
+
+
+/* ===== MORE FEATURES SECTION ===== */
+.more-features-section {
+  margin-top: 4rem;
+  padding-top: 4rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.more-features-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.more-features-header h3 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 0.5rem;
+}
+
+.more-features-header p {
+  font-size: 1rem;
+  color: #64748b;
+}
+
+.more-features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.more-feature-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.more-feature-card:hover {
+  border-color: #0066FF;
+  box-shadow: 0 4px 12px rgba(0, 102, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.more-feature-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.more-feature-icon.teal {
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.1), rgba(20, 184, 166, 0.05));
+  color: #14b8a6;
+}
+
+.more-feature-icon.green {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05));
+  color: #22c55e;
+}
+
+.more-feature-icon.red {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
+  color: #ef4444;
+}
+
+.more-feature-icon.purple {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(139, 92, 246, 0.05));
+  color: #8b5cf6;
+}
+
+.more-feature-icon.orange {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(249, 115, 22, 0.05));
+  color: #f97316;
+}
+
+
+.more-feature-icon.blue {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05));
+  color: #3B82F6;
+}
+
+.more-feature-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.more-feature-content h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-bottom: 0.25rem;
+}
+
+.more-feature-content p {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.more-feature-arrow {
+  color: #94a3b8;
+  flex-shrink: 0;
+  transition: transform 0.2s, color 0.2s;
+}
+
+.more-feature-card:hover .more-feature-arrow {
+  color: #0066FF;
+  transform: translateX(4px);
+}
+
+.more-features-cta {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.all-features-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #0066FF;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 1rem;
+  transition: gap 0.2s;
+}
+
+.all-features-link:hover {
+  gap: 0.75rem;
+}
+
+@media (max-width: 768px) {
+  .more-features-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .more-features-header h3 {
+    font-size: 1.5rem;
+  }
+}
+
