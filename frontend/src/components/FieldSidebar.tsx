@@ -1,6 +1,7 @@
 // 📋 FieldSidebar.tsx - Field List with Progress & Navigation
 // Shows all fields grouped by page, with status and smart navigation
 
+import React from "react";
 import { PenTool, Calendar, Type, FileSignature, CheckCircle, AlertCircle, ChevronRight, MapPin } from "lucide-react";
 import styles from "../styles/FieldSidebar.module.css";
 
