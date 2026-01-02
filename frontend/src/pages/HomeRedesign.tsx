@@ -1003,7 +1003,7 @@ const HomeRedesign = () => {
 
             {/* "Alle Funktionen" Button */}
             <div className="features-cta-wrapper">
-              <p className="features-hint">Das ist nur ein Auszug – entdecken Sie mehr</p>
+              <p className="features-hint">Das war noch längst nicht alles.</p>
               <Link to="/features" className="features-discover-btn">
                 <span>Alle Funktionen entdecken</span>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
