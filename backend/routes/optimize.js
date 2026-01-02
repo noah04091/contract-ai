@@ -1114,10 +1114,13 @@ const applyUltimateQualityLayer = (result, requestId, contractType = 'sonstiges'
     'wie vereinbart'
   ];
 
-  // 🔥 v2.0: GENERISCHE BULLSHIT-PHRASEN - Erweiterte Liste
-  // Issues mit diesen Phrasen werden GELÖSCHT
-  const GENERIC_PHRASES = [
-    // Original-Liste
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 🔥 v2.1: PHASE 1.5 - PRÄZISIONS-UPGRADE
+  // Kontextbasiertes Killing statt blindem Pattern-Match
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // KATEGORIE A: IMMER BULLSHIT - Diese Phrasen sind NIEMALS legitim
+  const ALWAYS_BULLSHIT_PHRASES = [
     'klarheit & präzision',
     'best practice',
     'sollte man haben',
@@ -1127,19 +1130,34 @@ const applyUltimateQualityLayer = (result, requestId, contractType = 'sonstiges'
     'mehr klarheit',
     'bessere struktur',
     'optimale formulierung',
-    // 🆕 Neue Bullshit-Phrasen
-    'marktüblich',
-    'branchenstandard',
-    'könnte präziser',
-    'sollte ergänzt werden',
-    'fehlt üblicherweise',
-    'typischerweise enthalten',
-    'wäre zu empfehlen',
     'generell sinnvoll',
     'grundsätzlich ratsam',
+    'der vollständigkeit halber',
+    'empfiehlt sich',
+    'anzuraten wäre',
+    'zu empfehlen wäre',
+    'professioneller wäre',
+    'rechtssicherer wäre'
+  ];
+
+  // KATEGORIE B: KONTEXTABHÄNGIG - Nur Bullshit wenn OHNE konkrete Abweichung/Evidence
+  // Diese Phrasen sind OK wenn: konkreter Vergleich, spezifische Abweichung, echtes Risiko
+  const CONTEXT_DEPENDENT_PHRASES = [
+    'marktüblich',
+    'branchenstandard',
+    'üblich ist',
+    'standard ist',
+    'fehlt üblicherweise',
+    'typischerweise enthalten'
+  ];
+
+  // KATEGORIE C: SCHWACH - Nur in Kombination mit anderen Schwächen killen
+  const WEAK_PHRASES = [
+    'könnte präziser',
+    'sollte ergänzt werden',
+    'wäre zu empfehlen',
     'aus rechtlicher sicht',
     'zur klarstellung',
-    'der vollständigkeit halber',
     'präzisere formulierung',
     'klarere regelung',
     'explizite regelung',
@@ -1149,58 +1167,66 @@ const applyUltimateQualityLayer = (result, requestId, contractType = 'sonstiges'
     'zur absicherung',
     'zur vermeidung von',
     'zur sicherheit',
-    'im interesse beider parteien',
-    'empfiehlt sich',
-    'anzuraten wäre',
-    'zu empfehlen wäre',
-    'üblich ist',
-    'standard ist',
-    'professioneller wäre',
-    'rechtssicherer wäre'
+    'im interesse beider parteien'
   ];
 
-  // 🔥 v2.0: SCHWAMMIGE BEGRÜNDUNGEN - Erweiterte Pattern-Liste
-  // Issues mit diesen Patterns werden GELÖSCHT
+  // SCHWAMMIGE PATTERNS - Nur die wirklich unrettbaren
   const VAGUE_REASONING_PATTERNS = [
-    // Original-Patterns
     /könnte\s+problematisch/i,
     /vielleicht\s+sollte/i,
     /möglicherweise\s+fehlt/i,
     /eventuell\s+verbessern/i,
     /wäre\s+zu\s+überlegen/i,
-    /nicht\s+optimal/i,
-    /könnte\s+besser/i,
-    // 🆕 Neue schwammige Patterns
-    /wäre\s+wünschenswert/i,
-    /sollte\s+man\s+prüfen/i,
-    /könnte\s+man\s+erwägen/i,
-    /ggf\.\s+ergänzen/i,
-    /bei\s+bedarf/i,
-    /nach\s+wunsch/i,
-    /je\s+nach\s+situation/i,
-    /unter\s+umständen/i,
-    /in\s+manchen\s+fällen/i,
-    /theoretisch/i,
-    /prinzipiell/i,
-    /im\s+grunde/i,
-    /an\s+sich/i,
-    /eigentlich/i,
-    /sozusagen/i,
-    /gewissermaßen/i,
-    /quasi/i,
-    /tendenziell/i,
-    /mehr\s+oder\s+weniger/i,
-    /in\s+gewisser\s+weise/i,
-    /bis\s+zu\s+einem\s+gewissen\s+grad/i,
-    /nicht\s+unbedingt/i,
-    /nicht\s+zwingend/i,
-    /nicht\s+notwendigerweise/i,
     /könnte\s+sinnvoll\s+sein/i,
     /wäre\s+denkbar/i,
-    /ließe\s+sich/i,
     /man\s+könnte/i,
     /es\s+wäre\s+möglich/i
   ];
+
+  // 🆕 SUBSTANZ-INDIKATOREN - Zeichen dass eine Aussage Substanz hat
+  const SUBSTANCE_INDICATORS = [
+    /§\s*\d+/,                    // Paragraphen-Referenz
+    /abs\.\s*\d+/i,               // Absatz-Referenz
+    /bgb|hgb|arbzg|kündigungsschutzgesetz/i,  // Gesetzesreferenzen
+    /bgh|bag|lg|olg|az\./i,       // Rechtsprechung
+    /\d+\s*(euro|€|%|prozent|tage|monate|jahre)/i,  // Konkrete Zahlen
+    /haftung|kündigung|frist|zahlung|gewährleistung/i,  // Juristische Kernbegriffe
+    /nachteil|risiko|schaden|verlust|kosten/i,  // Impact-Wörter
+    /unwirksam|nichtig|rechtswidrig|unzulässig/i  // Rechtliche Konsequenzen
+  ];
+
+  // 🆕 Helper: Prüft ob Text echte Substanz hat (nicht nur Länge!)
+  const hasSubstance = (text) => {
+    if (!text || text.trim().length === 0) return false;
+    const lowerText = text.toLowerCase();
+
+    // Mindestens ein Substanz-Indikator vorhanden?
+    const hasIndicator = SUBSTANCE_INDICATORS.some(pattern => pattern.test(text));
+
+    // Keine schwammigen Patterns?
+    const isVague = VAGUE_REASONING_PATTERNS.some(pattern => pattern.test(text));
+
+    // Substanz = Hat Indikator ODER ist konkret genug (>30 Zeichen ohne vague)
+    return hasIndicator || (text.trim().length > 30 && !isVague);
+  };
+
+  // 🆕 Helper: Prüft ob kontextabhängige Phrase mit Substanz untermauert ist
+  const isContextPhraseJustified = (issue, phrase) => {
+    // Phrase ist OK wenn:
+    // 1. Evidence enthält konkreten Vergleich/Abweichung
+    // 2. whyItMatters enthält spezifisches Risiko
+    // 3. risk/impact ist hoch (>=7)
+
+    const evidenceText = (issue.evidence || []).join(' ').toLowerCase();
+    const whyMattersText = (issue.whyItMatters || '').toLowerCase();
+
+    // Suche nach Vergleichs-/Abweichungs-Indikatoren
+    const hasComparison = /abweich|unterschied|im gegensatz|anders als|statt|anstelle/i.test(evidenceText + whyMattersText);
+    const hasSpecificRisk = /\d+\s*(euro|€|%)|schaden|verlust|haftung|klage/i.test(whyMattersText);
+    const hasHighImpact = (issue.risk >= 7 || issue.impact >= 7);
+
+    return hasComparison || hasSpecificRisk || hasHighImpact;
+  };
 
   // Durchlaufe alle Kategorien und Issues
   result.categories = result.categories.map(category => {
@@ -1210,80 +1236,90 @@ const applyUltimateQualityLayer = (result, requestId, contractType = 'sonstiges'
       let modified = false;
 
       // ═══════════════════════════════════════════════════════════════════════
-      // 🔥 v2.0: ANTI-BULLSHIT-FIREWALL - KILL-REGELN AKTIV!
-      // Diese Checks LÖSCHEN Issues, nicht nur warnen!
+      // 🔥 v2.1: ANTI-BULLSHIT-FIREWALL - PRÄZISIONS-UPGRADE
+      // Kontextbasiertes Killing: Inhalt > Zeichenanzahl
       // ═══════════════════════════════════════════════════════════════════════
 
-      // KILL-REGEL 1: Evidence fehlt oder leer → LÖSCHEN
+      // KILL-REGEL 1: Evidence fehlt komplett → LÖSCHEN
       if (!issue.evidence || !Array.isArray(issue.evidence) || issue.evidence.length === 0) {
-        console.warn(`🚫 [${requestId}] KILL-REGEL 1: Evidence FEHLT für "${issue.id || issue.summary?.substring(0, 30)}" → GELÖSCHT`);
+        console.warn(`🚫 [${requestId}] KILL-1: Evidence FEHLT für "${issue.id || issue.summary?.substring(0, 30)}" → GELÖSCHT`);
         evidenceMissing++;
         bullshitDropped++;
-        return null; // 🔥 HARD DELETE
+        return null;
       }
 
-      // KILL-REGEL 2: Evidence nur generisch (keine echten Zitate)
+      // KILL-REGEL 2: Evidence ohne echte Textreferenz (muss § oder Zitat haben)
       const hasRealEvidence = issue.evidence.some(e =>
-        e && e.length > 20 && (e.includes('§') || e.includes(':') || e.includes('"') || e.includes("'"))
+        e && e.length > 15 && (e.includes('§') || e.includes(':') || e.includes('"') || e.includes("'") || /abs\.|nr\.|satz/i.test(e))
       );
       if (!hasRealEvidence) {
-        console.warn(`🚫 [${requestId}] KILL-REGEL 2: Evidence zu generisch für "${issue.id || issue.summary?.substring(0, 30)}" → GELÖSCHT`);
+        console.warn(`🚫 [${requestId}] KILL-2: Evidence ohne Textreferenz für "${issue.id || issue.summary?.substring(0, 30)}" → GELÖSCHT`);
         evidenceMissing++;
         bullshitDropped++;
-        return null; // 🔥 HARD DELETE
+        return null;
       }
 
-      // KILL-REGEL 3: whyNotIntentional fehlt → LÖSCHEN
-      if (!issue.whyNotIntentional || issue.whyNotIntentional.trim().length < 20) {
-        console.warn(`🚫 [${requestId}] KILL-REGEL 3: whyNotIntentional FEHLT/zu kurz für "${issue.id || issue.summary?.substring(0, 30)}" → GELÖSCHT`);
+      // KILL-REGEL 3: whyNotIntentional fehlt ODER ist schwammig → LÖSCHEN
+      // 🆕 KEINE Längenprüfung mehr! Substanz statt Zeichenanzahl
+      if (!issue.whyNotIntentional) {
+        console.warn(`🚫 [${requestId}] KILL-3: whyNotIntentional FEHLT für "${issue.id || issue.summary?.substring(0, 30)}" → GELÖSCHT`);
         whyNotIntentionalMissing++;
         bullshitDropped++;
-        return null; // 🔥 HARD DELETE
+        return null;
       }
-
-      // KILL-REGEL 4: whyNotIntentional ist schwammig → LÖSCHEN
       const isVagueWhyNot = VAGUE_REASONING_PATTERNS.some(pattern => pattern.test(issue.whyNotIntentional));
       if (isVagueWhyNot) {
-        console.warn(`🚫 [${requestId}] KILL-REGEL 4: whyNotIntentional SCHWAMMIG für "${issue.id || issue.summary?.substring(0, 30)}": "${issue.whyNotIntentional.substring(0, 50)}..." → GELÖSCHT`);
+        console.warn(`🚫 [${requestId}] KILL-3b: whyNotIntentional SCHWAMMIG für "${issue.id || issue.summary?.substring(0, 30)}": "${issue.whyNotIntentional.substring(0, 50)}..." → GELÖSCHT`);
         whyNotIntentionalMissing++;
         bullshitDropped++;
-        return null; // 🔥 HARD DELETE
+        return null;
       }
 
-      // KILL-REGEL 5: whenToIgnore fehlt → LÖSCHEN
-      if (!issue.whenToIgnore || issue.whenToIgnore.trim().length < 15) {
-        console.warn(`🚫 [${requestId}] KILL-REGEL 5: whenToIgnore FEHLT/zu kurz für "${issue.id || issue.summary?.substring(0, 30)}" → GELÖSCHT`);
+      // KILL-REGEL 4: whenToIgnore fehlt ODER ist schwammig → LÖSCHEN
+      // 🆕 Substanzprüfung statt Länge
+      if (!issue.whenToIgnore || !hasSubstance(issue.whenToIgnore)) {
+        console.warn(`🚫 [${requestId}] KILL-4: whenToIgnore FEHLT/substanzlos für "${issue.id || issue.summary?.substring(0, 30)}" → GELÖSCHT`);
         bullshitDropped++;
-        return null; // 🔥 HARD DELETE
+        return null;
       }
 
-      // KILL-REGEL 6: whyItMatters ist generisch → LÖSCHEN
-      if (issue.whyItMatters) {
-        const lowerWhyItMatters = issue.whyItMatters.toLowerCase();
-        const isGenericWhyMatters = GENERIC_PHRASES.some(phrase => lowerWhyItMatters.includes(phrase));
-        if (isGenericWhyMatters) {
-          console.warn(`🚫 [${requestId}] KILL-REGEL 6: whyItMatters GENERISCH für "${issue.id || issue.summary?.substring(0, 30)}": "${issue.whyItMatters.substring(0, 50)}..." → GELÖSCHT`);
-          genericWhyItMatters++;
-          bullshitDropped++;
-          return null; // 🔥 HARD DELETE
-        }
-      } else {
-        console.warn(`🚫 [${requestId}] KILL-REGEL 6b: whyItMatters FEHLT für "${issue.id || issue.summary?.substring(0, 30)}" → GELÖSCHT`);
+      // KILL-REGEL 5: whyItMatters fehlt ODER ist substanzlos → LÖSCHEN
+      if (!issue.whyItMatters || !hasSubstance(issue.whyItMatters)) {
+        console.warn(`🚫 [${requestId}] KILL-5: whyItMatters FEHLT/substanzlos für "${issue.id || issue.summary?.substring(0, 30)}" → GELÖSCHT`);
         genericWhyItMatters++;
         bullshitDropped++;
-        return null; // 🔥 HARD DELETE
+        return null;
       }
 
-      // KILL-REGEL 7: Summary ist generisch → LÖSCHEN
-      if (issue.summary) {
-        const lowerSummary = issue.summary.toLowerCase();
-        const isGenericSummary = GENERIC_PHRASES.some(phrase => lowerSummary.includes(phrase));
-        if (isGenericSummary) {
-          console.warn(`🚫 [${requestId}] KILL-REGEL 7: Summary GENERISCH "${issue.summary}" → GELÖSCHT`);
-          genericSummaryDropped++;
-          bullshitDropped++;
-          return null; // 🔥 HARD DELETE
-        }
+      // KILL-REGEL 6: IMMER-BULLSHIT Phrasen in Summary/whyItMatters → LÖSCHEN
+      const allText = `${issue.summary || ''} ${issue.whyItMatters || ''}`.toLowerCase();
+      const hasAlwaysBullshit = ALWAYS_BULLSHIT_PHRASES.some(phrase => allText.includes(phrase));
+      if (hasAlwaysBullshit) {
+        console.warn(`🚫 [${requestId}] KILL-6: IMMER-BULLSHIT Phrase gefunden in "${issue.id || issue.summary?.substring(0, 30)}" → GELÖSCHT`);
+        genericSummaryDropped++;
+        bullshitDropped++;
+        return null;
+      }
+
+      // KILL-REGEL 7: KONTEXTABHÄNGIGE Phrasen OHNE Rechtfertigung → LÖSCHEN
+      // 🆕 "marktüblich" ist OK wenn mit Vergleich/Risiko untermauert!
+      const foundContextPhrase = CONTEXT_DEPENDENT_PHRASES.find(phrase => allText.includes(phrase));
+      if (foundContextPhrase && !isContextPhraseJustified(issue, foundContextPhrase)) {
+        console.warn(`🚫 [${requestId}] KILL-7: "${foundContextPhrase}" OHNE Kontext für "${issue.id || issue.summary?.substring(0, 30)}" → GELÖSCHT`);
+        genericSummaryDropped++;
+        bullshitDropped++;
+        return null;
+      }
+
+      // KILL-REGEL 8: SCHWACHE Phrasen in Kombination mit niedriger Substanz → LÖSCHEN
+      const hasWeakPhrase = WEAK_PHRASES.some(phrase => allText.includes(phrase));
+      const hasLowSubstance = !hasSubstance(issue.whyItMatters) && !hasSubstance(issue.whyNotIntentional);
+      const hasLowImpact = (issue.risk < 5 && issue.impact < 5);
+      if (hasWeakPhrase && (hasLowSubstance || hasLowImpact)) {
+        console.warn(`🚫 [${requestId}] KILL-8: Schwache Phrase + niedrige Substanz für "${issue.id || issue.summary?.substring(0, 30)}" → GELÖSCHT`);
+        genericSummaryDropped++;
+        bullshitDropped++;
+        return null;
       }
 
       // ═══════════════════════════════════════════════════════════════════════
@@ -3068,10 +3104,30 @@ Bei einem sehr guten Vertrag ist das KORREKTE Ergebnis:
 Das ist BESSER als 8 erfundene Optimierungen!
 
 ═══════════════════════════════════════════════════════════════════════════════
-📋 SCHRITT 2: NUR WENN OPTIMIERUNGEN WIRKLICH NÖTIG SIND
+🛑 STOP! ENTSCHEIDUNGS-GATE (VOR JEDER OPTIMIERUNG!)
 ═══════════════════════════════════════════════════════════════════════════════
 
-Wenn du dich entscheidest, eine Optimierung vorzuschlagen, MUSS sie:
+BEVOR du IRGENDEINE Optimierung formulierst, stelle dir diese 3 Fragen:
+
+❓ FRAGE 1: Würde ein erfahrener Anwalt seinem Mandanten 500€+ berechnen,
+            um diese Klausel zu ändern?
+            → NEIN = Keine Optimierung
+
+❓ FRAGE 2: Gibt es einen KONKRETEN Schaden/Nachteil, wenn diese Klausel
+            unverändert bleibt? (Nicht "könnte", nicht "theoretisch")
+            → NEIN = Keine Optimierung
+
+❓ FRAGE 3: Ist diese Klausel OFFENSICHTLICH ein Fehler/Versehen,
+            oder könnte sie BEWUSST so formuliert sein?
+            → BEWUSST = Keine Optimierung
+
+Wenn du nicht ALLE 3 Fragen mit JA beantworten kannst → NICHT vorschlagen!
+
+═══════════════════════════════════════════════════════════════════════════════
+📋 SCHRITT 2: NUR WENN DAS GATE PASSIERT WURDE
+═══════════════════════════════════════════════════════════════════════════════
+
+Wenn du das Gate passiert hast und eine Optimierung vorschlagen willst, MUSS sie:
 
 1. ✅ EVIDENCE haben: Konkrete Textstelle(n) aus dem Vertrag zitieren
 2. ✅ WHY IT MATTERS erklären: Konkreter juristischer/wirtschaftlicher Nachteil
