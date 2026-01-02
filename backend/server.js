@@ -36,6 +36,9 @@ const { onContractChange } = require("./services/calendarEvents");
 const { checkAndSendNotifications, processEmailQueue } = require("./services/calendarNotifier");
 const { processDigests } = require("./services/calendarDigestService");
 
+// 🚨 ERROR MONITORING - Eigenes System für Fehler-Tracking
+const { initErrorCollection, errorHandler, getErrorStats } = require("./services/errorMonitoring");
+
 // 🔄 CRON JOBS - Monatlicher analysisCount Reset
 require("./cron/resetAnalysisCount");
 
@@ -390,7 +393,10 @@ const connectDB = async () => {
   try {
     // ✅ STEP 1: Central DB Connection
     db = await connectDB();
-    
+
+    // 🚨 STEP 1.5: Error Monitoring initialisieren
+    initErrorCollection(db);
+
     // ✅ STEP 2: Pass DB to all routes
     app.use((req, res, next) => {
       req.db = db;
@@ -2013,6 +2019,21 @@ const connectDB = async () => {
     app.get("/health", (req, res) => {
       res.status(200).json({ status: "ok" });
     });
+
+    // 🚨 ERROR MONITORING: Admin-Endpoint für Fehler-Statistiken
+    const verifyAdmin = require("./middleware/verifyAdmin");
+    app.get("/api/admin/errors", verifyToken, verifyAdmin, async (req, res) => {
+      try {
+        const hours = parseInt(req.query.hours) || 24;
+        const stats = await getErrorStats(hours);
+        res.json(stats);
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
+    });
+
+    // 🚨 GLOBAL ERROR HANDLER - Muss NACH allen Routes kommen!
+    app.use(errorHandler);
 
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, async () => {
