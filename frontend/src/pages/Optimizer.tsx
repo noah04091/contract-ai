@@ -539,17 +539,18 @@ const parseOptimizationResult = (data: OptimizationResult, fileName: string): Op
 // ✅ ORIGINAL: Calculate Contract Score
 const calculateContractScore = (optimizations: OptimizationSuggestion[]): ContractHealthScore => {
   if (optimizations.length === 0) {
+    // 🆕 FIX: 0 Optimierungen = Perfekter Vertrag = Score 98!
     return {
-      overall: 85,
+      overall: 98,
       categories: {
-        termination: { score: 85, trend: 'stable' },
-        liability: { score: 85, trend: 'stable' },
-        payment: { score: 85, trend: 'stable' },
-        clarity: { score: 85, trend: 'stable' },
-        compliance: { score: 85, trend: 'stable' }
+        termination: { score: 98, trend: 'stable' },
+        liability: { score: 98, trend: 'stable' },
+        payment: { score: 98, trend: 'stable' },
+        clarity: { score: 98, trend: 'stable' },
+        compliance: { score: 98, trend: 'stable' }
       },
-      industryPercentile: 65,
-      riskLevel: 'medium'
+      industryPercentile: 95,
+      riskLevel: 'low'
     };
   }
 
@@ -1396,10 +1397,34 @@ export default function Optimizer() {
 
         // Parse optimizations
         const parsedOptimizations = parseOptimizationResult(finalResult, file.name);
-        const calculatedScore = calculateContractScore(parsedOptimizations);
+
+        // 🆕 FIX: Verwende Backend-Score wenn verfügbar, sonst Frontend-Berechnung
+        const backendScore = finalResult.score?.health;
+        let finalScore: ContractHealthScore;
+
+        if (backendScore !== undefined && backendScore !== null) {
+          // Backend hat Score berechnet - diesen verwenden!
+          console.log(`🎯 Using backend score: ${backendScore}`);
+          finalScore = {
+            overall: backendScore,
+            categories: {
+              termination: { score: backendScore, trend: 'stable' as const },
+              liability: { score: backendScore, trend: 'stable' as const },
+              payment: { score: backendScore, trend: 'stable' as const },
+              clarity: { score: backendScore, trend: 'stable' as const },
+              compliance: { score: backendScore, trend: 'stable' as const }
+            },
+            industryPercentile: backendScore >= 90 ? 95 : backendScore >= 70 ? 75 : 50,
+            riskLevel: backendScore >= 80 ? 'low' : backendScore >= 60 ? 'medium' : 'high'
+          };
+        } else {
+          // Fallback: Frontend-Berechnung
+          console.log(`⚠️ No backend score, using frontend calculation`);
+          finalScore = calculateContractScore(parsedOptimizations);
+        }
 
         setOptimizations(parsedOptimizations);
-        setContractScore(calculatedScore);
+        setContractScore(finalScore);
 
         // Show success celebration
         setShowSuccessCelebration(true);
