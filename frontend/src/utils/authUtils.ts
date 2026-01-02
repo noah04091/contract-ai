@@ -87,6 +87,15 @@ export const isAuthenticated = (): boolean => {
   return !!token;
 };
 
+// 🔄 SILENT TOKEN REFRESH: Prüft Response auf erneuerten Token
+export const handleTokenRefresh = (response: Response): void => {
+  const refreshedToken = response.headers.get("X-Refreshed-Token");
+  if (refreshedToken) {
+    console.log("🔄 Token wurde automatisch erneuert");
+    setAuthToken(refreshedToken);
+  }
+};
+
 // ✅ NEUE HELPER für Backend-Properties
 export const hasAnalysisLimit = (user: UserData): boolean => {
   return user.analysisLimit !== Infinity && user.analysisLimit > 0;

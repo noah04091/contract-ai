@@ -57,14 +57,14 @@ function parseDeviceInfo(userAgent) {
   return { device, browser, os };
 }
 
-// ✅ FIXED: Cookie-Einstellungen gelockert für bessere Kompatibilität
+// ✅ SECURE: Cookie-Einstellungen mit CSRF-Schutz
 const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production', // ✅ Nur HTTPS in Production
-  sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // ✅ Weniger strikt in Development
+  sameSite: 'Lax', // ✅ CSRF-Schutz: Lax funktioniert für same-site (contract-ai.de + api.contract-ai.de)
   path: "/",
-  maxAge: 1000 * 60 * 60 * 2,
-  // ✅ Domain nur in Production setzen
+  maxAge: 1000 * 60 * 60 * 2, // 2 Stunden
+  // ✅ Domain nur in Production setzen (Cookie wird auf allen Subdomains geteilt)
   ...(process.env.NODE_ENV === 'production' && { domain: ".contract-ai.de" })
 };
 

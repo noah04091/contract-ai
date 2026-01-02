@@ -1,6 +1,20 @@
 // 📁 middleware/verifyToken.js
 const jwt = require("jsonwebtoken");
 
+// 🔄 Konfiguration für Silent Token Refresh
+const TOKEN_REFRESH_THRESHOLD_SECONDS = 30 * 60; // 30 Minuten vor Ablauf erneuern
+const JWT_EXPIRES_IN = "2h";
+
+// 🍪 Cookie-Optionen (gleiche wie in auth.js)
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'Lax',
+  path: "/",
+  maxAge: 1000 * 60 * 60 * 2, // 2 Stunden
+  ...(process.env.NODE_ENV === 'production' && { domain: ".contract-ai.de" })
+};
+
 module.exports = function (req, res, next) {
   // ✅ SKIP JWT-Check für E-Mail-Import (nutzt API-Key stattdessen)
   if (req.originalUrl.includes('/api/contracts/email-import')) {
@@ -46,6 +60,30 @@ module.exports = function (req, res, next) {
     req.user = decoded;
     req.userId = decoded.userId; // 📁 For Mongoose routes
     req.tokenSource = source;
+
+    // 🔄 SILENT TOKEN REFRESH: Prüfen ob Token bald abläuft
+    const now = Math.floor(Date.now() / 1000);
+    const timeUntilExpiry = decoded.exp - now;
+
+    if (timeUntilExpiry < TOKEN_REFRESH_THRESHOLD_SECONDS && timeUntilExpiry > 0) {
+      // Token läuft bald ab → neuen Token erstellen
+      const newToken = jwt.sign(
+        { email: decoded.email, userId: decoded.userId },
+        process.env.JWT_SECRET,
+        { expiresIn: JWT_EXPIRES_IN }
+      );
+
+      // Neuen Token als Cookie setzen (wenn ursprünglicher Token aus Cookie kam)
+      if (source === "cookie") {
+        res.cookie("token", newToken, COOKIE_OPTIONS);
+      }
+
+      // Neuen Token auch im Header senden (für Frontend)
+      res.setHeader("X-Refreshed-Token", newToken);
+
+      console.log(`🔄 Token erneuert für ${decoded.email} (${Math.round(timeUntilExpiry / 60)} Min. vor Ablauf)`);
+    }
+
     if (isDev) console.log(`✅ Authentifiziert via ${source} – ${decoded.email}`);
     next();
   } catch (err) {

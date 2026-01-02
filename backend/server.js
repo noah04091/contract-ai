@@ -1365,8 +1365,8 @@ const connectDB = async () => {
       console.log("Cookies:", req.cookies);
       res.cookie("debug_cookie", "test-value", {
         httpOnly: true,
-        secure: true,
-        sameSite: "None",
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: "Lax", // ✅ CSRF-Schutz
         path: "/",
       });
       
