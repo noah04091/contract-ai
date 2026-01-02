@@ -1114,8 +1114,10 @@ const applyUltimateQualityLayer = (result, requestId, contractType = 'sonstiges'
     'wie vereinbart'
   ];
 
-  // 🆕 v2.0: GENERISCHE PHRASEN die auf Bullshit-Optimierungen hindeuten
+  // 🔥 v2.0: GENERISCHE BULLSHIT-PHRASEN - Erweiterte Liste
+  // Issues mit diesen Phrasen werden GELÖSCHT
   const GENERIC_PHRASES = [
+    // Original-Liste
     'klarheit & präzision',
     'best practice',
     'sollte man haben',
@@ -1124,18 +1126,80 @@ const applyUltimateQualityLayer = (result, requestId, contractType = 'sonstiges'
     'allgemeine verbesserung',
     'mehr klarheit',
     'bessere struktur',
-    'optimale formulierung'
+    'optimale formulierung',
+    // 🆕 Neue Bullshit-Phrasen
+    'marktüblich',
+    'branchenstandard',
+    'könnte präziser',
+    'sollte ergänzt werden',
+    'fehlt üblicherweise',
+    'typischerweise enthalten',
+    'wäre zu empfehlen',
+    'generell sinnvoll',
+    'grundsätzlich ratsam',
+    'aus rechtlicher sicht',
+    'zur klarstellung',
+    'der vollständigkeit halber',
+    'präzisere formulierung',
+    'klarere regelung',
+    'explizite regelung',
+    'eindeutige definition',
+    'konkretere angabe',
+    'detailliertere beschreibung',
+    'zur absicherung',
+    'zur vermeidung von',
+    'zur sicherheit',
+    'im interesse beider parteien',
+    'empfiehlt sich',
+    'anzuraten wäre',
+    'zu empfehlen wäre',
+    'üblich ist',
+    'standard ist',
+    'professioneller wäre',
+    'rechtssicherer wäre'
   ];
 
-  // 🆕 v2.0: SCHWAMMIGE BEGRÜNDUNGEN die auf fehlende Substanz hindeuten
+  // 🔥 v2.0: SCHWAMMIGE BEGRÜNDUNGEN - Erweiterte Pattern-Liste
+  // Issues mit diesen Patterns werden GELÖSCHT
   const VAGUE_REASONING_PATTERNS = [
+    // Original-Patterns
     /könnte\s+problematisch/i,
     /vielleicht\s+sollte/i,
     /möglicherweise\s+fehlt/i,
     /eventuell\s+verbessern/i,
     /wäre\s+zu\s+überlegen/i,
     /nicht\s+optimal/i,
-    /könnte\s+besser/i
+    /könnte\s+besser/i,
+    // 🆕 Neue schwammige Patterns
+    /wäre\s+wünschenswert/i,
+    /sollte\s+man\s+prüfen/i,
+    /könnte\s+man\s+erwägen/i,
+    /ggf\.\s+ergänzen/i,
+    /bei\s+bedarf/i,
+    /nach\s+wunsch/i,
+    /je\s+nach\s+situation/i,
+    /unter\s+umständen/i,
+    /in\s+manchen\s+fällen/i,
+    /theoretisch/i,
+    /prinzipiell/i,
+    /im\s+grunde/i,
+    /an\s+sich/i,
+    /eigentlich/i,
+    /sozusagen/i,
+    /gewissermaßen/i,
+    /quasi/i,
+    /tendenziell/i,
+    /mehr\s+oder\s+weniger/i,
+    /in\s+gewisser\s+weise/i,
+    /bis\s+zu\s+einem\s+gewissen\s+grad/i,
+    /nicht\s+unbedingt/i,
+    /nicht\s+zwingend/i,
+    /nicht\s+notwendigerweise/i,
+    /könnte\s+sinnvoll\s+sein/i,
+    /wäre\s+denkbar/i,
+    /ließe\s+sich/i,
+    /man\s+könnte/i,
+    /es\s+wäre\s+möglich/i
   ];
 
   // Durchlaufe alle Kategorien und Issues
@@ -1146,48 +1210,79 @@ const applyUltimateQualityLayer = (result, requestId, contractType = 'sonstiges'
       let modified = false;
 
       // ═══════════════════════════════════════════════════════════════════════
-      // 🆕 v2.0: ANTI-BULLSHIT-FIREWALL (VOR allen anderen Checks!)
+      // 🔥 v2.0: ANTI-BULLSHIT-FIREWALL - KILL-REGELN AKTIV!
+      // Diese Checks LÖSCHEN Issues, nicht nur warnen!
       // ═══════════════════════════════════════════════════════════════════════
 
-      // CHECK 1: Evidence fehlt oder leer
+      // KILL-REGEL 1: Evidence fehlt oder leer → LÖSCHEN
       if (!issue.evidence || !Array.isArray(issue.evidence) || issue.evidence.length === 0) {
-        console.warn(`🚫 [${requestId}] ANTI-BULLSHIT: Evidence fehlt für issue "${issue.id || issue.summary?.substring(0, 30)}" → Warnung (nicht gelöscht, da KI noch lernt)`);
+        console.warn(`🚫 [${requestId}] KILL-REGEL 1: Evidence FEHLT für "${issue.id || issue.summary?.substring(0, 30)}" → GELÖSCHT`);
         evidenceMissing++;
-        // Wir löschen noch nicht, aber loggen - für spätere Verschärfung
-        // return null;
+        bullshitDropped++;
+        return null; // 🔥 HARD DELETE
       }
 
-      // CHECK 2: whyNotIntentional fehlt oder schwammig
-      if (issue.whyNotIntentional) {
-        const isVague = VAGUE_REASONING_PATTERNS.some(pattern => pattern.test(issue.whyNotIntentional));
-        if (isVague) {
-          console.warn(`🚫 [${requestId}] ANTI-BULLSHIT: whyNotIntentional zu schwammig für issue "${issue.id || issue.summary?.substring(0, 30)}"`);
-          whyNotIntentionalMissing++;
-        }
-      } else {
-        console.warn(`🚫 [${requestId}] ANTI-BULLSHIT: whyNotIntentional fehlt für issue "${issue.id || issue.summary?.substring(0, 30)}"`);
+      // KILL-REGEL 2: Evidence nur generisch (keine echten Zitate)
+      const hasRealEvidence = issue.evidence.some(e =>
+        e && e.length > 20 && (e.includes('§') || e.includes(':') || e.includes('"') || e.includes("'"))
+      );
+      if (!hasRealEvidence) {
+        console.warn(`🚫 [${requestId}] KILL-REGEL 2: Evidence zu generisch für "${issue.id || issue.summary?.substring(0, 30)}" → GELÖSCHT`);
+        evidenceMissing++;
+        bullshitDropped++;
+        return null; // 🔥 HARD DELETE
+      }
+
+      // KILL-REGEL 3: whyNotIntentional fehlt → LÖSCHEN
+      if (!issue.whyNotIntentional || issue.whyNotIntentional.trim().length < 20) {
+        console.warn(`🚫 [${requestId}] KILL-REGEL 3: whyNotIntentional FEHLT/zu kurz für "${issue.id || issue.summary?.substring(0, 30)}" → GELÖSCHT`);
         whyNotIntentionalMissing++;
+        bullshitDropped++;
+        return null; // 🔥 HARD DELETE
       }
 
-      // CHECK 3: whyItMatters nur generisch
+      // KILL-REGEL 4: whyNotIntentional ist schwammig → LÖSCHEN
+      const isVagueWhyNot = VAGUE_REASONING_PATTERNS.some(pattern => pattern.test(issue.whyNotIntentional));
+      if (isVagueWhyNot) {
+        console.warn(`🚫 [${requestId}] KILL-REGEL 4: whyNotIntentional SCHWAMMIG für "${issue.id || issue.summary?.substring(0, 30)}": "${issue.whyNotIntentional.substring(0, 50)}..." → GELÖSCHT`);
+        whyNotIntentionalMissing++;
+        bullshitDropped++;
+        return null; // 🔥 HARD DELETE
+      }
+
+      // KILL-REGEL 5: whenToIgnore fehlt → LÖSCHEN
+      if (!issue.whenToIgnore || issue.whenToIgnore.trim().length < 15) {
+        console.warn(`🚫 [${requestId}] KILL-REGEL 5: whenToIgnore FEHLT/zu kurz für "${issue.id || issue.summary?.substring(0, 30)}" → GELÖSCHT`);
+        bullshitDropped++;
+        return null; // 🔥 HARD DELETE
+      }
+
+      // KILL-REGEL 6: whyItMatters ist generisch → LÖSCHEN
       if (issue.whyItMatters) {
         const lowerWhyItMatters = issue.whyItMatters.toLowerCase();
-        const isGeneric = GENERIC_PHRASES.some(phrase => lowerWhyItMatters.includes(phrase));
-        if (isGeneric) {
-          console.warn(`🚫 [${requestId}] ANTI-BULLSHIT: whyItMatters zu generisch für issue "${issue.id || issue.summary?.substring(0, 30)}": "${issue.whyItMatters.substring(0, 50)}..."`);
+        const isGenericWhyMatters = GENERIC_PHRASES.some(phrase => lowerWhyItMatters.includes(phrase));
+        if (isGenericWhyMatters) {
+          console.warn(`🚫 [${requestId}] KILL-REGEL 6: whyItMatters GENERISCH für "${issue.id || issue.summary?.substring(0, 30)}": "${issue.whyItMatters.substring(0, 50)}..." → GELÖSCHT`);
           genericWhyItMatters++;
+          bullshitDropped++;
+          return null; // 🔥 HARD DELETE
         }
+      } else {
+        console.warn(`🚫 [${requestId}] KILL-REGEL 6b: whyItMatters FEHLT für "${issue.id || issue.summary?.substring(0, 30)}" → GELÖSCHT`);
+        genericWhyItMatters++;
+        bullshitDropped++;
+        return null; // 🔥 HARD DELETE
       }
 
-      // CHECK 4: Summary ist generisch (HARD DELETE)
+      // KILL-REGEL 7: Summary ist generisch → LÖSCHEN
       if (issue.summary) {
         const lowerSummary = issue.summary.toLowerCase();
         const isGenericSummary = GENERIC_PHRASES.some(phrase => lowerSummary.includes(phrase));
         if (isGenericSummary) {
-          console.warn(`🚫 [${requestId}] ANTI-BULLSHIT: Generische Summary "${issue.summary}" → GELÖSCHT`);
+          console.warn(`🚫 [${requestId}] KILL-REGEL 7: Summary GENERISCH "${issue.summary}" → GELÖSCHT`);
           genericSummaryDropped++;
           bullshitDropped++;
-          return null; // Issue löschen
+          return null; // 🔥 HARD DELETE
         }
       }
 
@@ -3481,7 +3576,8 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
                         whyNotIntentional: { type: "string" },
                         whenToIgnore: { type: "string" }
                       },
-                      required: ["id", "summary", "originalText", "improvedText", "legalReasoning", "category"]
+                      // 🔥 v2.0: Anti-Bullshit Felder sind jetzt PFLICHT!
+                      required: ["id", "summary", "originalText", "improvedText", "legalReasoning", "category", "evidence", "whyItMatters", "whyNotIntentional", "whenToIgnore"]
                     }
                   }
                 },
@@ -4451,7 +4547,8 @@ router.post("/stream", verifyToken, uploadLimiter, smartRateLimiter, upload.sing
                         whyNotIntentional: { type: "string" },
                         whenToIgnore: { type: "string" }
                       },
-                      required: ["summary", "improvedText", "legalReasoning", "risk", "impact", "confidence", "difficulty"]
+                      // 🔥 v2.0: Anti-Bullshit Felder sind jetzt PFLICHT!
+                      required: ["id", "summary", "originalText", "improvedText", "legalReasoning", "category", "evidence", "whyItMatters", "whyNotIntentional", "whenToIgnore"]
                     }
                   }
                 },
