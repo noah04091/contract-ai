@@ -1240,6 +1240,17 @@ const applyUltimateQualityLayer = (result, requestId, contractType = 'sonstiges'
       // Kontextbasiertes Killing: Inhalt > Zeichenanzahl
       // ═══════════════════════════════════════════════════════════════════════
 
+      // 🔥 v2.1 FIX: Regelbasierte und Top-Up Issues überspringen
+      // Diese haben keine Anti-Bullshit-Felder und würden sonst ALLE gelöscht!
+      const isGapGeneratedIssue = issue.id && issue.id.startsWith('missing_');
+      const isTopUpIssue = issue.id && issue.id.startsWith('topup_');
+
+      if (isGapGeneratedIssue || isTopUpIssue) {
+        const issueType = isGapGeneratedIssue ? 'Gap-Issue (regelbasiert)' : 'Top-Up-Issue';
+        console.log(`✅ [${requestId}] ${issueType} übersprungen: "${issue.id}"`);
+        return issue; // Direkt durchlassen, keine Kill-Regeln anwenden
+      }
+
       // KILL-REGEL 1: Evidence fehlt komplett → LÖSCHEN
       if (!issue.evidence || !Array.isArray(issue.evidence) || issue.evidence.length === 0) {
         console.warn(`🚫 [${requestId}] KILL-1: Evidence FEHLT für "${issue.id || issue.summary?.substring(0, 30)}" → GELÖSCHT`);
