@@ -4195,33 +4195,68 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
     console.log(`🎯 [${requestId}] Checking if Top-Up needed (unabhängig von GPT's Assessment)...`);
     normalizedResult = await topUpFindingsIfNeeded(normalizedResult, contractText, contractTypeInfo.type, openai, requestId);
 
-    // 🚀 STAGE 6.5: HARD SCOPE ENFORCEMENT (Phase 3b.6)
+    // 🚀 STAGE 6.5: HARD SCOPE ENFORCEMENT (Phase 3b.6 + 3b.7)
     // Bei Amendments: ALLE Nicht-Amendment-Issues werden serverseitig entfernt
     // Server entscheidet final – nicht GPT!
+    // 🆕 Phase 3b.7: Changed-Topic Lock - Nur tatsächlich geänderte Themen erlaubt
     if (contractTypeInfo.isAmendment) {
       console.log(`\n🔒 [${requestId}] HARD SCOPE ENFORCEMENT für Amendment aktiviert`);
 
-      // Erlaubte Kategorien/Themen für Amendments
-      const AMENDMENT_ALLOWED_TOPICS = [
-        // Struktur & Referenz
+      // 🆕 Phase 3b.7: Mapping von matchedIndicator zu erlaubten Änderungsthemen
+      // NUR diese spezifischen Themen sind erlaubt, basierend auf dem Änderungstyp
+      const CHANGED_TOPIC_MAPPING = {
+        // Arbeitszeit-Änderungen
+        'arbeitszeiterhöhung': ['wöchentliche arbeitszeit', 'wochenstunden', 'stundenerhöhung', 'arbeitszeit erhöht'],
+        'arbeitszeitänderung': ['wöchentliche arbeitszeit', 'wochenstunden', 'arbeitszeit'],
+        'arbeitszeitanpassung': ['wöchentliche arbeitszeit', 'wochenstunden', 'arbeitszeit'],
+        'stundenerhöhung': ['wochenstunden', 'stundenerhöhung', 'arbeitszeit'],
+        'stundenreduzierung': ['wochenstunden', 'stundenreduzierung', 'arbeitszeit', 'teilzeit'],
+        'stundenanpassung': ['wochenstunden', 'arbeitszeit'],
+        // Gehalts-Änderungen
+        'gehaltserhöhung': ['bruttogehalt', 'monatliches gehalt', 'gehaltserhöhung', 'neue vergütung'],
+        'gehaltsanpassung': ['bruttogehalt', 'monatliches gehalt', 'vergütung'],
+        'gehaltsnachtrag': ['bruttogehalt', 'monatliches gehalt', 'vergütung'],
+        // Tätigkeits-Änderungen
+        'tätigkeitsänderung': ['tätigkeit', 'aufgabenbereich', 'position', 'stellenbeschreibung'],
+        'versetzung': ['arbeitsort', 'einsatzort', 'versetzung', 'standort'],
+        // Miet-Änderungen
+        'mieterhöhung': ['miete', 'kaltmiete', 'warmmiete', 'mieterhöhung'],
+        'mietanpassung': ['miete', 'kaltmiete', 'warmmiete'],
+        // Allgemeine Änderungen
+        'vertragsänderung': [],
+        'änderungsvereinbarung': [],
+        'nachtrag': [],
+        'zusatzvereinbarung': [],
+        'vertragsverlängerung': ['laufzeit', 'vertragsdauer', 'verlängerung']
+      };
+
+      // Erkannte Änderung aus Amendment-Detection
+      const matchedIndicator = contractTypeInfo.amendmentDetection?.matchedIndicator || '';
+      const changedTopics = CHANGED_TOPIC_MAPPING[matchedIndicator] || [];
+
+      console.log(`🔒 [${requestId}] Changed-Topic Lock:`);
+      console.log(`   → Indicator: "${matchedIndicator}"`);
+      console.log(`   → Erlaubte Änderungsthemen: ${changedTopics.length > 0 ? changedTopics.join(', ') : '(keine spezifischen)'}`);
+
+      // IMMER erlaubte Basis-Themen für ALLE Amendments (unabhängig vom Typ)
+      const AMENDMENT_CORE_TOPICS = [
+        // Struktur & Referenz (IMMER prüfen)
         'reference', 'referenz', 'hauptvertrag', 'bezugnahme',
         'clear_reference', 'eindeutige_referenz',
-        // Inkrafttreten & Gültigkeit
+        // Inkrafttreten & Gültigkeit (IMMER prüfen)
         'effective_date', 'inkrafttreten', 'wirksamkeit', 'gueltigkeitsdatum',
-        'validity', 'gültigkeit',
-        // Klarheit der Änderung
+        'validity', 'gültigkeit', 'wirksam ab', 'gilt ab',
+        // Klarheit der Änderung (IMMER prüfen)
         'clarity', 'klarheit', 'scope_of_change', 'aenderungsgegenstand',
-        'änderungsumfang', 'neue_konditionen',
-        // Salvatorische Klausel
+        'änderungsumfang', 'gegenstand der änderung',
+        // Salvatorische Klausel (IMMER prüfen)
         'salvatorisch', 'unchanged_clauses', 'unveraenderte_bestandteile',
-        'restvertrag', 'fortgeltung',
-        // Unterschriften
-        'signature', 'unterschrift', 'unterzeichnung',
-        // Der GEÄNDERTE Inhalt selbst (z.B. Arbeitszeit bei Arbeitszeiterhöhung)
-        'arbeitszeit', 'gehalt', 'vergütung_änderung', 'stunden'
+        'restvertrag', 'fortgeltung', 'übrige bestimmungen',
+        // Unterschriften (IMMER prüfen)
+        'signature', 'unterschrift', 'unterzeichnung'
       ];
 
-      // Verbotene Kategorien für Amendments (gehören in Hauptvertrag)
+      // Verbotene Kategorien für Amendments (gehören IMMER in Hauptvertrag)
       const AMENDMENT_FORBIDDEN_CATEGORIES = [
         'kuendigung', 'kündigung', 'kündigungsfristen', 'termination',
         'datenschutz', 'dsgvo', 'privacy', 'data_protection',
@@ -4230,11 +4265,15 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
         'schriftform', 'schriftformklausel', 'form_requirements',
         'wettbewerbsverbot', 'konkurrenzklausel', 'non_compete',
         'vertraulichkeit', 'geheimhaltung', 'confidentiality',
-        'ip_rechte', 'intellectual_property', 'urheberrecht',
-        'arbeitsort', 'einsatzort', 'work_location',
+        'ip_rechte', 'intellectual_property', 'urheberrecht', 'ip-rechte',
         'probezeit', 'probationary',
         'urlaub', 'urlaubsanspruch', 'vacation',
-        'nebentätigkeit', 'side_activities'
+        'nebentätigkeit', 'side_activities',
+        // 🆕 Phase 3b.7: Zusätzliche Verbote die vorher durchrutschten
+        'überstunden', 'mehrarbeit', 'overtime',
+        'zahlungsmodalitäten', 'zahlungsbedingungen', 'payment',
+        'bonus', 'prämie', 'sonderzahlung',
+        'arbeitsort', 'einsatzort', 'work_location' // außer bei Versetzung
       ];
 
       let filteredCount = 0;
@@ -4247,30 +4286,52 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
         const filteredCatIssues = (cat.issues || []).filter(issue => {
           const issueText = `${issue.id || ''} ${issue.clause || ''} ${issue.tag || ''} ${issue.summary || ''} ${cat.tag || ''}`.toLowerCase();
 
-          // Check: Ist das Issue über ein verbotenes Thema?
+          // 🆕 Phase 3b.7: Dreistufige Prüfung
+
+          // STUFE 1: Ist es ein Core-Amendment-Thema? (IMMER erlaubt)
+          const isCoreAmendmentTopic = AMENDMENT_CORE_TOPICS.some(core =>
+            issueText.includes(core)
+          );
+          if (isCoreAmendmentTopic) {
+            keptCount++;
+            return true; // Referenz, Inkrafttreten, Klarheit, etc. = IMMER behalten
+          }
+
+          // STUFE 2: Ist es explizit verboten? (IMMER entfernen)
           const isForbidden = AMENDMENT_FORBIDDEN_CATEGORIES.some(forbidden =>
             issueText.includes(forbidden)
           );
-
-          // Check: Ist das Issue über ein erlaubtes Thema?
-          const isAllowed = AMENDMENT_ALLOWED_TOPICS.some(allowed =>
-            issueText.includes(allowed)
-          );
-
-          // Erlaubt wenn: explizit erlaubt ODER nicht verboten
-          // Verboten wenn: explizit verboten UND nicht erlaubt
-          if (isForbidden && !isAllowed) {
+          if (isForbidden) {
             filteredCount++;
             filteredIssues.push({
               id: issue.id,
               summary: issue.summary?.substring(0, 50),
               reason: 'forbidden_for_amendment'
             });
-            return false;
+            return false; // Kündigung, DSGVO, Haftung, Überstunden, etc. = ENTFERNEN
           }
 
-          keptCount++;
-          return true;
+          // STUFE 3: Ist es ein geändertes Thema? (NUR wenn im Mapping)
+          // Bei "arbeitszeiterhöhung" → nur Arbeitszeit-Themen erlaubt
+          if (changedTopics.length > 0) {
+            const isChangedTopic = changedTopics.some(topic =>
+              issueText.includes(topic)
+            );
+            if (isChangedTopic) {
+              keptCount++;
+              return true; // Thema wird tatsächlich geändert = behalten
+            }
+          }
+
+          // STUFE 4: Alles andere bei Amendments = ENTFERNEN
+          // Wenn es weder Core noch Changed noch Forbidden ist = nicht relevant
+          filteredCount++;
+          filteredIssues.push({
+            id: issue.id,
+            summary: issue.summary?.substring(0, 50),
+            reason: 'not_in_amendment_scope'
+          });
+          return false;
         });
 
         return {
@@ -4284,16 +4345,22 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
         cat.issues && cat.issues.length > 0
       );
 
-      console.log(`🔒 [${requestId}] HARD SCOPE RESULT:`);
+      console.log(`🔒 [${requestId}] HARD SCOPE RESULT (Phase 3b.7):`);
       console.log(`   → Behalten: ${keptCount} Issues (amendment-relevant)`);
-      console.log(`   → Entfernt: ${filteredCount} Issues (Hauptvertrag-Themen)`);
+      console.log(`   → Entfernt: ${filteredCount} Issues (nicht im Scope)`);
       if (filteredIssues.length > 0) {
-        console.log(`   → Gefiltert:`, filteredIssues.slice(0, 5).map(i => i.summary));
+        console.log(`   → Gefiltert:`, filteredIssues.slice(0, 5).map(i => `${i.summary} (${i.reason})`));
       }
 
       // Speichere Filter-Stats für Debug-Meta
       normalizedResult._hardScopeStats = {
         applied: true,
+        // 🆕 Phase 3b.7: Changed-Topic Lock Details
+        changedTopicLock: {
+          matchedIndicator,
+          allowedChangedTopics: changedTopics,
+          coreTopicsAlwaysAllowed: true
+        },
         kept: keptCount,
         filtered: filteredCount,
         filteredIssues: filteredIssues.slice(0, 10) // Max 10 für Debug
@@ -4400,8 +4467,8 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
         },
         totalBeforeFilter: issuesByOrigin.ai + issuesByOrigin.rule + issuesByOrigin.topup,
         finalScoreBasis: 'weighted_issues',
-        ruleVersion: '3.2.0', // 🆕 Phase 3b.6: Hard Scope Enforcement
-        optimizerVersion: '5.0-phase3b6',
+        ruleVersion: '3.3.0', // 🆕 Phase 3b.7: Changed-Topic Lock
+        optimizerVersion: '5.0-phase3b7',
         analyzedAt: new Date().toISOString()
       }
     };
