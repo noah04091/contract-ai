@@ -21,6 +21,13 @@ export interface OptimizationSuggestion {
   whyItMatters?: string; // Konkreter juristischer/wirtschaftlicher Nachteil
   whyNotIntentional?: string; // Warum ist das NICHT bewusst so gewollt?
   whenToIgnore?: string; // Wann wäre diese Optimierung NICHT sinnvoll?
+  // 🆕 Phase 3c.3: Klassifizierung für Hinweis vs Optimierung
+  classification?: {
+    existence?: 'missing' | 'present' | 'partial';
+    sufficiency?: 'sufficient' | 'weak' | 'outdated';
+    necessity?: 'mandatory' | 'risk_based' | 'best_practice';
+    perspective?: 'auftraggeber' | 'auftragnehmer' | 'neutral';
+  };
 }
 
 // 🆕 v2.0: Assessment-Block für Decision-First Logik

@@ -32,7 +32,8 @@ import {
   Download,
   MessageSquare,
   Briefcase,
-  Scale
+  Scale,
+  Info // 🆕 Phase 3c.3: Icon für Hinweise
 } from 'lucide-react';
 import styles from '../../styles/Optimizer.module.css';
 import { OptimizationSuggestion, ContractHealthScore, DocumentScopeInfo } from '../../types/optimizer';

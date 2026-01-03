@@ -3845,3 +3845,78 @@ html {
     font-size: 12px;
   }
 }
+
+/* ============================================================
+   PHASE 3c.3: HINWEIS VS OPTIMIERUNG UNTERSCHEIDUNG
+   ============================================================ */
+
+/* Hinweis Issue Card - sanfter, grau/blau statt farbig */
+.issueCard.hint {
+  border-left-color: #64748b;
+  background: linear-gradient(135deg, rgba(100, 116, 139, 0.02) 0%, rgba(100, 116, 139, 0.01) 100%);
+}
+
+.issueCard.hint:hover {
+  border-left-color: #3b82f6;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.04) 0%, rgba(59, 130, 246, 0.02) 100%);
+}
+
+/* Hinweis Icon */
+.issueIcon.hint {
+  background: linear-gradient(135deg, rgba(100, 116, 139, 0.1) 0%, rgba(100, 116, 139, 0.05) 100%);
+  color: #64748b;
+}
+
+.issueCard.hint:hover .issueIcon.hint {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.08) 100%);
+  color: #3b82f6;
+}
+
+/* Hinweis Badge */
+.issueBadge.hint {
+  background: rgba(100, 116, 139, 0.1);
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.issueBadge.hint svg {
+  width: 10px;
+  height: 10px;
+}
+
+/* Hinweis Diff View - sanftere Farben */
+.issueDiffView.hintDiff {
+  /* Basis-Styles bleiben, aber Farben werden überschrieben */
+}
+
+.diffLabel.hintOriginal {
+  color: #64748b;
+  background: rgba(100, 116, 139, 0.05);
+}
+
+.diffLabel.hintOriginal svg {
+  color: #64748b;
+}
+
+.diffBox.hintOriginal {
+  background: rgba(100, 116, 139, 0.03);
+  border-color: rgba(100, 116, 139, 0.15);
+  color: var(--text-secondary);
+}
+
+.diffLabel.hintImproved {
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.diffLabel.hintImproved svg {
+  color: #3b82f6;
+}
+
+.diffBox.hintImproved {
+  background: rgba(59, 130, 246, 0.03);
+  border-color: rgba(59, 130, 246, 0.15);
+  color: var(--text-primary);
+}
