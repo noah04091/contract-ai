@@ -3857,15 +3857,12 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
     // 🚀 STAGE 6: Anreicherung mit generierten professionellen Klauseln
     let enhancedIssueCount = 0;
 
-    // 🆕 v2.0 DECISION-FIRST: Skip gap-based issues if GPT says "no optimization needed"
-    const skipGapIssues = normalizedResult.assessment?.optimizationNeeded === false;
-    if (skipGapIssues) {
-      console.log(`🎯 [${requestId}] DECISION-FIRST: Skipping ${gapAnalysis.gaps.length} gap-based issues (assessment.optimizationNeeded = false)`);
-    }
+    // 🔥 v2.1 FIX: Gap-Analyse ist UNABHÄNGIG von GPT's optimizationNeeded!
+    // GPT kann falsch liegen - die regelbasierte Gap-Analyse ist objektiv
+    console.log(`📋 [${requestId}] Processing ${gapAnalysis.gaps.length} gap-based issues (unabhängig von GPT)`);
 
     gapAnalysis.gaps.forEach(gap => {
-      // 🆕 v2.0: Respektiere Assessment - wenn optimizationNeeded=false, keine Gap-Issues hinzufügen
-      if (skipGapIssues) return;
+      // Nur kritische und high-severity Gaps werden zu Issues
 
       if (gap.type === 'missing_clause' && generatedClauses[gap.clause]) {
         const categoryTag = getCategoryForClause(gap.clause);
@@ -3919,37 +3916,34 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
     console.log(`🔥 [${requestId}] Running Quality Layer AGAIN after template generation...`);
     normalizedResult = applyUltimateQualityLayer(normalizedResult, requestId, contractTypeInfo.type);
 
-    // 🔥 STAGE 6.7: TOP-UP-PASS - Garantiere Minimum 6-8 Findings
-    // 🆕 v2.0 DECISION-FIRST: Skip Top-Up if assessment says no optimization needed
-    if (normalizedResult.assessment?.optimizationNeeded === false) {
-      console.log(`🎯 [${requestId}] DECISION-FIRST: Skipping Top-Up (assessment.optimizationNeeded = false)`);
-    } else {
-      console.log(`🎯 [${requestId}] Checking if Top-Up needed...`);
-      normalizedResult = await topUpFindingsIfNeeded(normalizedResult, contractText, contractTypeInfo.type, openai, requestId);
-    }
+    // 🔥 STAGE 6.7: TOP-UP-PASS - Garantiere Qualität, nicht Quantität
+    // 🔥 v2.1 FIX: Top-Up läuft IMMER, aber mit angepassten Schwellwerten
+    // GPT's optimizationNeeded beeinflusst NUR den Score, nicht ob Issues gesucht werden
+    console.log(`🎯 [${requestId}] Checking if Top-Up needed (unabhängig von GPT's Assessment)...`);
+    normalizedResult = await topUpFindingsIfNeeded(normalizedResult, contractText, contractTypeInfo.type, openai, requestId);
 
     // 🚀 STAGE 7: Finale Health-Score-Berechnung
-    // 🆕 v2.0 DECISION-FIRST: Bei optimizationNeeded=false, hoher Score
+    // 🔥 v2.1 FIX: Score basiert auf TATSÄCHLICHEN Issues, nicht auf GPT's Meinung!
     let healthScore;
     const totalIssueCount = normalizedResult.categories.flatMap(c => c.issues).length;
 
-    // Robuste Prüfung: optimizationNeeded kann boolean oder string sein
+    // GPT's Assessment nur für Logging, nicht für Score-Entscheidung
     const optimizationNeeded = normalizedResult.assessment?.optimizationNeeded;
-    const isOptimizationNotNeeded = optimizationNeeded === false || optimizationNeeded === 'false' || optimizationNeeded === "false";
+    console.log(`🔍 [${requestId}] Score-Decision: GPT sagt optimizationNeeded=${optimizationNeeded}, aber wir haben ${totalIssueCount} echte Issues gefunden`);
 
-    // ZUSÄTZLICH: Wenn 0 Issues gefunden wurden, ist es ein guter Vertrag
-    const isPerfectContract = isOptimizationNotNeeded || totalIssueCount === 0;
-
-    console.log(`🔍 [${requestId}] Score-Decision: optimizationNeeded=${optimizationNeeded} (type: ${typeof optimizationNeeded}), totalIssues=${totalIssueCount}, isPerfect=${isPerfectContract}`);
-
-    if (isPerfectContract) {
-      // Professioneller Vertrag ohne nötige Optimierungen → IMMER hoher Score (95-98)
-      // Score: 98 bei 0 Issues, 97 bei 1, 96 bei 2, aber NIEMALS unter 95
-      healthScore = Math.max(95, 98 - totalIssueCount);
-      console.log(`🎯 [${requestId}] DECISION-FIRST: High score ${healthScore} (isPerfectContract=true, ${totalIssueCount} issues)`);
+    // Score basiert NUR auf tatsächlich gefundenen Issues
+    if (totalIssueCount === 0) {
+      // Wirklich keine Issues gefunden → hoher Score
+      healthScore = 98;
+      console.log(`🎯 [${requestId}] Score 98: Keine echten Issues gefunden`);
+    } else if (totalIssueCount <= 3) {
+      // Wenige Issues → guter Score
+      healthScore = Math.max(85, 95 - (totalIssueCount * 3));
+      console.log(`🎯 [${requestId}] Score ${healthScore}: ${totalIssueCount} Issues gefunden (wenige)`);
     } else {
-      // Normaler Score-Algorithmus
+      // Normale Score-Berechnung für mehr Issues
       healthScore = calculateHealthScore(gapAnalysis.gaps, normalizedResult.categories.flatMap(c => c.issues));
+      console.log(`🎯 [${requestId}] Score ${healthScore}: ${totalIssueCount} Issues gefunden (normal berechnet)`);
     }
     normalizedResult.score.health = healthScore;
     
