@@ -1330,6 +1330,37 @@ const applyUltimateQualityLayer = (result, requestId, contractType = 'sonstiges'
       }
 
       // ═══════════════════════════════════════════════════════════════════════
+      // 🆕 PHASE 3a: EXISTENZ- & NECESSITY-GATES
+      // ═══════════════════════════════════════════════════════════════════════
+
+      // KILL-REGEL 9: "FEHLT" im Text aber existence !== "missing" → FALSE POSITIVE
+      const claimsFehlend = /FEHLT|fehlt|nicht vorhanden|Pflichtklausel fehlt/i.test(issue.originalText || '');
+      const existenceNotMissing = issue.classification?.existence && issue.classification.existence !== 'missing';
+      if (claimsFehlend && existenceNotMissing) {
+        console.warn(`🚫 [${requestId}] KILL-9: FALSE POSITIVE - "FEHLT" aber existence="${issue.classification.existence}" für "${issue.id || issue.summary?.substring(0, 30)}" → GELÖSCHT`);
+        bullshitDropped++;
+        return null;
+      }
+
+      // KILL-REGEL 10: necessity="best_practice" aber risk >= 7 → ÜBERTREIBUNG
+      const isBestPractice = issue.classification?.necessity === 'best_practice';
+      const hasHighRisk = issue.risk >= 7;
+      if (isBestPractice && hasHighRisk) {
+        console.warn(`🚫 [${requestId}] KILL-10: best_practice mit risk=${issue.risk} ist Übertreibung für "${issue.id || issue.summary?.substring(0, 30)}" → GELÖSCHT`);
+        bullshitDropped++;
+        return null;
+      }
+
+      // KILL-REGEL 11: "Pflichtklausel" im Summary aber necessity !== "mandatory" → FALSCHE DRINGLICHKEIT
+      const claimsPflicht = /Pflichtklausel|zwingend|gesetzlich vorgeschrieben/i.test(issue.summary || '');
+      const notMandatory = issue.classification?.necessity && issue.classification.necessity !== 'mandatory';
+      if (claimsPflicht && notMandatory) {
+        console.warn(`🚫 [${requestId}] KILL-11: "Pflichtklausel" aber necessity="${issue.classification.necessity}" für "${issue.id || issue.summary?.substring(0, 30)}" → GELÖSCHT`);
+        bullshitDropped++;
+        return null;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════════
       // STANDARD QUALITY CHECKS (wie vorher)
       // ═══════════════════════════════════════════════════════════════════════
 
@@ -1584,7 +1615,14 @@ const normalizeAndValidateOutput = (aiOutput, contractType) => {
             evidence: issue.evidence || [],
             whyItMatters: issue.whyItMatters || '',
             whyNotIntentional: issue.whyNotIntentional || '',
-            whenToIgnore: issue.whenToIgnore || ''
+            whenToIgnore: issue.whenToIgnore || '',
+            // 🆕 Phase 3a: Klassifikationsobjekt
+            classification: issue.classification || {
+              existence: 'missing',
+              sufficiency: 'weak',
+              necessity: 'risk_based',
+              perspective: 'neutral'
+            }
           };
         }) : []
       }));
@@ -2150,15 +2188,65 @@ const analyzeContractGaps = (text, contractType, detectedClauses) => {
     const requiredClauses = typeConfig.requiredClauses || [];
     const riskFactors = typeConfig.riskFactors || [];
     
-    // Prüfe Pflichtklauseln
+    // 🆕 PHASE 3a: INTELLIGENTE KLAUSEL-ERKENNUNG
+    // Nicht nur Keywords suchen, sondern REGELUNGSINHALTE prüfen
+    const clausePatterns = {
+      'kuendigung': [
+        /§\s*\d+[a-z]?\s*[\-–]\s*(?:kündigung|vertragsbeendigung|laufzeit)/i,
+        /kündigung(?:sfrist|srecht|sregelung)/i,
+        /(?:ordentlich|außerordentlich)e?\s+kündigung/i,
+        /(?:beendigung|auflösung)\s+des\s+(?:vertrags?|arbeitsverhältnisses)/i
+      ],
+      'datenschutz': [
+        /§\s*\d+[a-z]?\s*[\-–]\s*datenschutz/i,
+        /personenbezogene\s+daten/i,
+        /dsgvo|datenschutz-?grundverordnung/i,
+        /verarbeitung\s+(?:von\s+)?(?:personen)?daten/i,
+        /speicherung\s+(?:von\s+)?daten/i
+      ],
+      'haftung': [
+        /§\s*\d+[a-z]?\s*[\-–]\s*haftung/i,
+        /haftungsbeschränkung|haftungsausschluss/i,
+        /(?:haften|haftet)\s+(?:nur\s+)?für/i,
+        /schadensersatz(?:anspruch|pflicht)?/i
+      ],
+      'schriftform': [
+        /§\s*\d+[a-z]?\s*[\-–]\s*(?:schriftform|form)/i,
+        /schrift(?:form|lich)/i,
+        /änderung(?:en)?\s+(?:bedürfen|bedarf|müssen)/i
+      ],
+      'gerichtsstand': [
+        /§\s*\d+[a-z]?\s*[\-–]\s*(?:gerichtsstand|schlussbestimmungen)/i,
+        /gerichtsstand/i,
+        /(?:zuständig(?:es)?|vereinbart(?:er)?)\s+gericht/i
+      ],
+      'salvatorisch': [
+        /§\s*\d+[a-z]?\s*[\-–]\s*(?:salvatorisch|schlussbestimmungen)/i,
+        /salvatorisch/i,
+        /(?:unwirksam|nichtig)(?:keit)?\s+(?:einer|einzelner)/i,
+        /übrigen?\s+bestimmungen/i
+      ]
+    };
+
+    // Prüfe Pflichtklauseln MIT INTELLIGENTER ERKENNUNG
     requiredClauses.forEach(clause => {
-      const clauseKeywords = clause.replace(/_/g, ' ').split(' ');
-      const hasClause = clauseKeywords.some(keyword => lowerText.includes(keyword));
-      
+      // 🆕 Phase 3a: Nutze Patterns wenn verfügbar, sonst Fallback auf Keywords
+      const patterns = clausePatterns[clause];
+      let hasClause = false;
+
+      if (patterns && patterns.length > 0) {
+        // Intelligente Pattern-Suche
+        hasClause = patterns.some(pattern => pattern.test(text));
+      } else {
+        // Fallback: Keyword-Suche
+        const clauseKeywords = clause.replace(/_/g, ' ').split(' ');
+        hasClause = clauseKeywords.some(keyword => lowerText.includes(keyword));
+      }
+
       if (!hasClause) {
         const legalFramework = typeConfig.legalFramework || [];
         let legalReason = `Diese Klausel ist nach gängiger Vertragspraxis und Rechtsprechung erforderlich.`;
-        
+
         // Füge spezifische rechtliche Begründung hinzu
         if (clause === 'datenschutz') {
           legalReason = `Nach Art. 13, 14 DSGVO besteht eine Informationspflicht bei Erhebung personenbezogener Daten. Fehlt eine Datenschutzklausel, drohen Bußgelder bis 20 Mio. EUR oder 4% des Jahresumsatzes.`;
@@ -2168,12 +2256,14 @@ const analyzeContractGaps = (text, contractType, detectedClauses) => {
           legalReason = `Kündigungsregelungen sind essentiell. Bei Fehlen gelten gesetzliche Fristen, die oft nachteilig sind. Siehe §§ 622 ff. BGB, § 626 BGB.`;
         }
         
+        // 🆕 Phase 3a: Neutrale Formulierung statt "Pflichtklausel fehlt"
+        const clauseLabel = clause.replace(/_/g, ' ').charAt(0).toUpperCase() + clause.replace(/_/g, ' ').slice(1);
         gaps.push({
           type: 'missing_clause',
           clause: clause,
           severity: 'high',
           category: getCategoryForClause(clause),
-          description: `Pflichtklausel fehlt: ${clause.replace(/_/g, ' ')}`,
+          description: `${clauseLabel}-Regelung nicht gefunden`,
           legalReason: legalReason
         });
       }
@@ -3116,6 +3206,70 @@ Bei einem sehr guten Vertrag ist das KORREKTE Ergebnis:
 Das ist BESSER als 8 erfundene Optimierungen!
 
 ═══════════════════════════════════════════════════════════════════════════════
+🔴 PHASE 3a: EXISTENZ-GATE (KRITISCH! VOR ALLEM ANDEREN!)
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️ ABSOLUTES VERBOT: Du darfst NIEMALS sagen "Pflichtklausel fehlt" oder
+   "FEHLT" wenn der Regelungsgegenstand IRGENDWO im Vertrag behandelt wird!
+
+BEVOR du etwas als "fehlend" bezeichnest, prüfe:
+
+1. EXISTENZ-CHECK (HART!):
+   Ist der rechtliche Regelungsgegenstand im Vertrag inhaltlich vorhanden?
+   (Auch verteilt über mehrere Paragraphen, implizit, oder verklausuliert?)
+
+   ✅ JA → existence = "present" oder "partial"
+   ❌ NEIN (wirklich NICHTS da) → existence = "missing"
+
+   ⚠️ "missing" darf NUR gesetzt werden wenn wirklich KEINE Regelung existiert!
+
+2. SUFFICIENCY-CHECK (nur wenn existence !== "missing"):
+   Reicht die vorhandene Regelung für DIESEN Vertragstyp aus?
+
+   - sufficient = Regelung ist vollständig und zeitgemäß
+   - weak = Regelung vorhanden, aber lückenhaft
+   - outdated = Regelung vorhanden, aber veraltet
+
+3. NECESSITY-KLASSIFIKATION (SEHR WICHTIG!):
+
+   - mandatory = Gesetzlich ZWINGEND für diesen Vertragstyp
+                 (NUR bei echter Unwirksamkeitsfolge!)
+   - risk_based = Erhöht Risiko, aber nicht gesetzlich zwingend
+   - best_practice = Nice-to-have, Marktstandard, Optimierung
+
+   ⚠️ "mandatory" ist EXTREM selten!
+   ⚠️ Kündigung & Datenschutz sind NICHT automatisch mandatory!
+
+4. PERSPEKTIVE (wem schadet es?):
+
+   - auftraggeber = Risiko primär für Vertragsersteller
+   - auftragnehmer = Risiko primär für Vertragsempfänger
+   - neutral = Beide betroffen oder strukturelle Verbesserung
+
+═══════════════════════════════════════════════════════════════════════════════
+🚫 VERBOTEN (WERDEN AUTOMATISCH GELÖSCHT!):
+═══════════════════════════════════════════════════════════════════════════════
+
+❌ "Pflichtklausel fehlt" wenn existence = "present" oder "partial"
+❌ "FEHLT" wenn Regelung verteilt/implizit vorhanden
+❌ "Hoch" Priorität bei necessity = "best_practice"
+❌ DSGVO-Bußgelder erwähnen wenn Datenverarbeitung geregelt ist
+❌ Arbeitsvertragslogik auf FRV/B2B anwenden
+
+═══════════════════════════════════════════════════════════════════════════════
+✅ KORREKTE FORMULIERUNGEN (statt "fehlt"):
+═══════════════════════════════════════════════════════════════════════════════
+
+❌ FALSCH: "Kündigungsklausel fehlt"
+✅ RICHTIG: "Kündigungsregelung vorhanden (§19), aber nicht gebündelt"
+
+❌ FALSCH: "Datenschutzklausel fehlt"
+✅ RICHTIG: "Datenverarbeitung geregelt (§15), DSGVO-Hinweise ergänzbar"
+
+❌ FALSCH: "Pflichtklausel Haftung fehlt"
+✅ RICHTIG: "Haftungsregelungen verteilt, Konsolidierung empfohlen"
+
+═══════════════════════════════════════════════════════════════════════════════
 🛑 STOP! ENTSCHEIDUNGS-GATE (VOR JEDER OPTIMIERUNG!)
 ═══════════════════════════════════════════════════════════════════════════════
 
@@ -3251,7 +3405,14 @@ ${contractType === 'arbeitsvertrag' || contractType.includes('arbeit') ? '✅ "A
           "evidence": ["§3 Abs. 2: 'exakter Text aus Vertrag'", "§7: 'weiterer relevanter Text'"],
           "whyItMatters": "Konkreter juristischer/wirtschaftlicher Nachteil wenn nicht gefixt",
           "whyNotIntentional": "Warum diese Klausel NICHT bewusst so gewollt ist",
-          "whenToIgnore": "Wann diese Optimierung bewusst NICHT sinnvoll wäre"
+          "whenToIgnore": "Wann diese Optimierung bewusst NICHT sinnvoll wäre",
+
+          "classification": {
+            "existence": "missing | present | partial",
+            "sufficiency": "sufficient | weak | outdated",
+            "necessity": "mandatory | risk_based | best_practice",
+            "perspective": "auftraggeber | auftragnehmer | neutral"
+          }
         }
       ]
     }
@@ -3891,20 +4052,29 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
         }
         
         // Füge professionelle Klausel hinzu
+        // 🆕 Phase 3a: Nur echte Lücken markieren (Pattern-Matching hat NICHTS gefunden)
         const professionalIssue = {
           id: `missing_${gap.clause}_${Date.now()}_${enhancedIssueCount++}`,
           // 🆕 Phase 2.1: Explizite Issue-Herkunft
           origin: 'rule',
           summary: gap.description,
-          originalText: 'FEHLT - Diese Pflichtklausel ist nicht im Vertrag vorhanden',
+          // 🆕 Phase 3a: Formulierung angepasst - nur bei echten Lücken
+          originalText: 'Keine Regelung zu diesem Thema im Vertrag gefunden',
           improvedText: generatedClauses[gap.clause],
-          legalReasoning: gap.legalReason || `Diese Klausel ist für ${contractTypeInfo.type} zwingend erforderlich. ${gap.severity === 'critical' ? 'Ohne diese Regelung droht die Unwirksamkeit des Vertrages oder erhebliche rechtliche Nachteile.' : 'Die Aufnahme dieser Klausel entspricht der üblichen Vertragspraxis und minimiert rechtliche Risiken.'}`,
+          legalReasoning: gap.legalReason || `Diese Klausel ist für ${contractTypeInfo.type} empfohlen. ${gap.severity === 'critical' ? 'Ohne diese Regelung bestehen erhöhte rechtliche Risiken.' : 'Die Aufnahme dieser Klausel entspricht der üblichen Vertragspraxis.'}`,
           benchmark: `${gap.severity === 'critical' ? '98%' : '87%'} aller professionellen ${contractTypeInfo.type}-Verträge enthalten diese Klausel (Erhebung: Bundesrechtsanwaltskammer 2023)`,
           risk: gap.severity === 'critical' ? 9 : gap.severity === 'high' ? 7 : 5,
           impact: gap.severity === 'critical' ? 9 : gap.severity === 'high' ? 7 : 5,
           confidence: 95,
           difficulty: 'Einfach',
-          legalReferences: extractLegalReferences(gap.legalReason || '')
+          legalReferences: extractLegalReferences(gap.legalReason || ''),
+          // 🆕 Phase 3a: Klassifikationsobjekt für Rule-Issues
+          classification: {
+            existence: 'missing', // Gap-Analysis hat NICHTS gefunden
+            sufficiency: 'weak',
+            necessity: gap.severity === 'critical' ? 'mandatory' : 'risk_based',
+            perspective: 'neutral'
+          }
         };
         
         // Prüfe ob nicht bereits vorhanden
@@ -4000,13 +4170,24 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
         agbControlPassed: healthScore > 60,
         formRequirementsMet: normalizedResult.categories.some(c => c.tag.includes('schriftform'))
       },
-      // 🆕 Phase 2.3 & 2.4: Debug-Meta für Transparenz
+      // 🆕 Phase 2.3, 2.4 & 3a: Debug-Meta für Transparenz
       _debug: {
         issuesByOrigin,
+        // 🆕 Phase 3a: Klassifikations-Statistiken
+        issuesByExistence: {
+          missing: allIssues.filter(i => i.classification?.existence === 'missing').length,
+          present: allIssues.filter(i => i.classification?.existence === 'present').length,
+          partial: allIssues.filter(i => i.classification?.existence === 'partial').length
+        },
+        issuesByNecessity: {
+          mandatory: allIssues.filter(i => i.classification?.necessity === 'mandatory').length,
+          risk_based: allIssues.filter(i => i.classification?.necessity === 'risk_based').length,
+          best_practice: allIssues.filter(i => i.classification?.necessity === 'best_practice').length
+        },
         totalBeforeFilter: issuesByOrigin.ai + issuesByOrigin.rule + issuesByOrigin.topup,
         finalScoreBasis: 'weighted_issues',
-        ruleVersion: '2.0.0',
-        optimizerVersion: '5.0-phase2',
+        ruleVersion: '3.0.0', // 🆕 Phase 3a
+        optimizerVersion: '5.0-phase3a',
         analyzedAt: new Date().toISOString()
       }
     };
