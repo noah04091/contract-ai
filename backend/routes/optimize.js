@@ -1965,25 +1965,35 @@ const detectContractType = async (text, fileName = '') => {
   const lowerText = text.toLowerCase();
   const lowerFileName = fileName.toLowerCase();
   
-  // 🔥 FIX: Prüfe auf Amendments/Änderungen - STRENGER!
-  // NUR als Amendment erkennen wenn EINDEUTIG eine Änderung ist
-  // 🆕 Phase 3b.5: Erweiterte Amendment-Erkennung für alle Änderungstypen
-  const strongAmendmentIndicators = [
+  // 🔥 FIX Phase 3b.8: Amendment-Erkennung PRÄZISIERT
+  // PROBLEM: "vertragsänderung" matchte "§ 12 Vertragsänderungen" in normalen Verträgen!
+  // LÖSUNG: Unterscheide zwischen Dateiname (immer prüfen) und Content (nur Titel-Bereich)
+
+  // === DATEINAME-INDIKATOREN (dürfen im Dateinamen vorkommen) ===
+  const filenameAmendmentIndicators = [
     // Formelle Bezeichnungen
     'änderungsvereinbarung', 'nachtrag', 'zusatzvereinbarung',
     'amendment', 'addendum', 'supplement',
-    'änderung zum', 'ergänzung zum', 'anpassung des vertrages vom',
-    'änderung des vertrages', 'vertragsergänzung', 'vertragsnachtrag',
-    // 🆕 Arbeitsvertrag-spezifische Amendments (häufig in Dateinamen!)
+    'vertragsergänzung', 'vertragsnachtrag',
+    // Arbeitsvertrag-spezifische Amendments (häufig in Dateinamen!)
     'arbeitszeiterhöhung', 'arbeitszeitänderung', 'arbeitszeitanpassung',
     'gehaltserhöhung', 'gehaltsanpassung', 'gehaltsnachtrag',
     'stundenerhöhung', 'stundenreduzierung', 'stundenanpassung',
-    'vertragsänderung', 'arbeitsvertragsänderung',
+    'arbeitsvertragsänderung',
     'tätigkeitsänderung', 'versetzung',
-    // 🆕 Weitere häufige Amendment-Typen
+    // Weitere häufige Amendment-Typen
     'mieterhöhung', 'mietanpassung', 'mietnachtrag',
-    'konditionsänderung', 'preisanpassung',
-    'verlängerung', 'vertragsverlängerung'
+    'konditionsänderung', 'preisanpassung'
+    // ENTFERNT: 'vertragsänderung' (zu generisch - jeder Vertrag hat diese Klausel!)
+    // ENTFERNT: 'verlängerung', 'vertragsverlängerung' (zu generisch)
+  ];
+
+  // === CONTENT-INDIKATOREN (nur im TITEL-BEREICH, erste 500 Zeichen) ===
+  const titleAmendmentIndicators = [
+    'änderungsvereinbarung', 'nachtrag zum', 'zusatzvereinbarung',
+    'änderung zum arbeitsvertrag', 'änderung zum mietvertrag',
+    'ergänzung zum vertrag', 'anpassung des vertrages vom',
+    'amendment to', 'addendum to'
   ];
 
   let isAmendment = false;
@@ -1993,18 +2003,26 @@ const detectContractType = async (text, fileName = '') => {
   let matchedIndicator = null;
   let matchSource = null;
 
-  for (const indicator of strongAmendmentIndicators) {
+  // 1. DATEINAME prüfen (alle Indikatoren)
+  for (const indicator of filenameAmendmentIndicators) {
     if (lowerFileName.includes(indicator)) {
       isAmendment = true;
       matchedIndicator = indicator;
       matchSource = 'filename';
       break;
     }
-    if (lowerText.includes(indicator)) {
-      isAmendment = true;
-      matchedIndicator = indicator;
-      matchSource = 'content';
-      break;
+  }
+
+  // 2. TITEL-BEREICH prüfen (nur erste 500 Zeichen, spezifischere Indikatoren)
+  if (!isAmendment) {
+    const titleText = lowerText.slice(0, 500);
+    for (const indicator of titleAmendmentIndicators) {
+      if (titleText.includes(indicator)) {
+        isAmendment = true;
+        matchedIndicator = indicator;
+        matchSource = 'title';
+        break;
+      }
     }
   }
 
