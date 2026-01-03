@@ -1240,18 +1240,14 @@ const applyUltimateQualityLayer = (result, requestId, contractType = 'sonstiges'
       // Kontextbasiertes Killing: Inhalt > Zeichenanzahl
       // ═══════════════════════════════════════════════════════════════════════
 
-      // 🔥 v2.1 FIX: Regelbasierte und Top-Up Issues überspringen
-      // Diese haben keine Anti-Bullshit-Felder und würden sonst ALLE gelöscht!
-      const isGapGeneratedIssue = issue.id && issue.id.startsWith('missing_');
-      const isTopUpIssue = issue.id && issue.id.startsWith('topup_');
-
-      if (isGapGeneratedIssue || isTopUpIssue) {
-        const issueType = isGapGeneratedIssue ? 'Gap-Issue (regelbasiert)' : 'Top-Up-Issue';
-        console.log(`✅ [${requestId}] ${issueType} übersprungen: "${issue.id}"`);
-        return issue; // Direkt durchlassen, keine Kill-Regeln anwenden
+      // 🆕 Phase 2.2: Kill-Rules NUR für AI-generierte Issues
+      // Rule-Issues und Top-Up-Issues sind deterministisch/trusted
+      if (issue.origin && issue.origin !== 'ai') {
+        console.log(`✅ [${requestId}] ${issue.origin.toUpperCase()}-Issue übersprungen (trusted): "${issue.id}"`);
+        return issue; // Keine Kill-Rules für rule/topup
       }
 
-      // KILL-REGEL 1: Evidence fehlt komplett → LÖSCHEN
+      // KILL-REGEL 1: Evidence fehlt komplett → LÖSCHEN (nur AI-Issues)
       if (!issue.evidence || !Array.isArray(issue.evidence) || issue.evidence.length === 0) {
         console.warn(`🚫 [${requestId}] KILL-1: Evidence FEHLT für "${issue.id || issue.summary?.substring(0, 30)}" → GELÖSCHT`);
         evidenceMissing++;
@@ -1568,6 +1564,8 @@ const normalizeAndValidateOutput = (aiOutput, contractType) => {
           
           return {
             id: issue.id || `issue_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+            // 🆕 Phase 2.1: Explizite Issue-Herkunft
+            origin: 'ai',
             summary: cleanText(issue.summary || issue.description || ''),
             originalText: cleanText(issue.originalText || issue.original || 'FEHLT - Diese Klausel ist nicht vorhanden'),
             improvedText: improvedText,
@@ -2602,7 +2600,7 @@ ${contractText.substring(0, 30000)}`;
       openai.chat.completions.create({
         model: "gpt-4o-mini",
         response_format: { type: "json_object" },
-        temperature: 0.1,
+        temperature: 0.0, // 🆕 Phase 2.6: Maximum Determinismus
         max_tokens: 1800,
         messages: [
           { role: 'system', content: 'Gib strikt gültiges JSON nach Schema zurück. KEINE Platzhalter!' },
@@ -2633,7 +2631,7 @@ ${contractText.substring(0, 30000)}`;
           const retryCompletion = await openai.chat.completions.create({
             model: "gpt-4o-mini",
             response_format: { type: "json_object" },
-            temperature: 0.1,
+            temperature: 0.0, // 🆕 Phase 2.6: Maximum Determinismus
             max_tokens: 1200, // Weniger tokens für weniger Kategorien
             messages: [
               { role: 'system', content: 'Gib strikt gültiges JSON nach Schema zurück. KEINE Platzhalter!' },
@@ -2683,6 +2681,9 @@ ${contractText.substring(0, 30000)}`;
         if (!issue.id) {
           issue.id = `topup_${newCat.tag}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         }
+
+        // 🆕 Phase 2.1: Explizite Issue-Herkunft
+        issue.origin = 'topup';
 
         // 🔥 FIX v5 (Smart Confidence): Dynamische Berechnung statt pauschaler 85%
         if (!issue.confidence || issue.confidence === 0) {
@@ -3702,7 +3703,7 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
               },
               { role: "user", content: optimizedPrompt }
             ],
-            temperature: 0.1, // Sehr konsistent für juristische Präzision
+            temperature: 0.0, // 🆕 Phase 2.6: Maximum Determinismus
             max_tokens: 8000, // Erhöht für bis zu 50+ Optimierungen bei schlechten Verträgen
             top_p: 0.95,
             frequency_penalty: 0.2, // Vermeidet Wiederholungen
@@ -3735,7 +3736,7 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
                   },
                   { role: "user", content: optimizedPrompt }
                 ],
-                temperature: 0.2,
+                temperature: 0.0, // 🆕 Phase 2.6: Maximum Determinismus
                 max_tokens: 3000,
                 response_format: strictJsonSchema // 🔥 Gleiches striktes Schema wie GPT-4o
               }),
@@ -3892,6 +3893,8 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
         // Füge professionelle Klausel hinzu
         const professionalIssue = {
           id: `missing_${gap.clause}_${Date.now()}_${enhancedIssueCount++}`,
+          // 🆕 Phase 2.1: Explizite Issue-Herkunft
+          origin: 'rule',
           summary: gap.description,
           originalText: 'FEHLT - Diese Pflichtklausel ist nicht im Vertrag vorhanden',
           improvedText: generatedClauses[gap.clause],
@@ -3934,31 +3937,55 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
     normalizedResult = await topUpFindingsIfNeeded(normalizedResult, contractText, contractTypeInfo.type, openai, requestId);
 
     // 🚀 STAGE 7: Finale Health-Score-Berechnung
-    // 🔥 v2.1 FIX: Score basiert auf TATSÄCHLICHEN Issues, nicht auf GPT's Meinung!
+    // 🆕 Phase 2.5: Kontextbasierte Gewichtung nach Issue-Herkunft
     let healthScore;
-    const totalIssueCount = normalizedResult.categories.flatMap(c => c.issues).length;
+    const issuesFlat = normalizedResult.categories.flatMap(c => c.issues);
+    const totalIssueCount = issuesFlat.length;
 
-    // GPT's Assessment nur für Logging, nicht für Score-Entscheidung
+    // 🆕 Phase 2.5: Gewichtete Issue-Zählung
+    // Rule-Issues = Baseline, AI-Issues mit hohem Risiko = wichtiger, Top-Up = weniger wichtig
+    const baseWeights = { rule: 1.0, ai: 1.0, topup: 0.5 };
+
+    let weightedIssueCount = 0;
+    issuesFlat.forEach(issue => {
+      const origin = issue.origin || 'ai';
+      const baseWeight = baseWeights[origin] || 1.0;
+      // AI-Issues mit hohem Risiko (≥8) bekommen 1.3x Multiplikator
+      const aiMultiplier = (origin === 'ai' && issue.risk >= 8) ? 1.3 : 1.0;
+      weightedIssueCount += baseWeight * aiMultiplier;
+    });
+
+    // GPT's Assessment nur für Logging
     const optimizationNeeded = normalizedResult.assessment?.optimizationNeeded;
-    console.log(`🔍 [${requestId}] Score-Decision: GPT sagt optimizationNeeded=${optimizationNeeded}, aber wir haben ${totalIssueCount} echte Issues gefunden`);
+    console.log(`🔍 [${requestId}] Score-Decision: GPT=${optimizationNeeded}, Issues=${totalIssueCount}, Gewichtet=${weightedIssueCount.toFixed(1)}`);
 
-    // Score basiert NUR auf tatsächlich gefundenen Issues
-    if (totalIssueCount === 0) {
-      // Wirklich keine Issues gefunden → hoher Score
+    // Score basiert auf GEWICHTETEN Issues
+    if (weightedIssueCount === 0) {
       healthScore = 98;
-      console.log(`🎯 [${requestId}] Score 98: Keine echten Issues gefunden`);
-    } else if (totalIssueCount <= 3) {
-      // Wenige Issues → guter Score
-      healthScore = Math.max(85, 95 - (totalIssueCount * 3));
-      console.log(`🎯 [${requestId}] Score ${healthScore}: ${totalIssueCount} Issues gefunden (wenige)`);
+      console.log(`🎯 [${requestId}] Score 98: Keine Issues`);
+    } else if (weightedIssueCount <= 3) {
+      healthScore = Math.max(85, 95 - Math.round(weightedIssueCount * 3));
+      console.log(`🎯 [${requestId}] Score ${healthScore}: ${weightedIssueCount.toFixed(1)} gewichtete Issues (wenige)`);
     } else {
-      // Normale Score-Berechnung für mehr Issues
-      healthScore = calculateHealthScore(gapAnalysis.gaps, normalizedResult.categories.flatMap(c => c.issues));
-      console.log(`🎯 [${requestId}] Score ${healthScore}: ${totalIssueCount} Issues gefunden (normal berechnet)`);
+      // Normale Berechnung mit gewichteten Issues
+      const baseScore = calculateHealthScore(gapAnalysis.gaps, issuesFlat);
+      // Zusätzliche Gewichtungs-Anpassung für hohe AI-Risiken
+      const highRiskAiCount = issuesFlat.filter(i => i.origin === 'ai' && i.risk >= 8).length;
+      healthScore = Math.max(30, baseScore - (highRiskAiCount * 2)); // -2 pro High-Risk AI-Issue
+      console.log(`🎯 [${requestId}] Score ${healthScore}: ${weightedIssueCount.toFixed(1)} gewichtete Issues (${highRiskAiCount} High-Risk AI)`);
     }
     normalizedResult.score.health = healthScore;
     
     // 🚀 STAGE 8: Metadaten-Anreicherung
+
+    // 🆕 Phase 2.3: Debug-Meta für Transparenz
+    const allIssues = normalizedResult.categories.flatMap(c => c.issues);
+    const issuesByOrigin = {
+      ai: allIssues.filter(i => i.origin === 'ai').length,
+      rule: allIssues.filter(i => i.origin === 'rule').length,
+      topup: allIssues.filter(i => i.origin === 'topup').length
+    };
+
     normalizedResult.meta = {
       ...normalizedResult.meta,
       ...contractTypeInfo,
@@ -3972,6 +3999,15 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
         dsgvoCompliant: normalizedResult.categories.some(c => c.tag.includes('datenschutz')),
         agbControlPassed: healthScore > 60,
         formRequirementsMet: normalizedResult.categories.some(c => c.tag.includes('schriftform'))
+      },
+      // 🆕 Phase 2.3 & 2.4: Debug-Meta für Transparenz
+      _debug: {
+        issuesByOrigin,
+        totalBeforeFilter: issuesByOrigin.ai + issuesByOrigin.rule + issuesByOrigin.topup,
+        finalScoreBasis: 'weighted_issues',
+        ruleVersion: '2.0.0',
+        optimizerVersion: '5.0-phase2',
+        analyzedAt: new Date().toISOString()
       }
     };
 
@@ -4660,7 +4696,7 @@ router.post("/stream", verifyToken, uploadLimiter, smartRateLimiter, upload.sing
               },
               { role: "user", content: optimizedPrompt }
             ],
-            temperature: 0.2,
+            temperature: 0.0, // 🆕 Phase 2.6: Maximum Determinismus
             max_tokens: 8000, // Erhöht für bis zu 50+ Optimierungen
             response_format: strictJsonSchema
           }),
@@ -4688,7 +4724,7 @@ router.post("/stream", verifyToken, uploadLimiter, smartRateLimiter, upload.sing
                   },
                   { role: "user", content: optimizedPrompt }
                 ],
-                temperature: 0.2,
+                temperature: 0.0, // 🆕 Phase 2.6: Maximum Determinismus
                 max_tokens: 3000,
                 response_format: strictJsonSchema
               }),
