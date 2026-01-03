@@ -237,7 +237,7 @@ router.post("/register", authLimiter, async (req, res) => {
       const { logActivity, ActivityTypes } = require('../services/activityLogger');
       await logActivity(dbInstance, {
         type: ActivityTypes.USER_REGISTERED,
-        userId: result.insertedId.toString(),
+        userId: newUser._id.toString(),
         userEmail: newUser.email,
         description: `Neuer User registriert: ${newUser.email}`,
         details: {
