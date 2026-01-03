@@ -1247,7 +1247,26 @@ const applyUltimateQualityLayer = (result, requestId, contractType = 'sonstiges'
         return issue; // Keine Kill-Rules für rule/topup
       }
 
-      // KILL-REGEL 1: Evidence fehlt komplett → LÖSCHEN (nur AI-Issues)
+      // 🆕 Phase 3d: best_practice Issues haben LOCKERE Kill-Rules
+      const isBestPracticeIssue = issue.classification?.necessity === 'best_practice';
+      if (isBestPracticeIssue) {
+        // best_practice: Nur Priority auf "low" erzwingen, Rest durchlassen
+        if (issue.priority !== 'low') {
+          console.log(`⚠️ [${requestId}] best_practice: Priority "${issue.priority}"→"low" für "${issue.id}"`);
+          issue.priority = 'low';
+          modified = true;
+        }
+        // Risk auf max 4 begrenzen
+        if (issue.risk > 4) {
+          issue.risk = 4;
+          issue.impact = Math.min(issue.impact, 4);
+          modified = true;
+        }
+        console.log(`💡 [${requestId}] best_practice Issue durchgelassen: "${issue.id || issue.summary?.substring(0, 30)}"`);
+        return issue; // Keine weiteren Kill-Rules für best_practice
+      }
+
+      // KILL-REGEL 1: Evidence fehlt komplett → LÖSCHEN (nur AI-Issues, NICHT best_practice)
       if (!issue.evidence || !Array.isArray(issue.evidence) || issue.evidence.length === 0) {
         console.warn(`🚫 [${requestId}] KILL-1: Evidence FEHLT für "${issue.id || issue.summary?.substring(0, 30)}" → GELÖSCHT`);
         evidenceMissing++;
@@ -3406,6 +3425,32 @@ Wenn du das Gate passiert hast und eine Optimierung vorschlagen willst, MUSS sie
 4. ✅ WHEN TO IGNORE nennen: Wann wäre diese Optimierung NICHT sinnvoll?
 
 Wenn du diese 4 Punkte nicht ausfüllen kannst → KEINE Optimierung vorschlagen!
+
+═══════════════════════════════════════════════════════════════════════════════
+💡 SEPARATES GATE FÜR BEST-PRACTICE HINWEISE (Phase 3d)
+═══════════════════════════════════════════════════════════════════════════════
+
+ZUSÄTZLICH zu den mandatory/risk_based Issues kannst du HINWEISE (best_practice) geben:
+
+Ein HINWEIS (necessity = "best_practice") ist erlaubt, wenn:
+✅ Keine juristische PFLICHT, aber verbessert Professionalität/Klarheit
+✅ Kein RISIKO wenn ignoriert, aber ein VORTEIL wenn umgesetzt
+✅ Marktüblich bei professionellen Verträgen
+
+BEISPIELE für best_practice Hinweise:
+- "Inhaltsverzeichnis würde Navigation erleichtern"
+- "Nummerierung der Absätze erhöht Referenzierbarkeit"
+- "Salvatorische Klausel ist Marktstandard (aber nicht Pflicht)"
+- "Definition von Fachbegriffen am Anfang verbessert Klarheit"
+
+WICHTIG für best_practice:
+⚠️ priority MUSS "low" sein (niemals "critical" oder "high"!)
+⚠️ risk MUSS <= 4 sein
+⚠️ whyNotIntentional = "Bewusste Entscheidung möglich - dies ist nur ein Verbesserungsvorschlag"
+⚠️ evidence kann generischer sein (z.B. "Gesamter Vertrag: keine Nummerierung vorhanden")
+⚠️ whyItMatters = Vorteil wenn umgesetzt, KEIN Nachteil wenn ignoriert
+
+Pro Vertrag: MAX 2-3 best_practice Hinweise (nicht alles ist ein Hinweis!)
 
 ═══════════════════════════════════════════════════════════════════════════════
 📊 ERWARTETE ISSUE-ANZAHLEN (INDIVIDUELL, KEINE QUOTEN!)
