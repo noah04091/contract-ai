@@ -1,0 +1,112 @@
+/* 📁 frontend/src/components/Tour/TourTrigger.module.css */
+/* 🎯 Tour Trigger Styles */
+
+/* Icon Button (minimal) */
+.iconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.iconButton:hover {
+  background: #f3f4f6;
+  color: #3B82F6;
+}
+
+/* Full Button */
+.button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.button:hover {
+  background: #f9fafb;
+  border-color: #3B82F6;
+  color: #3B82F6;
+}
+
+/* Floating Button */
+.floatingButton {
+  position: fixed;
+  bottom: 100px;
+  right: 24px;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #3B82F6;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  z-index: 1000;
+  transition: all 0.2s ease;
+}
+
+.floatingButton:hover {
+  background: #3B82F6;
+  color: #ffffff;
+  transform: scale(1.05);
+}
+
+/* Floating Tooltip */
+.floatingTooltip {
+  position: absolute;
+  right: 56px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  padding: 8px 12px;
+  background: #1f2937;
+  border-radius: 8px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.tooltipTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.tooltipDesc {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* Hide on mobile */
+@media (max-width: 768px) {
+  .floatingButton {
+    bottom: 80px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .floatingTooltip {
+    display: none;
+  }
+}

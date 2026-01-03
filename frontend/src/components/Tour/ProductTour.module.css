@@ -1,0 +1,171 @@
+/* 📁 frontend/src/components/Tour/ProductTour.module.css */
+/* 🎯 Product Tour Styles - Premium Tooltip Design */
+
+.tooltip {
+  position: relative;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 10px 20px -5px rgba(0, 0, 0, 0.2),
+    0 0 40px rgba(59, 130, 246, 0.1);
+  padding: 24px;
+  max-width: 380px;
+  min-width: 300px;
+}
+
+/* Progress dots */
+.progress {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.progressDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+.progressDot.active {
+  background: #3B82F6;
+  transform: scale(1.1);
+}
+
+/* Content */
+.content {
+  margin-bottom: 20px;
+}
+
+.title {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  letter-spacing: -0.01em;
+}
+
+.description {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #4b5563;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.navButtons {
+  display: flex;
+  gap: 8px;
+}
+
+.skipButton {
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.skipButton:hover {
+  color: #6b7280;
+}
+
+.backButton {
+  padding: 10px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.backButton:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.nextButton {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  background: #3B82F6;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nextButton:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.nextButton:active {
+  transform: translateY(0);
+}
+
+/* Step counter */
+.stepCounter {
+  position: absolute;
+  bottom: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(0, 0, 0, 0.6);
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .tooltip {
+    max-width: calc(100vw - 32px);
+    min-width: 280px;
+    padding: 20px;
+  }
+
+  .title {
+    font-size: 16px;
+  }
+
+  .description {
+    font-size: 13px;
+  }
+
+  .actions {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .skipButton {
+    order: 2;
+  }
+
+  .navButtons {
+    order: 1;
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .backButton,
+  .nextButton {
+    flex: 1;
+  }
+}

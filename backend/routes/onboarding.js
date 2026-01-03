@@ -411,6 +411,48 @@ router.put("/preferences", verifyToken, async (req, res) => {
   }
 });
 
+/**
+ * POST /api/onboarding/reset-feature
+ * Feature-Tour zurücksetzen (aus seenFeatures entfernen)
+ * Ermöglicht das erneute Anzeigen einer Tour
+ */
+router.post("/reset-feature", verifyToken, async (req, res) => {
+  try {
+    const { featureId } = req.body;
+
+    if (!featureId) {
+      return res.status(400).json({ message: "featureId erforderlich" });
+    }
+
+    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
+
+    if (!user) {
+      return res.status(404).json({ message: "User nicht gefunden" });
+    }
+
+    await usersCollection.updateOne(
+      { _id: user._id },
+      {
+        $pull: { "onboarding.seenFeatures": featureId },
+        $set: { updatedAt: new Date() }
+      }
+    );
+
+    const updatedFeatures = (user.onboarding?.seenFeatures || []).filter(f => f !== featureId);
+
+    console.log(`🔄 Feature-Tour zurückgesetzt für ${user.email}: ${featureId}`);
+
+    res.json({
+      success: true,
+      message: `Feature "${featureId}" zurückgesetzt`,
+      seenFeatures: updatedFeatures
+    });
+  } catch (err) {
+    console.error("❌ Fehler bei /onboarding/reset-feature:", err);
+    res.status(500).json({ message: "Serverfehler" });
+  }
+});
+
 // =====================================================
 // 🔄 MIGRATION: Bestehende User
 // =====================================================

@@ -36,6 +36,7 @@ import { useFolders } from "../hooks/useFolders"; // 📁 Folder Hook
 import type { FolderType } from "../components/FolderBar"; // 📁 Folder Type
 import InlineAnalysisProgress from "../components/InlineAnalysisProgress"; // 🎨 Kompakte Inline-Analyse
 import { useCelebrationContext } from "../components/Celebration"; // 🎉 Celebration System
+import { ProductTour } from "../components/Tour"; // 🎯 Product Tour
 
 interface Contract {
   _id: string;
@@ -3342,6 +3343,9 @@ export default function Contracts() {
       </Helmet>
 
       <div className={styles.pageContainer}>
+        {/* 🎯 Product Tour */}
+        <ProductTour tourId="contracts" />
+
         {/* ========== ENTERPRISE LAYOUT ========== */}
         <div className={styles.enterpriseLayout}>
 
@@ -3363,6 +3367,7 @@ export default function Contracts() {
               <button
                 className={`${styles.sidebarNavItem} ${activeSection === 'upload' ? styles.active : ''}`}
                 onClick={() => setActiveSection('upload')}
+                data-tour="contracts-upload"
               >
                 <Upload size={18} className={styles.sidebarNavIcon} />
                 <span>Hochladen</span>
@@ -3408,7 +3413,7 @@ export default function Contracts() {
 
               {/* Folders */}
               <p className={styles.sidebarTitle}>Ordner</p>
-              <div className={styles.sidebarFolderList}>
+              <div className={styles.sidebarFolderList} data-tour="contracts-folders">
                 {/* Alle Verträge */}
                 <button
                   className={`${styles.sidebarFolderItem} ${activeFolder === null ? styles.active : ''}`}
@@ -3656,7 +3661,7 @@ export default function Contracts() {
               <div className={styles.toolbarDivider} />
 
               {/* Desktop: Suchleiste bleibt hier */}
-              <div className={styles.toolbarSearch}>
+              <div className={styles.toolbarSearch} data-tour="contracts-search">
                 <Search size={16} className={styles.toolbarSearchIcon} />
                 <input
                   type="text"
@@ -3854,7 +3859,7 @@ export default function Contracts() {
             </AnimatePresence>
 
             {/* Content Area - nur dieser Bereich scrollt */}
-            <div className={styles.contentArea} ref={contentAreaRef}>
+            <div className={styles.contentArea} ref={contentAreaRef} data-tour="contracts-list">
               <AnimatePresence mode="wait" initial={false}>
                 {activeSection === 'upload' && (
                   <motion.div
@@ -5054,6 +5059,7 @@ export default function Contracts() {
                     className={`${styles.previewActionBtn} ${styles.analyze}`}
                     onClick={() => handleAnalyzeExistingContract(previewContract)}
                     disabled={analyzingContract[previewContract._id]}
+                    data-tour="contracts-analyze"
                   >
                     {analyzingContract[previewContract._id] ? (
                       <>

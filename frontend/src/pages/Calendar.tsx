@@ -38,6 +38,7 @@ import "../styles/AppleCalendar.css";
 import CalendarSyncModal from "../components/CalendarSyncModal";
 import { useCalendarStore } from "../stores/calendarStore";
 import { useToast } from "../context/ToastContext";
+import { ProductTour } from "../components/Tour"; // 🎯 Product Tour
 
 // Hook: ESC-Taste schließt Modal
 const useEscapeKey = (onClose: () => void) => {
@@ -2740,7 +2741,10 @@ export default function CalendarPage() {
         <title>Vertragskalender | Contract AI</title>
       </Helmet>
 
-      <div className="calendar-page">
+      {/* 🎯 Product Tour */}
+      <ProductTour tourId="calendar" />
+
+      <div className="calendar-page" data-tour="calendar-view">
         <div className="calendar-page-content">
           {/* Page Header - Mobile optimiert */}
           <header className="page-header">
@@ -2758,6 +2762,7 @@ export default function CalendarPage() {
                 className="btn btn-primary"
                 onClick={() => setShowCreateEventModal(new Date())}
                 title="Ereignis erstellen"
+                data-tour="calendar-create"
               >
                 <Plus size={18} />
                 {!isMobile && <span className="btn-text">Ereignis erstellen</span>}
@@ -2900,7 +2905,7 @@ export default function CalendarPage() {
             {/* Sidebar */}
             <aside className="calendar-sidebar" style={{ gridColumn: '2' }}>
               {/* Stats Card */}
-              <div className="sidebar-card">
+              <div className="sidebar-card" data-tour="calendar-stats">
                 <div className="sidebar-card-header">
                   <div className="sidebar-card-title">
                     <BarChart3 size={18} />
@@ -2951,7 +2956,7 @@ export default function CalendarPage() {
 
                 {paginatedUrgent.length > 0 ? (
                   <>
-                    <div className="urgent-events-list">
+                    <div className="urgent-events-list" data-tour="calendar-event">
                       {paginatedUrgent.map(event => {
                         const daysInfo = getDaysRemaining(event.date);
                         return (
@@ -3012,7 +3017,7 @@ export default function CalendarPage() {
               </div>
 
               {/* Filter Card - Collapsible */}
-              <div className="sidebar-card">
+              <div className="sidebar-card" data-tour="calendar-filters">
                 <div
                   className="sidebar-card-header clickable"
                   onClick={() => setShowFilters(!showFilters)}

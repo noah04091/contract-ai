@@ -221,7 +221,7 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
         <div className={styles.sidebarOverlay} onClick={onClose} />
       )}
 
-      <aside className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : ''}`}>
+      <aside className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : ''}`} data-tour="dashboard-sidebar">
         {/* Logo */}
         <div className={styles.sidebarLogo}>
           <Link to="/dashboard" className={styles.logoLink}>

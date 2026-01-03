@@ -28,6 +28,7 @@ import { useAuth } from "../context/AuthContext";
 import { DashboardLayout } from "../components/DashboardV2";
 import AdminDashboard from "../components/AdminDashboard"; // 🔐 Admin Dashboard
 import { OnboardingChecklist } from "../components/Onboarding"; // 🎓 Onboarding Checklist
+import { ProductTour } from "../components/Tour"; // 🎯 Product Tour
 
 // ============================================
 // TYPES
@@ -513,10 +514,13 @@ export default function DashboardV2() {
           </div>
         )}
 
+        {/* 🎯 Product Tour */}
+        <ProductTour tourId="dashboard" />
+
         {/* ============================================
             HEADER - Clean & Minimal
             ============================================ */}
-        <header className={styles.header}>
+        <header className={styles.header} data-tour="dashboard-welcome">
           <div>
             <h1 className={styles.greeting}>{getGreeting()}, {userName}</h1>
             <p className={styles.subline}>
@@ -615,7 +619,7 @@ export default function DashboardV2() {
         {/* ============================================
             ROW 1: STATS - Überblick auf einen Blick
             ============================================ */}
-        <div className={styles.statsRow}>
+        <div className={styles.statsRow} data-tour="dashboard-stats">
           {/* Stat: Total Contracts */}
           <div
             className={`${styles.statCard} ${styles.clickable}`}
@@ -769,7 +773,7 @@ export default function DashboardV2() {
           </div>
 
           {/* Urgent / Deadlines + Calendar Events */}
-          <div className={styles.card}>
+          <div className={styles.card} data-tour="dashboard-urgent">
             <div className={styles.cardHeader}>
               <div className={styles.cardHeaderLeft}>
                 <AlertTriangle size={16} className={styles.cardIconOrange} />
@@ -853,7 +857,7 @@ export default function DashboardV2() {
         {/* ============================================
             ROW 3: QUICK ACTIONS - Horizontale Aktionsleiste
             ============================================ */}
-        <div className={styles.quickActionsRow}>
+        <div className={styles.quickActionsRow} data-tour="dashboard-quick-actions">
           <Link to="/generate" className={styles.quickActionCard}>
             <div className={styles.quickActionIcon} style={{ background: 'linear-gradient(135deg, #3B82F6, #2563EB)' }}>
               <Sparkles size={20} />
