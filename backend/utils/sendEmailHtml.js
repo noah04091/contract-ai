@@ -16,17 +16,31 @@ const transporter = nodemailer.createTransport({
 
 async function sendEmailHtml(to, subject, html) {
   try {
+    // ✅ Robuster FROM-Fallback: EMAIL_FROM > EMAIL_USER > Hardcoded Fallback
+    const fromAddress = process.env.EMAIL_FROM
+      || (process.env.EMAIL_USER ? `"Contract AI" <${process.env.EMAIL_USER}>` : null)
+      || "Contract AI <no-reply@contract-ai.de>";
+
+    // 📧 Debug: FROM-Adresse loggen (ohne sensible Daten)
+    console.log(`📧 sendEmailHtml: Sende von "${fromAddress}" an ${to}`);
+
     const result = await transporter.sendMail({
-      from: `"Contract AI" <${process.env.EMAIL_USER}>`,
+      from: fromAddress,
       to,
       subject,
       html, // ✅ HTML statt text
     });
-    
+
     console.log(`✅ E-Mail gesendet an ${to}: ${subject}`);
     return result;
   } catch (error) {
-    console.error(`❌ E-Mail-Versand fehlgeschlagen an ${to}:`, error);
+    // 📧 Debug: Detailliertes Error-Logging
+    console.error(`❌ E-Mail-Versand fehlgeschlagen an ${to}:`, {
+      error: error.message,
+      code: error.code,
+      command: error.command,
+      fromAddress: process.env.EMAIL_FROM ? '[EMAIL_FROM set]' : (process.env.EMAIL_USER ? '[EMAIL_USER set]' : '[Fallback used]')
+    });
     throw error;
   }
 }

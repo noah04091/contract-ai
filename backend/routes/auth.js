@@ -72,8 +72,10 @@ const COOKIE_OPTIONS = {
 // 🔗 Collections werden dynamisch übergeben
 let usersCollection;
 let contractsCollection;
+let dbInstance; // 💾 Speichere db-Referenz für Activity Logging
 
 module.exports = (db) => {
+  dbInstance = db; // 💾 Speichere für spätere Verwendung
   usersCollection = db.collection("users");
   contractsCollection = db.collection("contracts");
   return router;
@@ -233,7 +235,7 @@ router.post("/register", authLimiter, async (req, res) => {
     // 📋 Activity Log: Neue Registrierung
     try {
       const { logActivity, ActivityTypes } = require('../services/activityLogger');
-      await logActivity(db, {
+      await logActivity(dbInstance, {
         type: ActivityTypes.USER_REGISTERED,
         userId: result.insertedId.toString(),
         userEmail: newUser.email,
