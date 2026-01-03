@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, Circle, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { Check, Circle, ChevronRight, ChevronDown } from 'lucide-react';
 import { useOnboarding } from '../../hooks/useOnboarding';
 import styles from './OnboardingChecklist.module.css';
 

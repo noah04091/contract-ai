@@ -5,7 +5,8 @@ import { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import type { TourId } from '../config/tourConfig';
 import { getTourById } from '../config/tourConfig';
-import type { CallBackProps, STATUS } from 'react-joyride';
+import type { CallBackProps } from 'react-joyride';
+import { STATUS } from 'react-joyride';
 
 // Helper to get auth token
 function getToken(): string | null {
@@ -163,14 +164,14 @@ export function useTour({
     }
 
     // Handle tour completion
-    if (status === 'finished' as STATUS) {
+    if (status === STATUS.FINISHED) {
       setIsRunning(false);
       markTourAsSeen();
       onComplete?.();
     }
 
     // Handle tour skip
-    if (status === 'skipped' as STATUS || action === 'skip') {
+    if (status === STATUS.SKIPPED || action === 'skip') {
       setIsRunning(false);
       markTourAsSeen();
       onSkip?.();

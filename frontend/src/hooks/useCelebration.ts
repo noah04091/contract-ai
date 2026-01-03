@@ -124,14 +124,14 @@ const confettiConfigs = {
 
   // Stars - golden stars falling
   stars: () => {
-    const defaults = {
+    const defaults: confetti.Options = {
       spread: 360,
       ticks: 100,
       gravity: 0,
       decay: 0.94,
       startVelocity: 30,
       colors: ['#FFD700', '#FFA500', '#FF8C00', '#FFB347'],
-      shapes: ['star'],
+      shapes: ['star'] as confetti.Shape[],
       zIndex: 9999
     };
 

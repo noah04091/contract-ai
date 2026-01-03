@@ -31,6 +31,14 @@ export interface UserData {
   firstName?: string;
   lastName?: string;
   updatedAt?: string;
+
+  // 🎓 Onboarding (aus Backend)
+  onboarding?: {
+    status: 'not_started' | 'in_progress' | 'completed' | 'skipped';
+    checklist?: Record<string, boolean>;
+    seenFeatures?: string[];
+    showTooltips?: boolean;
+  };
 }
 
 // ✅ DEINE HELPER-FUNKTIONEN (behalten!)

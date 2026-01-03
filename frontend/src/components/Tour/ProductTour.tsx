@@ -16,11 +16,9 @@ interface ProductTourProps {
 
 // Custom Tooltip Component
 function CustomTooltip({
-  continuous,
   index,
   step,
   backProps,
-  closeProps,
   primaryProps,
   skipProps,
   tooltipProps,

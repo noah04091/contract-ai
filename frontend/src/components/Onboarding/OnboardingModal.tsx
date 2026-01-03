@@ -65,7 +65,6 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
 
   const [currentStep, setCurrentStep] = useState(0);
   const [profile, setProfile] = useState<OnboardingProfile>({});
-  const [isUploading, setIsUploading] = useState(false);
 
   // Start onboarding when modal opens
   useEffect(() => {
@@ -79,7 +78,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
 
     // Save step data
     if (step.id === 'personalization' && profile.primaryUseCase) {
-      await completeStep('personalization', profile);
+      await completeStep('personalization', profile as unknown as Record<string, unknown>);
     } else if (step.id !== 'welcome') {
       await completeStep(step.id);
     }
