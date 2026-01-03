@@ -2145,16 +2145,25 @@ const detectContractType = async (text, fileName = '') => {
 
 /**
  * Analysiert Vertragslücken mit juristischer Präzision
+ * 🆕 Phase 3b: isAmendment als expliziter Parameter für Scope-Gate
  */
-const analyzeContractGaps = (text, contractType, detectedClauses) => {
+const analyzeContractGaps = (text, contractType, detectedClauses, isAmendment = false) => {
   const lowerText = text.toLowerCase();
   const gaps = [];
   const categories = new Map();
-  
+
   const typeConfig = CONTRACT_TYPES[contractType] || CONTRACT_TYPES.sonstiges;
-  
+
+  // 🆕 Phase 3b: Document Scope Gate
+  // Amendments bekommen KEINE Pflichtklausel-Prüfung (Kündigung, Datenschutz, etc.)
+  const isAmendmentDocument = isAmendment || typeConfig.isAmendment;
+
+  if (isAmendmentDocument) {
+    console.log(`📄 [SCOPE] Amendment erkannt → NUR Amendment-spezifische Prüfungen (keine Pflichtklauseln)`);
+  }
+
   // Spezialbehandlung für Amendments
-  if (typeConfig.isAmendment) {
+  if (isAmendmentDocument) {
     const amendmentChecks = [
       {
         clause: 'clear_reference',
@@ -3127,16 +3136,38 @@ const createOptimizedPrompt = (contractText, contractType, gaps, fileName, contr
 
   if (contractInfo.isAmendment) {
     typeSpecificInstructions = `
-🔴 KRITISCH: Dies ist eine ÄNDERUNGSVEREINBARUNG zu einem ${contractInfo.parentType || 'Vertrag'}.
+🔴 KRITISCH: Dies ist eine ÄNDERUNGSVEREINBARUNG / NACHTRAG zu einem ${contractInfo.parentType || 'Vertrag'}.
 
-SPEZIELLE PRÜFPUNKTE FÜR ÄNDERUNGSVEREINBARUNGEN:
-1. ✅ Eindeutige Referenz zum Hauptvertrag (Datum, Parteien, Registernummer)
-2. ✅ Klares Inkrafttreten der Änderungen
-3. ✅ Keine Widersprüche zum Hauptvertrag
-4. ✅ Salvatorische Klausel für unveränderte Bestandteile
-5. ✅ Schriftformerfordernis für weitere Änderungen
+═══════════════════════════════════════════════════════════════════════════════
+🚫 ABSOLUT VERBOTEN BEI ÄNDERUNGSVEREINBARUNGEN:
+═══════════════════════════════════════════════════════════════════════════════
 
-WICHTIG: Gib KEINE Empfehlungen für Grundklauseln, die im Hauptvertrag stehen sollten!`;
+Du darfst NIEMALS folgende Klauseln als "fehlend" oder "nicht gefunden" melden:
+❌ Kündigung / Kündigungsfristen → Steht im Hauptvertrag
+❌ Datenschutz / DSGVO → Steht im Hauptvertrag
+❌ Haftung / Haftungsbeschränkung → Steht im Hauptvertrag
+❌ Arbeitsort / Einsatzort → Steht im Hauptvertrag
+❌ Arbeitszeit (außer wenn geändert) → Steht im Hauptvertrag
+❌ Vergütung (außer wenn geändert) → Steht im Hauptvertrag
+❌ Gerichtsstand → Steht im Hauptvertrag
+❌ Schriftformklausel → Steht im Hauptvertrag
+
+Diese Regelungen sind Bestandteil des HAUPTVERTRAGS, nicht des Nachtrags!
+
+═══════════════════════════════════════════════════════════════════════════════
+✅ ERLAUBT BEI ÄNDERUNGSVEREINBARUNGEN (nur diese prüfen!):
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Eindeutige Referenz zum Hauptvertrag (Datum, Parteien)
+2. Klares Inkrafttreten der Änderung
+3. Was genau geändert wird (Klarheit)
+4. Salvatorische Klausel für unveränderte Bestandteile
+5. Unterschriften beider Parteien
+
+═══════════════════════════════════════════════════════════════════════════════
+
+Bei einer guten Änderungsvereinbarung sind 0-2 Optimierungen NORMAL!
+Mehr zu finden ist ein Zeichen von ÜBERANALYSE.`;
   } else {
     // 🔥 v2.0: DECISION-FIRST PROMPT - Anwalt-Logik
     // Die KI MUSS zuerst entscheiden, OB optimiert werden muss
@@ -3708,10 +3739,12 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
     });
     
     // 🚀 STAGE 2: Juristische Lückenanalyse
+    // 🆕 Phase 3b: isAmendment für Document Scope Gate übergeben
     const gapAnalysis = analyzeContractGaps(
-      contractText, 
+      contractText,
       contractTypeInfo.type,
-      contractTypeInfo.detectedClauses
+      contractTypeInfo.detectedClauses,
+      contractTypeInfo.isAmendment // 🆕 Phase 3b: Scope Gate
     );
     console.log(`⚖️ [${requestId}] Juristische Analyse:`, {
       totalGaps: gapAnalysis.gaps.length,
@@ -4181,7 +4214,7 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
         agbControlPassed: healthScore > 60,
         formRequirementsMet: normalizedResult.categories.some(c => c.tag.includes('schriftform'))
       },
-      // 🆕 Phase 2.3, 2.4 & 3a: Debug-Meta für Transparenz
+      // 🆕 Phase 2.3, 2.4, 3a & 3b: Debug-Meta für Transparenz
       _debug: {
         issuesByOrigin,
         // 🆕 Phase 3a: Klassifikations-Statistiken
@@ -4195,10 +4228,24 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
           risk_based: allIssues.filter(i => i.classification?.necessity === 'risk_based').length,
           best_practice: allIssues.filter(i => i.classification?.necessity === 'best_practice').length
         },
+        // 🆕 Phase 3b: Document Scope Engine Transparenz
+        documentScope: {
+          type: contractTypeInfo.isAmendment ? 'amendment' : 'main_contract',
+          isAmendment: contractTypeInfo.isAmendment || false,
+          parentType: contractTypeInfo.parentType || null,
+          appliedScope: contractTypeInfo.isAmendment ? 'amendment_specific' : 'full_contract',
+          skippedMandatoryChecks: contractTypeInfo.isAmendment ? [
+            'Kündigungsfristen', 'Datenschutz/DSGVO', 'Haftungsbeschränkung',
+            'Gewährleistung', 'Gerichtsstand', 'Schriftformklausel'
+          ] : [],
+          scopeReason: contractTypeInfo.isAmendment
+            ? 'Änderungsvereinbarungen referenzieren Hauptvertrag für Standardklauseln'
+            : 'Vollständiger Vertrag mit allen Pflichtklauseln geprüft'
+        },
         totalBeforeFilter: issuesByOrigin.ai + issuesByOrigin.rule + issuesByOrigin.topup,
         finalScoreBasis: 'weighted_issues',
-        ruleVersion: '3.0.0', // 🆕 Phase 3a
-        optimizerVersion: '5.0-phase3a',
+        ruleVersion: '3.1.0', // 🆕 Phase 3b
+        optimizerVersion: '5.0-phase3b',
         analyzedAt: new Date().toISOString()
       }
     };
@@ -4728,11 +4775,13 @@ router.post("/stream", verifyToken, uploadLimiter, smartRateLimiter, upload.sing
     });
 
     // STAGE 2: Gap analysis
+    // 🆕 Phase 3b: isAmendment für Document Scope Gate übergeben
     sendProgress(35, "⚖️ Analysiere juristische Lücken...");
     const gapAnalysis = analyzeContractGaps(
       contractText,
       contractTypeInfo.type,
-      contractTypeInfo.detectedClauses
+      contractTypeInfo.detectedClauses,
+      contractTypeInfo.isAmendment // 🆕 Phase 3b: Scope Gate
     );
 
     const criticalGaps = gapAnalysis.gaps.filter(g => g.severity === 'critical').length;
