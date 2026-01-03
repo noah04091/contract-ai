@@ -3,28 +3,32 @@
 
 .overlay {
   /* 🔧 KRITISCH: Absolute Positionierung im Viewport */
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100vw;
-  height: 100vh;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
   /* Visuell */
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.6) !important;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   /* Layout */
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   padding: 20px;
   box-sizing: border-box;
   /* Z-Index über allem */
-  z-index: 99999;
+  z-index: 99999 !important;
   /* Verhindert Scroll-Propagation */
-  overflow: hidden;
+  overflow: hidden !important;
   overscroll-behavior: contain;
+  /* 🔧 KRITISCH: Verhindert transform-Probleme */
+  transform: none !important;
+  will-change: auto !important;
+  isolation: isolate;
 }
 
 .modal {

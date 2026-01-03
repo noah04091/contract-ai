@@ -274,27 +274,39 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
   // 🔧 Render via Portal direkt in document.body
   // Damit umgehen wir alle Parent-Elemente mit transform/will-change
   const modalContent = (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key="onboarding-overlay"
-        className={styles.overlay}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={(e) => {
-          // Nur schließen wenn direkt auf Overlay geklickt wird
-          if (e.target === e.currentTarget) {
-            handleSkip();
-          }
-        }}
-      >
+    <div
+      className={styles.overlay}
+      style={{
+        // Inline styles als Fallback - überschreiben ALLES
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 99999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'rgba(0, 0, 0, 0.6)',
+        transform: 'none',
+      }}
+      onClick={(e) => {
+        // Nur schließen wenn direkt auf Overlay geklickt wird
+        if (e.target === e.currentTarget) {
+          handleSkip();
+        }
+      }}
+    >
+      <AnimatePresence mode="wait">
         <motion.div
           key={`onboarding-step-${currentStep}`}
           className={styles.modal}
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: -20 }}
-          transition={{ duration: 0.2, ease: 'easeOut' }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15, ease: 'easeOut' }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Close Button */}
@@ -357,8 +369,8 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
             )}
           </div>
         </motion.div>
-      </motion.div>
-    </AnimatePresence>
+      </AnimatePresence>
+    </div>
   );
 
   // 🔧 Portal: Rendert direkt in document.body, unabhängig von Parent-CSS
