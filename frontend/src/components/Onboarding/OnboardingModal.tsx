@@ -1,10 +1,12 @@
 // 📁 frontend/src/components/Onboarding/OnboardingModal.tsx
 // Enterprise Onboarding System v3.0 - Main Modal Component
+// 🔧 FIX: Portal-basiert für korrektes position:fixed Verhalten
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, Upload, FileText, Calendar, Shield, Sparkles, Building2, Check, Circle } from 'lucide-react';
+import { ChevronRight, Upload, FileText, Calendar, Shield, Sparkles, Building2, Check, Circle, X } from 'lucide-react';
 import { useOnboarding } from '../../hooks/useOnboarding';
 import { useCelebrationContext } from '../Celebration';
 import type { OnboardingProfile } from '../../types/onboarding';
@@ -255,22 +257,55 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
     }
   };
 
+  // 🔧 Body scroll lock when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.paddingRight = '0px'; // Prevent layout shift
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
-  return (
-    <AnimatePresence>
+  // 🔧 Render via Portal direkt in document.body
+  // Damit umgehen wir alle Parent-Elemente mit transform/will-change
+  const modalContent = (
+    <AnimatePresence mode="wait">
       <motion.div
+        key="onboarding-overlay"
         className={styles.overlay}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
+        onClick={(e) => {
+          // Nur schließen wenn direkt auf Overlay geklickt wird
+          if (e.target === e.currentTarget) {
+            handleSkip();
+          }
+        }}
       >
         <motion.div
+          key={`onboarding-step-${currentStep}`}
           className={styles.modal}
-          initial={{ scale: 0.95, y: 20 }}
-          animate={{ scale: 1, y: 0 }}
-          exit={{ scale: 0.95, y: 20 }}
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: -20 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+          onClick={(e) => e.stopPropagation()}
         >
+          {/* Close Button */}
+          <button
+            className={styles.closeButton}
+            onClick={handleSkip}
+            aria-label="Schließen"
+          >
+            <X size={20} />
+          </button>
+
           <div className={styles.content}>
             {/* Progress Dots */}
             <div className={styles.progress}>
@@ -325,6 +360,9 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
       </motion.div>
     </AnimatePresence>
   );
+
+  // 🔧 Portal: Rendert direkt in document.body, unabhängig von Parent-CSS
+  return createPortal(modalContent, document.body);
 }
 
 export default OnboardingModal;

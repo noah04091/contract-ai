@@ -2,18 +2,33 @@
 /* Enterprise Onboarding System v3.0 - Premium Modal Design */
 
 .overlay {
+  /* 🔧 KRITISCH: Absolute Positionierung im Viewport */
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  /* Visuell */
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(8px);
-  z-index: 9999;
+  -webkit-backdrop-filter: blur(8px);
+  /* Layout */
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
+  box-sizing: border-box;
+  /* Z-Index über allem */
+  z-index: 99999;
+  /* Verhindert Scroll-Propagation */
+  overflow: hidden;
+  overscroll-behavior: contain;
 }
 
 .modal {
+  position: relative;
   background: #fff;
   border-radius: 20px;
   width: 100%;
@@ -21,19 +36,33 @@
   max-height: 90vh;
   overflow: hidden;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  animation: modalIn 0.3s ease-out;
 }
 
-@keyframes modalIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
+/* Close Button */
+.closeButton {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #6b7280;
+  transition: all 0.2s ease;
+  z-index: 10;
 }
+
+.closeButton:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+/* Animation wird von Framer Motion gesteuert */
 
 .content {
   padding: 40px;
