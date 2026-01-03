@@ -1330,34 +1330,45 @@ const applyUltimateQualityLayer = (result, requestId, contractType = 'sonstiges'
       }
 
       // ═══════════════════════════════════════════════════════════════════════
-      // 🆕 PHASE 3a: EXISTENZ- & NECESSITY-GATES
+      // 🆕 PHASE 3a.1: EXISTENZ- & NECESSITY-GATES (ENTSCHÄRFT)
       // ═══════════════════════════════════════════════════════════════════════
 
-      // KILL-REGEL 9: "FEHLT" im Text aber existence !== "missing" → FALSE POSITIVE
-      const claimsFehlend = /FEHLT|fehlt|nicht vorhanden|Pflichtklausel fehlt/i.test(issue.originalText || '');
+      // KILL-REGEL 9: "FEHLT/Pflicht" in SUMMARY oder REASONING (nicht originalText!)
+      // 🔧 Phase 3a.1 FIX: originalText ist oft auto-generiert, nicht GPT's Aussage
+      const summaryAndReasoning = `${issue.summary || ''} ${issue.legalReasoning || ''}`.toLowerCase();
+      const claimsMissing = /pflichtklausel\s*fehlt|zwingend\s*erforderlich\s*fehlt|muss\s*enthalten\s*sein.*fehlt/i.test(summaryAndReasoning);
       const existenceNotMissing = issue.classification?.existence && issue.classification.existence !== 'missing';
-      if (claimsFehlend && existenceNotMissing) {
-        console.warn(`🚫 [${requestId}] KILL-9: FALSE POSITIVE - "FEHLT" aber existence="${issue.classification.existence}" für "${issue.id || issue.summary?.substring(0, 30)}" → GELÖSCHT`);
+      if (claimsMissing && existenceNotMissing) {
+        console.warn(`🚫 [${requestId}] KILL-9: FALSE POSITIVE - "fehlt" in Summary/Reasoning aber existence="${issue.classification.existence}" für "${issue.id || issue.summary?.substring(0, 30)}" → GELÖSCHT`);
         bullshitDropped++;
         return null;
       }
 
-      // KILL-REGEL 10: necessity="best_practice" aber risk >= 7 → ÜBERTREIBUNG
+      // REGEL 10: necessity="best_practice" + risk >= 7 → HERABSTUFEN (nicht löschen!)
+      // 🔧 Phase 3a.1 FIX: DSGVO-Upgrades, Haftungs-Caps haben legitimes hohes Risiko
       const isBestPractice = issue.classification?.necessity === 'best_practice';
-      const hasHighRisk = issue.risk >= 7;
-      if (isBestPractice && hasHighRisk) {
-        console.warn(`🚫 [${requestId}] KILL-10: best_practice mit risk=${issue.risk} ist Übertreibung für "${issue.id || issue.summary?.substring(0, 30)}" → GELÖSCHT`);
-        bullshitDropped++;
-        return null;
+      if (isBestPractice && issue.risk >= 7) {
+        const oldRisk = issue.risk;
+        issue.risk = 5; // Max risk für best_practice
+        issue.impact = Math.min(issue.impact, 5);
+        console.log(`⚠️ [${requestId}] REGEL-10: best_practice risk ${oldRisk}→5 für "${issue.id || issue.summary?.substring(0, 30)}" (herabgestuft, nicht gelöscht)`);
+        modified = true;
       }
 
       // KILL-REGEL 11: "Pflichtklausel" im Summary aber necessity !== "mandatory" → FALSCHE DRINGLICHKEIT
-      const claimsPflicht = /Pflichtklausel|zwingend|gesetzlich vorgeschrieben/i.test(issue.summary || '');
+      const claimsPflicht = /Pflichtklausel|zwingend\s+erforderlich|gesetzlich\s+vorgeschrieben/i.test(issue.summary || '');
       const notMandatory = issue.classification?.necessity && issue.classification.necessity !== 'mandatory';
       if (claimsPflicht && notMandatory) {
         console.warn(`🚫 [${requestId}] KILL-11: "Pflichtklausel" aber necessity="${issue.classification.necessity}" für "${issue.id || issue.summary?.substring(0, 30)}" → GELÖSCHT`);
         bullshitDropped++;
         return null;
+      }
+
+      // 🆕 Phase 3a.1: Risk-Capping für alle best_practice Issues
+      if (isBestPractice && issue.risk > 5) {
+        issue.risk = 5;
+        issue.impact = Math.min(issue.impact, 5);
+        modified = true;
       }
 
       // ═══════════════════════════════════════════════════════════════════════
