@@ -4195,6 +4195,113 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
     console.log(`🎯 [${requestId}] Checking if Top-Up needed (unabhängig von GPT's Assessment)...`);
     normalizedResult = await topUpFindingsIfNeeded(normalizedResult, contractText, contractTypeInfo.type, openai, requestId);
 
+    // 🚀 STAGE 6.5: HARD SCOPE ENFORCEMENT (Phase 3b.6)
+    // Bei Amendments: ALLE Nicht-Amendment-Issues werden serverseitig entfernt
+    // Server entscheidet final – nicht GPT!
+    if (contractTypeInfo.isAmendment) {
+      console.log(`\n🔒 [${requestId}] HARD SCOPE ENFORCEMENT für Amendment aktiviert`);
+
+      // Erlaubte Kategorien/Themen für Amendments
+      const AMENDMENT_ALLOWED_TOPICS = [
+        // Struktur & Referenz
+        'reference', 'referenz', 'hauptvertrag', 'bezugnahme',
+        'clear_reference', 'eindeutige_referenz',
+        // Inkrafttreten & Gültigkeit
+        'effective_date', 'inkrafttreten', 'wirksamkeit', 'gueltigkeitsdatum',
+        'validity', 'gültigkeit',
+        // Klarheit der Änderung
+        'clarity', 'klarheit', 'scope_of_change', 'aenderungsgegenstand',
+        'änderungsumfang', 'neue_konditionen',
+        // Salvatorische Klausel
+        'salvatorisch', 'unchanged_clauses', 'unveraenderte_bestandteile',
+        'restvertrag', 'fortgeltung',
+        // Unterschriften
+        'signature', 'unterschrift', 'unterzeichnung',
+        // Der GEÄNDERTE Inhalt selbst (z.B. Arbeitszeit bei Arbeitszeiterhöhung)
+        'arbeitszeit', 'gehalt', 'vergütung_änderung', 'stunden'
+      ];
+
+      // Verbotene Kategorien für Amendments (gehören in Hauptvertrag)
+      const AMENDMENT_FORBIDDEN_CATEGORIES = [
+        'kuendigung', 'kündigung', 'kündigungsfristen', 'termination',
+        'datenschutz', 'dsgvo', 'privacy', 'data_protection',
+        'haftung', 'haftungsbeschränkung', 'liability', 'gewährleistung',
+        'gerichtsstand', 'jurisdiction', 'rechtsweg',
+        'schriftform', 'schriftformklausel', 'form_requirements',
+        'wettbewerbsverbot', 'konkurrenzklausel', 'non_compete',
+        'vertraulichkeit', 'geheimhaltung', 'confidentiality',
+        'ip_rechte', 'intellectual_property', 'urheberrecht',
+        'arbeitsort', 'einsatzort', 'work_location',
+        'probezeit', 'probationary',
+        'urlaub', 'urlaubsanspruch', 'vacation',
+        'nebentätigkeit', 'side_activities'
+      ];
+
+      let filteredCount = 0;
+      let keptCount = 0;
+      const filteredIssues = [];
+
+      normalizedResult.categories = normalizedResult.categories.map(cat => {
+        const originalCount = cat.issues?.length || 0;
+
+        const filteredCatIssues = (cat.issues || []).filter(issue => {
+          const issueText = `${issue.id || ''} ${issue.clause || ''} ${issue.tag || ''} ${issue.summary || ''} ${cat.tag || ''}`.toLowerCase();
+
+          // Check: Ist das Issue über ein verbotenes Thema?
+          const isForbidden = AMENDMENT_FORBIDDEN_CATEGORIES.some(forbidden =>
+            issueText.includes(forbidden)
+          );
+
+          // Check: Ist das Issue über ein erlaubtes Thema?
+          const isAllowed = AMENDMENT_ALLOWED_TOPICS.some(allowed =>
+            issueText.includes(allowed)
+          );
+
+          // Erlaubt wenn: explizit erlaubt ODER nicht verboten
+          // Verboten wenn: explizit verboten UND nicht erlaubt
+          if (isForbidden && !isAllowed) {
+            filteredCount++;
+            filteredIssues.push({
+              id: issue.id,
+              summary: issue.summary?.substring(0, 50),
+              reason: 'forbidden_for_amendment'
+            });
+            return false;
+          }
+
+          keptCount++;
+          return true;
+        });
+
+        return {
+          ...cat,
+          issues: filteredCatIssues
+        };
+      });
+
+      // Entferne leere Kategorien
+      normalizedResult.categories = normalizedResult.categories.filter(cat =>
+        cat.issues && cat.issues.length > 0
+      );
+
+      console.log(`🔒 [${requestId}] HARD SCOPE RESULT:`);
+      console.log(`   → Behalten: ${keptCount} Issues (amendment-relevant)`);
+      console.log(`   → Entfernt: ${filteredCount} Issues (Hauptvertrag-Themen)`);
+      if (filteredIssues.length > 0) {
+        console.log(`   → Gefiltert:`, filteredIssues.slice(0, 5).map(i => i.summary));
+      }
+
+      // Speichere Filter-Stats für Debug-Meta
+      normalizedResult._hardScopeStats = {
+        applied: true,
+        kept: keptCount,
+        filtered: filteredCount,
+        filteredIssues: filteredIssues.slice(0, 10) // Max 10 für Debug
+      };
+    } else {
+      normalizedResult._hardScopeStats = { applied: false };
+    }
+
     // 🚀 STAGE 7: Finale Health-Score-Berechnung
     // 🆕 Phase 2.5: Kontextbasierte Gewichtung nach Issue-Herkunft
     let healthScore;
@@ -4281,6 +4388,8 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
           appliedScope: contractTypeInfo.isAmendment ? 'amendment_specific' : 'full_contract',
           // 🆕 Phase 3b.5: Amendment-Detection Details
           detection: contractTypeInfo.amendmentDetection || null,
+          // 🆕 Phase 3b.6: Hard Scope Enforcement Stats
+          hardScopeEnforcement: normalizedResult._hardScopeStats || { applied: false },
           skippedMandatoryChecks: contractTypeInfo.isAmendment ? [
             'Kündigungsfristen', 'Datenschutz/DSGVO', 'Haftungsbeschränkung',
             'Gewährleistung', 'Gerichtsstand', 'Schriftformklausel'
@@ -4291,8 +4400,8 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
         },
         totalBeforeFilter: issuesByOrigin.ai + issuesByOrigin.rule + issuesByOrigin.topup,
         finalScoreBasis: 'weighted_issues',
-        ruleVersion: '3.1.5', // 🆕 Phase 3b.5: Erweiterte Amendment-Erkennung
-        optimizerVersion: '5.0-phase3b5',
+        ruleVersion: '3.2.0', // 🆕 Phase 3b.6: Hard Scope Enforcement
+        optimizerVersion: '5.0-phase3b6',
         analyzedAt: new Date().toISOString()
       }
     };
