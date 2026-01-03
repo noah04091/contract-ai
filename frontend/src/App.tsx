@@ -15,6 +15,7 @@ import SkipNavigation from "./components/SkipNavigation";
 import CookieConsentBanner from "./components/CookieConsentBanner";
 import ScrollToTop from "./components/ScrollToTop";
 import AssistantWidget from "./components/AssistantWidget";
+import { OnboardingProvider } from "./components/Onboarding";
 
 // 🚀 PERFORMANCE: Lazy Loading für alle Seiten (Code Splitting)
 // Homepage, Login, Contracts und Profile werden sofort geladen (kritische Seiten)
@@ -277,7 +278,9 @@ export default function App() {
         <AuthProvider>
           <ToastProvider>
             <AnnouncerProvider>
-              <AppWithLoader />
+              <OnboardingProvider>
+                <AppWithLoader />
+              </OnboardingProvider>
             </AnnouncerProvider>
           </ToastProvider>
         </AuthProvider>

@@ -27,6 +27,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { DashboardLayout } from "../components/DashboardV2";
 import AdminDashboard from "../components/AdminDashboard"; // 🔐 Admin Dashboard
+import { OnboardingChecklist } from "../components/Onboarding"; // 🎓 Onboarding Checklist
 
 // ============================================
 // TYPES
@@ -540,6 +541,11 @@ export default function DashboardV2() {
             </Link>
           </div>
         </header>
+
+        {/* ============================================
+            ONBOARDING CHECKLIST - For guided setup
+            ============================================ */}
+        <OnboardingChecklist className={styles.onboardingChecklist} />
 
         {/* ============================================
             ONBOARDING - Für neue User ohne Verträge

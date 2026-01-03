@@ -440,6 +440,15 @@ const connectDB = async () => {
       console.error("❌ Fehler beim Laden der Auth-Routen:", err);
     }
 
+    // ✅ 1.5 ONBOARDING ROUTES - Enterprise Onboarding System v3.0
+    try {
+      const onboardingRoutes = require("./routes/onboarding")(db);
+      app.use("/api/onboarding", onboardingRoutes);
+      console.log("✅ Onboarding-Routen geladen unter /api/onboarding");
+    } catch (err) {
+      console.error("❌ Fehler beim Laden der Onboarding-Routen:", err);
+    }
+
     // ✅ 2. EMAIL VERIFICATION ROUTES - NEUE SEPARATE ROUTE
     try {
       const emailVerificationRoutes = require("./routes/emailVerification")(db);

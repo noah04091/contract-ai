@@ -1,8 +1,11 @@
 // 📁 frontend/src/utils/fetchUserData.ts
 // ✅ ERWEITERT: Mit Authorization Header Fallback für bessere Kompatibilität
 
+import type { OnboardingState } from '../types/onboarding';
+
 export interface UserData {
   email: string;
+  name?: string;
   role?: "user" | "admin";
   subscriptionPlan: "free" | "business" | "premium";
   subscriptionStatus: string;
@@ -17,6 +20,7 @@ export interface UserData {
   createdAt: string;
   emailNotifications: boolean;
   contractReminders: boolean;
+  onboarding?: OnboardingState;
 }
 
 export const fetchUserData = async (): Promise<UserData> => {

@@ -154,7 +154,25 @@ router.post("/register", authLimiter, async (req, res) => {
         ip: ipAddress,
         timestamp: new Date()
       },
-      lastLoginDevice: null // Wird beim ersten Login gesetzt
+      lastLoginDevice: null, // Wird beim ersten Login gesetzt
+      // 🎓 ONBOARDING v3.0 - Server-seitige Persistierung
+      onboarding: {
+        status: 'not_started', // not_started | in_progress | completed | skipped
+        startedAt: null,
+        completedAt: null,
+        skippedAt: null,
+        completedSteps: [], // Array von { stepId, completedAt, data }
+        profile: {}, // Personalisierungsdaten aus Onboarding
+        seenFeatures: [], // Welche Feature-Tooltips gesehen wurden
+        showTooltips: true, // User kann Tooltips deaktivieren
+        checklist: {
+          accountCreated: true,
+          emailVerified: false, // Wird nach Verification true
+          firstContractUploaded: false,
+          companyProfileComplete: false,
+          firstAnalysisComplete: false
+        }
+      }
     };
 
     await usersCollection.insertOne(newUser);
@@ -411,10 +429,25 @@ router.get("/me", verifyToken, async (req, res) => {
       emailInboxAddress: user.emailInboxAddress || null,
       emailInboxEnabled: user.emailInboxEnabled ?? true,
       emailInboxAddressCreatedAt: user.emailInboxAddressCreatedAt || null,
-      // 🎓 ONBOARDING TOURS (serverseitig gespeichert)
+      // 🎓 ONBOARDING TOURS (serverseitig gespeichert) - LEGACY
       completedTours: user.completedTours || [],
       // 📷 PROFILBILD
-      profilePicture: user.profilePicture || null
+      profilePicture: user.profilePicture || null,
+      // 🎓 ONBOARDING v3.0 - Enterprise Onboarding System
+      onboarding: user.onboarding || {
+        status: 'not_started',
+        completedSteps: [],
+        profile: {},
+        seenFeatures: [],
+        showTooltips: true,
+        checklist: {
+          accountCreated: true,
+          emailVerified: user.verified || false,
+          firstContractUploaded: false,
+          companyProfileComplete: false,
+          firstAnalysisComplete: false
+        }
+      }
     };
 
     console.log("✅ User-Info erfolgreich geladen:", {
