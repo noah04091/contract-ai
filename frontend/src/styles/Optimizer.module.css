@@ -2207,6 +2207,10 @@ html {
    ============================================================ */
 
 .categoryTabsContainer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
   background: var(--bg-primary);
   border-radius: var(--radius-xl);
   padding: var(--space-2);
@@ -3919,4 +3923,128 @@ html {
   background: rgba(59, 130, 246, 0.03);
   border-color: rgba(59, 130, 246, 0.15);
   color: var(--text-primary);
+}
+
+/* ============================================================
+   PHASE 3d.1: TOOLTIP FÜR HINWEIS-BADGE
+   ============================================================ */
+
+.hintBadgeWrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.hintTooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(30, 41, 59, 0.95);
+  color: #f8fafc;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+}
+
+/* Tooltip Pfeil */
+.hintTooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: rgba(30, 41, 59, 0.95);
+}
+
+.hintBadgeWrapper:hover .hintTooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ============================================================
+   PHASE 3d.2: TOGGLE "HINWEISE AUSBLENDEN"
+   ============================================================ */
+
+.hintToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  margin-left: auto;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: rgba(100, 116, 139, 0.08);
+  transition: all 0.2s ease;
+}
+
+.hintToggle:hover {
+  background: rgba(100, 116, 139, 0.12);
+}
+
+.hintToggle input {
+  display: none;
+}
+
+.hintToggleSlider {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  background: rgba(100, 116, 139, 0.3);
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.hintToggleSlider::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.hintToggle input:checked + .hintToggleSlider {
+  background: #3b82f6;
+}
+
+.hintToggle input:checked + .hintToggleSlider::after {
+  left: 18px;
+}
+
+.hintToggleLabel {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.hintToggle input:checked ~ .hintToggleLabel {
+  color: #3b82f6;
+}
+
+/* Responsive: Toggle unter Tabs auf Mobile */
+@media (max-width: 768px) {
+  .categoryTabsContainer {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .hintToggle {
+    margin-left: 0;
+    align-self: flex-start;
+  }
 }

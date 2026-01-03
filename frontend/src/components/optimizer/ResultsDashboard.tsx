@@ -185,15 +185,28 @@ export default function ResultsDashboard({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showPitchMenu, setShowPitchMenu] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  // 🆕 Phase 3d.2: Toggle für "Nur Optimierungen anzeigen"
+  const [hideHints, setHideHints] = useState(false);
 
   // Mark as used for future premium feature restrictions
   void isPremium;
 
-  // Filter optimizations by category
+  // Filter optimizations by category and hint toggle
   const filteredOptimizations = useMemo(() => {
-    if (selectedCategory === 'all') return optimizations;
-    return optimizations.filter(opt => opt.category === selectedCategory);
-  }, [optimizations, selectedCategory]);
+    let result = optimizations;
+
+    // 🆕 Phase 3d.2: Filter Hinweise wenn Toggle aktiv
+    if (hideHints) {
+      result = result.filter(opt => !isHint(opt));
+    }
+
+    // Filter by category
+    if (selectedCategory !== 'all') {
+      result = result.filter(opt => opt.category === selectedCategory);
+    }
+
+    return result;
+  }, [optimizations, selectedCategory, hideHints]);
 
   // Count by category
   const categoryCounts = useMemo(() => {
@@ -212,6 +225,11 @@ export default function ResultsDashboard({
       medium: optimizations.filter(o => o.priority === 'medium').length,
       low: optimizations.filter(o => o.priority === 'low').length,
     };
+  }, [optimizations]);
+
+  // 🆕 Phase 3d.2: Zähle Hinweise für Toggle-Label
+  const hintCount = useMemo(() => {
+    return optimizations.filter(opt => isHint(opt)).length;
   }, [optimizations]);
 
   // 📈 PROGNOSTIZIERTER SCORE: Berechne erwarteten Score nach Übernahme aller Optimierungen
@@ -544,10 +562,10 @@ export default function ResultsDashboard({
                   )}
                 </div>
               ) : (
-                // Standard-Erklärung für normale Verträge
+                // 🆕 Phase 3d.3: Microcopy - Standard-Erklärung für normale Verträge
                 <p>
-                  Unser KI-System optimiert nur, wenn echte juristische oder wirtschaftliche Risiken bestehen.
-                  "Keine Optimierungen" bedeutet: Sie haben einen gut durchdachten Vertrag.
+                  Unsere KI empfiehlt Änderungen nur bei echten juristischen oder wirtschaftlichen Risiken.
+                  Keine Optimierungen zu haben ist das beste Ergebnis — Ihr Vertrag ist solide aufgestellt.
                 </p>
               )}
             </div>
@@ -788,6 +806,21 @@ export default function ResultsDashboard({
             );
           })}
         </div>
+
+        {/* 🆕 Phase 3d.2: Toggle für "Nur Optimierungen anzeigen" */}
+        {hintCount > 0 && (
+          <label className={styles.hintToggle} title="Hinweise sind optionale Best-Practice-Empfehlungen">
+            <input
+              type="checkbox"
+              checked={hideHints}
+              onChange={(e) => setHideHints(e.target.checked)}
+            />
+            <span className={styles.hintToggleSlider}></span>
+            <span className={styles.hintToggleLabel}>
+              {hideHints ? 'Nur Optimierungen' : `+ ${hintCount} Hinweise`}
+            </span>
+          </label>
+        )}
       </motion.div>
 
       {/* Issues List */}
@@ -803,11 +836,19 @@ export default function ResultsDashboard({
               <div className={styles.emptyStateIcon}>
                 <CheckCircle />
               </div>
+              {/* 🆕 Phase 3d.3: Microcopy-Feinschliff - kontextabhängiger Text */}
               <h3 className={styles.emptyStateTitle}>
-                Keine Optimierungen in dieser Kategorie
+                {hideHints && hintCount > 0
+                  ? 'Nur Hinweise in dieser Ansicht'
+                  : 'Alles im grünen Bereich'}
               </h3>
               <p className={styles.emptyStateText}>
-                Wähle eine andere Kategorie oder zeige alle Optimierungen an.
+                {hideHints && hintCount > 0
+                  ? `${hintCount} Hinweise werden ausgeblendet. Deaktiviere den Filter, um sie anzuzeigen.`
+                  : selectedCategory === 'all'
+                    ? 'In diesem Vertrag wurden keine Optimierungspotenziale gefunden.'
+                    : `Im Bereich "${CATEGORY_LABELS[selectedCategory as keyof typeof CATEGORY_LABELS] || selectedCategory}" gibt es keine Beanstandungen.`
+                }
               </p>
             </motion.div>
           ) : (
@@ -846,8 +887,15 @@ export default function ResultsDashboard({
                         <div className={styles.issueMeta}>
                           {/* 🆕 Phase 3c.3: Hinweis Badge */}
                           {optimizationIsHint ? (
-                            <span className={`${styles.issueBadge} ${styles.hint}`}>
-                              <Info size={10} /> {HINT_LABEL}
+                            /* 🆕 Phase 3d.1: Tooltip für Hinweis-Badge */
+                            <span className={styles.hintBadgeWrapper}>
+                              <span className={`${styles.issueBadge} ${styles.hint}`}>
+                                <Info size={10} /> {HINT_LABEL}
+                              </span>
+                              <span className={styles.hintTooltip}>
+                                Hinweise sind optionale Empfehlungen.<br />
+                                Sie beeinflussen weder Score noch Bewertung.
+                              </span>
                             </span>
                           ) : (
                             <span className={`${styles.issueBadge} ${styles[optimization.priority]}`}>
