@@ -5,7 +5,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, Upload, FileText, Calendar, Shield, Sparkles, Building2, Check, Circle, X } from 'lucide-react';
 import { useOnboarding } from '../../hooks/useOnboarding';
 import { useCelebrationContext } from '../Celebration';
@@ -271,44 +270,51 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
 
   if (!isOpen) return null;
 
-  // 🔧 Render via Portal direkt in document.body
-  // Damit umgehen wir alle Parent-Elemente mit transform/will-change
+  // 🔧 KOMPLETT INLINE - keine CSS Klassen, nur inline styles
+  const overlayStyle: React.CSSProperties = {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100vw',
+    height: '100vh',
+    zIndex: 999999,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'rgba(0, 0, 0, 0.6)',
+    backdropFilter: 'blur(8px)',
+    WebkitBackdropFilter: 'blur(8px)',
+    padding: 20,
+    boxSizing: 'border-box',
+    overflow: 'hidden',
+  };
+
+  const modalStyle: React.CSSProperties = {
+    position: 'relative',
+    background: '#fff',
+    borderRadius: 20,
+    width: '100%',
+    maxWidth: 560,
+    maxHeight: '90vh',
+    overflow: 'hidden',
+    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+  };
+
   const modalContent = (
     <div
-      className={styles.overlay}
-      style={{
-        // Inline styles als Fallback - überschreiben ALLES
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        width: '100vw',
-        height: '100vh',
-        zIndex: 99999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'rgba(0, 0, 0, 0.6)',
-        transform: 'none',
-      }}
+      style={overlayStyle}
       onClick={(e) => {
-        // Nur schließen wenn direkt auf Overlay geklickt wird
         if (e.target === e.currentTarget) {
           handleSkip();
         }
       }}
     >
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={`onboarding-step-${currentStep}`}
-          className={styles.modal}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.15, ease: 'easeOut' }}
-          onClick={(e) => e.stopPropagation()}
-        >
+      <div
+        style={modalStyle}
+        onClick={(e) => e.stopPropagation()}
+      >
           {/* Close Button */}
           <button
             className={styles.closeButton}
@@ -368,8 +374,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
               </button>
             )}
           </div>
-        </motion.div>
-      </AnimatePresence>
+      </div>
     </div>
   );
 
