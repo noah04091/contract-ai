@@ -93,6 +93,14 @@ const PRIORITY_LABELS = {
   low: 'Niedrig'
 };
 
+// 🆕 Phase 3c.3: Helper für Hinweis vs Optimierung Unterscheidung
+const isHint = (optimization: OptimizationSuggestion): boolean => {
+  return optimization.classification?.necessity === 'best_practice';
+};
+
+// 🆕 Phase 3c.3: Labels für Hinweise
+const HINT_LABEL = 'Hinweis';
+
 // 🆕 Formatter für intentionalClauses: snake_case → Lesbare deutsche Begriffe
 const formatIntentionalClause = (clause: string): string => {
   // Mapping für bekannte Klauseln
