@@ -14,7 +14,9 @@ import {
   FileUp, AlertTriangle, Sparkles, RotateCcw, CreditCard,
   MoreVertical, ChevronUp, ChevronDown, ChevronLeft,
   SlidersHorizontal, // 📱 Mobile Filter Icon
-  Star // ⭐ Favoriten-Icon
+  Star, // ⭐ Favoriten-Icon
+  Scale, // ⚖️ Rechtsprüfung Icon
+  Radar // 📡 Legal Pulse Icon
 } from "lucide-react";
 import styles from "../styles/Contracts.module.css";
 import ContractAnalysis from "../components/ContractAnalysis";
@@ -33,6 +35,7 @@ import { apiCall, uploadAndAnalyze, uploadOnly } from "../utils/api"; // ✅ NEU
 import { useFolders } from "../hooks/useFolders"; // 📁 Folder Hook
 import type { FolderType } from "../components/FolderBar"; // 📁 Folder Type
 import InlineAnalysisProgress from "../components/InlineAnalysisProgress"; // 🎨 Kompakte Inline-Analyse
+import { useCelebrationContext } from "../components/Celebration"; // 🎉 Celebration System
 
 interface Contract {
   _id: string;
@@ -231,6 +234,7 @@ export default function Contracts() {
   // ✅ Navigation state handling
   const location = useLocation();
   const navigate = useNavigate();
+  const { celebrate } = useCelebrationContext(); // 🎉 Celebration System
 
   const [contracts, setContracts] = useState<Contract[]>([]);
   // 🚀 OPTIMIERT: contracts State entfernt - war redundant da Backend bereits filtert
@@ -1788,6 +1792,9 @@ export default function Contracts() {
 
       // Zeige Success Modal
       if (uploadedContracts.length > 0) {
+        // 🎉 Celebration for successful upload!
+        celebrate('first-upload');
+
         setUploadSuccessModal({
           show: true,
           uploadedContracts
@@ -1946,6 +1953,9 @@ export default function Contracts() {
 
       // ✅ WECHSEL zur Upload-Seite - zeigt SOFORT die Analyse-Ergebnisse!
       setActiveSection('upload');
+
+      // 🎉 Celebration for completed analysis!
+      celebrate('first-analysis');
 
       console.log(`✅ ${contractsToAnalyze.length} Vertrag${contractsToAnalyze.length > 1 ? 'e' : ''} erfolgreich analysiert und Ergebnisse werden angezeigt!`);
 
@@ -4177,6 +4187,63 @@ export default function Contracts() {
                       )}
                     </div>
 
+                    {/* 📋 User Flow - Horizontal mit Icons wie im Mockup */}
+                    {uploadFiles.length === 0 && (
+                      <div className={styles.uploadFlowSteps}>
+                        {/* Step 1: Upload */}
+                        <div className={styles.uploadFlowStep}>
+                          <div className={styles.uploadFlowIcon}>
+                            <FileText size={28} />
+                          </div>
+                          <div className={styles.uploadFlowContent}>
+                            <h4>1. Upload</h4>
+                            <p>User lädt Vertrag hoch</p>
+                          </div>
+                        </div>
+
+                        <div className={styles.uploadFlowConnector} />
+
+                        {/* Step 2: Rechtsprüfung */}
+                        <div className={styles.uploadFlowStep}>
+                          <span className={`${styles.uploadFlowBadge} ${styles.uploadFlowBadgeBlue}`}>Rechtsprüfung</span>
+                          <div className={`${styles.uploadFlowIcon} ${styles.uploadFlowIconBlue}`}>
+                            <Scale size={28} />
+                          </div>
+                          <div className={styles.uploadFlowContent}>
+                            <h4>2. Rechtsprüfung</h4>
+                            <p>Einmalige, tiefe Analyse wie vom Anwalt</p>
+                          </div>
+                        </div>
+
+                        <div className={styles.uploadFlowConnector} />
+
+                        {/* Step 3: Verwaltung */}
+                        <div className={styles.uploadFlowStep}>
+                          <div className={`${styles.uploadFlowIcon} ${styles.uploadFlowIconYellow}`}>
+                            <Folder size={28} />
+                          </div>
+                          <div className={styles.uploadFlowContent}>
+                            <h4>3. Verwaltung</h4>
+                            <p>Vertrag wird gespeichert</p>
+                          </div>
+                        </div>
+
+                        <div className={styles.uploadFlowConnector} />
+
+                        {/* Step 4: Legal Pulse */}
+                        <div className={styles.uploadFlowStep}>
+                          <span className={`${styles.uploadFlowBadge} ${styles.uploadFlowBadgeGreen}`}>Monitoring</span>
+                          <div className={`${styles.uploadFlowIcon} ${styles.uploadFlowIconGreen}`}>
+                            <Radar size={28} />
+                          </div>
+                          <div className={styles.uploadFlowContent}>
+                            <h4>4. Legal Pulse</h4>
+                            <p>Laufende Überwachung startet automatisch</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {/* ✅ DEINE BESTEHENDE ANALYSE-ANZEIGE bleibt unverändert */}
                     {selectedFile && uploadFiles.length === 1 && uploadFiles[0].status === 'completed' && (
                       <div className={styles.analysisContainer}>
@@ -4202,7 +4269,7 @@ export default function Contracts() {
               </motion.div>
             )}
 
-            {/* 📧 NEU: Email-Upload Sektion */}
+            {/* 📧 Email-Upload Sektion */}
             {activeSection === 'email-upload' && userInfo.emailInboxAddress && (
               <motion.div
                 key="email-upload-section"
@@ -4212,18 +4279,6 @@ export default function Contracts() {
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
               >
-                <div className={styles.sectionHeader}>
-                  <div>
-                    <h2 className={styles.sectionTitle}>
-                      <Mail size={32} strokeWidth={2} />
-                      Email-Upload
-                    </h2>
-                    <p className={styles.sectionDescription}>
-                      Leite Emails mit Verträgen an deine persönliche Email-Adresse weiter
-                    </p>
-                  </div>
-                </div>
-
                 <EmailInboxWidget
                   emailInboxAddress={userInfo.emailInboxAddress}
                   emailInboxEnabled={userInfo.emailInboxEnabled ?? true}

@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, Upload, FileText, Calendar, Shield, Sparkles, Building2, Check, Circle } from 'lucide-react';
 import { useOnboarding } from '../../hooks/useOnboarding';
+import { useCelebrationContext } from '../Celebration';
 import type { OnboardingProfile } from '../../types/onboarding';
 import styles from './OnboardingModal.module.css';
 
@@ -60,6 +61,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
     skipOnboarding,
     startOnboarding
   } = useOnboarding();
+  const { celebrate } = useCelebrationContext();
 
   const [currentStep, setCurrentStep] = useState(0);
   const [profile, setProfile] = useState<OnboardingProfile>({});
@@ -87,6 +89,8 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
       setCurrentStep(prev => prev + 1);
     } else {
       await completeOnboarding();
+      // 🎉 Celebrate onboarding completion with fireworks!
+      celebrate('onboarding-complete');
       onClose?.();
       navigate('/dashboard');
     }

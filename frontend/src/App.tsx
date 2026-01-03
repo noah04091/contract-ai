@@ -16,6 +16,7 @@ import CookieConsentBanner from "./components/CookieConsentBanner";
 import ScrollToTop from "./components/ScrollToTop";
 import AssistantWidget from "./components/AssistantWidget";
 import { OnboardingProvider } from "./components/Onboarding";
+import { CelebrationProvider } from "./components/Celebration";
 
 // 🚀 PERFORMANCE: Lazy Loading für alle Seiten (Code Splitting)
 // Homepage, Login, Contracts und Profile werden sofort geladen (kritische Seiten)
@@ -278,9 +279,11 @@ export default function App() {
         <AuthProvider>
           <ToastProvider>
             <AnnouncerProvider>
-              <OnboardingProvider>
-                <AppWithLoader />
-              </OnboardingProvider>
+              <CelebrationProvider>
+                <OnboardingProvider>
+                  <AppWithLoader />
+                </OnboardingProvider>
+              </CelebrationProvider>
             </AnnouncerProvider>
           </ToastProvider>
         </AuthProvider>
