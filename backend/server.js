@@ -1573,6 +1573,19 @@ const connectDB = async () => {
         }
       });
 
+      // 📧 NEU: Onboarding E-Mail Sequence (täglich um 8:30 Uhr morgens)
+      // Sendet automatisch Day 2 und Day 7 E-Mails an neue User
+      cron.schedule("30 8 * * *", async () => {
+        console.log("📧 [ONBOARDING] Starte E-Mail Sequence Verarbeitung...");
+        try {
+          const { processOnboardingEmails } = require("./services/onboardingEmailService");
+          const emailsSent = await processOnboardingEmails(db);
+          console.log(`📧 [ONBOARDING] ${emailsSent} E-Mail(s) gesendet`);
+        } catch (error) {
+          console.error("❌ Onboarding E-Mail Cron Error:", error);
+        }
+      });
+
       // ✅ CALENDAR: Event-Generierung für neue Verträge (täglich um 2 Uhr nachts)
       cron.schedule("0 2 * * *", async () => {
         console.log("🔄 Starte tägliche Event-Generierung für neue Verträge...");

@@ -1240,6 +1240,58 @@ router.post("/test", async (req, res) => {
       results.push("verification");
     }
 
+    // ========== TYP 8: Onboarding E-Mails (Day 0, 2, 7) ==========
+    if (type === "onboarding" || type === "onboarding-welcome" || type === "onboarding-day2" || type === "onboarding-day7") {
+      const {
+        generateWelcomeEmail,
+        generateFirstContractEmail,
+        generateFeaturesEmail
+      } = require("../services/onboardingEmailService");
+
+      // Mock user for testing
+      const mockUser = {
+        email: email,
+        name: "Test User",
+        subscriptionPlan: "free",
+        onboarding: {
+          profile: { primaryUseCase: "analyze" }
+        }
+      };
+
+      if (type === "onboarding" || type === "onboarding-welcome") {
+        const welcomeHtml = generateWelcomeEmail(mockUser);
+        await transporter.sendMail({
+          from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
+          to: email,
+          subject: "Willkommen bei Contract AI - Dein Start in die intelligente Vertragswelt",
+          html: welcomeHtml
+        });
+        results.push("onboarding-welcome");
+      }
+
+      if (type === "onboarding" || type === "onboarding-day2") {
+        const day2Html = generateFirstContractEmail(mockUser);
+        await transporter.sendMail({
+          from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
+          to: email,
+          subject: "Hast du schon deinen ersten Vertrag hochgeladen?",
+          html: day2Html
+        });
+        results.push("onboarding-day2");
+      }
+
+      if (type === "onboarding" || type === "onboarding-day7") {
+        const day7Html = generateFeaturesEmail(mockUser);
+        await transporter.sendMail({
+          from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
+          to: email,
+          subject: "Entdecke diese 3 Features - perfekt für dich",
+          html: day7Html
+        });
+        results.push("onboarding-day7");
+      }
+    }
+
     res.json({
       success: true,
       message: `${results.length} Test-E-Mail(s) an ${email} gesendet`,

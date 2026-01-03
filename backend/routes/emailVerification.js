@@ -9,6 +9,7 @@ const router = express.Router();
 const sendEmailHtml = require("../utils/sendEmailHtml");
 const { generateEmailTemplate } = require("../utils/emailTemplate");
 const { normalizeEmail } = require("../utils/normalizeEmail");
+const { sendWelcomeEmailNow } = require("../services/onboardingEmailService");
 
 module.exports = function(db) {
   const usersCollection = db.collection("users");
@@ -146,43 +147,18 @@ module.exports = function(db) {
 
       console.log(`✅ User verifiziert: ${user.email}`);
 
-      // ✅ V4 WILLKOMMENS-E-MAIL senden (optional)
+      // ✅ Onboarding Checklist aktualisieren - emailVerified = true
+      await usersCollection.updateOne(
+        { _id: user._id },
+        { $set: { 'onboarding.checklist.emailVerified': true } }
+      );
+
+      // 📧 Onboarding Welcome E-Mail senden (verbesserte Version)
       try {
-        const welcomeEmailHtml = generateEmailTemplate({
-          title: "Willkommen bei Contract AI!",
-          preheader: "Ihr Konto ist jetzt aktiviert",
-          body: `
-            <div style="background-color: #ecfdf5; border-radius: 12px; padding: 20px; margin-bottom: 25px; text-align: center;">
-              <span style="font-size: 48px;">✅</span>
-              <p style="color: #065f46; font-size: 18px; font-weight: 600; margin: 10px 0 0 0;">Konto aktiviert!</p>
-            </div>
-
-            <p style="text-align: center; margin-bottom: 25px;">
-              Ihre E-Mail-Adresse wurde erfolgreich bestätigt.<br>
-              Sie können jetzt alle Funktionen von Contract AI nutzen.
-            </p>
-
-            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa; border-radius: 12px; margin-bottom: 25px;">
-              <tr><td style="padding: 20px;">
-                <p style="margin: 0 0 12px 0; font-size: 15px; font-weight: 600; color: #1a1a1a;">Ihre Vorteile:</p>
-                <p style="margin: 0 0 8px 0; font-size: 14px; color: #555;">• KI-gestützte Vertragsanalyse</p>
-                <p style="margin: 0 0 8px 0; font-size: 14px; color: #555;">• Automatische Fristenverwaltung</p>
-                <p style="margin: 0 0 8px 0; font-size: 14px; color: #555;">• Optimierungsvorschläge</p>
-                <p style="margin: 0 0 8px 0; font-size: 14px; color: #555;">• Risiko-Erkennung</p>
-                <p style="margin: 0 0 8px 0; font-size: 14px; color: #555;">• Vertragsgenerator</p>
-                <p style="margin: 0; font-size: 14px; color: #555;">• Digitale Signaturen</p>
-              </td></tr>
-            </table>
-          `,
-          cta: {
-            text: "Zum Dashboard",
-            url: `${process.env.FRONTEND_URL || "https://contract-ai.de"}/dashboard`
-          }
-        });
-
-        await sendEmailHtml(user.email, "Willkommen bei Contract AI!", welcomeEmailHtml);
+        await sendWelcomeEmailNow(user, db);
+        console.log(`📧 Onboarding Welcome E-Mail gesendet an: ${user.email}`);
       } catch (emailError) {
-        console.log("⚠️ Willkommens-E-Mail konnte nicht gesendet werden:", emailError.message);
+        console.log("⚠️ Onboarding Welcome E-Mail konnte nicht gesendet werden:", emailError.message);
         // Nicht kritisch - Verification war erfolgreich
       }
 
