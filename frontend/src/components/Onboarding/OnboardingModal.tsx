@@ -186,7 +186,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
           </>
         );
 
-      case 'features':
+      case 'features': {
         const features = FEATURES_BY_USE_CASE[profile.primaryUseCase || 'analyze'];
         return (
           <>
@@ -210,6 +210,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
             </div>
           </>
         );
+      }
 
       case 'complete':
         return (
