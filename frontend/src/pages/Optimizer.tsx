@@ -3032,6 +3032,8 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                     contractMaturity={optimizationResult?.meta?.maturity}
                     recognizedAs={optimizationResult?.meta?.recognizedAs}
                     onNewAnalysis={handleReset}
+                    // 🆕 Phase 3c: Document Scope für Explainability
+                    documentScope={optimizationResult?.meta?.documentScope}
                   />
                 ) : (
                   <>

@@ -52,6 +52,30 @@ interface ContractAssessment {
   intentionalClauses: string[];
 }
 
+// 🆕 Phase 3c: Document Scope Interface für Amendments
+interface DocumentScopeInfo {
+  type: 'amendment' | 'main_contract';
+  isAmendment: boolean;
+  parentType?: string;
+  appliedScope?: 'amendment_specific' | 'full_contract';
+  detection?: {
+    matchedIndicator?: string;
+    matchSource?: 'filename' | 'content';
+    detectedParentType?: string;
+  };
+  hardScopeEnforcement?: {
+    applied: boolean;
+    kept?: number;
+    filtered?: number;
+    changedTopicLock?: {
+      matchedIndicator?: string;
+      allowedChangedTopics?: string[];
+    };
+  };
+  skippedMandatoryChecks?: string[];
+  scopeReason?: string;
+}
+
 interface ResultsDashboardProps {
   optimizations: OptimizationSuggestion[];
   contractScore: ContractHealthScore;
@@ -68,6 +92,8 @@ interface ResultsDashboardProps {
   contractMaturity?: 'high' | 'medium' | 'low';
   recognizedAs?: string;
   onNewAnalysis?: () => void; // 🆕 Callback für neue Analyse
+  // 🆕 Phase 3c: Document Scope für Explainability
+  documentScope?: DocumentScopeInfo;
 }
 
 // Category configuration
@@ -163,7 +189,9 @@ export default function ResultsDashboard({
   assessment,
   contractMaturity,
   recognizedAs,
-  onNewAnalysis
+  onNewAnalysis,
+  // 🆕 Phase 3c: Document Scope für Explainability
+  documentScope
 }: ResultsDashboardProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
@@ -333,6 +361,35 @@ export default function ResultsDashboard({
                   <span>Reife: {contractMaturity === 'high' ? 'Hoch' : contractMaturity === 'medium' ? 'Mittel' : 'Niedrig'}</span>
                 </div>
               )}
+              {/* 🆕 Phase 3c.1: Amendment Badge */}
+              {documentScope?.isAmendment && (
+                <div className={`${styles.metricBadge} ${styles.amendment}`}>
+                  <FileText size={14} />
+                  <span>Änderungsvereinbarung</span>
+                </div>
+              )}
+            </div>
+
+            {/* 🆕 Phase 3c.1: Trust Badges */}
+            <div className={styles.trustBadges}>
+              <div className={styles.trustBadge}>
+                <CheckCircle size={16} />
+                <span>Professionell erstellt</span>
+              </div>
+              <div className={styles.trustBadge}>
+                <Scale size={16} />
+                <span>Juristisch konsistent</span>
+              </div>
+              <div className={styles.trustBadge}>
+                <Shield size={16} />
+                <span>Keine Risiken erkannt</span>
+              </div>
+              {documentScope?.isAmendment && (
+                <div className={styles.trustBadge}>
+                  <Sparkles size={16} />
+                  <span>Scope-geprüft</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -421,12 +478,18 @@ export default function ResultsDashboard({
             </div>
             <div className={styles.perfectCardContent}>
               <h3>Kein Handlungsbedarf</h3>
-              <p>Dieser Vertrag wurde professionell erstellt und enthält keine kritischen Lücken oder risikoreichen Klauseln.</p>
+              <p>
+                {documentScope?.isAmendment
+                  ? 'Diese Änderungsvereinbarung wurde korrekt erstellt. Alle relevanten Punkte für einen Nachtrag sind abgedeckt.'
+                  : 'Dieser Vertrag wurde professionell erstellt und enthält keine kritischen Lücken oder risikoreichen Klauseln.'
+                }
+              </p>
             </div>
           </motion.div>
 
+          {/* 🆕 Phase 3c.2: Erweiterte Explainability Card */}
           <motion.div
-            className={styles.perfectSummaryCard}
+            className={`${styles.perfectSummaryCard} ${styles.explainabilityCard}`}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
@@ -436,10 +499,70 @@ export default function ResultsDashboard({
             </div>
             <div className={styles.perfectCardContent}>
               <h3>Warum 0 Optimierungen?</h3>
-              <p>
-                Unser KI-System optimiert nur, wenn echte juristische oder wirtschaftliche Risiken bestehen.
-                "Keine Optimierungen" bedeutet: Sie haben einen gut durchdachten Vertrag.
-              </p>
+
+              {/* Amendment-spezifische Erklärung */}
+              {documentScope?.isAmendment ? (
+                <div className={styles.explainabilityDetails}>
+                  <p className={styles.explainabilityIntro}>
+                    Dieses Dokument wurde als <strong>Änderungsvereinbarung</strong> erkannt und entsprechend analysiert:
+                  </p>
+
+                  <ul className={styles.explainabilityList}>
+                    <li>
+                      <CheckCircle size={14} />
+                      <span>Dokumenttyp korrekt erkannt</span>
+                    </li>
+                    <li>
+                      <CheckCircle size={14} />
+                      <span>Nur änderungsrelevante Punkte geprüft</span>
+                    </li>
+                    <li>
+                      <CheckCircle size={14} />
+                      <span>Keine Pflichtklauseln erzwungen (→ gehören in Hauptvertrag)</span>
+                    </li>
+                    {documentScope.scopeReason && (
+                      <li>
+                        <Shield size={14} />
+                        <span>{documentScope.scopeReason}</span>
+                      </li>
+                    )}
+                  </ul>
+
+                  {/* Skipped Checks Info */}
+                  {documentScope.skippedMandatoryChecks && documentScope.skippedMandatoryChecks.length > 0 && (
+                    <div className={styles.skippedChecks}>
+                      <div className={styles.skippedChecksLabel}>
+                        <Shield size={14} />
+                        <span>Bewusst nicht geprüft (→ Hauptvertrag):</span>
+                      </div>
+                      <div className={styles.skippedChecksTags}>
+                        {documentScope.skippedMandatoryChecks.slice(0, 4).map((check, idx) => (
+                          <span key={idx} className={styles.skippedCheckTag}>{check}</span>
+                        ))}
+                        {documentScope.skippedMandatoryChecks.length > 4 && (
+                          <span className={styles.skippedCheckTag}>+{documentScope.skippedMandatoryChecks.length - 4} weitere</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Hard Scope Enforcement Stats */}
+                  {documentScope.hardScopeEnforcement?.applied && documentScope.hardScopeEnforcement.filtered && documentScope.hardScopeEnforcement.filtered > 0 && (
+                    <div className={styles.scopeEnforcementInfo}>
+                      <Sparkles size={14} />
+                      <span>
+                        {documentScope.hardScopeEnforcement.filtered} nicht-relevante Punkte wurden automatisch gefiltert
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                // Standard-Erklärung für normale Verträge
+                <p>
+                  Unser KI-System optimiert nur, wenn echte juristische oder wirtschaftliche Risiken bestehen.
+                  "Keine Optimierungen" bedeutet: Sie haben einen gut durchdachten Vertrag.
+                </p>
+              )}
             </div>
           </motion.div>
         </div>
