@@ -119,6 +119,29 @@ interface ContractMeta {
   maturity?: 'high' | 'medium' | 'low';
   isAmendment?: boolean;
   parentType?: string | null;
+  // 🆕 Phase 3c: Document Scope für Explainability
+  documentScope?: {
+    type: 'amendment' | 'main_contract';
+    isAmendment: boolean;
+    parentType?: string;
+    appliedScope?: 'amendment_specific' | 'full_contract';
+    detection?: {
+      matchedIndicator?: string;
+      matchSource?: 'filename' | 'content';
+      detectedParentType?: string;
+    };
+    hardScopeEnforcement?: {
+      applied: boolean;
+      kept?: number;
+      filtered?: number;
+      changedTopicLock?: {
+        matchedIndicator?: string;
+        allowedChangedTopics?: string[];
+      };
+    };
+    skippedMandatoryChecks?: string[];
+    scopeReason?: string;
+  };
 }
 
 interface OptimizationIssue {

@@ -35,7 +35,7 @@ import {
   Scale
 } from 'lucide-react';
 import styles from '../../styles/Optimizer.module.css';
-import { OptimizationSuggestion, ContractHealthScore } from '../../types/optimizer';
+import { OptimizationSuggestion, ContractHealthScore, DocumentScopeInfo } from '../../types/optimizer';
 
 // Pitch-Stile
 const PITCH_STYLES = [
@@ -52,29 +52,7 @@ interface ContractAssessment {
   intentionalClauses: string[];
 }
 
-// 🆕 Phase 3c: Document Scope Interface für Amendments
-interface DocumentScopeInfo {
-  type: 'amendment' | 'main_contract';
-  isAmendment: boolean;
-  parentType?: string;
-  appliedScope?: 'amendment_specific' | 'full_contract';
-  detection?: {
-    matchedIndicator?: string;
-    matchSource?: 'filename' | 'content';
-    detectedParentType?: string;
-  };
-  hardScopeEnforcement?: {
-    applied: boolean;
-    kept?: number;
-    filtered?: number;
-    changedTopicLock?: {
-      matchedIndicator?: string;
-      allowedChangedTopics?: string[];
-    };
-  };
-  skippedMandatoryChecks?: string[];
-  scopeReason?: string;
-}
+// 🆕 Phase 3c: DocumentScopeInfo wird aus types/optimizer.ts importiert
 
 interface ResultsDashboardProps {
   optimizations: OptimizationSuggestion[];

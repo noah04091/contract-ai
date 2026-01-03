@@ -31,6 +31,30 @@ export interface ContractAssessment {
   intentionalClauses: string[];
 }
 
+// 🆕 Phase 3c: Document Scope Info für Amendments
+export interface DocumentScopeInfo {
+  type: 'amendment' | 'main_contract';
+  isAmendment: boolean;
+  parentType?: string;
+  appliedScope?: 'amendment_specific' | 'full_contract';
+  detection?: {
+    matchedIndicator?: string;
+    matchSource?: 'filename' | 'content';
+    detectedParentType?: string;
+  };
+  hardScopeEnforcement?: {
+    applied: boolean;
+    kept?: number;
+    filtered?: number;
+    changedTopicLock?: {
+      matchedIndicator?: string;
+      allowedChangedTopics?: string[];
+    };
+  };
+  skippedMandatoryChecks?: string[];
+  scopeReason?: string;
+}
+
 // 🆕 v2.0: Erweiterte Meta-Daten
 export interface ContractMeta {
   type: string;
@@ -41,6 +65,8 @@ export interface ContractMeta {
   parentType: string | null;
   recognizedAs: string;
   maturity: 'high' | 'medium' | 'low';
+  // 🆕 Phase 3c: Document Scope
+  documentScope?: DocumentScopeInfo;
 }
 
 export interface ContractHealthScore {
