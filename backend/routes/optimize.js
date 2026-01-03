@@ -1967,39 +1967,78 @@ const detectContractType = async (text, fileName = '') => {
   
   // 🔥 FIX: Prüfe auf Amendments/Änderungen - STRENGER!
   // NUR als Amendment erkennen wenn EINDEUTIG eine Änderung ist
+  // 🆕 Phase 3b.5: Erweiterte Amendment-Erkennung für alle Änderungstypen
   const strongAmendmentIndicators = [
+    // Formelle Bezeichnungen
     'änderungsvereinbarung', 'nachtrag', 'zusatzvereinbarung',
     'amendment', 'addendum', 'supplement',
     'änderung zum', 'ergänzung zum', 'anpassung des vertrages vom',
-    'änderung des vertrages', 'vertragsergänzung', 'vertragsnachtrag'
+    'änderung des vertrages', 'vertragsergänzung', 'vertragsnachtrag',
+    // 🆕 Arbeitsvertrag-spezifische Amendments (häufig in Dateinamen!)
+    'arbeitszeiterhöhung', 'arbeitszeitänderung', 'arbeitszeitanpassung',
+    'gehaltserhöhung', 'gehaltsanpassung', 'gehaltsnachtrag',
+    'stundenerhöhung', 'stundenreduzierung', 'stundenanpassung',
+    'vertragsänderung', 'arbeitsvertragsänderung',
+    'tätigkeitsänderung', 'versetzung',
+    // 🆕 Weitere häufige Amendment-Typen
+    'mieterhöhung', 'mietanpassung', 'mietnachtrag',
+    'konditionsänderung', 'preisanpassung',
+    'verlängerung', 'vertragsverlängerung'
   ];
 
   let isAmendment = false;
   let parentContractType = null;
 
   // ✅ NUR als Amendment erkennen wenn KLARE Indikatoren vorhanden sind
+  let matchedIndicator = null;
+  let matchSource = null;
+
   for (const indicator of strongAmendmentIndicators) {
-    if (lowerText.includes(indicator) || lowerFileName.includes(indicator)) {
+    if (lowerFileName.includes(indicator)) {
       isAmendment = true;
-      
-      // Identifiziere Hauptvertragstyp
-      const mainContractPatterns = [
-        { pattern: /arbeitsvertrag.*?vom\s+\d{1,2}\.\d{1,2}\.\d{4}/i, type: 'arbeitsvertrag' },
-        { pattern: /mietvertrag.*?vom\s+\d{1,2}\.\d{1,2}\.\d{4}/i, type: 'mietvertrag_wohnung' },
-        { pattern: /kaufvertrag.*?vom\s+\d{1,2}\.\d{1,2}\.\d{4}/i, type: 'kaufvertrag' },
-        { pattern: /dienstvertrag.*?vom\s+\d{1,2}\.\d{1,2}\.\d{4}/i, type: 'dienstvertrag' },
-        { pattern: /werkvertrag.*?vom\s+\d{1,2}\.\d{1,2}\.\d{4}/i, type: 'werkvertrag' }
-      ];
-      
-      for (const { pattern, type } of mainContractPatterns) {
-        if (pattern.test(text)) {
-          parentContractType = type;
-          break;
-        }
-      }
-      
+      matchedIndicator = indicator;
+      matchSource = 'filename';
       break;
     }
+    if (lowerText.includes(indicator)) {
+      isAmendment = true;
+      matchedIndicator = indicator;
+      matchSource = 'content';
+      break;
+    }
+  }
+
+  if (isAmendment) {
+    console.log(`📋 [AMENDMENT-DETECT] ✅ Amendment erkannt!`);
+    console.log(`   → Indicator: "${matchedIndicator}"`);
+    console.log(`   → Source: ${matchSource} (${matchSource === 'filename' ? fileName : 'Vertragstext'})`);
+
+    // Identifiziere Hauptvertragstyp
+    const mainContractPatterns = [
+      { pattern: /arbeitsvertrag.*?vom\s+\d{1,2}\.\d{1,2}\.\d{4}/i, type: 'arbeitsvertrag' },
+      { pattern: /mietvertrag.*?vom\s+\d{1,2}\.\d{1,2}\.\d{4}/i, type: 'mietvertrag_wohnung' },
+      { pattern: /kaufvertrag.*?vom\s+\d{1,2}\.\d{1,2}\.\d{4}/i, type: 'kaufvertrag' },
+      { pattern: /dienstvertrag.*?vom\s+\d{1,2}\.\d{1,2}\.\d{4}/i, type: 'dienstvertrag' },
+      { pattern: /werkvertrag.*?vom\s+\d{1,2}\.\d{1,2}\.\d{4}/i, type: 'werkvertrag' }
+    ];
+
+    for (const { pattern, type } of mainContractPatterns) {
+      if (pattern.test(text)) {
+        parentContractType = type;
+        console.log(`   → Parent Contract: ${type}`);
+        break;
+      }
+    }
+
+    if (!parentContractType) {
+      // Fallback: Suche nach Vertragstyp-Keywords im Text
+      if (lowerText.includes('arbeitsvertrag') || lowerText.includes('arbeitnehmer')) {
+        parentContractType = 'arbeitsvertrag';
+        console.log(`   → Parent Contract (Fallback): arbeitsvertrag`);
+      }
+    }
+  } else {
+    console.log(`📋 [AMENDMENT-DETECT] ❌ Kein Amendment erkannt (Dateiname: ${fileName})`);
   }
   
   // Multi-Stage-Erkennung mit Scoring
@@ -2132,6 +2171,12 @@ const detectContractType = async (text, fileName = '') => {
     riskFactors: typeConfig.riskFactors || [],
     legalFramework: typeConfig.legalFramework || [],
     dates: [...dateMatches, ...dateMatchesISO],
+    // 🆕 Phase 3b.5: Amendment-Detection Details für Debug
+    amendmentDetection: isAmendment ? {
+      matchedIndicator,
+      matchSource,
+      detectedParentType: parentContractType
+    } : null,
     metadata: {
       fileName,
       textLength: text.length,
@@ -4234,6 +4279,8 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
           isAmendment: contractTypeInfo.isAmendment || false,
           parentType: contractTypeInfo.parentType || null,
           appliedScope: contractTypeInfo.isAmendment ? 'amendment_specific' : 'full_contract',
+          // 🆕 Phase 3b.5: Amendment-Detection Details
+          detection: contractTypeInfo.amendmentDetection || null,
           skippedMandatoryChecks: contractTypeInfo.isAmendment ? [
             'Kündigungsfristen', 'Datenschutz/DSGVO', 'Haftungsbeschränkung',
             'Gewährleistung', 'Gerichtsstand', 'Schriftformklausel'
@@ -4244,8 +4291,8 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
         },
         totalBeforeFilter: issuesByOrigin.ai + issuesByOrigin.rule + issuesByOrigin.topup,
         finalScoreBasis: 'weighted_issues',
-        ruleVersion: '3.1.0', // 🆕 Phase 3b
-        optimizerVersion: '5.0-phase3b',
+        ruleVersion: '3.1.5', // 🆕 Phase 3b.5: Erweiterte Amendment-Erkennung
+        optimizerVersion: '5.0-phase3b5',
         analyzedAt: new Date().toISOString()
       }
     };
