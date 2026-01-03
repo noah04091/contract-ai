@@ -805,11 +805,13 @@ export default function ResultsDashboard({
             filteredOptimizations.map((optimization, index) => {
               const isExpanded = expandedCards.has(optimization.id);
               const isCopied = copiedId === optimization.id;
+              // 🆕 Phase 3c.3: Hinweis vs Optimierung Unterscheidung
+              const optimizationIsHint = isHint(optimization);
 
               return (
                 <motion.div
                   key={optimization.id}
-                  className={`${styles.issueCard} ${styles[optimization.priority]}`}
+                  className={`${styles.issueCard} ${optimizationIsHint ? styles.hint : styles[optimization.priority]}`}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
@@ -819,10 +821,13 @@ export default function ResultsDashboard({
                   {/* Header */}
                   <div className={styles.issueHeader}>
                     <div className={styles.issueHeaderLeft}>
-                      <div className={`${styles.issueIcon} ${styles[optimization.priority]}`}>
-                        {optimization.priority === 'critical' || optimization.priority === 'high'
-                          ? <AlertTriangle size={20} />
-                          : <Lightbulb size={20} />
+                      <div className={`${styles.issueIcon} ${optimizationIsHint ? styles.hint : styles[optimization.priority]}`}>
+                        {/* 🆕 Phase 3c.3: Unterschiedliche Icons */}
+                        {optimizationIsHint
+                          ? <Info size={20} />
+                          : optimization.priority === 'critical' || optimization.priority === 'high'
+                            ? <AlertTriangle size={20} />
+                            : <Lightbulb size={20} />
                         }
                       </div>
                       <div className={styles.issueTitleGroup}>
@@ -830,13 +835,20 @@ export default function ResultsDashboard({
                           {optimization.summary || CATEGORY_LABELS[optimization.category]}
                         </h3>
                         <div className={styles.issueMeta}>
-                          <span className={`${styles.issueBadge} ${styles[optimization.priority]}`}>
-                            {PRIORITY_LABELS[optimization.priority]}
-                          </span>
+                          {/* 🆕 Phase 3c.3: Hinweis Badge */}
+                          {optimizationIsHint ? (
+                            <span className={`${styles.issueBadge} ${styles.hint}`}>
+                              <Info size={10} /> {HINT_LABEL}
+                            </span>
+                          ) : (
+                            <span className={`${styles.issueBadge} ${styles[optimization.priority]}`}>
+                              {PRIORITY_LABELS[optimization.priority]}
+                            </span>
+                          )}
                           <span className={`${styles.issueBadge} ${styles.category}`}>
                             {CATEGORY_LABELS[optimization.category]}
                           </span>
-                          {optimization.implementationDifficulty === 'easy' && (
+                          {!optimizationIsHint && optimization.implementationDifficulty === 'easy' && (
                             <span className={`${styles.issueBadge} ${styles.low}`}>
                               <Zap size={10} /> Quick Win
                             </span>
@@ -880,23 +892,23 @@ export default function ResultsDashboard({
                           exit={{ height: 0, opacity: 0 }}
                           transition={{ duration: 0.3 }}
                         >
-                          {/* Diff View */}
-                          <div className={styles.issueDiffView}>
+                          {/* Diff View - 🆕 Phase 3c.3: Unterschiedliche Labels für Hinweise */}
+                          <div className={`${styles.issueDiffView} ${optimizationIsHint ? styles.hintDiff : ''}`}>
                             <div className={styles.diffColumn}>
-                              <div className={`${styles.diffLabel} ${styles.original}`}>
-                                <AlertTriangle size={14} />
-                                <span>Aktuell (Problem)</span>
+                              <div className={`${styles.diffLabel} ${optimizationIsHint ? styles.hintOriginal : styles.original}`}>
+                                {optimizationIsHint ? <Info size={14} /> : <AlertTriangle size={14} />}
+                                <span>{optimizationIsHint ? 'Aktueller Stand' : 'Aktuell (Problem)'}</span>
                               </div>
-                              <div className={`${styles.diffBox} ${styles.original}`}>
-                                {optimization.original || 'Klausel fehlt oder ist unvollständig'}
+                              <div className={`${styles.diffBox} ${optimizationIsHint ? styles.hintOriginal : styles.original}`}>
+                                {optimization.original || (optimizationIsHint ? 'Nicht vorhanden' : 'Klausel fehlt oder ist unvollständig')}
                               </div>
                             </div>
                             <div className={styles.diffColumn}>
-                              <div className={`${styles.diffLabel} ${styles.improved}`}>
-                                <CheckCircle size={14} />
-                                <span>Optimiert</span>
+                              <div className={`${styles.diffLabel} ${optimizationIsHint ? styles.hintImproved : styles.improved}`}>
+                                <Lightbulb size={14} />
+                                <span>{optimizationIsHint ? 'Empfehlung (optional)' : 'Optimiert'}</span>
                               </div>
-                              <div className={`${styles.diffBox} ${styles.improved}`}>
+                              <div className={`${styles.diffBox} ${optimizationIsHint ? styles.hintImproved : styles.improved}`}>
                                 {optimization.improved}
                               </div>
                             </div>
