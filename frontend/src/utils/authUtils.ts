@@ -1,6 +1,8 @@
 // 📁 frontend/src/utils/authUtils.ts
 // ✅ HYBRID VERSION - Backend-kompatible Interface + deine Helper-Funktionen
 
+import type { OnboardingState } from '../types/onboarding';
+
 // ✅ BACKEND-KOMPATIBLE UserData Interface
 export interface UserData {
   // 🔐 Auth-Basis (aus Backend)
@@ -33,12 +35,7 @@ export interface UserData {
   updatedAt?: string;
 
   // 🎓 Onboarding (aus Backend)
-  onboarding?: {
-    status: 'not_started' | 'in_progress' | 'completed' | 'skipped';
-    checklist?: Record<string, boolean>;
-    seenFeatures?: string[];
-    showTooltips?: boolean;
-  };
+  onboarding?: OnboardingState;
 }
 
 // ✅ DEINE HELPER-FUNKTIONEN (behalten!)
