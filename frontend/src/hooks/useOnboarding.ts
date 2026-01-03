@@ -52,7 +52,10 @@ export function useOnboarding(): UseOnboardingReturn {
   // Fetch current onboarding status
   const fetchStatus = useCallback(async () => {
     const token = getToken();
+    console.log('🎓 [Onboarding] fetchStatus called, token:', token ? 'present' : 'missing');
+
     if (!token) {
+      console.log('🎓 [Onboarding] No token, skipping fetch');
       setIsLoading(false);
       return;
     }
@@ -73,6 +76,11 @@ export function useOnboarding(): UseOnboardingReturn {
       }
 
       const data: OnboardingStatusResponse = await response.json();
+      console.log('🎓 [Onboarding] API Response:', {
+        status: data.status,
+        shouldShowModal: data.shouldShowModal,
+        shouldShowChecklist: data.shouldShowChecklist
+      });
 
       setOnboardingState({
         status: data.status,
@@ -91,21 +99,23 @@ export function useOnboarding(): UseOnboardingReturn {
       setChecklistProgress(data.checklistProgress);
       setChecklistTotal(data.checklistTotal);
     } catch (err) {
-      console.error('Error fetching onboarding status:', err);
+      console.error('🎓 [Onboarding] Error fetching status:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // Initial fetch
+  // Initial fetch + re-fetch when user changes (e.g., after login)
   useEffect(() => {
+    console.log('🎓 [Onboarding] Initial/User-change effect, user:', user?.email || 'null');
     fetchStatus();
-  }, [fetchStatus]);
+  }, [fetchStatus, user?.email]); // Re-fetch when user email changes (login/logout)
 
   // Also sync from user object if available
   useEffect(() => {
     if (user?.onboarding) {
+      console.log('🎓 [Onboarding] Syncing from user.onboarding:', user.onboarding.status);
       setOnboardingState(user.onboarding);
 
       const checklist = user.onboarding.checklist || {};

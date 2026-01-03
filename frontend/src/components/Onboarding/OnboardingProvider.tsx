@@ -72,14 +72,24 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
 
   // Show modal automatically for new users on authenticated routes
   useEffect(() => {
+    console.log('🎓 [OnboardingProvider] Effect check:', {
+      shouldShowModal,
+      isAuthenticatedRoute,
+      isExcludedRoute,
+      pathname: location.pathname,
+      willShowModal: shouldShowModal && isAuthenticatedRoute && !isExcludedRoute
+    });
+
     if (shouldShowModal && isAuthenticatedRoute && !isExcludedRoute) {
+      console.log('🎓 [OnboardingProvider] Scheduling modal to open in 500ms');
       // Small delay to let page render first
       const timer = setTimeout(() => {
+        console.log('🎓 [OnboardingProvider] Opening modal NOW');
         setIsModalOpen(true);
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [shouldShowModal, isAuthenticatedRoute, isExcludedRoute]);
+  }, [shouldShowModal, isAuthenticatedRoute, isExcludedRoute, location.pathname]);
 
   const showModal = () => setIsModalOpen(true);
   const hideModal = () => setIsModalOpen(false);
