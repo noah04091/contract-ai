@@ -56,7 +56,8 @@ import { ResultsDashboard } from "../components/optimizer";
 // Types für revolutionäre Features
 import {
   OptimizationSuggestion,
-  ContractHealthScore
+  ContractHealthScore,
+  LegalIntegrity
 } from "../types/optimizer";
 
 // Utils
@@ -202,6 +203,8 @@ interface OptimizationResult {
   expiryDate?: string;
   status?: string;
   legalAssessment?: string;
+  // 🆕 Phase 4: Legal Integrity Check
+  legalIntegrity?: LegalIntegrity;
 }
 
 interface AnalysisData {
