@@ -64,8 +64,9 @@ export function WelcomePopup({
 
         if (response.ok) {
           const data = await response.json();
-          const seenFeatures = data.onboarding?.seenFeatures || [];
-          const showTooltips = data.onboarding?.showTooltips !== false;
+          // API returns seenFeatures directly, not nested under onboarding
+          const seenFeatures = data.seenFeatures || [];
+          const showTooltips = data.showTooltips !== false;
 
           const hasSeen = seenFeatures.includes(featureId);
 
