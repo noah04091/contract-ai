@@ -793,6 +793,11 @@ export default function ResultsDashboard({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.05 }}
         >
+          {/* Beta Badge */}
+          <div className={styles.betaBadgeWrapper}>
+            <span className={styles.betaBadge}>Beta</span>
+          </div>
+
           <div className={styles.integrityHeader}>
             <div className={styles.integrityIcon}>
               {legalIntegrity.level === 'not_usable' && <XCircle size={24} />}
@@ -851,9 +856,10 @@ export default function ResultsDashboard({
             </div>
           )}
 
-          {/* Legal Disclaimer - wichtig für Seriosität */}
+          {/* Beta-Hinweis + Legal Disclaimer */}
           <div className={styles.integrityDisclaimer}>
-            Diese Einschätzung ersetzt keine Rechtsberatung, stellt aber eine fundierte Risikobewertung dar.
+            <span className={styles.betaHint}>Diese Funktion befindet sich in der Beta-Phase und wird anhand realer Verträge weiter kalibriert.</span>
+            <span className={styles.legalHint}>Diese Einschätzung ersetzt keine Rechtsberatung.</span>
           </div>
         </motion.div>
       )}
@@ -866,6 +872,11 @@ export default function ResultsDashboard({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.05 }}
         >
+          {/* Beta Badge */}
+          <div className={styles.betaBadgeWrapper}>
+            <span className={styles.betaBadge}>Beta</span>
+          </div>
+
           <div className={styles.integrityHeader}>
             <div className={styles.integrityIcon}>
               <ShieldCheck size={24} />
@@ -874,6 +885,11 @@ export default function ResultsDashboard({
               <h3>{legalIntegrity.label}</h3>
               <p>{legalIntegrity.description}</p>
             </div>
+          </div>
+
+          {/* Beta-Hinweis */}
+          <div className={styles.integrityDisclaimer}>
+            <span className={styles.betaHint}>Diese Funktion befindet sich in der Beta-Phase und wird anhand realer Verträge weiter kalibriert.</span>
           </div>
         </motion.div>
       )}
