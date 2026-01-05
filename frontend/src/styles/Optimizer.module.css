@@ -4048,3 +4048,242 @@ html {
     align-self: flex-start;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🆕 PHASE 4: LEGAL INTEGRITY BANNER
+   Zeigt kritische Rechtsprobleme prominent an
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.legalIntegrityBanner {
+  background: var(--bg-primary);
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  border: 2px solid;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* Integrity Level Colors */
+.integrity_valid {
+  border-color: var(--apple-green);
+  background: linear-gradient(135deg, rgba(52, 199, 89, 0.05) 0%, rgba(52, 199, 89, 0.02) 100%);
+}
+
+.integrity_review_recommended {
+  border-color: var(--apple-yellow);
+  background: linear-gradient(135deg, rgba(255, 204, 0, 0.08) 0%, rgba(255, 204, 0, 0.03) 100%);
+}
+
+.integrity_lawyer_required {
+  border-color: var(--apple-orange);
+  background: linear-gradient(135deg, rgba(255, 149, 0, 0.08) 0%, rgba(255, 149, 0, 0.03) 100%);
+}
+
+.integrity_not_usable {
+  border-color: var(--apple-red);
+  background: linear-gradient(135deg, rgba(255, 59, 48, 0.08) 0%, rgba(255, 59, 48, 0.03) 100%);
+}
+
+/* Header */
+.integrityHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.integrityIcon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.integrity_valid .integrityIcon {
+  background: rgba(52, 199, 89, 0.15);
+  color: var(--apple-green);
+}
+
+.integrity_review_recommended .integrityIcon {
+  background: rgba(255, 204, 0, 0.2);
+  color: #b38f00;
+}
+
+.integrity_lawyer_required .integrityIcon {
+  background: rgba(255, 149, 0, 0.15);
+  color: var(--apple-orange);
+}
+
+.integrity_not_usable .integrityIcon {
+  background: rgba(255, 59, 48, 0.15);
+  color: var(--apple-red);
+}
+
+.integrityTitle h3 {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.integrity_valid .integrityTitle h3 {
+  color: #1a7f37;
+}
+
+.integrity_review_recommended .integrityTitle h3 {
+  color: #9a6700;
+}
+
+.integrity_lawyer_required .integrityTitle h3 {
+  color: #c45500;
+}
+
+.integrity_not_usable .integrityTitle h3 {
+  color: #cf222e;
+}
+
+.integrityTitle p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Sections */
+.integritySection {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.integritySection h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.integritySection h4 svg {
+  color: var(--apple-red);
+}
+
+/* Flag List */
+.integrityList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.integrityList li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 8px;
+  gap: 12px;
+}
+
+.flagReason {
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
+  flex: 1;
+}
+
+.flagLaw {
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: rgba(0, 0, 0, 0.06);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: 'SF Mono', 'Monaco', monospace;
+  white-space: nowrap;
+}
+
+/* Recommendation */
+.integrityRecommendation {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.integrity_valid .integrityRecommendation {
+  background: rgba(52, 199, 89, 0.1);
+  color: #1a7f37;
+}
+
+.integrity_review_recommended .integrityRecommendation {
+  background: rgba(255, 204, 0, 0.15);
+  color: #735c0f;
+}
+
+.integrity_lawyer_required .integrityRecommendation {
+  background: rgba(255, 149, 0, 0.1);
+  color: #8a4500;
+}
+
+.integrity_not_usable .integrityRecommendation {
+  background: rgba(255, 59, 48, 0.1);
+  color: #a40e26;
+}
+
+.integrityRecommendation strong {
+  font-weight: 600;
+}
+
+/* Score Cap Info */
+.integrityScoreCap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.integrityScoreCap svg {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .legalIntegrityBanner {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .integrityHeader {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .integrityIcon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .integrityList li {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .flagLaw {
+    align-self: flex-start;
+  }
+}

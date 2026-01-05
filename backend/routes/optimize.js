@@ -4471,7 +4471,174 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
       console.log(`🎯 [${requestId}] Score ${healthScore}: ${weightedIssueCount.toFixed(1)} gewichtete Issues (${highRiskAiCount} High-Risk AI)`);
     }
     normalizedResult.score.health = healthScore;
-    
+
+    // ════════════════════════════════════════════════════════════════════════════
+    // 🚀 STAGE 7.5: PHASE 4 - LEGAL INTEGRITY CHECK
+    // Prüft auf fundamentale rechtliche Mängel und setzt Score-Caps + Eskalations-Labels
+    // ════════════════════════════════════════════════════════════════════════════
+    console.log(`\n⚖️ [${requestId}] PHASE 4: LEGAL INTEGRITY CHECK gestartet...`);
+
+    // 4.1 RED-FLAG PATTERNS - Klauseln die auf Sittenwidrigkeit/Totalschaden hinweisen
+    const RED_FLAG_PATTERNS = [
+      { pattern: /jederzeit.*ohne.*grund.*gekündigt|ohne.*frist.*gekündigt|arbeitgeber.*muss.*keine.*frist/i, reason: 'Umgehung gesetzlicher Kündigungsfristen', law: 'BGB §622' },
+      { pattern: /unbegrenzte?.*haftung|haftet.*unbeschränkt|haftung.*ist.*unbegrenzt|haftet.*für.*alle.*schäden.*auch.*wenn.*nichts.*dafür.*kann/i, reason: 'Unzulässige unbegrenzte Arbeitnehmerhaftung', law: 'BAG-Rechtsprechung' },
+      { pattern: /gehalt.*jederzeit.*kürz|beliebig.*gehalt|je.*nachdem.*wie.*der.*chef.*drauf/i, reason: 'Unzulässiges einseitiges Leistungsbestimmungsrecht', law: 'BGB §315' },
+      { pattern: /10.*jahr.*wettbewerb|wettbewerbsverbot.*ohne.*entschädigung|keine.*entschädigung.*dafür/i, reason: 'Sittenwidriges nachvertragliches Wettbewerbsverbot', law: 'HGB §74' },
+      { pattern: /kein.*fest.*urlaub|urlaub.*wenn.*chef.*erlaubt|keinen.*urlaubsanspruch/i, reason: 'Verstoß gegen unabdingbaren Mindesturlaub', law: 'BUrlG §3' },
+      { pattern: /krankheit.*trotzdem.*kommen|krankheit.*lohnabzug|krank.*arbeiten/i, reason: 'Verstoß gegen Entgeltfortzahlung', law: 'EFZG' },
+      { pattern: /überstunden.*nicht.*bezahlt.*egal.*wie.*viel|unbegrenzt.*überstunden.*abgegolten/i, reason: 'Unzulässige pauschale Überstundenabgeltung', law: 'BAG-Rechtsprechung' },
+      { pattern: /nirgendwo.*anders.*arbeiten.*auch.*nicht.*ehrenamtlich|auch.*ehrenamtlich.*verboten/i, reason: 'Unverhältnismäßiges Nebentätigkeitsverbot', law: 'Art. 12 GG' },
+      { pattern: /mündliche.*zusagen.*gelten.*mehr|mündlich.*über.*schriftlich/i, reason: 'Rechtsunsicherheit durch Formvorbehalt-Umkehr', law: 'BGB §126' },
+      { pattern: /arbeit.*beginnt.*wenn.*chef.*sagt|beginn.*unbestimmt/i, reason: 'Unbestimmter Vertragsbeginn', law: 'NachwG §2' }
+    ];
+
+    // 4.2 MANDATORY LAW VIOLATIONS - Verstöße gegen zwingendes Recht (aus Issue-Analyse)
+    const MANDATORY_LAW_KEYWORDS = [
+      { keywords: ['urlaub', 'urlaubsanspruch'], missingIndicator: /fehlt|nicht.*gefunden|kein|missing/i, law: 'BUrlG §3', description: 'Gesetzlicher Mindesturlaub' },
+      { keywords: ['kündigungsfrist', 'kündigung'], missingIndicator: /fehlt|nicht.*gefunden|kein|unzureichend|missing/i, law: 'BGB §622', description: 'Gesetzliche Kündigungsfristen' },
+      { keywords: ['vergütung', 'gehalt', 'lohn'], missingIndicator: /fehlt|unklar|unbestimmt|missing/i, law: 'BGB §611a', description: 'Bestimmte Vergütungsregelung' },
+      { keywords: ['arbeitszeit', 'wochenarbeitszeit'], missingIndicator: /fehlt|unbegrenzt|missing/i, law: 'ArbZG', description: 'Arbeitszeitregelung' },
+      { keywords: ['entgeltfortzahlung', 'krankheit', 'lohnfortzahlung'], missingIndicator: /fehlt|kein|missing/i, law: 'EFZG', description: 'Entgeltfortzahlung im Krankheitsfall' }
+    ];
+
+    // 4.3 Analyse durchführen
+    let redFlagsFound = [];
+    let mandatoryViolations = [];
+    const lowerContractText = contractText.toLowerCase();
+
+    // Red-Flag-Scan im Originaltext
+    RED_FLAG_PATTERNS.forEach(flag => {
+      if (flag.pattern.test(lowerContractText)) {
+        redFlagsFound.push({
+          reason: flag.reason,
+          law: flag.law,
+          severity: 'critical',
+          type: 'red_flag'
+        });
+      }
+    });
+
+    // Issue-basierte Analyse für zwingendes Recht
+    const allIssuesForIntegrity = normalizedResult.categories.flatMap(c => c.issues);
+    const isArbeitsvertrag = contractTypeInfo.type?.includes('arbeit') || contractTypeInfo.type?.includes('praktikum') || contractTypeInfo.type?.includes('ausbildung');
+
+    if (isArbeitsvertrag) {
+      allIssuesForIntegrity.forEach(issue => {
+        const issueLower = (issue.summary + ' ' + (issue.reasoning || '')).toLowerCase();
+
+        MANDATORY_LAW_KEYWORDS.forEach(law => {
+          const hasKeyword = law.keywords.some(kw => issueLower.includes(kw));
+          const indicatesMissing = law.missingIndicator.test(issueLower);
+
+          if (hasKeyword && indicatesMissing) {
+            // Prüfe ob nicht schon erfasst
+            if (!mandatoryViolations.some(v => v.law === law.law)) {
+              mandatoryViolations.push({
+                reason: law.description + ' fehlt oder unzureichend',
+                law: law.law,
+                severity: 'mandatory_violation',
+                triggeredBy: issue.summary
+              });
+            }
+          }
+        });
+      });
+    }
+
+    // 4.4 STRUKTUR-CHECK - Essentialia negotii
+    let missingEssentialia = [];
+    if (isArbeitsvertrag) {
+      const essentialElements = [
+        { element: 'vergütung', patterns: [/gehalt|vergütung|lohn|euro|€|\d+.*euro/i], required: true },
+        { element: 'tätigkeit', patterns: [/tätigkeit|aufgabe|position|stelle|eingestellt.*als/i], required: true },
+        { element: 'arbeitszeit', patterns: [/arbeitszeit|stunden|woche|vollzeit|teilzeit/i], required: true }
+      ];
+
+      essentialElements.forEach(essential => {
+        const found = essential.patterns.some(p => p.test(contractText));
+        if (!found && essential.required) {
+          missingEssentialia.push({
+            element: essential.element,
+            reason: `Wesentlicher Vertragsbestandteil "${essential.element}" nicht erkennbar`,
+            severity: 'structure_defect'
+          });
+        }
+      });
+    }
+
+    // 4.5 SCORE-CAPS basierend auf Integrity-Ergebnissen
+    const totalIntegrityIssues = redFlagsFound.length + mandatoryViolations.length + missingEssentialia.length;
+    let scoreCap = 100;
+    let integrityLevel = 'valid'; // valid | review_recommended | lawyer_required | not_usable
+
+    if (redFlagsFound.length >= 3 || totalIntegrityIssues >= 5) {
+      scoreCap = 15;
+      integrityLevel = 'not_usable';
+    } else if (redFlagsFound.length >= 1 || totalIntegrityIssues >= 3) {
+      scoreCap = 25;
+      integrityLevel = 'lawyer_required';
+    } else if (mandatoryViolations.length >= 2 || totalIntegrityIssues >= 2) {
+      scoreCap = 40;
+      integrityLevel = 'review_recommended';
+    } else if (totalIntegrityIssues >= 1) {
+      scoreCap = 60;
+      integrityLevel = 'review_recommended';
+    }
+
+    // Apply Score-Cap
+    const originalScore = healthScore;
+    if (healthScore > scoreCap) {
+      healthScore = scoreCap;
+      console.log(`🔒 [${requestId}] SCORE-CAP angewendet: ${originalScore} → ${healthScore} (Cap: ${scoreCap})`);
+    }
+
+    // 4.6 Eskalations-Label bestimmen
+    const ESCALATION_LABELS = {
+      valid: { label: 'Vertrag verwendbar', color: 'green', description: 'Der Vertrag enthält keine fundamentalen rechtlichen Mängel.' },
+      review_recommended: { label: 'Überarbeitung empfohlen', color: 'yellow', description: 'Der Vertrag enthält Mängel, die vor Verwendung behoben werden sollten.' },
+      lawyer_required: { label: 'Anwaltliche Prüfung erforderlich', color: 'orange', description: 'Der Vertrag enthält schwerwiegende Mängel. Eine anwaltliche Prüfung wird dringend empfohlen.' },
+      not_usable: { label: 'Vertrag nicht verwendbar', color: 'red', description: 'Der Vertrag enthält fundamentale rechtliche Mängel und sollte in dieser Form nicht verwendet werden.' }
+    };
+
+    const escalationInfo = ESCALATION_LABELS[integrityLevel];
+
+    // 4.7 Legal Integrity Ergebnis zusammenstellen
+    const legalIntegrity = {
+      level: integrityLevel,
+      label: escalationInfo.label,
+      color: escalationInfo.color,
+      description: escalationInfo.description,
+      scoreCap: scoreCap,
+      originalScore: originalScore,
+      cappedScore: healthScore,
+      redFlags: redFlagsFound,
+      mandatoryViolations: mandatoryViolations,
+      missingEssentialia: missingEssentialia,
+      totalIssues: totalIntegrityIssues,
+      recommendation: integrityLevel === 'not_usable'
+        ? 'Dieser Vertrag sollte nicht verwendet werden. Lassen Sie einen neuen Vertrag erstellen.'
+        : integrityLevel === 'lawyer_required'
+        ? 'Lassen Sie diesen Vertrag vor Unterzeichnung von einem Anwalt prüfen.'
+        : integrityLevel === 'review_recommended'
+        ? 'Beheben Sie die identifizierten Mängel vor der Verwendung.'
+        : 'Der Vertrag kann nach Berücksichtigung der Optimierungsvorschläge verwendet werden.'
+    };
+
+    // Update healthScore in result
+    normalizedResult.score.health = healthScore;
+    normalizedResult.legalIntegrity = legalIntegrity;
+
+    console.log(`⚖️ [${requestId}] PHASE 4 ERGEBNIS:`);
+    console.log(`   → Integrity Level: ${integrityLevel.toUpperCase()}`);
+    console.log(`   → Red Flags: ${redFlagsFound.length}`);
+    console.log(`   → Mandatory Violations: ${mandatoryViolations.length}`);
+    console.log(`   → Missing Essentialia: ${missingEssentialia.length}`);
+    console.log(`   → Score: ${originalScore} → ${healthScore} (Cap: ${scoreCap})`);
+    if (redFlagsFound.length > 0) {
+      console.log(`   → Red Flags Details:`, redFlagsFound.map(f => f.reason));
+    }
+
+    // ════════════════════════════════════════════════════════════════════════════
     // 🚀 STAGE 8: Metadaten-Anreicherung
 
     // 🆕 Phase 2.3: Debug-Meta für Transparenz
@@ -4530,8 +4697,18 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
         },
         totalBeforeFilter: issuesByOrigin.ai + issuesByOrigin.rule + issuesByOrigin.topup,
         finalScoreBasis: 'weighted_issues',
-        ruleVersion: '3.3.0', // 🆕 Phase 3b.7: Changed-Topic Lock
-        optimizerVersion: '5.0-phase3b7',
+        ruleVersion: '4.0.0', // 🆕 Phase 4: Legal Integrity Check
+        optimizerVersion: '5.0-phase4',
+        // 🆕 Phase 4: Legal Integrity Check Details
+        legalIntegrityCheck: {
+          level: legalIntegrity.level,
+          redFlagsCount: legalIntegrity.redFlags.length,
+          mandatoryViolationsCount: legalIntegrity.mandatoryViolations.length,
+          missingEssentialiaCount: legalIntegrity.missingEssentialia.length,
+          scoreCap: legalIntegrity.scoreCap,
+          originalScore: legalIntegrity.originalScore,
+          applied: legalIntegrity.scoreCap < 100
+        },
         analyzedAt: new Date().toISOString()
       }
     };

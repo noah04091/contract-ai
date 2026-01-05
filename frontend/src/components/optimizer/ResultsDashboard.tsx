@@ -33,10 +33,14 @@ import {
   MessageSquare,
   Briefcase,
   Scale,
-  Info // 🆕 Phase 3c.3: Icon für Hinweise
+  Info, // 🆕 Phase 3c.3: Icon für Hinweise
+  AlertOctagon, // 🆕 Phase 4: Legal Integrity
+  XCircle,
+  ShieldAlert,
+  ShieldCheck
 } from 'lucide-react';
 import styles from '../../styles/Optimizer.module.css';
-import { OptimizationSuggestion, ContractHealthScore, DocumentScopeInfo } from '../../types/optimizer';
+import { OptimizationSuggestion, ContractHealthScore, DocumentScopeInfo, LegalIntegrity } from '../../types/optimizer';
 
 // Pitch-Stile
 const PITCH_STYLES = [
@@ -73,6 +77,8 @@ interface ResultsDashboardProps {
   onNewAnalysis?: () => void; // 🆕 Callback für neue Analyse
   // 🆕 Phase 3c: Document Scope für Explainability
   documentScope?: DocumentScopeInfo;
+  // 🆕 Phase 4: Legal Integrity Check
+  legalIntegrity?: LegalIntegrity;
 }
 
 // Category configuration
@@ -178,7 +184,9 @@ export default function ResultsDashboard({
   recognizedAs,
   onNewAnalysis,
   // 🆕 Phase 3c: Document Scope für Explainability
-  documentScope
+  documentScope,
+  // 🆕 Phase 4: Legal Integrity Check
+  legalIntegrity
 }: ResultsDashboardProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
@@ -776,6 +784,94 @@ export default function ResultsDashboard({
           )}
         </div>
       </motion.div>
+
+      {/* 🆕 Phase 4: Legal Integrity Banner */}
+      {legalIntegrity && legalIntegrity.level !== 'valid' && (
+        <motion.div
+          className={`${styles.legalIntegrityBanner} ${styles[`integrity_${legalIntegrity.level}`]}`}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.05 }}
+        >
+          <div className={styles.integrityHeader}>
+            <div className={styles.integrityIcon}>
+              {legalIntegrity.level === 'not_usable' && <XCircle size={24} />}
+              {legalIntegrity.level === 'lawyer_required' && <ShieldAlert size={24} />}
+              {legalIntegrity.level === 'review_recommended' && <AlertOctagon size={24} />}
+            </div>
+            <div className={styles.integrityTitle}>
+              <h3>{legalIntegrity.label}</h3>
+              <p>{legalIntegrity.description}</p>
+            </div>
+          </div>
+
+          {/* Red Flags */}
+          {legalIntegrity.redFlags.length > 0 && (
+            <div className={styles.integritySection}>
+              <h4><AlertTriangle size={16} /> Kritische Rechtsverstöße ({legalIntegrity.redFlags.length})</h4>
+              <ul className={styles.integrityList}>
+                {legalIntegrity.redFlags.map((flag, idx) => (
+                  <li key={idx}>
+                    <span className={styles.flagReason}>{flag.reason}</span>
+                    <span className={styles.flagLaw}>{flag.law}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Mandatory Violations */}
+          {legalIntegrity.mandatoryViolations.length > 0 && (
+            <div className={styles.integritySection}>
+              <h4><Shield size={16} /> Verstöße gegen zwingendes Recht ({legalIntegrity.mandatoryViolations.length})</h4>
+              <ul className={styles.integrityList}>
+                {legalIntegrity.mandatoryViolations.map((violation, idx) => (
+                  <li key={idx}>
+                    <span className={styles.flagReason}>{violation.reason}</span>
+                    <span className={styles.flagLaw}>{violation.law}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Recommendation */}
+          <div className={styles.integrityRecommendation}>
+            <strong>Empfehlung:</strong> {legalIntegrity.recommendation}
+          </div>
+
+          {/* Score Cap Info */}
+          {legalIntegrity.originalScore !== legalIntegrity.cappedScore && (
+            <div className={styles.integrityScoreCap}>
+              <Info size={14} />
+              <span>
+                Score wurde von {legalIntegrity.originalScore} auf {legalIntegrity.cappedScore} begrenzt
+                (Max. {legalIntegrity.scoreCap} bei diesem Integritätslevel)
+              </span>
+            </div>
+          )}
+        </motion.div>
+      )}
+
+      {/* Valid Contract Badge - nur wenn keine Probleme */}
+      {legalIntegrity && legalIntegrity.level === 'valid' && (
+        <motion.div
+          className={`${styles.legalIntegrityBanner} ${styles.integrity_valid}`}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.05 }}
+        >
+          <div className={styles.integrityHeader}>
+            <div className={styles.integrityIcon}>
+              <ShieldCheck size={24} />
+            </div>
+            <div className={styles.integrityTitle}>
+              <h3>{legalIntegrity.label}</h3>
+              <p>{legalIntegrity.description}</p>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Category Tabs */}
       <motion.div

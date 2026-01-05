@@ -98,6 +98,31 @@ export interface SmartInsight {
   priority: number;
 }
 
+// 🆕 Phase 4: Legal Integrity Check
+export interface LegalIntegrityFlag {
+  reason: string;
+  law: string;
+  severity: string;
+  type?: string;
+  triggeredBy?: string;
+  element?: string;
+}
+
+export interface LegalIntegrity {
+  level: 'valid' | 'review_recommended' | 'lawyer_required' | 'not_usable';
+  label: string;
+  color: 'green' | 'yellow' | 'orange' | 'red';
+  description: string;
+  scoreCap: number;
+  originalScore: number;
+  cappedScore: number;
+  redFlags: LegalIntegrityFlag[];
+  mandatoryViolations: LegalIntegrityFlag[];
+  missingEssentialia: LegalIntegrityFlag[];
+  totalIssues: number;
+  recommendation: string;
+}
+
 export interface OptimizationCategory {
   id: string;
   name: string;

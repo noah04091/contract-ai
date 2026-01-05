@@ -3057,6 +3057,8 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                     onNewAnalysis={handleReset}
                     // 🆕 Phase 3c: Document Scope für Explainability
                     documentScope={optimizationResult?.meta?.documentScope}
+                    // 🆕 Phase 4: Legal Integrity Check
+                    legalIntegrity={optimizationResult?.legalIntegrity}
                   />
                 ) : (
                   <>
