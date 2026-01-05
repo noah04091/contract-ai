@@ -850,6 +850,11 @@ export default function ResultsDashboard({
               </span>
             </div>
           )}
+
+          {/* Legal Disclaimer - wichtig für Seriosität */}
+          <div className={styles.integrityDisclaimer}>
+            Diese Einschätzung ersetzt keine Rechtsberatung, stellt aber eine fundierte Risikobewertung dar.
+          </div>
         </motion.div>
       )}
 
