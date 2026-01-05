@@ -121,14 +121,24 @@ export function ProductTour({
       }}
       styles={{
         options: {
-          zIndex: 10000,
+          zIndex: 99999,  // 🔧 Höher als alle anderen Elemente
+          primaryColor: '#3B82F6',
           overlayColor: 'rgba(0, 0, 0, 0.5)',
         },
         spotlight: {
           borderRadius: 8,
+          boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
         },
         overlay: {
           backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          mixBlendMode: 'normal' as const,
+        },
+        tooltip: {
+          borderRadius: 12,
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+        },
+        tooltipContainer: {
+          textAlign: 'left' as const,
         },
       }}
       locale={{

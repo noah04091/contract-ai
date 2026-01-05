@@ -101,18 +101,24 @@ export const dashboardTour: TourConfig = {
 // ============================================================
 // CONTRACTS TOUR
 // ============================================================
-// 🎯 Interaktive Tour - NUR Elemente im sichtbaren Bereich (Header/Sidebar)
+// 🎯 Interaktive Tour - NUR Toolbar-Elemente (stabil, immer sichtbar)
 export const contractsTour: TourConfig = {
   id: 'contracts',
   name: 'Verträge Tour',
   description: 'Lerne die Vertragsverwaltung kennen',
   steps: [
     {
-      target: '[data-tour="contracts-upload"]',
-      content: 'Hier kannst du neue Verträge hochladen. Unterstützt werden PDF, DOC, und DOCX Dateien bis 10 MB. Einfach per Drag & Drop!',
-      title: '📄 Vertrag hochladen',
+      target: '[data-tour="contracts-toolbar"]',
+      content: 'Willkommen bei deiner Vertragsverwaltung! Über die Toolbar oben steuerst du alles: Hochladen, Suchen, Filtern.',
+      title: '🎛️ Deine Werkzeugleiste',
       placement: 'bottom',
       disableBeacon: true,
+    },
+    {
+      target: '[data-tour="contracts-upload-btn"]',
+      content: 'Klicke hier um neue Verträge hochzuladen. Unterstützt werden PDF, DOC und DOCX bis 10 MB. Einfach per Drag & Drop!',
+      title: '📄 Vertrag hochladen',
+      placement: 'bottom',
     },
     {
       target: '[data-tour="contracts-search"]',
@@ -121,16 +127,10 @@ export const contractsTour: TourConfig = {
       placement: 'bottom',
     },
     {
-      target: '[data-tour="contracts-folders"]',
-      content: 'Organisiere deine Verträge in Ordnern. Erstelle eigene Ordner oder nutze die Smart Folders für automatische Kategorisierung.',
-      title: '📁 Ordner & Organisation',
-      placement: 'right',
-    },
-    {
-      target: 'body',
-      content: 'In der Liste unten siehst du alle deine Verträge. Klicke auf einen Vertrag um Details zu sehen oder eine KI-Analyse zu starten!',
-      title: '🤖 Verträge & KI-Analyse',
-      placement: 'center',
+      target: '[data-tour="contracts-list"]',
+      content: 'Hier siehst du all deine Verträge. Klicke auf einen Vertrag für Details, oder nutze die KI-Analyse für tiefere Einblicke!',
+      title: '📋 Deine Verträge',
+      placement: 'top',
     },
   ],
 };

@@ -3367,7 +3367,6 @@ export default function Contracts() {
               <button
                 className={`${styles.sidebarNavItem} ${activeSection === 'upload' ? styles.active : ''}`}
                 onClick={() => setActiveSection('upload')}
-                data-tour="contracts-upload"
               >
                 <Upload size={18} className={styles.sidebarNavIcon} />
                 <span>Hochladen</span>
@@ -3413,7 +3412,7 @@ export default function Contracts() {
 
               {/* Folders */}
               <p className={styles.sidebarTitle}>Ordner</p>
-              <div className={styles.sidebarFolderList} data-tour="contracts-folders">
+              <div className={styles.sidebarFolderList}>
                 {/* Alle Verträge */}
                 <button
                   className={`${styles.sidebarFolderItem} ${activeFolder === null ? styles.active : ''}`}
@@ -3608,11 +3607,12 @@ export default function Contracts() {
             </div>
 
             {/* Enterprise Toolbar */}
-            <div className={styles.enterpriseToolbar}>
+            <div className={styles.enterpriseToolbar} data-tour="contracts-toolbar">
               <div className={styles.toolbarSection}>
                 <button
                   className={`${styles.toolbarButton} ${styles.primary}`}
                   onClick={() => setActiveSection('upload')}
+                  data-tour="contracts-upload-btn"
                 >
                   <FileUp size={16} />
                   <span>Hochladen</span>
