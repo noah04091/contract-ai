@@ -256,21 +256,43 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
     }
   };
 
-  // 🔧 Body scroll lock when modal is open
+  // 🔧 AGGRESSIVER Body scroll lock when modal is open
   useEffect(() => {
     if (isOpen) {
+      // Speichere aktuelle Scroll-Position
+      const scrollY = window.scrollY;
+
+      // Lock body
       document.body.style.overflow = 'hidden';
-      document.body.style.paddingRight = '0px'; // Prevent layout shift
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = '0';
+      document.body.style.right = '0';
+      document.body.style.width = '100%';
+
+      // Auch HTML element locken
+      document.documentElement.style.overflow = 'hidden';
+
+      return () => {
+        // Unlock body
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.left = '';
+        document.body.style.right = '';
+        document.body.style.width = '';
+        document.documentElement.style.overflow = '';
+
+        // Scroll-Position wiederherstellen
+        window.scrollTo(0, scrollY);
+      };
     }
-    return () => {
-      document.body.style.overflow = '';
-      document.body.style.paddingRight = '';
-    };
   }, [isOpen]);
 
   if (!isOpen) return null;
 
   // 🔧 KOMPLETT INLINE - keine CSS Klassen, nur inline styles
+  // z-index: 2147483647 ist der maximal sichere Wert für CSS
   const overlayStyle: React.CSSProperties = {
     position: 'fixed',
     top: 0,
@@ -279,7 +301,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
     bottom: 0,
     width: '100vw',
     height: '100vh',
-    zIndex: 999999,
+    zIndex: 2147483647, // Maximaler z-index Wert
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -289,6 +311,11 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
     padding: 20,
     boxSizing: 'border-box',
     overflow: 'hidden',
+    // Verhindert Scroll-Propagation
+    overscrollBehavior: 'contain',
+    touchAction: 'none',
+    // Isoliert von allem anderen
+    isolation: 'isolate',
   };
 
   const modalStyle: React.CSSProperties = {
@@ -300,6 +327,8 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
     maxHeight: '90vh',
     overflow: 'hidden',
     boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+    // Verhindert dass der Modal-Inhalt das Overlay beeinflusst
+    contain: 'layout paint',
   };
 
   const modalContent = (
