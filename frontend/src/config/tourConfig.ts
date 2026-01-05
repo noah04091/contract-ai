@@ -64,41 +64,42 @@ const tooltipStyles = {
 // ============================================================
 // DASHBOARD TOUR
 // ============================================================
+// 🔧 FIX: Alle Steps auf placement: 'center' für konsistentes, bug-freies Verhalten
 export const dashboardTour: TourConfig = {
   id: 'dashboard',
   name: 'Dashboard Tour',
   description: 'Lerne dein Dashboard kennen',
   steps: [
     {
-      target: '[data-tour="dashboard-welcome"]',
+      target: 'body',
       content: 'Willkommen in deinem Dashboard! Hier siehst du alles auf einen Blick: Verträge, Fristen, und wichtige Aktionen.',
-      title: 'Dein Command Center',
+      title: '🏠 Dein Command Center',
       placement: 'center',
       disableBeacon: true,
     },
     {
-      target: '[data-tour="dashboard-stats"]',
-      content: 'Diese Karten zeigen dir die wichtigsten Kennzahlen: Aktive Verträge, bevorstehende Fristen, und mehr.',
-      title: 'Statistiken im Überblick',
-      placement: 'bottom',
+      target: 'body',
+      content: 'Die Karten oben zeigen dir die wichtigsten Kennzahlen: Aktive Verträge, bevorstehende Fristen, und mehr.',
+      title: '📊 Statistiken im Überblick',
+      placement: 'center',
     },
     {
-      target: '[data-tour="dashboard-urgent"]',
-      content: 'Hier werden dringende Aktionen angezeigt - Fristen die bald ablaufen oder Verträge die Aufmerksamkeit brauchen.',
-      title: 'Dringende Aktionen',
-      placement: 'left',
+      target: 'body',
+      content: 'Im Bereich "Dringende Aktionen" werden Fristen angezeigt, die bald ablaufen oder Verträge die Aufmerksamkeit brauchen.',
+      title: '⚡ Dringende Aktionen',
+      placement: 'center',
     },
     {
-      target: '[data-tour="dashboard-quick-actions"]',
-      content: 'Mit diesen Schnellaktionen kannst du direkt loslegen: Vertrag hochladen, analysieren, oder generieren.',
-      title: 'Schnellaktionen',
-      placement: 'top',
+      target: 'body',
+      content: 'Mit den Schnellaktionen kannst du direkt loslegen: Vertrag hochladen, analysieren, oder generieren.',
+      title: '🚀 Schnellaktionen',
+      placement: 'center',
     },
     {
-      target: '[data-tour="dashboard-sidebar"]',
-      content: 'Über die Sidebar navigierst du zu allen Bereichen: Verträge, Kalender, Optimizer, und mehr.',
-      title: 'Navigation',
-      placement: 'right',
+      target: 'body',
+      content: 'Über die linke Sidebar navigierst du zu allen Bereichen: Verträge, Kalender, Optimizer, und mehr.',
+      title: '📍 Navigation',
+      placement: 'center',
     },
   ],
 };
@@ -106,41 +107,42 @@ export const dashboardTour: TourConfig = {
 // ============================================================
 // CONTRACTS TOUR
 // ============================================================
+// 🔧 FIX: Alle Steps auf placement: 'center' um Scroll-/Sprung-Bugs zu vermeiden
 export const contractsTour: TourConfig = {
   id: 'contracts',
   name: 'Verträge Tour',
   description: 'Lerne die Vertragsverwaltung kennen',
   steps: [
     {
-      target: '[data-tour="contracts-upload"]',
-      content: 'Hier kannst du neue Verträge hochladen. Unterstützt werden PDF, DOC, und DOCX Dateien bis 10 MB.',
-      title: 'Vertrag hochladen',
-      placement: 'bottom',
+      target: 'body',
+      content: 'Willkommen bei deiner Vertragsverwaltung! Hier lädst du Verträge hoch und behältst den Überblick. Unterstützt werden PDF, DOC, und DOCX Dateien bis 10 MB.',
+      title: '📄 Vertrag hochladen',
+      placement: 'center',
       disableBeacon: true,
     },
     {
-      target: '[data-tour="contracts-list"]',
-      content: 'Deine Verträge werden hier aufgelistet. Du kannst nach Name, Datum, oder Status filtern und sortieren.',
-      title: 'Vertragsliste',
-      placement: 'top',
+      target: 'body',
+      content: 'Deine Verträge werden in einer übersichtlichen Liste angezeigt. Du kannst nach Name, Datum, oder Status filtern und sortieren.',
+      title: '📋 Vertragsliste',
+      placement: 'center',
     },
     {
-      target: '[data-tour="contracts-search"]',
-      content: 'Mit der Suche findest du schnell jeden Vertrag. Suche nach Name, Inhalt, oder Vertragspartner.',
-      title: 'Suche',
-      placement: 'bottom',
+      target: 'body',
+      content: 'Mit der Suchleiste oben findest du schnell jeden Vertrag. Suche nach Name, Inhalt, oder Vertragspartner.',
+      title: '🔍 Suche & Filter',
+      placement: 'center',
     },
     {
-      target: '[data-tour="contracts-folders"]',
-      content: 'Organisiere deine Verträge in Ordnern. Erstelle eigene Ordner oder nutze die Smart Folders für automatische Kategorisierung.',
-      title: 'Ordner & Organisation',
-      placement: 'right',
+      target: 'body',
+      content: 'Organisiere deine Verträge in Ordnern über die linke Seitenleiste. Erstelle eigene Ordner oder nutze die Smart Folders für automatische Kategorisierung.',
+      title: '📁 Ordner & Organisation',
+      placement: 'center',
     },
     {
-      target: '[data-tour="contracts-analyze"]',
-      content: 'Klicke auf "Analysieren" um eine KI-Analyse zu starten. Du erhältst Risikobewertung, Klauselanalyse, und Optimierungsvorschläge.',
-      title: 'KI-Analyse',
-      placement: 'left',
+      target: 'body',
+      content: 'Klicke auf einen Vertrag und dann auf "Analysieren" um eine KI-Analyse zu starten. Du erhältst Risikobewertung, Klauselanalyse, und Optimierungsvorschläge.',
+      title: '🤖 KI-Analyse',
+      placement: 'center',
     },
   ],
 };
@@ -148,41 +150,42 @@ export const contractsTour: TourConfig = {
 // ============================================================
 // CALENDAR TOUR
 // ============================================================
+// 🔧 FIX: Alle Steps auf placement: 'center' um Scroll-/Sprung-Bugs zu vermeiden
 export const calendarTour: TourConfig = {
   id: 'calendar',
   name: 'Kalender Tour',
   description: 'Lerne den Fristenkalender kennen',
   steps: [
     {
-      target: '[data-tour="calendar-view"]',
-      content: 'Der Kalender zeigt alle wichtigen Vertragstermine: Kündigungsfristen, Verlängerungen, und Zahlungstermine.',
-      title: 'Fristenkalender',
+      target: 'body',
+      content: 'Willkommen im Fristenkalender! Hier siehst du alle wichtigen Vertragstermine: Kündigungsfristen, Verlängerungen, und Zahlungstermine.',
+      title: '📅 Fristenkalender',
       placement: 'center',
       disableBeacon: true,
     },
     {
-      target: '[data-tour="calendar-event"]',
-      content: 'Klicke auf ein Event für Details. Du kannst Erinnerungen setzen, Notizen hinzufügen, oder direkt zum Vertrag springen.',
-      title: 'Event Details',
-      placement: 'top',
+      target: 'body',
+      content: 'Klicke auf ein Event im Kalender für Details. Du kannst Erinnerungen setzen, Notizen hinzufügen, oder direkt zum Vertrag springen.',
+      title: '📌 Event Details',
+      placement: 'center',
     },
     {
-      target: '[data-tour="calendar-filters"]',
-      content: 'Filtere nach Event-Typ: Kündigungen, Verlängerungen, Zahlungen, oder eigene Erinnerungen.',
-      title: 'Filter',
-      placement: 'left',
+      target: 'body',
+      content: 'In der rechten Seitenleiste kannst du nach Event-Typ filtern: Kündigungen, Verlängerungen, Zahlungen, oder eigene Erinnerungen.',
+      title: '🔍 Filter',
+      placement: 'center',
     },
     {
-      target: '[data-tour="calendar-create"]',
-      content: 'Erstelle eigene Erinnerungen für wichtige Termine. Diese werden automatisch per E-Mail erinnert.',
-      title: 'Erinnerung erstellen',
-      placement: 'bottom',
+      target: 'body',
+      content: 'Über den Plus-Button im Header oder durch Klick auf einen Tag kannst du eigene Erinnerungen erstellen. Diese werden automatisch per E-Mail erinnert.',
+      title: '➕ Erinnerung erstellen',
+      placement: 'center',
     },
     {
-      target: '[data-tour="calendar-stats"]',
-      content: 'Die Statistik-Karten zeigen dir auf einen Blick: Kommende Fristen, kritische Events, und mehr.',
-      title: 'Statistiken',
-      placement: 'left',
+      target: 'body',
+      content: 'Die Statistik-Karten in der Seitenleiste zeigen dir auf einen Blick: Kommende Fristen, kritische Events, und mehr. Klicke darauf für Details.',
+      title: '📊 Statistiken',
+      placement: 'center',
     },
   ],
 };
@@ -190,35 +193,36 @@ export const calendarTour: TourConfig = {
 // ============================================================
 // OPTIMIZER TOUR
 // ============================================================
+// 🔧 FIX: Alle Steps auf placement: 'center' um Scroll-/Sprung-Bugs zu vermeiden
 export const optimizerTour: TourConfig = {
   id: 'optimizer',
   name: 'Optimizer Tour',
   description: 'Lerne den KI-Optimizer kennen',
   steps: [
     {
-      target: '[data-tour="optimizer-upload"]',
-      content: 'Lade einen Vertrag hoch, den du optimieren möchtest. Die KI analysiert und verbessert ihn.',
-      title: 'Vertrag optimieren',
-      placement: 'bottom',
+      target: 'body',
+      content: 'Willkommen beim KI-Optimizer! Lade einen Vertrag hoch, den du optimieren möchtest. Die KI analysiert und verbessert ihn automatisch.',
+      title: '🔧 Vertrag optimieren',
+      placement: 'center',
       disableBeacon: true,
     },
     {
-      target: '[data-tour="optimizer-perspective"]',
+      target: 'body',
       content: 'Wähle deine Perspektive: Neutral, als Vertragsersteller, oder als Empfänger. Die Optimierungen werden entsprechend angepasst.',
-      title: 'Perspektive wählen',
-      placement: 'bottom',
+      title: '👁️ Perspektive wählen',
+      placement: 'center',
     },
     {
-      target: '[data-tour="optimizer-results"]',
-      content: 'Hier siehst du alle Optimierungsvorschläge. Jeder Vorschlag zeigt Original, Verbesserung, und Begründung.',
-      title: 'Optimierungen',
-      placement: 'top',
+      target: 'body',
+      content: 'Nach der Analyse siehst du alle Optimierungsvorschläge. Jeder Vorschlag zeigt Original, Verbesserung, und Begründung.',
+      title: '📝 Optimierungen',
+      placement: 'center',
     },
     {
-      target: '[data-tour="optimizer-apply"]',
-      content: 'Wähle die Vorschläge aus, die du übernehmen möchtest, und generiere den optimierten Vertrag.',
-      title: 'Anwenden',
-      placement: 'left',
+      target: 'body',
+      content: 'Wähle die Vorschläge aus, die du übernehmen möchtest, und generiere den optimierten Vertrag als PDF.',
+      title: '✅ Anwenden',
+      placement: 'center',
     },
   ],
 };
@@ -226,35 +230,36 @@ export const optimizerTour: TourConfig = {
 // ============================================================
 // LEGAL LENS TOUR
 // ============================================================
+// 🔧 FIX: Alle Steps auf placement: 'center' um Scroll-/Sprung-Bugs zu vermeiden
 export const legalLensTour: TourConfig = {
   id: 'legal-lens',
   name: 'Legal Lens Tour',
   description: 'Lerne Legal Lens kennen',
   steps: [
     {
-      target: '[data-tour="legal-lens-document"]',
-      content: 'Hier siehst du deinen Vertrag. Klicke auf eine beliebige Klausel, um sie zu analysieren.',
-      title: 'Dokument-Ansicht',
-      placement: 'right',
+      target: 'body',
+      content: 'Willkommen bei Legal Lens! Hier siehst du deinen Vertrag mit interaktiver Klausel-Analyse. Klicke auf eine beliebige Klausel, um sie zu analysieren.',
+      title: '🔍 Dokument-Ansicht',
+      placement: 'center',
       disableBeacon: true,
     },
     {
-      target: '[data-tour="legal-lens-clause"]',
+      target: 'body',
       content: 'Markierte Klauseln zeigen potenzielle Risiken oder wichtige Punkte. Grün = OK, Gelb = Achtung, Rot = Risiko.',
-      title: 'Klausel-Markierungen',
-      placement: 'left',
+      title: '🚦 Klausel-Markierungen',
+      placement: 'center',
     },
     {
-      target: '[data-tour="legal-lens-explanation"]',
-      content: 'Die Erklärung zeigt dir in einfacher Sprache, was die Klausel bedeutet und worauf du achten solltest.',
-      title: 'Klausel-Erklärung',
-      placement: 'left',
+      target: 'body',
+      content: 'Wenn du auf eine Klausel klickst, zeigt dir die Erklärung in einfacher Sprache, was sie bedeutet und worauf du achten solltest.',
+      title: '💡 Klausel-Erklärung',
+      placement: 'center',
     },
     {
-      target: '[data-tour="legal-lens-actions"]',
-      content: 'Von hier aus kannst du direkt zur Optimierung springen oder die Klausel mit Experten teilen.',
-      title: 'Aktionen',
-      placement: 'top',
+      target: 'body',
+      content: 'Von der Klausel-Ansicht aus kannst du direkt zur Optimierung springen oder die Klausel mit Experten teilen.',
+      title: '⚡ Aktionen',
+      placement: 'center',
     },
   ],
 };
@@ -262,41 +267,42 @@ export const legalLensTour: TourConfig = {
 // ============================================================
 // CONTRACT BUILDER TOUR
 // ============================================================
+// 🔧 FIX: Alle Steps auf placement: 'center' um Scroll-/Sprung-Bugs zu vermeiden
 export const contractBuilderTour: TourConfig = {
   id: 'contract-builder',
   name: 'Contract Builder Tour',
   description: 'Lerne den Vertragsbaukasten kennen',
   steps: [
     {
-      target: '[data-tour="builder-toolbar"]',
-      content: 'Die Toolbar enthält alle Bausteine: Überschriften, Absätze, Klauseln, Tabellen, und mehr.',
-      title: 'Bausteine',
-      placement: 'bottom',
+      target: 'body',
+      content: 'Willkommen im Contract Builder! In der linken Toolbar findest du alle Bausteine: Überschriften, Absätze, Klauseln, Tabellen, und mehr.',
+      title: '🧱 Bausteine',
+      placement: 'center',
       disableBeacon: true,
     },
     {
-      target: '[data-tour="builder-canvas"]',
-      content: 'Ziehe Bausteine auf die Arbeitsfläche und ordne sie per Drag & Drop an.',
-      title: 'Arbeitsfläche',
-      placement: 'left',
+      target: 'body',
+      content: 'Die große Fläche in der Mitte ist deine Arbeitsfläche. Ziehe Bausteine hierher und ordne sie per Drag & Drop an.',
+      title: '📄 Arbeitsfläche',
+      placement: 'center',
     },
     {
-      target: '[data-tour="builder-properties"]',
-      content: 'Im Eigenschaften-Panel passt du den ausgewählten Baustein an: Text, Styling, Variablen.',
-      title: 'Eigenschaften',
-      placement: 'left',
+      target: 'body',
+      content: 'Wenn du einen Baustein auswählst, erscheint rechts das Eigenschaften-Panel. Hier passt du Text, Styling, und Variablen an.',
+      title: '⚙️ Eigenschaften',
+      placement: 'center',
     },
     {
-      target: '[data-tour="builder-variables"]',
-      content: 'Variablen werden automatisch erkannt. Klicke darauf, um den Wert einzutragen.',
-      title: 'Variablen',
-      placement: 'left',
+      target: 'body',
+      content: 'Variablen wie {{name}} werden automatisch erkannt und hervorgehoben. Klicke darauf, um den Wert direkt einzutragen.',
+      title: '🔤 Variablen',
+      placement: 'center',
     },
     {
-      target: '[data-tour="builder-export"]',
-      content: 'Wenn du fertig bist, exportiere den Vertrag als PDF oder speichere ihn als Vorlage.',
-      title: 'Export',
-      placement: 'bottom',
+      target: 'body',
+      content: 'Wenn du fertig bist, klicke oben rechts auf "Export" um den Vertrag als PDF zu speichern, oder speichere ihn als wiederverwendbare Vorlage.',
+      title: '📤 Export',
+      placement: 'center',
     },
   ],
 };
