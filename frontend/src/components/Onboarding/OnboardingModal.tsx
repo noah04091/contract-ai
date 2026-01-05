@@ -1,9 +1,9 @@
 // 📁 frontend/src/components/Onboarding/OnboardingModal.tsx
 // Enterprise Onboarding System v3.0 - Main Modal Component
-// 🔧 FIX: Portal-basiert für korrektes position:fixed Verhalten
+// 🔧 FIX: Native <dialog> Element für 100% zuverlässiges Modal-Verhalten
+// Der Browser rendert showModal() in die "top layer" - umgeht ALLE CSS-Stacking-Probleme!
 
-import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, Upload, FileText, Calendar, Shield, Sparkles, Building2, Check, Circle, X } from 'lucide-react';
 import { useOnboarding } from '../../hooks/useOnboarding';
@@ -256,70 +256,44 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
     }
   };
 
-  // 🔧 AGGRESSIVER Body scroll lock when modal is open
+  // 🔧 Native Dialog Ref
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  // 🔧 Native Dialog öffnen/schließen
   useEffect(() => {
-    if (isOpen) {
-      // Speichere aktuelle Scroll-Position
-      const scrollY = window.scrollY;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
 
-      // Lock body
-      document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.left = '0';
-      document.body.style.right = '0';
-      document.body.style.width = '100%';
-
-      // Auch HTML element locken
-      document.documentElement.style.overflow = 'hidden';
-
-      return () => {
-        // Unlock body
-        document.body.style.overflow = '';
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.left = '';
-        document.body.style.right = '';
-        document.body.style.width = '';
-        document.documentElement.style.overflow = '';
-
-        // Scroll-Position wiederherstellen
-        window.scrollTo(0, scrollY);
-      };
+    if (isOpen && !dialog.open) {
+      dialog.showModal();
+    } else if (!isOpen && dialog.open) {
+      dialog.close();
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  // 🔧 ESC-Taste abfangen (native dialog schließt sonst automatisch)
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
 
-  // 🔧 KOMPLETT INLINE - keine CSS Klassen, nur inline styles
-  // z-index: 2147483647 ist der maximal sichere Wert für CSS
-  const overlayStyle: React.CSSProperties = {
+    const handleCancel = (e: Event) => {
+      e.preventDefault(); // Verhindert automatisches Schließen
+      handleSkip(); // Unser eigenes Skip-Handling
+    };
+
+    dialog.addEventListener('cancel', handleCancel);
+    return () => dialog.removeEventListener('cancel', handleCancel);
+  }, []);
+
+  // Native dialog styles
+  const dialogStyle: React.CSSProperties = {
     position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    width: '100vw',
-    height: '100vh',
-    zIndex: 2147483647, // Maximaler z-index Wert
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: 'rgba(0, 0, 0, 0.6)',
-    backdropFilter: 'blur(8px)',
-    WebkitBackdropFilter: 'blur(8px)',
-    padding: 20,
-    boxSizing: 'border-box',
-    overflow: 'hidden',
-    // Verhindert Scroll-Propagation
-    overscrollBehavior: 'contain',
-    touchAction: 'none',
-    // Isoliert von allem anderen
-    isolation: 'isolate',
-  };
-
-  const modalStyle: React.CSSProperties = {
-    position: 'relative',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    margin: 0,
+    padding: 0,
+    border: 'none',
     background: '#fff',
     borderRadius: 20,
     width: '100%',
@@ -327,88 +301,94 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
     maxHeight: '90vh',
     overflow: 'hidden',
     boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-    // Verhindert dass der Modal-Inhalt das Overlay beeinflusst
-    contain: 'layout paint',
+    zIndex: 2147483647,
   };
 
+  // Backdrop wird über ::backdrop pseudo-element gestyled (siehe CSS)
+
   const modalContent = (
-    <div
-      style={overlayStyle}
+    <dialog
+      ref={dialogRef}
+      style={dialogStyle}
       onClick={(e) => {
-        if (e.target === e.currentTarget) {
+        // Klick außerhalb des Dialogs (auf backdrop) schließt
+        const rect = (e.target as HTMLDialogElement).getBoundingClientRect();
+        if (
+          e.clientX < rect.left ||
+          e.clientX > rect.right ||
+          e.clientY < rect.top ||
+          e.clientY > rect.bottom
+        ) {
           handleSkip();
         }
       }}
     >
-      <div
-        style={modalStyle}
-        onClick={(e) => e.stopPropagation()}
+      {/* Close Button */}
+      <button
+        className={styles.closeButton}
+        onClick={handleSkip}
+        aria-label="Schließen"
       >
-          {/* Close Button */}
-          <button
-            className={styles.closeButton}
-            onClick={handleSkip}
-            aria-label="Schließen"
-          >
-            <X size={20} />
-          </button>
+        <X size={20} />
+      </button>
 
-          <div className={styles.content}>
-            {/* Progress Dots */}
-            <div className={styles.progress}>
-              {STEPS.map((step, index) => (
-                <div
-                  key={step.id}
-                  className={`${styles.progressDot} ${
-                    index === currentStep ? styles.active : ''
-                  } ${index < currentStep ? styles.completed : ''}`}
-                />
-              ))}
-            </div>
+      <div className={styles.content}>
+        {/* Progress Dots */}
+        <div className={styles.progress}>
+          {STEPS.map((step, index) => (
+            <div
+              key={step.id}
+              className={`${styles.progressDot} ${
+                index === currentStep ? styles.active : ''
+              } ${index < currentStep ? styles.completed : ''}`}
+            />
+          ))}
+        </div>
 
-            {/* Step Content */}
-            {renderStepContent()}
-          </div>
-
-          {/* Footer */}
-          <div className={styles.footer}>
-            <button className={styles.skipButton} onClick={handleSkip}>
-              Überspringen
-            </button>
-
-            {STEPS[currentStep].id === 'upload' ? (
-              <div style={{ display: 'flex', gap: 12 }}>
-                <button className={styles.laterButton} onClick={handleNext}>
-                  Später
-                </button>
-                <button
-                  className={styles.nextButton}
-                  onClick={() => {
-                    navigate('/contracts');
-                    handleNext();
-                  }}
-                >
-                  Jetzt hochladen
-                  <ChevronRight size={18} />
-                </button>
-              </div>
-            ) : (
-              <button
-                className={styles.nextButton}
-                onClick={handleNext}
-                disabled={STEPS[currentStep].id === 'personalization' && !profile.primaryUseCase}
-              >
-                {currentStep === STEPS.length - 1 ? 'Zum Dashboard' : 'Weiter'}
-                <ChevronRight size={18} />
-              </button>
-            )}
-          </div>
+        {/* Step Content */}
+        {renderStepContent()}
       </div>
-    </div>
+
+      {/* Footer */}
+      <div className={styles.footer}>
+        <button className={styles.skipButton} onClick={handleSkip}>
+          Überspringen
+        </button>
+
+        {STEPS[currentStep].id === 'upload' ? (
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button className={styles.laterButton} onClick={handleNext}>
+              Später
+            </button>
+            <button
+              className={styles.nextButton}
+              onClick={() => {
+                navigate('/contracts');
+                handleNext();
+              }}
+            >
+              Jetzt hochladen
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        ) : (
+          <button
+            className={styles.nextButton}
+            onClick={handleNext}
+            disabled={STEPS[currentStep].id === 'personalization' && !profile.primaryUseCase}
+          >
+            {currentStep === STEPS.length - 1 ? 'Zum Dashboard' : 'Weiter'}
+            <ChevronRight size={18} />
+          </button>
+        )}
+      </div>
+    </dialog>
   );
 
-  // 🔧 Portal: Rendert direkt in document.body, unabhängig von Parent-CSS
-  return createPortal(modalContent, document.body);
+  // Native <dialog> mit showModal() braucht kein Portal - es wird automatisch in die "top layer" gerendert
+  // Das ist der Browser-native Weg, der ALLE CSS-Stacking-Probleme umgeht!
+  if (!isOpen) return null;
+  return modalContent;
 }
 
 export default OnboardingModal;

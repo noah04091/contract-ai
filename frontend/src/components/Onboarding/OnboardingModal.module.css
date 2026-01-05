@@ -1,6 +1,16 @@
 /* 📁 frontend/src/components/Onboarding/OnboardingModal.module.css */
 /* Enterprise Onboarding System v3.0 - Premium Modal Design */
+/* 🔧 FIX: Verwendet native <dialog> Element für 100% zuverlässiges Modal-Verhalten */
 
+/* Native Dialog Backdrop - wird vom Browser automatisch gerendert */
+/* WICHTIG: :global weil ::backdrop kein CSS Module Selector ist */
+:global(dialog::backdrop) {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Legacy overlay class (nicht mehr verwendet, für Referenz) */
 .overlay {
   /* 🔧 KRITISCH: Absolute Positionierung im Viewport */
   position: fixed !important;
