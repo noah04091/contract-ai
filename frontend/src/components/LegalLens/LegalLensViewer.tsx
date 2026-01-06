@@ -466,15 +466,16 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         }
       }
 
-      // Minimum-Score erforderlich (verhindert schlechte Matches)
-      if (bestMatchScore < 0.1) {
-        matchingClause = null;
-        console.log('[Legal Lens] No good match found, score:', bestMatchScore);
+      // ✅ Nur GUTE Matches verwenden (Score >= 0.7)
+      // Bei schlechten Matches → temporäre Klausel erstellen
+      if (bestMatchScore >= 0.7) {
+        console.log('[Legal Lens] Good match:', matchingClause?.id, 'score:', bestMatchScore.toFixed(2));
       } else {
-        console.log('[Legal Lens] Best match:', matchingClause?.id, 'score:', bestMatchScore.toFixed(2));
+        console.log('[Legal Lens] Low score match, creating temp clause. Best was:', matchingClause?.id, 'score:', bestMatchScore.toFixed(2));
+        matchingClause = null; // Zurücksetzen → temporäre Klausel wird erstellt
       }
 
-      // ✅ Fix 2: Content-basierte ID (statt Date.now())
+      // ✅ IMMER eine Klausel erstellen wenn kein guter Match
       if (!matchingClause && cleanSentenceText.length > 10) {
         // Deterministischer Hash: gleicher Text + contractId = gleiche ID
         const hashInput = cleanSentenceText.substring(0, 100).toLowerCase().replace(/\s+/g, ' ');
