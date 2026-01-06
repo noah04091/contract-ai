@@ -266,10 +266,10 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     if (isAnalyzing) return;
 
     // Cache-Key für diese Klausel+Perspektive
-    const cacheKey = `${selectedClause.id}-${currentPerspective}`;
+    const cacheKey = `${selectedClause.id}-${currentPerspective}` as const;
 
     // ✅ Direkter Cache-Check (statt Ref-basierter Hacks)
-    const isAlreadyCached = analysisCache[cacheKey] !== undefined;
+    const isAlreadyCached = cacheKey in analysisCache;
     if (isAlreadyCached) {
       console.log('[Legal Lens] Using cached analysis:', cacheKey);
       return;
