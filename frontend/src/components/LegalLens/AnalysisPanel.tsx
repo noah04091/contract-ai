@@ -243,8 +243,22 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
 
   const actionInfo = ACTION_LABELS[actionLevel] || ACTION_LABELS.negotiate;
 
+  // ✅ Phase 2 Task 2.1: Ein-Satz-Erklärung extrahieren
+  const oneSentenceSummary = perspectiveData?.explanation?.simple ||
+    perspectiveData?.explanation?.summary ||
+    actionReason ||
+    null;
+
   return (
     <div className={styles.analysisContent}>
+      {/* 📝 Phase 2: EIN-SATZ-ERKLÄRUNG - Sofortiges Verständnis */}
+      {oneSentenceSummary && (
+        <div className={styles.oneSentenceSummary}>
+          <span className={styles.summaryLabel}>Auf einen Blick</span>
+          <p className={styles.summaryText}>{oneSentenceSummary}</p>
+        </div>
+      )}
+
       {/* 🎯 ACTION BADGE - DAS WICHTIGSTE ZUERST */}
       <div
         className={styles.analysisSection}
