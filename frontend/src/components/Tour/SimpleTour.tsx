@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
+import type { CallBackProps } from 'react-joyride';
 import { useTour } from '../../hooks/useTour';
 import type { TourId } from '../../config/tourConfig';
 import styles from './SimpleTour.module.css';
@@ -144,7 +145,7 @@ export function SimpleTour({
         size: tour.steps.length,
         step: tour.steps[stepIndex],
         origin: null,
-      } as any);
+      } as CallBackProps);
     } else {
       // Complete tour
       handleJoyrideCallback({
@@ -157,7 +158,7 @@ export function SimpleTour({
         size: tour.steps.length,
         step: tour.steps[stepIndex],
         origin: null,
-      } as any);
+      } as CallBackProps);
     }
   }, [stepIndex, tour, handleJoyrideCallback]);
 
@@ -175,7 +176,7 @@ export function SimpleTour({
       size: tour.steps.length,
       step: tour.steps[stepIndex],
       origin: null,
-    } as any);
+    } as CallBackProps);
   }, [stepIndex, tour, handleJoyrideCallback]);
 
   // Handle skip/close
@@ -188,9 +189,9 @@ export function SimpleTour({
       controlled: true,
       lifecycle: 'complete',
       size: tour?.steps.length || 0,
-      step: tour?.steps[stepIndex] || {} as any,
+      step: tour?.steps[stepIndex] || ({} as CallBackProps['step']),
       origin: null,
-    } as any);
+    } as CallBackProps);
   }, [stepIndex, tour, handleJoyrideCallback]);
 
   // ESC key to close
