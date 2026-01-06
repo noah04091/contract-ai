@@ -3,7 +3,7 @@
 // ✨ LINEAR/NOTION QUALITY - Smooth animations, personalization, professional design
 // 🔧 Native <dialog> Element für 100% zuverlässiges Modal-Verhalten
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -24,7 +24,10 @@ import {
   FileSignature,
   Rocket,
   Target,
-  Zap
+  Zap,
+  CheckCircle,
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
 import { useOnboarding } from '../../hooks/useOnboarding';
 import { useAuth } from '../../context/AuthContext';
@@ -105,13 +108,21 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
     completeStep,
     completeOnboarding,
     skipOnboarding,
-    startOnboarding
+    startOnboarding,
+    updateChecklistItem
   } = useOnboarding();
   const { celebrate } = useCelebrationContext();
 
   const [currentStep, setCurrentStep] = useState(0);
   const [profile, setProfile] = useState<OnboardingProfile>({});
   const [direction, setDirection] = useState(1); // 1 = forward, -1 = backward
+
+  // 📁 File Upload State
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   // Get user's first name for personalization
   const userName = user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'there';
@@ -153,10 +164,11 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
     }
   };
 
-  const handleSkip = async () => {
+  // 🔧 useCallback für stabile Referenz (wird im ESC-Handler verwendet)
+  const handleSkip = useCallback(async () => {
     await skipOnboarding();
     onClose?.();
-  };
+  }, [skipOnboarding, onClose]);
 
   // Type for use cases
   type UseCaseType = 'analyze' | 'generate' | 'manage' | 'sign';
@@ -193,6 +205,111 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
   const isUseCaseSelected = (useCase: string) => {
     const cases: UseCaseType[] = profile.useCases || [];
     return cases.includes(useCase as UseCaseType);
+  };
+
+  // ============================================
+  // FILE UPLOAD HANDLERS
+  // ============================================
+  const handleFileUpload = useCallback(async (file: File) => {
+    // Validate file type
+    const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (!validTypes.includes(file.type)) {
+      setUploadError('Bitte nur PDF oder Word-Dokumente hochladen');
+      setUploadState('error');
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError('Datei ist zu groß (max. 10 MB)');
+      setUploadState('error');
+      return;
+    }
+
+    setUploadState('uploading');
+    setUploadedFileName(file.name);
+    setUploadError(null);
+
+    try {
+      // Create form data
+      const formData = new FormData();
+      formData.append('file', file);
+
+      // Get auth token
+      const authToken = localStorage.getItem('authToken');
+
+      // Upload to backend - correct endpoint is /api/upload
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Upload fehlgeschlagen');
+      }
+
+      const data = await response.json();
+      console.log('✅ Onboarding Upload erfolgreich:', data);
+
+      setUploadState('success');
+
+      // Mark the upload step as complete in onboarding
+      await completeStep('upload', { contractId: data.contract?._id || data.contractId });
+
+      // ✅ WICHTIG: Auch Checklist-Item "firstContractUploaded" als erledigt markieren
+      await updateChecklistItem('firstContractUploaded');
+
+      // Auto-advance to next step after 1.5 seconds
+      setTimeout(() => {
+        handleNext();
+      }, 1500);
+
+    } catch (error) {
+      console.error('❌ Upload Fehler:', error);
+      setUploadError(error instanceof Error ? error.message : 'Upload fehlgeschlagen');
+      setUploadState('error');
+    }
+  }, [completeStep, updateChecklistItem]);
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileUpload(file);
+    }
+    // Reset input for re-selection
+    e.target.value = '';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      handleFileUpload(file);
+    }
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
   };
 
   // ============================================
@@ -360,7 +477,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
         );
 
       // ----------------------------------------
-      // STEP 3: UPLOAD - First contract upload
+      // STEP 3: UPLOAD - First contract upload (FUNCTIONAL!)
       // ----------------------------------------
       case 'upload':
         return (
@@ -374,12 +491,12 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
             className={styles.stepContent}
           >
             <motion.div
-              className={styles.iconWrapper}
+              className={`${styles.iconWrapper} ${uploadState === 'success' ? styles.successIcon : ''}`}
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: 'spring', stiffness: 200, damping: 15 }}
             >
-              <Upload size={32} />
+              {uploadState === 'success' ? <CheckCircle size={32} /> : <Upload size={32} />}
             </motion.div>
 
             <motion.h2
@@ -388,7 +505,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
             >
-              Lade deinen ersten Vertrag
+              {uploadState === 'success' ? 'Upload erfolgreich!' : 'Lade deinen ersten Vertrag'}
             </motion.h2>
 
             <motion.p
@@ -397,38 +514,105 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              Teste die KI-Analyse direkt mit einem deiner Verträge.
+              {uploadState === 'success'
+                ? `"${uploadedFileName}" wurde hochgeladen. Weiter geht's!`
+                : 'Teste die KI-Analyse direkt mit einem deiner Verträge.'}
             </motion.p>
 
-            {/* 📌 Rein informativ - Navigation über "Jetzt hochladen" Button im Footer */}
+            {/* Hidden File Input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              onChange={handleFileInputChange}
+              style={{ display: 'none' }}
+            />
+
+            {/* Upload Zone - Clickable & Drag/Drop */}
             <motion.div
-              className={styles.uploadZone}
+              className={`${styles.uploadZone} ${isDragOver ? styles.dragOver : ''} ${uploadState === 'success' ? styles.uploadSuccess : ''} ${uploadState === 'error' ? styles.uploadError : ''}`}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3 }}
+              onClick={uploadState === 'idle' || uploadState === 'error' ? triggerFileInput : undefined}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              style={{ cursor: uploadState === 'uploading' || uploadState === 'success' ? 'default' : 'pointer' }}
             >
-              <motion.div
-                animate={{ y: [0, -5, 0] }}
-                transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
-              >
-                <Upload className={styles.uploadIconLarge} size={48} />
-              </motion.div>
-              <p className={styles.uploadTitle}>Drag & Drop oder klicken</p>
-              <p className={styles.uploadHint}>PDF, DOC, DOCX (max. 10 MB)</p>
+              {uploadState === 'idle' && (
+                <>
+                  <motion.div
+                    animate={{ y: [0, -5, 0] }}
+                    transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
+                  >
+                    <Upload className={styles.uploadIconLarge} size={48} />
+                  </motion.div>
+                  <p className={styles.uploadTitle}>Drag & Drop oder klicken</p>
+                  <p className={styles.uploadHint}>PDF, DOC, DOCX (max. 10 MB)</p>
+                </>
+              )}
+
+              {uploadState === 'uploading' && (
+                <div className={styles.uploadingState}>
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+                  >
+                    <Loader2 size={48} className={styles.uploadIconLarge} />
+                  </motion.div>
+                  <p className={styles.uploadTitle}>Wird hochgeladen...</p>
+                  <p className={styles.uploadHint}>{uploadedFileName}</p>
+                </div>
+              )}
+
+              {uploadState === 'success' && (
+                <div className={styles.uploadSuccessState}>
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+                  >
+                    <CheckCircle size={48} className={styles.uploadIconSuccess} />
+                  </motion.div>
+                  <p className={styles.uploadTitle}>Erfolgreich hochgeladen!</p>
+                  <p className={styles.uploadHint}>{uploadedFileName}</p>
+                </div>
+              )}
+
+              {uploadState === 'error' && (
+                <div className={styles.uploadErrorState}>
+                  <AlertCircle size={48} className={styles.uploadIconError} />
+                  <p className={styles.uploadTitle}>Upload fehlgeschlagen</p>
+                  <p className={styles.uploadHint}>{uploadError || 'Bitte erneut versuchen'}</p>
+                  <button
+                    className={styles.retryButton}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setUploadState('idle');
+                      setUploadError(null);
+                    }}
+                  >
+                    Erneut versuchen
+                  </button>
+                </div>
+              )}
             </motion.div>
 
-            <motion.div
-              className={styles.uploadTip}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-            >
-              <Zap size={18} className={styles.tipIcon} />
-              <p className={styles.uploadTipText}>
-                <strong>Tipp:</strong> Lade einen Handyvertrag, Mietvertrag oder Arbeitsvertrag hoch –
-                unsere KI erkennt automatisch den Typ.
-              </p>
-            </motion.div>
+            {uploadState === 'idle' && (
+              <motion.div
+                className={styles.uploadTip}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <Zap size={18} className={styles.tipIcon} />
+                <p className={styles.uploadTipText}>
+                  <strong>Tipp:</strong> Lade einen Handyvertrag, Mietvertrag oder Arbeitsvertrag hoch –
+                  unsere KI erkennt automatisch den Typ.
+                </p>
+              </motion.div>
+            )}
           </motion.div>
         );
 
@@ -631,7 +815,8 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
 
     dialog.addEventListener('cancel', handleCancel);
     return () => dialog.removeEventListener('cancel', handleCancel);
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [handleSkip]); // handleSkip als Dependency für korrekten Closure
 
   // Native dialog styles
   const dialogStyle: React.CSSProperties = {
@@ -659,14 +844,11 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
       ref={dialogRef}
       style={dialogStyle}
       onClick={(e) => {
-        // Klick außerhalb des Dialogs (auf backdrop) schließt
-        const rect = (e.target as HTMLDialogElement).getBoundingClientRect();
-        if (
-          e.clientX < rect.left ||
-          e.clientX > rect.right ||
-          e.clientY < rect.top ||
-          e.clientY > rect.bottom
-        ) {
+        // 🔒 FIX: Nur schließen wenn DIREKT auf das dialog-Element geklickt wird
+        // (= der Backdrop), NICHT wenn auf Kind-Elemente geklickt wird.
+        // Der alte Code verglich Koordinaten mit e.target.getBoundingClientRect(),
+        // aber e.target kann jedes Kind-Element sein, nicht das Dialog selbst.
+        if (e.target === dialogRef.current) {
           handleSkip();
         }
       }}
@@ -771,17 +953,25 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
               <button className={styles.laterButton} onClick={handleNext}>
                 Später
               </button>
+              {/* Upload-Button triggert nur den File-Dialog, keine Navigation */}
               <motion.button
                 className={styles.nextButton}
-                onClick={() => {
-                  navigate('/contracts');
-                  handleNext();
-                }}
+                onClick={triggerFileInput}
+                disabled={uploadState === 'uploading'}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                Jetzt hochladen
-                <ChevronRight size={18} />
+                {uploadState === 'uploading' ? (
+                  <>
+                    Wird hochgeladen...
+                    <Loader2 size={18} className={styles.spinning} />
+                  </>
+                ) : (
+                  <>
+                    Datei auswählen
+                    <Upload size={18} />
+                  </>
+                )}
               </motion.button>
             </div>
           ) : (
