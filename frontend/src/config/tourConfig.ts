@@ -69,24 +69,19 @@ const tooltipStyles = {
 // ============================================================
 // DASHBOARD TOUR
 // ============================================================
-// 🎯 Interaktive Tour mit Element-Highlighting (nur sichtbare Elemente!)
+// 🎯 Robuste Tour - funktioniert auch bei leeren Dashboards!
+// Nutzt body als Fallback wenn Elemente noch nicht existieren
 export const dashboardTour: TourConfig = {
   id: 'dashboard',
   name: 'Dashboard Tour',
   description: 'Lerne dein Dashboard kennen',
   steps: [
     {
-      target: '[data-tour="dashboard-welcome"]',
+      target: 'body',
       content: 'Willkommen in deinem Dashboard! Hier siehst du alles auf einen Blick: Verträge, Fristen, und wichtige Aktionen.',
       title: '🏠 Dein Command Center',
       placement: 'center',
       disableBeacon: true,
-    },
-    {
-      target: '[data-tour="dashboard-stats"]',
-      content: 'Diese Karten zeigen dir die wichtigsten Kennzahlen: Aktive Verträge, bevorstehende Fristen, und mehr.',
-      title: '📊 Statistiken im Überblick',
-      placement: 'bottom',
     },
     {
       target: '[data-tour="dashboard-sidebar"]',
@@ -95,10 +90,16 @@ export const dashboardTour: TourConfig = {
       placement: 'right',
     },
     {
-      target: '[data-tour="dashboard-quick-actions"]',
-      content: 'Mit diesen Schnellaktionen kannst du direkt loslegen: Vertrag hochladen, analysieren, oder generieren.',
-      title: '🚀 Schnellaktionen',
-      placement: 'bottom',
+      target: 'body',
+      content: 'Sobald du Verträge hochgeladen hast, siehst du hier Statistiken: Aktive Verträge, bevorstehende Fristen, und kritische Termine.',
+      title: '📊 Statistiken',
+      placement: 'center',
+    },
+    {
+      target: 'body',
+      content: 'Starte jetzt! Lade deinen ersten Vertrag hoch - die KI analysiert ihn automatisch und zeigt dir alle wichtigen Informationen.',
+      title: '🚀 Jetzt loslegen',
+      placement: 'center',
     },
   ],
 };

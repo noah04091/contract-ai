@@ -24,8 +24,7 @@ import {
   FileSignature,
   Rocket,
   Target,
-  Zap,
-  ArrowRight
+  Zap
 } from 'lucide-react';
 import { useOnboarding } from '../../hooks/useOnboarding';
 import { useAuth } from '../../context/AuthContext';
@@ -159,8 +158,41 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
     onClose?.();
   };
 
-  const handleUseCaseSelect = (useCase: string) => {
-    setProfile(prev => ({ ...prev, primaryUseCase: useCase as OnboardingProfile['primaryUseCase'] }));
+  // Type for use cases
+  type UseCaseType = 'analyze' | 'generate' | 'manage' | 'sign';
+
+  // Multi-Select: Toggle use case in/out of array
+  const handleUseCaseToggle = (useCase: string) => {
+    const typedUseCase = useCase as UseCaseType;
+    setProfile(prev => {
+      const currentCases: UseCaseType[] = prev.useCases || [];
+      const isSelected = currentCases.includes(typedUseCase);
+
+      if (isSelected) {
+        // Remove from array
+        const filtered = currentCases.filter(c => c !== typedUseCase);
+        return {
+          ...prev,
+          useCases: filtered,
+          // Keep primaryUseCase for backward compatibility (first selected)
+          primaryUseCase: filtered[0]
+        };
+      } else {
+        // Add to array
+        const newCases = [...currentCases, typedUseCase];
+        return {
+          ...prev,
+          useCases: newCases,
+          primaryUseCase: newCases[0]
+        };
+      }
+    });
+  };
+
+  // Check if a use case is selected
+  const isUseCaseSelected = (useCase: string) => {
+    const cases: UseCaseType[] = profile.useCases || [];
+    return cases.includes(useCase as UseCaseType);
   };
 
   // ============================================
@@ -246,7 +278,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
         );
 
       // ----------------------------------------
-      // STEP 2: PERSONALIZATION - Use case selection
+      // STEP 2: PERSONALIZATION - Multi-Select Use Cases
       // ----------------------------------------
       case 'personalization':
         return (
@@ -274,7 +306,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
             >
-              Wie nutzt du Contract AI?
+              Was möchtest du mit Contract AI machen?
             </motion.h2>
 
             <motion.p
@@ -283,7 +315,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              Wähle deinen Hauptanwendungsfall – wir passen das Erlebnis für dich an.
+              Wähle alle zutreffenden aus – wir zeigen dir dann die passenden Features.
             </motion.p>
 
             <motion.div
@@ -295,8 +327,8 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
               {USE_CASES.map((useCase, index) => (
                 <motion.button
                   key={useCase.id}
-                  className={`${styles.useCaseCard} ${profile.primaryUseCase === useCase.id ? styles.selected : ''}`}
-                  onClick={() => handleUseCaseSelect(useCase.id)}
+                  className={`${styles.useCaseCard} ${isUseCaseSelected(useCase.id) ? styles.selected : ''}`}
+                  onClick={() => handleUseCaseToggle(useCase.id)}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 + index * 0.1 }}
@@ -311,7 +343,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
                   </div>
                   <p className={styles.useCaseLabel}>{useCase.label}</p>
                   <p className={styles.useCaseHint}>{useCase.hint}</p>
-                  {profile.primaryUseCase === useCase.id && (
+                  {isUseCaseSelected(useCase.id) && (
                     <motion.div
                       className={styles.selectedCheck}
                       initial={{ scale: 0 }}
@@ -368,13 +400,12 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
               Teste die KI-Analyse direkt mit einem deiner Verträge.
             </motion.p>
 
+            {/* 📌 Rein informativ - Navigation über "Jetzt hochladen" Button im Footer */}
             <motion.div
               className={styles.uploadZone}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3 }}
-              whileHover={{ scale: 1.01, borderColor: '#3B82F6' }}
-              onClick={() => navigate('/contracts')}
             >
               <motion.div
                 animate={{ y: [0, -5, 0] }}
@@ -402,10 +433,26 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
         );
 
       // ----------------------------------------
-      // STEP 4: FEATURES - Personalized recommendations
+      // STEP 4: FEATURES - Personalized recommendations for ALL selected use cases
       // ----------------------------------------
       case 'features': {
-        const features = FEATURES_BY_USE_CASE[profile.primaryUseCase || 'analyze'];
+        // Sammle Features für ALLE ausgewählten Use Cases (ohne Duplikate)
+        const selectedCases = profile.useCases?.length ? profile.useCases : ['analyze'];
+        const allFeatures: Array<{ icon: React.ReactNode; title: string; description: string }> = [];
+        const seenTitles = new Set<string>();
+
+        selectedCases.forEach(useCase => {
+          const caseFeatures = FEATURES_BY_USE_CASE[useCase] || [];
+          caseFeatures.forEach(feature => {
+            if (!seenTitles.has(feature.title)) {
+              seenTitles.add(feature.title);
+              allFeatures.push(feature);
+            }
+          });
+        });
+
+        // Max 6 Features anzeigen
+        const features = allFeatures.slice(0, 6);
         return (
           <motion.div
             key="features"
@@ -443,6 +490,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
               Basierend auf deiner Auswahl empfehlen wir dir diese Features:
             </motion.p>
 
+            {/* 📌 Rein informative Feature-Liste - keine Klick-Aktionen */}
             <div className={styles.featureList}>
               {features.map((feature, index) => (
                 <motion.div
@@ -451,7 +499,6 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3 + index * 0.1 }}
-                  whileHover={{ x: 4 }}
                 >
                   <div className={styles.featureIconWrapper}>
                     {feature.icon}
@@ -460,7 +507,6 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
                     <p className={styles.featureTitle}>{feature.title}</p>
                     <p className={styles.featureDescription}>{feature.description}</p>
                   </div>
-                  <ArrowRight size={18} className={styles.featureArrow} />
                 </motion.div>
               ))}
             </div>
@@ -742,7 +788,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
             <motion.button
               className={styles.nextButton}
               onClick={handleNext}
-              disabled={STEPS[currentStep].id === 'personalization' && !profile.primaryUseCase}
+              disabled={STEPS[currentStep].id === 'personalization' && (!profile.useCases || profile.useCases.length === 0)}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >

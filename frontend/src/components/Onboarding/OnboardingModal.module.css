@@ -375,13 +375,7 @@
   background: #f8fafc;
   border-radius: 14px;
   border: 1px solid #e2e8f0;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.featureItem:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
+  /* Nicht klickbar - rein informativ */
 }
 
 .featureIconWrapper {
@@ -414,16 +408,7 @@
   margin: 0;
 }
 
-.featureArrow {
-  color: #9ca3af;
-  flex-shrink: 0;
-  transition: transform 0.2s ease;
-}
-
-.featureItem:hover .featureArrow {
-  transform: translateX(4px);
-  color: #3B82F6;
-}
+/* featureArrow und Hover-Effekte entfernt - Features sind rein informativ */
 
 /* ============================================
    CHECKLIST PREVIEW

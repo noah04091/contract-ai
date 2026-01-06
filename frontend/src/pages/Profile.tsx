@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
-import { User, Key, CreditCard, Trash2, AlertCircle, CheckCircle, LogOut, FileText, Download, MessageSquare, Users, Link2, Mail } from "lucide-react";
+import { User, Key, CreditCard, Trash2, AlertCircle, CheckCircle, LogOut, FileText, Download, MessageSquare, Users, Link2, Mail, RefreshCw, Compass } from "lucide-react";
 import styles from "../styles/Profile.module.css";
 import { useAuth } from "../hooks/useAuth";;
 
@@ -60,6 +60,9 @@ export default function Profile() {
   const [emailDigestMode, setEmailDigestMode] = useState<'instant' | 'daily' | 'weekly'>('instant');
   const [isEmailPrefsLoading, setIsEmailPrefsLoading] = useState(false);
   const [isPremiumOrHigher, setIsPremiumOrHigher] = useState(false);
+
+  // Onboarding/Tour Reset State
+  const [isResettingTour, setIsResettingTour] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -182,6 +185,45 @@ export default function Profile() {
       message: newValue ? "Chatbot aktiviert" : "Chatbot deaktiviert",
       type: "success"
     });
+  };
+
+  // Handler für Tour/Onboarding Reset
+  const handleResetTour = async () => {
+    setIsResettingTour(true);
+    try {
+      const res = await fetch('/api/onboarding/reset', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (res.ok) {
+        // Clear sessionStorage for checklist hidden state
+        sessionStorage.removeItem('contract-ai-checklist-hidden');
+
+        setNotification({
+          message: "Tour wurde zurückgesetzt! Lade die Seite neu, um sie erneut zu sehen.",
+          type: "success"
+        });
+
+        // Reload after short delay to show the notification
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        setNotification({
+          message: "Fehler beim Zurücksetzen der Tour",
+          type: "error"
+        });
+      }
+    } catch {
+      setNotification({
+        message: "Fehler beim Zurücksetzen der Tour",
+        type: "error"
+      });
+    } finally {
+      setIsResettingTour(false);
+    }
   };
 
   const handlePasswordChange = async () => {
@@ -657,6 +699,48 @@ export default function Profile() {
                       📆 Wöchentlich{!isPremiumOrHigher ? ' 🔒' : ''}
                     </option>
                   </select>
+                </div>
+              </motion.div>
+
+              {/* Onboarding & Tour Section */}
+              <motion.div
+                className={styles.section}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.59 }}
+              >
+                <div className={styles.sectionHeader}>
+                  <Compass size={18} className={styles.sectionIcon} />
+                  <h2 className={styles.sectionTitle}>Einführung & Hilfe</h2>
+                </div>
+
+                <div className={styles.settingRow}>
+                  <div className={styles.settingInfo}>
+                    <h3 className={styles.settingLabel}>Produkt-Tour erneut starten</h3>
+                    <p className={styles.settingDescription}>
+                      Zeige die Einführungs-Tour und Checklist erneut an, um alle Features kennenzulernen
+                    </p>
+                  </div>
+                  <motion.button
+                    className={styles.resetTourButton}
+                    onClick={handleResetTour}
+                    disabled={isResettingTour}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  >
+                    {isResettingTour ? (
+                      <>
+                        <span className={styles.buttonSpinner}></span>
+                        <span>Wird zurückgesetzt...</span>
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw size={16} />
+                        <span>Tour zurücksetzen</span>
+                      </>
+                    )}
+                  </motion.button>
                 </div>
               </motion.div>
 

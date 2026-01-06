@@ -12,6 +12,7 @@ export interface OnboardingStep {
 export interface OnboardingProfile {
   role?: 'freelancer' | 'startup' | 'enterprise' | 'agency';
   primaryUseCase?: 'analyze' | 'generate' | 'manage' | 'sign';
+  useCases?: Array<'analyze' | 'generate' | 'manage' | 'sign'>; // Multi-Select
   teamSize?: 'solo' | '2-10' | '11-50' | '50+';
 }
 
