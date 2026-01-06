@@ -1,58 +1,19 @@
 /* 📁 frontend/src/components/Onboarding/OnboardingModal.module.css */
-/* Enterprise Onboarding System v3.0 - Premium Modal Design */
-/* 🔧 FIX: Verwendet native <dialog> Element für 100% zuverlässiges Modal-Verhalten */
+/* Enterprise Onboarding System v4.0 - Premium Modal Design */
+/* ✨ LINEAR/NOTION QUALITY - Smooth animations, professional design */
 
-/* Native Dialog Backdrop - wird vom Browser automatisch gerendert */
-/* WICHTIG: :global weil ::backdrop kein CSS Module Selector ist */
+/* ============================================
+   NATIVE DIALOG BACKDROP
+   ============================================ */
 :global(dialog::backdrop) {
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
 
-/* Legacy overlay class (nicht mehr verwendet, für Referenz) */
-.overlay {
-  /* 🔧 KRITISCH: Absolute Positionierung im Viewport */
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  /* Visuell */
-  background: rgba(0, 0, 0, 0.6) !important;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  /* Layout */
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  padding: 20px;
-  box-sizing: border-box;
-  /* Z-Index über allem */
-  z-index: 99999 !important;
-  /* Verhindert Scroll-Propagation */
-  overflow: hidden !important;
-  overscroll-behavior: contain;
-  /* 🔧 KRITISCH: Verhindert transform-Probleme */
-  transform: none !important;
-  will-change: auto !important;
-  isolation: isolate;
-}
-
-.modal {
-  position: relative;
-  background: #fff;
-  border-radius: 20px;
-  width: 100%;
-  max-width: 560px;
-  max-height: 90vh;
-  overflow: hidden;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-}
-
-/* Close Button */
+/* ============================================
+   CLOSE BUTTON
+   ============================================ */
 .closeButton {
   position: absolute;
   top: 16px;
@@ -74,81 +35,202 @@
 .closeButton:hover {
   background: #e5e7eb;
   color: #374151;
+  transform: rotate(90deg);
 }
 
-/* Animation wird von Framer Motion gesteuert */
-
+/* ============================================
+   CONTENT CONTAINER
+   ============================================ */
 .content {
-  padding: 40px;
+  padding: 32px 40px 24px;
   overflow-y: auto;
-  max-height: calc(90vh - 80px);
+  max-height: calc(90vh - 100px);
 }
 
-/* Progress Dots */
-.progress {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
+/* ============================================
+   PREMIUM PROGRESS INDICATOR
+   ============================================ */
+.progressContainer {
   margin-bottom: 32px;
+}
+
+.progressBar {
+  height: 3px;
+  background: #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #3B82F6 0%, #10B981 100%);
+  border-radius: 10px;
+}
+
+.progressSteps {
+  display: flex;
+  justify-content: space-between;
+}
+
+.progressStep {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
 }
 
 .progressDot {
-  width: 10px;
-  height: 10px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: #e5e7eb;
+  color: #9ca3af;
   transition: all 0.3s ease;
 }
 
-.progressDot.active {
-  background: #3b82f6;
-  transform: scale(1.2);
+.progressStep.active .progressDot {
+  background: #3B82F6;
+  color: white;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
 }
 
-.progressDot.completed {
-  background: #10b981;
+.progressStep.completed .progressDot {
+  background: #10B981;
+  color: white;
 }
 
-/* Step Header */
-.stepHeader {
+.progressLabel {
+  font-size: 11px;
+  font-weight: 500;
+  color: #9ca3af;
   text-align: center;
-  margin-bottom: 32px;
+  transition: color 0.2s ease;
 }
 
-.stepIcon {
-  font-size: 56px;
-  margin-bottom: 16px;
-  display: block;
+.progressStep.active .progressLabel {
+  color: #3B82F6;
+  font-weight: 600;
 }
 
+.progressStep.completed .progressLabel {
+  color: #10B981;
+}
+
+/* ============================================
+   STEP CONTENT - Animated container
+   ============================================ */
+.stepContent {
+  text-align: center;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ============================================
+   ICON WRAPPER - Premium animated icon
+   ============================================ */
+.iconWrapper {
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  margin-bottom: 24px;
+  box-shadow: 0 10px 40px -10px rgba(59, 130, 246, 0.5);
+}
+
+.iconWrapper.successIcon {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  box-shadow: 0 10px 40px -10px rgba(16, 185, 129, 0.5);
+}
+
+/* ============================================
+   TYPOGRAPHY
+   ============================================ */
 .stepTitle {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 700;
   color: #111827;
   margin: 0 0 12px 0;
-  line-height: 1.2;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+
+.highlight {
+  background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .stepDescription {
-  font-size: 16px;
+  font-size: 15px;
   color: #6b7280;
-  margin: 0;
+  margin: 0 0 28px 0;
   line-height: 1.6;
+  max-width: 400px;
 }
 
-/* Use Case Grid (Step 2) */
+/* ============================================
+   WELCOME STATS
+   ============================================ */
+.welcomeStats {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  padding: 24px 32px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  width: 100%;
+  max-width: 400px;
+}
+
+.statItem {
+  text-align: center;
+}
+
+.statNumber {
+  font-size: 28px;
+  font-weight: 700;
+  color: #3B82F6;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.statLabel {
+  font-size: 12px;
+  color: #64748b;
+  margin: 4px 0 0 0;
+  font-weight: 500;
+}
+
+/* ============================================
+   USE CASE GRID
+   ============================================ */
 .useCaseGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
-  margin-bottom: 24px;
+  width: 100%;
+  max-width: 440px;
 }
 
 .useCaseCard {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 24px 16px;
+  padding: 20px 16px;
   border: 2px solid #e5e7eb;
   border-radius: 16px;
   background: #fff;
@@ -158,71 +240,92 @@
 }
 
 .useCaseCard:hover {
-  border-color: #3b82f6;
-  background: #f0f9ff;
+  border-color: #3B82F6;
+  background: #f8fafc;
 }
 
 .useCaseCard.selected {
-  border-color: #3b82f6;
+  border-color: #3B82F6;
   background: #eff6ff;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
-.useCaseIcon {
-  font-size: 32px;
+.useCaseIconWrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 12px;
+  transition: transform 0.2s ease;
+}
+
+.useCaseCard:hover .useCaseIconWrapper {
+  transform: scale(1.05);
 }
 
 .useCaseLabel {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: #111827;
   margin: 0;
 }
 
 .useCaseHint {
-  font-size: 13px;
+  font-size: 12px;
   color: #6b7280;
   margin: 4px 0 0 0;
 }
 
-/* Upload Zone (Step 3) */
+.selectedCheck {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #3B82F6;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ============================================
+   UPLOAD ZONE
+   ============================================ */
 .uploadZone {
   border: 2px dashed #d1d5db;
   border-radius: 16px;
-  padding: 40px;
+  padding: 36px 24px;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  margin-bottom: 24px;
   background: #f9fafb;
+  width: 100%;
+  max-width: 400px;
 }
 
 .uploadZone:hover {
-  border-color: #3b82f6;
+  border-color: #3B82F6;
   background: #f0f9ff;
 }
 
-.uploadZone.dragging {
-  border-color: #3b82f6;
-  background: #eff6ff;
-}
-
-.uploadIcon {
-  font-size: 48px;
-  margin-bottom: 16px;
-  color: #9ca3af;
+.uploadIconLarge {
+  color: #3B82F6;
+  margin-bottom: 12px;
 }
 
 .uploadTitle {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   color: #374151;
-  margin: 0 0 8px 0;
+  margin: 0 0 6px 0;
 }
 
 .uploadHint {
-  font-size: 14px;
+  font-size: 13px;
   color: #9ca3af;
   margin: 0;
 }
@@ -231,30 +334,37 @@
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  padding: 16px;
+  padding: 14px 18px;
   background: #fef3c7;
   border-radius: 12px;
-  margin-top: 16px;
+  margin-top: 20px;
+  width: 100%;
+  max-width: 400px;
+  text-align: left;
 }
 
-.uploadTipIcon {
-  font-size: 20px;
+.tipIcon {
+  color: #d97706;
   flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .uploadTipText {
-  font-size: 14px;
+  font-size: 13px;
   color: #92400e;
   margin: 0;
   line-height: 1.5;
 }
 
-/* Feature List (Step 4) */
+/* ============================================
+   FEATURE LIST
+   ============================================ */
 .featureList {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: 10px;
+  width: 100%;
+  max-width: 440px;
 }
 
 .featureItem {
@@ -262,75 +372,147 @@
   align-items: center;
   gap: 16px;
   padding: 16px 20px;
-  background: #f9fafb;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.featureIcon {
-  font-size: 28px;
+.featureItem:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.featureIconWrapper {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
   flex-shrink: 0;
 }
 
 .featureContent {
   flex: 1;
+  text-align: left;
 }
 
 .featureTitle {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: #111827;
-  margin: 0 0 4px 0;
+  margin: 0 0 2px 0;
 }
 
 .featureDescription {
-  font-size: 13px;
+  font-size: 12px;
   color: #6b7280;
   margin: 0;
 }
 
-/* Checklist Preview (Step 5) */
+.featureArrow {
+  color: #9ca3af;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.featureItem:hover .featureArrow {
+  transform: translateX(4px);
+  color: #3B82F6;
+}
+
+/* ============================================
+   CHECKLIST PREVIEW
+   ============================================ */
 .checklistPreview {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 24px;
+  gap: 8px;
+  width: 100%;
+  max-width: 380px;
   padding: 20px;
-  background: #f9fafb;
+  background: #f8fafc;
   border-radius: 16px;
+  border: 1px solid #e2e8f0;
 }
 
 .checklistItem {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 15px;
-  color: #374151;
+  font-size: 14px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  transition: all 0.2s ease;
 }
 
 .checklistItem.completed {
-  color: #10b981;
+  color: #059669;
+  background: #ecfdf5;
 }
 
 .checklistItem.pending {
   color: #6b7280;
 }
 
-.checklistIcon {
-  font-size: 18px;
+.checklistIconWrapper {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
-/* Footer */
+.checklistItem.completed .checklistIconWrapper {
+  background: #10B981;
+  color: white;
+}
+
+.checklistItem.pending .checklistIconWrapper {
+  background: #e5e7eb;
+  color: #9ca3af;
+}
+
+.checklistHint {
+  text-align: center;
+  color: #9ca3af;
+  font-size: 13px;
+  margin-top: 16px;
+}
+
+/* ============================================
+   FOOTER
+   ============================================ */
 .footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px 40px;
-  background: #f9fafb;
-  border-top: 1px solid #e5e7eb;
+  padding: 20px 40px 28px;
+  background: #fff;
+  border-top: 1px solid #f1f5f9;
 }
 
+.footerLeft,
+.footerRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.uploadActions {
+  display: flex;
+  gap: 12px;
+}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
 .skipButton {
   background: none;
   border: none;
@@ -338,41 +520,34 @@
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  padding: 12px 16px;
+  padding: 10px 16px;
   transition: color 0.2s ease;
+  border-radius: 10px;
 }
 
 .skipButton:hover {
   color: #6b7280;
+  background: #f3f4f6;
 }
 
-.nextButton {
+.backButton {
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: #3b82f6;
-  color: #fff;
+  gap: 4px;
+  background: none;
   border: none;
-  border-radius: 12px;
-  padding: 14px 28px;
-  font-size: 15px;
-  font-weight: 600;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
+  padding: 10px 16px;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
+  border-radius: 10px;
 }
 
-.nextButton:hover {
-  background: #2563eb;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
-}
-
-.nextButton:disabled {
-  background: #d1d5db;
-  cursor: not-allowed;
-  box-shadow: none;
-  transform: none;
+.backButton:hover {
+  color: #374151;
+  background: #f3f4f6;
 }
 
 .laterButton {
@@ -380,8 +555,8 @@
   color: #6b7280;
   border: none;
   border-radius: 12px;
-  padding: 14px 24px;
-  font-size: 15px;
+  padding: 12px 20px;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -392,54 +567,72 @@
   color: #374151;
 }
 
-/* Welcome Animation */
-.welcomeStats {
+.nextButton {
   display: flex;
-  justify-content: center;
-  gap: 40px;
-  margin: 32px 0;
-  padding: 24px;
-  background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
-  border-radius: 16px;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
 }
 
-.statItem {
-  text-align: center;
+.nextButton:hover {
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.45);
 }
 
-.statNumber {
-  font-size: 32px;
-  font-weight: 700;
-  color: #3b82f6;
-  margin: 0;
+.nextButton:disabled {
+  background: #d1d5db;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
-.statLabel {
-  font-size: 13px;
-  color: #6b7280;
-  margin: 4px 0 0 0;
-}
-
-/* Responsive */
+/* ============================================
+   RESPONSIVE
+   ============================================ */
 @media (max-width: 640px) {
-  .modal {
-    max-width: 100%;
-    max-height: 100%;
-    border-radius: 0;
+  .content {
+    padding: 24px 20px 20px;
   }
 
-  .content {
-    padding: 24px;
+  .progressSteps {
+    display: none;
+  }
+
+  .progressBar {
+    margin-bottom: 24px;
+  }
+
+  .stepTitle {
+    font-size: 22px;
   }
 
   .useCaseGrid {
     grid-template-columns: 1fr;
   }
 
+  .welcomeStats {
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+  }
+
   .footer {
-    padding: 16px 24px;
+    padding: 16px 20px 24px;
     flex-direction: column-reverse;
     gap: 12px;
+  }
+
+  .footerLeft,
+  .footerRight {
+    width: 100%;
+    justify-content: center;
   }
 
   .nextButton {
@@ -447,8 +640,14 @@
     justify-content: center;
   }
 
-  .welcomeStats {
-    flex-direction: column;
-    gap: 16px;
+  .uploadActions {
+    width: 100%;
+    flex-direction: column-reverse;
+  }
+
+  .uploadActions .laterButton,
+  .uploadActions .nextButton {
+    width: 100%;
+    justify-content: center;
   }
 }
