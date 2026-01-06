@@ -112,12 +112,15 @@ export function useOnboarding(): UseOnboardingReturn {
     fetchStatus();
   }, [fetchStatus, user?.email]); // Re-fetch when user email changes (login/logout)
 
-  // Also sync from user object if available
+  // Also sync checklist progress from user object if available
+  // ⚠️ WICHTIG: shouldShowModal wird NICHT von user.onboarding gesetzt!
+  // Nur die API ist die "Single Source of Truth" für shouldShowModal.
+  // user.onboarding kann stale sein nach Skip/Complete.
   useEffect(() => {
     if (user?.onboarding) {
-      console.log('🎓 [Onboarding] Syncing from user.onboarding:', user.onboarding.status);
-      setOnboardingState(user.onboarding);
+      console.log('🎓 [Onboarding] Syncing checklist from user.onboarding (NOT modal state!)');
 
+      // Nur Checklist-Daten synchronisieren, NICHT shouldShowModal!
       const checklist = user.onboarding.checklist || {};
       const progress = Object.values(checklist).filter(Boolean).length;
       const total = Object.keys(checklist).length || 5;
@@ -125,8 +128,8 @@ export function useOnboarding(): UseOnboardingReturn {
       setChecklistProgress(progress);
       setChecklistTotal(total);
 
+      // shouldShowChecklist ist OK zu syncen (hat keine Race Condition)
       const status = user.onboarding.status;
-      setShouldShowModal(status === 'not_started' || status === 'in_progress');
       setShouldShowChecklist(status === 'completed' && progress < total);
     }
   }, [user?.onboarding]);

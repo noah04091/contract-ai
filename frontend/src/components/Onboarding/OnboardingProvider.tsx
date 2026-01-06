@@ -49,6 +49,11 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
   const { shouldShowModal, resetOnboarding: hookResetOnboarding } = useOnboarding();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // 🔒 WICHTIG: Flag um zu verhindern, dass Modal nach Dismiss wieder erscheint
+  // Sobald der User das Modal einmal schließt (Skip/Complete), wird es in dieser
+  // Session NIEMALS wieder automatisch geöffnet - auch nicht bei Navigation.
+  const [hasBeenDismissed, setHasBeenDismissed] = useState(false);
+
   // Check if current route is excluded
   const isExcludedRoute = EXCLUDED_ROUTES.some(route =>
     location.pathname.startsWith(route)
@@ -71,16 +76,19 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
   ].some(route => location.pathname.startsWith(route));
 
   // Show modal automatically for new users on authenticated routes
+  // ⚠️ NUR wenn es noch nicht dismissed wurde!
   useEffect(() => {
     console.log('🎓 [OnboardingProvider] Effect check:', {
       shouldShowModal,
+      hasBeenDismissed,
       isAuthenticatedRoute,
       isExcludedRoute,
       pathname: location.pathname,
-      willShowModal: shouldShowModal && isAuthenticatedRoute && !isExcludedRoute
+      willShowModal: shouldShowModal && isAuthenticatedRoute && !isExcludedRoute && !hasBeenDismissed
     });
 
-    if (shouldShowModal && isAuthenticatedRoute && !isExcludedRoute) {
+    // 🔒 Zusätzlicher Check: hasBeenDismissed verhindert erneutes Öffnen
+    if (shouldShowModal && isAuthenticatedRoute && !isExcludedRoute && !hasBeenDismissed) {
       console.log('🎓 [OnboardingProvider] Scheduling modal to open in 500ms');
       // Small delay to let page render first
       const timer = setTimeout(() => {
@@ -89,13 +97,20 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [shouldShowModal, isAuthenticatedRoute, isExcludedRoute, location.pathname]);
+  }, [shouldShowModal, isAuthenticatedRoute, isExcludedRoute, location.pathname, hasBeenDismissed]);
 
   const showModal = () => setIsModalOpen(true);
-  const hideModal = () => setIsModalOpen(false);
+
+  // 🔒 hideModal setzt auch hasBeenDismissed auf true
+  const hideModal = () => {
+    console.log('🎓 [OnboardingProvider] Modal dismissed - will NOT auto-open again');
+    setIsModalOpen(false);
+    setHasBeenDismissed(true); // Verhindert erneutes automatisches Öffnen
+  };
 
   const resetOnboarding = async () => {
     await hookResetOnboarding();
+    setHasBeenDismissed(false); // Reset erlaubt erneutes Öffnen
     setIsModalOpen(true);
   };
 
