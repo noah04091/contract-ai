@@ -429,26 +429,49 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
       highlightedElementsRef.current = sentenceSpans;
 
-      // ✅ Fix 3: Matching mit Prioritäten (statt Single-Word-Match)
+      // ✅ Fix 3: Matching mit Prioritäten - BESTE Klausel finden (nicht erste)
       const sentenceTextLower = cleanSentenceText.toLowerCase();
       let matchingClause = null;
+      let bestMatchScore = 0;
 
-      // Priorität 1: Exakter Substring-Match
-      matchingClause = clauses.find(clause => {
+      // Durchsuche ALLE Klauseln und finde die BESTE (längste Übereinstimmung)
+      for (const clause of clauses) {
         const clauseTextLower = clause.text.toLowerCase();
-        return clauseTextLower.includes(sentenceTextLower) ||
-               sentenceTextLower.includes(clauseTextLower);
-      });
+        let score = 0;
 
-      // Priorität 2: Signifikanter Wort-Overlap (>70%)
-      if (!matchingClause) {
-        const sentenceWords = sentenceTextLower.split(/\s+/).filter(w => w.length > 3);
-        matchingClause = clauses.find(clause => {
-          const clauseWords = clause.text.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+        // Exakter Match: Auswahl ist Teil der Klausel
+        if (clauseTextLower.includes(sentenceTextLower)) {
+          // Score basiert auf Verhältnis: je mehr der Klausel abgedeckt, desto besser
+          score = sentenceTextLower.length / clauseTextLower.length;
+        }
+        // Exakter Match: Klausel ist Teil der Auswahl (nur wenn Klausel lang genug)
+        else if (sentenceTextLower.includes(clauseTextLower) && clauseTextLower.length > 50) {
+          score = clauseTextLower.length / sentenceTextLower.length;
+        }
+        // Wort-Overlap als Fallback
+        else {
+          const sentenceWords = sentenceTextLower.split(/\s+/).filter(w => w.length > 3);
+          const clauseWords = clauseTextLower.split(/\s+/).filter(w => w.length > 3);
           const matchingWords = sentenceWords.filter(w => clauseWords.includes(w));
           const overlapRatio = matchingWords.length / Math.max(sentenceWords.length, 1);
-          return overlapRatio >= 0.7;
-        });
+          if (overlapRatio >= 0.5) {
+            score = overlapRatio * 0.5; // Overlap-Matches gewichten weniger
+          }
+        }
+
+        // Beste Klausel merken
+        if (score > bestMatchScore) {
+          bestMatchScore = score;
+          matchingClause = clause;
+        }
+      }
+
+      // Minimum-Score erforderlich (verhindert schlechte Matches)
+      if (bestMatchScore < 0.1) {
+        matchingClause = null;
+        console.log('[Legal Lens] No good match found, score:', bestMatchScore);
+      } else {
+        console.log('[Legal Lens] Best match:', matchingClause?.id, 'score:', bestMatchScore.toFixed(2));
       }
 
       // ✅ Fix 2: Content-basierte ID (statt Date.now())
