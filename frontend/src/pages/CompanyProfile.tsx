@@ -411,7 +411,7 @@ export default function CompanyProfile() {
                 <div className={styles.formGroup}>
                   <label htmlFor="companyName">
                     Firmenname *
-                    <span className={styles.freeBadge}>Kostenlos</span>
+                    {!isPremium && <span className={styles.freeBadge}>Kostenlos</span>}
                   </label>
                   <input
                     id="companyName"
