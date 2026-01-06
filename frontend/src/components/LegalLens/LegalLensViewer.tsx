@@ -88,10 +88,6 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   // Ref für alle aktuell gelb markierten Text-Elemente
   const highlightedElementsRef = useRef<HTMLElement[]>([]);
 
-  // Ref um doppelte Analyse-Aufrufe zu verhindern
-  const lastAnalyzedClauseRef = useRef<string | null>(null);
-  const analysisAttemptedRef = useRef<boolean>(false);
-
   // Resize Handler
   const handleMouseDown = useCallback(() => {
     setIsDragging(true);
@@ -261,46 +257,38 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     }
   }, [contractId, currentIndustry]);
 
-  // Analyse starten wenn Klausel ausgewählt - MIT Loop-Protection und Cache-Check
+  // ✅ Phase 1 Fix: Analyse starten - Direkter Cache-Check statt Ref-Hacks
   useEffect(() => {
-    // Verhindere doppelte Analyse der gleichen Klausel
-    if (!selectedClause) {
-      lastAnalyzedClauseRef.current = null;
-      analysisAttemptedRef.current = false;
+    // Keine Klausel ausgewählt → nichts tun
+    if (!selectedClause) return;
+
+    // Bereits eine Analyse läuft → abwarten
+    if (isAnalyzing) return;
+
+    // Cache-Key für diese Klausel+Perspektive
+    const cacheKey = `${selectedClause.id}-${currentPerspective}`;
+
+    // ✅ Direkter Cache-Check (statt Ref-basierter Hacks)
+    const isAlreadyCached = analysisCache[cacheKey] !== undefined;
+    if (isAlreadyCached) {
+      console.log('[Legal Lens] Using cached analysis:', cacheKey);
       return;
     }
 
-    const clauseKey = `${selectedClause.id}-${currentPerspective}`;
+    // ✅ Prüfe ob currentAnalysis zur ausgewählten Klausel passt
+    // (Analyse enthält alle Perspektiven, daher nur clauseId prüfen)
+    const currentMatchesClause = currentAnalysis &&
+      currentAnalysis.clauseId === selectedClause.id;
 
-    // ✅ NEU: Wenn bereits eine Analyse vorhanden ist (aus Cache), nichts tun
-    if (currentAnalysis) {
-      lastAnalyzedClauseRef.current = clauseKey;
+    if (currentMatchesClause) {
+      console.log('[Legal Lens] Current analysis matches selected clause');
       return;
     }
 
-    // Wenn diese Klausel+Perspektive bereits analysiert wird/wurde, nichts tun
-    if (lastAnalyzedClauseRef.current === clauseKey) {
-      return;
-    }
-
-    // Wenn bereits eine Analyse läuft, nicht erneut starten
-    if (isAnalyzing) {
-      return;
-    }
-
-    // Wenn bereits eine Analyse-Versuch für diese Klausel gemacht wurde, nicht wiederholen
-    if (analysisAttemptedRef.current && lastAnalyzedClauseRef.current === clauseKey) {
-      return;
-    }
-
-    // Markiere dass wir diese Klausel analysieren
-    lastAnalyzedClauseRef.current = clauseKey;
-    analysisAttemptedRef.current = true;
-
-    console.log('[Legal Lens] Starting analysis for:', clauseKey);
-    analyzeClause(false); // Use JSON mode, not streaming (streaming doesn't return structured data)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedClause?.id, currentPerspective, isAnalyzing, currentAnalysis]);
+    // Starte Analyse
+    console.log('[Legal Lens] Starting analysis for:', cacheKey);
+    analyzeClause(false);
+  }, [selectedClause?.id, currentPerspective, isAnalyzing, analysisCache, currentAnalysis, analyzeClause]);
 
   // Klausel als gelesen markieren
   useEffect(() => {
@@ -347,7 +335,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     }
   }, [viewMode, clearHighlight]);
 
-  // PDF Text Click Handler - Findet passende Klausel und markiert ganzen SATZ gelb
+  // ✅ Phase 1 Task 2: PDF Text Click Handler - Robuste Klausel-Erkennung
   const handlePdfTextClick = (event: React.MouseEvent) => {
     const target = event.target as HTMLElement;
     const textContent = target.closest('.react-pdf__Page__textContent');
@@ -363,39 +351,51 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       const clickedIndex = allSpans.indexOf(target);
       if (clickedIndex === -1) return;
 
-      // Satzgrenzen finden (. ! ? gefolgt von Leerzeichen oder Ende)
+      // ✅ Erweiterte Grenzen-Erkennung (Sätze + Paragraphen + Nummerierungen)
       const sentenceEndRegex = /[.!?](\s|$)/;
+      const paragraphStartRegex = /^(§\s*\d|Art\.?\s*\d|\(\d+\)|\d+\.)/;
 
-      // Rückwärts suchen: Satzanfang finden
+      // Rückwärts suchen: Satzanfang oder Paragraph-Start finden
       let startIndex = clickedIndex;
       for (let i = clickedIndex; i >= 0; i--) {
-
-        // Prüfe ob wir einen Satzanfang gefunden haben
         if (i === 0) {
           startIndex = 0;
           break;
         }
 
-        // Prüfe ob der vorherige Span mit Satzende endet
+        const currentText = allSpans[i].textContent || '';
         const prevText = allSpans[i - 1].textContent || '';
+
+        // Paragraph-Start erkannt → hier beginnen
+        if (paragraphStartRegex.test(currentText.trim())) {
+          startIndex = i;
+          break;
+        }
+
+        // Satzende im vorherigen Span → hier beginnen
         if (sentenceEndRegex.test(prevText)) {
           startIndex = i;
           break;
         }
       }
 
-      // Vorwärts suchen: Satzende finden
+      // Vorwärts suchen: Satzende oder nächsten Paragraph finden
       let endIndex = clickedIndex;
       for (let i = clickedIndex; i < allSpans.length; i++) {
         const spanText = allSpans[i].textContent || '';
         endIndex = i;
 
-        // Prüfe ob dieser Span ein Satzende enthält
+        // Satzende gefunden
         if (sentenceEndRegex.test(spanText)) {
           break;
         }
 
-        // Wenn wir am Ende sind
+        // Nächster Paragraph beginnt → stoppen vor diesem
+        if (i > clickedIndex && paragraphStartRegex.test(spanText.trim())) {
+          endIndex = i - 1;
+          break;
+        }
+
         if (i === allSpans.length - 1) {
           break;
         }
@@ -409,24 +409,56 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         allSpans[i].classList.add('legal-lens-highlight');
         sentenceText += (allSpans[i].textContent || '') + ' ';
       }
+
+      // ✅ Fix 4: Auto-Expand bei zu kurzer Auswahl (< 30 Zeichen)
+      let cleanSentenceText = sentenceText.trim().normalize('NFC');
+      if (cleanSentenceText.length < 30 && allSpans.length > endIndex + 1) {
+        // Erweitere zum nächsten Satzende
+        for (let i = endIndex + 1; i < Math.min(endIndex + 20, allSpans.length); i++) {
+          const spanText = allSpans[i].textContent || '';
+          sentenceSpans.push(allSpans[i]);
+          allSpans[i].classList.add('legal-lens-highlight');
+          cleanSentenceText += ' ' + spanText;
+          if (sentenceEndRegex.test(spanText)) {
+            break;
+          }
+        }
+        cleanSentenceText = cleanSentenceText.trim().normalize('NFC');
+        console.log('[Legal Lens] Auto-expanded short selection to:', cleanSentenceText.length, 'chars');
+      }
+
       highlightedElementsRef.current = sentenceSpans;
 
-      // Finde Klausel die diesen Text enthält
-      const cleanSentenceText = sentenceText.trim();
-      let matchingClause = clauses.find(clause => {
+      // ✅ Fix 3: Matching mit Prioritäten (statt Single-Word-Match)
+      const sentenceTextLower = cleanSentenceText.toLowerCase();
+      let matchingClause = null;
+
+      // Priorität 1: Exakter Substring-Match
+      matchingClause = clauses.find(clause => {
         const clauseTextLower = clause.text.toLowerCase();
-        const sentenceTextLower = cleanSentenceText.toLowerCase();
         return clauseTextLower.includes(sentenceTextLower) ||
-               sentenceTextLower.includes(clauseTextLower.substring(0, 50)) ||
-               clause.text.toLowerCase().split(' ').some(word =>
-                 word.length > 4 && sentenceTextLower.includes(word)
-               );
+               sentenceTextLower.includes(clauseTextLower);
       });
 
-      // Falls keine passende Klausel gefunden, erstelle eine temporäre
+      // Priorität 2: Signifikanter Wort-Overlap (>70%)
+      if (!matchingClause) {
+        const sentenceWords = sentenceTextLower.split(/\s+/).filter(w => w.length > 3);
+        matchingClause = clauses.find(clause => {
+          const clauseWords = clause.text.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+          const matchingWords = sentenceWords.filter(w => clauseWords.includes(w));
+          const overlapRatio = matchingWords.length / Math.max(sentenceWords.length, 1);
+          return overlapRatio >= 0.7;
+        });
+      }
+
+      // ✅ Fix 2: Content-basierte ID (statt Date.now())
       if (!matchingClause && cleanSentenceText.length > 10) {
+        // Deterministischer Hash: gleicher Text + contractId = gleiche ID
+        const hashInput = cleanSentenceText.substring(0, 100).toLowerCase().replace(/\s+/g, ' ');
+        const hash = btoa(encodeURIComponent(hashInput)).slice(0, 16);
+
         matchingClause = {
-          id: `pdf-selection-${Date.now()}`,
+          id: `pdf-${contractId}-${hash}`,
           text: cleanSentenceText,
           type: 'sentence' as const,
           startIndex: 0,
@@ -443,12 +475,11 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
             hasMoneyReferences: /€|\$|EUR|USD/.test(cleanSentenceText)
           }
         };
-        console.log('[Legal Lens] Created temporary clause for text:', cleanSentenceText.substring(0, 50));
+        console.log('[Legal Lens] Created stable clause:', matchingClause.id);
       }
 
+      // ✅ Fix 1: Broken Ref entfernt - selectClause direkt aufrufen
       if (matchingClause) {
-        // Reset die Analyse-Refs für neue Klausel
-        analysisAttemptedRef.current = false;
         selectClause(matchingClause);
       }
     }
