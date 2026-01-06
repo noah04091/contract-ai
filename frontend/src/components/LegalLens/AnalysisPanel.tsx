@@ -304,80 +304,78 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
         )}
       </div>
 
-      {/* 📖 Einfache Erklärung - mit Fallback */}
-      {(perspectiveData?.explanation || true) && (
-        <div className={styles.analysisSection}>
-          <div
-            className={styles.sectionHeader}
-            onClick={() => toggleSection('explanation')}
-            style={{ cursor: 'pointer' }}
-          >
-            <h4 className={styles.sectionTitle}>
-              <span className={styles.sectionIcon}>{getCurrentPerspectiveInfo().icon}</span>
-              Was bedeutet das?
-            </h4>
-            <span style={{ fontSize: '0.875rem', color: '#64748b' }}>
-              {expandedSections.has('explanation') ? '▼' : '▶'}
-            </span>
-          </div>
-          {expandedSections.has('explanation') && (
-            <>
-              <p style={{
-                fontSize: '1rem',
-                lineHeight: 1.7,
-                color: '#1e293b',
-                margin: '0 0 1rem 0',
-                fontWeight: 500
-              }}>
-                {perspectiveData?.explanation?.simple ||
-                 perspectiveData?.explanation?.summary ||
-                 'Diese Klausel regelt einen bestimmten Aspekt des Vertrags. Die detaillierte Erklärung wird gerade erstellt.'}
-              </p>
-
-              {/* Was das für DICH bedeutet - HIGHLIGHT */}
-              {perspectiveData?.explanation?.whatItMeansForYou && (
-                <div style={{
-                  background: '#eff6ff',
-                  border: '1px solid #bfdbfe',
-                  borderRadius: '8px',
-                  padding: '1rem',
-                  marginBottom: '1rem'
-                }}>
-                  <div style={{
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    color: '#3b82f6',
-                    marginBottom: '0.5rem',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em'
-                  }}>
-                    💡 Was das für dich bedeutet
-                  </div>
-                  <p style={{
-                    margin: 0,
-                    fontSize: '0.95rem',
-                    color: '#1e40af',
-                    lineHeight: 1.6
-                  }}>
-                    {perspectiveData.explanation.whatItMeansForYou}
-                  </p>
-                </div>
-              )}
-
-              {perspectiveData?.explanation?.keyPoints?.length > 0 && (
-                <ul className={styles.keyPoints}>
-                  {perspectiveData.explanation.keyPoints.map((point, idx) => (
-                    <li key={idx} className={styles.keyPoint}>
-                      <span className={styles.keyPointBullet}>•</span>
-                      {point}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </>
-          )}
+      {/* 📖 Einfache Erklärung - IMMER anzeigen mit Fallback-Text */}
+      <div className={styles.analysisSection}>
+        <div
+          className={styles.sectionHeader}
+          onClick={() => toggleSection('explanation')}
+          style={{ cursor: 'pointer' }}
+        >
+          <h4 className={styles.sectionTitle}>
+            <span className={styles.sectionIcon}>{getCurrentPerspectiveInfo().icon}</span>
+            Was bedeutet das?
+          </h4>
+          <span style={{ fontSize: '0.875rem', color: '#64748b' }}>
+            {expandedSections.has('explanation') ? '▼' : '▶'}
+          </span>
         </div>
-      )}
+        {expandedSections.has('explanation') && (
+          <>
+            <p style={{
+              fontSize: '1rem',
+              lineHeight: 1.7,
+              color: '#1e293b',
+              margin: '0 0 1rem 0',
+              fontWeight: 500
+            }}>
+              {perspectiveData?.explanation?.simple ||
+               perspectiveData?.explanation?.summary ||
+               'Diese Klausel regelt einen bestimmten Aspekt des Vertrags. Die detaillierte Erklärung wird gerade erstellt.'}
+            </p>
+
+            {/* Was das für DICH bedeutet - HIGHLIGHT */}
+            {perspectiveData?.explanation?.whatItMeansForYou && (
+              <div style={{
+                background: '#eff6ff',
+                border: '1px solid #bfdbfe',
+                borderRadius: '8px',
+                padding: '1rem',
+                marginBottom: '1rem'
+              }}>
+                <div style={{
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  color: '#3b82f6',
+                  marginBottom: '0.5rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}>
+                  💡 Was das für dich bedeutet
+                </div>
+                <p style={{
+                  margin: 0,
+                  fontSize: '0.95rem',
+                  color: '#1e40af',
+                  lineHeight: 1.6
+                }}>
+                  {perspectiveData.explanation.whatItMeansForYou}
+                </p>
+              </div>
+            )}
+
+            {perspectiveData?.explanation?.keyPoints?.length > 0 && (
+              <ul className={styles.keyPoints}>
+                {perspectiveData.explanation.keyPoints.map((point, idx) => (
+                  <li key={idx} className={styles.keyPoint}>
+                    <span className={styles.keyPointBullet}>•</span>
+                    {point}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        )}
+      </div>
 
       {/* ⚠️ Worst-Case Szenario - MIT KONKRETEN ZAHLEN */}
       {worstCase && (
