@@ -70,7 +70,10 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
 }) => {
   const [chatInput, setChatInput] = useState('');
   const [copiedTemplate, setCopiedTemplate] = useState(false);
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['action', 'explanation', 'worstCase']));
+  // ✅ Phase 2 Task 2.2: Progressive Disclosure - nur wichtigste Sektion offen
+  // explanation = Was bedeutet das? (wichtig für Verständnis)
+  // worstCase, risks, alternative, market = collapsed (User entscheidet selbst)
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['explanation']));
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [compareAlternativeText, setCompareAlternativeText] = useState('');
   const [compareWhyBetter, setCompareWhyBetter] = useState('');
