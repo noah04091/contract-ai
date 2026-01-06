@@ -1,0 +1,244 @@
+/* 📁 frontend/src/components/Tour/SimpleTour.module.css */
+/* 🎯 Simple Tour Styles - Clean, professional like Intercom/Notion */
+
+/* Dark overlay - only shown when NO target element */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 99990;
+}
+
+/* Spotlight - creates dark overlay WITH a hole for the target */
+/* This replaces the overlay when we have a target element */
+.spotlight {
+  position: fixed;
+  background: transparent;
+  border-radius: 8px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+  z-index: 99991;
+  pointer-events: none;
+}
+
+/* Tooltip container - fixed center */
+.tooltipContainer {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 99999;
+  pointer-events: auto;
+}
+
+/* Tooltip */
+.tooltip {
+  position: relative;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 20px 40px -10px rgba(0, 0, 0, 0.25),
+    0 0 60px rgba(59, 130, 246, 0.15);
+  padding: 28px;
+  max-width: 420px;
+  min-width: 340px;
+}
+
+/* Close button */
+.closeBtn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: #f3f4f6;
+  border-radius: 8px;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.closeBtn:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+/* Progress dots */
+.progress {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+.dot.active {
+  background: #3B82F6;
+  width: 24px;
+  border-radius: 4px;
+}
+
+.dot.completed {
+  background: #3B82F6;
+}
+
+/* Content */
+.content {
+  margin-bottom: 24px;
+}
+
+.title {
+  margin: 0 0 10px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+  letter-spacing: -0.02em;
+  padding-right: 24px; /* Space for close button */
+}
+
+.description {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.7;
+  color: #4b5563;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 20px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.navBtns {
+  display: flex;
+  gap: 10px;
+}
+
+.skipBtn {
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 14px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.skipBtn:hover {
+  color: #6b7280;
+}
+
+.backBtn {
+  padding: 12px 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.backBtn:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.nextBtn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #3B82F6 0%, #2563eb 100%);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.nextBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+.nextBtn:active {
+  transform: translateY(0);
+}
+
+/* Step counter */
+.stepCounter {
+  position: absolute;
+  bottom: -36px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(0, 0, 0, 0.7);
+  padding: 6px 14px;
+  border-radius: 20px;
+  backdrop-filter: blur(8px);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .tooltipContainer {
+    left: 16px;
+    right: 16px;
+    transform: translate(0, -50%);
+    width: auto;
+  }
+
+  .tooltip {
+    max-width: none;
+    min-width: 0;
+    width: 100%;
+    padding: 24px 20px;
+  }
+
+  .title {
+    font-size: 18px;
+  }
+
+  .description {
+    font-size: 14px;
+  }
+
+  .actions {
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .skipBtn {
+    order: 2;
+  }
+
+  .navBtns {
+    order: 1;
+    width: 100%;
+  }
+
+  .backBtn,
+  .nextBtn {
+    flex: 1;
+    justify-content: center;
+  }
+}

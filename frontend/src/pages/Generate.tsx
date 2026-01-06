@@ -17,6 +17,7 @@ import CreateTemplateModal, { TemplateFormData } from "../components/CreateTempl
 import EnhancedTemplateLibrary from "../components/EnhancedTemplateLibrary";
 import EnhancedSignatureModal from "../components/EnhancedSignatureModal";
 import { UserTemplate, createUserTemplate } from "../services/userTemplatesAPI";
+import { WelcomePopup } from "../components/Tour";
 
 // Types
 export interface FormDataType {
@@ -4823,6 +4824,13 @@ export default function Generate() {
   // Main Render
   return (
     <>
+      <WelcomePopup
+        featureId="generator"
+        icon={<FileText size={32} />}
+        title="Verträge mit KI erstellen"
+        description="Wählen Sie aus über 50 Vorlagen und erstellen Sie rechtssichere Verträge in wenigen Minuten. Die KI hilft bei Formulierungen und prüft auf Vollständigkeit."
+        tip="Ihre Firmendaten werden automatisch übernommen, wenn Sie ein Firmenprofil hinterlegt haben."
+      />
       <Helmet>
         <title>Verträge erstellen & sofort nutzen – KI-Generator | Contract AI</title>
         <meta name="description" content="Erstelle rechtssichere, individuelle Verträge in Minuten mit KI. Einfach, schnell & sofort einsatzbereit. Jetzt starten & direkt nutzen!" />

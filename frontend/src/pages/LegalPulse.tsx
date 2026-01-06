@@ -9,6 +9,8 @@ import ContractRiskGrid from "../components/ContractRiskGrid";
 import LegalPulseSettings from "../components/LegalPulseSettings";
 import LegalPulseFeedWidget from "../components/LegalPulseFeedWidget";
 import { useLegalPulseFeed } from "../hooks/useLegalPulseFeed";
+import { WelcomePopup } from "../components/Tour";
+import { Activity } from "lucide-react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   AreaChart, Area
@@ -1196,6 +1198,13 @@ export default function LegalPulse() {
   // Übersichtsseite (wenn keine contractId)
   return (
     <div className={styles.legalPulseContainer}>
+      <WelcomePopup
+        featureId="legal-pulse"
+        icon={<Activity size={32} />}
+        title="Legal Pulse - Risiko-Monitoring"
+        description="Legal Pulse überwacht Ihre Verträge automatisch auf Gesetzesänderungen und rechtliche Risiken. Bei relevanten Änderungen werden Sie benachrichtigt."
+        tip="Klicken Sie auf einen Vertrag, um Details zur Risikoanalyse zu sehen."
+      />
       <Helmet>
         <title>Legal Pulse – Risiken erkennen & Verträge schützen | Contract AI</title>
         <meta name="description" content="Erkenne rechtliche Risiken frühzeitig & schütze deine Verträge mit Legal Pulse. Bleib immer einen Schritt voraus. Jetzt prüfen & absichern!" />

@@ -65,6 +65,7 @@ import { mapLegacyToProgress } from "../utils/analysisAdapter";
 
 // Styles
 import styles from "../styles/Optimizer.module.css";
+import { WelcomePopup } from "../components/Tour";
 
 // 🚀 REVOLUTIONARY: Enhanced Types with backwards compatibility
 interface CompanyProfile {
@@ -2382,6 +2383,15 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
 
   return (
     <>
+      {/* Welcome Popup */}
+      <WelcomePopup
+        featureId="optimizer"
+        icon={<Sparkles size={32} />}
+        title="Willkommen beim Optimizer"
+        description="Laden Sie einen Vertrag hoch und lassen Sie die KI Optimierungsvorschläge generieren. Sie erhalten konkrete Verbesserungen mit Begründungen."
+        tip="Wählen Sie Ihre Perspektive (Neutral, Ersteller, Empfänger) für maßgeschneiderte Optimierungen."
+      />
+
       <div className={styles.optimizer}>
         <div className={styles.backgroundGradient}></div>
 

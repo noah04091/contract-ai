@@ -28,7 +28,7 @@ import { useAuth } from "../context/AuthContext";
 import { DashboardLayout } from "../components/DashboardV2";
 import AdminDashboard from "../components/AdminDashboard"; // 🔐 Admin Dashboard
 import { OnboardingChecklist } from "../components/Onboarding"; // 🎓 Onboarding Checklist
-import { ProductTour } from "../components/Tour"; // 🎯 Product Tour
+import { SimpleTour } from "../components/Tour"; // 🎯 Simple Tour (zuverlässiger)
 
 // ============================================
 // TYPES
@@ -514,8 +514,8 @@ export default function DashboardV2() {
           </div>
         )}
 
-        {/* 🎯 Product Tour */}
-        <ProductTour tourId="dashboard" />
+        {/* 🎯 Simple Tour */}
+        <SimpleTour tourId="dashboard" />
 
         {/* ============================================
             HEADER - Clean & Minimal

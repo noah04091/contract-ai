@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { LegalLensViewer } from '../components/LegalLens';
+import { WelcomePopup } from '../components/Tour';
+import { Search } from 'lucide-react';
 
 interface Contract {
   _id: string;
@@ -184,6 +186,13 @@ const LegalLens = () => {
 
   return (
     <>
+      <WelcomePopup
+        featureId="legal-lens"
+        icon={<Search size={32} />}
+        title="Legal Lens - Klauseln verstehen"
+        description="Klicken Sie auf beliebige Stellen im Vertrag, um eine verständliche Erklärung zu erhalten. Risiken werden farblich markiert."
+        tip="Grün = Unbedenklich, Gelb = Achtung, Rot = Risiko. Klicken Sie für Details und Verhandlungstipps."
+      />
       <Helmet>
         <title>Legal Lens: {contract?.name || 'Analyse'} | Contract AI</title>
         <meta name="description" content="Interaktive Vertragsanalyse mit KI - Klauseln verstehen, Risiken erkennen, Verhandlungstipps erhalten." />

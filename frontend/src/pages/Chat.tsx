@@ -3,6 +3,8 @@ import React, { useEffect, useMemo, useRef, useState, useCallback } from "react"
 import { Helmet } from "react-helmet-async";
 import styles from "../styles/Chat.module.css";
 import { useAuth } from "../context/AuthContext";
+import { WelcomePopup } from "../components/Tour";
+import { MessageCircle } from "lucide-react";
 
 type ChatLite = {
   _id: string;
@@ -497,6 +499,13 @@ export default function Chat() {
 
   return (
     <>
+      <WelcomePopup
+        featureId="chat"
+        icon={<MessageCircle size={32} />}
+        title="Ihr KI-Rechtsassistent"
+        description="Stellen Sie Fragen zu Verträgen, Klauseln oder rechtlichen Themen. Der KI-Assistent gibt Ihnen strukturierte Einschätzungen und konkrete Handlungsempfehlungen."
+        tip="Laden Sie einen Vertrag hoch, um kontextbezogene Fragen zu stellen."
+      />
       <Helmet>
         <title>Legal Chat 2.0 – KI-Rechtsanwalt für Vertragsrecht | Contract AI</title>
         <meta

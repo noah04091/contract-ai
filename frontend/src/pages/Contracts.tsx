@@ -36,7 +36,7 @@ import { useFolders } from "../hooks/useFolders"; // 📁 Folder Hook
 import type { FolderType } from "../components/FolderBar"; // 📁 Folder Type
 import InlineAnalysisProgress from "../components/InlineAnalysisProgress"; // 🎨 Kompakte Inline-Analyse
 import { useCelebrationContext } from "../components/Celebration"; // 🎉 Celebration System
-import { ProductTour } from "../components/Tour"; // 🎯 Product Tour
+import { SimpleTour } from "../components/Tour"; // 🎯 Simple Tour (zuverlässiger)
 
 interface Contract {
   _id: string;
@@ -3343,8 +3343,8 @@ export default function Contracts() {
       </Helmet>
 
       <div className={styles.pageContainer}>
-        {/* 🎯 Product Tour */}
-        <ProductTour tourId="contracts" />
+        {/* 🎯 Simple Tour - zuverlässiger als react-joyride */}
+        <SimpleTour tourId="contracts" />
 
         {/* ========== ENTERPRISE LAYOUT ========== */}
         <div className={styles.enterpriseLayout}>

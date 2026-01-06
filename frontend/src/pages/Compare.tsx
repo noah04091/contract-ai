@@ -9,6 +9,7 @@ import {
   Eye, EyeOff, Star, Award, ThumbsUp, ThumbsDown
 } from "lucide-react";
 import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
+import { WelcomePopup } from "../components/Tour";
 
 // Enhanced types for better comparison structure
 interface ComparisonDifference {
@@ -595,6 +596,13 @@ export default function EnhancedCompare() {
 
   return (
     <>
+      <WelcomePopup
+        featureId="compare"
+        icon={<Scale size={32} />}
+        title="Verträge vergleichen"
+        description="Laden Sie zwei Verträge hoch, um sie nebeneinander zu vergleichen. Die KI erkennt Unterschiede und bewertet, welcher Vertrag für Sie vorteilhafter ist."
+        tip="Ideal für: Alter vs. neuer Vertrag, oder zwei Angebote von verschiedenen Anbietern."
+      />
       <Helmet>
         <title>Verträge vergleichen & bessere Wahl treffen mit KI | Contract AI</title>
         <meta name="description" content="Vergleiche Verträge in Sekunden mit KI: Unterschiede sehen, Fairness prüfen & bessere Konditionen sichern. Jetzt schnell & einfach vergleichen!" />

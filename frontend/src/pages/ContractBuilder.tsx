@@ -48,6 +48,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { createUserTemplate, UserTemplate } from '../services/userTemplatesAPI';
+import { WelcomePopup } from '../components/Tour';
 import { useAuth } from '../hooks/useAuth';
 import styles from '../styles/ContractBuilder.module.css';
 
@@ -1287,6 +1288,13 @@ const ContractBuilder: React.FC = () => {
 
   return (
     <div className={styles.builderPage}>
+      <WelcomePopup
+        featureId="contract-builder"
+        icon={<Edit3 size={32} />}
+        title="Contract Builder - Visueller Vertragsbaukasten"
+        description="Erstellen Sie Verträge visuell per Drag & Drop. Wählen Sie Bausteine aus der Toolbar, ordnen Sie sie an und exportieren Sie als PDF."
+        tip="Nutzen Sie die Variablen-Funktion, um Platzhalter wie {{Name}} automatisch auszufüllen."
+      />
       {/* Top Toolbar */}
       <header className={styles.topBar}>
         {/* Left Section */}

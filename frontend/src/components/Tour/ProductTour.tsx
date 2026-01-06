@@ -111,13 +111,16 @@ export function ProductTour({
       spotlightClicks
       callback={handleJoyrideCallback}
       tooltipComponent={CustomTooltip}
-      // 🔧 KRITISCH: Diese Optionen verhindern das Springen/Flackern
-      disableScrolling={true}           // Verhindert automatisches Scrollen zu Elementen
-      disableScrollParentFix={true}     // Verhindert Scroll-Container-Manipulation
-      scrollToFirstStep={false}         // Kein Scroll beim Start
+      // 🔧 Joyride Positionierung
+      scrollOffset={100}                // Offset beim Scrollen
       floaterProps={{
-        disableAnimation: true,         // Stabilere Positionierung
+        disableAnimation: false,
         hideArrow: false,
+        styles: {
+          floater: {
+            filter: 'none',
+          },
+        },
       }}
       styles={{
         options: {

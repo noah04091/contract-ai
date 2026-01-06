@@ -38,7 +38,7 @@ import "../styles/AppleCalendar.css";
 import CalendarSyncModal from "../components/CalendarSyncModal";
 import { useCalendarStore } from "../stores/calendarStore";
 import { useToast } from "../context/ToastContext";
-import { ProductTour } from "../components/Tour"; // 🎯 Product Tour
+import { SimpleTour } from "../components/Tour"; // 🎯 Simple Tour (zuverlässiger)
 
 // Hook: ESC-Taste schließt Modal
 const useEscapeKey = (onClose: () => void) => {
@@ -2741,8 +2741,8 @@ export default function CalendarPage() {
         <title>Vertragskalender | Contract AI</title>
       </Helmet>
 
-      {/* 🎯 Product Tour */}
-      <ProductTour tourId="calendar" />
+      {/* 🎯 Simple Tour */}
+      <SimpleTour tourId="calendar" />
 
       <div className="calendar-page" data-tour="calendar-view">
         <div className="calendar-page-content">

@@ -41,6 +41,7 @@ import jsPDF from "jspdf";
 import styles from "../styles/Envelopes.module.css";
 import PDFViewer from "../components/PDFViewer";
 import { QRCodeCanvas } from "qrcode.react";
+import { WelcomePopup } from "../components/Tour";
 
 interface Signer {
   email: string;
@@ -1289,6 +1290,13 @@ export default function Envelopes() {
 
   return (
     <div className={styles.pageContainer}>
+      <WelcomePopup
+        featureId="envelopes"
+        icon={<Send size={32} />}
+        title="Digitale Signaturen"
+        description="Hier verwalten Sie alle Ihre Signaturanfragen. Senden Sie Verträge zur Unterschrift, verfolgen Sie den Status und laden Sie signierte Dokumente herunter."
+        tip="Klicken Sie auf eine Anfrage, um Details zu sehen und Erinnerungen zu versenden."
+      />
       <div className={styles.container}>
         {/* Header */}
         <div className={styles.header}>

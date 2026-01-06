@@ -11,7 +11,12 @@ export type TourId =
   | 'calendar'
   | 'optimizer'
   | 'legal-lens'
-  | 'contract-builder';
+  | 'contract-builder'
+  | 'generator'
+  | 'compare'
+  | 'chat'
+  | 'legal-pulse'
+  | 'envelopes';
 
 // Tour configuration type
 export interface TourConfig {
@@ -101,7 +106,7 @@ export const dashboardTour: TourConfig = {
 // ============================================================
 // CONTRACTS TOUR
 // ============================================================
-// 🎯 Interaktive Tour - NUR Toolbar-Elemente (stabil, immer sichtbar)
+// 🎯 Hybrid: Spotlight auf Element, Tooltip ZENTRIERT (stabiler)
 export const contractsTour: TourConfig = {
   id: 'contracts',
   name: 'Verträge Tour',
@@ -111,26 +116,26 @@ export const contractsTour: TourConfig = {
       target: '[data-tour="contracts-toolbar"]',
       content: 'Willkommen bei deiner Vertragsverwaltung! Über die Toolbar oben steuerst du alles: Hochladen, Suchen, Filtern.',
       title: '🎛️ Deine Werkzeugleiste',
-      placement: 'bottom',
+      placement: 'center',  // Tooltip zentriert, Spotlight auf Element
       disableBeacon: true,
     },
     {
       target: '[data-tour="contracts-upload-btn"]',
       content: 'Klicke hier um neue Verträge hochzuladen. Unterstützt werden PDF, DOC und DOCX bis 10 MB. Einfach per Drag & Drop!',
       title: '📄 Vertrag hochladen',
-      placement: 'bottom',
+      placement: 'center',
     },
     {
       target: '[data-tour="contracts-search"]',
       content: 'Mit der Suche findest du schnell jeden Vertrag. Suche nach Name, Inhalt, oder Vertragspartner.',
       title: '🔍 Suche',
-      placement: 'bottom',
+      placement: 'center',
     },
     {
       target: '[data-tour="contracts-list"]',
       content: 'Hier siehst du all deine Verträge. Klicke auf einen Vertrag für Details, oder nutze die KI-Analyse für tiefere Einblicke!',
       title: '📋 Deine Verträge',
-      placement: 'top',
+      placement: 'center',
     },
   ],
 };
@@ -271,6 +276,156 @@ export const contractBuilderTour: TourConfig = {
   ],
 };
 
+// ============================================================
+// GENERATOR TOUR
+// ============================================================
+export const generatorTour: TourConfig = {
+  id: 'generator',
+  name: 'Generator Tour',
+  description: 'Lerne den Vertragsgenerator kennen',
+  steps: [
+    {
+      target: '[data-tour="generator-templates"]',
+      content: 'Wähle aus über 50 Vertragsvorlagen: Arbeitsverträge, NDAs, Mietverträge, und mehr. Alle rechtssicher und aktuell.',
+      title: '📑 Vorlagen',
+      placement: 'center',
+      disableBeacon: true,
+    },
+    {
+      target: '[data-tour="generator-form"]',
+      content: 'Fülle die Felder aus - Name, Datum, Konditionen. Die KI hilft dir bei Formulierungen und prüft auf Vollständigkeit.',
+      title: '✏️ Daten eingeben',
+      placement: 'center',
+    },
+    {
+      target: 'body',
+      content: 'Wenn alles ausgefüllt ist, generiert die KI deinen fertigen Vertrag. Du kannst ihn als PDF exportieren oder direkt zur Signatur senden.',
+      title: '📄 Vertrag generieren',
+      placement: 'center',
+    },
+  ],
+};
+
+// ============================================================
+// COMPARE TOUR
+// ============================================================
+export const compareTour: TourConfig = {
+  id: 'compare',
+  name: 'Vergleich Tour',
+  description: 'Lerne den Vertragsvergleich kennen',
+  steps: [
+    {
+      target: '[data-tour="compare-upload"]',
+      content: 'Lade zwei Verträge hoch, die du vergleichen möchtest. Zum Beispiel: Alter vs. neuer Vertrag, oder zwei Angebote.',
+      title: '📂 Verträge hochladen',
+      placement: 'center',
+      disableBeacon: true,
+    },
+    {
+      target: 'body',
+      content: 'Die KI analysiert beide Dokumente und zeigt dir alle Unterschiede: Geänderte Klauseln, neue Bedingungen, entfernte Passagen.',
+      title: '🔍 Unterschiede erkennen',
+      placement: 'center',
+    },
+    {
+      target: 'body',
+      content: 'Jede Änderung wird farblich markiert und erklärt. So erkennst du sofort, was sich geändert hat und ob es für dich vorteilhaft ist.',
+      title: '📊 Analyse verstehen',
+      placement: 'center',
+    },
+  ],
+};
+
+// ============================================================
+// CHAT TOUR
+// ============================================================
+export const chatTour: TourConfig = {
+  id: 'chat',
+  name: 'KI-Chat Tour',
+  description: 'Lerne den KI-Assistenten kennen',
+  steps: [
+    {
+      target: '[data-tour="chat-input"]',
+      content: 'Stelle hier deine Fragen zu Verträgen, Klauseln, oder rechtlichen Themen. Der KI-Assistent antwortet sofort.',
+      title: '💬 Frage stellen',
+      placement: 'top',
+      disableBeacon: true,
+    },
+    {
+      target: '[data-tour="chat-context"]',
+      content: 'Lade einen Vertrag hoch, um kontextbezogene Fragen zu stellen. "Was bedeutet Paragraph 5?" oder "Ist diese Klausel fair?"',
+      title: '📄 Kontext hinzufügen',
+      placement: 'center',
+    },
+    {
+      target: 'body',
+      content: 'Der Chat merkt sich den Gesprächsverlauf. Du kannst Folgefragen stellen und tiefer in Themen einsteigen.',
+      title: '🧠 Intelligente Antworten',
+      placement: 'center',
+    },
+  ],
+};
+
+// ============================================================
+// LEGAL PULSE TOUR
+// ============================================================
+export const legalPulseTour: TourConfig = {
+  id: 'legal-pulse',
+  name: 'Legal Pulse Tour',
+  description: 'Lerne Legal Pulse kennen',
+  steps: [
+    {
+      target: '[data-tour="pulse-overview"]',
+      content: 'Legal Pulse überwacht automatisch Gesetzesänderungen, die deine Verträge betreffen könnten.',
+      title: '📡 Überwachung',
+      placement: 'center',
+      disableBeacon: true,
+    },
+    {
+      target: '[data-tour="pulse-alerts"]',
+      content: 'Bei relevanten Änderungen wirst du sofort benachrichtigt. Klicke auf eine Warnung für Details und Handlungsempfehlungen.',
+      title: '🔔 Benachrichtigungen',
+      placement: 'center',
+    },
+    {
+      target: 'body',
+      content: 'Für jeden betroffenen Vertrag siehst du konkrete Anpassungsvorschläge. So bleibst du immer rechtssicher.',
+      title: '✅ Handlungsempfehlungen',
+      placement: 'center',
+    },
+  ],
+};
+
+// ============================================================
+// ENVELOPES/SIGNATURES TOUR
+// ============================================================
+export const envelopesTour: TourConfig = {
+  id: 'envelopes',
+  name: 'Signaturen Tour',
+  description: 'Lerne die digitale Signatur kennen',
+  steps: [
+    {
+      target: '[data-tour="envelopes-list"]',
+      content: 'Hier siehst du alle deine Signatur-Anfragen: Ausstehend, In Bearbeitung, Abgeschlossen.',
+      title: '📨 Übersicht',
+      placement: 'center',
+      disableBeacon: true,
+    },
+    {
+      target: '[data-tour="envelopes-new"]',
+      content: 'Starte eine neue Signatur-Anfrage: Dokument hochladen, Unterzeichner hinzufügen, Signaturfelder platzieren.',
+      title: '✍️ Neue Anfrage',
+      placement: 'center',
+    },
+    {
+      target: 'body',
+      content: 'Verfolge den Status in Echtzeit. Du wirst benachrichtigt, sobald alle unterschrieben haben. Das fertige Dokument wird automatisch archiviert.',
+      title: '📊 Status verfolgen',
+      placement: 'center',
+    },
+  ],
+};
+
 // All tours combined
 export const ALL_TOURS: TourConfig[] = [
   dashboardTour,
@@ -279,6 +434,11 @@ export const ALL_TOURS: TourConfig[] = [
   optimizerTour,
   legalLensTour,
   contractBuilderTour,
+  generatorTour,
+  compareTour,
+  chatTour,
+  legalPulseTour,
+  envelopesTour,
 ];
 
 // Get tour by ID
