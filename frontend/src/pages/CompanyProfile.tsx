@@ -1,17 +1,17 @@
 // Company Profile Page with Logo Upload
+// v2.0 - Freemium Model: Firmenname für alle, Rest Premium
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import {
   Building, Upload, X, Save, Eye, Camera,
   Phone, FileText, CreditCard, Globe,
-  AlertCircle, ArrowLeft
+  AlertCircle, ArrowLeft, Lock, Sparkles, Crown
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import styles from '../styles/CompanyProfile.module.css';
-import UnifiedPremiumNotice from '../components/UnifiedPremiumNotice';
 
 interface CompanyProfileData {
   _id?: string;
@@ -71,20 +71,16 @@ export default function CompanyProfile() {
   const [hasChanges, setHasChanges] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
-  // 🔐 Enterprise Check - Firmenprofil nur für Enterprise (premium) User
-  const isPremium = user?.subscriptionPlan === 'premium' || user?.subscriptionPlan === 'enterprise';
+  // 🔐 Premium Check - Erweiterte Features nur für Premium/Business/Enterprise
+  const isPremium = user?.subscriptionPlan === 'premium' ||
+                    user?.subscriptionPlan === 'business' ||
+                    user?.subscriptionPlan === 'enterprise';
 
-  // Load existing profile
+  // Load existing profile - auch für Free User
   useEffect(() => {
     if (!user || isLoading) return;
-    
-    if (!isPremium) {
-      navigate('/pricing');
-      return;
-    }
-
     loadProfile();
-  }, [user, isLoading, isPremium, navigate]);
+  }, [user, isLoading]);
 
   // Check for changes
   useEffect(() => {
@@ -127,7 +123,14 @@ export default function CompanyProfile() {
   };
 
   const handleSave = async () => {
-    if (!profile.companyName || !profile.street || !profile.postalCode || !profile.city) {
+    // Free User: Nur Firmenname erforderlich
+    // Premium User: Alle Pflichtfelder
+    if (!profile.companyName) {
+      toast.error('Bitte geben Sie einen Firmennamen ein');
+      return;
+    }
+
+    if (isPremium && (!profile.street || !profile.postalCode || !profile.city)) {
       toast.error('Bitte füllen Sie alle Pflichtfelder aus');
       return;
     }
@@ -242,15 +245,6 @@ export default function CompanyProfile() {
     );
   }
 
-  if (!isPremium) {
-    return (
-      <div className={styles.upgradeNotice}>
-        <UnifiedPremiumNotice
-          featureName="Das Firmenprofil"
-        />
-      </div>
-    );
-  }
 
   return (
     <>
@@ -286,87 +280,126 @@ export default function CompanyProfile() {
         </motion.header>
 
         <div className={styles.profileContainer}>
+          {/* Premium Upgrade Banner für Free User */}
+          {!isPremium && (
+            <motion.div
+              className={styles.upgradeBanner}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              <div className={styles.upgradeBannerContent}>
+                <div className={styles.upgradeBannerIcon}>
+                  <Crown size={24} />
+                </div>
+                <div className={styles.upgradeBannerText}>
+                  <h3>Vollständiges Firmenprofil freischalten</h3>
+                  <p>
+                    Mit Premium kannst du alle Firmendaten speichern für die automatische Vertragserstellung,
+                    inklusive Logo, Adresse, Steuerdaten und Bankverbindung.
+                  </p>
+                </div>
+                <Link to="/pricing" className={styles.upgradeBannerButton}>
+                  <Sparkles size={16} />
+                  Jetzt upgraden
+                </Link>
+              </div>
+            </motion.div>
+          )}
+
           <motion.div
             className={styles.profileCard}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            {/* Logo Section */}
-            <div className={styles.logoSection}>
+            {/* Logo Section - Premium Only */}
+            <div className={`${styles.formSection} ${!isPremium ? styles.lockedSection : ''}`}>
               <h3>
                 <Camera size={20} />
                 Firmenlogo
+                {!isPremium && <span className={styles.premiumBadge}><Lock size={12} /> Premium</span>}
               </h3>
-              
-              <div className={styles.logoContainer}>
-                {logoPreview ? (
-                  <div className={styles.logoPreview}>
-                    <img 
-                      src={logoPreview} 
-                      alt="Firmenlogo"
-                      onError={(e) => {
-                        console.error('❌ Logo konnte nicht geladen werden:', logoPreview);
-                        console.error('Error:', e);
-                      }}
-                      onLoad={() => {
-                        console.log('✅ Logo erfolgreich geladen:', logoPreview);
-                      }}
-                      style={{ 
-                        display: 'block',
-                        maxWidth: '100%',
-                        height: 'auto'
-                      }}
-                    />
-                    <div className={styles.logoActions}>
-                      <button
-                        className={styles.logoActionButton}
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={uploadingLogo}
-                      >
-                        <Upload size={16} />
-                        Ändern
-                      </button>
-                      <button
-                        className={`${styles.logoActionButton} ${styles.danger}`}
-                        onClick={handleDeleteLogo}
-                      >
-                        <X size={16} />
-                        Entfernen
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div 
-                    className={styles.logoUpload}
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    {uploadingLogo ? (
-                      <div className={styles.uploadingState}>
-                        <div className={styles.loadingSpinner}></div>
-                        <span>Wird hochgeladen...</span>
+
+              {isPremium ? (
+                <>
+                  <div className={styles.logoContainer}>
+                    {logoPreview ? (
+                      <div className={styles.logoPreview}>
+                        <img
+                          src={logoPreview}
+                          alt="Firmenlogo"
+                          onError={(e) => {
+                            console.error('❌ Logo konnte nicht geladen werden:', logoPreview);
+                            console.error('Error:', e);
+                          }}
+                          onLoad={() => {
+                            console.log('✅ Logo erfolgreich geladen:', logoPreview);
+                          }}
+                          style={{
+                            display: 'block',
+                            maxWidth: '100%',
+                            height: 'auto'
+                          }}
+                        />
+                        <div className={styles.logoActions}>
+                          <button
+                            className={styles.logoActionButton}
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={uploadingLogo}
+                          >
+                            <Upload size={16} />
+                            Ändern
+                          </button>
+                          <button
+                            className={`${styles.logoActionButton} ${styles.danger}`}
+                            onClick={handleDeleteLogo}
+                          >
+                            <X size={16} />
+                            Entfernen
+                          </button>
+                        </div>
                       </div>
                     ) : (
-                      <div className={styles.uploadPrompt}>
-                        <Upload size={32} />
-                        <span>Logo hochladen</span>
-                        <small>JPG, PNG, SVG oder WebP (max. 5MB)</small>
+                      <div
+                        className={styles.logoUpload}
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        {uploadingLogo ? (
+                          <div className={styles.uploadingState}>
+                            <div className={styles.loadingSpinner}></div>
+                            <span>Wird hochgeladen...</span>
+                          </div>
+                        ) : (
+                          <div className={styles.uploadPrompt}>
+                            <Upload size={32} />
+                            <span>Logo hochladen</span>
+                            <small>JPG, PNG, SVG oder WebP (max. 5MB)</small>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
-                )}
-              </div>
 
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/svg+xml,image/webp"
-                onChange={handleFileSelect}
-                style={{ display: 'none' }}
-              />
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/svg+xml,image/webp"
+                    onChange={handleFileSelect}
+                    style={{ display: 'none' }}
+                  />
+                </>
+              ) : (
+                <div className={styles.lockedContent}>
+                  <div className={styles.lockedPlaceholder}>
+                    <Lock size={24} />
+                    <span>Logo-Upload mit Premium freischalten</span>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Company Information */}
+            {/* Company Information - Firmenname FREE, Rest Premium */}
             <div className={styles.formSection}>
               <h3>
                 <Building size={20} />
@@ -374,8 +407,12 @@ export default function CompanyProfile() {
               </h3>
 
               <div className={styles.formGrid}>
+                {/* Firmenname - IMMER FREI */}
                 <div className={styles.formGroup}>
-                  <label htmlFor="companyName">Firmenname *</label>
+                  <label htmlFor="companyName">
+                    Firmenname *
+                    <span className={styles.freeBadge}>Kostenlos</span>
+                  </label>
                   <input
                     id="companyName"
                     type="text"
@@ -386,12 +423,17 @@ export default function CompanyProfile() {
                   />
                 </div>
 
-                <div className={styles.formGroup}>
-                  <label htmlFor="legalForm">Rechtsform</label>
+                {/* Rechtsform - Premium */}
+                <div className={`${styles.formGroup} ${!isPremium ? styles.lockedField : ''}`}>
+                  <label htmlFor="legalForm">
+                    Rechtsform
+                    {!isPremium && <Lock size={12} className={styles.lockIcon} />}
+                  </label>
                   <select
                     id="legalForm"
                     value={profile.legalForm}
                     onChange={(e) => handleInputChange('legalForm', e.target.value)}
+                    disabled={!isPremium}
                   >
                     {LEGAL_FORMS.map(form => (
                       <option key={form} value={form}>{form}</option>
@@ -399,48 +441,68 @@ export default function CompanyProfile() {
                   </select>
                 </div>
 
-                <div className={`${styles.formGroup} ${styles.spanning}`}>
-                  <label htmlFor="street">Straße & Hausnummer *</label>
+                {/* Straße - Premium */}
+                <div className={`${styles.formGroup} ${styles.spanning} ${!isPremium ? styles.lockedField : ''}`}>
+                  <label htmlFor="street">
+                    Straße & Hausnummer {isPremium && '*'}
+                    {!isPremium && <Lock size={12} className={styles.lockIcon} />}
+                  </label>
                   <input
                     id="street"
                     type="text"
                     value={profile.street}
                     onChange={(e) => handleInputChange('street', e.target.value)}
-                    placeholder="z.B. Musterstraße 123"
-                    required
+                    placeholder={isPremium ? "z.B. Musterstraße 123" : "Premium-Feature"}
+                    required={isPremium}
+                    disabled={!isPremium}
                   />
                 </div>
 
-                <div className={styles.formGroup}>
-                  <label htmlFor="postalCode">PLZ *</label>
+                {/* PLZ - Premium */}
+                <div className={`${styles.formGroup} ${!isPremium ? styles.lockedField : ''}`}>
+                  <label htmlFor="postalCode">
+                    PLZ {isPremium && '*'}
+                    {!isPremium && <Lock size={12} className={styles.lockIcon} />}
+                  </label>
                   <input
                     id="postalCode"
                     type="text"
                     value={profile.postalCode}
                     onChange={(e) => handleInputChange('postalCode', e.target.value)}
-                    placeholder="12345"
-                    required
+                    placeholder={isPremium ? "12345" : "Premium"}
+                    required={isPremium}
+                    disabled={!isPremium}
                   />
                 </div>
 
-                <div className={styles.formGroup}>
-                  <label htmlFor="city">Stadt *</label>
+                {/* Stadt - Premium */}
+                <div className={`${styles.formGroup} ${!isPremium ? styles.lockedField : ''}`}>
+                  <label htmlFor="city">
+                    Stadt {isPremium && '*'}
+                    {!isPremium && <Lock size={12} className={styles.lockIcon} />}
+                  </label>
                   <input
                     id="city"
                     type="text"
                     value={profile.city}
                     onChange={(e) => handleInputChange('city', e.target.value)}
-                    placeholder="z.B. Berlin"
-                    required
+                    placeholder={isPremium ? "z.B. Berlin" : "Premium"}
+                    required={isPremium}
+                    disabled={!isPremium}
                   />
                 </div>
 
-                <div className={styles.formGroup}>
-                  <label htmlFor="country">Land</label>
+                {/* Land - Premium */}
+                <div className={`${styles.formGroup} ${!isPremium ? styles.lockedField : ''}`}>
+                  <label htmlFor="country">
+                    Land
+                    {!isPremium && <Lock size={12} className={styles.lockIcon} />}
+                  </label>
                   <select
                     id="country"
                     value={profile.country}
                     onChange={(e) => handleInputChange('country', e.target.value)}
+                    disabled={!isPremium}
                   >
                     {COUNTRIES.map(country => (
                       <option key={country} value={country}>{country}</option>
@@ -450,108 +512,139 @@ export default function CompanyProfile() {
               </div>
             </div>
 
-            {/* Legal & Tax Information */}
-            <div className={styles.formSection}>
+            {/* Legal & Tax Information - Premium Only */}
+            <div className={`${styles.formSection} ${!isPremium ? styles.lockedSection : ''}`}>
               <h3>
                 <FileText size={20} />
                 Rechts- & Steuerangaben
+                {!isPremium && <span className={styles.premiumBadge}><Lock size={12} /> Premium</span>}
               </h3>
 
               <div className={styles.formGrid}>
-                <div className={styles.formGroup}>
-                  <label htmlFor="vatId">USt-IdNr.</label>
+                <div className={`${styles.formGroup} ${!isPremium ? styles.lockedField : ''}`}>
+                  <label htmlFor="vatId">
+                    USt-IdNr.
+                    {!isPremium && <Lock size={12} className={styles.lockIcon} />}
+                  </label>
                   <input
                     id="vatId"
                     type="text"
                     value={profile.vatId}
                     onChange={(e) => handleInputChange('vatId', e.target.value)}
-                    placeholder="z.B. DE123456789"
+                    placeholder={isPremium ? "z.B. DE123456789" : "Premium-Feature"}
+                    disabled={!isPremium}
                   />
                 </div>
 
-                <div className={styles.formGroup}>
-                  <label htmlFor="tradeRegister">Handelsregister</label>
+                <div className={`${styles.formGroup} ${!isPremium ? styles.lockedField : ''}`}>
+                  <label htmlFor="tradeRegister">
+                    Handelsregister
+                    {!isPremium && <Lock size={12} className={styles.lockIcon} />}
+                  </label>
                   <input
                     id="tradeRegister"
                     type="text"
                     value={profile.tradeRegister}
                     onChange={(e) => handleInputChange('tradeRegister', e.target.value)}
-                    placeholder="z.B. HRB 12345"
+                    placeholder={isPremium ? "z.B. HRB 12345" : "Premium-Feature"}
+                    disabled={!isPremium}
                   />
                 </div>
               </div>
             </div>
 
-            {/* Contact Information */}
-            <div className={styles.formSection}>
+            {/* Contact Information - Premium Only */}
+            <div className={`${styles.formSection} ${!isPremium ? styles.lockedSection : ''}`}>
               <h3>
                 <Phone size={20} />
                 Kontaktdaten
+                {!isPremium && <span className={styles.premiumBadge}><Lock size={12} /> Premium</span>}
               </h3>
 
               <div className={styles.formGrid}>
-                <div className={styles.formGroup}>
-                  <label htmlFor="contactEmail">E-Mail</label>
+                <div className={`${styles.formGroup} ${!isPremium ? styles.lockedField : ''}`}>
+                  <label htmlFor="contactEmail">
+                    E-Mail
+                    {!isPremium && <Lock size={12} className={styles.lockIcon} />}
+                  </label>
                   <input
                     id="contactEmail"
                     type="email"
                     value={profile.contactEmail}
                     onChange={(e) => handleInputChange('contactEmail', e.target.value)}
-                    placeholder="info@firma.de"
+                    placeholder={isPremium ? "info@firma.de" : "Premium-Feature"}
+                    disabled={!isPremium}
                   />
                 </div>
 
-                <div className={styles.formGroup}>
-                  <label htmlFor="contactPhone">Telefon</label>
+                <div className={`${styles.formGroup} ${!isPremium ? styles.lockedField : ''}`}>
+                  <label htmlFor="contactPhone">
+                    Telefon
+                    {!isPremium && <Lock size={12} className={styles.lockIcon} />}
+                  </label>
                   <input
                     id="contactPhone"
                     type="tel"
                     value={profile.contactPhone}
                     onChange={(e) => handleInputChange('contactPhone', e.target.value)}
-                    placeholder="+49 30 12345678"
+                    placeholder={isPremium ? "+49 30 12345678" : "Premium-Feature"}
+                    disabled={!isPremium}
                   />
                 </div>
               </div>
             </div>
 
-            {/* Banking Information */}
-            <div className={styles.formSection}>
+            {/* Banking Information - Premium Only */}
+            <div className={`${styles.formSection} ${!isPremium ? styles.lockedSection : ''}`}>
               <h3>
                 <CreditCard size={20} />
                 Bankverbindung
+                {!isPremium && <span className={styles.premiumBadge}><Lock size={12} /> Premium</span>}
               </h3>
 
               <div className={styles.formGrid}>
-                <div className={`${styles.formGroup} ${styles.spanning}`}>
-                  <label htmlFor="bankName">Bank</label>
+                <div className={`${styles.formGroup} ${styles.spanning} ${!isPremium ? styles.lockedField : ''}`}>
+                  <label htmlFor="bankName">
+                    Bank
+                    {!isPremium && <Lock size={12} className={styles.lockIcon} />}
+                  </label>
                   <input
                     id="bankName"
                     type="text"
                     value={profile.bankName}
                     onChange={(e) => handleInputChange('bankName', e.target.value)}
-                    placeholder="z.B. Deutsche Bank AG"
+                    placeholder={isPremium ? "z.B. Deutsche Bank AG" : "Premium-Feature"}
+                    disabled={!isPremium}
                   />
                 </div>
 
-                <div className={styles.formGroup}>
-                  <label htmlFor="iban">IBAN</label>
+                <div className={`${styles.formGroup} ${!isPremium ? styles.lockedField : ''}`}>
+                  <label htmlFor="iban">
+                    IBAN
+                    {!isPremium && <Lock size={12} className={styles.lockIcon} />}
+                  </label>
                   <input
                     id="iban"
                     type="text"
                     value={profile.iban}
                     onChange={(e) => handleInputChange('iban', e.target.value)}
-                    placeholder="DE89 3704 0044 0532 0130 00"
+                    placeholder={isPremium ? "DE89 3704 0044 0532 0130 00" : "Premium-Feature"}
+                    disabled={!isPremium}
                   />
                 </div>
 
-                <div className={styles.formGroup}>
-                  <label htmlFor="bic">BIC</label>
+                <div className={`${styles.formGroup} ${!isPremium ? styles.lockedField : ''}`}>
+                  <label htmlFor="bic">
+                    BIC
+                    {!isPremium && <Lock size={12} className={styles.lockIcon} />}
+                  </label>
                   <input
                     id="bic"
                     type="text"
                     value={profile.bic}
                     onChange={(e) => handleInputChange('bic', e.target.value)}
-                    placeholder="COBADEFFXXX"
+                    placeholder={isPremium ? "COBADEFFXXX" : "Premium-Feature"}
+                    disabled={!isPremium}
                   />
                 </div>
               </div>
