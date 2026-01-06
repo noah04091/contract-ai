@@ -1,12 +1,34 @@
 // 📁 frontend/src/components/Onboarding/OnboardingModal.tsx
-// Enterprise Onboarding System v3.0 - Main Modal Component
-// 🔧 FIX: Native <dialog> Element für 100% zuverlässiges Modal-Verhalten
-// Der Browser rendert showModal() in die "top layer" - umgeht ALLE CSS-Stacking-Probleme!
+// Enterprise Onboarding System v4.0 - Premium Modal Component
+// ✨ LINEAR/NOTION QUALITY - Smooth animations, personalization, professional design
+// 🔧 Native <dialog> Element für 100% zuverlässiges Modal-Verhalten
 
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, Upload, FileText, Calendar, Shield, Sparkles, Building2, Check, Circle, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  ChevronRight,
+  ChevronLeft,
+  Upload,
+  FileText,
+  Calendar,
+  Shield,
+  Sparkles,
+  Building2,
+  Check,
+  Circle,
+  X,
+  Search,
+  PenTool,
+  FolderOpen,
+  FileSignature,
+  Rocket,
+  Target,
+  Zap,
+  ArrowRight
+} from 'lucide-react';
 import { useOnboarding } from '../../hooks/useOnboarding';
+import { useAuth } from '../../context/AuthContext';
 import { useCelebrationContext } from '../Celebration';
 import type { OnboardingProfile } from '../../types/onboarding';
 import styles from './OnboardingModal.module.css';
@@ -16,19 +38,42 @@ interface OnboardingModalProps {
   onClose?: () => void;
 }
 
+// ============================================
+// ANIMATION VARIANTS - Smooth, professional transitions
+// ============================================
+const pageTransition = {
+  type: 'tween',
+  ease: 'easeInOut',
+  duration: 0.3
+};
+
+const staggerContainer = {
+  animate: {
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+// ============================================
+// STEP CONFIGURATION
+// ============================================
 const STEPS = [
-  { id: 'welcome', title: 'Willkommen' },
-  { id: 'personalization', title: 'Personalisierung' },
-  { id: 'upload', title: 'Erster Upload' },
-  { id: 'features', title: 'Features' },
-  { id: 'complete', title: 'Fertig' }
+  { id: 'welcome', title: 'Willkommen', icon: Sparkles },
+  { id: 'personalization', title: 'Personalisierung', icon: Target },
+  { id: 'upload', title: 'Erster Upload', icon: Upload },
+  { id: 'features', title: 'Features', icon: Zap },
+  { id: 'complete', title: 'Startklar', icon: Rocket }
 ];
 
+// ============================================
+// USE CASES - Professional icons
+// ============================================
 const USE_CASES = [
-  { id: 'analyze', icon: '🔍', label: 'Verträge prüfen', hint: 'Risiken erkennen' },
-  { id: 'generate', icon: '✍️', label: 'Verträge erstellen', hint: 'Generator nutzen' },
-  { id: 'manage', icon: '📁', label: 'Verträge verwalten', hint: 'Fristen im Blick' },
-  { id: 'sign', icon: '✒️', label: 'Verträge signieren', hint: 'Digital unterschreiben' }
+  { id: 'analyze', Icon: Search, label: 'Verträge prüfen', hint: 'Risiken erkennen', color: '#3B82F6' },
+  { id: 'generate', Icon: PenTool, label: 'Verträge erstellen', hint: 'Generator nutzen', color: '#8B5CF6' },
+  { id: 'manage', Icon: FolderOpen, label: 'Verträge verwalten', hint: 'Fristen im Blick', color: '#10B981' },
+  { id: 'sign', Icon: FileSignature, label: 'Verträge signieren', hint: 'Digital unterschreiben', color: '#F59E0B' }
 ];
 
 const FEATURES_BY_USE_CASE: Record<string, Array<{ icon: React.ReactNode; title: string; description: string }>> = {
@@ -56,6 +101,7 @@ const FEATURES_BY_USE_CASE: Record<string, Array<{ icon: React.ReactNode; title:
 
 export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const {
     completeStep,
     completeOnboarding,
@@ -66,6 +112,10 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
 
   const [currentStep, setCurrentStep] = useState(0);
   const [profile, setProfile] = useState<OnboardingProfile>({});
+  const [direction, setDirection] = useState(1); // 1 = forward, -1 = backward
+
+  // Get user's first name for personalization
+  const userName = user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'there';
 
   // Start onboarding when modal opens
   useEffect(() => {
@@ -86,6 +136,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
 
     // Move to next step or complete
     if (currentStep < STEPS.length - 1) {
+      setDirection(1); // Forward animation
       setCurrentStep(prev => prev + 1);
     } else {
       await completeOnboarding();
@@ -93,6 +144,13 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
       celebrate('onboarding-complete');
       onClose?.();
       navigate('/dashboard');
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep > 0) {
+      setDirection(-1); // Backward animation
+      setCurrentStep(prev => prev - 1);
     }
   };
 
@@ -105,150 +163,394 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
     setProfile(prev => ({ ...prev, primaryUseCase: useCase as OnboardingProfile['primaryUseCase'] }));
   };
 
+  // ============================================
+  // STEP CONTENT RENDERER - Premium animated content
+  // ============================================
   const renderStepContent = () => {
+    const animationVariants = {
+      initial: { opacity: 0, x: direction * 30 },
+      animate: { opacity: 1, x: 0 },
+      exit: { opacity: 0, x: direction * -30 }
+    };
+
     switch (STEPS[currentStep].id) {
+      // ----------------------------------------
+      // STEP 1: WELCOME - Personalized greeting
+      // ----------------------------------------
       case 'welcome':
         return (
-          <div className={styles.stepHeader}>
-            <span className={styles.stepIcon}>🎉</span>
-            <h2 className={styles.stepTitle}>Willkommen bei Contract AI!</h2>
-            <p className={styles.stepDescription}>
+          <motion.div
+            key="welcome"
+            variants={animationVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={pageTransition}
+            className={styles.stepContent}
+          >
+            {/* Animated Icon */}
+            <motion.div
+              className={styles.iconWrapper}
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
+            >
+              <Sparkles size={32} />
+            </motion.div>
+
+            {/* Personalized Title */}
+            <motion.h2
+              className={styles.stepTitle}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              Willkommen, <span className={styles.highlight}>{userName}</span>!
+            </motion.h2>
+
+            <motion.p
+              className={styles.stepDescription}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
               Du bist einer von über 5.000 Nutzern, die ihre Verträge intelligent verwalten.
-              In 60 Sekunden zeigen wir dir, wie du das Maximum herausholst.
-            </p>
-            <div className={styles.welcomeStats}>
-              <div className={styles.statItem}>
-                <p className={styles.statNumber}>5.000+</p>
-                <p className={styles.statLabel}>Nutzer</p>
-              </div>
-              <div className={styles.statItem}>
-                <p className={styles.statNumber}>50.000+</p>
-                <p className={styles.statLabel}>Verträge analysiert</p>
-              </div>
-              <div className={styles.statItem}>
-                <p className={styles.statNumber}>98%</p>
-                <p className={styles.statLabel}>Zufriedenheit</p>
-              </div>
-            </div>
-          </div>
+              <br />In 60 Sekunden zeigen wir dir, wie du das Maximum herausholst.
+            </motion.p>
+
+            {/* Animated Stats */}
+            <motion.div
+              className={styles.welcomeStats}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              {[
+                { value: '5.000+', label: 'Nutzer' },
+                { value: '50.000+', label: 'Verträge' },
+                { value: '98%', label: 'Zufriedenheit' }
+              ].map((stat, index) => (
+                <motion.div
+                  key={stat.label}
+                  className={styles.statItem}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.5 + index * 0.1 }}
+                >
+                  <p className={styles.statNumber}>{stat.value}</p>
+                  <p className={styles.statLabel}>{stat.label}</p>
+                </motion.div>
+              ))}
+            </motion.div>
+          </motion.div>
         );
 
+      // ----------------------------------------
+      // STEP 2: PERSONALIZATION - Use case selection
+      // ----------------------------------------
       case 'personalization':
         return (
-          <>
-            <div className={styles.stepHeader}>
-              <span className={styles.stepIcon}>🎯</span>
-              <h2 className={styles.stepTitle}>Wie nutzt du Contract AI?</h2>
-              <p className={styles.stepDescription}>
-                Wähle deinen Hauptanwendungsfall – wir passen die Oberfläche für dich an.
-              </p>
-            </div>
-            <div className={styles.useCaseGrid}>
-              {USE_CASES.map(useCase => (
-                <button
+          <motion.div
+            key="personalization"
+            variants={animationVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={pageTransition}
+            className={styles.stepContent}
+          >
+            <motion.div
+              className={styles.iconWrapper}
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+            >
+              <Target size={32} />
+            </motion.div>
+
+            <motion.h2
+              className={styles.stepTitle}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              Wie nutzt du Contract AI?
+            </motion.h2>
+
+            <motion.p
+              className={styles.stepDescription}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              Wähle deinen Hauptanwendungsfall – wir passen das Erlebnis für dich an.
+            </motion.p>
+
+            <motion.div
+              className={styles.useCaseGrid}
+              variants={staggerContainer}
+              initial="initial"
+              animate="animate"
+            >
+              {USE_CASES.map((useCase, index) => (
+                <motion.button
                   key={useCase.id}
                   className={`${styles.useCaseCard} ${profile.primaryUseCase === useCase.id ? styles.selected : ''}`}
                   onClick={() => handleUseCaseSelect(useCase.id)}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 + index * 0.1 }}
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  <span className={styles.useCaseIcon}>{useCase.icon}</span>
+                  <div
+                    className={styles.useCaseIconWrapper}
+                    style={{ backgroundColor: `${useCase.color}15`, color: useCase.color }}
+                  >
+                    <useCase.Icon size={24} />
+                  </div>
                   <p className={styles.useCaseLabel}>{useCase.label}</p>
                   <p className={styles.useCaseHint}>{useCase.hint}</p>
-                </button>
+                  {profile.primaryUseCase === useCase.id && (
+                    <motion.div
+                      className={styles.selectedCheck}
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+                    >
+                      <Check size={14} />
+                    </motion.div>
+                  )}
+                </motion.button>
               ))}
-            </div>
-          </>
+            </motion.div>
+          </motion.div>
         );
 
+      // ----------------------------------------
+      // STEP 3: UPLOAD - First contract upload
+      // ----------------------------------------
       case 'upload':
         return (
-          <>
-            <div className={styles.stepHeader}>
-              <span className={styles.stepIcon}>📄</span>
-              <h2 className={styles.stepTitle}>Lade deinen ersten Vertrag</h2>
-              <p className={styles.stepDescription}>
-                Teste die KI-Analyse direkt mit einem deiner Verträge.
-              </p>
-            </div>
-            <div
+          <motion.div
+            key="upload"
+            variants={animationVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={pageTransition}
+            className={styles.stepContent}
+          >
+            <motion.div
+              className={styles.iconWrapper}
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+            >
+              <Upload size={32} />
+            </motion.div>
+
+            <motion.h2
+              className={styles.stepTitle}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              Lade deinen ersten Vertrag
+            </motion.h2>
+
+            <motion.p
+              className={styles.stepDescription}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              Teste die KI-Analyse direkt mit einem deiner Verträge.
+            </motion.p>
+
+            <motion.div
               className={styles.uploadZone}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3 }}
+              whileHover={{ scale: 1.01, borderColor: '#3B82F6' }}
               onClick={() => navigate('/contracts')}
             >
-              <Upload className={styles.uploadIcon} size={48} />
+              <motion.div
+                animate={{ y: [0, -5, 0] }}
+                transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
+              >
+                <Upload className={styles.uploadIconLarge} size={48} />
+              </motion.div>
               <p className={styles.uploadTitle}>Drag & Drop oder klicken</p>
               <p className={styles.uploadHint}>PDF, DOC, DOCX (max. 10 MB)</p>
-            </div>
-            <div className={styles.uploadTip}>
-              <span className={styles.uploadTipIcon}>💡</span>
+            </motion.div>
+
+            <motion.div
+              className={styles.uploadTip}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <Zap size={18} className={styles.tipIcon} />
               <p className={styles.uploadTipText}>
-                Tipp: Lade einen Handyvertrag, Mietvertrag oder Arbeitsvertrag hoch –
-                unsere KI erkennt automatisch den Typ und analysiert relevante Klauseln.
+                <strong>Tipp:</strong> Lade einen Handyvertrag, Mietvertrag oder Arbeitsvertrag hoch –
+                unsere KI erkennt automatisch den Typ.
               </p>
-            </div>
-          </>
+            </motion.div>
+          </motion.div>
         );
 
+      // ----------------------------------------
+      // STEP 4: FEATURES - Personalized recommendations
+      // ----------------------------------------
       case 'features': {
         const features = FEATURES_BY_USE_CASE[profile.primaryUseCase || 'analyze'];
         return (
-          <>
-            <div className={styles.stepHeader}>
-              <span className={styles.stepIcon}>✨</span>
-              <h2 className={styles.stepTitle}>Perfekt für dich</h2>
-              <p className={styles.stepDescription}>
-                Basierend auf deiner Auswahl empfehlen wir dir diese Features:
-              </p>
-            </div>
+          <motion.div
+            key="features"
+            variants={animationVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={pageTransition}
+            className={styles.stepContent}
+          >
+            <motion.div
+              className={styles.iconWrapper}
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+            >
+              <Zap size={32} />
+            </motion.div>
+
+            <motion.h2
+              className={styles.stepTitle}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              Perfekt für dich, <span className={styles.highlight}>{userName}</span>
+            </motion.h2>
+
+            <motion.p
+              className={styles.stepDescription}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              Basierend auf deiner Auswahl empfehlen wir dir diese Features:
+            </motion.p>
+
             <div className={styles.featureList}>
               {features.map((feature, index) => (
-                <div key={index} className={styles.featureItem}>
-                  <span className={styles.featureIcon}>{feature.icon}</span>
+                <motion.div
+                  key={index}
+                  className={styles.featureItem}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 + index * 0.1 }}
+                  whileHover={{ x: 4 }}
+                >
+                  <div className={styles.featureIconWrapper}>
+                    {feature.icon}
+                  </div>
                   <div className={styles.featureContent}>
                     <p className={styles.featureTitle}>{feature.title}</p>
                     <p className={styles.featureDescription}>{feature.description}</p>
                   </div>
-                </div>
+                  <ArrowRight size={18} className={styles.featureArrow} />
+                </motion.div>
               ))}
             </div>
-          </>
+          </motion.div>
         );
       }
 
+      // ----------------------------------------
+      // STEP 5: COMPLETE - Ready to go!
+      // ----------------------------------------
       case 'complete':
         return (
-          <>
-            <div className={styles.stepHeader}>
-              <span className={styles.stepIcon}>🚀</span>
-              <h2 className={styles.stepTitle}>Du bist startklar!</h2>
-              <p className={styles.stepDescription}>
-                Dein Dashboard ist eingerichtet. Diese Checklist hilft dir bei den nächsten Schritten:
-              </p>
-            </div>
-            <div className={styles.checklistPreview}>
-              <div className={`${styles.checklistItem} ${styles.completed}`}>
-                <Check className={styles.checklistIcon} size={18} />
-                <span>Account erstellt</span>
-              </div>
-              <div className={`${styles.checklistItem} ${styles.completed}`}>
-                <Check className={styles.checklistIcon} size={18} />
-                <span>E-Mail bestätigt</span>
-              </div>
-              <div className={`${styles.checklistItem} ${styles.pending}`}>
-                <Circle className={styles.checklistIcon} size={18} />
-                <span>Ersten Vertrag hochladen</span>
-              </div>
-              <div className={`${styles.checklistItem} ${styles.pending}`}>
-                <Circle className={styles.checklistIcon} size={18} />
-                <span>Firmenprofil vervollständigen</span>
-              </div>
-              <div className={`${styles.checklistItem} ${styles.pending}`}>
-                <Circle className={styles.checklistIcon} size={18} />
-                <span>Erste Analyse durchführen</span>
-              </div>
-            </div>
-            <p style={{ textAlign: 'center', color: '#6b7280', fontSize: 14 }}>
+          <motion.div
+            key="complete"
+            variants={animationVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={pageTransition}
+            className={styles.stepContent}
+          >
+            <motion.div
+              className={`${styles.iconWrapper} ${styles.successIcon}`}
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+            >
+              <Rocket size={32} />
+            </motion.div>
+
+            <motion.h2
+              className={styles.stepTitle}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              Du bist startklar, <span className={styles.highlight}>{userName}</span>!
+            </motion.h2>
+
+            <motion.p
+              className={styles.stepDescription}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              Dein Dashboard ist eingerichtet. Diese Checklist hilft dir bei den nächsten Schritten:
+            </motion.p>
+
+            <motion.div
+              className={styles.checklistPreview}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              {[
+                { label: 'Account erstellt', done: true },
+                { label: 'E-Mail bestätigt', done: true },
+                { label: 'Ersten Vertrag hochladen', done: false },
+                { label: 'Firmenprofil vervollständigen', done: false },
+                { label: 'Erste Analyse durchführen', done: false }
+              ].map((item, index) => (
+                <motion.div
+                  key={item.label}
+                  className={`${styles.checklistItem} ${item.done ? styles.completed : styles.pending}`}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 + index * 0.08 }}
+                >
+                  <motion.div
+                    className={styles.checklistIconWrapper}
+                    initial={item.done ? { scale: 0 } : {}}
+                    animate={item.done ? { scale: 1 } : {}}
+                    transition={{ delay: 0.5 + index * 0.08, type: 'spring', stiffness: 500 }}
+                  >
+                    {item.done ? <Check size={14} /> : <Circle size={14} />}
+                  </motion.div>
+                  <span>{item.label}</span>
+                </motion.div>
+              ))}
+            </motion.div>
+
+            <motion.p
+              className={styles.checklistHint}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8 }}
+            >
               Diese Checklist findest du auch in deinem Dashboard.
-            </p>
-          </>
+            </motion.p>
+          </motion.div>
         );
 
       default:
@@ -333,54 +635,131 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
       </button>
 
       <div className={styles.content}>
-        {/* Progress Dots */}
-        <div className={styles.progress}>
-          {STEPS.map((step, index) => (
-            <div
-              key={step.id}
-              className={`${styles.progressDot} ${
-                index === currentStep ? styles.active : ''
-              } ${index < currentStep ? styles.completed : ''}`}
+        {/* ============================================
+            PREMIUM PROGRESS INDICATOR - With step names
+            ============================================ */}
+        <div className={styles.progressContainer}>
+          {/* Progress Bar Background */}
+          <div className={styles.progressBar}>
+            <motion.div
+              className={styles.progressFill}
+              initial={{ width: 0 }}
+              animate={{ width: `${((currentStep) / (STEPS.length - 1)) * 100}%` }}
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
             />
-          ))}
+          </div>
+
+          {/* Step Indicators */}
+          <div className={styles.progressSteps}>
+            {STEPS.map((step, index) => {
+              const StepIcon = step.icon;
+              const isActive = index === currentStep;
+              const isCompleted = index < currentStep;
+
+              return (
+                <div
+                  key={step.id}
+                  className={`${styles.progressStep} ${isActive ? styles.active : ''} ${isCompleted ? styles.completed : ''}`}
+                >
+                  <motion.div
+                    className={styles.progressDot}
+                    animate={{
+                      scale: isActive ? 1.1 : 1,
+                      backgroundColor: isCompleted ? '#10B981' : isActive ? '#3B82F6' : '#E5E7EB'
+                    }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {isCompleted ? (
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+                      >
+                        <Check size={14} />
+                      </motion.div>
+                    ) : (
+                      <StepIcon size={14} />
+                    )}
+                  </motion.div>
+                  <span className={styles.progressLabel}>{step.title}</span>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Step Content */}
-        {renderStepContent()}
+        {/* ============================================
+            ANIMATED STEP CONTENT
+            ============================================ */}
+        <AnimatePresence mode="wait">
+          {renderStepContent()}
+        </AnimatePresence>
       </div>
 
-      {/* Footer */}
+      {/* ============================================
+          FOOTER - With back button
+          ============================================ */}
       <div className={styles.footer}>
-        <button className={styles.skipButton} onClick={handleSkip}>
-          Überspringen
-        </button>
-
-        {STEPS[currentStep].id === 'upload' ? (
-          <div style={{ display: 'flex', gap: 12 }}>
-            <button className={styles.laterButton} onClick={handleNext}>
-              Später
-            </button>
-            <button
-              className={styles.nextButton}
-              onClick={() => {
-                navigate('/contracts');
-                handleNext();
-              }}
+        <div className={styles.footerLeft}>
+          {currentStep > 0 ? (
+            <motion.button
+              className={styles.backButton}
+              onClick={handleBack}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              whileHover={{ x: -2 }}
             >
-              Jetzt hochladen
-              <ChevronRight size={18} />
+              <ChevronLeft size={18} />
+              Zurück
+            </motion.button>
+          ) : (
+            <button className={styles.skipButton} onClick={handleSkip}>
+              Überspringen
             </button>
-          </div>
-        ) : (
-          <button
-            className={styles.nextButton}
-            onClick={handleNext}
-            disabled={STEPS[currentStep].id === 'personalization' && !profile.primaryUseCase}
-          >
-            {currentStep === STEPS.length - 1 ? 'Zum Dashboard' : 'Weiter'}
-            <ChevronRight size={18} />
-          </button>
-        )}
+          )}
+        </div>
+
+        <div className={styles.footerRight}>
+          {STEPS[currentStep].id === 'upload' ? (
+            <div className={styles.uploadActions}>
+              <button className={styles.laterButton} onClick={handleNext}>
+                Später
+              </button>
+              <motion.button
+                className={styles.nextButton}
+                onClick={() => {
+                  navigate('/contracts');
+                  handleNext();
+                }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                Jetzt hochladen
+                <ChevronRight size={18} />
+              </motion.button>
+            </div>
+          ) : (
+            <motion.button
+              className={styles.nextButton}
+              onClick={handleNext}
+              disabled={STEPS[currentStep].id === 'personalization' && !profile.primaryUseCase}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {currentStep === STEPS.length - 1 ? (
+                <>
+                  Zum Dashboard
+                  <Rocket size={18} />
+                </>
+              ) : (
+                <>
+                  Weiter
+                  <ChevronRight size={18} />
+                </>
+              )}
+            </motion.button>
+          )}
+        </div>
       </div>
     </dialog>
   );

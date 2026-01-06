@@ -7,6 +7,7 @@ import type { OnboardingState } from '../types/onboarding';
 export interface UserData {
   // 🔐 Auth-Basis (aus Backend)
   email: string;
+  name?: string; // Optional: Benutzername
   role?: 'user' | 'admin'; // 🔐 Admin-Role Support
   subscriptionPlan: "free" | "premium" | "business" | "enterprise";
   subscriptionStatus: string;
