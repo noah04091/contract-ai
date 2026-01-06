@@ -448,7 +448,10 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
         setAlternatives(response.alternatives);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Fehler beim Generieren der Alternativen');
+      // ✅ Phase 1 Task 4: Kategorisierte Fehlermeldungen
+      const errorDetails = categorizeError(err);
+      setError(errorDetails.message);
+      setErrorInfo(errorDetails);
     } finally {
       setIsGeneratingAlternatives(false);
     }
@@ -475,7 +478,10 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
         setNegotiation(response.negotiation);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Fehler beim Generieren der Verhandlungstipps');
+      // ✅ Phase 1 Task 4: Kategorisierte Fehlermeldungen
+      const errorDetails = categorizeError(err);
+      setError(errorDetails.message);
+      setErrorInfo(errorDetails);
     } finally {
       setIsGeneratingNegotiation(false);
     }
@@ -516,7 +522,10 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
         setChatHistory(prev => [...prev, assistantMessage]);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Chat-Fehler');
+      // ✅ Phase 1 Task 4: Bessere Chat-Fehlermeldungen
+      const errorDetails = categorizeError(err);
+      setError(errorDetails.message);
+      setErrorInfo(errorDetails);
       // User-Nachricht wieder entfernen bei Fehler
       setChatHistory(prev => prev.slice(0, -1));
     } finally {
@@ -566,7 +575,10 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
         } : null);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Fehler beim Speichern der Notiz');
+      // ✅ Phase 1 Task 4: Kategorisierte Fehlermeldungen
+      const errorDetails = categorizeError(err);
+      setError(errorDetails.message);
+      setErrorInfo(errorDetails);
     }
   }, [contractId]);
 
@@ -596,7 +608,10 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
         });
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Fehler beim Bookmark');
+      // ✅ Phase 1 Task 4: Kategorisierte Fehlermeldungen
+      const errorDetails = categorizeError(err);
+      setError(errorDetails.message);
+      setErrorInfo(errorDetails);
     }
   }, [contractId]);
 
@@ -615,7 +630,10 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
         setSummary(response.summary);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Fehler beim Laden der Zusammenfassung');
+      // ✅ Phase 1 Task 4: Kategorisierte Fehlermeldungen
+      const errorDetails = categorizeError(err);
+      setError(errorDetails.message);
+      setErrorInfo(errorDetails);
     } finally {
       setIsLoading(false);
     }

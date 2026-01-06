@@ -207,9 +207,20 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
     );
   }
 
-  // No Analysis Yet
+  // No Analysis Yet - aber Klausel ausgewählt
+  // ✅ Phase 1 Task 4: Fallback-Text statt leerer Anzeige
   if (!analysis) {
-    return null;
+    return (
+      <div className={styles.analysisContent}>
+        <div className={styles.emptyAnalysisState}>
+          <span className={styles.emptyAnalysisIcon}>📋</span>
+          <h4 className={styles.emptyAnalysisTitle}>Analyse wird vorbereitet</h4>
+          <p className={styles.emptyAnalysisText}>
+            Die Analyse für diese Klausel wird geladen. Bitte warten Sie einen Moment.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   // Die Analyse kann in zwei Formaten kommen:
@@ -293,8 +304,8 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
         )}
       </div>
 
-      {/* 📖 Einfache Erklärung */}
-      {perspectiveData?.explanation && (
+      {/* 📖 Einfache Erklärung - mit Fallback */}
+      {(perspectiveData?.explanation || true) && (
         <div className={styles.analysisSection}>
           <div
             className={styles.sectionHeader}
@@ -318,11 +329,13 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                 margin: '0 0 1rem 0',
                 fontWeight: 500
               }}>
-                {perspectiveData.explanation.simple || perspectiveData.explanation.summary}
+                {perspectiveData?.explanation?.simple ||
+                 perspectiveData?.explanation?.summary ||
+                 'Diese Klausel regelt einen bestimmten Aspekt des Vertrags. Die detaillierte Erklärung wird gerade erstellt.'}
               </p>
 
               {/* Was das für DICH bedeutet - HIGHLIGHT */}
-              {perspectiveData.explanation.whatItMeansForYou && (
+              {perspectiveData?.explanation?.whatItMeansForYou && (
                 <div style={{
                   background: '#eff6ff',
                   border: '1px solid #bfdbfe',
@@ -351,7 +364,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                 </div>
               )}
 
-              {perspectiveData.explanation.keyPoints?.length > 0 && (
+              {perspectiveData?.explanation?.keyPoints?.length > 0 && (
                 <ul className={styles.keyPoints}>
                   {perspectiveData.explanation.keyPoints.map((point, idx) => (
                     <li key={idx} className={styles.keyPoint}>
