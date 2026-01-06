@@ -71,9 +71,9 @@ export default function CompanyProfile() {
   const [hasChanges, setHasChanges] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
-  // 🔐 Premium Check - Erweiterte Features nur für Premium/Business/Enterprise
+  // 🔐 Enterprise Check - Vollständiges Firmenprofil nur für Enterprise User
+  // Free & Business: Nur Firmenname | Enterprise: Voller Zugriff
   const isPremium = user?.subscriptionPlan === 'premium' ||
-                    user?.subscriptionPlan === 'business' ||
                     user?.subscriptionPlan === 'enterprise';
 
   // Load existing profile - auch für Free User
@@ -295,7 +295,7 @@ export default function CompanyProfile() {
                 <div className={styles.upgradeBannerText}>
                   <h3>Vollständiges Firmenprofil freischalten</h3>
                   <p>
-                    Mit Premium kannst du alle Firmendaten speichern für die automatische Vertragserstellung,
+                    Mit dem Enterprise-Plan kannst du alle Firmendaten speichern für die automatische Vertragserstellung,
                     inklusive Logo, Adresse, Steuerdaten und Bankverbindung.
                   </p>
                 </div>
