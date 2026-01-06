@@ -252,6 +252,15 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
     actionReason ||
     null;
 
+  // ✅ Phase 2 Task 2.3: Risk-Score Erklärung Helper
+  const getRiskScoreInfo = (score: number) => {
+    if (score >= 80) return { label: 'Kritisch', color: '#dc2626', hint: 'Dringend prüfen' };
+    if (score >= 60) return { label: 'Hoch', color: '#ea580c', hint: 'Aufmerksamkeit nötig' };
+    if (score >= 40) return { label: 'Mittel', color: '#ca8a04', hint: 'Verhandeln empfohlen' };
+    if (score >= 20) return { label: 'Niedrig', color: '#16a34a', hint: 'Akzeptabel' };
+    return { label: 'Minimal', color: '#059669', hint: 'Unbedenklich' };
+  };
+
   return (
     <div className={styles.analysisContent}>
       {/* 📝 Phase 2: EIN-SATZ-ERKLÄRUNG - Sofortiges Verständnis */}
@@ -294,19 +303,33 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            {riskAssessment && (
-              <div style={{
-                textAlign: 'right',
-                padding: '0.5rem 1rem',
-                background: 'white',
-                borderRadius: '8px'
-              }}>
-                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: actionInfo.color }}>
-                  {riskAssessment.score}/100
+            {riskAssessment && (() => {
+              const scoreInfo = getRiskScoreInfo(riskAssessment.score);
+              return (
+                <div style={{
+                  textAlign: 'right',
+                  padding: '0.5rem 1rem',
+                  background: 'white',
+                  borderRadius: '8px',
+                  minWidth: '100px'
+                }}>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: scoreInfo.color }}>
+                    {riskAssessment.score}/100
+                  </div>
+                  <div style={{
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    color: scoreInfo.color,
+                    marginBottom: '2px'
+                  }}>
+                    {scoreInfo.label}
+                  </div>
+                  <div style={{ fontSize: '0.65rem', color: '#64748b' }}>
+                    {scoreInfo.hint}
+                  </div>
                 </div>
-                <div style={{ fontSize: '0.7rem', color: '#64748b' }}>Risiko-Score</div>
-              </div>
-            )}
+              );
+            })()}
           </div>
         </div>
         {actionReason && (
