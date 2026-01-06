@@ -76,18 +76,28 @@ export function useTour({
 
         if (response.ok) {
           const data = await response.json();
-          const seenFeatures = data.onboarding?.seenFeatures || [];
-          const showTooltips = data.onboarding?.showTooltips !== false;
+          // API returns seenFeatures directly, not nested under onboarding
+          const seenFeatures = data.seenFeatures || [];
+          const showTooltips = data.showTooltips !== false;
 
           const hasSeen = seenFeatures.includes(tourId);
           setHasSeenTour(hasSeen);
 
           // Auto-start if enabled and not seen and tooltips are enabled
           if (autoStart && !hasSeen && showTooltips && tour) {
-            // Small delay to let page render
+            // Längerer Delay und Element-Check vor Start
             setTimeout(() => {
+              // Prüfe ob das erste Target-Element existiert
+              const firstStep = tour.steps[0];
+              if (firstStep?.target && typeof firstStep.target === 'string' && firstStep.target !== 'body') {
+                const targetElement = document.querySelector(firstStep.target);
+                if (!targetElement) {
+                  console.warn(`[Tour] Target element not found: ${firstStep.target}, skipping tour`);
+                  return;
+                }
+              }
               setIsRunning(true);
-            }, 1000);
+            }, 1500); // Erhöht auf 1.5s
           }
         }
       } catch (error) {
@@ -107,7 +117,7 @@ export function useTour({
       if (!token) return;
 
       await fetch(`/api/onboarding/feature/${tourId}`, {
-        method: 'PUT',
+        method: 'POST',  // Backend expects POST, not PUT!
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -161,6 +171,11 @@ export function useTour({
     // Update step index on step changes
     if (type === 'step:after') {
       setStepIndex(index + 1);
+    }
+
+    // Handle back navigation (for SimpleTour)
+    if (type === 'step:before' && action === 'prev') {
+      setStepIndex(prev => Math.max(0, prev - 1));
     }
 
     // Handle tour completion
