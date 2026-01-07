@@ -15,6 +15,18 @@
   min-width: 300px;
 }
 
+/* 🔧 FIX: Explizite Zentrierung für center placement */
+.tooltip.centered {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  /* Sicherstellen dass keine anderen Positionierungswerte stören */
+  right: auto !important;
+  bottom: auto !important;
+  margin: 0 !important;
+}
+
 /* Progress dots */
 .progress {
   display: flex;

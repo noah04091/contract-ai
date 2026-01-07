@@ -57,11 +57,35 @@ function CustomTooltip({
   isLastStep,
   size,
 }: TooltipRenderProps) {
+  // 🔧 FIX: Bei center placement eigene Zentrierung verwenden
+  const isCentered = step.placement === 'center';
+
+  // Für center placement: tooltipProps überschreiben mit fixer Zentrierung
+  const finalTooltipProps = isCentered
+    ? {
+        ...tooltipProps,
+        style: {
+          // Überschreibe alle inline styles von react-floater
+          position: 'fixed' as const,
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          // Andere styles behalten
+          ...(tooltipProps.style || {}),
+          // Diese MÜSSEN überschrieben werden (nach spread)
+          position: 'fixed' as const,
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+        },
+      }
+    : tooltipProps;
+
   return (
     <motion.div
-      {...tooltipProps}
-      className={styles.tooltip}
-      initial={{ opacity: 0, scale: 0.9, y: 10 }}
+      {...finalTooltipProps}
+      className={`${styles.tooltip} ${isCentered ? styles.centered : ''}`}
+      initial={{ opacity: 0, scale: 0.9, y: isCentered ? 0 : 10 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ duration: 0.2 }}
     >
