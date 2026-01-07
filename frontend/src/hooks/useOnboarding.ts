@@ -1,5 +1,6 @@
 // 📁 frontend/src/hooks/useOnboarding.ts
 // Enterprise Onboarding System v3.0 - React Hook
+// 🔄 Mit Event-basierter Synchronisation zwischen Instanzen
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -9,6 +10,11 @@ import type {
 } from '../types/onboarding';
 
 const API_BASE = import.meta.env.VITE_API_BASE || '';
+
+// 🔄 Custom Event für Synchronisation zwischen useOnboarding Instanzen
+// Wenn eine Instanz den Status ändert (complete/skip), sollen alle anderen
+// Instanzen ihre Daten neu laden.
+const ONBOARDING_SYNC_EVENT = 'onboarding-state-sync';
 
 // Helper to get token from localStorage
 const getToken = (): string | null => {
@@ -111,6 +117,19 @@ export function useOnboarding(): UseOnboardingReturn {
     console.log('🎓 [Onboarding] Initial/User-change effect, user:', user?.email || 'null');
     fetchStatus();
   }, [fetchStatus, user?.email]); // Re-fetch when user email changes (login/logout)
+
+  // 🔄 Event-Listener für Synchronisation zwischen Instanzen
+  // Wenn eine andere useOnboarding-Instanz den Status ändert (complete/skip),
+  // laden wir unsere Daten neu um synchron zu bleiben.
+  useEffect(() => {
+    const handleSyncEvent = () => {
+      console.log('🔄 [Onboarding] Sync event received, refetching status...');
+      fetchStatus();
+    };
+
+    window.addEventListener(ONBOARDING_SYNC_EVENT, handleSyncEvent);
+    return () => window.removeEventListener(ONBOARDING_SYNC_EVENT, handleSyncEvent);
+  }, [fetchStatus]);
 
   // Also sync checklist progress from user object if available
   // ⚠️ WICHTIG: shouldShowModal wird NICHT von user.onboarding gesetzt!
@@ -217,6 +236,11 @@ export function useOnboarding(): UseOnboardingReturn {
         completedAt: new Date().toISOString()
       } : prev);
 
+      // 🔄 WICHTIG: Alle anderen useOnboarding-Instanzen benachrichtigen!
+      // Dies stellt sicher, dass z.B. OnboardingChecklist sofort aktualisiert wird.
+      console.log('🔄 [Onboarding] Dispatching sync event after complete');
+      window.dispatchEvent(new Event(ONBOARDING_SYNC_EVENT));
+
       // ✅ Refetch um sicherzustellen dass alle Daten aktuell sind
       // (z.B. für Checklist-Items die während des Onboardings aktualisiert wurden)
       await fetchStatus();
@@ -250,6 +274,10 @@ export function useOnboarding(): UseOnboardingReturn {
         status: 'skipped',
         skippedAt: new Date().toISOString()
       } : prev);
+
+      // 🔄 WICHTIG: Alle anderen useOnboarding-Instanzen benachrichtigen!
+      console.log('🔄 [Onboarding] Dispatching sync event after skip');
+      window.dispatchEvent(new Event(ONBOARDING_SYNC_EVENT));
 
       // ✅ Refetch für aktuelle Daten
       await fetchStatus();
