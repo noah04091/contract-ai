@@ -103,7 +103,7 @@ const FEATURES_BY_USE_CASE: Record<string, Array<{ icon: React.ReactNode; title:
 
 export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, refetchUser } = useAuth();
   const {
     completeStep,
     completeOnboarding,
@@ -150,6 +150,8 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
       setCurrentStep(prev => prev + 1);
     } else {
       await completeOnboarding();
+      // ✅ User-Context aktualisieren damit Dashboard sofort aktuelle Daten hat
+      await refetchUser();
       // 🎉 Celebrate onboarding completion with fireworks!
       celebrate('onboarding-complete');
       onClose?.();
@@ -167,8 +169,10 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
   // 🔧 useCallback für stabile Referenz (wird im ESC-Handler verwendet)
   const handleSkip = useCallback(async () => {
     await skipOnboarding();
+    // ✅ User-Context aktualisieren damit Dashboard sofort aktuelle Daten hat
+    await refetchUser();
     onClose?.();
-  }, [skipOnboarding, onClose]);
+  }, [skipOnboarding, refetchUser, onClose]);
 
   // Type for use cases
   type UseCaseType = 'analyze' | 'generate' | 'manage' | 'sign';

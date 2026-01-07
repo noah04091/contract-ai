@@ -208,17 +208,23 @@ export function useOnboarding(): UseOnboardingReturn {
 
       if (!response.ok) throw new Error('Failed to complete onboarding');
 
+      // ✅ Optimistic Update für sofortige UI-Reaktion
       setShouldShowModal(false);
+      setShouldShowChecklist(true); // Checklist sofort anzeigen!
       setOnboardingState(prev => prev ? {
         ...prev,
         status: 'completed',
         completedAt: new Date().toISOString()
       } : prev);
+
+      // ✅ Refetch um sicherzustellen dass alle Daten aktuell sind
+      // (z.B. für Checklist-Items die während des Onboardings aktualisiert wurden)
+      await fetchStatus();
     } catch (err) {
       console.error('Error completing onboarding:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
     }
-  }, []);
+  }, [fetchStatus]);
 
   // Skip onboarding
   const skipOnboarding = useCallback(async () => {
@@ -236,17 +242,22 @@ export function useOnboarding(): UseOnboardingReturn {
 
       if (!response.ok) throw new Error('Failed to skip onboarding');
 
+      // ✅ Optimistic Update
       setShouldShowModal(false);
+      setShouldShowChecklist(true); // Checklist auch bei Skip anzeigen
       setOnboardingState(prev => prev ? {
         ...prev,
         status: 'skipped',
         skippedAt: new Date().toISOString()
       } : prev);
+
+      // ✅ Refetch für aktuelle Daten
+      await fetchStatus();
     } catch (err) {
       console.error('Error skipping onboarding:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
     }
-  }, []);
+  }, [fetchStatus]);
 
   // Mark feature as seen
   const markFeatureSeen = useCallback(async (featureId: string) => {
