@@ -1,11 +1,43 @@
 // 📁 frontend/src/components/Tour/ProductTour.tsx
 // 🎯 Product Tour Component - Wraps react-joyride with custom styling
 
+import { useEffect } from 'react';
 import Joyride, { TooltipRenderProps } from 'react-joyride';
 import { motion } from 'framer-motion';
 import { useTour } from '../../hooks/useTour';
 import type { TourId } from '../../config/tourConfig';
 import styles from './ProductTour.module.css';
+
+// 🔧 FIX: Injectiere CSS für center-placement Zentrierung
+// React-joyride nutzt react-floater, das .__floater Klassen verwendet
+const CENTERING_STYLE_ID = 'joyride-center-fix';
+
+function injectCenteringStyles() {
+  if (document.getElementById(CENTERING_STYLE_ID)) return;
+
+  const style = document.createElement('style');
+  style.id = CENTERING_STYLE_ID;
+  style.textContent = `
+    /* Fix: Zentriere Tooltip bei center placement */
+    .__floater.__floater__open[data-placement="center"] {
+      position: fixed !important;
+      top: 50% !important;
+      left: 50% !important;
+      transform: translate(-50%, -50%) !important;
+      right: auto !important;
+      bottom: auto !important;
+    }
+
+    /* Fallback: Wenn target=body, auch zentrieren */
+    .react-joyride__spotlight[style*="width: 100%"][style*="height: 100%"] ~ .__floater {
+      position: fixed !important;
+      top: 50% !important;
+      left: 50% !important;
+      transform: translate(-50%, -50%) !important;
+    }
+  `;
+  document.head.appendChild(style);
+}
 
 interface ProductTourProps {
   tourId: TourId;
@@ -94,6 +126,11 @@ export function ProductTour({
     onSkip,
   });
 
+  // 🔧 FIX: Inject centering styles on mount
+  useEffect(() => {
+    injectCenteringStyles();
+  }, []);
+
   // Don't render if loading or no tour
   if (isLoading || !tour) {
     return null;
@@ -115,12 +152,18 @@ export function ProductTour({
       scrollOffset={100}                // Offset beim Scrollen
       floaterProps={{
         disableAnimation: false,
-        hideArrow: false,
+        hideArrow: true, // Arrow bei center placement verstecken
         styles: {
           floater: {
             filter: 'none',
           },
+          // 🔧 FIX: Explizite Zentrierung für center placement
+          floaterWithComponent: {
+            maxWidth: 'none',
+          },
         },
+        // 🔧 FIX: Offset auf 0 setzen für echte Zentrierung
+        offset: 0,
       }}
       styles={{
         options: {

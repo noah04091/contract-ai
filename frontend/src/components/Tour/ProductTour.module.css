@@ -1,5 +1,6 @@
 /* 📁 frontend/src/components/Tour/ProductTour.module.css */
 /* 🎯 Product Tour Styles - Premium Tooltip Design */
+/* 📝 NOTE: Center-placement Zentrierung wird programmatisch in ProductTour.tsx injiziert */
 
 .tooltip {
   position: relative;
