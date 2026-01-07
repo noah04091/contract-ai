@@ -15,7 +15,7 @@
   min-width: 300px;
 }
 
-/* 🔧 FIX: Explizite Zentrierung für center placement */
+/* 🔧 FIX: Explizite Zentrierung für center placement (via Portal) */
 .tooltip.centered {
   position: fixed !important;
   top: 50% !important;
@@ -25,6 +25,8 @@
   right: auto !important;
   bottom: auto !important;
   margin: 0 !important;
+  /* Z-Index muss höher sein als react-joyride overlay (99999) */
+  z-index: 100000 !important;
 }
 
 /* Progress dots */

@@ -1,43 +1,12 @@
 // 📁 frontend/src/components/Tour/ProductTour.tsx
 // 🎯 Product Tour Component - Wraps react-joyride with custom styling
 
-import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Joyride, { TooltipRenderProps } from 'react-joyride';
 import { motion } from 'framer-motion';
 import { useTour } from '../../hooks/useTour';
 import type { TourId } from '../../config/tourConfig';
 import styles from './ProductTour.module.css';
-
-// 🔧 FIX: Injectiere CSS für center-placement Zentrierung
-// React-joyride nutzt react-floater, das .__floater Klassen verwendet
-const CENTERING_STYLE_ID = 'joyride-center-fix';
-
-function injectCenteringStyles() {
-  if (document.getElementById(CENTERING_STYLE_ID)) return;
-
-  const style = document.createElement('style');
-  style.id = CENTERING_STYLE_ID;
-  style.textContent = `
-    /* Fix: Zentriere Tooltip bei center placement */
-    .__floater.__floater__open[data-placement="center"] {
-      position: fixed !important;
-      top: 50% !important;
-      left: 50% !important;
-      transform: translate(-50%, -50%) !important;
-      right: auto !important;
-      bottom: auto !important;
-    }
-
-    /* Fallback: Wenn target=body, auch zentrieren */
-    .react-joyride__spotlight[style*="width: 100%"][style*="height: 100%"] ~ .__floater {
-      position: fixed !important;
-      top: 50% !important;
-      left: 50% !important;
-      transform: translate(-50%, -50%) !important;
-    }
-  `;
-  document.head.appendChild(style);
-}
 
 interface ProductTourProps {
   tourId: TourId;
@@ -57,22 +26,16 @@ function CustomTooltip({
   isLastStep,
   size,
 }: TooltipRenderProps) {
-  // 🔧 FIX: Bei center placement eigene Zentrierung verwenden
+  // 🔧 FIX: Bei center placement Portal verwenden um Floater komplett zu umgehen
   const isCentered = step.placement === 'center';
 
-  return (
+  const tooltipElement = (
     <motion.div
-      {...tooltipProps}
+      // Bei center: KEINE tooltipProps - die enthalten die falsche Positionierung von react-floater
+      {...(isCentered ? { role: 'dialog', 'aria-modal': true } : tooltipProps)}
       className={`${styles.tooltip} ${isCentered ? styles.centered : ''}`}
-      // 🔧 FIX: Bei center inline styles für Zentrierung setzen
-      style={isCentered ? {
-        position: 'fixed',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-      } : undefined}
-      initial={{ opacity: 0, scale: 0.9, y: isCentered ? 0 : 10 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.2 }}
     >
       {/* Progress indicator */}
@@ -115,6 +78,15 @@ function CustomTooltip({
       </div>
     </motion.div>
   );
+
+  // 🔧 FIX: Bei center placement über Portal direkt in body rendern
+  // Das umgeht react-floater's Positionierung komplett
+  if (isCentered) {
+    return createPortal(tooltipElement, document.body);
+  }
+
+  // Normal positioning für non-center steps
+  return tooltipElement;
 }
 
 export function ProductTour({
@@ -136,11 +108,6 @@ export function ProductTour({
     onSkip,
   });
 
-  // 🔧 FIX: Inject centering styles on mount
-  useEffect(() => {
-    injectCenteringStyles();
-  }, []);
-
   // Don't render if loading or no tour
   if (isLoading || !tour) {
     return null;
@@ -158,26 +125,15 @@ export function ProductTour({
       spotlightClicks
       callback={handleJoyrideCallback}
       tooltipComponent={CustomTooltip}
-      // 🔧 Joyride Positionierung
-      scrollOffset={100}                // Offset beim Scrollen
+      scrollOffset={100}
       floaterProps={{
         disableAnimation: false,
-        hideArrow: true, // Arrow bei center placement verstecken
-        styles: {
-          floater: {
-            filter: 'none',
-          },
-          // 🔧 FIX: Explizite Zentrierung für center placement
-          floaterWithComponent: {
-            maxWidth: 'none',
-          },
-        },
-        // 🔧 FIX: Offset auf 0 setzen für echte Zentrierung
+        hideArrow: true,
         offset: 0,
       }}
       styles={{
         options: {
-          zIndex: 99999,  // 🔧 Höher als alle anderen Elemente
+          zIndex: 99999,
           primaryColor: '#3B82F6',
           overlayColor: 'rgba(0, 0, 0, 0.5)',
         },
