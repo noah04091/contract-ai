@@ -19,6 +19,7 @@ import {
   X
 } from 'lucide-react';
 import { useOnboarding } from '../../hooks/useOnboarding';
+import { useAuth } from '../../context/AuthContext';
 import { useCelebrationContext } from '../Celebration';
 import styles from './OnboardingChecklist.module.css';
 
@@ -94,6 +95,7 @@ interface OnboardingChecklistProps {
 export function OnboardingChecklist({ className }: OnboardingChecklistProps) {
   const navigate = useNavigate();
   const { celebrate } = useCelebrationContext();
+  const { user } = useAuth(); // 🔧 Direkt aus AuthContext für zuverlässige Updates
   const {
     onboardingState,
     shouldShowChecklist,
@@ -101,6 +103,21 @@ export function OnboardingChecklist({ className }: OnboardingChecklistProps) {
     checklistTotal,
     isLoading
   } = useOnboarding();
+
+  // 🔧 ROBUSTER FIX: Berechne shouldShow direkt aus user.onboarding
+  // Dies ist zuverlässiger als der Hook-State, weil refetchUser() den user aktualisiert
+  const userOnboarding = user?.onboarding;
+  const userStatus = userOnboarding?.status;
+  const userChecklist = userOnboarding?.checklist || {};
+  const userChecklistProgress = Object.values(userChecklist).filter(Boolean).length;
+  const userChecklistTotal = Object.keys(userChecklist).length || 5;
+
+  // Zeige Checklist wenn: (completed ODER skipped) UND nicht alle Items erledigt
+  const shouldShowFromUser = (userStatus === 'completed' || userStatus === 'skipped')
+    && userChecklistProgress < userChecklistTotal;
+
+  // Kombiniere beide Quellen: Hook-State ODER direkte Berechnung aus user
+  const effectiveShouldShow = shouldShowChecklist || shouldShowFromUser;
 
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isHidden, setIsHidden] = useState(() => {
@@ -141,18 +158,24 @@ export function OnboardingChecklist({ className }: OnboardingChecklistProps) {
   };
 
   // Don't show if loading, hidden, or shouldn't show
-  if (isLoading || isHidden || !shouldShowChecklist) {
+  // 🔧 Verwendet effectiveShouldShow statt nur shouldShowChecklist
+  // effectiveShouldShow = shouldShowChecklist (Hook) ODER shouldShowFromUser (direkt aus user)
+  if (isLoading || isHidden || !effectiveShouldShow) {
     return null;
   }
 
-  // Get checklist state
-  const checklist = onboardingState?.checklist || {};
+  // Get checklist state - bevorzuge user.onboarding.checklist (wird durch refetchUser aktualisiert)
+  const checklist = userChecklist && Object.keys(userChecklist).length > 0
+    ? userChecklist
+    : (onboardingState?.checklist || {});
 
-  // Calculate progress percentage
-  const progressPercent = Math.round((checklistProgress / checklistTotal) * 100);
+  // Calculate progress percentage - bevorzuge user-Daten
+  const effectiveProgress = userChecklistProgress > 0 ? userChecklistProgress : checklistProgress;
+  const effectiveTotal = userChecklistTotal > 0 ? userChecklistTotal : checklistTotal;
+  const progressPercent = Math.round((effectiveProgress / effectiveTotal) * 100);
 
-  // Check if all complete
-  const isAllComplete = checklistProgress === checklistTotal;
+  // Check if all complete - mit effective Werten
+  const isAllComplete = effectiveProgress === effectiveTotal;
 
   // Animation variants
   const containerVariants = {
@@ -188,7 +211,7 @@ export function OnboardingChecklist({ className }: OnboardingChecklistProps) {
             whileTap={{ scale: 0.99 }}
           >
             <Rocket size={18} className={styles.expandIcon} />
-            <span>Erste Schritte ({checklistProgress}/{checklistTotal})</span>
+            <span>Erste Schritte ({effectiveProgress}/{effectiveTotal})</span>
             <ChevronUp size={16} />
           </motion.button>
         </div>
@@ -216,7 +239,7 @@ export function OnboardingChecklist({ className }: OnboardingChecklistProps) {
           <div>
             <h3 className={styles.headerTitle}>Erste Schritte</h3>
             <p className={styles.headerSubtitle}>
-              {isAllComplete ? 'Alles erledigt!' : `${checklistProgress} von ${checklistTotal} abgeschlossen`}
+              {isAllComplete ? 'Alles erledigt!' : `${effectiveProgress} von ${effectiveTotal} abgeschlossen`}
             </p>
           </div>
         </div>
