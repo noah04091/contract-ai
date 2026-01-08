@@ -244,15 +244,33 @@ export function SimpleTour({
             />
           )}
 
-          {/* Tooltip - Always centered in viewport */}
-          <motion.div
-            className={styles.tooltipContainer}
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ duration: 0.2 }}
+          {/* Tooltip - INLINE STYLES für 100% zuverlässige Viewport-Zentrierung
+              Der äußere div ist der Zentrierungs-Container (KEIN framer-motion!)
+              Der innere motion.div hat die Animation */}
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              width: '100vw',
+              height: '100vh',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 99999,
+              pointerEvents: 'none',
+            }}
           >
-            <div className={styles.tooltip}>
+            <motion.div
+              className={styles.tooltip}
+              style={{ pointerEvents: 'auto' }}
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ duration: 0.2 }}
+            >
               {/* Close button */}
               <button className={styles.closeBtn} onClick={handleClose}>
                 <X size={18} />
@@ -297,8 +315,8 @@ export function SimpleTour({
               <div className={styles.stepCounter}>
                 {stepIndex + 1} / {totalSteps}
               </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
         </>
       )}
     </AnimatePresence>
