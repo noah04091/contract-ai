@@ -962,7 +962,12 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
       });
 
       if (!response.ok) {
-        throw new Error('Fehler beim Generieren des Analyse-Reports');
+        // Parse error message from backend
+        const errorData = await response.json().catch(() => null);
+        if (response.status === 404) {
+          throw new Error(errorData?.message || 'Dieser Vertrag wurde noch nicht analysiert. Bitte führe zuerst eine Analyse durch.');
+        }
+        throw new Error(errorData?.message || 'Fehler beim Generieren des Analyse-Reports');
       }
 
       const blob = await response.blob();
@@ -976,7 +981,9 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading analysis PDF:', error);
-      alert('Fehler beim Herunterladen des Analyse-Reports');
+      // Show the specific error message to the user
+      const errorMessage = error instanceof Error ? error.message : 'Fehler beim Herunterladen des Analyse-Reports';
+      alert(errorMessage);
     }
   };
 
