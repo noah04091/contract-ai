@@ -114,7 +114,7 @@ interface LegalPulseData {
   [key: string]: unknown;
 }
 
-export default function ContractAnalysis({ file, contractName, contractId: _contractId, onReset, onNavigateToContract, initialResult }: ContractAnalysisProps) {
+export default function ContractAnalysis({ file, contractName, onReset, onNavigateToContract, initialResult }: ContractAnalysisProps) {
   // Nutze file.name oder contractName als Fallback
   const displayName = file?.name || contractName || 'Vertrag';
   const displaySize = file ? (file.size / 1024 / 1024).toFixed(2) : null;
