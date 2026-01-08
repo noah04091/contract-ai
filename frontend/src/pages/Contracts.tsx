@@ -120,6 +120,12 @@ interface Contract {
     calculated?: boolean;
     source?: string;
   }>;
+  // 📊 Analysis Object (für Analyse-Tab Verfügbarkeit)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  analysis?: Record<string, any>;
+  // 📡 Legal Pulse (für Analyse-Tab Verfügbarkeit)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  legalPulse?: Record<string, any>;
 }
 
 // ✅ KORRIGIERT: Interface für Mehrfach-Upload
@@ -2056,6 +2062,10 @@ export default function Contracts() {
           // ✅ BESTE QUELLE: Backend-Response direkt nach Analyse - hat ALLE Felder
           updatedContract = data.contract;
           console.log("📊 Contract aus Backend-Response geladen (vollständige Daten)");
+          // 🔍 DEBUG: Prüfe ob analysis und legalPulse vorhanden sind
+          console.log("🔍 DEBUG: data.contract hat analysis:", !!data.contract.analysis);
+          console.log("🔍 DEBUG: data.contract hat legalPulse:", !!data.contract.legalPulse);
+          console.log("🔍 DEBUG: data.contract keys:", Object.keys(data.contract));
         } else {
           // Fallback: Aus der Liste oder alter Contract
           const foundContract = refreshedContracts?.find((c: Contract) => c._id === contract._id);
@@ -2069,6 +2079,14 @@ export default function Contracts() {
           }
         }
 
+        console.log("🔍 DEBUG: Setting selectedContract with:", {
+          id: updatedContract._id,
+          name: updatedContract.name,
+          hasAnalysis: !!updatedContract.analysis,
+          analysisKeys: updatedContract.analysis ? Object.keys(updatedContract.analysis) : 'N/A',
+          hasLegalPulse: !!updatedContract.legalPulse,
+          analyzed: updatedContract.analyzed
+        });
         setSelectedContract(updatedContract);
         setShowDetails(true);
 
@@ -5126,7 +5144,9 @@ export default function Contracts() {
         {/* 🎨 NEW: Professional Contract Details Modal */}
           {selectedContract && showDetails && (
             <NewContractDetailsModal
-              contract={selectedContract}
+              key={`${selectedContract._id}-${!!selectedContract.analysis}-${!!selectedContract.legalPulse}`}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              contract={selectedContract as any}
               onClose={() => {
                 setShowDetails(false);
                 setOpenEditModalDirectly(false); // ✅ Reset beim Schließen

@@ -2373,6 +2373,11 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
     // ✅ NEU: Hole den vollständig aktualisierten Contract für Frontend
     const finalContract = await contractsCollection.findOne({ _id: new ObjectId(id) });
 
+    // 🔍 DEBUG: Prüfe ob analysis und legalPulse im finalContract vorhanden sind
+    console.log(`🔍 [${requestId}] finalContract hat analysis:`, !!finalContract?.analysis);
+    console.log(`🔍 [${requestId}] finalContract hat legalPulse:`, !!finalContract?.legalPulse);
+    console.log(`🔍 [${requestId}] finalContract.analysis keys:`, finalContract?.analysis ? Object.keys(finalContract.analysis) : 'N/A');
+
     // 🎓 Onboarding: firstAnalysisComplete automatisch auf true setzen
     try {
       await usersCollection.updateOne(

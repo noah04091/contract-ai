@@ -231,6 +231,13 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
 
   // Update contract when prop changes
   useEffect(() => {
+    console.log('🔄 [Modal] initialContract changed:', {
+      id: initialContract._id,
+      name: initialContract.name,
+      hasAnalysis: !!initialContract.analysis,
+      analysisKeys: initialContract.analysis ? Object.keys(initialContract.analysis) : 'N/A',
+      hasLegalPulse: !!initialContract.legalPulse
+    });
     setContract(initialContract);
   }, [initialContract]);
 
@@ -1757,7 +1764,10 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
               </button>
               <button
                 className={`${styles.tabButton} ${activeTab === 'analysis' ? styles.tabActive : ''}`}
-                onClick={() => setActiveTab('analysis')}
+                onClick={() => {
+                  console.log('🔍 [Modal] Analyse Tab clicked. contract.analysis:', contract.analysis, 'contract.legalPulse:', contract.legalPulse);
+                  setActiveTab('analysis');
+                }}
                 disabled={!contract.analysis && !contract.legalPulse}
               >
                 <BarChart3 size={18} />
