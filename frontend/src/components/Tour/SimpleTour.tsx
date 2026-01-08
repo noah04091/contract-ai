@@ -205,9 +205,30 @@ export function SimpleTour({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isRunning, handleClose]);
 
+  // DEBUG: IMMER sichtbar - VOR dem early return!
+  const debugBadge = mounted ? createPortal(
+    <div
+      style={{
+        position: 'fixed',
+        bottom: '10px',
+        right: '10px',
+        background: 'red',
+        color: 'white',
+        padding: '8px 16px',
+        borderRadius: '8px',
+        zIndex: 999999,
+        fontSize: '12px',
+        fontWeight: 'bold',
+      }}
+    >
+      🔴 DEBUG v4 - mounted={String(mounted)} loading={String(isLoading)} running={String(isRunning)}
+    </div>,
+    document.body
+  ) : null;
+
   // Don't render if not running or loading
   if (!mounted || isLoading || !isRunning || !tour || !currentStep) {
-    return null;
+    return debugBadge; // Zeigt zumindest das Debug-Badge
   }
 
   const totalSteps = tour.steps.length;
@@ -339,33 +360,12 @@ export function SimpleTour({
     </AnimatePresence>
   );
 
-  // DEBUG: Immer sichtbares Element um zu prüfen ob Code deployt ist
-  const debugElement = (
-    <div
-      style={{
-        position: 'fixed',
-        bottom: '10px',
-        right: '10px',
-        background: 'red',
-        color: 'white',
-        padding: '8px 16px',
-        borderRadius: '8px',
-        zIndex: 999999,
-        fontSize: '12px',
-        fontWeight: 'bold',
-      }}
-    >
-      🔴 SimpleTour DEBUG v3 - {new Date().toLocaleTimeString()}
-    </div>
-  );
-
   // Use portal to render at document body level
-  return createPortal(
+  return (
     <>
-      {debugElement}
-      {tourContent}
-    </>,
-    document.body
+      {debugBadge}
+      {createPortal(tourContent, document.body)}
+    </>
   );
 }
 
