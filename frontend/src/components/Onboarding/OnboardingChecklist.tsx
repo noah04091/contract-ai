@@ -2,7 +2,7 @@
 // Enterprise Onboarding System v4.0 - Premium Dashboard Checklist Widget
 // ✨ LINEAR/NOTION QUALITY - Animations, professional icons, persistent state
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -127,8 +127,25 @@ export function OnboardingChecklist({ className }: OnboardingChecklistProps) {
   const [justCompletedId, setJustCompletedId] = useState<string | null>(null);
   const [previousProgress, setPreviousProgress] = useState(checklistProgress);
 
+  // 🔧 FIX: Track if initial data has loaded to prevent false celebrations
+  // Problem: checklistProgress starts at 0, then jumps to 5 on fetch
+  // This would trigger celebration on EVERY page load for users who already completed!
+  const hasInitializedRef = useRef(false);
+  const celebrationTriggeredRef = useRef(false);
+
   // Track completion for celebration
   useEffect(() => {
+    // 🔧 FIX: Skip the first render cycle where progress goes from 0 to actual value
+    // This prevents celebration from triggering on every page load
+    if (!hasInitializedRef.current) {
+      // First time seeing the data - just initialize, don't celebrate
+      if (checklistProgress > 0) {
+        hasInitializedRef.current = true;
+        setPreviousProgress(checklistProgress);
+      }
+      return;
+    }
+
     if (checklistProgress > previousProgress) {
       // Find which item was just completed
       const checklist = onboardingState?.checklist || {};
@@ -144,7 +161,9 @@ export function OnboardingChecklist({ className }: OnboardingChecklistProps) {
       }
 
       // 🎉 Celebrate when all items are complete!
-      if (checklistProgress === checklistTotal && previousProgress < checklistTotal) {
+      // 🔧 FIX: Also check celebrationTriggeredRef to prevent double celebrations
+      if (checklistProgress === checklistTotal && previousProgress < checklistTotal && !celebrationTriggeredRef.current) {
+        celebrationTriggeredRef.current = true;
         celebrate('checklist-complete');
       }
     }
