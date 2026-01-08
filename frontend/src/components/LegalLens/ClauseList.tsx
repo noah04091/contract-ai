@@ -1,7 +1,7 @@
 // 📁 components/LegalLens/ClauseList.tsx
 // Komponente für die Klausel-Liste (linke Seite)
 
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { FileText, Eye } from 'lucide-react';
 import type { ParsedClause, LegalLensProgress, RiskLevel } from '../../types/legalLens';
 import { RISK_LABELS } from '../../types/legalLens';
@@ -28,6 +28,29 @@ const ClauseList: React.FC<ClauseListProps> = ({
   onViewModeChange,
   cachedClauseIds = []
 }) => {
+  // ✅ FIX Issue #5: Refs für Auto-Scroll zur ausgewählten Klausel
+  const clauseRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  // listContainerRef entfernt - wurde nicht verwendet
+
+  // ✅ Auto-Scroll zur ausgewählten Klausel wenn sie sich ändert
+  useEffect(() => {
+    if (selectedClause && clauseRefs.current.has(selectedClause.id)) {
+      const element = clauseRefs.current.get(selectedClause.id);
+      if (element) {
+        // Smooth scroll zur Klausel mit etwas Abstand vom oberen Rand
+        element.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+
+        // Kurzes visuelles Highlight für bessere Sichtbarkeit
+        element.style.animation = 'pulse-highlight 1s ease-out';
+        setTimeout(() => {
+          element.style.animation = '';
+        }, 1000);
+      }
+    }
+  }, [selectedClause?.id]);
   const isClauseReviewed = (clauseId: string): boolean => {
     return progress?.reviewedClauses?.includes(clauseId) || false;
   };
@@ -98,6 +121,10 @@ const ClauseList: React.FC<ClauseListProps> = ({
           return (
             <div
               key={clause.id}
+              ref={(el) => {
+                // ✅ FIX Issue #5: Ref für Auto-Scroll speichern
+                if (el) clauseRefs.current.set(clause.id, el);
+              }}
               className={`${styles.clauseItem} ${isSelected ? styles.selected : ''} ${isReviewed ? styles.reviewed : ''}`}
               onClick={() => onSelectClause(clause)}
               role="button"
