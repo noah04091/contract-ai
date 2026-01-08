@@ -2373,6 +2373,14 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
     // ✅ NEU: Hole den vollständig aktualisierten Contract für Frontend
     const finalContract = await contractsCollection.findOne({ _id: new ObjectId(id) });
 
+    // 🔧 FIX: Stelle sicher dass analysis im Response enthalten ist
+    // MongoDB findOne() kann manchmal das gerade geschriebene Dokument noch nicht haben (Replikation/Timing)
+    // Daher fügen wir analysis explizit hinzu, da wir es gerade erstellt haben
+    if (finalContract && !finalContract.analysis) {
+      console.log(`⚠️ [${requestId}] finalContract.analysis war undefined - füge manuell hinzu`);
+      finalContract.analysis = analysisObject;
+    }
+
     // 🔍 DEBUG: Prüfe ob analysis und legalPulse im finalContract vorhanden sind
     console.log(`🔍 [${requestId}] finalContract hat analysis:`, !!finalContract?.analysis);
     console.log(`🔍 [${requestId}] finalContract hat legalPulse:`, !!finalContract?.legalPulse);
