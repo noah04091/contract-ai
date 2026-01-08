@@ -57,7 +57,8 @@ router.get("/status", verifyToken, async (req, res) => {
 
     // Entscheide ob Modal/Checklist gezeigt werden soll
     const shouldShowModal = onboarding.status === 'not_started' || onboarding.status === 'in_progress';
-    const shouldShowChecklist = onboarding.status === 'completed' && checklistProgress < checklistTotal;
+    // 🔧 FIX: Checklist auch für 'skipped' Status zeigen (User hat Onboarding übersprungen aber Items nicht erledigt)
+    const shouldShowChecklist = (onboarding.status === 'completed' || onboarding.status === 'skipped') && checklistProgress < checklistTotal;
 
     res.json({
       status: onboarding.status,

@@ -2946,6 +2946,26 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     const contractScore = result?.contractScore || 0;
     console.log(`✅ [ANALYSIS] Done in ${duration}s | type=${contractType} | score=${contractScore} | user=${req.user?.userId} | requestId=${requestId}`);
 
+    // 🎓 Onboarding: firstAnalysisComplete automatisch auf true setzen
+    if (req.user?.userId && usersCollectionRef) {
+      try {
+        const updateResult = await usersCollectionRef.updateOne(
+          { _id: new ObjectId(req.user.userId) },
+          {
+            $set: {
+              'onboarding.checklist.firstAnalysisComplete': true,
+              updatedAt: new Date()
+            }
+          }
+        );
+        if (updateResult.modifiedCount > 0) {
+          console.log(`🎓 [Onboarding] Checklist aktualisiert: firstAnalysisComplete = true für User ${req.user.userId}`);
+        }
+      } catch (onboardingErr) {
+        console.warn(`⚠️ [Onboarding] Checklist Update fehlgeschlagen:`, onboardingErr.message);
+      }
+    }
+
     // ✅ KRITISCHER FIX: ORIGINAL RESPONSE-STRUKTUR OHNE "data" WRAPPER!
     const responseData = { 
       success: true,

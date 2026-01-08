@@ -435,6 +435,33 @@ function extractContractDetails(text) {
     usersCollection = db.collection("users");
     console.log("📦 Verbunden mit contracts, analyses, contract_events UND users");
 
+// 🎓 Helper: Onboarding Checklist Item automatisch aktualisieren
+async function updateOnboardingChecklist(userId, itemId) {
+  try {
+    if (!usersCollection) return;
+
+    const result = await usersCollection.updateOne(
+      { _id: new ObjectId(userId) },
+      {
+        $set: {
+          [`onboarding.checklist.${itemId}`]: true,
+          updatedAt: new Date()
+        }
+      }
+    );
+
+    if (result.modifiedCount > 0) {
+      console.log(`🎓 [Onboarding] Checklist aktualisiert: ${itemId} = true für User ${userId}`);
+    }
+  } catch (err) {
+    console.warn(`⚠️ [Onboarding] Checklist Update fehlgeschlagen für ${itemId}:`, err.message);
+    // Fehler nicht werfen - Contract-Operation soll weiterlaufen
+  }
+}
+
+// Export für andere Routes (z.B. analyze.js)
+router.updateOnboardingChecklist = updateOnboardingChecklist;
+
     // 🚀 PERFORMANCE: MongoDB Indizes erstellen (idempotent - existierende werden übersprungen)
     try {
       // Compound Index für häufigste Query: User's Contracts sortiert nach Datum
@@ -1352,9 +1379,12 @@ router.post("/", verifyToken, async (req, res) => {
 
     const result = await contractsCollection.insertOne(contractDoc);
     const contractId = result.insertedId;
-    
+
     console.log("✅ Vertrag gespeichert mit ID:", contractId);
-    
+
+    // 🎓 Onboarding: firstContractUploaded automatisch auf true setzen
+    await updateOnboardingChecklist(req.user.userId, 'firstContractUploaded');
+
     // ✅ NEU: Calendar Events generieren
     try {
       const fullContract = { ...contractDoc, _id: contractId };
