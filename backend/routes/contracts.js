@@ -634,20 +634,29 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
   // 🔄 Transformation der Ergebnisse
   pipeline.push({
     $addFields: {
-      // Analysis-Daten extrahieren (Fallback: aus Analysis Collection wenn nicht direkt auf Contract)
+      // 🔧 FIX: Analysis-Daten extrahieren - PRIORITÄT: Direkt auf Contract > Analysis Collection
+      // Das analysis-Feld wird bei Schnellanalyse direkt auf dem Contract gespeichert!
       analysis: {
         $cond: {
-          if: { $gt: [{ $size: "$analysisData" }, 0] },
-          then: {
-            summary: { $arrayElemAt: ["$analysisData.summary", 0] },
-            legalAssessment: { $arrayElemAt: ["$analysisData.legalAssessment", 0] },
-            suggestions: { $arrayElemAt: ["$analysisData.suggestions", 0] },
-            comparison: { $arrayElemAt: ["$analysisData.comparison", 0] },
-            contractScore: { $arrayElemAt: ["$analysisData.contractScore", 0] },
-            analysisId: { $arrayElemAt: ["$analysisData._id", 0] },
-            lastAnalyzed: { $arrayElemAt: ["$analysisData.createdAt", 0] }
-          },
-          else: null
+          // PRIORITÄT 1: analysis direkt auf Contract vorhanden?
+          if: { $and: [{ $ne: ["$analysis", null] }, { $ne: ["$analysis", {}] }] },
+          then: "$analysis", // Direkt vom Contract nehmen!
+          else: {
+            $cond: {
+              // PRIORITÄT 2: Fallback auf Analysis Collection
+              if: { $gt: [{ $size: "$analysisData" }, 0] },
+              then: {
+                summary: { $arrayElemAt: ["$analysisData.summary", 0] },
+                legalAssessment: { $arrayElemAt: ["$analysisData.legalAssessment", 0] },
+                suggestions: { $arrayElemAt: ["$analysisData.suggestions", 0] },
+                comparison: { $arrayElemAt: ["$analysisData.comparison", 0] },
+                contractScore: { $arrayElemAt: ["$analysisData.contractScore", 0] },
+                analysisId: { $arrayElemAt: ["$analysisData._id", 0] },
+                lastAnalyzed: { $arrayElemAt: ["$analysisData.createdAt", 0] }
+              },
+              else: null
+            }
+          }
         }
       },
       // ✅ NEU: Analysedaten direkt auf Root-Level (für Frontend Kompatibilität)
