@@ -15,18 +15,28 @@
   min-width: 300px;
 }
 
-/* 🔧 FIX: Explizite Zentrierung für center placement (via Portal) */
-.tooltip.centered {
-  position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  /* Sicherstellen dass keine anderen Positionierungswerte stören */
-  right: auto !important;
-  bottom: auto !important;
-  margin: 0 !important;
+/* 🔧 FIX: Wrapper für center placement - verwendet FLEXBOX statt transform
+   Grund: Framer-motion überschreibt transform mit scale(), daher muss
+   die Zentrierung auf einem separaten Wrapper-Element passieren */
+.centeredWrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* Flexbox für perfekte Zentrierung - wird NICHT von framer-motion überschrieben */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   /* Z-Index muss höher sein als react-joyride overlay (99999) */
-  z-index: 100000 !important;
+  z-index: 100000;
+  /* Keine Hintergrundfarbe - das Overlay kommt von react-joyride */
+  pointer-events: none;
+}
+
+/* Das Tooltip selbst muss pointer-events wieder aktivieren */
+.centeredWrapper .tooltip {
+  pointer-events: auto;
 }
 
 /* Progress dots */

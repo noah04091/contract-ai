@@ -26,14 +26,12 @@ function CustomTooltip({
   isLastStep,
   size,
 }: TooltipRenderProps) {
-  // 🔧 FIX: Bei center placement Portal verwenden um Floater komplett zu umgehen
   const isCentered = step.placement === 'center';
 
-  const tooltipElement = (
+  // Tooltip-Inhalt (wird animiert)
+  const tooltipContent = (
     <motion.div
-      // Bei center: KEINE tooltipProps - die enthalten die falsche Positionierung von react-floater
-      {...(isCentered ? { role: 'dialog', 'aria-modal': true } : tooltipProps)}
-      className={`${styles.tooltip} ${isCentered ? styles.centered : ''}`}
+      className={styles.tooltip}
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.2 }}
@@ -79,14 +77,24 @@ function CustomTooltip({
     </motion.div>
   );
 
-  // 🔧 FIX: Bei center placement über Portal direkt in body rendern
-  // Das umgeht react-floater's Positionierung komplett
+  // 🔧 FIX: Bei center placement - Wrapper für Zentrierung, inneres Element für Animation
+  // Framer-motion überschreibt transform mit scale(), daher brauchen wir einen separaten
+  // Wrapper der die Zentrierung via Flexbox macht (nicht transform)
   if (isCentered) {
-    return createPortal(tooltipElement, document.body);
+    return createPortal(
+      <div className={styles.centeredWrapper} role="dialog" aria-modal="true">
+        {tooltipContent}
+      </div>,
+      document.body
+    );
   }
 
-  // Normal positioning für non-center steps
-  return tooltipElement;
+  // Normal positioning für non-center steps (verwendet tooltipProps von react-floater)
+  return (
+    <div {...tooltipProps}>
+      {tooltipContent}
+    </div>
+  );
 }
 
 export function ProductTour({
