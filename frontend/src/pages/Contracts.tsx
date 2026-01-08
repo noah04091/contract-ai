@@ -260,6 +260,14 @@ export default function Contracts() {
 
   // ✏️ NEU: Quick Edit Modal State (öffnet direkt ohne Detail-Ansicht)
   const [quickEditContract, setQuickEditContract] = useState<Contract | null>(null);
+
+  // ⚡ NEU: Schnellanalyse-Modal State (zeigt ausführliche Analyse nach Schnellanalyse)
+  const [quickAnalysisModal, setQuickAnalysisModal] = useState<{
+    show: boolean;
+    contractName: string;
+    contractId: string;
+    analysisResult: Record<string, unknown> | null;
+  }>({ show: false, contractName: '', contractId: '', analysisResult: null });
   
   // ✅ KORRIGIERT: User-Plan States - Free = 3 Analysen!
   const [userInfo, setUserInfo] = useState<UserInfo>({
@@ -2079,21 +2087,39 @@ export default function Contracts() {
           }
         }
 
-        console.log("🔍 DEBUG: Setting selectedContract with:", {
+        console.log("🔍 DEBUG: Setting quickAnalysisModal with:", {
           id: updatedContract._id,
           name: updatedContract.name,
           hasAnalysis: !!updatedContract.analysis,
           analysisKeys: updatedContract.analysis ? Object.keys(updatedContract.analysis) : 'N/A',
-          hasLegalPulse: !!updatedContract.legalPulse,
-          analyzed: updatedContract.analyzed
+          hasLegalPulse: !!updatedContract.legalPulse
         });
-        setSelectedContract(updatedContract);
-        setShowDetails(true);
 
-        // Update URL für bessere Navigation
-        navigate(`/contracts?view=${contract._id}`, { replace: true });
+        // ⚡ NEU: Öffne das ausführliche Analyse-Modal statt ContractDetailView
+        setQuickAnalysisModal({
+          show: true,
+          contractName: updatedContract.name,
+          contractId: updatedContract._id,
+          analysisResult: {
+            success: true,
+            contractScore: updatedContract.analysis?.contractScore || updatedContract.contractScore,
+            summary: updatedContract.analysis?.summary || updatedContract.summary,
+            legalAssessment: updatedContract.analysis?.legalAssessment || updatedContract.legalAssessment,
+            suggestions: updatedContract.analysis?.suggestions || updatedContract.suggestions,
+            comparison: updatedContract.analysis?.comparison,
+            positiveAspects: updatedContract.analysis?.positiveAspects,
+            criticalIssues: updatedContract.analysis?.criticalIssues,
+            recommendations: updatedContract.analysis?.recommendations,
+            detailedLegalOpinion: updatedContract.analysis?.detailedLegalOpinion || updatedContract.detailedLegalOpinion,
+            // Legacy Felder für Kompatibilität
+            kuendigung: updatedContract.kuendigung,
+            laufzeit: updatedContract.laufzeit,
+            risiken: updatedContract.risiken,
+            optimierungen: updatedContract.optimierungen
+          }
+        });
 
-        console.log("📊 Opening analysis results for contract:", contract._id);
+        console.log("📊 Opening detailed analysis modal for contract:", contract._id);
       } else {
         throw new Error(data.message || 'Analyse fehlgeschlagen');
       }
@@ -5168,6 +5194,37 @@ export default function Contracts() {
               }}
               onDelete={handleDeleteContract}
             />
+          )}
+
+          {/* ⚡ NEU: Schnellanalyse-Modal - zeigt ausführliche Analyse nach Schnellanalyse */}
+          {quickAnalysisModal.show && quickAnalysisModal.analysisResult && (
+            <div className={styles.modalOverlay} onClick={() => setQuickAnalysisModal({ show: false, contractName: '', contractId: '', analysisResult: null })}>
+              <div className={styles.quickAnalysisModal} onClick={(e) => e.stopPropagation()}>
+                <button
+                  className={styles.closeButton}
+                  onClick={() => setQuickAnalysisModal({ show: false, contractName: '', contractId: '', analysisResult: null })}
+                >
+                  <X size={24} />
+                </button>
+                <ContractAnalysis
+                  contractName={quickAnalysisModal.contractName}
+                  contractId={quickAnalysisModal.contractId}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  initialResult={quickAnalysisModal.analysisResult as any}
+                  onReset={() => setQuickAnalysisModal({ show: false, contractName: '', contractId: '', analysisResult: null })}
+                  onNavigateToContract={(contractId) => {
+                    setQuickAnalysisModal({ show: false, contractName: '', contractId: '', analysisResult: null });
+                    // Öffne Contract Details
+                    const contract = contracts.find(c => c._id === contractId);
+                    if (contract) {
+                      setSelectedContract(contract);
+                      setShowDetails(true);
+                      navigate(`/contracts?view=${contractId}`, { replace: true });
+                    }
+                  }}
+                />
+              </div>
+            </div>
           )}
 
           {/* ✅ NEU: Legacy-Modal für alte Verträge */}

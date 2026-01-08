@@ -15,7 +15,9 @@ import styles from "./ContractAnalysis.module.css";
 import { uploadAndAnalyze, checkAnalyzeHealth } from "../utils/api";
 
 interface ContractAnalysisProps {
-  file: File;
+  file?: File; // Optional - für Upload-Flow
+  contractName?: string; // Optional - für Schnellanalyse (ohne File)
+  contractId?: string; // Optional - für Schnellanalyse
   onReset: () => void;
   onNavigateToContract?: (contractId: string) => void;
   initialResult?: AnalysisResult;
@@ -112,7 +114,10 @@ interface LegalPulseData {
   [key: string]: unknown;
 }
 
-export default function ContractAnalysis({ file, onReset, onNavigateToContract, initialResult }: ContractAnalysisProps) {
+export default function ContractAnalysis({ file, contractName, contractId: _contractId, onReset, onNavigateToContract, initialResult }: ContractAnalysisProps) {
+  // Nutze file.name oder contractName als Fallback
+  const displayName = file?.name || contractName || 'Vertrag';
+  const displaySize = file ? (file.size / 1024 / 1024).toFixed(2) : null;
   const [analyzing, setAnalyzing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -258,7 +263,7 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
       return;
     }
 
-    console.log("🔄 Starte Analyse für:", file.name, forceReanalyze ? "(Re-Analyse)" : "");
+    console.log("🔄 Starte Analyse für:", displayName, forceReanalyze ? "(Re-Analyse)" : "");
     
     // ✅ WICHTIG: States zurücksetzen VOR der Analyse
     setAnalyzing(true);
@@ -269,6 +274,12 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
     setDuplicateInfo(null);
 
     try {
+      // Guard: Wenn kein File vorhanden, kann keine Analyse gestartet werden
+      if (!file) {
+        console.error("❌ Keine Datei vorhanden für Analyse");
+        throw new Error("Keine Datei zum Analysieren vorhanden");
+      }
+
       const response = await uploadAndAnalyze(file, (progress) => {
         setProgress(progress);
       }, forceReanalyze);
@@ -483,7 +494,7 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
         heightLeft -= pageHeight;
       }
       
-      pdf.save(`Vertragsanalyse_${file.name.replace('.pdf', '')}_${new Date().toISOString().split('T')[0]}.pdf`);
+      pdf.save(`Vertragsanalyse_${displayName.replace('.pdf', '')}_${new Date().toISOString().split('T')[0]}.pdf`);
       
     } catch (error) {
       console.error('❌ PDF-Generierung fehlgeschlagen:', error);
@@ -748,9 +759,9 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
               <FileText size={24} className={styles.fileIcon} />
             </div>
             <div className={styles.fileDetails}>
-              <h3 className={styles.fileName}>{file.name}</h3>
+              <h3 className={styles.fileName}>{displayName}</h3>
               <p className={styles.fileSize}>
-                {(file.size / 1024 / 1024).toFixed(2)} MB
+                {displaySize ? `${displaySize} MB` : 'Schnellanalyse'}
                 {serviceHealth === false && (
                   <span className={styles.serviceWarning}>
                     <WifiOff size={12} />
