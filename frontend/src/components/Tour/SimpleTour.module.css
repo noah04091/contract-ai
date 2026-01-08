@@ -23,13 +23,27 @@
   pointer-events: none;
 }
 
-/* Tooltip container - fixed center */
+/* Tooltip container - Flexbox centered (like WelcomePopup)
+   WICHTIG: Keine transform für Zentrierung verwenden!
+   Framer-motion überschreibt transform mit scale/y Animationen.
+   Stattdessen: Flexbox-Container für 100% zuverlässige Zentrierung. */
 .tooltipContainer {
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   z-index: 99999;
+  pointer-events: none;
+}
+
+/* Das Tooltip selbst muss pointer-events haben */
+.tooltipContainer > * {
   pointer-events: auto;
 }
 
@@ -200,11 +214,9 @@
 
 /* Responsive */
 @media (max-width: 480px) {
+  /* Container bleibt Flexbox-zentriert, keine Änderung nötig */
   .tooltipContainer {
-    left: 16px;
-    right: 16px;
-    transform: translate(0, -50%);
-    width: auto;
+    padding: 16px;
   }
 
   .tooltip {
