@@ -244,31 +244,48 @@ export function SimpleTour({
             />
           )}
 
-          {/* Tooltip - INLINE STYLES für 100% zuverlässige Viewport-Zentrierung
-              Der äußere div ist der Zentrierungs-Container (KEIN framer-motion!)
-              Der innere motion.div hat die Animation */}
+          {/* DEBUG: Rote Linie in der ECHTEN Bildschirmmitte */}
           <div
             style={{
               position: 'fixed',
               top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              width: '100vw',
+              left: '50%',
+              width: '2px',
               height: '100vh',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 99999,
+              background: 'red',
+              zIndex: 999999,
               pointerEvents: 'none',
+            }}
+          />
+          <div
+            style={{
+              position: 'fixed',
+              top: '50%',
+              left: 0,
+              width: '100vw',
+              height: '2px',
+              background: 'red',
+              zIndex: 999999,
+              pointerEvents: 'none',
+            }}
+          />
+
+          {/* Tooltip - Transform-basierte Zentrierung auf WRAPPER (nicht motion.div!)
+              So kann framer-motion das transform nicht überschreiben */}
+          <div
+            style={{
+              position: 'fixed',
+              top: '50vh',
+              left: '50vw',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 99999,
             }}
           >
             <motion.div
               className={styles.tooltip}
-              style={{ pointerEvents: 'auto' }}
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
               transition={{ duration: 0.2 }}
             >
               {/* Close button */}
