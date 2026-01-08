@@ -226,7 +226,71 @@ router.get("/me", verifyToken, async (req, res) => {
   }
 });
 
-// POST /api/company-profile - Firmenprofil erstellen/aktualisieren
+// POST /api/company-profile/basic - Basis-Profil (nur Firmenname) für ALLE User
+// Free/Business User können nur den Firmennamen speichern
+router.post("/basic", verifyToken, async (req, res) => {
+  try {
+    const userId = new ObjectId(req.user.userId);
+    const db = req.db;
+
+    // Nur Firmenname ist Pflicht für Basis-Profil
+    if (!req.body.companyName) {
+      return res.status(400).json({
+        success: false,
+        message: "Firmenname ist erforderlich"
+      });
+    }
+
+    // Nur Basis-Daten speichern (Firmenname)
+    const profileData = {
+      userId,
+      companyName: req.body.companyName,
+      updatedAt: new Date()
+    };
+
+    // Upsert (Update oder Insert)
+    const result = await db.collection("company_profiles").updateOne(
+      { userId },
+      {
+        $set: profileData,
+        $setOnInsert: { createdAt: new Date() }
+      },
+      { upsert: true }
+    );
+
+    console.log("✅ Basis-Firmenprofil gespeichert für User:", req.user.userId);
+
+    // 🎓 Onboarding: companyProfileComplete automatisch auf true setzen
+    try {
+      await db.collection("users").updateOne(
+        { _id: userId },
+        {
+          $set: {
+            'onboarding.checklist.companyProfileComplete': true,
+            updatedAt: new Date()
+          }
+        }
+      );
+      console.log("🎓 [Onboarding] Checklist aktualisiert: companyProfileComplete = true");
+    } catch (onboardingErr) {
+      console.warn("⚠️ [Onboarding] Checklist Update fehlgeschlagen:", onboardingErr.message);
+    }
+
+    res.json({
+      success: true,
+      message: result.upsertedCount ? "Firmenprofil erstellt" : "Firmenprofil aktualisiert",
+      profile: profileData
+    });
+  } catch (error) {
+    console.error("❌ Fehler beim Speichern des Basis-Firmenprofils:", error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Speichern des Firmenprofils"
+    });
+  }
+});
+
+// POST /api/company-profile - Firmenprofil erstellen/aktualisieren (Enterprise only)
 router.post("/", verifyToken, requireEnterprise, async (req, res) => {
   try {
     const userId = new ObjectId(req.user.userId);
@@ -281,7 +345,23 @@ router.post("/", verifyToken, requireEnterprise, async (req, res) => {
     );
     
     console.log("✅ Firmenprofil gespeichert für User:", req.user.userId);
-    
+
+    // 🎓 Onboarding: companyProfileComplete automatisch auf true setzen
+    try {
+      await db.collection("users").updateOne(
+        { _id: userId },
+        {
+          $set: {
+            'onboarding.checklist.companyProfileComplete': true,
+            updatedAt: new Date()
+          }
+        }
+      );
+      console.log("🎓 [Onboarding] Checklist aktualisiert: companyProfileComplete = true");
+    } catch (onboardingErr) {
+      console.warn("⚠️ [Onboarding] Checklist Update fehlgeschlagen:", onboardingErr.message);
+    }
+
     res.json({
       success: true,
       message: result.upsertedCount ? "Firmenprofil erstellt" : "Firmenprofil aktualisiert",

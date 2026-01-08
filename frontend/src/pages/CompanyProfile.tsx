@@ -137,7 +137,11 @@ export default function CompanyProfile() {
 
     try {
       setSaving(true);
-      const response = await fetch('/api/company-profile', {
+      // Free/Business User: /basic Route (nur Firmenname)
+      // Premium/Enterprise User: vollständige Route
+      const endpoint = isPremium ? '/api/company-profile' : '/api/company-profile/basic';
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -145,7 +149,7 @@ export default function CompanyProfile() {
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
         setOriginalProfile(profile);
         toast.success('✅ Firmenprofil erfolgreich gespeichert!');

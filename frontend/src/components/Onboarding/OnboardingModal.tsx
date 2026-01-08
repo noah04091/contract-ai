@@ -109,7 +109,8 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
     completeOnboarding,
     skipOnboarding,
     startOnboarding,
-    updateChecklistItem
+    updateChecklistItem,
+    onboardingState
   } = useOnboarding();
   const { celebrate } = useCelebrationContext();
 
@@ -749,12 +750,13 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
+              {/* 🔧 Dynamische Checklist basierend auf tatsächlichem State + lokalem Upload-Status */}
               {[
-                { label: 'Account erstellt', done: true },
-                { label: 'E-Mail bestätigt', done: true },
-                { label: 'Ersten Vertrag hochladen', done: false },
-                { label: 'Firmenprofil vervollständigen', done: false },
-                { label: 'Erste Analyse durchführen', done: false }
+                { label: 'Account erstellt', done: onboardingState?.checklist?.accountCreated ?? true },
+                { label: 'E-Mail bestätigt', done: onboardingState?.checklist?.emailVerified ?? true },
+                { label: 'Ersten Vertrag hochladen', done: uploadState === 'success' || (onboardingState?.checklist?.firstContractUploaded ?? false) },
+                { label: 'Firmenprofil vervollständigen', done: onboardingState?.checklist?.companyProfileComplete ?? false },
+                { label: 'Erste Analyse durchführen', done: onboardingState?.checklist?.firstAnalysisComplete ?? false }
               ].map((item, index) => (
                 <motion.div
                   key={item.label}
