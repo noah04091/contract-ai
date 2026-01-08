@@ -2049,22 +2049,24 @@ export default function Contracts() {
 
         await fetchUserInfo();
 
-        // ✅ WICHTIG: Hole den aktualisierten Contract aus der frisch geladenen Liste
-        // Das stellt sicher, dass alle Analysedaten (risiken, summary, etc.) vorhanden sind
-        const foundContract = refreshedContracts?.find((c: Contract) => c._id === contract._id);
-
-        // 🚀 FIX: Bessere Fallback-Logik - Backend-Response hat vollständige Daten
+        // 🚀 FIX: Backend-Response PRIORISIEREN - hat ALLE Analyse-Felder (analysis, legalPulse)
+        // Die Listen-Route gibt nicht alle Felder zurück!
         let updatedContract: Contract;
-        if (foundContract) {
-          updatedContract = foundContract;
-          console.log("📊 Contract aus frischer Liste geladen");
-        } else if (data.contract) {
+        if (data.contract) {
+          // ✅ BESTE QUELLE: Backend-Response direkt nach Analyse - hat ALLE Felder
           updatedContract = data.contract;
-          console.log("📊 Contract aus Backend-Response geladen");
+          console.log("📊 Contract aus Backend-Response geladen (vollständige Daten)");
         } else {
-          // Letzter Fallback - sollte nie passieren
-          console.warn("⚠️ Kein aktualisierter Contract gefunden, verwende alten mit analyzed: true");
-          updatedContract = { ...contract, analyzed: true };
+          // Fallback: Aus der Liste oder alter Contract
+          const foundContract = refreshedContracts?.find((c: Contract) => c._id === contract._id);
+          if (foundContract) {
+            updatedContract = foundContract;
+            console.log("📊 Contract aus frischer Liste geladen (Fallback)");
+          } else {
+            // Letzter Fallback - sollte nie passieren
+            console.warn("⚠️ Kein aktualisierter Contract gefunden, verwende alten mit analyzed: true");
+            updatedContract = { ...contract, analyzed: true };
+          }
         }
 
         setSelectedContract(updatedContract);

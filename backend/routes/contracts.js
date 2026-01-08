@@ -2373,6 +2373,22 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
     // ✅ NEU: Hole den vollständig aktualisierten Contract für Frontend
     const finalContract = await contractsCollection.findOne({ _id: new ObjectId(id) });
 
+    // 🎓 Onboarding: firstAnalysisComplete automatisch auf true setzen
+    try {
+      await usersCollection.updateOne(
+        { _id: new ObjectId(req.user.userId) },
+        {
+          $set: {
+            'onboarding.checklist.firstAnalysisComplete': true,
+            updatedAt: new Date()
+          }
+        }
+      );
+      console.log(`🎓 [${requestId}] Onboarding Checklist aktualisiert: firstAnalysisComplete = true`);
+    } catch (onboardingErr) {
+      console.warn(`⚠️ [${requestId}] Onboarding Checklist Update fehlgeschlagen:`, onboardingErr.message);
+    }
+
     res.json({
       success: true,
       message: 'Analyse erfolgreich abgeschlossen',

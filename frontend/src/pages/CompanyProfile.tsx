@@ -59,7 +59,7 @@ const COUNTRIES = [
 ];
 
 export default function CompanyProfile() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, refetchUser } = useAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -153,6 +153,8 @@ export default function CompanyProfile() {
       if (data.success) {
         setOriginalProfile(profile);
         toast.success('✅ Firmenprofil erfolgreich gespeichert!');
+        // 🔄 User-Daten neu laden damit Onboarding-Checklist aktualisiert wird
+        await refetchUser();
       } else {
         throw new Error(data.message || 'Fehler beim Speichern');
       }
