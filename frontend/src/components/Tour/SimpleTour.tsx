@@ -205,30 +205,9 @@ export function SimpleTour({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isRunning, handleClose]);
 
-  // DEBUG: IMMER sichtbar - VOR dem early return!
-  const debugBadge = mounted ? createPortal(
-    <div
-      style={{
-        position: 'fixed',
-        bottom: '10px',
-        right: '10px',
-        background: 'red',
-        color: 'white',
-        padding: '8px 16px',
-        borderRadius: '8px',
-        zIndex: 999999,
-        fontSize: '12px',
-        fontWeight: 'bold',
-      }}
-    >
-      🔴 DEBUG v4 - mounted={String(mounted)} loading={String(isLoading)} running={String(isRunning)}
-    </div>,
-    document.body
-  ) : null;
-
   // Don't render if not running or loading
   if (!mounted || isLoading || !isRunning || !tour || !currentStep) {
-    return debugBadge; // Zeigt zumindest das Debug-Badge
+    return null;
   }
 
   const totalSteps = tour.steps.length;
@@ -264,32 +243,6 @@ export function SimpleTour({
               onClick={handleClose}
             />
           )}
-
-          {/* DEBUG: Rote Linie in der ECHTEN Bildschirmmitte */}
-          <div
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: '50%',
-              width: '2px',
-              height: '100vh',
-              background: 'red',
-              zIndex: 999999,
-              pointerEvents: 'none',
-            }}
-          />
-          <div
-            style={{
-              position: 'fixed',
-              top: '50%',
-              left: 0,
-              width: '100vw',
-              height: '2px',
-              background: 'red',
-              zIndex: 999999,
-              pointerEvents: 'none',
-            }}
-          />
 
           {/* Tooltip - Transform-basierte Zentrierung auf WRAPPER (nicht motion.div!)
               So kann framer-motion das transform nicht überschreiben */}
@@ -361,12 +314,7 @@ export function SimpleTour({
   );
 
   // Use portal to render at document body level
-  return (
-    <>
-      {debugBadge}
-      {createPortal(tourContent, document.body)}
-    </>
-  );
+  return createPortal(tourContent, document.body);
 }
 
 export default SimpleTour;
