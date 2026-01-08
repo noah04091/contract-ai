@@ -4,7 +4,12 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { GitCompare, Target, BarChart3, AlertTriangle, FileText, Shield, CheckCircle, ArrowRight } from "lucide-react";
+import AutoPlayVideo from "../../components/AutoPlayVideo";
+import { GitCompare, Target, BarChart3, AlertTriangle, FileText, Shield, CheckCircle, ArrowRight, Play } from "lucide-react";
+
+// Video
+const vergleichVideo = "/Videos/vergleich.mp4";
+import vergleichImg from "../../assets/Vergleich.png";
 
 const Vergleich: React.FC = () => {
   const { user } = useAuth();
@@ -96,8 +101,30 @@ const Vergleich: React.FC = () => {
           </div>
         </section>
 
+        {/* VIDEO SHOWCASE */}
+        <section className={styles.videoSection}>
+          <div className={styles.videoContainer}>
+            <div style={{ textAlign: 'center' }}>
+              <div className={styles.videoLabel}>
+                <Play size={14} />
+                <span>So sieht's aus</span>
+              </div>
+            </div>
+            <h2 className={styles.sectionTitle}>Der Vertragsvergleich in Aktion</h2>
+            <div className={styles.videoFrame}>
+              <div className={styles.videoWrapper}>
+                <AutoPlayVideo
+                  src={vergleichVideo}
+                  poster={vergleichImg}
+                  alt="Vertragsvergleich Demo"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
         <div className={styles.contentContainer}>
-          
+
           {/* PAIN */}
           <section className={styles.funktionSection}>
             <h2 className={styles.sectionTitle}>Kleine Unterschiede, große Wirkung</h2>

@@ -80,13 +80,36 @@ const INFO_CONTENT = {
   }
 };
 
+/**
+ * ✅ FIX Issue #1 & #5: Content-basierter Hash für konsistenten Cache
+ * Muss dieselbe Logik verwenden wie useLegalLens.ts
+ */
+const generateContentHash = (text: string): string => {
+  const normalized = text
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim()
+    .substring(0, 200);
+
+  let hash = 0;
+  for (let i = 0; i < normalized.length; i++) {
+    const char = normalized.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+
+  return Math.abs(hash).toString(16);
+};
+
 // Hilfsfunktion um actionLevel aus Cache oder preAnalysis zu ermitteln
 const getClauseActionLevel = (
   clause: ParsedClause,
   analysisCache: Record<string, ClauseAnalysis>,
   perspective: string
 ): ActionLevel => {
-  const cacheKey = `${clause.id}-${perspective}`;
+  // ✅ FIX Issue #5: Content-basierter Cache-Key statt ID
+  const contentHash = generateContentHash(clause.text);
+  const cacheKey = `content-${contentHash}-${perspective}`;
   const cached = analysisCache[cacheKey];
   if (cached?.actionLevel) {
     return cached.actionLevel;

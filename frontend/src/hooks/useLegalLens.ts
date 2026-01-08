@@ -169,6 +169,39 @@ interface AnalysisCache {
 }
 
 /**
+ * ✅ FIX Issue #1: Content-basierter Hash für konsistenten Cache
+ * Erzeugt einen stabilen Hash aus dem Klauseltext (unabhängig von der clause.id)
+ * So matchen PDF-Klicks und Text-Klauseln mit demselben Inhalt
+ */
+const generateContentHash = (text: string): string => {
+  // Normalisiere Text: lowercase, whitespace reduzieren, erste 200 Zeichen
+  const normalized = text
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim()
+    .substring(0, 200);
+
+  // Einfacher Hash basierend auf dem normalisierten Text
+  let hash = 0;
+  for (let i = 0; i < normalized.length; i++) {
+    const char = normalized.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+
+  // Positiver Hash als Hex-String
+  return Math.abs(hash).toString(16);
+};
+
+/**
+ * Erzeugt einen konsistenten Cache-Key basierend auf INHALT statt ID
+ */
+const getCacheKey = (clause: ParsedClause, perspective: PerspectiveType): CacheKey => {
+  const contentHash = generateContentHash(clause.text);
+  return `content-${contentHash}-${perspective}` as CacheKey;
+};
+
+/**
  * Custom Hook für die Legal Lens Funktionalität
  */
 export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
@@ -274,8 +307,8 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
   const selectClause = useCallback((clause: ParsedClause) => {
     setSelectedClause(clause);
 
-    // ✅ NEU: Prüfe ob Analyse bereits im Cache ist
-    const cacheKey: CacheKey = `${clause.id}-${currentPerspective}`;
+    // ✅ FIX Issue #1: Content-basierter Cache-Key statt ID
+    const cacheKey = getCacheKey(clause, currentPerspective);
     const cachedAnalysis = analysisCache[cacheKey];
 
     if (cachedAnalysis) {
@@ -299,8 +332,8 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
   const analyzeClause = useCallback(async (streaming: boolean = true) => {
     if (!contractId || !selectedClause) return;
 
-    // ✅ NEU: Prüfe zuerst den Cache
-    const cacheKey: CacheKey = `${selectedClause.id}-${currentPerspective}`;
+    // ✅ FIX Issue #1: Content-basierter Cache-Key statt ID
+    const cacheKey = getCacheKey(selectedClause, currentPerspective);
     const cachedAnalysis = analysisCache[cacheKey];
 
     if (cachedAnalysis) {
@@ -409,9 +442,9 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
       }
     }
 
-    // ✅ NEU: Prüfe Cache für neue Perspektive
+    // ✅ FIX Issue #1: Content-basierter Cache-Key für neue Perspektive
     if (selectedClause) {
-      const cacheKey: CacheKey = `${selectedClause.id}-${perspective}`;
+      const cacheKey = getCacheKey(selectedClause, perspective);
       const cachedAnalysis = analysisCache[cacheKey];
 
       if (cachedAnalysis) {
@@ -650,9 +683,10 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
     setIsBatchAnalyzing(true);
     setError(null);
 
+    // ✅ FIX Issue #1: Content-basierter Cache-Key
     // Finde alle Klauseln die noch nicht im Cache sind
     const uncachedClauses = clauses.filter(clause => {
-      const cacheKey: CacheKey = `${clause.id}-${currentPerspective}`;
+      const cacheKey = getCacheKey(clause, currentPerspective);
       return !analysisCache[cacheKey];
     });
 
@@ -680,7 +714,8 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
       }
 
       const clause = uncachedClauses[i];
-      const cacheKey: CacheKey = `${clause.id}-${currentPerspective}`;
+      // ✅ FIX Issue #1: Content-basierter Cache-Key
+      const cacheKey = getCacheKey(clause, currentPerspective);
 
       // Update Progress
       setBatchProgress(prev => ({

@@ -4,7 +4,12 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { FileText, Zap, Shield, PenTool, Target, CheckCircle, ArrowRight } from "lucide-react";
+import AutoPlayVideo from "../../components/AutoPlayVideo";
+import { FileText, Zap, Shield, PenTool, Target, CheckCircle, ArrowRight, Play } from "lucide-react";
+
+// Video
+const generatorVideo = "/Videos/generator.mp4";
+import generatorImg from "../../assets/Generator.png";
 
 const Generator: React.FC = () => {
   const { user } = useAuth();
@@ -96,8 +101,30 @@ const Generator: React.FC = () => {
           </div>
         </section>
 
+        {/* VIDEO SHOWCASE */}
+        <section className={styles.videoSection}>
+          <div className={styles.videoContainer}>
+            <div style={{ textAlign: 'center' }}>
+              <div className={styles.videoLabel}>
+                <Play size={14} />
+                <span>So sieht's aus</span>
+              </div>
+            </div>
+            <h2 className={styles.sectionTitle}>Der Vertragsgenerator in Aktion</h2>
+            <div className={styles.videoFrame}>
+              <div className={styles.videoWrapper}>
+                <AutoPlayVideo
+                  src={generatorVideo}
+                  poster={generatorImg}
+                  alt="Vertragsgenerator Demo"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
         <div className={styles.contentContainer}>
-          
+
           {/* PAIN */}
           <section className={styles.funktionSection}>
             <h2 className={styles.sectionTitle}>Neue Verträge brauchen Sie öfter als gedacht</h2>

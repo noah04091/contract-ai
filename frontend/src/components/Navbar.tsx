@@ -16,7 +16,7 @@ import {
   Rocket,
   Scale,
   MessageSquare,
-  Lightbulb,
+  Radar,
   Hammer,
   PenTool,
   BookOpen,
@@ -38,34 +38,32 @@ const API_BASE = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
 // Feature-Daten für das Mega-Menü
 const featureCategories = [
   {
-    title: "Analyse & Optimierung",
+    title: "Analysieren",
+    description: "Verträge verstehen & bewerten",
     features: [
-      { name: "KI-Vertragsanalyse", description: "Automatische Analyse mit GPT-4", icon: "🔍", path: "/features/vertragsanalyse" },
-      { name: "Vertragsoptimierung", description: "KI-gestützte Verbesserungsvorschläge", icon: "✨", path: "/features/optimierung" },
-      { name: "Legal Pulse", description: "Rechtliche Risikoanalyse", icon: "⚖️", path: "/features/legalpulse" },
-      { name: "Vertragsvergleich", description: "Zwei Verträge vergleichen", icon: "📊", path: "/features/vergleich" },
+      { name: "KI-Vertragsanalyse", description: "Risiken & Chancen erkennen", icon: "🔍", path: "/features/vertragsanalyse" },
+      { name: "Vertragsoptimierung", description: "Verbesserungsvorschläge erhalten", icon: "✨", path: "/features/optimierung" },
+      { name: "Vertragsvergleich", description: "Zwei Versionen vergleichen", icon: "📊", path: "/features/vergleich" },
+      { name: "Legal Lens", description: "Klauseln sofort verstehen", icon: "👁️", path: "/features/legal-lens" },
     ]
   },
   {
-    title: "Verwaltung & Organisation",
+    title: "Erstellen",
+    description: "Verträge professionell erstellen",
     features: [
-      { name: "Vertragsverwaltung", description: "Alle Verträge an einem Ort", icon: "📁", path: "/features/vertragsverwaltung" },
-      { name: "Fristenkalender", description: "Keine Frist mehr verpassen", icon: "📅", path: "/features/fristen" },
-      { name: "E-Mail Upload", description: "Verträge per E-Mail hochladen", icon: "📧", path: "/features/email-upload" },
+      { name: "Vertragsgenerator", description: "50+ Vorlagen nutzen", icon: "📝", path: "/features/generator" },
+      { name: "Contract Builder", description: "Drag & Drop Editor", icon: "🔧", path: "/features/contract-builder" },
+      { name: "Digitale Signatur", description: "Rechtsgültig unterschreiben", icon: "✍️", path: "/features/digitalesignatur" },
     ]
   },
   {
-    title: "Erstellung & Signatur",
+    title: "Verwalten",
+    description: "Verträge organisieren & überwachen",
     features: [
-      { name: "Vertragsgenerator", description: "Verträge mit KI erstellen", icon: "📝", path: "/features/generator" },
-      { name: "Contract Builder", description: "Verträge per Drag & Drop bauen", icon: "🔧", path: "/features/contract-builder" },
-      { name: "Digitale Signatur", description: "Rechtsgültig digital unterschreiben", icon: "✍️", path: "/features/digitalesignatur" },
-    ]
-  },
-  {
-    title: "Verständnis & Einblick",
-    features: [
-      { name: "Legal Lens", description: "Klauseln anklicken und verstehen", icon: "🔍", path: "/features/legal-lens" },
+      { name: "Vertragsverwaltung", description: "Zentrale Organisation", icon: "📁", path: "/features/vertragsverwaltung" },
+      { name: "Fristenkalender", description: "Keine Frist verpassen", icon: "📅", path: "/features/fristen" },
+      { name: "E-Mail Upload", description: "Per E-Mail hochladen", icon: "📧", path: "/features/email-upload" },
+      { name: "Legal Pulse", description: "Gesetzesänderungen tracken", icon: "⚖️", path: "/features/legalpulse" },
     ]
   }
 ];
@@ -525,7 +523,10 @@ export default function Navbar() {
                         <div className={styles.megaMenuContent}>
                           {featureCategories.map((category, catIndex) => (
                             <div key={catIndex} className={styles.megaMenuCategory}>
-                              <h3 className={styles.megaMenuCategoryTitle}>{category.title}</h3>
+                              <div className={styles.megaMenuCategoryHeader}>
+                                <h3 className={styles.megaMenuCategoryTitle}>{category.title}</h3>
+                                <span className={styles.megaMenuCategoryDesc}>{category.description}</span>
+                              </div>
                               <div className={styles.megaMenuFeatures}>
                                 {category.features.map((feature, featIndex) => (
                                   <Link
@@ -546,8 +547,8 @@ export default function Navbar() {
                           ))}
                         </div>
                         <div className={styles.megaMenuFooter}>
-                          <Link to="/pricing" className={styles.megaMenuFooterLink} onClick={() => setMegaMenuOpen(false)}>
-                            <span>Alle Preise ansehen</span>
+                          <Link to="/features" className={styles.megaMenuFooterLink} onClick={() => setMegaMenuOpen(false)}>
+                            <span>Alle Funktionen ansehen</span>
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <path d="M5 12h14M12 5l7 7-7 7"/>
                             </svg>
@@ -1231,6 +1232,19 @@ export default function Navbar() {
                             ))}
                           </div>
                         ))}
+                        <Link
+                          to="/features"
+                          className={styles.mobileNavAllFeatures}
+                          onClick={() => {
+                            setMobileNavOpen(false);
+                            setMobileFeaturesOpen(false);
+                          }}
+                        >
+                          <span>Alle Funktionen ansehen</span>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                          </svg>
+                        </Link>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -1389,7 +1403,7 @@ export default function Navbar() {
                     </li>
                     <li className={styles.navItemNew}>
                       <Link to="/legalpulse" className={`${styles.navLinkNew} ${location.pathname === '/legalpulse' ? styles.navLinkActiveNew : ''}`} onClick={() => setSidebarOpen(false)}>
-                        <span className={styles.navIconNew}><Lightbulb size={20} strokeWidth={1.75} /></span>
+                        <span className={styles.navIconNew}><Radar size={20} strokeWidth={1.75} /></span>
                         <span className={styles.navLabelNew}>Legal Pulse</span>
                       </Link>
                     </li>

@@ -4,7 +4,11 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { PenTool, CheckCircle, Mail, FileText, Shield, Zap, ArrowRight } from "lucide-react";
+import AutoPlayVideo from "../../components/AutoPlayVideo";
+import { PenTool, CheckCircle, Mail, FileText, Shield, Zap, ArrowRight, Play } from "lucide-react";
+
+// Video
+const signaturVideo = "/Videos/signatur.mp4";
 
 const DigitaleSignatur: React.FC = () => {
   const { user } = useAuth();
@@ -132,6 +136,28 @@ const DigitaleSignatur: React.FC = () => {
             </div>
           </div>
         </section>
+
+        {/* VIDEO SHOWCASE */}
+        <section className={styles.videoSection}>
+          <div className={styles.videoContainer}>
+            <div style={{ textAlign: 'center' }}>
+              <div className={styles.videoLabel}>
+                <Play size={14} />
+                <span>So sieht's aus</span>
+              </div>
+            </div>
+            <h2 className={styles.sectionTitle}>Die digitale Signatur in Aktion</h2>
+            <div className={styles.videoFrame}>
+              <div className={styles.videoWrapper}>
+                <AutoPlayVideo
+                  src={signaturVideo}
+                  alt="Digitale Signatur Demo"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
         <div className={styles.contentContainer}>
 
           {/* PAIN */}

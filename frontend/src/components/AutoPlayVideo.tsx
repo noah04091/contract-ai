@@ -99,10 +99,13 @@ const AutoPlayVideo = ({ src, poster, alt, className = '' }: AutoPlayVideoProps)
       muted
       loop
       playsInline
-      preload="metadata"
+      preload="auto"
       onError={handleError}
       onLoadedData={handleLoadedData}
       aria-label={alt}
+      // Bessere Qualität
+      disablePictureInPicture
+      disableRemotePlayback
     />
   );
 };

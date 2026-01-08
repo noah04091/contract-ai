@@ -312,9 +312,86 @@
   background: #f0f9ff;
 }
 
+/* Drag Over State */
+.uploadZone.dragOver {
+  border-color: #3B82F6;
+  background: #eff6ff;
+  border-style: solid;
+  transform: scale(1.01);
+}
+
+/* Success State */
+.uploadZone.uploadSuccess {
+  border-color: #10B981;
+  background: #ecfdf5;
+  border-style: solid;
+  cursor: default;
+}
+
+.uploadZone.uploadSuccess:hover {
+  border-color: #10B981;
+  background: #ecfdf5;
+}
+
+/* Error State */
+.uploadZone.uploadError {
+  border-color: #EF4444;
+  background: #fef2f2;
+}
+
+.uploadZone.uploadError:hover {
+  border-color: #EF4444;
+  background: #fef2f2;
+}
+
 .uploadIconLarge {
   color: #3B82F6;
   margin-bottom: 12px;
+}
+
+.uploadIconSuccess {
+  color: #10B981;
+  margin-bottom: 12px;
+}
+
+.uploadIconError {
+  color: #EF4444;
+  margin-bottom: 12px;
+}
+
+/* Upload State Containers */
+.uploadingState,
+.uploadSuccessState,
+.uploadErrorState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.uploadSuccessState .uploadTitle {
+  color: #059669;
+}
+
+.uploadErrorState .uploadTitle {
+  color: #DC2626;
+}
+
+/* Retry Button */
+.retryButton {
+  margin-top: 12px;
+  padding: 8px 16px;
+  background: #EF4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.retryButton:hover {
+  background: #DC2626;
 }
 
 .uploadTitle {
@@ -576,6 +653,22 @@
   background: #d1d5db;
   cursor: not-allowed;
   box-shadow: none;
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ============================================

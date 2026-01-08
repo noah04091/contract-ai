@@ -8,6 +8,29 @@ import { getTourById } from '../config/tourConfig';
 import type { CallBackProps } from 'react-joyride';
 import { STATUS } from 'react-joyride';
 
+/**
+ * 🔧 Check if any modal/dialog is currently open
+ * Tours should NOT auto-start when modals are open
+ */
+function isAnyModalOpen(): boolean {
+  // Check for open native <dialog> elements (OnboardingModal uses this)
+  const openDialogs = document.querySelectorAll('dialog[open]');
+  if (openDialogs.length > 0) {
+    return true;
+  }
+
+  // Check for common modal overlays by class
+  const modalOverlays = document.querySelectorAll('.modal-overlay, .modal-backdrop, [role="dialog"]');
+  for (const overlay of modalOverlays) {
+    const style = window.getComputedStyle(overlay);
+    if (style.display !== 'none' && style.visibility !== 'hidden') {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 // Helper to get auth token
 function getToken(): string | null {
   return localStorage.getItem('authToken') || localStorage.getItem('token');
@@ -87,6 +110,12 @@ export function useTour({
           if (autoStart && !hasSeen && showTooltips && tour) {
             // Längerer Delay und Element-Check vor Start
             setTimeout(() => {
+              // 🔒 WICHTIG: Keine Tour starten wenn ein Modal offen ist (z.B. Onboarding)
+              if (isAnyModalOpen()) {
+                console.log('[Tour] Modal is open, skipping auto-start for:', tourId);
+                return;
+              }
+
               // Prüfe ob das erste Target-Element existiert
               const firstStep = tour.steps[0];
               if (firstStep?.target && typeof firstStep.target === 'string' && firstStep.target !== 'body') {

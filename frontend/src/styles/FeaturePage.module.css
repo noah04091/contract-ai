@@ -2118,3 +2118,94 @@
     padding: 20px;
   }
 }
+
+/* ============================================
+   VIDEO SHOWCASE SECTION
+   ============================================ */
+
+.videoSection {
+  padding: 60px 24px 80px;
+  position: relative;
+  z-index: 1;
+}
+
+.videoContainer {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.videoLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(0, 122, 255, 0.08);
+  border: 1px solid rgba(0, 122, 255, 0.15);
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #007aff;
+  margin-bottom: 16px;
+}
+
+.videoTitle {
+  font-size: 28px;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.videoFrame {
+  background: white;
+  border-radius: 16px;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.08),
+    0 1px 3px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.videoFrame:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.12),
+    0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.videoWrapper {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  /* GPU-Beschleunigung für schärfere Darstellung */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+.videoWrapper video {
+  width: 100%;
+  height: auto;
+  display: block;
+  /* Schärfere Video-Darstellung */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  /* Verhindert unscharfe Skalierung */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+@media (max-width: 768px) {
+  .videoSection {
+    padding: 40px 20px 60px;
+  }
+
+  .videoTitle {
+    font-size: 22px;
+    margin-bottom: 24px;
+  }
+
+  .videoFrame {
+    border-radius: 12px;
+  }
+}

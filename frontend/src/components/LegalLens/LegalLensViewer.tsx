@@ -65,6 +65,12 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   // Export Modal State
   const [showExportModal, setShowExportModal] = useState<boolean>(false);
 
+  // ✅ FIX Issue #7: UX-Hinweis verstecken nach erstem Klick
+  const [hasPdfClicked, setHasPdfClicked] = useState<boolean>(() => {
+    // LocalStorage-Persistenz
+    return localStorage.getItem('legalLens_hasPdfClicked') === 'true';
+  });
+
   // Resizable Panel State
   const [analysisPanelWidth, setAnalysisPanelWidth] = useState<number>(480);
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -258,6 +264,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   }, [contractId, currentIndustry]);
 
   // ✅ Phase 1 Fix: Analyse starten - Direkter Cache-Check statt Ref-Hacks
+  // ✅ FIX Issue #1: Content-basierter Cache für konsistente Text↔PDF Matches
   useEffect(() => {
     // Keine Klausel ausgewählt → nichts tun
     if (!selectedClause) return;
@@ -265,8 +272,19 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     // Bereits eine Analyse läuft → abwarten
     if (isAnalyzing) return;
 
-    // Cache-Key für diese Klausel+Perspektive
-    const cacheKey = `${selectedClause.id}-${currentPerspective}` as const;
+    // ✅ FIX Issue #1: Content-basierter Cache-Key (gleicher Hash für gleichen Text)
+    const generateContentHash = (text: string): string => {
+      const normalized = text.toLowerCase().replace(/\s+/g, ' ').trim().substring(0, 200);
+      let hash = 0;
+      for (let i = 0; i < normalized.length; i++) {
+        const char = normalized.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+      }
+      return Math.abs(hash).toString(16);
+    };
+
+    const cacheKey = `content-${generateContentHash(selectedClause.text)}-${currentPerspective}`;
 
     // ✅ Direkter Cache-Check (statt Ref-basierter Hacks)
     const isAlreadyCached = cacheKey in analysisCache;
@@ -335,7 +353,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     }
   }, [viewMode, clearHighlight]);
 
-  // ✅ Phase 1 Task 2: PDF Text Click Handler - Robuste Klausel-Erkennung
+  // ✅ FIX Issue #3: PDF Text Click Handler - IMMER bis zum vollständigen Satzende
   const handlePdfTextClick = (event: React.MouseEvent) => {
     const target = event.target as HTMLElement;
     const textContent = target.closest('.react-pdf__Page__textContent');
@@ -351,54 +369,83 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       const clickedIndex = allSpans.indexOf(target);
       if (clickedIndex === -1) return;
 
-      // ✅ Erweiterte Grenzen-Erkennung (Sätze + Paragraphen + Nummerierungen)
+      // Regex für Satzende und Paragraph-Start
       const sentenceEndRegex = /[.!?](\s|$)/;
-      const paragraphStartRegex = /^(§\s*\d|Art\.?\s*\d|\(\d+\)|\d+\.)/;
+      const paragraphStartRegex = /^(§\s*\d|Art\.?\s*\d|\(\d+\)|\d+\.\s)/;
 
-      // Rückwärts suchen: Satzanfang oder Paragraph-Start finden
-      let startIndex = clickedIndex;
-      for (let i = clickedIndex; i >= 0; i--) {
-        if (i === 0) {
-          startIndex = 0;
+      // ✅ FIX: Sammle erst den gesamten Text um Satzgrenzen korrekt zu erkennen
+      let fullText = '';
+      const spanTexts: string[] = [];
+      for (const span of allSpans) {
+        const text = span.textContent || '';
+        spanTexts.push(text);
+        fullText += text + ' ';
+      }
+
+      // Finde den Textindex des geklickten Spans
+      let clickedTextStart = 0;
+      for (let i = 0; i < clickedIndex; i++) {
+        clickedTextStart += spanTexts[i].length + 1; // +1 für Leerzeichen
+      }
+
+      // ✅ RÜCKWÄRTS: Finde den Satzanfang (nach letztem Satzende oder Paragraph-Start)
+      let sentenceStartPos = 0;
+      for (let i = clickedTextStart - 1; i >= 0; i--) {
+        const char = fullText[i];
+        // Satzende gefunden → Satz beginnt danach
+        if (char === '.' || char === '!' || char === '?') {
+          sentenceStartPos = i + 1;
+          // Überspringe Leerzeichen
+          while (sentenceStartPos < fullText.length && /\s/.test(fullText[sentenceStartPos])) {
+            sentenceStartPos++;
+          }
           break;
         }
-
-        const currentText = allSpans[i].textContent || '';
-        const prevText = allSpans[i - 1].textContent || '';
-
-        // Paragraph-Start erkannt → hier beginnen
-        if (paragraphStartRegex.test(currentText.trim())) {
-          startIndex = i;
-          break;
-        }
-
-        // Satzende im vorherigen Span → hier beginnen
-        if (sentenceEndRegex.test(prevText)) {
-          startIndex = i;
+        // Paragraph-Start prüfen (§, Art., (1), etc.)
+        const remainingText = fullText.substring(i).trim();
+        if (paragraphStartRegex.test(remainingText)) {
+          sentenceStartPos = i;
           break;
         }
       }
 
-      // Vorwärts suchen: Satzende oder nächsten Paragraph finden
-      let endIndex = clickedIndex;
-      for (let i = clickedIndex; i < allSpans.length; i++) {
-        const spanText = allSpans[i].textContent || '';
-        endIndex = i;
+      // ✅ VORWÄRTS: Finde das Satzende (Punkt, Ausrufezeichen, Fragezeichen)
+      // WICHTIG: Stoppe NICHT bei Paragraph-Start, sondern IMMER beim nächsten Satzende!
+      let sentenceEndPos = fullText.length;
+      for (let i = clickedTextStart; i < fullText.length; i++) {
+        const char = fullText[i];
+        if (char === '.' || char === '!' || char === '?') {
+          // Prüfe ob es wirklich ein Satzende ist (nicht z.B. "Art." oder "Nr.")
+          const beforeDot = fullText.substring(Math.max(0, i - 5), i).toLowerCase();
+          const isAbbreviation = /\b(art|nr|abs|bzw|ca|etc|ggf|inkl|max|min|vgl|z\.b|u\.a|d\.h|i\.d\.r)\s*$/i.test(beforeDot);
 
-        // Satzende gefunden
-        if (sentenceEndRegex.test(spanText)) {
+          if (!isAbbreviation) {
+            sentenceEndPos = i + 1;
+            break;
+          }
+        }
+      }
+
+      // ✅ Finde welche Spans zur Auswahl gehören
+      let currentPos = 0;
+      let startIndex = 0;
+      let endIndex = allSpans.length - 1;
+
+      for (let i = 0; i < allSpans.length; i++) {
+        const spanEnd = currentPos + spanTexts[i].length;
+
+        // Start-Span finden
+        if (currentPos <= sentenceStartPos && spanEnd > sentenceStartPos) {
+          startIndex = i;
+        }
+
+        // End-Span finden
+        if (currentPos < sentenceEndPos && spanEnd >= sentenceEndPos) {
+          endIndex = i;
           break;
         }
 
-        // Nächster Paragraph beginnt → stoppen vor diesem
-        if (i > clickedIndex && paragraphStartRegex.test(spanText.trim())) {
-          endIndex = i - 1;
-          break;
-        }
-
-        if (i === allSpans.length - 1) {
-          break;
-        }
+        currentPos = spanEnd + 1; // +1 für Leerzeichen
       }
 
       // Alle Spans des Satzes markieren
@@ -410,11 +457,12 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         sentenceText += (allSpans[i].textContent || '') + ' ';
       }
 
-      // ✅ Fix 4: Auto-Expand bei zu kurzer Auswahl (< 30 Zeichen)
       let cleanSentenceText = sentenceText.trim().normalize('NFC');
-      if (cleanSentenceText.length < 30 && allSpans.length > endIndex + 1) {
-        // Erweitere zum nächsten Satzende
-        for (let i = endIndex + 1; i < Math.min(endIndex + 20, allSpans.length); i++) {
+      console.log('[Legal Lens] Selected sentence:', cleanSentenceText.substring(0, 100) + '...');
+
+      // ✅ Fallback: Wenn Satz zu kurz, erweitere zum nächsten Satzende
+      if (cleanSentenceText.length < 30 && endIndex < allSpans.length - 1) {
+        for (let i = endIndex + 1; i < Math.min(endIndex + 30, allSpans.length); i++) {
           const spanText = allSpans[i].textContent || '';
           sentenceSpans.push(allSpans[i]);
           allSpans[i].classList.add('legal-lens-highlight');
@@ -424,7 +472,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
           }
         }
         cleanSentenceText = cleanSentenceText.trim().normalize('NFC');
-        console.log('[Legal Lens] Auto-expanded short selection to:', cleanSentenceText.length, 'chars');
+        console.log('[Legal Lens] Auto-expanded to:', cleanSentenceText.length, 'chars');
       }
 
       highlightedElementsRef.current = sentenceSpans;
@@ -466,9 +514,9 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         }
       }
 
-      // ✅ Nur GUTE Matches verwenden (Score >= 0.7)
-      // Bei schlechten Matches → temporäre Klausel erstellen
-      if (bestMatchScore >= 0.7) {
+      // ✅ FIX Issue #3: Match-Schwelle von 0.7 auf 0.4 reduziert für mehr Treffer
+      // Bei sehr schlechten Matches → temporäre Klausel erstellen
+      if (bestMatchScore >= 0.4) {
         console.log('[Legal Lens] Good match:', matchingClause?.id, 'score:', bestMatchScore.toFixed(2));
       } else {
         console.log('[Legal Lens] Low score match, creating temp clause. Best was:', matchingClause?.id, 'score:', bestMatchScore.toFixed(2));
@@ -505,6 +553,12 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       // ✅ Fix 1: Broken Ref entfernt - selectClause direkt aufrufen
       if (matchingClause) {
         selectClause(matchingClause);
+
+        // ✅ FIX Issue #7: UX-Hinweis verstecken nach erstem Klick
+        if (!hasPdfClicked) {
+          setHasPdfClicked(true);
+          localStorage.setItem('legalLens_hasPdfClicked', 'true');
+        }
       }
     }
   };
@@ -942,8 +996,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                 </Document>
               ) : null}
 
-              {/* Hint für klickbare Texte */}
-              {pdfUrl && !pdfLoading && (
+              {/* ✅ FIX Issue #7: Hint nur anzeigen bis zum ersten Klick */}
+              {pdfUrl && !pdfLoading && !hasPdfClicked && (
                 <div style={{
                   position: 'absolute',
                   bottom: '1rem',

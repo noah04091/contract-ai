@@ -2924,6 +2924,195 @@
   content: '📄';
 }
 
+/* ========== UPLOAD FLOW STEPS (Premium Enterprise Design) ========== */
+.uploadFlowSteps {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0;
+  margin-top: 40px;
+  padding: 48px 32px;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.uploadFlowStep {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-width: 150px;
+  max-width: 170px;
+  position: relative;
+  padding: 0 8px;
+}
+
+/* Icon-Kreis - Premium Style */
+.uploadFlowIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 2;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.uploadFlowIcon svg {
+  width: 24px;
+  height: 24px;
+  stroke-width: 1.5;
+}
+
+.uploadFlowIconBlue {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #3b82f6;
+}
+
+.uploadFlowIconYellow {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #f59e0b;
+}
+
+.uploadFlowIconGreen {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #22c55e;
+}
+
+/* Badge über dem Icon - Dezent & Elegant */
+.uploadFlowBadge {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  z-index: 3;
+  letter-spacing: 0.3px;
+}
+
+.uploadFlowBadgeBlue {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+}
+
+.uploadFlowBadgeGreen {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+/* Content unter dem Icon */
+.uploadFlowContent h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 6px;
+  letter-spacing: -0.01em;
+}
+
+.uploadFlowContent p {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.5;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* Horizontale Verbindungslinie - Fein & Elegant */
+.uploadFlowConnector {
+  width: 48px;
+  height: 1px;
+  background: #e2e8f0;
+  margin-top: 28px;
+  flex-shrink: 0;
+}
+
+/* Responsive für Flow Steps */
+@media (max-width: 900px) {
+  .uploadFlowSteps {
+    flex-wrap: wrap;
+    gap: 24px;
+    padding: 32px 20px;
+  }
+
+  .uploadFlowStep {
+    min-width: 130px;
+    max-width: 150px;
+  }
+
+  .uploadFlowIcon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .uploadFlowIcon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .uploadFlowConnector {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .uploadFlowSteps {
+    flex-direction: column;
+    gap: 20px;
+    padding: 24px 20px;
+  }
+
+  .uploadFlowStep {
+    flex-direction: row;
+    text-align: left;
+    max-width: 100%;
+    gap: 16px;
+    padding: 0;
+  }
+
+  .uploadFlowIcon {
+    margin-bottom: 0;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+  }
+
+  .uploadFlowBadge {
+    position: static;
+    transform: none;
+    margin-bottom: 4px;
+    display: inline-block;
+  }
+
+  .uploadFlowContent {
+    flex: 1;
+  }
+
+  .uploadFlowContent h4 {
+    font-size: 13px;
+  }
+
+  .uploadFlowContent p {
+    font-size: 11px;
+  }
+}
+
 /* ========== PREMIUM FILE PREVIEW ========== */
 .filePreview {
   display: flex;

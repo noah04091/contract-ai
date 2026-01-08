@@ -4,7 +4,12 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { Search, Target, CheckCircle, AlertTriangle, FileText, Shield, Zap, Briefcase, ArrowRight } from "lucide-react";
+import AutoPlayVideo from "../../components/AutoPlayVideo";
+import { Search, Target, CheckCircle, AlertTriangle, FileText, Shield, Zap, Briefcase, ArrowRight, Play } from "lucide-react";
+
+// Video
+const analyseVideo = "/Videos/analyse.mp4";
+import analyseImg from "../../assets/Analyse.png";
 
 const Vertragsanalyse: React.FC = () => {
   const { user } = useAuth();
@@ -132,8 +137,31 @@ const Vertragsanalyse: React.FC = () => {
             </div>
           </div>
         </section>
+
+        {/* VIDEO SHOWCASE */}
+        <section className={styles.videoSection}>
+          <div className={styles.videoContainer}>
+            <div style={{ textAlign: 'center' }}>
+              <div className={styles.videoLabel}>
+                <Play size={14} />
+                <span>So sieht's aus</span>
+              </div>
+            </div>
+            <h2 className={styles.sectionTitle}>Die Vertragsanalyse in Aktion</h2>
+            <div className={styles.videoFrame}>
+              <div className={styles.videoWrapper}>
+                <AutoPlayVideo
+                  src={analyseVideo}
+                  poster={analyseImg}
+                  alt="Vertragsanalyse Demo"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
         <div className={styles.contentContainer}>
-          
+
           {/* PAIN */}
           <section className={styles.funktionSection}>
             <h2 className={styles.sectionTitle}>Warum Vertragsanalyse so wichtig ist</h2>

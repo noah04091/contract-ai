@@ -246,11 +246,16 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
 
   const actionInfo = ACTION_LABELS[actionLevel] || ACTION_LABELS.negotiate;
 
-  // ✅ Phase 2 Task 2.1: Ein-Satz-Erklärung extrahieren
-  const oneSentenceSummary = perspectiveData?.explanation?.simple ||
-    perspectiveData?.explanation?.summary ||
-    actionReason ||
-    null;
+  // ✅ FIX Issue #2: "Auf einen Blick" zeigt NUR actionReason, NICHT die Erklärung
+  // Die detaillierte Erklärung kommt in "Was bedeutet das?" - KEINE DUPLIZIERUNG!
+  const oneSentenceSummary = actionReason || null;
+
+  // Prüfe ob "Auf einen Blick" ANDERS ist als "Was bedeutet das?" (Erklärung)
+  const explanationText = perspectiveData?.explanation?.simple ||
+    perspectiveData?.explanation?.summary || '';
+  const showOneSentenceSummary = oneSentenceSummary &&
+    oneSentenceSummary !== explanationText &&
+    oneSentenceSummary.length > 10;
 
   // ✅ Phase 2 Task 2.3: Risk-Score Erklärung Helper
   const getRiskScoreInfo = (score: number) => {
@@ -263,8 +268,8 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
 
   return (
     <div className={styles.analysisContent}>
-      {/* 📝 Phase 2: EIN-SATZ-ERKLÄRUNG - Sofortiges Verständnis */}
-      {oneSentenceSummary && (
+      {/* 📝 FIX Issue #2: EIN-SATZ-ERKLÄRUNG - NUR wenn unterschiedlich von Erklärung */}
+      {showOneSentenceSummary && (
         <div className={styles.oneSentenceSummary}>
           <span className={styles.summaryLabel}>Auf einen Blick</span>
           <p className={styles.summaryText}>{oneSentenceSummary}</p>

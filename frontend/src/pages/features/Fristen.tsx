@@ -4,7 +4,12 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { Calendar, Clock, AlertCircle, Mail, Shield, CheckCircle, ArrowRight } from "lucide-react";
+import AutoPlayVideo from "../../components/AutoPlayVideo";
+import { Calendar, Clock, AlertCircle, Mail, Shield, CheckCircle, ArrowRight, Play } from "lucide-react";
+
+// Video
+const fristenVideo = "/Videos/fristen.mp4";
+import fristenImg from "../../assets/Fristen.png";
 
 const Fristen: React.FC = () => {
   const { user } = useAuth();
@@ -96,8 +101,30 @@ const Fristen: React.FC = () => {
           </div>
         </section>
 
+        {/* VIDEO SHOWCASE */}
+        <section className={styles.videoSection}>
+          <div className={styles.videoContainer}>
+            <div style={{ textAlign: 'center' }}>
+              <div className={styles.videoLabel}>
+                <Play size={14} />
+                <span>So sieht's aus</span>
+              </div>
+            </div>
+            <h2 className={styles.sectionTitle}>Der Fristenkalender in Aktion</h2>
+            <div className={styles.videoFrame}>
+              <div className={styles.videoWrapper}>
+                <AutoPlayVideo
+                  src={fristenVideo}
+                  poster={fristenImg}
+                  alt="Fristenkalender Demo"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
         <div className={styles.contentContainer}>
-          
+
           {/* PAIN */}
           <section className={styles.funktionSection}>
             <h2 className={styles.sectionTitle}>Automatische Verlängerungen – die teure Falle</h2>

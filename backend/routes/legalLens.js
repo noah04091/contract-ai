@@ -1345,15 +1345,23 @@ router.post('/:contractId/negotiation-checklist', verifyToken, async (req, res) 
 
     console.log(`🔄 [Legal Lens] Generating new checklist...`);
 
-    // GPT-Prompt für Verhandlungs-Checkliste
+    // ✅ FIX Issue #4: GPT-Prompt verbessert gegen Halluzination
+    // KRITISCH: GPT darf NUR auf Basis des TATSÄCHLICHEN Vertragstextes antworten!
     const systemPrompt = `Du bist ein erfahrener Vertragsanwalt und Verhandlungsexperte.
 
 AUFGABE: Erstelle eine PRIORISIERTE Verhandlungs-Checkliste für einen ${perspective === 'contractor' ? 'Auftraggeber/Kunden' : 'Auftragnehmer/Dienstleister'}.
 
 BRANCHEN-KONTEXT: ${industryContext}
 
-Analysiere den Vertrag und identifiziere die TOP 5-7 wichtigsten Verhandlungspunkte.
-Sortiere nach PRIORITÄT - die wichtigsten Punkte zuerst!
+⚠️ KRITISCH - ANTI-HALLUZINATIONS-REGELN:
+1. Analysiere NUR was TATSÄCHLICH im Vertragstext steht!
+2. ERFINDE NIEMALS Klauseln oder Fristen die nicht im Text vorkommen!
+3. Wenn du eine Klausel zitierst, muss sie WORTWÖRTLICH im Vertrag stehen!
+4. Bei "clausePreview" ZITIERE den EXAKTEN Wortlaut aus dem Vertrag!
+5. Wenn der Vertrag z.B. "fristlos kündbar" sagt, erfinde KEINE "6 Monate Kündigungsfrist"!
+6. Wenn du dir unsicher bist ob etwas im Vertrag steht → LASS ES WEG!
+
+Identifiziere die TOP 5-7 wichtigsten Verhandlungspunkte NUR basierend auf dem, was du im Text findest.
 
 Antworte NUR mit diesem JSON-Format:
 {
@@ -1364,11 +1372,11 @@ Antworte NUR mit diesem JSON-Format:
       "category": "financial|liability|termination|scope|other",
       "title": "Kurzer Titel (max 5 Wörter)",
       "section": "§-Nummer oder Abschnitt falls erkennbar",
-      "clausePreview": "Die ersten 100 Zeichen der betroffenen Klausel...",
-      "issue": "Was ist das Problem? (2-3 Sätze)",
-      "risk": "Was droht im schlimmsten Fall? Mit €-Betrag/Zeitraum",
+      "clausePreview": "EXAKTES ZITAT aus dem Vertrag (die betroffene Stelle)",
+      "issue": "Was ist das Problem mit DIESER konkreten Klausel? (2-3 Sätze)",
+      "risk": "Was droht im schlimmsten Fall? Mit €-Betrag/Zeitraum WENN im Vertrag genannt",
       "whatToSay": "Konkreter Satz für die Verhandlung: 'Ich möchte gerne...'",
-      "alternativeSuggestion": "Bessere Formulierung für die Klausel",
+      "alternativeSuggestion": "Bessere Formulierung für diese konkrete Klausel",
       "difficulty": "easy|medium|hard",
       "emoji": "Passendes Emoji"
     }
@@ -1384,11 +1392,13 @@ Antworte NUR mit diesem JSON-Format:
 }
 
 REGELN:
-- Max 7 Punkte, min 3 Punkte
+- Max 7 Punkte, min 3 Punkte (nur wenn du wirklich so viele ECHTE Probleme findest!)
 - priority 1 = kritisch/Dealbreaker, 2 = wichtig, 3 = nice-to-have
-- Konkrete Beträge und Zeiträume nennen wo möglich
+- Konkrete Beträge und Zeiträume nennen NUR wenn sie im Vertrag stehen!
 - "whatToSay" muss ein KOMPLETTER Satz sein, den man direkt verwenden kann
-- Sprich den Leser mit "du/dein" an in issue und risk`;
+- "clausePreview" MUSS ein WÖRTLICHES ZITAT aus dem Vertrag sein!
+- Sprich den Leser mit "du/dein" an in issue und risk
+- WENIGER Punkte sind besser als erfundene Punkte!`;
 
     const response = await clauseAnalyzer.openai.chat.completions.create({
       model: 'gpt-4-turbo-preview',

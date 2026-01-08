@@ -4,7 +4,12 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { Activity, TrendingUp, AlertTriangle, Bell, Shield, CheckCircle, ArrowRight } from "lucide-react";
+import AutoPlayVideo from "../../components/AutoPlayVideo";
+import { Activity, TrendingUp, AlertTriangle, Bell, Shield, CheckCircle, ArrowRight, Play } from "lucide-react";
+
+// Video
+const legalpulseVideo = "/Videos/legalpulse.mp4";
+import legalpulseImg from "../../assets/Legal Pulse.png";
 
 const LegalPulse: React.FC = () => {
   const { user } = useAuth();
@@ -96,8 +101,30 @@ const LegalPulse: React.FC = () => {
           </div>
         </section>
 
+        {/* VIDEO SHOWCASE */}
+        <section className={styles.videoSection}>
+          <div className={styles.videoContainer}>
+            <div style={{ textAlign: 'center' }}>
+              <div className={styles.videoLabel}>
+                <Play size={14} />
+                <span>So sieht's aus</span>
+              </div>
+            </div>
+            <h2 className={styles.sectionTitle}>Legal Pulse in Aktion</h2>
+            <div className={styles.videoFrame}>
+              <div className={styles.videoWrapper}>
+                <AutoPlayVideo
+                  src={legalpulseVideo}
+                  poster={legalpulseImg}
+                  alt="Legal Pulse Demo"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
         <div className={styles.contentContainer}>
-          
+
           {/* PAIN */}
           <section className={styles.funktionSection}>
             <h2 className={styles.sectionTitle}>Stillstand ist Risiko</h2>

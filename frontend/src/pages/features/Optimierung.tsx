@@ -4,7 +4,12 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { Wrench, Target, CheckCircle, AlertTriangle, FileText, Shield, Zap, ArrowRight } from "lucide-react";
+import AutoPlayVideo from "../../components/AutoPlayVideo";
+import { Wrench, Target, CheckCircle, AlertTriangle, FileText, Shield, Zap, ArrowRight, Play } from "lucide-react";
+
+// Video
+const optimierungVideo = "/Videos/optimierung.mp4";
+import optimierungImg from "../../assets/Optimierung.png";
 
 const Optimierung: React.FC = () => {
   const { user } = useAuth();
@@ -133,8 +138,30 @@ const Optimierung: React.FC = () => {
           </div>
         </section>
 
+        {/* VIDEO SHOWCASE */}
+        <section className={styles.videoSection}>
+          <div className={styles.videoContainer}>
+            <div style={{ textAlign: 'center' }}>
+              <div className={styles.videoLabel}>
+                <Play size={14} />
+                <span>So sieht's aus</span>
+              </div>
+            </div>
+            <h2 className={styles.sectionTitle}>Der Optimierer in Aktion</h2>
+            <div className={styles.videoFrame}>
+              <div className={styles.videoWrapper}>
+                <AutoPlayVideo
+                  src={optimierungVideo}
+                  poster={optimierungImg}
+                  alt="Vertragsoptimierung Demo"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
         <div className={styles.contentContainer}>
-          
+
           {/* PAIN */}
           <section className={styles.funktionSection}>
             <h2 className={styles.sectionTitle}>Warum Vertragsoptimierung so wichtig ist</h2>
