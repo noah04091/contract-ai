@@ -77,13 +77,30 @@ function CustomTooltip({
     </motion.div>
   );
 
-  // 🔧 FIX: Bei center placement - Wrapper für Zentrierung, inneres Element für Animation
-  // Framer-motion überschreibt transform mit scale(), daher brauchen wir einen separaten
-  // Wrapper der die Zentrierung via Flexbox macht (nicht transform)
+  // 🔧 FIX: Bei center placement - Wrapper für Zentrierung mit INLINE STYLES
+  // Inline-styles haben höchste Priorität und können nicht durch CSS überschrieben werden
   if (isCentered) {
+    console.log('🎯 [Tour] Rendering CENTERED tooltip via Portal');
     return createPortal(
-      <div className={styles.centeredWrapper} role="dialog" aria-modal="true">
-        {tooltipContent}
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 100000,
+          pointerEvents: 'none',
+        }}
+        role="dialog"
+        aria-modal="true"
+      >
+        <div style={{ pointerEvents: 'auto' }}>
+          {tooltipContent}
+        </div>
       </div>,
       document.body
     );
