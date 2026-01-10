@@ -453,7 +453,7 @@ router.get("/me", verifyToken, async (req, res) => {
       firstName: user.firstName || '',
       lastName: user.lastName || '',
       name: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email.split('@')[0], // Fallback auf Email-Prefix
-      verified: user.verified ?? true, // ⭐ NEU: Verification Status
+      verified: user.verified ?? false, // ⭐ Default false für alte User ohne Feld
       role: user.role || 'user', // 🔐 Admin-Role Support
       subscriptionPlan: plan,
       subscriptionStatus: status,
@@ -1137,5 +1137,356 @@ router.get("/users", verifyToken, verifyAdmin, async (req, res) => {
       message: 'Fehler beim Abrufen der Benutzerliste',
       error: error.message
     });
+  }
+});
+
+// ===== 🆕 PROFIL BEARBEITEN =====
+
+// 📝 PUT /api/auth/update-profile - Name ändern
+router.put("/update-profile", verifyToken, async (req, res) => {
+  try {
+    const { firstName, lastName } = req.body;
+
+    // Validierung
+    if (!firstName || !lastName) {
+      return res.status(400).json({ message: "❌ Vorname und Nachname erforderlich" });
+    }
+
+    if (firstName.trim().length < 2 || lastName.trim().length < 2) {
+      return res.status(400).json({ message: "❌ Name muss mindestens 2 Zeichen haben" });
+    }
+
+    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
+    if (!user) {
+      return res.status(404).json({ message: "❌ Benutzer nicht gefunden" });
+    }
+
+    const updatedFirstName = firstName.trim();
+    const updatedLastName = lastName.trim();
+    const updatedName = `${updatedFirstName} ${updatedLastName}`;
+
+    await usersCollection.updateOne(
+      { _id: new ObjectId(req.user.userId) },
+      {
+        $set: {
+          firstName: updatedFirstName,
+          lastName: updatedLastName,
+          name: updatedName,
+          updatedAt: new Date()
+        }
+      }
+    );
+
+    console.log(`✅ Profil aktualisiert für ${user.email}: ${updatedName}`);
+
+    res.json({
+      success: true,
+      message: "✅ Profil erfolgreich aktualisiert",
+      firstName: updatedFirstName,
+      lastName: updatedLastName,
+      name: updatedName
+    });
+  } catch (err) {
+    console.error("❌ Fehler beim Aktualisieren des Profils:", err);
+    res.status(500).json({ message: "Serverfehler beim Aktualisieren" });
+  }
+});
+
+// 📧 POST /api/auth/request-email-change - E-Mail-Änderung anfragen
+router.post("/request-email-change", verifyToken, async (req, res) => {
+  try {
+    const { newEmail, password } = req.body;
+
+    if (!newEmail || !password) {
+      return res.status(400).json({ message: "❌ Neue E-Mail und Passwort erforderlich" });
+    }
+
+    const normalizedNewEmail = normalizeEmail(newEmail);
+
+    // Prüfe ob E-Mail bereits existiert
+    const existingUser = await usersCollection.findOne({ email: normalizedNewEmail });
+    if (existingUser) {
+      return res.status(409).json({ message: "❌ Diese E-Mail ist bereits registriert" });
+    }
+
+    // Hole aktuellen User und prüfe Passwort
+    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
+    if (!user) {
+      return res.status(404).json({ message: "❌ Benutzer nicht gefunden" });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "❌ Falsches Passwort" });
+    }
+
+    // Generiere Bestätigungstoken
+    const emailChangeToken = crypto.randomBytes(32).toString("hex");
+    const emailChangeExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 Stunden
+
+    await usersCollection.updateOne(
+      { _id: new ObjectId(req.user.userId) },
+      {
+        $set: {
+          pendingEmail: normalizedNewEmail,
+          emailChangeToken,
+          emailChangeExpires,
+          updatedAt: new Date()
+        }
+      }
+    );
+
+    // Sende Bestätigungs-E-Mail an NEUE Adresse
+    const confirmLink = `https://contract-ai.de/confirm-email-change?token=${emailChangeToken}`;
+
+    const html = generateEmailTemplate({
+      title: "E-Mail-Adresse bestätigen",
+      preheader: "Bestätigen Sie Ihre neue E-Mail-Adresse",
+      body: `
+        <p style="text-align: center; margin-bottom: 25px;">
+          Sie haben angefordert, Ihre E-Mail-Adresse zu ändern.<br>
+          Klicken Sie auf den Button, um <strong>${normalizedNewEmail}</strong> zu bestätigen.
+        </p>
+
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa; border-radius: 12px; margin-bottom: 25px;">
+          <tr><td style="padding: 20px; text-align: center;">
+            <p style="margin: 0; font-size: 14px; color: #555;">
+              <strong>Gültig für:</strong> 24 Stunden
+            </p>
+          </td></tr>
+        </table>
+
+        <p style="font-size: 13px; color: #888; text-align: center;">
+          Falls Sie dies nicht angefordert haben, ignorieren Sie diese E-Mail.<br>
+          Ihre E-Mail-Adresse bleibt unverändert.
+        </p>
+      `,
+      cta: {
+        text: "E-Mail-Adresse bestätigen",
+        url: confirmLink
+      }
+    });
+
+    await sendEmail({ to: normalizedNewEmail, subject: "E-Mail-Adresse bestätigen", html });
+
+    console.log(`📧 E-Mail-Änderung angefordert: ${user.email} → ${normalizedNewEmail}`);
+
+    res.json({
+      success: true,
+      message: "✅ Bestätigungs-E-Mail gesendet. Bitte prüfen Sie Ihr Postfach."
+    });
+  } catch (err) {
+    console.error("❌ Fehler bei E-Mail-Änderung:", err);
+    res.status(500).json({ message: "Serverfehler bei E-Mail-Änderung" });
+  }
+});
+
+// ✅ GET /api/auth/confirm-email-change - E-Mail-Änderung bestätigen
+router.get("/confirm-email-change", async (req, res) => {
+  try {
+    const { token } = req.query;
+
+    if (!token) {
+      return res.status(400).json({ message: "❌ Token fehlt" });
+    }
+
+    const user = await usersCollection.findOne({ emailChangeToken: token });
+
+    if (!user) {
+      return res.status(404).json({ message: "❌ Ungültiger Token" });
+    }
+
+    if (user.emailChangeExpires < Date.now()) {
+      return res.status(410).json({ message: "❌ Token abgelaufen" });
+    }
+
+    const oldEmail = user.email;
+    const newEmail = user.pendingEmail;
+
+    // E-Mail aktualisieren
+    await usersCollection.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          email: newEmail,
+          updatedAt: new Date()
+        },
+        $unset: {
+          pendingEmail: "",
+          emailChangeToken: "",
+          emailChangeExpires: ""
+        }
+      }
+    );
+
+    console.log(`✅ E-Mail geändert: ${oldEmail} → ${newEmail}`);
+
+    // Redirect zur Erfolgsseite
+    res.redirect(`https://contract-ai.de/profile?emailChanged=true`);
+  } catch (err) {
+    console.error("❌ Fehler bei E-Mail-Bestätigung:", err);
+    res.status(500).json({ message: "Serverfehler bei E-Mail-Bestätigung" });
+  }
+});
+
+// 🖼️ POST /api/auth/upload-profile-picture - Profilbild hochladen (Base64)
+router.post("/upload-profile-picture", verifyToken, async (req, res) => {
+  try {
+    const { imageData } = req.body; // Base64 encoded image
+
+    if (!imageData) {
+      return res.status(400).json({ message: "❌ Bilddaten fehlen" });
+    }
+
+    // Validiere Base64 Format
+    const matches = imageData.match(/^data:image\/(png|jpeg|jpg|webp);base64,/);
+    if (!matches) {
+      return res.status(400).json({ message: "❌ Ungültiges Bildformat. Erlaubt: PNG, JPEG, WebP" });
+    }
+
+    // Größe prüfen (max 2MB)
+    const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
+    const sizeInBytes = Buffer.from(base64Data, 'base64').length;
+    if (sizeInBytes > 2 * 1024 * 1024) {
+      return res.status(400).json({ message: "❌ Bild zu groß. Maximum: 2MB" });
+    }
+
+    await usersCollection.updateOne(
+      { _id: new ObjectId(req.user.userId) },
+      {
+        $set: {
+          profilePicture: imageData,
+          updatedAt: new Date()
+        }
+      }
+    );
+
+    console.log(`🖼️ Profilbild aktualisiert für User ${req.user.userId}`);
+
+    res.json({
+      success: true,
+      message: "✅ Profilbild erfolgreich hochgeladen"
+    });
+  } catch (err) {
+    console.error("❌ Fehler beim Profilbild-Upload:", err);
+    res.status(500).json({ message: "Serverfehler beim Upload" });
+  }
+});
+
+// 🗑️ DELETE /api/auth/profile-picture - Profilbild löschen
+router.delete("/profile-picture", verifyToken, async (req, res) => {
+  try {
+    await usersCollection.updateOne(
+      { _id: new ObjectId(req.user.userId) },
+      {
+        $unset: { profilePicture: "" },
+        $set: { updatedAt: new Date() }
+      }
+    );
+
+    console.log(`🗑️ Profilbild gelöscht für User ${req.user.userId}`);
+
+    res.json({
+      success: true,
+      message: "✅ Profilbild gelöscht"
+    });
+  } catch (err) {
+    console.error("❌ Fehler beim Löschen des Profilbilds:", err);
+    res.status(500).json({ message: "Serverfehler beim Löschen" });
+  }
+});
+
+// 📦 GET /api/auth/export-data - DSGVO Daten-Export
+router.get("/export-data", verifyToken, async (req, res) => {
+  try {
+    const user = await usersCollection.findOne(
+      { _id: new ObjectId(req.user.userId) },
+      { projection: { password: 0, resetToken: 0, resetTokenExpires: 0, emailChangeToken: 0 } }
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "❌ Benutzer nicht gefunden" });
+    }
+
+    // Hole alle Verträge des Users
+    const contracts = await contractsCollection.find({ userId: req.user.userId }).toArray();
+
+    // Hole Kalender-Events
+    const calendarCollection = dbInstance.collection("calendar_events");
+    const calendarEvents = await calendarCollection.find({ userId: req.user.userId }).toArray();
+
+    // Hole Firmenprofil
+    const companyProfilesCollection = dbInstance.collection("company_profiles");
+    const companyProfile = await companyProfilesCollection.findOne({ userId: new ObjectId(req.user.userId) });
+
+    // Exportdaten zusammenstellen
+    const exportData = {
+      exportedAt: new Date().toISOString(),
+      exportedFor: user.email,
+      user: {
+        email: user.email,
+        firstName: user.firstName || null,
+        lastName: user.lastName || null,
+        name: user.name || null,
+        createdAt: user.createdAt,
+        verified: user.verified,
+        subscriptionPlan: user.subscriptionPlan,
+        subscriptionStatus: user.subscriptionStatus,
+        analysisCount: user.analysisCount,
+        optimizationCount: user.optimizationCount,
+        emailNotifications: user.emailNotifications,
+        contractReminders: user.contractReminders,
+        onboarding: user.onboarding || null
+      },
+      companyProfile: companyProfile ? {
+        companyName: companyProfile.companyName,
+        legalForm: companyProfile.legalForm,
+        street: companyProfile.street,
+        postalCode: companyProfile.postalCode,
+        city: companyProfile.city,
+        country: companyProfile.country,
+        vatId: companyProfile.vatId,
+        contactEmail: companyProfile.contactEmail,
+        contactPhone: companyProfile.contactPhone
+      } : null,
+      contracts: contracts.map(c => ({
+        id: c._id,
+        contractName: c.contractName,
+        contractType: c.contractType,
+        partnerName: c.partnerName,
+        startDate: c.startDate,
+        expiryDate: c.expiryDate,
+        value: c.value,
+        status: c.status,
+        createdAt: c.createdAt,
+        analysisScore: c.analysisScore,
+        // Keine Dateiinhalte exportieren, nur Metadaten
+        hasFile: !!c.s3Key
+      })),
+      calendarEvents: calendarEvents.map(e => ({
+        id: e._id,
+        title: e.title,
+        date: e.date,
+        type: e.type,
+        severity: e.severity,
+        description: e.description,
+        createdAt: e.createdAt
+      })),
+      _meta: {
+        totalContracts: contracts.length,
+        totalCalendarEvents: calendarEvents.length,
+        hasCompanyProfile: !!companyProfile
+      }
+    };
+
+    console.log(`📦 DSGVO-Export erstellt für ${user.email}: ${contracts.length} Verträge, ${calendarEvents.length} Events`);
+
+    // Als JSON-Datei senden
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="contract-ai-export-${new Date().toISOString().split('T')[0]}.json"`);
+    res.json(exportData);
+  } catch (err) {
+    console.error("❌ Fehler beim Daten-Export:", err);
+    res.status(500).json({ message: "Serverfehler beim Export" });
   }
 });

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
-import { User, Key, CreditCard, Trash2, AlertCircle, CheckCircle, LogOut, FileText, Download, MessageSquare, Users, Link2, Mail, RefreshCw, Compass } from "lucide-react";
+import { User, Key, CreditCard, Trash2, AlertCircle, CheckCircle, LogOut, FileText, Download, MessageSquare, Users, Link2, Mail, RefreshCw, Compass, Edit3, Camera, Database } from "lucide-react";
 import styles from "../styles/Profile.module.css";
 import { useAuth } from "../hooks/useAuth";;
 
@@ -63,6 +63,24 @@ export default function Profile() {
 
   // Onboarding/Tour Reset State
   const [isResettingTour, setIsResettingTour] = useState(false);
+
+  // 🆕 Profil bearbeiten State
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editFirstName, setEditFirstName] = useState('');
+  const [editLastName, setEditLastName] = useState('');
+  const [isSavingName, setIsSavingName] = useState(false);
+
+  // 🆕 E-Mail ändern State
+  const [isEditingEmail, setIsEditingEmail] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [emailPassword, setEmailPassword] = useState('');
+  const [isSavingEmail, setIsSavingEmail] = useState(false);
+
+  // 🆕 Profilbild State
+  const [isUploadingPicture, setIsUploadingPicture] = useState(false);
+
+  // 🆕 Daten-Export State
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -223,6 +241,183 @@ export default function Profile() {
       });
     } finally {
       setIsResettingTour(false);
+    }
+  };
+
+  // 🆕 Handler: Name bearbeiten starten
+  const handleStartEditName = () => {
+    setEditFirstName((user as any)?.firstName || '');
+    setEditLastName((user as any)?.lastName || '');
+    setIsEditingName(true);
+  };
+
+  // 🆕 Handler: Name speichern
+  const handleSaveName = async () => {
+    if (!editFirstName.trim() || !editLastName.trim()) {
+      setNotification({ message: "Vorname und Nachname erforderlich", type: "error" });
+      return;
+    }
+
+    setIsSavingName(true);
+    try {
+      const res = await fetch('/api/auth/update-profile', {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: editFirstName.trim(),
+          lastName: editLastName.trim()
+        })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setNotification({ message: "Name erfolgreich geändert", type: "success" });
+        setIsEditingName(false);
+        // Seite neu laden um User-Daten zu aktualisieren
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        setNotification({ message: data.message || "Fehler beim Speichern", type: "error" });
+      }
+    } catch {
+      setNotification({ message: "Fehler beim Speichern des Namens", type: "error" });
+    } finally {
+      setIsSavingName(false);
+    }
+  };
+
+  // 🆕 Handler: E-Mail ändern
+  const handleChangeEmail = async () => {
+    if (!newEmail.trim() || !emailPassword) {
+      setNotification({ message: "E-Mail und Passwort erforderlich", type: "error" });
+      return;
+    }
+
+    setIsSavingEmail(true);
+    try {
+      const res = await fetch('/api/auth/request-email-change', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          newEmail: newEmail.trim(),
+          password: emailPassword
+        })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setNotification({ message: "Bestätigungs-E-Mail gesendet! Bitte prüfen Sie Ihr Postfach.", type: "success" });
+        setIsEditingEmail(false);
+        setNewEmail('');
+        setEmailPassword('');
+      } else {
+        setNotification({ message: data.message || "Fehler beim Ändern der E-Mail", type: "error" });
+      }
+    } catch {
+      setNotification({ message: "Fehler beim Ändern der E-Mail", type: "error" });
+    } finally {
+      setIsSavingEmail(false);
+    }
+  };
+
+  // 🆕 Handler: Profilbild hochladen
+  const handleProfilePictureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validierung
+    if (!file.type.match(/^image\/(png|jpeg|jpg|webp)$/)) {
+      setNotification({ message: "Nur PNG, JPEG oder WebP erlaubt", type: "error" });
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      setNotification({ message: "Bild zu groß. Maximum: 2MB", type: "error" });
+      return;
+    }
+
+    setIsUploadingPicture(true);
+
+    try {
+      // Konvertiere zu Base64
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const imageData = reader.result as string;
+
+        const res = await fetch('/api/auth/upload-profile-picture', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageData })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          setNotification({ message: "Profilbild hochgeladen", type: "success" });
+          setTimeout(() => window.location.reload(), 1000);
+        } else {
+          setNotification({ message: data.message || "Fehler beim Upload", type: "error" });
+        }
+        setIsUploadingPicture(false);
+      };
+      reader.readAsDataURL(file);
+    } catch {
+      setNotification({ message: "Fehler beim Hochladen", type: "error" });
+      setIsUploadingPicture(false);
+    }
+  };
+
+  // 🆕 Handler: Profilbild löschen
+  const handleDeleteProfilePicture = async () => {
+    if (!window.confirm("Profilbild wirklich löschen?")) return;
+
+    try {
+      const res = await fetch('/api/auth/profile-picture', {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (res.ok) {
+        setNotification({ message: "Profilbild gelöscht", type: "success" });
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        setNotification({ message: "Fehler beim Löschen", type: "error" });
+      }
+    } catch {
+      setNotification({ message: "Fehler beim Löschen", type: "error" });
+    }
+  };
+
+  // 🆕 Handler: DSGVO Daten-Export
+  const handleExportData = async () => {
+    setIsExporting(true);
+    try {
+      const res = await fetch('/api/auth/export-data', {
+        credentials: 'include'
+      });
+
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `contract-ai-export-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        setNotification({ message: "Daten erfolgreich exportiert", type: "success" });
+      } else {
+        setNotification({ message: "Fehler beim Export", type: "error" });
+      }
+    } catch {
+      setNotification({ message: "Fehler beim Export", type: "error" });
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -402,9 +597,112 @@ export default function Profile() {
               transition={{ duration: 0.5, delay: 0.4 }}
             >
               <div className={styles.userInfo}>
+                {/* 🆕 Profilbild */}
+                <div className={styles.profilePictureSection}>
+                  <div className={styles.profilePictureWrapper}>
+                    {(user as any).profilePicture ? (
+                      <img src={(user as any).profilePicture} alt="Profilbild" className={styles.profilePicture} />
+                    ) : (
+                      <div className={styles.profilePicturePlaceholder}>
+                        <User size={40} />
+                      </div>
+                    )}
+                    <label className={styles.profilePictureUpload}>
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        onChange={handleProfilePictureUpload}
+                        disabled={isUploadingPicture}
+                        style={{ display: 'none' }}
+                      />
+                      {isUploadingPicture ? (
+                        <span className={styles.buttonSpinner}></span>
+                      ) : (
+                        <Camera size={16} />
+                      )}
+                    </label>
+                  </div>
+                  {(user as any).profilePicture && (
+                    <button onClick={handleDeleteProfilePicture} className={styles.deletePictureButton}>
+                      Bild entfernen
+                    </button>
+                  )}
+                </div>
+
+                {/* 🆕 Name bearbeiten */}
+                <div className={styles.nameContainer}>
+                  <div className={styles.label}>Name</div>
+                  {isEditingName ? (
+                    <div className={styles.editNameForm}>
+                      <input
+                        type="text"
+                        value={editFirstName}
+                        onChange={(e) => setEditFirstName(e.target.value)}
+                        placeholder="Vorname"
+                        className={styles.input}
+                      />
+                      <input
+                        type="text"
+                        value={editLastName}
+                        onChange={(e) => setEditLastName(e.target.value)}
+                        placeholder="Nachname"
+                        className={styles.input}
+                      />
+                      <div className={styles.editNameButtons}>
+                        <button onClick={handleSaveName} disabled={isSavingName} className={styles.saveButton}>
+                          {isSavingName ? 'Speichern...' : 'Speichern'}
+                        </button>
+                        <button onClick={() => setIsEditingName(false)} className={styles.cancelButton}>
+                          Abbrechen
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className={styles.nameDisplay}>
+                      <span>{(user as any).name || user.email?.split('@')[0]}</span>
+                      <button onClick={handleStartEditName} className={styles.editButton}>
+                        <Edit3 size={14} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* 🆕 E-Mail bearbeiten */}
                 <div className={styles.emailContainer}>
                   <div className={styles.label}>E-Mail-Adresse</div>
-                  <div className={styles.email}>{user.email}</div>
+                  {isEditingEmail ? (
+                    <div className={styles.editEmailForm}>
+                      <input
+                        type="email"
+                        value={newEmail}
+                        onChange={(e) => setNewEmail(e.target.value)}
+                        placeholder="Neue E-Mail-Adresse"
+                        className={styles.input}
+                      />
+                      <input
+                        type="password"
+                        value={emailPassword}
+                        onChange={(e) => setEmailPassword(e.target.value)}
+                        placeholder="Aktuelles Passwort zur Bestätigung"
+                        className={styles.input}
+                      />
+                      <div className={styles.editNameButtons}>
+                        <button onClick={handleChangeEmail} disabled={isSavingEmail} className={styles.saveButton}>
+                          {isSavingEmail ? 'Senden...' : 'Bestätigungs-E-Mail senden'}
+                        </button>
+                        <button onClick={() => { setIsEditingEmail(false); setNewEmail(''); setEmailPassword(''); }} className={styles.cancelButton}>
+                          Abbrechen
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className={styles.nameDisplay}>
+                      <span>{user.email}</span>
+                      <button onClick={() => setIsEditingEmail(true)} className={styles.editButton}>
+                        <Edit3 size={14} />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className={styles.subscriptionContainer}>
@@ -819,7 +1117,49 @@ export default function Profile() {
                 </div>
               </motion.div>
 
-              <motion.div 
+              {/* 🆕 DSGVO Daten-Export */}
+              <motion.div
+                className={styles.section}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.65 }}
+              >
+                <div className={styles.sectionHeader}>
+                  <Database size={18} className={styles.sectionIcon} />
+                  <h2 className={styles.sectionTitle}>Meine Daten (DSGVO)</h2>
+                </div>
+
+                <div className={styles.settingRow}>
+                  <div className={styles.settingInfo}>
+                    <h3 className={styles.settingLabel}>Daten exportieren</h3>
+                    <p className={styles.settingDescription}>
+                      Laden Sie alle Ihre Daten als JSON-Datei herunter (Profil, Verträge, Kalender-Events)
+                    </p>
+                  </div>
+                  <motion.button
+                    className={styles.exportButton}
+                    onClick={handleExportData}
+                    disabled={isExporting}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  >
+                    {isExporting ? (
+                      <>
+                        <span className={styles.buttonSpinner}></span>
+                        <span>Exportiere...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Download size={16} />
+                        <span>Daten exportieren</span>
+                      </>
+                    )}
+                  </motion.button>
+                </div>
+              </motion.div>
+
+              <motion.div
                 className={styles.dangerSection}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
