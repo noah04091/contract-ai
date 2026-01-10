@@ -57,6 +57,8 @@ interface Contract {
 
 interface UserData {
   email: string;
+  firstName?: string;
+  lastName?: string;
   name?: string;
   analysisCount?: number;
   analysisLimit?: number;
