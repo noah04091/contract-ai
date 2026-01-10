@@ -1156,16 +1156,21 @@ export default function ContractDetailsV2() {
                         </div>
                         <div className={styles.cardBody}>
                           <div className={styles.analysisList}>
-                            {contract.analysis.recommendations.map((rec, idx) => (
-                              <div key={idx} className={`${styles.analysisItem} ${styles.neutral}`}>
-                                <div className={styles.analysisItemIcon} style={{ background: '#dbeafe', color: '#2563eb' }}>
-                                  <Lightbulb size={16} />
+                            {contract.analysis.recommendations.map((rec, idx) => {
+                              // Handle both string and object formats
+                              const recText = typeof rec === 'string' ? rec : (rec as { title?: string; description?: string })?.title || (rec as { title?: string; description?: string })?.description || '';
+                              if (!recText) return null;
+                              return (
+                                <div key={idx} className={`${styles.analysisItem} ${styles.neutral}`}>
+                                  <div className={styles.analysisItemIcon} style={{ background: '#dbeafe', color: '#2563eb' }}>
+                                    <Lightbulb size={16} />
+                                  </div>
+                                  <div className={styles.analysisItemContent}>
+                                    <div className={styles.analysisItemText}>{recText}</div>
+                                  </div>
                                 </div>
-                                <div className={styles.analysisItemContent}>
-                                  <div className={styles.analysisItemText}>{rec}</div>
-                                </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </div>
                       </div>
@@ -1187,16 +1192,21 @@ export default function ContractDetailsV2() {
                         </div>
                         <div className={styles.cardBody}>
                           <div className={styles.analysisList}>
-                            {contract.analysis.missingInformation.map((info, idx) => (
-                              <div key={idx} className={`${styles.analysisItem} ${styles.warning}`}>
-                                <div className={styles.analysisItemIcon} style={{ background: '#fef3c7', color: '#d97706' }}>
-                                  <HelpCircle size={16} />
+                            {contract.analysis.missingInformation.map((info, idx) => {
+                              // Handle both string and object formats
+                              const infoText = typeof info === 'string' ? info : (info as { title?: string; description?: string })?.title || (info as { title?: string; description?: string })?.description || '';
+                              if (!infoText) return null;
+                              return (
+                                <div key={idx} className={`${styles.analysisItem} ${styles.warning}`}>
+                                  <div className={styles.analysisItemIcon} style={{ background: '#fef3c7', color: '#d97706' }}>
+                                    <HelpCircle size={16} />
+                                  </div>
+                                  <div className={styles.analysisItemContent}>
+                                    <div className={styles.analysisItemText}>{infoText}</div>
+                                  </div>
                                 </div>
-                                <div className={styles.analysisItemContent}>
-                                  <div className={styles.analysisItemText}>{info}</div>
-                                </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </div>
                       </div>
