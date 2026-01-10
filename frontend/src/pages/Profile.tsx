@@ -571,19 +571,11 @@ export default function Profile() {
           transition={{ duration: 0.5 }}
         >
           <div className={styles.header}>
-            <motion.div 
-              className={styles.profileIcon}
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <User size={32} className={styles.icon} />
-            </motion.div>
-            <motion.h1 
+            <motion.h1
               className={styles.title}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
             >
               Dein Profil
             </motion.h1>
