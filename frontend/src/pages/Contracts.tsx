@@ -1445,6 +1445,15 @@ export default function Contracts() {
         currentSkip: response.pagination.skip
       });
 
+      // 🔧 FIX: Auch previewContract aktualisieren (sonst bleibt "Jetzt analysieren" Button sichtbar)
+      if (previewContract) {
+        const updatedPreviewContract = response.contracts.find(c => c._id === previewContract._id);
+        if (updatedPreviewContract) {
+          console.log("🔄 Preview-Contract aktualisiert nach Analyse");
+          setPreviewContract(updatedPreviewContract);
+        }
+      }
+
       return response.contracts;
     } catch {
       return null;
