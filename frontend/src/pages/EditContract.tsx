@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
-import "./EditContract.module.css";
+import styles from "./EditContract.module.css";
 
 interface Contract {
   name: string;
@@ -17,15 +17,15 @@ interface ToastProps {
 
 const Toast: React.FC<ToastProps> = ({ message, type }) => {
   return (
-    <motion.div 
-      className={`toast ${type}`}
+    <motion.div
+      className={`${styles.toast} ${type === 'success' ? styles.success : styles.error}`}
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ type: "spring", stiffness: 500, damping: 30 }}
     >
-      <span className="toast-icon">{type === 'success' ? '✅' : '❌'}</span>
-      <span className="toast-message">{message}</span>
+      <span className={styles.toastIcon}>{type === 'success' ? '✅' : '❌'}</span>
+      <span className={styles.toastMessage}>{message}</span>
     </motion.div>
   );
 };
@@ -37,8 +37,8 @@ const InputField: React.FC<{
   placeholder?: string;
 }> = ({ label, value, onChange, placeholder }) => {
   return (
-    <motion.div 
-      className="input-group"
+    <motion.div
+      className={styles.inputGroup}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -49,7 +49,7 @@ const InputField: React.FC<{
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="input-field"
+        className={styles.inputField}
       />
     </motion.div>
   );
@@ -157,67 +157,67 @@ export default function EditContract() {
         <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
       </Helmet>
 
-      <motion.div 
-        className="edit-container"
+      <motion.div
+        className={styles.editContainer}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="header-container">
-          <motion.h1 
+        <div className={styles.headerContainer}>
+          <motion.h1
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="edit-title"
+            className={styles.editTitle}
           >
-            <span className="title-icon">✏️</span> Vertrag bearbeiten
+            <span className={styles.titleIcon}>✏️</span> Vertrag bearbeiten
           </motion.h1>
-          
-          <motion.div 
-            className="header-blur"
+
+          <motion.div
+            className={styles.headerBlur}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
           />
         </div>
 
-        <motion.div 
-          className="edit-form"
+        <motion.div
+          className={styles.editForm}
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
           {isLoading ? (
-            <div className="loading-container">
-              <div className="loading-spinner"></div>
+            <div className={styles.loadingContainer}>
+              <div className={styles.loadingSpinner}></div>
               <p>Vertrag wird geladen...</p>
             </div>
           ) : (
             <>
-              <InputField 
-                label="Name" 
-                value={contract.name} 
+              <InputField
+                label="Name"
+                value={contract.name}
                 onChange={(value) => setContract({ ...contract, name: value })}
                 placeholder="Vertragsname eingeben"
               />
-              
-              <InputField 
-                label="Laufzeit" 
-                value={contract.laufzeit} 
+
+              <InputField
+                label="Laufzeit"
+                value={contract.laufzeit}
                 onChange={(value) => setContract({ ...contract, laufzeit: value })}
                 placeholder="z.B. 12 Monate"
               />
-              
-              <InputField 
-                label="Kündigungsfrist" 
-                value={contract.kuendigung} 
+
+              <InputField
+                label="Kündigungsfrist"
+                value={contract.kuendigung}
                 onChange={(value) => setContract({ ...contract, kuendigung: value })}
                 placeholder="z.B. 3 Monate vor Ablauf"
               />
 
-              <div className="button-group">
-                <motion.button 
-                  className="cancel-button"
+              <div className={styles.buttonGroup}>
+                <motion.button
+                  className={styles.cancelButton}
                   onClick={handleCancel}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
@@ -225,9 +225,9 @@ export default function EditContract() {
                 >
                   Abbrechen
                 </motion.button>
-                
-                <motion.button 
-                  className="save-button"
+
+                <motion.button
+                  className={styles.saveButton}
                   onClick={handleUpdate}
                   disabled={isSaving}
                   whileHover={{ scale: 1.02, boxShadow: "0 4px 8px rgba(0, 0, 0, 0.12)" }}
@@ -236,12 +236,12 @@ export default function EditContract() {
                 >
                   {isSaving ? (
                     <>
-                      <span className="button-spinner"></span>
+                      <span className={styles.buttonSpinner}></span>
                       <span>Wird gespeichert...</span>
                     </>
                   ) : (
                     <>
-                      <span className="save-icon">💾</span>
+                      <span className={styles.saveIcon}>💾</span>
                       <span>Speichern</span>
                     </>
                   )}

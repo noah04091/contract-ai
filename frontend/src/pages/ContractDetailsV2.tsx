@@ -35,7 +35,12 @@ import {
   Info,
   AlertCircle,
   Maximize2,
-  X
+  X,
+  BookOpen,
+  Lightbulb,
+  HelpCircle,
+  CreditCard,
+  Package
 } from "lucide-react";
 import styles from "../styles/ContractDetailsV2.module.css";
 
@@ -954,6 +959,227 @@ export default function ContractDetailsV2() {
                             ))}
                           </div>
                         </div>
+                      </div>
+                    )}
+
+                    {/* Vertragsparteien */}
+                    {contract.analysis?.parties && (contract.analysis.parties.provider || contract.analysis.parties.customer) && (
+                      <div className={`${styles.card} ${styles.fadeIn} ${styles.stagger3}`}>
+                        <div className={styles.cardHeader}>
+                          <h3 className={styles.cardTitle}>
+                            <span className={styles.cardIcon}>
+                              <Users size={18} />
+                            </span>
+                            Vertragsparteien
+                          </h3>
+                        </div>
+                        <div className={styles.cardBody}>
+                          <div className={styles.metricsGrid} style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+                            {contract.analysis.parties.provider && (
+                              <div className={styles.metricCard}>
+                                <div className={styles.metricHeader}>
+                                  <span className={styles.metricLabel}>Anbieter / Auftragnehmer</span>
+                                </div>
+                                <div className={styles.metricValue}>{contract.analysis.parties.provider}</div>
+                              </div>
+                            )}
+                            {contract.analysis.parties.customer && (
+                              <div className={styles.metricCard}>
+                                <div className={styles.metricHeader}>
+                                  <span className={styles.metricLabel}>Kunde / Auftraggeber</span>
+                                </div>
+                                <div className={styles.metricValue}>{contract.analysis.parties.customer}</div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Kernbedingungen */}
+                    {contract.analysis?.keyTerms && (
+                      <div className={`${styles.card} ${styles.fadeIn} ${styles.stagger3}`}>
+                        <div className={styles.cardHeader}>
+                          <h3 className={styles.cardTitle}>
+                            <span className={styles.cardIcon}>
+                              <FileSearch size={18} />
+                            </span>
+                            Kernbedingungen
+                          </h3>
+                        </div>
+                        <div className={styles.cardBody}>
+                          <div className={styles.metricsGrid}>
+                            {contract.analysis.keyTerms.duration && (
+                              <div className={styles.metricCard}>
+                                <div className={styles.metricHeader}>
+                                  <span className={styles.metricLabel}>Laufzeit</span>
+                                  <div className={styles.metricIconWrapper}><Clock size={16} /></div>
+                                </div>
+                                <div className={styles.metricValue}>{contract.analysis.keyTerms.duration}</div>
+                              </div>
+                            )}
+                            {contract.analysis.keyTerms.cancellation && (
+                              <div className={styles.metricCard}>
+                                <div className={styles.metricHeader}>
+                                  <span className={styles.metricLabel}>Kündigung</span>
+                                  <div className={styles.metricIconWrapper}><AlertCircle size={16} /></div>
+                                </div>
+                                <div className={styles.metricValue}>{contract.analysis.keyTerms.cancellation}</div>
+                              </div>
+                            )}
+                            {contract.analysis.keyTerms.payment && (
+                              <div className={styles.metricCard}>
+                                <div className={styles.metricHeader}>
+                                  <span className={styles.metricLabel}>Zahlung</span>
+                                  <div className={styles.metricIconWrapper}><CreditCard size={16} /></div>
+                                </div>
+                                <div className={styles.metricValue}>{contract.analysis.keyTerms.payment}</div>
+                              </div>
+                            )}
+                            {contract.analysis.keyTerms.deliverables && (
+                              <div className={styles.metricCard}>
+                                <div className={styles.metricHeader}>
+                                  <span className={styles.metricLabel}>Leistungen</span>
+                                  <div className={styles.metricIconWrapper}><Package size={16} /></div>
+                                </div>
+                                <div className={styles.metricValue}>{contract.analysis.keyTerms.deliverables}</div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Wichtige Klauseln */}
+                    {contract.analysis?.importantClauses && contract.analysis.importantClauses.length > 0 && (
+                      <div className={`${styles.card} ${styles.fadeIn} ${styles.stagger3}`}>
+                        <div className={styles.cardHeader}>
+                          <h3 className={styles.cardTitle}>
+                            <span className={styles.cardIcon} style={{ background: 'var(--cd-primary-light)', color: 'var(--cd-primary)' }}>
+                              <BookOpen size={18} />
+                            </span>
+                            Wichtige Klauseln
+                          </h3>
+                          <span className={styles.tabBadge}>
+                            {contract.analysis.importantClauses.length}
+                          </span>
+                        </div>
+                        <div className={styles.cardBody}>
+                          <div className={styles.clausesList}>
+                            {contract.analysis.importantClauses.map((clause, idx) => (
+                              <div key={idx} className={styles.clauseItem}>
+                                <div className={styles.clauseHeader}>
+                                  <span className={styles.clauseNumber}>{idx + 1}</span>
+                                  <h4 className={styles.clauseTitle}>{clause.title}</h4>
+                                </div>
+                                {clause.content && (
+                                  <div className={styles.clauseContent}>
+                                    <strong>Inhalt:</strong> {clause.content}
+                                  </div>
+                                )}
+                                {clause.explanation && (
+                                  <div className={styles.clauseExplanation}>
+                                    <strong>Erklärung:</strong> {clause.explanation}
+                                  </div>
+                                )}
+                                {clause.action && (
+                                  <div className={styles.clauseAction}>
+                                    <Lightbulb size={14} style={{ marginRight: 6, flexShrink: 0 }} />
+                                    <span><strong>Handlungsempfehlung:</strong> {clause.action}</span>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Empfehlungen */}
+                    {contract.analysis?.recommendations && contract.analysis.recommendations.length > 0 && (
+                      <div className={`${styles.card} ${styles.fadeIn} ${styles.stagger3}`}>
+                        <div className={styles.cardHeader}>
+                          <h3 className={styles.cardTitle}>
+                            <span className={styles.cardIcon} style={{ background: '#dbeafe', color: '#2563eb' }}>
+                              <Lightbulb size={18} />
+                            </span>
+                            Empfehlungen
+                          </h3>
+                          <span className={styles.tabBadge} style={{ background: '#dbeafe', color: '#2563eb' }}>
+                            {contract.analysis.recommendations.length}
+                          </span>
+                        </div>
+                        <div className={styles.cardBody}>
+                          <div className={styles.analysisList}>
+                            {contract.analysis.recommendations.map((rec, idx) => (
+                              <div key={idx} className={`${styles.analysisItem} ${styles.neutral}`}>
+                                <div className={styles.analysisItemIcon} style={{ background: '#dbeafe', color: '#2563eb' }}>
+                                  <Lightbulb size={16} />
+                                </div>
+                                <div className={styles.analysisItemContent}>
+                                  <div className={styles.analysisItemText}>{rec}</div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Fehlende Informationen */}
+                    {contract.analysis?.missingInformation && contract.analysis.missingInformation.length > 0 && (
+                      <div className={`${styles.card} ${styles.fadeIn} ${styles.stagger3}`}>
+                        <div className={styles.cardHeader}>
+                          <h3 className={styles.cardTitle}>
+                            <span className={styles.cardIcon} style={{ background: '#fef3c7', color: '#d97706' }}>
+                              <HelpCircle size={18} />
+                            </span>
+                            Fehlende Informationen
+                          </h3>
+                          <span className={styles.tabBadge} style={{ background: '#fef3c7', color: '#d97706' }}>
+                            {contract.analysis.missingInformation.length}
+                          </span>
+                        </div>
+                        <div className={styles.cardBody}>
+                          <div className={styles.analysisList}>
+                            {contract.analysis.missingInformation.map((info, idx) => (
+                              <div key={idx} className={`${styles.analysisItem} ${styles.warning}`}>
+                                <div className={styles.analysisItemIcon} style={{ background: '#fef3c7', color: '#d97706' }}>
+                                  <HelpCircle size={16} />
+                                </div>
+                                <div className={styles.analysisItemContent}>
+                                  <div className={styles.analysisItemText}>{info}</div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Analyse-Zusammenfassung */}
+                    {contract.analysis?.summary && (
+                      <div className={`${styles.card} ${styles.fadeIn} ${styles.stagger3}`}>
+                        <div className={styles.cardHeader}>
+                          <h3 className={styles.cardTitle}>
+                            <span className={styles.cardIcon}>
+                              <FileSearch size={18} />
+                            </span>
+                            Zusammenfassung
+                          </h3>
+                        </div>
+                        <div className={styles.cardBody}>
+                          <p style={{ margin: 0, lineHeight: 1.7, color: 'var(--cd-text-secondary)' }}>
+                            {contract.analysis.summary}
+                          </p>
+                        </div>
+                        {contract.analysis.analyzedAt && (
+                          <div className={styles.cardFooter}>
+                            <span style={{ fontSize: 12, color: 'var(--cd-text-tertiary)' }}>
+                              Analyse vom {formatDate(contract.analysis.analyzedAt)}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     )}
 
