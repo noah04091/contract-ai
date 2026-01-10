@@ -861,16 +861,21 @@ export default function ContractDetailsV2() {
                                 Identifizierte Risiken
                               </h4>
                               <div className={styles.analysisList}>
-                                {contract.legalPulse.riskFactors.map((risk, idx) => (
-                                  <div key={idx} className={`${styles.analysisItem} ${styles.negative}`}>
-                                    <div className={styles.analysisItemIcon}>
-                                      <AlertTriangle size={16} />
+                                {contract.legalPulse.riskFactors.map((risk, idx) => {
+                                  // Handle both string and object formats
+                                  const riskText = typeof risk === 'string' ? risk : (risk as { title?: string; description?: string })?.title || (risk as { title?: string; description?: string })?.description || '';
+                                  if (!riskText) return null;
+                                  return (
+                                    <div key={idx} className={`${styles.analysisItem} ${styles.negative}`}>
+                                      <div className={styles.analysisItemIcon}>
+                                        <AlertTriangle size={16} />
+                                      </div>
+                                      <div className={styles.analysisItemContent}>
+                                        <div className={styles.analysisItemText}>{riskText}</div>
+                                      </div>
                                     </div>
-                                    <div className={styles.analysisItemContent}>
-                                      <div className={styles.analysisItemText}>{risk}</div>
-                                    </div>
-                                  </div>
-                                ))}
+                                  );
+                                })}
                               </div>
                             </div>
                           )}
@@ -881,18 +886,44 @@ export default function ContractDetailsV2() {
                                 Empfehlungen
                               </h4>
                               <div className={styles.analysisList}>
-                                {contract.legalPulse.recommendations.map((rec, idx) => (
-                                  <div key={idx} className={`${styles.analysisItem} ${styles.positive}`}>
-                                    <div className={styles.analysisItemIcon}>
-                                      <CheckCircle size={16} />
-                                    </div>
-                                    <div className={styles.analysisItemContent}>
-                                      <div className={styles.analysisItemText}>
-                                        {typeof rec === 'string' ? rec : JSON.stringify(rec)}
+                                {contract.legalPulse.recommendations.map((rec, idx) => {
+                                  // Handle both string and object formats {title, description, priority, timeframe, effort}
+                                  const recObj = typeof rec === 'string' ? { title: rec } : (rec as { title?: string; description?: string; priority?: string; timeframe?: string; effort?: string });
+                                  const title = recObj?.title || recObj?.description || '';
+                                  if (!title) return null;
+                                  return (
+                                    <div key={idx} className={`${styles.analysisItem} ${styles.positive}`}>
+                                      <div className={styles.analysisItemIcon}>
+                                        <CheckCircle size={16} />
+                                      </div>
+                                      <div className={styles.analysisItemContent}>
+                                        <div className={styles.analysisItemTitle}>{title}</div>
+                                        {recObj?.description && recObj.description !== title && (
+                                          <div className={styles.analysisItemText}>{recObj.description}</div>
+                                        )}
+                                        {(recObj?.priority || recObj?.timeframe || recObj?.effort) && (
+                                          <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
+                                            {recObj.priority && (
+                                              <span style={{ fontSize: 11, padding: '2px 6px', borderRadius: 4, background: 'var(--cd-warning-light)', color: 'var(--cd-warning)' }}>
+                                                {recObj.priority}
+                                              </span>
+                                            )}
+                                            {recObj.timeframe && (
+                                              <span style={{ fontSize: 11, padding: '2px 6px', borderRadius: 4, background: 'var(--cd-primary-light)', color: 'var(--cd-primary)' }}>
+                                                {recObj.timeframe}
+                                              </span>
+                                            )}
+                                            {recObj.effort && (
+                                              <span style={{ fontSize: 11, padding: '2px 6px', borderRadius: 4, background: '#f1f5f9', color: '#64748b' }}>
+                                                {recObj.effort}
+                                              </span>
+                                            )}
+                                          </div>
+                                        )}
                                       </div>
                                     </div>
-                                  </div>
-                                ))}
+                                  );
+                                })}
                               </div>
                             </div>
                           )}
