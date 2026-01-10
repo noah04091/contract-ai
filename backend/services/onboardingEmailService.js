@@ -32,7 +32,8 @@ const EMAIL_SEQUENCE = {
  * Generate Welcome Email (Day 0)
  */
 function generateWelcomeEmail(user) {
-  const firstName = user.name?.split(' ')[0] || 'dort';
+  // 🆕 Nutze firstName aus Registrierung, Fallback auf name oder 'dort'
+  const firstName = user.firstName || user.name?.split(' ')[0] || 'dort';
 
   const body = `
     ${generateParagraph(`Hallo ${firstName},`)}
@@ -79,7 +80,8 @@ function generateWelcomeEmail(user) {
  * Generate First Contract Reminder Email (Day 2)
  */
 function generateFirstContractEmail(user) {
-  const firstName = user.name?.split(' ')[0] || 'dort';
+  // 🆕 Nutze firstName aus Registrierung, Fallback auf name oder 'dort'
+  const firstName = user.firstName || user.name?.split(' ')[0] || 'dort';
 
   const body = `
     ${generateParagraph(`Hallo ${firstName},`)}
@@ -123,7 +125,8 @@ function generateFirstContractEmail(user) {
  * Generate Features Email (Day 7)
  */
 function generateFeaturesEmail(user) {
-  const firstName = user.name?.split(' ')[0] || 'dort';
+  // 🆕 Nutze firstName aus Registrierung, Fallback auf name oder 'dort'
+  const firstName = user.firstName || user.name?.split(' ')[0] || 'dort';
 
   // Get features based on user's use case (from onboarding) or default
   const useCase = user.onboarding?.profile?.primaryUseCase || 'analyze';

@@ -237,6 +237,8 @@ router.post("/test-alert", verifyToken, async (req, res) => {
     broadcastToUser(userId, testAlert);
 
     // 2. Send E-Mail notification
+    // 🆕 Nutze firstName aus Registrierung, Fallback auf name oder email
+    const userFirstName = user.firstName || user.name?.split(' ')[0] || user.email.split('@')[0];
     const emailHtml = `
 <!DOCTYPE html>
 <html>
@@ -269,7 +271,7 @@ router.post("/test-alert", verifyToken, async (req, res) => {
     </div>
 
     <div class="content">
-      <p>Hallo ${user.name},</p>
+      <p>Hallo ${userFirstName},</p>
 
       <p>Sie haben eine neue Legal Pulse Benachrichtigung erhalten:</p>
 

@@ -510,6 +510,9 @@ class LegalPulseMonitor {
       low: 'Niedrig'
     }[severity];
 
+    // 🆕 Nutze firstName aus Registrierung, Fallback auf name oder email
+    const userFirstName = user.firstName || user.name?.split(' ')[0] || user.email.split('@')[0];
+
     const emailHtml = `
 <!DOCTYPE html>
 <html>
@@ -543,7 +546,7 @@ class LegalPulseMonitor {
     </div>
 
     <div class="content">
-      <p>Hallo ${user.name},</p>
+      <p>Hallo ${userFirstName},</p>
 
       <p>Unser KI-gestütztes Legal Pulse System hat eine <strong>relevante Gesetzesänderung</strong> für einen Ihrer Verträge erkannt:</p>
 

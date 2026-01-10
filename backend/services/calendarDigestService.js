@@ -72,7 +72,8 @@ async function createDigestEmail(db, userId, events, user) {
  */
 function generateDigestHtml(allEvents, critical, warning, info, user) {
   const baseUrl = process.env.FRONTEND_URL || "https://contract-ai.de";
-  const userName = user.name || user.email.split("@")[0];
+  // 🆕 Nutze firstName aus Registrierung, Fallback auf name oder email
+  const userName = user.firstName || user.name?.split(' ')[0] || user.email.split("@")[0];
 
   // Kritische Events Section (keine CAPS, keine aggressiven Emojis)
   const criticalHtml = critical.length > 0 ? `
