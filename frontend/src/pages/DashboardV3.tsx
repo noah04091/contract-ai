@@ -264,7 +264,8 @@ export default function DashboardV2() {
     });
   }, [contracts]);
 
-  const userName = userData?.email?.split('@')[0] || 'User';
+  // 🆕 Nutze firstName/name aus Registrierung
+  const userName = userData?.firstName || userData?.name?.split(' ')[0] || userData?.email?.split('@')[0] || 'User';
 
   // ============================================
   // LOADING STATE

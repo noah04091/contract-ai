@@ -84,9 +84,14 @@ module.exports = (db) => {
 // ✅ Registrierung - ERWEITERT mit Double-Opt-In + Beta-Tester Support + Geräteerkennung
 // 🛡️ Rate Limited: Max 5 Versuche pro 15 Minuten (Brute-Force-Schutz)
 router.post("/register", authLimiter, async (req, res) => {
-  const { email: rawEmail, password, isBetaTester } = req.body;
+  const { email: rawEmail, password, isBetaTester, firstName, lastName, companyName } = req.body;
+
+  // 🆕 Validierung der Pflichtfelder
   if (!rawEmail || !password)
     return res.status(400).json({ message: "❌ E-Mail und Passwort erforderlich" });
+
+  if (!firstName || !lastName)
+    return res.status(400).json({ message: "❌ Vorname und Nachname erforderlich" });
 
   // 🔐 Password-Policy Validierung
   const passwordValidation = validatePassword(password);
@@ -123,6 +128,10 @@ router.post("/register", authLimiter, async (req, res) => {
       _id: userId, // ✅ Explizit setzen, damit wir es für E-Mail-Adresse nutzen können
       email,
       password: hashed,
+      // 🆕 Name-Felder
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      name: `${firstName.trim()} ${lastName.trim()}`, // Vollständiger Name für einfachen Zugriff
       verified: false, // ⭐ NEU: Double-Opt-In Status
       isPremium: isBetaTester ? true : false, // 🎁 Beta-Tester = Premium
       role: 'user', // 🔐 NEW: User role (user|admin) - default: user
@@ -171,7 +180,7 @@ router.post("/register", authLimiter, async (req, res) => {
           accountCreated: true,
           emailVerified: false, // Wird nach Verification true
           firstContractUploaded: false,
-          companyProfileComplete: false,
+          companyProfileComplete: companyName ? true : false, // 🆕 Automatisch true wenn Firmenname bei Registrierung
           firstAnalysisComplete: false
         }
       }
@@ -179,21 +188,54 @@ router.post("/register", authLimiter, async (req, res) => {
 
     await usersCollection.insertOne(newUser);
 
+    // 🆕 FIRMENPROFIL: Automatisch anlegen wenn Firmenname bei Registrierung angegeben
+    if (companyName && companyName.trim()) {
+      try {
+        const companyProfilesCollection = dbInstance.collection("company_profiles");
+        await companyProfilesCollection.insertOne({
+          userId: userId,
+          companyName: companyName.trim(),
+          // Weitere Felder leer - können später im Profil ergänzt werden
+          legalForm: '',
+          street: '',
+          postalCode: '',
+          city: '',
+          country: 'Deutschland',
+          vatId: '',
+          tradeRegister: '',
+          contactEmail: '',
+          contactPhone: '',
+          bankName: '',
+          iban: '',
+          bic: '',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdFrom: 'registration' // Kennzeichnung dass es bei Registrierung erstellt wurde
+        });
+        console.log(`🏢 Firmenprofil automatisch erstellt für: ${newUser.email} (${companyName.trim()})`);
+      } catch (companyErr) {
+        // Nicht kritisch - Registrierung war erfolgreich
+        console.warn("⚠️ Firmenprofil konnte nicht erstellt werden:", companyErr.message);
+      }
+    }
+
     // 🎁 Beta-Tester Logging
     if (isBetaTester) {
       console.log("🎁 BETA-TESTER registriert:", {
+        name: newUser.name,
         email: newUser.email,
         plan: newUser.subscriptionPlan,
         betaExpiresAt: betaExpiresAt,
-        verified: newUser.verified
+        verified: newUser.verified,
+        companyName: companyName || null
       });
     } else {
       console.log("✅ Neuer User registriert:", {
+        name: newUser.name,
         email: newUser.email,
         plan: newUser.subscriptionPlan,
         verified: newUser.verified,
-        analysisCount: newUser.analysisCount,
-        optimizationCount: newUser.optimizationCount
+        companyName: companyName || null
       });
     }
 
@@ -202,7 +244,7 @@ router.post("/register", authLimiter, async (req, res) => {
     try {
       const adminNotificationHtml = generateEmailTemplate({
         title: "Neue Registrierung",
-        preheader: `Neuer User: ${newUser.email}`,
+        preheader: `Neuer User: ${newUser.name} (${newUser.email})`,
         body: `
           <p style="text-align: center; margin-bottom: 25px;">
             <strong>Ein neuer Benutzer hat sich registriert!</strong>
@@ -210,7 +252,9 @@ router.post("/register", authLimiter, async (req, res) => {
 
           <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa; border-radius: 12px; margin-bottom: 25px;">
             <tr><td style="padding: 20px;">
+              <p style="margin: 0 0 10px 0;"><strong>Name:</strong> ${newUser.name}</p>
               <p style="margin: 0 0 10px 0;"><strong>E-Mail:</strong> ${newUser.email}</p>
+              ${companyName ? `<p style="margin: 0 0 10px 0;"><strong>Firma:</strong> ${companyName.trim()}</p>` : ''}
               <p style="margin: 0 0 10px 0;"><strong>Plan:</strong> ${newUser.subscriptionPlan}</p>
               <p style="margin: 0 0 10px 0;"><strong>Beta-Tester:</strong> ${isBetaTester ? 'Ja ✅' : 'Nein'}</p>
               <p style="margin: 0;"><strong>Registriert am:</strong> ${new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' })}</p>
@@ -405,6 +449,10 @@ router.get("/me", verifyToken, async (req, res) => {
 
     const userData = {
       email: user.email,
+      // 🆕 Name-Felder
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      name: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email.split('@')[0], // Fallback auf Email-Prefix
       verified: user.verified ?? true, // ⭐ NEU: Verification Status
       role: user.role || 'user', // 🔐 Admin-Role Support
       subscriptionPlan: plan,

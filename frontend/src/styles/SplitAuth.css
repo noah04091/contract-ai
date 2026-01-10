@@ -406,6 +406,31 @@
   flex-direction: column;
 }
 
+/* 🆕 Zwei Felder nebeneinander (Vorname / Nachname) */
+.split-auth-input-row {
+  display: flex;
+  gap: 16px;
+}
+
+.split-auth-input-row .split-auth-input-group {
+  flex: 1;
+}
+
+/* 🆕 Optional-Label */
+.split-auth-optional {
+  font-weight: 400;
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+/* Responsive: Auf Mobile untereinander */
+@media (max-width: 480px) {
+  .split-auth-input-row {
+    flex-direction: column;
+    gap: 0;
+  }
+}
+
 .split-auth-label {
   font-size: 14px;
   font-weight: 500;

@@ -378,10 +378,11 @@ export default function DashboardV2() {
     return { used, total, percentage: Math.min(percentage, 100), remaining, isUnlimited };
   }, [userData]);
 
-  // Benutzername ermitteln
+  // Benutzername ermitteln - 🆕 Priorisiere firstName/name aus Registrierung
   const userName = useMemo(() => {
-    if (userData?.name) return userData.name.split(' ')[0];
-    if (userData?.email) return userData.email.split('@')[0];
+    if (userData?.firstName) return userData.firstName; // 🆕 Direkt Vorname nutzen
+    if (userData?.name) return userData.name.split(' ')[0]; // Fallback: Erster Teil des vollständigen Namens
+    if (userData?.email) return userData.email.split('@')[0]; // Legacy-Fallback
     if (user?.email) return user.email.split('@')[0];
     return 'User';
   }, [userData, user]);

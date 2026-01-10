@@ -85,10 +85,13 @@ export default function Navbar() {
 
   const location = useLocation();
 
-  // User display helpers
+  // User display helpers - 🆕 Nutze firstName/name aus Registrierung
   const userName = useMemo(() => {
     if (!user) return 'User';
-    // TODO: Add name field to User interface when available
+    // @ts-expect-error - firstName/name werden vom Backend zurückgegeben
+    if (user.firstName) return user.firstName;
+    // @ts-expect-error - firstName/name werden vom Backend zurückgegeben
+    if (user.name) return user.name.split(' ')[0];
     return user.email?.split('@')[0] || 'User';
   }, [user]);
 

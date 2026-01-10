@@ -11,6 +11,10 @@ const BackArrowIcon = () => (
 );
 
 export default function Register() {
+  // 🆕 Erweiterte Registrierungsfelder
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [companyName, setCompanyName] = useState(""); // Optional
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -74,7 +78,14 @@ export default function Register() {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, isBetaTester }),
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          companyName: companyName.trim() || undefined, // Nur senden wenn ausgefüllt
+          email,
+          password,
+          isBetaTester
+        }),
       });
 
       const data = await res.json();
@@ -223,6 +234,40 @@ export default function Register() {
 
                 {/* Form */}
                 <form onSubmit={handleRegister} className="split-auth-form">
+                  {/* 🆕 Vorname & Nachname in einer Zeile */}
+                  <div className="split-auth-input-row">
+                    <div className="split-auth-input-group">
+                      <label htmlFor="firstName" className="split-auth-label">
+                        Vorname
+                      </label>
+                      <input
+                        type="text"
+                        id="firstName"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        className="split-auth-input"
+                        placeholder="Max"
+                        required
+                        autoComplete="given-name"
+                      />
+                    </div>
+                    <div className="split-auth-input-group">
+                      <label htmlFor="lastName" className="split-auth-label">
+                        Nachname
+                      </label>
+                      <input
+                        type="text"
+                        id="lastName"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        className="split-auth-input"
+                        placeholder="Müller"
+                        required
+                        autoComplete="family-name"
+                      />
+                    </div>
+                  </div>
+
                   <div className="split-auth-input-group">
                     <label htmlFor="email" className="split-auth-label">
                       E-Mail Adresse
@@ -257,6 +302,22 @@ export default function Register() {
                     <p className="split-auth-password-hint">
                       Mind. 8 Zeichen, 1 Großbuchstabe, 1 Kleinbuchstabe, 1 Zahl
                     </p>
+                  </div>
+
+                  {/* 🆕 Firmenname - Optional */}
+                  <div className="split-auth-input-group">
+                    <label htmlFor="companyName" className="split-auth-label">
+                      Firmenname <span className="split-auth-optional">(optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="companyName"
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
+                      className="split-auth-input"
+                      placeholder="Meine Firma GmbH"
+                      autoComplete="organization"
+                    />
                   </div>
 
                   <p className="split-auth-terms">
