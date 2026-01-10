@@ -5,6 +5,8 @@ import type { OnboardingState } from '../types/onboarding';
 
 export interface UserData {
   email: string;
+  firstName?: string;
+  lastName?: string;
   name?: string;
   role?: "user" | "admin";
   subscriptionPlan: "free" | "business" | "premium";

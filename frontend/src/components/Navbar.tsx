@@ -88,9 +88,7 @@ export default function Navbar() {
   // User display helpers - 🆕 Nutze firstName/name aus Registrierung
   const userName = useMemo(() => {
     if (!user) return 'User';
-    // @ts-expect-error - firstName/name werden vom Backend zurückgegeben
     if (user.firstName) return user.firstName;
-    // @ts-expect-error - firstName/name werden vom Backend zurückgegeben
     if (user.name) return user.name.split(' ')[0];
     return user.email?.split('@')[0] || 'User';
   }, [user]);
