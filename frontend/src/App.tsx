@@ -76,6 +76,7 @@ const Dashboard = lazy(() => import("./pages/DashboardV2")); // ✅ Neues Premiu
 const DashboardLegacy = lazy(() => import("./pages/Dashboard")); // 🔙 Altes Dashboard (Backup)
 // Contracts und Profile werden direkt importiert (siehe oben) - verhindert CSS-Preload-Fehler
 const ContractDetails = lazy(() => import("./pages/ContractDetails"));
+const ContractDetailsV2 = lazy(() => import("./pages/ContractDetailsV2")); // V2 - Premium Enterprise Design
 const EditContract = lazy(() => import("./pages/EditContract"));
 const CalendarView = lazy(() => import("./pages/Calendar"));
 const Cancel = lazy(() => import("./pages/Cancel"));
@@ -212,6 +213,7 @@ function AppWithLoader() {
             <Route path="/dashboard-legacy" element={<RequireAuth><DashboardLegacy /></RequireAuth>} /> {/* 🔙 Altes Dashboard */}
             <Route path="/contracts" element={<RequireAuth><Contracts /></RequireAuth>} />
             <Route path="/contracts/:id" element={<RequireAuth><ContractDetails /></RequireAuth>} />
+            <Route path="/contracts/:id/v2" element={<RequireAuth><ContractDetailsV2 /></RequireAuth>} /> {/* V2 Test */}
             <Route path="/contracts/:id/edit" element={<RequireAuth><EditContract /></RequireAuth>} />
 
             {/* ✉️ NEU: Digital Signature Dashboard */}
