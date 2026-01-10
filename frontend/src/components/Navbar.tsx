@@ -97,6 +97,25 @@ export default function Navbar() {
     return userName.charAt(0).toUpperCase();
   }, [userName]);
 
+  // 🆕 Avatar-Komponente: Zeigt Profilbild oder Initialen
+  const UserAvatar = ({ size = 'small', className }: { size?: 'small' | 'mobile' | 'dropdown', className?: string }) => {
+    const sizeClass = size === 'mobile' ? styles.userAvatarMobile : size === 'dropdown' ? styles.dropdownUserAvatar : styles.userAvatarSmall;
+
+    if (user?.profilePicture) {
+      return (
+        <div className={`${sizeClass} ${className || ''}`}>
+          <img
+            src={user.profilePicture}
+            alt=""
+            className={styles.userAvatarImage}
+          />
+        </div>
+      );
+    }
+
+    return <div className={`${sizeClass} ${className || ''}`}>{userInitial}</div>;
+  };
+
   const formatPlan = (plan?: string): string => {
     if (!plan || plan === 'free') return 'Free';
     if (plan === 'premium') return 'Premium';
@@ -316,7 +335,7 @@ export default function Navbar() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <div className={styles.userAvatarMobile}>{userInitial}</div>
+                  <UserAvatar size="mobile" />
                   <ChevronDown size={14} strokeWidth={2.5} className={styles.userChevronMobile} />
                 </motion.button>
 
@@ -330,7 +349,7 @@ export default function Navbar() {
                       transition={{ duration: 0.2 }}
                     >
                       <div className={styles.dropdownUserHeader}>
-                        <div className={styles.dropdownUserAvatar}>{userInitial}</div>
+                        <UserAvatar size="dropdown" />
                         <div>
                           <div className={styles.dropdownUserName}>{userName}</div>
                           <div className={styles.dropdownUserEmail}>{user.email}</div>
@@ -375,7 +394,7 @@ export default function Navbar() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <div className={styles.userAvatarSmall}>{userInitial}</div>
+                  <UserAvatar size="small" />
                   <div className={styles.userInfoSmall}>
                     <span className={styles.userNameSmall}>{userName}</span>
                     <span className={styles.userPlanSmall}>{formatPlan(user.subscriptionPlan)}</span>
@@ -393,7 +412,7 @@ export default function Navbar() {
                       transition={{ duration: 0.2 }}
                     >
                       <div className={styles.dropdownUserHeader}>
-                        <div className={styles.dropdownUserAvatar}>{userInitial}</div>
+                        <UserAvatar size="dropdown" />
                         <div>
                           <div className={styles.dropdownUserName}>{userName}</div>
                           <div className={styles.dropdownUserEmail}>{user.email}</div>
@@ -674,7 +693,7 @@ export default function Navbar() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <div className={styles.userAvatarSmall}>{userInitial}</div>
+                <UserAvatar size="small" />
                 <div className={styles.userInfoSmall}>
                   <span className={styles.userNameSmall}>{userName}</span>
                   <span className={styles.userPlanSmall}>{formatPlan(user.subscriptionPlan)}</span>
@@ -692,7 +711,7 @@ export default function Navbar() {
                     transition={{ duration: 0.2 }}
                   >
                     <div className={styles.dropdownUserHeader}>
-                      <div className={styles.dropdownUserAvatar}>{userInitial}</div>
+                      <UserAvatar size="dropdown" />
                       <div>
                         <div className={styles.dropdownUserName}>{userName}</div>
                         <div className={styles.dropdownUserEmail}>{user.email}</div>
@@ -780,7 +799,7 @@ export default function Navbar() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <div className={styles.userAvatarSmall}>{userInitial}</div>
+                <UserAvatar size="small" />
                 <div className={styles.userInfoSmall}>
                   <span className={styles.userNameSmall}>{userName}</span>
                   <span className={styles.userPlanSmall}>{formatPlan(user.subscriptionPlan)}</span>
@@ -798,7 +817,7 @@ export default function Navbar() {
                     transition={{ duration: 0.2 }}
                   >
                     <div className={styles.dropdownUserHeader}>
-                      <div className={styles.dropdownUserAvatar}>{userInitial}</div>
+                      <UserAvatar size="dropdown" />
                       <div>
                         <div className={styles.dropdownUserName}>{userName}</div>
                         <div className={styles.dropdownUserEmail}>{user.email}</div>
@@ -846,7 +865,7 @@ export default function Navbar() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <div className={styles.userAvatarMobile}>{userInitial}</div>
+                <UserAvatar size="mobile" />
                 <ChevronDown size={14} strokeWidth={2.5} className={styles.userChevronMobile} />
               </motion.button>
 
@@ -860,7 +879,7 @@ export default function Navbar() {
                     transition={{ duration: 0.2 }}
                   >
                     <div className={styles.dropdownUserHeader}>
-                      <div className={styles.dropdownUserAvatar}>{userInitial}</div>
+                      <UserAvatar size="dropdown" />
                       <div>
                         <div className={styles.dropdownUserName}>{userName}</div>
                         <div className={styles.dropdownUserEmail}>{user.email}</div>
@@ -968,7 +987,7 @@ export default function Navbar() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <div className={styles.userAvatarSmall}>{userInitial}</div>
+                <UserAvatar size="small" />
                 <div className={styles.userInfoSmall}>
                   <span className={styles.userNameSmall}>{userName}</span>
                   <span className={styles.userPlanSmall}>{formatPlan(user.subscriptionPlan)}</span>
@@ -986,7 +1005,7 @@ export default function Navbar() {
                     transition={{ duration: 0.2 }}
                   >
                     <div className={styles.dropdownUserHeader}>
-                      <div className={styles.dropdownUserAvatar}>{userInitial}</div>
+                      <UserAvatar size="dropdown" />
                       <div>
                         <div className={styles.dropdownUserName}>{userName}</div>
                         <div className={styles.dropdownUserEmail}>{user.email}</div>
