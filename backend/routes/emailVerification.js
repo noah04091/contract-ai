@@ -88,7 +88,8 @@ module.exports = function(db) {
         cta: {
           text: "E-Mail bestätigen",
           url: verificationLink
-        }
+        },
+        centerContent: true // 🆕 Überschrift & Button zentriert
       });
 
       // E-Mail senden
