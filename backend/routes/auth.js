@@ -1401,7 +1401,7 @@ router.get("/export-data", verifyToken, async (req, res) => {
   try {
     const user = await usersCollection.findOne(
       { _id: new ObjectId(req.user.userId) },
-      { projection: { password: 0, resetToken: 0, resetTokenExpires: 0, emailChangeToken: 0 } }
+      { projection: { password: 0, resetToken: 0, resetTokenExpires: 0, emailChangeToken: 0, profilePicture: 0 } }
     );
 
     if (!user) {

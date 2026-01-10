@@ -98,21 +98,27 @@ export default function Navbar() {
   }, [userName]);
 
   // 🆕 Avatar-Komponente: Zeigt Profilbild oder Initialen
+  const [avatarError, setAvatarError] = useState(false);
+
   const UserAvatar = ({ size = 'small', className }: { size?: 'small' | 'mobile' | 'dropdown', className?: string }) => {
     const sizeClass = size === 'mobile' ? styles.userAvatarMobile : size === 'dropdown' ? styles.dropdownUserAvatar : styles.userAvatarSmall;
 
-    if (user?.profilePicture) {
+    // Zeige Profilbild nur wenn vorhanden UND kein Ladefehler
+    if (user?.profilePicture && !avatarError) {
       return (
         <div className={`${sizeClass} ${className || ''}`}>
           <img
             src={user.profilePicture}
-            alt=""
+            alt={`Profilbild von ${userName}`}
             className={styles.userAvatarImage}
+            onError={() => setAvatarError(true)}
+            loading="lazy"
           />
         </div>
       );
     }
 
+    // Fallback: Initialen-Buchstabe
     return <div className={`${sizeClass} ${className || ''}`}>{userInitial}</div>;
   };
 
