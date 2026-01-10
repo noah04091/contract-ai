@@ -33,6 +33,7 @@ export interface UserData {
   _id?: string;
   firstName?: string;
   lastName?: string;
+  profilePicture?: string;
   updatedAt?: string;
 
   // 🎓 Onboarding (aus Backend)

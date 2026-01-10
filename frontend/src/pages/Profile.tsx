@@ -246,8 +246,8 @@ export default function Profile() {
 
   // 🆕 Handler: Name bearbeiten starten
   const handleStartEditName = () => {
-    setEditFirstName((user as any)?.firstName || '');
-    setEditLastName((user as any)?.lastName || '');
+    setEditFirstName(user?.firstName || '');
+    setEditLastName(user?.lastName || '');
     setIsEditingName(true);
   };
 
@@ -600,8 +600,8 @@ export default function Profile() {
                 {/* 🆕 Profilbild */}
                 <div className={styles.profilePictureSection}>
                   <div className={styles.profilePictureWrapper}>
-                    {(user as any).profilePicture ? (
-                      <img src={(user as any).profilePicture} alt="Profilbild" className={styles.profilePicture} />
+                    {user.profilePicture ? (
+                      <img src={user.profilePicture} alt="Profilbild" className={styles.profilePicture} />
                     ) : (
                       <div className={styles.profilePicturePlaceholder}>
                         <User size={40} />
@@ -622,7 +622,7 @@ export default function Profile() {
                       )}
                     </label>
                   </div>
-                  {(user as any).profilePicture && (
+                  {user.profilePicture && (
                     <button onClick={handleDeleteProfilePicture} className={styles.deletePictureButton}>
                       Bild entfernen
                     </button>
@@ -659,7 +659,7 @@ export default function Profile() {
                     </div>
                   ) : (
                     <div className={styles.nameDisplay}>
-                      <span>{(user as any).name || user.email?.split('@')[0]}</span>
+                      <span>{user.name || user.email?.split('@')[0]}</span>
                       <button onClick={handleStartEditName} className={styles.editButton}>
                         <Edit3 size={14} />
                       </button>
