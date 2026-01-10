@@ -212,8 +212,8 @@ function AppWithLoader() {
             <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
             <Route path="/dashboard-legacy" element={<RequireAuth><DashboardLegacy /></RequireAuth>} /> {/* 🔙 Altes Dashboard */}
             <Route path="/contracts" element={<RequireAuth><Contracts /></RequireAuth>} />
-            <Route path="/contracts/:id" element={<RequireAuth><ContractDetails /></RequireAuth>} />
-            <Route path="/contracts/:id/v2" element={<RequireAuth><ContractDetailsV2 /></RequireAuth>} /> {/* V2 Test */}
+            <Route path="/contracts/:id" element={<RequireAuth><ContractDetailsV2 /></RequireAuth>} /> {/* V2 - Premium Enterprise Design */}
+            <Route path="/contracts/:id/legacy" element={<RequireAuth><ContractDetails /></RequireAuth>} /> {/* Legacy Backup */}
             <Route path="/contracts/:id/edit" element={<RequireAuth><EditContract /></RequireAuth>} />
 
             {/* ✉️ NEU: Digital Signature Dashboard */}

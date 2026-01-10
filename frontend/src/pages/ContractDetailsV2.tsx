@@ -1,7 +1,7 @@
 // ContractDetailsV2.tsx - Premium Enterprise Design
 // Inspiriert von: Notion, Linear, Stripe, Figma
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
@@ -33,7 +33,9 @@ import {
   Share2,
   Bookmark,
   Info,
-  AlertCircle
+  AlertCircle,
+  Maximize2,
+  X
 } from "lucide-react";
 import styles from "../styles/ContractDetailsV2.module.css";
 
@@ -65,6 +67,7 @@ interface Contract {
   expiryDate?: string;
   status?: string;
   filePath?: string;
+  s3Key?: string;
   reminder?: boolean;
   content?: string;
   contentHTML?: string;
@@ -124,6 +127,7 @@ type TabType = 'overview' | 'analysis' | 'document' | 'timeline';
 export default function ContractDetailsV2() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const documentRef = useRef<HTMLDivElement>(null);
 
   // State
   const [contract, setContract] = useState<Contract | null>(null);
@@ -132,6 +136,9 @@ export default function ContractDetailsV2() {
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [bookmarked, setBookmarked] = useState(false);
 
   // ============================================
   // DATA FETCHING
@@ -186,10 +193,180 @@ export default function ContractDetailsV2() {
   }, [id]);
 
   // ============================================
-  // HANDLERS
+  // PDF & PRINT HANDLERS
+  // ============================================
+  const handlePrint = useCallback(() => {
+    if (!contract) return;
+
+    const printContent = contract.contentHTML || contract.content?.replace(/\n/g, '<br/>') || '';
+    const printWindow = window.open('', '_blank');
+
+    if (printWindow) {
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>${contract.name}</title>
+          <style>
+            @page { size: A4; margin: 20mm 15mm 25mm 20mm; }
+            body {
+              font-family: 'Segoe UI', Arial, sans-serif;
+              font-size: 11pt;
+              line-height: 1.6;
+              color: #1a1a1a;
+              max-width: 800px;
+              margin: 0 auto;
+              padding: 20px;
+            }
+            h1 { font-size: 18pt; text-align: center; margin-bottom: 30px; color: #1e40af; }
+            h2 { font-size: 14pt; margin-top: 20px; color: #1e40af; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px; }
+            .meta { background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+            .meta p { margin: 5px 0; font-size: 10pt; color: #64748b; }
+            .signature { margin-top: 40px; padding-top: 20px; border-top: 2px solid #1e40af; }
+            .footer { margin-top: 40px; text-align: center; font-size: 9pt; color: #94a3b8; }
+          </style>
+        </head>
+        <body>
+          <h1>${contract.name}</h1>
+          <div class="meta">
+            <p><strong>Status:</strong> ${contract.status || 'Unbekannt'}</p>
+            <p><strong>Hochgeladen:</strong> ${contract.uploadedAt ? new Date(contract.uploadedAt).toLocaleDateString('de-DE') : 'Unbekannt'}</p>
+            ${contract.laufzeit ? `<p><strong>Laufzeit:</strong> ${contract.laufzeit}</p>` : ''}
+            ${contract.kuendigung ? `<p><strong>Kündigungsfrist:</strong> ${contract.kuendigung}</p>` : ''}
+          </div>
+          <div class="content">${printContent}</div>
+          ${contract.signature ? `
+            <div class="signature">
+              <p><strong>Digitale Unterschrift:</strong></p>
+              <img src="${contract.signature}" alt="Unterschrift" style="max-width: 200px;" />
+            </div>
+          ` : ''}
+          <div class="footer">
+            <p>Gedruckt am ${new Date().toLocaleDateString('de-DE')} | Contract AI</p>
+          </div>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+      setTimeout(() => printWindow.print(), 300);
+    } else {
+      toast.error('Pop-up blockiert. Bitte erlauben Sie Pop-ups für diese Seite.');
+    }
+  }, [contract]);
+
+  const handleExportPDF = useCallback(async () => {
+    if (!contract || exporting) return;
+    setExporting(true);
+
+    try {
+      const html2pdfModule = await import('html2pdf.js');
+      const html2pdf = (html2pdfModule.default || html2pdfModule) as typeof import('html2pdf.js').default;
+
+      // Create content for PDF
+      const content = document.createElement('div');
+      content.innerHTML = `
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto;">
+          <h1 style="font-size: 24px; text-align: center; color: #1e40af; margin-bottom: 30px;">${contract.name}</h1>
+
+          <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+            <p style="margin: 5px 0;"><strong>Status:</strong> ${contract.status || 'Unbekannt'}</p>
+            <p style="margin: 5px 0;"><strong>Hochgeladen:</strong> ${contract.uploadedAt ? new Date(contract.uploadedAt).toLocaleDateString('de-DE') : 'Unbekannt'}</p>
+            ${contract.laufzeit ? `<p style="margin: 5px 0;"><strong>Laufzeit:</strong> ${contract.laufzeit}</p>` : ''}
+            ${contract.kuendigung ? `<p style="margin: 5px 0;"><strong>Kündigungsfrist:</strong> ${contract.kuendigung}</p>` : ''}
+          </div>
+
+          <div style="line-height: 1.7;">
+            ${contract.contentHTML || contract.content?.replace(/\n/g, '<br/>') || '<p style="color: #94a3b8; text-align: center;">Kein Inhalt verfügbar</p>'}
+          </div>
+
+          ${contract.signature ? `
+            <div style="margin-top: 50px; padding-top: 20px; border-top: 2px solid #1e40af;">
+              <p style="font-weight: 600; color: #1e40af;">Digitale Unterschrift:</p>
+              <img src="${contract.signature}" alt="Unterschrift" style="max-width: 200px; margin-top: 10px;" />
+            </div>
+          ` : ''}
+
+          <div style="margin-top: 50px; text-align: center; font-size: 10px; color: #94a3b8; border-top: 1px solid #e5e7eb; padding-top: 20px;">
+            <p>Exportiert am ${new Date().toLocaleDateString('de-DE')} | Contract AI</p>
+          </div>
+        </div>
+      `;
+
+      const options = {
+        margin: [10, 10, 15, 10] as [number, number, number, number],
+        filename: `${contract.name.replace(/[^a-zA-Z0-9äöüÄÖÜß]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
+        image: { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+        jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const }
+      };
+
+      await html2pdf().set(options).from(content).save();
+      toast.success('PDF erfolgreich exportiert!');
+    } catch (error) {
+      console.error('PDF Export failed:', error);
+      toast.error('PDF-Export fehlgeschlagen');
+    } finally {
+      setExporting(false);
+    }
+  }, [contract, exporting]);
+
+  const handleOpenOriginalPDF = useCallback(async () => {
+    if (!contract) return;
+
+    try {
+      // Try S3 presigned URL first
+      if (contract.s3Key) {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/s3/download-url?key=${encodeURIComponent(contract.s3Key)}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.url) {
+            window.open(data.url, '_blank');
+            return;
+          }
+        }
+      }
+
+      // Fallback to filePath
+      if (contract.filePath) {
+        window.open(`/api${contract.filePath}`, '_blank');
+      } else {
+        toast.error('Keine PDF-Datei verfügbar');
+      }
+    } catch (error) {
+      console.error('Error opening PDF:', error);
+      toast.error('Fehler beim Öffnen der PDF');
+    }
+  }, [contract]);
+
+  const handleDownloadOptimizedPDF = useCallback(async () => {
+    if (!contract?.optimizedPdfS3Key) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/s3/download-url?key=${encodeURIComponent(contract.optimizedPdfS3Key)}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.url) {
+          window.open(data.url, '_blank');
+          toast.success('Optimiertes PDF wird heruntergeladen');
+        }
+      }
+    } catch (error) {
+      console.error('Error downloading optimized PDF:', error);
+      toast.error('Fehler beim Herunterladen');
+    }
+  }, [contract]);
+
+  // ============================================
+  // OTHER HANDLERS
   // ============================================
   const handleDelete = async () => {
-    const confirmDelete = window.confirm("Bist du sicher, dass du diesen Vertrag löschen möchtest?");
+    const confirmDelete = window.confirm("Bist du sicher, dass du diesen Vertrag löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.");
     if (!confirmDelete || deleting) return;
 
     setDeleting(true);
@@ -200,7 +377,7 @@ export default function ContractDetailsV2() {
       });
 
       if (res.ok) {
-        toast.success("Vertrag gelöscht");
+        toast.success("Vertrag erfolgreich gelöscht");
         setTimeout(() => navigate("/contracts"), 1000);
       } else {
         toast.error("Fehler beim Löschen");
@@ -241,9 +418,32 @@ export default function ContractDetailsV2() {
     }
     try {
       await navigator.clipboard.writeText(contract.content);
-      toast.success("Inhalt kopiert!");
+      toast.success("Inhalt in Zwischenablage kopiert!");
     } catch {
       toast.error("Kopieren fehlgeschlagen");
+    }
+  };
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: contract?.name || 'Vertrag',
+          url: url
+        });
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast.success("Link in Zwischenablage kopiert!");
+      }
+    } catch {
+      // User cancelled share
+    }
+  };
+
+  const handleAnalyze = () => {
+    if (contract) {
+      navigate(`/optimizer?contractId=${contract._id}`);
     }
   };
 
@@ -357,7 +557,7 @@ export default function ContractDetailsV2() {
             animate={{ opacity: 1, y: 0 }}
           >
             <div className={styles.breadcrumb}>
-              <button className={styles.backButton} onClick={() => navigate(-1)}>
+              <button className={styles.backButton} onClick={() => navigate('/contracts')}>
                 <ArrowLeft size={18} />
               </button>
               <span className={styles.breadcrumbText}>
@@ -367,11 +567,20 @@ export default function ContractDetailsV2() {
               </span>
             </div>
             <div className={styles.headerActions}>
-              <button className={`${styles.btn} ${styles.btnGhost} ${styles.btnIcon}`} title="Teilen">
+              <button
+                className={`${styles.btn} ${styles.btnGhost} ${styles.btnIcon}`}
+                title="Teilen"
+                onClick={handleShare}
+              >
                 <Share2 size={18} />
               </button>
-              <button className={`${styles.btn} ${styles.btnGhost} ${styles.btnIcon}`} title="Merken">
-                <Bookmark size={18} />
+              <button
+                className={`${styles.btn} ${styles.btnGhost} ${styles.btnIcon}`}
+                title={bookmarked ? "Gemerkt" : "Merken"}
+                onClick={() => { setBookmarked(!bookmarked); toast.success(bookmarked ? 'Lesezeichen entfernt' : 'Lesezeichen gesetzt'); }}
+                style={bookmarked ? { color: 'var(--cd-primary)' } : {}}
+              >
+                <Bookmark size={18} fill={bookmarked ? 'currentColor' : 'none'} />
               </button>
               <button className={`${styles.btn} ${styles.btnGhost} ${styles.btnIcon}`} title="Mehr">
                 <MoreHorizontal size={18} />
@@ -548,7 +757,7 @@ export default function ContractDetailsV2() {
                     </div>
 
                     {/* Parties */}
-                    {contract.analysis?.parties && (
+                    {contract.analysis?.parties && (contract.analysis.parties.provider || contract.analysis.parties.customer) && (
                       <div className={`${styles.card} ${styles.fadeIn} ${styles.stagger1}`}>
                         <div className={styles.cardHeader}>
                           <h3 className={styles.cardTitle}>
@@ -759,7 +968,11 @@ export default function ContractDetailsV2() {
                           <p className={styles.emptyText}>
                             Dieser Vertrag wurde noch nicht analysiert. Starte eine Analyse, um detaillierte Einblicke zu erhalten.
                           </p>
-                          <button className={`${styles.btn} ${styles.btnPrimary}`} style={{ marginTop: 16 }}>
+                          <button
+                            className={`${styles.btn} ${styles.btnPrimary}`}
+                            style={{ marginTop: 16 }}
+                            onClick={handleAnalyze}
+                          >
                             <Zap size={16} /> Jetzt analysieren
                           </button>
                         </div>
@@ -784,18 +997,35 @@ export default function ContractDetailsV2() {
                           {contract.name}
                         </span>
                         <div className={styles.documentActions}>
-                          <button className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`} onClick={handleCopyContent}>
+                          <button
+                            className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
+                            onClick={handleCopyContent}
+                            disabled={!contract.content}
+                          >
                             <Copy size={14} /> Kopieren
                           </button>
-                          <button className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}>
+                          <button
+                            className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
+                            onClick={handlePrint}
+                          >
                             <Printer size={14} /> Drucken
                           </button>
-                          <button className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`}>
-                            <Download size={14} /> PDF Export
+                          <button
+                            className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
+                            onClick={() => setIsFullscreen(true)}
+                          >
+                            <Maximize2 size={14} /> Vollbild
+                          </button>
+                          <button
+                            className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`}
+                            onClick={handleExportPDF}
+                            disabled={exporting}
+                          >
+                            <Download size={14} /> {exporting ? 'Exportiere...' : 'PDF Export'}
                           </button>
                         </div>
                       </div>
-                      <div className={styles.documentContent}>
+                      <div className={styles.documentContent} ref={documentRef}>
                         {contract.content || contract.contentHTML ? (
                           <div dangerouslySetInnerHTML={{ __html: contract.contentHTML || contract.content?.replace(/\n/g, '<br/>') || '' }} />
                         ) : (
@@ -803,20 +1033,18 @@ export default function ContractDetailsV2() {
                             <div className={styles.emptyIcon}>
                               <FileText size={32} />
                             </div>
-                            <h4 className={styles.emptyTitle}>Kein Inhalt verfügbar</h4>
+                            <h4 className={styles.emptyTitle}>Kein Textinhalt verfügbar</h4>
                             <p className={styles.emptyText}>
-                              Der Vertragsinhalt ist nicht als Text verfügbar.
+                              Der Vertragsinhalt ist nicht als Text verfügbar. Du kannst das Original-PDF öffnen.
                             </p>
-                            {contract.filePath && (
-                              <a
-                                href={`/api${contract.filePath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                            {(contract.filePath || contract.s3Key) && (
+                              <button
+                                onClick={handleOpenOriginalPDF}
                                 className={`${styles.btn} ${styles.btnPrimary}`}
                                 style={{ marginTop: 16 }}
                               >
                                 <ExternalLink size={16} /> Original PDF öffnen
-                              </a>
+                              </button>
                             )}
                           </div>
                         )}
@@ -900,6 +1128,13 @@ export default function ContractDetailsV2() {
                             <p className={styles.emptyText}>
                               Für diesen Vertrag sind keine Kalender-Events hinterlegt.
                             </p>
+                            <button
+                              className={`${styles.btn} ${styles.btnPrimary}`}
+                              style={{ marginTop: 16 }}
+                              onClick={() => navigate('/calendar')}
+                            >
+                              Event erstellen
+                            </button>
                           </div>
                         )}
                       </div>
@@ -911,7 +1146,7 @@ export default function ContractDetailsV2() {
                         <div className={styles.cardHeader}>
                           <h3 className={styles.cardTitle}>
                             <span className={styles.cardIcon}><Clock size={18} /></span>
-                            Wichtige Termine
+                            Wichtige Termine (KI-extrahiert)
                           </h3>
                         </div>
                         <div className={styles.cardBody}>
@@ -954,13 +1189,13 @@ export default function ContractDetailsV2() {
                     <button className={styles.quickActionBtn} onClick={() => navigate(`/legal-lens/${id}`)}>
                       <FileSearch size={18} /> Legal Lens öffnen
                     </button>
-                    {contract.filePath && (
-                      <a href={`/api${contract.filePath}`} target="_blank" rel="noopener noreferrer" className={styles.quickActionBtn}>
+                    {(contract.filePath || contract.s3Key) && (
+                      <button onClick={handleOpenOriginalPDF} className={styles.quickActionBtn}>
                         <ExternalLink size={18} /> Original PDF
-                      </a>
+                      </button>
                     )}
                     {contract.optimizedPdfS3Key && (
-                      <button className={styles.quickActionBtn}>
+                      <button className={styles.quickActionBtn} onClick={handleDownloadOptimizedPDF}>
                         <Zap size={18} /> Optimiertes PDF
                       </button>
                     )}
@@ -1019,6 +1254,65 @@ export default function ContractDetailsV2() {
           </div>
         </div>
       </div>
+
+      {/* Fullscreen Modal */}
+      <AnimatePresence>
+        {isFullscreen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.9)',
+              zIndex: 9999,
+              display: 'flex',
+              flexDirection: 'column',
+              padding: 20
+            }}
+            onClick={() => setIsFullscreen(false)}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2 style={{ color: 'white', margin: 0, fontSize: 18 }}>{contract.name}</h2>
+              <button
+                onClick={() => setIsFullscreen(false)}
+                style={{
+                  background: 'rgba(255,255,255,0.1)',
+                  border: 'none',
+                  borderRadius: 8,
+                  padding: '8px 16px',
+                  color: 'white',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8
+                }}
+              >
+                <X size={18} /> Schließen (ESC)
+              </button>
+            </div>
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                flex: 1,
+                backgroundColor: 'white',
+                borderRadius: 12,
+                overflow: 'auto',
+                padding: 40,
+                fontFamily: 'Georgia, serif',
+                fontSize: 14,
+                lineHeight: 1.8
+              }}
+            >
+              <div dangerouslySetInnerHTML={{ __html: contract.contentHTML || contract.content?.replace(/\n/g, '<br/>') || '<p style="color: #94a3b8; text-align: center;">Kein Inhalt verfügbar</p>' }} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
