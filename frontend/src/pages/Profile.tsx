@@ -323,7 +323,56 @@ export default function Profile() {
     }
   };
 
-  // 🆕 Handler: Profilbild hochladen
+  // 🆕 Helper: Bild komprimieren auf max 200x200px (für kleine DB-Einträge)
+  const compressImage = (file: File, maxSize = 200): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let { width, height } = img;
+
+        // Skaliere auf maxSize x maxSize (behalte Seitenverhältnis)
+        if (width > height) {
+          if (width > maxSize) {
+            height = Math.round((height * maxSize) / width);
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width = Math.round((width * maxSize) / height);
+            height = maxSize;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Canvas nicht unterstützt'));
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Konvertiere zu JPEG mit 85% Qualität (sehr klein, aber gut)
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        resolve(compressedDataUrl);
+      };
+
+      img.onerror = () => reject(new Error('Bild konnte nicht geladen werden'));
+
+      // Lade das Bild
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error('Datei konnte nicht gelesen werden'));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // 🆕 Handler: Profilbild hochladen (mit Kompression)
   const handleProfilePictureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -334,39 +383,46 @@ export default function Profile() {
       return;
     }
 
-    if (file.size > 2 * 1024 * 1024) {
-      setNotification({ message: "Bild zu groß. Maximum: 2MB", type: "error" });
+    if (file.size > 10 * 1024 * 1024) { // 10MB Original-Limit (wird komprimiert)
+      setNotification({ message: "Bild zu groß. Maximum: 10MB", type: "error" });
       return;
     }
 
     setIsUploadingPicture(true);
 
     try {
-      // Konvertiere zu Base64
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const imageData = reader.result as string;
+      // ✅ Komprimiere Bild auf 200x200px (resultiert in ~20-50KB)
+      const compressedImage = await compressImage(file, 200);
 
-        const res = await fetch('/api/auth/upload-profile-picture', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageData })
-        });
+      // ✅ Timeout nach 30 Sekunden
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-        const data = await res.json();
+      const res = await fetch('/api/auth/upload-profile-picture', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageData: compressedImage }),
+        signal: controller.signal
+      });
 
-        if (res.ok) {
-          setNotification({ message: "Profilbild hochgeladen", type: "success" });
-          setTimeout(() => window.location.reload(), 1000);
-        } else {
-          setNotification({ message: data.message || "Fehler beim Upload", type: "error" });
-        }
-        setIsUploadingPicture(false);
-      };
-      reader.readAsDataURL(file);
-    } catch {
-      setNotification({ message: "Fehler beim Hochladen", type: "error" });
+      clearTimeout(timeoutId);
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setNotification({ message: "Profilbild hochgeladen", type: "success" });
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        setNotification({ message: data.message || "Fehler beim Upload", type: "error" });
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        setNotification({ message: "Upload-Timeout. Bitte erneut versuchen.", type: "error" });
+      } else {
+        setNotification({ message: "Fehler beim Hochladen", type: "error" });
+      }
+    } finally {
       setIsUploadingPicture(false);
     }
   };

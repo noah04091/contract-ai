@@ -1193,7 +1193,8 @@ router.put("/update-profile", verifyToken, async (req, res) => {
 });
 
 // 📧 POST /api/auth/request-email-change - E-Mail-Änderung anfragen
-router.post("/request-email-change", verifyToken, async (req, res) => {
+// 🛡️ Rate Limited: Max 3 Versuche pro 15 Minuten (Spam-Schutz)
+router.post("/request-email-change", authLimiter, verifyToken, async (req, res) => {
   try {
     const { newEmail, password } = req.body;
 
@@ -1320,6 +1321,40 @@ router.get("/confirm-email-change", async (req, res) => {
     );
 
     console.log(`✅ E-Mail geändert: ${oldEmail} → ${newEmail}`);
+
+    // 🔒 Sicherheits-Benachrichtigung an ALTE E-Mail senden
+    try {
+      const userName = user.firstName || user.name?.split(' ')[0] || oldEmail.split('@')[0];
+      const securityEmailHtml = generateEmailTemplate({
+        title: `Sicherheitshinweis: E-Mail-Adresse geändert`,
+        preheader: `Ihre E-Mail-Adresse wurde erfolgreich geändert`,
+        body: `
+          <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+            Hallo ${userName},
+          </p>
+          <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+            die E-Mail-Adresse Ihres Contract AI-Kontos wurde soeben geändert.
+          </p>
+          <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 24px 0;">
+            <p style="margin: 0; color: #374151;"><strong>Alte E-Mail:</strong> ${oldEmail}</p>
+            <p style="margin: 8px 0 0; color: #374151;"><strong>Neue E-Mail:</strong> ${newEmail}</p>
+            <p style="margin: 8px 0 0; color: #6b7280; font-size: 14px;">Geändert am: ${new Date().toLocaleString('de-DE')}</p>
+          </div>
+          <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+            Wenn Sie diese Änderung <strong>nicht</strong> vorgenommen haben, kontaktieren Sie uns bitte umgehend unter
+            <a href="mailto:support@contract-ai.de" style="color: #3b82f6;">support@contract-ai.de</a>
+          </p>
+        `,
+        recipientEmail: oldEmail,
+        emailCategory: 'security'
+      });
+
+      await sendEmail(oldEmail, "⚠️ Sicherheitshinweis: E-Mail-Adresse geändert – Contract AI", securityEmailHtml);
+      console.log(`📧 Sicherheits-E-Mail an alte Adresse gesendet: ${oldEmail}`);
+    } catch (emailErr) {
+      console.error("⚠️ Sicherheits-E-Mail konnte nicht gesendet werden:", emailErr);
+      // Fehler beim E-Mail-Versand sollte die Änderung nicht blockieren
+    }
 
     // Redirect zur Erfolgsseite
     res.redirect(`https://contract-ai.de/profile?emailChanged=true`);
