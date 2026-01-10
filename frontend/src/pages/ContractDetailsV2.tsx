@@ -43,6 +43,7 @@ import {
   Package
 } from "lucide-react";
 import styles from "../styles/ContractDetailsV2.module.css";
+import ContractEditModal from "../components/ContractEditModal";
 
 // ============================================
 // INTERFACES
@@ -79,8 +80,15 @@ interface Contract {
   signature?: string;
   isGenerated?: boolean;
   createdAt?: string;
+  updatedAt?: string;
   optimizedPdfS3Key?: string;
   importantDates?: ImportantDate[];
+  // Felder für ContractEditModal
+  gekuendigtZum?: string;
+  anbieter?: string;
+  kosten?: number;
+  vertragsnummer?: string;
+  notes?: string;
   analysis?: {
     summary?: string;
     contractType?: string;
@@ -144,6 +152,7 @@ export default function ContractDetailsV2() {
   const [exporting, setExporting] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   // ============================================
   // DATA FETCHING
@@ -846,7 +855,7 @@ export default function ContractDetailsV2() {
                             </p>
                           )}
 
-                          {contract.legalPulse.riskFactors && contract.legalPulse.riskFactors.length > 0 && (
+                          {contract.legalPulse.riskFactors && Array.isArray(contract.legalPulse.riskFactors) && contract.legalPulse.riskFactors.length > 0 && (
                             <div className={styles.analysisSection}>
                               <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: 'var(--cd-text-primary)' }}>
                                 Identifizierte Risiken
@@ -866,7 +875,7 @@ export default function ContractDetailsV2() {
                             </div>
                           )}
 
-                          {contract.legalPulse.recommendations && contract.legalPulse.recommendations.length > 0 && (
+                          {contract.legalPulse.recommendations && Array.isArray(contract.legalPulse.recommendations) && contract.legalPulse.recommendations.length > 0 && (
                             <div className={styles.analysisSection} style={{ marginTop: 20 }}>
                               <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: 'var(--cd-text-primary)' }}>
                                 Empfehlungen
@@ -899,7 +908,7 @@ export default function ContractDetailsV2() {
                     )}
 
                     {/* Positive Aspects */}
-                    {contract.analysis?.positiveAspects && contract.analysis.positiveAspects.length > 0 && (
+                    {contract.analysis?.positiveAspects && Array.isArray(contract.analysis.positiveAspects) && contract.analysis.positiveAspects.length > 0 && (
                       <div className={`${styles.card} ${styles.fadeIn} ${styles.stagger1}`}>
                         <div className={styles.cardHeader}>
                           <h3 className={styles.cardTitle}>
@@ -931,7 +940,7 @@ export default function ContractDetailsV2() {
                     )}
 
                     {/* Concerning Aspects */}
-                    {contract.analysis?.concerningAspects && contract.analysis.concerningAspects.length > 0 && (
+                    {contract.analysis?.concerningAspects && Array.isArray(contract.analysis.concerningAspects) && contract.analysis.concerningAspects.length > 0 && (
                       <div className={`${styles.card} ${styles.fadeIn} ${styles.stagger2}`}>
                         <div className={styles.cardHeader}>
                           <h3 className={styles.cardTitle}>
@@ -998,6 +1007,11 @@ export default function ContractDetailsV2() {
 
                     {/* Kernbedingungen */}
                     {contract.analysis?.keyTerms && (
+                      contract.analysis.keyTerms.duration ||
+                      contract.analysis.keyTerms.cancellation ||
+                      contract.analysis.keyTerms.payment ||
+                      contract.analysis.keyTerms.deliverables
+                    ) && (
                       <div className={`${styles.card} ${styles.fadeIn} ${styles.stagger3}`}>
                         <div className={styles.cardHeader}>
                           <h3 className={styles.cardTitle}>
@@ -1051,7 +1065,7 @@ export default function ContractDetailsV2() {
                     )}
 
                     {/* Wichtige Klauseln */}
-                    {contract.analysis?.importantClauses && contract.analysis.importantClauses.length > 0 && (
+                    {contract.analysis?.importantClauses && Array.isArray(contract.analysis.importantClauses) && contract.analysis.importantClauses.length > 0 && (
                       <div className={`${styles.card} ${styles.fadeIn} ${styles.stagger3}`}>
                         <div className={styles.cardHeader}>
                           <h3 className={styles.cardTitle}>
@@ -1066,11 +1080,11 @@ export default function ContractDetailsV2() {
                         </div>
                         <div className={styles.cardBody}>
                           <div className={styles.clausesList}>
-                            {contract.analysis.importantClauses.map((clause, idx) => (
+                            {contract.analysis.importantClauses.map((clause, idx) => clause && (
                               <div key={idx} className={styles.clauseItem}>
                                 <div className={styles.clauseHeader}>
                                   <span className={styles.clauseNumber}>{idx + 1}</span>
-                                  <h4 className={styles.clauseTitle}>{clause.title}</h4>
+                                  <h4 className={styles.clauseTitle}>{clause.title || 'Klausel'}</h4>
                                 </div>
                                 {clause.content && (
                                   <div className={styles.clauseContent}>
@@ -1096,7 +1110,7 @@ export default function ContractDetailsV2() {
                     )}
 
                     {/* Empfehlungen */}
-                    {contract.analysis?.recommendations && contract.analysis.recommendations.length > 0 && (
+                    {contract.analysis?.recommendations && Array.isArray(contract.analysis.recommendations) && contract.analysis.recommendations.length > 0 && (
                       <div className={`${styles.card} ${styles.fadeIn} ${styles.stagger3}`}>
                         <div className={styles.cardHeader}>
                           <h3 className={styles.cardTitle}>
@@ -1127,7 +1141,7 @@ export default function ContractDetailsV2() {
                     )}
 
                     {/* Fehlende Informationen */}
-                    {contract.analysis?.missingInformation && contract.analysis.missingInformation.length > 0 && (
+                    {contract.analysis?.missingInformation && Array.isArray(contract.analysis.missingInformation) && contract.analysis.missingInformation.length > 0 && (
                       <div className={`${styles.card} ${styles.fadeIn} ${styles.stagger3}`}>
                         <div className={styles.cardHeader}>
                           <h3 className={styles.cardTitle}>
@@ -1409,7 +1423,7 @@ export default function ContractDetailsV2() {
                 </div>
                 <div className={styles.cardBody}>
                   <div className={styles.quickActions}>
-                    <button className={styles.quickActionBtn} onClick={() => navigate(`/contracts/${id}/edit`)}>
+                    <button className={styles.quickActionBtn} onClick={() => setShowEditModal(true)}>
                       <Edit3 size={18} /> Vertrag bearbeiten
                     </button>
                     <button className={styles.quickActionBtn} onClick={() => navigate(`/legal-lens/${id}`)}>
@@ -1539,6 +1553,26 @@ export default function ContractDetailsV2() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Edit Modal */}
+      {contract && (
+        <ContractEditModal
+          contract={{
+            ...contract,
+            status: contract.status || 'Aktiv',
+            createdAt: contract.createdAt || contract.uploadedAt || new Date().toISOString()
+          }}
+          show={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          onUpdate={(updatedContract) => {
+            setContract({
+              ...contract,
+              ...updatedContract
+            });
+            toast.success('Vertrag erfolgreich aktualisiert');
+          }}
+        />
+      )}
     </>
   );
 }
