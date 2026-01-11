@@ -412,67 +412,27 @@ class LegalPulseMonitor {
         }
       }
 
-      // 🆕 Always queue for weekly digest (cost optimization)
+      // 📧 STRATEGIE: Weekly Digest statt Echtzeit-Emails (Kostenoptimierung)
+      // Alle Alerts werden für den wöchentlichen Digest gesammelt
+      // Echtzeit-Emails wurden deaktiviert um Spam zu vermeiden und Kosten zu sparen
       console.log(`   📬 Queueing alert for weekly digest: ${user.email}`);
       await this.queueDigestAlert(user._id, contract, lawChange, 'weekly');
-      return true; // Count as "sent" for stats
 
-      // Check if user opted out (legacy setting)
-      if (user.settings?.legalPulseAuto === false) {
-        console.log(`   ⏭️  User opted out of auto-alerts: ${user.email}`);
-        return false;
-      }
-
-      // Check email notifications preference
-      if (settings.emailNotifications === false) {
-        console.log(`   📧 Email notifications disabled for user: ${user.email}`);
-        // Still create the alert in DB, just don't send email
-        return this.createAlertWithoutEmail(contract, lawChange, user);
-      }
-
-      // Calculate severity
+      // SSE-Notification für Echtzeit-UI-Update (kostenfrei)
       const severity = this.calculateSeverity(contract.score);
-
-      // 🆕 Generate GPT-4 explanation
-      let explanation = null;
-      try {
-        const alertExplainer = getAlertExplainer();
-        explanation = await alertExplainer.explainRelevance(
-          lawChange,
-          contract,
-          contract.matchedChunk || '',
-          contract.score
-        );
-      } catch (explainerError) {
-        console.log(`   ⚠️  GPT-4 explanation failed, using fallback`);
-        explanation = `Diese Gesetzesänderung wurde als ${(contract.score * 100).toFixed(1)}% relevant für Ihren Vertrag "${contract.contractName}" eingestuft.`;
-      }
-
-      // 🆕 Log alert in database FIRST to get alert ID for feedback links
-      const alertId = await this.logAlert(contract, lawChange, explanation);
-
-      // Create alert object for SSE
       const alert = {
         contractId: contract.contractId,
         type: 'law_change',
         severity,
-        title: `${lawChange.title}`,
+        title: lawChange.title,
         description: `Betrifft: ${contract.contractName}`,
-        explanation, // 🆕 Include GPT-4 explanation
-        actionUrl: `/optimizer?contractId=${contract.contractId}&lawChangeId=${lawChange.id}`,
+        actionUrl: `/legal-pulse?highlight=${contract.contractId}`,
         score: contract.score,
         createdAt: new Date()
       };
-
-      // 🆕 Send E-Mail with explanation AND alert ID for feedback
-      await this.sendAlertEmail(user, contract, lawChange, severity, explanation, alertId);
-
-      // Send SSE notification
       broadcastToUser(contract.userId, alert);
 
-      console.log(`   ✅ Alert sent to ${user.email} for ${contract.contractName} (score: ${(contract.score * 100).toFixed(1)}%)`);
-
-      return true;
+      return true; // Count as "sent" for stats
 
     } catch (error) {
       console.error(`   ❌ Error sending alert for ${contract.contractName}:`, error);

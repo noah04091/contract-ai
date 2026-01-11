@@ -70,7 +70,21 @@ async function createProductionIndexes() {
       { userId: 1, lastIndexedAt: 1 },
       { name: 'userId_1_lastIndexedAt_1', background: true }
     );
-    console.log('  ✅ userId + lastIndexedAt compound index\n');
+    console.log('  ✅ userId + lastIndexedAt compound index');
+
+    // 🆕 Risk Score Index für schnelle Filter-Queries auf Legal Pulse
+    await contractsCollection.createIndex(
+      { userId: 1, 'legalPulse.riskScore': -1 },
+      { name: 'userId_1_legalPulse_riskScore_-1', background: true }
+    );
+    console.log('  ✅ userId + legalPulse.riskScore compound index (risk filter)');
+
+    // 🆕 Name + Risk Score für kombinierte Suche
+    await contractsCollection.createIndex(
+      { userId: 1, name: 'text', 'legalPulse.riskScore': -1 },
+      { name: 'userId_1_name_text_riskScore_-1', background: true }
+    );
+    console.log('  ✅ userId + name text + riskScore compound index (search + filter)\n');
 
     // 3. Pulse Notifications Collection Indexes
     console.log('📋 Creating Pulse Notifications Collection Indexes...\n');

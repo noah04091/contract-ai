@@ -6,6 +6,7 @@ const router = express.Router();
 const verifyToken = require("../middleware/verifyToken");
 const sendEmailHtml = require("../utils/sendEmailHtml");
 const { MongoClient, ObjectId } = require("mongodb");
+const { sseLimiter } = require("../middleware/rateLimiter"); // 🚦 SSE Rate Limiting
 require("dotenv").config();
 
 // MongoDB Connection
@@ -34,8 +35,9 @@ const connections = new Map();
 /**
  * SSE Stream endpoint
  * GET /api/legalpulse/stream
+ * 🚦 Rate Limited: Max 5 neue Verbindungen pro Minute
  */
-router.get("/stream", verifyToken, async (req, res) => {
+router.get("/stream", sseLimiter, verifyToken, async (req, res) => {
   const userId = req.user.userId;
 
   console.log(`[LEGAL-PULSE:FEED] New SSE connection from user: ${userId}`);

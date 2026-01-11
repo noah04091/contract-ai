@@ -28,8 +28,12 @@ interface UseLegalPulseFeedReturn {
   lastEvent: PulseEvent | null;
 }
 
+// Premium Plans die SSE-Zugriff haben
+const PREMIUM_PLANS = ['premium', 'business', 'enterprise', 'legendary'];
+
 /**
  * Hook for Legal Pulse real-time feed using Server-Sent Events
+ * WICHTIG: Nur für Premium-User - Free Users werden nicht verbunden
  */
 export function useLegalPulseFeed(): UseLegalPulseFeedReturn {
   const [events, setEvents] = useState<PulseEvent[]>([]);
@@ -39,14 +43,51 @@ export function useLegalPulseFeed(): UseLegalPulseFeedReturn {
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttempts = useRef(0);
+  const isPremiumRef = useRef<boolean | null>(null);
 
   const maxReconnectAttempts = 5;
   const baseReconnectDelay = 1000; // 1 second
 
-  const connect = useCallback(() => {
+  const connect = useCallback(async () => {
     // Prevent multiple connections
     if (eventSourceRef.current?.readyState === EventSource.OPEN) {
       console.log('[Legal Pulse Feed] Already connected');
+      return;
+    }
+
+    // 🔐 Premium-Check: Nur Premium-User dürfen SSE verbinden
+    if (isPremiumRef.current === null) {
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL ||
+          (window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://api.contract-ai.de');
+
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.log('[Legal Pulse Feed] No token - skipping SSE connection');
+          return;
+        }
+
+        const response = await fetch(`${apiUrl}/api/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+          const user = await response.json();
+          const plan = user.subscriptionPlan?.toLowerCase() || 'free';
+          isPremiumRef.current = PREMIUM_PLANS.includes(plan);
+          console.log(`[Legal Pulse Feed] User plan: ${plan}, Premium: ${isPremiumRef.current}`);
+        } else {
+          isPremiumRef.current = false;
+        }
+      } catch (error) {
+        console.error('[Legal Pulse Feed] Error checking subscription:', error);
+        isPremiumRef.current = false;
+      }
+    }
+
+    // 🚫 Free User - keine SSE Verbindung
+    if (!isPremiumRef.current) {
+      console.log('[Legal Pulse Feed] Skipping SSE - not a premium user');
       return;
     }
 
