@@ -44,6 +44,7 @@ interface ContractRiskGridProps {
   onMouseLeave: (contractId: string) => void;
   onLoadMore: () => void;
   onResetFilters?: () => void;
+  canAccessLegalPulse?: boolean; // 🔐 Premium-Check
 }
 
 export default function ContractRiskGrid({
@@ -56,7 +57,8 @@ export default function ContractRiskGrid({
   onContractClick,
   onMouseEnter,
   onMouseLeave,
-  onLoadMore
+  onLoadMore,
+  canAccessLegalPulse = true // Default: true für Rückwärtskompatibilität
 }: ContractRiskGridProps) {
   return (
     <div className={styles.contractsGrid}>
@@ -84,6 +86,7 @@ export default function ContractRiskGrid({
                   <span className={styles.generatedBadge}>✨ KI</span>
                 )}
               </div>
+              {canAccessLegalPulse ? (
               <div
                 className={styles.riskBadge}
                 style={{ '--risk-color': riskLevel.color } as React.CSSProperties}
@@ -93,43 +96,66 @@ export default function ContractRiskGrid({
                   {contract.legalPulse?.riskScore || '—'}
                 </span>
               </div>
+            ) : (
+              <div
+                className={`${styles.riskBadge} ${styles.premiumLocked}`}
+                style={{ '--risk-color': '#f59e0b' } as React.CSSProperties}
+                title="Upgrade auf Business oder Enterprise für Legal Pulse"
+              >
+                <span className={styles.riskIcon}>⭐</span>
+                <span className={styles.riskScore}>Premium</span>
+              </div>
+            )}
             </div>
 
             <div className={styles.contractCardBody}>
-              <div className={styles.contractMeta}>
-                <div className={styles.metaItem}>
-                  <span className={styles.metaLabel}>Letzter Scan:</span>
-                  <span className={styles.metaValue}>
-                    {contract.legalPulse?.lastAnalysis
-                      ? new Date(contract.legalPulse.lastAnalysis).toLocaleDateString('de-DE')
-                      : 'Noch nicht analysiert'
-                    }
-                  </span>
-                </div>
-                <div className={styles.metaItem}>
-                  <span className={styles.metaLabel}>Status:</span>
-                  <span
-                    className={styles.metaValue}
-                    style={{ color: riskLevel.color }}
-                  >
-                    {riskLevel.level}
-                  </span>
-                </div>
-              </div>
+              {canAccessLegalPulse ? (
+                <>
+                  <div className={styles.contractMeta}>
+                    <div className={styles.metaItem}>
+                      <span className={styles.metaLabel}>Letzter Scan:</span>
+                      <span className={styles.metaValue}>
+                        {contract.legalPulse?.lastAnalysis
+                          ? new Date(contract.legalPulse.lastAnalysis).toLocaleDateString('de-DE')
+                          : 'Noch nicht analysiert'
+                        }
+                      </span>
+                    </div>
+                    <div className={styles.metaItem}>
+                      <span className={styles.metaLabel}>Status:</span>
+                      <span
+                        className={styles.metaValue}
+                        style={{ color: riskLevel.color }}
+                      >
+                        {riskLevel.level}
+                      </span>
+                    </div>
+                  </div>
 
-              {contract.legalPulse?.lastRecommendation && (
-                <div className={styles.lastRecommendation}>
-                  <span className={styles.recommendationLabel}>💡 Letzte Empfehlung:</span>
-                  <p className={styles.recommendationText}>
-                    {contract.legalPulse.lastRecommendation}
-                  </p>
+                  {contract.legalPulse?.lastRecommendation && (
+                    <div className={styles.lastRecommendation}>
+                      <span className={styles.recommendationLabel}>💡 Letzte Empfehlung:</span>
+                      <p className={styles.recommendationText}>
+                        {contract.legalPulse.lastRecommendation}
+                      </p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className={styles.premiumLockedBody}>
+                  <p>Upgrade auf Business oder Enterprise für:</p>
+                  <ul>
+                    <li>Risiko-Score & Analyse</li>
+                    <li>Handlungsempfehlungen</li>
+                    <li>Echtzeit-Überwachung</li>
+                  </ul>
                 </div>
               )}
             </div>
 
             <div className={styles.contractCardFooter}>
               <button className={styles.detailsButton}>
-                <span>Details ansehen</span>
+                <span>{canAccessLegalPulse ? 'Details ansehen' : 'Jetzt upgraden'}</span>
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2"/>
                 </svg>

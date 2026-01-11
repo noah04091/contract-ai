@@ -395,3 +395,50 @@
     font-size: 1.1rem;
   }
 }
+
+/* ===== PREMIUM LOCKED STATES ===== */
+.premiumLocked {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
+  border: 1px solid #f59e0b !important;
+}
+
+.premiumLocked .riskScore {
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+}
+
+.premiumLockedBody {
+  padding: 16px;
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border-radius: 12px;
+  border: 1px dashed #f59e0b;
+}
+
+.premiumLockedBody p {
+  margin: 0 0 12px 0;
+  color: #92400e;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.premiumLockedBody ul {
+  margin: 0;
+  padding: 0 0 0 20px;
+  list-style-type: none;
+}
+
+.premiumLockedBody li {
+  position: relative;
+  color: #78350f;
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+  padding-left: 8px;
+}
+
+.premiumLockedBody li::before {
+  content: "✓";
+  position: absolute;
+  left: -16px;
+  color: #f59e0b;
+  font-weight: bold;
+}
