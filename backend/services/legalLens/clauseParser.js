@@ -9,6 +9,12 @@
  */
 
 const crypto = require('crypto');
+const OpenAI = require('openai');
+
+// OpenAI Client für GPT-Segmentierung
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
 
 class ClauseParser {
   constructor() {
@@ -627,6 +633,345 @@ class ClauseParser {
     return clauses.filter(c =>
       c.text.toLowerCase().includes(lowerSearch)
     );
+  }
+
+  // ============================================
+  // STUFE 1 + 2: INTELLIGENTE GPT-SEGMENTIERUNG
+  // ============================================
+
+  /**
+   * NEUE HAUPTFUNKTION: Intelligentes Parsing mit GPT
+   * Zweistufiger Ansatz:
+   * 1. Technische Vorverarbeitung (Header/Footer raus, Blöcke bilden)
+   * 2. GPT-basierte semantische Segmentierung
+   */
+  async parseContractIntelligent(text, options = {}) {
+    console.log('🧠 [Legal Lens] Starte INTELLIGENTE Klausel-Extraktion...');
+    console.log(`📊 Text-Länge: ${text.length} Zeichen`);
+
+    const {
+      detectRisk = true,
+      contractName = ''
+    } = options;
+
+    // ===== STUFE 1: Technische Vorverarbeitung =====
+    console.log('📋 Stufe 1: Technische Vorverarbeitung...');
+
+    // 1a. Grundlegende Textbereinigung
+    let cleanedText = this.preprocessText(text);
+
+    // 1b. Header/Footer entfernen (wiederkehrende Textblöcke)
+    const { text: filteredText, removedBlocks } = this.removeHeaderFooter(cleanedText);
+    console.log(`🗑️ ${removedBlocks.length} Header/Footer-Blöcke entfernt`);
+
+    // 1c. Text in grobe Blöcke aufteilen (mit Position-Tracking)
+    const rawBlocks = this.createTextBlocks(filteredText);
+    console.log(`📦 ${rawBlocks.length} Roh-Blöcke erstellt`);
+
+    // ===== STUFE 2: GPT-basierte Segmentierung =====
+    console.log('🧠 Stufe 2: GPT-Segmentierung...');
+
+    const gptClauses = await this.gptSegmentClauses(rawBlocks, contractName);
+    console.log(`✅ GPT hat ${gptClauses.length} Klauseln identifiziert`);
+
+    // ===== Nachbearbeitung =====
+    const clauses = gptClauses.map((clause, index) => {
+      // Risiko-Vorbewertung
+      let riskAssessment = { level: 'low', score: 0, keywords: [] };
+      if (detectRisk) {
+        riskAssessment = this.assessClauseRisk(clause.text);
+      }
+
+      return {
+        id: clause.id || `clause_${index + 1}`,
+        number: clause.number || `${index + 1}`,
+        title: clause.title || null,
+        text: clause.text,
+        type: clause.type || 'paragraph',
+        riskLevel: riskAssessment.level,
+        riskScore: riskAssessment.score,
+        riskKeywords: riskAssessment.keywords,
+        riskIndicators: {
+          level: riskAssessment.level,
+          keywords: riskAssessment.keywords,
+          score: riskAssessment.score
+        },
+        // TRACEABILITY: Referenzen zu Ursprungsblöcken
+        source: {
+          blockIds: clause.sourceBlockIds || [],
+          originalText: clause.originalText || clause.text,
+          confidence: clause.confidence || 0.9
+        },
+        position: {
+          start: clause.startPosition || 0,
+          end: clause.endPosition || clause.text.length
+        },
+        textHash: this.generateHash(clause.text),
+        metadata: {
+          wordCount: clause.text.split(/\s+/).length,
+          hasNumbers: /\d/.test(clause.text),
+          hasDates: /\d{1,2}\.\d{1,2}\.\d{2,4}/.test(clause.text),
+          hasMoneyReferences: /€|\$|EUR|USD/.test(clause.text)
+        }
+      };
+    });
+
+    // Risiko-Zusammenfassung
+    const riskSummary = this.calculateRiskSummary(clauses);
+
+    return {
+      success: true,
+      clauses,
+      totalClauses: clauses.length,
+      riskSummary,
+      metadata: {
+        originalLength: text.length,
+        cleanedLength: filteredText.length,
+        removedHeaderFooter: removedBlocks.length,
+        rawBlockCount: rawBlocks.length,
+        parsedAt: new Date().toISOString(),
+        parserVersion: '2.0.0-intelligent',
+        usedGPT: true
+      }
+    };
+  }
+
+  /**
+   * STUFE 1b: Header/Footer erkennen und entfernen
+   * Erkennt wiederkehrende Textblöcke (erscheinen auf mehreren "Seiten")
+   */
+  removeHeaderFooter(text) {
+    const removedBlocks = [];
+    let processedText = text;
+
+    // Pattern für typische Header/Footer
+    const headerFooterPatterns = [
+      // Seitenzahlen: "Seite X von Y"
+      /Seite\s+\d+\s+von\s+\d+/gi,
+      // Dateiname-Wiederholungen
+      /\d{6}\s+\w+\s+-\s+DE\s+–\s+\d{2}\/\d{2}\/\d{4}\s+V[\d.]+/g,
+      // Dokument-Header mit Adresse (erscheint auf jeder Seite)
+      /GRENKEFACTORING GmbH\s+Neuer Markt 2[\s\S]*?Handelsregister Nr\.\s*\d+/g,
+      // Ausdruck vom Datum
+      /Ausdruck vom \d{2}\.\d{2}\.\d{4}/g,
+      // Dateinamen
+      /\d+\.\d+\s+\w+\s+\w+\s+\w+\.doc/g,
+      // Geschäftsführer-Zeile (wenn wiederholt)
+      /Geschäftsführer:\s*[\w\s-]+\s+Amtsgericht\s+\w+/g
+    ];
+
+    for (const pattern of headerFooterPatterns) {
+      const matches = processedText.match(pattern);
+      if (matches) {
+        for (const match of matches) {
+          removedBlocks.push({
+            type: 'header_footer',
+            text: match.substring(0, 100)
+          });
+        }
+        processedText = processedText.replace(pattern, '\n');
+      }
+    }
+
+    // Entferne wiederkehrende Textblöcke (Frequency-Analyse)
+    const lines = processedText.split('\n');
+    const lineFrequency = new Map();
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.length > 20 && trimmed.length < 200) {
+        lineFrequency.set(trimmed, (lineFrequency.get(trimmed) || 0) + 1);
+      }
+    }
+
+    // Zeilen die 3+ mal vorkommen sind wahrscheinlich Header/Footer
+    const repeatedLines = [];
+    for (const [line, count] of lineFrequency) {
+      if (count >= 3) {
+        repeatedLines.push(line);
+        removedBlocks.push({
+          type: 'repeated_block',
+          text: line.substring(0, 100),
+          frequency: count
+        });
+      }
+    }
+
+    // Entferne wiederkehrende Zeilen
+    if (repeatedLines.length > 0) {
+      processedText = lines
+        .filter(line => !repeatedLines.includes(line.trim()))
+        .join('\n');
+    }
+
+    // Bereinige übermäßige Leerzeilen
+    processedText = processedText
+      .replace(/\n{4,}/g, '\n\n\n')
+      .trim();
+
+    return {
+      text: processedText,
+      removedBlocks
+    };
+  }
+
+  /**
+   * STUFE 1c: Text in grobe Blöcke aufteilen
+   * Jeder Block behält seine Position für Traceability
+   */
+  createTextBlocks(text) {
+    const blocks = [];
+
+    // Splitte nach Doppel-Zeilenumbrüchen (Absätze)
+    const paragraphs = text.split(/\n\n+/);
+    let currentPosition = 0;
+
+    for (let i = 0; i < paragraphs.length; i++) {
+      const paragraph = paragraphs[i].trim();
+
+      if (paragraph.length > 10) { // Mindestlänge für sinnvollen Block
+        blocks.push({
+          id: `block_${i + 1}`,
+          text: paragraph,
+          startPosition: currentPosition,
+          endPosition: currentPosition + paragraph.length,
+          lineCount: paragraph.split('\n').length,
+          wordCount: paragraph.split(/\s+/).length
+        });
+      }
+
+      currentPosition += paragraph.length + 2; // +2 für \n\n
+    }
+
+    return blocks;
+  }
+
+  /**
+   * STUFE 2: GPT-basierte semantische Segmentierung
+   * GPT entscheidet mit "menschlicher Intuition" was zusammengehört
+   */
+  async gptSegmentClauses(blocks, contractName = '') {
+    if (blocks.length === 0) {
+      return [];
+    }
+
+    // Bereite Blöcke für GPT vor (mit IDs für Traceability)
+    const blocksForGPT = blocks.map(b => ({
+      id: b.id,
+      text: b.text.substring(0, 1500) // Limit pro Block
+    }));
+
+    // Limitiere auf ~50 Blöcke für API-Call (sonst splitten)
+    const maxBlocksPerCall = 50;
+    const allClauses = [];
+
+    for (let i = 0; i < blocksForGPT.length; i += maxBlocksPerCall) {
+      const batchBlocks = blocksForGPT.slice(i, i + maxBlocksPerCall);
+
+      const prompt = `Du bist ein erfahrener Rechtsexperte. Analysiere die folgenden Text-Blöcke aus einem Vertrag und gruppiere sie zu sinnvollen, eigenständigen Klauseln.
+
+VERTRAGSNAME: ${contractName || 'Unbekannt'}
+
+TEXT-BLÖCKE (mit IDs):
+${batchBlocks.map(b => `[${b.id}]\n${b.text}`).join('\n\n---\n\n')}
+
+REGELN:
+1. Jede Klausel muss einen abgeschlossenen rechtlichen Gedanken enthalten
+2. Zusammengehörige Absätze (z.B. Aufzählungen, Unterabschnitte eines §) = EINE Klausel
+3. Kurze eigenständige Sätze können einzelne Klauseln sein, wenn sie rechtlich relevant sind
+4. Gebührentabellen/Konditionenübersichten = EINE Klausel "Konditionen" oder "Gebühren"
+5. Reine Kontaktdaten/Adressen/Handelsregister = EINE Klausel "Vertragsparteien" oder "Firmendaten"
+6. Ignoriere leere oder sinnlose Fragmente
+
+WICHTIG: Behalte die Block-IDs für Traceability!
+
+Antworte NUR mit einem JSON-Array:
+[
+  {
+    "title": "Kurzer Titel der Klausel",
+    "text": "Vollständiger Text der Klausel",
+    "type": "paragraph|article|section|header|condition",
+    "sourceBlockIds": ["block_1", "block_2"],
+    "number": "§ 1" oder "1." oder null,
+    "confidence": 0.0-1.0
+  }
+]`;
+
+      try {
+        const response = await openai.chat.completions.create({
+          model: 'gpt-4o-mini', // Kosteneffizient
+          messages: [
+            {
+              role: 'system',
+              content: 'Du bist ein Rechtsexperte, der Verträge in sinnvolle Klauseln segmentiert. Antworte IMMER mit validem JSON.'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          temperature: 0.1, // Niedrig für konsistente Ergebnisse
+          max_tokens: 4000,
+          response_format: { type: 'json_object' }
+        });
+
+        const content = response.choices[0].message.content;
+
+        // Parse JSON Response
+        let parsed;
+        try {
+          parsed = JSON.parse(content);
+          // Handle both array and object with clauses property
+          const clausesArray = Array.isArray(parsed) ? parsed : (parsed.clauses || parsed.result || []);
+
+          // Map source block positions
+          for (const clause of clausesArray) {
+            // Finde die Original-Blöcke für Position-Tracking
+            const sourceBlocks = (clause.sourceBlockIds || [])
+              .map(id => blocks.find(b => b.id === id))
+              .filter(Boolean);
+
+            if (sourceBlocks.length > 0) {
+              clause.startPosition = sourceBlocks[0].startPosition;
+              clause.endPosition = sourceBlocks[sourceBlocks.length - 1].endPosition;
+              clause.originalText = sourceBlocks.map(b => b.text).join('\n\n');
+            }
+          }
+
+          allClauses.push(...clausesArray);
+        } catch (parseError) {
+          console.error('⚠️ GPT JSON Parse Error:', parseError.message);
+          console.log('Raw response:', content.substring(0, 500));
+
+          // Fallback: Behandle jeden Block als eigene Klausel
+          for (const block of batchBlocks) {
+            allClauses.push({
+              title: null,
+              text: block.text,
+              type: 'paragraph',
+              sourceBlockIds: [block.id],
+              confidence: 0.5
+            });
+          }
+        }
+      } catch (apiError) {
+        console.error('❌ GPT API Error:', apiError.message);
+
+        // Fallback: Verwende regelbasierten Parser
+        console.log('⚠️ Fallback auf regelbasierten Parser...');
+        for (const block of batchBlocks) {
+          allClauses.push({
+            title: null,
+            text: block.text,
+            type: 'paragraph',
+            sourceBlockIds: [block.id],
+            confidence: 0.3
+          });
+        }
+      }
+    }
+
+    return allClauses;
   }
 }
 

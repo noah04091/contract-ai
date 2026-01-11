@@ -461,11 +461,11 @@ router.post('/parse', verifyToken, async (req, res) => {
       });
     }
 
-    // Parsen
-    const parseResult = clauseParser.parseContract(text, {
+    // Parsen mit intelligentem GPT-basiertem Parsing
+    console.log(`🧠 [Legal Lens] Starte intelligentes Parsing...`);
+    const parseResult = await clauseParser.parseContractIntelligent(text, {
       detectRisk: true,
-      minClauseLength: 20,
-      maxClauseLength: 2000
+      contractName: contract.name || contract.title || ''
     });
 
     if (!parseResult.success) {
