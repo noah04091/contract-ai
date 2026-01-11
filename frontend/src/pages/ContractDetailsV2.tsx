@@ -23,7 +23,6 @@ import {
   BellOff,
   ExternalLink,
   Copy,
-  MoreHorizontal,
   ChevronRight,
   Shield,
   TrendingUp,
@@ -32,16 +31,15 @@ import {
   Zap,
   Eye,
   Share2,
-  Bookmark,
   Info,
   AlertCircle,
   Maximize2,
-  X,
   BookOpen,
   Lightbulb,
   HelpCircle,
   CreditCard,
-  Package
+  Package,
+  Minimize2
 } from "lucide-react";
 import styles from "../styles/ContractDetailsV2.module.css";
 import ContractEditModal from "../components/ContractEditModal";
@@ -155,8 +153,27 @@ export default function ContractDetailsV2() {
   const [deleting, setDeleting] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [bookmarked, setBookmarked] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+
+  // ESC-Taste Handler für Fullscreen-Modal
+  useEffect(() => {
+    const handleEscKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFullscreen) {
+        setIsFullscreen(false);
+      }
+    };
+
+    if (isFullscreen) {
+      document.addEventListener('keydown', handleEscKey);
+      // Prevent body scroll when fullscreen is open
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscKey);
+      document.body.style.overflow = '';
+    };
+  }, [isFullscreen]);
 
   // PDF Viewer State
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
@@ -382,16 +399,20 @@ export default function ContractDetailsV2() {
     if (!contract) return;
 
     try {
-      // Try S3 presigned URL first
-      if (contract.s3Key) {
+      // Use consistent API endpoint
+      if (contract._id && contract.s3Key) {
         const token = localStorage.getItem('token');
-        const res = await fetch(`/api/s3/download-url?key=${encodeURIComponent(contract.s3Key)}`, {
-          headers: { Authorization: `Bearer ${token}` }
+        const res = await fetch(`/api/s3/view?contractId=${contract._id}&type=original`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
         });
         if (res.ok) {
           const data = await res.json();
-          if (data.url) {
-            window.open(data.url, '_blank');
+          if (data.fileUrl || data.url) {
+            window.open(data.fileUrl || data.url, '_blank');
             return;
           }
         }
@@ -625,7 +646,11 @@ export default function ContractDetailsV2() {
             animate={{ opacity: 1, y: 0 }}
           >
             <div className={styles.breadcrumb}>
-              <button className={styles.backButton} onClick={() => navigate('/contracts')}>
+              <button
+                className={styles.backButton}
+                onClick={() => navigate('/contracts')}
+                aria-label="Zurück zur Vertragsübersicht"
+              >
                 <ArrowLeft size={18} />
               </button>
               <span className={styles.breadcrumbText}>
@@ -638,20 +663,18 @@ export default function ContractDetailsV2() {
               <button
                 className={`${styles.btn} ${styles.btnGhost} ${styles.btnIcon}`}
                 title="Teilen"
+                aria-label="Vertrag teilen"
                 onClick={handleShare}
               >
                 <Share2 size={18} />
               </button>
               <button
                 className={`${styles.btn} ${styles.btnGhost} ${styles.btnIcon}`}
-                title={bookmarked ? "Gemerkt" : "Merken"}
-                onClick={() => { setBookmarked(!bookmarked); toast.success(bookmarked ? 'Lesezeichen entfernt' : 'Lesezeichen gesetzt'); }}
-                style={bookmarked ? { color: 'var(--cd-primary)' } : {}}
+                title="Drucken"
+                aria-label="Vertrag drucken"
+                onClick={handlePrint}
               >
-                <Bookmark size={18} fill={bookmarked ? 'currentColor' : 'none'} />
-              </button>
-              <button className={`${styles.btn} ${styles.btnGhost} ${styles.btnIcon}`} title="Mehr">
-                <MoreHorizontal size={18} />
+                <Printer size={18} />
               </button>
             </div>
           </motion.div>
@@ -1346,6 +1369,7 @@ export default function ContractDetailsV2() {
                             onClick={handlePdfZoomOut}
                             disabled={pdfScale <= 0.5}
                             title="Verkleinern"
+                            aria-label="PDF verkleinern"
                           >
                             -
                           </button>
@@ -1357,6 +1381,7 @@ export default function ContractDetailsV2() {
                             onClick={handlePdfZoomIn}
                             disabled={pdfScale >= 2.5}
                             title="Vergrößern"
+                            aria-label="PDF vergrößern"
                           >
                             +
                           </button>
@@ -1366,6 +1391,7 @@ export default function ContractDetailsV2() {
                             onClick={handleCopyContent}
                             disabled={!contract.content}
                             title="Text kopieren"
+                            aria-label="Vertragstext in Zwischenablage kopieren"
                           >
                             <Copy size={14} />
                           </button>
@@ -1373,6 +1399,7 @@ export default function ContractDetailsV2() {
                             className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
                             onClick={handlePrint}
                             title="Drucken"
+                            aria-label="Vertrag drucken"
                           >
                             <Printer size={14} />
                           </button>
@@ -1380,6 +1407,7 @@ export default function ContractDetailsV2() {
                             className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
                             onClick={() => setIsFullscreen(true)}
                             title="Vollbild"
+                            aria-label="PDF im Vollbild anzeigen"
                           >
                             <Maximize2 size={14} />
                           </button>
@@ -1387,6 +1415,7 @@ export default function ContractDetailsV2() {
                             className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
                             onClick={handleOpenOriginalPDF}
                             title="In neuem Tab öffnen"
+                            aria-label="Original-PDF in neuem Tab öffnen"
                           >
                             <ExternalLink size={14} />
                           </button>
@@ -1394,6 +1423,7 @@ export default function ContractDetailsV2() {
                             className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`}
                             onClick={handleExportPDF}
                             disabled={exporting}
+                            aria-label="Vertrag als PDF exportieren"
                           >
                             <Download size={14} /> {exporting ? 'Exportiere...' : 'PDF Export'}
                           </button>
@@ -1692,7 +1722,7 @@ export default function ContractDetailsV2() {
         </div>
       </div>
 
-      {/* Fullscreen Modal */}
+      {/* Fullscreen PDF Modal */}
       <AnimatePresence>
         {isFullscreen && (
           <motion.div
@@ -1705,47 +1735,193 @@ export default function ContractDetailsV2() {
               left: 0,
               right: 0,
               bottom: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.9)',
+              backgroundColor: 'rgba(0, 0, 0, 0.95)',
               zIndex: 9999,
               display: 'flex',
-              flexDirection: 'column',
-              padding: 20
+              flexDirection: 'column'
             }}
-            onClick={() => setIsFullscreen(false)}
+            role="dialog"
+            aria-modal="true"
+            aria-label="PDF Vollbildansicht"
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h2 style={{ color: 'white', margin: 0, fontSize: 18 }}>{contract.name}</h2>
-              <button
-                onClick={() => setIsFullscreen(false)}
-                style={{
-                  background: 'rgba(255,255,255,0.1)',
-                  border: 'none',
-                  borderRadius: 8,
-                  padding: '8px 16px',
-                  color: 'white',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8
-                }}
-              >
-                <X size={18} /> Schließen (ESC)
-              </button>
+            {/* Fullscreen Header */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '12px 20px',
+              borderBottom: '1px solid rgba(255,255,255,0.1)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <h2 style={{ color: 'white', margin: 0, fontSize: 16, fontWeight: 500 }}>
+                  <FileText size={18} style={{ marginRight: 8, verticalAlign: 'middle' }} />
+                  {contract.name}
+                </h2>
+                {numPages && (
+                  <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14 }}>
+                    Seite {pageNumber} von {numPages}
+                  </span>
+                )}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {/* Zoom Controls */}
+                <button
+                  onClick={handlePdfZoomOut}
+                  disabled={pdfScale <= 0.5}
+                  style={{
+                    background: 'rgba(255,255,255,0.1)',
+                    border: 'none',
+                    borderRadius: 6,
+                    padding: '6px 12px',
+                    color: 'white',
+                    cursor: pdfScale <= 0.5 ? 'not-allowed' : 'pointer',
+                    opacity: pdfScale <= 0.5 ? 0.5 : 1
+                  }}
+                  aria-label="Verkleinern"
+                >
+                  −
+                </button>
+                <span style={{ color: 'white', fontSize: 13, minWidth: 50, textAlign: 'center' }}>
+                  {Math.round(pdfScale * 100)}%
+                </span>
+                <button
+                  onClick={handlePdfZoomIn}
+                  disabled={pdfScale >= 2.5}
+                  style={{
+                    background: 'rgba(255,255,255,0.1)',
+                    border: 'none',
+                    borderRadius: 6,
+                    padding: '6px 12px',
+                    color: 'white',
+                    cursor: pdfScale >= 2.5 ? 'not-allowed' : 'pointer',
+                    opacity: pdfScale >= 2.5 ? 0.5 : 1
+                  }}
+                  aria-label="Vergrößern"
+                >
+                  +
+                </button>
+                <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,0.2)', margin: '0 8px' }} />
+                <button
+                  onClick={() => setIsFullscreen(false)}
+                  style={{
+                    background: 'rgba(255,255,255,0.1)',
+                    border: 'none',
+                    borderRadius: 6,
+                    padding: '8px 16px',
+                    color: 'white',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8
+                  }}
+                  aria-label="Vollbild beenden"
+                >
+                  <Minimize2 size={16} /> Beenden (ESC)
+                </button>
+              </div>
             </div>
+
+            {/* PDF Content */}
             <div
-              onClick={(e) => e.stopPropagation()}
               style={{
                 flex: 1,
-                backgroundColor: 'white',
-                borderRadius: 12,
                 overflow: 'auto',
-                padding: 40,
-                fontFamily: 'Georgia, serif',
-                fontSize: 14,
-                lineHeight: 1.8
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                padding: '20px 0',
+                background: '#525659'
               }}
+              onClick={(e) => e.stopPropagation()}
             >
-              <div dangerouslySetInnerHTML={{ __html: contract.contentHTML || contract.content?.replace(/\n/g, '<br/>') || '<p style="color: #94a3b8; text-align: center;">Kein Inhalt verfügbar</p>' }} />
+              {pdfUrl ? (
+                <>
+                  <Document
+                    file={pdfUrl}
+                    onLoadSuccess={onDocumentLoadSuccess}
+                    loading={
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 60, color: 'white' }}>
+                        <div className={styles.loadingSpinner} style={{ width: 40, height: 40, marginBottom: 16 }} />
+                        <p>PDF wird geladen...</p>
+                      </div>
+                    }
+                    error={
+                      <div style={{ textAlign: 'center', padding: 60, color: 'white' }}>
+                        <AlertCircle size={48} style={{ marginBottom: 16, opacity: 0.7 }} />
+                        <p>Fehler beim Laden der PDF</p>
+                      </div>
+                    }
+                  >
+                    <Page
+                      pageNumber={pageNumber}
+                      scale={pdfScale}
+                      renderTextLayer={false}
+                      renderAnnotationLayer={false}
+                    />
+                  </Document>
+
+                  {/* Page Navigation */}
+                  {numPages && numPages > 1 && (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 16,
+                      marginTop: 20,
+                      padding: '12px 24px',
+                      background: 'rgba(0,0,0,0.5)',
+                      borderRadius: 8
+                    }}>
+                      <button
+                        onClick={handlePrevPage}
+                        disabled={pageNumber === 1}
+                        style={{
+                          background: 'rgba(255,255,255,0.1)',
+                          border: 'none',
+                          borderRadius: 6,
+                          padding: '8px 16px',
+                          color: 'white',
+                          cursor: pageNumber === 1 ? 'not-allowed' : 'pointer',
+                          opacity: pageNumber === 1 ? 0.5 : 1
+                        }}
+                        aria-label="Vorherige Seite"
+                      >
+                        ← Zurück
+                      </button>
+                      <span style={{ color: 'white', fontSize: 14 }}>
+                        {pageNumber} / {numPages}
+                      </span>
+                      <button
+                        onClick={handleNextPage}
+                        disabled={pageNumber === numPages}
+                        style={{
+                          background: 'rgba(255,255,255,0.1)',
+                          border: 'none',
+                          borderRadius: 6,
+                          padding: '8px 16px',
+                          color: 'white',
+                          cursor: pageNumber === numPages ? 'not-allowed' : 'pointer',
+                          opacity: pageNumber === numPages ? 0.5 : 1
+                        }}
+                        aria-label="Nächste Seite"
+                      >
+                        Weiter →
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '100%',
+                  color: 'rgba(255,255,255,0.7)'
+                }}>
+                  <FileText size={48} style={{ marginBottom: 16, opacity: 0.5 }} />
+                  <p>Keine PDF verfügbar</p>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
