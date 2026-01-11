@@ -495,12 +495,18 @@ const ContractOverview: React.FC<ContractOverviewProps> = ({
     );
   };
 
-  // ✅ Inline-Analyse-Panel rendern
+  // ✅ Inline-Analyse-Panel rendern - ALS MODAL/OVERLAY
   const renderInlineAnalysis = () => {
     if (!inlineSelectedClause) return null;
 
     return (
-      <div className={styles.inlineAnalysisPanel}>
+      <>
+        {/* Backdrop - Klick schließt Modal */}
+        <div
+          className={styles.inlineAnalysisOverlay}
+          onClick={handleCloseInline}
+        />
+        <div className={styles.inlineAnalysisPanel}>
         {/* Header */}
         <div className={styles.inlineHeader}>
           <div className={styles.inlineHeaderLeft}>
@@ -581,15 +587,16 @@ const ContractOverview: React.FC<ContractOverviewProps> = ({
           )}
         </div>
       </div>
+      </>
     );
   };
 
   return (
-    <div className={`${styles.overviewContainer} ${inlineSelectedClause ? styles.withInlinePanel : ''}`}>
+    <div className={styles.overviewContainer}>
       {/* Info Modal */}
       {renderInfoModal()}
 
-      {/* ✅ Inline-Analyse-Panel (rechte Seite) */}
+      {/* ✅ Inline-Analyse-Panel (als Modal-Overlay) */}
       {renderInlineAnalysis()}
 
       {/* Sticky Header */}

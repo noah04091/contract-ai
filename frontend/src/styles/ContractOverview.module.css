@@ -1027,41 +1027,59 @@
   }
 }
 
-/* ===== INLINE ANALYSIS PANEL ===== */
+/* ===== INLINE ANALYSIS PANEL - FULLSCREEN OVERLAY ===== */
 
-/* Container mit Panel aktiv: 2-Spalten-Layout */
+/* Container bleibt normal, Panel ist ein Overlay */
 .overviewContainer.withInlinePanel {
-  flex-direction: row;
+  /* Keine Layout-Änderung - Panel ist absolut positioniert */
 }
 
-.overviewContainer.withInlinePanel .stickyHeader,
-.overviewContainer.withInlinePanel .scrollContent {
-  flex: 1;
-  min-width: 0;
+/* Overlay Backdrop */
+.inlineAnalysisOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
 }
 
-/* Inline Analysis Panel - Rechte Seite */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Inline Analysis Panel - CENTERED MODAL */
 .inlineAnalysisPanel {
-  width: 480px;
-  min-width: 400px;
-  max-width: 50%;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 800px;
+  height: 85vh;
+  max-height: 900px;
   display: flex;
   flex-direction: column;
   background: white;
-  border-left: 1px solid #e2e8f0;
-  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.08);
-  animation: slideInRight 0.3s ease-out;
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  z-index: 1001;
+  animation: slideUp 0.3s ease-out;
   overflow: hidden;
 }
 
-@keyframes slideInRight {
+@keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateX(20px);
+    transform: translate(-50%, -45%);
   }
   to {
     opacity: 1;
-    transform: translateX(0);
+    transform: translate(-50%, -50%);
   }
 }
 
@@ -1211,27 +1229,19 @@
   background: #eff6ff !important;
 }
 
-/* Mobile: Inline-Panel als Modal */
-@media (max-width: 1024px) {
-  .overviewContainer.withInlinePanel {
-    flex-direction: column;
-    position: relative;
-  }
-
+/* Mobile: Inline-Panel als Bottom Sheet */
+@media (max-width: 768px) {
   .inlineAnalysisPanel {
-    position: fixed;
+    top: auto;
     bottom: 0;
     left: 0;
     right: 0;
+    transform: none;
     width: 100%;
     max-width: 100%;
-    min-width: unset;
-    max-height: 70vh;
+    height: 80vh;
+    max-height: 80vh;
     border-radius: 20px 20px 0 0;
-    border-left: none;
-    border-top: 1px solid #e2e8f0;
-    box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.15);
-    z-index: 100;
     animation: slideUpMobile 0.3s ease-out;
   }
 
@@ -1249,6 +1259,7 @@
   .inlineHeader {
     border-radius: 20px 20px 0 0;
     padding: 1rem;
+    position: relative;
   }
 
   /* Drag Handle */

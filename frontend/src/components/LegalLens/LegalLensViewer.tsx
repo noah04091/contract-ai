@@ -383,7 +383,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     }
   }, [viewMode, clearHighlight, selectedClause]);
 
-  // ✅ FIX: PDF-Text nach Auswahl highlighten (bei View-Wechsel)
+  // ✅ FIX v2: Robuste PDF-Text Synchronisation
   const syncPdfHighlightTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -396,83 +396,124 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     }
 
     syncPdfHighlightTimeoutRef.current = setTimeout(() => {
-      // Finde Text-Layer und suche nach dem Klausel-Text
+      // Vorherige Highlights entfernen
+      clearHighlight();
+
+      // Finde Text-Layer
       const textLayer = document.querySelector('.react-pdf__Page__textContent');
-      if (!textLayer) return;
+      if (!textLayer) {
+        console.log('[Legal Lens] PDF sync: No text layer found');
+        return;
+      }
 
       const allSpans = Array.from(textLayer.querySelectorAll('span')) as HTMLElement[];
       if (allSpans.length === 0) return;
 
-      // Suche nach dem ersten signifikanten Wort der Klausel
-      const clauseWords = selectedClause.text.toLowerCase().split(/\s+/).filter(w => w.length > 4);
+      // ✅ Sammle gesamten Text und finde beste Übereinstimmung
+      const clauseText = selectedClause.text.toLowerCase().normalize('NFC');
+      const clauseWords = clauseText.split(/\s+/).filter(w => w.length > 3);
+
       if (clauseWords.length === 0) return;
 
-      const searchWord = clauseWords[0];
-      let foundSpan: HTMLElement | null = null;
+      // Baue vollständigen Text mit Span-Referenzen
+      let fullText = '';
+      const spanPositions: Array<{span: HTMLElement, start: number, end: number}> = [];
 
       for (const span of allSpans) {
-        const spanText = (span.textContent || '').toLowerCase();
-        if (spanText.includes(searchWord)) {
-          foundSpan = span;
+        const text = (span.textContent || '').normalize('NFC');
+        const start = fullText.length;
+        fullText += text + ' ';
+        spanPositions.push({ span, start, end: fullText.length });
+      }
+
+      const fullTextLower = fullText.toLowerCase();
+
+      // ✅ Suche nach den ersten 3-5 signifikanten Wörtern als Phrase
+      const searchPhrases = [
+        clauseWords.slice(0, 5).join(' '),  // Erste 5 Wörter
+        clauseWords.slice(0, 3).join(' '),  // Erste 3 Wörter
+        clauseWords[0] + ' ' + clauseWords[1], // Erste 2 Wörter
+      ].filter(p => p.length > 5);
+
+      let bestMatchIndex = -1;
+
+      for (const phrase of searchPhrases) {
+        const idx = fullTextLower.indexOf(phrase);
+        if (idx !== -1) {
+          bestMatchIndex = idx;
+          console.log('[Legal Lens] PDF sync: Found phrase match:', phrase.substring(0, 30));
           break;
         }
       }
 
-      if (foundSpan) {
-        // Scroll zum gefundenen Element
-        foundSpan.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-        // Kurzes visuelles Highlight
-        foundSpan.style.outline = '2px solid #3b82f6';
-        foundSpan.style.outlineOffset = '2px';
-        foundSpan.style.borderRadius = '4px';
-
-        setTimeout(() => {
-          if (foundSpan) {
-            foundSpan.style.outline = '';
-            foundSpan.style.outlineOffset = '';
-            foundSpan.style.borderRadius = '';
+      // Fallback: Einzelne Wörter suchen
+      if (bestMatchIndex === -1) {
+        for (const word of clauseWords.slice(0, 3)) {
+          if (word.length > 4) {
+            const idx = fullTextLower.indexOf(word);
+            if (idx !== -1) {
+              bestMatchIndex = idx;
+              console.log('[Legal Lens] PDF sync: Found word match:', word);
+              break;
+            }
           }
-        }, 2000);
-
-        console.log('[Legal Lens] PDF sync: highlighted text for clause:', selectedClause.id);
+        }
       }
-    }, 500); // Warte bis PDF gerendert ist
+
+      if (bestMatchIndex === -1) {
+        console.log('[Legal Lens] PDF sync: No match found in PDF');
+        return;
+      }
+
+      // ✅ Finde alle Spans in diesem Bereich (ca. 200 Zeichen)
+      const matchEnd = Math.min(bestMatchIndex + 200, fullText.length);
+      const matchingSpans: HTMLElement[] = [];
+
+      for (const { span, start, end } of spanPositions) {
+        // Span überlappt mit Match-Bereich?
+        if (start < matchEnd && end > bestMatchIndex) {
+          matchingSpans.push(span);
+          // Highlight hinzufügen
+          span.classList.add('legal-lens-highlight');
+        }
+      }
+
+      highlightedElementsRef.current = matchingSpans;
+
+      // ✅ Scroll zum ersten Match
+      if (matchingSpans.length > 0) {
+        matchingSpans[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        console.log('[Legal Lens] PDF sync: Highlighted', matchingSpans.length, 'spans for clause:', selectedClause.id);
+      }
+    }, 600); // Etwas mehr Zeit für PDF-Rendering
 
     return () => {
       if (syncPdfHighlightTimeoutRef.current) {
         clearTimeout(syncPdfHighlightTimeoutRef.current);
       }
     };
-  }, [viewMode, selectedClause?.id, pdfUrl, pdfLoading, pageNumber]);
+  }, [viewMode, selectedClause?.id, pdfUrl, pdfLoading, pageNumber, clearHighlight]);
 
-  // ✅ FIX: PDF Text Click Handler - Unterstützt alle 3 Selection Modes
+  // ✅ FIX v2: Vereinfachter PDF Text Click Handler
   const handlePdfTextClick = (event: React.MouseEvent) => {
     const target = event.target as HTMLElement;
     const textContent = target.closest('.react-pdf__Page__textContent');
 
-    // ✅ CUSTOM MODE: Nutze Browser-Textauswahl
+    // ========== CUSTOM MODE: Browser-Textauswahl ==========
     if (selectionMode === 'custom') {
       const selection = window.getSelection();
       if (selection && selection.toString().trim().length > 10) {
         const selectedText = selection.toString().trim().normalize('NFC');
         clearHighlight();
 
-        // Erstelle Klausel aus Auswahl
-        const hashInput = selectedText.substring(0, 100).toLowerCase().replace(/\s+/g, ' ');
-        const hash = btoa(encodeURIComponent(hashInput)).slice(0, 16);
-
+        const hash = btoa(encodeURIComponent(selectedText.substring(0, 50))).slice(0, 12);
         const customClause = {
-          id: `pdf-custom-${contractId}-${hash}`,
+          id: `pdf-custom-${hash}`,
           text: selectedText,
-          type: 'paragraph' as const,  // Use paragraph type for custom selections
+          type: 'paragraph' as const,
           startIndex: 0,
           endIndex: selectedText.length,
-          riskIndicators: {
-            level: 'medium' as const,
-            keywords: [],
-            score: 50
-          },
+          riskIndicators: { level: 'medium' as const, keywords: [], score: 50 },
           metadata: {
             wordCount: selectedText.split(/\s+/).length,
             hasNumbers: /\d/.test(selectedText),
@@ -481,232 +522,159 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
           }
         };
 
-        console.log('[Legal Lens] Custom selection:', selectedText.substring(0, 50) + '...');
+        console.log('[Legal Lens] Custom selection:', selectedText.substring(0, 50));
         selectClause(customClause);
-
-        if (!hasPdfClicked) {
-          setHasPdfClicked(true);
-          localStorage.setItem('legalLens_hasPdfClicked', 'true');
-        }
+        setHasPdfClicked(true);
+        localStorage.setItem('legalLens_hasPdfClicked', 'true');
         return;
       }
-      // Im Custom-Mode ignorieren wir einfache Klicks
+      // Custom Mode: Einfache Klicks ignorieren - User muss Text markieren
       return;
     }
 
-    if (target.tagName === 'SPAN' && textContent) {
-      // Vorherige Markierung entfernen
-      clearHighlight();
+    // ========== SENTENCE & PARAGRAPH MODE ==========
+    if (target.tagName !== 'SPAN' || !textContent) return;
 
-      // Alle Spans in Dokumentreihenfolge sammeln
-      const allSpans = Array.from(textContent.querySelectorAll('span')) as HTMLElement[];
+    clearHighlight();
 
-      // Index des angeklickten Spans finden
-      const clickedIndex = allSpans.indexOf(target);
-      if (clickedIndex === -1) return;
+    const allSpans = Array.from(textContent.querySelectorAll('span')) as HTMLElement[];
+    const clickedIndex = allSpans.indexOf(target);
+    if (clickedIndex === -1) return;
 
-      // Regex für Satzende und Paragraph-Start
-      const sentenceEndRegex = /[.!?](\s|$)/;
-      const paragraphStartRegex = /^(§\s*\d|Art\.?\s*\d|\(\d+\)|\d+\.\s)/;
+    // Sammle Text mit Span-Referenzen
+    const spanData = allSpans.map(span => ({
+      span,
+      text: (span.textContent || '').normalize('NFC')
+    }));
 
-      // Sammle erst den gesamten Text um Grenzen korrekt zu erkennen
-      let fullText = '';
-      const spanTexts: string[] = [];
-      for (const span of allSpans) {
-        const text = span.textContent || '';
-        spanTexts.push(text);
-        fullText += text + ' ';
-      }
+    // ========== SENTENCE MODE: ~5-15 Spans um Klick ==========
+    // Einfacher Ansatz: Erweitere bis Satzende (. ! ?) gefunden
+    let startIdx = clickedIndex;
+    let endIdx = clickedIndex;
 
-      // Finde den Textindex des geklickten Spans
-      let clickedTextStart = 0;
-      for (let i = 0; i < clickedIndex; i++) {
-        clickedTextStart += spanTexts[i].length + 1; // +1 für Leerzeichen
-      }
-
-      let selectionStartPos = 0;
-      let selectionEndPos = fullText.length;
-
-      // ✅ PARAGRAPH MODE: Wähle von § bis zum nächsten §
-      if (selectionMode === 'paragraph') {
-        // RÜCKWÄRTS: Finde den Paragraph-Start (§, Art., (1), Ziffer.)
-        for (let i = clickedTextStart - 1; i >= 0; i--) {
-          const remainingText = fullText.substring(i).trim();
-          if (paragraphStartRegex.test(remainingText)) {
-            selectionStartPos = i;
-            break;
-          }
-        }
-
-        // VORWÄRTS: Finde den nächsten Paragraph-Start oder Dokument-Ende
-        let foundNextParagraph = false;
-        for (let i = clickedTextStart + 10; i < fullText.length; i++) {
-          const remainingText = fullText.substring(i).trim();
-          if (paragraphStartRegex.test(remainingText)) {
-            selectionEndPos = i;
-            foundNextParagraph = true;
-            break;
-          }
-        }
-
-        // Wenn kein nächster Paragraph, bis zum Ende
-        if (!foundNextParagraph) {
-          selectionEndPos = fullText.length;
-        }
-
-        console.log('[Legal Lens] Paragraph mode: start', selectionStartPos, 'end', selectionEndPos);
-      }
-      // ✅ SENTENCE MODE: Wähle einzelnen Satz
-      else {
-        // RÜCKWÄRTS: Finde den Satzanfang
-        for (let i = clickedTextStart - 1; i >= 0; i--) {
-          const char = fullText[i];
-          if (char === '.' || char === '!' || char === '?') {
-            selectionStartPos = i + 1;
-            while (selectionStartPos < fullText.length && /\s/.test(fullText[selectionStartPos])) {
-              selectionStartPos++;
-            }
-            break;
-          }
-          const remainingText = fullText.substring(i).trim();
-          if (paragraphStartRegex.test(remainingText)) {
-            selectionStartPos = i;
-            break;
-          }
-        }
-
-        // VORWÄRTS: Finde das Satzende
-        for (let i = clickedTextStart; i < fullText.length; i++) {
-          const char = fullText[i];
-          if (char === '.' || char === '!' || char === '?') {
-            const beforeDot = fullText.substring(Math.max(0, i - 5), i).toLowerCase();
-            const isAbbreviation = /\b(art|nr|abs|bzw|ca|etc|ggf|inkl|max|min|vgl|z\.b|u\.a|d\.h|i\.d\.r)\s*$/i.test(beforeDot);
-            if (!isAbbreviation) {
-              selectionEndPos = i + 1;
-              break;
-            }
-          }
-        }
-      }
-
-      // Finde welche Spans zur Auswahl gehören
-      let currentPos = 0;
-      let startIndex = 0;
-      let endIndex = allSpans.length - 1;
-
-      for (let i = 0; i < allSpans.length; i++) {
-        const spanEnd = currentPos + spanTexts[i].length;
-
-        if (currentPos <= selectionStartPos && spanEnd > selectionStartPos) {
-          startIndex = i;
-        }
-
-        if (currentPos < selectionEndPos && spanEnd >= selectionEndPos) {
-          endIndex = i;
+    if (selectionMode === 'sentence') {
+      // Rückwärts bis Satzanfang (nach . ! ? oder Zeilenanfang)
+      for (let i = clickedIndex - 1; i >= Math.max(0, clickedIndex - 20); i--) {
+        const text = spanData[i].text;
+        if (/[.!?]\s*$/.test(text)) {
+          startIdx = i + 1;
           break;
         }
-
-        currentPos = spanEnd + 1;
+        startIdx = i;
       }
 
-      // Alle Spans der Auswahl markieren
-      const selectedSpans: HTMLElement[] = [];
-      let selectedText = '';
-      for (let i = startIndex; i <= endIndex; i++) {
-        selectedSpans.push(allSpans[i]);
-        allSpans[i].classList.add('legal-lens-highlight');
-        selectedText += (allSpans[i].textContent || '') + ' ';
-      }
-
-      let cleanSelectedText = selectedText.trim().normalize('NFC');
-      console.log(`[Legal Lens] ${selectionMode} selection:`, cleanSelectedText.substring(0, 100) + '...');
-
-      // Fallback: Wenn Text zu kurz, erweitere
-      if (cleanSelectedText.length < 30 && endIndex < allSpans.length - 1) {
-        for (let i = endIndex + 1; i < Math.min(endIndex + 30, allSpans.length); i++) {
-          const spanText = allSpans[i].textContent || '';
-          selectedSpans.push(allSpans[i]);
-          allSpans[i].classList.add('legal-lens-highlight');
-          cleanSelectedText += ' ' + spanText;
-          if (sentenceEndRegex.test(spanText)) {
-            break;
-          }
-        }
-        cleanSelectedText = cleanSelectedText.trim().normalize('NFC');
-      }
-
-      highlightedElementsRef.current = selectedSpans;
-
-      // Matching mit Prioritäten - BESTE Klausel finden
-      const selectedTextLower = cleanSelectedText.toLowerCase();
-      let matchingClause = null;
-      let bestMatchScore = 0;
-
-      for (const clause of clauses) {
-        const clauseTextLower = clause.text.toLowerCase();
-        let score = 0;
-
-        if (clauseTextLower.includes(selectedTextLower)) {
-          score = selectedTextLower.length / clauseTextLower.length;
-        } else if (selectedTextLower.includes(clauseTextLower) && clauseTextLower.length > 50) {
-          score = clauseTextLower.length / selectedTextLower.length;
-        } else {
-          const selectedWords = selectedTextLower.split(/\s+/).filter(w => w.length > 3);
-          const clauseWords = clauseTextLower.split(/\s+/).filter(w => w.length > 3);
-          const matchingWords = selectedWords.filter(w => clauseWords.includes(w));
-          const overlapRatio = matchingWords.length / Math.max(selectedWords.length, 1);
-          if (overlapRatio >= 0.5) {
-            score = overlapRatio * 0.5;
-          }
-        }
-
-        if (score > bestMatchScore) {
-          bestMatchScore = score;
-          matchingClause = clause;
+      // Vorwärts bis Satzende
+      for (let i = clickedIndex; i < Math.min(allSpans.length, clickedIndex + 30); i++) {
+        endIdx = i;
+        const text = spanData[i].text;
+        // Satzende gefunden (aber nicht bei Abkürzungen)
+        if (/[.!?]\s*$/.test(text) && !/\b(Nr|Art|Abs|bzw|ca|etc|max|min)\.\s*$/i.test(text)) {
+          break;
         }
       }
+    }
 
-      if (bestMatchScore >= 0.4) {
-        console.log('[Legal Lens] Good match:', matchingClause?.id, 'score:', bestMatchScore.toFixed(2));
+    // ========== PARAGRAPH MODE: ~20-50 Spans um Klick ==========
+    // Erweitere bis § oder Nummerierung gefunden
+    else {
+      const paragraphMarker = /^(§\s*\d|Art\.?\s*\d|\(\d+\)|\d+\.\d*\s|[IVX]+\.\s)/;
+
+      // Rückwärts bis Paragraph-Start
+      for (let i = clickedIndex - 1; i >= Math.max(0, clickedIndex - 50); i--) {
+        const text = spanData[i].text.trim();
+        if (paragraphMarker.test(text)) {
+          startIdx = i;
+          break;
+        }
+        startIdx = i;
+      }
+
+      // Vorwärts bis nächster Paragraph oder max 50 Spans
+      for (let i = clickedIndex + 1; i < Math.min(allSpans.length, clickedIndex + 60); i++) {
+        const text = spanData[i].text.trim();
+        if (paragraphMarker.test(text)) {
+          endIdx = i - 1;
+          break;
+        }
+        endIdx = i;
+      }
+    }
+
+    // Mindestens 3 Spans auswählen
+    if (endIdx - startIdx < 2) {
+      startIdx = Math.max(0, clickedIndex - 2);
+      endIdx = Math.min(allSpans.length - 1, clickedIndex + 5);
+    }
+
+    // Spans markieren und Text sammeln
+    const selectedSpans: HTMLElement[] = [];
+    let selectedText = '';
+
+    for (let i = startIdx; i <= endIdx; i++) {
+      selectedSpans.push(spanData[i].span);
+      spanData[i].span.classList.add('legal-lens-highlight');
+      selectedText += spanData[i].text + ' ';
+    }
+
+    selectedText = selectedText.trim();
+    highlightedElementsRef.current = selectedSpans;
+
+    console.log(`[Legal Lens] ${selectionMode}: ${selectedSpans.length} spans, "${selectedText.substring(0, 60)}..."`);
+
+    // ========== Beste passende Klausel finden ==========
+    const selectedLower = selectedText.toLowerCase();
+    let bestMatch: typeof clauses[0] | null = null;
+    let bestScore = 0;
+
+    for (const clause of clauses) {
+      const clauseLower = clause.text.toLowerCase();
+
+      // Exakte Übereinstimmung
+      if (clauseLower.includes(selectedLower) || selectedLower.includes(clauseLower)) {
+        const score = Math.min(selectedLower.length, clauseLower.length) / Math.max(selectedLower.length, clauseLower.length);
+        if (score > bestScore) {
+          bestScore = score;
+          bestMatch = clause;
+        }
       } else {
-        matchingClause = null;
-      }
-
-      // Klausel erstellen wenn kein guter Match
-      if (!matchingClause && cleanSelectedText.length > 10) {
-        const hashInput = cleanSelectedText.substring(0, 100).toLowerCase().replace(/\s+/g, ' ');
-        const hash = btoa(encodeURIComponent(hashInput)).slice(0, 16);
-
-        matchingClause = {
-          id: `pdf-${selectionMode}-${contractId}-${hash}`,
-          text: cleanSelectedText,
-          type: selectionMode as 'sentence' | 'paragraph',
-          startIndex: 0,
-          endIndex: cleanSelectedText.length,
-          riskIndicators: {
-            level: 'medium' as const,
-            keywords: [],
-            score: 50
-          },
-          metadata: {
-            wordCount: cleanSelectedText.split(/\s+/).length,
-            hasNumbers: /\d/.test(cleanSelectedText),
-            hasDates: /\d{1,2}\.\d{1,2}\.\d{2,4}/.test(cleanSelectedText),
-            hasMoneyReferences: /€|\$|EUR|USD/.test(cleanSelectedText)
-          }
-        };
-        console.log('[Legal Lens] Created clause:', matchingClause.id);
-      }
-
-      if (matchingClause) {
-        selectClause(matchingClause);
-
-        // ✅ FIX Issue #7: UX-Hinweis verstecken nach erstem Klick
-        if (!hasPdfClicked) {
-          setHasPdfClicked(true);
-          localStorage.setItem('legalLens_hasPdfClicked', 'true');
+        // Wort-Überlappung prüfen
+        const selectedWords = new Set(selectedLower.split(/\s+/).filter(w => w.length > 4));
+        const clauseWords = clauseLower.split(/\s+/).filter(w => w.length > 4);
+        const matches = clauseWords.filter(w => selectedWords.has(w)).length;
+        const score = matches / Math.max(selectedWords.size, 1) * 0.7;
+        if (score > bestScore && score > 0.3) {
+          bestScore = score;
+          bestMatch = clause;
         }
       }
+    }
+
+    // Klausel verwenden oder neue erstellen
+    let finalClause = bestMatch;
+
+    if (!finalClause && selectedText.length > 20) {
+      const hash = btoa(encodeURIComponent(selectedText.substring(0, 50))).slice(0, 12);
+      finalClause = {
+        id: `pdf-${selectionMode}-${hash}`,
+        text: selectedText,
+        type: selectionMode as 'sentence' | 'paragraph',
+        startIndex: 0,
+        endIndex: selectedText.length,
+        riskIndicators: { level: 'medium' as const, keywords: [], score: 50 },
+        metadata: {
+          wordCount: selectedText.split(/\s+/).length,
+          hasNumbers: /\d/.test(selectedText),
+          hasDates: /\d{1,2}\.\d{1,2}\.\d{2,4}/.test(selectedText),
+          hasMoneyReferences: /€|\$|EUR|USD/.test(selectedText)
+        }
+      };
+      console.log('[Legal Lens] Created new clause:', finalClause.id);
+    }
+
+    if (finalClause) {
+      selectClause(finalClause);
+      setHasPdfClicked(true);
+      localStorage.setItem('legalLens_hasPdfClicked', 'true');
     }
   };
 
