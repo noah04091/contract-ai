@@ -2734,11 +2734,15 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         }
 
         // ⚡ NEW: LEGAL PULSE RISK ANALYSIS (Async Background Job) for existing contract
-        (async () => {
-          try {
-            console.log(`⚡ [${requestId}] Starting Legal Pulse risk analysis for existing contract in background...`);
+        // 🔐 NUR für Premium/Business/Enterprise User - Free User bekommen kein Legal Pulse
+        const canAccessLegalPulse = ['premium', 'business', 'enterprise', 'legendary'].includes(plan?.toLowerCase());
 
-            const contractInfo = {
+        if (canAccessLegalPulse) {
+          (async () => {
+            try {
+              console.log(`⚡ [${requestId}] Starting Legal Pulse risk analysis for existing contract in background...`);
+
+              const contractInfo = {
               name: existingContract.name,
               provider: extractedProvider?.displayName || 'Unknown',
               type: extractedContractType || validationResult.documentType || 'other', // ✅ FIXED: Use contract type (telecom, purchase, etc.) instead of document type
@@ -2772,7 +2776,10 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
             // Don't throw - this is a background job
           }
         })();
-        
+        } else {
+          console.log(`⏭️ [${requestId}] Skipping Legal Pulse for existing contract - User plan "${plan}" does not include Legal Pulse`);
+        }
+
       } else {
         // 📋 ÄNDERUNG 4: UPDATE contractAnalysisData WITH AUTO-RENEWAL & DURATION
         const contractAnalysisData = {
@@ -2890,12 +2897,16 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
         // ⚡ NEW: LEGAL PULSE RISK ANALYSIS (Async Background Job)
         // This runs in the background and updates the contract with full risk analysis
-        (async () => {
-          try {
-            console.log(`⚡ [${requestId}] Starting Legal Pulse risk analysis in background...`);
+        // 🔐 NUR für Premium/Business/Enterprise User - Free User bekommen kein Legal Pulse
+        const canAccessLegalPulseNew = ['premium', 'business', 'enterprise', 'legendary'].includes(plan?.toLowerCase());
 
-            const contractInfo = {
-              name: savedContract.name,
+        if (canAccessLegalPulseNew) {
+          (async () => {
+            try {
+              console.log(`⚡ [${requestId}] Starting Legal Pulse risk analysis in background...`);
+
+              const contractInfo = {
+                name: savedContract.name,
               provider: extractedProvider?.displayName || 'Unknown',
               type: extractedContractType || validationResult.documentType || 'other', // ✅ FIXED: Use contract type (telecom, purchase, etc.) instead of document type
               startDate: extractedStartDate,
@@ -2928,8 +2939,11 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
             // Don't throw - this is a background job
           }
         })();
+        } else {
+          console.log(`⏭️ [${requestId}] Skipping Legal Pulse for new contract - User plan "${plan}" does not include Legal Pulse`);
+        }
       }
-      
+
     } catch (saveError) {
       console.error(`❌ [${requestId}] Contract save error:`, saveError.message);
       console.warn(`⚠️ [${requestId}] FIXED Deep lawyer-level analysis was successful, but contract saving failed`);

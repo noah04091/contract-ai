@@ -216,6 +216,30 @@ export default function LegalPulse() {
     fetchContracts();
   }, [contractId]);
 
+  // 🔐 User Subscription Check für Premium-Gating
+  const [userPlan, setUserPlan] = useState<string>('free');
+  const canAccessLegalPulse = ['premium', 'business', 'enterprise', 'legendary'].includes(userPlan.toLowerCase());
+
+  useEffect(() => {
+    const fetchUserPlan = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/auth/me', {
+          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include'
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setUserPlan(data.subscriptionPlan || data.plan || 'free');
+        }
+      } catch (err) {
+        console.error('Error fetching user plan:', err);
+        setUserPlan('free');
+      }
+    };
+    fetchUserPlan();
+  }, []);
+
   // Hero Auto-Minimize nach Besuchen
   useEffect(() => {
     const visits = parseInt(localStorage.getItem('legalPulse_heroVisits') || '0');
@@ -1205,6 +1229,33 @@ export default function LegalPulse() {
         description="Legal Pulse überwacht Ihre Verträge automatisch auf Gesetzesänderungen und rechtliche Risiken. Bei relevanten Änderungen werden Sie benachrichtigt."
         tip="Klicken Sie auf einen Vertrag, um Details zur Risikoanalyse zu sehen."
       />
+
+      {/* 🔐 Premium Upgrade Banner für Free-User */}
+      {!canAccessLegalPulse && (
+        <div className={styles.premiumBanner}>
+          <div className={styles.premiumBannerContent}>
+            <div className={styles.premiumBannerIcon}>
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="32" height="32">
+                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor"/>
+              </svg>
+            </div>
+            <div className={styles.premiumBannerText}>
+              <h3>Legal Pulse ist ein Premium-Feature</h3>
+              <p>Upgrade auf Business oder Enterprise, um automatisches Risiko-Monitoring, Gesetzesänderungs-Alerts und detaillierte Analysen für alle deine Verträge zu erhalten.</p>
+            </div>
+            <Link to="/subscribe" className={styles.premiumBannerButton}>
+              Jetzt upgraden
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
+                <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </Link>
+          </div>
+          <div className={styles.premiumBannerInfo}>
+            <span>📊 Du siehst hier deine Verträge, aber die Legal Pulse Analyse ist deaktiviert.</span>
+          </div>
+        </div>
+      )}
+
       <Helmet>
         <title>Legal Pulse – Risiken erkennen & Verträge schützen | Contract AI</title>
         <meta name="description" content="Erkenne rechtliche Risiken frühzeitig & schütze deine Verträge mit Legal Pulse. Bleib immer einen Schritt voraus. Jetzt prüfen & absichern!" />

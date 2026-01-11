@@ -8,6 +8,99 @@
   margin: 0;
 }
 
+/* ===== PREMIUM UPGRADE BANNER ===== */
+.premiumBanner {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 2px solid #f59e0b;
+  border-radius: 16px;
+  padding: 24px 32px;
+  margin-bottom: 32px;
+  max-width: 1600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.premiumBannerContent {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.premiumBannerIcon {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.premiumBannerText {
+  flex: 1;
+}
+
+.premiumBannerText h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #92400e;
+}
+
+.premiumBannerText p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #78350f;
+  line-height: 1.5;
+}
+
+.premiumBannerButton {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.premiumBannerButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
+}
+
+.premiumBannerInfo {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.premiumBannerInfo span {
+  font-size: 0.875rem;
+  color: #92400e;
+}
+
+@media (max-width: 768px) {
+  .premiumBannerContent {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .premiumBannerButton {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 /* ===== HERO SECTION ===== */
 .heroSection {
   position: relative;
