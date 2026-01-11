@@ -109,6 +109,10 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   // Ref für alle aktuell gelb markierten Text-Elemente
   const highlightedElementsRef = useRef<HTMLElement[]>([]);
 
+  // ✅ FIX v4: Ref um Race Condition zwischen PDF-Klick und Sync-useEffect zu verhindern
+  // Wenn User in PDF klickt, soll der Sync-useEffect die Markierung NICHT überschreiben
+  const pdfClickActiveRef = useRef<boolean>(false);
+
   // Resize Handler
   const handleMouseDown = useCallback(() => {
     setIsDragging(true);
@@ -383,12 +387,20 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     }
   }, [viewMode, clearHighlight, selectedClause]);
 
-  // ✅ FIX v2: Robuste PDF-Text Synchronisation
+  // ✅ FIX v2/v4: Robuste PDF-Text Synchronisation
   const syncPdfHighlightTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Nur im PDF-Modus mit ausgewählter Klausel
     if (viewMode !== 'pdf' || !selectedClause || !pdfUrl || pdfLoading) return;
+
+    // ✅ FIX v4: Wenn User gerade in PDF geklickt hat, NICHT synchronisieren!
+    // Der Klick-Handler hat bereits die richtige Markierung gesetzt.
+    if (pdfClickActiveRef.current) {
+      console.log('[Legal Lens] PDF sync: Skipping - user just clicked in PDF');
+      pdfClickActiveRef.current = false; // Reset für nächsten Aufruf
+      return;
+    }
 
     // Debounce um sicherzustellen, dass PDF gerendert ist
     if (syncPdfHighlightTimeoutRef.current) {
@@ -396,6 +408,13 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     }
 
     syncPdfHighlightTimeoutRef.current = setTimeout(() => {
+      // ✅ FIX v4: Nochmal prüfen - könnte sich während des Timeouts geändert haben
+      if (pdfClickActiveRef.current) {
+        console.log('[Legal Lens] PDF sync: Skipping in timeout - user clicked in PDF');
+        pdfClickActiveRef.current = false;
+        return;
+      }
+
       // Vorherige Highlights entfernen
       clearHighlight();
 
@@ -545,6 +564,11 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         };
 
         console.log('[Legal Lens] FREI-MODUS:', selectedText.substring(0, 60) + '...');
+
+        // ✅ FIX v4: Flag setzen BEVOR selectClause aufgerufen wird
+        // Verhindert dass PDF-Sync useEffect die Markierung überschreibt
+        pdfClickActiveRef.current = true;
+
         selectClause(newClause);
         setHasPdfClicked(true);
         localStorage.setItem('legalLens_hasPdfClicked', 'true');
@@ -694,6 +718,10 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         hasMoneyReferences: /€|\$|EUR|USD/.test(selectedText)
       }
     };
+
+    // ✅ FIX v4: Flag setzen BEVOR selectClause aufgerufen wird
+    // Verhindert dass PDF-Sync useEffect die Markierung überschreibt
+    pdfClickActiveRef.current = true;
 
     selectClause(newClause);
     setHasPdfClicked(true);
