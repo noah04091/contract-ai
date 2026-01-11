@@ -402,6 +402,19 @@ export default function Contracts() {
     }
   }, [location]);
 
+  // ✅ NEW: Handle "upload" URL parameter to open upload section directly
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const shouldOpenUpload = params.get('upload') === 'true';
+
+    if (shouldOpenUpload) {
+      console.log('📤 Opening upload section via URL parameter');
+      setActiveSection('upload');
+      // Clean up URL parameter
+      window.history.replaceState({}, document.title, location.pathname);
+    }
+  }, [location.search]);
+
   // ✅ NEW: Handle "view" URL parameter to open contract details
   // Wird getriggert wenn URL sich ändert ODER wenn contracts geladen wurden
   useEffect(() => {
