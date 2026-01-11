@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { FileText, Eye, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, BarChart3, Zap, X, List, MessageSquare, LayoutGrid, ClipboardCheck, Download } from 'lucide-react';
+import { FileText, Eye, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, BarChart3, Zap, X, List, MessageSquare, LayoutGrid, ClipboardCheck, Download, Type, AlignJustify, MousePointer2 } from 'lucide-react';
 import { useLegalLens } from '../../hooks/useLegalLens';
 import ClauseList from './ClauseList';
 import PerspectiveSwitcher from './PerspectiveSwitcher';
@@ -23,6 +23,9 @@ import 'react-pdf/dist/Page/TextLayer.css';
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 type ViewMode = 'text' | 'pdf';
+
+// ✅ NEU: Selection Mode für flexible Markierung
+type SelectionMode = 'sentence' | 'paragraph' | 'custom';
 
 interface LegalLensViewerProps {
   contractId: string;
@@ -70,6 +73,18 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     // LocalStorage-Persistenz
     return localStorage.getItem('legalLens_hasPdfClicked') === 'true';
   });
+
+  // ✅ NEU: Selection Mode - Wort/Satz/Paragraph/Frei
+  const [selectionMode, setSelectionMode] = useState<SelectionMode>(() => {
+    const saved = localStorage.getItem('legalLens_selectionMode');
+    return (saved as SelectionMode) || 'paragraph'; // Default: Paragraph
+  });
+
+  // Selection Mode speichern
+  const handleSelectionModeChange = useCallback((mode: SelectionMode) => {
+    setSelectionMode(mode);
+    localStorage.setItem('legalLens_selectionMode', mode);
+  }, []);
 
   // Resizable Panel State
   const [analysisPanelWidth, setAnalysisPanelWidth] = useState<number>(480);
@@ -346,17 +361,138 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     highlightedElementsRef.current = [];
   }, []);
 
-  // Highlight bei View-Mode Wechsel entfernen
-  useEffect(() => {
-    if (viewMode === 'text') {
-      clearHighlight();
-    }
-  }, [viewMode, clearHighlight]);
+  // ✅ FIX: Text↔PDF Sync - Ref für vorherigen ViewMode
+  const prevViewModeRef = useRef<ViewMode>(viewMode);
 
-  // ✅ FIX Issue #3: PDF Text Click Handler - IMMER bis zum vollständigen Satzende
+  // ✅ FIX: Text↔PDF Sync - Bei View-Wechsel Auswahl spiegeln
+  useEffect(() => {
+    const prevViewMode = prevViewModeRef.current;
+    prevViewModeRef.current = viewMode;
+
+    // Nur bei echtem Wechsel
+    if (prevViewMode === viewMode) return;
+
+    if (viewMode === 'text') {
+      // Von PDF zu Text: Highlight entfernen, ClauseList scrollt automatisch via ClauseList useEffect
+      clearHighlight();
+      console.log('[Legal Lens] View switched to Text, clause sync via ClauseList');
+    } else if (viewMode === 'pdf' && selectedClause) {
+      // Von Text zu PDF: Versuche Text in PDF zu highlighten (nach PDF-Load)
+      console.log('[Legal Lens] View switched to PDF, will highlight clause:', selectedClause.id);
+      // PDF-Highlight passiert automatisch beim nächsten Render über syncPdfHighlight
+    }
+  }, [viewMode, clearHighlight, selectedClause]);
+
+  // ✅ FIX: PDF-Text nach Auswahl highlighten (bei View-Wechsel)
+  const syncPdfHighlightTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    // Nur im PDF-Modus mit ausgewählter Klausel
+    if (viewMode !== 'pdf' || !selectedClause || !pdfUrl || pdfLoading) return;
+
+    // Debounce um sicherzustellen, dass PDF gerendert ist
+    if (syncPdfHighlightTimeoutRef.current) {
+      clearTimeout(syncPdfHighlightTimeoutRef.current);
+    }
+
+    syncPdfHighlightTimeoutRef.current = setTimeout(() => {
+      // Finde Text-Layer und suche nach dem Klausel-Text
+      const textLayer = document.querySelector('.react-pdf__Page__textContent');
+      if (!textLayer) return;
+
+      const allSpans = Array.from(textLayer.querySelectorAll('span')) as HTMLElement[];
+      if (allSpans.length === 0) return;
+
+      // Suche nach dem ersten signifikanten Wort der Klausel
+      const clauseWords = selectedClause.text.toLowerCase().split(/\s+/).filter(w => w.length > 4);
+      if (clauseWords.length === 0) return;
+
+      const searchWord = clauseWords[0];
+      let foundSpan: HTMLElement | null = null;
+
+      for (const span of allSpans) {
+        const spanText = (span.textContent || '').toLowerCase();
+        if (spanText.includes(searchWord)) {
+          foundSpan = span;
+          break;
+        }
+      }
+
+      if (foundSpan) {
+        // Scroll zum gefundenen Element
+        foundSpan.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // Kurzes visuelles Highlight
+        foundSpan.style.outline = '2px solid #3b82f6';
+        foundSpan.style.outlineOffset = '2px';
+        foundSpan.style.borderRadius = '4px';
+
+        setTimeout(() => {
+          if (foundSpan) {
+            foundSpan.style.outline = '';
+            foundSpan.style.outlineOffset = '';
+            foundSpan.style.borderRadius = '';
+          }
+        }, 2000);
+
+        console.log('[Legal Lens] PDF sync: highlighted text for clause:', selectedClause.id);
+      }
+    }, 500); // Warte bis PDF gerendert ist
+
+    return () => {
+      if (syncPdfHighlightTimeoutRef.current) {
+        clearTimeout(syncPdfHighlightTimeoutRef.current);
+      }
+    };
+  }, [viewMode, selectedClause?.id, pdfUrl, pdfLoading, pageNumber]);
+
+  // ✅ FIX: PDF Text Click Handler - Unterstützt alle 3 Selection Modes
   const handlePdfTextClick = (event: React.MouseEvent) => {
     const target = event.target as HTMLElement;
     const textContent = target.closest('.react-pdf__Page__textContent');
+
+    // ✅ CUSTOM MODE: Nutze Browser-Textauswahl
+    if (selectionMode === 'custom') {
+      const selection = window.getSelection();
+      if (selection && selection.toString().trim().length > 10) {
+        const selectedText = selection.toString().trim().normalize('NFC');
+        clearHighlight();
+
+        // Erstelle Klausel aus Auswahl
+        const hashInput = selectedText.substring(0, 100).toLowerCase().replace(/\s+/g, ' ');
+        const hash = btoa(encodeURIComponent(hashInput)).slice(0, 16);
+
+        const customClause = {
+          id: `pdf-custom-${contractId}-${hash}`,
+          text: selectedText,
+          type: 'paragraph' as const,  // Use paragraph type for custom selections
+          startIndex: 0,
+          endIndex: selectedText.length,
+          riskIndicators: {
+            level: 'medium' as const,
+            keywords: [],
+            score: 50
+          },
+          metadata: {
+            wordCount: selectedText.split(/\s+/).length,
+            hasNumbers: /\d/.test(selectedText),
+            hasDates: /\d{1,2}\.\d{1,2}\.\d{2,4}/.test(selectedText),
+            hasMoneyReferences: /€|\$|EUR|USD/.test(selectedText)
+          }
+        };
+
+        console.log('[Legal Lens] Custom selection:', selectedText.substring(0, 50) + '...');
+        selectClause(customClause);
+
+        if (!hasPdfClicked) {
+          setHasPdfClicked(true);
+          localStorage.setItem('legalLens_hasPdfClicked', 'true');
+        }
+        return;
+      }
+      // Im Custom-Mode ignorieren wir einfache Klicks
+      return;
+    }
 
     if (target.tagName === 'SPAN' && textContent) {
       // Vorherige Markierung entfernen
@@ -373,7 +509,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       const sentenceEndRegex = /[.!?](\s|$)/;
       const paragraphStartRegex = /^(§\s*\d|Art\.?\s*\d|\(\d+\)|\d+\.\s)/;
 
-      // ✅ FIX: Sammle erst den gesamten Text um Satzgrenzen korrekt zu erkennen
+      // Sammle erst den gesamten Text um Grenzen korrekt zu erkennen
       let fullText = '';
       const spanTexts: string[] = [];
       for (const span of allSpans) {
@@ -388,45 +524,72 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         clickedTextStart += spanTexts[i].length + 1; // +1 für Leerzeichen
       }
 
-      // ✅ RÜCKWÄRTS: Finde den Satzanfang (nach letztem Satzende oder Paragraph-Start)
-      let sentenceStartPos = 0;
-      for (let i = clickedTextStart - 1; i >= 0; i--) {
-        const char = fullText[i];
-        // Satzende gefunden → Satz beginnt danach
-        if (char === '.' || char === '!' || char === '?') {
-          sentenceStartPos = i + 1;
-          // Überspringe Leerzeichen
-          while (sentenceStartPos < fullText.length && /\s/.test(fullText[sentenceStartPos])) {
-            sentenceStartPos++;
-          }
-          break;
-        }
-        // Paragraph-Start prüfen (§, Art., (1), etc.)
-        const remainingText = fullText.substring(i).trim();
-        if (paragraphStartRegex.test(remainingText)) {
-          sentenceStartPos = i;
-          break;
-        }
-      }
+      let selectionStartPos = 0;
+      let selectionEndPos = fullText.length;
 
-      // ✅ VORWÄRTS: Finde das Satzende (Punkt, Ausrufezeichen, Fragezeichen)
-      // WICHTIG: Stoppe NICHT bei Paragraph-Start, sondern IMMER beim nächsten Satzende!
-      let sentenceEndPos = fullText.length;
-      for (let i = clickedTextStart; i < fullText.length; i++) {
-        const char = fullText[i];
-        if (char === '.' || char === '!' || char === '?') {
-          // Prüfe ob es wirklich ein Satzende ist (nicht z.B. "Art." oder "Nr.")
-          const beforeDot = fullText.substring(Math.max(0, i - 5), i).toLowerCase();
-          const isAbbreviation = /\b(art|nr|abs|bzw|ca|etc|ggf|inkl|max|min|vgl|z\.b|u\.a|d\.h|i\.d\.r)\s*$/i.test(beforeDot);
-
-          if (!isAbbreviation) {
-            sentenceEndPos = i + 1;
+      // ✅ PARAGRAPH MODE: Wähle von § bis zum nächsten §
+      if (selectionMode === 'paragraph') {
+        // RÜCKWÄRTS: Finde den Paragraph-Start (§, Art., (1), Ziffer.)
+        for (let i = clickedTextStart - 1; i >= 0; i--) {
+          const remainingText = fullText.substring(i).trim();
+          if (paragraphStartRegex.test(remainingText)) {
+            selectionStartPos = i;
             break;
           }
         }
+
+        // VORWÄRTS: Finde den nächsten Paragraph-Start oder Dokument-Ende
+        let foundNextParagraph = false;
+        for (let i = clickedTextStart + 10; i < fullText.length; i++) {
+          const remainingText = fullText.substring(i).trim();
+          if (paragraphStartRegex.test(remainingText)) {
+            selectionEndPos = i;
+            foundNextParagraph = true;
+            break;
+          }
+        }
+
+        // Wenn kein nächster Paragraph, bis zum Ende
+        if (!foundNextParagraph) {
+          selectionEndPos = fullText.length;
+        }
+
+        console.log('[Legal Lens] Paragraph mode: start', selectionStartPos, 'end', selectionEndPos);
+      }
+      // ✅ SENTENCE MODE: Wähle einzelnen Satz
+      else {
+        // RÜCKWÄRTS: Finde den Satzanfang
+        for (let i = clickedTextStart - 1; i >= 0; i--) {
+          const char = fullText[i];
+          if (char === '.' || char === '!' || char === '?') {
+            selectionStartPos = i + 1;
+            while (selectionStartPos < fullText.length && /\s/.test(fullText[selectionStartPos])) {
+              selectionStartPos++;
+            }
+            break;
+          }
+          const remainingText = fullText.substring(i).trim();
+          if (paragraphStartRegex.test(remainingText)) {
+            selectionStartPos = i;
+            break;
+          }
+        }
+
+        // VORWÄRTS: Finde das Satzende
+        for (let i = clickedTextStart; i < fullText.length; i++) {
+          const char = fullText[i];
+          if (char === '.' || char === '!' || char === '?') {
+            const beforeDot = fullText.substring(Math.max(0, i - 5), i).toLowerCase();
+            const isAbbreviation = /\b(art|nr|abs|bzw|ca|etc|ggf|inkl|max|min|vgl|z\.b|u\.a|d\.h|i\.d\.r)\s*$/i.test(beforeDot);
+            if (!isAbbreviation) {
+              selectionEndPos = i + 1;
+              break;
+            }
+          }
+        }
       }
 
-      // ✅ Finde welche Spans zur Auswahl gehören
+      // Finde welche Spans zur Auswahl gehören
       let currentPos = 0;
       let startIndex = 0;
       let endIndex = allSpans.length - 1;
@@ -434,123 +597,107 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       for (let i = 0; i < allSpans.length; i++) {
         const spanEnd = currentPos + spanTexts[i].length;
 
-        // Start-Span finden
-        if (currentPos <= sentenceStartPos && spanEnd > sentenceStartPos) {
+        if (currentPos <= selectionStartPos && spanEnd > selectionStartPos) {
           startIndex = i;
         }
 
-        // End-Span finden
-        if (currentPos < sentenceEndPos && spanEnd >= sentenceEndPos) {
+        if (currentPos < selectionEndPos && spanEnd >= selectionEndPos) {
           endIndex = i;
           break;
         }
 
-        currentPos = spanEnd + 1; // +1 für Leerzeichen
+        currentPos = spanEnd + 1;
       }
 
-      // Alle Spans des Satzes markieren
-      const sentenceSpans: HTMLElement[] = [];
-      let sentenceText = '';
+      // Alle Spans der Auswahl markieren
+      const selectedSpans: HTMLElement[] = [];
+      let selectedText = '';
       for (let i = startIndex; i <= endIndex; i++) {
-        sentenceSpans.push(allSpans[i]);
+        selectedSpans.push(allSpans[i]);
         allSpans[i].classList.add('legal-lens-highlight');
-        sentenceText += (allSpans[i].textContent || '') + ' ';
+        selectedText += (allSpans[i].textContent || '') + ' ';
       }
 
-      let cleanSentenceText = sentenceText.trim().normalize('NFC');
-      console.log('[Legal Lens] Selected sentence:', cleanSentenceText.substring(0, 100) + '...');
+      let cleanSelectedText = selectedText.trim().normalize('NFC');
+      console.log(`[Legal Lens] ${selectionMode} selection:`, cleanSelectedText.substring(0, 100) + '...');
 
-      // ✅ Fallback: Wenn Satz zu kurz, erweitere zum nächsten Satzende
-      if (cleanSentenceText.length < 30 && endIndex < allSpans.length - 1) {
+      // Fallback: Wenn Text zu kurz, erweitere
+      if (cleanSelectedText.length < 30 && endIndex < allSpans.length - 1) {
         for (let i = endIndex + 1; i < Math.min(endIndex + 30, allSpans.length); i++) {
           const spanText = allSpans[i].textContent || '';
-          sentenceSpans.push(allSpans[i]);
+          selectedSpans.push(allSpans[i]);
           allSpans[i].classList.add('legal-lens-highlight');
-          cleanSentenceText += ' ' + spanText;
+          cleanSelectedText += ' ' + spanText;
           if (sentenceEndRegex.test(spanText)) {
             break;
           }
         }
-        cleanSentenceText = cleanSentenceText.trim().normalize('NFC');
-        console.log('[Legal Lens] Auto-expanded to:', cleanSentenceText.length, 'chars');
+        cleanSelectedText = cleanSelectedText.trim().normalize('NFC');
       }
 
-      highlightedElementsRef.current = sentenceSpans;
+      highlightedElementsRef.current = selectedSpans;
 
-      // ✅ Fix 3: Matching mit Prioritäten - BESTE Klausel finden (nicht erste)
-      const sentenceTextLower = cleanSentenceText.toLowerCase();
+      // Matching mit Prioritäten - BESTE Klausel finden
+      const selectedTextLower = cleanSelectedText.toLowerCase();
       let matchingClause = null;
       let bestMatchScore = 0;
 
-      // Durchsuche ALLE Klauseln und finde die BESTE (längste Übereinstimmung)
       for (const clause of clauses) {
         const clauseTextLower = clause.text.toLowerCase();
         let score = 0;
 
-        // Exakter Match: Auswahl ist Teil der Klausel
-        if (clauseTextLower.includes(sentenceTextLower)) {
-          // Score basiert auf Verhältnis: je mehr der Klausel abgedeckt, desto besser
-          score = sentenceTextLower.length / clauseTextLower.length;
-        }
-        // Exakter Match: Klausel ist Teil der Auswahl (nur wenn Klausel lang genug)
-        else if (sentenceTextLower.includes(clauseTextLower) && clauseTextLower.length > 50) {
-          score = clauseTextLower.length / sentenceTextLower.length;
-        }
-        // Wort-Overlap als Fallback
-        else {
-          const sentenceWords = sentenceTextLower.split(/\s+/).filter(w => w.length > 3);
+        if (clauseTextLower.includes(selectedTextLower)) {
+          score = selectedTextLower.length / clauseTextLower.length;
+        } else if (selectedTextLower.includes(clauseTextLower) && clauseTextLower.length > 50) {
+          score = clauseTextLower.length / selectedTextLower.length;
+        } else {
+          const selectedWords = selectedTextLower.split(/\s+/).filter(w => w.length > 3);
           const clauseWords = clauseTextLower.split(/\s+/).filter(w => w.length > 3);
-          const matchingWords = sentenceWords.filter(w => clauseWords.includes(w));
-          const overlapRatio = matchingWords.length / Math.max(sentenceWords.length, 1);
+          const matchingWords = selectedWords.filter(w => clauseWords.includes(w));
+          const overlapRatio = matchingWords.length / Math.max(selectedWords.length, 1);
           if (overlapRatio >= 0.5) {
-            score = overlapRatio * 0.5; // Overlap-Matches gewichten weniger
+            score = overlapRatio * 0.5;
           }
         }
 
-        // Beste Klausel merken
         if (score > bestMatchScore) {
           bestMatchScore = score;
           matchingClause = clause;
         }
       }
 
-      // ✅ FIX Issue #3: Match-Schwelle von 0.7 auf 0.4 reduziert für mehr Treffer
-      // Bei sehr schlechten Matches → temporäre Klausel erstellen
       if (bestMatchScore >= 0.4) {
         console.log('[Legal Lens] Good match:', matchingClause?.id, 'score:', bestMatchScore.toFixed(2));
       } else {
-        console.log('[Legal Lens] Low score match, creating temp clause. Best was:', matchingClause?.id, 'score:', bestMatchScore.toFixed(2));
-        matchingClause = null; // Zurücksetzen → temporäre Klausel wird erstellt
+        matchingClause = null;
       }
 
-      // ✅ IMMER eine Klausel erstellen wenn kein guter Match
-      if (!matchingClause && cleanSentenceText.length > 10) {
-        // Deterministischer Hash: gleicher Text + contractId = gleiche ID
-        const hashInput = cleanSentenceText.substring(0, 100).toLowerCase().replace(/\s+/g, ' ');
+      // Klausel erstellen wenn kein guter Match
+      if (!matchingClause && cleanSelectedText.length > 10) {
+        const hashInput = cleanSelectedText.substring(0, 100).toLowerCase().replace(/\s+/g, ' ');
         const hash = btoa(encodeURIComponent(hashInput)).slice(0, 16);
 
         matchingClause = {
-          id: `pdf-${contractId}-${hash}`,
-          text: cleanSentenceText,
-          type: 'sentence' as const,
+          id: `pdf-${selectionMode}-${contractId}-${hash}`,
+          text: cleanSelectedText,
+          type: selectionMode as 'sentence' | 'paragraph',
           startIndex: 0,
-          endIndex: cleanSentenceText.length,
+          endIndex: cleanSelectedText.length,
           riskIndicators: {
             level: 'medium' as const,
             keywords: [],
             score: 50
           },
           metadata: {
-            wordCount: cleanSentenceText.split(/\s+/).length,
-            hasNumbers: /\d/.test(cleanSentenceText),
-            hasDates: /\d{1,2}\.\d{1,2}\.\d{2,4}/.test(cleanSentenceText),
-            hasMoneyReferences: /€|\$|EUR|USD/.test(cleanSentenceText)
+            wordCount: cleanSelectedText.split(/\s+/).length,
+            hasNumbers: /\d/.test(cleanSelectedText),
+            hasDates: /\d{1,2}\.\d{1,2}\.\d{2,4}/.test(cleanSelectedText),
+            hasMoneyReferences: /€|\$|EUR|USD/.test(cleanSelectedText)
           }
         };
-        console.log('[Legal Lens] Created stable clause:', matchingClause.id);
+        console.log('[Legal Lens] Created clause:', matchingClause.id);
       }
 
-      // ✅ Fix 1: Broken Ref entfernt - selectClause direkt aufrufen
       if (matchingClause) {
         selectClause(matchingClause);
 
@@ -713,6 +860,30 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
               setShowOverview(false);
             }}
             onClose={() => setShowOverview(false)}
+            // ✅ Neue Props für Inline-Analyse
+            contractId={contractId}
+            contractName={contractName}
+            onAnalyzeClause={async (clause, perspective) => {
+              // Klausel auswählen für Synchronisation
+              selectClause(clause);
+              changePerspective(perspective);
+
+              // ✅ FIX: API DIREKT aufrufen und Ergebnis zurückgeben
+              // (statt auf React State-Update zu warten)
+              try {
+                const response = await legalLensAPI.analyzeClause(
+                  contractId,
+                  clause.id,
+                  clause.text,
+                  perspective,
+                  false // kein Streaming
+                );
+                return response.analysis;
+              } catch (error) {
+                console.error('Inline Analysis Error:', error);
+                return null;
+              }
+            }}
           />
         </main>
       ) : isMobile ? (
@@ -856,6 +1027,82 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                 </button>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {/* ✅ Selection Mode Toggle */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '2px',
+                  background: '#f1f5f9',
+                  borderRadius: '6px',
+                  padding: '2px'
+                }}>
+                  <button
+                    onClick={() => handleSelectionModeChange('sentence')}
+                    style={{
+                      padding: '0.375rem 0.5rem',
+                      border: 'none',
+                      borderRadius: '4px',
+                      background: selectionMode === 'sentence' ? 'white' : 'transparent',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      fontSize: '0.7rem',
+                      fontWeight: 500,
+                      color: selectionMode === 'sentence' ? '#3b82f6' : '#64748b',
+                      boxShadow: selectionMode === 'sentence' ? '0 1px 2px rgba(0,0,0,0.1)' : 'none'
+                    }}
+                    title="Satz-Modus: Klick wählt ganzen Satz"
+                  >
+                    <Type size={12} />
+                    Satz
+                  </button>
+                  <button
+                    onClick={() => handleSelectionModeChange('paragraph')}
+                    style={{
+                      padding: '0.375rem 0.5rem',
+                      border: 'none',
+                      borderRadius: '4px',
+                      background: selectionMode === 'paragraph' ? 'white' : 'transparent',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      fontSize: '0.7rem',
+                      fontWeight: 500,
+                      color: selectionMode === 'paragraph' ? '#3b82f6' : '#64748b',
+                      boxShadow: selectionMode === 'paragraph' ? '0 1px 2px rgba(0,0,0,0.1)' : 'none'
+                    }}
+                    title="Paragraph-Modus: Klick wählt ganzen §/Absatz"
+                  >
+                    <AlignJustify size={12} />
+                    §
+                  </button>
+                  <button
+                    onClick={() => handleSelectionModeChange('custom')}
+                    style={{
+                      padding: '0.375rem 0.5rem',
+                      border: 'none',
+                      borderRadius: '4px',
+                      background: selectionMode === 'custom' ? 'white' : 'transparent',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      fontSize: '0.7rem',
+                      fontWeight: 500,
+                      color: selectionMode === 'custom' ? '#3b82f6' : '#64748b',
+                      boxShadow: selectionMode === 'custom' ? '0 1px 2px rgba(0,0,0,0.1)' : 'none'
+                    }}
+                    title="Frei-Modus: Text markieren und analysieren"
+                  >
+                    <MousePointer2 size={12} />
+                    Frei
+                  </button>
+                </div>
+
+                <div style={{ width: '1px', height: '20px', background: '#e2e8f0' }} />
+
                 {/* Zoom Controls */}
                 <button
                   onClick={() => setScale(s => Math.max(0.5, s - 0.1))}
@@ -947,6 +1194,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                 padding: '1rem'
               }}
               onClickCapture={handlePdfTextClick}
+              onMouseUp={selectionMode === 'custom' ? handlePdfTextClick : undefined}
             >
               {pdfLoading ? (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem' }}>

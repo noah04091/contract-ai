@@ -1697,6 +1697,16 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             </div>
 
             <div className={styles.headerActions}>
+              {/* Vollansicht */}
+              <button
+                className={styles.actionBtn}
+                onClick={() => window.open(`/contracts/${contract._id}`, '_blank')}
+                title="Vollansicht öffnen"
+                aria-label="Vertrag in Vollansicht öffnen"
+              >
+                <ExternalLink size={18} />
+              </button>
+
               {/* Share */}
               <button
                 className={styles.actionBtn}

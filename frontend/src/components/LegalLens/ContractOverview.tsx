@@ -15,9 +15,13 @@ import {
   X,
   Eye,
   Info,
-  Shield
+  Shield,
+  Maximize2,
+  Loader2
 } from 'lucide-react';
-import type { ParsedClause, ActionLevel, RiskLevel, ClauseAnalysis } from '../../types/legalLens';
+import type { ParsedClause, ActionLevel, RiskLevel, ClauseAnalysis, PerspectiveType } from '../../types/legalLens';
+import PerspectiveSwitcher from './PerspectiveSwitcher';
+import AnalysisPanel from './AnalysisPanel';
 import styles from '../../styles/ContractOverview.module.css';
 
 interface ContractOverviewProps {
@@ -26,6 +30,10 @@ interface ContractOverviewProps {
   currentPerspective: string;
   onSelectClause: (clause: ParsedClause) => void;
   onClose: () => void;
+  // ✅ Neue Props für Inline-Analyse
+  onAnalyzeClause?: (clause: ParsedClause, perspective: PerspectiveType) => Promise<ClauseAnalysis | null>;
+  contractId?: string;
+  contractName?: string;
 }
 
 type ViewMode = 'cards' | 'compact';
@@ -151,7 +159,10 @@ const ContractOverview: React.FC<ContractOverviewProps> = ({
   analysisCache,
   currentPerspective,
   onSelectClause,
-  onClose
+  onClose,
+  onAnalyzeClause,
+  contractId,
+  contractName
 }) => {
   // State
   const [viewMode, setViewMode] = useState<ViewMode>('cards');
@@ -164,6 +175,85 @@ const ContractOverview: React.FC<ContractOverviewProps> = ({
     ok: ITEMS_PER_SECTION
   });
   const [activeModal, setActiveModal] = useState<InfoModalType>(null);
+
+  // ✅ Inline Analysis State
+  const [inlineSelectedClause, setInlineSelectedClause] = useState<ParsedClause | null>(null);
+  const [inlineAnalysis, setInlineAnalysis] = useState<ClauseAnalysis | null>(null);
+  const [inlinePerspective, setInlinePerspective] = useState<PerspectiveType>(currentPerspective as PerspectiveType);
+  const [inlineLoading, setInlineLoading] = useState(false);
+
+  // ✅ Inline-Analyse laden wenn Klausel ausgewählt wird
+  const handleInlineSelect = useCallback(async (clause: ParsedClause) => {
+    setInlineSelectedClause(clause);
+
+    // Prüfe ob im Cache
+    const contentHash = generateContentHash(clause.text);
+    const cacheKey = `content-${contentHash}-${inlinePerspective}`;
+    const cached = analysisCache[cacheKey];
+
+    if (cached) {
+      setInlineAnalysis(cached);
+      setInlineLoading(false);
+      return;
+    }
+
+    // Lade Analyse
+    if (onAnalyzeClause) {
+      setInlineLoading(true);
+      try {
+        const analysis = await onAnalyzeClause(clause, inlinePerspective);
+        setInlineAnalysis(analysis);
+      } catch (error) {
+        console.error('[ContractOverview] Inline analysis error:', error);
+      } finally {
+        setInlineLoading(false);
+      }
+    }
+  }, [analysisCache, inlinePerspective, onAnalyzeClause]);
+
+  // ✅ Perspektive wechseln und neu laden
+  const handleInlinePerspectiveChange = useCallback(async (perspective: PerspectiveType) => {
+    setInlinePerspective(perspective);
+
+    if (!inlineSelectedClause) return;
+
+    // Prüfe ob im Cache
+    const contentHash = generateContentHash(inlineSelectedClause.text);
+    const cacheKey = `content-${contentHash}-${perspective}`;
+    const cached = analysisCache[cacheKey];
+
+    if (cached) {
+      setInlineAnalysis(cached);
+      return;
+    }
+
+    // Lade Analyse für neue Perspektive
+    if (onAnalyzeClause) {
+      setInlineLoading(true);
+      try {
+        const analysis = await onAnalyzeClause(inlineSelectedClause, perspective);
+        setInlineAnalysis(analysis);
+      } catch (error) {
+        console.error('[ContractOverview] Perspective change error:', error);
+      } finally {
+        setInlineLoading(false);
+      }
+    }
+  }, [analysisCache, inlineSelectedClause, onAnalyzeClause]);
+
+  // ✅ Schließen der Inline-Analyse
+  const handleCloseInline = useCallback(() => {
+    setInlineSelectedClause(null);
+    setInlineAnalysis(null);
+  }, []);
+
+  // ✅ Zur Detail-Ansicht wechseln (mit ausgewählter Klausel)
+  const handleGoToDetail = useCallback(() => {
+    if (inlineSelectedClause) {
+      onSelectClause(inlineSelectedClause);
+    }
+    onClose();
+  }, [inlineSelectedClause, onSelectClause, onClose]);
 
   // Klauseln mit actionLevel anreichern
   const enrichedClauses = useMemo(() => {
@@ -344,13 +434,15 @@ const ContractOverview: React.FC<ContractOverviewProps> = ({
     );
   };
 
-  // Klausel-Karte rendern
+  // Klausel-Karte rendern - ✅ Jetzt mit Inline-Analyse
   const renderClauseCard = (clause: ParsedClause & { actionLevel: ActionLevel; riskScore: number }, color: string) => {
+    const isSelected = inlineSelectedClause?.id === clause.id;
+
     return (
       <button
         key={clause.id}
-        className={styles.clauseCard}
-        onClick={() => onSelectClause(clause)}
+        className={`${styles.clauseCard} ${isSelected ? styles.clauseCardSelected : ''}`}
+        onClick={() => onAnalyzeClause ? handleInlineSelect(clause) : onSelectClause(clause)}
         style={{ '--card-accent': color } as React.CSSProperties}
       >
         <div className={styles.cardTop}>
@@ -377,19 +469,21 @@ const ContractOverview: React.FC<ContractOverviewProps> = ({
 
         <div className={styles.cardAction}>
           <Eye size={14} />
-          <span>Analysieren</span>
+          <span>{isSelected ? 'Ausgewählt' : 'Analysieren'}</span>
         </div>
       </button>
     );
   };
 
-  // Kompakte Zeile rendern
+  // Kompakte Zeile rendern - ✅ Jetzt mit Inline-Analyse
   const renderCompactRow = (clause: ParsedClause & { actionLevel: ActionLevel; riskScore: number }, color: string) => {
+    const isSelected = inlineSelectedClause?.id === clause.id;
+
     return (
       <button
         key={clause.id}
-        className={styles.compactRow}
-        onClick={() => onSelectClause(clause)}
+        className={`${styles.compactRow} ${isSelected ? styles.compactRowSelected : ''}`}
+        onClick={() => onAnalyzeClause ? handleInlineSelect(clause) : onSelectClause(clause)}
         style={{ '--row-accent': color } as React.CSSProperties}
       >
         <span className={styles.rowNumber}>{clause.number || `#${clause.id.slice(-4)}`}</span>
@@ -401,10 +495,102 @@ const ContractOverview: React.FC<ContractOverviewProps> = ({
     );
   };
 
+  // ✅ Inline-Analyse-Panel rendern
+  const renderInlineAnalysis = () => {
+    if (!inlineSelectedClause) return null;
+
+    return (
+      <div className={styles.inlineAnalysisPanel}>
+        {/* Header */}
+        <div className={styles.inlineHeader}>
+          <div className={styles.inlineHeaderLeft}>
+            <span className={styles.inlineClauseNumber}>
+              {inlineSelectedClause.number || `#${inlineSelectedClause.id.slice(-4)}`}
+            </span>
+            <h3 className={styles.inlineTitle}>
+              {inlineSelectedClause.title || 'Klausel-Analyse'}
+            </h3>
+          </div>
+          <div className={styles.inlineHeaderRight}>
+            <button
+              className={styles.inlineExpandBtn}
+              onClick={handleGoToDetail}
+              title="Vollansicht öffnen"
+            >
+              <Maximize2 size={16} />
+            </button>
+            <button
+              className={styles.inlineCloseBtn}
+              onClick={handleCloseInline}
+              title="Schließen"
+            >
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+
+        {/* Klausel-Text */}
+        <div className={styles.inlineClauseText}>
+          <p>{inlineSelectedClause.text}</p>
+        </div>
+
+        {/* Perspektive Switcher */}
+        <PerspectiveSwitcher
+          currentPerspective={inlinePerspective}
+          onChangePerspective={handleInlinePerspectiveChange}
+          disabled={inlineLoading}
+        />
+
+        {/* Analyse-Inhalt */}
+        <div className={styles.inlineAnalysisContent}>
+          {inlineLoading ? (
+            <div className={styles.inlineLoading}>
+              <Loader2 className={styles.inlineSpinner} size={32} />
+              <span>Analyse wird geladen...</span>
+            </div>
+          ) : inlineAnalysis ? (
+            <AnalysisPanel
+              analysis={inlineAnalysis}
+              currentPerspective={inlinePerspective}
+              alternatives={[]}
+              negotiation={null}
+              chatHistory={[]}
+              isAnalyzing={false}
+              isGeneratingAlternatives={false}
+              isGeneratingNegotiation={false}
+              isChatting={false}
+              isRetrying={false}
+              retryCount={0}
+              streamingText=""
+              error={null}
+              errorInfo={null}
+              originalClauseText={inlineSelectedClause.text}
+              sourceContractId={contractId || ''}
+              sourceContractName={contractName || ''}
+              sourceClauseId={inlineSelectedClause.id}
+              onLoadAlternatives={() => {}}
+              onLoadNegotiation={() => {}}
+              onSendChatMessage={() => {}}
+              onRetry={() => {}}
+            />
+          ) : (
+            <div className={styles.inlineEmpty}>
+              <Info size={24} />
+              <span>Keine Analyse verfügbar</span>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className={styles.overviewContainer}>
+    <div className={`${styles.overviewContainer} ${inlineSelectedClause ? styles.withInlinePanel : ''}`}>
       {/* Info Modal */}
       {renderInfoModal()}
+
+      {/* ✅ Inline-Analyse-Panel (rechte Seite) */}
+      {renderInlineAnalysis()}
 
       {/* Sticky Header */}
       <div className={styles.stickyHeader}>
