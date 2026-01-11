@@ -32,6 +32,11 @@ interface Contract {
   reminder?: boolean;
   isGenerated?: boolean;
   createdAt?: string;
+  // For OneClickCancelModal
+  provider?: string;
+  contractNumber?: string;
+  customerNumber?: string;
+  amount?: number;
   legalPulse?: {
     riskScore: number | null;
     healthScore?: number;
@@ -212,7 +217,7 @@ export default function LegalPulse() {
 
   // Team Collaboration State
   const [organization, setOrganization] = useState<Organization | null>(null);
-  const [membership, setMembership] = useState<Membership | null>(null);
+  const [, setMembership] = useState<Membership | null>(null); // membership stored for future use
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [teamFilter, setTeamFilter] = useState<'my' | 'all' | string>('my'); // 'my', 'all', or specific userId
 
