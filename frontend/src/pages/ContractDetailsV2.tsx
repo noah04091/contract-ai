@@ -6,6 +6,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
+import { Document, Page, pdfjs } from "react-pdf";
 import {
   ArrowLeft,
   Calendar,
@@ -44,6 +45,9 @@ import {
 } from "lucide-react";
 import styles from "../styles/ContractDetailsV2.module.css";
 import ContractEditModal from "../components/ContractEditModal";
+
+// Configure PDF.js worker
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 // ============================================
 // INTERFACES
@@ -154,6 +158,13 @@ export default function ContractDetailsV2() {
   const [bookmarked, setBookmarked] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
 
+  // PDF Viewer State
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [numPages, setNumPages] = useState<number | null>(null);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [pdfScale, setPdfScale] = useState(1.0);
+
   // ============================================
   // DATA FETCHING
   // ============================================
@@ -205,6 +216,44 @@ export default function ContractDetailsV2() {
     };
     fetchCalendarEvents();
   }, [id]);
+
+  // Fetch PDF URL for inline viewer
+  useEffect(() => {
+    const fetchPdfUrl = async () => {
+      if (!contract?.s3Key) return;
+
+      setPdfLoading(true);
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/s3/download-url?key=${encodeURIComponent(contract.s3Key)}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.url) {
+            setPdfUrl(data.url);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching PDF URL:', error);
+      } finally {
+        setPdfLoading(false);
+      }
+    };
+
+    fetchPdfUrl();
+  }, [contract?.s3Key]);
+
+  // PDF Navigation Handlers
+  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
+    setNumPages(numPages);
+    setPageNumber(1);
+  };
+
+  const handlePdfZoomIn = () => setPdfScale(prev => Math.min(prev + 0.2, 2.5));
+  const handlePdfZoomOut = () => setPdfScale(prev => Math.max(prev - 0.2, 0.5));
+  const handleNextPage = () => numPages && pageNumber < numPages && setPageNumber(prev => prev + 1);
+  const handlePrevPage = () => pageNumber > 1 && setPageNumber(prev => prev - 1);
 
   // ============================================
   // PDF & PRINT HANDLERS
@@ -1272,30 +1321,69 @@ export default function ContractDetailsV2() {
                     transition={{ duration: 0.2 }}
                   >
                     <div className={styles.documentViewer}>
+                      {/* PDF Header with Controls */}
                       <div className={styles.documentHeader}>
-                        <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--cd-text-primary)' }}>
-                          <FileText size={16} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-                          {contract.name}
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                          <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--cd-text-primary)' }}>
+                            <FileText size={16} style={{ marginRight: 8, verticalAlign: 'middle' }} />
+                            {contract.name}
+                          </span>
+                          {numPages && (
+                            <span style={{ fontSize: 13, color: 'var(--cd-text-tertiary)' }}>
+                              Seite {pageNumber} von {numPages}
+                            </span>
+                          )}
+                        </div>
                         <div className={styles.documentActions}>
+                          {/* Zoom Controls */}
+                          <button
+                            className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
+                            onClick={handlePdfZoomOut}
+                            disabled={pdfScale <= 0.5}
+                            title="Verkleinern"
+                          >
+                            -
+                          </button>
+                          <span style={{ fontSize: 12, color: 'var(--cd-text-secondary)', minWidth: 45, textAlign: 'center' }}>
+                            {Math.round(pdfScale * 100)}%
+                          </span>
+                          <button
+                            className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
+                            onClick={handlePdfZoomIn}
+                            disabled={pdfScale >= 2.5}
+                            title="Vergrößern"
+                          >
+                            +
+                          </button>
+                          <div style={{ width: 1, height: 20, background: 'var(--cd-border)', margin: '0 8px' }} />
                           <button
                             className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
                             onClick={handleCopyContent}
                             disabled={!contract.content}
+                            title="Text kopieren"
                           >
-                            <Copy size={14} /> Kopieren
+                            <Copy size={14} />
                           </button>
                           <button
                             className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
                             onClick={handlePrint}
+                            title="Drucken"
                           >
-                            <Printer size={14} /> Drucken
+                            <Printer size={14} />
                           </button>
                           <button
                             className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
                             onClick={() => setIsFullscreen(true)}
+                            title="Vollbild"
                           >
-                            <Maximize2 size={14} /> Vollbild
+                            <Maximize2 size={14} />
+                          </button>
+                          <button
+                            className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
+                            onClick={handleOpenOriginalPDF}
+                            title="In neuem Tab öffnen"
+                          >
+                            <ExternalLink size={14} />
                           </button>
                           <button
                             className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`}
@@ -1306,27 +1394,90 @@ export default function ContractDetailsV2() {
                           </button>
                         </div>
                       </div>
-                      <div className={styles.documentContent} ref={documentRef}>
-                        {contract.content || contract.contentHTML ? (
-                          <div dangerouslySetInnerHTML={{ __html: contract.contentHTML || contract.content?.replace(/\n/g, '<br/>') || '' }} />
+
+                      {/* PDF Content */}
+                      <div className={styles.documentContent} ref={documentRef} style={{ background: '#525659', minHeight: 600, overflow: 'auto' }}>
+                        {pdfLoading ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 60, color: 'white' }}>
+                            <div className={styles.loadingSpinner} style={{ width: 40, height: 40, marginBottom: 16 }} />
+                            <p>PDF wird geladen...</p>
+                          </div>
+                        ) : pdfUrl ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
+                            <Document
+                              file={pdfUrl}
+                              onLoadSuccess={onDocumentLoadSuccess}
+                              loading={
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 60, color: 'white' }}>
+                                  <div className={styles.loadingSpinner} style={{ width: 40, height: 40, marginBottom: 16 }} />
+                                  <p>PDF wird geladen...</p>
+                                </div>
+                              }
+                              error={
+                                <div style={{ textAlign: 'center', padding: 60, color: 'white' }}>
+                                  <AlertCircle size={48} style={{ marginBottom: 16, opacity: 0.7 }} />
+                                  <p>Fehler beim Laden der PDF</p>
+                                  <button
+                                    onClick={handleOpenOriginalPDF}
+                                    className={`${styles.btn} ${styles.btnPrimary}`}
+                                    style={{ marginTop: 16 }}
+                                  >
+                                    <ExternalLink size={16} /> In neuem Tab öffnen
+                                  </button>
+                                </div>
+                              }
+                            >
+                              <Page
+                                pageNumber={pageNumber}
+                                scale={pdfScale}
+                                renderTextLayer={false}
+                                renderAnnotationLayer={false}
+                                className={styles.pdfPage}
+                              />
+                            </Document>
+
+                            {/* Page Navigation */}
+                            {numPages && numPages > 1 && (
+                              <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 16,
+                                marginTop: 20,
+                                padding: '12px 24px',
+                                background: 'rgba(255,255,255,0.1)',
+                                borderRadius: 8
+                              }}>
+                                <button
+                                  onClick={handlePrevPage}
+                                  disabled={pageNumber === 1}
+                                  className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
+                                  style={{ color: 'white', borderColor: 'rgba(255,255,255,0.3)' }}
+                                >
+                                  ← Zurück
+                                </button>
+                                <span style={{ color: 'white', fontSize: 14 }}>
+                                  Seite {pageNumber} / {numPages}
+                                </span>
+                                <button
+                                  onClick={handleNextPage}
+                                  disabled={pageNumber === numPages}
+                                  className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
+                                  style={{ color: 'white', borderColor: 'rgba(255,255,255,0.3)' }}
+                                >
+                                  Weiter →
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         ) : (
-                          <div className={styles.emptyState}>
+                          <div className={styles.emptyState} style={{ background: 'white', margin: 20, borderRadius: 12 }}>
                             <div className={styles.emptyIcon}>
                               <FileText size={32} />
                             </div>
-                            <h4 className={styles.emptyTitle}>Kein Textinhalt verfügbar</h4>
+                            <h4 className={styles.emptyTitle}>Keine PDF verfügbar</h4>
                             <p className={styles.emptyText}>
-                              Der Vertragsinhalt ist nicht als Text verfügbar. Du kannst das Original-PDF öffnen.
+                              Für diesen Vertrag ist keine PDF-Datei hinterlegt.
                             </p>
-                            {(contract.filePath || contract.s3Key) && (
-                              <button
-                                onClick={handleOpenOriginalPDF}
-                                className={`${styles.btn} ${styles.btnPrimary}`}
-                                style={{ marginTop: 16 }}
-                              >
-                                <ExternalLink size={16} /> Original PDF öffnen
-                              </button>
-                            )}
                           </div>
                         )}
                       </div>
