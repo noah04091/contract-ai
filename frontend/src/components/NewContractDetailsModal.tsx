@@ -206,6 +206,10 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   const [legalPulsePolling, setLegalPulsePolling] = useState(false);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // 🔐 User Subscription Check für Legal Pulse
+  const [userPlan, setUserPlan] = useState<string>('free');
+  const canAccessLegalPulse = ['premium', 'business', 'enterprise', 'legendary'].includes(userPlan.toLowerCase());
+
   // Modals
   const [showShareModal, setShowShareModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(openEditModalDirectly);
@@ -270,6 +274,28 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     fetchCalendarEvents();
   }, [contract._id]);
 
+  // 🔐 User Subscription Plan laden für Legal Pulse Zugriffsprüfung
+  useEffect(() => {
+    const fetchUserPlan = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/auth/me', {
+          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include'
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setUserPlan(data.subscriptionPlan || data.plan || 'free');
+          console.log('🔐 [Modal] User Plan:', data.subscriptionPlan || data.plan || 'free');
+        }
+      } catch (err) {
+        console.error('Error fetching user plan:', err);
+        setUserPlan('free'); // Default to free on error
+      }
+    };
+    fetchUserPlan();
+  }, []);
+
   // ✅ BUG FIX: Update showEditModal when openEditModalDirectly prop changes
   useEffect(() => {
     if (openEditModalDirectly) {
@@ -308,8 +334,9 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   }, [activeTab, contract.optimizedPdfS3Key, optimizedPdfUrl, optimizedPdfLoading]);
 
   // 🆕 Poll for Legal Pulse data when analysis tab is active and Legal Pulse not yet loaded
+  // 🔐 NUR für Premium/Business/Enterprise User - Free User bekommen kein Legal Pulse
   useEffect(() => {
-    if (activeTab === 'analysis' && !contract.legalPulse && (contract.summary || contract.legalAssessment) && !legalPulsePolling) {
+    if (activeTab === 'analysis' && !contract.legalPulse && (contract.summary || contract.legalAssessment) && !legalPulsePolling && canAccessLegalPulse) {
       startLegalPulsePolling();
     }
 
@@ -320,7 +347,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         pollingIntervalRef.current = null;
       }
     };
-  }, [activeTab, contract.legalPulse, legalPulsePolling]);
+  }, [activeTab, contract.legalPulse, legalPulsePolling, canAccessLegalPulse]);
 
   const startLegalPulsePolling = () => {
     console.log('⚡ [Modal] Starting Legal Pulse polling for contract:', contract._id);
@@ -1225,15 +1252,48 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             </button>
           </div>
         ) : (contractScore || summary || legalAssessment) && (
-          <div className={styles.legalPulseLoading}>
-            <div className={styles.legalPulseLoadingSpinner}></div>
-            <h3 className={styles.legalPulseLoadingTitle}>
-              ⚡ Legal Pulse Analyse lädt...
-            </h3>
-            <p className={styles.legalPulseLoadingText}>
-              Die Risiko-Analyse wird im Hintergrund durchgeführt. Bitte warten Sie einen Moment.
-            </p>
-          </div>
+          canAccessLegalPulse ? (
+            // 🔐 Premium/Business/Enterprise User - Loading anzeigen
+            <div className={styles.legalPulseLoading}>
+              <div className={styles.legalPulseLoadingSpinner}></div>
+              <h3 className={styles.legalPulseLoadingTitle}>
+                ⚡ Legal Pulse Analyse lädt...
+              </h3>
+              <p className={styles.legalPulseLoadingText}>
+                Die Risiko-Analyse wird im Hintergrund durchgeführt. Bitte warten Sie einen Moment.
+              </p>
+            </div>
+          ) : (
+            // 🔐 Free User - Upgrade Notice anzeigen
+            <div className={styles.legalPulseLoading} style={{ background: 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)' }}>
+              <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔒</div>
+              <h3 className={styles.legalPulseLoadingTitle} style={{ color: '#374151' }}>
+                Legal Pulse - Premium Feature
+              </h3>
+              <p className={styles.legalPulseLoadingText} style={{ color: '#6b7280', marginBottom: '16px' }}>
+                Mit Legal Pulse erhalten Sie KI-gestützte Risiko-Analysen, rechtliche Updates und proaktive Warnungen für Ihre Verträge.
+              </p>
+              <button
+                onClick={() => window.location.href = '/pricing'}
+                style={{
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '12px 24px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  margin: '0 auto'
+                }}
+              >
+                ⚡ Jetzt upgraden
+              </button>
+            </div>
+          )
         )}
       </div>
     );
