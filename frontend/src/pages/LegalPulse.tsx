@@ -1662,20 +1662,36 @@ export default function LegalPulse() {
         )}
       </div>
 
-      {/* Bottom CTA */}
-      <div className={styles.bottomCTA}>
-        <div className={styles.ctaContent}>
-          <h2>Bleiben Sie vorbereitet. Reagieren Sie jetzt.</h2>
-          <p>Optimieren Sie Ihre Verträge mit unserer KI-gestützten Lösung</p>
-          <button
-            className={styles.primaryCTAButton}
-            onClick={() => navigate('/generate')}
-          >
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2L15.09 8.26L22 9L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9L8.91 8.26L12 2Z" stroke="currentColor" strokeWidth="2"/>
+      {/* Bottom CTA - Passend zu Legal Pulse */}
+      <div className={styles.bottomCTALight}>
+        <div className={styles.ctaLightContent}>
+          <div className={styles.ctaLightIcon}>
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="32" height="32">
+              <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            Vertrag jetzt optimieren
-          </button>
+          </div>
+          <h2>Behalten Sie den Überblick</h2>
+          <p>Laden Sie weitere Verträge hoch oder optimieren Sie bestehende Risiken</p>
+          <div className={styles.ctaLightButtons}>
+            <button
+              className={styles.ctaLightPrimary}
+              onClick={() => navigate('/contracts')}
+            >
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+              Vertrag hochladen
+            </button>
+            <button
+              className={styles.ctaLightSecondary}
+              onClick={() => navigate('/optimizer')}
+            >
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Verträge optimieren
+            </button>
+          </div>
         </div>
       </div>
 

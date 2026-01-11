@@ -1789,54 +1789,122 @@
   border-top: 1px solid #f1f5f9;
 }
 
-/* ===== BOTTOM CTA ===== */
+/* ===== BOTTOM CTA (Legacy Dark - nicht mehr verwendet) ===== */
 .bottomCTA {
-  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-  border-radius: 24px;
-  padding: 80px 60px;
+  display: none;
+}
+
+/* ===== BOTTOM CTA LIGHT ===== */
+.bottomCTALight {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 48px;
   text-align: center;
+  margin: 60px 0 40px 0;
+}
+
+.ctaLightContent {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.ctaLightIcon {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
   color: white;
-  margin: 80px 0 40px 0;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.25);
 }
 
-.ctaContent h2 {
-  font-size: 2.5rem;
+.ctaLightContent h2 {
+  font-size: 1.5rem;
   font-weight: 700;
-  margin: 0 0 16px 0;
-  letter-spacing: -0.01em;
+  color: #1f2937;
+  margin: 0 0 12px 0;
 }
 
-.ctaContent p {
-  font-size: 1.25rem;
-  color: #d1d5db;
-  margin: 0 0 40px 0;
-  font-weight: 400;
+.ctaLightContent p {
+  font-size: 1rem;
+  color: #6b7280;
+  margin: 0 0 32px 0;
+  line-height: 1.5;
 }
 
-.primaryCTAButton {
+.ctaLightButtons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.ctaLightPrimary {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
-  padding: 20px 40px;
+  gap: 8px;
+  padding: 14px 28px;
   background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   color: white;
   border: none;
-  border-radius: 16px;
-  font-size: 1.1rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
 }
 
-.primaryCTAButton:hover {
+.ctaLightPrimary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.5);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.35);
 }
 
-.primaryCTAButton svg {
-  width: 20px;
-  height: 20px;
+.ctaLightPrimary svg {
+  width: 18px;
+  height: 18px;
+}
+
+.ctaLightSecondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  background: white;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ctaLightSecondary:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+  transform: translateY(-1px);
+}
+
+.ctaLightSecondary svg {
+  width: 18px;
+  height: 18px;
+}
+
+@media (max-width: 480px) {
+  .ctaLightButtons {
+    flex-direction: column;
+  }
+
+  .ctaLightPrimary,
+  .ctaLightSecondary {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 /* ===== BUTTON STYLES ===== */
