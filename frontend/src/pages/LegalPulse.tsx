@@ -10,7 +10,8 @@ import LegalPulseSettings from "../components/LegalPulseSettings";
 import LegalPulseFeedWidget from "../components/LegalPulseFeedWidget";
 import { useLegalPulseFeed } from "../hooks/useLegalPulseFeed";
 import { WelcomePopup } from "../components/Tour";
-import { Activity } from "lucide-react";
+import OneClickCancelModal from "../components/OneClickCancelModal";
+import { Activity, Zap, XCircle, Bell, ArrowRight } from "lucide-react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   AreaChart, Area
@@ -96,6 +97,50 @@ interface RecommendationObject {
 type RiskInput = string | RiskObject;
 type RecommendationInput = string | RecommendationObject;
 
+// ML Forecast Types
+interface ForecastEvent {
+  type: string;
+  severity: string;
+  description: string;
+  probability: number;
+}
+
+interface ForecastMonth {
+  month: number;
+  date: string;
+  predictedRisk: number;
+  predictedHealth: number;
+  confidence: number;
+  events: ForecastEvent[];
+  method: 'ml' | 'heuristic';
+}
+
+interface ForecastData {
+  contractId: string;
+  currentState: {
+    impactScore: number;
+    factors: {
+      baseRisk: number;
+      ageFactor: number;
+      changeDensity: number;
+      lawChangeFactor: number;
+      trendFactor: number;
+    };
+    recommendation: string;
+  };
+  forecast: ForecastMonth[];
+  forecastMethod: 'ml' | 'heuristic';
+  generatedAt: string;
+  summary: {
+    avgRisk: number;
+    maxRisk: number;
+    criticalMonths: number;
+    trend: 'increasing' | 'stable' | 'decreasing';
+    highProbabilityEvents: number;
+    recommendation: string;
+  };
+}
+
 interface ExternalSearchResult {
   source: string;
   title: string;
@@ -104,6 +149,30 @@ interface ExternalSearchResult {
   documentId?: string;
   relevance?: number;
   url?: string;
+}
+
+// Team Collaboration Types
+interface Organization {
+  id: string;
+  name: string;
+  ownerId: string;
+  companyLogo?: string;
+  memberCount: number;
+  maxMembers: number;
+}
+
+interface TeamMember {
+  userId: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'member' | 'viewer';
+  avatar?: string;
+}
+
+interface Membership {
+  role: 'admin' | 'member' | 'viewer';
+  permissions: string[];
+  isOwner: boolean;
 }
 
 export default function LegalPulse() {
@@ -131,6 +200,21 @@ export default function LegalPulse() {
   const [externalSearchHasMore, setExternalSearchHasMore] = useState(false);
   const [externalSearchOffset, setExternalSearchOffset] = useState(0);
   const [heroMinimized, setHeroMinimized] = useState(false);
+
+  // ML Forecast State
+  const [forecastData, setForecastData] = useState<ForecastData | null>(null);
+  const [forecastLoading, setForecastLoading] = useState(false);
+  const [forecastError, setForecastError] = useState<string | null>(null);
+
+  // One-Click Cancel Modal State
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [contractToCancel, setContractToCancel] = useState<Contract | null>(null);
+
+  // Team Collaboration State
+  const [organization, setOrganization] = useState<Organization | null>(null);
+  const [membership, setMembership] = useState<Membership | null>(null);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [teamFilter, setTeamFilter] = useState<'my' | 'all' | string>('my'); // 'my', 'all', or specific userId
 
   // Filter and Search State
   const [searchQuery, setSearchQuery] = useState('');
@@ -188,6 +272,17 @@ export default function LegalPulse() {
         riskFilter: riskFilter,
         sort: sortBy
       });
+
+      // 👥 Team Filter: Add organization filter if applicable
+      if (organization && teamFilter !== 'my') {
+        if (teamFilter === 'all') {
+          params.set('organizationId', organization.id);
+        } else {
+          // Filter by specific team member
+          params.set('organizationId', organization.id);
+          params.set('userId', teamFilter);
+        }
+      }
 
       const url = `/api/contracts?${params}`;
       const contractsResponse = await fetch(url, { credentials: "include" });
@@ -253,6 +348,46 @@ export default function LegalPulse() {
     fetchUserPlan();
   }, []);
 
+  // 👥 Team Collaboration: Fetch Organization & Members for Premium Users
+  useEffect(() => {
+    const fetchOrganization = async () => {
+      if (!canAccessLegalPulse) return;
+
+      try {
+        const res = await fetch('/api/organizations/my-organization', {
+          credentials: 'include'
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+
+          if (data.success && data.organization) {
+            setOrganization(data.organization);
+            setMembership(data.membership);
+
+            // Fetch team members if user is admin
+            if (data.membership?.role === 'admin' || data.membership?.isOwner) {
+              const membersRes = await fetch(`/api/organizations/${data.organization.id}/members`, {
+                credentials: 'include'
+              });
+
+              if (membersRes.ok) {
+                const membersData = await membersRes.json();
+                if (membersData.success) {
+                  setTeamMembers(membersData.members || []);
+                }
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching organization:', err);
+      }
+    };
+
+    fetchOrganization();
+  }, [canAccessLegalPulse]);
+
   // Hero Auto-Minimize nach erstem Besuch
   // Erstes Mal: Hero offen, danach: minimiert mit "Mehr anzeigen"
   useEffect(() => {
@@ -283,7 +418,7 @@ export default function LegalPulse() {
     }, searchQuery ? 500 : 0); // 500ms Debounce für Search
 
     return () => clearTimeout(debounceTimer);
-  }, [searchQuery, riskFilter, sortBy]);
+  }, [searchQuery, riskFilter, sortBy, teamFilter]);
 
   // ✅ IntersectionObserver für Infinite Scroll
   useEffect(() => {
@@ -552,6 +687,42 @@ export default function LegalPulse() {
         : [...prev, source]
     );
   };
+
+  // ML Forecast API Call
+  const fetchForecast = async (contractId: string) => {
+    setForecastLoading(true);
+    setForecastError(null);
+    try {
+      const response = await fetch(`/api/predictive/forecast/${contractId}?months=6`, {
+        credentials: 'include'
+      });
+      const data = await response.json();
+
+      if (data.success && data.forecast) {
+        setForecastData(data.forecast);
+      } else {
+        setForecastError(data.message || 'Prognose konnte nicht geladen werden');
+      }
+    } catch (error) {
+      console.error('[LEGAL-PULSE] Forecast fetch error:', error);
+      setForecastError('Verbindungsfehler bei der Prognose');
+    } finally {
+      setForecastLoading(false);
+    }
+  };
+
+  // Fetch forecast when switching to forecast tab
+  useEffect(() => {
+    if (activeTab === 'forecast' && selectedContract && !forecastData && !forecastLoading) {
+      fetchForecast(selectedContract._id);
+    }
+  }, [activeTab, selectedContract?._id]);
+
+  // Reset forecast when contract changes
+  useEffect(() => {
+    setForecastData(null);
+    setForecastError(null);
+  }, [selectedContract?._id]);
 
   // Legal Pulse → Optimizer Handoff
   const handleStartOptimizer = async () => {
@@ -929,6 +1100,46 @@ export default function LegalPulse() {
           </button>
         </div>
 
+        {/* Quick Actions Bar - Shows for high-risk contracts */}
+        {selectedContract && selectedContract.legalPulse?.riskScore && selectedContract.legalPulse.riskScore > 60 && (
+          <div className={styles.quickActionsBar}>
+            <div className={styles.quickActionsHeader}>
+              <span className={styles.quickActionsIcon}>⚡</span>
+              <div>
+                <h4>Empfohlene Aktionen</h4>
+                <p>Dieser Vertrag hat einen hohen Risiko-Score ({selectedContract.legalPulse.riskScore}/100)</p>
+              </div>
+            </div>
+            <div className={styles.quickActionsButtons}>
+              <button
+                className={styles.quickActionBtn}
+                onClick={() => navigate(`/optimizer?contractId=${selectedContract._id}`)}
+              >
+                <Zap size={18} />
+                Vertrag optimieren
+                <ArrowRight size={14} />
+              </button>
+              <button
+                className={`${styles.quickActionBtn} ${styles.cancelBtn}`}
+                onClick={() => {
+                  setContractToCancel(selectedContract);
+                  setShowCancelModal(true);
+                }}
+              >
+                <XCircle size={18} />
+                Kündigung vorbereiten
+              </button>
+              <button
+                className={styles.quickActionBtn}
+                onClick={() => navigate(`/calendar?contractId=${selectedContract._id}`)}
+              >
+                <Bell size={18} />
+                Frist-Reminder
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Tab Content */}
         <div className={styles.tabContent}>
           {activeTab === 'overview' && (
@@ -1130,88 +1341,205 @@ export default function LegalPulse() {
                 <p>KI-basierte Vorhersagen für Risiken und Vertragsentwicklung</p>
               </div>
 
-              {/* Forecast Overview Cards */}
-              <div className={styles.forecastCards}>
-                <div className={styles.forecastCard}>
-                  <div className={styles.cardIcon}>🎯</div>
-                  <div className={styles.cardContent}>
-                    <h4>Risiko-Trend (6 Monate)</h4>
-                    <div className={styles.cardValue} style={{ color: '#10b981' }}>↓ Sinkend</div>
-                    <p className={styles.cardDescription}>
-                      Prognose: Risiko-Score wird voraussichtlich um 12% sinken
-                    </p>
-                  </div>
+              {/* Loading State */}
+              {forecastLoading && (
+                <div className={styles.forecastLoading}>
+                  <div className={styles.loadingSpinner}></div>
+                  <p>Prognose wird berechnet...</p>
                 </div>
-                <div className={styles.forecastCard}>
-                  <div className={styles.cardIcon}>⚠️</div>
-                  <div className={styles.cardContent}>
-                    <h4>Nächstes Risiko-Event</h4>
-                    <div className={styles.cardValue}>3-4 Monate</div>
-                    <p className={styles.cardDescription}>
-                      Wahrscheinlich durch Gesetzesänderung im Datenschutz
-                    </p>
-                  </div>
-                </div>
-                <div className={styles.forecastCard}>
-                  <div className={styles.cardIcon}>📊</div>
-                  <div className={styles.cardContent}>
-                    <h4>Modell-Konfidenz</h4>
-                    <div className={styles.cardValue}>72%</div>
-                    <p className={styles.cardDescription}>
-                      Prognose basiert auf {selectedContract?._id ? '127' : '0'} ähnlichen Verträgen
-                    </p>
-                  </div>
-                </div>
-              </div>
+              )}
 
-              {/* ML Status Info */}
-              <div className={styles.mlStatus}>
-                <div className={styles.infoBox}>
-                  <div className={styles.infoIcon}>ℹ️</div>
-                  <div className={styles.infoContent}>
-                    <h4>Machine Learning Status</h4>
-                    <p>
-                      Das ML-Modell benötigt mindestens 50 Verträge für präzise Prognosen.
-                      Derzeit sind <strong>noch nicht genug Daten</strong> für spezifische Vorhersagen vorhanden.
-                    </p>
-                    <p className={styles.infoNote}>
-                      Die oben gezeigten Werte sind Beispiel-Prognosen basierend auf ähnlichen Vertragstypen.
-                    </p>
+              {/* Error State */}
+              {forecastError && !forecastLoading && (
+                <div className={styles.forecastError}>
+                  <div className={styles.infoBox} style={{ borderColor: '#ef4444', background: '#fef2f2' }}>
+                    <div className={styles.infoIcon}>⚠️</div>
+                    <div className={styles.infoContent}>
+                      <h4>Prognose nicht verfügbar</h4>
+                      <p>{forecastError}</p>
+                      <button
+                        className={styles.retryButton}
+                        onClick={() => selectedContract && fetchForecast(selectedContract._id)}
+                      >
+                        Erneut versuchen
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
-              {/* Risk Timeline Placeholder */}
-              <div className={styles.forecastSection}>
-                <h4>📅 Risiko-Timeline (nächste 12 Monate)</h4>
-                <div className={styles.timelinePlaceholder}>
-                  <div className={styles.timelineMonth}>
-                    <span className={styles.monthLabel}>Monat 1-3</span>
-                    <div className={styles.riskIndicator} style={{ backgroundColor: '#10b981' }}>
-                      <span>Niedriges Risiko</span>
+              {/* Forecast Data */}
+              {forecastData && !forecastLoading && (
+                <>
+                  {/* Forecast Overview Cards */}
+                  <div className={styles.forecastCards}>
+                    <div className={styles.forecastCard}>
+                      <div className={styles.cardIcon}>🎯</div>
+                      <div className={styles.cardContent}>
+                        <h4>Risiko-Trend (6 Monate)</h4>
+                        <div className={styles.cardValue} style={{
+                          color: forecastData.summary.trend === 'increasing' ? '#ef4444' :
+                                 forecastData.summary.trend === 'stable' ? '#f59e0b' : '#10b981'
+                        }}>
+                          {forecastData.summary.trend === 'increasing' ? '↑ Steigend' :
+                           forecastData.summary.trend === 'stable' ? '→ Stabil' : '↓ Sinkend'}
+                        </div>
+                        <p className={styles.cardDescription}>
+                          Durchschnittliches Risiko: {forecastData.summary.avgRisk}/100
+                        </p>
+                      </div>
+                    </div>
+                    <div className={styles.forecastCard}>
+                      <div className={styles.cardIcon}>⚠️</div>
+                      <div className={styles.cardContent}>
+                        <h4>Kritische Monate</h4>
+                        <div className={styles.cardValue} style={{
+                          color: forecastData.summary.criticalMonths > 2 ? '#ef4444' :
+                                 forecastData.summary.criticalMonths > 0 ? '#f59e0b' : '#10b981'
+                        }}>
+                          {forecastData.summary.criticalMonths} von 6
+                        </div>
+                        <p className={styles.cardDescription}>
+                          Maximales Risiko: {forecastData.summary.maxRisk}/100
+                        </p>
+                      </div>
+                    </div>
+                    <div className={styles.forecastCard}>
+                      <div className={styles.cardIcon}>📊</div>
+                      <div className={styles.cardContent}>
+                        <h4>Modell-Typ</h4>
+                        <div className={styles.cardValue}>
+                          {forecastData.forecastMethod === 'ml' ? '🧠 Machine Learning' : '📈 Heuristik'}
+                        </div>
+                        <p className={styles.cardDescription}>
+                          Konfidenz: {forecastData.forecast[0]?.confidence
+                            ? `${Math.round(forecastData.forecast[0].confidence * 100)}%`
+                            : 'N/A'}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                  <div className={styles.timelineMonth}>
-                    <span className={styles.monthLabel}>Monat 4-6</span>
-                    <div className={styles.riskIndicator} style={{ backgroundColor: '#f59e0b' }}>
-                      <span>Mittleres Risiko</span>
-                      <small>DSGVO-Anpassung erwartet</small>
+
+                  {/* Recommendation Box */}
+                  <div className={styles.mlStatus}>
+                    <div className={styles.infoBox}>
+                      <div className={styles.infoIcon}>💡</div>
+                      <div className={styles.infoContent}>
+                        <h4>Empfehlung</h4>
+                        <p>{forecastData.summary.recommendation}</p>
+                        {forecastData.summary.highProbabilityEvents > 0 && (
+                          <p className={styles.infoNote}>
+                            {forecastData.summary.highProbabilityEvents} wahrscheinliche Events in den nächsten 6 Monaten erwartet.
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <div className={styles.timelineMonth}>
-                    <span className={styles.monthLabel}>Monat 7-9</span>
-                    <div className={styles.riskIndicator} style={{ backgroundColor: '#10b981' }}>
-                      <span>Niedriges Risiko</span>
+
+                  {/* Forecast Chart */}
+                  <div className={styles.forecastSection}>
+                    <h4>📅 6-Monats-Prognose</h4>
+                    <div className={styles.forecastChart}>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <AreaChart data={forecastData.forecast}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                          <XAxis
+                            dataKey="month"
+                            stroke="#64748b"
+                            fontSize={12}
+                            tickFormatter={(month) => `Monat ${month}`}
+                          />
+                          <YAxis stroke="#64748b" fontSize={12} domain={[0, 100]} />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: '#ffffff',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '8px',
+                              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                            }}
+                            formatter={(value: number, name: string) => [
+                              `${Math.round(value)}/100`,
+                              name === 'predictedRisk' ? 'Risiko' : 'Gesundheit'
+                            ]}
+                            labelFormatter={(month) => `Monat ${month}`}
+                          />
+                          <Area
+                            type="monotone"
+                            dataKey="predictedRisk"
+                            stroke="#ef4444"
+                            fill="#fef2f2"
+                            strokeWidth={2}
+                            name="Risiko"
+                          />
+                          <Area
+                            type="monotone"
+                            dataKey="predictedHealth"
+                            stroke="#10b981"
+                            fill="#ecfdf5"
+                            strokeWidth={2}
+                            name="Gesundheit"
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
                     </div>
                   </div>
-                  <div className={styles.timelineMonth}>
-                    <span className={styles.monthLabel}>Monat 10-12</span>
-                    <div className={styles.riskIndicator} style={{ backgroundColor: '#10b981' }}>
-                      <span>Niedriges Risiko</span>
+
+                  {/* Predicted Events Timeline */}
+                  {forecastData.forecast.some(f => f.events && f.events.length > 0) && (
+                    <div className={styles.forecastSection}>
+                      <h4>🔮 Vorhergesagte Events</h4>
+                      <div className={styles.eventsTimeline}>
+                        {forecastData.forecast.map((month, idx) => (
+                          month.events && month.events.length > 0 && (
+                            <div key={idx} className={styles.eventMonth}>
+                              <div className={styles.eventMonthHeader}>
+                                <span className={styles.monthLabel}>Monat {month.month}</span>
+                                <span className={styles.eventDate}>
+                                  {new Date(month.date).toLocaleDateString('de-DE', { month: 'short', year: 'numeric' })}
+                                </span>
+                              </div>
+                              {month.events.map((event, eventIdx) => (
+                                <div
+                                  key={eventIdx}
+                                  className={styles.eventItem}
+                                  style={{
+                                    borderLeftColor: event.severity === 'critical' ? '#ef4444' :
+                                                     event.severity === 'high' ? '#f59e0b' :
+                                                     event.severity === 'medium' ? '#3b82f6' : '#10b981'
+                                  }}
+                                >
+                                  <div className={styles.eventType}>
+                                    {event.type === 'law_change' ? '⚖️' :
+                                     event.type === 'expiry' ? '📅' :
+                                     event.type === 'deadline' ? '⏰' : '📊'} {event.type}
+                                  </div>
+                                  <div className={styles.eventDescription}>{event.description}</div>
+                                  <div className={styles.eventProbability}>
+                                    Wahrscheinlichkeit: {Math.round(event.probability * 100)}%
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* No contract selected */}
+              {!selectedContract && !forecastLoading && (
+                <div className={styles.mlStatus}>
+                  <div className={styles.infoBox}>
+                    <div className={styles.infoIcon}>ℹ️</div>
+                    <div className={styles.infoContent}>
+                      <h4>Kein Vertrag ausgewählt</h4>
+                      <p>Wählen Sie einen Vertrag aus der Liste, um die ML-Prognose anzuzeigen.</p>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </div>
@@ -1444,9 +1772,34 @@ export default function LegalPulse() {
         {/* Header with Title (left) and Action Buttons (right) in ONE row */}
         <div className={styles.sectionHeaderWithActions}>
           <h2 className={styles.sectionTitle}>
-            📋 Ihre Pulse-Analysen
+            📋 {teamFilter === 'my' ? 'Ihre' : teamFilter === 'all' ? 'Team' : ''} Pulse-Analysen
             <span className={styles.contractCount}>({pagination.total} Verträge)</span>
           </h2>
+
+          {/* 👥 Team Filter Widget - Only for Premium with Organization */}
+          {organization && canAccessLegalPulse && (
+            <div className={styles.teamWidget}>
+              <span className={styles.teamLabel}>👥</span>
+              <select
+                className={styles.teamSelect}
+                value={teamFilter}
+                onChange={(e) => setTeamFilter(e.target.value)}
+              >
+                <option value="my">Meine Verträge</option>
+                <option value="all">Team ({organization.name})</option>
+                {teamMembers.length > 0 && (
+                  <>
+                    <option disabled>──────────</option>
+                    {teamMembers.map((member) => (
+                      <option key={member.userId} value={member.userId}>
+                        {member.name || member.email}
+                      </option>
+                    ))}
+                  </>
+                )}
+              </select>
+            </div>
+          )}
 
           {/* Dashboard Actions - All 4 Buttons */}
           <div className={styles.dashboardActions}>
@@ -1922,6 +2275,31 @@ export default function LegalPulse() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* One-Click Cancel Modal */}
+      {showCancelModal && contractToCancel && (
+        <OneClickCancelModal
+          contract={{
+            _id: contractToCancel._id,
+            name: contractToCancel.name,
+            provider: contractToCancel.provider,
+            contractNumber: contractToCancel.contractNumber,
+            customerNumber: contractToCancel.customerNumber,
+            expiryDate: contractToCancel.expiryDate,
+            amount: contractToCancel.amount
+          }}
+          show={showCancelModal}
+          onClose={() => {
+            setShowCancelModal(false);
+            setContractToCancel(null);
+          }}
+          onSuccess={() => {
+            fetchContracts();
+            setShowCancelModal(false);
+            setContractToCancel(null);
+          }}
+        />
       )}
     </div>
   );

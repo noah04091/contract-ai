@@ -528,3 +528,137 @@
     top: 16px;
   }
 }
+
+/* ===== DIGEST MODE SELECTOR (NEW) ===== */
+.digestModeSelector {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.digestModeBtn {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  position: relative;
+}
+
+.digestModeBtn:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.digestModeBtn.active {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-color: #3b82f6;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+}
+
+.digestModeBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.digestIcon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.digestBtnContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.digestBtnContent strong {
+  font-size: 0.95rem;
+  color: #1f2937;
+}
+
+.digestBtnContent span {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.digestModeBtn.active .digestBtnContent strong {
+  color: #1d4ed8;
+}
+
+.digestModeBtn.recommended {
+  border-style: dashed;
+}
+
+.digestModeBtn.recommended.active {
+  border-style: solid;
+}
+
+.recommendedBadge {
+  position: absolute;
+  top: -8px;
+  right: 12px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Next Email Preview */
+.nextEmailPreview {
+  margin-top: 20px;
+  padding: 16px 20px;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.previewIcon {
+  font-size: 1.3rem;
+}
+
+.previewContent {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.previewContent strong {
+  font-size: 0.85rem;
+  color: #166534;
+}
+
+.previewContent span {
+  font-size: 0.9rem;
+  color: #15803d;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .digestModeSelector {
+    gap: 10px;
+  }
+
+  .digestModeBtn {
+    padding: 14px 16px;
+  }
+
+  .recommendedBadge {
+    position: static;
+    margin-left: auto;
+  }
+}
