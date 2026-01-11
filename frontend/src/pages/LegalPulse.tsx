@@ -151,8 +151,23 @@ export default function LegalPulse() {
   // Optimizer Integration
   const [isStartingOptimizer, setIsStartingOptimizer] = useState(false);
 
-  // Feed Hook
-  const { events: feedEvents, isConnected: feedConnected, clearEvents } = useLegalPulseFeed();
+  // 🔐 User Subscription Check für Premium-Gating - MUSS vor Feed Hook sein!
+  const [userPlan, setUserPlan] = useState<string>('free');
+  const canAccessLegalPulse = ['premium', 'business', 'enterprise', 'legendary'].includes(userPlan.toLowerCase());
+
+  // Feed Hook - 🔐 NUR für Premium-User (SSE-Verbindung ist teuer)
+  const feedHook = useLegalPulseFeed();
+  // Für Free-User: leere Events, nicht verbunden
+  const feedEvents = canAccessLegalPulse ? feedHook.events : [];
+  const feedConnected = canAccessLegalPulse ? feedHook.isConnected : false;
+  const clearEvents = canAccessLegalPulse ? feedHook.clearEvents : () => {};
+
+  // 🔐 SSE-Verbindung trennen für Free-User
+  useEffect(() => {
+    if (!canAccessLegalPulse && feedHook.disconnect) {
+      feedHook.disconnect();
+    }
+  }, [canAccessLegalPulse]);
 
   // ✅ REMOVED: Mock data logic - now using real data only
   // Contracts without Legal Pulse data will show "Analysis Pending" state in UI
@@ -216,10 +231,7 @@ export default function LegalPulse() {
     fetchContracts();
   }, [contractId]);
 
-  // 🔐 User Subscription Check für Premium-Gating
-  const [userPlan, setUserPlan] = useState<string>('free');
-  const canAccessLegalPulse = ['premium', 'business', 'enterprise', 'legendary'].includes(userPlan.toLowerCase());
-
+  // 🔐 User Plan bei Mount fetchen
   useEffect(() => {
     const fetchUserPlan = async () => {
       try {
@@ -607,7 +619,73 @@ export default function LegalPulse() {
     const isAnalysisLoading = !selectedContract.legalPulse ||
                              (selectedContract.legalPulse.riskScore === null &&
                               !selectedContract.legalPulse.lastChecked);
-    
+
+    // 🔐 Premium-Check für Detail-Ansicht
+    if (!canAccessLegalPulse) {
+      return (
+        <div className={styles.legalPulseContainer}>
+          <Helmet>
+            <title>Legal Pulse: {selectedContract.name} – Contract AI</title>
+          </Helmet>
+
+          <div className={styles.premiumGate}>
+            <button
+              className={styles.backButton}
+              onClick={() => navigate('/legalpulse')}
+              style={{ marginBottom: '2rem' }}
+            >
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19 12H5" stroke="currentColor" strokeWidth="2"/>
+                <path d="M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2"/>
+              </svg>
+              Zurück zur Übersicht
+            </button>
+
+            <div className={styles.premiumGateCard}>
+              <div className={styles.premiumGateIcon}>
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
+                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor"/>
+                </svg>
+              </div>
+              <h2>Premium-Feature</h2>
+              <h3>{selectedContract.name}</h3>
+              <p>Die detaillierte Legal Pulse Analyse mit Risiko-Score, Empfehlungen und Verlaufsdaten ist nur für Business- und Enterprise-Kunden verfügbar.</p>
+
+              <div className={styles.premiumGateFeatures}>
+                <div className={styles.premiumGateFeature}>
+                  <span className={styles.checkIcon}>✓</span>
+                  <span>Detaillierter Risiko-Score (0-100)</span>
+                </div>
+                <div className={styles.premiumGateFeature}>
+                  <span className={styles.checkIcon}>✓</span>
+                  <span>Top-Risiken mit Lösungsvorschlägen</span>
+                </div>
+                <div className={styles.premiumGateFeature}>
+                  <span className={styles.checkIcon}>✓</span>
+                  <span>Handlungsempfehlungen</span>
+                </div>
+                <div className={styles.premiumGateFeature}>
+                  <span className={styles.checkIcon}>✓</span>
+                  <span>Score-Verlauf & Trends</span>
+                </div>
+                <div className={styles.premiumGateFeature}>
+                  <span className={styles.checkIcon}>✓</span>
+                  <span>Echtzeit-Benachrichtigungen</span>
+                </div>
+              </div>
+
+              <Link to="/subscribe" className={styles.premiumGateButton}>
+                Jetzt upgraden
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="20" height="20">
+                  <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </Link>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className={styles.legalPulseContainer}>
         <Helmet>
@@ -1516,6 +1594,7 @@ export default function LegalPulse() {
               setRiskFilter('all');
               setSortBy('date');
             }}
+            canAccessLegalPulse={canAccessLegalPulse}
           />
         ) : (
           <div className={styles.emptyState}>
