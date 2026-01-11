@@ -5098,7 +5098,9 @@ export default function Contracts() {
                     </div>
                     <ul className={styles.previewList}>
                       {previewContract.risiken.slice(0, 3).map((risk, i) => (
-                        <li key={i} className={styles.previewRisk}>{risk}</li>
+                        <li key={i} className={styles.previewRisk}>
+                          {typeof risk === 'string' ? risk : ((risk as { title?: string; description?: string }).title || (risk as { title?: string; description?: string }).description || 'Unbekanntes Risiko')}
+                        </li>
                       ))}
                       {previewContract.risiken.length > 3 && (
                         <li className={styles.previewMore}>+{previewContract.risiken.length - 3} weitere Risiken</li>

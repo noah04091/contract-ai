@@ -1026,3 +1026,241 @@
     padding: 1.25rem;
   }
 }
+
+/* ===== INLINE ANALYSIS PANEL ===== */
+
+/* Container mit Panel aktiv: 2-Spalten-Layout */
+.overviewContainer.withInlinePanel {
+  flex-direction: row;
+}
+
+.overviewContainer.withInlinePanel .stickyHeader,
+.overviewContainer.withInlinePanel .scrollContent {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Inline Analysis Panel - Rechte Seite */
+.inlineAnalysisPanel {
+  width: 480px;
+  min-width: 400px;
+  max-width: 50%;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-left: 1px solid #e2e8f0;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.08);
+  animation: slideInRight 0.3s ease-out;
+  overflow: hidden;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.inlineHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.inlineHeaderLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.inlineClauseNumber {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #3b82f6;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.inlineTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.inlineHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.inlineExpandBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  color: #3b82f6;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.inlineExpandBtn:hover {
+  background: #dbeafe;
+}
+
+.inlineCloseBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 8px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.inlineCloseBtn:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.inlineClauseText {
+  padding: 1rem 1.25rem;
+  background: #fafbfc;
+  border-bottom: 1px solid #e2e8f0;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.inlineClauseText p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #374151;
+  line-height: 1.6;
+}
+
+.inlineAnalysisContent {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+  min-height: 0;
+}
+
+.inlineLoading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  gap: 1rem;
+}
+
+.inlineSpinner {
+  animation: spin 1s linear infinite;
+  color: #3b82f6;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.inlineLoading span {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.inlineEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  gap: 0.75rem;
+  color: #94a3b8;
+}
+
+.inlineEmpty span {
+  font-size: 0.875rem;
+}
+
+/* Selected Card/Row Styles */
+.clauseCardSelected {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2), 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+
+.compactRowSelected {
+  border-color: #3b82f6 !important;
+  background: #eff6ff !important;
+}
+
+/* Mobile: Inline-Panel als Modal */
+@media (max-width: 1024px) {
+  .overviewContainer.withInlinePanel {
+    flex-direction: column;
+    position: relative;
+  }
+
+  .inlineAnalysisPanel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: 100%;
+    min-width: unset;
+    max-height: 70vh;
+    border-radius: 20px 20px 0 0;
+    border-left: none;
+    border-top: 1px solid #e2e8f0;
+    box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    animation: slideUpMobile 0.3s ease-out;
+  }
+
+  @keyframes slideUpMobile {
+    from {
+      opacity: 0;
+      transform: translateY(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .inlineHeader {
+    border-radius: 20px 20px 0 0;
+    padding: 1rem;
+  }
+
+  /* Drag Handle */
+  .inlineHeader::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    background: #cbd5e1;
+    border-radius: 2px;
+  }
+}
