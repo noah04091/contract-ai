@@ -220,18 +220,23 @@ export default function ContractDetailsV2() {
   // Fetch PDF URL for inline viewer
   useEffect(() => {
     const fetchPdfUrl = async () => {
-      if (!contract?.s3Key) return;
+      if (!contract?._id || !contract?.s3Key) return;
 
       setPdfLoading(true);
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch(`/api/s3/download-url?key=${encodeURIComponent(contract.s3Key)}`, {
-          headers: { Authorization: `Bearer ${token}` }
+        // Use the same API endpoint as NewContractDetailsModal
+        const res = await fetch(`/api/s3/view?contractId=${contract._id}&type=original`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
         });
         if (res.ok) {
           const data = await res.json();
-          if (data.url) {
-            setPdfUrl(data.url);
+          if (data.fileUrl || data.url) {
+            setPdfUrl(data.fileUrl || data.url);
           }
         }
       } catch (error) {
@@ -242,7 +247,7 @@ export default function ContractDetailsV2() {
     };
 
     fetchPdfUrl();
-  }, [contract?.s3Key]);
+  }, [contract?._id, contract?.s3Key]);
 
   // PDF Navigation Handlers
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
