@@ -99,13 +99,14 @@ export default function LegalPulseSettings({ onSaveSuccess, compact = false }: L
         nextDate.setHours(8, 0, 0, 0);
         return `Täglich um 8:00 Uhr (Nächste: ${nextDate.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })})`;
       case 'weekly':
-      default:
+      default: {
         // Next Wednesday
         nextDate = new Date(now);
         const daysUntilWednesday = (3 - nextDate.getDay() + 7) % 7 || 7;
         nextDate.setDate(nextDate.getDate() + daysUntilWednesday);
         nextDate.setHours(9, 0, 0, 0);
         return `Jeden Mittwoch um 9:00 Uhr (Nächste: ${nextDate.toLocaleDateString('de-DE', { day: 'numeric', month: 'long' })})`;
+      }
     }
   };
 
