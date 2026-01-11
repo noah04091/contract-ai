@@ -879,7 +879,8 @@ class ClauseParser {
     }));
 
     // FIX: Intelligentes Batching - nicht mitten im § trennen
-    const maxBlocksPerCall = 50;
+    // REDUZIERT von 50 auf 25 um Token-Limit nicht zu überschreiten
+    const maxBlocksPerCall = 25;
     const overlapBlocks = 5; // Overlap für Kontext
     const allClauses = [];
     const processedClauseIds = new Set(); // Deduplizierung bei Overlap
@@ -894,7 +895,8 @@ class ClauseParser {
       }
 
       // Suche rückwärts nach einem strukturellen Start (§, Artikel, etc.)
-      for (let i = idealEnd; i > startIdx + 30; i--) {
+      // Mindestens 15 Blöcke pro Batch (halbe Batch-Größe)
+      for (let i = idealEnd; i > startIdx + 15; i--) {
         if (blocksForGPT[i].isStructuralStart) {
           console.log(`📍 Batch-Trennung bei Block ${i} (struktureller Start)`);
           return i;
@@ -956,7 +958,7 @@ Antworte NUR mit einem JSON-Array:
             }
           ],
           temperature: 0.1, // Niedrig für konsistente Ergebnisse
-          max_tokens: 4000,
+          max_tokens: 16000, // ERHÖHT von 4000 - GPT-4o-mini unterstützt bis 16k
           response_format: { type: 'json_object' }
         });
 
