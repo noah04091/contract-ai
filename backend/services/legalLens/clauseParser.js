@@ -492,6 +492,10 @@ class ClauseParser {
    * Bewertet das Risiko einer Klausel basierend auf Keywords
    */
   assessClauseRisk(text) {
+    // FIX: Null-Check - GPT liefert manchmal null/undefined
+    if (!text || typeof text !== 'string') {
+      return { level: 'low', score: 0, keywords: [] };
+    }
     const lowerText = text.toLowerCase();
     let score = 0;
     const foundKeywords = [];
@@ -675,7 +679,13 @@ class ClauseParser {
     console.log(`✅ GPT hat ${gptClauses.length} Klauseln identifiziert`);
 
     // ===== Nachbearbeitung =====
-    const clauses = gptClauses.map((clause, index) => {
+    // FIX: Filtere ungültige Klauseln (null/undefined/leerer Text)
+    const validClauses = gptClauses.filter(clause =>
+      clause && clause.text && typeof clause.text === 'string' && clause.text.trim().length > 0
+    );
+    console.log(`📋 ${validClauses.length} gültige Klauseln nach Filterung`);
+
+    const clauses = validClauses.map((clause, index) => {
       // Risiko-Vorbewertung
       let riskAssessment = { level: 'low', score: 0, keywords: [] };
       if (detectRisk) {
