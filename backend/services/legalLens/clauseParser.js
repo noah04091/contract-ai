@@ -818,6 +818,9 @@ class ClauseParser {
   /**
    * STUFE 1c: Text in grobe Blöcke aufteilen
    * Jeder Block behält seine Position für Traceability
+   *
+   * FIX: Kurze Blöcke werden NICHT verworfen, sondern markiert!
+   * GPT entscheidet, ob sie relevant sind (z.B. "Gerichtsstand: München.")
    */
   createTextBlocks(text) {
     const blocks = [];
@@ -825,19 +828,27 @@ class ClauseParser {
     // Splitte nach Doppel-Zeilenumbrüchen (Absätze)
     const paragraphs = text.split(/\n\n+/);
     let currentPosition = 0;
+    let blockIndex = 0;
 
     for (let i = 0; i < paragraphs.length; i++) {
       const paragraph = paragraphs[i].trim();
 
-      if (paragraph.length > 10) { // Mindestlänge für sinnvollen Block
+      // FIX: Behalte ALLE Blöcke, auch kurze - markiere sie nur
+      // Nur komplett leere oder rein aus Whitespace bestehende überspringen
+      if (paragraph.length > 0) {
         blocks.push({
-          id: `block_${i + 1}`,
+          id: `block_${blockIndex + 1}`,
           text: paragraph,
           startPosition: currentPosition,
           endPosition: currentPosition + paragraph.length,
           lineCount: paragraph.split('\n').length,
-          wordCount: paragraph.split(/\s+/).length
+          wordCount: paragraph.split(/\s+/).length,
+          // WICHTIG: Markiere kurze Blöcke, aber verwerfe sie nicht!
+          short: paragraph.length < 20,
+          // Erkenne strukturelle Marker (§, Artikel, etc.)
+          isStructuralStart: /^(§\s*\d|Artikel\s*\d|Art\.\s*\d|\d+\.\s+[A-ZÄÖÜ]|[IVXLC]+\.\s)/i.test(paragraph)
         });
+        blockIndex++;
       }
 
       currentPosition += paragraph.length + 2; // +2 für \n\n
@@ -849,24 +860,58 @@ class ClauseParser {
   /**
    * STUFE 2: GPT-basierte semantische Segmentierung
    * GPT entscheidet mit "menschlicher Intuition" was zusammengehört
+   *
+   * FIX: Intelligentes Batching mit Overlap
+   * - Paragraphen werden nicht mitten im § zerrissen
+   * - 5 Blöcke Overlap zwischen Batches für Kontext
    */
   async gptSegmentClauses(blocks, contractName = '') {
     if (blocks.length === 0) {
       return [];
     }
 
-    // Bereite Blöcke für GPT vor (mit IDs für Traceability)
+    // Bereite Blöcke für GPT vor (mit IDs und Metadaten für Traceability)
     const blocksForGPT = blocks.map(b => ({
       id: b.id,
-      text: b.text.substring(0, 1500) // Limit pro Block
+      text: b.text.substring(0, 1500), // Limit pro Block
+      short: b.short || false,
+      isStructuralStart: b.isStructuralStart || false
     }));
 
-    // Limitiere auf ~50 Blöcke für API-Call (sonst splitten)
+    // FIX: Intelligentes Batching - nicht mitten im § trennen
     const maxBlocksPerCall = 50;
+    const overlapBlocks = 5; // Overlap für Kontext
     const allClauses = [];
+    const processedClauseIds = new Set(); // Deduplizierung bei Overlap
 
-    for (let i = 0; i < blocksForGPT.length; i += maxBlocksPerCall) {
-      const batchBlocks = blocksForGPT.slice(i, i + maxBlocksPerCall);
+    // Finde intelligente Trennpunkte (bei strukturellen Starts)
+    const findBatchEnd = (startIdx) => {
+      const idealEnd = Math.min(startIdx + maxBlocksPerCall, blocksForGPT.length);
+
+      // Wenn wir am Ende sind, nimm alles
+      if (idealEnd >= blocksForGPT.length) {
+        return blocksForGPT.length;
+      }
+
+      // Suche rückwärts nach einem strukturellen Start (§, Artikel, etc.)
+      for (let i = idealEnd; i > startIdx + 30; i--) {
+        if (blocksForGPT[i].isStructuralStart) {
+          console.log(`📍 Batch-Trennung bei Block ${i} (struktureller Start)`);
+          return i;
+        }
+      }
+
+      // Kein struktureller Start gefunden - nimm idealEnd
+      return idealEnd;
+    };
+
+    let i = 0;
+    let batchNum = 0;
+    while (i < blocksForGPT.length) {
+      const batchEnd = findBatchEnd(i);
+      const batchBlocks = blocksForGPT.slice(i, batchEnd);
+      batchNum++;
+      console.log(`📦 Batch ${batchNum}: Blöcke ${i + 1} bis ${batchEnd} (${batchBlocks.length} Blöcke)`);
 
       const prompt = `Du bist ein erfahrener Rechtsexperte. Analysiere die folgenden Text-Blöcke aus einem Vertrag und gruppiere sie zu sinnvollen, eigenständigen Klauseln.
 
@@ -936,22 +981,37 @@ Antworte NUR mit einem JSON-Array:
               clause.endPosition = sourceBlocks[sourceBlocks.length - 1].endPosition;
               clause.originalText = sourceBlocks.map(b => b.text).join('\n\n');
             }
+
+            // Generiere eindeutige ID basierend auf sourceBlockIds
+            const clauseKey = (clause.sourceBlockIds || []).sort().join('_') || `clause_${allClauses.length}`;
+            clause.id = clauseKey;
           }
 
-          allClauses.push(...clausesArray);
+          // FIX: Deduplizierung bei Overlap - nur neue Klauseln hinzufügen
+          for (const clause of clausesArray) {
+            if (!processedClauseIds.has(clause.id)) {
+              processedClauseIds.add(clause.id);
+              allClauses.push(clause);
+            }
+          }
         } catch (parseError) {
           console.error('⚠️ GPT JSON Parse Error:', parseError.message);
           console.log('Raw response:', content.substring(0, 500));
 
           // Fallback: Behandle jeden Block als eigene Klausel
           for (const block of batchBlocks) {
-            allClauses.push({
-              title: null,
-              text: block.text,
-              type: 'paragraph',
-              sourceBlockIds: [block.id],
-              confidence: 0.5
-            });
+            const clauseId = `fallback_${block.id}`;
+            if (!processedClauseIds.has(clauseId)) {
+              processedClauseIds.add(clauseId);
+              allClauses.push({
+                id: clauseId,
+                title: null,
+                text: block.text,
+                type: 'paragraph',
+                sourceBlockIds: [block.id],
+                confidence: 0.5
+              });
+            }
           }
         }
       } catch (apiError) {
@@ -960,15 +1020,23 @@ Antworte NUR mit einem JSON-Array:
         // Fallback: Verwende regelbasierten Parser
         console.log('⚠️ Fallback auf regelbasierten Parser...');
         for (const block of batchBlocks) {
-          allClauses.push({
-            title: null,
-            text: block.text,
-            type: 'paragraph',
-            sourceBlockIds: [block.id],
-            confidence: 0.3
-          });
+          const clauseId = `fallback_${block.id}`;
+          if (!processedClauseIds.has(clauseId)) {
+            processedClauseIds.add(clauseId);
+            allClauses.push({
+              id: clauseId,
+              title: null,
+              text: block.text,
+              type: 'paragraph',
+              sourceBlockIds: [block.id],
+              confidence: 0.3
+            });
+          }
         }
       }
+
+      // Nächster Batch startet beim Ende des aktuellen
+      i = batchEnd;
     }
 
     return allClauses;
