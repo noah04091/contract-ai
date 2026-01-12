@@ -442,13 +442,30 @@ router.post('/parse', verifyToken, async (req, res) => {
       });
     }
 
-    // Preprocessing läuft gerade? Info zurückgeben
-    if (contract.legalLens?.preprocessStatus === 'processing') {
-      console.log(`⏳ [Legal Lens] Vorverarbeitung läuft noch...`);
-      // Fallback auf Regex-Parsing, aber Info mitgeben
+    // Preprocessing läuft gerade oder nicht vorhanden? → Frontend soll Streaming nutzen
+    const preprocessStatus = contract.legalLens?.preprocessStatus;
+
+    if (preprocessStatus === 'processing') {
+      console.log(`⏳ [Legal Lens] Vorverarbeitung läuft noch - empfehle Streaming`);
+      return res.json({
+        success: true,
+        useStreaming: true,
+        reason: 'preprocessing_in_progress',
+        message: 'Vorverarbeitung läuft - bitte Streaming nutzen für Live-Updates',
+        contractName: contract.name || contract.title || 'Vertrag'
+      });
     }
 
-    console.log(`📋 [Legal Lens] Keine Vorverarbeitung gefunden - Fallback auf Regex-Parsing`);
+    // Keine Vorverarbeitung vorhanden → Frontend soll Streaming nutzen
+    // Das liefert bessere Ergebnisse als Regex-Parsing
+    console.log(`📋 [Legal Lens] Keine Vorverarbeitung gefunden - empfehle Streaming`);
+    return res.json({
+      success: true,
+      useStreaming: true,
+      reason: 'no_preprocessing',
+      message: 'Keine Vorverarbeitung vorhanden - bitte Streaming nutzen für beste Ergebnisse',
+      contractName: contract.name || contract.title || 'Vertrag'
+    });
 
     // Text extrahieren - mehrere Fallbacks
     let text = contract.content || contract.extractedText || contract.fullText || contract.analysisText;

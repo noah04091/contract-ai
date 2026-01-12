@@ -426,9 +426,9 @@ export interface LegalLensProgress {
  */
 export interface ParseContractResponse {
   success: boolean;
-  contractId: string;
-  clauses: ParsedClause[];
-  summary: {
+  contractId?: string;
+  clauses?: ParsedClause[];
+  summary?: {
     totalClauses: number;
     highRisk: number;
     mediumRisk: number;
@@ -442,6 +442,14 @@ export interface ParseContractResponse {
     parsingMethod?: string;
     [key: string]: unknown;
   };
+  /** Backend empfiehlt Streaming (keine Vorverarbeitung vorhanden) */
+  useStreaming?: boolean;
+  /** Grund für Streaming-Empfehlung */
+  reason?: 'preprocessing_in_progress' | 'no_preprocessing';
+  /** Nachricht für den User */
+  message?: string;
+  /** Vertragsname */
+  contractName?: string;
 }
 
 /**

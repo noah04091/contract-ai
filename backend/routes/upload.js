@@ -7,6 +7,9 @@ const { ObjectId } = require("mongodb");
 const path = require("path");
 // Note: verifyToken wird bereits im Router-Mount (server.js) aufgerufen
 
+// 🧠 Legal Lens Vorverarbeitung (für sofortiges Laden in Legal Lens)
+const { preprocessContract } = require("../services/legalLens/clausePreprocessor");
+
 const router = express.Router();
 
 // ✅ Crypto für File-Hash
@@ -302,6 +305,20 @@ router.post("/", uploadMiddleware.single("file"), async (req, res) => {
     const result = await contractsCollection.insertOne(contractData);
 
     console.log(`✅ [${requestId}] Contract saved without analysis:`, result.insertedId);
+
+    // 🧠 LEGAL LENS: GPT-Klausel-Parsing im Hintergrund starten
+    // Läuft async - blockiert die Response nicht
+    // So ist Legal Lens beim nächsten Öffnen sofort bereit
+    const contractId = result.insertedId;
+    preprocessContract(contractId.toString()).then(preprocessResult => {
+      if (preprocessResult.success) {
+        console.log(`🧠 [${requestId}] Legal Lens Vorverarbeitung erfolgreich: ${preprocessResult.clauseCount} Klauseln`);
+      } else if (!preprocessResult.alreadyProcessed) {
+        console.warn(`⚠️ [${requestId}] Legal Lens Vorverarbeitung fehlgeschlagen:`, preprocessResult.error);
+      }
+    }).catch(err => {
+      console.error(`❌ [${requestId}] Legal Lens Vorverarbeitung Exception:`, err.message);
+    });
 
     // Cleanup local file if uploaded to S3
     if (cleanupLocalFile) {

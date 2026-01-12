@@ -286,19 +286,56 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
       setRetryCount(0);
 
       if (response.success) {
-        // Prüfe ob vorverarbeitet (Option A) oder Regex-Fallback
+        // 🌊 STREAMING PATH: Backend empfiehlt Streaming (keine Vorverarbeitung)
+        if (response.useStreaming) {
+          console.log(`🌊 [Legal Lens] Backend empfiehlt Streaming: ${response.reason}`);
+          setIsParsing(false);
+          setIsStreaming(true);
+          setStreamingStatus(response.message || 'Starte KI-Analyse...');
+
+          // Streaming sofort starten
+          streamingAbortRef.current = legalLensAPI.parseContractStreaming(id, {
+            onStatus: (message, progress) => {
+              setStreamingStatus(message);
+              setStreamingProgress(progress);
+            },
+            onClausesBatch: (newClauses, totalSoFar) => {
+              setClauses(prev => {
+                const existingIds = new Set(prev.map(c => c.id));
+                const uniqueNew = newClauses.filter(c => !existingIds.has(c.id));
+                return [...prev, ...uniqueNew];
+              });
+              setStreamingStatus(`${totalSoFar} Klauseln analysiert...`);
+            },
+            onComplete: (totalClauses) => {
+              console.log(`✅ [Legal Lens] Streaming complete: ${totalClauses} Klauseln`);
+              setIsStreaming(false);
+              setStreamingProgress(100);
+              setStreamingStatus('Analyse abgeschlossen');
+              setParseSource('streaming');
+            },
+            onError: (errorMsg) => {
+              console.error(`❌ [Legal Lens] Streaming error:`, errorMsg);
+              setIsStreaming(false);
+              setError(errorMsg);
+            }
+          });
+          return; // Fertig - Streaming übernimmt
+        }
+
+        // Prüfe ob vorverarbeitet (Option A)
         const source = response.metadata?.source as 'preprocessed' | 'regex' | undefined;
 
         if (source === 'preprocessed') {
           // ⚡ FAST PATH: Vorverarbeitete Klauseln - sofort anzeigen
-          console.log(`⚡ [Legal Lens] Vorverarbeitete Klauseln: ${response.clauses.length}`);
-          setClauses(response.clauses);
+          console.log(`⚡ [Legal Lens] Vorverarbeitete Klauseln: ${response.clauses?.length}`);
+          setClauses(response.clauses || []);
           setParseSource('preprocessed');
           setIsParsing(false);
-        } else if (response.clauses.length > 50) {
-          // 🌊 STREAMING PATH: Viele Klauseln = nicht vorverarbeitet
-          // Automatisch Streaming starten für bessere UX
-          console.log(`🌊 [Legal Lens] Starte Streaming für bessere Ergebnisse...`);
+        } else if (response.clauses && response.clauses.length > 50) {
+          // 🌊 FALLBACK STREAMING: Viele Klauseln vom alten Regex-Parser
+          // (Sollte mit neuer Backend-Logik nicht mehr vorkommen)
+          console.log(`🌊 [Legal Lens] Fallback: Starte Streaming für bessere Ergebnisse...`);
           setIsParsing(false);
           setIsStreaming(true);
           setStreamingStatus('Starte KI-Analyse...');
