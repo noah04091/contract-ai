@@ -257,6 +257,7 @@ const ContractOverview: React.FC<ContractOverviewProps> = ({
 
   // Klauseln mit actionLevel anreichern
   const enrichedClauses = useMemo(() => {
+    if (!clauses || clauses.length === 0) return [];
     return clauses.map(clause => ({
       ...clause,
       actionLevel: getClauseActionLevel(clause, analysisCache, currentPerspective),

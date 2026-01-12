@@ -30,6 +30,9 @@ const ClauseList: React.FC<ClauseListProps> = ({
 }) => {
   // ✅ FIX Issue #5: Refs für Auto-Scroll zur ausgewählten Klausel
   const clauseRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
+  // ✅ Defensiver Check für undefined clauses
+  const safeClauses = clauses || [];
   // listContainerRef entfernt - wurde nicht verwendet
 
   // ✅ Auto-Scroll zur ausgewählten Klausel wenn sie sich ändert
@@ -102,12 +105,12 @@ const ClauseList: React.FC<ClauseListProps> = ({
         )}
 
         <span className={styles.clauseCount}>
-          {clauses.length} Klauseln
+          {safeClauses.length} Klauseln
         </span>
       </div>
 
       <div className={styles.clauseList}>
-        {clauses.map((clause) => {
+        {safeClauses.map((clause) => {
           const isSelected = selectedClause?.id === clause.id;
           const isReviewed = isClauseReviewed(clause.id);
           const isCached = isClauseCached(clause.id);
