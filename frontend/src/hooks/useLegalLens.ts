@@ -257,6 +257,9 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
   const streamingAbortRef = useRef<(() => void) | null>(null);
   const batchAbortRef = useRef<boolean>(false);
 
+  // ✅ Phase 1 Performance: Ref um doppelten Auto-Preload zu verhindern
+  const startedPreloadRef = useRef<boolean>(false);
+
   /**
    * Vertrag parsen - mit Auto-Streaming für nicht-vorverarbeitete Verträge
    */
@@ -881,6 +884,105 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
   }, []);
 
   /**
+   * ✅ Phase 1 Performance: Automatisches Vorladen von HIGH-Risk Klauseln
+   * Wird nach erfolgreichem Streaming automatisch getriggert.
+   * Analysiert NUR High-Risk Klauseln (meist 3-7 Stück) für optimale Kosten/UX Balance.
+   */
+  const autoAnalyzeHighRisk = useCallback(async () => {
+    if (!contractId || clauses.length === 0) {
+      console.log('[Legal Lens] Auto-Preload: Skipped - no contractId or clauses');
+      return;
+    }
+
+    // Filtere nur HIGH-Risk Klauseln
+    const highRiskClauses = clauses.filter(clause => {
+      const riskLevel = clause.riskLevel || clause.riskIndicators?.level;
+      return riskLevel === 'high';
+    });
+
+    if (highRiskClauses.length === 0) {
+      console.log('[Legal Lens] Auto-Preload: No high-risk clauses found');
+      return;
+    }
+
+    // Filtere bereits gecachte Klauseln raus
+    const uncachedHighRisk = highRiskClauses.filter(clause => {
+      const cacheKey = getCacheKey(clause, currentPerspective);
+      return !analysisCache[cacheKey];
+    });
+
+    if (uncachedHighRisk.length === 0) {
+      console.log('[Legal Lens] Auto-Preload: All high-risk clauses already cached');
+      return;
+    }
+
+    console.log(`🚀 [Legal Lens] Auto-Preload: Starting for ${uncachedHighRisk.length} high-risk clauses`);
+
+    // Batch starten
+    batchAbortRef.current = false;
+    setIsBatchAnalyzing(true);
+    setBatchProgress({
+      total: uncachedHighRisk.length,
+      completed: 0,
+      current: uncachedHighRisk[0]?.text.substring(0, 50) || null,
+      isRunning: true
+    });
+
+    // Analysiere High-Risk Klauseln nacheinander
+    for (let i = 0; i < uncachedHighRisk.length; i++) {
+      if (batchAbortRef.current) {
+        console.log('[Legal Lens] Auto-Preload: Cancelled');
+        break;
+      }
+
+      const clause = uncachedHighRisk[i];
+      const cacheKey = getCacheKey(clause, currentPerspective);
+
+      setBatchProgress(prev => ({
+        ...prev,
+        current: `🔴 ${clause.text.substring(0, 40)}...`,
+        completed: i
+      }));
+
+      try {
+        const response = await legalLensAPI.analyzeClause(
+          contractId,
+          clause.id,
+          clause.text,
+          currentPerspective,
+          false
+        );
+
+        if (response.success) {
+          setAnalysisCache(prev => ({
+            ...prev,
+            [cacheKey]: response.analysis
+          }));
+          console.log(`✅ [Legal Lens] Auto-Preload: Cached ${i + 1}/${uncachedHighRisk.length} (${clause.id})`);
+        }
+      } catch (err) {
+        console.error(`❌ [Legal Lens] Auto-Preload error for ${clause.id}:`, err);
+        // Fehler überspringen, nicht abbrechen
+      }
+
+      // Pause zwischen Requests (300ms)
+      if (i < uncachedHighRisk.length - 1 && !batchAbortRef.current) {
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+    }
+
+    setBatchProgress(prev => ({
+      ...prev,
+      completed: batchAbortRef.current ? prev.completed : uncachedHighRisk.length,
+      current: null,
+      isRunning: false
+    }));
+    setIsBatchAnalyzing(false);
+
+    console.log(`🏁 [Legal Lens] Auto-Preload: Completed`);
+  }, [contractId, clauses, currentPerspective, analysisCache]);
+
+  /**
    * Reset
    */
   const reset = useCallback(() => {
@@ -902,6 +1004,7 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
     setStreamingText('');
     setError(null);
     setAnalysisCache({}); // ✅ NEU: Cache leeren
+    startedPreloadRef.current = false; // ✅ Phase 1: Preload-Flag zurücksetzen
   }, []);
 
   // Cleanup bei Unmount
@@ -912,6 +1015,32 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
       }
     };
   }, []);
+
+  /**
+   * ✅ Phase 1 Performance: Auto-Preload nach Streaming
+   *
+   * GUARDRAILS (wie von ChatGPT empfohlen):
+   * - Streaming muss abgeschlossen sein (!isStreaming)
+   * - Klauseln müssen vorhanden sein (clauses.length > 0)
+   * - Noch kein Batch läuft (!isBatchAnalyzing)
+   * - Noch nicht gestartet (!startedPreloadRef.current)
+   *
+   * Das verhindert Race Conditions mit React State Updates.
+   */
+  useEffect(() => {
+    // Alle Guardrails prüfen
+    if (
+      !isStreaming &&                      // Streaming muss fertig sein
+      clauses.length > 0 &&                // Klauseln müssen da sein
+      !isBatchAnalyzing &&                 // Kein Batch darf laufen
+      !startedPreloadRef.current &&        // Noch nicht gestartet
+      parseSource === 'streaming'          // Nur nach echtem Streaming (nicht bei preprocessed)
+    ) {
+      console.log('🎯 [Legal Lens] Auto-Preload: Conditions met, starting...');
+      startedPreloadRef.current = true;
+      autoAnalyzeHighRisk();
+    }
+  }, [isStreaming, clauses.length, isBatchAnalyzing, parseSource, autoAnalyzeHighRisk]);
 
   return {
     // Daten
