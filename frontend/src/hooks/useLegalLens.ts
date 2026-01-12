@@ -896,7 +896,8 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
 
     // Filtere nur HIGH-Risk Klauseln
     const highRiskClauses = clauses.filter(clause => {
-      const riskLevel = clause.riskLevel || clause.riskIndicators?.level;
+      // riskIndicators.level ist der korrekte Pfad laut ParsedClause Interface
+      const riskLevel = clause.riskIndicators?.level || clause.preAnalysis?.riskLevel;
       return riskLevel === 'high';
     });
 
