@@ -773,14 +773,14 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
               <span className={styles.streamingPercent}>{streamingProgress}%</span>
             </div>
             <span className={styles.streamingClauseCount}>
-              {clauses.length} Klauseln gefunden
+              {(clauses || []).length} Klauseln gefunden
             </span>
           </div>
         </div>
       )}
 
       {/* Smart Summary Modal */}
-      {showSmartSummary && !isParsing && !isStreaming && clauses.length > 0 && (
+      {showSmartSummary && !isParsing && !isStreaming && (clauses || []).length > 0 && (
         <SmartSummary
           contractId={contractId}
           contractName={contractName}
@@ -810,7 +810,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
           <button
             className={styles.exportButton}
             onClick={() => setShowExportModal(true)}
-            disabled={clauses.length === 0}
+            disabled={(clauses || []).length === 0}
             title="Analyse als PDF exportieren"
           >
             <Download size={18} />
@@ -822,7 +822,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
             <button
               className={styles.checklistButton}
               onClick={() => setShowChecklist(true)}
-              disabled={clauses.length === 0}
+              disabled={(clauses || []).length === 0}
               title="Verhandlungs-Checkliste"
             >
               <ClipboardCheck size={18} />
@@ -878,7 +878,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
             <button
               className={styles.batchAnalyzeButton}
               onClick={analyzeAllClauses}
-              disabled={clauses.length === 0}
+              disabled={(clauses || []).length === 0}
               title="Alle Klauseln im Hintergrund vorab laden"
             >
               <Zap size={16} />
@@ -1026,8 +1026,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
             >
               <List size={20} />
               <span>Klauseln</span>
-              {clauses.length > 0 && (
-                <span className={styles.mobileNavBadge}>{clauses.length}</span>
+              {(clauses || []).length > 0 && (
+                <span className={styles.mobileNavBadge}>{(clauses || []).length}</span>
               )}
             </button>
             <button
