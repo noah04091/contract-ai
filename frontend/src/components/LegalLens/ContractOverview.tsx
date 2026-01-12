@@ -302,8 +302,8 @@ const ContractOverview: React.FC<ContractOverviewProps> = ({
     negotiate: groupedClauses.negotiate.length,
     ok: groupedClauses.ok.length,
     total: filteredClauses.length,
-    originalTotal: clauses.length
-  }), [groupedClauses, filteredClauses.length, clauses.length]);
+    originalTotal: (clauses || []).length
+  }), [groupedClauses, filteredClauses.length, clauses]);
 
   // Gesamt-Risiko-Score
   const overallRiskScore = useMemo(() => {

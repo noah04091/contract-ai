@@ -184,7 +184,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
           );
         })}
 
-        {clauses.length === 0 && (
+        {safeClauses.length === 0 && (
           <div className={styles.analysisPanelEmpty}>
             <span className={styles.emptyIcon}>📄</span>
             <h4 className={styles.emptyTitle}>Keine Klauseln gefunden</h4>
