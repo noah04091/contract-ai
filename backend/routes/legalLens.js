@@ -461,11 +461,13 @@ router.post('/parse', verifyToken, async (req, res) => {
       });
     }
 
-    // Parsen mit intelligentem GPT-basiertem Parsing
-    console.log(`🧠 [Legal Lens] Starte intelligentes Parsing...`);
-    const parseResult = await clauseParser.parseContractIntelligent(text, {
+    // Parsen - ZURÜCK auf schnelles Regex-Parsing (GPT dauerte zu lange)
+    // TODO: GPT-Parsing als Background-Job implementieren
+    console.log(`📋 [Legal Lens] Starte Regex-basiertes Parsing...`);
+    const parseResult = clauseParser.parseContract(text, {
       detectRisk: true,
-      contractName: contract.name || contract.title || ''
+      minClauseLength: 20,
+      maxClauseLength: 2000
     });
 
     if (!parseResult.success) {
