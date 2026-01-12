@@ -14,6 +14,7 @@ const nodemailer = require("nodemailer"); // 📧 Email Service
 const { generateEmailTemplate } = require("../utils/emailTemplate");
 const contractAnalyzer = require("../services/contractAnalyzer"); // 🤖 ULTRA-INTELLIGENT Contract Analyzer v10
 const AILegalPulse = require("../services/aiLegalPulse"); // ⚡ Legal Pulse Risk Analysis
+const { preprocessContract } = require("../services/legalLens/clausePreprocessor"); // 🧠 Legal Lens Vorverarbeitung
 const analyzeRoute = require("./analyze"); // 🚀 V2 Analysis Functions
 const OrganizationMember = require("../models/OrganizationMember"); // 👥 Team-Management
 const { generateDeepLawyerLevelPrompt, getContractTypeAwareness } = analyzeRoute; // 🚀 Import V2 functions
@@ -1403,6 +1404,18 @@ router.post("/", verifyToken, async (req, res) => {
       console.warn("⚠️ Calendar Events konnten nicht generiert werden:", eventError.message);
       // Fehler nicht werfen - Contract wurde trotzdem gespeichert
     }
+
+    // 🧠 LEGAL LENS: GPT-Klausel-Parsing im Hintergrund (für sofortiges Legal Lens laden)
+    // Läuft async - blockiert die Response nicht
+    preprocessContract(contractId.toString()).then(result => {
+      if (result.success) {
+        console.log(`🧠 [Legal Lens] Vorverarbeitung erfolgreich für ${name}: ${result.clauseCount} Klauseln`);
+      } else if (!result.alreadyProcessed) {
+        console.warn(`⚠️ [Legal Lens] Vorverarbeitung fehlgeschlagen für ${name}:`, result.error);
+      }
+    }).catch(err => {
+      console.error(`❌ [Legal Lens] Vorverarbeitung Exception für ${name}:`, err);
+    });
 
     // 🆕 AUTO-PDF: Für generierte Verträge mit HTML automatisch PDF erstellen und zu S3 hochladen
     if (isGenerated && finalHTML && finalHTML.length > 100) {

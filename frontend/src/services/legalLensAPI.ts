@@ -2,6 +2,7 @@
 import { fetchWithAuth, API_BASE_URL } from '../context/authUtils';
 import type {
   ParseContractResponse,
+  ParsedClause,
   AnalyzeClauseResponse,
   GetPerspectivesResponse,
   GenerateAlternativesResponse,
@@ -635,4 +636,114 @@ export function downloadPdfBlob(blob: Blob, filename: string): void {
   link.click();
   document.body.removeChild(link);
   window.URL.revokeObjectURL(url);
+}
+
+// ============================================
+// STREAMING PARSE API (SSE)
+// ============================================
+
+export interface StreamingParseCallbacks {
+  onStatus?: (message: string, progress: number) => void;
+  onClausesBatch?: (clauses: ParsedClause[], totalSoFar: number) => void;
+  onComplete?: (totalClauses: number, riskSummary: { high: number; medium: number; low: number }) => void;
+  onError?: (error: string) => void;
+}
+
+/**
+ * Streaming-Parse für Klauseln (SSE)
+ * Verwendet Server-Sent Events für Live-Updates
+ *
+ * @returns Cleanup-Funktion zum Abbrechen
+ */
+export function parseContractStreaming(
+  contractId: string,
+  callbacks: StreamingParseCallbacks
+): () => void {
+  const token = localStorage.getItem('token');
+  const controller = new AbortController();
+
+  // SSE via fetch (EventSource unterstützt keine custom headers für Auth)
+  fetch(`${LEGAL_LENS_BASE}/${contractId}/parse-stream`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'text/event-stream',
+      ...(token && { Authorization: `Bearer ${token}` })
+    },
+    credentials: 'include',
+    signal: controller.signal
+  })
+    .then(async response => {
+      if (!response.ok) {
+        throw new Error('Streaming-Verbindung fehlgeschlagen');
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('Kein Reader verfügbar');
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        let currentEvent = '';
+        let currentData = '';
+
+        for (const line of lines) {
+          if (line.startsWith('event: ')) {
+            currentEvent = line.slice(7);
+          } else if (line.startsWith('data: ')) {
+            currentData = line.slice(6);
+
+            // Event verarbeiten
+            if (currentEvent && currentData) {
+              try {
+                const data = JSON.parse(currentData);
+
+                switch (currentEvent) {
+                  case 'status':
+                    callbacks.onStatus?.(data.message, data.progress);
+                    break;
+                  case 'clauses_batch':
+                    callbacks.onClausesBatch?.(data.newClauses, data.totalSoFar);
+                    break;
+                  case 'clauses':
+                    // Alle Klauseln auf einmal (cached)
+                    callbacks.onClausesBatch?.(data.clauses, data.totalClauses);
+                    break;
+                  case 'complete':
+                    callbacks.onComplete?.(data.totalClauses, data.riskSummary);
+                    break;
+                  case 'error':
+                    callbacks.onError?.(data.error);
+                    break;
+                  case 'warning':
+                    console.warn('[Legal Lens Stream]', data.message);
+                    break;
+                }
+              } catch {
+                // Ignoriere Parse-Fehler bei unvollständigen Chunks
+              }
+            }
+          } else if (line === '') {
+            // Leere Zeile = Event Ende, reset
+            currentEvent = '';
+            currentData = '';
+          }
+        }
+      }
+    })
+    .catch(error => {
+      if (error.name !== 'AbortError') {
+        callbacks.onError?.(error.message);
+      }
+    });
+
+  // Cleanup-Funktion
+  return () => controller.abort();
 }

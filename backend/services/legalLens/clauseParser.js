@@ -1053,6 +1053,97 @@ Antworte NUR mit einem JSON-Array:
 
     return allClauses;
   }
+
+  /**
+   * GPT-Segmentierung für einen einzelnen Batch
+   * Wird vom Streaming-Endpoint verwendet
+   */
+  async gptSegmentClausesBatch(blocks, contractName = '') {
+    if (!blocks || blocks.length === 0) {
+      return [];
+    }
+
+    // Bereite Blöcke für GPT vor
+    const blocksForGPT = blocks.map(b => ({
+      id: b.id,
+      text: (b.text || '').substring(0, 1500),
+      short: b.short || false
+    }));
+
+    const prompt = `Du bist ein erfahrener Rechtsexperte. Analysiere die folgenden Text-Blöcke aus einem Vertrag und gruppiere sie zu sinnvollen, eigenständigen Klauseln.
+
+VERTRAGSNAME: ${contractName || 'Unbekannt'}
+
+TEXT-BLÖCKE (mit IDs):
+${blocksForGPT.map(b => `[${b.id}]\n${b.text}`).join('\n\n---\n\n')}
+
+REGELN:
+1. Jede Klausel muss einen abgeschlossenen rechtlichen Gedanken enthalten
+2. Zusammengehörige Absätze = EINE Klausel
+3. Kurze eigenständige Sätze können einzelne Klauseln sein
+4. Gebührentabellen = EINE Klausel "Konditionen"
+5. Kontaktdaten = EINE Klausel "Vertragsparteien"
+
+Antworte NUR mit einem JSON-Array:
+[
+  {
+    "title": "Kurzer Titel",
+    "text": "Vollständiger Text",
+    "type": "paragraph|article|section|header|condition",
+    "sourceBlockIds": ["block_1"],
+    "number": "§ 1" oder null,
+    "confidence": 0.0-1.0
+  }
+]`;
+
+    try {
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: 'Du bist ein Rechtsexperte, der Verträge in Klauseln segmentiert. Antworte mit validem JSON.'
+          },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.1,
+        max_tokens: 16000,
+        response_format: { type: 'json_object' }
+      });
+
+      const content = response.choices[0].message.content;
+      const parsed = JSON.parse(content);
+      const clausesArray = Array.isArray(parsed) ? parsed : (parsed.clauses || parsed.result || []);
+
+      // Map source block positions
+      for (const clause of clausesArray) {
+        const sourceBlocks = (clause.sourceBlockIds || [])
+          .map(id => blocks.find(b => b.id === id))
+          .filter(Boolean);
+
+        if (sourceBlocks.length > 0) {
+          clause.originalText = sourceBlocks.map(b => b.text).join('\n\n');
+        }
+
+        clause.id = (clause.sourceBlockIds || []).sort().join('_') || `clause_${Math.random().toString(36).substr(2, 9)}`;
+      }
+
+      return clausesArray;
+
+    } catch (error) {
+      console.error('❌ GPT Batch Error:', error.message);
+
+      // Fallback: Jeden Block als Klausel behandeln
+      return blocks.map(block => ({
+        id: `fallback_${block.id}`,
+        title: null,
+        text: block.text,
+        type: 'paragraph',
+        sourceBlockIds: [block.id],
+        confidence: 0.3
+      }));
+    }
+  }
 }
 
 // Singleton-Export

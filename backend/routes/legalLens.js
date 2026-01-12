@@ -419,6 +419,37 @@ router.post('/parse', verifyToken, async (req, res) => {
       });
     }
 
+    // ⚡ FAST PATH: Prüfen ob vorverarbeitete Klauseln existieren
+    if (contract.legalLens?.preParsedClauses?.length > 0 &&
+        contract.legalLens?.preprocessStatus === 'completed') {
+      console.log(`⚡ [Legal Lens] Vorverarbeitete Klauseln gefunden: ${contract.legalLens.preParsedClauses.length}`);
+
+      // Vorverarbeitete Klauseln zurückgeben (instant!)
+      return res.json({
+        success: true,
+        clauses: contract.legalLens.preParsedClauses,
+        totalClauses: contract.legalLens.preParsedClauses.length,
+        riskSummary: contract.legalLens.riskSummary || {
+          high: contract.legalLens.preParsedClauses.filter(c => c.riskLevel === 'high').length,
+          medium: contract.legalLens.preParsedClauses.filter(c => c.riskLevel === 'medium').length,
+          low: contract.legalLens.preParsedClauses.filter(c => c.riskLevel === 'low').length
+        },
+        metadata: {
+          ...(contract.legalLens.metadata || {}),
+          source: 'preprocessed',
+          preprocessedAt: contract.legalLens.preprocessedAt
+        }
+      });
+    }
+
+    // Preprocessing läuft gerade? Info zurückgeben
+    if (contract.legalLens?.preprocessStatus === 'processing') {
+      console.log(`⏳ [Legal Lens] Vorverarbeitung läuft noch...`);
+      // Fallback auf Regex-Parsing, aber Info mitgeben
+    }
+
+    console.log(`📋 [Legal Lens] Keine Vorverarbeitung gefunden - Fallback auf Regex-Parsing`);
+
     // Text extrahieren - mehrere Fallbacks
     let text = contract.content || contract.extractedText || contract.fullText || contract.analysisText;
 
@@ -1863,6 +1894,244 @@ router.post('/:contractId/export-report', verifyToken, async (req, res) => {
       error: 'Fehler beim Generieren des Reports: ' + error.message
     });
   }
+});
+
+// ============================================
+// STREAMING PARSE ENDPOINT (SSE)
+// ============================================
+
+/**
+ * GET /api/legal-lens/:contractId/parse-stream
+ *
+ * Streamt Klauseln live während der GPT-Analyse.
+ * Verwendet Server-Sent Events (SSE) für Echtzeit-Updates.
+ *
+ * Wird verwendet für:
+ * - Neue Uploads direkt in Legal Lens
+ * - Alte Verträge ohne Vorverarbeitung
+ */
+router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
+  const { contractId } = req.params;
+  const userId = req.user.userId;
+
+  console.log(`🌊 [Legal Lens] Streaming parse request for contract: ${contractId}`);
+
+  // SSE Headers setzen
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders();
+
+  // Helper für SSE-Nachrichten
+  const sendEvent = (type, data) => {
+    res.write(`event: ${type}\n`);
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  };
+
+  try {
+    // Vertrag laden
+    const contract = await Contract.findOne({
+      _id: new ObjectId(contractId),
+      userId: new ObjectId(userId)
+    });
+
+    if (!contract) {
+      sendEvent('error', { error: 'Vertrag nicht gefunden' });
+      return res.end();
+    }
+
+    // Prüfen ob bereits vorverarbeitet
+    if (contract.legalLens?.preParsedClauses?.length > 0 &&
+        contract.legalLens?.preprocessStatus === 'completed') {
+      console.log(`⚡ [Legal Lens] Vorverarbeitete Klauseln vorhanden - sende alle auf einmal`);
+
+      // Alle Klauseln auf einmal senden (cached)
+      sendEvent('status', { message: 'Lade vorverarbeitete Klauseln...', progress: 100 });
+      sendEvent('clauses', {
+        clauses: contract.legalLens.preParsedClauses,
+        totalClauses: contract.legalLens.preParsedClauses.length,
+        riskSummary: contract.legalLens.riskSummary,
+        source: 'preprocessed'
+      });
+      sendEvent('complete', { success: true });
+      return res.end();
+    }
+
+    // Text extrahieren
+    sendEvent('status', { message: 'Extrahiere Vertragstext...', progress: 5 });
+
+    let text = contract.content || contract.extractedText || contract.fullText;
+
+    if ((!text || text.length < 50) && contract.s3Key) {
+      try {
+        const command = new GetObjectCommand({
+          Bucket: process.env.S3_BUCKET_NAME,
+          Key: contract.s3Key
+        });
+        const response = await s3Client.send(command);
+        const chunks = [];
+        for await (const chunk of response.Body) {
+          chunks.push(chunk);
+        }
+        const pdfBuffer = Buffer.concat(chunks);
+        const pdfData = await pdfParse(pdfBuffer);
+        text = pdfData.text;
+      } catch (s3Error) {
+        sendEvent('error', { error: 'PDF konnte nicht gelesen werden' });
+        return res.end();
+      }
+    }
+
+    if (!text || text.length < 50) {
+      sendEvent('error', { error: 'Kein analysierbarer Text im Vertrag' });
+      return res.end();
+    }
+
+    sendEvent('status', { message: 'Starte KI-Analyse...', progress: 10 });
+
+    // GPT-basiertes Parsing mit Progress-Updates
+    // Wir nutzen die parseContractIntelligent Funktion, aber mit Callbacks für Progress
+
+    // Stufe 1: Vorverarbeitung (schnell)
+    sendEvent('status', { message: 'Bereite Text auf...', progress: 15 });
+
+    const cleanedText = clauseParser.preprocessText(text);
+    const { text: filteredText, removedBlocks } = clauseParser.removeHeaderFooter(cleanedText);
+
+    sendEvent('status', {
+      message: `${removedBlocks.length} Header/Footer entfernt`,
+      progress: 20
+    });
+
+    // Text in Blöcke aufteilen
+    const rawBlocks = clauseParser.createTextBlocks(filteredText);
+
+    sendEvent('status', {
+      message: `${rawBlocks.length} Textblöcke identifiziert`,
+      progress: 25
+    });
+
+    // Stufe 2: GPT-Segmentierung mit Streaming
+    sendEvent('status', { message: 'KI analysiert Klauseln...', progress: 30 });
+
+    // Batch-Verarbeitung mit Progress-Updates
+    const maxBlocksPerCall = 25;
+    const batches = [];
+    for (let i = 0; i < rawBlocks.length; i += maxBlocksPerCall) {
+      batches.push(rawBlocks.slice(i, i + maxBlocksPerCall));
+    }
+
+    let allClauses = [];
+    let batchIndex = 0;
+
+    for (const batch of batches) {
+      batchIndex++;
+      const progress = 30 + Math.round((batchIndex / batches.length) * 50);
+
+      sendEvent('status', {
+        message: `Analysiere Block ${batchIndex}/${batches.length}...`,
+        progress
+      });
+
+      try {
+        // GPT-Segmentierung für diesen Batch
+        const batchClauses = await clauseParser.gptSegmentClausesBatch(batch, contract.name || '');
+
+        // Gültige Klauseln filtern und mit Risk-Assessment versehen
+        const validClauses = batchClauses
+          .filter(c => c && c.text && typeof c.text === 'string' && c.text.trim().length > 0)
+          .map((clause, idx) => {
+            const riskAssessment = clauseParser.assessClauseRisk(clause.text);
+            return {
+              id: clause.id || `clause_stream_${allClauses.length + idx + 1}`,
+              number: clause.number || `${allClauses.length + idx + 1}`,
+              title: clause.title || null,
+              text: clause.text,
+              type: clause.type || 'paragraph',
+              riskLevel: riskAssessment.level,
+              riskScore: riskAssessment.score,
+              riskKeywords: riskAssessment.keywords,
+              riskIndicators: {
+                level: riskAssessment.level,
+                keywords: riskAssessment.keywords,
+                score: riskAssessment.score
+              }
+            };
+          });
+
+        allClauses = [...allClauses, ...validClauses];
+
+        // Neue Klauseln direkt streamen!
+        if (validClauses.length > 0) {
+          sendEvent('clauses_batch', {
+            newClauses: validClauses,
+            totalSoFar: allClauses.length,
+            batchIndex,
+            totalBatches: batches.length
+          });
+        }
+
+      } catch (batchError) {
+        console.error(`❌ [Legal Lens] Batch ${batchIndex} Fehler:`, batchError.message);
+        sendEvent('warning', { message: `Batch ${batchIndex} konnte nicht analysiert werden` });
+      }
+
+      // Kleine Pause zwischen Batches
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    // Finale Zusammenfassung
+    sendEvent('status', { message: 'Finalisiere Analyse...', progress: 85 });
+
+    const riskSummary = {
+      high: allClauses.filter(c => c.riskLevel === 'high').length,
+      medium: allClauses.filter(c => c.riskLevel === 'medium').length,
+      low: allClauses.filter(c => c.riskLevel === 'low').length
+    };
+
+    // Ergebnis in DB cachen für nächstes Mal
+    sendEvent('status', { message: 'Speichere Ergebnisse...', progress: 95 });
+
+    try {
+      await Contract.updateOne(
+        { _id: new ObjectId(contractId) },
+        {
+          $set: {
+            'legalLens.preParsedClauses': allClauses,
+            'legalLens.riskSummary': riskSummary,
+            'legalLens.metadata': {
+              parsedAt: new Date().toISOString(),
+              parserVersion: '2.0.0-streaming',
+              usedGPT: true,
+              blockCount: rawBlocks.length,
+              batchCount: batches.length
+            },
+            'legalLens.preprocessStatus': 'completed',
+            'legalLens.preprocessedAt': new Date()
+          }
+        }
+      );
+    } catch (dbError) {
+      console.warn(`⚠️ [Legal Lens] Konnte Ergebnis nicht cachen:`, dbError.message);
+    }
+
+    // Finale Nachricht
+    sendEvent('complete', {
+      success: true,
+      totalClauses: allClauses.length,
+      riskSummary,
+      source: 'streaming'
+    });
+
+    console.log(`✅ [Legal Lens] Streaming complete: ${allClauses.length} Klauseln`);
+
+  } catch (error) {
+    console.error('❌ [Legal Lens] Streaming error:', error);
+    sendEvent('error', { error: error.message });
+  }
+
+  res.end();
 });
 
 module.exports = router;
