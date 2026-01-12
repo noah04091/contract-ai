@@ -370,11 +370,16 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
               setParseSource('regex');
             }
           });
-        } else {
+        } else if (response.clauses && response.clauses.length > 0) {
           // Wenige Klauseln - normal anzeigen (könnte vorverarbeitet sein ohne Metadata)
           console.log(`📋 [Legal Lens] ${response.clauses.length} Klauseln geladen`);
           setClauses(response.clauses);
           setParseSource(source || 'regex');
+          setIsParsing(false);
+        } else {
+          // Keine Klauseln - Fehler
+          console.error(`❌ [Legal Lens] Keine Klauseln in Response`);
+          setError('Keine Klauseln gefunden');
           setIsParsing(false);
         }
 
