@@ -435,6 +435,13 @@ export interface ParseContractResponse {
     lowRisk: number;
     keyFindings: string[];
   };
+  /** Metadata über die Klausel-Quelle (vorverarbeitet, streaming, regex) */
+  metadata?: {
+    source?: 'preprocessed' | 'streaming' | 'regex' | 'live';
+    preprocessedAt?: string;
+    parsingMethod?: string;
+    [key: string]: unknown;
+  };
 }
 
 /**

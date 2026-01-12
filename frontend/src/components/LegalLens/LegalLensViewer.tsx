@@ -184,8 +184,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     // ✅ NEU: Streaming-Status (Option B)
     isStreaming,
     streamingProgress,
-    streamingStatus,
-    parseSource
+    streamingStatus
   } = useLegalLens();
 
   // Auto-switch to analysis tab when clause is selected on mobile
