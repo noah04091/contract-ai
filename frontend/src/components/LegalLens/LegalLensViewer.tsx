@@ -180,7 +180,12 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     sendChatMessage,
     markClauseReviewed,
     analyzeAllClauses,
-    cancelBatchAnalysis
+    cancelBatchAnalysis,
+    // ✅ NEU: Streaming-Status (Option B)
+    isStreaming,
+    streamingProgress,
+    streamingStatus,
+    parseSource
   } = useLegalLens();
 
   // Auto-switch to analysis tab when clause is selected on mobile
@@ -728,7 +733,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     localStorage.setItem('legalLens_hasPdfClicked', 'true');
   };
 
-  // Loading State
+  // Loading State - Normal Parsing
   if (isParsing) {
     return (
       <div className={styles.container}>
@@ -740,12 +745,43 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     );
   }
 
+  // ✅ NEU: Streaming State (Option B) - Klauseln erscheinen live
+  // Zeige normales UI mit Overlay für Streaming-Progress
+  const showStreamingOverlay = isStreaming && streamingProgress < 100;
+
   const percentComplete = progress?.percentComplete || 0;
 
   return (
     <div className={styles.container}>
+      {/* ✅ NEU: Streaming Progress Banner (Option B) */}
+      {showStreamingOverlay && (
+        <div className={styles.streamingBanner}>
+          <div className={styles.streamingContent}>
+            <div className={styles.streamingIcon}>
+              <Zap size={20} className={styles.pulseIcon} />
+            </div>
+            <div className={styles.streamingInfo}>
+              <span className={styles.streamingTitle}>KI-Analyse läuft</span>
+              <span className={styles.streamingStatus}>{streamingStatus}</span>
+            </div>
+            <div className={styles.streamingProgressWrapper}>
+              <div className={styles.streamingProgressBar}>
+                <div
+                  className={styles.streamingProgressFill}
+                  style={{ width: `${streamingProgress}%` }}
+                />
+              </div>
+              <span className={styles.streamingPercent}>{streamingProgress}%</span>
+            </div>
+            <span className={styles.streamingClauseCount}>
+              {clauses.length} Klauseln gefunden
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Smart Summary Modal */}
-      {showSmartSummary && !isParsing && clauses.length > 0 && (
+      {showSmartSummary && !isParsing && !isStreaming && clauses.length > 0 && (
         <SmartSummary
           contractId={contractId}
           contractName={contractName}

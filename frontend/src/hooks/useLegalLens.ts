@@ -144,6 +144,12 @@ interface UseLegalLensReturn {
   error: string | null;
   errorInfo: ErrorInfo | null;
 
+  // ✅ NEU: Streaming-Status (Option B)
+  isStreaming: boolean;
+  streamingProgress: number;
+  streamingStatus: string;
+  parseSource: 'preprocessed' | 'streaming' | 'regex' | null;
+
   // Aktionen
   parseContract: (contractId: string) => Promise<void>;
   selectClause: (clause: ParsedClause) => void;
@@ -240,12 +246,19 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
   const [isRetrying, setIsRetrying] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
 
+  // ✅ NEU: Streaming-spezifische States für Option B
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingProgress, setStreamingProgress] = useState(0);
+  const [streamingStatus, setStreamingStatus] = useState<string>('');
+  const [parseSource, setParseSource] = useState<'preprocessed' | 'streaming' | 'regex' | null>(null);
+
   // Refs
   const abortControllerRef = useRef<(() => void) | null>(null);
+  const streamingAbortRef = useRef<(() => void) | null>(null);
   const batchAbortRef = useRef<boolean>(false);
 
   /**
-   * Vertrag parsen - mit Auto-Retry
+   * Vertrag parsen - mit Auto-Streaming für nicht-vorverarbeitete Verträge
    */
   const parseContract = useCallback(async (id: string) => {
     setIsParsing(true);
@@ -253,8 +266,12 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
     setErrorInfo(null);
     setContractId(id);
     setRetryCount(0);
+    setParseSource(null);
+    setStreamingProgress(0);
+    setStreamingStatus('');
 
     try {
+      // Erst normalen Parse versuchen (prüft auf vorverarbeitete Klauseln)
       const response = await withRetry(
         () => legalLensAPI.parseContract(id),
         2,
@@ -269,9 +286,62 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
       setRetryCount(0);
 
       if (response.success) {
-        setClauses(response.clauses);
+        // Prüfe ob vorverarbeitet (Option A) oder Regex-Fallback
+        const source = response.metadata?.source as 'preprocessed' | 'regex' | undefined;
 
-        // Fortschritt laden (auch mit Retry)
+        if (source === 'preprocessed') {
+          // ⚡ FAST PATH: Vorverarbeitete Klauseln - sofort anzeigen
+          console.log(`⚡ [Legal Lens] Vorverarbeitete Klauseln: ${response.clauses.length}`);
+          setClauses(response.clauses);
+          setParseSource('preprocessed');
+          setIsParsing(false);
+        } else if (response.clauses.length > 50) {
+          // 🌊 STREAMING PATH: Viele Klauseln = nicht vorverarbeitet
+          // Automatisch Streaming starten für bessere UX
+          console.log(`🌊 [Legal Lens] Starte Streaming für bessere Ergebnisse...`);
+          setIsParsing(false);
+          setIsStreaming(true);
+          setStreamingStatus('Starte KI-Analyse...');
+
+          // Streaming starten
+          streamingAbortRef.current = legalLensAPI.parseContractStreaming(id, {
+            onStatus: (message, progress) => {
+              setStreamingStatus(message);
+              setStreamingProgress(progress);
+            },
+            onClausesBatch: (newClauses, totalSoFar) => {
+              setClauses(prev => {
+                // Merge neue Klauseln (dedupliziert nach ID)
+                const existingIds = new Set(prev.map(c => c.id));
+                const uniqueNew = newClauses.filter(c => !existingIds.has(c.id));
+                return [...prev, ...uniqueNew];
+              });
+              setStreamingStatus(`${totalSoFar} Klauseln analysiert...`);
+            },
+            onComplete: (totalClauses) => {
+              console.log(`✅ [Legal Lens] Streaming complete: ${totalClauses} Klauseln`);
+              setIsStreaming(false);
+              setStreamingProgress(100);
+              setStreamingStatus('Analyse abgeschlossen');
+              setParseSource('streaming');
+            },
+            onError: (errorMsg) => {
+              console.error(`❌ [Legal Lens] Streaming error:`, errorMsg);
+              setIsStreaming(false);
+              setError(errorMsg);
+              // Behalte die Regex-Klauseln als Fallback
+              setParseSource('regex');
+            }
+          });
+        } else {
+          // Wenige Klauseln - normal anzeigen (könnte vorverarbeitet sein ohne Metadata)
+          console.log(`📋 [Legal Lens] ${response.clauses.length} Klauseln geladen`);
+          setClauses(response.clauses);
+          setParseSource(source || 'regex');
+          setIsParsing(false);
+        }
+
+        // Fortschritt laden
         try {
           const progressResponse = await withRetry(
             () => legalLensAPI.getProgress(id),
@@ -279,14 +349,11 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
           );
           if (progressResponse.success) {
             setProgress(progressResponse.progress);
-
-            // Letzte Perspektive wiederherstellen
             if (progressResponse.progress.currentPerspective) {
               setCurrentPerspective(progressResponse.progress.currentPerspective);
             }
           }
         } catch {
-          // Progress-Fehler ist nicht kritisch, ignorieren
           console.warn('[Legal Lens] Could not load progress');
         }
       }
@@ -295,9 +362,8 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
       setError(errorDetails.message);
       setErrorInfo(errorDetails);
       setIsRetrying(false);
-      console.error('[Legal Lens] Parse error after retries:', err);
-    } finally {
       setIsParsing(false);
+      console.error('[Legal Lens] Parse error after retries:', err);
     }
   }, [retryCount]);
 
@@ -832,6 +898,12 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
     streamingText,
     error,
     errorInfo,
+
+    // ✅ NEU: Streaming-Status (Option B)
+    isStreaming,
+    streamingProgress,
+    streamingStatus,
+    parseSource,
 
     // Aktionen
     parseContract,

@@ -2342,3 +2342,125 @@
     }
   }
 }
+
+/* ===== STREAMING BANNER (Option B) ===== */
+.streamingBanner {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.streamingContent {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.streamingIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pulseIcon {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+.streamingInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 120px;
+}
+
+.streamingTitle {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.streamingStatus {
+  font-size: 0.75rem;
+  opacity: 0.9;
+}
+
+.streamingProgressWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  max-width: 400px;
+}
+
+.streamingProgressBar {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.streamingProgressFill {
+  height: 100%;
+  background: white;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.streamingPercent {
+  font-size: 0.875rem;
+  font-weight: 600;
+  min-width: 40px;
+  text-align: right;
+}
+
+.streamingClauseCount {
+  font-size: 0.875rem;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .streamingContent {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .streamingIcon {
+    display: none;
+  }
+
+  .streamingProgressWrapper {
+    order: 3;
+    flex-basis: 100%;
+    max-width: none;
+  }
+
+  .streamingClauseCount {
+    margin-left: auto;
+  }
+}
