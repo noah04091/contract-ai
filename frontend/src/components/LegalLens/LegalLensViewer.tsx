@@ -184,7 +184,9 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     // ✅ NEU: Streaming-Status (Option B)
     isStreaming,
     streamingProgress,
-    streamingStatus
+    streamingStatus,
+    // ✅ Phase 1 Schritt 4: Queue-Priorisierung
+    bumpClauseInQueue
   } = useLegalLens();
 
   // Auto-switch to analysis tab when clause is selected on mobile
@@ -288,6 +290,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
   // ✅ Phase 1 Fix: Analyse starten - Direkter Cache-Check statt Ref-Hacks
   // ✅ FIX Issue #1: Content-basierter Cache für konsistente Text↔PDF Matches
+  // ✅ SCHRITT 4: Queue-Priorisierung wenn Batch läuft
   useEffect(() => {
     // Keine Klausel ausgewählt → nichts tun
     if (!selectedClause) return;
@@ -315,7 +318,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       cacheKey: cacheKey,
       riskLevel: selectedClause.riskIndicators?.level || selectedClause.preAnalysis?.riskLevel || 'unknown',
       textPreview: selectedClause.text.substring(0, 50) + '...',
-      cacheKeys: Object.keys(analysisCache)
+      cacheKeys: Object.keys(analysisCache),
+      isBatchRunning: isBatchAnalyzing
     });
 
     // ✅ Direkter Cache-Check (statt Ref-basierter Hacks)
@@ -335,10 +339,33 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       return;
     }
 
+    // ✅ SCHRITT 4: Queue-Priorisierung wenn Batch läuft
+    if (isBatchAnalyzing) {
+      // Versuche Klausel in der Queue zu priorisieren
+      const wasBumped = bumpClauseInQueue(selectedClause);
+
+      if (wasBumped) {
+        console.log(`⏳ [Legal Lens] Klausel in Queue priorisiert, warte auf Batch...`);
+
+        // Fallback-Timer: Wenn nach 2s immer noch nicht gecached, direkt analysieren
+        const fallbackTimer = setTimeout(() => {
+          // Nochmal prüfen ob inzwischen gecached
+          if (!(cacheKey in analysisCache)) {
+            console.log(`⚠️ [Legal Lens] Fallback: Batch zu langsam, starte direkte Analyse`);
+            analyzeClause(false);
+          }
+        }, 2000);
+
+        // Cleanup bei Unmount oder wenn sich Klausel ändert
+        return () => clearTimeout(fallbackTimer);
+      }
+      // Klausel nicht in Queue → normal analysieren (z.B. nicht-high-risk Klausel)
+    }
+
     // Starte Analyse
     console.log('[Legal Lens] Starting analysis for:', cacheKey);
     analyzeClause(false);
-  }, [selectedClause?.id, currentPerspective, isAnalyzing, analysisCache, currentAnalysis, analyzeClause]);
+  }, [selectedClause?.id, currentPerspective, isAnalyzing, analysisCache, currentAnalysis, analyzeClause, isBatchAnalyzing, bumpClauseInQueue]);
 
   // Klausel als gelesen markieren
   useEffect(() => {

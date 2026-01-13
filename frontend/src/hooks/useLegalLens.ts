@@ -165,6 +165,8 @@ interface UseLegalLensReturn {
   analyzeAllClauses: () => Promise<void>;
   cancelBatchAnalysis: () => void;
   reset: () => void;
+  // ✅ Phase 1 Schritt 4: Queue-Priorisierung
+  bumpClauseInQueue: (clause: ParsedClause) => boolean;
 }
 
 // Cache-Key für Klausel+Perspektive Kombination
@@ -259,6 +261,12 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
 
   // ✅ Phase 1 Performance: Ref um doppelten Auto-Preload zu verhindern
   const startedPreloadRef = useRef<boolean>(false);
+
+  // ✅ Phase 1 Schritt 4: Queue-Priorisierung
+  // Speichert die Klauseln die noch analysiert werden müssen (als Map: cacheKey -> clause)
+  const preloadQueueRef = useRef<Map<string, ParsedClause>>(new Map());
+  // Speichert den cacheKey der Klausel die der User angeklickt hat (Priorität)
+  const priorityClauseRef = useRef<string | null>(null);
 
   /**
    * Vertrag parsen - mit Auto-Streaming für nicht-vorverarbeitete Verträge
@@ -884,9 +892,30 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
   }, []);
 
   /**
+   * ✅ Phase 1 Schritt 4: Klausel in Queue nach vorne schieben
+   * Wird aufgerufen wenn User auf eine Klausel klickt während Batch läuft.
+   * Gibt true zurück wenn die Klausel in der Queue ist und priorisiert wurde.
+   */
+  const bumpClauseInQueue = useCallback((clause: ParsedClause): boolean => {
+    const cacheKey = getCacheKey(clause, currentPerspective);
+
+    // Prüfe ob Klausel in der Queue ist
+    if (preloadQueueRef.current.has(cacheKey)) {
+      console.log(`⬆️ [Legal Lens] Queue-Bump: ${cacheKey} wird priorisiert`);
+      priorityClauseRef.current = cacheKey;
+      return true;
+    }
+
+    return false;
+  }, [currentPerspective]);
+
+  /**
    * ✅ Phase 1 Performance: Automatisches Vorladen von HIGH-Risk Klauseln
    * Wird nach erfolgreichem Streaming automatisch getriggert.
    * Analysiert NUR High-Risk Klauseln (meist 3-7 Stück) für optimale Kosten/UX Balance.
+   *
+   * SCHRITT 4: Unterstützt Queue-Priorisierung - wenn User eine Klausel anklickt
+   * während der Batch läuft, wird diese Klausel als nächstes analysiert.
    */
   const autoAnalyzeHighRisk = useCallback(async () => {
     if (!contractId || clauses.length === 0) {
@@ -919,10 +948,14 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
 
     console.log(`🚀 [Legal Lens] Auto-Preload: Starting for ${uncachedHighRisk.length} high-risk clauses`);
 
-    // Debug: Zeige welche Klauseln vorgeladen werden
+    // ✅ SCHRITT 4: Queue aufbauen (Map: cacheKey -> clause)
+    preloadQueueRef.current.clear();
+    priorityClauseRef.current = null;
+
     uncachedHighRisk.forEach((clause, i) => {
       const cacheKey = getCacheKey(clause, currentPerspective);
-      console.log(`📋 [Auto-Preload] Klausel ${i + 1}: ID=${clause.id}, CacheKey=${cacheKey}, Risk=${clause.riskIndicators?.level || clause.preAnalysis?.riskLevel}`);
+      preloadQueueRef.current.set(cacheKey, clause);
+      console.log(`📋 [Auto-Preload] Queue ${i + 1}: ID=${clause.id}, CacheKey=${cacheKey}`);
     });
 
     // Batch starten
@@ -935,20 +968,35 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
       isRunning: true
     });
 
-    // Analysiere High-Risk Klauseln nacheinander
-    for (let i = 0; i < uncachedHighRisk.length; i++) {
-      if (batchAbortRef.current) {
-        console.log('[Legal Lens] Auto-Preload: Cancelled');
-        break;
+    let completedCount = 0;
+    const totalCount = uncachedHighRisk.length;
+
+    // ✅ SCHRITT 4: Queue-basierte Verarbeitung mit Priorität
+    while (preloadQueueRef.current.size > 0 && !batchAbortRef.current) {
+      // Prüfe ob es eine priorisierte Klausel gibt
+      let nextCacheKey: string;
+      let clause: ParsedClause;
+
+      if (priorityClauseRef.current && preloadQueueRef.current.has(priorityClauseRef.current)) {
+        // ⬆️ Priorisierte Klausel zuerst
+        nextCacheKey = priorityClauseRef.current;
+        clause = preloadQueueRef.current.get(nextCacheKey)!;
+        console.log(`⚡ [Auto-Preload] Priorisierte Klausel wird analysiert: ${nextCacheKey}`);
+        priorityClauseRef.current = null; // Reset nach Verwendung
+      } else {
+        // Nächste Klausel aus der Queue (erste in der Map)
+        const firstEntry = preloadQueueRef.current.entries().next().value;
+        if (!firstEntry) break;
+        [nextCacheKey, clause] = firstEntry;
       }
 
-      const clause = uncachedHighRisk[i];
-      const cacheKey = getCacheKey(clause, currentPerspective);
+      // Entferne aus Queue
+      preloadQueueRef.current.delete(nextCacheKey);
 
       setBatchProgress(prev => ({
         ...prev,
         current: `🔴 ${clause.text.substring(0, 40)}...`,
-        completed: i
+        completed: completedCount
       }));
 
       try {
@@ -963,24 +1011,29 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
         if (response.success) {
           setAnalysisCache(prev => ({
             ...prev,
-            [cacheKey]: response.analysis
+            [nextCacheKey]: response.analysis
           }));
-          console.log(`✅ [Legal Lens] Auto-Preload: Cached ${i + 1}/${uncachedHighRisk.length} (${clause.id})`);
+          completedCount++;
+          console.log(`✅ [Legal Lens] Auto-Preload: Cached ${completedCount}/${totalCount} (${clause.id})`);
         }
       } catch (err) {
         console.error(`❌ [Legal Lens] Auto-Preload error for ${clause.id}:`, err);
-        // Fehler überspringen, nicht abbrechen
+        completedCount++; // Trotzdem weiterzählen
       }
 
-      // Pause zwischen Requests (300ms)
-      if (i < uncachedHighRisk.length - 1 && !batchAbortRef.current) {
+      // Pause zwischen Requests (300ms) - nur wenn noch Klauseln in Queue
+      if (preloadQueueRef.current.size > 0 && !batchAbortRef.current) {
         await new Promise(resolve => setTimeout(resolve, 300));
       }
     }
 
+    // Queue leeren falls abgebrochen
+    preloadQueueRef.current.clear();
+    priorityClauseRef.current = null;
+
     setBatchProgress(prev => ({
       ...prev,
-      completed: batchAbortRef.current ? prev.completed : uncachedHighRisk.length,
+      completed: completedCount,
       current: null,
       isRunning: false
     }));
@@ -1012,6 +1065,9 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
     setError(null);
     setAnalysisCache({}); // ✅ NEU: Cache leeren
     startedPreloadRef.current = false; // ✅ Phase 1: Preload-Flag zurücksetzen
+    // ✅ Phase 1 Schritt 4: Queue zurücksetzen
+    preloadQueueRef.current.clear();
+    priorityClauseRef.current = null;
   }, []);
 
   // Cleanup bei Unmount
@@ -1106,7 +1162,9 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
     loadSummary,
     analyzeAllClauses,
     cancelBatchAnalysis,
-    reset
+    reset,
+    // ✅ Phase 1 Schritt 4: Queue-Priorisierung
+    bumpClauseInQueue
   };
 }
 
