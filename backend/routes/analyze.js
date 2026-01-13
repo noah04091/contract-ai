@@ -13,6 +13,7 @@ const contractAnalyzer = require("../services/contractAnalyzer"); // 📋 Provid
 const { generateEventsForContract } = require("../services/calendarEvents"); // 🆕 CALENDAR EVENTS IMPORT
 const AILegalPulse = require("../services/aiLegalPulse"); // ⚡ NEW: Legal Pulse Risk Analysis
 const { getInstance: getCostTrackingService } = require("../services/costTracking"); // 💰 NEW: Cost Tracking
+const { clauseParser } = require("../services/legalLens"); // 🔍 Legal Lens Pre-Processing
 
 const router = express.Router();
 
@@ -2780,6 +2781,93 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           console.log(`⏭️ [${requestId}] Skipping Legal Pulse for existing contract - User plan "${plan}" does not include Legal Pulse`);
         }
 
+        // 🔍 LEGAL LENS PRE-PROCESSING für existierenden Vertrag (Background Job)
+        // Nur wenn noch keine vorverarbeiteten Klauseln existieren
+        if (!existingContract.legalLens?.preParsedClauses?.length) {
+          (async () => {
+            try {
+              console.log(`🔍 [${requestId}] Starting Legal Lens pre-processing for existing contract in background...`);
+
+              const cleanedText = clauseParser.preprocessText(fullTextContent);
+              const { text: filteredText } = clauseParser.removeHeaderFooter(cleanedText);
+              const rawBlocks = clauseParser.createTextBlocks(filteredText);
+
+              if (rawBlocks.length === 0) return;
+
+              const maxBlocksPerCall = 25;
+              const batches = [];
+              for (let i = 0; i < rawBlocks.length; i += maxBlocksPerCall) {
+                batches.push(rawBlocks.slice(i, i + maxBlocksPerCall));
+              }
+
+              let allClauses = [];
+              for (const batch of batches) {
+                try {
+                  const batchClauses = await clauseParser.gptSegmentClausesBatch(batch, existingContract.name || '');
+                  const validClauses = batchClauses
+                    .filter(c => c && c.text && typeof c.text === 'string' && c.text.trim().length > 0)
+                    .map((clause, idx) => {
+                      const riskAssessment = clauseParser.assessClauseRisk(clause.text);
+                      return {
+                        id: clause.id || `clause_pre_${allClauses.length + idx + 1}`,
+                        number: clause.number || `${allClauses.length + idx + 1}`,
+                        title: clause.title || null,
+                        text: clause.text,
+                        type: clause.type || 'paragraph',
+                        riskLevel: riskAssessment.level,
+                        riskScore: riskAssessment.score,
+                        riskKeywords: riskAssessment.keywords,
+                        riskIndicators: {
+                          level: riskAssessment.level,
+                          keywords: riskAssessment.keywords,
+                          score: riskAssessment.score
+                        }
+                      };
+                    });
+                  allClauses = [...allClauses, ...validClauses];
+                } catch (batchError) {
+                  console.warn(`⚠️ [${requestId}] Legal Lens batch error:`, batchError.message);
+                }
+                await new Promise(resolve => setTimeout(resolve, 300));
+              }
+
+              if (allClauses.length === 0) return;
+
+              const riskSummary = {
+                high: allClauses.filter(c => c.riskLevel === 'high').length,
+                medium: allClauses.filter(c => c.riskLevel === 'medium').length,
+                low: allClauses.filter(c => c.riskLevel === 'low').length
+              };
+
+              await contractsCollection.updateOne(
+                { _id: existingContract._id },
+                {
+                  $set: {
+                    'legalLens.preParsedClauses': allClauses,
+                    'legalLens.riskSummary': riskSummary,
+                    'legalLens.metadata': {
+                      parsedAt: new Date().toISOString(),
+                      parserVersion: '2.0.0-preprocess',
+                      usedGPT: true,
+                      blockCount: rawBlocks.length,
+                      batchCount: batches.length,
+                      source: 'background-preprocess'
+                    },
+                    'legalLens.preprocessStatus': 'completed',
+                    'legalLens.preprocessedAt': new Date()
+                  }
+                }
+              );
+
+              console.log(`✅ [${requestId}] Legal Lens pre-processing completed: ${allClauses.length} clauses cached for existing contract ${existingContract._id}`);
+            } catch (preprocessError) {
+              console.error(`❌ [${requestId}] Legal Lens pre-processing failed:`, preprocessError.message);
+            }
+          })();
+        } else {
+          console.log(`⏭️ [${requestId}] Legal Lens: Existing contract already has pre-parsed clauses`);
+        }
+
       } else {
         // 📋 ÄNDERUNG 4: UPDATE contractAnalysisData WITH AUTO-RENEWAL & DURATION
         const contractAnalysisData = {
@@ -2942,6 +3030,107 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         } else {
           console.log(`⏭️ [${requestId}] Skipping Legal Pulse for new contract - User plan "${plan}" does not include Legal Pulse`);
         }
+
+        // 🔍 LEGAL LENS PRE-PROCESSING (Background Job für alle User)
+        // Parsed Klauseln im Hintergrund für schnelles Laden bei Legal Lens
+        (async () => {
+          try {
+            console.log(`🔍 [${requestId}] Starting Legal Lens pre-processing in background...`);
+
+            // Text vorbereiten
+            const cleanedText = clauseParser.preprocessText(fullTextContent);
+            const { text: filteredText } = clauseParser.removeHeaderFooter(cleanedText);
+            const rawBlocks = clauseParser.createTextBlocks(filteredText);
+
+            if (rawBlocks.length === 0) {
+              console.log(`⚠️ [${requestId}] Legal Lens: No text blocks found, skipping`);
+              return;
+            }
+
+            // GPT-basiertes Klausel-Parsing (in Batches)
+            const maxBlocksPerCall = 25;
+            const batches = [];
+            for (let i = 0; i < rawBlocks.length; i += maxBlocksPerCall) {
+              batches.push(rawBlocks.slice(i, i + maxBlocksPerCall));
+            }
+
+            let allClauses = [];
+            for (const batch of batches) {
+              try {
+                const batchClauses = await clauseParser.gptSegmentClausesBatch(batch, savedContract.name || '');
+                const validClauses = batchClauses
+                  .filter(c => c && c.text && typeof c.text === 'string' && c.text.trim().length > 0)
+                  .map((clause, idx) => {
+                    const riskAssessment = clauseParser.assessClauseRisk(clause.text);
+                    return {
+                      id: clause.id || `clause_pre_${allClauses.length + idx + 1}`,
+                      number: clause.number || `${allClauses.length + idx + 1}`,
+                      title: clause.title || null,
+                      text: clause.text,
+                      type: clause.type || 'paragraph',
+                      riskLevel: riskAssessment.level,
+                      riskScore: riskAssessment.score,
+                      riskKeywords: riskAssessment.keywords,
+                      riskIndicators: {
+                        level: riskAssessment.level,
+                        keywords: riskAssessment.keywords,
+                        score: riskAssessment.score
+                      }
+                    };
+                  });
+                allClauses = [...allClauses, ...validClauses];
+              } catch (batchError) {
+                console.warn(`⚠️ [${requestId}] Legal Lens batch error:`, batchError.message);
+              }
+              // Kleine Pause zwischen Batches
+              await new Promise(resolve => setTimeout(resolve, 300));
+            }
+
+            if (allClauses.length === 0) {
+              console.log(`⚠️ [${requestId}] Legal Lens: No clauses parsed`);
+              return;
+            }
+
+            // Risk Summary berechnen
+            const riskSummary = {
+              high: allClauses.filter(c => c.riskLevel === 'high').length,
+              medium: allClauses.filter(c => c.riskLevel === 'medium').length,
+              low: allClauses.filter(c => c.riskLevel === 'low').length
+            };
+
+            // In DB speichern
+            await contractsCollection.updateOne(
+              { _id: savedContract._id },
+              {
+                $set: {
+                  'legalLens.preParsedClauses': allClauses,
+                  'legalLens.riskSummary': riskSummary,
+                  'legalLens.metadata': {
+                    parsedAt: new Date().toISOString(),
+                    parserVersion: '2.0.0-preprocess',
+                    usedGPT: true,
+                    blockCount: rawBlocks.length,
+                    batchCount: batches.length,
+                    source: 'background-preprocess'
+                  },
+                  'legalLens.preprocessStatus': 'completed',
+                  'legalLens.preprocessedAt': new Date()
+                }
+              }
+            );
+
+            console.log(`✅ [${requestId}] Legal Lens pre-processing completed: ${allClauses.length} clauses cached for contract ${savedContract._id}`);
+          } catch (preprocessError) {
+            console.error(`❌ [${requestId}] Legal Lens pre-processing failed:`, preprocessError.message);
+            // Update status to error
+            try {
+              await contractsCollection.updateOne(
+                { _id: savedContract._id },
+                { $set: { 'legalLens.preprocessStatus': 'error' } }
+              );
+            } catch (e) { /* ignore */ }
+          }
+        })();
       }
 
     } catch (saveError) {
