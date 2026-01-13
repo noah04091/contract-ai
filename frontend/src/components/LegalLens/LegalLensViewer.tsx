@@ -971,6 +971,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                 viewMode={viewMode}
                 onViewModeChange={setViewMode}
                 cachedClauseIds={Object.keys(analysisCache).map(key => key.split('-')[0])}
+                isStreaming={isStreaming}
+                streamingProgress={streamingProgress}
               />
             </div>
           ) : (
@@ -1069,6 +1071,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
               viewMode={viewMode}
               onViewModeChange={setViewMode}
               cachedClauseIds={Object.keys(analysisCache).map(key => key.split('-')[0])}
+              isStreaming={isStreaming}
+              streamingProgress={streamingProgress}
             />
           ) : (
           <div className={styles.contractPanel} style={{ display: 'flex', flexDirection: 'column' }}>

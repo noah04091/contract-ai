@@ -17,6 +17,8 @@ interface ClauseListProps {
   viewMode?: ViewMode;
   onViewModeChange?: (mode: ViewMode) => void;
   cachedClauseIds?: string[];
+  isStreaming?: boolean;
+  streamingProgress?: number;
 }
 
 const ClauseList: React.FC<ClauseListProps> = ({
@@ -26,7 +28,9 @@ const ClauseList: React.FC<ClauseListProps> = ({
   onSelectClause,
   viewMode = 'text',
   onViewModeChange,
-  cachedClauseIds = []
+  cachedClauseIds = [],
+  isStreaming = false,
+  streamingProgress = 0
 }) => {
   // ✅ FIX Issue #5: Refs für Auto-Scroll zur ausgewählten Klausel
   const clauseRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -253,11 +257,34 @@ const ClauseList: React.FC<ClauseListProps> = ({
 
         {safeClauses.length === 0 && (
           <div className={styles.analysisPanelEmpty}>
-            <span className={styles.emptyIcon}>📄</span>
-            <h4 className={styles.emptyTitle}>Keine Klauseln gefunden</h4>
-            <p className={styles.emptyText}>
-              Der Vertrag enthält keine analysierbaren Klauseln.
-            </p>
+            {isStreaming ? (
+              <>
+                {/* Streaming in Progress - Lade-Animation */}
+                <div className={styles.streamingLoader}>
+                  <div className={styles.streamingPulse} />
+                </div>
+                <h4 className={styles.emptyTitle}>Klauseln werden erkannt...</h4>
+                <p className={styles.emptyText}>
+                  Die KI analysiert den Vertrag. Klauseln erscheinen hier sobald sie erkannt werden.
+                </p>
+                <div className={styles.streamingMiniProgress}>
+                  <div
+                    className={styles.streamingMiniBar}
+                    style={{ width: `${streamingProgress}%` }}
+                  />
+                </div>
+                <span className={styles.streamingPercent}>{streamingProgress}% analysiert</span>
+              </>
+            ) : (
+              <>
+                {/* Wirklich keine Klauseln gefunden */}
+                <span className={styles.emptyIcon}>📄</span>
+                <h4 className={styles.emptyTitle}>Keine Klauseln gefunden</h4>
+                <p className={styles.emptyText}>
+                  Der Vertrag enthält keine analysierbaren Klauseln.
+                </p>
+              </>
+            )}
           </div>
         )}
       </div>
