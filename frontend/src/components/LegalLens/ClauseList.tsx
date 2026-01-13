@@ -1,8 +1,8 @@
 // 📁 components/LegalLens/ClauseList.tsx
 // Komponente für die Klausel-Liste (linke Seite)
 
-import React, { useRef, useEffect } from 'react';
-import { FileText, Eye } from 'lucide-react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
+import { FileText, Eye, ChevronDown, ChevronUp } from 'lucide-react';
 import type { ParsedClause, LegalLensProgress, RiskLevel } from '../../types/legalLens';
 import { RISK_LABELS } from '../../types/legalLens';
 import styles from '../../styles/LegalLens.module.css';
@@ -30,10 +30,50 @@ const ClauseList: React.FC<ClauseListProps> = ({
 }) => {
   // ✅ FIX Issue #5: Refs für Auto-Scroll zur ausgewählten Klausel
   const clauseRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  // Refs für Text-Elemente um Überlauf zu prüfen
+  const textRefs = useRef<Map<string, HTMLParagraphElement>>(new Map());
 
   // ✅ Defensiver Check für undefined clauses
   const safeClauses = clauses || [];
-  // listContainerRef entfernt - wurde nicht verwendet
+
+  // ✅ Phase 3: State für expandierte Klauseln
+  const [expandedClauses, setExpandedClauses] = useState<Set<string>>(new Set());
+  const [overflowingClauses, setOverflowingClauses] = useState<Set<string>>(new Set());
+
+  // Prüfe welche Klauseln mehr als 3 Zeilen haben
+  useEffect(() => {
+    const checkOverflow = () => {
+      const newOverflowing = new Set<string>();
+      textRefs.current.forEach((el, id) => {
+        if (el) {
+          // Prüfe ob Text abgeschnitten ist (scrollHeight > clientHeight)
+          const isOverflowing = el.scrollHeight > el.clientHeight + 2; // +2 für Rundungsfehler
+          if (isOverflowing) {
+            newOverflowing.add(id);
+          }
+        }
+      });
+      setOverflowingClauses(newOverflowing);
+    };
+
+    // Nach kurzem Timeout prüfen (warten auf Render)
+    const timer = setTimeout(checkOverflow, 100);
+    return () => clearTimeout(timer);
+  }, [safeClauses]);
+
+  // Toggle expand/collapse für eine Klausel
+  const toggleExpand = useCallback((clauseId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Verhindert dass die Klausel ausgewählt wird
+    setExpandedClauses(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(clauseId)) {
+        newSet.delete(clauseId);
+      } else {
+        newSet.add(clauseId);
+      }
+      return newSet;
+    });
+  }, []);
 
   // ✅ Auto-Scroll zur ausgewählten Klausel wenn sie sich ändert
   useEffect(() => {
@@ -144,9 +184,36 @@ const ClauseList: React.FC<ClauseListProps> = ({
                 </span>
               </div>
 
-              <p className={styles.clauseText}>
-                {clause.text}
-              </p>
+              <div className={styles.clauseTextWrapper}>
+                <p
+                  ref={(el) => {
+                    if (el) textRefs.current.set(clause.id, el);
+                  }}
+                  className={`${styles.clauseText} ${expandedClauses.has(clause.id) ? styles.expanded : ''}`}
+                >
+                  {clause.text}
+                </p>
+                {/* Expand/Collapse Button - nur wenn Text überläuft */}
+                {(overflowingClauses.has(clause.id) || expandedClauses.has(clause.id)) && (
+                  <button
+                    className={styles.expandButton}
+                    onClick={(e) => toggleExpand(clause.id, e)}
+                    title={expandedClauses.has(clause.id) ? 'Weniger anzeigen' : 'Mehr anzeigen'}
+                  >
+                    {expandedClauses.has(clause.id) ? (
+                      <>
+                        <ChevronUp size={14} />
+                        <span>Weniger</span>
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown size={14} />
+                        <span>Mehr anzeigen</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
 
               {/* Voranalyse-Info anzeigen wenn verfügbar */}
               {clause.preAnalysis && (
