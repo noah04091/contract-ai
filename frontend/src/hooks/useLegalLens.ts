@@ -1029,6 +1029,15 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
    * Das verhindert Race Conditions mit React State Updates.
    */
   useEffect(() => {
+    // Debug: Zeige aktuellen Status
+    console.log('🔍 [Legal Lens] Auto-Preload Check:', {
+      isStreaming,
+      clausesCount: clauses.length,
+      isBatchAnalyzing,
+      startedPreload: startedPreloadRef.current,
+      parseSource
+    });
+
     // Alle Guardrails prüfen
     if (
       !isStreaming &&                      // Streaming muss fertig sein
