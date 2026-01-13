@@ -326,7 +326,7 @@ Sei PESSIMISTISCH und zeige MAXIMALE RISIKEN auf - aber bleibe realistisch.`
     }
 
     const {
-      model = 'gpt-4-turbo-preview',
+      model = 'gpt-4o',
       temperature = 0.3,
       maxTokens = 2000, // Erhöht für ausführlichere Analysen
       language = 'de'
@@ -486,7 +486,7 @@ REGELN:
     const {
       count = 2,
       style = 'balanced', // 'favorable', 'balanced', 'strict'
-      model = 'gpt-4-turbo-preview'
+      model = 'gpt-4o'
     } = options;
 
     const styleInstructions = {
@@ -570,7 +570,7 @@ Antworte in diesem JSON-Format:
         : '';
 
       const response = await this.openai.chat.completions.create({
-        model: 'gpt-4-turbo-preview',
+        model: 'gpt-4o',
         messages: [
           { role: 'system', content: systemPrompt },
           {
@@ -624,7 +624,7 @@ Bei rechtlichen Fragen weise darauf hin, dass du keine Rechtsberatung gibst.`;
       ];
 
       const response = await this.openai.chat.completions.create({
-        model: 'gpt-4-turbo-preview',
+        model: 'gpt-4o',
         messages,
         temperature: 0.5,
         max_tokens: 300
@@ -705,7 +705,7 @@ Strukturiere deine Antwort so:
 
     try {
       const stream = await this.openai.chat.completions.create({
-        model: 'gpt-4-turbo-preview',
+        model: 'gpt-4o',
         messages: [
           { role: 'system', content: systemPrompt },
           {
@@ -994,7 +994,7 @@ Antworte NUR mit diesem JSON-Format:
       const startTime = Date.now();
 
       const response = await this.openai.chat.completions.create({
-        model: 'gpt-4-turbo-preview',
+        model: 'gpt-4o',
         messages: [
           { role: 'system', content: systemPrompt },
           {
@@ -1017,7 +1017,7 @@ Antworte NUR mit diesem JSON-Format:
         success: true,
         summary: result,
         metadata: {
-          model: 'gpt-4-turbo-preview',
+          model: 'gpt-4o',
           tokensUsed,
           processingTimeMs: processingTime,
           analyzedAt: new Date().toISOString(),
@@ -1135,7 +1135,7 @@ WICHTIG: Nenne KONKRETE Zahlen (€, Monate, %). Sprich mit "du/dein". Sei ehrli
 
     try {
       const stream = await this.openai.chat.completions.create({
-        model: 'gpt-4-turbo-preview',
+        model: 'gpt-4o',
         messages: [
           { role: 'system', content: systemPrompt },
           {
