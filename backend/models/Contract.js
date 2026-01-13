@@ -296,6 +296,53 @@ const contractSchema = new mongoose.Schema({
     error: { type: String }
   }],
 
+  // Legal Lens - Klausel-Analyse & Caching
+  legalLens: {
+    // Vorverarbeitete Klauseln (gecached für schnelles Laden)
+    preParsedClauses: [{
+      id: String,
+      number: String,
+      title: String,
+      text: String,
+      type: String,
+      riskLevel: { type: String, enum: ['high', 'medium', 'low'] },
+      riskScore: Number,
+      riskKeywords: [String],
+      riskIndicators: {
+        level: String,
+        keywords: [String],
+        score: Number
+      },
+      preAnalysis: {
+        riskLevel: String,
+        summary: String,
+        mainRisk: String
+      }
+    }],
+    // Risk Summary
+    riskSummary: {
+      high: { type: Number, default: 0 },
+      medium: { type: Number, default: 0 },
+      low: { type: Number, default: 0 }
+    },
+    // Metadata
+    metadata: {
+      parsedAt: String,
+      parserVersion: String,
+      usedGPT: Boolean,
+      blockCount: Number,
+      batchCount: Number,
+      source: String
+    },
+    // Status
+    preprocessStatus: {
+      type: String,
+      enum: ['pending', 'processing', 'completed', 'error'],
+      default: null
+    },
+    preprocessedAt: Date
+  },
+
   // Legal Pulse 2.0
   legalPulse: {
     // Core Metrics
