@@ -953,7 +953,6 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
     });
 
     let completedCount = 0;
-    const totalCount = uncachedHighRisk.length;
 
     // ✅ SCHRITT 4: Queue-basierte Verarbeitung mit Priorität
     while (preloadQueueRef.current.size > 0 && !batchAbortRef.current) {
