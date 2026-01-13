@@ -309,10 +309,19 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
     const cacheKey = `content-${generateContentHash(selectedClause.text)}-${currentPerspective}`;
 
+    // Debug: Zeige Klick-Details
+    console.log(`🖱️ [Legal Lens] Klausel geklickt:`, {
+      clauseId: selectedClause.id,
+      cacheKey: cacheKey,
+      riskLevel: selectedClause.riskIndicators?.level || selectedClause.preAnalysis?.riskLevel || 'unknown',
+      textPreview: selectedClause.text.substring(0, 50) + '...',
+      cacheKeys: Object.keys(analysisCache)
+    });
+
     // ✅ Direkter Cache-Check (statt Ref-basierter Hacks)
     const isAlreadyCached = cacheKey in analysisCache;
     if (isAlreadyCached) {
-      console.log('[Legal Lens] Using cached analysis:', cacheKey);
+      console.log('✅ [Legal Lens] Using cached analysis:', cacheKey);
       return;
     }
 

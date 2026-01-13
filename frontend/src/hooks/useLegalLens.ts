@@ -919,6 +919,12 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
 
     console.log(`🚀 [Legal Lens] Auto-Preload: Starting for ${uncachedHighRisk.length} high-risk clauses`);
 
+    // Debug: Zeige welche Klauseln vorgeladen werden
+    uncachedHighRisk.forEach((clause, i) => {
+      const cacheKey = getCacheKey(clause, currentPerspective);
+      console.log(`📋 [Auto-Preload] Klausel ${i + 1}: ID=${clause.id}, CacheKey=${cacheKey}, Risk=${clause.riskIndicators?.level || clause.preAnalysis?.riskLevel}`);
+    });
+
     // Batch starten
     batchAbortRef.current = false;
     setIsBatchAnalyzing(true);
