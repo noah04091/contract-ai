@@ -431,7 +431,6 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
     const cachedAnalysis = analysisCache[cacheKey];
 
     if (cachedAnalysis) {
-      console.log('[Legal Lens] Using cached analysis for:', cacheKey);
       setCurrentAnalysis(cachedAnalysis);
       setChatHistory(cachedAnalysis.chatHistory || []);
     } else {
@@ -456,7 +455,6 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
     const cachedAnalysis = analysisCache[cacheKey];
 
     if (cachedAnalysis) {
-      console.log('[Legal Lens] Analysis already cached, skipping API call');
       setCurrentAnalysis(cachedAnalysis);
       setChatHistory(cachedAnalysis.chatHistory || []);
       return; // Keine API-Anfrage nötig!
@@ -567,7 +565,6 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
       const cachedAnalysis = analysisCache[cacheKey];
 
       if (cachedAnalysis) {
-        console.log('[Legal Lens] Using cached analysis for perspective:', perspective);
         setCurrentAnalysis(cachedAnalysis);
         setChatHistory(cachedAnalysis.chatHistory || []);
       } else {
@@ -859,7 +856,6 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
             ...prev,
             [cacheKey]: response.analysis
           }));
-          console.log(`[Legal Lens] Cached clause ${i + 1}/${uncachedClauses.length}: ${clause.id}`);
         }
       } catch (err) {
         console.error(`[Legal Lens] Error analyzing clause ${clause.id}:`, err);
@@ -901,7 +897,6 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
 
     // Prüfe ob Klausel in der Queue ist
     if (preloadQueueRef.current.has(cacheKey)) {
-      console.log(`⬆️ [Legal Lens] Queue-Bump: ${cacheKey} wird priorisiert`);
       priorityClauseRef.current = cacheKey;
       return true;
     }
@@ -918,22 +913,15 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
    * während der Batch läuft, wird diese Klausel als nächstes analysiert.
    */
   const autoAnalyzeHighRisk = useCallback(async () => {
-    if (!contractId || clauses.length === 0) {
-      console.log('[Legal Lens] Auto-Preload: Skipped - no contractId or clauses');
-      return;
-    }
+    if (!contractId || clauses.length === 0) return;
 
     // Filtere nur HIGH-Risk Klauseln
     const highRiskClauses = clauses.filter(clause => {
-      // riskIndicators.level ist der korrekte Pfad laut ParsedClause Interface
       const riskLevel = clause.riskIndicators?.level || clause.preAnalysis?.riskLevel;
       return riskLevel === 'high';
     });
 
-    if (highRiskClauses.length === 0) {
-      console.log('[Legal Lens] Auto-Preload: No high-risk clauses found');
-      return;
-    }
+    if (highRiskClauses.length === 0) return;
 
     // Filtere bereits gecachte Klauseln raus
     const uncachedHighRisk = highRiskClauses.filter(clause => {
@@ -941,21 +929,17 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
       return !analysisCache[cacheKey];
     });
 
-    if (uncachedHighRisk.length === 0) {
-      console.log('[Legal Lens] Auto-Preload: All high-risk clauses already cached');
-      return;
-    }
+    if (uncachedHighRisk.length === 0) return;
 
-    console.log(`🚀 [Legal Lens] Auto-Preload: Starting for ${uncachedHighRisk.length} high-risk clauses`);
+    console.log(`🚀 [Legal Lens] Auto-Preload: ${uncachedHighRisk.length} high-risk clauses`);
 
-    // ✅ SCHRITT 4: Queue aufbauen (Map: cacheKey -> clause)
+    // Queue aufbauen (Map: cacheKey -> clause)
     preloadQueueRef.current.clear();
     priorityClauseRef.current = null;
 
-    uncachedHighRisk.forEach((clause, i) => {
+    uncachedHighRisk.forEach((clause) => {
       const cacheKey = getCacheKey(clause, currentPerspective);
       preloadQueueRef.current.set(cacheKey, clause);
-      console.log(`📋 [Auto-Preload] Queue ${i + 1}: ID=${clause.id}, CacheKey=${cacheKey}`);
     });
 
     // Batch starten
@@ -978,10 +962,9 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
       let clause: ParsedClause;
 
       if (priorityClauseRef.current && preloadQueueRef.current.has(priorityClauseRef.current)) {
-        // ⬆️ Priorisierte Klausel zuerst
+        // Priorisierte Klausel zuerst
         nextCacheKey = priorityClauseRef.current;
         clause = preloadQueueRef.current.get(nextCacheKey)!;
-        console.log(`⚡ [Auto-Preload] Priorisierte Klausel wird analysiert: ${nextCacheKey}`);
         priorityClauseRef.current = null; // Reset nach Verwendung
       } else {
         // Nächste Klausel aus der Queue (erste in der Map)
@@ -1014,7 +997,6 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
             [nextCacheKey]: response.analysis
           }));
           completedCount++;
-          console.log(`✅ [Legal Lens] Auto-Preload: Cached ${completedCount}/${totalCount} (${clause.id})`);
         }
       } catch (err) {
         console.error(`❌ [Legal Lens] Auto-Preload error for ${clause.id}:`, err);
@@ -1038,8 +1020,6 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
       isRunning: false
     }));
     setIsBatchAnalyzing(false);
-
-    console.log(`🏁 [Legal Lens] Auto-Preload: Completed`);
   }, [contractId, clauses, currentPerspective, analysisCache]);
 
   /**
@@ -1091,15 +1071,6 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
    * Das verhindert Race Conditions mit React State Updates.
    */
   useEffect(() => {
-    // Debug: Zeige aktuellen Status
-    console.log('🔍 [Legal Lens] Auto-Preload Check:', {
-      isStreaming,
-      clausesCount: clauses.length,
-      isBatchAnalyzing,
-      startedPreload: startedPreloadRef.current,
-      parseSource
-    });
-
     // Alle Guardrails prüfen
     if (
       !isStreaming &&                      // Streaming muss fertig sein
@@ -1108,7 +1079,6 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
       !startedPreloadRef.current &&        // Noch nicht gestartet
       parseSource === 'streaming'          // Nur nach echtem Streaming (nicht bei preprocessed)
     ) {
-      console.log('🎯 [Legal Lens] Auto-Preload: Conditions met, starting...');
       startedPreloadRef.current = true;
       autoAnalyzeHighRisk();
     }

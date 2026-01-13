@@ -312,32 +312,16 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
     const cacheKey = `content-${generateContentHash(selectedClause.text)}-${currentPerspective}`;
 
-    // Debug: Zeige Klick-Details
-    console.log(`🖱️ [Legal Lens] Klausel geklickt:`, {
-      clauseId: selectedClause.id,
-      cacheKey: cacheKey,
-      riskLevel: selectedClause.riskIndicators?.level || selectedClause.preAnalysis?.riskLevel || 'unknown',
-      textPreview: selectedClause.text.substring(0, 50) + '...',
-      cacheKeys: Object.keys(analysisCache),
-      isBatchRunning: isBatchAnalyzing
-    });
-
-    // ✅ Direkter Cache-Check (statt Ref-basierter Hacks)
+    // Direkter Cache-Check
     const isAlreadyCached = cacheKey in analysisCache;
-    if (isAlreadyCached) {
-      console.log('✅ [Legal Lens] Using cached analysis:', cacheKey);
-      return;
-    }
+    if (isAlreadyCached) return;
 
     // ✅ Prüfe ob currentAnalysis zur ausgewählten Klausel passt
     // (Analyse enthält alle Perspektiven, daher nur clauseId prüfen)
     const currentMatchesClause = currentAnalysis &&
       currentAnalysis.clauseId === selectedClause.id;
 
-    if (currentMatchesClause) {
-      console.log('[Legal Lens] Current analysis matches selected clause');
-      return;
-    }
+    if (currentMatchesClause) return;
 
     // ✅ SCHRITT 4: Queue-Priorisierung wenn Batch läuft
     if (isBatchAnalyzing) {
@@ -345,13 +329,9 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       const wasBumped = bumpClauseInQueue(selectedClause);
 
       if (wasBumped) {
-        console.log(`⏳ [Legal Lens] Klausel in Queue priorisiert, warte auf Batch...`);
-
         // Fallback-Timer: Wenn nach 2s immer noch nicht gecached, direkt analysieren
         const fallbackTimer = setTimeout(() => {
-          // Nochmal prüfen ob inzwischen gecached
           if (!(cacheKey in analysisCache)) {
-            console.log(`⚠️ [Legal Lens] Fallback: Batch zu langsam, starte direkte Analyse`);
             analyzeClause(false);
           }
         }, 2000);
@@ -362,8 +342,6 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       // Klausel nicht in Queue → normal analysieren (z.B. nicht-high-risk Klausel)
     }
 
-    // Starte Analyse
-    console.log('[Legal Lens] Starting analysis for:', cacheKey);
     analyzeClause(false);
   }, [selectedClause?.id, currentPerspective, isAnalyzing, analysisCache, currentAnalysis, analyzeClause, isBatchAnalyzing, bumpClauseInQueue]);
 
@@ -815,8 +793,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         </div>
       )}
 
-      {/* Smart Summary Modal */}
-      {showSmartSummary && !isParsing && !isStreaming && (clauses || []).length > 0 && (
+      {/* Smart Summary Modal - Zeigt sich SOFORT wenn Streaming startet (parallel zu Klauseln) */}
+      {showSmartSummary && (isStreaming || (!isParsing && (clauses || []).length > 0)) && (
         <SmartSummary
           contractId={contractId}
           contractName={contractName}
