@@ -402,10 +402,6 @@ const BetterContracts: React.FC = () => {
       </Helmet>
       
       <div className="contract-page">
-        <div className="contract-page-bg">
-          <div className="contract-page-shape shape-1"></div>
-          <div className="contract-page-shape shape-2"></div>
-        </div>
         
         {/* WICHTIG: Dynamische Container-Breite für Step 3 */}
         <div className={`contract-container ${step === 3 && results ? 'has-results' : ''}`} style={step === 3 && results ? { maxWidth: '1200px' } : {}}>

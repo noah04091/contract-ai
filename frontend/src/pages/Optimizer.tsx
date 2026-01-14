@@ -2394,8 +2394,6 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
       />
 
       <div className={styles.optimizer}>
-        <div className={styles.backgroundGradient}></div>
-
         <motion.div
           className={styles.container}
           initial={{ opacity: 0 }}
