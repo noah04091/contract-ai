@@ -259,6 +259,11 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
   const streamingAbortRef = useRef<(() => void) | null>(null);
   const batchAbortRef = useRef<boolean>(false);
 
+  // ✅ Race Condition Fix: Request ID Tracking
+  // Jede Analyse bekommt eine eindeutige ID, nur die neueste wird akzeptiert
+  const analysisRequestIdRef = useRef<number>(0);
+  const lastClauseIdRef = useRef<string | null>(null);
+
   // ✅ Phase 1 Performance: Ref um doppelten Auto-Preload zu verhindern
   const startedPreloadRef = useRef<boolean>(false);
 
@@ -432,8 +437,22 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
 
   /**
    * Klausel auswählen - mit Cache-Prüfung
+   * ✅ Race Condition Fix: Bricht laufende Analysen ab
    */
   const selectClause = useCallback((clause: ParsedClause) => {
+    // ✅ Race Condition Fix: Abbrechen laufender Analyse wenn andere Klausel
+    if (lastClauseIdRef.current !== clause.id) {
+      if (abortControllerRef.current) {
+        console.log('[Legal Lens] Abbreche laufende Analyse (neue Klausel ausgewählt)');
+        abortControllerRef.current();
+        abortControllerRef.current = null;
+      }
+      // Reset analyzing state
+      setIsAnalyzing(false);
+      setStreamingText('');
+    }
+
+    lastClauseIdRef.current = clause.id;
     setSelectedClause(clause);
 
     // ✅ FIX Issue #1: Content-basierter Cache-Key statt ID
@@ -451,11 +470,11 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
 
     setAlternatives([]);
     setNegotiation(null);
-    setStreamingText('');
   }, [currentPerspective, analysisCache]);
 
   /**
    * Klausel analysieren - mit Caching
+   * ✅ Race Condition Fix: Request ID Tracking
    */
   const analyzeClause = useCallback(async (streaming: boolean = true) => {
     if (!contractId || !selectedClause) return;
@@ -476,11 +495,25 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
       abortControllerRef.current = null;
     }
 
+    // ✅ Race Condition Fix: Eindeutige Request ID für diese Analyse
+    const currentRequestId = ++analysisRequestIdRef.current;
+    const currentClauseId = selectedClause.id;
+
     setIsAnalyzing(true);
     setError(null);
     setErrorInfo(null);
     setStreamingText('');
     setRetryCount(0);
+
+    // ✅ Helper: Prüft ob diese Anfrage noch aktuell ist
+    const isRequestStale = () => {
+      const isStale = analysisRequestIdRef.current !== currentRequestId ||
+                      lastClauseIdRef.current !== currentClauseId;
+      if (isStale) {
+        console.log('[Legal Lens] Ignoriere veraltete Response (Request ID mismatch)');
+      }
+      return isStale;
+    };
 
     // ✅ Helper: Analyse in Cache speichern
     const cacheAnalysis = (analysis: ClauseAnalysis) => {
@@ -499,9 +532,14 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
           selectedClause.text,
           currentPerspective,
           (chunk) => {
-            setStreamingText(prev => prev + chunk);
+            // ✅ Race Condition Fix: Nur updaten wenn Request noch aktuell
+            if (!isRequestStale()) {
+              setStreamingText(prev => prev + chunk);
+            }
           },
           (response) => {
+            // ✅ Race Condition Fix: Nur updaten wenn Request noch aktuell
+            if (isRequestStale()) return;
             setCurrentAnalysis(response.analysis);
             setChatHistory(response.analysis.chatHistory || []);
             cacheAnalysis(response.analysis);
@@ -509,6 +547,8 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
             setIsRetrying(false);
           },
           (err) => {
+            // ✅ Race Condition Fix: Fehler nur anzeigen wenn Request noch aktuell
+            if (isRequestStale()) return;
             const errorDetails = categorizeError(err);
             setError(errorDetails.message);
             setErrorInfo(errorDetails);
@@ -529,11 +569,17 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
           ),
           2,
           (attempt) => {
-            setIsRetrying(true);
-            setRetryCount(attempt);
+            // ✅ Race Condition Fix: Nur Retry-Status updaten wenn noch aktuell
+            if (!isRequestStale()) {
+              setIsRetrying(true);
+              setRetryCount(attempt);
+            }
             console.log(`[Legal Lens] Analyze retry attempt ${attempt}`);
           }
         );
+
+        // ✅ Race Condition Fix: Nur updaten wenn Request noch aktuell
+        if (isRequestStale()) return;
 
         setIsRetrying(false);
         setRetryCount(0);
@@ -546,6 +592,8 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
         setIsAnalyzing(false);
       }
     } catch (err) {
+      // ✅ Race Condition Fix: Fehler nur anzeigen wenn Request noch aktuell
+      if (isRequestStale()) return;
       const errorDetails = categorizeError(err, retryCount);
       setError(errorDetails.message);
       setErrorInfo(errorDetails);
