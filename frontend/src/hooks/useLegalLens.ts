@@ -277,6 +277,10 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
   // ✅ Phase 1 Performance: Ref um doppelten Auto-Preload zu verhindern
   const startedPreloadRef = useRef<boolean>(false);
 
+  // ✅ Opt 3: Pre-fetch Adjacent - Ref um laufende Pre-fetches zu tracken
+  const prefetchInProgressRef = useRef<Set<string>>(new Set());
+  const lastPrefetchClauseIdRef = useRef<string | null>(null);
+
   // ✅ Phase 1 Schritt 4: Queue-Priorisierung
   // Speichert die Klauseln die noch analysiert werden müssen (als Map: cacheKey -> clause)
   const preloadQueueRef = useRef<Map<string, ParsedClause>>(new Map());
@@ -662,6 +666,125 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
       setIsRetrying(false);
     }
   }, [contractId, selectedClause, currentPerspective, analysisCache, retryCount]);
+
+  /**
+   * ✅ Opt 3: Pre-fetch benachbarter Klauseln
+   * Lädt die nächsten 2 Klauseln im Hintergrund vor, damit Keyboard-Navigation
+   * (Pfeiltasten) instant ist.
+   *
+   * Wird automatisch aufgerufen wenn eine Klausel ausgewählt wird.
+   */
+  const prefetchAdjacentClauses = useCallback(async (
+    selectedClause: ParsedClause,
+    direction: 'both' | 'next' | 'prev' = 'both'
+  ) => {
+    if (!contractId || clauses.length === 0) return;
+
+    // Finde Index der ausgewählten Klausel
+    const currentIndex = clauses.findIndex(c => c.id === selectedClause.id);
+    if (currentIndex === -1) return;
+
+    // Bestimme welche Klauseln pre-fetched werden sollen
+    const toFetch: ParsedClause[] = [];
+
+    // Nächste 2 Klauseln (für Arrow Down / j)
+    if (direction === 'both' || direction === 'next') {
+      for (let i = 1; i <= 2; i++) {
+        const nextIdx = currentIndex + i;
+        if (nextIdx < clauses.length) {
+          const nextClause = clauses[nextIdx];
+          // Überspringe nicht-analysierbare Klauseln
+          if (!nextClause.nonAnalyzable) {
+            toFetch.push(nextClause);
+          }
+        }
+      }
+    }
+
+    // Vorherige 1 Klausel (für Arrow Up / k) - weniger aggressiv
+    if (direction === 'both' || direction === 'prev') {
+      const prevIdx = currentIndex - 1;
+      if (prevIdx >= 0) {
+        const prevClause = clauses[prevIdx];
+        if (!prevClause.nonAnalyzable) {
+          toFetch.push(prevClause);
+        }
+      }
+    }
+
+    // Filtere bereits gecachte und in-progress Klauseln
+    const uncachedClauses = toFetch.filter(clause => {
+      const cacheKey = getCacheKey(clause, currentPerspective);
+      const isCached = cacheKey in analysisCache;
+      const isInProgress = prefetchInProgressRef.current.has(cacheKey);
+      return !isCached && !isInProgress;
+    });
+
+    if (uncachedClauses.length === 0) {
+      return; // Alles bereits gecached oder in-progress
+    }
+
+    console.log(`🔮 [Legal Lens] Pre-fetch: ${uncachedClauses.length} adjacent clauses`);
+
+    // Starte Pre-fetch für alle (parallel, aber mit Abstand)
+    for (const clause of uncachedClauses) {
+      const cacheKey = getCacheKey(clause, currentPerspective);
+
+      // Markiere als in-progress
+      prefetchInProgressRef.current.add(cacheKey);
+
+      // Fire-and-forget: Nicht auf Ergebnis warten
+      legalLensAPI.analyzeClause(
+        contractId,
+        clause.id,
+        clause.text,
+        currentPerspective,
+        false // JSON mode (kein Streaming)
+      ).then(response => {
+        if (response.success) {
+          // In Cache speichern
+          setAnalysisCache(prev => ({
+            ...prev,
+            [cacheKey]: response.analysis
+          }));
+          console.log(`✅ [Legal Lens] Pre-fetched: ${clause.id.slice(-8)}`);
+        }
+      }).catch(err => {
+        console.warn(`⚠️ [Legal Lens] Pre-fetch failed for ${clause.id}:`, err);
+      }).finally(() => {
+        // Aus in-progress entfernen
+        prefetchInProgressRef.current.delete(cacheKey);
+      });
+
+      // Kleiner Abstand zwischen Requests (100ms)
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+  }, [contractId, clauses, currentPerspective, analysisCache]);
+
+  /**
+   * ✅ Opt 3: Auto Pre-fetch bei Klausel-Auswahl
+   * Triggered automatisch wenn eine neue Klausel ausgewählt wird.
+   */
+  useEffect(() => {
+    // Nur wenn eine Klausel ausgewählt ist und sich geändert hat
+    if (!selectedClause) return;
+    if (lastPrefetchClauseIdRef.current === selectedClause.id) return;
+
+    // Nicht während Batch-Analyse (die lädt sowieso alles)
+    if (isBatchAnalyzing) return;
+
+    // Nicht während Streaming oder Parsing (erst nach Abschluss)
+    if (isParsing || isStreaming || clauses.length === 0) return;
+
+    lastPrefetchClauseIdRef.current = selectedClause.id;
+
+    // Pre-fetch mit kleiner Verzögerung (User soll erst die aktuelle Analyse sehen)
+    const timer = setTimeout(() => {
+      prefetchAdjacentClauses(selectedClause, 'both');
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [selectedClause?.id, isBatchAnalyzing, isParsing, isStreaming, clauses.length, prefetchAdjacentClauses]);
 
   /**
    * Perspektive wechseln - mit Cache-Prüfung
@@ -1166,6 +1289,9 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
     // ✅ Phase 1 Schritt 4: Queue zurücksetzen
     preloadQueueRef.current.clear();
     priorityClauseRef.current = null;
+    // ✅ Opt 3: Pre-fetch Refs zurücksetzen
+    prefetchInProgressRef.current.clear();
+    lastPrefetchClauseIdRef.current = null;
   }, []);
 
   // Cleanup bei Unmount

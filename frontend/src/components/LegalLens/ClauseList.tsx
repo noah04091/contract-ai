@@ -1,8 +1,8 @@
 // 📁 components/LegalLens/ClauseList.tsx
 // Komponente für die Klausel-Liste (linke Seite)
 
-import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { FileText, Eye, ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
+import { FileText, Eye, ChevronDown, ChevronUp, Search, X } from 'lucide-react';
 import type { ParsedClause, LegalLensProgress, RiskLevel } from '../../types/legalLens';
 import { RISK_LABELS, NON_ANALYZABLE_LABELS } from '../../types/legalLens';
 import styles from '../../styles/LegalLens.module.css';
@@ -43,6 +43,64 @@ const ClauseList: React.FC<ClauseListProps> = ({
   // ✅ Phase 3: State für expandierte Klauseln
   const [expandedClauses, setExpandedClauses] = useState<Set<string>>(new Set());
   const [overflowingClauses, setOverflowingClauses] = useState<Set<string>>(new Set());
+
+  // ✅ Opt 4: Klausel-Suche
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isSearchFocused, setIsSearchFocused] = useState<boolean>(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Gefilterte Klauseln basierend auf Suchanfrage
+  const filteredClauses = useMemo(() => {
+    if (!searchQuery.trim()) return safeClauses;
+
+    const query = searchQuery.toLowerCase().trim();
+
+    return safeClauses.filter(clause => {
+      // Suche in Text
+      if (clause.text.toLowerCase().includes(query)) return true;
+      // Suche in Titel
+      if (clause.title?.toLowerCase().includes(query)) return true;
+      // Suche in Nummer
+      if (clause.number?.toLowerCase().includes(query)) return true;
+      // Suche in PreAnalysis Summary
+      if (clause.preAnalysis?.summary?.toLowerCase().includes(query)) return true;
+      // Suche in Risk-Level (z.B. "hoch" oder "niedrig")
+      const riskLevel = clause.preAnalysis?.riskLevel || clause.riskIndicators?.level;
+      if (riskLevel) {
+        const riskLabels: Record<string, string[]> = {
+          high: ['hoch', 'high', 'rot', 'kritisch', 'gefährlich'],
+          medium: ['mittel', 'medium', 'gelb', 'moderat'],
+          low: ['niedrig', 'low', 'grün', 'unbedenklich', 'sicher']
+        };
+        if (riskLabels[riskLevel]?.some(label => label.includes(query) || query.includes(label))) {
+          return true;
+        }
+      }
+      return false;
+    });
+  }, [safeClauses, searchQuery]);
+
+  // Keyboard shortcut: Ctrl+F oder Cmd+F zum Fokussieren der Suche
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        // Nur abfangen wenn wir im ClauseList-Bereich sind
+        const target = e.target as HTMLElement;
+        if (!target.closest('.react-pdf__Page')) {
+          e.preventDefault();
+          searchInputRef.current?.focus();
+        }
+      }
+      // Escape zum Leeren der Suche
+      if (e.key === 'Escape' && searchQuery) {
+        setSearchQuery('');
+        searchInputRef.current?.blur();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [searchQuery]);
 
   // Prüfe welche Klauseln mehr als 3 Zeilen haben
   useEffect(() => {
@@ -153,8 +211,40 @@ const ClauseList: React.FC<ClauseListProps> = ({
         </span>
       </div>
 
+      {/* ✅ Opt 4: Suchfeld */}
+      <div className={`${styles.clauseSearchWrapper} ${isSearchFocused ? styles.focused : ''}`}>
+        <Search size={16} className={styles.clauseSearchIcon} />
+        <input
+          ref={searchInputRef}
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onFocus={() => setIsSearchFocused(true)}
+          onBlur={() => setIsSearchFocused(false)}
+          placeholder="Klauseln durchsuchen... (Ctrl+F)"
+          className={styles.clauseSearchInput}
+        />
+        {searchQuery && (
+          <button
+            className={styles.clauseSearchClear}
+            onClick={() => {
+              setSearchQuery('');
+              searchInputRef.current?.focus();
+            }}
+            title="Suche leeren"
+          >
+            <X size={14} />
+          </button>
+        )}
+        {searchQuery && (
+          <span className={styles.clauseSearchCount}>
+            {filteredClauses.length} / {safeClauses.length}
+          </span>
+        )}
+      </div>
+
       <div className={styles.clauseList}>
-        {safeClauses.map((clause) => {
+        {filteredClauses.map((clause) => {
           const isSelected = selectedClause?.id === clause.id;
           const isReviewed = isClauseReviewed(clause.id);
           const isCached = isClauseCached(clause.id);
@@ -284,6 +374,24 @@ const ClauseList: React.FC<ClauseListProps> = ({
           );
         })}
 
+        {/* Keine Suchergebnisse */}
+        {filteredClauses.length === 0 && safeClauses.length > 0 && searchQuery && (
+          <div className={styles.analysisPanelEmpty}>
+            <span className={styles.emptyIcon}>🔍</span>
+            <h4 className={styles.emptyTitle}>Keine Treffer</h4>
+            <p className={styles.emptyText}>
+              Keine Klauseln für „{searchQuery}" gefunden.
+            </p>
+            <button
+              className={styles.clearSearchButton}
+              onClick={() => setSearchQuery('')}
+            >
+              Suche zurücksetzen
+            </button>
+          </div>
+        )}
+
+        {/* Keine Klauseln vorhanden */}
         {safeClauses.length === 0 && (
           <div className={styles.analysisPanelEmpty}>
             {isStreaming ? (

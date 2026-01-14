@@ -6,6 +6,7 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import { FileText, Eye, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, BarChart3, Zap, X, List, MessageSquare, LayoutGrid, ClipboardCheck, Download, Type, AlignJustify, MousePointer2, RefreshCw } from 'lucide-react';
 import { useLegalLens } from '../../hooks/useLegalLens';
 import ClauseList from './ClauseList';
+import ClauseSkeleton from './ClauseSkeleton';
 import PerspectiveSwitcher from './PerspectiveSwitcher';
 import AnalysisPanel from './AnalysisPanel';
 import SmartSummary from './SmartSummary';
@@ -188,6 +189,68 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     // ✅ Phase 1 Schritt 4: Queue-Priorisierung
     bumpClauseInQueue
   } = useLegalLens();
+
+  // ============================================
+  // KEYBOARD NAVIGATION (Opt 2: Wow-Effect)
+  // ============================================
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Nur navigieren wenn keine Klauseln laden und Klauseln vorhanden
+      if (!clauses || clauses.length === 0 || isParsing || isStreaming) return;
+
+      // Ignorieren wenn in Input/Textarea
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return;
+      }
+
+      // Nur nicht-analysierbare Klauseln überspringen
+      const analyzableClauses = clauses.filter(c => !c.nonAnalyzable);
+      if (analyzableClauses.length === 0) return;
+
+      // Aktuelle Position finden
+      const currentIndex = selectedClause
+        ? analyzableClauses.findIndex(c => c.id === selectedClause.id)
+        : -1;
+
+      let newIndex = -1;
+
+      switch (e.key) {
+        case 'ArrowDown':
+        case 'j': // Vim-Style
+          e.preventDefault();
+          newIndex = currentIndex < analyzableClauses.length - 1 ? currentIndex + 1 : 0;
+          break;
+
+        case 'ArrowUp':
+        case 'k': // Vim-Style
+          e.preventDefault();
+          newIndex = currentIndex > 0 ? currentIndex - 1 : analyzableClauses.length - 1;
+          break;
+
+        case 'Home':
+          e.preventDefault();
+          newIndex = 0;
+          break;
+
+        case 'End':
+          e.preventDefault();
+          newIndex = analyzableClauses.length - 1;
+          break;
+
+        default:
+          return;
+      }
+
+      if (newIndex >= 0 && newIndex < analyzableClauses.length) {
+        selectClause(analyzableClauses[newIndex]);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [clauses, selectedClause, selectClause, isParsing, isStreaming]);
 
   // Auto-switch to analysis tab when clause is selected on mobile
   useEffect(() => {
@@ -746,13 +809,58 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     localStorage.setItem('legalLens_hasPdfClicked', 'true');
   };
 
-  // Loading State - Normal Parsing
+  // Loading State - Skeleton UI statt Spinner
   if (isParsing) {
     return (
       <div className={styles.container}>
-        <div className={styles.loadingOverlay} style={{ flex: 1 }}>
-          <div className={styles.loadingSpinner} />
-          <span className={styles.loadingText}>Vertrag wird analysiert...</span>
+        {/* Header */}
+        <div className={styles.header}>
+          <div className={styles.headerLeft}>
+            <FileText size={24} className={styles.headerIcon} />
+            <div className={styles.titleContainer}>
+              <h1 className={styles.title}>{contractName}</h1>
+              <span className={styles.subtitle}>Wird analysiert...</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content mit Skeleton */}
+        <div className={styles.mainContent}>
+          {/* Left Panel - Skeleton Klauseln */}
+          <ClauseSkeleton count={6} showHeader={true} />
+
+          {/* Right Panel - Skeleton Analyse */}
+          <div className={styles.analysisPanel}>
+            <div className={styles.analysisSkeleton}>
+              <div className={styles.skeletonHeader}>
+                <span className={`${styles.skeletonText} ${styles.skeletonTitle}`} />
+                <span className={styles.skeletonBadge} />
+              </div>
+
+              <div className={styles.skeletonActionLevel}>
+                <span className={`${styles.skeletonText} ${styles.skeletonActionButton}`} />
+                <span className={`${styles.skeletonText} ${styles.skeletonActionButton}`} />
+                <span className={`${styles.skeletonText} ${styles.skeletonActionButton}`} />
+              </div>
+
+              <div className={styles.skeletonSection}>
+                <span className={`${styles.skeletonText} ${styles.skeletonSectionTitle}`} />
+                <div className={styles.skeletonParagraph}>
+                  <span className={styles.skeletonText} />
+                  <span className={styles.skeletonText} />
+                  <span className={styles.skeletonText} />
+                </div>
+              </div>
+
+              <div className={styles.skeletonSection}>
+                <span className={`${styles.skeletonText} ${styles.skeletonSectionTitle}`} />
+                <div className={styles.skeletonParagraph}>
+                  <span className={styles.skeletonText} />
+                  <span className={styles.skeletonText} />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );

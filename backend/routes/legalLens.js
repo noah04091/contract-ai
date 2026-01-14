@@ -11,6 +11,7 @@ const router = express.Router();
 const verifyToken = require('../middleware/verifyToken');
 const { MongoClient, ObjectId } = require('mongodb');
 const rateLimit = require('express-rate-limit');
+const crypto = require('crypto');
 
 // Services
 const { clauseParser, clauseAnalyzer } = require('../services/legalLens');
@@ -119,6 +120,130 @@ function getCacheInvalidMessage(reason) {
     ttl_expired: 'Cache abgelaufen - Klauseln werden aktualisiert.'
   };
   return messages[reason] || 'Klauseln werden geparst.';
+}
+
+// ============================================
+// PDF LIMITS CONFIGURATION (Bug 2: Memory Protection)
+// ============================================
+
+/**
+ * Maximale PDF-Dateigröße in Bytes (50 MB)
+ * Schützt vor Memory-Überlastung bei sehr großen Dateien.
+ */
+const MAX_PDF_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
+
+/**
+ * Maximale Seitenanzahl für PDFs (200 Seiten)
+ * Schützt vor extrem langen Dokumenten die den Server überlasten.
+ */
+const MAX_PDF_PAGES = 200;
+
+/**
+ * Validiert ein PDF gegen Größen- und Seitenlimits.
+ * @param {Buffer} pdfBuffer - Der PDF-Buffer
+ * @param {Object} extractionResult - Ergebnis der PDF-Extraktion (optional, für Seitenprüfung)
+ * @returns {{ valid: boolean, error?: string, details?: object }}
+ */
+function validatePdfLimits(pdfBuffer, extractionResult = null) {
+  const sizeInMB = (pdfBuffer.length / (1024 * 1024)).toFixed(2);
+
+  // Größenlimit prüfen
+  if (pdfBuffer.length > MAX_PDF_SIZE_BYTES) {
+    console.warn(`⚠️ [PDF Limits] Datei zu groß: ${sizeInMB} MB (max: ${MAX_PDF_SIZE_BYTES / (1024 * 1024)} MB)`);
+    return {
+      valid: false,
+      error: `Die PDF-Datei ist zu groß (${sizeInMB} MB). Maximal erlaubt sind 50 MB. Bitte laden Sie eine kleinere Datei hoch oder teilen Sie das Dokument auf.`,
+      details: {
+        sizeMB: parseFloat(sizeInMB),
+        maxSizeMB: MAX_PDF_SIZE_BYTES / (1024 * 1024),
+        reason: 'size_exceeded'
+      }
+    };
+  }
+
+  // Seitenlimit prüfen (wenn Extraktion bereits erfolgt)
+  if (extractionResult?.quality?.pageCount > MAX_PDF_PAGES) {
+    const pageCount = extractionResult.quality.pageCount;
+    console.warn(`⚠️ [PDF Limits] Zu viele Seiten: ${pageCount} (max: ${MAX_PDF_PAGES})`);
+    return {
+      valid: false,
+      error: `Das Dokument hat zu viele Seiten (${pageCount}). Maximal erlaubt sind ${MAX_PDF_PAGES} Seiten. Bitte laden Sie einen kürzeren Vertrag hoch oder teilen Sie das Dokument auf.`,
+      details: {
+        pageCount: pageCount,
+        maxPages: MAX_PDF_PAGES,
+        reason: 'pages_exceeded'
+      }
+    };
+  }
+
+  return {
+    valid: true,
+    details: {
+      sizeMB: parseFloat(sizeInMB),
+      pageCount: extractionResult?.quality?.pageCount || 0
+    }
+  };
+}
+
+// ============================================
+// CLAUSE ANALYSIS CACHING (Bug 4: Hash-basiertes Caching)
+// ============================================
+
+/**
+ * Generiert einen Hash für Klauseltext zur Cache-Identifikation.
+ * Normalisiert den Text vorher (Whitespace, Lowercase).
+ *
+ * @param {string} clauseText - Der Klauseltext
+ * @returns {string} SHA-256 Hash (erste 16 Zeichen)
+ */
+function generateClauseTextHash(clauseText) {
+  if (!clauseText) return null;
+
+  // Text normalisieren für konsistente Hashes
+  const normalized = clauseText
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return crypto
+    .createHash('sha256')
+    .update(normalized)
+    .digest('hex')
+    .substring(0, 16); // Kurzer Hash reicht
+}
+
+/**
+ * Sucht eine gecachte Analyse anhand des Klausel-Hashes.
+ * Ermöglicht Wiederverwendung von Analysen für identische Klauseln
+ * über verschiedene Verträge hinweg.
+ *
+ * @param {string} clauseTextHash - Der Hash des Klauseltexts
+ * @param {string} perspective - Die Perspektive (contractor/client/neutral)
+ * @returns {Promise<Object|null>} Die gecachte Analyse oder null
+ */
+async function findCachedAnalysisByHash(clauseTextHash, perspective) {
+  if (!clauseTextHash) return null;
+
+  try {
+    const cached = await ClauseAnalysis.findOne({
+      clauseTextHash,
+      [`perspectives.${perspective}.analyzedAt`]: { $exists: true }
+    }).sort({ updatedAt: -1 }); // Neueste zuerst
+
+    if (cached?.perspectives?.[perspective]) {
+      console.log(`🔄 [Clause Cache] Hash-Match gefunden: ${clauseTextHash} → Perspektive ${perspective}`);
+      return {
+        analysis: cached.perspectives[perspective],
+        originalContractId: cached.contractId,
+        originalClauseId: cached.clauseId,
+        analyzedAt: cached.perspectives[perspective].analyzedAt
+      };
+    }
+  } catch (error) {
+    console.warn(`⚠️ [Clause Cache] Hash-Lookup Fehler:`, error.message);
+  }
+
+  return null;
 }
 
 // ============================================
@@ -320,20 +445,43 @@ router.post('/smart-summary', verifyToken, async (req, res) => {
         }
         const pdfBuffer = Buffer.concat(chunks);
 
-        // Robuste PDF-Extraktion mit Qualitätsprüfung
-        const extractionResult = await pdfExtractor.extractTextWithOCRFallback(pdfBuffer);
+        // PDF-Größenlimit prüfen (vor Verarbeitung)
+        const sizeValidation = validatePdfLimits(pdfBuffer);
+        if (!sizeValidation.valid) {
+          console.error(`❌ [Legal Lens] PDF-Limit überschritten:`, sizeValidation.details);
+          return res.status(413).json({
+            success: false,
+            error: sizeValidation.error,
+            details: sizeValidation.details
+          });
+        }
+
+        // Robuste PDF-Extraktion mit Qualitätsprüfung und OCR-Nutzungstracking
+        const extractionResult = await pdfExtractor.extractTextWithOCRFallback(pdfBuffer, { userId });
 
         if (!extractionResult.success) {
           console.error(`❌ [Legal Lens] PDF-Extraktion fehlgeschlagen:`, extractionResult.error);
           return res.status(400).json({
             success: false,
             error: extractionResult.error || 'PDF konnte nicht gelesen werden.',
-            pdfQuality: extractionResult.quality
+            pdfQuality: extractionResult.quality,
+            ocrUsage: extractionResult.ocrUsage
+          });
+        }
+
+        // PDF-Seitenlimit prüfen (nach Extraktion)
+        const pagesValidation = validatePdfLimits(pdfBuffer, extractionResult);
+        if (!pagesValidation.valid) {
+          console.error(`❌ [Legal Lens] PDF-Seitenlimit überschritten:`, pagesValidation.details);
+          return res.status(413).json({
+            success: false,
+            error: pagesValidation.error,
+            details: pagesValidation.details
           });
         }
 
         text = extractionResult.text;
-        console.log(`✅ [Legal Lens] PDF-Text extrahiert: ${extractionResult.quality.charCount} Zeichen, Qualität: ${extractionResult.quality.qualityScore}%`);
+        console.log(`✅ [Legal Lens] PDF-Text extrahiert: ${extractionResult.quality.charCount} Zeichen, Qualität: ${extractionResult.quality.qualityScore}%${extractionResult.usedOCR ? ` (OCR: ${extractionResult.ocrPages} Seiten)` : ''}`);
 
         // Text im Contract speichern für zukünftige Anfragen
         await Contract.updateOne(
@@ -616,6 +764,7 @@ router.post('/parse', verifyToken, async (req, res) => {
       contractName: contract.name || contract.title || 'Vertrag'
     });
 
+    // NOTE: Der folgende Code ist unreachable (nach return) - wird für Konsistenz beibehalten
     // Text extrahieren - mehrere Fallbacks
     let text = contract.content || contract.extractedText || contract.fullText || contract.analysisText;
 
@@ -636,20 +785,43 @@ router.post('/parse', verifyToken, async (req, res) => {
         }
         const pdfBuffer = Buffer.concat(chunks);
 
-        // Robuste PDF-Extraktion mit Qualitätsprüfung
-        const extractionResult = await pdfExtractor.extractTextWithOCRFallback(pdfBuffer);
+        // PDF-Größenlimit prüfen (vor Verarbeitung)
+        const sizeValidation = validatePdfLimits(pdfBuffer);
+        if (!sizeValidation.valid) {
+          console.error(`❌ [Legal Lens] PDF-Limit überschritten:`, sizeValidation.details);
+          return res.status(413).json({
+            success: false,
+            error: sizeValidation.error,
+            details: sizeValidation.details
+          });
+        }
+
+        // Robuste PDF-Extraktion mit Qualitätsprüfung und OCR-Nutzungstracking
+        const extractionResult = await pdfExtractor.extractTextWithOCRFallback(pdfBuffer, { userId });
 
         if (!extractionResult.success) {
           console.error(`❌ [Legal Lens] PDF-Extraktion fehlgeschlagen:`, extractionResult.error);
           return res.status(400).json({
             success: false,
             error: extractionResult.error || 'PDF konnte nicht gelesen werden.',
-            pdfQuality: extractionResult.quality
+            pdfQuality: extractionResult.quality,
+            ocrUsage: extractionResult.ocrUsage
+          });
+        }
+
+        // PDF-Seitenlimit prüfen (nach Extraktion)
+        const pagesValidation = validatePdfLimits(pdfBuffer, extractionResult);
+        if (!pagesValidation.valid) {
+          console.error(`❌ [Legal Lens] PDF-Seitenlimit überschritten:`, pagesValidation.details);
+          return res.status(413).json({
+            success: false,
+            error: pagesValidation.error,
+            details: pagesValidation.details
           });
         }
 
         text = extractionResult.text;
-        console.log(`✅ [Legal Lens] PDF-Text extrahiert: ${extractionResult.quality.charCount} Zeichen, Qualität: ${extractionResult.quality.qualityScore}%`);
+        console.log(`✅ [Legal Lens] PDF-Text extrahiert: ${extractionResult.quality.charCount} Zeichen, Qualität: ${extractionResult.quality.qualityScore}%${extractionResult.usedOCR ? ` (OCR: ${extractionResult.ocrPages} Seiten)` : ''}`);
 
         // Text und Qualität im Contract speichern
         await Contract.updateOne(
@@ -845,23 +1017,68 @@ router.post(
         });
       }
 
-      // Prüfe Cache
-      const cachedAnalysis = await ClauseAnalysis.findOne({
+      // Generiere Hash für Klauseltext (für Cache-Lookup)
+      const clauseTextHash = generateClauseTextHash(clauseText);
+
+      // ========== CACHE PRÜFUNG (2-stufig) ==========
+
+      // Stufe 1: Direkter Cache (contractId + clauseId)
+      const directCache = await ClauseAnalysis.findOne({
         contractId: new ObjectId(contractId),
         clauseId,
         [`perspectives.${perspective}.analyzedAt`]: { $exists: true }
       });
 
-      if (cachedAnalysis?.perspectives?.[perspective]) {
-        console.log(`💾 [Legal Lens] Returning cached analysis for ${clauseId}`);
+      if (directCache?.perspectives?.[perspective]) {
+        console.log(`💾 [Legal Lens] Direct cache hit for ${clauseId}`);
         return res.json({
           success: true,
-          analysis: cachedAnalysis.perspectives[perspective],
+          analysis: directCache.perspectives[perspective],
           cached: true,
+          cacheType: 'direct',
           clauseId,
           perspective
         });
       }
+
+      // Stufe 2: Hash-basierter Cache (identische Klauseln über Verträge hinweg)
+      const hashCache = await findCachedAnalysisByHash(clauseTextHash, perspective);
+
+      if (hashCache) {
+        console.log(`🔄 [Legal Lens] Hash cache hit for ${clauseId} (from ${hashCache.originalClauseId})`);
+
+        // Kopiere die gecachte Analyse in den aktuellen Vertrag
+        await ClauseAnalysis.findOneAndUpdate(
+          { contractId: new ObjectId(contractId), clauseId },
+          {
+            $set: {
+              userId: new ObjectId(userId),
+              clauseText,
+              clauseTextHash,
+              [`perspectives.${perspective}`]: hashCache.analysis,
+              riskLevel: hashCache.analysis.riskAssessment?.level || 'medium',
+              riskScore: hashCache.analysis.riskAssessment?.score || 50,
+              actionLevel: hashCache.analysis.actionLevel || 'negotiate',
+              updatedAt: new Date()
+            },
+            $setOnInsert: {
+              createdAt: new Date()
+            }
+          },
+          { upsert: true }
+        );
+
+        return res.json({
+          success: true,
+          analysis: hashCache.analysis,
+          cached: true,
+          cacheType: 'hash',
+          clauseId,
+          perspective
+        });
+      }
+
+      // ========== KEINE CACHE-TREFFER → NEUE ANALYSE ==========
 
       // Streaming Response
       if (stream) {
@@ -989,7 +1206,7 @@ router.post(
 
       const transformedAnalysis = transformAnalysis(result.analysis);
 
-      // In Datenbank speichern
+      // In Datenbank speichern (mit Hash für Cross-Contract Caching)
       try {
         await ClauseAnalysis.findOneAndUpdate(
           { contractId: new ObjectId(contractId), clauseId },
@@ -997,6 +1214,7 @@ router.post(
             $set: {
               userId: new ObjectId(userId),
               clauseText,
+              clauseTextHash, // Für Hash-basiertes Caching über Verträge hinweg
               riskLevel: transformedAnalysis.riskAssessment?.level || 'medium',
               riskScore: transformedAnalysis.riskAssessment?.score || 50,
               actionLevel: transformedAnalysis.actionLevel || 'negotiate',
@@ -1012,7 +1230,7 @@ router.post(
           },
           { upsert: true, new: true }
         );
-        console.log(`✅ [Legal Lens] Analysis saved for ${clauseId}`);
+        console.log(`✅ [Legal Lens] Analysis saved for ${clauseId} (hash: ${clauseTextHash})`);
       } catch (dbError) {
         console.error('⚠️ [Legal Lens] DB save error (non-critical):', dbError.message);
         // Nicht abbrechen - Analyse trotzdem zurückgeben
@@ -2211,14 +2429,30 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
         }
         const pdfBuffer = Buffer.concat(chunks);
 
-        // Robuste PDF-Extraktion mit Qualitätsprüfung
-        const extractionResult = await pdfExtractor.extractTextWithOCRFallback(pdfBuffer);
+        // PDF-Größenlimit prüfen (vor Verarbeitung)
+        const sizeValidation = validatePdfLimits(pdfBuffer);
+        if (!sizeValidation.valid) {
+          console.error(`❌ [Legal Lens] PDF-Limit überschritten:`, sizeValidation.details);
+          sendEvent('error', {
+            error: sizeValidation.error,
+            details: sizeValidation.details,
+            suggestions: [
+              'Laden Sie eine kleinere Datei hoch (max. 50 MB)',
+              'Teilen Sie das Dokument in mehrere Teile auf'
+            ]
+          });
+          return res.end();
+        }
+
+        // Robuste PDF-Extraktion mit Qualitätsprüfung und OCR-Nutzungstracking
+        const extractionResult = await pdfExtractor.extractTextWithOCRFallback(pdfBuffer, { userId });
         pdfQuality = extractionResult.quality;
 
         if (!extractionResult.success) {
           sendEvent('error', {
             error: extractionResult.error || 'PDF konnte nicht gelesen werden',
             pdfQuality: extractionResult.quality,
+            ocrUsage: extractionResult.ocrUsage,
             suggestions: [
               'Laden Sie eine digitale PDF hoch (keine Scan-Datei)',
               'Entfernen Sie den Passwortschutz, falls vorhanden'
@@ -2227,20 +2461,45 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
           return res.end();
         }
 
+        // PDF-Seitenlimit prüfen (nach Extraktion)
+        const pagesValidation = validatePdfLimits(pdfBuffer, extractionResult);
+        if (!pagesValidation.valid) {
+          console.error(`❌ [Legal Lens] PDF-Seitenlimit überschritten:`, pagesValidation.details);
+          sendEvent('error', {
+            error: pagesValidation.error,
+            details: pagesValidation.details,
+            suggestions: [
+              'Laden Sie ein kürzeres Dokument hoch (max. 200 Seiten)',
+              'Teilen Sie das Dokument in mehrere Teile auf'
+            ]
+          });
+          return res.end();
+        }
+
         text = extractionResult.text;
 
-        // Warnungen an Frontend senden
+        // Warnungen an Frontend senden (inkl. OCR-Warnungen)
         if (extractionResult.warnings.length > 0) {
           for (const warning of extractionResult.warnings) {
             sendEvent('warning', {
-              type: 'pdf_quality',
+              type: warning.type || 'pdf_quality',
               message: warning.message,
               suggestion: warning.suggestion
             });
           }
         }
 
-        console.log(`✅ [Legal Lens] PDF-Text extrahiert: ${extractionResult.quality.charCount} Zeichen, Qualität: ${extractionResult.quality.qualityScore}%`);
+        // OCR-Nutzungsinfo senden
+        if (extractionResult.usedOCR && extractionResult.ocrUsage) {
+          sendEvent('ocr_usage', {
+            pagesUsed: extractionResult.ocrUsage.pagesUsed,
+            pagesLimit: extractionResult.ocrUsage.pagesLimit,
+            pagesRemaining: extractionResult.ocrUsage.pagesRemaining,
+            plan: extractionResult.ocrUsage.plan
+          });
+        }
+
+        console.log(`✅ [Legal Lens] PDF-Text extrahiert: ${extractionResult.quality.charCount} Zeichen, Qualität: ${extractionResult.quality.qualityScore}%${extractionResult.usedOCR ? ` (OCR: ${extractionResult.ocrPages} Seiten)` : ''}`);
       } catch (s3Error) {
         sendEvent('error', {
           error: 'PDF konnte nicht gelesen werden: ' + s3Error.message,

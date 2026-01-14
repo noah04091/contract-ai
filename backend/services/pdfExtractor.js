@@ -11,6 +11,7 @@
 
 const pdfParse = require('pdf-parse');
 const { extractTextWithOCR, isTextractAvailable } = require('./textractService');
+const { checkOcrUsage, incrementOcrUsage, getOcrLimitMessage } = require('./ocrUsageService');
 
 class PdfExtractor {
   /**
@@ -207,15 +208,18 @@ class PdfExtractor {
    * @param {Object} options - Optionen
    * @param {boolean} options.enableOCR - OCR aktivieren (default: true)
    * @param {number} options.ocrThreshold - Qualitätsschwelle für OCR (default: 50)
-   * @returns {Object} { success, text, quality, warnings, error, usedOCR }
+   * @param {string} options.userId - User-ID für OCR-Nutzungstracking (optional)
+   * @returns {Object} { success, text, quality, warnings, error, usedOCR, ocrUsage }
    */
   async extractTextWithOCRFallback(pdfBuffer, options = {}) {
     const enableOCR = options.enableOCR !== false;
     const ocrThreshold = options.ocrThreshold || 50;
+    const userId = options.userId;
 
     // Schritt 1: Normale PDF-Extraktion
     const result = await this.extractText(pdfBuffer, options);
     result.usedOCR = false;
+    result.ocrUsage = null;
 
     // Wenn erfolgreich und gute Qualität → fertig
     if (result.success && result.quality.qualityScore >= ocrThreshold) {
@@ -239,6 +243,36 @@ class PdfExtractor {
         return result;
       }
 
+      // Prüfe OCR-Nutzungslimit (wenn userId vorhanden)
+      if (userId) {
+        const usageCheck = await checkOcrUsage(userId);
+        result.ocrUsage = usageCheck;
+
+        if (!usageCheck.allowed) {
+          console.warn(`⚠️ [PdfExtractor] OCR-Limit erreicht für User ${userId}`);
+          result.warnings.push({
+            type: 'ocr_limit_reached',
+            message: getOcrLimitMessage(usageCheck),
+            suggestion: 'Upgraden Sie Ihren Plan für mehr OCR-Seiten oder laden Sie eine digitale PDF hoch.'
+          });
+          return result;
+        }
+
+        // Warnung wenn Limit fast erreicht (< 20% verbleibend)
+        if (usageCheck.pagesLimit > 0) {
+          const percentRemaining = (usageCheck.pagesRemaining / usageCheck.pagesLimit) * 100;
+          if (percentRemaining < 20) {
+            result.warnings.push({
+              type: 'ocr_limit_warning',
+              message: `OCR-Kontingent fast aufgebraucht: ${usageCheck.pagesRemaining} von ${usageCheck.pagesLimit} Seiten verbleibend.`,
+              suggestion: 'Sparen Sie OCR-Seiten indem Sie digitale PDFs hochladen.'
+            });
+          }
+        }
+
+        console.log(`📊 [PdfExtractor] OCR-Nutzung: ${usageCheck.pagesUsed}/${usageCheck.pagesLimit} Seiten`);
+      }
+
       try {
         const ocrResult = await extractTextWithOCR(pdfBuffer);
 
@@ -246,9 +280,24 @@ class PdfExtractor {
           // OCR war erfolgreich und hat mehr Text gefunden
           console.log(`✅ [PdfExtractor] OCR erfolgreich: ${ocrResult.text.length} Zeichen (vorher: ${result.text.length})`);
 
+          // OCR-Nutzung inkrementieren (wenn userId vorhanden)
+          if (userId) {
+            const pagesProcessed = ocrResult.pages || 1;
+            const incrementResult = await incrementOcrUsage(userId, pagesProcessed);
+            if (incrementResult.success) {
+              console.log(`📊 [PdfExtractor] OCR-Nutzung erhöht: +${pagesProcessed} Seiten (Total: ${incrementResult.newTotal})`);
+              // Update ocrUsage mit neuen Werten
+              if (result.ocrUsage) {
+                result.ocrUsage.pagesUsed = incrementResult.newTotal;
+                result.ocrUsage.pagesRemaining = Math.max(0, result.ocrUsage.pagesLimit - incrementResult.newTotal);
+              }
+            }
+          }
+
           result.text = ocrResult.text;
           result.success = true;
           result.usedOCR = true;
+          result.ocrPages = ocrResult.pages || 1;
           result.quality.charCount = ocrResult.text.length;
           result.quality.wordCount = ocrResult.text.split(/\s+/).filter(w => w.length > 0).length;
           result.quality.qualityScore = Math.round(ocrResult.confidence);
@@ -260,7 +309,7 @@ class PdfExtractor {
           // Füge OCR-Info hinzu
           result.warnings.push({
             type: 'ocr_used',
-            message: `Text wurde per OCR extrahiert (${ocrResult.confidence.toFixed(0)}% Confidence).`,
+            message: `Text wurde per OCR extrahiert (${ocrResult.confidence.toFixed(0)}% Confidence, ${ocrResult.pages || 1} Seiten).`,
             suggestion: 'Bitte prüfen Sie die Analyse auf mögliche OCR-Fehler.'
           });
 
