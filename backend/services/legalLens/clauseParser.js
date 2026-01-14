@@ -531,9 +531,10 @@ class ClauseParser {
       return { nonAnalyzable: true, reason: 'date_location', category: 'metadata' };
     }
 
-    // Titel enthält "Unterzeichnung", "Unterschrift", "Signatur"
+    // Titel enthält "Unterzeichnung", "Unterschrift", "Signatur", "Unterzeichner"
     if (lowerTitle.includes('unterzeichnung') || lowerTitle.includes('unterschrift') ||
-        lowerTitle.includes('signatur') || lowerTitle.includes('signature')) {
+        lowerTitle.includes('unterzeichner') || lowerTitle.includes('signatur') ||
+        lowerTitle.includes('signature')) {
       console.log(`[detectNonAnalyzable] MATCH: signature_field via title="${lowerTitle}"`);
       return { nonAnalyzable: true, reason: 'signature_field', category: 'signature' };
     }
