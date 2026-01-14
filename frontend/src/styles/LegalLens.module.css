@@ -44,11 +44,25 @@
   border-color: #cbd5e1;
 }
 
+.titleIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+  border-radius: 10px;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.25);
+  flex-shrink: 0;
+}
+
 .title {
   font-size: 1.25rem;
   font-weight: 600;
   color: #1e293b;
   margin: 0;
+  letter-spacing: -0.02em;
 }
 
 .headerRight {
@@ -144,6 +158,41 @@
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+/* ===== REFRESH BUTTON ===== */
+.refreshButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.refreshButton:hover:not(:disabled) {
+  background: #e2e8f0;
+  color: #475569;
+  border-color: #cbd5e1;
+}
+
+.refreshButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* ===== EXPORT BUTTON ===== */

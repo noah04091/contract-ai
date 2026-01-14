@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { FileText, Eye, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, BarChart3, Zap, X, List, MessageSquare, LayoutGrid, ClipboardCheck, Download, Type, AlignJustify, MousePointer2 } from 'lucide-react';
+import { FileText, Eye, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, BarChart3, Zap, X, List, MessageSquare, LayoutGrid, ClipboardCheck, Download, Type, AlignJustify, MousePointer2, RefreshCw } from 'lucide-react';
 import { useLegalLens } from '../../hooks/useLegalLens';
 import ClauseList from './ClauseList';
 import PerspectiveSwitcher from './PerspectiveSwitcher';
@@ -805,7 +805,10 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       {/* Header */}
       <header className={styles.header}>
         <div className={styles.headerLeft}>
-          <h1 className={styles.title}>🔍 Legal Lens: {contractName}</h1>
+          <div className={styles.titleIcon}>
+            <Eye size={20} />
+          </div>
+          <h1 className={styles.title}>Legal Lens: {contractName}</h1>
         </div>
 
         <div className={styles.headerRight}>
@@ -819,6 +822,16 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
             confidence={industryConfidence}
             detectedKeywords={industryKeywords}
           />
+
+          {/* Force-Refresh Button */}
+          <button
+            className={styles.refreshButton}
+            onClick={() => parseContract(contractId, true)}
+            disabled={isParsing || isStreaming}
+            title="Klauseln neu analysieren (Cache ignorieren)"
+          >
+            <RefreshCw size={18} className={isStreaming ? styles.spinning : ''} />
+          </button>
 
           {/* Export Button */}
           <button
