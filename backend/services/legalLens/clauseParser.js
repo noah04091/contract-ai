@@ -539,6 +539,42 @@ class ClauseParser {
       return { nonAnalyzable: true, reason: 'signature_field', category: 'signature' };
     }
 
+    // ===== KURZER TEXT + SIGNATUR/DATUM-MUSTER =====
+    if (trimmedText.length < 200) {
+      // Zähle typische Signatur-Elemente
+      const signatureIndicators = [
+        /_+/.test(trimmedText),                           // Unterschriftslinien
+        /\(.*geber\)|\(.*nehmer\)/i.test(trimmedText),   // (Auftraggeber), (Auftragnehmer)
+        /unterschrift/i.test(lowerText),
+        /unterzeichnung/i.test(lowerText),
+        /gez\./i.test(lowerText),                        // "gez." = gezeichnet
+        /i\.\s*a\./i.test(lowerText),                    // "i.A." = im Auftrag
+      ];
+      const signatureScore = signatureIndicators.filter(Boolean).length;
+
+      if (signatureScore >= 2) {
+        console.log(`[detectNonAnalyzable] MATCH: signature_field via short text + ${signatureScore} indicators for title="${title}"`);
+        return { nonAnalyzable: true, reason: 'signature_field', category: 'signature' };
+      }
+
+      // Zähle typische Ort/Datum-Elemente
+      const dateLocationIndicators = [
+        /ort[,:\s]*(den)?\s*datum/i.test(lowerText),     // "Ort, den Datum" Pattern
+        /datum[:\s]+ort/i.test(lowerText),               // "Datum: Ort"
+        /^[a-zäöü]+,\s*(den\s*)?\d{1,2}\./i.test(trimmedText), // "München, den 01." am Anfang
+        /\d{1,2}\.\s*\d{1,2}\.\s*\d{2,4}/.test(trimmedText),   // Datum im Text
+        /^ort\s*$/im.test(lowerText),                    // Nur "Ort" auf einer Zeile
+        /^datum\s*$/im.test(lowerText),                  // Nur "Datum" auf einer Zeile
+      ];
+      const dateLocationScore = dateLocationIndicators.filter(Boolean).length;
+
+      // Bei kurzen Texten (< 100 Zeichen) mit Datum-Mustern
+      if (trimmedText.length < 100 && dateLocationScore >= 2) {
+        console.log(`[detectNonAnalyzable] MATCH: date_location via short text + ${dateLocationScore} indicators for title="${title}"`);
+        return { nonAnalyzable: true, reason: 'date_location', category: 'metadata' };
+      }
+    }
+
     // ===== TEXT-BASIERTE ERKENNUNG =====
 
     // 1. Zu kurz für sinnvolle Analyse (< 30 Zeichen ohne Titel)

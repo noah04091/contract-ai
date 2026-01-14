@@ -433,20 +433,53 @@ router.post('/parse', verifyToken, async (req, res) => {
         contract.legalLens?.preprocessStatus === 'completed') {
       console.log(`⚡ [Legal Lens] Vorverarbeitete Klauseln gefunden: ${contract.legalLens.preParsedClauses.length}`);
 
-      // Vorverarbeitete Klauseln zurückgeben (instant!)
+      // 🔄 Re-validate nonAnalyzable für alte Caches (Patterns wurden verbessert)
+      let cacheNeedsUpdate = false;
+      const validatedClauses = contract.legalLens.preParsedClauses.map(clause => {
+        // Re-run detectNonAnalyzable mit aktuellen Patterns
+        const analyzableCheck = clauseParser.detectNonAnalyzable(clause.text || '', clause.title || '');
+
+        // Prüfen ob sich das Ergebnis geändert hat
+        if (analyzableCheck.nonAnalyzable !== clause.nonAnalyzable) {
+          console.log(`🔄 [Legal Lens] nonAnalyzable geändert für "${clause.title}": ${clause.nonAnalyzable} → ${analyzableCheck.nonAnalyzable}`);
+          cacheNeedsUpdate = true;
+          return {
+            ...clause,
+            nonAnalyzable: analyzableCheck.nonAnalyzable,
+            nonAnalyzableReason: analyzableCheck.reason,
+            category: analyzableCheck.category,
+            // Für non-analyzable: Risk auf 'none' setzen
+            riskLevel: analyzableCheck.nonAnalyzable ? 'none' : clause.riskLevel,
+            riskIndicators: analyzableCheck.nonAnalyzable ? { level: 'none', keywords: [], score: 0 } : clause.riskIndicators
+          };
+        }
+        return clause;
+      });
+
+      // Cache im Hintergrund aktualisieren wenn nötig (nicht blockierend)
+      if (cacheNeedsUpdate) {
+        console.log(`💾 [Legal Lens] Cache wird im Hintergrund aktualisiert...`);
+        Contract.updateOne(
+          { _id: contract._id },
+          { $set: { 'legalLens.preParsedClauses': validatedClauses } }
+        ).catch(err => console.error('Cache update error:', err.message));
+      }
+
+      // Validierte Klauseln zurückgeben (instant!)
       return res.json({
         success: true,
-        clauses: contract.legalLens.preParsedClauses,
-        totalClauses: contract.legalLens.preParsedClauses.length,
+        clauses: validatedClauses,
+        totalClauses: validatedClauses.length,
         riskSummary: contract.legalLens.riskSummary || {
-          high: contract.legalLens.preParsedClauses.filter(c => c.riskLevel === 'high').length,
-          medium: contract.legalLens.preParsedClauses.filter(c => c.riskLevel === 'medium').length,
-          low: contract.legalLens.preParsedClauses.filter(c => c.riskLevel === 'low').length
+          high: validatedClauses.filter(c => c.riskLevel === 'high' && !c.nonAnalyzable).length,
+          medium: validatedClauses.filter(c => c.riskLevel === 'medium' && !c.nonAnalyzable).length,
+          low: validatedClauses.filter(c => c.riskLevel === 'low' && !c.nonAnalyzable).length
         },
         metadata: {
           ...(contract.legalLens.metadata || {}),
           source: 'preprocessed',
-          preprocessedAt: contract.legalLens.preprocessedAt
+          preprocessedAt: contract.legalLens.preprocessedAt,
+          revalidated: cacheNeedsUpdate
         }
       });
     }
@@ -1991,13 +2024,42 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
         !cacheSeemsBuggy) {
       console.log(`⚡ [Legal Lens] Vorverarbeitete Klauseln vorhanden - sende alle auf einmal`);
 
-      // Alle Klauseln auf einmal senden (cached)
+      // 🔄 Re-validate nonAnalyzable für alte Caches (Patterns wurden verbessert)
+      let cacheNeedsUpdate = false;
+      const validatedClauses = cachedClauses.map(clause => {
+        const analyzableCheck = clauseParser.detectNonAnalyzable(clause.text || '', clause.title || '');
+        if (analyzableCheck.nonAnalyzable !== clause.nonAnalyzable) {
+          console.log(`🔄 [Legal Lens] nonAnalyzable geändert für "${clause.title}": ${clause.nonAnalyzable} → ${analyzableCheck.nonAnalyzable}`);
+          cacheNeedsUpdate = true;
+          return {
+            ...clause,
+            nonAnalyzable: analyzableCheck.nonAnalyzable,
+            nonAnalyzableReason: analyzableCheck.reason,
+            category: analyzableCheck.category,
+            riskLevel: analyzableCheck.nonAnalyzable ? 'none' : clause.riskLevel,
+            riskIndicators: analyzableCheck.nonAnalyzable ? { level: 'none', keywords: [], score: 0 } : clause.riskIndicators
+          };
+        }
+        return clause;
+      });
+
+      // Cache im Hintergrund aktualisieren wenn nötig
+      if (cacheNeedsUpdate) {
+        console.log(`💾 [Legal Lens] Cache wird im Hintergrund aktualisiert...`);
+        Contract.updateOne(
+          { _id: contract._id },
+          { $set: { 'legalLens.preParsedClauses': validatedClauses } }
+        ).catch(err => console.error('Cache update error:', err.message));
+      }
+
+      // Validierte Klauseln auf einmal senden (cached)
       sendEvent('status', { message: 'Lade vorverarbeitete Klauseln...', progress: 100 });
       sendEvent('clauses', {
-        clauses: cachedClauses,
-        totalClauses: cachedClauses.length,
+        clauses: validatedClauses,
+        totalClauses: validatedClauses.length,
         riskSummary: contract.legalLens.riskSummary,
-        source: 'preprocessed'
+        source: 'preprocessed',
+        revalidated: cacheNeedsUpdate
       });
       sendEvent('complete', { success: true });
       return res.end();
