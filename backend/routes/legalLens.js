@@ -17,7 +17,7 @@ const { clauseParser, clauseAnalyzer } = require('../services/legalLens');
 const ClauseAnalysis = require('../models/ClauseAnalysis');
 const LegalLensProgress = require('../models/LegalLensProgress');
 const Contract = require('../models/Contract');
-const pdfParse = require('pdf-parse');
+const pdfExtractor = require('../services/pdfExtractor');
 const { generateAnalysisReport, getAvailableDesigns, getAvailableSections } = require('../services/legalLens/analysisReportGenerator');
 const { generateChecklistPdf } = require('../services/legalLens/checklistPdfGenerator');
 
@@ -245,16 +245,36 @@ router.post('/smart-summary', verifyToken, async (req, res) => {
         }
         const pdfBuffer = Buffer.concat(chunks);
 
-        const pdfData = await pdfParse(pdfBuffer);
-        text = pdfData.text;
+        // Robuste PDF-Extraktion mit Qualitätsprüfung
+        const extractionResult = await pdfExtractor.extractText(pdfBuffer);
 
-        console.log(`✅ [Legal Lens] PDF-Text extrahiert: ${text.length} Zeichen`);
+        if (!extractionResult.success) {
+          console.error(`❌ [Legal Lens] PDF-Extraktion fehlgeschlagen:`, extractionResult.error);
+          return res.status(400).json({
+            success: false,
+            error: extractionResult.error || 'PDF konnte nicht gelesen werden.',
+            pdfQuality: extractionResult.quality
+          });
+        }
+
+        text = extractionResult.text;
+        console.log(`✅ [Legal Lens] PDF-Text extrahiert: ${extractionResult.quality.charCount} Zeichen, Qualität: ${extractionResult.quality.qualityScore}%`);
 
         // Text im Contract speichern für zukünftige Anfragen
         await Contract.updateOne(
           { _id: contract._id },
-          { $set: { extractedText: text } }
+          {
+            $set: {
+              extractedText: text,
+              pdfQuality: extractionResult.quality
+            }
+          }
         );
+
+        // Warnungen loggen
+        if (extractionResult.warnings.length > 0) {
+          console.warn(`⚠️ [Legal Lens] PDF-Warnungen:`, extractionResult.warnings.map(w => w.type).join(', '));
+        }
       } catch (s3Error) {
         console.error(`❌ [Legal Lens] S3-Extraktion fehlgeschlagen:`, s3Error.message);
       }
@@ -263,7 +283,12 @@ router.post('/smart-summary', verifyToken, async (req, res) => {
     if (!text || text.length < 50) {
       return res.status(400).json({
         success: false,
-        error: 'Vertrag enthält keinen analysierbaren Text. Bitte stellen Sie sicher, dass die PDF lesbar ist.'
+        error: 'Vertrag enthält keinen analysierbaren Text. Mögliche Ursachen: Die PDF ist gescannt (Bilddatei), verschlüsselt, oder beschädigt.',
+        suggestions: [
+          'Laden Sie eine digitale PDF hoch (keine Scan-Datei)',
+          'Entfernen Sie den Passwortschutz, falls vorhanden',
+          'Nutzen Sie ein OCR-Tool, um gescannte Dokumente in Text umzuwandeln'
+        ]
       });
     }
 
@@ -529,15 +554,30 @@ router.post('/parse', verifyToken, async (req, res) => {
         }
         const pdfBuffer = Buffer.concat(chunks);
 
-        const pdfData = await pdfParse(pdfBuffer);
-        text = pdfData.text;
+        // Robuste PDF-Extraktion mit Qualitätsprüfung
+        const extractionResult = await pdfExtractor.extractText(pdfBuffer);
 
-        console.log(`✅ [Legal Lens] PDF-Text extrahiert: ${text.length} Zeichen`);
+        if (!extractionResult.success) {
+          console.error(`❌ [Legal Lens] PDF-Extraktion fehlgeschlagen:`, extractionResult.error);
+          return res.status(400).json({
+            success: false,
+            error: extractionResult.error || 'PDF konnte nicht gelesen werden.',
+            pdfQuality: extractionResult.quality
+          });
+        }
 
-        // Optional: Text im Contract speichern für zukünftige Anfragen
+        text = extractionResult.text;
+        console.log(`✅ [Legal Lens] PDF-Text extrahiert: ${extractionResult.quality.charCount} Zeichen, Qualität: ${extractionResult.quality.qualityScore}%`);
+
+        // Text und Qualität im Contract speichern
         await Contract.updateOne(
           { _id: contract._id },
-          { $set: { extractedText: text } }
+          {
+            $set: {
+              extractedText: text,
+              pdfQuality: extractionResult.quality
+            }
+          }
         );
       } catch (s3Error) {
         console.error(`❌ [Legal Lens] S3-Extraktion fehlgeschlagen:`, s3Error.message);
@@ -547,7 +587,12 @@ router.post('/parse', verifyToken, async (req, res) => {
     if (!text || text.length < 50) {
       return res.status(400).json({
         success: false,
-        error: 'Vertrag enthält keinen analysierbaren Text. Bitte stellen Sie sicher, dass die PDF lesbar ist.'
+        error: 'Vertrag enthält keinen analysierbaren Text. Mögliche Ursachen: Die PDF ist gescannt (Bilddatei), verschlüsselt, oder beschädigt.',
+        suggestions: [
+          'Laden Sie eine digitale PDF hoch (keine Scan-Datei)',
+          'Entfernen Sie den Passwortschutz, falls vorhanden',
+          'Nutzen Sie ein OCR-Tool, um gescannte Dokumente in Text umzuwandeln'
+        ]
       });
     }
 
@@ -2069,6 +2114,7 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
     sendEvent('status', { message: 'Extrahiere Vertragstext...', progress: 5 });
 
     let text = contract.content || contract.extractedText || contract.fullText;
+    let pdfQuality = null;
 
     if ((!text || text.length < 50) && contract.s3Key) {
       try {
@@ -2082,16 +2128,55 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
           chunks.push(chunk);
         }
         const pdfBuffer = Buffer.concat(chunks);
-        const pdfData = await pdfParse(pdfBuffer);
-        text = pdfData.text;
+
+        // Robuste PDF-Extraktion mit Qualitätsprüfung
+        const extractionResult = await pdfExtractor.extractText(pdfBuffer);
+        pdfQuality = extractionResult.quality;
+
+        if (!extractionResult.success) {
+          sendEvent('error', {
+            error: extractionResult.error || 'PDF konnte nicht gelesen werden',
+            pdfQuality: extractionResult.quality,
+            suggestions: [
+              'Laden Sie eine digitale PDF hoch (keine Scan-Datei)',
+              'Entfernen Sie den Passwortschutz, falls vorhanden'
+            ]
+          });
+          return res.end();
+        }
+
+        text = extractionResult.text;
+
+        // Warnungen an Frontend senden
+        if (extractionResult.warnings.length > 0) {
+          for (const warning of extractionResult.warnings) {
+            sendEvent('warning', {
+              type: 'pdf_quality',
+              message: warning.message,
+              suggestion: warning.suggestion
+            });
+          }
+        }
+
+        console.log(`✅ [Legal Lens] PDF-Text extrahiert: ${extractionResult.quality.charCount} Zeichen, Qualität: ${extractionResult.quality.qualityScore}%`);
       } catch (s3Error) {
-        sendEvent('error', { error: 'PDF konnte nicht gelesen werden' });
+        sendEvent('error', {
+          error: 'PDF konnte nicht gelesen werden: ' + s3Error.message,
+          suggestions: ['Prüfen Sie, ob die Datei eine gültige PDF ist']
+        });
         return res.end();
       }
     }
 
     if (!text || text.length < 50) {
-      sendEvent('error', { error: 'Kein analysierbarer Text im Vertrag' });
+      sendEvent('error', {
+        error: 'Kein analysierbarer Text im Vertrag. Die PDF könnte gescannt, verschlüsselt oder beschädigt sein.',
+        suggestions: [
+          'Laden Sie eine digitale PDF hoch (keine Scan-Datei)',
+          'Entfernen Sie den Passwortschutz, falls vorhanden',
+          'Nutzen Sie ein OCR-Tool für gescannte Dokumente'
+        ]
+      });
       return res.end();
     }
 
