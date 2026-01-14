@@ -32,6 +32,7 @@ export async function parseContract(
   options?: {
     includeSubSentences?: boolean;
     preserveFormatting?: boolean;
+    forceRefresh?: boolean; // Force Cache-Invalidierung
   }
 ): Promise<ParseContractResponse> {
   const response = await fetchWithAuth(`${LEGAL_LENS_BASE}/parse`, {
@@ -647,32 +648,67 @@ export interface StreamingParseCallbacks {
   onClausesBatch?: (clauses: ParsedClause[], totalSoFar: number) => void;
   onComplete?: (totalClauses: number, riskSummary: { high: number; medium: number; low: number }) => void;
   onError?: (error: string) => void;
+  /** Phase 5: Callback bei Verbindungsverlust */
+  onConnectionLost?: (info: {
+    clausesReceived: number;
+    progress: number;
+    retryCount: number;
+    willRetry: boolean;
+  }) => void;
+  /** Phase 5: Callback bei Retry-Versuch */
+  onRetrying?: (attempt: number, maxAttempts: number) => void;
 }
 
 /**
  * Streaming-Parse für Klauseln (SSE)
  * Verwendet Server-Sent Events für Live-Updates
  *
+ * Phase 5: Mit Connection-Loss-Erkennung und Auto-Retry
+ *
+ * @param forceRefresh - Force Cache-Invalidierung
  * @returns Cleanup-Funktion zum Abbrechen
  */
 export function parseContractStreaming(
   contractId: string,
-  callbacks: StreamingParseCallbacks
+  callbacks: StreamingParseCallbacks,
+  forceRefresh: boolean = false
 ): () => void {
   const token = localStorage.getItem('token');
   const controller = new AbortController();
 
-  // SSE via fetch (EventSource unterstützt keine custom headers für Auth)
-  fetch(`${LEGAL_LENS_BASE}/${contractId}/parse-stream`, {
-    method: 'GET',
-    headers: {
-      'Accept': 'text/event-stream',
-      ...(token && { Authorization: `Bearer ${token}` })
-    },
-    credentials: 'include',
-    signal: controller.signal
-  })
-    .then(async response => {
+  // Phase 5: Retry-Konfiguration
+  const MAX_RETRIES = 3;
+  const BASE_DELAY_MS = 1000; // Exponential backoff: 1s, 2s, 4s
+
+  // Phase 5: Fortschritts-Tracking für Resume
+  let clausesReceived = 0;
+  let lastProgress = 0;
+  let isComplete = false;
+  let retryCount = 0;
+  let isAborted = false;
+
+  // URL mit optionalem forceRefresh Query-Parameter
+  const getUrl = () => forceRefresh
+    ? `${LEGAL_LENS_BASE}/${contractId}/parse-stream?forceRefresh=true`
+    : `${LEGAL_LENS_BASE}/${contractId}/parse-stream`;
+
+  /**
+   * Führt den Streaming-Request aus (mit Retry-Logik)
+   */
+  const executeStream = async () => {
+    if (isAborted) return;
+
+    try {
+      const response = await fetch(getUrl(), {
+        method: 'GET',
+        headers: {
+          'Accept': 'text/event-stream',
+          ...(token && { Authorization: `Bearer ${token}` })
+        },
+        credentials: 'include',
+        signal: controller.signal
+      });
+
       if (!response.ok) {
         throw new Error('Streaming-Verbindung fehlgeschlagen');
       }
@@ -682,6 +718,9 @@ export function parseContractStreaming(
 
       const decoder = new TextDecoder();
       let buffer = '';
+
+      // Bei erfolgreichem Connect: Retry-Counter zurücksetzen
+      retryCount = 0;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -707,16 +746,20 @@ export function parseContractStreaming(
 
                 switch (currentEvent) {
                   case 'status':
+                    lastProgress = data.progress || lastProgress;
                     callbacks.onStatus?.(data.message, data.progress);
                     break;
                   case 'clauses_batch':
+                    clausesReceived = data.totalSoFar || clausesReceived;
                     callbacks.onClausesBatch?.(data.newClauses, data.totalSoFar);
                     break;
                   case 'clauses':
                     // Alle Klauseln auf einmal (cached)
+                    clausesReceived = data.totalClauses || clausesReceived;
                     callbacks.onClausesBatch?.(data.clauses, data.totalClauses);
                     break;
                   case 'complete':
+                    isComplete = true;
                     callbacks.onComplete?.(data.totalClauses, data.riskSummary);
                     break;
                   case 'error':
@@ -737,13 +780,68 @@ export function parseContractStreaming(
           }
         }
       }
-    })
-    .catch(error => {
-      if (error.name !== 'AbortError') {
-        callbacks.onError?.(error.message);
+    } catch (error) {
+      // Abbruch durch User? → Kein Retry
+      if (isAborted || (error instanceof Error && error.name === 'AbortError')) {
+        console.log('[Legal Lens] Streaming abgebrochen durch User');
+        return;
       }
-    });
+
+      // Bereits complete? → Kein Retry nötig
+      if (isComplete) {
+        return;
+      }
+
+      // Phase 5: Verbindungsverlust-Erkennung
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const isConnectionLost =
+        errorMessage.includes('network') ||
+        errorMessage.includes('fetch') ||
+        errorMessage.includes('Failed to fetch') ||
+        errorMessage.includes('NetworkError') ||
+        errorMessage.includes('connection') ||
+        errorMessage.includes('timeout');
+
+      console.warn(`[Legal Lens] Streaming-Fehler: ${errorMessage} (Retry ${retryCount}/${MAX_RETRIES})`);
+
+      // Callback für Verbindungsverlust
+      const willRetry = retryCount < MAX_RETRIES && isConnectionLost;
+      callbacks.onConnectionLost?.({
+        clausesReceived,
+        progress: lastProgress,
+        retryCount,
+        willRetry
+      });
+
+      // Retry bei Verbindungsverlust (mit exponential backoff)
+      if (willRetry) {
+        retryCount++;
+        const delay = BASE_DELAY_MS * Math.pow(2, retryCount - 1);
+        console.log(`[Legal Lens] Retry in ${delay}ms (Attempt ${retryCount}/${MAX_RETRIES})`);
+
+        callbacks.onRetrying?.(retryCount, MAX_RETRIES);
+
+        await new Promise(resolve => setTimeout(resolve, delay));
+
+        if (!isAborted) {
+          executeStream(); // Rekursiver Retry
+        }
+      } else {
+        // Kein Retry mehr möglich
+        callbacks.onError?.(isConnectionLost
+          ? `Verbindung verloren nach ${MAX_RETRIES} Versuchen. Bitte prüfe deine Internetverbindung.`
+          : errorMessage
+        );
+      }
+    }
+  };
+
+  // Stream starten
+  executeStream();
 
   // Cleanup-Funktion
-  return () => controller.abort();
+  return () => {
+    isAborted = true;
+    controller.abort();
+  };
 }

@@ -150,8 +150,13 @@ interface UseLegalLensReturn {
   streamingStatus: string;
   parseSource: 'preprocessed' | 'streaming' | 'regex' | null;
 
+  // ✅ Phase 5: Verbindungs-Status
+  connectionLost: boolean;
+  streamRetryCount: number;
+  streamMaxRetries: number;
+
   // Aktionen
-  parseContract: (contractId: string) => Promise<void>;
+  parseContract: (contractId: string, forceRefresh?: boolean) => Promise<void>;
   selectClause: (clause: ParsedClause) => void;
   analyzeClause: (streaming?: boolean) => Promise<void>;
   changePerspective: (perspective: PerspectiveType) => void;
@@ -254,6 +259,11 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
   const [streamingStatus, setStreamingStatus] = useState<string>('');
   const [parseSource, setParseSource] = useState<'preprocessed' | 'streaming' | 'regex' | null>(null);
 
+  // ✅ Phase 5: Verbindungs-Status für Retry-UI
+  const [connectionLost, setConnectionLost] = useState(false);
+  const [streamRetryCount, setStreamRetryCount] = useState(0);
+  const [streamMaxRetries] = useState(3);
+
   // Refs
   const abortControllerRef = useRef<(() => void) | null>(null);
   const streamingAbortRef = useRef<(() => void) | null>(null);
@@ -275,8 +285,10 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
 
   /**
    * Vertrag parsen - mit Auto-Streaming für nicht-vorverarbeitete Verträge
+   * @param id - Contract ID
+   * @param forceRefresh - Force Cache-Invalidierung (neu parsen)
    */
-  const parseContract = useCallback(async (id: string) => {
+  const parseContract = useCallback(async (id: string, forceRefresh: boolean = false) => {
     // FIX: Race Condition - Abort any existing streaming FIRST
     if (streamingAbortRef.current) {
       console.log('[Legal Lens] Aborting existing streaming session');
@@ -297,9 +309,14 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
     setClauses([]);
 
     try {
+      // Log force refresh
+      if (forceRefresh) {
+        console.log(`🔄 [Legal Lens] Force-Refresh angefordert für Contract ${id}`);
+      }
+
       // Erst normalen Parse versuchen (prüft auf vorverarbeitete Klauseln)
       const response = await withRetry(
-        () => legalLensAPI.parseContract(id),
+        () => legalLensAPI.parseContract(id, { forceRefresh }),
         2,
         (attempt) => {
           setIsRetrying(true);
@@ -319,11 +336,14 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
           setIsStreaming(true);
           setStreamingStatus(response.message || 'Starte KI-Analyse...');
 
-          // Streaming sofort starten
+          // Streaming sofort starten (forceRefresh wird weitergereicht)
+          // Phase 5: Mit Connection-Loss-Callbacks
           streamingAbortRef.current = legalLensAPI.parseContractStreaming(id, {
             onStatus: (message, progress) => {
               setStreamingStatus(message);
               setStreamingProgress(progress);
+              // Bei erfolgreichem Empfang: Connection OK
+              setConnectionLost(false);
             },
             onClausesBatch: (newClauses, totalSoFar) => {
               setClauses(prev => {
@@ -332,6 +352,8 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
                 return [...prev, ...uniqueNew];
               });
               setStreamingStatus(`${totalSoFar} Klauseln analysiert...`);
+              // Bei erfolgreichem Empfang: Connection OK
+              setConnectionLost(false);
             },
             onComplete: (totalClauses) => {
               console.log(`✅ [Legal Lens] Streaming complete: ${totalClauses} Klauseln`);
@@ -339,13 +361,32 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
               setStreamingProgress(100);
               setStreamingStatus('Analyse abgeschlossen');
               setParseSource('streaming');
+              setConnectionLost(false);
+              setStreamRetryCount(0);
             },
             onError: (errorMsg) => {
               console.error(`❌ [Legal Lens] Streaming error:`, errorMsg);
               setIsStreaming(false);
+              setConnectionLost(false);
+              setStreamRetryCount(0);
               setError(errorMsg);
+            },
+            // Phase 5: Verbindungsverlust
+            onConnectionLost: (info) => {
+              console.warn(`⚠️ [Legal Lens] Verbindung verloren:`, info);
+              setConnectionLost(true);
+              setStreamRetryCount(info.retryCount);
+              if (info.willRetry) {
+                setStreamingStatus(`Verbindung verloren... Retry ${info.retryCount + 1}/3`);
+              }
+            },
+            // Phase 5: Retry-Versuch
+            onRetrying: (attempt, maxAttempts) => {
+              console.log(`🔄 [Legal Lens] Retry ${attempt}/${maxAttempts}`);
+              setStreamRetryCount(attempt);
+              setStreamingStatus(`Verbindung wird wiederhergestellt... (${attempt}/${maxAttempts})`);
             }
-          });
+          }, forceRefresh);
           return; // Fertig - Streaming übernimmt
         }
 
@@ -366,11 +407,13 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
           setIsStreaming(true);
           setStreamingStatus('Starte KI-Analyse...');
 
-          // Streaming starten
+          // Streaming starten (forceRefresh wird weitergereicht)
+          // Phase 5: Mit Connection-Loss-Callbacks
           streamingAbortRef.current = legalLensAPI.parseContractStreaming(id, {
             onStatus: (message, progress) => {
               setStreamingStatus(message);
               setStreamingProgress(progress);
+              setConnectionLost(false);
             },
             onClausesBatch: (newClauses, totalSoFar) => {
               setClauses(prev => {
@@ -380,6 +423,7 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
                 return [...prev, ...uniqueNew];
               });
               setStreamingStatus(`${totalSoFar} Klauseln analysiert...`);
+              setConnectionLost(false);
             },
             onComplete: (totalClauses) => {
               console.log(`✅ [Legal Lens] Streaming complete: ${totalClauses} Klauseln`);
@@ -387,15 +431,32 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
               setStreamingProgress(100);
               setStreamingStatus('Analyse abgeschlossen');
               setParseSource('streaming');
+              setConnectionLost(false);
+              setStreamRetryCount(0);
             },
             onError: (errorMsg) => {
               console.error(`❌ [Legal Lens] Streaming error:`, errorMsg);
               setIsStreaming(false);
+              setConnectionLost(false);
+              setStreamRetryCount(0);
               setError(errorMsg);
               // Behalte die Regex-Klauseln als Fallback
               setParseSource('regex');
+            },
+            onConnectionLost: (info) => {
+              console.warn(`⚠️ [Legal Lens] Verbindung verloren:`, info);
+              setConnectionLost(true);
+              setStreamRetryCount(info.retryCount);
+              if (info.willRetry) {
+                setStreamingStatus(`Verbindung verloren... Retry ${info.retryCount + 1}/3`);
+              }
+            },
+            onRetrying: (attempt, maxAttempts) => {
+              console.log(`🔄 [Legal Lens] Retry ${attempt}/${maxAttempts}`);
+              setStreamRetryCount(attempt);
+              setStreamingStatus(`Verbindung wird wiederhergestellt... (${attempt}/${maxAttempts})`);
             }
-          });
+          }, forceRefresh);
         } else if (response.clauses && response.clauses.length > 0) {
           // Wenige Klauseln - normal anzeigen (könnte vorverarbeitet sein ohne Metadata)
           console.log(`📋 [Legal Lens] ${response.clauses.length} Klauseln geladen`);
@@ -1174,6 +1235,11 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
     streamingProgress,
     streamingStatus,
     parseSource,
+
+    // ✅ Phase 5: Verbindungs-Status
+    connectionLost,
+    streamRetryCount,
+    streamMaxRetries,
 
     // Aktionen
     parseContract,

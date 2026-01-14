@@ -47,6 +47,81 @@ const analysisRateLimiter = rateLimit({
 });
 
 // ============================================
+// CACHE CONFIGURATION (Phase 4: TTL + Version)
+// ============================================
+
+/**
+ * Cache-Version: Erhöhe diese Nummer, wenn sich die Parsing-Logik ändert.
+ * Alte Caches werden automatisch invalidiert und neu geparsed.
+ */
+const CACHE_VERSION = 2;
+
+/**
+ * Cache TTL in Millisekunden (30 Tage)
+ * Nach Ablauf wird der Cache als abgelaufen betrachtet.
+ */
+const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+/**
+ * Prüft ob der Cache noch gültig ist.
+ * @param {Object} legalLens - Das legalLens-Objekt aus dem Contract
+ * @param {boolean} forceRefresh - Force-Refresh Flag vom Request
+ * @returns {{ valid: boolean, reason?: string }}
+ */
+function isCacheValid(legalLens, forceRefresh = false) {
+  // Force-Refresh überschreibt alles
+  if (forceRefresh) {
+    return { valid: false, reason: 'force_refresh' };
+  }
+
+  // Keine Klauseln cached
+  if (!legalLens?.preParsedClauses?.length) {
+    return { valid: false, reason: 'no_cache' };
+  }
+
+  // Status nicht completed
+  if (legalLens.preprocessStatus !== 'completed') {
+    return { valid: false, reason: 'status_not_completed' };
+  }
+
+  // Cache-Version prüfen
+  const cachedVersion = legalLens.metadata?.cacheVersion || 1;
+  if (cachedVersion < CACHE_VERSION) {
+    console.log(`🔄 [Cache] Version veraltet: ${cachedVersion} < ${CACHE_VERSION} - Cache wird invalidiert`);
+    return { valid: false, reason: 'version_outdated' };
+  }
+
+  // TTL prüfen
+  const preprocessedAt = legalLens.preprocessedAt;
+  if (preprocessedAt) {
+    const cacheAge = Date.now() - new Date(preprocessedAt).getTime();
+    if (cacheAge > CACHE_TTL_MS) {
+      const daysOld = Math.round(cacheAge / (24 * 60 * 60 * 1000));
+      console.log(`⏰ [Cache] TTL abgelaufen: ${daysOld} Tage alt (max: 30 Tage) - Cache wird invalidiert`);
+      return { valid: false, reason: 'ttl_expired', daysOld };
+    }
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Gibt eine benutzerfreundliche Nachricht für den Cache-Status zurück.
+ * @param {string} reason - Der Grund für die Cache-Invalidierung
+ * @returns {string}
+ */
+function getCacheInvalidMessage(reason) {
+  const messages = {
+    force_refresh: 'Neu-Analyse angefordert - Klauseln werden frisch geparst.',
+    no_cache: 'Keine Vorverarbeitung vorhanden - Klauseln werden geparst.',
+    status_not_completed: 'Vorverarbeitung unvollständig - wird fortgesetzt.',
+    version_outdated: 'Verbesserte Analyse verfügbar - Klauseln werden neu geparst.',
+    ttl_expired: 'Cache abgelaufen - Klauseln werden aktualisiert.'
+  };
+  return messages[reason] || 'Klauseln werden geparst.';
+}
+
+// ============================================
 // BRANCHEN AUTO-ERKENNUNG
 // ============================================
 
@@ -428,10 +503,10 @@ router.get('/:contractId/smart-summary', verifyToken, async (req, res) => {
  */
 router.post('/parse', verifyToken, async (req, res) => {
   try {
-    const { contractId } = req.body;
+    const { contractId, forceRefresh } = req.body;
     const userId = req.user.userId;
 
-    console.log(`📜 [Legal Lens] Parse request for contract: ${contractId}`);
+    console.log(`📜 [Legal Lens] Parse request for contract: ${contractId}${forceRefresh ? ' (FORCE REFRESH)' : ''}`);
 
     if (!contractId) {
       return res.status(400).json({
@@ -453,10 +528,11 @@ router.post('/parse', verifyToken, async (req, res) => {
       });
     }
 
-    // ⚡ FAST PATH: Prüfen ob vorverarbeitete Klauseln existieren
-    if (contract.legalLens?.preParsedClauses?.length > 0 &&
-        contract.legalLens?.preprocessStatus === 'completed') {
-      console.log(`⚡ [Legal Lens] Vorverarbeitete Klauseln gefunden: ${contract.legalLens.preParsedClauses.length}`);
+    // ⚡ FAST PATH: Prüfen ob Cache gültig ist (TTL + Version + Force-Refresh)
+    const cacheCheck = isCacheValid(contract.legalLens, forceRefresh);
+
+    if (cacheCheck.valid) {
+      console.log(`⚡ [Legal Lens] Gültiger Cache gefunden: ${contract.legalLens.preParsedClauses.length} Klauseln`);
 
       // 🔄 Re-validate nonAnalyzable für alte Caches (Patterns wurden verbessert)
       let cacheNeedsUpdate = false;
@@ -509,7 +585,12 @@ router.post('/parse', verifyToken, async (req, res) => {
       });
     }
 
-    // Preprocessing läuft gerade oder nicht vorhanden? → Frontend soll Streaming nutzen
+    // Cache ungültig - warum?
+    if (!cacheCheck.valid) {
+      console.log(`🔄 [Legal Lens] Cache ungültig: ${cacheCheck.reason}`);
+    }
+
+    // Preprocessing läuft gerade? → Frontend soll Streaming nutzen
     const preprocessStatus = contract.legalLens?.preprocessStatus;
 
     if (preprocessStatus === 'processing') {
@@ -523,14 +604,15 @@ router.post('/parse', verifyToken, async (req, res) => {
       });
     }
 
-    // Keine Vorverarbeitung vorhanden → Frontend soll Streaming nutzen
-    // Das liefert bessere Ergebnisse als Regex-Parsing
-    console.log(`📋 [Legal Lens] Keine Vorverarbeitung gefunden - empfehle Streaming`);
+    // Cache ungültig oder nicht vorhanden → Frontend soll Streaming nutzen
+    // Zeige Grund für Cache-Invalidierung im Log
+    const invalidReason = cacheCheck.reason || 'unknown';
+    console.log(`📋 [Legal Lens] Cache-Invalidierung: ${invalidReason} - empfehle Streaming`);
     return res.json({
       success: true,
       useStreaming: true,
-      reason: 'no_preprocessing',
-      message: 'Keine Vorverarbeitung vorhanden - bitte Streaming nutzen für beste Ergebnisse',
+      reason: invalidReason,
+      message: getCacheInvalidMessage(invalidReason),
       contractName: contract.name || contract.title || 'Vertrag'
     });
 
@@ -2016,9 +2098,11 @@ router.post('/:contractId/export-report', verifyToken, async (req, res) => {
  */
 router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
   const { contractId } = req.params;
+  const { forceRefresh } = req.query;
   const userId = req.user.userId;
+  const isForceRefresh = forceRefresh === 'true' || forceRefresh === '1';
 
-  console.log(`🌊 [Legal Lens] Streaming parse request for contract: ${contractId}`);
+  console.log(`🌊 [Legal Lens] Streaming parse request for contract: ${contractId}${isForceRefresh ? ' (FORCE REFRESH)' : ''}`);
 
   // SSE Headers setzen
   res.setHeader('Content-Type', 'text/event-stream');
@@ -2045,29 +2129,27 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
       return res.end();
     }
 
-    // Prüfen ob bereits vorverarbeitet
-    const cachedClauses = contract.legalLens?.preParsedClauses;
+    // ⚡ CACHE VALIDATION (TTL + Version + Force-Refresh)
+    const cacheCheck = isCacheValid(contract.legalLens, isForceRefresh);
     const contractText = contract.content || contract.extractedText || contract.fullText || '';
 
-    // FIX: Sanity-Check für verdächtig kleine Caches (alte buggy Daten)
-    // Wenn Cache < 5 Klauseln aber Text > 2000 Zeichen, ist Cache wahrscheinlich defekt
+    // Zusätzlicher Sanity-Check für verdächtig kleine Caches (alte buggy Daten)
+    const cachedClauses = contract.legalLens?.preParsedClauses;
     const cacheSeemsBuggy = cachedClauses?.length > 0 &&
                            cachedClauses.length < 5 &&
                            contractText.length > 2000;
 
     if (cacheSeemsBuggy) {
       console.log(`⚠️ [Legal Lens] Verdächtiger Cache: ${cachedClauses.length} Klauseln für ${contractText.length} Zeichen Text - Cache wird ignoriert`);
-      // Cache als defekt markieren, um frisches Streaming zu erzwingen
       await Contract.updateOne(
         { _id: new ObjectId(contractId) },
         { $set: { 'legalLens.preprocessStatus': 'invalid' } }
       );
     }
 
-    if (cachedClauses?.length > 0 &&
-        contract.legalLens?.preprocessStatus === 'completed' &&
-        !cacheSeemsBuggy) {
-      console.log(`⚡ [Legal Lens] Vorverarbeitete Klauseln vorhanden - sende alle auf einmal`);
+    // Cache nur nutzen wenn gültig UND nicht buggy
+    if (cacheCheck.valid && !cacheSeemsBuggy) {
+      console.log(`⚡ [Legal Lens] Gültiger Cache - sende alle Klauseln auf einmal`);
 
       // 🔄 Re-validate nonAnalyzable für alte Caches (Patterns wurden verbessert)
       let cacheNeedsUpdate = false;
@@ -2351,6 +2433,7 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
             'legalLens.metadata': {
               parsedAt: new Date().toISOString(),
               parserVersion: '2.1.0-coverage-verified',
+              cacheVersion: CACHE_VERSION, // Für automatische Invalidierung bei Code-Updates
               usedGPT: true,
               blockCount: rawBlocks.length,
               batchCount: batches.length,
