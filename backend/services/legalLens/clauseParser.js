@@ -1265,6 +1265,16 @@ Antworte NUR mit einem JSON-Array:
   }
 
   /**
+   * Schätzt die Anzahl der Tokens für einen Text
+   * Grobe Schätzung: ~4 Zeichen = 1 Token (Deutsch/Englisch gemischt)
+   */
+  estimateTokens(text) {
+    if (!text) return 0;
+    // Etwas konservativer für deutsche Texte (längere Wörter)
+    return Math.ceil(text.length / 3.5);
+  }
+
+  /**
    * GPT-Segmentierung für einen einzelnen Batch
    * Wird vom Streaming-Endpoint verwendet
    */
@@ -1273,16 +1283,61 @@ Antworte NUR mit einem JSON-Array:
       return [];
     }
 
+    // ===== TOKEN-LIMIT SCHUTZ =====
+    // GPT-4o-mini: 128k Token Limit, wir bleiben sicher unter 100k
+    const MAX_INPUT_TOKENS = 80000;
+    const CHARS_PER_BLOCK_LIMIT = 2000; // Reduziert von 3000 wenn nötig
+
     // Bereite Blöcke für GPT vor
     // WICHTIG: Wir senden eine Preview an GPT, aber behalten den VOLLSTÄNDIGEN Text!
-    const blocksForGPT = blocks.map(b => ({
+    let blocksForGPT = blocks.map(b => ({
       id: b.id,
-      // Preview für GPT (max 3000 Zeichen) - aber originalText bleibt vollständig
+      // Preview für GPT - dynamisch basierend auf Batch-Größe
       text: (b.text || '').substring(0, 3000),
       fullTextLength: (b.text || '').length,
       truncated: (b.text || '').length > 3000,
       short: b.short || false
     }));
+
+    // Schätze Tokens für den gesamten Batch
+    let totalChars = blocksForGPT.reduce((sum, b) => sum + b.text.length, 0);
+    let estimatedTokens = this.estimateTokens(totalChars);
+
+    // Wenn zu viele Tokens, reduziere Text pro Block
+    if (estimatedTokens > MAX_INPUT_TOKENS) {
+      console.warn(`⚠️ [Token-Limit] Batch zu groß (${estimatedTokens} Tokens), reduziere Text pro Block...`);
+
+      blocksForGPT = blocks.map(b => ({
+        id: b.id,
+        text: (b.text || '').substring(0, CHARS_PER_BLOCK_LIMIT),
+        fullTextLength: (b.text || '').length,
+        truncated: (b.text || '').length > CHARS_PER_BLOCK_LIMIT,
+        short: b.short || false
+      }));
+
+      totalChars = blocksForGPT.reduce((sum, b) => sum + b.text.length, 0);
+      estimatedTokens = this.estimateTokens(totalChars);
+
+      console.log(`✅ [Token-Limit] Reduziert auf ${estimatedTokens} Tokens`);
+    }
+
+    // Finale Warnung wenn immer noch zu groß
+    if (estimatedTokens > MAX_INPUT_TOKENS) {
+      console.error(`❌ [Token-Limit] Batch immer noch zu groß (${estimatedTokens} Tokens), einige Blöcke werden übersprungen!`);
+      // Nimm nur die ersten N Blöcke die ins Limit passen
+      let currentTokens = 0;
+      const safeBlocks = [];
+      for (const block of blocksForGPT) {
+        const blockTokens = this.estimateTokens(block.text.length);
+        if (currentTokens + blockTokens < MAX_INPUT_TOKENS) {
+          safeBlocks.push(block);
+          currentTokens += blockTokens;
+        } else {
+          console.warn(`⚠️ [Token-Limit] Block ${block.id} übersprungen (würde Limit überschreiten)`);
+        }
+      }
+      blocksForGPT = safeBlocks;
+    }
 
     const prompt = `Du bist ein erfahrener Rechtsexperte. Analysiere die folgenden Text-Blöcke aus einem Vertrag und gruppiere sie zu sinnvollen, eigenständigen Klauseln.
 

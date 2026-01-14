@@ -2207,8 +2207,26 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
     // Stufe 2: GPT-Segmentierung mit Streaming
     sendEvent('status', { message: 'KI analysiert Klauseln...', progress: 30 });
 
-    // Batch-Verarbeitung mit Progress-Updates
-    const maxBlocksPerCall = 25;
+    // ===== DYNAMISCHE BATCH-GRÖSSE =====
+    // Berechne optimale Batch-Größe basierend auf durchschnittlicher Blocklänge
+    const totalTextLength = rawBlocks.reduce((sum, b) => sum + (b.text?.length || 0), 0);
+    const avgBlockLength = rawBlocks.length > 0 ? totalTextLength / rawBlocks.length : 500;
+
+    // Token-Limit: ~80k Tokens sicher, ~3.5 chars/token
+    // Max chars pro Batch: 80000 * 3.5 = 280000, aber mit Puffer: 200000
+    const MAX_CHARS_PER_BATCH = 200000;
+    let maxBlocksPerCall = Math.max(5, Math.min(30, Math.floor(MAX_CHARS_PER_BATCH / avgBlockLength)));
+
+    // Für sehr lange Verträge, kleinere Batches
+    if (rawBlocks.length > 100) {
+      maxBlocksPerCall = Math.min(maxBlocksPerCall, 20);
+    }
+    if (rawBlocks.length > 200) {
+      maxBlocksPerCall = Math.min(maxBlocksPerCall, 15);
+    }
+
+    console.log(`📊 [Batch-Size] ${rawBlocks.length} Blöcke, avg ${Math.round(avgBlockLength)} chars/block → ${maxBlocksPerCall} Blöcke/Batch`);
+
     const batches = [];
     for (let i = 0; i < rawBlocks.length; i += maxBlocksPerCall) {
       batches.push(rawBlocks.slice(i, i + maxBlocksPerCall));
