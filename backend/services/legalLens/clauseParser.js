@@ -504,6 +504,36 @@ class ClauseParser {
     // DEBUG: Logging für Diagnose
     console.log(`[detectNonAnalyzable] title="${title}", text="${trimmedText.substring(0, 50)}...", lowerTitle="${lowerTitle}"`);
 
+    // ===== ESCAPE HATCHES - IMMER ANALYSIERBAR =====
+    // Diese Keywords bedeuten: Klausel ist IMMER relevant, auch wenn kurz!
+    const alwaysAnalyzableKeywords = [
+      // Rechtliche Begriffe
+      'verpflichtet', 'berechtigt', 'haftet', 'haftung', 'gewährleist',
+      'schuldet', 'zahlt', 'vergütung', 'entgelt', 'gebühr',
+      'kündigung', 'kündigungs', 'frist', 'laufzeit', 'dauer',
+      'beginn', 'ende', 'gültig', 'wirksam', 'beendigung',
+      'gerichtsstand', 'recht', 'gesetz', 'anwendbar',
+      'schadensersatz', 'vertragsstrafe', 'verzug', 'mahnung',
+      'gewährleistung', 'garantie', 'mängel',
+      'geheimhaltung', 'vertraulich', 'datenschutz',
+      'wettbewerb', 'konkurrenz',
+      // Paragraph-Referenzen
+      '§', 'abs.', 'absatz', 'ziffer', 'artikel', 'gemäß', 'nach maßgabe',
+      // Vertragsbestandteile
+      'leistung', 'pflicht', 'recht', 'anspruch',
+      'vertragsbeginn', 'vertragsende', 'mindestlaufzeit', 'verlängerung'
+    ];
+
+    // Prüfe ob Titel oder Text relevante Keywords enthält
+    const hasRelevantContent = alwaysAnalyzableKeywords.some(keyword =>
+      lowerTitle.includes(keyword) || lowerText.includes(keyword)
+    );
+
+    if (hasRelevantContent) {
+      console.log(`[detectNonAnalyzable] ESCAPE: Relevanter Inhalt gefunden für "${title}" - bleibt analysierbar`);
+      return { nonAnalyzable: false, reason: null, category: 'clause' };
+    }
+
     // ===== TITEL-BASIERTE ERKENNUNG (Priorität!) =====
     // Wenn der Titel eindeutig auf nicht-analysierbar hindeutet
 
