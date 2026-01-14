@@ -94,9 +94,16 @@ function detectIndustryFromText(text) {
         'beratung', 'consulting', 'beratungsleistung', 'honorar', 'tagessatz',
         'projektberatung', 'unternehmensberatung', 'strategieberatung',
         'management consulting', 'berater', 'beratungsvertrag', 'mandate',
-        'beratungsprojekt', 'analyse', 'empfehlung', 'gutachten'
+        'beratungsprojekt', 'analyse', 'empfehlung', 'gutachten',
+        // Steuerberatung
+        'steuerberatung', 'steuerberater', 'steuerberatungsvertrag', 'steuererklärung',
+        'jahresabschluss', 'buchhaltung', 'finanzbuchhaltung', 'lohnbuchhaltung',
+        'bilanz', 'gewinnermittlung', 'einnahmenüberschussrechnung', 'umsatzsteuer',
+        'einkommensteuer', 'körperschaftsteuer', 'gewerbesteuer', 'steuerlich',
+        'finanzamt', 'steuerbescheid', 'betriebsprüfung', 'wirtschaftsprüfer',
+        'rechtsberatung', 'kanzlei', 'mandant'
       ],
-      weight: 1.3
+      weight: 1.5  // Erhöht wegen spezifischer Keywords
     },
     manufacturing: {
       keywords: [
@@ -2055,25 +2062,32 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
         // GPT-Segmentierung für diesen Batch
         const batchClauses = await clauseParser.gptSegmentClausesBatch(batch, contract.name || '');
 
-        // Gültige Klauseln filtern und mit Risk-Assessment versehen
+        // Gültige Klauseln filtern und mit Risk-Assessment + NonAnalyzable-Check versehen
         const validClauses = batchClauses
           .filter(c => c && c.text && typeof c.text === 'string' && c.text.trim().length > 0)
           .map((clause, idx) => {
             const riskAssessment = clauseParser.assessClauseRisk(clause.text);
+            // Prüfe ob Klausel analysierbar ist (Titel, Metadaten, Unterschriften = nicht analysierbar)
+            const analyzableCheck = clauseParser.detectNonAnalyzable(clause.text, clause.title);
+
             return {
               id: clause.id || `clause_stream_${allClauses.length + idx + 1}`,
               number: clause.number || `${allClauses.length + idx + 1}`,
               title: clause.title || null,
               text: clause.text,
               type: clause.type || 'paragraph',
-              riskLevel: riskAssessment.level,
-              riskScore: riskAssessment.score,
-              riskKeywords: riskAssessment.keywords,
+              riskLevel: analyzableCheck.nonAnalyzable ? 'none' : riskAssessment.level,
+              riskScore: analyzableCheck.nonAnalyzable ? 0 : riskAssessment.score,
+              riskKeywords: analyzableCheck.nonAnalyzable ? [] : riskAssessment.keywords,
               riskIndicators: {
-                level: riskAssessment.level,
-                keywords: riskAssessment.keywords,
-                score: riskAssessment.score
-              }
+                level: analyzableCheck.nonAnalyzable ? 'none' : riskAssessment.level,
+                keywords: analyzableCheck.nonAnalyzable ? [] : riskAssessment.keywords,
+                score: analyzableCheck.nonAnalyzable ? 0 : riskAssessment.score
+              },
+              // Neue Felder für nicht-analysierbare Klauseln
+              nonAnalyzable: analyzableCheck.nonAnalyzable,
+              nonAnalyzableReason: analyzableCheck.reason,
+              clauseCategory: analyzableCheck.category  // 'clause', 'title', 'metadata', 'signature'
             };
           });
 
@@ -2149,6 +2163,69 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
   }
 
   res.end();
+});
+
+// ============================================
+// CLEAR CACHE & FORCE RE-PARSE
+// ============================================
+
+/**
+ * POST /api/legal-lens/:contractId/clear-cache
+ *
+ * Löscht den Legal Lens Cache für einen Vertrag und erzwingt Neuanalyse.
+ * Nützlich wenn die ursprüngliche Analyse fehlerhaft war.
+ */
+router.post('/:contractId/clear-cache', verifyToken, async (req, res) => {
+  try {
+    const { contractId } = req.params;
+    const userId = req.user.userId;
+
+    console.log(`🗑️ [Legal Lens] Clear cache request for contract: ${contractId}`);
+
+    // Vertrag finden und prüfen ob User Zugriff hat
+    const contract = await Contract.findOne({
+      _id: new ObjectId(contractId),
+      userId: new ObjectId(userId)
+    });
+
+    if (!contract) {
+      return res.status(404).json({
+        success: false,
+        error: 'Vertrag nicht gefunden'
+      });
+    }
+
+    // Cache löschen
+    await Contract.updateOne(
+      { _id: new ObjectId(contractId) },
+      {
+        $unset: {
+          'legalLens.preParsedClauses': '',
+          'legalLens.riskSummary': '',
+          'legalLens.metadata': '',
+          'legalLens.preprocessedAt': ''
+        },
+        $set: {
+          'legalLens.preprocessStatus': null
+        }
+      }
+    );
+
+    console.log(`✅ [Legal Lens] Cache cleared for contract ${contractId}`);
+
+    res.json({
+      success: true,
+      message: 'Legal Lens Cache gelöscht. Bitte Legal Lens neu öffnen für frische Analyse.',
+      contractId
+    });
+
+  } catch (error) {
+    console.error('❌ [Legal Lens] Clear cache error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Fehler beim Löschen des Caches'
+    });
+  }
 });
 
 module.exports = router;

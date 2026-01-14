@@ -148,7 +148,12 @@ export const INDUSTRIES: IndustryInfo[] = [
 /**
  * Risikostufen
  */
-export type RiskLevel = 'low' | 'medium' | 'high';
+export type RiskLevel = 'low' | 'medium' | 'high' | 'none';
+
+/**
+ * Kategorie für nicht-analysierbare Klauseln
+ */
+export type ClauseCategory = 'clause' | 'title' | 'metadata' | 'signature' | 'invalid';
 
 /**
  * Highlight-Typen für markierte Klauseln
@@ -190,6 +195,12 @@ export interface ParsedClause {
     summary: string;
     mainRisk: string;
   };
+  /** Nicht-analysierbare Klausel (Titel, Metadaten, Unterschriften) */
+  nonAnalyzable?: boolean;
+  /** Grund warum nicht analysierbar */
+  nonAnalyzableReason?: 'too_short' | 'contract_title' | 'date_location' | 'signature_field' | 'address_only' | 'page_number';
+  /** Kategorie der Klausel */
+  clauseCategory?: ClauseCategory;
 }
 
 /**
@@ -591,7 +602,8 @@ export const PERSPECTIVES: PerspectiveInfo[] = [
 export const RISK_COLORS: Record<RiskLevel, string> = {
   low: '#10b981',
   medium: '#f59e0b',
-  high: '#ef4444'
+  high: '#ef4444',
+  none: '#9ca3af'  // Grau für nicht-analysierbare Klauseln
 };
 
 /**
@@ -600,7 +612,21 @@ export const RISK_COLORS: Record<RiskLevel, string> = {
 export const RISK_LABELS: Record<RiskLevel, string> = {
   low: 'Niedriges Risiko',
   medium: 'Mittleres Risiko',
-  high: 'Hohes Risiko'
+  high: 'Hohes Risiko',
+  none: 'Nicht analysierbar'
+};
+
+/**
+ * Labels für nicht-analysierbare Klauseln
+ */
+export const NON_ANALYZABLE_LABELS: Record<string, string> = {
+  too_short: 'Zu kurz',
+  contract_title: 'Vertragstitel',
+  contract_parties: 'Vertragsparteien',
+  date_location: 'Ort & Datum',
+  signature_field: 'Unterschriftenfeld',
+  address_only: 'Adresse',
+  page_number: 'Seitenzahl'
 };
 
 /**

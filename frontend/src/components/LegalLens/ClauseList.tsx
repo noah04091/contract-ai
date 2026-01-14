@@ -4,7 +4,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { FileText, Eye, ChevronDown, ChevronUp } from 'lucide-react';
 import type { ParsedClause, LegalLensProgress, RiskLevel } from '../../types/legalLens';
-import { RISK_LABELS } from '../../types/legalLens';
+import { RISK_LABELS, NON_ANALYZABLE_LABELS } from '../../types/legalLens';
 import styles from '../../styles/LegalLens.module.css';
 
 type ViewMode = 'text' | 'pdf';
@@ -161,9 +161,38 @@ const ClauseList: React.FC<ClauseListProps> = ({
           const isBookmarked = isClauseBookmarked(clause.id);
           const notesCount = getClauseNotes(clause.id);
           const riskLevel = clause.riskIndicators?.level || 'low';
+          const isNonAnalyzable = clause.nonAnalyzable === true;
 
           // Verwende preAnalysis wenn verfügbar, sonst riskIndicators
-          const effectiveRiskLevel = clause.preAnalysis?.riskLevel || riskLevel;
+          const effectiveRiskLevel = isNonAnalyzable ? 'none' : (clause.preAnalysis?.riskLevel || riskLevel);
+
+          // Nicht-analysierbare Klauseln: ausgegraut, nicht klickbar
+          if (isNonAnalyzable) {
+            return (
+              <div
+                key={clause.id}
+                ref={(el) => {
+                  if (el) clauseRefs.current.set(clause.id, el);
+                }}
+                className={`${styles.clauseItem} ${styles.nonAnalyzable}`}
+              >
+                <div className={styles.clauseHeader}>
+                  <span className={styles.clauseNumber}>
+                    {clause.number || `#${clause.id.slice(-4)}`}
+                    {clause.title && ` - ${clause.title}`}
+                  </span>
+                  <span className={`${styles.clauseRisk} ${styles.none}`}>
+                    {clause.nonAnalyzableReason && NON_ANALYZABLE_LABELS[clause.nonAnalyzableReason]
+                      ? NON_ANALYZABLE_LABELS[clause.nonAnalyzableReason]
+                      : 'Info'}
+                  </span>
+                </div>
+                <p className={`${styles.clauseText} ${styles.nonAnalyzableText}`}>
+                  {clause.text}
+                </p>
+              </div>
+            );
+          }
 
           return (
             <div
