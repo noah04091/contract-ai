@@ -1,0 +1,299 @@
+/* ============================================
+   PageHeader - Variante E: Premium Minimal
+   Solide Farben, subtile Features, professionell
+   ============================================ */
+
+/* Container */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 2rem;
+  background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+  border-bottom: 1px solid #e5e5e5;
+  gap: 2rem;
+}
+
+/* Linke Seite: Icon + Text */
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+  flex: 1;
+}
+
+/* Icon Container - Solide Farben */
+.iconContainer {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.iconContainer:hover {
+  transform: scale(1.05);
+}
+
+/* Solide, professionelle Farben */
+.iconBlue {
+  background: #3b82f6;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.iconPurple {
+  background: #7c3aed;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
+}
+
+.iconGreen {
+  background: #10b981;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.iconOrange {
+  background: #f59e0b;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+.iconRed {
+  background: #ef4444;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
+.iconIndigo {
+  background: #6366f1;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+/* Dark/Primary - für neutrale Seiten */
+.iconDark {
+  background: #18181b;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+  color: white;
+}
+
+/* Text Content */
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.title {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #09090b;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.subtitle {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
+  font-size: 0.8125rem;
+  color: #71717a;
+  margin: 2px 0 0 0;
+  line-height: 1.4;
+}
+
+/* Badge (Premium, Beta, etc.) */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.625rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+.badgePremium {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.badgeBeta {
+  background: #f3e8ff;
+  color: #7c3aed;
+}
+
+.badgeNew {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.badgePro {
+  background: #f4f4f5;
+  color: #3f3f46;
+}
+
+/* Rechte Seite: Features + Actions */
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex-shrink: 0;
+}
+
+/* Features - Subtil mit Icon */
+.features {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.feature {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  color: #52525b;
+  white-space: nowrap;
+}
+
+.featureIcon {
+  width: 14px;
+  height: 14px;
+  color: #a1a1aa;
+  flex-shrink: 0;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.actionButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid #e4e4e7;
+  font-family: inherit;
+}
+
+.actionPrimary {
+  background: #18181b;
+  border-color: #18181b;
+  color: white;
+}
+
+.actionPrimary:hover:not(:disabled) {
+  background: #27272a;
+}
+
+.actionSecondary {
+  background: white;
+  color: #18181b;
+}
+
+.actionSecondary:hover:not(:disabled) {
+  background: #f4f4f5;
+  border-color: #d4d4d8;
+}
+
+.actionGhost {
+  background: transparent;
+  border-color: transparent;
+  color: #3b82f6;
+}
+
+.actionGhost:hover:not(:disabled) {
+  background: #eff6ff;
+}
+
+.actionButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 1024px) {
+  .header {
+    flex-wrap: wrap;
+    padding: 1rem 1.5rem;
+    gap: 1rem;
+  }
+
+  .headerLeft {
+    flex: 1 1 100%;
+  }
+
+  .headerRight {
+    flex: 1 1 100%;
+    justify-content: flex-start;
+  }
+
+  .features {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .header {
+    padding: 1rem;
+  }
+
+  .iconContainer {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+  }
+
+  .icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .title {
+    font-size: 1rem;
+  }
+
+  .subtitle {
+    font-size: 0.75rem;
+  }
+
+  .features {
+    display: none;
+  }
+
+  .actions {
+    width: 100%;
+  }
+
+  .actionButton {
+    flex: 1;
+    justify-content: center;
+  }
+}

@@ -52,6 +52,7 @@ import SimpleExplanationPopup from "../components/SimpleExplanationPopup";
 import AnalysisProgressComponent from "../components/AnalysisProgress";
 import PDFDocumentViewer from "../components/PDFDocumentViewer";
 import { ResultsDashboard } from "../components/optimizer";
+import { PageHeader } from "../components/PageHeader";
 
 // Types für revolutionäre Features
 import {
@@ -2413,36 +2414,23 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
           }}
         >
           {/* Header */}
-          <motion.div 
-            className={styles.header}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <motion.h1 className={styles.title}>
-              <Sparkles className="inline-block" />
-              KI-Vertragsoptimierung
-            </motion.h1>
-            
-            <motion.p className={styles.subtitle}>
-              Lade deinen Vertrag hoch und wir machen ihn besser - einfach und automatisch.
-            </motion.p>
-
-            {/* Neue Analyse Button - nur sichtbar wenn Ergebnisse vorhanden */}
-            {optimizations.length > 0 && (
-              <motion.button
-                className={styles.newAnalysisBtn}
-                onClick={handleReset}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <RefreshCw size={16} />
-                <span>Neue Analyse starten</span>
-              </motion.button>
-            )}
-          </motion.div>
+          <PageHeader
+            icon={Sparkles}
+            title="KI-Vertragsoptimierung"
+            subtitle="Automatische Verbesserungsvorschläge für deine Verträge"
+            iconColor="purple"
+            features={[
+              { text: 'Risiko-Erkennung', icon: Shield },
+              { text: 'Klausel-Vorschläge', icon: Lightbulb },
+              { text: 'PDF-Export', icon: Download }
+            ]}
+            actions={optimizations.length > 0 ? [{
+              label: 'Neue Analyse',
+              icon: RefreshCw,
+              onClick: handleReset,
+              variant: 'secondary'
+            }] : undefined}
+          />
 
           {/* Premium Notice */}
           {!isPremium && (

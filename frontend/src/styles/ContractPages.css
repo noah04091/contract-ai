@@ -2,7 +2,7 @@
 .contract-page {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     color: #1e293b;
-    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+    background: #f8fafc;
     min-height: 100vh;
     position: relative;
     overflow-x: hidden;

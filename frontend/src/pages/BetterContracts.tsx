@@ -2,9 +2,11 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { Helmet } from "react-helmet-async";
+import { SearchCheck, TrendingDown, Star, Bookmark } from "lucide-react";
 import BetterContractsResults from "../components/BetterContractsResults";
 import SavedAlternativesFull from "../components/SavedAlternativesFull";
 import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
+import { PageHeader } from "../components/PageHeader";
 import "../styles/ContractPages.css";
 
 interface ApiResponse {
@@ -407,39 +409,18 @@ const BetterContracts: React.FC = () => {
         
         {/* WICHTIG: Dynamische Container-Breite für Step 3 */}
         <div className={`contract-container ${step === 3 && results ? 'has-results' : ''}`} style={step === 3 && results ? { maxWidth: '1200px' } : {}}>
-          <div className="contract-header">
-            <div className="contract-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"></circle>
-                <path d="m21 21-4.3-4.3"></path>
-                <path d="M8 11h6"></path>
-                <path d="M11 8v6"></path>
-              </svg>
-            </div>
-            <h1>Bessere Alternativen zu deinem Vertrag</h1>
-            
-            {/* ✅ Premium Badge wie in Chat.tsx */}
-            {!isPremium && (
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: 'white',
-                padding: '6px 12px',
-                borderRadius: '20px',
-                fontSize: '0.8rem',
-                fontWeight: '600',
-                marginTop: '0.5rem'
-              }}>
-                <span style={{ marginRight: '4px' }}>✦</span>
-                Premium erforderlich
-              </div>
-            )}
-            
-            <p className="contract-description">
-              Wir analysieren deinen Vertrag und finden automatisch bessere Anbieter mit echten Preisen und Konditionen.
-            </p>
-          </div>
+          <PageHeader
+            icon={SearchCheck}
+            title="Bessere Alternativen"
+            subtitle="Finde günstigere Anbieter für deine bestehenden Verträge"
+            iconColor="green"
+            features={[
+              { text: 'Preisvergleich', icon: TrendingDown },
+              { text: 'Echte Angebote', icon: Star },
+              { text: 'Merkliste', icon: Bookmark }
+            ]}
+            badge={!isPremium ? { text: 'Premium', variant: 'premium' } : undefined}
+          />
 
           {/* Premium Notice */}
           {!isPremium && (

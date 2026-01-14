@@ -25,8 +25,8 @@
   
   /* Background Colors */
   --bg-primary: #ffffff;
-  --bg-secondary: #f5f5f7;
-  --bg-tertiary: #e8e8ed;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
   
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', 'Helvetica Neue', sans-serif;
   background: var(--bg-secondary);

@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
 import { WelcomePopup } from "../components/Tour";
+import { PageHeader } from "../components/PageHeader";
 
 // Enhanced types for better comparison structure
 interface ComparisonDifference {
@@ -621,33 +622,24 @@ export default function EnhancedCompare() {
         <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
       </Helmet>
 
-      <div style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif", backgroundColor: 'white', minHeight: '100vh', color: '#1d1d1f' }}>
+      <div style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif", backgroundColor: '#f8fafc', minHeight: '100vh', color: '#1d1d1f' }}>
         <motion.div 
           style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div style={{ marginBottom: '2.5rem', textAlign: 'center' }}>
-            <motion.h1 
-              style={{ fontSize: '2.2rem', fontWeight: 600, margin: '0 0 0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.8rem', letterSpacing: '-0.02em', color: '#1d1d1f' }}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1, duration: 0.5 }}
-            >
-              <FileText size={28} style={{ color: '#0071e3' }} />
-              Vertragsvergleich
-            </motion.h1>
-            <motion.p 
-              style={{ fontSize: '1.1rem', fontWeight: 400, margin: '0', color: '#6e6e73', lineHeight: 1.5, maxWidth: '700px', marginLeft: 'auto', marginRight: 'auto' }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-            >
-              Analysiere und vergleiche zwei Verträge mit KI-basierter Bewertung
-              und erhalte eine professionelle Empfehlung
-            </motion.p>
-          </div>
+          <PageHeader
+            icon={Scale}
+            title="Vertragsvergleich"
+            subtitle="Vergleiche zwei Verträge und erhalte eine KI-Empfehlung"
+            iconColor="blue"
+            features={[
+              { text: 'Side-by-Side', icon: Eye },
+              { text: 'Unterschiede markiert', icon: AlertTriangle },
+              { text: 'KI-Empfehlung', icon: Star }
+            ]}
+          />
 
           {!isPremium && <PremiumNotice />}
 
