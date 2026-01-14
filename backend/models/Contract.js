@@ -305,7 +305,7 @@ const contractSchema = new mongoose.Schema({
       title: String,
       text: String,
       type: String,
-      riskLevel: { type: String, enum: ['high', 'medium', 'low'] },
+      riskLevel: { type: String, enum: ['high', 'medium', 'low', 'none'] },  // 'none' für nicht-analysierbare Klauseln
       riskScore: Number,
       riskKeywords: [String],
       riskIndicators: {
@@ -317,7 +317,11 @@ const contractSchema = new mongoose.Schema({
         riskLevel: String,
         summary: String,
         mainRisk: String
-      }
+      },
+      // Felder für nicht-analysierbare Klauseln
+      nonAnalyzable: { type: Boolean, default: false },
+      nonAnalyzableReason: String,
+      clauseCategory: String
     }],
     // Risk Summary
     riskSummary: {

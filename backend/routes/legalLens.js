@@ -2102,8 +2102,9 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
                 (riskAssessment.keywords || []).map(k => typeof k === 'string' ? k : k.keyword),
               riskIndicators: {
                 level: analyzableCheck.nonAnalyzable ? 'none' : riskAssessment.level,
-                // Keywords als Objekte behalten für Frontend-Anzeige
-                keywords: analyzableCheck.nonAnalyzable ? [] : riskAssessment.keywords,
+                // FIX: Keywords auch als Strings für MongoDB-Kompatibilität
+                keywords: analyzableCheck.nonAnalyzable ? [] :
+                  (riskAssessment.keywords || []).map(k => typeof k === 'string' ? k : k.keyword),
                 score: analyzableCheck.nonAnalyzable ? 0 : riskAssessment.score
               },
               // Neue Felder für nicht-analysierbare Klauseln

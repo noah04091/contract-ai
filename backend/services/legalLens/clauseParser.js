@@ -552,12 +552,13 @@ class ClauseParser {
     }
 
     // 2. Vertragsname/Titel-Erkennung (TEXT)
+    // WICHTIG: Alle Alternativen müssen gruppiert sein, sonst matcht z.B. "anlage" überall im Text!
     const titlePatterns = [
       /^(steuerberatungs|beratungs|dienst|arbeits|miet|kauf|lizenz|service|rahmen)?vertrag$/i,
       /^vertrag\s+(über|zur|zum|für)/i,
       /^(allgemeine\s+)?(geschäfts|vertrags|nutzungs)bedingungen$/i,
       /^agb$/i,
-      /^anhang|anlage|annex/i
+      /^(anhang|anlage|annex)\b/i  // FIX: Gruppierung + Wortgrenze
     ];
     if (titlePatterns.some(p => p.test(trimmedText)) ||
         (trimmedText.length < 50 && lowerTitle.includes('vertragsname'))) {
