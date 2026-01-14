@@ -2202,10 +2202,37 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
     // Finale Zusammenfassung
     sendEvent('status', { message: 'Finalisiere Analyse...', progress: 85 });
 
+    // ===== FINALE COVERAGE-PRÜFUNG =====
+    // Vergleiche extrahierten Text mit Originaltext
+    const originalTextLength = text.length;
+    const extractedTextLength = allClauses.reduce((sum, c) => sum + (c.text?.length || 0), 0);
+    const textCoveragePercent = Math.round((extractedTextLength / originalTextLength) * 100);
+    const blockCoveragePercent = Math.round((allClauses.length / rawBlocks.length) * 100);
+
+    // Zähle "gerettete" Klauseln
+    const recoveredCount = allClauses.filter(c => c.recovered).length;
+
+    console.log(`📊 [Coverage] Text: ${textCoveragePercent}% (${extractedTextLength}/${originalTextLength} Zeichen)`);
+    console.log(`📊 [Coverage] Blöcke: ${blockCoveragePercent}% (${allClauses.length}/${rawBlocks.length})`);
+    if (recoveredCount > 0) {
+      console.log(`📊 [Coverage] ${recoveredCount} Klauseln wurden aus verwaisten Blöcken gerettet`);
+    }
+
+    // Warnung bei niedriger Coverage
+    if (textCoveragePercent < 80) {
+      console.warn(`⚠️ [Coverage] WARNUNG: Nur ${textCoveragePercent}% des Textes wurde erfasst!`);
+      sendEvent('warning', {
+        type: 'low_coverage',
+        message: `Hinweis: ${textCoveragePercent}% des Vertragstextes wurden analysiert. Einige Abschnitte könnten fehlen.`,
+        textCoverage: textCoveragePercent,
+        blockCoverage: blockCoveragePercent
+      });
+    }
+
     const riskSummary = {
-      high: allClauses.filter(c => c.riskLevel === 'high').length,
-      medium: allClauses.filter(c => c.riskLevel === 'medium').length,
-      low: allClauses.filter(c => c.riskLevel === 'low').length
+      high: allClauses.filter(c => c.riskLevel === 'high' && !c.nonAnalyzable).length,
+      medium: allClauses.filter(c => c.riskLevel === 'medium' && !c.nonAnalyzable).length,
+      low: allClauses.filter(c => c.riskLevel === 'low' && !c.nonAnalyzable).length
     };
 
     // Ergebnis in DB cachen für nächstes Mal
@@ -2220,10 +2247,18 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
             'legalLens.riskSummary': riskSummary,
             'legalLens.metadata': {
               parsedAt: new Date().toISOString(),
-              parserVersion: '2.0.0-streaming',
+              parserVersion: '2.1.0-coverage-verified',
               usedGPT: true,
               blockCount: rawBlocks.length,
-              batchCount: batches.length
+              batchCount: batches.length,
+              // Coverage-Metriken für Qualitätssicherung
+              coverage: {
+                textPercent: textCoveragePercent,
+                blockPercent: blockCoveragePercent,
+                originalLength: originalTextLength,
+                extractedLength: extractedTextLength,
+                recoveredClauses: recoveredCount
+              }
             },
             'legalLens.preprocessStatus': 'completed',
             'legalLens.preprocessedAt': new Date()
@@ -2243,12 +2278,18 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
       }, null, 2));
     }
 
-    // Finale Nachricht
+    // Finale Nachricht mit Coverage-Info
     sendEvent('complete', {
       success: true,
       totalClauses: allClauses.length,
       riskSummary,
-      source: 'streaming'
+      source: 'streaming',
+      coverage: {
+        textPercent: textCoveragePercent,
+        blockPercent: blockCoveragePercent,
+        recoveredClauses: recoveredCount,
+        verified: textCoveragePercent >= 80
+      }
     });
 
     console.log(`✅ [Legal Lens] Streaming complete: ${allClauses.length} Klauseln`);

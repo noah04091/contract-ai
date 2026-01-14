@@ -1274,9 +1274,13 @@ Antworte NUR mit einem JSON-Array:
     }
 
     // Bereite Blöcke für GPT vor
+    // WICHTIG: Wir senden eine Preview an GPT, aber behalten den VOLLSTÄNDIGEN Text!
     const blocksForGPT = blocks.map(b => ({
       id: b.id,
-      text: (b.text || '').substring(0, 1500),
+      // Preview für GPT (max 3000 Zeichen) - aber originalText bleibt vollständig
+      text: (b.text || '').substring(0, 3000),
+      fullTextLength: (b.text || '').length,
+      truncated: (b.text || '').length > 3000,
       short: b.short || false
     }));
 
@@ -1325,18 +1329,58 @@ Antworte NUR mit einem JSON-Array:
       const parsed = JSON.parse(content);
       const clausesArray = Array.isArray(parsed) ? parsed : (parsed.clauses || parsed.result || []);
 
-      // Map source block positions
+      // ===== COVERAGE VERIFICATION =====
+      // Sammle alle Block-IDs die von GPT erfasst wurden
+      const coveredBlockIds = new Set();
+
+      // Map source block positions + Track Coverage
       for (const clause of clausesArray) {
         const sourceBlocks = (clause.sourceBlockIds || [])
           .map(id => blocks.find(b => b.id === id))
           .filter(Boolean);
 
+        // Track covered blocks
+        (clause.sourceBlockIds || []).forEach(id => coveredBlockIds.add(id));
+
         if (sourceBlocks.length > 0) {
+          // WICHTIG: Verwende den VOLLSTÄNDIGEN Originaltext, nicht die GPT-Preview!
           clause.originalText = sourceBlocks.map(b => b.text).join('\n\n');
+          // Überschreibe GPTs text mit dem vollständigen Text
+          clause.text = clause.originalText;
         }
 
         clause.id = (clause.sourceBlockIds || []).sort().join('_') || `clause_${Math.random().toString(36).substr(2, 9)}`;
       }
+
+      // ===== ORPHANED BLOCKS CHECK =====
+      // Finde Blöcke die GPT NICHT erfasst hat
+      const orphanedBlocks = blocks.filter(b => !coveredBlockIds.has(b.id));
+
+      if (orphanedBlocks.length > 0) {
+        console.log(`⚠️ [Coverage] ${orphanedBlocks.length} von ${blocks.length} Blöcken wurden von GPT nicht erfasst!`);
+
+        // Erstelle Klauseln für verwaiste Blöcke
+        for (const orphan of orphanedBlocks) {
+          // Nur wenn Block substantiellen Text hat (nicht nur Whitespace)
+          if (orphan.text && orphan.text.trim().length > 10) {
+            console.log(`📥 [Coverage] Füge verwaisten Block hinzu: "${orphan.text.substring(0, 50)}..."`);
+            clausesArray.push({
+              id: `recovered_${orphan.id}`,
+              title: null,
+              text: orphan.text,  // VOLLSTÄNDIGER Text
+              type: 'paragraph',
+              sourceBlockIds: [orphan.id],
+              confidence: 0.5,
+              recovered: true,  // Markiere als "gerettet"
+              recoveryReason: 'orphaned_block'
+            });
+          }
+        }
+      }
+
+      // Log Coverage Statistics
+      const coveragePercent = Math.round((coveredBlockIds.size / blocks.length) * 100);
+      console.log(`✅ [Coverage] ${coveragePercent}% der Blöcke erfasst (${coveredBlockIds.size}/${blocks.length})`);
 
       return clausesArray;
 
