@@ -5,10 +5,12 @@
  * - Erkennung von gescannten PDFs
  * - Erkennung von verschlüsselten PDFs
  * - Qualitätsprüfung des extrahierten Textes
+ * - AWS Textract OCR-Fallback für gescannte PDFs
  * - Detaillierte Fehlermeldungen
  */
 
 const pdfParse = require('pdf-parse');
+const { extractTextWithOCR, isTextractAvailable } = require('./textractService');
 
 class PdfExtractor {
   /**
@@ -192,6 +194,96 @@ class PdfExtractor {
    */
   shouldShowWarning(result) {
     return result.warnings.length > 0 || result.quality.qualityScore < 70;
+  }
+
+  /**
+   * Extrahiert Text mit automatischem OCR-Fallback
+   *
+   * Ablauf:
+   * 1. Versuche pdf-parse (schnell, kostenlos)
+   * 2. Wenn Qualität < 50% → AWS Textract OCR (langsamer, kostet ~$0.0015/Seite)
+   *
+   * @param {Buffer} pdfBuffer - Der PDF-Buffer
+   * @param {Object} options - Optionen
+   * @param {boolean} options.enableOCR - OCR aktivieren (default: true)
+   * @param {number} options.ocrThreshold - Qualitätsschwelle für OCR (default: 50)
+   * @returns {Object} { success, text, quality, warnings, error, usedOCR }
+   */
+  async extractTextWithOCRFallback(pdfBuffer, options = {}) {
+    const enableOCR = options.enableOCR !== false;
+    const ocrThreshold = options.ocrThreshold || 50;
+
+    // Schritt 1: Normale PDF-Extraktion
+    const result = await this.extractText(pdfBuffer, options);
+    result.usedOCR = false;
+
+    // Wenn erfolgreich und gute Qualität → fertig
+    if (result.success && result.quality.qualityScore >= ocrThreshold) {
+      console.log(`✅ [PdfExtractor] Normale Extraktion erfolgreich (Score: ${result.quality.qualityScore}%)`);
+      return result;
+    }
+
+    // Schritt 2: OCR-Fallback wenn Qualität niedrig
+    if (enableOCR && (result.quality.isLikelyScanned || result.quality.qualityScore < ocrThreshold)) {
+      console.log(`🔍 [PdfExtractor] Qualität niedrig (${result.quality.qualityScore}%), versuche OCR...`);
+
+      // Prüfe ob Textract verfügbar
+      const textractStatus = await isTextractAvailable();
+      if (!textractStatus.available) {
+        console.warn(`⚠️ [PdfExtractor] OCR nicht verfügbar: ${textractStatus.reason}`);
+        result.warnings.push({
+          type: 'ocr_unavailable',
+          message: 'OCR ist nicht konfiguriert. Gescannte PDFs können nicht automatisch verarbeitet werden.',
+          suggestion: 'Bitte laden Sie eine digitale PDF hoch oder kontaktieren Sie den Support.'
+        });
+        return result;
+      }
+
+      try {
+        const ocrResult = await extractTextWithOCR(pdfBuffer);
+
+        if (ocrResult.success && ocrResult.text.length > result.text.length) {
+          // OCR war erfolgreich und hat mehr Text gefunden
+          console.log(`✅ [PdfExtractor] OCR erfolgreich: ${ocrResult.text.length} Zeichen (vorher: ${result.text.length})`);
+
+          result.text = ocrResult.text;
+          result.success = true;
+          result.usedOCR = true;
+          result.quality.charCount = ocrResult.text.length;
+          result.quality.wordCount = ocrResult.text.split(/\s+/).filter(w => w.length > 0).length;
+          result.quality.qualityScore = Math.round(ocrResult.confidence);
+          result.quality.isLikelyScanned = true; // War gescannt, aber jetzt haben wir Text
+
+          // Entferne alte Warnungen über gescannte PDFs
+          result.warnings = result.warnings.filter(w => w.type !== 'likely_scanned' && w.type !== 'minimal_content');
+
+          // Füge OCR-Info hinzu
+          result.warnings.push({
+            type: 'ocr_used',
+            message: `Text wurde per OCR extrahiert (${ocrResult.confidence.toFixed(0)}% Confidence).`,
+            suggestion: 'Bitte prüfen Sie die Analyse auf mögliche OCR-Fehler.'
+          });
+
+        } else if (ocrResult.error) {
+          console.warn(`⚠️ [PdfExtractor] OCR fehlgeschlagen: ${ocrResult.error}`);
+          result.warnings.push({
+            type: 'ocr_failed',
+            message: ocrResult.error,
+            suggestion: 'Bitte laden Sie eine digitale PDF hoch.'
+          });
+        }
+
+      } catch (ocrError) {
+        console.error(`❌ [PdfExtractor] OCR Fehler:`, ocrError.message);
+        result.warnings.push({
+          type: 'ocr_error',
+          message: `OCR-Verarbeitung fehlgeschlagen: ${ocrError.message}`,
+          suggestion: 'Bitte laden Sie eine digitale PDF hoch.'
+        });
+      }
+    }
+
+    return result;
   }
 }
 

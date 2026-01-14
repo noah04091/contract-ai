@@ -321,7 +321,7 @@ router.post('/smart-summary', verifyToken, async (req, res) => {
         const pdfBuffer = Buffer.concat(chunks);
 
         // Robuste PDF-Extraktion mit Qualitätsprüfung
-        const extractionResult = await pdfExtractor.extractText(pdfBuffer);
+        const extractionResult = await pdfExtractor.extractTextWithOCRFallback(pdfBuffer);
 
         if (!extractionResult.success) {
           console.error(`❌ [Legal Lens] PDF-Extraktion fehlgeschlagen:`, extractionResult.error);
@@ -637,7 +637,7 @@ router.post('/parse', verifyToken, async (req, res) => {
         const pdfBuffer = Buffer.concat(chunks);
 
         // Robuste PDF-Extraktion mit Qualitätsprüfung
-        const extractionResult = await pdfExtractor.extractText(pdfBuffer);
+        const extractionResult = await pdfExtractor.extractTextWithOCRFallback(pdfBuffer);
 
         if (!extractionResult.success) {
           console.error(`❌ [Legal Lens] PDF-Extraktion fehlgeschlagen:`, extractionResult.error);
@@ -2212,7 +2212,7 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
         const pdfBuffer = Buffer.concat(chunks);
 
         // Robuste PDF-Extraktion mit Qualitätsprüfung
-        const extractionResult = await pdfExtractor.extractText(pdfBuffer);
+        const extractionResult = await pdfExtractor.extractTextWithOCRFallback(pdfBuffer);
         pdfQuality = extractionResult.quality;
 
         if (!extractionResult.success) {
