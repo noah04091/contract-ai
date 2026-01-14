@@ -1966,15 +1966,34 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
     }
 
     // Prüfen ob bereits vorverarbeitet
-    if (contract.legalLens?.preParsedClauses?.length > 0 &&
-        contract.legalLens?.preprocessStatus === 'completed') {
+    const cachedClauses = contract.legalLens?.preParsedClauses;
+    const contractText = contract.content || contract.extractedText || contract.fullText || '';
+
+    // FIX: Sanity-Check für verdächtig kleine Caches (alte buggy Daten)
+    // Wenn Cache < 5 Klauseln aber Text > 2000 Zeichen, ist Cache wahrscheinlich defekt
+    const cacheSeemsBuggy = cachedClauses?.length > 0 &&
+                           cachedClauses.length < 5 &&
+                           contractText.length > 2000;
+
+    if (cacheSeemsBuggy) {
+      console.log(`⚠️ [Legal Lens] Verdächtiger Cache: ${cachedClauses.length} Klauseln für ${contractText.length} Zeichen Text - Cache wird ignoriert`);
+      // Cache als defekt markieren, um frisches Streaming zu erzwingen
+      await Contract.updateOne(
+        { _id: new ObjectId(contractId) },
+        { $set: { 'legalLens.preprocessStatus': 'invalid' } }
+      );
+    }
+
+    if (cachedClauses?.length > 0 &&
+        contract.legalLens?.preprocessStatus === 'completed' &&
+        !cacheSeemsBuggy) {
       console.log(`⚡ [Legal Lens] Vorverarbeitete Klauseln vorhanden - sende alle auf einmal`);
 
       // Alle Klauseln auf einmal senden (cached)
       sendEvent('status', { message: 'Lade vorverarbeitete Klauseln...', progress: 100 });
       sendEvent('clauses', {
-        clauses: contract.legalLens.preParsedClauses,
-        totalClauses: contract.legalLens.preParsedClauses.length,
+        clauses: cachedClauses,
+        totalClauses: cachedClauses.length,
         riskSummary: contract.legalLens.riskSummary,
         source: 'preprocessed'
       });
@@ -2078,9 +2097,12 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
               type: clause.type || 'paragraph',
               riskLevel: analyzableCheck.nonAnalyzable ? 'none' : riskAssessment.level,
               riskScore: analyzableCheck.nonAnalyzable ? 0 : riskAssessment.score,
-              riskKeywords: analyzableCheck.nonAnalyzable ? [] : riskAssessment.keywords,
+              // FIX: riskKeywords als String-Array für MongoDB-Kompatibilität
+              riskKeywords: analyzableCheck.nonAnalyzable ? [] :
+                (riskAssessment.keywords || []).map(k => typeof k === 'string' ? k : k.keyword),
               riskIndicators: {
                 level: analyzableCheck.nonAnalyzable ? 'none' : riskAssessment.level,
+                // Keywords als Objekte behalten für Frontend-Anzeige
                 keywords: analyzableCheck.nonAnalyzable ? [] : riskAssessment.keywords,
                 score: analyzableCheck.nonAnalyzable ? 0 : riskAssessment.score
               },

@@ -280,6 +280,8 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
     setParseSource(null);
     setStreamingProgress(0);
     setStreamingStatus('');
+    // FIX: Reset clauses bei neuem Contract, um alte Daten zu vermeiden
+    setClauses([]);
 
     try {
       // Erst normalen Parse versuchen (prüft auf vorverarbeitete Klauseln)

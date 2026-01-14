@@ -546,11 +546,12 @@ class ClauseParser {
       // Ausnahme: Wenn es wie eine echte Mini-Klausel aussieht
       const looksLikeClause = /§|abs\.|artikel|ziffer|\d+\.\d+/.test(lowerText);
       if (!looksLikeClause) {
+        console.log(`[detectNonAnalyzable] MATCH: too_short (${trimmedText.length} chars) for title="${title}"`);
         return { nonAnalyzable: true, reason: 'too_short', category: 'metadata' };
       }
     }
 
-    // 2. Vertragsname/Titel-Erkennung
+    // 2. Vertragsname/Titel-Erkennung (TEXT)
     const titlePatterns = [
       /^(steuerberatungs|beratungs|dienst|arbeits|miet|kauf|lizenz|service|rahmen)?vertrag$/i,
       /^vertrag\s+(über|zur|zum|für)/i,
@@ -560,6 +561,7 @@ class ClauseParser {
     ];
     if (titlePatterns.some(p => p.test(trimmedText)) ||
         (trimmedText.length < 50 && lowerTitle.includes('vertragsname'))) {
+      console.log(`[detectNonAnalyzable] MATCH: contract_title via TEXT pattern for title="${title}"`);
       return { nonAnalyzable: true, reason: 'contract_title', category: 'title' };
     }
 
@@ -574,10 +576,12 @@ class ClauseParser {
       /^[a-zäöüß]{3,}\s+(im\s+)?(januar|februar|märz|april|mai|juni|juli|august|september|oktober|november|dezember)\s+\d{4}$/i  // "München im Januar 2024"
     ];
     if (dateLocationPatterns.some(p => p.test(trimmedText))) {
+      console.log(`[detectNonAnalyzable] MATCH: date_location via TEXT pattern for title="${title}"`);
       return { nonAnalyzable: true, reason: 'date_location', category: 'metadata' };
     }
     // Kurzer Text + title enthält "ort" oder "datum" einzeln
     if (trimmedText.length < 80 && (lowerTitle.includes('ort') || lowerTitle.includes('datum'))) {
+      console.log(`[detectNonAnalyzable] MATCH: date_location via short+title for title="${title}"`);
       return { nonAnalyzable: true, reason: 'date_location', category: 'metadata' };
     }
 
@@ -597,28 +601,33 @@ class ClauseParser {
       /^(für|name|gez\.|i\.?\s*a\.?|p\.?\s*p\.?)[:\s]*$/i
     ];
     if (signaturePatterns.some(p => p.test(trimmedText))) {
+      console.log(`[detectNonAnalyzable] MATCH: signature_field via TEXT pattern for title="${title}"`);
       return { nonAnalyzable: true, reason: 'signature_field', category: 'signature' };
     }
     // Kurzer Text + enthält Unterschriftslinie-ähnliche Struktur
     if (trimmedText.length < 150 && trimmedText.includes('_') &&
         (lowerText.includes('auftraggeber') || lowerText.includes('auftragnehmer') ||
          lowerText.includes('steuerberater') || lowerText.includes('unterschrift'))) {
+      console.log(`[detectNonAnalyzable] MATCH: signature_field via underscore+keyword for title="${title}"`);
       return { nonAnalyzable: true, reason: 'signature_field', category: 'signature' };
     }
 
     // 5. Reine Kontaktdaten/Adressen (ohne rechtlichen Inhalt)
     const onlyAddressPattern = /^[a-zäöüß\s\.\-]+\s*\n?\s*(str\.|straße|weg|platz|gasse)?\s*\d+[a-z]?\s*\n?\s*\d{5}\s+[a-zäöüß\s\-]+$/i;
     if (onlyAddressPattern.test(trimmedText) && trimmedText.length < 150) {
+      console.log(`[detectNonAnalyzable] MATCH: address_only for title="${title}"`);
       return { nonAnalyzable: true, reason: 'address_only', category: 'metadata' };
     }
 
     // 6. Seitenzahlen, Header/Footer
     const pagePattern = /^(seite\s*)?\d+(\s*(von|\/)\s*\d+)?$/i;
     if (pagePattern.test(trimmedText)) {
+      console.log(`[detectNonAnalyzable] MATCH: page_number via text pattern`);
       return { nonAnalyzable: true, reason: 'page_number', category: 'metadata' };
     }
 
-    // Analysierbar
+    // Analysierbar - DEBUG: Log dass Klausel als analysierbar eingestuft wurde
+    console.log(`[detectNonAnalyzable] RESULT: analyzable=true for title="${title}"`);
     return { nonAnalyzable: false, reason: null, category: 'clause' };
   }
 
