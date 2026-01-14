@@ -306,14 +306,14 @@ router.post('/smart-summary', verifyToken, async (req, res) => {
       });
     }
 
-    // Summary im Contract speichern
+    // Summary im Contract speichern (im legalLens-Objekt)
     try {
       await Contract.updateOne(
         { _id: contract._id },
         {
           $set: {
-            smartSummary: result.summary,
-            smartSummaryGeneratedAt: new Date()
+            'legalLens.smartSummary': result.summary,
+            'legalLens.smartSummaryGeneratedAt': new Date()
           }
         }
       );
@@ -362,18 +362,20 @@ router.get('/:contractId/smart-summary', verifyToken, async (req, res) => {
       });
     }
 
-    // Prüfe ob bereits eine Summary existiert
-    if (contract.smartSummary) {
+    // Prüfe ob bereits eine Summary existiert (im legalLens-Objekt)
+    if (contract.legalLens?.smartSummary) {
+      console.log(`⚡ [Legal Lens] Smart Summary aus Cache für Contract ${contractId}`);
       return res.json({
         success: true,
-        summary: contract.smartSummary,
+        summary: contract.legalLens.smartSummary,
         cached: true,
-        generatedAt: contract.smartSummaryGeneratedAt,
+        generatedAt: contract.legalLens.smartSummaryGeneratedAt,
         contractName: contract.name || contract.title
       });
     }
 
     // Keine Summary vorhanden
+    console.log(`📝 [Legal Lens] Keine gecachte Smart Summary für Contract ${contractId}`);
     res.json({
       success: true,
       summary: null,

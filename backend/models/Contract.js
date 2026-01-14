@@ -307,6 +307,9 @@ const contractSchema = new mongoose.Schema({
       medium: { type: Number, default: 0 },
       low: { type: Number, default: 0 }
     },
+    // Smart Summary (Sofort-Übersicht) - gecached für schnelles Laden
+    smartSummary: mongoose.Schema.Types.Mixed,
+    smartSummaryGeneratedAt: Date,
     // Metadata
     metadata: mongoose.Schema.Types.Mixed,
     // Status - 'invalid' für defekte Caches hinzugefügt
