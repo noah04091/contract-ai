@@ -2166,8 +2166,17 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
           }
         }
       );
+      console.log(`✅ [Legal Lens] Cache gespeichert: ${allClauses.length} Klauseln für Contract ${contractId}`);
     } catch (dbError) {
-      console.warn(`⚠️ [Legal Lens] Konnte Ergebnis nicht cachen:`, dbError.message);
+      console.error(`⚠️ [Legal Lens] Cache-Fehler:`, dbError.message);
+      console.error(`⚠️ [Legal Lens] Error Details:`, JSON.stringify({
+        name: dbError.name,
+        code: dbError.code,
+        path: dbError.path,
+        kind: dbError.kind,
+        clauseCount: allClauses.length,
+        firstClauseKeys: allClauses[0] ? Object.keys(allClauses[0]) : []
+      }, null, 2));
     }
 
     // Finale Nachricht

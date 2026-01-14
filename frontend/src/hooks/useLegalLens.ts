@@ -272,7 +272,15 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
    * Vertrag parsen - mit Auto-Streaming für nicht-vorverarbeitete Verträge
    */
   const parseContract = useCallback(async (id: string) => {
+    // FIX: Race Condition - Abort any existing streaming FIRST
+    if (streamingAbortRef.current) {
+      console.log('[Legal Lens] Aborting existing streaming session');
+      streamingAbortRef.current();
+      streamingAbortRef.current = null;
+    }
+
     setIsParsing(true);
+    setIsStreaming(false); // Reset streaming state
     setError(null);
     setErrorInfo(null);
     setContractId(id);

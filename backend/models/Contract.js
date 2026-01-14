@@ -299,30 +299,8 @@ const contractSchema = new mongoose.Schema({
   // Legal Lens - Klausel-Analyse & Caching
   legalLens: {
     // Vorverarbeitete Klauseln (gecached für schnelles Laden)
-    preParsedClauses: [{
-      id: String,
-      number: String,
-      title: String,
-      text: String,
-      type: String,
-      riskLevel: { type: String, enum: ['high', 'medium', 'low', 'none'] },  // 'none' für nicht-analysierbare Klauseln
-      riskScore: Number,
-      riskKeywords: [String],
-      riskIndicators: {
-        level: String,
-        keywords: [String],
-        score: Number
-      },
-      preAnalysis: {
-        riskLevel: String,
-        summary: String,
-        mainRisk: String
-      },
-      // Felder für nicht-analysierbare Klauseln
-      nonAnalyzable: { type: Boolean, default: false },
-      nonAnalyzableReason: String,
-      clauseCategory: String
-    }],
+    // Schema.Types.Mixed für maximale Flexibilität - akzeptiert jede Klausel-Struktur
+    preParsedClauses: [mongoose.Schema.Types.Mixed],
     // Risk Summary
     riskSummary: {
       high: { type: Number, default: 0 },
@@ -330,18 +308,11 @@ const contractSchema = new mongoose.Schema({
       low: { type: Number, default: 0 }
     },
     // Metadata
-    metadata: {
-      parsedAt: String,
-      parserVersion: String,
-      usedGPT: Boolean,
-      blockCount: Number,
-      batchCount: Number,
-      source: String
-    },
-    // Status
+    metadata: mongoose.Schema.Types.Mixed,
+    // Status - 'invalid' für defekte Caches hinzugefügt
     preprocessStatus: {
       type: String,
-      enum: ['pending', 'processing', 'completed', 'error'],
+      enum: ['pending', 'processing', 'completed', 'error', 'invalid', null],
       default: null
     },
     preprocessedAt: Date
