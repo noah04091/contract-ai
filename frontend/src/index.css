@@ -5,7 +5,7 @@
 
   color-scheme: light;
   color: #213547;
-  background-color: #ffffff;
+  background-color: #f8fafc;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -53,7 +53,7 @@ button:focus-visible {
 }
 
 body {
-  background-color: #f4f4f4;
+  background-color: #f8fafc;
   color: #111;
 }
 
