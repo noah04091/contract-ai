@@ -89,6 +89,43 @@ const INFO_CONTENT = {
 };
 
 /**
+ * Formatiert Klausel-Text für bessere Lesbarkeit im Modal
+ */
+const formatClauseTextForModal = (text: string): React.ReactNode => {
+  if (!text) return null;
+
+  // Normalisiere Whitespace
+  let formatted = text.replace(/\s+/g, ' ').trim();
+
+  // Füge Zeilenumbrüche ein bei:
+  // 1. Satzende gefolgt von Großbuchstabe
+  formatted = formatted.replace(/([.!?])\s+([A-ZÄÖÜ])/g, '$1\n\n$2');
+
+  // 2. Vor §-Zeichen oder "Art."
+  formatted = formatted.replace(/\s+(§\s*\d)/g, '\n\n$1');
+  formatted = formatted.replace(/\s+(Art\.\s*\d)/g, '\n\n$1');
+
+  // 3. Bei Aufzählungen
+  formatted = formatted.replace(/\s+(\([a-z]\)|\(\d+\)|\d+\.)\s+/g, '\n$1 ');
+
+  // 4. Bei Bindestrichen (Aufzählung)
+  formatted = formatted.replace(/\s+-\s+([A-ZÄÖÜ])/g, '\n- $1');
+
+  // Teile in Absätze
+  const paragraphs = formatted.split('\n').filter(p => p.trim().length > 0);
+
+  return (
+    <>
+      {paragraphs.map((paragraph, index) => (
+        <span key={index} style={{ display: 'block', marginBottom: index < paragraphs.length - 1 ? '0.75rem' : 0 }}>
+          {paragraph.trim()}
+        </span>
+      ))}
+    </>
+  );
+};
+
+/**
  * ✅ FIX Issue #1 & #5: Content-basierter Hash für konsistenten Cache
  * Muss dieselbe Logik verwenden wie useLegalLens.ts
  */
@@ -536,9 +573,9 @@ const ContractOverview: React.FC<ContractOverviewProps> = ({
           </div>
         </div>
 
-        {/* Klausel-Text */}
+        {/* Klausel-Text - formatiert */}
         <div className={styles.inlineClauseText}>
-          <p>{inlineSelectedClause.text}</p>
+          <div>{formatClauseTextForModal(inlineSelectedClause.text)}</div>
         </div>
 
         {/* Perspektive Switcher */}

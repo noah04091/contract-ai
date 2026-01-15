@@ -7,6 +7,52 @@ import type { ParsedClause, LegalLensProgress, RiskLevel } from '../../types/leg
 import { RISK_LABELS, NON_ANALYZABLE_LABELS } from '../../types/legalLens';
 import styles from '../../styles/LegalLens.module.css';
 
+/**
+ * Formatiert Klausel-Text für bessere Lesbarkeit
+ * - Fügt Zeilenumbrüche nach Satzenden ein
+ * - Erkennt §-Paragraphen und Aufzählungen
+ * - Begrenzt auf max. 3 Absätze für Vorschau
+ */
+const formatClauseText = (text: string, maxParagraphs: number = 3): React.ReactNode => {
+  if (!text) return null;
+
+  // Normalisiere Whitespace
+  let formatted = text.replace(/\s+/g, ' ').trim();
+
+  // Füge Zeilenumbrüche ein bei:
+  // 1. Satzende gefolgt von Großbuchstabe (aber nicht bei Abkürzungen)
+  formatted = formatted.replace(/([.!?])\s+([A-ZÄÖÜ])/g, '$1\n$2');
+
+  // 2. Vor §-Zeichen oder "Art." / "Artikel"
+  formatted = formatted.replace(/\s+(§\s*\d)/g, '\n$1');
+  formatted = formatted.replace(/\s+(Art\.\s*\d)/g, '\n$1');
+
+  // 3. Bei Aufzählungen (a), (b), (1), (2), etc.
+  formatted = formatted.replace(/\s+(\([a-z]\)|\(\d+\)|\d+\.)\s+/g, '\n$1 ');
+
+  // 4. Bei Bindestrichen am Zeilenanfang (Aufzählung)
+  formatted = formatted.replace(/\s+-\s+([A-ZÄÖÜ])/g, '\n- $1');
+
+  // Teile in Absätze
+  const paragraphs = formatted.split('\n').filter(p => p.trim().length > 0);
+
+  // Begrenze auf maxParagraphs für Vorschau
+  const displayParagraphs = paragraphs.slice(0, maxParagraphs);
+  const hasMore = paragraphs.length > maxParagraphs;
+
+  return (
+    <>
+      {displayParagraphs.map((paragraph, index) => (
+        <span key={index} className={styles.clauseParagraph}>
+          {paragraph.trim()}
+          {index < displayParagraphs.length - 1 && <br />}
+        </span>
+      ))}
+      {hasMore && <span className={styles.clauseMoreIndicator}>...</span>}
+    </>
+  );
+};
+
 type ViewMode = 'text' | 'pdf';
 
 interface ClauseListProps {
@@ -308,14 +354,17 @@ const ClauseList: React.FC<ClauseListProps> = ({
               </div>
 
               <div className={styles.clauseTextWrapper}>
-                <p
+                <div
                   ref={(el) => {
-                    if (el) textRefs.current.set(clause.id, el);
+                    if (el) textRefs.current.set(clause.id, el as unknown as HTMLParagraphElement);
                   }}
                   className={`${styles.clauseText} ${expandedClauses.has(clause.id) ? styles.expanded : ''}`}
                 >
-                  {clause.text}
-                </p>
+                  {expandedClauses.has(clause.id)
+                    ? formatClauseText(clause.text, 999) // Alle Absätze wenn expanded
+                    : formatClauseText(clause.text, 3)   // Max 3 Absätze für Vorschau
+                  }
+                </div>
                 {/* Expand/Collapse Button - nur wenn Text überläuft */}
                 {(overflowingClauses.has(clause.id) || expandedClauses.has(clause.id)) && (
                   <button

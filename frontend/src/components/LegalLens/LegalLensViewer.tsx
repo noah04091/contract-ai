@@ -87,6 +87,9 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     localStorage.setItem('legalLens_selectionMode', mode);
   }, []);
 
+  // ✅ Frei-Modus Hinweis-Toast
+  const [showFreeModeTip, setShowFreeModeTip] = useState<boolean>(false);
+
   // Resizable Panel State
   const [analysisPanelWidth, setAnalysisPanelWidth] = useState<number>(480);
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -656,8 +659,11 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
         // Selection aufheben nach kurzer Verzögerung
         setTimeout(() => selection?.removeAllRanges(), 100);
+      } else {
+        // Frei-Modus: Bei einfachem Klick ohne Markierung → Hinweis anzeigen
+        setShowFreeModeTip(true);
+        setTimeout(() => setShowFreeModeTip(false), 3000);
       }
-      // Frei-Modus: Bei einfachem Klick ohne Markierung → nichts tun
       return;
     }
 
@@ -1452,6 +1458,31 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                   boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
                 }}>
                   💡 Klicken Sie auf Text um die Analyse zu sehen
+                </div>
+              )}
+
+              {/* Frei-Modus Hinweis-Toast */}
+              {showFreeModeTip && (
+                <div style={{
+                  position: 'absolute',
+                  bottom: '1rem',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  background: 'rgba(251, 191, 36, 0.95)',
+                  color: '#78350f',
+                  padding: '0.75rem 1.25rem',
+                  borderRadius: '8px',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  animation: 'fadeIn 0.2s ease',
+                  zIndex: 10
+                }}>
+                  <span style={{ fontSize: '1.1rem' }}>✋</span>
+                  Im Frei-Modus: Text mit Maus markieren (ziehen), dann loslassen
                 </div>
               )}
             </div>

@@ -337,7 +337,8 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
             })()}
           </div>
         </div>
-        {actionReason && (
+        {/* ✅ FIX: actionReason NUR zeigen wenn NICHT schon in "Auf einen Blick" */}
+        {actionReason && !showOneSentenceSummary && (
           <p style={{
             margin: 0,
             fontSize: '0.95rem',
