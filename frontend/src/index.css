@@ -53,7 +53,8 @@ button:focus-visible {
 }
 
 body {
-  background-color: #f8fafc;
+  background: linear-gradient(180deg, #f0f4ff 0%, #fafbff 50%, #f8fafc 100%);
+  background-attachment: fixed;
   color: #111;
 }
 

@@ -29,7 +29,7 @@
   --bg-tertiary: #f1f5f9;
   
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', 'Helvetica Neue', sans-serif;
-  background: var(--bg-secondary);
+  background: linear-gradient(180deg, #f0f4ff 0%, #fafbff 50%, #f8fafc 100%);
   min-height: 100vh;
   position: relative;
   color: var(--text-primary);
@@ -51,12 +51,24 @@
 
 /* ✨ CONTAINER - CLEAN LAYOUT */
 .container {
-  max-width: 1200px;
+  max-width: 1000px;
   width: 100%;
   margin: 0 auto;
-  padding: 48px 32px;
+  padding: 56px 24px 80px;
   position: relative;
   z-index: 1;
+}
+
+/* ✨ MAIN CARD - White card container like Legal Lens */
+.mainCard {
+  background: white;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.02),
+    0 8px 16px rgba(0, 0, 0, 0.04);
+  padding: 40px;
+  margin-top: 24px;
 }
 
 /* 📱 MOBILE OPTIMIZATIONS */
@@ -2979,10 +2991,17 @@ html {
    🚀 ENTERPRISE UPLOAD EXPERIENCE v2.0
    ============================================================ */
 
-/* Upload Container - Wrapper für die Upload-Zone */
+/* Upload Container - Wrapper für die Upload-Zone (Card Style wie Legal Lens) */
 .uploadContainer {
   position: relative;
   margin-bottom: var(--space-8);
+  background: white;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.02),
+    0 8px 16px rgba(0, 0, 0, 0.04);
+  padding: 40px;
 }
 
 /* Enhanced Upload Area */

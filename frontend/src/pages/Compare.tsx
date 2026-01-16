@@ -673,7 +673,14 @@ export default function EnhancedCompare() {
           )}
 
           <motion.div
-            style={{ marginBottom: '3rem' }}
+            style={{
+              marginBottom: '3rem',
+              background: 'white',
+              borderRadius: '20px',
+              border: '1px solid rgba(0, 0, 0, 0.06)',
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.02), 0 8px 16px rgba(0, 0, 0, 0.04)',
+              padding: '40px'
+            }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.5 }}
