@@ -51,6 +51,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
   // ✅ PDF Text-Index für Auto-Scroll zur richtigen Seite
   const pdfTextIndexRef = useRef<Map<number, string>>(new Map());
+  const [pdfIndexReady, setPdfIndexReady] = useState<boolean>(false);
 
   // Smart Summary State
   const [showSmartSummary, setShowSmartSummary] = useState<boolean>(true);
@@ -449,6 +450,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   const onDocumentLoadSuccess = async ({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
     setPageNumber(1);
+    setPdfIndexReady(false); // Reset während Index erstellt wird
 
     // ✅ Text aller Seiten extrahieren für Auto-Scroll
     if (pdfUrl) {
@@ -469,9 +471,11 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         }
 
         pdfTextIndexRef.current = textIndex;
+        setPdfIndexReady(true); // ✅ Signal dass Index bereit ist
         console.log(`[Legal Lens] PDF Text-Index erstellt: ${numPages} Seiten`);
       } catch (err) {
         console.warn('[Legal Lens] Text-Index Extraktion fehlgeschlagen:', err);
+        setPdfIndexReady(false);
       }
     }
   };
@@ -616,9 +620,10 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
   // ========== EFFECT 3: Pending Navigation wenn Index bereit ==========
   useEffect(() => {
+    // Warte bis Index wirklich bereit ist
+    if (!pdfIndexReady) return;
     if (!pendingNavigationRef.current || !selectedClause) return;
     if (pendingNavigationRef.current !== selectedClause.id) return;
-    if (pdfTextIndexRef.current.size === 0) return;
 
     // ✅ FIX v7: Auch hier prüfen ob es eine PDF-Klick-Klausel ist
     if (selectedClause.id.startsWith('pdf-')) {
@@ -634,8 +639,10 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     if (targetPage) {
       console.log(`[Legal Lens] Navigating to page ${targetPage}`);
       setPageNumber(targetPage);
+    } else {
+      console.log('[Legal Lens] Could not find clause in PDF index');
     }
-  }, [numPages, selectedClause, findPageForClause]);
+  }, [pdfIndexReady, selectedClause, findPageForClause]);
 
   // ========== EFFECT 4: Highlighting v7 - Wort-basiertes Matching ==========
   useEffect(() => {
