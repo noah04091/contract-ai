@@ -571,12 +571,82 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     return null;
   }, []);
 
+  // Highlight-Overlay-Container Ref
+  const highlightContainerRef = useRef<HTMLDivElement | null>(null);
+
   // Highlight von allen markierten Elementen entfernen
   const clearHighlight = useCallback(() => {
+    // Alte Methode: Klassen entfernen (falls noch vorhanden)
     highlightedElementsRef.current.forEach(el => {
       el.classList.remove('legal-lens-highlight');
     });
     highlightedElementsRef.current = [];
+
+    // Neue Methode: Highlight-Overlay-Divs entfernen
+    if (highlightContainerRef.current) {
+      highlightContainerRef.current.remove();
+      highlightContainerRef.current = null;
+    }
+  }, []);
+
+  // ✅ NEUE METHODE: Erstelle Highlight-Overlays UNTER der Textschicht
+  const createHighlightOverlays = useCallback((spans: HTMLElement[]) => {
+    if (spans.length === 0) return;
+
+    // Finde die PDF-Page
+    const pdfPage = document.querySelector('.react-pdf__Page');
+    if (!pdfPage) return;
+
+    // Entferne alten Container falls vorhanden
+    if (highlightContainerRef.current) {
+      highlightContainerRef.current.remove();
+    }
+
+    // Erstelle neuen Highlight-Container
+    const container = document.createElement('div');
+    container.className = 'legal-lens-highlight-container';
+    container.style.cssText = `
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    `;
+
+    // Page-Position für relative Berechnung
+    const pageRect = pdfPage.getBoundingClientRect();
+
+    // Erstelle für jeden Span ein Highlight-Div
+    for (const span of spans) {
+      const rect = span.getBoundingClientRect();
+
+      const highlightDiv = document.createElement('div');
+      highlightDiv.className = 'legal-lens-highlight-box';
+      highlightDiv.style.cssText = `
+        position: absolute;
+        left: ${rect.left - pageRect.left}px;
+        top: ${rect.top - pageRect.top}px;
+        width: ${rect.width}px;
+        height: ${rect.height}px;
+        background-color: rgba(253, 224, 71, 0.4);
+        pointer-events: none;
+        border-radius: 2px;
+      `;
+      container.appendChild(highlightDiv);
+    }
+
+    // Füge Container VOR der Textschicht ein (damit er darunter liegt)
+    const textLayer = pdfPage.querySelector('.react-pdf__Page__textContent');
+    if (textLayer) {
+      pdfPage.insertBefore(container, textLayer);
+    } else {
+      pdfPage.appendChild(container);
+    }
+
+    highlightContainerRef.current = container;
+    console.log('[Legal Lens] Created', spans.length, 'highlight overlays');
   }, []);
 
   // ✅ FIX v7: PDF-Sync mit Schutz vor Navigation bei PDF-Klick
@@ -779,14 +849,13 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
           .filter(pos => pos.end > matchStart && pos.start < matchEnd)
           .map(pos => pos.span);
 
-        for (const span of spansToHighlight) {
-          span.classList.add('legal-lens-highlight');
-        }
+        // ✅ NEUE METHODE: Overlay-Divs statt CSS-Klassen
+        createHighlightOverlays(spansToHighlight);
         highlightedElementsRef.current = spansToHighlight;
 
         if (spansToHighlight.length > 0) {
           spansToHighlight[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-          console.log('[Legal Lens] PDF highlight (short): Marked', spansToHighlight.length, 'spans');
+          console.log('[Legal Lens] PDF highlight (short): Created', spansToHighlight.length, 'overlays');
         }
         return;
       }
@@ -801,18 +870,16 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         .filter(pos => pos.end > matchStart && pos.start < matchEnd)
         .map(pos => pos.span);
 
-      console.log('[Legal Lens] PDF highlight: Marking', spansToHighlight.length, 'spans');
+      console.log('[Legal Lens] PDF highlight: Creating', spansToHighlight.length, 'overlays');
 
-      for (const span of spansToHighlight) {
-        span.classList.add('legal-lens-highlight');
-      }
-
+      // ✅ NEUE METHODE: Overlay-Divs statt CSS-Klassen
+      createHighlightOverlays(spansToHighlight);
       highlightedElementsRef.current = spansToHighlight;
 
       // Scroll zum ersten markierten Span
       if (spansToHighlight.length > 0) {
         spansToHighlight[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-        console.log('[Legal Lens] PDF highlight: Marked', spansToHighlight.length, 'spans (exact match)');
+        console.log('[Legal Lens] PDF highlight: Created', spansToHighlight.length, 'overlays (exact match)');
       }
     }, 1200);
 
@@ -821,7 +888,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         clearTimeout(syncPdfHighlightTimeoutRef.current);
       }
     };
-  }, [viewMode, selectedClause, pdfUrl, pdfLoading, pageNumber, scale, clearHighlight]);
+  }, [viewMode, selectedClause, pdfUrl, pdfLoading, pageNumber, scale, clearHighlight, createHighlightOverlays]);
 
   // ✅ FIX v3: Komplett überarbeiteter PDF Selection Handler
   // WICHTIG: KEINE Klausel-Matching mehr - das verursachte das "Springen"!
@@ -849,10 +916,11 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
           for (const span of allSpans) {
             if (range.intersectsNode(span)) {
-              span.classList.add('legal-lens-highlight');
               selectedSpans.push(span);
             }
           }
+          // ✅ NEUE METHODE: Overlay-Divs statt CSS-Klassen
+          createHighlightOverlays(selectedSpans);
           highlightedElementsRef.current = selectedSpans;
         }
 
@@ -991,19 +1059,21 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     if (startIdx > clickedIndex) startIdx = clickedIndex;
     if (endIdx < clickedIndex) endIdx = clickedIndex;
 
-    // ========== Spans markieren und Text sammeln ==========
+    // ========== Spans sammeln und Text extrahieren ==========
     const selectedSpans: HTMLElement[] = [];
     let selectedText = '';
 
     for (let i = startIdx; i <= endIdx; i++) {
       if (i >= 0 && i < spanData.length) {
         selectedSpans.push(spanData[i].span);
-        spanData[i].span.classList.add('legal-lens-highlight');
         selectedText += spanData[i].text + ' ';
       }
     }
 
     selectedText = selectedText.trim().normalize('NFC');
+
+    // ✅ NEUE METHODE: Overlay-Divs statt CSS-Klassen
+    createHighlightOverlays(selectedSpans);
     highlightedElementsRef.current = selectedSpans;
 
     // Mindestlänge prüfen
