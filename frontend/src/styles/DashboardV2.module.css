@@ -36,7 +36,7 @@
   --danger: #EF4444;
 
   /* Surfaces */
-  --bg: #F9FAFB;
+  --bg: linear-gradient(180deg, #f0f4ff 0%, #fafbff 50%, #f8fafc 100%);
   --surface: #FFFFFF;
   --border: #E5E7EB;
 
