@@ -528,58 +528,80 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     highlightedElementsRef.current = [];
   }, []);
 
-  // ✅ FIX v5: Komplett überarbeitete PDF-Sync Logik
-  // TRENNUNG: Navigation (nur bei Klausel-Wechsel) vs Highlighting (bei jeder Änderung)
+  // ✅ FIX v6: Komplett überarbeitete PDF-Sync Logik
+  // Navigation wartet auf PDF-Index, Highlighting mit korrekten Indizes
 
   const prevViewModeRef = useRef<ViewMode>(viewMode);
   const lastNavigatedClauseIdRef = useRef<string | null>(null);
   const syncPdfHighlightTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingNavigationRef = useRef<string | null>(null); // Klausel-ID die noch navigiert werden muss
 
-  // ========== EFFECT 1: Seiten-Navigation (NUR bei Klausel-Wechsel oder View-Wechsel) ==========
+  // ========== EFFECT 1: View-Wechsel Handler ==========
   useEffect(() => {
-    // Bei Wechsel zu Text: Highlights entfernen
     if (viewMode === 'text' && prevViewModeRef.current === 'pdf') {
       clearHighlight();
       console.log('[Legal Lens] View switched to Text');
     }
     prevViewModeRef.current = viewMode;
+  }, [viewMode, clearHighlight]);
 
-    // Navigation nur im PDF-Modus mit Klausel
+  // ========== EFFECT 2: Navigation bei neuer Klausel (mit Warten auf Index) ==========
+  useEffect(() => {
     if (viewMode !== 'pdf' || !selectedClause || !pdfUrl) return;
 
-    // ✅ WICHTIG: Nur navigieren wenn sich die KLAUSEL geändert hat
-    // NICHT bei manuellem Seitenwechsel oder Zoom!
+    // Nur navigieren wenn sich die KLAUSEL geändert hat
     if (lastNavigatedClauseIdRef.current === selectedClause.id) {
       return;
     }
 
-    // Neue Klausel → Navigation erlaubt
-    lastNavigatedClauseIdRef.current = selectedClause.id;
-    console.log('[Legal Lens] New clause selected, checking page navigation:', selectedClause.id);
+    console.log('[Legal Lens] New clause selected:', selectedClause.id);
 
-    // Zur richtigen Seite navigieren wenn Text-Index verfügbar
-    if (pdfTextIndexRef.current.size > 0) {
-      const targetPage = findPageForClause(selectedClause.text);
-      if (targetPage) {
-        console.log(`[Legal Lens] Navigating to page ${targetPage} for clause`);
-        setPageNumber(targetPage);
-      }
+    // Wenn Index noch nicht geladen, merken für später
+    if (pdfTextIndexRef.current.size === 0) {
+      pendingNavigationRef.current = selectedClause.id;
+      console.log('[Legal Lens] PDF index not ready, pending navigation for:', selectedClause.id);
+      return;
     }
-  }, [viewMode, selectedClause?.id, pdfUrl, clearHighlight, findPageForClause]);
 
-  // ========== EFFECT 2: Highlighting (bei Seite/Zoom/Klausel-Änderung, OHNE Navigation) ==========
+    // Navigation durchführen
+    lastNavigatedClauseIdRef.current = selectedClause.id;
+    pendingNavigationRef.current = null;
+
+    const targetPage = findPageForClause(selectedClause.text);
+    if (targetPage) {
+      console.log(`[Legal Lens] Navigating to page ${targetPage}`);
+      setPageNumber(targetPage);
+    }
+  }, [viewMode, selectedClause?.id, pdfUrl, findPageForClause]);
+
+  // ========== EFFECT 3: Pending Navigation ausführen wenn Index bereit ==========
   useEffect(() => {
-    // Nur im PDF-Modus mit ausgewählter Klausel
+    // Dieser Effect wird getriggert wenn numPages sich ändert (PDF geladen)
+    if (!pendingNavigationRef.current || !selectedClause) return;
+    if (pendingNavigationRef.current !== selectedClause.id) return;
+    if (pdfTextIndexRef.current.size === 0) return;
+
+    console.log('[Legal Lens] PDF index ready, executing pending navigation');
+    lastNavigatedClauseIdRef.current = selectedClause.id;
+    pendingNavigationRef.current = null;
+
+    const targetPage = findPageForClause(selectedClause.text);
+    if (targetPage) {
+      console.log(`[Legal Lens] Navigating to page ${targetPage}`);
+      setPageNumber(targetPage);
+    }
+  }, [numPages, selectedClause, findPageForClause]);
+
+  // ========== EFFECT 4: Highlighting (OHNE Navigation, korrekte Index-Berechnung) ==========
+  useEffect(() => {
     if (viewMode !== 'pdf' || !selectedClause || !pdfUrl || pdfLoading) return;
 
-    // Wenn User gerade in PDF geklickt hat, NICHT synchronisieren
     if (pdfClickActiveRef.current) {
       console.log('[Legal Lens] PDF highlight: Skipping - user clicked in PDF');
       pdfClickActiveRef.current = false;
       return;
     }
 
-    // Debounce für PDF-Rendering
     if (syncPdfHighlightTimeoutRef.current) {
       clearTimeout(syncPdfHighlightTimeoutRef.current);
     }
@@ -590,10 +612,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         return;
       }
 
-      // Vorherige Highlights entfernen
       clearHighlight();
 
-      // Finde Text-Layer der aktuellen Seite
       const textLayer = document.querySelector('.react-pdf__Page__textContent');
       if (!textLayer) {
         console.log('[Legal Lens] PDF highlight: No text layer found');
@@ -603,71 +623,76 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       const allSpans = Array.from(textLayer.querySelectorAll('span')) as HTMLElement[];
       if (allSpans.length === 0) return;
 
-      // ✅ Klausel-Text vorbereiten
-      const clauseTextClean = selectedClause.text
+      // ✅ Klausel-Text vorbereiten (normalisiert)
+      const clauseTextNorm = selectedClause.text
         .toLowerCase()
         .normalize('NFC')
         .replace(/\s+/g, ' ')
         .trim();
 
-      // Erste signifikante Wörter extrahieren (min 4 Zeichen)
-      const clauseWords = clauseTextClean.split(' ').filter(w => w.length >= 4);
-      if (clauseWords.length === 0) {
-        console.log('[Legal Lens] PDF highlight: No significant words in clause');
-        return;
-      }
+      const clauseWords = clauseTextNorm.split(' ').filter(w => w.length >= 4);
+      if (clauseWords.length === 0) return;
 
-      // ✅ Baue Text der aktuellen Seite zusammen
-      // WICHTIG: Spans NICHT sortieren - PDF.js gibt sie in Lesereihenfolge aus
+      // ✅ FIX: Baue pageText UND pageTextNorm parallel
+      // pageText = Original für Span-Ranges
+      // pageTextNorm = Normalisiert für Suche
       let pageText = '';
-      const spanRanges: Array<{span: HTMLElement, start: number, end: number}> = [];
+      let pageTextNorm = '';
+      const spanRanges: Array<{span: HTMLElement, start: number, end: number, normStart: number, normEnd: number}> = [];
 
       for (const span of allSpans) {
         const text = (span.textContent || '').normalize('NFC');
+        const textLower = text.toLowerCase();
+
+        // Original-Ranges
         const start = pageText.length;
         pageText += text;
-        spanRanges.push({ span, start, end: pageText.length });
+
+        // Normalisierte Ranges (für Suche)
+        const normStart = pageTextNorm.length;
+        pageTextNorm += textLower.replace(/\s+/g, ' ');
+
+        spanRanges.push({
+          span,
+          start,
+          end: pageText.length,
+          normStart,
+          normEnd: pageTextNorm.length
+        });
       }
 
-      const pageTextLower = pageText.toLowerCase().replace(/\s+/g, ' ');
-
-      // ✅ Suche nach Klausel-Anfang (erste 5-8 signifikante Wörter)
+      // ✅ Suche im normalisierten Text
       const searchTerms = [
-        clauseWords.slice(0, 8).join(' '),
-        clauseWords.slice(0, 5).join(' '),
-        clauseWords.slice(0, 3).join(' '),
-      ].filter(t => t.length >= 10);
+        clauseWords.slice(0, 10).join(' '),
+        clauseWords.slice(0, 6).join(' '),
+        clauseWords.slice(0, 4).join(' '),
+      ].filter(t => t.length >= 8);
 
-      let matchStart = -1;
+      let matchNormStart = -1;
+      let matchNormEnd = -1;
 
       for (const term of searchTerms) {
-        // Fuzzy-Match: Erlaube fehlende Leerzeichen
-        const termPattern = term.split(' ').join('\\s*');
-        const regex = new RegExp(termPattern, 'i');
-        const match = pageTextLower.match(regex);
-
-        if (match && match.index !== undefined) {
-          matchStart = match.index;
-          console.log('[Legal Lens] PDF highlight: Found match for:', term.substring(0, 40));
+        const idx = pageTextNorm.indexOf(term);
+        if (idx !== -1) {
+          matchNormStart = idx;
+          // Match-Ende: Suche nach dem Ende der Klausel (oder Term + Puffer)
+          matchNormEnd = idx + Math.min(clauseTextNorm.length, pageTextNorm.length - idx);
+          console.log('[Legal Lens] PDF highlight: Found "' + term.substring(0, 30) + '..." at norm index', idx);
           break;
         }
       }
 
-      if (matchStart === -1) {
-        console.log('[Legal Lens] PDF highlight: Clause not found on current page');
+      if (matchNormStart === -1) {
+        console.log('[Legal Lens] PDF highlight: Clause not found on page');
         return;
       }
 
-      // ✅ Match-Ende basierend auf Klausel-Länge (mit Toleranz für PDF-Formatierung)
-      const matchLength = Math.min(clauseTextClean.length * 1.2, pageText.length - matchStart);
-      const matchEnd = matchStart + matchLength;
-
-      // ✅ Alle Spans im Match-Bereich markieren
+      // ✅ FIX: Finde Spans basierend auf NORMALISIERTEN Indizes
       const matchingSpans: HTMLElement[] = [];
 
-      for (const { span, start, end } of spanRanges) {
-        // Span überlappt mit Match?
-        if (end > matchStart && start < matchEnd) {
+      for (const { span, normStart, normEnd } of spanRanges) {
+        // Span überlappt mit Match im normalisierten Text?
+        if (normEnd > matchNormStart && normStart < matchNormEnd) {
           span.classList.add('legal-lens-highlight');
           matchingSpans.push(span);
         }
@@ -676,11 +701,10 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       highlightedElementsRef.current = matchingSpans;
 
       if (matchingSpans.length > 0) {
-        // Scroll zum ersten Match
         matchingSpans[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-        console.log('[Legal Lens] PDF highlight: Highlighted', matchingSpans.length, 'spans');
+        console.log('[Legal Lens] PDF highlight: Marked', matchingSpans.length, 'spans');
       }
-    }, 500);
+    }, 600);
 
     return () => {
       if (syncPdfHighlightTimeoutRef.current) {
