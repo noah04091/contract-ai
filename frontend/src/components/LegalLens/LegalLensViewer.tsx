@@ -76,9 +76,16 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   });
 
   // ✅ NEU: Selection Mode - Wort/Satz/Paragraph/Frei
+  // Default ist 'paragraph' - 'custom' (Frei-Modus) wird NICHT aus localStorage geladen
+  // da es für viele User verwirrend ist
   const [selectionMode, setSelectionMode] = useState<SelectionMode>(() => {
     const saved = localStorage.getItem('legalLens_selectionMode');
-    return (saved as SelectionMode) || 'paragraph'; // Default: Paragraph
+    // Nur 'word', 'sentence', 'paragraph' aus localStorage laden - NICHT 'custom'
+    const validModes = ['word', 'sentence', 'paragraph'];
+    if (saved && validModes.includes(saved)) {
+      return saved as SelectionMode;
+    }
+    return 'paragraph'; // Default: Paragraph
   });
 
   // Selection Mode speichern
