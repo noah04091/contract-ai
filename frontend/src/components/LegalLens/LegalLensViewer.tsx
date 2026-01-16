@@ -449,7 +449,6 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   // PDF Document Loaded - ✅ Mit Text-Extraktion für alle Seiten
   const onDocumentLoadSuccess = async ({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
-    setPageNumber(1);
     setPdfIndexReady(false); // Reset während Index erstellt wird
 
     // ✅ Text aller Seiten extrahieren für Auto-Scroll
@@ -473,10 +472,28 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         pdfTextIndexRef.current = textIndex;
         setPdfIndexReady(true); // ✅ Signal dass Index bereit ist
         console.log(`[Legal Lens] PDF Text-Index erstellt: ${numPages} Seiten`);
+
+        // ✅ FIX: Nach Index-Erstellung zur Klausel navigieren (wenn vorhanden)
+        // NICHT vorher setPageNumber(1) aufrufen - das überschreibt die Navigation!
+        if (selectedClause && !selectedClause.id.startsWith('pdf-')) {
+          const targetPage = findPageForClause(selectedClause.text);
+          if (targetPage) {
+            console.log(`[Legal Lens] onDocumentLoad: Navigating to clause page ${targetPage}`);
+            setPageNumber(targetPage);
+            lastNavigatedClauseIdRef.current = selectedClause.id;
+          } else {
+            setPageNumber(1); // Fallback nur wenn Klausel nicht gefunden
+          }
+        } else {
+          setPageNumber(1); // Keine Klausel ausgewählt → Seite 1
+        }
       } catch (err) {
         console.warn('[Legal Lens] Text-Index Extraktion fehlgeschlagen:', err);
         setPdfIndexReady(false);
+        setPageNumber(1);
       }
+    } else {
+      setPageNumber(1);
     }
   };
 
