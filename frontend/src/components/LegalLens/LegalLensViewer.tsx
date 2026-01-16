@@ -702,88 +702,94 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         return;
       }
 
-      // ✅ WORT-BASIERTES HIGHLIGHTING: Finde Spans die Klausel-Wörter enthalten
-      // (Exakter Text-Match funktioniert nicht weil PDF-Text anders formatiert ist)
+      // ✅ SLIDING-WINDOW DICHTE-SUCHE: Finde den Bereich mit höchster Wort-Konzentration
 
       const clauseText = selectedClause.text
         .toLowerCase()
         .normalize('NFC')
         .replace(/[„""''«»]/g, '"');
 
-      // Extrahiere die ersten 10 signifikanten Wörter der Klausel
+      // Extrahiere signifikante Wörter (mind. 4 Zeichen, keine Stopwords)
       const stopWords = ['der', 'die', 'das', 'und', 'oder', 'für', 'von', 'mit', 'bei', 'auf', 'aus', 'nach', 'über', 'unter', 'einer', 'einem', 'einen', 'eine', 'sind', 'wird', 'werden', 'kann', 'können', 'soll', 'haben', 'sein', 'nicht', 'auch', 'wenn', 'dass', 'diese', 'dieser', 'dieses', 'sowie', 'durch', 'muss', 'darf', 'zum', 'zur', 'den', 'dem', 'des'];
 
       const clauseWords = clauseText
         .split(/\s+/)
-        .filter(w => w.length >= 3 && !stopWords.includes(w))
-        .slice(0, 10);
+        .filter(w => w.length >= 4 && !stopWords.includes(w))
+        .slice(0, 12);
 
-      if (clauseWords.length === 0) {
-        console.log('[Legal Lens] PDF highlight: No significant words in clause');
+      if (clauseWords.length < 3) {
+        console.log('[Legal Lens] PDF highlight: Not enough significant words');
         return;
       }
 
       console.log('[Legal Lens] PDF highlight: Looking for words:', clauseWords.slice(0, 5).join(', '));
 
-      // ✅ Sortiere alle Spans nach visueller Position
-      const spansWithRect = allSpans.map(span => ({
+      // ✅ Sortiere alle Spans nach visueller Position (oben-links nach unten-rechts)
+      const spansWithRect = allSpans.map((span, idx) => ({
         span,
+        idx,
         rect: span.getBoundingClientRect(),
         text: (span.textContent || '').toLowerCase().normalize('NFC')
       })).sort((a, b) => {
         const yDiff = a.rect.top - b.rect.top;
-        if (Math.abs(yDiff) > 5) return yDiff;
+        if (Math.abs(yDiff) > 8) return yDiff;
         return a.rect.left - b.rect.left;
       });
 
-      // ✅ Finde den ERSTEN Span der das ERSTE signifikante Wort enthält
-      let startSpanIndex = -1;
-      const firstWord = clauseWords[0];
+      // ✅ SLIDING WINDOW: Finde das 20-Span-Fenster mit den MEISTEN unterschiedlichen Klausel-Wörtern
+      const windowSize = 20;
+      let bestWindowStart = -1;
+      let bestScore = 0;
 
-      for (let i = 0; i < spansWithRect.length; i++) {
-        if (spansWithRect[i].text.includes(firstWord)) {
-          startSpanIndex = i;
-          break;
+      for (let i = 0; i <= spansWithRect.length - windowSize; i++) {
+        const windowSpans = spansWithRect.slice(i, i + windowSize);
+        const windowText = windowSpans.map(s => s.text).join(' ');
+
+        // Zähle wie viele VERSCHIEDENE Klausel-Wörter in diesem Fenster sind
+        let uniqueMatches = 0;
+        for (const word of clauseWords) {
+          if (windowText.includes(word)) {
+            uniqueMatches++;
+          }
+        }
+
+        // Bonus wenn die ersten 3 Wörter alle da sind (= wahrscheinlich der Anfang)
+        let startBonus = 0;
+        if (clauseWords.length >= 3) {
+          const hasFirst3 = clauseWords.slice(0, 3).every(w => windowText.includes(w));
+          if (hasFirst3) startBonus = 5;
+        }
+
+        const score = uniqueMatches + startBonus;
+
+        if (score > bestScore) {
+          bestScore = score;
+          bestWindowStart = i;
         }
       }
 
-      if (startSpanIndex === -1) {
-        console.log('[Legal Lens] PDF highlight: First word not found:', firstWord);
+      // Mindestens 40% der Wörter müssen gefunden werden
+      if (bestScore < clauseWords.length * 0.4 || bestWindowStart === -1) {
+        console.log('[Legal Lens] PDF highlight: No good match found, best score:', bestScore);
         return;
       }
 
-      // ✅ Ab dem Startpunkt: Markiere Spans die Klausel-Wörter enthalten
-      // Aber nur in einem Fenster von max 30 Spans (um nicht die ganze Seite zu markieren)
-      const windowSize = 30;
-      const endIndex = Math.min(startSpanIndex + windowSize, spansWithRect.length);
+      console.log('[Legal Lens] PDF highlight: Best window at', bestWindowStart, 'with score', bestScore);
 
+      // ✅ Markiere nur die Spans im besten Fenster die auch wirklich Matches enthalten
+      const bestWindow = spansWithRect.slice(bestWindowStart, bestWindowStart + windowSize);
       const spansToHighlight: HTMLElement[] = [];
-      let consecutiveMisses = 0;
 
-      for (let i = startSpanIndex; i < endIndex; i++) {
-        const spanText = spansWithRect[i].text;
-        let hasMatch = false;
-
+      for (const item of bestWindow) {
         for (const word of clauseWords) {
-          if (spanText.includes(word)) {
-            hasMatch = true;
-            break;
-          }
-        }
-
-        if (hasMatch) {
-          spansToHighlight.push(spansWithRect[i].span);
-          consecutiveMisses = 0;
-        } else {
-          consecutiveMisses++;
-          // Stoppe wenn 5 Spans hintereinander kein Match haben
-          if (consecutiveMisses >= 5) {
+          if (item.text.includes(word)) {
+            spansToHighlight.push(item.span);
             break;
           }
         }
       }
 
-      console.log('[Legal Lens] PDF highlight: Found', spansToHighlight.length, 'matching spans starting at index', startSpanIndex);
+      console.log('[Legal Lens] PDF highlight: Highlighting', spansToHighlight.length, 'spans');
 
       for (const span of spansToHighlight) {
         span.classList.add('legal-lens-highlight');
