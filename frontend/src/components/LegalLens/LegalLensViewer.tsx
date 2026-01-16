@@ -698,7 +698,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
       // ✅ Finde alle Spans die signifikante Wörter enthalten
       const matchingSpans: HTMLElement[] = [];
-      let foundWords = new Set<string>();
+      const foundWords = new Set<string>();
 
       for (const span of allSpans) {
         const spanText = (span.textContent || '').toLowerCase().normalize('NFC');
