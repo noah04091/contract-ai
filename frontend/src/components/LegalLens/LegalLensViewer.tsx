@@ -702,94 +702,105 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         return;
       }
 
-      // ✅ SLIDING-WINDOW DICHTE-SUCHE: Finde den Bereich mit höchster Wort-Konzentration
+      // ✅ EXAKTER TEXT-MATCH v2: Normalisiere VOR dem Index-Tracking
 
-      const clauseText = selectedClause.text
-        .toLowerCase()
-        .normalize('NFC')
-        .replace(/[„""''«»]/g, '"');
+      // Hilfsfunktion: Text normalisieren (gleich für Klausel und PDF)
+      const normalizeText = (text: string): string => {
+        return text
+          .toLowerCase()
+          .normalize('NFC')
+          .replace(/[„""''«»„"]/g, '"')
+          .replace(/[\r\n\t]+/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+      };
 
-      // Extrahiere signifikante Wörter (mind. 4 Zeichen, keine Stopwords)
-      const stopWords = ['der', 'die', 'das', 'und', 'oder', 'für', 'von', 'mit', 'bei', 'auf', 'aus', 'nach', 'über', 'unter', 'einer', 'einem', 'einen', 'eine', 'sind', 'wird', 'werden', 'kann', 'können', 'soll', 'haben', 'sein', 'nicht', 'auch', 'wenn', 'dass', 'diese', 'dieser', 'dieses', 'sowie', 'durch', 'muss', 'darf', 'zum', 'zur', 'den', 'dem', 'des'];
+      // Klausel-Text normalisieren
+      const clauseNormalized = normalizeText(selectedClause.text);
 
-      const clauseWords = clauseText
-        .split(/\s+/)
-        .filter(w => w.length >= 4 && !stopWords.includes(w))
-        .slice(0, 12);
+      // Suchtext: Erste 80 Zeichen (eindeutiger Anfang)
+      const searchText = clauseNormalized.slice(0, 80);
 
-      if (clauseWords.length < 3) {
-        console.log('[Legal Lens] PDF highlight: Not enough significant words');
+      if (searchText.length < 20) {
+        console.log('[Legal Lens] PDF highlight: Clause too short');
         return;
       }
 
-      console.log('[Legal Lens] PDF highlight: Looking for words:', clauseWords.slice(0, 5).join(', '));
+      console.log('[Legal Lens] PDF highlight: Searching for:', searchText.slice(0, 40) + '...');
 
-      // ✅ Sortiere alle Spans nach visueller Position (oben-links nach unten-rechts)
-      const spansWithRect = allSpans.map((span, idx) => ({
+      // ✅ Sortiere Spans nach visueller Position
+      const spansWithRect = allSpans.map(span => ({
         span,
-        idx,
         rect: span.getBoundingClientRect(),
-        text: (span.textContent || '').toLowerCase().normalize('NFC')
+        // Normalisiere JEDEN Span-Text gleich
+        normalizedText: normalizeText(span.textContent || '')
       })).sort((a, b) => {
         const yDiff = a.rect.top - b.rect.top;
         if (Math.abs(yDiff) > 8) return yDiff;
         return a.rect.left - b.rect.left;
       });
 
-      // ✅ SLIDING WINDOW: Finde das 20-Span-Fenster mit den MEISTEN unterschiedlichen Klausel-Wörtern
-      const windowSize = 20;
-      let bestWindowStart = -1;
-      let bestScore = 0;
+      // ✅ Baue normalisierten Seitentext UND tracke Positionen
+      let pageText = '';
+      const spanPositions: { span: HTMLElement; start: number; end: number }[] = [];
 
-      for (let i = 0; i <= spansWithRect.length - windowSize; i++) {
-        const windowSpans = spansWithRect.slice(i, i + windowSize);
-        const windowText = windowSpans.map(s => s.text).join(' ');
-
-        // Zähle wie viele VERSCHIEDENE Klausel-Wörter in diesem Fenster sind
-        let uniqueMatches = 0;
-        for (const word of clauseWords) {
-          if (windowText.includes(word)) {
-            uniqueMatches++;
-          }
-        }
-
-        // Bonus wenn die ersten 3 Wörter alle da sind (= wahrscheinlich der Anfang)
-        let startBonus = 0;
-        if (clauseWords.length >= 3) {
-          const hasFirst3 = clauseWords.slice(0, 3).every(w => windowText.includes(w));
-          if (hasFirst3) startBonus = 5;
-        }
-
-        const score = uniqueMatches + startBonus;
-
-        if (score > bestScore) {
-          bestScore = score;
-          bestWindowStart = i;
-        }
+      for (const item of spansWithRect) {
+        const start = pageText.length;
+        pageText += item.normalizedText + ' ';
+        const end = pageText.length - 1; // -1 wegen dem Leerzeichen
+        spanPositions.push({ span: item.span, start, end });
       }
 
-      // Mindestens 40% der Wörter müssen gefunden werden
-      if (bestScore < clauseWords.length * 0.4 || bestWindowStart === -1) {
-        console.log('[Legal Lens] PDF highlight: No good match found, best score:', bestScore);
+      // Finales Trimmen (ohne weitere Änderungen die Indizes verschieben)
+      pageText = pageText.trimEnd();
+
+      console.log('[Legal Lens] PDF highlight: Page text length:', pageText.length);
+
+      // ✅ Suche exakten Text
+      const matchIndex = pageText.indexOf(searchText);
+
+      if (matchIndex === -1) {
+        // Fallback: Kürzeren Text suchen (erste 40 Zeichen)
+        const shortSearch = searchText.slice(0, 40);
+        const shortMatchIndex = pageText.indexOf(shortSearch);
+
+        if (shortMatchIndex === -1) {
+          console.log('[Legal Lens] PDF highlight: Text not found on page');
+          console.log('[Legal Lens] Searching for:', shortSearch);
+          return;
+        }
+
+        // Gefunden mit kurzem Text
+        const matchStart = shortMatchIndex;
+        const matchEnd = shortMatchIndex + clauseNormalized.length;
+
+        const spansToHighlight = spanPositions
+          .filter(pos => pos.end > matchStart && pos.start < matchEnd)
+          .map(pos => pos.span);
+
+        for (const span of spansToHighlight) {
+          span.classList.add('legal-lens-highlight');
+        }
+        highlightedElementsRef.current = spansToHighlight;
+
+        if (spansToHighlight.length > 0) {
+          spansToHighlight[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+          console.log('[Legal Lens] PDF highlight (short): Marked', spansToHighlight.length, 'spans');
+        }
         return;
       }
 
-      console.log('[Legal Lens] PDF highlight: Best window at', bestWindowStart, 'with score', bestScore);
+      // ✅ Exakter Match gefunden - markiere entsprechende Spans
+      const matchStart = matchIndex;
+      const matchEnd = matchIndex + clauseNormalized.length;
 
-      // ✅ Markiere nur die Spans im besten Fenster die auch wirklich Matches enthalten
-      const bestWindow = spansWithRect.slice(bestWindowStart, bestWindowStart + windowSize);
-      const spansToHighlight: HTMLElement[] = [];
+      console.log('[Legal Lens] PDF highlight: Found at index', matchIndex, 'to', matchEnd);
 
-      for (const item of bestWindow) {
-        for (const word of clauseWords) {
-          if (item.text.includes(word)) {
-            spansToHighlight.push(item.span);
-            break;
-          }
-        }
-      }
+      const spansToHighlight = spanPositions
+        .filter(pos => pos.end > matchStart && pos.start < matchEnd)
+        .map(pos => pos.span);
 
-      console.log('[Legal Lens] PDF highlight: Highlighting', spansToHighlight.length, 'spans');
+      console.log('[Legal Lens] PDF highlight: Marking', spansToHighlight.length, 'spans');
 
       for (const span of spansToHighlight) {
         span.classList.add('legal-lens-highlight');
