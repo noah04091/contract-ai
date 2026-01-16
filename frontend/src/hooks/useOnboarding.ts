@@ -53,6 +53,8 @@ interface UseOnboardingReturn {
   updatePreferences: (showTooltips: boolean) => Promise<void>;
   resetOnboarding: () => Promise<void>;
   refetch: () => Promise<void>;
+  hideChecklist: () => Promise<void>;  // 🆕 Dauerhaft ausblenden
+  showChecklist: () => Promise<void>;  // 🆕 Wieder einblenden
 }
 
 export function useOnboarding(): UseOnboardingReturn {
@@ -404,6 +406,56 @@ export function useOnboarding(): UseOnboardingReturn {
     }
   }, [fetchStatus]);
 
+  // 🆕 Checklist dauerhaft ausblenden (in DB gespeichert)
+  const hideChecklist = useCallback(async () => {
+    const token = getToken();
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_BASE}/api/onboarding/hide-checklist`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to hide checklist');
+
+      // Optimistic Update
+      setShouldShowChecklist(false);
+      console.log('🙈 Checklist dauerhaft ausgeblendet');
+
+      await fetchStatus();
+    } catch (err) {
+      console.error('Error hiding checklist:', err);
+    }
+  }, [fetchStatus]);
+
+  // 🆕 Checklist wieder einblenden
+  const showChecklist = useCallback(async () => {
+    const token = getToken();
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_BASE}/api/onboarding/show-checklist`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to show checklist');
+
+      console.log('👁️ Checklist wieder eingeblendet');
+
+      await fetchStatus();
+    } catch (err) {
+      console.error('Error showing checklist:', err);
+    }
+  }, [fetchStatus]);
+
   return {
     onboardingState,
     isLoading,
@@ -420,7 +472,9 @@ export function useOnboarding(): UseOnboardingReturn {
     updateChecklistItem,
     updatePreferences,
     resetOnboarding,
-    refetch: fetchStatus
+    refetch: fetchStatus,
+    hideChecklist,
+    showChecklist
   };
 }
 

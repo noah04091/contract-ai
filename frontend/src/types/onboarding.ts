@@ -34,6 +34,7 @@ export interface OnboardingState {
   seenFeatures: string[];
   showTooltips: boolean;
   checklist: OnboardingChecklist;
+  checklistHiddenByUser?: boolean; // 🆕 Dauerhaft ausgeblendet
 }
 
 // API Response Types
@@ -51,6 +52,7 @@ export interface OnboardingStatusResponse {
   checklistTotal: number;
   shouldShowModal: boolean;
   shouldShowChecklist: boolean;
+  checklistHiddenByUser: boolean; // 🆕 Dauerhaft ausgeblendet
 }
 
 export interface OnboardingActionResponse {

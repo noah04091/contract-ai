@@ -130,10 +130,15 @@ router.get("/status", verifyToken, async (req, res) => {
     const checklistProgress = checklistItems.filter(Boolean).length;
     const checklistTotal = checklistItems.length || 5;
 
+    // 🙈 Prüfe ob User die Checklist dauerhaft ausgeblendet hat
+    const checklistHiddenByUser = onboarding.checklistHiddenByUser || false;
+
     // Entscheide ob Modal/Checklist gezeigt werden soll
     const shouldShowModal = onboarding.status === 'not_started' || onboarding.status === 'in_progress';
-    // 🔧 FIX: Checklist auch für 'skipped' Status zeigen (User hat Onboarding übersprungen aber Items nicht erledigt)
-    const shouldShowChecklist = (onboarding.status === 'completed' || onboarding.status === 'skipped') && checklistProgress < checklistTotal;
+    // 🔧 FIX: Checklist auch für 'skipped' Status zeigen, ABER nicht wenn User sie ausgeblendet hat
+    const shouldShowChecklist = !checklistHiddenByUser &&
+      (onboarding.status === 'completed' || onboarding.status === 'skipped') &&
+      checklistProgress < checklistTotal;
 
     res.json({
       status: onboarding.status,
@@ -148,7 +153,8 @@ router.get("/status", verifyToken, async (req, res) => {
       checklistProgress,
       checklistTotal,
       shouldShowModal,
-      shouldShowChecklist
+      shouldShowChecklist,
+      checklistHiddenByUser // 🆕 Für Frontend-Logik
     });
   } catch (err) {
     console.error("❌ Fehler bei /onboarding/status:", err);
@@ -337,6 +343,78 @@ router.post("/skip", verifyToken, async (req, res) => {
     });
   } catch (err) {
     console.error("❌ Fehler bei /onboarding/skip:", err);
+    res.status(500).json({ message: "Serverfehler" });
+  }
+});
+
+/**
+ * POST /api/onboarding/hide-checklist
+ * Checklist dauerhaft ausblenden (in DB gespeichert)
+ */
+router.post("/hide-checklist", verifyToken, async (req, res) => {
+  try {
+    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
+
+    if (!user) {
+      return res.status(404).json({ message: "User nicht gefunden" });
+    }
+
+    await usersCollection.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          "onboarding.checklistHiddenByUser": true,
+          "onboarding.checklistHiddenAt": new Date(),
+          updatedAt: new Date()
+        }
+      }
+    );
+
+    console.log(`🙈 Checklist dauerhaft ausgeblendet für: ${user.email}`);
+
+    res.json({
+      success: true,
+      message: "Checklist dauerhaft ausgeblendet"
+    });
+  } catch (err) {
+    console.error("❌ Fehler bei /onboarding/hide-checklist:", err);
+    res.status(500).json({ message: "Serverfehler" });
+  }
+});
+
+/**
+ * POST /api/onboarding/show-checklist
+ * Checklist wieder einblenden (für Einstellungen)
+ */
+router.post("/show-checklist", verifyToken, async (req, res) => {
+  try {
+    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
+
+    if (!user) {
+      return res.status(404).json({ message: "User nicht gefunden" });
+    }
+
+    await usersCollection.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          "onboarding.checklistHiddenByUser": false,
+          updatedAt: new Date()
+        },
+        $unset: {
+          "onboarding.checklistHiddenAt": ""
+        }
+      }
+    );
+
+    console.log(`👁️ Checklist wieder eingeblendet für: ${user.email}`);
+
+    res.json({
+      success: true,
+      message: "Checklist wieder eingeblendet"
+    });
+  } catch (err) {
+    console.error("❌ Fehler bei /onboarding/show-checklist:", err);
     res.status(500).json({ message: "Serverfehler" });
   }
 });

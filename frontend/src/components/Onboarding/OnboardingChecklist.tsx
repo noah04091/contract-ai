@@ -85,9 +85,6 @@ const CHECKLIST_ITEMS: ChecklistItemConfig[] = [
   }
 ];
 
-// SessionStorage key for persistent hide state
-const CHECKLIST_HIDDEN_KEY = 'contract-ai-checklist-hidden';
-
 interface OnboardingChecklistProps {
   className?: string;
 }
@@ -101,7 +98,8 @@ export function OnboardingChecklist({ className }: OnboardingChecklistProps) {
     shouldShowChecklist,
     checklistProgress,
     checklistTotal,
-    isLoading
+    isLoading,
+    hideChecklist  // 🆕 Dauerhaft ausblenden (in DB gespeichert)
   } = useOnboarding();
 
   // 🔧 ROBUSTER FIX: Berechne shouldShow direkt aus user.onboarding
@@ -111,19 +109,17 @@ export function OnboardingChecklist({ className }: OnboardingChecklistProps) {
   const userChecklist = userOnboarding?.checklist || {};
   const userChecklistProgress = Object.values(userChecklist).filter(Boolean).length;
   const userChecklistTotal = Object.keys(userChecklist).length || 5;
+  const userChecklistHidden = userOnboarding?.checklistHiddenByUser || false; // 🆕
 
-  // Zeige Checklist wenn: (completed ODER skipped) UND nicht alle Items erledigt
-  const shouldShowFromUser = (userStatus === 'completed' || userStatus === 'skipped')
+  // Zeige Checklist wenn: (completed ODER skipped) UND nicht alle Items erledigt UND nicht ausgeblendet
+  const shouldShowFromUser = !userChecklistHidden
+    && (userStatus === 'completed' || userStatus === 'skipped')
     && userChecklistProgress < userChecklistTotal;
 
   // Kombiniere beide Quellen: Hook-State ODER direkte Berechnung aus user
   const effectiveShouldShow = shouldShowChecklist || shouldShowFromUser;
 
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isHidden, setIsHidden] = useState(() => {
-    // Persistent hide state from sessionStorage
-    return sessionStorage.getItem(CHECKLIST_HIDDEN_KEY) === 'true';
-  });
   const [justCompletedId, setJustCompletedId] = useState<string | null>(null);
   const [previousProgress, setPreviousProgress] = useState(checklistProgress);
 
@@ -170,16 +166,16 @@ export function OnboardingChecklist({ className }: OnboardingChecklistProps) {
     setPreviousProgress(checklistProgress);
   }, [checklistProgress, previousProgress, checklistTotal, onboardingState?.checklist, celebrate]);
 
-  // Persist hide state to sessionStorage
+  // 🆕 Dauerhaft ausblenden (in DB gespeichert, geräteübergreifend)
   const handleHide = () => {
-    setIsHidden(true);
-    sessionStorage.setItem(CHECKLIST_HIDDEN_KEY, 'true');
+    hideChecklist();
   };
 
-  // Don't show if loading, hidden, or shouldn't show
+  // Don't show if loading or shouldn't show
   // 🔧 Verwendet effectiveShouldShow statt nur shouldShowChecklist
   // effectiveShouldShow = shouldShowChecklist (Hook) ODER shouldShowFromUser (direkt aus user)
-  if (isLoading || isHidden || !effectiveShouldShow) {
+  // 🆕 isHidden wird jetzt vom Backend gesteuert (checklistHiddenByUser in shouldShowChecklist)
+  if (isLoading || !effectiveShouldShow) {
     return null;
   }
 
