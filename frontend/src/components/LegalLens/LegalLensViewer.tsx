@@ -682,6 +682,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       clearTimeout(syncPdfHighlightTimeoutRef.current);
     }
 
+    // Längerer Timeout (1200ms) damit die neue Seite Zeit hat zu rendern
     syncPdfHighlightTimeoutRef.current = setTimeout(() => {
       if (pdfClickActiveRef.current) {
         pdfClickActiveRef.current = false;
@@ -813,7 +814,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         spansToHighlight[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
         console.log('[Legal Lens] PDF highlight: Marked', spansToHighlight.length, 'spans (exact match)');
       }
-    }, 700);
+    }, 1200);
 
     return () => {
       if (syncPdfHighlightTimeoutRef.current) {
