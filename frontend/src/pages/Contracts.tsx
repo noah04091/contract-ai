@@ -37,6 +37,7 @@ import type { FolderType } from "../components/FolderBar"; // 📁 Folder Type
 import InlineAnalysisProgress from "../components/InlineAnalysisProgress"; // 🎨 Kompakte Inline-Analyse
 import { useCelebrationContext } from "../components/Celebration"; // 🎉 Celebration System
 import { SimpleTour } from "../components/Tour"; // 🎯 Simple Tour (zuverlässiger)
+import { triggerOnboardingSync } from "../hooks/useOnboarding"; // 🎓 Onboarding Sync
 
 interface Contract {
   _id: string;
@@ -1834,6 +1835,9 @@ export default function Contracts() {
         // 🎉 Celebration for successful upload!
         celebrate('first-upload');
 
+        // 🎓 Onboarding: Sync triggern um Checklist zu aktualisieren
+        triggerOnboardingSync();
+
         setUploadSuccessModal({
           show: true,
           uploadedContracts
@@ -1996,6 +2000,9 @@ export default function Contracts() {
       // 🎉 Celebration for completed analysis!
       celebrate('first-analysis');
 
+      // 🎓 Onboarding: Sync triggern um Checklist zu aktualisieren
+      triggerOnboardingSync();
+
       console.log(`✅ ${contractsToAnalyze.length} Vertrag${contractsToAnalyze.length > 1 ? 'e' : ''} erfolgreich analysiert und Ergebnisse werden angezeigt!`);
 
     } catch (error) {
@@ -2144,6 +2151,9 @@ export default function Contracts() {
         });
 
         console.log("📊 Opening detailed analysis modal for contract:", contract._id);
+
+        // 🎓 Onboarding: Sync triggern um Checklist zu aktualisieren
+        triggerOnboardingSync();
       } else {
         throw new Error(data.message || 'Analyse fehlgeschlagen');
       }
@@ -2338,12 +2348,15 @@ export default function Contracts() {
     }
 
     setIsAnalyzing(false);
-    
+
     // ✅ User-Info und Verträge neu laden (force=true weil analysisCount sich geändert hat)
     setTimeout(() => {
       fetchUserInfo(true);
       fetchContracts();
     }, 1000);
+
+    // 🎓 Onboarding: Sync triggern um Checklist zu aktualisieren
+    triggerOnboardingSync();
 
     console.log("🎉 Batch-Analyse abgeschlossen");
   };

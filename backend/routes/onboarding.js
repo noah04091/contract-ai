@@ -7,11 +7,15 @@ const router = express.Router();
 const { ObjectId } = require("mongodb");
 const verifyToken = require("../middleware/verifyToken");
 
-// 🔗 Collection wird dynamisch übergeben
+// 🔗 Collections werden dynamisch übergeben
 let usersCollection;
+let contractsCollection;
+let companyProfilesCollection;
 
 module.exports = (db) => {
   usersCollection = db.collection("users");
+  contractsCollection = db.collection("contracts");
+  companyProfilesCollection = db.collection("company_profiles");
   return router;
 };
 
@@ -25,9 +29,11 @@ module.exports = (db) => {
  */
 router.get("/status", verifyToken, async (req, res) => {
   try {
+    const userId = new ObjectId(req.user.userId);
+
     const user = await usersCollection.findOne(
-      { _id: new ObjectId(req.user.userId) },
-      { projection: { onboarding: 1, email: 1, createdAt: 1 } }
+      { _id: userId },
+      { projection: { onboarding: 1, email: 1, createdAt: 1, verified: 1 } }
     );
 
     if (!user) {
@@ -35,7 +41,7 @@ router.get("/status", verifyToken, async (req, res) => {
     }
 
     // Default-Werte falls onboarding noch nicht existiert
-    const onboarding = user.onboarding || {
+    let onboarding = user.onboarding || {
       status: 'not_started',
       completedSteps: [],
       profile: {},
@@ -50,8 +56,77 @@ router.get("/status", verifyToken, async (req, res) => {
       }
     };
 
+    // 🔧 AUTO-SYNC: Checklist-Items automatisch basierend auf tatsächlichen Daten aktualisieren
+    const checklist = { ...onboarding.checklist };
+    let needsUpdate = false;
+
+    // ✅ accountCreated ist immer true (User existiert ja)
+    if (!checklist.accountCreated) {
+      checklist.accountCreated = true;
+      needsUpdate = true;
+    }
+
+    // ✅ emailVerified: Aus User.verified Feld
+    if (!checklist.emailVerified && user.verified) {
+      checklist.emailVerified = true;
+      needsUpdate = true;
+    }
+
+    // ✅ firstContractUploaded: Prüfe ob User mindestens 1 Vertrag hat
+    if (!checklist.firstContractUploaded && contractsCollection) {
+      const contractCount = await contractsCollection.countDocuments({ userId: userId });
+      if (contractCount > 0) {
+        checklist.firstContractUploaded = true;
+        needsUpdate = true;
+        console.log(`🔄 [Onboarding Auto-Sync] firstContractUploaded = true für ${user.email} (${contractCount} Verträge)`);
+      }
+    }
+
+    // ✅ companyProfileComplete: Prüfe ob Firmenprofil existiert und ausgefüllt ist
+    if (!checklist.companyProfileComplete && companyProfilesCollection) {
+      const profile = await companyProfilesCollection.findOne({ userId: userId });
+      if (profile && profile.companyName && profile.companyName.trim()) {
+        checklist.companyProfileComplete = true;
+        needsUpdate = true;
+        console.log(`🔄 [Onboarding Auto-Sync] companyProfileComplete = true für ${user.email}`);
+      }
+    }
+
+    // ✅ firstAnalysisComplete: Prüfe ob User mindestens 1 analysierten Vertrag hat
+    if (!checklist.firstAnalysisComplete && contractsCollection) {
+      const analyzedCount = await contractsCollection.countDocuments({
+        userId: userId,
+        analyzed: true
+      });
+      if (analyzedCount > 0) {
+        checklist.firstAnalysisComplete = true;
+        needsUpdate = true;
+        console.log(`🔄 [Onboarding Auto-Sync] firstAnalysisComplete = true für ${user.email} (${analyzedCount} Analysen)`);
+      }
+    }
+
+    // 💾 Bei Änderungen: Checklist in DB aktualisieren (async, nicht blockierend)
+    if (needsUpdate) {
+      usersCollection.updateOne(
+        { _id: userId },
+        {
+          $set: {
+            'onboarding.checklist': checklist,
+            updatedAt: new Date()
+          }
+        }
+      ).then(() => {
+        console.log(`✅ [Onboarding Auto-Sync] Checklist aktualisiert für ${user.email}`);
+      }).catch(err => {
+        console.warn(`⚠️ [Onboarding Auto-Sync] Update fehlgeschlagen:`, err.message);
+      });
+
+      // Verwende aktualisierte Checklist für Response
+      onboarding = { ...onboarding, checklist };
+    }
+
     // Berechne Checklist-Progress
-    const checklistItems = Object.values(onboarding.checklist || {});
+    const checklistItems = Object.values(checklist);
     const checklistProgress = checklistItems.filter(Boolean).length;
     const checklistTotal = checklistItems.length || 5;
 
@@ -69,7 +144,7 @@ router.get("/status", verifyToken, async (req, res) => {
       profile: onboarding.profile || {},
       seenFeatures: onboarding.seenFeatures || [],
       showTooltips: onboarding.showTooltips ?? true,
-      checklist: onboarding.checklist || {},
+      checklist: checklist,
       checklistProgress,
       checklistTotal,
       shouldShowModal,

@@ -16,6 +16,16 @@ const API_BASE = import.meta.env.VITE_API_BASE || '';
 // Instanzen ihre Daten neu laden.
 const ONBOARDING_SYNC_EVENT = 'onboarding-state-sync';
 
+/**
+ * 🔄 Utility-Funktion zum Auslösen eines Onboarding-Sync-Events
+ * Kann von anderen Komponenten aufgerufen werden (z.B. nach Analyse, Upload, etc.)
+ * um alle useOnboarding-Instanzen zum Neu-Laden zu veranlassen.
+ */
+export function triggerOnboardingSync(): void {
+  console.log('🔄 [Onboarding] Manual sync triggered');
+  window.dispatchEvent(new Event(ONBOARDING_SYNC_EVENT));
+}
+
 // Helper to get token from localStorage
 const getToken = (): string | null => {
   return localStorage.getItem('authToken') || localStorage.getItem('token');

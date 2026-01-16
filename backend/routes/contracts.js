@@ -3120,6 +3120,24 @@ router.post("/email-import", verifyEmailImportKey, async (req, res) => {
 
         console.log(`✅ Contract erstellt: ${result.insertedId}`);
 
+        // 🎓 Onboarding: firstContractUploaded automatisch auf true setzen (bei erstem Import)
+        if (importedContracts.filter(c => !c.duplicate).length === 1) {
+          try {
+            await usersCollection.updateOne(
+              { _id: user._id },
+              {
+                $set: {
+                  'onboarding.checklist.firstContractUploaded': true,
+                  updatedAt: new Date()
+                }
+              }
+            );
+            console.log(`🎓 [Onboarding] Checklist aktualisiert: firstContractUploaded = true für User ${user.email}`);
+          } catch (onboardingErr) {
+            console.warn(`⚠️ [Onboarding] Checklist Update fehlgeschlagen:`, onboardingErr.message);
+          }
+        }
+
       } catch (uploadError) {
         console.error(`❌ Fehler beim Upload von ${sanitizedFilename}:`, uploadError);
         errors.push({
