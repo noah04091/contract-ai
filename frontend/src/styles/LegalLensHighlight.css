@@ -7,24 +7,26 @@
    We need very high specificity selectors + !important to override them. */
 
 /* Primary highlight class - used when user clicks on text */
-/* WICHTIG: Keine position-Änderung! React-PDF nutzt absolute positioning. */
-/* WICHTIG: KEIN color setzen! Sonst wird der extrahierte Text sichtbar statt nur Hintergrund! */
+/* WICHTIG: Text MUSS transparent bleiben! Nur Hintergrund färben. */
+/* mix-blend-mode: multiply lässt den Hintergrund mit dem PDF verschmelzen */
 .react-pdf__Page__textContent span.legal-lens-highlight,
 .react-pdf__Page__textContent > span.legal-lens-highlight,
 div.react-pdf__Page__textContent span.legal-lens-highlight,
 .react-pdf__Document .react-pdf__Page .react-pdf__Page__textContent span.legal-lens-highlight,
 span.legal-lens-highlight {
-  background-color: #fde047 !important;
-  background: #fde047 !important;
-  /* KEIN color: #000000 !important; - das macht extrahierten Text sichtbar! */
+  background-color: rgba(253, 224, 71, 0.5) !important;
+  background: rgba(253, 224, 71, 0.5) !important;
+  color: transparent !important;
+  mix-blend-mode: multiply !important;
   border-radius: 2px !important;
 }
 
 /* Alternative selector using attribute */
 [class*="react-pdf__Page__textContent"] span.legal-lens-highlight {
-  background-color: #fde047 !important;
-  background: #fde047 !important;
-  /* KEIN color setzen! */
+  background-color: rgba(253, 224, 71, 0.5) !important;
+  background: rgba(253, 224, 71, 0.5) !important;
+  color: transparent !important;
+  mix-blend-mode: multiply !important;
 }
 
 /* Hover state for clickable text - subtle blue highlight */
