@@ -8,6 +8,7 @@
 
 /* Primary highlight class - used when user clicks on text */
 /* WICHTIG: Keine position-Änderung! React-PDF nutzt absolute positioning. */
+/* WICHTIG: KEIN color setzen! Sonst wird der extrahierte Text sichtbar statt nur Hintergrund! */
 .react-pdf__Page__textContent span.legal-lens-highlight,
 .react-pdf__Page__textContent > span.legal-lens-highlight,
 div.react-pdf__Page__textContent span.legal-lens-highlight,
@@ -15,7 +16,7 @@ div.react-pdf__Page__textContent span.legal-lens-highlight,
 span.legal-lens-highlight {
   background-color: #fde047 !important;
   background: #fde047 !important;
-  color: #000000 !important;
+  /* KEIN color: #000000 !important; - das macht extrahierten Text sichtbar! */
   border-radius: 2px !important;
 }
 
@@ -23,7 +24,7 @@ span.legal-lens-highlight {
 [class*="react-pdf__Page__textContent"] span.legal-lens-highlight {
   background-color: #fde047 !important;
   background: #fde047 !important;
-  color: #000000 !important;
+  /* KEIN color setzen! */
 }
 
 /* Hover state for clickable text - subtle blue highlight */
