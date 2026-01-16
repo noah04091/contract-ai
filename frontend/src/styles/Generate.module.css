@@ -10,7 +10,7 @@
 .contractGenerator {
   min-height: 100vh;
   min-height: 100dvh; /* iOS Safari fix */
-  background: #F7F8FA;
+  background: linear-gradient(180deg, #f0f4ff 0%, #fafbff 50%, #f8fafc 100%);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
   color: #0B1324;
   line-height: 1.6;

@@ -1,7 +1,7 @@
 /* 🎨 Chat.module.css - Apple/ChatGPT-Style UI (Light Mode) */
 
 :root {
-  --bg: #f7f7f8;
+  --bg: linear-gradient(180deg, #f0f4ff 0%, #fafbff 50%, #f8fafc 100%);
   --panel: #ffffff;
   --muted: #6b7280;
   --border: #e5e7eb;

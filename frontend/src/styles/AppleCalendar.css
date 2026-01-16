@@ -42,6 +42,14 @@
   padding: 24px;
 }
 
+/* ========== Premium Calendar Page Layout ========== */
+.calendar-page-premium {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f0f4ff 0%, #fafbff 50%, #f8fafc 100%);
+  padding: 2rem 1.5rem;
+  position: relative;
+}
+
 .calendar-page-content {
   max-width: 1600px;
   margin: 0 auto;
