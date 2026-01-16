@@ -528,188 +528,166 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     highlightedElementsRef.current = [];
   }, []);
 
-  // ✅ FIX: Text↔PDF Sync - Ref für vorherigen ViewMode
+  // ✅ FIX v5: Komplett überarbeitete PDF-Sync Logik
+  // TRENNUNG: Navigation (nur bei Klausel-Wechsel) vs Highlighting (bei jeder Änderung)
+
   const prevViewModeRef = useRef<ViewMode>(viewMode);
-
-  // ✅ FIX: Text↔PDF Sync - Bei View-Wechsel Auswahl spiegeln
-  useEffect(() => {
-    const prevViewMode = prevViewModeRef.current;
-    prevViewModeRef.current = viewMode;
-
-    // Nur bei echtem Wechsel
-    if (prevViewMode === viewMode) return;
-
-    if (viewMode === 'text') {
-      // Von PDF zu Text: Highlight entfernen, ClauseList scrollt automatisch via ClauseList useEffect
-      clearHighlight();
-      console.log('[Legal Lens] View switched to Text, clause sync via ClauseList');
-    } else if (viewMode === 'pdf' && selectedClause) {
-      // Von Text zu PDF: Finde richtige Seite und navigiere dorthin
-      console.log('[Legal Lens] View switched to PDF, will highlight clause:', selectedClause.id);
-
-      // ✅ Auto-Scroll zur richtigen Seite wenn Text-Index verfügbar
-      if (pdfTextIndexRef.current.size > 0) {
-        const targetPage = findPageForClause(selectedClause.text);
-        if (targetPage && targetPage !== pageNumber) {
-          console.log(`[Legal Lens] Auto-navigating to page ${targetPage} for clause`);
-          setPageNumber(targetPage);
-        }
-      }
-      // PDF-Highlight passiert automatisch beim nächsten Render über syncPdfHighlight
-    }
-  }, [viewMode, clearHighlight, selectedClause, findPageForClause, pageNumber]);
-
-  // ✅ FIX v2/v4: Robuste PDF-Text Synchronisation
+  const lastNavigatedClauseIdRef = useRef<string | null>(null);
   const syncPdfHighlightTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // ========== EFFECT 1: Seiten-Navigation (NUR bei Klausel-Wechsel oder View-Wechsel) ==========
+  useEffect(() => {
+    // Bei Wechsel zu Text: Highlights entfernen
+    if (viewMode === 'text' && prevViewModeRef.current === 'pdf') {
+      clearHighlight();
+      console.log('[Legal Lens] View switched to Text');
+    }
+    prevViewModeRef.current = viewMode;
+
+    // Navigation nur im PDF-Modus mit Klausel
+    if (viewMode !== 'pdf' || !selectedClause || !pdfUrl) return;
+
+    // ✅ WICHTIG: Nur navigieren wenn sich die KLAUSEL geändert hat
+    // NICHT bei manuellem Seitenwechsel oder Zoom!
+    if (lastNavigatedClauseIdRef.current === selectedClause.id) {
+      return;
+    }
+
+    // Neue Klausel → Navigation erlaubt
+    lastNavigatedClauseIdRef.current = selectedClause.id;
+    console.log('[Legal Lens] New clause selected, checking page navigation:', selectedClause.id);
+
+    // Zur richtigen Seite navigieren wenn Text-Index verfügbar
+    if (pdfTextIndexRef.current.size > 0) {
+      const targetPage = findPageForClause(selectedClause.text);
+      if (targetPage) {
+        console.log(`[Legal Lens] Navigating to page ${targetPage} for clause`);
+        setPageNumber(targetPage);
+      }
+    }
+  }, [viewMode, selectedClause?.id, pdfUrl, clearHighlight, findPageForClause]);
+
+  // ========== EFFECT 2: Highlighting (bei Seite/Zoom/Klausel-Änderung, OHNE Navigation) ==========
   useEffect(() => {
     // Nur im PDF-Modus mit ausgewählter Klausel
     if (viewMode !== 'pdf' || !selectedClause || !pdfUrl || pdfLoading) return;
 
-    // ✅ FIX v4: Wenn User gerade in PDF geklickt hat, NICHT synchronisieren!
-    // Der Klick-Handler hat bereits die richtige Markierung gesetzt.
+    // Wenn User gerade in PDF geklickt hat, NICHT synchronisieren
     if (pdfClickActiveRef.current) {
-      console.log('[Legal Lens] PDF sync: Skipping - user just clicked in PDF');
-      pdfClickActiveRef.current = false; // Reset für nächsten Aufruf
+      console.log('[Legal Lens] PDF highlight: Skipping - user clicked in PDF');
+      pdfClickActiveRef.current = false;
       return;
     }
 
-    // Debounce um sicherzustellen, dass PDF gerendert ist
+    // Debounce für PDF-Rendering
     if (syncPdfHighlightTimeoutRef.current) {
       clearTimeout(syncPdfHighlightTimeoutRef.current);
     }
 
     syncPdfHighlightTimeoutRef.current = setTimeout(() => {
-      // ✅ FIX v4: Nochmal prüfen - könnte sich während des Timeouts geändert haben
       if (pdfClickActiveRef.current) {
-        console.log('[Legal Lens] PDF sync: Skipping in timeout - user clicked in PDF');
         pdfClickActiveRef.current = false;
         return;
-      }
-
-      // ✅ Auto-Scroll zur richtigen Seite wenn nötig
-      if (pdfTextIndexRef.current.size > 0 && selectedClause) {
-        const targetPage = findPageForClause(selectedClause.text);
-        if (targetPage && targetPage !== pageNumber) {
-          console.log(`[Legal Lens] PDF sync: Auto-navigating to page ${targetPage}`);
-          setPageNumber(targetPage);
-          // Nach Seitenwechsel wird dieser Effect erneut ausgelöst (wegen pageNumber dependency)
-          // Daher hier abbrechen und beim nächsten Aufruf highlighten
-          return;
-        }
       }
 
       // Vorherige Highlights entfernen
       clearHighlight();
 
-      // Finde Text-Layer
+      // Finde Text-Layer der aktuellen Seite
       const textLayer = document.querySelector('.react-pdf__Page__textContent');
       if (!textLayer) {
-        console.log('[Legal Lens] PDF sync: No text layer found');
+        console.log('[Legal Lens] PDF highlight: No text layer found');
         return;
       }
 
-      let allSpans = Array.from(textLayer.querySelectorAll('span')) as HTMLElement[];
+      const allSpans = Array.from(textLayer.querySelectorAll('span')) as HTMLElement[];
       if (allSpans.length === 0) return;
 
-      // ✅ FIX: Sortiere Spans nach visueller Position (Lesereihenfolge)
-      // Nach Zoom können Spans in falscher DOM-Reihenfolge sein
-      allSpans = allSpans.sort((a, b) => {
-        const rectA = a.getBoundingClientRect();
-        const rectB = b.getBoundingClientRect();
-        // Erst nach Y (Zeile), dann nach X (Position in Zeile)
-        const yDiff = rectA.top - rectB.top;
-        if (Math.abs(yDiff) > 5) return yDiff;
-        return rectA.left - rectB.left;
-      });
+      // ✅ Klausel-Text vorbereiten
+      const clauseTextClean = selectedClause.text
+        .toLowerCase()
+        .normalize('NFC')
+        .replace(/\s+/g, ' ')
+        .trim();
 
-      // ✅ Sammle gesamten Text und finde beste Übereinstimmung
-      const clauseText = selectedClause.text.toLowerCase().normalize('NFC');
-      const clauseWords = clauseText.split(/\s+/).filter(w => w.length > 3);
+      // Erste signifikante Wörter extrahieren (min 4 Zeichen)
+      const clauseWords = clauseTextClean.split(' ').filter(w => w.length >= 4);
+      if (clauseWords.length === 0) {
+        console.log('[Legal Lens] PDF highlight: No significant words in clause');
+        return;
+      }
 
-      if (clauseWords.length === 0) return;
-
-      // Baue vollständigen Text mit Span-Referenzen
-      let fullText = '';
-      const spanPositions: Array<{span: HTMLElement, start: number, end: number}> = [];
+      // ✅ Baue Text der aktuellen Seite zusammen
+      // WICHTIG: Spans NICHT sortieren - PDF.js gibt sie in Lesereihenfolge aus
+      let pageText = '';
+      const spanRanges: Array<{span: HTMLElement, start: number, end: number}> = [];
 
       for (const span of allSpans) {
         const text = (span.textContent || '').normalize('NFC');
-        const start = fullText.length;
-        fullText += text + ' ';
-        spanPositions.push({ span, start, end: fullText.length });
+        const start = pageText.length;
+        pageText += text;
+        spanRanges.push({ span, start, end: pageText.length });
       }
 
-      const fullTextLower = fullText.toLowerCase();
+      const pageTextLower = pageText.toLowerCase().replace(/\s+/g, ' ');
 
-      // ✅ Suche nach den ersten 3-5 signifikanten Wörtern als Phrase
-      const searchPhrases = [
-        clauseWords.slice(0, 5).join(' '),  // Erste 5 Wörter
-        clauseWords.slice(0, 3).join(' '),  // Erste 3 Wörter
-        clauseWords[0] + ' ' + clauseWords[1], // Erste 2 Wörter
-      ].filter(p => p.length > 5);
+      // ✅ Suche nach Klausel-Anfang (erste 5-8 signifikante Wörter)
+      const searchTerms = [
+        clauseWords.slice(0, 8).join(' '),
+        clauseWords.slice(0, 5).join(' '),
+        clauseWords.slice(0, 3).join(' '),
+      ].filter(t => t.length >= 10);
 
-      let bestMatchIndex = -1;
+      let matchStart = -1;
 
-      for (const phrase of searchPhrases) {
-        const idx = fullTextLower.indexOf(phrase);
-        if (idx !== -1) {
-          bestMatchIndex = idx;
-          console.log('[Legal Lens] PDF sync: Found phrase match:', phrase.substring(0, 30));
+      for (const term of searchTerms) {
+        // Fuzzy-Match: Erlaube fehlende Leerzeichen
+        const termPattern = term.split(' ').join('\\s*');
+        const regex = new RegExp(termPattern, 'i');
+        const match = pageTextLower.match(regex);
+
+        if (match && match.index !== undefined) {
+          matchStart = match.index;
+          console.log('[Legal Lens] PDF highlight: Found match for:', term.substring(0, 40));
           break;
         }
       }
 
-      // Fallback: Einzelne Wörter suchen
-      if (bestMatchIndex === -1) {
-        for (const word of clauseWords.slice(0, 3)) {
-          if (word.length > 4) {
-            const idx = fullTextLower.indexOf(word);
-            if (idx !== -1) {
-              bestMatchIndex = idx;
-              console.log('[Legal Lens] PDF sync: Found word match:', word);
-              break;
-            }
-          }
-        }
-      }
-
-      if (bestMatchIndex === -1) {
-        console.log('[Legal Lens] PDF sync: No match found in PDF');
+      if (matchStart === -1) {
+        console.log('[Legal Lens] PDF highlight: Clause not found on current page');
         return;
       }
 
-      // ✅ FIX: Verwende tatsächliche Klausel-Länge statt fester 200 Zeichen
-      // Füge etwas Puffer hinzu für Whitespace-Unterschiede
-      const clauseLength = Math.max(selectedClause.text.length, 50);
-      const matchEnd = Math.min(bestMatchIndex + clauseLength + 20, fullText.length);
+      // ✅ Match-Ende basierend auf Klausel-Länge (mit Toleranz für PDF-Formatierung)
+      const matchLength = Math.min(clauseTextClean.length * 1.2, pageText.length - matchStart);
+      const matchEnd = matchStart + matchLength;
+
+      // ✅ Alle Spans im Match-Bereich markieren
       const matchingSpans: HTMLElement[] = [];
 
-      for (const { span, start, end } of spanPositions) {
-        // Span überlappt mit Match-Bereich?
-        if (start < matchEnd && end > bestMatchIndex) {
-          matchingSpans.push(span);
-          // Highlight hinzufügen
+      for (const { span, start, end } of spanRanges) {
+        // Span überlappt mit Match?
+        if (end > matchStart && start < matchEnd) {
           span.classList.add('legal-lens-highlight');
+          matchingSpans.push(span);
         }
       }
 
       highlightedElementsRef.current = matchingSpans;
 
-      // ✅ Scroll zum ersten Match
       if (matchingSpans.length > 0) {
+        // Scroll zum ersten Match
         matchingSpans[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-        console.log('[Legal Lens] PDF sync: Highlighted', matchingSpans.length, 'spans for clause:', selectedClause.id);
+        console.log('[Legal Lens] PDF highlight: Highlighted', matchingSpans.length, 'spans');
       }
-    }, 600); // Etwas mehr Zeit für PDF-Rendering
+    }, 500);
 
     return () => {
       if (syncPdfHighlightTimeoutRef.current) {
         clearTimeout(syncPdfHighlightTimeoutRef.current);
       }
     };
-  // ✅ scale hinzugefügt: Nach Zoom muss Highlight neu angewendet werden
-  }, [viewMode, selectedClause, pdfUrl, pdfLoading, pageNumber, scale, clearHighlight, findPageForClause]);
+  }, [viewMode, selectedClause, pdfUrl, pdfLoading, pageNumber, scale, clearHighlight]);
 
   // ✅ FIX v3: Komplett überarbeiteter PDF Selection Handler
   // WICHTIG: KEINE Klausel-Matching mehr - das verursachte das "Springen"!
