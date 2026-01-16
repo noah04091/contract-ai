@@ -730,54 +730,33 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         return;
       }
 
-      // ✅ Finde zusammenhängende Span-Bereiche (nicht einzelne verstreute Spans)
-      // Sortiere nach DOM-Position
-      const sortedSpans = matchingSpans.sort((a, b) => {
-        const aIdx = allSpans.indexOf(a);
-        const bIdx = allSpans.indexOf(b);
-        return aIdx - bIdx;
-      });
+      // ✅ FIX: Sortiere nach VISUELLER Position, nicht DOM-Position
+      // React-PDF positioniert Spans absolut - DOM-Reihenfolge ≠ visuelle Reihenfolge!
+      const sortedSpans = matchingSpans
+        .map(span => ({
+          span,
+          rect: span.getBoundingClientRect()
+        }))
+        .sort((a, b) => {
+          // Primär nach Y-Position (Zeile), dann nach X-Position
+          const yDiff = a.rect.top - b.rect.top;
+          if (Math.abs(yDiff) > 5) return yDiff; // Andere Zeile
+          return a.rect.left - b.rect.left; // Gleiche Zeile: nach X
+        })
+        .map(item => item.span);
 
-      // Finde den größten zusammenhängenden Block
-      let bestBlockStart = 0;
-      let bestBlockEnd = 0;
-      let bestBlockSize = 0;
-      let currentBlockStart = 0;
-
-      for (let i = 0; i < sortedSpans.length; i++) {
-        const currentIdx = allSpans.indexOf(sortedSpans[i]);
-        const prevIdx = i > 0 ? allSpans.indexOf(sortedSpans[i - 1]) : currentIdx - 1;
-
-        // Neuer Block wenn Lücke > 5 Spans
-        if (currentIdx - prevIdx > 5) {
-          currentBlockStart = i;
-        }
-
-        const blockSize = i - currentBlockStart + 1;
-        if (blockSize > bestBlockSize) {
-          bestBlockSize = blockSize;
-          bestBlockStart = currentBlockStart;
-          bestBlockEnd = i;
-        }
+      // ✅ FIX: Nur die gefundenen Spans markieren - KEINE Expansion!
+      // Die "Expansion" verursachte das Problem weil DOM-Index ≠ visuelle Position
+      for (const span of sortedSpans) {
+        span.classList.add('legal-lens-highlight');
       }
 
-      // Markiere nur den besten zusammenhängenden Block
-      const spansToHighlight = sortedSpans.slice(bestBlockStart, bestBlockEnd + 1);
+      highlightedElementsRef.current = sortedSpans;
 
-      // Erweitere auf alle Spans dazwischen (auch die ohne Match-Wörter)
-      if (spansToHighlight.length > 0) {
-        const firstIdx = allSpans.indexOf(spansToHighlight[0]);
-        const lastIdx = allSpans.indexOf(spansToHighlight[spansToHighlight.length - 1]);
-
-        for (let i = firstIdx; i <= lastIdx; i++) {
-          allSpans[i].classList.add('legal-lens-highlight');
-        }
-
-        highlightedElementsRef.current = allSpans.slice(firstIdx, lastIdx + 1);
-
-        // Scroll zum ersten markierten Span
-        allSpans[firstIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
-        console.log('[Legal Lens] PDF highlight: Marked', lastIdx - firstIdx + 1, 'spans');
+      // Scroll zum ersten markierten Span
+      if (sortedSpans.length > 0) {
+        sortedSpans[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        console.log('[Legal Lens] PDF highlight: Marked', sortedSpans.length, 'matching spans');
       }
     }, 700);
 
