@@ -685,78 +685,109 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         return;
       }
 
-      // ✅ Extrahiere signifikante Wörter aus der Klausel
-      const stopWords = ['der', 'die', 'das', 'und', 'oder', 'für', 'von', 'mit', 'bei', 'auf', 'aus', 'nach', 'über', 'unter', 'einer', 'einem', 'einen', 'eine', 'sind', 'wird', 'werden', 'kann', 'können', 'soll', 'haben', 'sein', 'nicht', 'auch', 'wenn', 'dass', 'diese', 'dieser', 'dieses'];
+      // ✅ Extrahiere die ERSTEN signifikanten Wörter der Klausel (Anfang ist am spezifischsten)
+      const stopWords = ['der', 'die', 'das', 'und', 'oder', 'für', 'von', 'mit', 'bei', 'auf', 'aus', 'nach', 'über', 'unter', 'einer', 'einem', 'einen', 'eine', 'sind', 'wird', 'werden', 'kann', 'können', 'soll', 'haben', 'sein', 'nicht', 'auch', 'wenn', 'dass', 'diese', 'dieser', 'dieses', 'sowie', 'durch', 'kann', 'muss', 'darf'];
 
-      const clauseWords = selectedClause.text
+      const allClauseWords = selectedClause.text
         .toLowerCase()
         .normalize('NFC')
         .replace(/[„""''«»]/g, '"')
         .split(/\s+/)
-        .filter(w => w.length >= 4 && !stopWords.includes(w))
-        .slice(0, 15); // Max 15 Wörter für Suche
+        .filter(w => w.length >= 4 && !stopWords.includes(w));
+
+      // Nimm nur die ersten 8 Wörter - der Anfang einer Klausel ist am spezifischsten
+      const clauseWords = allClauseWords.slice(0, 8);
 
       if (clauseWords.length === 0) {
         console.log('[Legal Lens] PDF highlight: No significant words in clause');
         return;
       }
 
-      console.log('[Legal Lens] PDF highlight: Looking for words:', clauseWords.slice(0, 5).join(', '));
+      console.log('[Legal Lens] PDF highlight: Looking for START words:', clauseWords.join(', '));
 
-      // ✅ Finde alle Spans die signifikante Wörter enthalten
-      const matchingSpans: HTMLElement[] = [];
-      const foundWords = new Set<string>();
+      // ✅ Sortiere alle Spans nach visueller Position
+      const spansWithRect = allSpans.map(span => ({
+        span,
+        rect: span.getBoundingClientRect(),
+        text: (span.textContent || '').toLowerCase().normalize('NFC')
+      })).sort((a, b) => {
+        const yDiff = a.rect.top - b.rect.top;
+        if (Math.abs(yDiff) > 5) return yDiff;
+        return a.rect.left - b.rect.left;
+      });
 
-      for (const span of allSpans) {
-        const spanText = (span.textContent || '').toLowerCase().normalize('NFC');
+      // ✅ DICHTE-BASIERTE SUCHE: Finde den Bereich mit den meisten Matches
+      // Sliding Window von 20 Spans - finde das Fenster mit höchster Match-Dichte
+      const windowSize = 25;
+      let bestWindowStart = 0;
+      let bestWindowScore = 0;
+      let bestMatchedWords = new Set<string>();
 
-        // Prüfe ob dieser Span mindestens ein signifikantes Wort enthält
+      for (let i = 0; i <= spansWithRect.length - windowSize; i++) {
+        const windowSpans = spansWithRect.slice(i, i + windowSize);
+        const windowText = windowSpans.map(s => s.text).join(' ');
+
+        // Zähle wie viele der Klausel-Wörter in diesem Fenster vorkommen
+        const matchedWords = new Set<string>();
         for (const word of clauseWords) {
-          if (spanText.includes(word)) {
-            foundWords.add(word);
-            if (!matchingSpans.includes(span)) {
-              matchingSpans.push(span);
-            }
+          if (windowText.includes(word)) {
+            matchedWords.add(word);
+          }
+        }
+
+        // Bonus für aufeinanderfolgende Wörter am Anfang (Sequenz-Match)
+        let sequenceBonus = 0;
+        for (let j = 0; j < clauseWords.length; j++) {
+          if (windowText.includes(clauseWords[j])) {
+            sequenceBonus += (clauseWords.length - j); // Frühere Wörter = mehr Bonus
+          } else {
+            break; // Sequenz unterbrochen
+          }
+        }
+
+        const score = matchedWords.size * 10 + sequenceBonus;
+
+        if (score > bestWindowScore) {
+          bestWindowScore = score;
+          bestWindowStart = i;
+          bestMatchedWords = matchedWords;
+        }
+      }
+
+      console.log('[Legal Lens] PDF highlight: Best window score:', bestWindowScore, 'matched:', bestMatchedWords.size, '/', clauseWords.length);
+
+      // ✅ Mindestens 40% der Wörter müssen im besten Fenster sein
+      if (bestMatchedWords.size < clauseWords.length * 0.4) {
+        console.log('[Legal Lens] PDF highlight: Not enough words found in any window');
+        return;
+      }
+
+      // ✅ Markiere nur die Spans im besten Fenster die auch tatsächlich Wörter enthalten
+      const bestWindow = spansWithRect.slice(bestWindowStart, bestWindowStart + windowSize);
+      const spansToHighlight: HTMLElement[] = [];
+
+      for (const item of bestWindow) {
+        for (const word of clauseWords) {
+          if (item.text.includes(word)) {
+            spansToHighlight.push(item.span);
+            break;
           }
         }
       }
 
-      // ✅ Nur markieren wenn mindestens 30% der Wörter gefunden wurden
-      const matchRatio = foundWords.size / clauseWords.length;
-      console.log('[Legal Lens] PDF highlight: Found', foundWords.size, 'of', clauseWords.length, 'words (' + Math.round(matchRatio * 100) + '%)');
+      // Markiere nur max 15 Spans um Übermarkierung zu vermeiden
+      const limitedSpans = spansToHighlight.slice(0, 15);
 
-      if (matchRatio < 0.3) {
-        console.log('[Legal Lens] PDF highlight: Not enough words found on this page');
-        return;
-      }
-
-      // ✅ FIX: Sortiere nach VISUELLER Position, nicht DOM-Position
-      // React-PDF positioniert Spans absolut - DOM-Reihenfolge ≠ visuelle Reihenfolge!
-      const sortedSpans = matchingSpans
-        .map(span => ({
-          span,
-          rect: span.getBoundingClientRect()
-        }))
-        .sort((a, b) => {
-          // Primär nach Y-Position (Zeile), dann nach X-Position
-          const yDiff = a.rect.top - b.rect.top;
-          if (Math.abs(yDiff) > 5) return yDiff; // Andere Zeile
-          return a.rect.left - b.rect.left; // Gleiche Zeile: nach X
-        })
-        .map(item => item.span);
-
-      // ✅ FIX: Nur die gefundenen Spans markieren - KEINE Expansion!
-      // Die "Expansion" verursachte das Problem weil DOM-Index ≠ visuelle Position
-      for (const span of sortedSpans) {
+      for (const span of limitedSpans) {
         span.classList.add('legal-lens-highlight');
       }
 
-      highlightedElementsRef.current = sortedSpans;
+      highlightedElementsRef.current = limitedSpans;
 
       // Scroll zum ersten markierten Span
-      if (sortedSpans.length > 0) {
-        sortedSpans[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-        console.log('[Legal Lens] PDF highlight: Marked', sortedSpans.length, 'matching spans');
+      if (limitedSpans.length > 0) {
+        limitedSpans[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        console.log('[Legal Lens] PDF highlight: Marked', limitedSpans.length, 'spans in best window');
       }
     }, 700);
 
