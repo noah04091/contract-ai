@@ -49,6 +49,9 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [scale, setScale] = useState<number>(1.0);
 
+  // ✅ PDF Text-Index für Auto-Scroll zur richtigen Seite
+  const pdfTextIndexRef = useRef<Map<number, string>>(new Map());
+
   // Smart Summary State
   const [showSmartSummary, setShowSmartSummary] = useState<boolean>(true);
   const [summaryDismissed, setSummaryDismissed] = useState<boolean>(false);
@@ -442,11 +445,80 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     }
   };
 
-  // PDF Document Loaded
-  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
+  // PDF Document Loaded - ✅ Mit Text-Extraktion für alle Seiten
+  const onDocumentLoadSuccess = async ({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
     setPageNumber(1);
+
+    // ✅ Text aller Seiten extrahieren für Auto-Scroll
+    if (pdfUrl) {
+      try {
+        const loadingTask = pdfjs.getDocument(pdfUrl);
+        const pdf = await loadingTask.promise;
+        const textIndex = new Map<number, string>();
+
+        for (let i = 1; i <= numPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items
+            .map((item) => ('str' in item ? (item as { str: string }).str : ''))
+            .join(' ')
+            .toLowerCase()
+            .normalize('NFC');
+          textIndex.set(i, pageText);
+        }
+
+        pdfTextIndexRef.current = textIndex;
+        console.log(`[Legal Lens] PDF Text-Index erstellt: ${numPages} Seiten`);
+      } catch (err) {
+        console.warn('[Legal Lens] Text-Index Extraktion fehlgeschlagen:', err);
+      }
+    }
   };
+
+  // ✅ Finde die Seite, auf der eine Klausel steht
+  const findPageForClause = useCallback((clauseText: string): number | null => {
+    const textIndex = pdfTextIndexRef.current;
+    if (textIndex.size === 0) return null;
+
+    const clauseTextLower = clauseText.toLowerCase().normalize('NFC');
+    const clauseWords = clauseTextLower.split(/\s+/).filter(w => w.length > 3);
+
+    if (clauseWords.length === 0) return null;
+
+    // Suche nach den ersten 3-5 signifikanten Wörtern als Phrase
+    const searchPhrases = [
+      clauseWords.slice(0, 5).join(' '),
+      clauseWords.slice(0, 3).join(' '),
+      clauseWords.slice(0, 2).join(' '),
+    ].filter(p => p.length > 5);
+
+    // Durchsuche alle Seiten
+    for (const [pageNum, pageText] of textIndex) {
+      for (const phrase of searchPhrases) {
+        if (pageText.includes(phrase)) {
+          console.log(`[Legal Lens] Klausel gefunden auf Seite ${pageNum}`);
+          return pageNum;
+        }
+      }
+    }
+
+    // Fallback: Einzelne Wörter suchen
+    for (const [pageNum, pageText] of textIndex) {
+      let matchCount = 0;
+      for (const word of clauseWords.slice(0, 5)) {
+        if (word.length > 4 && pageText.includes(word)) {
+          matchCount++;
+        }
+      }
+      if (matchCount >= 3) {
+        console.log(`[Legal Lens] Klausel wahrscheinlich auf Seite ${pageNum} (${matchCount} Wort-Matches)`);
+        return pageNum;
+      }
+    }
+
+    return null;
+  }, []);
 
   // Highlight von allen markierten Elementen entfernen
   const clearHighlight = useCallback(() => {
@@ -472,11 +544,20 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       clearHighlight();
       console.log('[Legal Lens] View switched to Text, clause sync via ClauseList');
     } else if (viewMode === 'pdf' && selectedClause) {
-      // Von Text zu PDF: Versuche Text in PDF zu highlighten (nach PDF-Load)
+      // Von Text zu PDF: Finde richtige Seite und navigiere dorthin
       console.log('[Legal Lens] View switched to PDF, will highlight clause:', selectedClause.id);
+
+      // ✅ Auto-Scroll zur richtigen Seite wenn Text-Index verfügbar
+      if (pdfTextIndexRef.current.size > 0) {
+        const targetPage = findPageForClause(selectedClause.text);
+        if (targetPage && targetPage !== pageNumber) {
+          console.log(`[Legal Lens] Auto-navigating to page ${targetPage} for clause`);
+          setPageNumber(targetPage);
+        }
+      }
       // PDF-Highlight passiert automatisch beim nächsten Render über syncPdfHighlight
     }
-  }, [viewMode, clearHighlight, selectedClause]);
+  }, [viewMode, clearHighlight, selectedClause, findPageForClause, pageNumber]);
 
   // ✅ FIX v2/v4: Robuste PDF-Text Synchronisation
   const syncPdfHighlightTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -504,6 +585,18 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         console.log('[Legal Lens] PDF sync: Skipping in timeout - user clicked in PDF');
         pdfClickActiveRef.current = false;
         return;
+      }
+
+      // ✅ Auto-Scroll zur richtigen Seite wenn nötig
+      if (pdfTextIndexRef.current.size > 0 && selectedClause) {
+        const targetPage = findPageForClause(selectedClause.text);
+        if (targetPage && targetPage !== pageNumber) {
+          console.log(`[Legal Lens] PDF sync: Auto-navigating to page ${targetPage}`);
+          setPageNumber(targetPage);
+          // Nach Seitenwechsel wird dieser Effect erneut ausgelöst (wegen pageNumber dependency)
+          // Daher hier abbrechen und beim nächsten Aufruf highlighten
+          return;
+        }
       }
 
       // Vorherige Highlights entfernen
@@ -602,7 +695,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         clearTimeout(syncPdfHighlightTimeoutRef.current);
       }
     };
-  }, [viewMode, selectedClause?.id, pdfUrl, pdfLoading, pageNumber, clearHighlight]);
+  // ✅ scale hinzugefügt: Nach Zoom muss Highlight neu angewendet werden
+  }, [viewMode, selectedClause, pdfUrl, pdfLoading, pageNumber, scale, clearHighlight, findPageForClause]);
 
   // ✅ FIX v3: Komplett überarbeiteter PDF Selection Handler
   // WICHTIG: KEINE Klausel-Matching mehr - das verursachte das "Springen"!
