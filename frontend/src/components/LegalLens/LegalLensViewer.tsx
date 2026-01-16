@@ -609,8 +609,19 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         return;
       }
 
-      const allSpans = Array.from(textLayer.querySelectorAll('span')) as HTMLElement[];
+      let allSpans = Array.from(textLayer.querySelectorAll('span')) as HTMLElement[];
       if (allSpans.length === 0) return;
+
+      // ✅ FIX: Sortiere Spans nach visueller Position (Lesereihenfolge)
+      // Nach Zoom können Spans in falscher DOM-Reihenfolge sein
+      allSpans = allSpans.sort((a, b) => {
+        const rectA = a.getBoundingClientRect();
+        const rectB = b.getBoundingClientRect();
+        // Erst nach Y (Zeile), dann nach X (Position in Zeile)
+        const yDiff = rectA.top - rectB.top;
+        if (Math.abs(yDiff) > 5) return yDiff;
+        return rectA.left - rectB.left;
+      });
 
       // ✅ Sammle gesamten Text und finde beste Übereinstimmung
       const clauseText = selectedClause.text.toLowerCase().normalize('NFC');
@@ -668,8 +679,10 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         return;
       }
 
-      // ✅ Finde alle Spans in diesem Bereich (ca. 200 Zeichen)
-      const matchEnd = Math.min(bestMatchIndex + 200, fullText.length);
+      // ✅ FIX: Verwende tatsächliche Klausel-Länge statt fester 200 Zeichen
+      // Füge etwas Puffer hinzu für Whitespace-Unterschiede
+      const clauseLength = Math.max(selectedClause.text.length, 50);
+      const matchEnd = Math.min(bestMatchIndex + clauseLength + 20, fullText.length);
       const matchingSpans: HTMLElement[] = [];
 
       for (const { span, start, end } of spanPositions) {
