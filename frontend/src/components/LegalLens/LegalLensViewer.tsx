@@ -838,7 +838,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       console.log('[Legal Lens] PDF highlight: Found best anchor at index', bestAnchorIndex, 'with score', bestScore);
 
       // Finde Start und Ende basierend auf Wort-Vorkommen
-      let firstMatchIdx = bestAnchorIndex;
+      const firstMatchIdx = bestAnchorIndex;
       let lastMatchIdx = bestAnchorIndex;
       const maxWindow = 40;
 
