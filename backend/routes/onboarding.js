@@ -72,57 +72,65 @@ router.get("/status", verifyToken, async (req, res) => {
       needsUpdate = true;
     }
 
+    // 🚀 PERFORMANCE: DB-Queries parallel ausführen statt sequentiell
+    // Nur Queries starten die wirklich benötigt werden
+    const needsContractCheck = !checklist.firstContractUploaded && contractsCollection;
+    const needsProfileCheck = !checklist.companyProfileComplete && companyProfilesCollection;
+    const needsAnalysisCheck = !checklist.firstAnalysisComplete && contractsCollection;
+
+    // Parallel ausführen - reduziert Latenz von 3x auf 1x
+    const [contractCount, companyProfile, analyzedCount] = await Promise.all([
+      needsContractCheck
+        ? contractsCollection.countDocuments({ userId: userId })
+        : Promise.resolve(0),
+      needsProfileCheck
+        ? companyProfilesCollection.findOne({ userId: userId }, { projection: { companyName: 1 } })
+        : Promise.resolve(null),
+      needsAnalysisCheck
+        ? contractsCollection.countDocuments({ userId: userId, analyzed: true })
+        : Promise.resolve(0)
+    ]);
+
     // ✅ firstContractUploaded: Prüfe ob User mindestens 1 Vertrag hat
-    if (!checklist.firstContractUploaded && contractsCollection) {
-      const contractCount = await contractsCollection.countDocuments({ userId: userId });
-      if (contractCount > 0) {
-        checklist.firstContractUploaded = true;
-        needsUpdate = true;
-        console.log(`🔄 [Onboarding Auto-Sync] firstContractUploaded = true für ${user.email} (${contractCount} Verträge)`);
-      }
+    if (needsContractCheck && contractCount > 0) {
+      checklist.firstContractUploaded = true;
+      needsUpdate = true;
+      console.log(`🔄 [Onboarding Auto-Sync] firstContractUploaded = true für ${user.email} (${contractCount} Verträge)`);
     }
 
     // ✅ companyProfileComplete: Prüfe ob Firmenprofil existiert und ausgefüllt ist
-    if (!checklist.companyProfileComplete && companyProfilesCollection) {
-      const profile = await companyProfilesCollection.findOne({ userId: userId });
-      if (profile && profile.companyName && profile.companyName.trim()) {
-        checklist.companyProfileComplete = true;
-        needsUpdate = true;
-        console.log(`🔄 [Onboarding Auto-Sync] companyProfileComplete = true für ${user.email}`);
-      }
+    if (needsProfileCheck && companyProfile && companyProfile.companyName && companyProfile.companyName.trim()) {
+      checklist.companyProfileComplete = true;
+      needsUpdate = true;
+      console.log(`🔄 [Onboarding Auto-Sync] companyProfileComplete = true für ${user.email}`);
     }
 
     // ✅ firstAnalysisComplete: Prüfe ob User mindestens 1 analysierten Vertrag hat
-    if (!checklist.firstAnalysisComplete && contractsCollection) {
-      const analyzedCount = await contractsCollection.countDocuments({
-        userId: userId,
-        analyzed: true
-      });
-      if (analyzedCount > 0) {
-        checklist.firstAnalysisComplete = true;
-        needsUpdate = true;
-        console.log(`🔄 [Onboarding Auto-Sync] firstAnalysisComplete = true für ${user.email} (${analyzedCount} Analysen)`);
-      }
+    if (needsAnalysisCheck && analyzedCount > 0) {
+      checklist.firstAnalysisComplete = true;
+      needsUpdate = true;
+      console.log(`🔄 [Onboarding Auto-Sync] firstAnalysisComplete = true für ${user.email} (${analyzedCount} Analysen)`);
     }
 
-    // 💾 Bei Änderungen: Checklist in DB aktualisieren (async, nicht blockierend)
+    // 💾 Bei Änderungen: Checklist in DB aktualisieren (mit await für Konsistenz)
     if (needsUpdate) {
-      usersCollection.updateOne(
-        { _id: userId },
-        {
-          $set: {
-            'onboarding.checklist': checklist,
-            updatedAt: new Date()
+      try {
+        await usersCollection.updateOne(
+          { _id: userId },
+          {
+            $set: {
+              'onboarding.checklist': checklist,
+              updatedAt: new Date()
+            }
           }
-        }
-      ).then(() => {
+        );
         console.log(`✅ [Onboarding Auto-Sync] Checklist aktualisiert für ${user.email}`);
-      }).catch(err => {
+        // Verwende aktualisierte Checklist für Response
+        onboarding = { ...onboarding, checklist };
+      } catch (err) {
         console.warn(`⚠️ [Onboarding Auto-Sync] Update fehlgeschlagen:`, err.message);
-      });
-
-      // Verwende aktualisierte Checklist für Response
-      onboarding = { ...onboarding, checklist };
+        // Bei Fehler: Originale Checklist beibehalten, nicht die aktualisierte
+      }
     }
 
     // Berechne Checklist-Progress
@@ -615,8 +623,9 @@ router.post("/reset-feature", verifyToken, async (req, res) => {
  * POST /api/onboarding/migrate-existing-users
  * Alle bestehenden User (vor Go-Live) als "completed" markieren
  * EINMALIG AUSFÜHREN!
+ * 🔒 Geschützt mit verifyToken - nur authentifizierte User können migrieren
  */
-router.post("/migrate-existing-users", async (req, res) => {
+router.post("/migrate-existing-users", verifyToken, async (req, res) => {
   try {
     console.log("🔄 Migration gestartet: Bestehende User auf onboarding.status = 'completed'...");
 
