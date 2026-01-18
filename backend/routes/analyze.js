@@ -249,6 +249,53 @@ const uploadToS3 = async (localFilePath, originalFilename, userId) => {
 };
 
 /**
+ * 🔧 FIX: Extract end_date from AI-analyzed importantDates
+ * AI analysis is more accurate than regex extraction for dates!
+ * If importantDates contains type='end_date', use that to update expiryDate
+ */
+const extractEndDateFromImportantDates = (importantDates) => {
+  if (!importantDates || !Array.isArray(importantDates)) {
+    return null;
+  }
+
+  // Find the end_date entry
+  const endDateEntry = importantDates.find(d => d.type === 'end_date');
+  if (!endDateEntry || !endDateEntry.date) {
+    return null;
+  }
+
+  try {
+    // Parse the date - handles formats like "2028-01-03", "03.01.2028", "3.1.2028"
+    let dateStr = endDateEntry.date;
+    let parsedDate;
+
+    // Try ISO format first (YYYY-MM-DD)
+    if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+      parsedDate = new Date(dateStr);
+    }
+    // German format (DD.MM.YYYY or D.M.YYYY)
+    else if (/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(dateStr)) {
+      const parts = dateStr.split('.');
+      parsedDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+    }
+    // Fallback: let Date parse it
+    else {
+      parsedDate = new Date(dateStr);
+    }
+
+    // Validate the date
+    if (parsedDate && !isNaN(parsedDate.getTime())) {
+      console.log(`🔧 [FIX] Extracted end_date from AI importantDates: ${parsedDate.toISOString()} (from "${dateStr}")`);
+      return parsedDate;
+    }
+  } catch (err) {
+    console.warn(`⚠️ [FIX] Failed to parse end_date from importantDates: ${endDateEntry.date}`, err.message);
+  }
+
+  return null;
+};
+
+/**
  * 📄 DYNAMIC FILE READING (AWS SDK v3) - UNCHANGED
  * Reads file from S3 if uploaded there, from local disk otherwise
  */
@@ -2687,6 +2734,15 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           importantDates: result.importantDates || [] // ✅ NEU: KI-extrahierte Datums für Kalender
         };
 
+        // 🔧 FIX: Override expiryDate from AI importantDates if available (more accurate than regex)
+        const aiEndDate = extractEndDateFromImportantDates(result.importantDates);
+        if (aiEndDate) {
+          console.log(`🔧 [${requestId}] Updating expiryDate from AI importantDates: ${updateData.expiryDate?.toISOString() || 'null'} → ${aiEndDate.toISOString()}`);
+          updateData.expiryDate = aiEndDate;
+          updateData.endDate = aiEndDate; // Also update endDate for consistency
+          updateData.expiryDateSource = 'ai_importantDates'; // Track the source
+        }
+
         // Add s3Key at top level if S3 upload
         if (storageInfo.s3Info) {
           updateData.s3Key = storageInfo.s3Info.key;
@@ -2808,20 +2864,24 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
                     .filter(c => c && c.text && typeof c.text === 'string' && c.text.trim().length > 0)
                     .map((clause, idx) => {
                       const riskAssessment = clauseParser.assessClauseRisk(clause.text);
+                      const analyzableCheck = clauseParser.detectNonAnalyzable(clause.text, clause.title);
                       return {
                         id: clause.id || `clause_pre_${allClauses.length + idx + 1}`,
                         number: clause.number || `${allClauses.length + idx + 1}`,
                         title: clause.title || null,
                         text: clause.text,
                         type: clause.type || 'paragraph',
-                        riskLevel: riskAssessment.level,
-                        riskScore: riskAssessment.score,
-                        riskKeywords: riskAssessment.keywords,
+                        riskLevel: analyzableCheck.nonAnalyzable ? 'none' : riskAssessment.level,
+                        riskScore: analyzableCheck.nonAnalyzable ? 0 : riskAssessment.score,
+                        riskKeywords: analyzableCheck.nonAnalyzable ? [] : riskAssessment.keywords,
                         riskIndicators: {
-                          level: riskAssessment.level,
-                          keywords: riskAssessment.keywords,
-                          score: riskAssessment.score
-                        }
+                          level: analyzableCheck.nonAnalyzable ? 'none' : riskAssessment.level,
+                          keywords: analyzableCheck.nonAnalyzable ? [] : riskAssessment.keywords,
+                          score: analyzableCheck.nonAnalyzable ? 0 : riskAssessment.score
+                        },
+                        nonAnalyzable: analyzableCheck.nonAnalyzable,
+                        nonAnalyzableReason: analyzableCheck.reason,
+                        clauseCategory: analyzableCheck.category
                       };
                     });
                   allClauses = [...allClauses, ...validClauses];
@@ -2833,10 +2893,11 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
               if (allClauses.length === 0) return;
 
+              const analyzableClauses = allClauses.filter(c => !c.nonAnalyzable);
               const riskSummary = {
-                high: allClauses.filter(c => c.riskLevel === 'high').length,
-                medium: allClauses.filter(c => c.riskLevel === 'medium').length,
-                low: allClauses.filter(c => c.riskLevel === 'low').length
+                high: analyzableClauses.filter(c => c.riskLevel === 'high').length,
+                medium: analyzableClauses.filter(c => c.riskLevel === 'medium').length,
+                low: analyzableClauses.filter(c => c.riskLevel === 'low').length
               };
 
               await contractsCollection.updateOne(
@@ -2917,11 +2978,24 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           fileHash
         );
 
+        // 🔧 FIX: Extract AI end date for new contracts too
+        const aiEndDateNew = extractEndDateFromImportantDates(result.importantDates);
+        if (aiEndDateNew) {
+          console.log(`🔧 [${requestId}] [NEW CONTRACT] Overriding expiryDate with AI importantDates: ${aiEndDateNew.toISOString()}`);
+        }
+
         await contractsCollection.updateOne(
           { _id: savedContract._id },
           {
             $set: {
               analysisId: inserted.insertedId,
+
+              // 🔧 FIX: Override expiryDate from AI importantDates if available (more accurate than regex)
+              ...(aiEndDateNew && {
+                expiryDate: aiEndDateNew,
+                endDate: aiEndDateNew,
+                expiryDateSource: 'ai_importantDates'
+              }),
 
               // Enhanced metadata
               documentType: validationResult.documentType,
@@ -3062,20 +3136,24 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
                   .filter(c => c && c.text && typeof c.text === 'string' && c.text.trim().length > 0)
                   .map((clause, idx) => {
                     const riskAssessment = clauseParser.assessClauseRisk(clause.text);
+                    const analyzableCheck = clauseParser.detectNonAnalyzable(clause.text, clause.title);
                     return {
                       id: clause.id || `clause_pre_${allClauses.length + idx + 1}`,
                       number: clause.number || `${allClauses.length + idx + 1}`,
                       title: clause.title || null,
                       text: clause.text,
                       type: clause.type || 'paragraph',
-                      riskLevel: riskAssessment.level,
-                      riskScore: riskAssessment.score,
-                      riskKeywords: riskAssessment.keywords,
+                      riskLevel: analyzableCheck.nonAnalyzable ? 'none' : riskAssessment.level,
+                      riskScore: analyzableCheck.nonAnalyzable ? 0 : riskAssessment.score,
+                      riskKeywords: analyzableCheck.nonAnalyzable ? [] : riskAssessment.keywords,
                       riskIndicators: {
-                        level: riskAssessment.level,
-                        keywords: riskAssessment.keywords,
-                        score: riskAssessment.score
-                      }
+                        level: analyzableCheck.nonAnalyzable ? 'none' : riskAssessment.level,
+                        keywords: analyzableCheck.nonAnalyzable ? [] : riskAssessment.keywords,
+                        score: analyzableCheck.nonAnalyzable ? 0 : riskAssessment.score
+                      },
+                      nonAnalyzable: analyzableCheck.nonAnalyzable,
+                      nonAnalyzableReason: analyzableCheck.reason,
+                      clauseCategory: analyzableCheck.category
                     };
                   });
                 allClauses = [...allClauses, ...validClauses];
@@ -3091,11 +3169,12 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
               return;
             }
 
-            // Risk Summary berechnen
+            // Risk Summary berechnen (nur analysierbare Klauseln zählen)
+            const analyzableClauses = allClauses.filter(c => !c.nonAnalyzable);
             const riskSummary = {
-              high: allClauses.filter(c => c.riskLevel === 'high').length,
-              medium: allClauses.filter(c => c.riskLevel === 'medium').length,
-              low: allClauses.filter(c => c.riskLevel === 'low').length
+              high: analyzableClauses.filter(c => c.riskLevel === 'high').length,
+              medium: analyzableClauses.filter(c => c.riskLevel === 'medium').length,
+              low: analyzableClauses.filter(c => c.riskLevel === 'low').length
             };
 
             // In DB speichern
