@@ -131,7 +131,7 @@ export const useCalendarStore = create<CalendarState>()(
             const pastDate = new Date();
             pastDate.setDate(pastDate.getDate() - 60);
             const futureDate = new Date();
-            futureDate.setDate(futureDate.getDate() + 365);
+            futureDate.setDate(futureDate.getDate() + 1095); // 3 Jahre in die Zukunft (für langfristige Verträge)
 
             const response = await axios.get<ApiResponse>('/api/calendar/events', {
               headers: { Authorization: `Bearer ${token}` },
