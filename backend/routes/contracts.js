@@ -53,6 +53,44 @@ try {
   S3_AVAILABLE = false;
 }
 
+/**
+ * 🔧 FIX: Extract end_date from AI-analyzed importantDates
+ * AI analysis is more accurate than regex extraction for dates!
+ */
+const extractEndDateFromImportantDates = (importantDates) => {
+  if (!importantDates || !Array.isArray(importantDates)) {
+    return null;
+  }
+
+  const endDateEntry = importantDates.find(d => d.type === 'end_date');
+  if (!endDateEntry || !endDateEntry.date) {
+    return null;
+  }
+
+  try {
+    let dateStr = endDateEntry.date;
+    let parsedDate;
+
+    if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+      parsedDate = new Date(dateStr);
+    } else if (/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(dateStr)) {
+      const parts = dateStr.split('.');
+      parsedDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+    } else {
+      parsedDate = new Date(dateStr);
+    }
+
+    if (parsedDate && !isNaN(parsedDate.getTime())) {
+      console.log(`🔧 [FIX] Extracted end_date from AI importantDates: ${parsedDate.toISOString()} (from "${dateStr}")`);
+      return parsedDate;
+    }
+  } catch (err) {
+    console.warn(`⚠️ [FIX] Failed to parse end_date: ${endDateEntry.date}`, err.message);
+  }
+
+  return null;
+};
+
 // ===== PUPPETEER FÜR AUTO-PDF =====
 let puppeteer;
 let chromium;
@@ -2225,6 +2263,24 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
       });
     }
 
+    // 🔧 FIX: Override extractedEndDate from AI importantDates if available (more accurate than regex)
+    const aiEndDate = extractEndDateFromImportantDates(analysisResult.importantDates);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (aiEndDate) {
+      console.log(`🔧 [${requestId}] Overriding extractedEndDate with AI importantDates: ${extractedEndDate || 'null'} → ${aiEndDate.toISOString()}`);
+      extractedEndDate = aiEndDate;
+      extractedEndDateConfidence = 95; // AI is more reliable
+      extractedDataSource = 'ai_importantDates';
+    } else if (extractedEndDate && new Date(extractedEndDate) < today) {
+      // 🛡️ PLAUSIBILITY CHECK: Regex date in past but AI found nothing - clear it!
+      console.warn(`⚠️ [${requestId}] PLAUSIBILITY CHECK: Regex expiryDate is in the past, but AI found no end_date. Clearing to prevent false "Beendet" status.`);
+      extractedEndDate = null;
+      extractedEndDateConfidence = 0;
+      extractedDataSource = 'cleared_implausible';
+    }
+
     // ===== UPDATE CONTRACT IN DATABASE =====
     console.log(`💾 [${requestId}] Saving V2 analysis results...`);
 
@@ -2254,7 +2310,9 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
 
     const updateData = {
       analyzed: true,
+      analyzedAt: new Date(), // 🔧 FIX: Zeitpunkt der Analyse für Status-Berechnung
       updatedAt: new Date(),
+      importantDates: analysisResult.importantDates || [], // 🔧 FIX: KI-extrahierte Daten speichern
       // 🚀 V2: New structured fields (stored directly for easy access)
       contractScore: analysisResult.contractScore || 0,
       laymanSummary: analysisResult.laymanSummary || [],

@@ -2739,7 +2739,8 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         // 🔧 FIX: Override expiryDate from AI importantDates if available (more accurate than regex)
         const aiEndDate = extractEndDateFromImportantDates(result.importantDates);
         if (aiEndDate) {
-          console.log(`🔧 [${requestId}] Updating expiryDate from AI importantDates: ${updateData.expiryDate?.toISOString() || 'null'} → ${aiEndDate.toISOString()}`);
+          const oldExpiry = updateData.expiryDate ? (updateData.expiryDate instanceof Date ? updateData.expiryDate.toISOString() : updateData.expiryDate) : 'null';
+          console.log(`🔧 [${requestId}] Updating expiryDate from AI importantDates: ${oldExpiry} → ${aiEndDate.toISOString()}`);
           updateData.expiryDate = aiEndDate;
           updateData.endDate = aiEndDate; // Also update endDate for consistency
           updateData.expiryDateSource = 'ai_importantDates'; // Track the source
