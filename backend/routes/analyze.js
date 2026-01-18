@@ -2718,6 +2718,8 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           substantialContent: true,
 
           // ✅ ANALYSE-FELDER direkt im Contract speichern für Contract Detail View
+          analyzed: true, // 🔧 FIX: Flag setzen damit Status "Aktiv" statt "Neu" angezeigt wird
+          analyzedAt: new Date(), // Zeitpunkt der Analyse
           contractScore: result.contractScore || 0,
           laymanSummary: result.laymanSummary || [],
           summary: result.summary || [],
@@ -3041,6 +3043,8 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
               substantialContent: true,
 
               // ✅ ANALYSE-FELDER direkt im Contract speichern für Contract Detail View
+              analyzed: true, // 🔧 FIX: Flag setzen damit Status "Aktiv" statt "Neu" angezeigt wird
+              analyzedAt: new Date(), // Zeitpunkt der Analyse
               contractScore: result.contractScore || 0,
               laymanSummary: result.laymanSummary || [],
               summary: result.summary || [],
