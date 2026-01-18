@@ -2580,6 +2580,21 @@ export default function Contracts() {
 
       // Bereits abgelaufen
       if (daysUntilExpiry < 0) {
+        // 🛡️ PLAUSIBILITY CHECK: Wenn Vertrag kürzlich hochgeladen wurde, aber expiryDate
+        // weit in der Vergangenheit liegt, ist das wahrscheinlich ein Fehler bei der Datumserkennung
+        // (z.B. Rechnungsdatum statt Vertragsende). Zeige dann "Aktiv" statt "Beendet".
+        const createdAt = contract.createdAt ? new Date(contract.createdAt) : null;
+        const daysSinceCreation = createdAt
+          ? Math.ceil((today.getTime() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24))
+          : 999;
+
+        // Wenn innerhalb der letzten 14 Tage hochgeladen UND expiryDate mehr als 60 Tage in der Vergangenheit
+        // → Vertraue dem Datum nicht, zeige "Aktiv"
+        if (daysSinceCreation <= 14 && daysUntilExpiry < -60) {
+          console.warn(`⚠️ [Status] Implausible expiryDate: Vertrag vor ${daysSinceCreation} Tagen hochgeladen, aber expiryDate ist ${Math.abs(daysUntilExpiry)} Tage in der Vergangenheit. Zeige "Aktiv" statt "Beendet".`);
+          return 'Aktiv';
+        }
+
         return 'Beendet';
       }
 
