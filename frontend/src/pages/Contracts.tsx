@@ -38,6 +38,7 @@ import InlineAnalysisProgress from "../components/InlineAnalysisProgress"; // �
 import { useCelebrationContext } from "../components/Celebration"; // 🎉 Celebration System
 import { SimpleTour } from "../components/Tour"; // 🎯 Simple Tour (zuverlässiger)
 import { triggerOnboardingSync } from "../hooks/useOnboarding"; // 🎓 Onboarding Sync
+import { useCalendarStore } from "../stores/calendarStore"; // 📅 Calendar Cache Invalidation
 
 interface Contract {
   _id: string;
@@ -243,6 +244,7 @@ export default function Contracts() {
   const location = useLocation();
   const navigate = useNavigate();
   const { celebrate } = useCelebrationContext(); // 🎉 Celebration System
+  const { clearCache: clearCalendarCache } = useCalendarStore(); // 📅 Calendar Cache Invalidation
 
   const [contracts, setContracts] = useState<Contract[]>([]);
   // 🚀 OPTIMIERT: contracts State entfernt - war redundant da Backend bereits filtert
@@ -1994,6 +1996,10 @@ export default function Contracts() {
       // ✅ Refresh contracts list
       await fetchContracts();
 
+      // 📅 Invalidiere Kalender-Cache - neue Events wurden generiert!
+      clearCalendarCache();
+      console.log("📅 Calendar cache cleared after batch analysis");
+
       // ✅ WECHSEL zur Upload-Seite - zeigt SOFORT die Analyse-Ergebnisse!
       setActiveSection('upload');
 
@@ -2082,6 +2088,10 @@ export default function Contracts() {
 
       if (data.success) {
         console.log("✅ Analysis successful for existing contract");
+
+        // 📅 Invalidiere Kalender-Cache - neue Events wurden generiert!
+        clearCalendarCache();
+        console.log("📅 Calendar cache cleared - new events will be fetched");
 
         // ✅ Silent Refresh - ohne Loading-Skeleton (damit UI nicht springt)
         let refreshedContracts = await silentRefreshContracts();
@@ -2291,6 +2301,9 @@ export default function Contracts() {
               : item
           ));
           console.log(`✅ Analyse erfolgreich: ${fileItem.file.name}`);
+
+          // 📅 Invalidiere Kalender-Cache - neue Events wurden generiert!
+          clearCalendarCache();
         } 
         // ✅ VERBESSERT: Duplikat erkannt - mit verbesserter Info
         else if (result?.duplicate) {
@@ -2395,11 +2408,14 @@ export default function Contracts() {
       ) as AnalysisResult;
 
       if (result?.success) {
-        setUploadFiles(prev => prev.map(item => 
-          item.id === fileId 
+        setUploadFiles(prev => prev.map(item =>
+          item.id === fileId
             ? { ...item, status: 'completed', progress: 100, result }
             : item
         ));
+
+        // 📅 Invalidiere Kalender-Cache - neue Events wurden generiert!
+        clearCalendarCache();
       } else if (result?.duplicate) {
         setUploadFiles(prev => prev.map(item => 
           item.id === fileId 
