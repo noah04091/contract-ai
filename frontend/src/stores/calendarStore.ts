@@ -267,3 +267,4 @@ export const useCalendarStore = create<CalendarState>()(
 );
 
 export default useCalendarStore;
+// Deployment trigger: So, 18. Jan 2026 19:38:41
