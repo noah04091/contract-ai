@@ -2741,6 +2741,18 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           updateData.expiryDate = aiEndDate;
           updateData.endDate = aiEndDate; // Also update endDate for consistency
           updateData.expiryDateSource = 'ai_importantDates'; // Track the source
+        } else {
+          // 🛡️ PLAUSIBILITY CHECK: If regex date is in the past but AI found no end_date,
+          // the regex probably found the wrong date (e.g., invoice date). Clear it!
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+
+          if (updateData.expiryDate && new Date(updateData.expiryDate) < today) {
+            console.warn(`⚠️ [${requestId}] PLAUSIBILITY CHECK: Regex expiryDate ${updateData.expiryDate} is in the past, but AI found no end_date. Clearing to prevent false "Beendet" status.`);
+            updateData.expiryDate = null;
+            updateData.endDate = null;
+            updateData.expiryDateSource = 'cleared_implausible';
+          }
         }
 
         // Add s3Key at top level if S3 upload
@@ -2980,8 +2992,27 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
         // 🔧 FIX: Extract AI end date for new contracts too
         const aiEndDateNew = extractEndDateFromImportantDates(result.importantDates);
+
+        // 🛡️ PLAUSIBILITY CHECK for new contracts
+        let expiryDateUpdate = {};
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
         if (aiEndDateNew) {
           console.log(`🔧 [${requestId}] [NEW CONTRACT] Overriding expiryDate with AI importantDates: ${aiEndDateNew.toISOString()}`);
+          expiryDateUpdate = {
+            expiryDate: aiEndDateNew,
+            endDate: aiEndDateNew,
+            expiryDateSource: 'ai_importantDates'
+          };
+        } else if (extractedEndDate && new Date(extractedEndDate) < today) {
+          // Regex found a date in the past but AI found nothing - clear it!
+          console.warn(`⚠️ [${requestId}] [NEW CONTRACT] PLAUSIBILITY CHECK: Regex expiryDate is in the past, but AI found no end_date. Clearing to prevent false "Beendet" status.`);
+          expiryDateUpdate = {
+            expiryDate: null,
+            endDate: null,
+            expiryDateSource: 'cleared_implausible'
+          };
         }
 
         await contractsCollection.updateOne(
@@ -2990,12 +3021,8 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
             $set: {
               analysisId: inserted.insertedId,
 
-              // 🔧 FIX: Override expiryDate from AI importantDates if available (more accurate than regex)
-              ...(aiEndDateNew && {
-                expiryDate: aiEndDateNew,
-                endDate: aiEndDateNew,
-                expiryDateSource: 'ai_importantDates'
-              }),
+              // 🔧 FIX: Override expiryDate from AI importantDates OR clear if implausible
+              ...expiryDateUpdate,
 
               // Enhanced metadata
               documentType: validationResult.documentType,
