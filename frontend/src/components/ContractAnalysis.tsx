@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import styles from "./ContractAnalysis.module.css";
 import { uploadAndAnalyze, checkAnalyzeHealth } from "../utils/api";
+import { useCalendarStore } from "../stores/calendarStore"; // 📅 Calendar Cache Invalidation
 
 interface ContractAnalysisProps {
   file?: File; // Optional - für Upload-Flow
@@ -140,6 +141,7 @@ export default function ContractAnalysis({ file, contractName, onReset, onNaviga
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const navigate = useNavigate();
+  const { clearCache: clearCalendarCache } = useCalendarStore(); // 📅 Calendar Cache Invalidation
   const analysisResultRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -329,6 +331,10 @@ export default function ContractAnalysis({ file, contractName, onReset, onNaviga
             console.log("⚡ Starte Legal Pulse Polling für Contract:", analysisResult.originalContractId);
             startLegalPulsePolling(analysisResult.originalContractId);
           }
+
+          // 📅 Invalidiere Kalender-Cache - neue Events wurden generiert!
+          clearCalendarCache();
+          console.log("📅 Calendar cache cleared - new events will be fetched");
 
           return;
         }
