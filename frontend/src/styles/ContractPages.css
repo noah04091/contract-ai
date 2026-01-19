@@ -11,6 +11,11 @@
     padding-bottom: 60px;
   }
 
+  /* Wenn Premium Banner sichtbar ist - min-height anpassen */
+  .contract-page.with-premium-banner {
+    min-height: calc(100vh - 60px);
+  }
+
   .contract-page-bg {
     position: absolute;
     top: 0;

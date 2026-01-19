@@ -409,7 +409,7 @@ const BetterContracts: React.FC = () => {
         />
       )}
 
-      <div className="contract-page">
+      <div className={`contract-page ${!isPremium ? 'with-premium-banner' : ''}`}>
 
         {/* WICHTIG: Dynamische Container-Breite für Step 3 */}
         <div className={`contract-container ${step === 3 && results ? 'has-results' : ''}`} style={step === 3 && results ? { maxWidth: '1200px' } : {}}>
