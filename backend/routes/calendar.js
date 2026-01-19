@@ -9,6 +9,50 @@ const { generateICSFeed, generateCalendarLinks } = require("../utils/icsGenerato
 
 const router = express.Router();
 
+// ============================================
+// 🔒 SUBSCRIPTION CHECK HELPER
+// ============================================
+
+/**
+ * Pläne mit vollem Kalender-Zugriff (erstellen, bearbeiten, löschen, Benachrichtigungen)
+ * Free User können nur Events ANSEHEN
+ */
+const CALENDAR_FULL_ACCESS_PLANS = ["business", "enterprise", "legendary"];
+
+/**
+ * Prüft ob User vollen Kalender-Zugriff hat
+ * @param {Object} db - MongoDB Datenbank
+ * @param {string} userId - User ID
+ * @returns {Promise<{hasAccess: boolean, plan: string, message: string}>}
+ */
+async function checkCalendarAccess(db, userId) {
+  try {
+    const user = await db.collection("users").findOne(
+      { _id: new ObjectId(userId) },
+      { projection: { subscriptionPlan: 1, subscriptionActive: 1 } }
+    );
+
+    if (!user) {
+      return { hasAccess: false, plan: null, message: "Benutzer nicht gefunden" };
+    }
+
+    const plan = user.subscriptionPlan || "free";
+    const isActive = user.subscriptionActive !== false; // Default true für Legacy
+    const hasAccess = isActive && CALENDAR_FULL_ACCESS_PLANS.includes(plan);
+
+    return {
+      hasAccess,
+      plan,
+      message: hasAccess
+        ? "Vollzugriff"
+        : "Kalender-Bearbeitung erfordert ein Business- oder Enterprise-Abo"
+    };
+  } catch (error) {
+    console.error("❌ Error checking calendar access:", error);
+    return { hasAccess: false, plan: null, message: "Fehler bei der Berechtigungsprüfung" };
+  }
+}
+
 /**
  * Helper: Generiert alle Instanzen eines wiederkehrenden Events im Zeitraum
  */
@@ -150,12 +194,26 @@ router.get("/events", verifyToken, async (req, res) => {
       masterEventId: event.masterEventId?.toString() || null
     }));
 
+    // 🔒 Prüfe Zugriffsrechte für Frontend UI-State
+    const access = await checkCalendarAccess(req.db, req.user.userId);
+
     res.json({
       success: true,
       events: transformedEvents,
-      count: transformedEvents.length
+      count: transformedEvents.length,
+      // 🔒 Access Info für Frontend
+      access: {
+        canCreate: access.hasAccess,
+        canEdit: access.hasAccess,
+        canDelete: access.hasAccess,
+        canSnooze: access.hasAccess,
+        canDismiss: access.hasAccess,
+        plan: access.plan,
+        upgradeRequired: !access.hasAccess,
+        requiredPlans: CALENDAR_FULL_ACCESS_PLANS
+      }
     });
-    
+
   } catch (error) {
     console.error("❌ Error fetching calendar events:", error);
     res.status(500).json({ 
@@ -354,9 +412,22 @@ router.patch("/events/:eventId", verifyToken, async (req, res) => {
 });
 
 // POST /api/calendar/events - Neues manuelles Event erstellen
+// 🔒 Erfordert Business/Enterprise Abo
 router.post("/events", verifyToken, async (req, res) => {
   try {
     const userId = new ObjectId(req.user.userId);
+
+    // 🔒 Subscription Check - Free User können keine Events erstellen
+    const access = await checkCalendarAccess(req.db, req.user.userId);
+    if (!access.hasAccess) {
+      return res.status(403).json({
+        success: false,
+        error: access.message,
+        upgradeRequired: true,
+        requiredPlans: CALENDAR_FULL_ACCESS_PLANS
+      });
+    }
+
     const { contractId, title, description, date, type, severity, notes, recurrence } = req.body;
 
     // Validate required fields
@@ -447,10 +518,22 @@ router.post("/events", verifyToken, async (req, res) => {
 });
 
 // DELETE /api/calendar/events/:eventId - Event löschen
+// 🔒 Erfordert Business/Enterprise Abo
 router.delete("/events/:eventId", verifyToken, async (req, res) => {
   try {
     const eventId = new ObjectId(req.params.eventId);
     const userId = new ObjectId(req.user.userId);
+
+    // 🔒 Subscription Check - Free User können keine Events löschen
+    const access = await checkCalendarAccess(req.db, req.user.userId);
+    if (!access.hasAccess) {
+      return res.status(403).json({
+        success: false,
+        error: access.message,
+        upgradeRequired: true,
+        requiredPlans: CALENDAR_FULL_ACCESS_PLANS
+      });
+    }
 
     // Verify event ownership
     const event = await req.db.collection("contract_events").findOne({
@@ -628,24 +711,39 @@ function generateEmptyICS(message) {
 }
 
 // POST /api/calendar/quick-action - Quick Actions aus dem Kalender
+// 🔒 Bestimmte Aktionen erfordern Business/Enterprise Abo
 router.post("/quick-action", verifyToken, async (req, res) => {
   try {
     const { eventId, action, data } = req.body;
     const userId = new ObjectId(req.user.userId);
-    
+
+    // 🔒 Aktionen die Daten ändern erfordern Business/Enterprise
+    const RESTRICTED_ACTIONS = ["snooze", "dismiss", "cancel", "complete", "edit"];
+    if (RESTRICTED_ACTIONS.includes(action)) {
+      const access = await checkCalendarAccess(req.db, req.user.userId);
+      if (!access.hasAccess) {
+        return res.status(403).json({
+          success: false,
+          error: access.message,
+          upgradeRequired: true,
+          requiredPlans: CALENDAR_FULL_ACCESS_PLANS
+        });
+      }
+    }
+
     // Verify event ownership
     const event = await req.db.collection("contract_events").findOne({
       _id: new ObjectId(eventId),
       userId
     });
-    
+
     if (!event) {
-      return res.status(404).json({ 
-        success: false, 
-        error: "Ereignis nicht gefunden" 
+      return res.status(404).json({
+        success: false,
+        error: "Ereignis nicht gefunden"
       });
     }
-    
+
     let result = {};
     
     switch (action) {
@@ -984,9 +1082,9 @@ router.get("/email-preferences", verifyToken, async (req, res) => {
       });
     }
 
-    // Digest-Modus ist für alle zahlenden User verfügbar (Premium, Business, Enterprise, Legendary)
-    const paidPlans = ["premium", "business", "enterprise", "legendary"];
-    const isPremiumOrHigher = user.subscriptionActive && paidPlans.includes(user.subscriptionPlan);
+    // 🔒 E-Mail Digest ist nur für Business/Enterprise verfügbar
+    const hasFullAccess = user.subscriptionActive && CALENDAR_FULL_ACCESS_PLANS.includes(user.subscriptionPlan);
+    const isPremiumOrHigher = hasFullAccess; // Alias für Abwärtskompatibilität
 
     res.json({
       success: true,
@@ -1021,17 +1119,15 @@ router.put("/email-preferences", verifyToken, async (req, res) => {
       });
     }
 
-    // Check subscription for digest modes
+    // 🔒 Check subscription for digest modes (Business/Enterprise only)
     if (emailDigestMode !== "instant") {
-      const user = await req.db.collection("users").findOne(
-        { _id: userId },
-        { projection: { subscriptionPlan: 1 } }
-      );
-
-      if (!user || user.subscriptionPlan === "free") {
+      const access = await checkCalendarAccess(req.db, req.user.userId);
+      if (!access.hasAccess) {
         return res.status(403).json({
           success: false,
-          error: "Digest-Modus erfordert ein Premium-Abo oder höher"
+          error: "E-Mail Digest erfordert ein Business- oder Enterprise-Abo",
+          upgradeRequired: true,
+          requiredPlans: CALENDAR_FULL_ACCESS_PLANS
         });
       }
     }
