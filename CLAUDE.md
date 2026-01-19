@@ -97,3 +97,32 @@ Required environment variables:
 - Automatic deadline extraction from contracts
 - Cron jobs for reminder notifications
 - ICS file generation for calendar imports
+
+## Deployment Process
+
+**WICHTIG: Bei JEDEM Deploy IMMER alle drei Plattformen deployen!**
+
+### 1. GitHub (Code)
+```bash
+git add .
+git commit -m "Commit message"
+git push origin main
+```
+
+### 2. Vercel (Frontend)
+```bash
+cd frontend
+npx vercel --prod
+```
+Frontend URL: https://contract-ai.de
+
+### 3. Render (Backend)
+- Backend deployed automatisch bei git push auf main
+- Falls manuell nötig: https://dashboard.render.com
+- Backend URL: https://api.contract-ai.de
+
+### Vollständiger Deploy-Befehl
+```bash
+# Aus dem Root-Verzeichnis:
+git add . && git commit -m "message" && git push origin main && cd frontend && npx vercel --prod && cd ..
+```
