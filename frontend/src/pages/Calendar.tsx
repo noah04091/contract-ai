@@ -2462,7 +2462,8 @@ export default function CalendarPage() {
     dismissEvent,
     snoozeEvent,
     updateEvent,
-    removeEvent
+    removeEvent,
+    access // 🔒 Access Control vom Backend
   } = useCalendarStore();
 
   // ===== TOAST NOTIFICATIONS =====
@@ -2491,6 +2492,10 @@ export default function CalendarPage() {
   const [showSnoozeModal, setShowSnoozeModal] = useState(false);
   const [snoozeEventId, setSnoozeEventId] = useState<string | null>(null);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
+
+  // 🔒 UPGRADE MODAL STATE
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeAction, setUpgradeAction] = useState<string>(''); // Welche Aktion wurde versucht
 
   // ===== MOBILE STATE =====
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -2561,6 +2566,22 @@ export default function CalendarPage() {
 
   // Handle Quick Action - mit optimistischen Updates!
   const handleQuickAction = async (action: string, eventId: string, snoozeDays?: number) => {
+    // 🔒 Access Check für eingeschränkte Aktionen
+    const restrictedActions = ["snooze", "dismiss", "delete", "edit"];
+    if (restrictedActions.includes(action)) {
+      if (access && !access.canSnooze) {
+        const actionLabels: Record<string, string> = {
+          snooze: "Ereignisse verschieben",
+          dismiss: "Ereignisse ausblenden",
+          delete: "Ereignisse löschen",
+          edit: "Ereignisse bearbeiten"
+        };
+        setUpgradeAction(actionLabels[action] || action);
+        setShowUpgradeModal(true);
+        return;
+      }
+    }
+
     // If snooze action without days, open the snooze modal
     if (action === "snooze" && !snoozeDays) {
       setSnoozeEventId(eventId);
@@ -2760,7 +2781,15 @@ export default function CalendarPage() {
             <div className="header-actions">
               <button
                 className="btn btn-primary"
-                onClick={() => setShowCreateEventModal(new Date())}
+                onClick={() => {
+                  // 🔒 Access Check - Free User bekommen Upgrade-Hinweis
+                  if (access && !access.canCreate) {
+                    setUpgradeAction('Ereignisse erstellen');
+                    setShowUpgradeModal(true);
+                    return;
+                  }
+                  setShowCreateEventModal(new Date());
+                }}
                 title="Ereignis erstellen"
                 data-tour="calendar-create"
               >
@@ -2855,7 +2884,13 @@ export default function CalendarPage() {
                     const dayEvents = filteredEvents.filter(e => e.date && e.date.split('T')[0] === dateStr);
 
                     if (dayEvents.length === 0) {
-                      // No events - show create event modal
+                      // No events - show create event modal (with access check)
+                      // 🔒 Access Check - Free User bekommen Upgrade-Hinweis
+                      if (access && !access.canCreate) {
+                        setUpgradeAction('Ereignisse erstellen');
+                        setShowUpgradeModal(true);
+                        return;
+                      }
                       setShowCreateEventModal(date);
                     } else if (dayEvents.length === 1) {
                       // Single event - show quick actions (no pagination)
@@ -3330,6 +3365,153 @@ export default function CalendarPage() {
               handleQuickAction("snooze", snoozeEventId, days);
             }}
           />
+        )}
+      </AnimatePresence>
+
+      {/* 🔒 Upgrade Modal für Free User */}
+      <AnimatePresence>
+        {showUpgradeModal && (
+          <motion.div
+            className="modal-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowUpgradeModal(false)}
+          >
+            <motion.div
+              className="premium-modal upgrade-modal"
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                borderRadius: '20px',
+                padding: '32px',
+                maxWidth: '420px',
+                width: '90%',
+                textAlign: 'center',
+                border: '1px solid rgba(255,255,255,0.1)',
+                boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)'
+              }}
+            >
+              <button
+                onClick={() => setShowUpgradeModal(false)}
+                style={{
+                  position: 'absolute',
+                  top: '16px',
+                  right: '16px',
+                  background: 'rgba(255,255,255,0.1)',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '8px',
+                  cursor: 'pointer',
+                  color: 'rgba(255,255,255,0.6)'
+                }}
+              >
+                <X size={20} />
+              </button>
+
+              <div style={{
+                width: '80px',
+                height: '80px',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 24px'
+              }}>
+                <Sparkles size={36} color="white" />
+              </div>
+
+              <h2 style={{
+                fontSize: '24px',
+                fontWeight: '700',
+                color: 'white',
+                marginBottom: '12px'
+              }}>
+                Premium-Feature
+              </h2>
+
+              <p style={{
+                color: 'rgba(255,255,255,0.7)',
+                fontSize: '16px',
+                lineHeight: '1.6',
+                marginBottom: '24px'
+              }}>
+                <strong style={{ color: 'white' }}>{upgradeAction}</strong> ist nur mit einem
+                <span style={{ color: '#667eea', fontWeight: '600' }}> Business</span> oder
+                <span style={{ color: '#764ba2', fontWeight: '600' }}> Enterprise</span> Abo verfügbar.
+              </p>
+
+              <div style={{
+                background: 'rgba(255,255,255,0.05)',
+                borderRadius: '12px',
+                padding: '16px',
+                marginBottom: '24px'
+              }}>
+                <p style={{
+                  color: 'rgba(255,255,255,0.6)',
+                  fontSize: '14px',
+                  margin: 0
+                }}>
+                  Mit einem Upgrade erhältst du vollen Zugriff auf alle Kalender-Features:
+                </p>
+                <ul style={{
+                  color: 'rgba(255,255,255,0.8)',
+                  fontSize: '14px',
+                  textAlign: 'left',
+                  margin: '12px 0 0 0',
+                  paddingLeft: '20px'
+                }}>
+                  <li>Eigene Ereignisse erstellen</li>
+                  <li>Erinnerungen verschieben & ausblenden</li>
+                  <li>E-Mail Benachrichtigungen</li>
+                </ul>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button
+                  onClick={() => setShowUpgradeModal(false)}
+                  style={{
+                    flex: 1,
+                    padding: '14px 20px',
+                    background: 'rgba(255,255,255,0.1)',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    borderRadius: '12px',
+                    color: 'white',
+                    fontSize: '15px',
+                    fontWeight: '500',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Später
+                </button>
+                <button
+                  onClick={() => window.location.href = '/subscribe'}
+                  style={{
+                    flex: 1,
+                    padding: '14px 20px',
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    border: 'none',
+                    borderRadius: '12px',
+                    color: 'white',
+                    fontSize: '15px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  Upgrade
+                  <ArrowRight size={18} />
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
 

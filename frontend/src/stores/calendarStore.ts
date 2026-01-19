@@ -7,11 +7,24 @@ import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import axios from 'axios';
 
+// 🔒 Calendar Access Info (vom Backend)
+export interface CalendarAccess {
+  canCreate: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  canSnooze: boolean;
+  canDismiss: boolean;
+  plan: string;
+  upgradeRequired: boolean;
+  requiredPlans: string[];
+}
+
 // API Response Type
 interface ApiResponse {
   success: boolean;
   events?: CalendarEvent[];
   message?: string;
+  access?: CalendarAccess;
 }
 
 // ============================================
@@ -57,6 +70,9 @@ interface CalendarState {
   lastFetched: number | null;
   cachedUserId: string | null;
 
+  // 🔒 Access Control (vom Backend)
+  access: CalendarAccess | null;
+
   // UI State
   loading: boolean;
   error: string | null;
@@ -75,6 +91,7 @@ interface CalendarState {
 
   // Helpers
   isCacheValid: () => boolean;
+  hasFullAccess: () => boolean;
 }
 
 // ============================================
@@ -89,9 +106,16 @@ export const useCalendarStore = create<CalendarState>()(
         events: [],
         lastFetched: null,
         cachedUserId: null,
+        access: null, // 🔒 Access wird beim ersten Fetch geladen
         loading: false,
         error: null,
         cacheMaxAge: 5 * 60 * 1000, // 5 minutes
+
+        // 🔒 Prüft ob User vollen Kalender-Zugriff hat
+        hasFullAccess: () => {
+          const { access } = get();
+          return access?.canCreate === true;
+        },
 
         // Check if cache is still valid (also checks if user changed)
         isCacheValid: () => {
@@ -143,10 +167,12 @@ export const useCalendarStore = create<CalendarState>()(
 
             if (response.data.success && response.data.events) {
               console.log('[CalendarStore] Events loaded:', response.data.events.length);
+              console.log('[CalendarStore] Access:', response.data.access);
               set({
                 events: response.data.events,
                 lastFetched: Date.now(),
                 cachedUserId: getUserIdFromToken(),
+                access: response.data.access || null, // 🔒 Access Info speichern
                 loading: false,
                 error: null
               });
@@ -254,11 +280,12 @@ export const useCalendarStore = create<CalendarState>()(
       }),
       {
         name: 'calendar-store',
-        // Only persist events, lastFetched, and cachedUserId (not loading state)
+        // Only persist events, lastFetched, cachedUserId, and access (not loading state)
         partialize: (state) => ({
           events: state.events,
           lastFetched: state.lastFetched,
-          cachedUserId: state.cachedUserId
+          cachedUserId: state.cachedUserId,
+          access: state.access // 🔒 Access auch persistieren
         })
       }
     ),
