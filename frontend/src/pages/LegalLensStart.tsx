@@ -6,9 +6,12 @@ import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
   Search, Upload, FileText, ChevronRight, Loader, AlertCircle,
-  Eye, Scale, Lightbulb
+  Eye, Scale, Lightbulb, Lock, Sparkles, ArrowRight
 } from 'lucide-react';
 import styles from '../styles/LegalLensStart.module.css';
+
+// Plans mit vollem Legal Lens Zugriff
+const LEGAL_LENS_ACCESS_PLANS = ['business', 'enterprise', 'legendary'];
 
 interface Contract {
   _id: string;
@@ -32,6 +35,11 @@ const LegalLensStart = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [userPlan, setUserPlan] = useState<string>('free');
+  const [planLoading, setPlanLoading] = useState(true);
+
+  // Prüfen ob User Zugriff hat
+  const hasAccess = LEGAL_LENS_ACCESS_PLANS.includes(userPlan);
 
   const getApiUrl = () => {
     if (import.meta.env.VITE_API_URL) {
@@ -43,6 +51,29 @@ const LegalLensStart = () => {
     }
     return 'https://api.contract-ai.de';
   };
+
+  // User Plan laden
+  useEffect(() => {
+    const fetchUserPlan = async () => {
+      try {
+        const apiUrl = getApiUrl();
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${apiUrl}/api/auth/me`, {
+          credentials: 'include',
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setUserPlan(data.subscriptionPlan || data.plan || 'free');
+        }
+      } catch (err) {
+        console.error('[Legal Lens] Error fetching user plan:', err);
+      } finally {
+        setPlanLoading(false);
+      }
+    };
+    fetchUserPlan();
+  }, []);
 
   useEffect(() => {
     const fetchContracts = async () => {
@@ -166,7 +197,122 @@ const LegalLensStart = () => {
         <meta name="description" content="Analysieren Sie Ihre Verträge interaktiv mit KI" />
       </Helmet>
 
-      <div className={styles.page}>
+      <div className={styles.page} style={{ position: 'relative' }}>
+        {/* 🔒 Premium Overlay für Free User */}
+        {!planLoading && !hasAccess && (
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(255, 255, 255, 0.85)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}>
+            <div style={{
+              background: 'white',
+              borderRadius: '20px',
+              padding: '40px',
+              maxWidth: '480px',
+              width: '100%',
+              textAlign: 'center',
+              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.15)',
+              border: '1px solid #e5e7eb'
+            }}>
+              <div style={{
+                width: '80px',
+                height: '80px',
+                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 24px'
+              }}>
+                <Lock size={36} color="white" />
+              </div>
+
+              <h2 style={{
+                fontSize: '24px',
+                fontWeight: '700',
+                color: '#1f2937',
+                marginBottom: '12px'
+              }}>
+                Premium-Feature
+              </h2>
+
+              <p style={{
+                color: '#6b7280',
+                fontSize: '16px',
+                lineHeight: '1.6',
+                marginBottom: '24px'
+              }}>
+                <strong style={{ color: '#1f2937' }}>Legal Lens</strong> ist nur mit einem
+                <span style={{ color: '#3b82f6', fontWeight: '600' }}> Business</span> oder
+                <span style={{ color: '#2563eb', fontWeight: '600' }}> Enterprise</span> Abo verfügbar.
+              </p>
+
+              <div style={{
+                background: '#f8fafc',
+                borderRadius: '12px',
+                padding: '16px',
+                marginBottom: '24px',
+                border: '1px solid #e2e8f0'
+              }}>
+                <p style={{
+                  color: '#64748b',
+                  fontSize: '14px',
+                  margin: 0,
+                  marginBottom: '12px'
+                }}>
+                  Mit Legal Lens erhältst du:
+                </p>
+                <ul style={{
+                  color: '#475569',
+                  fontSize: '14px',
+                  textAlign: 'left',
+                  margin: 0,
+                  paddingLeft: '20px'
+                }}>
+                  <li>Interaktive Vertragsanalyse mit 4 Perspektiven</li>
+                  <li>Detaillierte Risikobewertung jeder Klausel</li>
+                  <li>Alternative Formulierungsvorschläge</li>
+                  <li>PDF-Sync mit Klausel-Highlighting</li>
+                </ul>
+              </div>
+
+              <button
+                onClick={() => navigate('/subscribe')}
+                style={{
+                  width: '100%',
+                  padding: '14px 24px',
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                  border: 'none',
+                  borderRadius: '12px',
+                  color: 'white',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+                }}
+              >
+                <Sparkles size={18} />
+                Jetzt upgraden
+                <ArrowRight size={18} />
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className={styles.container}>
           {/* Header Row */}
           <header className={styles.headerRow}>

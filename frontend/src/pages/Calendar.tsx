@@ -2808,7 +2808,16 @@ export default function CalendarPage() {
               )}
               <button
                 className="btn btn-secondary"
-                onClick={() => setShowSyncModal(true)}
+                onClick={() => {
+                  // Kalender-Sync nur für Enterprise User
+                  const isEnterprise = access?.plan === 'enterprise' || access?.plan === 'legendary';
+                  if (!isEnterprise) {
+                    setUpgradeAction('Kalender-Synchronisierung');
+                    setShowUpgradeModal(true);
+                    return;
+                  }
+                  setShowSyncModal(true);
+                }}
                 title="Kalender Sync"
               >
                 <Link2 size={18} />
@@ -3453,8 +3462,14 @@ export default function CalendarPage() {
                 marginBottom: '24px'
               }}>
                 <strong style={{ color: '#1f2937' }}>{upgradeAction}</strong> ist nur mit einem
-                <span style={{ color: '#3b82f6', fontWeight: '600' }}> Business</span> oder
-                <span style={{ color: '#2563eb', fontWeight: '600' }}> Enterprise</span> Abo verfügbar.
+                {upgradeAction === 'Kalender-Synchronisierung' ? (
+                  <span style={{ color: '#2563eb', fontWeight: '600' }}> Enterprise</span>
+                ) : (
+                  <>
+                    <span style={{ color: '#3b82f6', fontWeight: '600' }}> Business</span> oder
+                    <span style={{ color: '#2563eb', fontWeight: '600' }}> Enterprise</span>
+                  </>
+                )} Abo verfügbar.
               </p>
 
               <div style={{
@@ -3469,7 +3484,9 @@ export default function CalendarPage() {
                   fontSize: '14px',
                   margin: 0
                 }}>
-                  Mit einem Upgrade erhältst du vollen Zugriff auf alle Kalender-Features:
+                  {upgradeAction === 'Kalender-Synchronisierung'
+                    ? 'Mit der Kalender-Synchronisierung erhältst du:'
+                    : 'Mit einem Upgrade erhältst du vollen Zugriff auf alle Kalender-Features:'}
                 </p>
                 <ul style={{
                   color: '#475569',
@@ -3478,9 +3495,20 @@ export default function CalendarPage() {
                   margin: '12px 0 0 0',
                   paddingLeft: '20px'
                 }}>
-                  <li>Eigene Ereignisse erstellen</li>
-                  <li>Erinnerungen verschieben & ausblenden</li>
-                  <li>E-Mail Benachrichtigungen</li>
+                  {upgradeAction === 'Kalender-Synchronisierung' ? (
+                    <>
+                      <li>Automatische Synchronisierung mit Google Kalender</li>
+                      <li>Synchronisierung mit Outlook / Microsoft 365</li>
+                      <li>Apple Kalender Integration</li>
+                      <li>ICS-Export für alle Kalender-Apps</li>
+                    </>
+                  ) : (
+                    <>
+                      <li>Eigene Ereignisse erstellen</li>
+                      <li>Erinnerungen verschieben & ausblenden</li>
+                      <li>E-Mail Benachrichtigungen</li>
+                    </>
+                  )}
                 </ul>
               </div>
 
