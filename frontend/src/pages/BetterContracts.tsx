@@ -400,9 +400,17 @@ const BetterContracts: React.FC = () => {
         <meta name="twitter:description" content="Finde automatisch die besten Vertragsalternativen mit Contract AI. Einfach vergleichen & sparen." />
         <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
       </Helmet>
-      
+
+      {/* 🔒 Premium Banner - Full Width - außerhalb container */}
+      {!isPremium && (
+        <UnifiedPremiumNotice
+          featureName="Bessere Vertragsalternativen"
+          variant="fullWidth"
+        />
+      )}
+
       <div className="contract-page">
-        
+
         {/* WICHTIG: Dynamische Container-Breite für Step 3 */}
         <div className={`contract-container ${step === 3 && results ? 'has-results' : ''}`} style={step === 3 && results ? { maxWidth: '1200px' } : {}}>
           <PageHeader
@@ -417,13 +425,6 @@ const BetterContracts: React.FC = () => {
             ]}
             badge={!isPremium ? { text: 'Premium', variant: 'premium' } : undefined}
           />
-
-          {/* Premium Notice */}
-          {!isPremium && (
-            <UnifiedPremiumNotice
-              featureName="Bessere Vertragsalternativen"
-            />
-          )}
 
           <div className="contract-progress-steps">
             <div className={`step ${step >= 1 ? 'active' : ''} ${step > 1 ? 'completed' : ''}`}>

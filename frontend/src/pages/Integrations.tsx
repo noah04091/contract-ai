@@ -23,9 +23,15 @@ import {
   HelpCircle,
   BookOpen,
   ExternalLink,
-  Lock
+  Lock,
+  Crown,
+  Sparkles
 } from "lucide-react";
 import styles from "../styles/Integrations.module.css";
+import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
+
+// 🔒 Plans mit Integrations-Zugriff (nur Enterprise)
+const INTEGRATIONS_ACCESS_PLANS = ['enterprise', 'legendary'];
 
 interface Integration {
   type: string;
@@ -80,6 +86,50 @@ export default function Integrations() {
   });
   const [showGuide, setShowGuide] = useState(false);
 
+  // 🔒 Premium Access State (Enterprise only)
+  const [userPlan, setUserPlan] = useState<string>('free');
+  const [planLoading, setPlanLoading] = useState(true);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const hasAccess = INTEGRATIONS_ACCESS_PLANS.includes(userPlan);
+
+  // 🔒 Fetch user plan for Enterprise access check
+  useEffect(() => {
+    const fetchUserPlan = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setPlanLoading(false);
+          return;
+        }
+
+        const getApiUrl = () => {
+          if (import.meta.env.VITE_API_URL) {
+            return import.meta.env.VITE_API_URL;
+          }
+          const hostname = window.location.hostname;
+          if (hostname === 'localhost' || hostname === '127.0.0.1') {
+            return 'http://localhost:5000';
+          }
+          return 'https://api.contract-ai.de';
+        };
+
+        const apiUrl = getApiUrl();
+        const response = await fetch(`${apiUrl}/api/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setUserPlan(data.subscriptionPlan || data.user?.subscriptionPlan || 'free');
+        }
+      } catch (err) {
+        console.error('Error fetching user plan:', err);
+      } finally {
+        setPlanLoading(false);
+      }
+    };
+    fetchUserPlan();
+  }, []);
+
   // Lade Integrationen
   useEffect(() => {
     loadIntegrations();
@@ -113,6 +163,12 @@ export default function Integrations() {
   };
 
   const handleConnect = async (integration: Integration) => {
+    // 🔒 Enterprise Access Check
+    if (!hasAccess) {
+      handleBlockedAction();
+      return;
+    }
+
     if (integration.comingSoon) {
       showNotification(`${integration.name} kommt bald!`, "error");
       return;
@@ -171,6 +227,12 @@ export default function Integrations() {
   };
 
   const handleDisconnect = async (type: string) => {
+    // 🔒 Enterprise Access Check
+    if (!hasAccess) {
+      handleBlockedAction();
+      return;
+    }
+
     if (!confirm("Integration wirklich trennen? Alle Sync-Daten gehen verloren.")) return;
 
     try {
@@ -212,6 +274,11 @@ export default function Integrations() {
   const showNotification = (message: string, type: "success" | "error") => {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 5000);
+  };
+
+  // 🔒 Blocked Action Handler für Enterprise-only Features
+  const handleBlockedAction = () => {
+    setShowUpgradeModal(true);
   };
 
   const getIntegrationIcon = (icon: string) => {
@@ -294,6 +361,14 @@ export default function Integrations() {
         <title>Integrationen | Contract AI</title>
       </Helmet>
 
+      {/* 🔒 Enterprise Premium Banner - Full Width - außerhalb container */}
+      {!planLoading && !hasAccess && (
+        <UnifiedPremiumNotice
+          featureName="CRM/ERP Integrationen"
+          variant="fullWidth"
+        />
+      )}
+
       <div className={styles.container}>
         {/* Header */}
         <motion.div
@@ -318,7 +393,7 @@ export default function Integrations() {
           transition={{ delay: 0.2 }}
         >
           <Lock size={16} />
-          <span>Premium-Feature</span>
+          <span>Enterprise-Feature</span>
         </motion.div>
 
         {/* Info/Guide Toggle Box */}
@@ -910,6 +985,97 @@ export default function Integrations() {
           </div>
         )}
       </div>
+
+      {/* 🔒 Upgrade Modal für Enterprise-Feature */}
+      <AnimatePresence>
+        {showUpgradeModal && (
+          <motion.div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0, 0, 0, 0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 9999,
+              padding: '20px'
+            }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowUpgradeModal(false)}
+          >
+            <motion.div
+              style={{
+                background: 'white',
+                borderRadius: '20px',
+                padding: '32px',
+                maxWidth: '420px',
+                width: '100%',
+                textAlign: 'center'
+              }}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{
+                width: '64px',
+                height: '64px',
+                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                borderRadius: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 20px'
+              }}>
+                <Crown size={32} color="white" />
+              </div>
+              <h3 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '12px', color: '#1e293b' }}>
+                Enterprise-Feature
+              </h3>
+              <p style={{ color: '#64748b', marginBottom: '24px', lineHeight: '1.6' }}>
+                CRM/ERP Integrationen sind nur mit einem Enterprise-Plan verfügbar.
+                Verbinden Sie Salesforce, HubSpot, SAP und mehr mit Ihrem Contract AI.
+              </p>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                <button
+                  onClick={() => setShowUpgradeModal(false)}
+                  style={{
+                    padding: '12px 24px',
+                    borderRadius: '10px',
+                    border: '1px solid #e2e8f0',
+                    background: 'white',
+                    color: '#64748b',
+                    fontWeight: 500,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Später
+                </button>
+                <button
+                  onClick={() => window.location.href = '/pricing'}
+                  style={{
+                    padding: '12px 24px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                    color: 'white',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <Sparkles size={18} />
+                  Jetzt upgraden
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
