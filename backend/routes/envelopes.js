@@ -1,10 +1,12 @@
 // 📁 backend/routes/envelopes.js - Digital Signature Envelope Routes
+// 🔐 SECURITY: All /envelopes/* routes require Business+ subscription
 const express = require("express");
 const mongoose = require("mongoose");
 const { ObjectId } = require("mongodb"); // 🆕 For user queries
 const crypto = require("crypto");
 const rateLimit = require("express-rate-limit");
 const verifyToken = require("../middleware/verifyToken");
+const requirePremium = require("../middleware/requirePremium"); // 🔐 Business+ Check
 const sendEmail = require("../services/mailer");
 const { sealPdf } = require("../services/pdfSealing"); // ✉️ PDF-Sealing Service
 const { generateSignedUrl, deleteFiles } = require("../services/fileStorage"); // 🆕 For S3 download links + 🗑️ For deletion
@@ -301,7 +303,7 @@ async function sendCompletionNotification(envelope, recipientEmail) {
 /**
  * POST /api/envelopes - Create new envelope
  */
-router.post("/envelopes", verifyToken, async (req, res) => {
+router.post("/envelopes", verifyToken, requirePremium, async (req, res) => {
   try {
     const {
       contractId,
@@ -474,7 +476,7 @@ router.post("/envelopes", verifyToken, async (req, res) => {
  * - limit: pagination limit (default 50)
  * - offset: pagination offset (default 0)
  */
-router.get("/envelopes", verifyToken, async (req, res) => {
+router.get("/envelopes", verifyToken, requirePremium, async (req, res) => {
   try {
     const { status, archived, search, limit = 50, offset = 0, sort = 'newest' } = req.query;
 
@@ -587,7 +589,7 @@ router.get("/envelopes", verifyToken, async (req, res) => {
 /**
  * GET /api/envelopes/:id - Get single envelope details
  */
-router.get("/envelopes/:id", verifyToken, async (req, res) => {
+router.get("/envelopes/:id", verifyToken, requirePremium, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -668,7 +670,7 @@ router.get("/envelopes/:id", verifyToken, async (req, res) => {
 /**
  * POST /api/envelopes/:id/send - Send invitations to signers
  */
-router.post("/envelopes/:id/send", verifyToken, async (req, res) => {
+router.post("/envelopes/:id/send", verifyToken, requirePremium, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -794,7 +796,7 @@ router.post("/envelopes/:id/send", verifyToken, async (req, res) => {
 /**
  * POST /api/envelopes/:id/remind - Remind ALL pending signers (no specific email needed)
  */
-router.post("/envelopes/:id/remind", verifyToken, async (req, res) => {
+router.post("/envelopes/:id/remind", verifyToken, requirePremium, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -902,7 +904,7 @@ router.post("/envelopes/:id/remind", verifyToken, async (req, res) => {
 /**
  * POST /api/envelopes/:id/resend - Resend invitation reminder to SPECIFIC signer
  */
-router.post("/envelopes/:id/resend", verifyToken, async (req, res) => {
+router.post("/envelopes/:id/resend", verifyToken, requirePremium, async (req, res) => {
   try {
     const { id } = req.params;
     const { signerEmail } = req.body;
@@ -1002,7 +1004,7 @@ router.post("/envelopes/:id/resend", verifyToken, async (req, res) => {
 /**
  * POST /api/envelopes/:id/seal - Manually seal PDF (COMPLETED envelopes only)
  */
-router.post("/envelopes/:id/seal", verifyToken, async (req, res) => {
+router.post("/envelopes/:id/seal", verifyToken, requirePremium, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -1096,7 +1098,7 @@ router.post("/envelopes/:id/seal", verifyToken, async (req, res) => {
 /**
  * PATCH /api/envelopes/:id/note - Update internal note
  */
-router.patch("/envelopes/:id/note", verifyToken, async (req, res) => {
+router.patch("/envelopes/:id/note", verifyToken, requirePremium, async (req, res) => {
   try {
     const { id } = req.params;
     const { note } = req.body;
@@ -1154,7 +1156,7 @@ router.patch("/envelopes/:id/note", verifyToken, async (req, res) => {
 /**
  * POST /api/envelopes/:id/void - Cancel/void envelope
  */
-router.post("/envelopes/:id/void", verifyToken, async (req, res) => {
+router.post("/envelopes/:id/void", verifyToken, requirePremium, async (req, res) => {
   try {
     const { id } = req.params;
     const { reason } = req.body;
@@ -1277,7 +1279,7 @@ router.post("/envelopes/:id/void", verifyToken, async (req, res) => {
  * POST /api/envelopes/:id/restore - Restore voided envelope
  * Stellt eine stornierte Signaturanfrage wieder her
  */
-router.post("/envelopes/:id/restore", verifyToken, async (req, res) => {
+router.post("/envelopes/:id/restore", verifyToken, requirePremium, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -1358,7 +1360,7 @@ router.post("/envelopes/:id/restore", verifyToken, async (req, res) => {
 /**
  * POST /api/envelopes/archive - Archive multiple envelopes (bulk)
  */
-router.post("/envelopes/archive", verifyToken, async (req, res) => {
+router.post("/envelopes/archive", verifyToken, requirePremium, async (req, res) => {
   try {
     const { envelopeIds } = req.body;
 
@@ -1405,7 +1407,7 @@ router.post("/envelopes/archive", verifyToken, async (req, res) => {
 /**
  * POST /api/envelopes/unarchive - Unarchive multiple envelopes (bulk)
  */
-router.post("/envelopes/unarchive", verifyToken, async (req, res) => {
+router.post("/envelopes/unarchive", verifyToken, requirePremium, async (req, res) => {
   try {
     const { envelopeIds } = req.body;
 
@@ -1454,7 +1456,7 @@ router.post("/envelopes/unarchive", verifyToken, async (req, res) => {
  * Safety: Only archived OR voided envelopes can be deleted
  * 🗑️ Includes S3 file cleanup
  */
-router.delete("/envelopes/bulk", verifyToken, async (req, res) => {
+router.delete("/envelopes/bulk", verifyToken, requirePremium, async (req, res) => {
   try {
     const { envelopeIds } = req.body;
 
@@ -2246,7 +2248,7 @@ router.post("/sign/:token/decline", signatureDeclineLimiter, async (req, res) =>
 // UPDATE ENVELOPE (Signature Fields)
 // PUT /api/envelopes/:id
 // ===================================================
-router.put("/envelopes/:id", verifyToken, async (req, res) => {
+router.put("/envelopes/:id", verifyToken, requirePremium, async (req, res) => {
   try {
     const { id } = req.params;
     const { signatureFields } = req.body;

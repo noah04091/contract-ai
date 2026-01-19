@@ -1,7 +1,8 @@
 // 📁 backend/middleware/checkSubscription.js
-// ✅ FIXED: Free-User können Basis-Features nutzen, nur Premium-Features werden blockiert
+// ✅ REFACTORED: Nutzt zentrale Plan-Konstanten für konsistente Berechtigungsprüfung
 
 const { ObjectId } = require("mongodb");
+const { isBusinessOrHigher, PLANS } = require("../constants/subscriptionPlans");
 
 // Diese Funktion wird vom Server mit gegebenem DB-Handle aufgerufen
 module.exports = function createCheckSubscription(usersCollection) {
@@ -25,91 +26,83 @@ module.exports = function createCheckSubscription(usersCollection) {
         return res.status(404).json({ message: "❌ Benutzer nicht gefunden" });
       }
 
-      const plan = user.subscriptionPlan || "free";
-      const isActive = user.subscriptionActive || false;
-      const isPremium = user.isPremium || false;
+      const plan = (user.subscriptionPlan || "free").toLowerCase();
 
-      // ✅ WICHTIG: Routes die für Free-User KOMPLETT gesperrt sind
-      // HINWEIS: /api/analyze hat eigene Limit-Logik (3 für Free, 25 für Business, ∞ für Enterprise)
+      // ✅ Routes die ein Business-Abo oder höher erfordern
       const premiumRequiredRoutes = [
-        '/api/optimize',          // KI-Optimierung (Free: 0, Business: 15, Enterprise: ∞)
-        '/api/contracts/generate', // Vertrag generieren (Free: 0, Business: 10, Enterprise: ∞)
-        '/api/chat',              // Chat mit Vertrag (Free: 0, Business: 50, Enterprise: ∞)
-        '/api/compare',           // Vergleich (Free: 0, Business: 20, Enterprise: ∞)
-        '/api/envelopes'          // Digitale Signaturen (Free: 0, Business: ∞, Enterprise: ∞)
+        '/api/optimize',           // KI-Optimierung
+        '/api/contracts/generate', // Vertrag generieren
+        '/api/chat',               // Chat mit Vertrag
+        '/api/compare',            // Vertragsvergleich
+        '/api/envelopes',          // Digitale Signaturen
+        '/api/legal-lens',         // LegalLens Analyse
+        '/api/legalpulse',         // Legal Pulse
+        '/api/better-contracts'    // Alternative Verträge
       ];
 
-      const isPremiumRoute = premiumRequiredRoutes.some(route => 
-        req.originalUrl.startsWith(route)
+      const isPremiumRoute = premiumRequiredRoutes.some(route =>
+        req.originalUrl.toLowerCase().startsWith(route.toLowerCase())
       );
 
       console.log(`🔍 CheckSubscription: User=${plan}, Route=${req.originalUrl}, IsPremiumRoute=${isPremiumRoute}`);
 
-      // ✅ FREE-USER: Basis-Features (Contracts anzeigen, Dashboard, etc.) erlauben
-      if (plan === "free") {
+      // ✅ Speichere Plan-Info für spätere Middleware/Routes
+      req.user.plan = plan;
+      req.user.subscriptionActive = user.subscriptionActive;
+
+      // ✅ FREE-USER: Basis-Features erlauben, Premium-Features blockieren
+      if (plan === PLANS.FREE) {
         if (isPremiumRoute) {
           console.log(`❌ Free-User blockiert für Premium-Route: ${req.originalUrl}`);
           return res.status(403).json({
             success: false,
-            message: "⛔ Diese Funktion ist nur mit einem aktiven Abo verfügbar.",
+            message: "⛔ Diese Funktion erfordert ein Business-Abo oder höher.",
             requiresUpgrade: true,
-            feature: "premium_feature",
+            error: "PREMIUM_REQUIRED",
             upgradeUrl: "/pricing",
-            userPlan: "free"
+            userPlan: plan
           });
         }
-        
-        // ✅ Basis-Features (Contracts anzeigen, Upload, etc.) sind für Free-User erlaubt
+
         console.log(`✅ Free-User Zugriff erlaubt auf Basis-Feature: ${req.originalUrl}`);
         return next();
       }
 
-      // ✅ BUSINESS-USER: Premium-Features erlaubt, aber Limits beachten
-      if (plan === "business") {
-        if (isPremiumRoute) {
-          // Business kann Premium-Features nutzen, aber mit Limits
-          console.log(`✅ Business-User Zugriff erlaubt auf Premium-Feature: ${req.originalUrl}`);
-        } else {
-          console.log(`✅ Business-User Zugriff erlaubt auf Basis-Feature: ${req.originalUrl}`);
-        }
+      // ✅ BUSINESS, ENTERPRISE, LEGENDARY: Premium-Features erlaubt
+      if (isBusinessOrHigher(plan)) {
+        console.log(`✅ ${plan.toUpperCase()}-User Zugriff erlaubt auf: ${req.originalUrl}`);
         return next();
       }
 
-      // ✅ PREMIUM-USER: Alles erlaubt
-      if (plan === "premium" || isPremium) {
-        console.log(`✅ Premium-User Zugriff erlaubt auf: ${req.originalUrl}`);
-        return next();
-      }
-
-      // ✅ FALLBACK: Bei unbekanntem Plan - Basis-Features erlauben
+      // ✅ FALLBACK: Unbekannter Plan - behandle wie Free
       if (isPremiumRoute) {
         console.log(`❌ Unbekannter Plan (${plan}) blockiert für Premium-Route: ${req.originalUrl}`);
         return res.status(403).json({
           success: false,
-          message: "⛔ Diese Funktion ist nur mit einem aktiven Abo verfügbar.",
+          message: "⛔ Diese Funktion erfordert ein Business-Abo oder höher.",
           requiresUpgrade: true,
-          feature: "premium_feature",
+          error: "PREMIUM_REQUIRED",
           upgradeUrl: "/pricing",
           userPlan: plan
         });
       }
 
-      console.log(`✅ Fallback: Zugriff erlaubt für unbekannten Plan (${plan}) auf: ${req.originalUrl}`);
+      console.log(`✅ Fallback: Zugriff erlaubt für Plan (${plan}) auf: ${req.originalUrl}`);
       next();
 
     } catch (err) {
       console.error("❌ Fehler in checkSubscription:", err);
-      
-      // ✅ WICHTIG: Bei Fehlern trotzdem Basis-Features erlauben (graceful degradation)
-      const premiumRequiredRoutes = ['/api/optimize', '/api/contracts/generate', '/api/chat', '/api/compare', '/api/envelopes'];
-      const isPremiumRoute = premiumRequiredRoutes.some(route => req.originalUrl.startsWith(route));
-      
+
+      // Bei Fehlern: Premium-Routes blockieren, Basis-Features erlauben
+      const premiumRequiredRoutes = ['/api/optimize', '/api/contracts/generate', '/api/chat', '/api/compare', '/api/envelopes', '/api/legal-lens', '/api/legalpulse'];
+      const isPremiumRoute = premiumRequiredRoutes.some(route => req.originalUrl.toLowerCase().startsWith(route.toLowerCase()));
+
       if (isPremiumRoute) {
         return res.status(500).json({ message: "Serverfehler bei Abo-Überprüfung" });
       }
-      
+
       console.log(`⚠️ Fehler in checkSubscription, aber Basis-Feature erlaubt: ${req.originalUrl}`);
-      next(); // Basis-Features trotz Fehler erlauben
+      next();
     }
   };
 };

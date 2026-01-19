@@ -6,6 +6,7 @@ const rateLimit = require("express-rate-limit"); // 🚦 Rate Limiting
 const verifyToken = require("../middleware/verifyToken");
 const requirePremium = require("../middleware/requirePremium"); // 🔐 Premium-Check
 const runLegalPulseScan = require("../services/legalPulseScan");
+const { validateLegalPulseBody, sanitizeString } = require("../middleware/validateLegalPulseInput"); // 🛡️ Input Validation
 
 // 🚦 RATE LIMITING für Legal Pulse - AI-Scans sind teuer!
 const legalPulseRateLimiter = rateLimit({
@@ -205,7 +206,8 @@ router.get("/settings", verifyToken, async (req, res) => {
 });
 
 // Update user's Legal Pulse settings
-router.put("/settings", verifyToken, async (req, res) => {
+// 🛡️ Input Validation Middleware für sicheren Body
+router.put("/settings", verifyToken, validateLegalPulseBody, async (req, res) => {
   try {
     const { enabled, similarityThreshold, categories, digestMode, emailNotifications } = req.body;
 

@@ -975,8 +975,9 @@ const connectDB = async () => {
       const envelopeRoutes = require("./routes/envelopes");
 
       // 🔧 FIX: Mount router once - routes define full paths internally
-      // Public routes: /api/sign/:token (no auth required)
-      // Authenticated routes: /api/envelopes/* (verifyToken in route definitions)
+      // Public routes: /api/sign/:token (no auth required) - handled in route file
+      // Authenticated routes: /api/envelopes/* - checkSubscription prüft Business+
+      // 🔐 checkSubscription wird in der Route-Datei angewendet (für /envelopes/*)
       app.use("/api", envelopeRoutes);
 
       console.log("✅ Envelope-Routen geladen unter /api/envelopes & /api/sign/:token");
@@ -1003,8 +1004,9 @@ const connectDB = async () => {
 
     try {
       // ✅ LEGAL CHAT 2.0 - MongoDB-basiert, SSE-Streaming, Anwalt-Persona
+      // 🔐 checkSubscription hinzugefügt - Chat ist Business+ Feature
       const chatRoutes = require("./routes/chat");
-      app.use("/api/chat", chatRoutes); // verifyToken ist bereits in der Route
+      app.use("/api/chat", checkSubscription, chatRoutes); // verifyToken ist in der Route
       console.log("✅ Legal Chat 2.0 geladen unter /api/chat (MongoDB, SSE, Lawyer Persona)");
     } catch (err) {
       console.error("❌ Fehler bei Chat-Route:", err);
@@ -1025,7 +1027,8 @@ const connectDB = async () => {
     }
 
     try {
-      app.use("/api/better-contracts", require("./routes/betterContracts"));
+      // 🔐 verifyToken + checkSubscription hinzugefügt - Better Contracts ist Business+ Feature
+      app.use("/api/better-contracts", verifyToken, checkSubscription, require("./routes/betterContracts"));
       console.log("✅ Better-Contracts-Route geladen unter /api/better-contracts");
     } catch (err) {
       console.error("❌ Fehler bei Better-Contracts-Route:", err);
@@ -1041,7 +1044,8 @@ const connectDB = async () => {
 
     // ✅ 14. LEGAL PULSE
     try {
-      app.use("/api/legal-pulse", verifyToken, require("./routes/legalPulse"));
+      // 🔐 checkSubscription hinzugefügt - Legal Pulse ist Business+ Feature
+      app.use("/api/legal-pulse", verifyToken, checkSubscription, require("./routes/legalPulse"));
       console.log("✅ Legal Pulse Routen geladen unter /api/legal-pulse");
     } catch (err) {
       console.error("❌ Fehler bei Legal Pulse Routen:", err);
@@ -1058,8 +1062,9 @@ const connectDB = async () => {
 
     // ✅ 14.1 LEGAL PULSE FEED (SSE)
     try {
+      // 🔐 verifyToken + checkSubscription hinzugefügt - Legal Pulse ist Business+ Feature
       const legalPulseFeedRoutes = require("./routes/legalPulseFeed");
-      app.use("/api/legalpulse", legalPulseFeedRoutes);
+      app.use("/api/legalpulse", verifyToken, checkSubscription, legalPulseFeedRoutes);
       console.log("✅ Legal Pulse Feed (SSE) geladen unter /api/legalpulse/stream");
     } catch (err) {
       console.error("❌ Fehler bei Legal Pulse Feed Routen:", err);
@@ -1085,8 +1090,9 @@ const connectDB = async () => {
 
     // 🔍 LEGAL LENS - Interaktive Vertragsanalyse
     try {
+      // 🔐 checkSubscription hinzugefügt - Legal Lens ist Business+ Feature
       const legalLensRoutes = require("./routes/legalLens");
-      app.use("/api/legal-lens", verifyToken, legalLensRoutes);
+      app.use("/api/legal-lens", verifyToken, checkSubscription, legalLensRoutes);
       console.log("✅ Legal Lens API geladen unter /api/legal-lens");
     } catch (err) {
       console.error("❌ Fehler bei Legal Lens API:", err);

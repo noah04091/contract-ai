@@ -1,13 +1,15 @@
 // 📁 backend/middleware/requirePremium.js
-// 🔐 Middleware: Prüft ob User Premium-Abo hat
-// Legal Pulse ist ein Premium-Feature
+// 🔐 Middleware: Prüft ob User ein bezahltes Abo hat (Business, Enterprise, Legendary)
+// ✅ FIXED: Erlaubt jetzt alle Premium-Pläne, nicht nur 'premium'
 
 const { MongoClient, ObjectId } = require("mongodb");
+const { isBusinessOrHigher, PLANS } = require("../constants/subscriptionPlans");
 require('dotenv').config();
 
 /**
- * Middleware: Prüft ob User Premium-Subscription hat
- * Legal Pulse ist ein Premium-Feature
+ * Middleware: Prüft ob User ein bezahltes Abo hat
+ * Erlaubt: business, enterprise, legendary
+ * Blockiert: free
  */
 const requirePremium = async (req, res, next) => {
   let client;
@@ -33,38 +35,41 @@ const requirePremium = async (req, res, next) => {
       });
     }
 
-    // ✅ Premium-Check: Nur Premium darf Legal Pulse nutzen
-    if (user.subscriptionPlan !== 'premium') {
-      console.log(`⚠️ [PREMIUM-CHECK] User ${user.email} hat kein Premium (Plan: ${user.subscriptionPlan})`);
+    const userPlan = user.subscriptionPlan || 'free';
+
+    // ✅ FIXED: Prüft ob User Business oder höher hat
+    if (!isBusinessOrHigher(userPlan)) {
+      console.log(`⚠️ [PREMIUM-CHECK] User ${user.email} hat kein Premium-Abo (Plan: ${userPlan})`);
 
       await client.close();
 
       return res.status(403).json({
         success: false,
-        message: "Legal Pulse ist ein Premium-Feature",
+        message: "Diese Funktion erfordert ein Business-Abo oder höher",
         error: "PREMIUM_REQUIRED",
         details: {
-          currentPlan: user.subscriptionPlan,
-          requiredPlan: "premium",
-          feature: "Legal Pulse - AI-gestützte Rechtsanalyse",
-          description: "Legal Pulse bietet intelligente Rechtsupdates basierend auf Ihren Verträgen"
+          currentPlan: userPlan,
+          requiredPlans: ["business", "enterprise", "legendary"],
+          feature: "Premium-Feature",
+          description: "Upgrade auf Business für Zugriff auf alle Premium-Features"
         },
         upgradeUrl: "/pricing",
         upgradeInfo: {
-          premiumPrice: "29€/Monat",
+          businessPrice: "49€/Monat",
           benefits: [
-            "Unbegrenzte Legal Pulse Analysen",
             "Unbegrenzte Vertragsanalysen",
-            "Alle Premium-Features"
+            "KI-Optimierung & Chat",
+            "Legal Pulse & LegalLens",
+            "Digitale Signaturen"
           ]
         }
       });
     }
 
-    console.log(`✅ [PREMIUM-CHECK] User ${user.email} hat Premium-Zugriff`);
+    console.log(`✅ [PREMIUM-CHECK] User ${user.email} hat Premium-Zugriff (Plan: ${userPlan})`);
 
-    // User ist Premium - Daten für nächste Middleware speichern
-    req.user.plan = user.subscriptionPlan;
+    // User hat Premium - Daten für nächste Middleware speichern
+    req.user.plan = userPlan;
     req.user.email = user.email;
     req.user.subscriptionActive = user.subscriptionActive;
 
