@@ -2567,9 +2567,10 @@ export default function CalendarPage() {
   // Handle Quick Action - mit optimistischen Updates!
   const handleQuickAction = async (action: string, eventId: string, snoozeDays?: number) => {
     // 🔒 Access Check für eingeschränkte Aktionen
+    // WICHTIG: Auch blocken wenn access noch nicht geladen ist
     const restrictedActions = ["snooze", "dismiss", "delete", "edit"];
     if (restrictedActions.includes(action)) {
-      if (access && !access.canSnooze) {
+      if (!access || !access.canSnooze) {
         const actionLabels: Record<string, string> = {
           snooze: "Ereignisse verschieben",
           dismiss: "Ereignisse ausblenden",
@@ -2783,7 +2784,8 @@ export default function CalendarPage() {
                 className="btn btn-primary"
                 onClick={() => {
                   // 🔒 Access Check - Free User bekommen Upgrade-Hinweis
-                  if (access && !access.canCreate) {
+                  // WICHTIG: Auch blocken wenn access noch nicht geladen ist
+                  if (!access || !access.canCreate) {
                     setUpgradeAction('Ereignisse erstellen');
                     setShowUpgradeModal(true);
                     return;
@@ -2895,7 +2897,8 @@ export default function CalendarPage() {
                     if (dayEvents.length === 0) {
                       // No events - show create event modal (with access check)
                       // 🔒 Access Check - Free User bekommen Upgrade-Hinweis
-                      if (access && !access.canCreate) {
+                      // WICHTIG: Auch blocken wenn access noch nicht geladen ist
+                      if (!access || !access.canCreate) {
                         setUpgradeAction('Ereignisse erstellen');
                         setShowUpgradeModal(true);
                         return;
