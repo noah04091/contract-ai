@@ -1,64 +1,61 @@
-.premiumNotice {
+/* Einheitlicher Premium Banner - Blauer Style wie Legal Lens */
+
+.premiumBanner {
   width: 100%;
-  max-width: none;
-  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
-  border: 1px solid #e2e8f0;
-  border-left: 4px solid #f97316;
-  border-radius: 8px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-radius: 16px;
   padding: 20px 24px;
-  margin: 24px 0;
+  margin-bottom: 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  transition: all 0.2s ease;
+  gap: 20px;
+  flex-wrap: wrap;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
 }
 
-.premiumNotice:hover {
-  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.1);
-}
-
-.premiumBadge {
+.bannerLeft {
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: linear-gradient(135deg, #f97316, #ea580c);
+  gap: 16px;
+}
+
+.iconWrapper {
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: white;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 6px 12px;
-  border-radius: 20px;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
   flex-shrink: 0;
 }
 
-.premiumContent {
-  flex: 1;
-  min-width: 0;
+.bannerContent {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.premiumTitle {
-  margin: 0 0 4px 0;
-  font-size: 18px;
+.bannerTitle {
+  color: white;
+  font-size: 16px;
   font-weight: 600;
-  color: #1e293b;
-  line-height: 1.3;
+  margin: 0;
 }
 
-.premiumSubtitle {
-  margin: 0;
+.bannerSubtitle {
+  color: rgba(255, 255, 255, 0.85);
   font-size: 14px;
-  color: #64748b;
-  line-height: 1.4;
+  margin: 0;
 }
 
 .upgradeButton {
-  background: linear-gradient(135deg, #0071e3, #005bb5);
-  color: white;
+  background: white;
+  color: #2563eb;
   border: none;
-  border-radius: 6px;
+  border-radius: 10px;
   padding: 12px 20px;
   font-size: 14px;
   font-weight: 600;
@@ -68,13 +65,13 @@
   gap: 8px;
   transition: all 0.2s ease;
   flex-shrink: 0;
-  letter-spacing: 0.3px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .upgradeButton:hover {
-  background: linear-gradient(135deg, #005bb5, #004494);
+  background: #f8fafc;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 113, 227, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .upgradeButton:active {
@@ -82,19 +79,35 @@
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
-  .premiumNotice {
+@media (max-width: 640px) {
+  .premiumBanner {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
     gap: 16px;
     padding: 18px 20px;
   }
 
-  .premiumTitle {
-    font-size: 16px;
+  .bannerLeft {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
   }
 
-  .premiumSubtitle {
+  .iconWrapper {
+    width: 40px;
+    height: 40px;
+  }
+
+  .iconWrapper svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .bannerTitle {
+    font-size: 15px;
+  }
+
+  .bannerSubtitle {
     font-size: 13px;
   }
 
