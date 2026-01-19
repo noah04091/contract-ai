@@ -7,6 +7,7 @@ interface UnifiedPremiumNoticeProps {
   className?: string;
 }
 
+// Unified Premium Banner - Blue Style (Jan 2026)
 export default function UnifiedPremiumNotice({
   featureName = "Diese Funktion",
   className = ""
