@@ -287,7 +287,7 @@ const LegalLensStart = () => {
               </div>
 
               <button
-                onClick={() => navigate('/subscribe')}
+                onClick={() => navigate('/pricing')}
                 style={{
                   width: '100%',
                   padding: '14px 24px',

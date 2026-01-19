@@ -3530,7 +3530,7 @@ export default function CalendarPage() {
                   Später
                 </button>
                 <button
-                  onClick={() => window.location.href = '/subscribe'}
+                  onClick={() => window.location.href = '/pricing'}
                   style={{
                     flex: 1,
                     padding: '14px 20px',
