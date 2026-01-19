@@ -7,9 +7,10 @@ import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Upload, FileText, ChevronRight, Loader, AlertCircle,
-  Eye, Scale, Lightbulb, Lock, Sparkles, X, Crown
+  Eye, Scale, Lightbulb, Lock, Sparkles, X
 } from 'lucide-react';
 import styles from '../styles/LegalLensStart.module.css';
+import UnifiedPremiumNotice from '../components/UnifiedPremiumNotice';
 
 // Plans mit vollem Legal Lens Zugriff
 const LEGAL_LENS_ACCESS_PLANS = ['business', 'enterprise', 'legendary'];
@@ -209,74 +210,15 @@ const LegalLensStart = () => {
       </Helmet>
 
       <div className={styles.page}>
+        {/* Full-Width Premium Banner - außerhalb des Containers */}
+        {!planLoading && !hasAccess && (
+          <UnifiedPremiumNotice
+            featureName="Legal Lens"
+            variant="fullWidth"
+          />
+        )}
+
         <div className={styles.container}>
-          {/* 🔒 Premium Banner für Free User */}
-          {!planLoading && !hasAccess && (
-            <div style={{
-              background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-              borderRadius: '16px',
-              padding: '20px 24px',
-              marginBottom: '24px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '20px',
-              flexWrap: 'wrap',
-              boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{
-                  width: '48px',
-                  height: '48px',
-                  background: 'rgba(255,255,255,0.2)',
-                  borderRadius: '12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <Crown size={24} color="white" />
-                </div>
-                <div>
-                  <h3 style={{
-                    color: 'white',
-                    fontSize: '16px',
-                    fontWeight: '600',
-                    margin: 0,
-                    marginBottom: '4px'
-                  }}>
-                    Premium-Feature
-                  </h3>
-                  <p style={{
-                    color: 'rgba(255,255,255,0.85)',
-                    fontSize: '14px',
-                    margin: 0
-                  }}>
-                    Legal Lens ist nur mit Business oder Enterprise verfügbar
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => navigate('/pricing')}
-                style={{
-                  padding: '12px 24px',
-                  background: 'white',
-                  border: 'none',
-                  borderRadius: '10px',
-                  color: '#2563eb',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                <Sparkles size={16} />
-                Jetzt upgraden
-              </button>
-            </div>
-          )}
 
           {/* Header Row */}
           <header className={styles.headerRow}>
