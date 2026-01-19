@@ -7,7 +7,8 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { LucideIcon, Circle } from 'lucide-react';
+import { LucideIcon, Circle, Crown, Sparkles } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import styles from './PageHeader.module.css';
 
 // Badge variant types
@@ -68,6 +69,12 @@ export interface PageHeaderProps {
 
   /** Animation enabled (uses framer-motion) - defaults to true */
   animated?: boolean;
+
+  /** Show premium upgrade prompt - displays upgrade button and premium badge */
+  premiumRequired?: boolean;
+
+  /** Custom text for premium subtitle */
+  premiumText?: string;
 }
 
 // Color class mapping
@@ -106,8 +113,15 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   iconColor = 'blue',
   className = '',
   animated = true,
+  premiumRequired = false,
+  premiumText,
 }) => {
-  const headerClassName = [styles.header, className].filter(Boolean).join(' ');
+  const navigate = useNavigate();
+  const headerClassName = [
+    styles.header,
+    premiumRequired ? styles.premiumRequired : '',
+    className
+  ].filter(Boolean).join(' ');
 
   const content = (
     <>
@@ -120,20 +134,35 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         <div className={styles.content}>
           <div className={styles.titleRow}>
             <h1 className={styles.title}>{title}</h1>
-            {badge && (
+            {/* Premium Badge wenn premiumRequired */}
+            {premiumRequired && (
+              <span className={`${styles.badge} ${styles.badgePremiumLocked}`}>
+                <Crown size={12} />
+                Premium
+              </span>
+            )}
+            {/* Normale Badge */}
+            {badge && !premiumRequired && (
               <span className={`${styles.badge} ${badgeVariantMap[badge.variant]}`}>
                 {badge.text}
               </span>
             )}
           </div>
-          {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
+          {/* Premium Text oder normaler Subtitle */}
+          {premiumRequired ? (
+            <p className={styles.subtitlePremium}>
+              {premiumText || `${title} ist nur mit Premium oder Business verfügbar`}
+            </p>
+          ) : (
+            subtitle && <p className={styles.subtitle}>{subtitle}</p>
+          )}
         </div>
       </div>
 
       {/* Rechte Seite: Features + Actions */}
       <div className={styles.headerRight}>
-        {/* Features - Subtle with icons */}
-        {features && features.length > 0 && (
+        {/* Features - nur wenn NICHT premiumRequired */}
+        {!premiumRequired && features && features.length > 0 && (
           <div className={styles.features}>
             {features.map((feature, index) => {
               const isString = typeof feature === 'string';
@@ -149,8 +178,21 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           </div>
         )}
 
-        {/* Action Buttons */}
-        {actions && actions.length > 0 && (
+        {/* Premium Upgrade Button */}
+        {premiumRequired && (
+          <motion.button
+            className={styles.upgradeButton}
+            onClick={() => navigate('/pricing')}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <Sparkles size={16} />
+            Jetzt upgraden
+          </motion.button>
+        )}
+
+        {/* Action Buttons - nur wenn NICHT premiumRequired */}
+        {!premiumRequired && actions && actions.length > 0 && (
           <div className={styles.actions}>
             {actions.map((action, index) => {
               const ActionIcon = action.icon;

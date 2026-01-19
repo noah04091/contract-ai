@@ -297,3 +297,72 @@
     justify-content: center;
   }
 }
+
+/* ===== PREMIUM REQUIRED STATE ===== */
+
+/* Premium Header - Blauer Gradient Hintergrund */
+.premiumRequired {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-bottom: none;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+}
+
+.premiumRequired .title {
+  color: white;
+}
+
+.premiumRequired .subtitle {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.subtitlePremium {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 2px 0 0 0;
+  line-height: 1.4;
+}
+
+/* Icon im Premium State - weißer Hintergrund mit Transparenz */
+.premiumRequired .iconContainer {
+  background: rgba(255, 255, 255, 0.2) !important;
+  box-shadow: none !important;
+}
+
+/* Premium Badge (locked) */
+.badgePremiumLocked {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  gap: 4px;
+}
+
+/* Upgrade Button */
+.upgradeButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: white;
+  color: #2563eb;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-family: inherit;
+}
+
+.upgradeButton:hover {
+  background: #f8fafc;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive für Premium */
+@media (max-width: 640px) {
+  .upgradeButton {
+    width: 100%;
+    justify-content: center;
+  }
+}
