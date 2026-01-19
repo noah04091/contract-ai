@@ -43,18 +43,7 @@ interface ComparisonResult {
   categories: string[];
 }
 
-interface PremiumNoticeProps {
-  className?: string;
-}
-
-const PremiumNotice: React.FC<PremiumNoticeProps> = ({ className }) => {
-  return (
-    <UnifiedPremiumNotice
-      featureName="Der Vertragsvergleich"
-      className={className}
-    />
-  );
-};
+// PremiumNotice Wrapper entfernt - verwende UnifiedPremiumNotice direkt mit variant="fullWidth"
 
 // User Profile Selector Component
 const UserProfileSelector: React.FC<{
@@ -623,7 +612,15 @@ export default function EnhancedCompare() {
       </Helmet>
 
       <div style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif", backgroundColor: '#f8fafc', minHeight: '100vh', color: '#1d1d1f' }}>
-        <motion.div 
+        {/* Full-Width Premium Banner - außerhalb des Containers */}
+        {!isPremium && (
+          <UnifiedPremiumNotice
+            featureName="Der Vertragsvergleich"
+            variant="fullWidth"
+          />
+        )}
+
+        <motion.div
           style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -640,8 +637,6 @@ export default function EnhancedCompare() {
               { text: 'KI-Empfehlung', icon: Star }
             ]}
           />
-
-          {!isPremium && <PremiumNotice />}
 
           <UserProfileSelector
             selectedProfile={userProfile}

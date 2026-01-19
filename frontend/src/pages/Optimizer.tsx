@@ -2393,6 +2393,14 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
         tip="Wählen Sie Ihre Perspektive (Neutral, Ersteller, Empfänger) für maßgeschneiderte Optimierungen."
       />
 
+      {/* Full-Width Premium Banner - außerhalb des Containers */}
+      {!isPremium && (
+        <UnifiedPremiumNotice
+          featureName="Der Vertragsoptimierer"
+          variant="fullWidth"
+        />
+      )}
+
       <div className={styles.optimizer}>
         <motion.div
           className={styles.container}
@@ -2429,14 +2437,6 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
               variant: 'secondary'
             }] : undefined}
           />
-
-          {/* Premium Notice */}
-          {!isPremium && (
-            <UnifiedPremiumNotice
-              featureName="Der Vertragsoptimierer"
-
-            />
-          )}
 
           {/* Preloaded Contract Indicator */}
           {preloadedContractName && (
