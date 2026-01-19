@@ -64,7 +64,10 @@ export const getSubscriptionDisplayName = (plan?: string): string => {
 };
 
 export const isSubscribed = (user: UserData): boolean => {
-  return user.subscriptionPlan === 'premium' || user.subscriptionPlan === 'business';
+  // ✅ Alle bezahlten Pläne berücksichtigen
+  return user.subscriptionPlan === 'business' ||
+         user.subscriptionPlan === 'enterprise' ||
+         user.subscriptionPlan === 'legendary';
 };
 
 export const isSubscriptionActive = (user: UserData): boolean => {

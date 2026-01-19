@@ -286,6 +286,205 @@ async function handleStripeEvent(event) {
       return;
     }
 
+    // ============================================
+    // 🔐 SUBSCRIPTION LIFECYCLE EVENTS
+    // ============================================
+
+    case "customer.subscription.updated": {
+      // Wird ausgelöst bei: Plan-Wechsel, Kündigung zum Periodenende, Reaktivierung
+      const subscription = event.data.object;
+      const stripeCustomerId = subscription.customer;
+      const status = subscription.status; // active, past_due, canceled, unpaid, etc.
+      const cancelAtPeriodEnd = subscription.cancel_at_period_end;
+
+      console.log(`🔄 Subscription Update:`, { stripeCustomerId, status, cancelAtPeriodEnd });
+
+      const client = new MongoClient(MONGO_URI);
+      try {
+        await client.connect();
+        const db = client.db("contract_ai");
+        const usersCollection = db.collection("users");
+
+        const user = await usersCollection.findOne({ stripeCustomerId });
+        if (!user) {
+          console.warn(`⚠️ Kein User gefunden für stripeCustomerId: ${stripeCustomerId}`);
+          return;
+        }
+
+        // Plan aus aktueller Subscription ermitteln
+        const priceId = subscription.items.data[0]?.price?.id;
+        const priceMap = {
+          [process.env.STRIPE_BUSINESS_MONTHLY_PRICE_ID]: "business",
+          [process.env.STRIPE_BUSINESS_YEARLY_PRICE_ID]: "business",
+          [process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID]: "enterprise",
+          [process.env.STRIPE_ENTERPRISE_YEARLY_PRICE_ID]: "enterprise",
+          // Legacy: "premium" wird zu "business" gemappt
+          [process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID]: "business",
+          [process.env.STRIPE_PREMIUM_YEARLY_PRICE_ID]: "business",
+          [process.env.STRIPE_BUSINESS_PRICE_ID]: "business",
+          [process.env.STRIPE_PREMIUM_PRICE_ID]: "business",
+        };
+        const plan = priceMap[priceId] || user.subscriptionPlan || "free";
+
+        // Update basierend auf Status
+        const updateData = {
+          subscriptionStatus: status,
+          subscriptionPlan: plan,
+          cancelAtPeriodEnd: cancelAtPeriodEnd || false,
+        };
+
+        // Wenn Subscription aktiv ist → Premium aktiv
+        if (status === "active" || status === "trialing") {
+          updateData.subscriptionActive = true;
+          updateData.isPremium = plan === "business" || plan === "enterprise";
+          updateData.isBusiness = plan === "business";
+          updateData.isEnterprise = plan === "enterprise";
+        }
+
+        // Wenn Subscription nicht mehr aktiv → Downgrade auf Free
+        if (status === "canceled" || status === "unpaid" || status === "incomplete_expired") {
+          updateData.subscriptionActive = false;
+          updateData.subscriptionPlan = "free";
+          updateData.isPremium = false;
+          updateData.isBusiness = false;
+          updateData.isEnterprise = false;
+          updateData.canceledAt = new Date();
+          console.log(`⚠️ User ${user.email} Abo deaktiviert (Status: ${status})`);
+        }
+
+        await usersCollection.updateOne(
+          { _id: user._id },
+          { $set: updateData }
+        );
+
+        console.log(`✅ User ${user.email} Subscription aktualisiert:`, updateData);
+
+      } finally {
+        await client.close();
+      }
+      return;
+    }
+
+    case "customer.subscription.deleted": {
+      // Wird ausgelöst wenn Subscription endgültig gelöscht wird
+      const subscription = event.data.object;
+      const stripeCustomerId = subscription.customer;
+
+      console.log(`🗑️ Subscription gelöscht für Customer: ${stripeCustomerId}`);
+
+      const client = new MongoClient(MONGO_URI);
+      try {
+        await client.connect();
+        const db = client.db("contract_ai");
+        const usersCollection = db.collection("users");
+
+        const user = await usersCollection.findOne({ stripeCustomerId });
+        if (!user) {
+          console.warn(`⚠️ Kein User gefunden für stripeCustomerId: ${stripeCustomerId}`);
+          return;
+        }
+
+        // Downgrade auf Free
+        await usersCollection.updateOne(
+          { _id: user._id },
+          {
+            $set: {
+              subscriptionActive: false,
+              subscriptionPlan: "free",
+              subscriptionStatus: "canceled",
+              isPremium: false,
+              isBusiness: false,
+              isEnterprise: false,
+              canceledAt: new Date(),
+              // Limits zurücksetzen auf Free-Level
+              analysisLimit: 3,
+              optimizationLimit: 0,
+            }
+          }
+        );
+
+        console.log(`✅ User ${user.email} auf Free downgraded (Subscription gelöscht)`);
+
+        // Optional: Kündigungs-Email senden
+        try {
+          await sendEmail({
+            to: user.email,
+            subject: "Contract AI - Dein Abo wurde beendet",
+            html: `
+              <h2>Schade, dass du gehst!</h2>
+              <p>Dein Contract AI Abo wurde beendet. Du kannst weiterhin die kostenlosen Features nutzen.</p>
+              <p>Falls du es dir anders überlegst, kannst du jederzeit wieder upgraden:</p>
+              <p><a href="https://contract-ai.de/pricing">Jetzt wieder upgraden</a></p>
+            `
+          });
+        } catch (emailErr) {
+          console.error(`❌ Kündigungs-Email Fehler:`, emailErr);
+        }
+
+      } finally {
+        await client.close();
+      }
+      return;
+    }
+
+    case "invoice.payment_failed": {
+      // Wird ausgelöst wenn Zahlung fehlschlägt
+      const invoice = event.data.object;
+      const stripeCustomerId = invoice.customer;
+      const customerEmail = invoice.customer_email;
+      const attemptCount = invoice.attempt_count || 1;
+
+      console.log(`❌ Zahlung fehlgeschlagen für ${customerEmail} (Versuch ${attemptCount})`);
+
+      const client = new MongoClient(MONGO_URI);
+      try {
+        await client.connect();
+        const db = client.db("contract_ai");
+        const usersCollection = db.collection("users");
+
+        const user = await usersCollection.findOne({ stripeCustomerId });
+        if (!user) {
+          console.warn(`⚠️ Kein User gefunden für stripeCustomerId: ${stripeCustomerId}`);
+          return;
+        }
+
+        // Bei erstem Fehlversuch: Warnung, Abo bleibt aktiv
+        // Bei mehreren Fehlversuchen: Stripe setzt subscription auf past_due/unpaid
+        await usersCollection.updateOne(
+          { _id: user._id },
+          {
+            $set: {
+              subscriptionStatus: "past_due",
+              lastPaymentFailed: new Date(),
+              paymentFailedCount: attemptCount,
+            }
+          }
+        );
+
+        // Zahlungserinnerung senden
+        try {
+          await sendEmail({
+            to: customerEmail,
+            subject: "Contract AI - Zahlung fehlgeschlagen",
+            html: `
+              <h2>Zahlungsproblem</h2>
+              <p>Leider konnte deine letzte Zahlung für Contract AI nicht verarbeitet werden.</p>
+              <p>Bitte aktualisiere deine Zahlungsmethode, um deinen Zugang zu behalten:</p>
+              <p><a href="https://contract-ai.de/profile">Zahlungsmethode aktualisieren</a></p>
+              <p>Falls du Fragen hast, kontaktiere uns unter support@contract-ai.de</p>
+            `
+          });
+          console.log(`📧 Zahlungserinnerung gesendet an ${customerEmail}`);
+        } catch (emailErr) {
+          console.error(`❌ Zahlungserinnerung Email Fehler:`, emailErr);
+        }
+
+      } finally {
+        await client.close();
+      }
+      return;
+    }
+
     default:
       console.log(`ℹ️ Event ${event.type} nicht behandelt`);
       return;
@@ -320,17 +519,22 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
     const priceId = subscription.items.data[0]?.price?.id;
 
     const priceMap = {
-      // Neue monatliche und jährliche Price IDs
+      // Business Plan (monatlich + jährlich)
       [process.env.STRIPE_BUSINESS_MONTHLY_PRICE_ID]: "business",
       [process.env.STRIPE_BUSINESS_YEARLY_PRICE_ID]: "business",
-      [process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID]: "premium",
-      [process.env.STRIPE_PREMIUM_YEARLY_PRICE_ID]: "premium",
-      // Fallback zu alten IDs für Backwards Compatibility
       [process.env.STRIPE_BUSINESS_PRICE_ID]: "business",
-      [process.env.STRIPE_PREMIUM_PRICE_ID]: "premium",
+      // Enterprise Plan (monatlich + jährlich)
+      [process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID]: "enterprise",
+      [process.env.STRIPE_ENTERPRISE_YEARLY_PRICE_ID]: "enterprise",
+      [process.env.STRIPE_ENTERPRISE_PRICE_ID]: "enterprise",
+      // ⚠️ LEGACY: "premium" wird zu "business" gemappt (für Bestandskunden)
+      [process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID]: "business",
+      [process.env.STRIPE_PREMIUM_YEARLY_PRICE_ID]: "business",
+      [process.env.STRIPE_PREMIUM_PRICE_ID]: "business",
     };
 
-    const plan = priceMap[priceId] || "unknown";
+    // Fallback auf "free" statt "unknown" für unbekannte Pläne
+    const plan = priceMap[priceId] || "free";
     console.log(`📊 Abo-Daten:`, {
       plan,
       email,
@@ -353,13 +557,18 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
       {
         $set: {
           subscriptionActive: true,
-          isPremium: plan === "premium",
+          // isPremium = hat bezahltes Abo (Business oder Enterprise)
+          isPremium: plan === "business" || plan === "enterprise",
           isBusiness: plan === "business",
+          isEnterprise: plan === "enterprise",
           subscriptionPlan: plan,
           stripeCustomerId,
           stripeSubscriptionId,
           premiumSince: new Date(),
           subscriptionStatus: "active",
+          // Limits basierend auf Plan setzen
+          analysisLimit: plan === "enterprise" ? Infinity : (plan === "business" ? 25 : 3),
+          optimizationLimit: plan === "enterprise" ? Infinity : (plan === "business" ? 15 : 0),
         },
       }
     );

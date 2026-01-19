@@ -437,15 +437,15 @@ router.get("/me", verifyToken, async (req, res) => {
       }
     }
 
-    // 📊 ANALYSE LIMITS - KORRIGIERT laut Preisliste
+    // 📊 ANALYSE LIMITS - gemäß subscriptionPlans.js
     let analysisLimit = 3;  // ✅ Free: 3 Analysen (einmalig, kein Reset)
     if (plan === "business") analysisLimit = 25;  // 📊 Business: 25 pro Monat
-    if (plan === "premium" || plan === "legendary") analysisLimit = Infinity; // ♾️ Premium/Legendary: Unbegrenzt
+    if (plan === "enterprise" || plan === "legendary") analysisLimit = Infinity; // ♾️ Enterprise/Legendary: Unbegrenzt
 
-    // 🔧 OPTIMIERUNG LIMITS - laut Preisliste
+    // 🔧 OPTIMIERUNG LIMITS - gemäß subscriptionPlans.js
     let optimizationLimit = 0; // ✅ Free: 0 Optimierungen
     if (plan === "business") optimizationLimit = 15; // 📊 Business: 15 Optimierungen
-    if (plan === "premium" || plan === "legendary") optimizationLimit = Infinity; // ♾️ Premium/Legendary: Unbegrenzt
+    if (plan === "enterprise" || plan === "legendary") optimizationLimit = Infinity; // ♾️ Enterprise/Legendary: Unbegrenzt
 
     const userData = {
       email: user.email,
@@ -458,8 +458,10 @@ router.get("/me", verifyToken, async (req, res) => {
       subscriptionPlan: plan,
       subscriptionStatus: status,
       subscriptionActive,
-      isPremium: plan === "premium" || plan === "legendary", // 🎁 Legendary = auch Premium-Features
+      // isPremium = hat bezahltes Abo (Business, Enterprise oder Legendary)
+      isPremium: plan === "business" || plan === "enterprise" || plan === "legendary",
       isBusiness: plan === "business",
+      isEnterprise: plan === "enterprise",
       isFree: plan === "free",
       isLegendary: plan === "legendary", // 🎁 NEU: Legendary Flag
       // 🎁 Beta-Tester Info

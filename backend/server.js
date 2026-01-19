@@ -2133,12 +2133,13 @@ const connectDB = async () => {
   }
 })();
 
-// Reset Business Limits (unchanged)
-try {
-  require("./cron/resetBusinessLimits");
-} catch (err) {
-  logger.error("Reset Business Limits konnte nicht geladen werden", { error: err.message });
-}
+// ❌ DEAKTIVIERT: Duplikat von resetAnalysisCount.js (Race Condition vermeiden)
+// Der monatliche Reset wird jetzt zentral in cron/resetAnalysisCount.js durchgeführt
+// try {
+//   require("./cron/resetBusinessLimits");
+// } catch (err) {
+//   logger.error("Reset Business Limits konnte nicht geladen werden", { error: err.message });
+// }
 
 // Graceful Shutdown
 process.on('SIGTERM', async () => {

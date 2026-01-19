@@ -3779,12 +3779,13 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
     }
 
     // Plan-Limits prüfen
-    const plan = user.subscriptionPlan || "free";
+    const plan = (user.subscriptionPlan || "free").toLowerCase();
     const optimizationCount = user.optimizationCount ?? 0;
 
+    // Limits gemäß subscriptionPlans.js
     let limit = 0; // Free: 0 (gesperrt)
     if (plan === "business") limit = 15; // Business: 15/Monat
-    if (plan === "premium") limit = Infinity; // Enterprise: Unbegrenzt
+    if (plan === "enterprise" || plan === "legendary") limit = Infinity; // Enterprise/Legendary: Unbegrenzt
 
     if (optimizationCount >= limit) {
       return res.status(403).json({
@@ -5172,12 +5173,13 @@ router.post("/stream", verifyToken, uploadLimiter, smartRateLimiter, upload.sing
     }
 
     // Plan limits check
-    const plan = user.subscriptionPlan || "free";
+    const plan = (user.subscriptionPlan || "free").toLowerCase();
     const optimizationCount = user.optimizationCount ?? 0;
 
+    // Limits gemäß subscriptionPlans.js
     let limit = 0; // Free: 0 (gesperrt)
     if (plan === "business") limit = 15; // Business: 15/Monat
-    if (plan === "premium") limit = Infinity; // Enterprise: Unbegrenzt
+    if (plan === "enterprise" || plan === "legendary") limit = Infinity; // Enterprise/Legendary: Unbegrenzt
 
     if (optimizationCount >= limit) {
       return sendError(

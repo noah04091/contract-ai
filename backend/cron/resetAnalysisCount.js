@@ -48,8 +48,9 @@ cron.schedule('0 0 1 * *', async () => {
 
     console.log('📊 [CRON] Business-Statistiken VOR Reset:', statsBefore[0] || 'Keine Daten');
 
-    // ✅ KORRIGIERT: Reset NUR für Business-User durchführen
+    // ✅ Reset für Business-User: Alle monatlichen Counter zurücksetzen
     // Free-User haben EINMALIGE 3 Analysen - werden NICHT resettet!
+    // Enterprise/Legendary haben Infinity - brauchen keinen Reset
     const result = await usersCollection.updateMany(
       {
         subscriptionPlan: 'business' // ✅ NUR Business!
@@ -57,6 +58,10 @@ cron.schedule('0 0 1 * *', async () => {
       {
         $set: {
           analysisCount: 0,
+          optimizationCount: 0,
+          generateCount: 0,
+          compareCount: 0,
+          chatCount: 0,
           legalPulseScanCount: 0,
           lastMonthlyReset: new Date()
         }

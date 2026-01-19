@@ -2318,16 +2318,21 @@ router.post("/", verifyToken, async (req, res) => {
 
     // Nutzer & Limit prüfen
     const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
-    const plan = user.subscriptionPlan || "free";
-    const count = user.analysisCount ?? 0;
+    const plan = (user.subscriptionPlan || "free").toLowerCase();
+    const count = user.generateCount ?? 0; // Separater Counter für Generate
 
+    // Limits gemäß subscriptionPlans.js
     let limit = 0; // Free: 0 (gesperrt)
     if (plan === "business") limit = 10; // Business: 10/Monat
-    if (plan === "premium" || plan === "legendary") limit = Infinity; // Premium/Legendary: Unbegrenzt
+    if (plan === "enterprise" || plan === "legendary") limit = Infinity; // Enterprise/Legendary: Unbegrenzt
 
     if (count >= limit) {
       return res.status(403).json({
-        message: "❌ Analyse-Limit erreicht. Bitte Paket upgraden.",
+        message: "❌ Vertrags-Generierung Limit erreicht. Bitte Paket upgraden.",
+        upgradeUrl: "/pricing",
+        currentPlan: plan,
+        currentCount: count,
+        limit: limit
       });
     }
 
