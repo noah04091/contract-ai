@@ -8,7 +8,7 @@ import {
   Users, Briefcase, Building, Zap, Scale, AlertTriangle,
   Eye, EyeOff, Star, Award, ThumbsUp, ThumbsDown
 } from "lucide-react";
-// UnifiedPremiumNotice entfernt - Premium-State jetzt in PageHeader integriert
+import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
 import { WelcomePopup } from "../components/Tour";
 import { PageHeader } from "../components/PageHeader";
 
@@ -43,7 +43,18 @@ interface ComparisonResult {
   categories: string[];
 }
 
-// PremiumNotice Komponente entfernt - Premium-State jetzt in PageHeader integriert
+interface PremiumNoticeProps {
+  className?: string;
+}
+
+const PremiumNotice: React.FC<PremiumNoticeProps> = ({ className }) => {
+  return (
+    <UnifiedPremiumNotice
+      featureName="Der Vertragsvergleich"
+      className={className}
+    />
+  );
+};
 
 // User Profile Selector Component
 const UserProfileSelector: React.FC<{
@@ -623,14 +634,14 @@ export default function EnhancedCompare() {
             title="Vertragsvergleich"
             subtitle="Vergleiche zwei Verträge und erhalte eine KI-Empfehlung"
             iconColor="blue"
-            premiumRequired={!isPremium}
-            premiumText="Der Vertragsvergleich ist nur mit Premium oder Business verfügbar"
             features={[
               { text: 'Side-by-Side', icon: Eye },
               { text: 'Unterschiede markiert', icon: AlertTriangle },
               { text: 'KI-Empfehlung', icon: Star }
             ]}
           />
+
+          {!isPremium && <PremiumNotice />}
 
           <UserProfileSelector
             selectedProfile={userProfile}

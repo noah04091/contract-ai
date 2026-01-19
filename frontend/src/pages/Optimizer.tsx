@@ -46,7 +46,7 @@ import {
 } from "lucide-react";
 
 // Components
-// UnifiedPremiumNotice entfernt - Premium-State jetzt in PageHeader integriert
+import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
 import ContractHealthDashboard from "../components/ContractHealthDashboard";
 import SimpleExplanationPopup from "../components/SimpleExplanationPopup";
 import AnalysisProgressComponent from "../components/AnalysisProgress";
@@ -2411,14 +2411,12 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
             }
           }}
         >
-          {/* Header - mit Premium-State wenn nicht Premium */}
+          {/* Header */}
           <PageHeader
             icon={Sparkles}
             title="KI-Vertragsoptimierung"
             subtitle="Automatische Verbesserungsvorschläge für deine Verträge"
             iconColor="purple"
-            premiumRequired={!isPremium}
-            premiumText="Der Vertragsoptimierer ist nur mit Premium oder Business verfügbar"
             features={[
               { text: 'Risiko-Erkennung', icon: Shield },
               { text: 'Klausel-Vorschläge', icon: Lightbulb },
@@ -2431,6 +2429,14 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
               variant: 'secondary'
             }] : undefined}
           />
+
+          {/* Premium Notice */}
+          {!isPremium && (
+            <UnifiedPremiumNotice
+              featureName="Der Vertragsoptimierer"
+
+            />
+          )}
 
           {/* Preloaded Contract Indicator */}
           {preloadedContractName && (
