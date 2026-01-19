@@ -355,7 +355,7 @@ const formatActivityType = (type: string): string => {
 };
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<'costs' | 'system' | 'users' | 'beta' | 'deleted' | 'activity' | 'settings'>('costs');
+  const [activeTab, setActiveTab] = useState<'costs' | 'system' | 'users' | 'beta' | 'deleted' | 'activity' | 'monitoring' | 'settings'>('costs');
   const [users, setUsers] = useState<User[]>([]);
   const [adminStats, setAdminStats] = useState<AdminStats | null>(null);
   const [betaStats, setBetaStats] = useState<BetaStats | null>(null);
@@ -393,6 +393,24 @@ export default function AdminDashboard() {
     loading: boolean;
   }>({ show: false, user: null, loading: false });
   const [suspendReason, setSuspendReason] = useState<string>('');
+
+  // Monitoring State
+  const [cronStatus, setCronStatus] = useState<Array<{
+    jobName: string;
+    status: 'completed' | 'failed' | 'running';
+    startedAt: string;
+    completedAt?: string;
+    duration?: number;
+    error?: string;
+  }>>([]);
+  const [errorLogs, setErrorLogs] = useState<Array<{
+    timestamp: string;
+    severity: string;
+    error: string;
+    route?: string;
+    count: number;
+  }>>([]);
+  const [monitoringLoading, setMonitoringLoading] = useState(false);
 
   // Fetch Admin Statistics
   const fetchData = async () => {
@@ -463,6 +481,38 @@ export default function AdminDashboard() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Fetch Monitoring Data (Cron Status & Errors)
+  const fetchMonitoringData = async () => {
+    try {
+      setMonitoringLoading(true);
+      const [cronRes, errorsRes] = await Promise.all([
+        fetch(`${API_URL}/api/admin/cron/status`, { credentials: 'include' }),
+        fetch(`${API_URL}/api/admin/errors?hours=24`, { credentials: 'include' })
+      ]);
+
+      if (cronRes.ok) {
+        const cronData = await cronRes.json();
+        setCronStatus(cronData.jobs || []);
+      }
+
+      if (errorsRes.ok) {
+        const errorsData = await errorsRes.json();
+        setErrorLogs(errorsData.recentErrors || []);
+      }
+    } catch (err) {
+      console.error('Error fetching monitoring data:', err);
+    } finally {
+      setMonitoringLoading(false);
+    }
+  };
+
+  // Load monitoring data when tab is selected
+  useEffect(() => {
+    if (activeTab === 'monitoring') {
+      fetchMonitoringData();
+    }
+  }, [activeTab]);
 
   // Filtered and sorted users
   const filteredUsers = useMemo(() => {
@@ -1221,6 +1271,16 @@ export default function AdminDashboard() {
           <span>Activity Log</span>
           {activityLogData && activityLogData.stats.totalActivities > 0 && (
             <span className={styles.tabBadge}>{activityLogData.stats.totalActivities}</span>
+          )}
+        </button>
+        <button
+          className={`${styles.tab} ${activeTab === 'monitoring' ? styles.active : ''}`}
+          onClick={() => setActiveTab('monitoring')}
+        >
+          <AlertTriangle size={20} />
+          <span>Monitoring</span>
+          {errorLogs.length > 0 && (
+            <span className={styles.tabBadge} style={{ background: '#ef4444' }}>{errorLogs.length}</span>
           )}
         </button>
         <button
@@ -2566,6 +2626,159 @@ export default function AdminDashboard() {
                     <span>Es wurden noch keine Aktivitäten protokolliert</span>
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* MONITORING TAB */}
+        {activeTab === 'monitoring' && (
+          <div className={styles.monitoringTab || styles.systemTab}>
+            <div className={styles.tabHeader}>
+              <h2>System Monitoring</h2>
+              <button
+                className={styles.refreshButton || styles.exportButton}
+                onClick={fetchMonitoringData}
+                disabled={monitoringLoading}
+              >
+                <RefreshCw size={16} className={monitoringLoading ? styles.spinning : ''} />
+                Aktualisieren
+              </button>
+            </div>
+
+            {/* Cron Job Status */}
+            <div className={styles.statsSection}>
+              <h3 style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Clock size={20} />
+                Cron-Job Status
+              </h3>
+              <div className={styles.tableContainer || ''} style={{ overflowX: 'auto' }}>
+                <table className={styles.usersTable} style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: 'left', padding: '12px', borderBottom: '1px solid #e5e7eb' }}>Job Name</th>
+                      <th style={{ textAlign: 'left', padding: '12px', borderBottom: '1px solid #e5e7eb' }}>Status</th>
+                      <th style={{ textAlign: 'left', padding: '12px', borderBottom: '1px solid #e5e7eb' }}>Letzter Run</th>
+                      <th style={{ textAlign: 'left', padding: '12px', borderBottom: '1px solid #e5e7eb' }}>Dauer</th>
+                      <th style={{ textAlign: 'left', padding: '12px', borderBottom: '1px solid #e5e7eb' }}>Fehler</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cronStatus.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} style={{ padding: '24px', textAlign: 'center', color: '#6b7280' }}>
+                          {monitoringLoading ? 'Laden...' : 'Noch keine Cron-Jobs ausgeführt'}
+                        </td>
+                      </tr>
+                    ) : (
+                      cronStatus.map((job, idx) => (
+                        <tr key={idx} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                          <td style={{ padding: '12px', fontWeight: 500 }}>{job.jobName}</td>
+                          <td style={{ padding: '12px' }}>
+                            <span style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              padding: '4px 12px',
+                              borderRadius: '9999px',
+                              fontSize: '13px',
+                              fontWeight: 500,
+                              background: job.status === 'completed' ? '#dcfce7' : job.status === 'failed' ? '#fee2e2' : '#fef3c7',
+                              color: job.status === 'completed' ? '#166534' : job.status === 'failed' ? '#991b1b' : '#92400e'
+                            }}>
+                              {job.status === 'completed' && <CheckCircle size={14} />}
+                              {job.status === 'failed' && <XCircle size={14} />}
+                              {job.status === 'running' && <RefreshCw size={14} />}
+                              {job.status === 'completed' ? 'Erfolgreich' : job.status === 'failed' ? 'Fehlgeschlagen' : 'Läuft'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '12px', color: '#6b7280', fontSize: '14px' }}>
+                            {job.startedAt ? new Date(job.startedAt).toLocaleString('de-DE') : '-'}
+                          </td>
+                          <td style={{ padding: '12px', color: '#6b7280', fontSize: '14px' }}>
+                            {job.duration ? `${(job.duration / 1000).toFixed(1)}s` : '-'}
+                          </td>
+                          <td style={{ padding: '12px', color: '#ef4444', fontSize: '14px' }}>
+                            {job.error || '-'}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Error Logs */}
+            <div className={styles.statsSection} style={{ marginTop: '32px' }}>
+              <h3 style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <AlertCircle size={20} />
+                Fehler-Log (letzte 24h)
+                {errorLogs.length > 0 && (
+                  <span style={{
+                    background: '#fee2e2',
+                    color: '#991b1b',
+                    padding: '2px 10px',
+                    borderRadius: '9999px',
+                    fontSize: '13px',
+                    fontWeight: 600
+                  }}>
+                    {errorLogs.length}
+                  </span>
+                )}
+              </h3>
+              <div style={{ overflowX: 'auto' }}>
+                <table className={styles.usersTable} style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: 'left', padding: '12px', borderBottom: '1px solid #e5e7eb' }}>Zeitpunkt</th>
+                      <th style={{ textAlign: 'left', padding: '12px', borderBottom: '1px solid #e5e7eb' }}>Severity</th>
+                      <th style={{ textAlign: 'left', padding: '12px', borderBottom: '1px solid #e5e7eb' }}>Route</th>
+                      <th style={{ textAlign: 'left', padding: '12px', borderBottom: '1px solid #e5e7eb' }}>Fehler</th>
+                      <th style={{ textAlign: 'left', padding: '12px', borderBottom: '1px solid #e5e7eb' }}>Count</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {errorLogs.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} style={{ padding: '24px', textAlign: 'center', color: '#16a34a' }}>
+                          <CheckCircle size={20} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                          Keine Fehler in den letzten 24 Stunden
+                        </td>
+                      </tr>
+                    ) : (
+                      errorLogs.map((log, idx) => (
+                        <tr key={idx} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                          <td style={{ padding: '12px', fontSize: '14px', color: '#6b7280' }}>
+                            {new Date(log.timestamp).toLocaleString('de-DE')}
+                          </td>
+                          <td style={{ padding: '12px' }}>
+                            <span style={{
+                              padding: '4px 10px',
+                              borderRadius: '9999px',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              textTransform: 'uppercase',
+                              background: log.severity === 'critical' ? '#fee2e2' : log.severity === 'high' ? '#ffedd5' : '#fef3c7',
+                              color: log.severity === 'critical' ? '#991b1b' : log.severity === 'high' ? '#c2410c' : '#92400e'
+                            }}>
+                              {log.severity}
+                            </span>
+                          </td>
+                          <td style={{ padding: '12px', fontFamily: 'monospace', fontSize: '13px' }}>
+                            {log.route || '-'}
+                          </td>
+                          <td style={{ padding: '12px', fontSize: '14px', maxWidth: '400px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {log.error}
+                          </td>
+                          <td style={{ padding: '12px', textAlign: 'center', fontWeight: 600 }}>
+                            {log.count}x
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>

@@ -37,7 +37,10 @@ const { checkAndSendNotifications, processEmailQueue } = require("./services/cal
 const { processDigests } = require("./services/calendarDigestService");
 
 // 🚨 ERROR MONITORING - Eigenes System für Fehler-Tracking
-const { initErrorCollection, errorHandler, getErrorStats } = require("./services/errorMonitoring");
+const { initErrorCollection, errorHandler, getErrorStats, captureError } = require("./services/errorMonitoring");
+
+// 📊 CRON LOGGER - Protokolliert alle Cron-Job Ausführungen
+const { initCronLogger, withCronLogging, getCronJobStatus, getCronLogs } = require("./services/cronLogger");
 
 // 📝 STRUCTURED LOGGING
 const logger = require("./utils/logger");
@@ -404,6 +407,9 @@ const connectDB = async () => {
 
     // 🚨 STEP 1.5: Error Monitoring initialisieren
     initErrorCollection(db);
+
+    // 📊 STEP 1.6: Cron Logger initialisieren
+    initCronLogger(db);
 
     // ✅ STEP 2: Pass DB to all routes
     app.use((req, res, next) => {
@@ -1519,15 +1525,19 @@ const connectDB = async () => {
       cron.schedule("0 8 * * *", async () => {
         console.log("⏰ Täglicher Reminder-Check gestartet");
         try {
-          // Alte Reminder-Funktion
-          const checkContractsAndSendReminders = require("./services/cron");
-          await checkContractsAndSendReminders();
-          
-          // ✅ CALENDAR: Neue Calendar Notifications
-          console.log("📅 Calendar Notification Check gestartet");
-          await checkAndSendNotifications(db);
+          await withCronLogging('reminder-calendar', async () => {
+            // Alte Reminder-Funktion
+            const checkContractsAndSendReminders = require("./services/cron");
+            await checkContractsAndSendReminders();
+
+            // ✅ CALENDAR: Neue Calendar Notifications
+            console.log("📅 Calendar Notification Check gestartet");
+            const notificationCount = await checkAndSendNotifications(db);
+            return { notificationsSent: notificationCount || 0 };
+          });
         } catch (error) {
           console.error("❌ Reminder/Calendar Cron Error:", error);
+          await captureError(error, { route: 'CRON:reminder-calendar', method: 'SCHEDULED', severity: 'high' });
         }
       });
 
@@ -1540,6 +1550,7 @@ const connectDB = async () => {
           }
         } catch (error) {
           console.error("❌ Email Queue Retry Cron Error:", error);
+          await captureError(error, { route: 'CRON:email-queue-retry', method: 'SCHEDULED', severity: 'high' });
         }
       });
 
@@ -1552,6 +1563,7 @@ const connectDB = async () => {
           console.log(`✅ Smart Status Update abgeschlossen:`, result);
         } catch (error) {
           console.error("❌ Smart Status Update Cron Error:", error);
+          await captureError(error, { route: 'CRON:smart-status-update', method: 'SCHEDULED', severity: 'medium' });
         }
       });
 
@@ -1564,6 +1576,7 @@ const connectDB = async () => {
           console.log(`✅ Notification Queue abgeschlossen:`, result);
         } catch (error) {
           console.error("❌ Notification Queue Cron Error:", error);
+          await captureError(error, { route: 'CRON:notification-queue', method: 'SCHEDULED', severity: 'high' });
         }
       });
 
@@ -1572,10 +1585,14 @@ const connectDB = async () => {
       cron.schedule("0 7 * * *", async () => {
         console.log("📬 Starte Digest-E-Mail Verarbeitung...");
         try {
-          const stats = await processDigests(db);
-          console.log(`📬 Digest-Verarbeitung: ${stats.users} User, ${stats.events} Events, ${stats.errors} Fehler`);
+          await withCronLogging('digest-emails', async () => {
+            const stats = await processDigests(db);
+            console.log(`📬 Digest-Verarbeitung: ${stats.users} User, ${stats.events} Events, ${stats.errors} Fehler`);
+            return stats;
+          });
         } catch (error) {
           console.error("❌ Digest Cron Error:", error);
+          await captureError(error, { route: 'CRON:digest-emails', method: 'SCHEDULED', severity: 'high' });
         }
       });
 
@@ -1589,6 +1606,7 @@ const connectDB = async () => {
           console.log(`📧 [ONBOARDING] ${emailsSent} E-Mail(s) gesendet`);
         } catch (error) {
           console.error("❌ Onboarding E-Mail Cron Error:", error);
+          await captureError(error, { route: 'CRON:onboarding-emails', method: 'SCHEDULED', severity: 'medium' });
         }
       });
 
@@ -1626,6 +1644,7 @@ const connectDB = async () => {
           console.log("✅ Event-Generierung abgeschlossen");
         } catch (error) {
           console.error("❌ Event Generation Cron Error:", error);
+          await captureError(error, { route: 'CRON:event-generation', method: 'SCHEDULED', severity: 'high' });
         }
       });
 
@@ -1637,6 +1656,7 @@ const connectDB = async () => {
           await updateExpiredEvents(db);
         } catch (error) {
           console.error("❌ Event Cleanup Cron Error:", error);
+          await captureError(error, { route: 'CRON:event-cleanup', method: 'SCHEDULED', severity: 'medium' });
         }
       });
 
@@ -1644,10 +1664,14 @@ const connectDB = async () => {
       cron.schedule("0 6 * * *", async () => {
         console.log("🧠 Starte täglichen AI-powered Legal Pulse Scan...");
         try {
-          const runLegalPulseScan = require("./services/legalPulseScan");
-          await runLegalPulseScan();
+          await withCronLogging('legal-pulse-scan', async () => {
+            const runLegalPulseScan = require("./services/legalPulseScan");
+            const result = await runLegalPulseScan();
+            return result || { scanned: true };
+          });
         } catch (error) {
           console.error("❌ Legal Pulse Scan Error:", error);
+          await captureError(error, { route: 'CRON:legal-pulse-scan', method: 'SCHEDULED', severity: 'high' });
         }
       });
 
@@ -1863,6 +1887,7 @@ const connectDB = async () => {
           console.log("✅ [BETA] Feedback-Erinnerungs-Check (beide Erinnerungen) abgeschlossen");
         } catch (error) {
           console.error("❌ [BETA] Feedback Reminder Cron Error:", error);
+          await captureError(error, { route: 'CRON:beta-feedback-reminder', method: 'SCHEDULED', severity: 'medium' });
         }
       });
 
@@ -1874,6 +1899,7 @@ const connectDB = async () => {
           await sendDailyAdminSummary();
         } catch (error) {
           console.error("❌ [ADMIN] Daily Summary Cron Error:", error);
+          await captureError(error, { route: 'CRON:admin-daily-summary', method: 'SCHEDULED', severity: 'medium' });
         }
       });
 
@@ -1885,6 +1911,7 @@ const connectDB = async () => {
           await sendWeeklyAdminSummary();
         } catch (error) {
           console.error("❌ [ADMIN] Weekly Summary Cron Error:", error);
+          await captureError(error, { route: 'CRON:admin-weekly-summary', method: 'SCHEDULED', severity: 'medium' });
         }
       });
 
@@ -1897,6 +1924,7 @@ const connectDB = async () => {
           console.log(`📧 [VERIFICATION] Ergebnis: ${result.sent} Erinnerungen gesendet`);
         } catch (error) {
           console.error("❌ [VERIFICATION] Reminder Cron Error:", error);
+          await captureError(error, { route: 'CRON:verification-reminder', method: 'SCHEDULED', severity: 'medium' });
         }
       });
 
@@ -1909,6 +1937,7 @@ const connectDB = async () => {
           console.log(`🗑️ [AUTO-DELETE] Ergebnis: ${result.deleted} Envelope(s) gelöscht`);
         } catch (error) {
           console.error("❌ [AUTO-DELETE] Cron Error:", error);
+          await captureError(error, { route: 'CRON:auto-delete-envelopes', method: 'SCHEDULED', severity: 'low' });
         }
       });
 
@@ -2063,6 +2092,31 @@ const connectDB = async () => {
         const hours = parseInt(req.query.hours) || 24;
         const stats = await getErrorStats(hours);
         res.json(stats);
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
+    });
+
+    // 📊 CRON MONITORING: Admin-Endpoints für Cron-Job Status
+    app.get("/api/admin/cron/status", verifyToken, verifyAdmin, async (req, res) => {
+      try {
+        const status = await getCronJobStatus();
+        res.json({ success: true, jobs: status });
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
+    });
+
+    app.get("/api/admin/cron/logs", verifyToken, verifyAdmin, async (req, res) => {
+      try {
+        const { limit = 50, jobName, status, hoursBack = 24 } = req.query;
+        const logs = await getCronLogs({
+          limit: parseInt(limit),
+          jobName: jobName || null,
+          status: status || null,
+          hoursBack: parseInt(hoursBack)
+        });
+        res.json({ success: true, ...logs });
       } catch (error) {
         res.status(500).json({ error: error.message });
       }
