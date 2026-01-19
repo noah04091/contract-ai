@@ -33,7 +33,9 @@ import {
   Loader,
   Filter,
   ChevronDown,
-  ArrowUpDown
+  ArrowUpDown,
+  Crown,
+  Sparkles
 } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -42,6 +44,10 @@ import styles from "../styles/Envelopes.module.css";
 import PDFViewer from "../components/PDFViewer";
 import { QRCodeCanvas } from "qrcode.react";
 import { WelcomePopup } from "../components/Tour";
+import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
+
+// Plans mit vollem Envelopes/Signaturen Zugriff
+const ENVELOPES_ACCESS_PLANS = ['business', 'enterprise', 'legendary'];
 
 interface Signer {
   email: string;
@@ -106,6 +112,12 @@ export default function Envelopes() {
   const [savingNote, setSavingNote] = useState(false);
   const [selectedEnvelopeIds, setSelectedEnvelopeIds] = useState<string[]>([]);
 
+  // 🔒 Premium Access State
+  const [userPlan, setUserPlan] = useState<string>('free');
+  const [planLoading, setPlanLoading] = useState(true);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const hasAccess = ENVELOPES_ACCESS_PLANS.includes(userPlan);
+
   // Search, pagination and archive states
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
@@ -139,6 +151,41 @@ export default function Envelopes() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // 🔒 Fetch user plan for premium access check
+  useEffect(() => {
+    const fetchUserPlan = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setPlanLoading(false);
+          return;
+        }
+        const response = await fetch('/api/auth/me', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setUserPlan(data.subscriptionPlan || data.user?.subscriptionPlan || 'free');
+        }
+      } catch (err) {
+        console.error('Error fetching user plan:', err);
+      } finally {
+        setPlanLoading(false);
+      }
+    };
+    fetchUserPlan();
+  }, []);
+
+  // Helper: Check access and show upgrade modal if needed
+  const handleBlockedAction = (callback?: () => void) => {
+    if (!hasAccess) {
+      setShowUpgradeModal(true);
+      return false;
+    }
+    if (callback) callback();
+    return true;
+  };
 
   // Debounce search query to avoid focus loss
   useEffect(() => {
@@ -1289,15 +1336,25 @@ export default function Envelopes() {
   }
 
   return (
-    <div className={styles.pageContainer}>
-      <WelcomePopup
-        featureId="envelopes"
-        icon={<Send size={32} />}
-        title="Digitale Signaturen"
-        description="Hier verwalten Sie alle Ihre Signaturanfragen. Senden Sie Verträge zur Unterschrift, verfolgen Sie den Status und laden Sie signierte Dokumente herunter."
-        tip="Klicken Sie auf eine Anfrage, um Details zu sehen und Erinnerungen zu versenden."
-      />
-      <div className={styles.container}>
+    <>
+      {/* 🔒 Premium Banner - Full Width - außerhalb pageContainer für korrektes Spacing */}
+      {!planLoading && !hasAccess && (
+        <UnifiedPremiumNotice
+          featureName="Digitale Signaturen"
+          variant="fullWidth"
+        />
+      )}
+
+      <div className={styles.pageContainer}>
+        <WelcomePopup
+          featureId="envelopes"
+          icon={<Send size={32} />}
+          title="Digitale Signaturen"
+          description="Hier verwalten Sie alle Ihre Signaturanfragen. Senden Sie Verträge zur Unterschrift, verfolgen Sie den Status und laden Sie signierte Dokumente herunter."
+          tip="Klicken Sie auf eine Anfrage, um Details zu sehen und Erinnerungen zu versenden."
+        />
+
+        <div className={styles.container}>
         {/* Header */}
         <div className={styles.header}>
           <div className={styles.headerTitle}>
@@ -1324,7 +1381,7 @@ export default function Envelopes() {
             </button>
             <button
               className={styles.newRequestBtn}
-              onClick={() => navigate("/envelopes/new")}
+              onClick={() => handleBlockedAction(() => navigate("/envelopes/new"))}
               title="Neue Signaturanfrage"
             >
               <Plus size={18} />
@@ -1709,7 +1766,7 @@ export default function Envelopes() {
                   <p>Sie haben keine offenen Signaturanfragen. Erstellen Sie eine neue Anfrage.</p>
                   <button
                     className={styles.emptyStateBtnPrimary}
-                    onClick={() => navigate("/signature/new")}
+                    onClick={() => handleBlockedAction(() => navigate("/envelopes/new"))}
                   >
                     <Plus size={18} />
                     Neue Signaturanfrage
@@ -1736,7 +1793,7 @@ export default function Envelopes() {
                   <p>Erstellen Sie Ihre erste Signaturanfrage und lassen Sie Dokumente rechtssicher unterschreiben.</p>
                   <button
                     className={styles.emptyStateBtnPrimary}
-                    onClick={() => navigate("/signature/new")}
+                    onClick={() => handleBlockedAction(() => navigate("/envelopes/new"))}
                   >
                     <Plus size={18} />
                     Erste Signaturanfrage erstellen
@@ -1778,7 +1835,7 @@ export default function Envelopes() {
                             </button>
                             <h3
                               className={styles.cardTitle}
-                              onClick={() => setSelectedEnvelope(envelope)}
+                              onClick={() => handleBlockedAction(() => setSelectedEnvelope(envelope))}
                               style={{ cursor: "pointer" }}
                             >
                               {envelope.title}
@@ -1990,7 +2047,7 @@ export default function Envelopes() {
                             </button>
                           </td>
                           <td
-                            onClick={() => setSelectedEnvelope(envelope)}
+                            onClick={() => handleBlockedAction(() => setSelectedEnvelope(envelope))}
                             style={{ cursor: "pointer" }}
                           >
                             <div className={styles.titleCell}>
@@ -1999,7 +2056,7 @@ export default function Envelopes() {
                             </div>
                           </td>
                           <td
-                            onClick={() => setSelectedEnvelope(envelope)}
+                            onClick={() => handleBlockedAction(() => setSelectedEnvelope(envelope))}
                             style={{ cursor: "pointer" }}
                           >
                             <div className={styles.signersCell}>
@@ -2016,7 +2073,7 @@ export default function Envelopes() {
                             </div>
                           </td>
                           <td
-                            onClick={() => setSelectedEnvelope(envelope)}
+                            onClick={() => handleBlockedAction(() => setSelectedEnvelope(envelope))}
                             style={{ cursor: "pointer" }}
                           >
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -2040,13 +2097,13 @@ export default function Envelopes() {
                             </div>
                           </td>
                           <td
-                            onClick={() => setSelectedEnvelope(envelope)}
+                            onClick={() => handleBlockedAction(() => setSelectedEnvelope(envelope))}
                             style={{ cursor: "pointer" }}
                           >
                             {formatDate(envelope.createdAt)}
                           </td>
                           <td
-                            onClick={() => setSelectedEnvelope(envelope)}
+                            onClick={() => handleBlockedAction(() => setSelectedEnvelope(envelope))}
                             style={{ cursor: "pointer" }}
                           >
                             {envelope.expiresAt ? formatDate(envelope.expiresAt) : "-"}
@@ -2772,6 +2829,82 @@ export default function Envelopes() {
         )}
       </AnimatePresence>
 
+      {/* 🔒 Upgrade Modal */}
+      <AnimatePresence>
+        {showUpgradeModal && (
+          <motion.div
+            className={styles.modalOverlay}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowUpgradeModal(false)}
+          >
+            <motion.div
+              className={styles.confirmModal}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{ textAlign: 'center' }}
+            >
+              <div style={{
+                width: '64px',
+                height: '64px',
+                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                borderRadius: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 20px'
+              }}>
+                <Crown size={32} color="white" />
+              </div>
+              <h3 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '12px', color: '#1e293b' }}>
+                Premium-Funktion
+              </h3>
+              <p style={{ color: '#64748b', marginBottom: '24px', lineHeight: '1.6' }}>
+                Digitale Signaturen sind nur mit einem Business- oder Enterprise-Plan verfügbar.
+                Upgraden Sie jetzt, um Verträge digital signieren zu lassen.
+              </p>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                <button
+                  onClick={() => setShowUpgradeModal(false)}
+                  style={{
+                    padding: '12px 24px',
+                    borderRadius: '10px',
+                    border: '1px solid #e2e8f0',
+                    background: 'white',
+                    color: '#64748b',
+                    fontWeight: 500,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Später
+                </button>
+                <button
+                  onClick={() => window.location.href = '/pricing'}
+                  style={{
+                    padding: '12px 24px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                    color: 'white',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <Sparkles size={18} />
+                  Jetzt upgraden
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Toast Container for Notifications */}
       <ToastContainer
         position="top-right"
@@ -2785,6 +2918,7 @@ export default function Envelopes() {
         pauseOnHover
         theme="light"
       />
-    </div>
+      </div>
+    </>
   );
 }
