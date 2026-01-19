@@ -171,7 +171,7 @@ interface UploadFileItem {
 
 // ✅ User Info Interface
 interface UserInfo {
-  subscriptionPlan: 'free' | 'business' | 'premium' | 'legendary';
+  subscriptionPlan: 'free' | 'business' | 'premium' | 'enterprise' | 'legendary';
   isPremium: boolean;
   analysisCount: number;
   analysisLimit: number;
@@ -863,9 +863,10 @@ export default function Contracts() {
 
   // 📊 Excel Export Handler
   const handleExportExcel = async () => {
-    // ✅ Premium-Check: Excel Export nur für Business/Premium
-    if (!userInfo.isPremium && userInfo.subscriptionPlan !== 'business') {
-      alert('📊 Excel-Export ist ein Premium-Feature.\n\n🚀 Upgrade auf Business oder Premium für diese Funktion!');
+    // ✅ Enterprise-Check: Excel Export nur für Enterprise/Legendary
+    const isEnterprise = userInfo.subscriptionPlan === 'enterprise' || userInfo.subscriptionPlan === 'legendary';
+    if (!isEnterprise) {
+      alert('📊 Excel-Export ist ein Enterprise-Feature.\n\n🚀 Upgrade auf Enterprise für diese Funktion!');
       window.location.href = '/pricing';
       return;
     }

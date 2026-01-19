@@ -36,19 +36,21 @@ export default function ApiKeys() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showKey, setShowKey] = useState(false);
 
-  // Enterprise-Check
+  // Enterprise-Check: API-Keys nur für Enterprise/Legendary
+  const isEnterprise = user?.subscriptionPlan === "enterprise" || user?.subscriptionPlan === "legendary";
+
   useEffect(() => {
-    if (!isLoading && user && user.subscriptionPlan !== "premium") {
+    if (!isLoading && user && !isEnterprise) {
       navigate("/pricing");
     }
-  }, [user, isLoading, navigate]);
+  }, [user, isLoading, navigate, isEnterprise]);
 
   // Lade API-Keys
   useEffect(() => {
-    if (user && user.subscriptionPlan === "premium") {
+    if (user && isEnterprise) {
       fetchApiKeys();
     }
-  }, [user]);
+  }, [user, isEnterprise]);
 
   const fetchApiKeys = async () => {
     setIsLoadingKeys(true);
@@ -169,7 +171,7 @@ export default function ApiKeys() {
     });
   };
 
-  if (isLoading || (user && user.subscriptionPlan !== "premium")) {
+  if (isLoading || (user && !isEnterprise)) {
     return null;
   }
 

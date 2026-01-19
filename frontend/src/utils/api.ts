@@ -1059,7 +1059,7 @@ export const batchUploadAndAnalyze = async (
  * - Premium/Legendary: Unbegrenzt
  */
 export const checkPremiumStatus = async (): Promise<{
-  subscriptionPlan: 'free' | 'business' | 'premium' | 'legendary';
+  subscriptionPlan: 'free' | 'business' | 'premium' | 'enterprise' | 'legendary';
   isPremium: boolean;
   analysisCount: number;
   analysisLimit: number;
@@ -1074,7 +1074,7 @@ export const checkPremiumStatus = async (): Promise<{
       }
     };
 
-    const plan = userInfo.user?.subscriptionPlan as 'free' | 'business' | 'premium' | 'legendary' || 'free';
+    const plan = userInfo.user?.subscriptionPlan as 'free' | 'business' | 'premium' | 'enterprise' | 'legendary' || 'free';
     const isPremium = userInfo.user?.isPremium || plan === 'premium' || plan === 'legendary';
     const analysisCount = userInfo.user?.analysisCount || 0;
 

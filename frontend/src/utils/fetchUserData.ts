@@ -9,7 +9,7 @@ export interface UserData {
   lastName?: string;
   name?: string;
   role?: "user" | "admin";
-  subscriptionPlan: "free" | "business" | "premium";
+  subscriptionPlan: "free" | "business" | "premium" | "enterprise" | "legendary";
   subscriptionStatus: string;
   subscriptionActive: boolean;
   isPremium: boolean;

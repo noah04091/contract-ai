@@ -11,7 +11,7 @@ export interface AssistantContext {
   mode: AssistantMode;
   page: string;
   route: string;
-  userPlan: "free" | "premium" | "business" | "enterprise" | null;
+  userPlan: "free" | "premium" | "business" | "enterprise" | "legendary" | null;
   isAuthenticated: boolean;
   // Optional: später für Vertrags-Context
   currentContractId?: string | null;

@@ -9,7 +9,7 @@ export interface UserData {
   email: string;
   name?: string; // Optional: Benutzername
   role?: 'user' | 'admin'; // 🔐 Admin-Role Support
-  subscriptionPlan: "free" | "premium" | "business" | "enterprise";
+  subscriptionPlan: "free" | "premium" | "business" | "enterprise" | "legendary";
   subscriptionStatus: string;
   subscriptionActive: boolean;
 
