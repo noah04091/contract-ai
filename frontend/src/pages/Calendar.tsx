@@ -3372,27 +3372,39 @@ export default function CalendarPage() {
       <AnimatePresence>
         {showUpgradeModal && (
           <motion.div
-            className="modal-overlay"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setShowUpgradeModal(false)}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0, 0, 0, 0.6)',
+              backdropFilter: 'blur(4px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 9999,
+              padding: '20px'
+            }}
           >
             <motion.div
-              className="premium-modal upgrade-modal"
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               onClick={(e) => e.stopPropagation()}
               style={{
-                background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                position: 'relative',
+                background: 'white',
                 borderRadius: '20px',
                 padding: '32px',
                 maxWidth: '420px',
-                width: '90%',
+                width: '100%',
                 textAlign: 'center',
-                border: '1px solid rgba(255,255,255,0.1)',
-                boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)'
+                boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)'
               }}
             >
               <button
@@ -3401,12 +3413,12 @@ export default function CalendarPage() {
                   position: 'absolute',
                   top: '16px',
                   right: '16px',
-                  background: 'rgba(255,255,255,0.1)',
+                  background: '#f3f4f6',
                   border: 'none',
                   borderRadius: '8px',
                   padding: '8px',
                   cursor: 'pointer',
-                  color: 'rgba(255,255,255,0.6)'
+                  color: '#6b7280'
                 }}
               >
                 <X size={20} />
@@ -3415,7 +3427,7 @@ export default function CalendarPage() {
               <div style={{
                 width: '80px',
                 height: '80px',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
                 borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',
@@ -3428,38 +3440,39 @@ export default function CalendarPage() {
               <h2 style={{
                 fontSize: '24px',
                 fontWeight: '700',
-                color: 'white',
+                color: '#1f2937',
                 marginBottom: '12px'
               }}>
                 Premium-Feature
               </h2>
 
               <p style={{
-                color: 'rgba(255,255,255,0.7)',
+                color: '#6b7280',
                 fontSize: '16px',
                 lineHeight: '1.6',
                 marginBottom: '24px'
               }}>
-                <strong style={{ color: 'white' }}>{upgradeAction}</strong> ist nur mit einem
-                <span style={{ color: '#667eea', fontWeight: '600' }}> Business</span> oder
-                <span style={{ color: '#764ba2', fontWeight: '600' }}> Enterprise</span> Abo verfügbar.
+                <strong style={{ color: '#1f2937' }}>{upgradeAction}</strong> ist nur mit einem
+                <span style={{ color: '#3b82f6', fontWeight: '600' }}> Business</span> oder
+                <span style={{ color: '#2563eb', fontWeight: '600' }}> Enterprise</span> Abo verfügbar.
               </p>
 
               <div style={{
-                background: 'rgba(255,255,255,0.05)',
+                background: '#f8fafc',
                 borderRadius: '12px',
                 padding: '16px',
-                marginBottom: '24px'
+                marginBottom: '24px',
+                border: '1px solid #e2e8f0'
               }}>
                 <p style={{
-                  color: 'rgba(255,255,255,0.6)',
+                  color: '#64748b',
                   fontSize: '14px',
                   margin: 0
                 }}>
                   Mit einem Upgrade erhältst du vollen Zugriff auf alle Kalender-Features:
                 </p>
                 <ul style={{
-                  color: 'rgba(255,255,255,0.8)',
+                  color: '#475569',
                   fontSize: '14px',
                   textAlign: 'left',
                   margin: '12px 0 0 0',
@@ -3477,10 +3490,10 @@ export default function CalendarPage() {
                   style={{
                     flex: 1,
                     padding: '14px 20px',
-                    background: 'rgba(255,255,255,0.1)',
-                    border: '1px solid rgba(255,255,255,0.2)',
+                    background: '#f3f4f6',
+                    border: '1px solid #e5e7eb',
                     borderRadius: '12px',
-                    color: 'white',
+                    color: '#374151',
                     fontSize: '15px',
                     fontWeight: '500',
                     cursor: 'pointer'
@@ -3493,7 +3506,7 @@ export default function CalendarPage() {
                   style={{
                     flex: 1,
                     padding: '14px 20px',
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
                     border: 'none',
                     borderRadius: '12px',
                     color: 'white',
