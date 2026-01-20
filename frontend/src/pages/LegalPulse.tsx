@@ -243,7 +243,7 @@ export default function LegalPulse() {
 
   // 🔐 User Subscription Check für Premium-Gating - MUSS vor Feed Hook sein!
   const [userPlan, setUserPlan] = useState<string>('free');
-  const canAccessLegalPulse = ['premium', 'business', 'enterprise', 'legendary'].includes(userPlan.toLowerCase());
+  const canAccessLegalPulse = ['business', 'enterprise'].includes(userPlan.toLowerCase());
 
   // Feed Hook - 🔐 NUR für Premium-User (SSE-Verbindung ist teuer)
   const feedHook = useLegalPulseFeed();

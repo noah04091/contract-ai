@@ -448,9 +448,8 @@ export default function TopBar({ onMenuClick, user }: TopBarProps) {
   // Plan-Anzeige: Formatiere für bessere Lesbarkeit
   const formatPlan = (plan?: string): string => {
     if (!plan || plan === 'free') return 'Free';
-    if (plan === 'premium') return 'Premium';
     if (plan === 'business') return 'Business';
-    if (plan === 'legendary' || plan === 'enterprise') return 'Enterprise';
+    if (plan === 'enterprise') return 'Enterprise';
     return plan.charAt(0).toUpperCase() + plan.slice(1);
   };
   const userPlan = formatPlan(user?.subscriptionPlan);

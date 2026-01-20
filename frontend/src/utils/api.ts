@@ -1059,7 +1059,7 @@ export const batchUploadAndAnalyze = async (
  * - Premium/Legendary: Unbegrenzt
  */
 export const checkPremiumStatus = async (): Promise<{
-  subscriptionPlan: 'free' | 'business' | 'premium' | 'enterprise' | 'legendary';
+  subscriptionPlan: 'free' | 'business' | 'enterprise';
   isPremium: boolean;
   analysisCount: number;
   analysisLimit: number;
@@ -1074,8 +1074,8 @@ export const checkPremiumStatus = async (): Promise<{
       }
     };
 
-    const plan = userInfo.user?.subscriptionPlan as 'free' | 'business' | 'premium' | 'enterprise' | 'legendary' || 'free';
-    const isPremium = userInfo.user?.isPremium || plan === 'premium' || plan === 'legendary';
+    const plan = userInfo.user?.subscriptionPlan as 'free' | 'business' | 'enterprise' || 'free';
+    const isPremium = userInfo.user?.isPremium || plan === 'business' || plan === 'enterprise';
     const analysisCount = userInfo.user?.analysisCount || 0;
 
     // ✅ KORRIGIERT: Limits laut Preisliste
@@ -1084,7 +1084,7 @@ export const checkPremiumStatus = async (): Promise<{
     if (!userInfo.user?.analysisLimit) {
       if (plan === 'free') analysisLimit = 3;           // ✅ Free: 3 Analysen (einmalig)
       else if (plan === 'business') analysisLimit = 25; // 📊 Business: 25 pro Monat
-      else if (plan === 'premium' || plan === 'legendary') analysisLimit = Infinity; // ♾️ Unbegrenzt
+      else if (plan === 'enterprise') analysisLimit = Infinity; // ♾️ Enterprise: Unbegrenzt
     }
 
     return { subscriptionPlan: plan, isPremium, analysisCount, analysisLimit };
@@ -1112,14 +1112,12 @@ export const getUploadLimits = async (): Promise<{
 }> => {
   try {
     const { subscriptionPlan, isPremium } = await checkPremiumStatus();
-    const hasUnlimitedPlan = subscriptionPlan === 'enterprise' || subscriptionPlan === 'legendary';
-
     return {
-      maxConcurrentUploads: hasUnlimitedPlan ? 10 : 1,
+      maxConcurrentUploads: subscriptionPlan === 'enterprise' ? 10 : 1,
       maxFileSize: isPremium ? 100 * 1024 * 1024 : 50 * 1024 * 1024, // 100MB vs 50MB
       allowedFormats: ['.pdf', '.doc', '.docx'],
       canUpload: subscriptionPlan !== 'free', // ✅ KORRIGIERT: Free kann nicht uploaden
-      canMultiUpload: hasUnlimitedPlan, // ✅ Enterprise/Legendary kann multi-upload
+      canMultiUpload: subscriptionPlan === 'enterprise', // ✅ Enterprise kann multi-upload
       subscriptionPlan
     };
   } catch (error) {
@@ -1176,7 +1174,7 @@ export const validateUploadFile = (
  */
 export const validateBatchUpload = (
   files: File[],
-  subscriptionPlan: 'free' | 'business' | 'enterprise' | 'legendary' | 'premium'
+  subscriptionPlan: 'free' | 'business' | 'enterprise'
 ): { valid: boolean; errors: string[]; warnings: string[] } => {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -1187,23 +1185,21 @@ export const validateBatchUpload = (
     return { valid: false, errors, warnings };
   }
   
-  // ✅ KORRIGIERT: Multi-Upload nur für Enterprise/Legendary
-  const isMultiUploadAllowed = subscriptionPlan === 'enterprise' || subscriptionPlan === 'legendary';
-  if (!isMultiUploadAllowed && files.length > 1) {
+  // ✅ KORRIGIERT: Multi-Upload nur für Enterprise
+  if (subscriptionPlan !== 'enterprise' && files.length > 1) {
     errors.push('Mehrere Dateien gleichzeitig analysieren ist nur für Enterprise-Nutzer verfügbar.');
     return { valid: false, errors, warnings };
   }
-  
+
   // Anzahl-Limits
-  const hasUnlimitedPlan = subscriptionPlan === 'enterprise' || subscriptionPlan === 'legendary';
-  const maxFiles = hasUnlimitedPlan ? 10 : 1;
+  const maxFiles = subscriptionPlan === 'enterprise' ? 10 : 1;
   if (files.length > maxFiles) {
     errors.push(`Zu viele Dateien. Maximum: ${maxFiles} (aktuell: ${files.length})`);
   }
 
   // Gesamtgröße prüfen
   const totalSize = files.reduce((sum, file) => sum + file.size, 0);
-  const maxTotalSize = hasUnlimitedPlan ? 500 * 1024 * 1024 : 100 * 1024 * 1024; // 500MB vs 100MB
+  const maxTotalSize = subscriptionPlan === 'enterprise' ? 500 * 1024 * 1024 : 100 * 1024 * 1024; // 500MB vs 100MB
   if (totalSize > maxTotalSize) {
     errors.push(`Gesamtgröße zu groß. Maximum: ${(maxTotalSize / 1024 / 1024).toFixed(0)}MB`);
   }

@@ -36,8 +36,8 @@ export default function ApiKeys() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showKey, setShowKey] = useState(false);
 
-  // Enterprise-Check: API-Keys nur für Enterprise/Legendary
-  const isEnterprise = user?.subscriptionPlan === "enterprise" || user?.subscriptionPlan === "legendary";
+  // Enterprise-Check: API-Keys nur für Enterprise
+  const isEnterprise = user?.subscriptionPlan === "enterprise";
 
   useEffect(() => {
     if (!isLoading && user && !isEnterprise) {

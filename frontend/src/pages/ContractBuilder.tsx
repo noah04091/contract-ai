@@ -73,10 +73,8 @@ const ContractBuilder: React.FC = () => {
   // User-Daten für Plan-Prüfung
   const { user } = useAuth();
   const isPremiumUser = user?.subscriptionActive === true && (
-    user?.subscriptionPlan === 'premium' ||
     user?.subscriptionPlan === 'business' ||
-    user?.subscriptionPlan === 'enterprise' ||
-    user?.subscriptionPlan === 'legendary'
+    user?.subscriptionPlan === 'enterprise'
   );
   const userPlan = user?.subscriptionPlan || 'free';
 

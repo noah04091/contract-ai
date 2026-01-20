@@ -11,15 +11,14 @@ export const AUTH_ENDPOINTS = {
 
 export interface UserData {
     email: string;
-    // ✅ Alle gültigen Subscription-Pläne
-    subscriptionPlan: "free" | "business" | "enterprise" | "legendary";
+    // ✅ Alle gültigen Subscription-Pläne: free (0€), business (19€), enterprise (29€)
+    subscriptionPlan: "free" | "business" | "enterprise";
     subscriptionStatus: "active" | "canceled" | "incomplete" | "past_due" | string;
-    // ✅ Premium = hat bezahltes Abo (Business, Enterprise oder Legendary)
+    // ✅ Premium = hat bezahltes Abo (Business oder Enterprise)
     isPremium: boolean;
     isBusiness: boolean;
     isEnterprise: boolean;
     isFree: boolean;
-    isLegendary: boolean;
     subscriptionActive: boolean;
     analysisCount: number;
     analysisLimit: number;

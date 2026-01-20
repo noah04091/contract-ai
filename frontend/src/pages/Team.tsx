@@ -72,14 +72,14 @@ export default function Team() {
 
   // Enterprise-Check
   useEffect(() => {
-    if (!isLoading && user && user.subscriptionPlan !== "premium") {
+    if (!isLoading && user && user.subscriptionPlan !== "enterprise") {
       navigate("/pricing");
     }
   }, [user, isLoading, navigate]);
 
   // Load Organization Data
   useEffect(() => {
-    if (user && user.subscriptionPlan === "premium") {
+    if (user && user.subscriptionPlan === "enterprise") {
       fetchOrganization();
     }
   }, [user]);
@@ -405,7 +405,7 @@ export default function Team() {
     }
   };
 
-  if (isLoading || (user && user.subscriptionPlan !== "premium")) {
+  if (isLoading || (user && user.subscriptionPlan !== "enterprise")) {
     return null;
   }
 

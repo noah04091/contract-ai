@@ -11,7 +11,7 @@ export interface AssistantContext {
   mode: AssistantMode;
   page: string;
   route: string;
-  userPlan: "free" | "premium" | "business" | "enterprise" | "legendary" | null;
+  userPlan: "free" | "business" | "enterprise" | null;
   isAuthenticated: boolean;
   // Optional: später für Vertrags-Context
   currentContractId?: string | null;
@@ -90,9 +90,8 @@ export function useAssistantContext(): AssistantContext {
 
     if (isLegalRoute) {
       // Free User auf Legal-Seiten: Zeige Product Mode (mit Upgrade-Hinweis)
-      // Premium+ User: Voller Legal Mode
+      // Business/Enterprise User: Voller Legal Mode
       const isPremiumOrHigher =
-        userPlan === "premium" ||
         userPlan === "business" ||
         userPlan === "enterprise";
 

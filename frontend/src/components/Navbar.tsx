@@ -124,9 +124,8 @@ export default function Navbar() {
 
   const formatPlan = (plan?: string): string => {
     if (!plan || plan === 'free') return 'Free';
-    if (plan === 'premium') return 'Premium';
     if (plan === 'business') return 'Business';
-    if (plan === 'legendary' || plan === 'enterprise') return 'Enterprise';
+    if (plan === 'enterprise') return 'Enterprise';
     return plan.charAt(0).toUpperCase() + plan.slice(1);
   };
   const isHomePage = location.pathname === "/";
@@ -1120,9 +1119,8 @@ export default function Navbar() {
                         {/* ✅ KORRIGIERT: Mobile Menu Badge */}
                         {user.subscriptionActive && (
                           <span className={styles.premiumBadge}>
-                            {user.subscriptionPlan === "legendary" ? "👑 Legendary" :
-                             user.subscriptionPlan === "enterprise" ? "🚀 Enterprise" :
-                             user.subscriptionPlan === "business" ? "🏢 Business" : "💎 Premium"}
+                            {user.subscriptionPlan === "enterprise" ? "🚀 Enterprise" :
+                             user.subscriptionPlan === "business" ? "🏢 Business" : ""}
                           </span>
                         )}
                       </div>

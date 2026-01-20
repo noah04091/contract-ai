@@ -9,13 +9,13 @@ export interface UserData {
   lastName?: string;
   name?: string;
   role?: "user" | "admin";
-  subscriptionPlan: "free" | "business" | "premium" | "enterprise" | "legendary";
+  // ✅ Nur 3 Pläne: free (0€), business (19€), enterprise (29€)
+  subscriptionPlan: "free" | "business" | "enterprise";
   subscriptionStatus: string;
   subscriptionActive: boolean;
   isPremium: boolean;
   isBusiness: boolean;
   isEnterprise: boolean;
-  isLegendary: boolean;
   isFree: boolean;
   analysisCount: number;
   analysisLimit: number;

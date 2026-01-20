@@ -9,7 +9,8 @@ export interface UserData {
   email: string;
   name?: string; // Optional: Benutzername
   role?: 'user' | 'admin'; // 🔐 Admin-Role Support
-  subscriptionPlan: "free" | "premium" | "business" | "enterprise" | "legendary";
+  // ✅ Nur 3 Pläne: free (0€), business (19€), enterprise (29€)
+  subscriptionPlan: "free" | "business" | "enterprise";
   subscriptionStatus: string;
   subscriptionActive: boolean;
 
@@ -17,7 +18,6 @@ export interface UserData {
   isPremium: boolean;
   isBusiness: boolean;
   isEnterprise: boolean;
-  isLegendary: boolean;
   isFree: boolean;
 
   // 📊 Limits (aus Backend)
@@ -55,41 +55,32 @@ export const getDisplayName = (user: UserData): string => {
 
 export const getSubscriptionDisplayName = (plan?: string): string => {
   switch (plan) {
-    case 'legendary':
-      return 'Legendary';
     case 'enterprise':
       return 'Enterprise';
     case 'business':
       return 'Business';
-    case 'premium':
-      return 'Premium'; // Legacy, maps to Business
     case 'free':
     default:
       return 'Kostenlos';
   }
 };
 
-// ✅ Helper für Enterprise oder höher
-export const isEnterpriseOrHigher = (user: UserData): boolean => {
-  return user.subscriptionPlan === 'enterprise' ||
-         user.subscriptionPlan === 'legendary' ||
-         user.isEnterprise === true ||
-         user.isLegendary === true;
+// ✅ Helper für Enterprise
+export const isEnterprise = (user: UserData): boolean => {
+  return user.subscriptionPlan === 'enterprise' || user.isEnterprise === true;
 };
 
-// ✅ Helper für Business oder höher
+// ✅ Helper für Business oder höher (Business oder Enterprise)
 export const isBusinessOrHigher = (user: UserData): boolean => {
   return user.subscriptionPlan === 'business' ||
          user.subscriptionPlan === 'enterprise' ||
-         user.subscriptionPlan === 'legendary' ||
          user.isPremium === true;
 };
 
 export const isSubscribed = (user: UserData): boolean => {
   // ✅ Alle bezahlten Pläne berücksichtigen
   return user.subscriptionPlan === 'business' ||
-         user.subscriptionPlan === 'enterprise' ||
-         user.subscriptionPlan === 'legendary';
+         user.subscriptionPlan === 'enterprise';
 };
 
 export const isSubscriptionActive = (user: UserData): boolean => {

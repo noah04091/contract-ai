@@ -374,8 +374,8 @@ export default function EnhancedCompare() {
         // Simple logic:
         const hasPremium =
           userData.isPremium === true ||
-          userData.subscriptionPlan === "premium" ||
           userData.subscriptionPlan === "business" ||
+          userData.subscriptionPlan === "enterprise" ||
           userData.subscriptionActive === true;
 
         console.log("🎯 FINAL PREMIUM STATUS:", hasPremium);

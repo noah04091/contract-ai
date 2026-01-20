@@ -208,7 +208,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
 
   // 🔐 User Subscription Check für Legal Pulse
   const [userPlan, setUserPlan] = useState<string>('free');
-  const canAccessLegalPulse = ['premium', 'business', 'enterprise', 'legendary'].includes(userPlan.toLowerCase());
+  const canAccessLegalPulse = ['business', 'enterprise'].includes(userPlan.toLowerCase());
 
   // Modals
   const [showShareModal, setShowShareModal] = useState(false);

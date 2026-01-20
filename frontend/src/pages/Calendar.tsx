@@ -2812,7 +2812,7 @@ export default function CalendarPage() {
                 className="btn btn-secondary"
                 onClick={() => {
                   // Kalender-Sync nur für Enterprise User
-                  const isEnterprise = access?.plan === 'enterprise' || access?.plan === 'legendary';
+                  const isEnterprise = access?.plan === 'enterprise';
                   if (!isEnterprise) {
                     setUpgradeAction('Kalender-Synchronisierung');
                     setShowUpgradeModal(true);

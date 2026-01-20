@@ -28,8 +28,8 @@ interface UseLegalPulseFeedReturn {
   lastEvent: PulseEvent | null;
 }
 
-// Premium Plans die SSE-Zugriff haben
-const PREMIUM_PLANS = ['premium', 'business', 'enterprise', 'legendary'];
+// Bezahlte Pläne die SSE-Zugriff haben
+const PREMIUM_PLANS = ['business', 'enterprise'];
 
 /**
  * Hook for Legal Pulse real-time feed using Server-Sent Events

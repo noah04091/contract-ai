@@ -31,7 +31,7 @@ import styles from "../styles/Integrations.module.css";
 import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
 
 // 🔒 Plans mit Integrations-Zugriff (nur Enterprise)
-const INTEGRATIONS_ACCESS_PLANS = ['enterprise', 'legendary'];
+const INTEGRATIONS_ACCESS_PLANS = ['enterprise'];
 
 interface Integration {
   type: string;

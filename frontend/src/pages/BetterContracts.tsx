@@ -38,12 +38,10 @@ const BetterContracts: React.FC = () => {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   
-  // ✅ Premium Check - alle bezahlten Pläne
+  // ✅ Premium Check - alle bezahlten Pläne (Business oder Enterprise)
   const isPremium = user?.subscriptionActive === true ||
                     user?.subscriptionPlan === 'business' ||
-                    user?.subscriptionPlan === 'enterprise' ||
-                    user?.subscriptionPlan === 'legendary' ||
-                    user?.subscriptionPlan === 'premium';
+                    user?.subscriptionPlan === 'enterprise';
 
   const [contractText, setContractText] = useState("");
   const [contractType, setContractType] = useState("");

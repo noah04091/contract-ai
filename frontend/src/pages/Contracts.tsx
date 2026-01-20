@@ -171,7 +171,7 @@ interface UploadFileItem {
 
 // ✅ User Info Interface
 interface UserInfo {
-  subscriptionPlan: 'free' | 'business' | 'premium' | 'enterprise' | 'legendary';
+  subscriptionPlan: 'free' | 'business' | 'enterprise';
   isPremium: boolean;
   analysisCount: number;
   analysisLimit: number;
@@ -863,8 +863,8 @@ export default function Contracts() {
 
   // 📊 Excel Export Handler
   const handleExportExcel = async () => {
-    // ✅ Enterprise-Check: Excel Export nur für Enterprise/Legendary
-    const isEnterprise = userInfo.subscriptionPlan === 'enterprise' || userInfo.subscriptionPlan === 'legendary';
+    // ✅ Enterprise-Check: Excel Export nur für Enterprise
+    const isEnterprise = userInfo.subscriptionPlan === 'enterprise';
     if (!isEnterprise) {
       alert('📊 Excel-Export ist ein Enterprise-Feature.\n\n🚀 Upgrade auf Enterprise für diese Funktion!');
       window.location.href = '/pricing';
@@ -933,8 +933,8 @@ export default function Contracts() {
 
   // 📦 Bulk ZIP Download Handler
   const handleBulkDownloadZip = async () => {
-    // ✅ Premium-Check: Bulk Download für Business/Enterprise/Legendary
-    const hasPaidPlan = userInfo.subscriptionPlan === 'business' || userInfo.subscriptionPlan === 'enterprise' || userInfo.subscriptionPlan === 'legendary' || userInfo.isPremium;
+    // ✅ Premium-Check: Bulk Download für Business/Enterprise
+    const hasPaidPlan = userInfo.subscriptionPlan === 'business' || userInfo.subscriptionPlan === 'enterprise';
     if (!hasPaidPlan) {
       alert('📦 Bulk-Download ist ein Premium-Feature.\n\n🚀 Upgrade auf Business oder Enterprise für diese Funktion!');
       window.location.href = '/pricing';
@@ -1315,8 +1315,8 @@ export default function Contracts() {
         }
       };
 
-      const plan = response.user?.subscriptionPlan as 'free' | 'business' | 'enterprise' | 'premium' | 'legendary' || 'free';
-      const isPremium = response.user?.isPremium || plan === 'premium' || plan === 'enterprise' || plan === 'legendary';
+      const plan = response.user?.subscriptionPlan as 'free' | 'business' | 'enterprise' || 'free';
+      const isPremium = response.user?.isPremium || plan === 'business' || plan === 'enterprise';
       const analysisCount = response.user?.analysisCount || 0;
 
       // ✅ KORRIGIERT: Limits laut Preisliste
@@ -1325,7 +1325,7 @@ export default function Contracts() {
       if (!response.user?.analysisLimit) {
         if (plan === 'free') analysisLimit = 3;           // ✅ Free: 3 Analysen (einmalig)
         else if (plan === 'business') analysisLimit = 25; // 📊 Business: 25 pro Monat
-        else if (plan === 'enterprise' || plan === 'premium' || plan === 'legendary') analysisLimit = Infinity; // ♾️ Unbegrenzt
+        else if (plan === 'enterprise') analysisLimit = Infinity; // ♾️ Enterprise: Unbegrenzt
       }
 
       const newUserInfo: UserInfo = {
@@ -1689,9 +1689,8 @@ export default function Contracts() {
     // ✅ KORRIGIERT: Free-User dürfen 3 Analysen machen!
     // (Limit-Check erfolgt unten)
 
-    // ✅ KORRIGIERT: Multi-Upload nur für Enterprise/Legendary
-    const hasUnlimitedPlan = userInfo.subscriptionPlan === 'enterprise' || userInfo.subscriptionPlan === 'legendary';
-    if (!hasUnlimitedPlan && files.length > 1) {
+    // ✅ KORRIGIERT: Multi-Upload nur für Enterprise
+    if (userInfo.subscriptionPlan !== 'enterprise' && files.length > 1) {
       alert("📊 Mehrere Verträge gleichzeitig hochladen ist nur für Enterprise-Nutzer verfügbar.\n\n🚀 Upgrade auf Enterprise für Batch-Upload!");
       e.target.value = ''; // ✅ Reset Input
       return;
@@ -2462,9 +2461,8 @@ export default function Contracts() {
       // ✅ KORRIGIERT: Free-User dürfen auch uploaden (3 Analysen)!
       // Limit-Check erfolgt beim Analysieren
 
-      // ✅ KORRIGIERT: Multi-Upload nur für Enterprise/Legendary
-      const hasUnlimitedPlan = userInfo.subscriptionPlan === 'enterprise' || userInfo.subscriptionPlan === 'legendary';
-      if (!hasUnlimitedPlan && files.length > 1) {
+      // ✅ KORRIGIERT: Multi-Upload nur für Enterprise
+      if (userInfo.subscriptionPlan !== 'enterprise' && files.length > 1) {
         alert("📊 Mehrere Verträge gleichzeitig hochladen ist nur für Enterprise-Nutzer verfügbar.\n\n🚀 Upgrade auf Enterprise für Batch-Upload!");
         return;
       }
@@ -2903,11 +2901,11 @@ export default function Contracts() {
             Business
           </span>
         );
-      case 'premium':
+      case 'enterprise':
         return (
-          <span className={styles.premiumBadge}>
+          <span className={styles.enterpriseBadge}>
             <Crown size={16} />
-            Premium
+            Enterprise
           </span>
         );
       default:
@@ -2916,8 +2914,8 @@ export default function Contracts() {
   };
 
   // ✅ KORRIGIERT: Upload-Berechtigung prüfen - Free darf auch uploaden!
-  const canUpload = true; // Alle Pläne dürfen uploaden (Free: 3, Business: 25, Premium: ∞)
-  const canMultiUpload = userInfo.subscriptionPlan === 'enterprise' || userInfo.subscriptionPlan === 'legendary';
+  const canUpload = true; // Alle Pläne dürfen uploaden (Free: 3, Business: 25, Enterprise: ∞)
+  const canMultiUpload = userInfo.subscriptionPlan === 'enterprise';
   const hasAnalysesLeft = userInfo.analysisLimit === Infinity || userInfo.analysisCount < userInfo.analysisLimit;
 
   // ✅ Infinite Scroll: Zeige alle geladenen Contracts (keine Frontend-Slice mehr)

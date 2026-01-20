@@ -47,7 +47,7 @@ import { WelcomePopup } from "../components/Tour";
 import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
 
 // Plans mit vollem Envelopes/Signaturen Zugriff
-const ENVELOPES_ACCESS_PLANS = ['business', 'enterprise', 'legendary'];
+const ENVELOPES_ACCESS_PLANS = ['business', 'enterprise'];
 
 interface Signer {
   email: string;

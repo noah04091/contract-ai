@@ -515,11 +515,11 @@ export default function Dashboard() {
   };
 
   const exportToCSV = () => {
-    // ✅ Premium-Check: CSV Export nur für Business/Premium
+    // ✅ Premium-Check: CSV Export nur für Business/Enterprise
     const plan = user?.subscriptionPlan as string | undefined;
-    const isPaidPlan = plan === 'business' || plan === 'premium' || plan === 'legendary' || plan === 'enterprise';
+    const isPaidPlan = plan === 'business' || plan === 'enterprise';
     if (!isPaidPlan) {
-      alert('📊 CSV-Export ist ein Premium-Feature.\n\n🚀 Upgrade auf Business oder Premium für diese Funktion!');
+      alert('📊 CSV-Export ist ein Business-Feature.\n\n🚀 Upgrade auf Business oder Enterprise für diese Funktion!');
       window.location.href = '/pricing';
       return;
     }
@@ -549,11 +549,11 @@ export default function Dashboard() {
   };
 
   const exportAllICS = () => {
-    // ✅ Premium-Check: ICS Export nur für Business/Premium
+    // ✅ Premium-Check: ICS Export nur für Business/Enterprise
     const plan = user?.subscriptionPlan as string | undefined;
-    const isPaidPlan = plan === 'business' || plan === 'premium' || plan === 'legendary' || plan === 'enterprise';
+    const isPaidPlan = plan === 'business' || plan === 'enterprise';
     if (!isPaidPlan) {
-      alert('📅 Kalender-Export ist ein Premium-Feature.\n\n🚀 Upgrade auf Business oder Premium für diese Funktion!');
+      alert('📅 Kalender-Export ist ein Business-Feature.\n\n🚀 Upgrade auf Business oder Enterprise für diese Funktion!');
       window.location.href = '/pricing';
       return;
     }
@@ -646,11 +646,11 @@ export default function Dashboard() {
       )}
 
       {/* Analyse-Limit Warnung */}
-      {userData && 
-       userData.analysisCount !== undefined && 
-       userData.analysisLimit !== undefined && 
-       userData.analysisCount >= userData.analysisLimit && 
-       userData.subscriptionPlan !== "premium" && (
+      {userData &&
+       userData.analysisCount !== undefined &&
+       userData.analysisLimit !== undefined &&
+       userData.analysisCount >= userData.analysisLimit &&
+       userData.subscriptionPlan === "free" && (
         <div className={styles.analysisLimitWarning}>
           <div className={styles.warningContent}>
             <svg className={styles.warningIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

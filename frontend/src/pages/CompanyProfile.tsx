@@ -73,8 +73,7 @@ export default function CompanyProfile() {
 
   // 🔐 Enterprise Check - Vollständiges Firmenprofil nur für Enterprise User
   // Free & Business: Nur Firmenname | Enterprise: Voller Zugriff
-  const isPremium = user?.subscriptionPlan === 'premium' ||
-                    user?.subscriptionPlan === 'enterprise';
+  const isPremium = user?.subscriptionPlan === 'enterprise';
 
   // Load existing profile - auch für Free User
   useEffect(() => {

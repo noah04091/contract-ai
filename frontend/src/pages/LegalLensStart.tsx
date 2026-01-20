@@ -13,7 +13,7 @@ import styles from '../styles/LegalLensStart.module.css';
 import UnifiedPremiumNotice from '../components/UnifiedPremiumNotice';
 
 // Plans mit vollem Legal Lens Zugriff
-const LEGAL_LENS_ACCESS_PLANS = ['business', 'enterprise', 'legendary'];
+const LEGAL_LENS_ACCESS_PLANS = ['business', 'enterprise'];
 
 interface Contract {
   _id: string;

@@ -11,7 +11,7 @@ import UnifiedPremiumNotice from '../components/UnifiedPremiumNotice';
 import { Search, Crown, Sparkles } from 'lucide-react';
 
 // Plans mit vollem Legal Lens Zugriff
-const LEGAL_LENS_ACCESS_PLANS = ['business', 'enterprise', 'legendary'];
+const LEGAL_LENS_ACCESS_PLANS = ['business', 'enterprise'];
 
 interface Contract {
   _id: string;
