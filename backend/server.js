@@ -1527,7 +1527,7 @@ const connectDB = async () => {
         try {
           await withCronLogging('reminder-calendar', async () => {
             // Alte Reminder-Funktion
-            const checkContractsAndSendReminders = require("./services/cron");
+            const { checkContractsAndSendReminders } = require("./services/cron");
             await checkContractsAndSendReminders();
 
             // ✅ CALENDAR: Neue Calendar Notifications
