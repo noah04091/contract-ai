@@ -321,7 +321,7 @@ const Features: React.FC = () => {
             <div className="fp-cta-card">
               <h2 className="fp-cta-title">Bereit, Ihre Verträge smarter zu verwalten?</h2>
               <p className="fp-cta-subtitle">
-                Testen Sie alle Funktionen 14 Tage kostenlos – keine Kreditkarte erforderlich.
+                Starten Sie kostenlos mit 3 Analysen pro Monat – keine Kreditkarte erforderlich.
               </p>
               <div className="fp-cta-buttons">
                 <Link to="/pricing" className="fp-cta-secondary-btn">

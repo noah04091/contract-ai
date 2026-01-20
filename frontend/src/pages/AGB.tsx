@@ -123,13 +123,10 @@ export default function AGB() {
             <strong>Free-Tarif:</strong> Kostenlos, 3 Vertragsanalysen pro Monat, Grundfunktionen der Plattform verfügbar.
           </p>
           <p style={{ fontSize: '16px', lineHeight: '1.6', color: '#1d1d1f', marginBottom: '15px' }}>
-            <strong>Premium-Tarif:</strong> Kostenpflichtig, 15 Vertragsanalysen pro Monat, alle Standard-Features inklusive.
+            <strong>Business-Tarif:</strong> 19€ pro Monat, 25 Vertragsanalysen pro Monat, alle Standard-Features inklusive.
           </p>
           <p style={{ fontSize: '16px', lineHeight: '1.6', color: '#1d1d1f', marginBottom: '15px' }}>
-            <strong>Business-Tarif:</strong> Kostenpflichtig, 50 Vertragsanalysen pro Monat, erweiterte Funktionen und Prioritätssupport.
-          </p>
-          <p style={{ fontSize: '16px', lineHeight: '1.6', color: '#1d1d1f', marginBottom: '15px' }}>
-            <strong>Legendary-Tarif:</strong> Kostenpflichtig, unbegrenzte Analysen, alle Premium-Features, höchster Support-Level.
+            <strong>Enterprise-Tarif:</strong> 29€ pro Monat, unbegrenzte Analysen, alle Premium-Features und Prioritätssupport.
           </p>
           <p style={{ fontSize: '16px', lineHeight: '1.6', color: '#1d1d1f', marginBottom: '15px' }}>
             Die jeweils aktuellen Preise sind auf der Pricing-Seite unter www.contract-ai.de/pricing einsehbar. Alle Preise verstehen sich inklusive der gesetzlichen Mehrwertsteuer.
@@ -151,8 +148,8 @@ export default function AGB() {
             Bei Zahlungsverzug kann der Zugriff auf kostenpflichtige Funktionen bis zur vollständigen Begleichung der ausstehenden Beträge gesperrt werden. Der Nutzer wird hierüber per E-Mail informiert.
           </p>
           <p style={{ fontSize: '16px', lineHeight: '1.6', color: '#1d1d1f', marginBottom: '15px' }}>
-            <strong>4.6 60-Tage-Geld-zurück-Garantie</strong><br/>
-            Für Erstkunden gilt eine 60-Tage-Geld-zurück-Garantie. Sollten Sie mit Contract AI nicht zufrieden sein, erstatten wir Ihnen innerhalb von 60 Tagen nach Zahlungseingang den vollen Betrag zurück. Bitte kontaktieren Sie hierzu unseren Support unter info@contract-ai.de.
+            <strong>4.6 14-Tage-Geld-zurück-Garantie</strong><br/>
+            Für Erstkunden gilt eine 14-Tage-Geld-zurück-Garantie. Sollten Sie mit Contract AI nicht zufrieden sein, erstatten wir Ihnen innerhalb von 14 Tagen nach Zahlungseingang den vollen Betrag zurück. Bitte kontaktieren Sie hierzu unseren Support unter info@contract-ai.de.
           </p>
 
           <h2 style={{ fontSize: '24px', fontWeight: '600', marginTop: '30px', marginBottom: '15px', color: '#1d1d1f' }}>
@@ -164,7 +161,7 @@ export default function AGB() {
           </p>
           <p style={{ fontSize: '16px', lineHeight: '1.6', color: '#1d1d1f', marginBottom: '15px' }}>
             <strong>5.2 Kündigung durch den Nutzer</strong><br/>
-            Der Vertrag kann jederzeit ohne Einhaltung einer Kündigungsfrist über das Nutzerkonto gekündigt werden. Die Kündigung wird zum Ende der aktuellen Abrechnungsperiode wirksam. Bereits gezahlte Beträge für die laufende Periode werden nicht erstattet (außer im Rahmen der 60-Tage-Geld-zurück-Garantie).
+            Der Vertrag kann jederzeit ohne Einhaltung einer Kündigungsfrist über das Nutzerkonto gekündigt werden. Die Kündigung wird zum Ende der aktuellen Abrechnungsperiode wirksam. Bereits gezahlte Beträge für die laufende Periode werden nicht erstattet (außer im Rahmen der 14-Tage-Geld-zurück-Garantie).
           </p>
           <p style={{ fontSize: '16px', lineHeight: '1.6', color: '#1d1d1f', marginBottom: '15px' }}>
             <strong>5.3 Keine automatische Verlängerung mit Preiserhöhung</strong><br/>
