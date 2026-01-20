@@ -2002,7 +2002,7 @@ const HomeRedesign = () => {
             </div>
             
             <div className="footer-bottom">
-              <p className="copyright">© 2025 Contract AI. Alle Rechte vorbehalten.</p>
+              <p className="copyright">© 2026 Contract AI. Alle Rechte vorbehalten.</p>
               <div className="social-links">
                 <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="social-link">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
