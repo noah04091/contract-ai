@@ -2743,6 +2743,8 @@ export default function Generate() {
   // Real subscription check
   const isPremium = user?.subscriptionActive === true && (
     user?.subscriptionPlan === 'business' ||
+    user?.subscriptionPlan === 'enterprise' ||
+    user?.subscriptionPlan === 'legendary' ||
     user?.subscriptionPlan === 'premium'
   );
   const userPlan = user?.subscriptionPlan || 'free';

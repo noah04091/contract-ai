@@ -759,6 +759,16 @@ export default function Profile() {
                     <span>Lade Abo-Status...</span>
                   ) : !user ? (
                     <span>❌ Nicht eingeloggt</span>
+                  ) : user.subscriptionPlan === "legendary" ? (
+                    <div className={styles.premium}>
+                      <span className={styles.premiumIcon}>👑</span>
+                      Legendary – aktiv
+                    </div>
+                  ) : user.subscriptionPlan === "enterprise" ? (
+                    <div className={styles.premium}>
+                      <span className={styles.premiumIcon}>🚀</span>
+                      Enterprise – aktiv
+                    </div>
                   ) : user.subscriptionPlan === "business" ? (
                     <div className={styles.premium}>
                       <span className={styles.premiumIcon}>🏢</span>
@@ -794,7 +804,7 @@ export default function Profile() {
                     </p>
                   </div>
                 </div>
-                {user?.subscriptionActive && (user.subscriptionPlan === 'business' || user.subscriptionPlan === 'premium') ? (
+                {user?.subscriptionActive && (user.subscriptionPlan === 'legendary' || user.subscriptionPlan === 'enterprise' || user.subscriptionPlan === 'business' || user.subscriptionPlan === 'premium') ? (
                   <motion.button
                     className={styles.companyProfileButton}
                     onClick={() => window.location.href = '/company-profile'}
@@ -835,7 +845,7 @@ export default function Profile() {
                     </p>
                   </div>
                 </div>
-                {user?.subscriptionActive && user.subscriptionPlan === 'premium' ? (
+                {user?.subscriptionActive && (user.subscriptionPlan === 'legendary' || user.subscriptionPlan === 'enterprise') ? (
                   <motion.button
                     className={styles.companyProfileButton}
                     onClick={() => window.location.href = '/api-keys'}
@@ -855,7 +865,7 @@ export default function Profile() {
                     transition={{ type: "spring", stiffness: 400, damping: 17 }}
                   >
                     <span className={styles.companyProfileButtonIcon}>⭐</span>
-                    <span>Upgrade auf Premium</span>
+                    <span>Upgrade auf Enterprise</span>
                   </motion.button>
                 )}
               </motion.div>
@@ -876,7 +886,7 @@ export default function Profile() {
                     </p>
                   </div>
                 </div>
-                {user?.subscriptionActive && user.subscriptionPlan === 'premium' ? (
+                {user?.subscriptionActive && (user.subscriptionPlan === 'legendary' || user.subscriptionPlan === 'enterprise' || user.subscriptionPlan === 'business' || user.subscriptionPlan === 'premium') ? (
                   <motion.button
                     className={styles.companyProfileButton}
                     onClick={() => window.location.href = '/team'}
@@ -896,7 +906,7 @@ export default function Profile() {
                     transition={{ type: "spring", stiffness: 400, damping: 17 }}
                   >
                     <span className={styles.companyProfileButtonIcon}>⭐</span>
-                    <span>Upgrade auf Premium</span>
+                    <span>Upgrade auf Business</span>
                   </motion.button>
                 )}
               </motion.div>
@@ -917,7 +927,7 @@ export default function Profile() {
                     </p>
                   </div>
                 </div>
-                {user?.subscriptionActive && (user.subscriptionPlan === 'premium' || user.subscriptionPlan === 'business') ? (
+                {user?.subscriptionActive && (user.subscriptionPlan === 'legendary' || user.subscriptionPlan === 'enterprise') ? (
                   <motion.button
                     className={styles.companyProfileButton}
                     onClick={() => window.location.href = '/integrations'}
@@ -937,7 +947,7 @@ export default function Profile() {
                     transition={{ type: "spring", stiffness: 400, damping: 17 }}
                   >
                     <span className={styles.companyProfileButtonIcon}>⭐</span>
-                    <span>Upgrade auf Premium</span>
+                    <span>Upgrade auf Enterprise</span>
                   </motion.button>
                 )}
               </motion.div>
@@ -1273,15 +1283,25 @@ export default function Profile() {
                         >
                           <div className={styles.invoiceDate}>{formatDate(invoice.date)}</div>
                           <div className={styles.invoicePlan}>
-                            {invoice.plan === 'premium' ? (
+                            {invoice.plan === 'legendary' ? (
                               <span className={styles.premiumPlan}>
-                                <span className={styles.premiumIcon}>💎</span>
-                                Premium
+                                <span className={styles.premiumIcon}>👑</span>
+                                Legendary
+                              </span>
+                            ) : invoice.plan === 'enterprise' ? (
+                              <span className={styles.premiumPlan}>
+                                <span className={styles.premiumIcon}>🚀</span>
+                                Enterprise
                               </span>
                             ) : invoice.plan === 'business' ? (
                               <span className={styles.businessPlan}>
                                 <span className={styles.businessIcon}>🏢</span>
                                 Business
+                              </span>
+                            ) : invoice.plan === 'premium' ? (
+                              <span className={styles.premiumPlan}>
+                                <span className={styles.premiumIcon}>💎</span>
+                                Premium
                               </span>
                             ) : (
                               <span className={styles.standardPlan}>
@@ -1324,15 +1344,25 @@ export default function Profile() {
                           <div className={styles.invoiceCardContent}>
                             <div className={styles.invoicePlanLabel}>Abo-Typ:</div>
                             <div className={styles.invoicePlan}>
-                              {invoice.plan === 'premium' ? (
+                              {invoice.plan === 'legendary' ? (
                                 <span className={styles.premiumPlan}>
-                                  <span className={styles.premiumIcon}>💎</span>
-                                  Premium
+                                  <span className={styles.premiumIcon}>👑</span>
+                                  Legendary
+                                </span>
+                              ) : invoice.plan === 'enterprise' ? (
+                                <span className={styles.premiumPlan}>
+                                  <span className={styles.premiumIcon}>🚀</span>
+                                  Enterprise
                                 </span>
                               ) : invoice.plan === 'business' ? (
                                 <span className={styles.businessPlan}>
                                   <span className={styles.businessIcon}>🏢</span>
                                   Business
+                                </span>
+                              ) : invoice.plan === 'premium' ? (
+                                <span className={styles.premiumPlan}>
+                                  <span className={styles.premiumIcon}>💎</span>
+                                  Premium
                                 </span>
                               ) : (
                                 <span className={styles.standardPlan}>

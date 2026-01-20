@@ -16,6 +16,8 @@ export interface UserData {
   // 🏷️ Plan-Booleans (aus Backend)
   isPremium: boolean;
   isBusiness: boolean;
+  isEnterprise: boolean;
+  isLegendary: boolean;
   isFree: boolean;
 
   // 📊 Limits (aus Backend)
@@ -53,14 +55,34 @@ export const getDisplayName = (user: UserData): string => {
 
 export const getSubscriptionDisplayName = (plan?: string): string => {
   switch (plan) {
-    case 'premium':
-      return 'Premium';
+    case 'legendary':
+      return 'Legendary';
+    case 'enterprise':
+      return 'Enterprise';
     case 'business':
       return 'Business';
+    case 'premium':
+      return 'Premium'; // Legacy, maps to Business
     case 'free':
     default:
       return 'Kostenlos';
   }
+};
+
+// ✅ Helper für Enterprise oder höher
+export const isEnterpriseOrHigher = (user: UserData): boolean => {
+  return user.subscriptionPlan === 'enterprise' ||
+         user.subscriptionPlan === 'legendary' ||
+         user.isEnterprise === true ||
+         user.isLegendary === true;
+};
+
+// ✅ Helper für Business oder höher
+export const isBusinessOrHigher = (user: UserData): boolean => {
+  return user.subscriptionPlan === 'business' ||
+         user.subscriptionPlan === 'enterprise' ||
+         user.subscriptionPlan === 'legendary' ||
+         user.isPremium === true;
 };
 
 export const isSubscribed = (user: UserData): boolean => {

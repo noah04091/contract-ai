@@ -75,7 +75,8 @@ const ContractBuilder: React.FC = () => {
   const isPremiumUser = user?.subscriptionActive === true && (
     user?.subscriptionPlan === 'premium' ||
     user?.subscriptionPlan === 'business' ||
-    user?.subscriptionPlan === 'enterprise'
+    user?.subscriptionPlan === 'enterprise' ||
+    user?.subscriptionPlan === 'legendary'
   );
   const userPlan = user?.subscriptionPlan || 'free';
 

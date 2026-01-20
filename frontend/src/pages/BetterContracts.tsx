@@ -38,9 +38,11 @@ const BetterContracts: React.FC = () => {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   
-  // ✅ Premium Check - wie in Chat.tsx
-  const isPremium = user?.subscriptionActive === true || 
-                    user?.subscriptionPlan === 'business' || 
+  // ✅ Premium Check - alle bezahlten Pläne
+  const isPremium = user?.subscriptionActive === true ||
+                    user?.subscriptionPlan === 'business' ||
+                    user?.subscriptionPlan === 'enterprise' ||
+                    user?.subscriptionPlan === 'legendary' ||
                     user?.subscriptionPlan === 'premium';
 
   const [contractText, setContractText] = useState("");

@@ -1120,7 +1120,9 @@ export default function Navbar() {
                         {/* ✅ KORRIGIERT: Mobile Menu Badge */}
                         {user.subscriptionActive && (
                           <span className={styles.premiumBadge}>
-                            {user.subscriptionPlan === "business" ? "🏢 Business" : "💎 Premium"}
+                            {user.subscriptionPlan === "legendary" ? "👑 Legendary" :
+                             user.subscriptionPlan === "enterprise" ? "🚀 Enterprise" :
+                             user.subscriptionPlan === "business" ? "🏢 Business" : "💎 Premium"}
                           </span>
                         )}
                       </div>

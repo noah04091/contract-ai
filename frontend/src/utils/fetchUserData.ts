@@ -14,6 +14,8 @@ export interface UserData {
   subscriptionActive: boolean;
   isPremium: boolean;
   isBusiness: boolean;
+  isEnterprise: boolean;
+  isLegendary: boolean;
   isFree: boolean;
   analysisCount: number;
   analysisLimit: number;

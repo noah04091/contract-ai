@@ -1112,13 +1112,14 @@ export const getUploadLimits = async (): Promise<{
 }> => {
   try {
     const { subscriptionPlan, isPremium } = await checkPremiumStatus();
-    
+    const hasUnlimitedPlan = subscriptionPlan === 'enterprise' || subscriptionPlan === 'legendary';
+
     return {
-      maxConcurrentUploads: subscriptionPlan === 'premium' ? 10 : 1,
+      maxConcurrentUploads: hasUnlimitedPlan ? 10 : 1,
       maxFileSize: isPremium ? 100 * 1024 * 1024 : 50 * 1024 * 1024, // 100MB vs 50MB
       allowedFormats: ['.pdf', '.doc', '.docx'],
       canUpload: subscriptionPlan !== 'free', // ✅ KORRIGIERT: Free kann nicht uploaden
-      canMultiUpload: subscriptionPlan === 'premium', // ✅ KORRIGIERT: Nur Premium kann multi-upload
+      canMultiUpload: hasUnlimitedPlan, // ✅ Enterprise/Legendary kann multi-upload
       subscriptionPlan
     };
   } catch (error) {
@@ -1175,7 +1176,7 @@ export const validateUploadFile = (
  */
 export const validateBatchUpload = (
   files: File[],
-  subscriptionPlan: 'free' | 'business' | 'premium'
+  subscriptionPlan: 'free' | 'business' | 'enterprise' | 'legendary' | 'premium'
 ): { valid: boolean; errors: string[]; warnings: string[] } => {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -1186,21 +1187,23 @@ export const validateBatchUpload = (
     return { valid: false, errors, warnings };
   }
   
-  // ✅ KORRIGIERT: Business vs Premium Check für Mehrfach-Upload
-  if (subscriptionPlan === 'business' && files.length > 1) {
-    errors.push('Mehrere Dateien gleichzeitig analysieren ist nur für Premium-Nutzer verfügbar.');
+  // ✅ KORRIGIERT: Multi-Upload nur für Enterprise/Legendary
+  const isMultiUploadAllowed = subscriptionPlan === 'enterprise' || subscriptionPlan === 'legendary';
+  if (!isMultiUploadAllowed && files.length > 1) {
+    errors.push('Mehrere Dateien gleichzeitig analysieren ist nur für Enterprise-Nutzer verfügbar.');
     return { valid: false, errors, warnings };
   }
   
   // Anzahl-Limits
-  const maxFiles = subscriptionPlan === 'premium' ? 10 : 1;
+  const hasUnlimitedPlan = subscriptionPlan === 'enterprise' || subscriptionPlan === 'legendary';
+  const maxFiles = hasUnlimitedPlan ? 10 : 1;
   if (files.length > maxFiles) {
     errors.push(`Zu viele Dateien. Maximum: ${maxFiles} (aktuell: ${files.length})`);
   }
-  
+
   // Gesamtgröße prüfen
   const totalSize = files.reduce((sum, file) => sum + file.size, 0);
-  const maxTotalSize = subscriptionPlan === 'premium' ? 500 * 1024 * 1024 : 100 * 1024 * 1024; // 500MB vs 100MB
+  const maxTotalSize = hasUnlimitedPlan ? 500 * 1024 * 1024 : 100 * 1024 * 1024; // 500MB vs 100MB
   if (totalSize > maxTotalSize) {
     errors.push(`Gesamtgröße zu groß. Maximum: ${(maxTotalSize / 1024 / 1024).toFixed(0)}MB`);
   }
