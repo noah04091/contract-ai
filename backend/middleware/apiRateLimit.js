@@ -2,6 +2,7 @@
 // Rate Limiting für REST API v1 (Enterprise-Feature)
 
 const rateLimit = require("express-rate-limit");
+const { isEnterpriseOrHigher } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
 
 /**
  * Rate Limiter für API v1 Endpoints
@@ -22,14 +23,14 @@ const apiRateLimiter = rateLimit({
 
     const plan = req.user.subscriptionPlan;
 
-    // Enterprise/Premium/Legendary: Höheres Limit
-    if (plan === "premium" || plan === "legendary") {
-      return 1000; // 1000 Requests/Stunde
+    // Enterprise/Legendary: Höheres Limit (1000 Requests/Stunde)
+    if (isEnterpriseOrHigher(plan)) {
+      return 1000;
     }
 
-    // Business: Standard Limit
+    // Business: Standard Limit (100 Requests/Stunde)
     if (plan === "business") {
-      return 100; // 100 Requests/Stunde
+      return 100;
     }
 
     // Free: Kein API-Zugang (sollte bereits von verifyApiKey blockiert sein)
@@ -60,11 +61,11 @@ const apiRateLimiter = rateLimit({
       error: "TOO_MANY_REQUESTS",
       limits: {
         plan,
-        maxRequests: (plan === "premium" || plan === "legendary") ? 1000 : 100,
+        maxRequests: isEnterpriseOrHigher(plan) ? 1000 : 100,
         window: "1 hour",
         resetAt: resetTime
       },
-      upgrade: (plan !== "premium" && plan !== "legendary") ? {
+      upgrade: !isEnterpriseOrHigher(plan) ? {
         message: "Upgrade zu Enterprise für höheres Rate Limit",
         upgradeUrl: "/pricing"
       } : null

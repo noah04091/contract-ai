@@ -29,15 +29,20 @@ router.post("/create-checkout-session", verifyToken, async (req, res) => {
   const priceIdMap = {
     // Monatliche Preise
     'business-monthly': process.env.STRIPE_BUSINESS_MONTHLY_PRICE_ID,
-    'premium-monthly': process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID,
+    'enterprise-monthly': process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID || process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID,
 
     // Jährliche Preise
     'business-yearly': process.env.STRIPE_BUSINESS_YEARLY_PRICE_ID,
-    'premium-yearly': process.env.STRIPE_PREMIUM_YEARLY_PRICE_ID,
+    'enterprise-yearly': process.env.STRIPE_ENTERPRISE_YEARLY_PRICE_ID || process.env.STRIPE_PREMIUM_YEARLY_PRICE_ID,
 
     // Backwards compatibility für alte Buttons
     'business': process.env.STRIPE_BUSINESS_MONTHLY_PRICE_ID || process.env.STRIPE_BUSINESS_PRICE_ID,
-    'premium': process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID || process.env.STRIPE_PREMIUM_PRICE_ID,
+    'enterprise': process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID || process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID || process.env.STRIPE_PREMIUM_PRICE_ID,
+
+    // LEGACY: Alte premium Keys weiterhin unterstützen (mappt zu Enterprise)
+    'premium-monthly': process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID || process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID,
+    'premium-yearly': process.env.STRIPE_ENTERPRISE_YEARLY_PRICE_ID || process.env.STRIPE_PREMIUM_YEARLY_PRICE_ID,
+    'premium': process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID || process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID || process.env.STRIPE_PREMIUM_PRICE_ID,
   };
 
   const priceKey = `${plan}-${billing}`;
@@ -150,8 +155,8 @@ router.post("/test-price-mapping", async (req, res) => {
     selectedPriceId,
     expectedPrice: plan === 'business' && billing === 'monthly' ? '19€' :
                   plan === 'business' && billing === 'yearly' ? '190€' :
-                  plan === 'premium' && billing === 'monthly' ? '29€' :
-                  plan === 'premium' && billing === 'yearly' ? '290€' : 'unknown',
+                  (plan === 'enterprise' || plan === 'premium') && billing === 'monthly' ? '29€' :
+                  (plan === 'enterprise' || plan === 'premium') && billing === 'yearly' ? '290€' : 'unknown',
     availableKeys: Object.keys(priceIdMap)
   });
 });

@@ -8,6 +8,8 @@ const pdfParse = require("pdf-parse");
 const fs = require("fs");
 const path = require("path");
 
+const { isBusinessOrHigher, isEnterpriseOrHigher, getFeatureLimit } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
+
 const router = express.Router();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -114,10 +116,8 @@ async function checkChatLimit(userId, usersCollection) {
 
   const plan = user.subscriptionPlan || "free";
 
-  // Limit per Plan
-  let chatLimit = 0; // Free: 0 (gesperrt)
-  if (plan === "business") chatLimit = 50; // Business: 50/Monat
-  if (plan === "premium" || plan === "enterprise" || plan === "legendary") chatLimit = Infinity; // Premium/Enterprise/Legendary: Unbegrenzt
+  // Limit aus zentraler Konfiguration (subscriptionPlans.js)
+  const chatLimit = getFeatureLimit(plan, 'chat');
 
   // Initialize chatUsage if not exists
   if (!user.chatUsage) {

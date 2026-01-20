@@ -5,6 +5,7 @@ const express = require("express");
 const router = express.Router();
 const { MongoClient, ObjectId } = require("mongodb");
 const verifyToken = require("../middleware/verifyToken");
+const { isEnterpriseOrHigher, getFeatureLimit } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
 
 // S3 für Profilbild-Upload
 let S3Client, PutObjectCommand, s3Instance;
@@ -212,12 +213,11 @@ router.get("/summary", verifyToken, async (req, res) => {
       { projection: { email: 1, name: 1, subscriptionPlan: 1, analysisCount: 1, analysisLimit: 1, profilePicture: 1 } }
     );
 
-    // 📊 ANALYSE LIMITS - Dynamisch nach Plan berechnen (wie in auth.js)
+    // 📊 ANALYSE LIMITS - Aus zentraler Konfiguration (subscriptionPlans.js)
     // WICHTIG: Infinity wird in JSON zu null, daher -1 als "unbegrenzt" verwenden
     const plan = user?.subscriptionPlan || 'free';
-    let analysisLimit = 3;  // ✅ Free: 3 Analysen
-    if (plan === "business") analysisLimit = 25;  // 📊 Business: 25 pro Monat
-    if (plan === "premium" || plan === "legendary" || plan === "enterprise") analysisLimit = -1; // ♾️ -1 = Unbegrenzt
+    const rawLimit = getFeatureLimit(plan, 'analyze');
+    const analysisLimit = rawLimit === Infinity ? -1 : rawLimit;
 
     res.json({
       success: true,

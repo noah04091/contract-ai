@@ -8,6 +8,8 @@ const fs = require("fs");
 const path = require("path");
 const { MongoClient, ObjectId } = require("mongodb");
 
+const { isBusinessOrHigher, isEnterpriseOrHigher, getFeatureLimit } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
+
 const router = express.Router();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -268,11 +270,10 @@ router.post("/", verifyToken, upload.fields([
     const plan = user.subscriptionPlan || "free";
     const compareCount = user.compareCount || 0;
 
-    let limit = 0; // Free: 0 (gesperrt)
-    if (plan === "business") limit = 20; // Business: 20/Monat
-    if (plan === "premium" || plan === "legendary") limit = Infinity; // Premium/Legendary: Unbegrenzt
+    // Limit aus zentraler Konfiguration (subscriptionPlans.js)
+    const limit = getFeatureLimit(plan, 'compare');
 
-    if (compareCount >= limit && plan !== "premium" && plan !== "legendary") {
+    if (compareCount >= limit && !isEnterpriseOrHigher(plan)) {
       return res.status(403).json({
         message: "❌ Vergleichs-Limit erreicht. Bitte Paket upgraden."
       });
@@ -451,9 +452,9 @@ router.get("/history", verifyToken, async (req, res) => {
       remainingComparisons: (() => {
         const plan = user.subscriptionPlan || "free";
         const used = user.compareCount || 0;
-        if (plan === "premium" || plan === "legendary") return "unlimited";
-        if (plan === "business") return Math.max(0, 50 - used);
-        return Math.max(0, 5 - used);
+        const limit = getFeatureLimit(plan, 'compare');
+        if (limit === Infinity) return "unlimited";
+        return Math.max(0, limit - used);
       })()
     });
 

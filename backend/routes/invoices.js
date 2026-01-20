@@ -7,6 +7,39 @@ const { MongoClient, ObjectId } = require("mongodb");
 const verifyToken = require("../middleware/verifyToken");
 require("dotenv").config();
 
+// 📊 PriceId → Plan Mapping (gleich wie in stripe-webhook-server.js)
+const getPlanFromPriceId = (priceId) => {
+  const priceMap = {
+    // Business Plan
+    [process.env.STRIPE_BUSINESS_MONTHLY_PRICE_ID]: "business",
+    [process.env.STRIPE_BUSINESS_YEARLY_PRICE_ID]: "business",
+    [process.env.STRIPE_BUSINESS_PRICE_ID]: "business",
+
+    // Enterprise Plan
+    [process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID]: "enterprise",
+    [process.env.STRIPE_ENTERPRISE_YEARLY_PRICE_ID]: "enterprise",
+    [process.env.STRIPE_ENTERPRISE_PRICE_ID]: "enterprise",
+
+    // LEGACY: "premium" PriceIds werden zu "enterprise" gemappt
+    [process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID]: "enterprise",
+    [process.env.STRIPE_PREMIUM_YEARLY_PRICE_ID]: "enterprise",
+    [process.env.STRIPE_PREMIUM_PRICE_ID]: "enterprise"
+  };
+
+  return priceMap[priceId] || null;
+};
+
+// 📊 Plan Display Name
+const getPlanDisplayName = (plan) => {
+  const names = {
+    'free': 'Free',
+    'business': 'Business',
+    'enterprise': 'Enterprise',
+    'legendary': 'Enterprise'
+  };
+  return names[plan] || plan;
+};
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
 
@@ -63,22 +96,38 @@ router.get("/me", verifyToken, async (req, res) => {
 
     console.log(`📊 ${stripeInvoices.data.length} Stripe-Rechnungen gefunden`);
 
-    // 3. Rechnungen für Frontend formatieren (EINFACH)
+    // 3. Rechnungen für Frontend formatieren
     const formattedInvoices = stripeInvoices.data.map(invoice => {
-      // Einfaches Plan-Mapping basierend auf Betrag (Quick & Dirty aber funktioniert)
+      // ✅ KORRIGIERT: Plan aus Stripe PriceId ermitteln (nicht aus Betrag!)
       let plan = "business"; // Default
-      
-      // Alternative: Basierend auf Betrag unterscheiden
-      if (invoice.amount_paid >= 2000) { // 20€ oder mehr = Premium
-        plan = "premium";
+
+      // Versuche Plan aus line_items zu ermitteln
+      if (invoice.lines && invoice.lines.data && invoice.lines.data.length > 0) {
+        const lineItem = invoice.lines.data[0];
+        if (lineItem.price && lineItem.price.id) {
+          const detectedPlan = getPlanFromPriceId(lineItem.price.id);
+          if (detectedPlan) {
+            plan = detectedPlan;
+          }
+        }
       }
-      
-      // Oder: Alle als "business" behandeln für jetzt
-      // plan = "business";
+
+      // Fallback: Aus Betrag ableiten (nur wenn PriceId nicht erkannt)
+      // 29€ = Enterprise, 19€ = Business
+      if (plan === "business") {
+        const amountInEuro = invoice.amount_paid / 100;
+        if (amountInEuro >= 28 && amountInEuro <= 30) {
+          plan = "enterprise"; // 29€ = Enterprise
+        } else if (amountInEuro >= 280 && amountInEuro <= 300) {
+          plan = "enterprise"; // 290€ = Enterprise (jährlich)
+        }
+        // 19€/190€ bleibt bei business (default)
+      }
 
       return {
         invoiceNumber: invoice.number || invoice.id, // Stripe's Rechnungsnummer
         plan: plan,
+        planDisplayName: getPlanDisplayName(plan), // ✅ Anzeigename für Frontend
         amount: invoice.amount_paid, // Bereits in Cent von Stripe
         date: new Date(invoice.created * 1000).toISOString(), // Unix timestamp → ISO string
         stripeInvoiceId: invoice.id // Für Download-Links

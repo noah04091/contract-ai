@@ -7,6 +7,7 @@ const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
 const { MongoClient, ObjectId } = require("mongodb");
 const saveContract = require("../services/saveContract"); // 🆕 Import
+const { isBusinessOrHigher, isEnterpriseOrHigher, getFeatureLimit } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -40,13 +41,11 @@ router.post("/", verifyToken, async (req, res) => {
     const plan = user.subscriptionPlan || "free";
     const count = user.analysisCount ?? 0;
 
-    // ✅ KORRIGIERT: Limits laut Preisliste
+    // ✅ Limits aus zentraler Konfiguration (subscriptionPlans.js)
     // - Free: 3 Analysen EINMALIG
     // - Business: 25 Analysen pro Monat
-    // - Premium/Legendary: Unbegrenzt
-    let limit = 3; // Free: 3 Analysen
-    if (plan === "business") limit = 25;
-    if (plan === "premium" || plan === "legendary") limit = Infinity;
+    // - Enterprise/Legendary: Unbegrenzt
+    const limit = getFeatureLimit(plan, 'analyze');
 
     if (count >= limit) {
       return res.status(403).json({

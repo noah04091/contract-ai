@@ -14,6 +14,7 @@ const { generateEventsForContract } = require("../services/calendarEvents"); // 
 const AILegalPulse = require("../services/aiLegalPulse"); // ⚡ NEW: Legal Pulse Risk Analysis
 const { getInstance: getCostTrackingService } = require("../services/costTracking"); // 💰 NEW: Cost Tracking
 const { clauseParser } = require("../services/legalLens"); // 🔍 Legal Lens Pre-Processing
+const { isBusinessOrHigher, isEnterpriseOrHigher, getFeatureLimit, PLANS } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
 
 const router = express.Router();
 
@@ -2194,16 +2195,14 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     // Jetzt: 1) Atomic increment-and-check in ONE operation
     const plan = user.subscriptionPlan || "free";
 
-    // ✅ KORRIGIERT: Limits laut Preisliste
+    // ✅ KORRIGIERT: Limits aus zentraler Konfiguration (subscriptionPlans.js)
     // - Free: 3 Analysen (einmalig, KEIN monatlicher Reset)
     // - Business: 25 Analysen pro Monat (MIT monatlichem Reset)
-    // - Premium/Legendary/Enterprise: Unbegrenzt
-    let limit = 3; // Free: 3 Analysen (einmalig)
-    if (plan === "business") limit = 25; // Business: 25 Analysen/Monat
-    if (plan === "premium" || plan === "legendary" || plan === "enterprise") limit = Infinity; // Unlimited
+    // - Enterprise/Legendary: Unbegrenzt
+    const limit = getFeatureLimit(plan, 'analyze');
 
-    // ✅ isPremium Flag für spätere Verwendung (inkl. legendary!)
-    const isPremium = plan === "premium" || plan === "legendary" || plan === "enterprise";
+    // ✅ isPremium Flag für spätere Verwendung (Business oder höher)
+    const isPremium = isBusinessOrHigher(plan);
 
     console.log(`📊 [${requestId}] User Plan: ${plan}, Current count: ${user.analysisCount ?? 0}, Limit: ${limit}`);
 
@@ -2214,7 +2213,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       _id: user._id  // Use the actual ObjectId from the fetched user
     };
 
-    if (plan !== 'premium' && plan !== 'legendary' && plan !== 'enterprise') {
+    if (!isEnterpriseOrHigher(plan)) {
       // Only add limit check for non-unlimited users (free + business)
       updateQuery.analysisCount = { $lt: limit };
     }
@@ -2224,7 +2223,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       hasLimitCheck: !!updateQuery.analysisCount,
       limit: updateQuery.analysisCount?.$lt
     });
-    console.log(`🔍 [${requestId}] Is Premium: ${plan === 'premium'}, Has Limit Check: ${!!updateQuery.analysisCount}`);
+    console.log(`🔍 [${requestId}] Is Premium: ${isPremium}, Is Enterprise: ${isEnterpriseOrHigher(plan)}, Has Limit Check: ${!!updateQuery.analysisCount}`);
 
     const updateResult = await users.findOneAndUpdate(
       updateQuery,
