@@ -6,6 +6,7 @@ const router = express.Router();
 const Contract = require("../models/Contract");
 const OrganizationMember = require("../models/OrganizationMember"); // Für Team-Zugriff
 const archiver = require("archiver");
+const { isEnterpriseOrHigher } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
 const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
 const { ObjectId } = require("mongodb");
 
@@ -33,7 +34,7 @@ const requireEnterprisePlan = async (req, res, next) => {
     const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
     const plan = user?.subscriptionPlan || 'free';
 
-    if (plan !== 'premium' && plan !== 'enterprise' && plan !== 'legendary') {
+    if (!isEnterpriseOrHigher(plan)) {
       return res.status(403).json({
         error: 'Bulk-Download ist nur für Enterprise verfügbar',
         requiresUpgrade: true,

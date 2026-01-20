@@ -101,8 +101,8 @@ function createDynamicLimiter(options) {
     windowMs,
     max: (req) => {
       const plan = req.user?.subscriptionPlan?.toLowerCase() || 'free';
-      const isPremium = ['premium', 'business', 'enterprise', 'legendary'].includes(plan);
-      return isPremium ? freeLimit * premiumMultiplier : freeLimit;
+      const isPaidPlan = ['business', 'enterprise', 'legendary'].includes(plan);
+      return isPaidPlan ? freeLimit * premiumMultiplier : freeLimit;
     },
     message: {
       error: 'Rate Limit erreicht',

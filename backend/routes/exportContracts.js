@@ -6,6 +6,7 @@ const router = express.Router();
 const Contract = require("../models/Contract");
 const ExcelJS = require("exceljs");
 const { ObjectId } = require("mongodb");
+const { isEnterpriseOrHigher } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
 
 // Middleware: Require authentication
 const requireAuth = (req, res, next) => {
@@ -22,7 +23,7 @@ const requireEnterprisePlan = async (req, res, next) => {
     const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
     const plan = user?.subscriptionPlan || 'free';
 
-    if (plan !== 'premium' && plan !== 'enterprise' && plan !== 'legendary') {
+    if (!isEnterpriseOrHigher(plan)) {
       return res.status(403).json({
         error: 'Excel-Export ist nur für Enterprise verfügbar',
         requiresUpgrade: true,

@@ -10,6 +10,7 @@ const multer = require("multer");
 const multerS3 = require("multer-s3");
 const https = require("https");
 const http = require("http");
+const { isEnterpriseOrHigher } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
 
 // AWS S3 Configuration
 const s3 = new aws.S3({
@@ -87,8 +88,8 @@ const requireEnterprise = async (req, res, next) => {
     const user = await req.db.collection("users").findOne({ _id: new ObjectId(userId) });
     const plan = user?.subscriptionPlan || 'free';
 
-    // Nur Enterprise (premium/legendary) hat Zugriff auf Firmenprofil/White-Label
-    if (plan !== 'premium' && plan !== 'enterprise' && plan !== 'legendary') {
+    // Nur Enterprise hat Zugriff auf Firmenprofil/White-Label
+    if (!isEnterpriseOrHigher(plan)) {
       return res.status(403).json({
         success: false,
         error: 'Firmenprofil & White-Label ist nur für Enterprise verfügbar',

@@ -17,7 +17,8 @@ const AILegalPulse = require("../services/aiLegalPulse"); // ⚡ Legal Pulse Ris
 const { preprocessContract } = require("../services/legalLens/clausePreprocessor"); // 🧠 Legal Lens Vorverarbeitung
 const analyzeRoute = require("./analyze"); // 🚀 V2 Analysis Functions
 const OrganizationMember = require("../models/OrganizationMember"); // 👥 Team-Management
-const { generateDeepLawyerLevelPrompt, getContractTypeAwareness } = analyzeRoute; // 🚀 Import V2 functions
+const { generateDeepLawyerLevelPrompt, getContractTypeAwareness } = analyzeRoute;
+const { isEnterpriseOrHigher } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen // 🚀 Import V2 functions
 
 const router = express.Router();
 const aiLegalPulse = new AILegalPulse(); // ⚡ Initialize Legal Pulse analyzer
@@ -3607,7 +3608,7 @@ router.post("/bulk-delete", verifyToken, async (req, res) => {
       });
     }
 
-    // 🔒 ENTERPRISE-CHECK: Nur Premium/Enterprise/Legendary-User
+    // 🔒 ENTERPRISE-CHECK: Nur Enterprise-User
     const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
 
     if (!user) {
@@ -3615,7 +3616,7 @@ router.post("/bulk-delete", verifyToken, async (req, res) => {
     }
 
     const plan = user.subscriptionPlan || "free";
-    if (plan !== "premium" && plan !== "legendary") {
+    if (!isEnterpriseOrHigher(plan)) {
       return res.status(403).json({
         success: false,
         message: "⛔ Bulk-Operationen sind nur im Enterprise-Plan verfügbar.",
@@ -3692,7 +3693,7 @@ router.post("/bulk-move", verifyToken, async (req, res) => {
       });
     }
 
-    // 🔒 ENTERPRISE-CHECK: Nur Premium/Enterprise/Legendary-User
+    // 🔒 ENTERPRISE-CHECK: Nur Enterprise-User
     const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
 
     if (!user) {
@@ -3700,7 +3701,7 @@ router.post("/bulk-move", verifyToken, async (req, res) => {
     }
 
     const plan = user.subscriptionPlan || "free";
-    if (plan !== "premium" && plan !== "legendary") {
+    if (!isEnterpriseOrHigher(plan)) {
       return res.status(403).json({
         success: false,
         message: "⛔ Bulk-Operationen sind nur im Enterprise-Plan verfügbar.",

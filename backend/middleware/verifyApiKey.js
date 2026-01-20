@@ -3,6 +3,7 @@
 
 const { MongoClient, ObjectId } = require("mongodb");
 const crypto = require("crypto");
+const { isEnterpriseOrHigher } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
 
 // MongoDB Connection
 const client = new MongoClient(process.env.MONGO_URI);
@@ -113,7 +114,7 @@ async function verifyApiKey(req, res, next) {
 
     // Enterprise-Check
     const plan = user.subscriptionPlan || "free";
-    if (plan !== "premium") {
+    if (!isEnterpriseOrHigher(plan)) {
       return res.status(403).json({
         success: false,
         message: "⛔ REST API-Zugang ist nur im Enterprise-Plan verfügbar.",

@@ -12,6 +12,7 @@ const nodemailer = require('nodemailer');
 const { generateEmailTemplate } = require('../utils/emailTemplate');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { isEnterpriseOrHigher } = require('../constants/subscriptionPlans'); // 📊 Zentrale Plan-Definitionen
 
 // Email Transporter (reuse existing from auth)
 const transporter = nodemailer.createTransport({
@@ -49,7 +50,7 @@ router.post('/', verifyToken, async (req, res) => {
     }
 
     const plan = user.subscriptionPlan || 'free';
-    if (plan !== 'premium' && plan !== 'legendary') {
+    if (!isEnterpriseOrHigher(plan)) {
       return res.status(403).json({
         success: false,
         message: '⛔ Team-Management ist nur im Enterprise-Plan verfügbar.',

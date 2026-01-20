@@ -7,6 +7,7 @@ const { MongoClient, ObjectId } = require("mongodb");
 const crypto = require("crypto");
 const verifyToken = require("../middleware/verifyToken");
 const { apiKeysRateLimiter } = require("../middleware/apiRateLimit");
+const { isEnterpriseOrHigher } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
 
 // Rate Limiting für API-Key Management
 router.use(apiKeysRateLimiter);
@@ -76,7 +77,7 @@ router.post("/generate", verifyToken, async (req, res) => {
     }
 
     const plan = user.subscriptionPlan || "free";
-    if (plan !== "premium") {
+    if (!isEnterpriseOrHigher(plan)) {
       return res.status(403).json({
         success: false,
         message: "⛔ REST API-Zugang ist nur im Enterprise-Plan verfügbar.",
@@ -159,7 +160,7 @@ router.get("/list", verifyToken, async (req, res) => {
     }
 
     const plan = user.subscriptionPlan || "free";
-    if (plan !== "premium") {
+    if (!isEnterpriseOrHigher(plan)) {
       return res.status(403).json({
         success: false,
         message: "⛔ REST API-Zugang ist nur im Enterprise-Plan verfügbar.",
@@ -232,7 +233,7 @@ router.delete("/:keyId", verifyToken, async (req, res) => {
     }
 
     const plan = user.subscriptionPlan || "free";
-    if (plan !== "premium") {
+    if (!isEnterpriseOrHigher(plan)) {
       return res.status(403).json({
         success: false,
         message: "⛔ REST API-Zugang ist nur im Enterprise-Plan verfügbar.",
