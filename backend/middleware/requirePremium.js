@@ -55,9 +55,11 @@ const requirePremium = async (req, res, next) => {
         },
         upgradeUrl: "/pricing",
         upgradeInfo: {
-          businessPrice: "49€/Monat",
+          businessPrice: "19€/Monat",
+          enterprisePrice: "29€/Monat",
           benefits: [
-            "Unbegrenzte Vertragsanalysen",
+            "25 Vertragsanalysen/Monat (Business)",
+            "Unbegrenzte Analysen (Enterprise)",
             "KI-Optimierung & Chat",
             "Legal Pulse & LegalLens",
             "Digitale Signaturen"

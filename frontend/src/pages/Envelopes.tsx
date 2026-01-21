@@ -302,7 +302,13 @@ export default function Envelopes() {
     } catch (err) {
       console.error("❌ Error loading envelopes:", err);
       const errorMessage = err instanceof Error ? err.message : "Unbekannter Fehler";
-      if (isInitial) setError(errorMessage);
+      // ✅ PREMIUM_REQUIRED ist kein Fehler - wird von UnifiedPremiumNotice behandelt
+      if (errorMessage === "PREMIUM_REQUIRED") {
+        console.log("ℹ️ Premium required for envelopes - showing upgrade notice");
+        // Nicht als Fehler setzen, stattdessen normale UI mit Premium-Banner zeigen
+      } else if (isInitial) {
+        setError(errorMessage);
+      }
     } finally {
       setLoading(false);
       setLoadingMore(false);
