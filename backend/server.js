@@ -1010,9 +1010,9 @@ const connectDB = async () => {
 
     try {
       // ✅ LEGAL CHAT 2.0 - MongoDB-basiert, SSE-Streaming, Anwalt-Persona
-      // 🔐 checkSubscription hinzugefügt - Chat ist Business+ Feature
+      // 🔐 verifyToken + checkSubscription - Chat ist Business+ Feature
       const chatRoutes = require("./routes/chat");
-      app.use("/api/chat", checkSubscription, chatRoutes); // verifyToken ist in der Route
+      app.use("/api/chat", verifyToken, checkSubscription, chatRoutes); // ✅ FIX: verifyToken MUSS vor checkSubscription!
       console.log("✅ Legal Chat 2.0 geladen unter /api/chat (MongoDB, SSE, Lawyer Persona)");
     } catch (err) {
       console.error("❌ Fehler bei Chat-Route:", err);
