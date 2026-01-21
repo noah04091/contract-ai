@@ -1,270 +1,1153 @@
-/* Profile.module.css */
-@import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600&display=swap');
+/* Profile.module.css - Redesigned */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
+/* ============================================
+   CSS Variables & Page Container
+   ============================================ */
 .pageContainer {
-  --apple-blue: #0071e3;
-  --apple-blue-dark: #0058b3;
-  --apple-gray-50: #f5f5f7;
-  --apple-gray-100: #e8e8ed;
-  --apple-gray-200: #d2d2d7;
-  --apple-gray-300: #a1a1a6;
-  --apple-gray-400: #6e6e73;
-  --apple-gray-500: #86868b;
-  --apple-gray-800: #1d1d1f;
-  --success-green: #34c759;
-  --error-red: #ff453a;
+  --blue-500: #3b82f6;
+  --blue-600: #2563eb;
+  --blue-700: #1d4ed8;
+  --green-500: #22c55e;
+  --green-600: #16a34a;
+  --orange-500: #f59e0b;
+  --orange-600: #d97706;
+  --red-500: #ef4444;
+  --red-600: #dc2626;
+  --purple-500: #8b5cf6;
+  --gray-50: #f8fafc;
+  --gray-100: #f1f5f9;
+  --gray-200: #e2e8f0;
+  --gray-300: #cbd5e1;
+  --gray-400: #94a3b8;
+  --gray-500: #64748b;
+  --gray-600: #475569;
+  --gray-700: #334155;
+  --gray-800: #1e293b;
+  --gray-900: #0f172a;
 
-  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-  background-color: var(--apple-gray-50);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   min-height: 100vh;
-  min-height: 100dvh; /* iOS Safari fix */
-  display: flex;
-  justify-content: center;
-  color: var(--apple-gray-800);
-  padding: 2rem;
+  min-height: 100dvh;
+  color: var(--gray-800);
+  padding: 32px 24px;
 }
 
 .container {
-  max-width: 800px;
+  max-width: 1200px;
   width: 100%;
+  margin: 0 auto;
 }
 
-/* Header Styling */
+/* ============================================
+   Page Header
+   ============================================ */
 .header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 2.5rem;
-  text-align: center;
+  margin-bottom: 32px;
 }
 
-.profileIcon {
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, #0070e0, #42a4ff);
+.title {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin: 0 0 8px 0;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  color: var(--gray-500);
+  font-size: 16px;
+  margin: 0;
+}
+
+/* ============================================
+   Profile Card (Top Section)
+   ============================================ */
+.profileCard {
+  background: white;
+  border-radius: 20px;
+  padding: 32px;
+  margin-bottom: 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 32px;
+  align-items: center;
+}
+
+/* Avatar Section */
+.profileAvatarSection {
+  position: relative;
+}
+
+.profilePicture {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.profilePicturePlaceholder {
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 8px 20px rgba(0, 113, 227, 0.2);
+  font-size: 40px;
+  color: #6366f1;
+  border: 4px solid white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.icon {
+.profilePictureUpload {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 32px;
+  height: 32px;
+  background: var(--blue-500);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  border: 3px solid white;
+  transition: all 0.2s ease;
+}
+
+.profilePictureUpload:hover {
+  transform: scale(1.1);
+  background: var(--blue-600);
+}
+
+.deletePictureButton {
+  display: block;
+  margin-top: 8px;
+  background: none;
+  border: none;
+  color: var(--red-500);
+  font-size: 12px;
+  cursor: pointer;
+  text-align: center;
+  width: 100%;
+}
+
+.deletePictureButton:hover {
+  text-decoration: underline;
+}
+
+/* Profile Info Grid */
+.profileInfo {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.profileField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.profileLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.profileValue {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--gray-900);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profileEditBtn {
+  background: none;
+  border: none;
+  color: var(--gray-400);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profileEditBtn:hover {
+  background: var(--gray-100);
+  color: var(--blue-500);
+}
+
+/* Edit Forms */
+.editNameForm,
+.editEmailForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.editNameButtons {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.input {
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.input:focus {
+  border-color: var(--blue-500);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.saveButton {
+  flex: 1;
+  background: var(--blue-500);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.saveButton:hover:not(:disabled) {
+  background: var(--blue-600);
+}
+
+.saveButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cancelButton {
+  flex: 1;
+  background: var(--gray-100);
+  color: var(--gray-700);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.cancelButton:hover {
+  background: var(--gray-200);
+}
+
+/* Subscription Badge */
+.profileSubscription {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.subscriptionBadge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.subscriptionBadge.business {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: var(--blue-700);
+}
+
+.subscriptionBadge.enterprise {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #b45309;
+}
+
+.subscriptionBadge.free {
+  background: var(--gray-100);
+  color: var(--gray-500);
+}
+
+.manageSubscriptionBtn {
+  background: none;
+  border: 1px solid var(--gray-200);
+  padding: 8px 16px;
+  border-radius: 8px;
+  color: var(--gray-500);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.manageSubscriptionBtn:hover {
+  background: var(--gray-50);
+  border-color: var(--gray-300);
+}
+
+.manageSubscriptionBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   Section Groups (Settings, Business, Enterprise)
+   ============================================ */
+.sectionGroup {
+  margin-bottom: 32px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--gray-200);
+}
+
+.sectionIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.sectionIcon.settings {
+  background: #f0fdf4;
+  color: var(--green-600);
+}
+
+.sectionIcon.business {
+  background: #dbeafe;
+  color: var(--blue-600);
+}
+
+.sectionIcon.enterprise {
+  background: #fef3c7;
+  color: var(--orange-600);
+}
+
+.sectionIcon.invoices {
+  background: #ede9fe;
+  color: var(--purple-500);
+}
+
+.sectionIcon.danger {
+  background: #fee2e2;
+  color: var(--red-500);
+}
+
+.sectionTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin: 0;
+}
+
+.sectionBadge {
+  margin-left: auto;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sectionBadge.included {
+  background: #dcfce7;
+  color: var(--green-600);
+}
+
+.sectionBadge.locked {
+  background: #fee2e2;
+  color: var(--red-600);
+}
+
+/* ============================================
+   Settings Grid (2 columns)
+   ============================================ */
+.settingsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.settingsCard {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.settingsCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.settingsCardIcon {
+  font-size: 20px;
+}
+
+.settingsCardTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.settingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.settingRow:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.settingInfo h4 {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gray-900);
+  margin: 0 0 2px 0;
+}
+
+.settingInfo p {
+  font-size: 12px;
+  color: var(--gray-500);
+  margin: 0;
+}
+
+/* Toggle Switch */
+.toggleSwitch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 26px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.toggleInput {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggleSlider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--gray-300);
+  transition: 0.3s;
+  border-radius: 26px;
+}
+
+.toggleSlider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggleInput:checked + .toggleSlider {
+  background: linear-gradient(135deg, var(--blue-500) 0%, var(--blue-600) 100%);
+}
+
+.toggleInput:checked + .toggleSlider:before {
+  transform: translateX(22px);
+}
+
+/* Dropdown */
+.emailPrefsDropdown {
+  padding: 8px 12px;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--gray-900);
+  background: white;
+  cursor: pointer;
+  font-family: inherit;
+  min-width: 150px;
+}
+
+.emailPrefsDropdown:hover {
+  border-color: var(--blue-500);
+}
+
+.emailPrefsDropdown:focus {
+  outline: none;
+  border-color: var(--blue-500);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.emailPrefsDropdown:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.emailPrefsDropdown option:disabled {
+  color: var(--gray-300);
+}
+
+/* Settings Open Button */
+.settingsOpenButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--gray-200);
+  background: white;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-600);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.settingsOpenButton:hover {
+  background: var(--gray-50);
+  border-color: var(--blue-500);
+  color: var(--blue-500);
+}
+
+/* ============================================
+   Feature Grid (Business & Enterprise Features)
+   ============================================ */
+.featureGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.featureCard {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+}
+
+.featureCard:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.featureCard.locked {
+  opacity: 0.75;
+}
+
+.featureCard.locked:hover {
+  border-color: var(--orange-500);
+}
+
+.featureHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.featureIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.featureIcon.blue {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+}
+
+.featureIcon.purple {
+  background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+}
+
+.featureIcon.orange {
+  background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%);
+}
+
+.featureIcon.green {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+}
+
+.featureContent {
+  flex: 1;
+}
+
+.featureTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin: 0 0 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.featureLockBadge {
+  font-size: 11px;
+  padding: 2px 8px;
+  background: #fef3c7;
+  color: #b45309;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.featureDescription {
+  font-size: 14px;
+  color: var(--gray-500);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.featureButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  font-family: inherit;
+}
+
+.featureButton.primary {
+  background: linear-gradient(135deg, var(--blue-500) 0%, var(--blue-600) 100%);
   color: white;
 }
 
-.title {
-  font-size: 2.2rem;
-  font-weight: 600;
-  margin: 0;
-  letter-spacing: -0.02em;
+.featureButton.primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
 }
 
-/* Content Styling */
-.content {
-  display: flex;
-  flex-direction: column;
-  gap: 2.5rem;
+.featureButton.upgrade {
+  background: linear-gradient(135deg, var(--orange-500) 0%, var(--orange-600) 100%);
+  color: white;
 }
 
-/* User Info */
-.userInfo {
+.featureButton.upgrade:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+/* ============================================
+   Account Actions Grid
+   ============================================ */
+.accountActions {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px);
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.accountActionCard {
+  background: white;
   border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  text-align: center;
 }
 
-.emailContainer, .subscriptionContainer {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.label {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--apple-gray-400);
-}
-
-.email {
-  font-size: 1.1rem;
-  font-weight: 500;
-}
-
-.premium, .standard {
+.accountActionIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 1.1rem;
+  justify-content: center;
+  font-size: 24px;
+  margin: 0 auto 12px;
+}
+
+.accountActionIcon.export {
+  background: #dbeafe;
+}
+
+.accountActionIcon.password {
+  background: #fef3c7;
+}
+
+.accountActionIcon.tour {
+  background: #dcfce7;
+}
+
+.accountActionTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin: 0 0 4px 0;
+}
+
+.accountActionDesc {
+  font-size: 12px;
+  color: var(--gray-500);
+  margin: 0 0 12px 0;
+}
+
+.accountActionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
   font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid var(--gray-200);
+  background: white;
+  color: var(--gray-600);
+  font-family: inherit;
 }
 
-.premium {
-  color: #34c759;
+.accountActionBtn:hover:not(:disabled) {
+  background: var(--gray-50);
+  border-color: var(--blue-500);
+  color: var(--blue-500);
 }
 
-.standard {
-  color: var(--apple-gray-500);
+.accountActionBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-.premiumIcon, .standardIcon {
-  font-size: 1.2rem;
-}
-
-/* Company Profile Section */
-.companyProfileSection {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px);
+/* ============================================
+   Password Change Modal/Expandable
+   ============================================ */
+.passwordSection {
+  background: white;
   border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(0, 170, 255, 0.2);
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  margin-top: 16px;
+}
+
+.passwordForm {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
+  gap: 16px;
 }
 
-.companyProfileContent {
+.inputGroup {
   display: flex;
-  gap: 1rem;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.companyProfileIcon {
-  color: #0aa5f7;
-  flex-shrink: 0;
-  margin-top: 0.3rem;
+.inputGroup label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-600);
 }
 
-.companyProfileTitle {
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin: 0 0 0.5rem;
+.passwordHint {
+  font-size: 12px;
+  color: var(--gray-400);
+  margin: 4px 0 0 0;
 }
 
-.companyProfileDescription {
-  font-size: 1rem;
-  color: var(--apple-gray-500);
-  margin: 0;
-  line-height: 1.5;
-}
-
-.companyProfileButton {
-  background: linear-gradient(135deg, #0aa5f7, #0284c7);
+.passwordButton {
+  background: var(--blue-500);
   color: white;
   border: none;
   font-family: inherit;
-  font-size: 1rem;
+  font-size: 14px;
   font-weight: 500;
-  padding: 0.9rem;
+  padding: 12px;
   border-radius: 10px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 8px;
   transition: all 0.2s ease;
+  margin-top: 8px;
 }
 
-.companyProfileButton:hover {
-  background: linear-gradient(135deg, #0284c7, #0369a1);
-  transform: translateY(-1px);
+.passwordButton:hover:not(:disabled) {
+  background: var(--blue-600);
 }
 
-.companyProfileButtonIcon {
-  font-size: 1.1rem;
+.passwordButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-/* Upgrade Feature Button (for locked features) */
-.upgradeFeatureButton {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  color: white;
-  border: none;
-  font-family: inherit;
-  font-size: 1rem;
-  font-weight: 500;
-  padding: 0.8rem 1.5rem;
+/* ============================================
+   Invoices Section
+   ============================================ */
+.invoicesContainer {
+  margin-top: 16px;
+}
+
+.invoiceTable {
+  width: 100%;
+  background: white;
   border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.invoiceTableHeader {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  background: var(--gray-50);
+  font-weight: 600;
+  color: var(--gray-500);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.invoiceTableHeader > div {
+  padding: 14px 16px;
+}
+
+.invoiceRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  border-bottom: 1px solid var(--gray-100);
+  transition: background-color 0.2s ease;
+}
+
+.invoiceRow:last-child {
+  border-bottom: none;
+}
+
+.invoiceRow:hover {
+  background: var(--gray-50);
+}
+
+.invoiceRow > div {
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+}
+
+.invoiceDate {
+  font-size: 14px;
+  color: var(--gray-700);
+}
+
+.invoicePlan {
+  font-size: 14px;
+}
+
+.invoiceAmount {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gray-900);
+}
+
+.invoiceAction {
+  justify-content: flex-end;
+}
+
+/* Plan Badges in Invoices */
+.premiumPlan, .businessPlan, .standardPlan {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.premiumPlan {
+  color: var(--green-600);
+}
+
+.businessPlan {
+  color: var(--blue-600);
+}
+
+.standardPlan {
+  color: var(--gray-500);
+}
+
+.premiumIcon, .businessIcon, .standardIcon {
+  font-size: 14px;
+}
+
+.downloadButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--gray-50);
+  color: var(--gray-700);
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.downloadButton:hover {
+  background: var(--gray-100);
+  color: var(--blue-600);
+}
+
+.downloadButton svg {
+  color: var(--blue-500);
+}
+
+.noInvoices {
+  text-align: center;
+  color: var(--gray-500);
+  padding: 32px 16px;
+  font-size: 14px;
+}
+
+/* Load More Button */
+.loadMoreButton {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 8px;
+  width: 100%;
+  padding: 14px 20px;
+  margin-top: 16px;
+  background: var(--gray-50);
+  border: 1px dashed var(--gray-300);
+  border-radius: 12px;
+  color: var(--gray-600);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+  font-family: inherit;
 }
 
-.upgradeFeatureButton:hover {
-  background: linear-gradient(135deg, #d97706, #b45309);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+.loadMoreButton:hover {
+  background: white;
+  border-color: var(--blue-500);
+  border-style: solid;
+  color: var(--blue-500);
 }
 
-/* Upgrade Section */
-.upgradeSection {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px);
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(0, 113, 227, 0.2);
+/* Invoice Cards for Mobile */
+.invoiceCards {
+  display: none;
+}
+
+.invoiceCard {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--gray-100);
+}
+
+.invoiceCardHeader {
   display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--gray-50);
+}
+
+.invoiceCardContent {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.invoicePlanLabel {
+  font-size: 12px;
+  color: var(--gray-400);
+  margin-right: 8px;
+}
+
+.invoiceCardFooter {
+  margin-top: 12px;
+}
+
+.invoiceCardFooter .downloadButton {
+  width: 100%;
+  justify-content: center;
+  padding: 10px;
+}
+
+/* ============================================
+   Danger Zone
+   ============================================ */
+.dangerSection {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  margin-top: 32px;
+}
+
+.dangerHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.dangerIcon {
+  color: var(--red-500);
+}
+
+.dangerTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin: 0;
+}
+
+.dangerText {
+  color: var(--gray-500);
+  font-size: 14px;
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+}
+
+.deleteButton {
+  background: var(--red-500);
+  color: white;
+  border: none;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.deleteButton:hover {
+  background: var(--red-600);
+}
+
+/* ============================================
+   Free User Upgrade Section
+   ============================================ */
+.upgradeSection {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border-radius: 16px;
+  padding: 32px;
+  margin-bottom: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
 }
 
 .upgradeContent {
   display: flex;
-  gap: 1rem;
+  gap: 16px;
   align-items: flex-start;
 }
 
 .upgradeIcon {
-  color: var(--apple-blue);
+  color: var(--blue-600);
   flex-shrink: 0;
-  margin-top: 0.3rem;
 }
 
 .upgradeTitle {
-  font-size: 1.2rem;
+  font-size: 18px;
   font-weight: 600;
-  margin: 0 0 0.5rem;
+  color: var(--gray-900);
+  margin: 0 0 4px 0;
 }
 
 .upgradeDescription {
-  font-size: 1rem;
-  color: var(--apple-gray-500);
+  font-size: 14px;
+  color: var(--gray-600);
   margin: 0;
   line-height: 1.5;
 }
 
 .upgradeButton {
-  background-color: var(--apple-blue);
+  background: var(--blue-600);
   color: white;
   border: none;
   font-family: inherit;
-  font-size: 1rem;
-  font-weight: 500;
-  padding: 0.9rem;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 14px 24px;
   border-radius: 10px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+  gap: 8px;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .upgradeButton:hover:not(:disabled) {
-  background-color: var(--apple-blue-dark);
+  background: var(--blue-700);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
 }
 
 .upgradeButton:disabled {
@@ -273,174 +1156,25 @@
 }
 
 .upgradeButtonIcon {
-  font-size: 1.2rem;
+  font-size: 16px;
 }
 
-/* Password Section */
-.section {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px);
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.7);
-}
-
-.sectionHeader {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  margin-bottom: 1.5rem;
-}
-
-.sectionIcon {
-  color: var(--apple-blue);
-}
-
-.sectionTitle {
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin: 0;
-}
-
-.passwordForm {
-  display: flex;
-  flex-direction: column;
-  gap: 1.2rem;
-}
-
-.inputGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.inputGroup label {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--apple-gray-500);
-}
-
-.input {
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid var(--apple-gray-200);
-  border-radius: 10px;
-  padding: 0.8rem 1rem;
-  font-family: inherit;
-  font-size: 1rem;
-  transition: all 0.2s ease;
-  outline: none;
-}
-
-.input:focus {
-  border-color: var(--apple-blue);
-  box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.15);
-}
-
-.passwordHint {
-  font-size: 0.75rem;
-  color: #6b7280;
-  margin-top: 0.375rem;
-  margin-bottom: 0;
-}
-
-.passwordButton {
-  background-color: var(--apple-blue);
-  color: white;
-  border: none;
-  font-family: inherit;
-  font-size: 1rem;
-  font-weight: 500;
-  padding: 0.9rem;
-  border-radius: 10px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  transition: all 0.2s ease;
-  margin-top: 0.5rem;
-}
-
-.passwordButton:hover:not(:disabled) {
-  background-color: var(--apple-blue-dark);
-}
-
-.passwordButton:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Danger Section */
-.dangerSection {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px);
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(255, 69, 58, 0.2);
-}
-
-.dangerHeader {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  margin-bottom: 1rem;
-}
-
-.dangerIcon {
-  color: var(--error-red);
-}
-
-.dangerTitle {
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin: 0;
-}
-
-.dangerText {
-  color: var(--apple-gray-500);
-  margin: 0 0 1.5rem;
-  line-height: 1.5;
-  font-size: 1rem;
-}
-
-.deleteButton {
-  background-color: var(--error-red);
-  color: white;
-  border: none;
-  font-family: inherit;
-  font-size: 1rem;
-  font-weight: 500;
-  padding: 0.9rem;
-  border-radius: 10px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  transition: all 0.2s ease;
-  align-self: flex-start;
-}
-
-.deleteButton:hover {
-  background-color: #e1302a;
-}
-
-/* Loading State */
+/* ============================================
+   Loading & Error States
+   ============================================ */
 .loadingContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 300px;
-  gap: 1rem;
-  color: var(--apple-gray-400);
+  gap: 16px;
+  color: var(--gray-400);
 }
 
 .loadingSpinner, .buttonSpinner {
-  border: 3px solid rgba(0, 0, 0, 0.1);
-  border-top-color: var(--apple-blue);
+  border: 3px solid var(--gray-200);
+  border-top-color: var(--blue-500);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -463,80 +1197,78 @@
   }
 }
 
-/* Error State */
 .errorContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 3rem;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px);
+  padding: 48px;
+  background: white;
   border-radius: 16px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
 .errorIcon {
-  color: var(--error-red);
-  margin-bottom: 1.5rem;
+  color: var(--red-500);
+  margin-bottom: 16px;
 }
 
 .errorMessage {
-  font-size: 1.1rem;
-  margin: 0 0 2rem;
-  color: var(--apple-gray-500);
+  font-size: 16px;
+  margin: 0 0 24px 0;
+  color: var(--gray-500);
 }
 
 .logoutButton {
-  background-color: var(--apple-gray-200);
-  color: var(--apple-gray-800);
+  background: var(--gray-200);
+  color: var(--gray-800);
   border: none;
   font-family: inherit;
-  font-size: 1rem;
+  font-size: 14px;
   font-weight: 500;
-  padding: 0.9rem 1.5rem;
+  padding: 12px 24px;
   border-radius: 10px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+  gap: 8px;
   transition: all 0.2s ease;
 }
 
 .logoutButton:hover {
-  background-color: var(--apple-gray-300);
+  background: var(--gray-300);
 }
 
-/* Notification */
+/* ============================================
+   Notifications
+   ============================================ */
 .notification {
   position: fixed;
-  bottom: 2rem;
+  bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
-  padding: 1rem 1.5rem;
+  padding: 14px 20px;
   border-radius: 12px;
   display: flex;
   align-items: center;
-  gap: 0.8rem;
+  gap: 10px;
   backdrop-filter: blur(10px);
   z-index: 100;
   min-width: 300px;
   max-width: 90%;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
 }
 
 .success {
-  background: rgba(52, 199, 89, 0.15);
-  border: 1px solid rgba(52, 199, 89, 0.3);
-  color: var(--success-green);
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: var(--green-600);
 }
 
 .error {
-  background: rgba(255, 69, 58, 0.15);
-  border: 1px solid rgba(255, 69, 58, 0.3);
-  color: var(--error-red);
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--red-600);
 }
 
 .notificationIcon {
@@ -546,15 +1278,16 @@
 .notificationMessage {
   font-weight: 500;
   flex-grow: 1;
+  font-size: 14px;
 }
 
 .notificationClose {
   background: none;
   border: none;
   color: inherit;
-  font-size: 1rem;
+  font-size: 16px;
   cursor: pointer;
-  padding: 0.2rem;
+  padding: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -566,737 +1299,132 @@
   opacity: 1;
 }
 
-/* Responsive Styling */
-@media (max-width: 768px) {
+/* ============================================
+   Verified Badge
+   ============================================ */
+.verifiedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--green-600);
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+@media (max-width: 900px) {
   .pageContainer {
-    padding: max(1.5rem, env(safe-area-inset-top)) max(1.5rem, env(safe-area-inset-right)) max(1.5rem, env(safe-area-inset-bottom)) max(1.5rem, env(safe-area-inset-left));
+    padding: 24px 16px;
   }
 
-  .title {
-    font-size: 1.8rem;
+  .profileCard {
+    grid-template-columns: 1fr;
+    text-align: center;
+    gap: 24px;
   }
 
-  .userInfo {
+  .profileAvatarSection {
+    margin: 0 auto;
+  }
+
+  .profileInfo {
+    grid-template-columns: 1fr;
+    text-align: left;
+  }
+
+  .profileSubscription {
+    align-items: center;
+  }
+
+  .featureGrid,
+  .settingsGrid {
     grid-template-columns: 1fr;
   }
 
-  /* Touch-Targets für Mobile */
-  .upgradeButton,
-  .passwordButton,
-  .deleteButton,
-  .logoutButton,
-  .downloadButton,
-  .companyProfileButton {
-    min-height: 44px;
+  .accountActions {
+    grid-template-columns: 1fr;
   }
 
-  .notification {
-    bottom: max(2rem, env(safe-area-inset-bottom));
-    left: max(1rem, env(safe-area-inset-left));
-    right: max(1rem, env(safe-area-inset-right));
-    transform: none;
-  }
-}
-
-/* Neue Styling für die Rechnungssektion */
-
-/* Keine Rechnungen Nachricht */
-.noInvoices {
-  text-align: center;
-  color: var(--apple-gray-500);
-  margin: 1.5rem 0;
-  font-size: 0.95rem;
-}
-
-/* Invoice Container */
-.invoicesContainer {
-  margin-top: 1rem;
-  width: 100%;
-}
-
-/* Invoice Table - für Desktop */
-.invoiceTable {
-  width: 100%;
-  border-collapse: collapse;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  display: table;
-  background-color: white;
-}
-
-/* Table Header */
-.invoiceTableHeader {
-  display: table-row;
-  background-color: var(--apple-gray-50);
-  font-weight: 600;
-  color: var(--apple-gray-400);
-  font-size: 0.85rem;
-  border-bottom: 1px solid var(--apple-gray-100);
-}
-
-.invoiceTableHeader > div {
-  display: table-cell;
-  padding: 1rem;
-  text-align: left;
-}
-
-/* Table Row */
-.invoiceRow {
-  display: table-row;
-  border-bottom: 1px solid var(--apple-gray-100);
-  transition: background-color 0.2s ease;
-}
-
-.invoiceRow:last-child {
-  border-bottom: none;
-}
-
-.invoiceRow > div {
-  display: table-cell;
-  padding: 1rem;
-  vertical-align: middle;
-}
-
-/* Column Styles */
-.invoiceDate {
-  width: 25%;
-  white-space: nowrap;
-}
-
-.invoicePlan {
-  width: 40%;
-}
-
-.invoiceAmount {
-  width: 20%;
-  font-weight: 500;
-}
-
-.invoiceAction {
-  width: 15%;
-  text-align: right;
-}
-
-/* Plan Badges */
-.premiumPlan, .businessPlan, .standardPlan {
-  display: inline-flex;
-  align-items: center;
-  font-size: 0.9rem;
-}
-
-.premiumPlan {
-  color: var(--success-green);
-}
-
-.businessPlan {
-  color: var(--apple-blue);
-}
-
-.standardPlan {
-  color: var(--apple-gray-500);
-}
-
-.premiumIcon, .businessIcon, .standardIcon {
-  margin-right: 0.5rem;
-}
-
-/* Download Button */
-.downloadButton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--apple-gray-50);
-  color: var(--apple-gray-800);
-  border: none;
-  border-radius: 6px;
-  padding: 0.5rem 0.8rem;
-  font-size: 0.85rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.downloadButton:hover {
-  background-color: var(--apple-gray-200);
-}
-
-.downloadButton svg {
-  margin-right: 0.5rem;
-  color: var(--apple-blue);
-}
-
-/* Responsive Card View - für mobile Geräte */
-.invoiceCards {
-  display: none;
-}
-
-.invoiceCard {
-  background-color: white;
-  border-radius: 10px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-  border: 1px solid var(--apple-gray-100);
-}
-
-.invoiceCardHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--apple-gray-50);
-}
-
-.invoiceCardContent {
-  display: flex;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.invoicePlanLabel {
-  font-size: 0.85rem;
-  color: var(--apple-gray-400);
-  margin-right: 0.5rem;
-}
-
-.invoiceCardFooter {
-  margin-top: 1rem;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.invoiceCardFooter .downloadButton {
-  width: 100%;
-  justify-content: center;
-  padding: 0.75rem;
-  background-color: var(--apple-gray-50);
-  transition: all 0.2s ease;
-}
-
-.invoiceCardFooter .downloadButton:hover {
-  background-color: var(--apple-gray-100);
-}
-
-/* Media Queries für Responsivität */
-@media (max-width: 768px) {
-  .invoiceTable {
-    display: none;
-  }
-  
-  .invoiceCards {
-    display: block;
-  }
-  
-  .invoiceCard {
-    margin-bottom: 1rem;
-  }
-  
-  .invoiceCardFooter .downloadButton {
-    padding: 0.75rem;
-  }
-}
-/* ============================================ */
-/* CHATBOT TOGGLE SETTINGS */
-/* ============================================ */
-
-.settingRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.25rem 0;
-  gap: 1.5rem;
-}
-
-.settingInfo {
-  flex: 1;
-}
-
-.settingLabel {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0 0 0.25rem 0;
-}
-
-.settingDescription {
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin: 0;
-  line-height: 1.5;
-}
-
-/* Toggle Switch */
-.toggleSwitch {
-  position: relative;
-  display: inline-block;
-  width: 52px;
-  height: 28px;
-  flex-shrink: 0;
-  cursor: pointer;
-}
-
-.toggleInput {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.toggleSlider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #d1d5db;
-  transition: 0.3s;
-  border-radius: 34px;
-}
-
-.toggleSlider:before {
-  position: absolute;
-  content: "";
-  height: 20px;
-  width: 20px;
-  left: 4px;
-  bottom: 4px;
-  background-color: white;
-  transition: 0.3s;
-  border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.toggleInput:checked + .toggleSlider {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-}
-
-.toggleInput:focus + .toggleSlider {
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.toggleInput:checked + .toggleSlider:before {
-  transform: translateX(24px);
-}
-
-/* Hover effect */
-.toggleSwitch:hover .toggleSlider {
-  opacity: 0.9;
-}
-
-@media (max-width: 768px) {
-  .settingRow {
+  .upgradeSection {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
+    text-align: center;
   }
 
-  .toggleSwitch {
-    align-self: flex-end;
-  }
-}
-
-/* 📱 SMALL MOBILE (max-width: 480px) */
-@media (max-width: 480px) {
-  .pageContainer {
-    padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  .upgradeContent {
+    flex-direction: column;
+    align-items: center;
   }
 
-  .title {
-    font-size: 1.6rem;
-  }
-
-  .profileIcon {
-    width: 64px;
-    height: 64px;
-  }
-
-  .section,
-  .upgradeSection,
-  .dangerSection,
-  .companyProfileSection {
-    padding: 1.25rem;
-  }
-
-  .sectionTitle,
-  .upgradeTitle,
-  .dangerTitle,
-  .companyProfileTitle {
-    font-size: 1.1rem;
-  }
-
-  .upgradeButton,
-  .passwordButton,
-  .deleteButton,
-  .logoutButton,
-  .companyProfileButton {
+  .upgradeButton {
     width: 100%;
     justify-content: center;
   }
+
+  /* Show invoice cards, hide table */
+  .invoiceTable {
+    display: none;
+  }
+
+  .invoiceCards {
+    display: block;
+  }
 }
 
-/* 📱 EXTRA SMALL MOBILE (max-width: 375px) */
-@media (max-width: 375px) {
+@media (max-width: 480px) {
   .pageContainer {
-    padding: max(0.75rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right)) max(0.75rem, env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left));
+    padding: max(16px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
   }
 
   .title {
-    font-size: 1.4rem;
+    font-size: 26px;
   }
 
-  .profileIcon {
-    width: 56px;
-    height: 56px;
-    margin-bottom: 1rem;
+  .profileCard,
+  .settingsCard,
+  .featureCard,
+  .accountActionCard,
+  .passwordSection,
+  .dangerSection {
+    padding: 20px;
+    border-radius: 14px;
   }
 
-  .header {
-    margin-bottom: 1.5rem;
+  .profilePicture,
+  .profilePicturePlaceholder {
+    width: 80px;
+    height: 80px;
+    font-size: 32px;
   }
 
-  .content {
-    gap: 1.5rem;
+  .subscriptionBadge {
+    padding: 10px 16px;
+    font-size: 14px;
   }
 
-  .section,
-  .upgradeSection,
-  .dangerSection,
-  .companyProfileSection {
-    padding: 1rem;
-    border-radius: 12px;
+  .featureIcon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
   }
 
-  .sectionTitle,
-  .upgradeTitle,
-  .dangerTitle,
-  .companyProfileTitle {
-    font-size: 1rem;
+  .featureButton {
+    padding: 10px 16px;
+    font-size: 13px;
   }
 
   .input {
     font-size: 16px; /* Prevents iOS zoom */
-    padding: 0.75rem;
-  }
-
-  .label {
-    font-size: 0.85rem;
-  }
-
-  .email {
-    font-size: 1rem;
-  }
-
-  .upgradeButton,
-  .passwordButton,
-  .deleteButton,
-  .logoutButton,
-  .companyProfileButton {
-    padding: 0.8rem;
-    font-size: 0.9rem;
   }
 
   .notification {
+    bottom: max(16px, env(safe-area-inset-bottom));
+    left: max(12px, env(safe-area-inset-left));
+    right: max(12px, env(safe-area-inset-right));
+    transform: none;
     min-width: auto;
-    padding: 0.875rem 1rem;
-    font-size: 0.9rem;
-  }
-}
-
-/* ======================================
-   E-Mail Präferenzen Styles
-   ====================================== */
-
-.emailPrefsDropdown {
-  padding: 10px 14px;
-  font-size: 14px;
-  border: 1px solid var(--apple-gray-200);
-  border-radius: 8px;
-  background: white;
-  color: var(--apple-gray-800);
-  cursor: pointer;
-  min-width: 180px;
-  transition: border-color 0.2s ease;
-}
-
-.emailPrefsDropdown:hover {
-  border-color: var(--apple-blue);
-}
-
-.emailPrefsDropdown:focus {
-  outline: none;
-  border-color: var(--apple-blue);
-  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.1);
-}
-
-.emailPrefsDropdown:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.emailPrefsDropdown option:disabled {
-  color: var(--apple-gray-300);
-}
-
-/* ======================================
-   Reset Tour Button Styles
-   ====================================== */
-
-.resetTourButton {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  font-size: 14px;
-  font-weight: 500;
-  font-family: inherit;
-  color: var(--apple-blue);
-  background: rgba(0, 113, 227, 0.08);
-  border: 1px solid rgba(0, 113, 227, 0.2);
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.resetTourButton:hover:not(:disabled) {
-  background: rgba(0, 113, 227, 0.15);
-  border-color: var(--apple-blue);
-}
-
-.resetTourButton:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* ======================================
-   Profilbild Section
-   ====================================== */
-
-.profilePictureSection {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--apple-gray-100);
-  margin-bottom: 0.5rem;
-}
-
-.profilePictureWrapper {
-  position: relative;
-  width: 100px;
-  height: 100px;
-}
-
-.profilePicture {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 3px solid var(--apple-blue);
-  box-shadow: 0 4px 12px rgba(0, 113, 227, 0.2);
-}
-
-.profilePicturePlaceholder {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--apple-gray-100), var(--apple-gray-200));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--apple-gray-400);
-  border: 3px dashed var(--apple-gray-300);
-}
-
-.profilePictureUpload {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 32px;
-  height: 32px;
-  background: var(--apple-blue);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: 2px solid white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.profilePictureUpload:hover {
-  background: var(--apple-blue-dark);
-  transform: scale(1.1);
-}
-
-.deletePictureButton {
-  background: none;
-  border: none;
-  color: var(--error-red);
-  font-size: 0.85rem;
-  cursor: pointer;
-  padding: 0.25rem 0.5rem;
-  transition: opacity 0.2s ease;
-}
-
-.deletePictureButton:hover {
-  opacity: 0.8;
-  text-decoration: underline;
-}
-
-/* ======================================
-   Name Container & Edit Form
-   ====================================== */
-
-.nameContainer {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.nameDisplay {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-size: 1.1rem;
-  font-weight: 500;
-}
-
-.editButton {
-  background: none;
-  border: none;
-  padding: 0.4rem;
-  cursor: pointer;
-  color: var(--apple-gray-400);
-  border-radius: 6px;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.editButton:hover {
-  background: var(--apple-gray-100);
-  color: var(--apple-blue);
-}
-
-.editNameForm {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.editNameButtons {
-  display: flex;
-  gap: 0.75rem;
-  margin-top: 0.25rem;
-}
-
-.saveButton {
-  flex: 1;
-  background: var(--apple-blue);
-  color: white;
-  border: none;
-  padding: 0.6rem 1rem;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: inherit;
-}
-
-.saveButton:hover:not(:disabled) {
-  background: var(--apple-blue-dark);
-}
-
-.saveButton:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.cancelButton {
-  flex: 1;
-  background: var(--apple-gray-100);
-  color: var(--apple-gray-800);
-  border: none;
-  padding: 0.6rem 1rem;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: inherit;
-}
-
-.cancelButton:hover {
-  background: var(--apple-gray-200);
-}
-
-/* ======================================
-   E-Mail Edit Form
-   ====================================== */
-
-.editEmailForm {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-/* ======================================
-   DSGVO Export Button
-   ====================================== */
-
-.exportButton {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  font-size: 14px;
-  font-weight: 500;
-  font-family: inherit;
-  color: var(--apple-blue);
-  background: rgba(0, 113, 227, 0.08);
-  border: 1px solid rgba(0, 113, 227, 0.2);
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.exportButton:hover:not(:disabled) {
-  background: rgba(0, 113, 227, 0.15);
-  border-color: var(--apple-blue);
-}
-
-.exportButton:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Mobile Responsive for new elements */
-@media (max-width: 768px) {
-  .profilePictureSection {
-    padding-bottom: 1.25rem;
-  }
-
-  .profilePictureWrapper {
-    width: 90px;
-    height: 90px;
   }
 
   .editNameButtons {
     flex-direction: column;
-  }
-
-  .saveButton,
-  .cancelButton {
-    width: 100%;
   }
 }

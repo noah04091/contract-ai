@@ -1,9 +1,14 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
-import { User, Key, CreditCard, Trash2, AlertCircle, CheckCircle, LogOut, FileText, Download, MessageSquare, Users, Link2, Mail, RefreshCw, Compass, Edit3, Camera, Database } from "lucide-react";
+import {
+  Key, CreditCard, Trash2, AlertCircle, CheckCircle, LogOut,
+  FileText, Download, Users, Link2, RefreshCw,
+  Edit3, Camera, CheckCircle2, Star, Settings, ChevronDown
+} from "lucide-react";
 import styles from "../styles/Profile.module.css";
-import { useAuth } from "../hooks/useAuth";;
+import { useAuth } from "../hooks/useAuth";
+import NotificationSettingsModal from "../components/NotificationSettingsModal";
 
 interface NotificationProps {
   message: string;
@@ -20,7 +25,7 @@ interface Invoice {
 
 const Notification: React.FC<NotificationProps> = ({ message, type, onClose }) => {
   return (
-    <motion.div 
+    <motion.div
       className={`${styles.notification} ${styles[type]}`}
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
@@ -51,36 +56,38 @@ export default function Profile() {
   const [isPortalOpening, setIsPortalOpening] = useState(false);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
+  const [visibleInvoicesCount, setVisibleInvoicesCount] = useState(3);
   const [isChatbotEnabled, setIsChatbotEnabled] = useState(() => {
     const saved = localStorage.getItem('assistantBotEnabled');
     return saved === null ? true : saved === 'true';
   });
 
-  // E-Mail-Präferenzen State
-  const [emailDigestMode, setEmailDigestMode] = useState<'instant' | 'daily' | 'weekly'>('instant');
-  const [isEmailPrefsLoading, setIsEmailPrefsLoading] = useState(false);
-  const [isPremiumOrHigher, setIsPremiumOrHigher] = useState(false);
+  // Notification Settings Modal State
+  const [showNotificationSettings, setShowNotificationSettings] = useState(false);
 
   // Onboarding/Tour Reset State
   const [isResettingTour, setIsResettingTour] = useState(false);
 
-  // 🆕 Profil bearbeiten State
+  // Profil bearbeiten State
   const [isEditingName, setIsEditingName] = useState(false);
   const [editFirstName, setEditFirstName] = useState('');
   const [editLastName, setEditLastName] = useState('');
   const [isSavingName, setIsSavingName] = useState(false);
 
-  // 🆕 E-Mail ändern State
+  // E-Mail ändern State
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [newEmail, setNewEmail] = useState('');
   const [emailPassword, setEmailPassword] = useState('');
   const [isSavingEmail, setIsSavingEmail] = useState(false);
 
-  // 🆕 Profilbild State
+  // Profilbild State
   const [isUploadingPicture, setIsUploadingPicture] = useState(false);
 
-  // 🆕 Daten-Export State
+  // Daten-Export State
   const [isExporting, setIsExporting] = useState(false);
+
+  // Password Section Expanded State
+  const [isPasswordSectionOpen, setIsPasswordSectionOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -100,7 +107,7 @@ export default function Profile() {
             });
           }
         } catch (error) {
-          console.error("Fehler beim Laden der Rechnungen:", error); // <--- das ist neu
+          console.error("Fehler beim Laden der Rechnungen:", error);
           setNotification({
             message: "Fehler beim Laden der Rechnungen",
             type: "error"
@@ -109,61 +116,10 @@ export default function Profile() {
           setIsLoadingInvoices(false);
         }
       };
-      
-      fetchInvoices();
 
-      // Fetch email preferences
-      const fetchEmailPrefs = async () => {
-        try {
-          const res = await fetch('/api/calendar/email-preferences', {
-            credentials: 'include',
-          });
-          if (res.ok) {
-            const data = await res.json();
-            setEmailDigestMode(data.emailDigestMode || 'instant');
-            setIsPremiumOrHigher(data.isPremiumOrHigher || false);
-          }
-        } catch (error) {
-          console.error("Fehler beim Laden der E-Mail-Einstellungen:", error);
-        }
-      };
-      fetchEmailPrefs();
+      fetchInvoices();
     }
   }, [user]);
-
-  const handleEmailPrefsChange = async (mode: 'instant' | 'daily' | 'weekly') => {
-    setIsEmailPrefsLoading(true);
-    try {
-      const res = await fetch('/api/calendar/email-preferences', {
-        method: 'PUT',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ emailDigestMode: mode })
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        setEmailDigestMode(mode);
-        setNotification({
-          message: data.message || "E-Mail-Einstellungen gespeichert",
-          type: "success"
-        });
-      } else {
-        setNotification({
-          message: data.error || "Fehler beim Speichern",
-          type: "error"
-        });
-      }
-    } catch {
-      setNotification({
-        message: "Fehler beim Speichern der E-Mail-Einstellungen",
-        type: "error"
-      });
-    } finally {
-      setIsEmailPrefsLoading(false);
-    }
-  };
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
@@ -177,10 +133,8 @@ export default function Profile() {
     });
   };
 
-  // ✅ NEUE VERSION: CSP-Fix für PDF-Download
   const handleDownload = (invoiceNumber: string) => {
     try {
-      // Direkte Navigation - keine fetch(), keine CSP-Probleme
       const downloadUrl = `/api/invoices/download/${invoiceNumber}`;
       window.open(downloadUrl, '_blank');
     } catch (error) {
@@ -196,7 +150,6 @@ export default function Profile() {
     const newValue = !isChatbotEnabled;
     setIsChatbotEnabled(newValue);
     localStorage.setItem('assistantBotEnabled', String(newValue));
-    // Dispatch custom event so AssistantWidget can react immediately
     window.dispatchEvent(new Event('assistantBotToggled'));
 
     setNotification({
@@ -205,7 +158,6 @@ export default function Profile() {
     });
   };
 
-  // Handler für Tour/Onboarding Reset
   const handleResetTour = async () => {
     setIsResettingTour(true);
     try {
@@ -216,15 +168,11 @@ export default function Profile() {
       });
 
       if (res.ok) {
-        // Clear sessionStorage for checklist hidden state
         sessionStorage.removeItem('contract-ai-checklist-hidden');
-
         setNotification({
           message: "Tour wurde zurückgesetzt! Lade die Seite neu, um sie erneut zu sehen.",
           type: "success"
         });
-
-        // Reload after short delay to show the notification
         setTimeout(() => {
           window.location.reload();
         }, 1500);
@@ -244,14 +192,12 @@ export default function Profile() {
     }
   };
 
-  // 🆕 Handler: Name bearbeiten starten
   const handleStartEditName = () => {
     setEditFirstName(user?.firstName || '');
     setEditLastName(user?.lastName || '');
     setIsEditingName(true);
   };
 
-  // 🆕 Handler: Name speichern
   const handleSaveName = async () => {
     if (!editFirstName.trim() || !editLastName.trim()) {
       setNotification({ message: "Vorname und Nachname erforderlich", type: "error" });
@@ -275,7 +221,6 @@ export default function Profile() {
       if (res.ok) {
         setNotification({ message: "Name erfolgreich geändert", type: "success" });
         setIsEditingName(false);
-        // Seite neu laden um User-Daten zu aktualisieren
         setTimeout(() => window.location.reload(), 1000);
       } else {
         setNotification({ message: data.message || "Fehler beim Speichern", type: "error" });
@@ -287,7 +232,6 @@ export default function Profile() {
     }
   };
 
-  // 🆕 Handler: E-Mail ändern
   const handleChangeEmail = async () => {
     if (!newEmail.trim() || !emailPassword) {
       setNotification({ message: "E-Mail und Passwort erforderlich", type: "error" });
@@ -323,7 +267,6 @@ export default function Profile() {
     }
   };
 
-  // 🆕 Helper: Bild komprimieren auf max 200x200px (für kleine DB-Einträge)
   const compressImage = (file: File, maxSize = 200): Promise<string> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -331,7 +274,6 @@ export default function Profile() {
         const canvas = document.createElement('canvas');
         let { width, height } = img;
 
-        // Skaliere auf maxSize x maxSize (behalte Seitenverhältnis)
         if (width > height) {
           if (width > maxSize) {
             height = Math.round((height * maxSize) / width);
@@ -354,15 +296,12 @@ export default function Profile() {
         }
 
         ctx.drawImage(img, 0, 0, width, height);
-
-        // Konvertiere zu JPEG mit 85% Qualität (sehr klein, aber gut)
         const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
         resolve(compressedDataUrl);
       };
 
       img.onerror = () => reject(new Error('Bild konnte nicht geladen werden'));
 
-      // Lade das Bild
       const reader = new FileReader();
       reader.onload = (e) => {
         img.src = e.target?.result as string;
@@ -372,18 +311,16 @@ export default function Profile() {
     });
   };
 
-  // 🆕 Handler: Profilbild hochladen (mit Kompression)
   const handleProfilePictureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validierung
     if (!file.type.match(/^image\/(png|jpeg|jpg|webp)$/)) {
       setNotification({ message: "Nur PNG, JPEG oder WebP erlaubt", type: "error" });
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) { // 10MB Original-Limit (wird komprimiert)
+    if (file.size > 10 * 1024 * 1024) {
       setNotification({ message: "Bild zu groß. Maximum: 10MB", type: "error" });
       return;
     }
@@ -391,10 +328,8 @@ export default function Profile() {
     setIsUploadingPicture(true);
 
     try {
-      // ✅ Komprimiere Bild auf 200x200px (resultiert in ~20-50KB)
       const compressedImage = await compressImage(file, 200);
 
-      // ✅ Timeout nach 30 Sekunden
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);
 
@@ -427,7 +362,6 @@ export default function Profile() {
     }
   };
 
-  // 🆕 Handler: Profilbild löschen
   const handleDeleteProfilePicture = async () => {
     if (!window.confirm("Profilbild wirklich löschen?")) return;
 
@@ -448,7 +382,6 @@ export default function Profile() {
     }
   };
 
-  // 🆕 Handler: DSGVO Daten-Export
   const handleExportData = async () => {
     setIsExporting(true);
     try {
@@ -479,9 +412,9 @@ export default function Profile() {
 
   const handlePasswordChange = async () => {
     if (newPassword !== confirmPassword) {
-      setNotification({ 
-        message: "Die Passwörter stimmen nicht überein", 
-        type: "error" 
+      setNotification({
+        message: "Die Passwörter stimmen nicht überein",
+        type: "error"
       });
       return;
     }
@@ -507,8 +440,8 @@ export default function Profile() {
         setOldPassword("");
         setNewPassword("");
         setConfirmPassword("");
+        setIsPasswordSectionOpen(false);
       } else {
-        // Zeige spezifische Passwort-Fehler falls vorhanden
         const errorMessage = data.errors && data.errors.length > 0
           ? data.errors.join('. ')
           : (data.message || "Fehler beim Passwortwechsel");
@@ -590,10 +523,54 @@ export default function Profile() {
     }
   };
 
+  const handleOpenPortal = async () => {
+    setIsPortalOpening(true);
+    try {
+      const res = await fetch("/api/stripe/portal", {
+        method: "POST",
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        window.location.href = data.url;
+      } else {
+        setNotification({
+          message: "Fehler beim Öffnen des Kundenportals",
+          type: "error"
+        });
+        setIsPortalOpening(false);
+      }
+    } catch {
+      setNotification({
+        message: "Fehler beim Öffnen des Kundenportals",
+        type: "error"
+      });
+      setIsPortalOpening(false);
+    }
+  };
+
+  // Helper functions for subscription checks
+  const isBusinessOrHigher = user?.subscriptionActive &&
+    (user.subscriptionPlan === 'business' || user.subscriptionPlan === 'enterprise');
+  const isEnterprise = user?.subscriptionActive && user.subscriptionPlan === 'enterprise';
+
+  // Get initials for avatar placeholder
+  const getInitials = () => {
+    if (user?.firstName && user?.lastName) {
+      return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
+    }
+    if (user?.email) {
+      return user.email[0].toUpperCase();
+    }
+    return 'U';
+  };
+
   if (isLoading) return (
-    <div className={styles.loadingContainer}>
-      <div className={styles.loadingSpinner}></div>
-      <p>Lade Profildaten...</p>
+    <div className={styles.pageContainer}>
+      <div className={styles.loadingContainer}>
+        <div className={styles.loadingSpinner}></div>
+        <p>Lade Profildaten...</p>
+      </div>
     </div>
   );
 
@@ -604,15 +581,13 @@ export default function Profile() {
         <meta name="description" content="Verwalte dein Nutzerprofil, sieh deine Abo-Details und behalte alle Vertragsaktivitäten im Blick. Dein persönlicher Bereich bei Contract AI." />
         <meta name="keywords" content="Profil, Benutzerkonto, Vertragsstatus, Account verwalten, Contract AI" />
         <link rel="canonical" href="https://www.contract-ai.de/profile" />
-        
-        {/* Open Graph / Facebook */}
+
         <meta property="og:title" content="Mein Profil & Vertragsstatus | Contract AI" />
         <meta property="og:description" content="Alle Vertragsdetails und Abo-Infos auf einen Blick. Verwalte dein Contract AI Profil einfach und sicher." />
         <meta property="og:url" content="https://www.contract-ai.de/profile" />
         <meta property="og:type" content="website" />
         <meta property="og:image" content="https://www.contract-ai.de/og-image.jpg" />
 
-        {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Mein Profil & Vertragsstatus | Contract AI" />
         <meta name="twitter:description" content="Deine persönlichen Vertrags- und Abo-Infos jederzeit im Blick. Mit Contract AI alles an einem Ort." />
@@ -620,56 +595,57 @@ export default function Profile() {
       </Helmet>
 
       <div className={styles.pageContainer}>
-        <motion.div 
+        <motion.div
           className={styles.container}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className={styles.header}>
+          {/* Page Header */}
+          <header className={styles.header}>
             <motion.h1
               className={styles.title}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              Dein Profil
+              Mein Profil
             </motion.h1>
-          </div>
+            <p className={styles.subtitle}>Verwalte dein Konto, Abonnement und Einstellungen</p>
+          </header>
 
           {user ? (
-            <motion.div 
-              className={styles.content}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-            >
-              <div className={styles.userInfo}>
-                {/* 🆕 Profilbild */}
-                <div className={styles.profilePictureSection}>
-                  <div className={styles.profilePictureWrapper}>
-                    {user.profilePicture ? (
-                      <img src={user.profilePicture} alt="Profilbild" className={styles.profilePicture} />
+            <>
+              {/* Profile Card */}
+              <motion.div
+                className={styles.profileCard}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
+                {/* Avatar Section */}
+                <div className={styles.profileAvatarSection}>
+                  {user.profilePicture ? (
+                    <img src={user.profilePicture} alt="Profilbild" className={styles.profilePicture} />
+                  ) : (
+                    <div className={styles.profilePicturePlaceholder}>
+                      {getInitials()}
+                    </div>
+                  )}
+                  <label className={styles.profilePictureUpload}>
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={handleProfilePictureUpload}
+                      disabled={isUploadingPicture}
+                      style={{ display: 'none' }}
+                    />
+                    {isUploadingPicture ? (
+                      <span className={styles.buttonSpinner}></span>
                     ) : (
-                      <div className={styles.profilePicturePlaceholder}>
-                        <User size={40} />
-                      </div>
+                      <Camera size={14} />
                     )}
-                    <label className={styles.profilePictureUpload}>
-                      <input
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp"
-                        onChange={handleProfilePictureUpload}
-                        disabled={isUploadingPicture}
-                        style={{ display: 'none' }}
-                      />
-                      {isUploadingPicture ? (
-                        <span className={styles.buttonSpinner}></span>
-                      ) : (
-                        <Camera size={16} />
-                      )}
-                    </label>
-                  </div>
+                  </label>
                   {user.profilePicture && (
                     <button onClick={handleDeleteProfilePicture} className={styles.deletePictureButton}>
                       Bild entfernen
@@ -677,299 +653,158 @@ export default function Profile() {
                   )}
                 </div>
 
-                {/* 🆕 Name bearbeiten */}
-                <div className={styles.nameContainer}>
-                  <div className={styles.label}>Name</div>
-                  {isEditingName ? (
-                    <div className={styles.editNameForm}>
-                      <input
-                        type="text"
-                        value={editFirstName}
-                        onChange={(e) => setEditFirstName(e.target.value)}
-                        placeholder="Vorname"
-                        className={styles.input}
-                      />
-                      <input
-                        type="text"
-                        value={editLastName}
-                        onChange={(e) => setEditLastName(e.target.value)}
-                        placeholder="Nachname"
-                        className={styles.input}
-                      />
-                      <div className={styles.editNameButtons}>
-                        <button onClick={handleSaveName} disabled={isSavingName} className={styles.saveButton}>
-                          {isSavingName ? 'Speichern...' : 'Speichern'}
-                        </button>
-                        <button onClick={() => setIsEditingName(false)} className={styles.cancelButton}>
-                          Abbrechen
-                        </button>
+                {/* Profile Info */}
+                <div className={styles.profileInfo}>
+                  {/* Name Field */}
+                  <div className={styles.profileField}>
+                    <span className={styles.profileLabel}>Name</span>
+                    {isEditingName ? (
+                      <div className={styles.editNameForm}>
+                        <input
+                          type="text"
+                          value={editFirstName}
+                          onChange={(e) => setEditFirstName(e.target.value)}
+                          placeholder="Vorname"
+                          className={styles.input}
+                        />
+                        <input
+                          type="text"
+                          value={editLastName}
+                          onChange={(e) => setEditLastName(e.target.value)}
+                          placeholder="Nachname"
+                          className={styles.input}
+                        />
+                        <div className={styles.editNameButtons}>
+                          <button onClick={handleSaveName} disabled={isSavingName} className={styles.saveButton}>
+                            {isSavingName ? 'Speichern...' : 'Speichern'}
+                          </button>
+                          <button onClick={() => setIsEditingName(false)} className={styles.cancelButton}>
+                            Abbrechen
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    <div className={styles.nameDisplay}>
-                      <span>{user.name || user.email?.split('@')[0]}</span>
-                      <button onClick={handleStartEditName} className={styles.editButton}>
-                        <Edit3 size={14} />
-                      </button>
-                    </div>
-                  )}
-                </div>
+                    ) : (
+                      <span className={styles.profileValue}>
+                        {user.name || user.email?.split('@')[0]}
+                        <button onClick={handleStartEditName} className={styles.profileEditBtn} title="Bearbeiten">
+                          <Edit3 size={14} />
+                        </button>
+                      </span>
+                    )}
+                  </div>
 
-                {/* 🆕 E-Mail bearbeiten */}
-                <div className={styles.emailContainer}>
-                  <div className={styles.label}>E-Mail-Adresse</div>
-                  {isEditingEmail ? (
-                    <div className={styles.editEmailForm}>
-                      <input
-                        type="email"
-                        value={newEmail}
-                        onChange={(e) => setNewEmail(e.target.value)}
-                        placeholder="Neue E-Mail-Adresse"
-                        className={styles.input}
-                      />
-                      <input
-                        type="password"
-                        value={emailPassword}
-                        onChange={(e) => setEmailPassword(e.target.value)}
-                        placeholder="Aktuelles Passwort zur Bestätigung"
-                        className={styles.input}
-                      />
-                      <div className={styles.editNameButtons}>
-                        <button onClick={handleChangeEmail} disabled={isSavingEmail} className={styles.saveButton}>
-                          {isSavingEmail ? 'Senden...' : 'Bestätigungs-E-Mail senden'}
-                        </button>
-                        <button onClick={() => { setIsEditingEmail(false); setNewEmail(''); setEmailPassword(''); }} className={styles.cancelButton}>
-                          Abbrechen
-                        </button>
+                  {/* Email Field */}
+                  <div className={styles.profileField}>
+                    <span className={styles.profileLabel}>E-Mail</span>
+                    {isEditingEmail ? (
+                      <div className={styles.editEmailForm}>
+                        <input
+                          type="email"
+                          value={newEmail}
+                          onChange={(e) => setNewEmail(e.target.value)}
+                          placeholder="Neue E-Mail-Adresse"
+                          className={styles.input}
+                        />
+                        <input
+                          type="password"
+                          value={emailPassword}
+                          onChange={(e) => setEmailPassword(e.target.value)}
+                          placeholder="Aktuelles Passwort zur Bestätigung"
+                          className={styles.input}
+                        />
+                        <div className={styles.editNameButtons}>
+                          <button onClick={handleChangeEmail} disabled={isSavingEmail} className={styles.saveButton}>
+                            {isSavingEmail ? 'Senden...' : 'Bestätigen'}
+                          </button>
+                          <button onClick={() => { setIsEditingEmail(false); setNewEmail(''); setEmailPassword(''); }} className={styles.cancelButton}>
+                            Abbrechen
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    <div className={styles.nameDisplay}>
-                      <span>{user.email}</span>
-                      <button onClick={() => setIsEditingEmail(true)} className={styles.editButton}>
-                        <Edit3 size={14} />
-                      </button>
-                    </div>
+                    ) : (
+                      <span className={styles.profileValue}>
+                        {user.email}
+                        <button onClick={() => setIsEditingEmail(true)} className={styles.profileEditBtn} title="Bearbeiten">
+                          <Edit3 size={14} />
+                        </button>
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Member Since */}
+                  <div className={styles.profileField}>
+                    <span className={styles.profileLabel}>Mitglied seit</span>
+                    <span className={styles.profileValue}>
+                      {user.createdAt ? formatDate(user.createdAt) : 'Unbekannt'}
+                    </span>
+                  </div>
+
+                  {/* Verified Status */}
+                  <div className={styles.profileField}>
+                    <span className={styles.profileLabel}>Verifiziert</span>
+                    <span className={`${styles.profileValue} ${styles.verifiedBadge}`}>
+                      <CheckCircle2 size={16} />
+                      Ja
+                    </span>
+                  </div>
+                </div>
+
+                {/* Subscription Badge */}
+                <div className={styles.profileSubscription}>
+                  <div className={`${styles.subscriptionBadge} ${
+                    user.subscriptionPlan === 'enterprise' ? styles.enterprise :
+                    user.subscriptionPlan === 'business' ? styles.business :
+                    styles.free
+                  }`}>
+                    <span>
+                      {user.subscriptionPlan === 'enterprise' ? '🚀' :
+                       user.subscriptionPlan === 'business' ? '🏢' : '🔓'}
+                    </span>
+                    <span>
+                      {user.subscriptionPlan === 'enterprise' ? 'Enterprise' :
+                       user.subscriptionPlan === 'business' ? 'Business' : 'Free'}
+                    </span>
+                  </div>
+                  {user.subscriptionActive && (
+                    <button
+                      className={styles.manageSubscriptionBtn}
+                      onClick={handleOpenPortal}
+                      disabled={isPortalOpening}
+                    >
+                      {isPortalOpening ? 'Laden...' : 'Abo verwalten'}
+                    </button>
                   )}
                 </div>
-
-                <div className={styles.subscriptionContainer}>
-                  <div className={styles.label}>Abo-Status</div>
-                  {isLoading ? (
-                    <span>Lade Abo-Status...</span>
-                  ) : !user ? (
-                    <span>❌ Nicht eingeloggt</span>
-                  ) : user.subscriptionPlan === "enterprise" ? (
-                    <div className={styles.premium}>
-                      <span className={styles.premiumIcon}>🚀</span>
-                      Enterprise – aktiv
-                    </div>
-                  ) : user.subscriptionPlan === "business" ? (
-                    <div className={styles.premium}>
-                      <span className={styles.premiumIcon}>🏢</span>
-                      Business – aktiv
-                    </div>
-                  ) : (
-                    <div className={styles.standard}>
-                      <span className={styles.standardIcon}>🔓</span>
-                      Standard – kein Abo aktiv
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Company Profile Section - visible for all, functional for Business/Premium */}
-              <motion.div
-                className={styles.companyProfileSection}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.5 }}
-              >
-                <div className={styles.companyProfileContent}>
-                  <FileText size={24} className={styles.companyProfileIcon} />
-                  <div>
-                    <h3 className={styles.companyProfileTitle}>Firmenprofil</h3>
-                    <p className={styles.companyProfileDescription}>
-                      Richten Sie Ihr Firmenprofil ein für automatische Daten in generierten Verträgen.
-                    </p>
-                  </div>
-                </div>
-                {user?.subscriptionActive && (user.subscriptionPlan === 'enterprise' || user.subscriptionPlan === 'business') ? (
-                  <motion.button
-                    className={styles.companyProfileButton}
-                    onClick={() => window.location.href = '/company-profile'}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                  >
-                    <span className={styles.companyProfileButtonIcon}>🏢</span>
-                    <span>Firmenprofil anlegen</span>
-                  </motion.button>
-                ) : (
-                  <motion.button
-                    className={styles.upgradeFeatureButton}
-                    onClick={() => window.location.href = '/pricing'}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                  >
-                    <span className={styles.companyProfileButtonIcon}>⭐</span>
-                    <span>Upgrade auf Premium</span>
-                  </motion.button>
-                )}
               </motion.div>
 
-              {/* REST API Access Section - visible for all, functional for Premium */}
-              <motion.div
-                className={styles.companyProfileSection}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.6 }}
-              >
-                <div className={styles.companyProfileContent}>
-                  <Key size={24} className={styles.companyProfileIcon} />
-                  <div>
-                    <h3 className={styles.companyProfileTitle}>REST API-Zugang</h3>
-                    <p className={styles.companyProfileDescription}>
-                      Verwalte deine API-Keys für programmatischen Zugriff auf Contract AI. Automatisiere Workflows und integriere mit eigenen Systemen.
-                    </p>
-                  </div>
-                </div>
-                {user?.subscriptionActive && user.subscriptionPlan === 'enterprise' ? (
-                  <motion.button
-                    className={styles.companyProfileButton}
-                    onClick={() => window.location.href = '/api-keys'}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                  >
-                    <span className={styles.companyProfileButtonIcon}>🔑</span>
-                    <span>API-Keys verwalten</span>
-                  </motion.button>
-                ) : (
-                  <motion.button
-                    className={styles.upgradeFeatureButton}
-                    onClick={() => window.location.href = '/pricing'}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                  >
-                    <span className={styles.companyProfileButtonIcon}>⭐</span>
-                    <span>Upgrade auf Enterprise</span>
-                  </motion.button>
-                )}
-              </motion.div>
-
-              {/* Team Management Section - visible for all, functional for Premium */}
-              <motion.div
-                className={styles.companyProfileSection}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.7 }}
-              >
-                <div className={styles.companyProfileContent}>
-                  <Users size={24} className={styles.companyProfileIcon} />
-                  <div>
-                    <h3 className={styles.companyProfileTitle}>Team-Management</h3>
-                    <p className={styles.companyProfileDescription}>
-                      Erstelle eine Organisation, lade Team-Mitglieder ein und arbeite gemeinsam an Verträgen. Bis zu 10 User pro Team.
-                    </p>
-                  </div>
-                </div>
-                {user?.subscriptionActive && (user.subscriptionPlan === 'enterprise' || user.subscriptionPlan === 'business') ? (
-                  <motion.button
-                    className={styles.companyProfileButton}
-                    onClick={() => window.location.href = '/team'}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                  >
-                    <span className={styles.companyProfileButtonIcon}>👥</span>
-                    <span>Team verwalten</span>
-                  </motion.button>
-                ) : (
-                  <motion.button
-                    className={styles.upgradeFeatureButton}
-                    onClick={() => window.location.href = '/pricing'}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                  >
-                    <span className={styles.companyProfileButtonIcon}>⭐</span>
-                    <span>Upgrade auf Business</span>
-                  </motion.button>
-                )}
-              </motion.div>
-
-              {/* CRM/ERP Integrations Section - visible for all, functional for Premium/Business */}
-              <motion.div
-                className={styles.companyProfileSection}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.75 }}
-              >
-                <div className={styles.companyProfileContent}>
-                  <Link2 size={24} className={styles.companyProfileIcon} />
-                  <div>
-                    <h3 className={styles.companyProfileTitle}>CRM/ERP Integrationen</h3>
-                    <p className={styles.companyProfileDescription}>
-                      Verbinde Contract AI mit Salesforce, HubSpot oder SAP. Synchronisiere Verträge automatisch mit deinen Geschäftssystemen.
-                    </p>
-                  </div>
-                </div>
-                {user?.subscriptionActive && user.subscriptionPlan === 'enterprise' ? (
-                  <motion.button
-                    className={styles.companyProfileButton}
-                    onClick={() => window.location.href = '/integrations'}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                  >
-                    <span className={styles.companyProfileButtonIcon}>🔗</span>
-                    <span>Integrationen verwalten</span>
-                  </motion.button>
-                ) : (
-                  <motion.button
-                    className={styles.upgradeFeatureButton}
-                    onClick={() => window.location.href = '/pricing'}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                  >
-                    <span className={styles.companyProfileButtonIcon}>⭐</span>
-                    <span>Upgrade auf Enterprise</span>
-                  </motion.button>
-                )}
-              </motion.div>
-
+              {/* Upgrade Section for Free Users */}
               {!user.subscriptionActive && (
-                <motion.div 
+                <motion.div
                   className={styles.upgradeSection}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.5 }}
+                  transition={{ duration: 0.5, delay: 0.4 }}
                 >
                   <div className={styles.upgradeContent}>
                     <CreditCard size={24} className={styles.upgradeIcon} />
                     <div>
-                      <h3 className={styles.upgradeTitle}>Upgrade auf Premium</h3>
+                      <h3 className={styles.upgradeTitle}>Upgrade auf Business oder Enterprise</h3>
                       <p className={styles.upgradeDescription}>
-                        Erhalte Zugriff auf unbegrenzte Analysen, Vertragsoptimierung, KI-Vertragserstellung und mehr.
+                        Erhalte Zugriff auf erweiterte Analysen, Vertragsoptimierung, KI-Chat und mehr.
                       </p>
                     </div>
                   </div>
-                  <motion.button 
+                  <motion.button
                     className={styles.upgradeButton}
                     onClick={handleUpgrade}
                     disabled={isUpgrading}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
                   >
                     {isUpgrading ? (
                       <>
                         <span className={styles.buttonSpinner}></span>
-                        <span>Lade Stripe...</span>
+                        <span>Lade...</span>
                       </>
                     ) : (
                       <>
@@ -981,271 +816,405 @@ export default function Profile() {
                 </motion.div>
               )}
 
-              {/* Chatbot Settings Section */}
-              <motion.div
-                className={styles.section}
+              {/* Settings Section */}
+              <motion.section
+                className={styles.sectionGroup}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.55 }}
+                transition={{ duration: 0.5, delay: 0.5 }}
               >
                 <div className={styles.sectionHeader}>
-                  <MessageSquare size={18} className={styles.sectionIcon} />
-                  <h2 className={styles.sectionTitle}>KI-Assistent</h2>
+                  <div className={`${styles.sectionIcon} ${styles.settings}`}>⚙️</div>
+                  <h2 className={styles.sectionTitle}>Einstellungen</h2>
+                  <span className={`${styles.sectionBadge} ${styles.included}`}>Für alle verfügbar</span>
                 </div>
 
-                <div className={styles.settingRow}>
-                  <div className={styles.settingInfo}>
-                    <h3 className={styles.settingLabel}>Chatbot anzeigen</h3>
-                    <p className={styles.settingDescription}>
-                      Aktiviere oder deaktiviere den KI-Assistenten auf allen Seiten
-                    </p>
+                <div className={styles.settingsGrid}>
+                  {/* AI Assistant Card */}
+                  <div className={styles.settingsCard}>
+                    <div className={styles.settingsCardHeader}>
+                      <span className={styles.settingsCardIcon}>💬</span>
+                      <span className={styles.settingsCardTitle}>KI-Assistent</span>
+                    </div>
+                    <div className={styles.settingRow}>
+                      <div className={styles.settingInfo}>
+                        <h4>Chatbot anzeigen</h4>
+                        <p>Assistenten auf allen Seiten anzeigen</p>
+                      </div>
+                      <label className={styles.toggleSwitch}>
+                        <input
+                          type="checkbox"
+                          checked={isChatbotEnabled}
+                          onChange={handleChatbotToggle}
+                          className={styles.toggleInput}
+                        />
+                        <span className={styles.toggleSlider}></span>
+                      </label>
+                    </div>
                   </div>
-                  <label className={styles.toggleSwitch}>
-                    <input
-                      type="checkbox"
-                      checked={isChatbotEnabled}
-                      onChange={handleChatbotToggle}
-                      className={styles.toggleInput}
-                    />
-                    <span className={styles.toggleSlider}></span>
-                  </label>
-                </div>
-              </motion.div>
 
-              {/* E-Mail Benachrichtigungen Section */}
-              <motion.div
-                className={styles.section}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.58 }}
-              >
-                <div className={styles.sectionHeader}>
-                  <Mail size={18} className={styles.sectionIcon} />
-                  <h2 className={styles.sectionTitle}>E-Mail Benachrichtigungen</h2>
-                </div>
-
-                <div className={styles.settingRow}>
-                  <div className={styles.settingInfo}>
-                    <h3 className={styles.settingLabel}>Kalender-Erinnerungen</h3>
-                    <p className={styles.settingDescription}>
-                      Wähle, wie du E-Mail-Erinnerungen erhalten möchtest
-                    </p>
+                  {/* Notifications Settings Card */}
+                  <div className={styles.settingsCard}>
+                    <div className={styles.settingsCardHeader}>
+                      <span className={styles.settingsCardIcon}>🔔</span>
+                      <span className={styles.settingsCardTitle}>Benachrichtigungen</span>
+                    </div>
+                    <div className={styles.settingRow}>
+                      <div className={styles.settingInfo}>
+                        <h4>Alle Einstellungen</h4>
+                        <p>E-Mail, Push, In-App & Zeitplan</p>
+                      </div>
+                      <motion.button
+                        className={styles.settingsOpenButton}
+                        onClick={() => setShowNotificationSettings(true)}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <Settings size={14} />
+                        Verwalten
+                      </motion.button>
+                    </div>
                   </div>
-                  <select
-                    className={styles.emailPrefsDropdown}
-                    value={emailDigestMode}
-                    onChange={(e) => handleEmailPrefsChange(e.target.value as 'instant' | 'daily' | 'weekly')}
-                    disabled={isEmailPrefsLoading}
-                  >
-                    <option value="instant">⚡ Sofort (einzeln)</option>
-                    <option value="daily" disabled={!isPremiumOrHigher}>
-                      📅 Täglich (7 Uhr){!isPremiumOrHigher ? ' 🔒' : ''}
-                    </option>
-                    <option value="weekly" disabled={!isPremiumOrHigher}>
-                      📆 Wöchentlich{!isPremiumOrHigher ? ' 🔒' : ''}
-                    </option>
-                  </select>
                 </div>
-              </motion.div>
+              </motion.section>
 
-              {/* Onboarding & Tour Section */}
-              <motion.div
-                className={styles.section}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.59 }}
-              >
-                <div className={styles.sectionHeader}>
-                  <Compass size={18} className={styles.sectionIcon} />
-                  <h2 className={styles.sectionTitle}>Einführung & Hilfe</h2>
-                </div>
-
-                <div className={styles.settingRow}>
-                  <div className={styles.settingInfo}>
-                    <h3 className={styles.settingLabel}>Produkt-Tour erneut starten</h3>
-                    <p className={styles.settingDescription}>
-                      Zeige die Einführungs-Tour und Checklist erneut an, um alle Features kennenzulernen
-                    </p>
-                  </div>
-                  <motion.button
-                    className={styles.resetTourButton}
-                    onClick={handleResetTour}
-                    disabled={isResettingTour}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                  >
-                    {isResettingTour ? (
-                      <>
-                        <span className={styles.buttonSpinner}></span>
-                        <span>Wird zurückgesetzt...</span>
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw size={16} />
-                        <span>Tour zurücksetzen</span>
-                      </>
-                    )}
-                  </motion.button>
-                </div>
-              </motion.div>
-
-              <motion.div
-                className={styles.section}
+              {/* Business Features Section */}
+              <motion.section
+                className={styles.sectionGroup}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.6 }}
               >
                 <div className={styles.sectionHeader}>
-                  <Key size={18} className={styles.sectionIcon} />
-                  <h2 className={styles.sectionTitle}>Passwort ändern</h2>
+                  <div className={`${styles.sectionIcon} ${styles.business}`}>💼</div>
+                  <h2 className={styles.sectionTitle}>Business Features</h2>
+                  <span className={`${styles.sectionBadge} ${isBusinessOrHigher ? styles.included : styles.locked}`}>
+                    {isBusinessOrHigher ? '✓ In deinem Abo' : '🔒 Upgrade erforderlich'}
+                  </span>
                 </div>
-                
-                <div className={styles.passwordForm}>
-                  <div className={styles.inputGroup}>
-                    <label htmlFor="oldPassword">Aktuelles Passwort</label>
-                    <input
-                      id="oldPassword"
-                      type="password"
-                      placeholder="••••••••"
-                      value={oldPassword}
-                      onChange={(e) => setOldPassword(e.target.value)}
-                      className={styles.input}
-                    />
-                  </div>
-                  
-                  <div className={styles.inputGroup}>
-                    <label htmlFor="newPassword">Neues Passwort</label>
-                    <input
-                      id="newPassword"
-                      type="password"
-                      placeholder="••••••••"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className={styles.input}
-                      minLength={8}
-                    />
-                    <p className={styles.passwordHint}>
-                      Mind. 8 Zeichen, 1 Großbuchstabe, 1 Kleinbuchstabe, 1 Zahl
-                    </p>
-                  </div>
-                  
-                  <div className={styles.inputGroup}>
-                    <label htmlFor="confirmPassword">Passwort bestätigen</label>
-                    <input
-                      id="confirmPassword"
-                      type="password"
-                      placeholder="••••••••"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className={styles.input}
-                    />
-                  </div>
-                  
-                  <motion.button 
-                    onClick={handlePasswordChange}
-                    className={styles.passwordButton}
-                    disabled={isPasswordChanging || !oldPassword || !newPassword || !confirmPassword}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                  >
-                    {isPasswordChanging ? (
-                      <>
-                        <span className={styles.buttonSpinner}></span>
-                        <span>Wird geändert...</span>
-                      </>
+
+                <div className={styles.featureGrid}>
+                  {/* Company Profile */}
+                  <div className={`${styles.featureCard} ${!isBusinessOrHigher ? styles.locked : ''}`}>
+                    <div className={styles.featureHeader}>
+                      <div className={`${styles.featureIcon} ${styles.blue}`}>🏢</div>
+                      <div className={styles.featureContent}>
+                        <h3 className={styles.featureTitle}>
+                          Firmenprofil
+                          {!isBusinessOrHigher && <span className={styles.featureLockBadge}>Business</span>}
+                        </h3>
+                        <p className={styles.featureDescription}>
+                          Hinterlege deine Firmendaten für automatisches Ausfüllen in generierten Verträgen.
+                        </p>
+                      </div>
+                    </div>
+                    {isBusinessOrHigher ? (
+                      <motion.button
+                        className={`${styles.featureButton} ${styles.primary}`}
+                        onClick={() => window.location.href = '/company-profile'}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <FileText size={16} />
+                        Firmenprofil bearbeiten
+                      </motion.button>
                     ) : (
-                      <>
-                        <Key size={16} />
-                        <span>Passwort ändern</span>
-                      </>
+                      <motion.button
+                        className={`${styles.featureButton} ${styles.upgrade}`}
+                        onClick={() => window.location.href = '/pricing'}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <Star size={16} />
+                        Upgrade auf Business (19€/Monat)
+                      </motion.button>
                     )}
-                  </motion.button>
-                </div>
-              </motion.div>
-
-              {/* 🆕 DSGVO Daten-Export */}
-              <motion.div
-                className={styles.section}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.65 }}
-              >
-                <div className={styles.sectionHeader}>
-                  <Database size={18} className={styles.sectionIcon} />
-                  <h2 className={styles.sectionTitle}>Meine Daten (DSGVO)</h2>
-                </div>
-
-                <div className={styles.settingRow}>
-                  <div className={styles.settingInfo}>
-                    <h3 className={styles.settingLabel}>Daten exportieren</h3>
-                    <p className={styles.settingDescription}>
-                      Laden Sie alle Ihre Daten als JSON-Datei herunter (Profil, Verträge, Kalender-Events)
-                    </p>
                   </div>
-                  <motion.button
-                    className={styles.exportButton}
-                    onClick={handleExportData}
-                    disabled={isExporting}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                  >
-                    {isExporting ? (
-                      <>
-                        <span className={styles.buttonSpinner}></span>
-                        <span>Exportiere...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Download size={16} />
-                        <span>Daten exportieren</span>
-                      </>
-                    )}
-                  </motion.button>
-                </div>
-              </motion.div>
 
-              <motion.div
-                className={styles.dangerSection}
+                  {/* Team Management - Now available for Business+ */}
+                  <div className={`${styles.featureCard} ${!isBusinessOrHigher ? styles.locked : ''}`}>
+                    <div className={styles.featureHeader}>
+                      <div className={`${styles.featureIcon} ${styles.orange}`}>👥</div>
+                      <div className={styles.featureContent}>
+                        <h3 className={styles.featureTitle}>
+                          Team-Management
+                          {!isBusinessOrHigher && <span className={styles.featureLockBadge}>Business</span>}
+                        </h3>
+                        <p className={styles.featureDescription}>
+                          Erstelle Teams, lade Mitglieder ein und arbeite gemeinsam an Verträgen.
+                        </p>
+                      </div>
+                    </div>
+                    {isBusinessOrHigher ? (
+                      <motion.button
+                        className={`${styles.featureButton} ${styles.primary}`}
+                        onClick={() => window.location.href = '/team'}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <Users size={16} />
+                        Team verwalten
+                      </motion.button>
+                    ) : (
+                      <motion.button
+                        className={`${styles.featureButton} ${styles.upgrade}`}
+                        onClick={() => window.location.href = '/pricing'}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <Star size={16} />
+                        Upgrade auf Business (19€/Monat)
+                      </motion.button>
+                    )}
+                  </div>
+                </div>
+              </motion.section>
+
+              {/* Enterprise Features Section */}
+              <motion.section
+                className={styles.sectionGroup}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.7 }}
               >
-                <div className={styles.dangerHeader}>
-                  <Trash2 size={18} className={styles.dangerIcon} />
-                  <h2 className={styles.dangerTitle}>Konto löschen</h2>
+                <div className={styles.sectionHeader}>
+                  <div className={`${styles.sectionIcon} ${styles.enterprise}`}>🏆</div>
+                  <h2 className={styles.sectionTitle}>Enterprise Features</h2>
+                  <span className={`${styles.sectionBadge} ${isEnterprise ? styles.included : styles.locked}`}>
+                    {isEnterprise ? '✓ In deinem Abo' : '🔒 Upgrade erforderlich'}
+                  </span>
                 </div>
-                
-                <p className={styles.dangerText}>
-                  Diese Aktion ist permanent und kann nicht rückgängig gemacht werden. Alle deine Verträge und Daten werden gelöscht.
-                </p>
-                
-                <motion.button 
-                  onClick={handleAccountDelete}
-                  className={styles.deleteButton}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                >
-                  <Trash2 size={16} />
-                  <span>Account löschen</span>
-                </motion.button>
-              </motion.div>
 
-              {/* Neue Rechnungssektion */}
-              <motion.div 
-                className={styles.section}
+                <div className={styles.featureGrid}>
+                  {/* REST API Access */}
+                  <div className={`${styles.featureCard} ${!isEnterprise ? styles.locked : ''}`}>
+                    <div className={styles.featureHeader}>
+                      <div className={`${styles.featureIcon} ${styles.purple}`}>🔑</div>
+                      <div className={styles.featureContent}>
+                        <h3 className={styles.featureTitle}>
+                          REST API-Zugang
+                          {!isEnterprise && <span className={styles.featureLockBadge}>Enterprise</span>}
+                        </h3>
+                        <p className={styles.featureDescription}>
+                          Programmatischer Zugriff auf alle Contract AI Funktionen. Automatisiere Workflows.
+                        </p>
+                      </div>
+                    </div>
+                    {isEnterprise ? (
+                      <motion.button
+                        className={`${styles.featureButton} ${styles.primary}`}
+                        onClick={() => window.location.href = '/api-keys'}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <Key size={16} />
+                        API-Keys verwalten
+                      </motion.button>
+                    ) : (
+                      <motion.button
+                        className={`${styles.featureButton} ${styles.upgrade}`}
+                        onClick={() => window.location.href = '/pricing'}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <Star size={16} />
+                        Upgrade auf Enterprise (29€/Monat)
+                      </motion.button>
+                    )}
+                  </div>
+
+                  {/* CRM/ERP Integrations */}
+                  <div className={`${styles.featureCard} ${!isEnterprise ? styles.locked : ''}`}>
+                    <div className={styles.featureHeader}>
+                      <div className={`${styles.featureIcon} ${styles.blue}`}>🔗</div>
+                      <div className={styles.featureContent}>
+                        <h3 className={styles.featureTitle}>
+                          CRM/ERP Integrationen
+                          {!isEnterprise && <span className={styles.featureLockBadge}>Enterprise</span>}
+                        </h3>
+                        <p className={styles.featureDescription}>
+                          Verbinde mit Salesforce, HubSpot, SAP und mehr. Automatische Synchronisation.
+                        </p>
+                      </div>
+                    </div>
+                    {isEnterprise ? (
+                      <motion.button
+                        className={`${styles.featureButton} ${styles.primary}`}
+                        onClick={() => window.location.href = '/integrations'}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <Link2 size={16} />
+                        Integrationen verwalten
+                      </motion.button>
+                    ) : (
+                      <motion.button
+                        className={`${styles.featureButton} ${styles.upgrade}`}
+                        onClick={() => window.location.href = '/pricing'}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <Star size={16} />
+                        Upgrade auf Enterprise (29€/Monat)
+                      </motion.button>
+                    )}
+                  </div>
+                </div>
+              </motion.section>
+
+              {/* Account Actions */}
+              <motion.div
+                className={styles.accountActions}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.8 }}
               >
-                <div className={styles.sectionHeader}>
-                  <FileText size={18} className={styles.sectionIcon} />
-                  <h2 className={styles.sectionTitle}>📄 Rechnungen</h2>
+                {/* Data Export */}
+                <div className={styles.accountActionCard}>
+                  <div className={`${styles.accountActionIcon} ${styles.export}`}>📦</div>
+                  <h3 className={styles.accountActionTitle}>Daten exportieren</h3>
+                  <p className={styles.accountActionDesc}>Alle deine Daten als JSON herunterladen</p>
+                  <motion.button
+                    className={styles.accountActionBtn}
+                    onClick={handleExportData}
+                    disabled={isExporting}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {isExporting ? (
+                      <span className={styles.buttonSpinner}></span>
+                    ) : (
+                      <Download size={14} />
+                    )}
+                    {isExporting ? 'Exportiere...' : 'Exportieren'}
+                  </motion.button>
                 </div>
-                
+
+                {/* Password Change */}
+                <div className={styles.accountActionCard}>
+                  <div className={`${styles.accountActionIcon} ${styles.password}`}>🔐</div>
+                  <h3 className={styles.accountActionTitle}>Passwort ändern</h3>
+                  <p className={styles.accountActionDesc}>Aktualisiere dein Passwort</p>
+                  <motion.button
+                    className={styles.accountActionBtn}
+                    onClick={() => setIsPasswordSectionOpen(!isPasswordSectionOpen)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Key size={14} />
+                    {isPasswordSectionOpen ? 'Schließen' : 'Ändern'}
+                  </motion.button>
+                </div>
+
+                {/* Tour Reset */}
+                <div className={styles.accountActionCard}>
+                  <div className={`${styles.accountActionIcon} ${styles.tour}`}>🎓</div>
+                  <h3 className={styles.accountActionTitle}>Tour zurücksetzen</h3>
+                  <p className={styles.accountActionDesc}>Einführungstour erneut starten</p>
+                  <motion.button
+                    className={styles.accountActionBtn}
+                    onClick={handleResetTour}
+                    disabled={isResettingTour}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {isResettingTour ? (
+                      <span className={styles.buttonSpinner}></span>
+                    ) : (
+                      <RefreshCw size={14} />
+                    )}
+                    {isResettingTour ? 'Lädt...' : 'Zurücksetzen'}
+                  </motion.button>
+                </div>
+              </motion.div>
+
+              {/* Password Change Section (Expandable) */}
+              <AnimatePresence>
+                {isPasswordSectionOpen && (
+                  <motion.div
+                    className={styles.passwordSection}
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <div className={styles.passwordForm}>
+                      <div className={styles.inputGroup}>
+                        <label htmlFor="oldPassword">Aktuelles Passwort</label>
+                        <input
+                          id="oldPassword"
+                          type="password"
+                          placeholder="••••••••"
+                          value={oldPassword}
+                          onChange={(e) => setOldPassword(e.target.value)}
+                          className={styles.input}
+                        />
+                      </div>
+
+                      <div className={styles.inputGroup}>
+                        <label htmlFor="newPassword">Neues Passwort</label>
+                        <input
+                          id="newPassword"
+                          type="password"
+                          placeholder="••••••••"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          className={styles.input}
+                          minLength={8}
+                        />
+                        <p className={styles.passwordHint}>
+                          Mind. 8 Zeichen, 1 Großbuchstabe, 1 Kleinbuchstabe, 1 Zahl
+                        </p>
+                      </div>
+
+                      <div className={styles.inputGroup}>
+                        <label htmlFor="confirmPassword">Passwort bestätigen</label>
+                        <input
+                          id="confirmPassword"
+                          type="password"
+                          placeholder="••••••••"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          className={styles.input}
+                        />
+                      </div>
+
+                      <motion.button
+                        onClick={handlePasswordChange}
+                        className={styles.passwordButton}
+                        disabled={isPasswordChanging || !oldPassword || !newPassword || !confirmPassword}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        {isPasswordChanging ? (
+                          <>
+                            <span className={styles.buttonSpinner}></span>
+                            <span>Wird geändert...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Key size={16} />
+                            <span>Passwort ändern</span>
+                          </>
+                        )}
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Invoices Section */}
+              <motion.section
+                className={styles.sectionGroup}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.9 }}
+              >
+                <div className={styles.sectionHeader}>
+                  <div className={`${styles.sectionIcon} ${styles.invoices}`}>📄</div>
+                  <h2 className={styles.sectionTitle}>Rechnungen</h2>
+                </div>
+
                 {isLoadingInvoices ? (
                   <div className={styles.loadingContainer}>
                     <div className={styles.loadingSpinner}></div>
@@ -1257,20 +1226,17 @@ export default function Profile() {
                   </p>
                 ) : (
                   <div className={styles.invoicesContainer}>
+                    {/* Desktop Table */}
                     <div className={styles.invoiceTable}>
                       <div className={styles.invoiceTableHeader}>
-                        <div className={styles.invoiceDate}>Datum</div>
-                        <div className={styles.invoicePlan}>Abo-Typ</div>
-                        <div className={styles.invoiceAmount}>Betrag</div>
-                        <div className={styles.invoiceAction}></div>
+                        <div>Datum</div>
+                        <div>Abo-Typ</div>
+                        <div>Betrag</div>
+                        <div></div>
                       </div>
-                      
-                      {invoices.map((invoice) => (
-                        <motion.div 
-                          key={invoice.invoiceNumber}
-                          className={styles.invoiceRow}
-                          whileHover={{ backgroundColor: "rgba(0,0,0,0.02)" }}
-                        >
+
+                      {invoices.slice(0, visibleInvoicesCount).map((invoice) => (
+                        <div key={invoice.invoiceNumber} className={styles.invoiceRow}>
                           <div className={styles.invoiceDate}>{formatDate(invoice.date)}</div>
                           <div className={styles.invoicePlan}>
                             {invoice.plan === 'enterprise' ? (
@@ -1292,31 +1258,24 @@ export default function Profile() {
                           </div>
                           <div className={styles.invoiceAmount}>{formatAmount(invoice.amount)}</div>
                           <div className={styles.invoiceAction}>
-                            <motion.button 
+                            <motion.button
                               className={styles.downloadButton}
                               onClick={() => handleDownload(invoice.invoiceNumber)}
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                              aria-label="Download Rechnung"
                             >
-                              <Download size={16} />
-                              <span>PDF</span>
+                              <Download size={14} />
+                              PDF
                             </motion.button>
                           </div>
-                        </motion.div>
+                        </div>
                       ))}
                     </div>
-                    
-                    {/* Responsive Card View für mobile Geräte */}
+
+                    {/* Mobile Cards */}
                     <div className={styles.invoiceCards}>
-                      {invoices.map((invoice) => (
-                        <motion.div 
-                          key={invoice.invoiceNumber}
-                          className={styles.invoiceCard}
-                          whileHover={{ scale: 1.02 }}
-                          transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                        >
+                      {invoices.slice(0, visibleInvoicesCount).map((invoice) => (
+                        <div key={invoice.invoiceNumber} className={styles.invoiceCard}>
                           <div className={styles.invoiceCardHeader}>
                             <div className={styles.invoiceDate}>{formatDate(invoice.date)}</div>
                             <div className={styles.invoiceAmount}>{formatAmount(invoice.amount)}</div>
@@ -1343,67 +1302,68 @@ export default function Profile() {
                             </div>
                           </div>
                           <div className={styles.invoiceCardFooter}>
-                            <motion.button 
+                            <motion.button
                               className={styles.downloadButton}
                               onClick={() => handleDownload(invoice.invoiceNumber)}
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
                             >
-                              <Download size={16} />
-                              <span>Rechnung herunterladen</span>
+                              <Download size={14} />
+                              Rechnung herunterladen
                             </motion.button>
                           </div>
-                        </motion.div>
+                        </div>
                       ))}
                     </div>
+
+                    {/* Load More Button */}
+                    {invoices.length > visibleInvoicesCount && (
+                      <motion.button
+                        className={styles.loadMoreButton}
+                        onClick={() => setVisibleInvoicesCount(prev => prev + 3)}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <ChevronDown size={16} />
+                        Mehr anzeigen ({invoices.length - visibleInvoicesCount} weitere)
+                      </motion.button>
+                    )}
                   </div>
                 )}
-              </motion.div>
+              </motion.section>
 
-              {user?.subscriptionActive && (
-                <p style={{ fontSize: "0.85rem", marginTop: "2rem", textAlign: "center" }}>
-                  💳{" "}
-                  <span
-                    style={{
-                      textDecoration: "underline",
-                      cursor: "pointer",
-                      color: "#666"
-                    }}
-                    onClick={async () => {
-                      setIsPortalOpening(true);
-                      try {
-                        const res = await fetch("/api/stripe/portal", {
-                          method: "POST",
-                          credentials: "include",
-                        });
-                        const data = await res.json();
-                        if (res.ok && data.url) {
-                          window.location.href = data.url;
-                        }
-                      } catch {
-                        alert("Fehler beim Öffnen des Kundenportals");
-                        setIsPortalOpening(false);
-                      }
-                    }}
-                  >
-                    {isPortalOpening ? (
-                      <>
-                        <span className={styles.buttonSpinner}></span>
-                        <span>Wird geöffnet...</span>
-                      </>
-                    ) : (
-                      "Abo kündigen"
-                    )}
-                  </span>
+              {/* Danger Zone */}
+              <motion.div
+                className={styles.dangerSection}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 1.0 }}
+              >
+                <div className={styles.dangerHeader}>
+                  <Trash2 size={18} className={styles.dangerIcon} />
+                  <h2 className={styles.dangerTitle}>Konto löschen</h2>
+                </div>
+
+                <p className={styles.dangerText}>
+                  Diese Aktion ist permanent und kann nicht rückgängig gemacht werden. Alle deine Verträge und Daten werden gelöscht.
                 </p>
-              )}
-            </motion.div>
+
+                <motion.button
+                  onClick={handleAccountDelete}
+                  className={styles.deleteButton}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Trash2 size={16} />
+                  <span>Account löschen</span>
+                </motion.button>
+              </motion.div>
+            </>
           ) : (
             <div className={styles.errorContainer}>
               <AlertCircle size={40} className={styles.errorIcon} />
               <p className={styles.errorMessage}>Keine Benutzerdaten gefunden.</p>
-              <motion.button 
+              <motion.button
                 className={styles.logoutButton}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -1425,6 +1385,13 @@ export default function Profile() {
             />
           )}
         </AnimatePresence>
+
+        {/* Notification Settings Modal */}
+        <NotificationSettingsModal
+          isOpen={showNotificationSettings}
+          onClose={() => setShowNotificationSettings(false)}
+          onSaved={() => setNotification({ message: "Benachrichtigungseinstellungen gespeichert", type: "success" })}
+        />
       </div>
     </>
   );
