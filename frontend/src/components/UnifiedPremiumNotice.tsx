@@ -89,14 +89,14 @@ export default function UnifiedPremiumNotice({
             fontWeight: 600,
             margin: 0
           }}>
-            Premium-Feature
+            Business Feature
           </h3>
           <p style={{
             color: 'rgba(255, 255, 255, 0.85)',
             fontSize: isFullWidth ? '13px' : '14px',
             margin: 0
           }}>
-            {featureName} ist nur mit Premium oder Business verfügbar
+            {featureName} ist nur mit Business oder Enterprise verfügbar
           </p>
         </div>
       </div>

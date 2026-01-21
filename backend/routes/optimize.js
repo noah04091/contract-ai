@@ -15,6 +15,7 @@ const { smartRateLimiter, uploadLimiter, generalLimiter } = require("../middlewa
 const { runBaselineRules } = require("../services/optimizer/rules");
 // 🔥 FIX 4+: Quality Layer imports (mit Sanitizer + Content-Mismatch Guard + Context-Aware Benchmarks)
 const { dedupeIssues, ensureCategory, sanitizeImprovedText, sanitizeText, sanitizeBenchmark, cleanPlaceholders, isTextMatchingCategory, generateContextAwareBenchmark } = require("../services/optimizer/quality");
+const { getFeatureLimit, isEnterpriseOrHigher } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
 
 // 🆕 S3 SDK für PDF-Upload
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
@@ -3782,16 +3783,15 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
     const plan = (user.subscriptionPlan || "free").toLowerCase();
     const optimizationCount = user.optimizationCount ?? 0;
 
-    // Limits gemäß subscriptionPlans.js
-    let limit = 0; // Free: 0 (gesperrt)
-    if (plan === "business") limit = 15; // Business: 15/Monat
-    if (plan === "enterprise" || plan === "legendary") limit = Infinity; // Enterprise/Legendary: Unbegrenzt
+    // Limits aus zentraler Konfiguration (subscriptionPlans.js)
+    // ✅ KORRIGIERT: Zentrale Funktion statt hardcoded Limits
+    const limit = getFeatureLimit(plan, 'optimize');
 
     if (optimizationCount >= limit) {
       return res.status(403).json({
         success: false,
-        message: plan === "free" 
-          ? "❌ KI-Vertragsoptimierung ist ein Premium-Feature."
+        message: plan === "free"
+          ? "❌ KI-Vertragsoptimierung ist ein Business-Feature."
           : "❌ Optimierung-Limit erreicht.",
         error: "LIMIT_EXCEEDED",
         currentCount: optimizationCount,
@@ -5176,15 +5176,14 @@ router.post("/stream", verifyToken, uploadLimiter, smartRateLimiter, upload.sing
     const plan = (user.subscriptionPlan || "free").toLowerCase();
     const optimizationCount = user.optimizationCount ?? 0;
 
-    // Limits gemäß subscriptionPlans.js
-    let limit = 0; // Free: 0 (gesperrt)
-    if (plan === "business") limit = 15; // Business: 15/Monat
-    if (plan === "enterprise" || plan === "legendary") limit = Infinity; // Enterprise/Legendary: Unbegrenzt
+    // Limits aus zentraler Konfiguration (subscriptionPlans.js)
+    // ✅ KORRIGIERT: Zentrale Funktion statt hardcoded Limits
+    const limit = getFeatureLimit(plan, 'optimize');
 
     if (optimizationCount >= limit) {
       return sendError(
         plan === "free"
-          ? "KI-Vertragsoptimierung ist ein Premium-Feature."
+          ? "KI-Vertragsoptimierung ist ein Business-Feature."
           : "Optimierung-Limit erreicht.",
         "LIMIT_EXCEEDED"
       );

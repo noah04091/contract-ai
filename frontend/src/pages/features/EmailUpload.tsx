@@ -396,7 +396,7 @@ const EmailUpload: React.FC = () => {
                   Gibt es ein Upload-Limit?
                   <span className={styles.faqIcon}>▼</span>
                 </summary>
-                <p className={styles.faqAnswer}>Ja, abhängig von Ihrem Plan: Free (1 E-Mail/Stunde), Premium (10 E-Mails/Stunde), Business (20 E-Mails/Stunde). Einzelne PDFs dürfen max. 15 MB groß sein.</p>
+                <p className={styles.faqAnswer}>Ja, abhängig von Ihrem Plan: Free (1 E-Mail/Stunde), Business (10 E-Mails/Stunde), Enterprise (unbegrenzt). Einzelne PDFs dürfen max. 15 MB groß sein.</p>
               </details>
             </div>
           </section>

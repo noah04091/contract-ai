@@ -8,6 +8,7 @@ const http = require("http");
 const AWS = require("aws-sdk");
 const crypto = require("crypto");
 const QRCode = require("qrcode"); // 🆕 ENTERPRISE QR-CODE GENERATION
+const { getFeatureLimit, isEnterpriseOrHigher } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
 
 // 🔴 KRITISCHER FIX #1: Puppeteer richtig importieren für Render.com
 let puppeteer;
@@ -2321,10 +2322,9 @@ router.post("/", verifyToken, async (req, res) => {
     const plan = (user.subscriptionPlan || "free").toLowerCase();
     const count = user.generateCount ?? 0; // Separater Counter für Generate
 
-    // Limits gemäß subscriptionPlans.js
-    let limit = 0; // Free: 0 (gesperrt)
-    if (plan === "business") limit = 10; // Business: 10/Monat
-    if (plan === "enterprise" || plan === "legendary") limit = Infinity; // Enterprise/Legendary: Unbegrenzt
+    // Limits aus zentraler Konfiguration (subscriptionPlans.js)
+    // ✅ KORRIGIERT: Zentrale Funktion statt hardcoded Limits
+    const limit = getFeatureLimit(plan, 'generate');
 
     if (count >= limit) {
       return res.status(403).json({

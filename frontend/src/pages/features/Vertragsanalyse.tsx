@@ -402,7 +402,7 @@ const Vertragsanalyse: React.FC = () => {
                   Was kostet die Vertragsanalyse?
                   <span className={styles.faqIcon}>▼</span>
                 </summary>
-                <p className={styles.faqAnswer}>Im Free-Tier: 3 Analysen pro Monat kostenlos. Premium-Pläne ab 19€/Monat mit unbegrenzten Analysen und erweiterten Features.</p>
+                <p className={styles.faqAnswer}>Im Free-Tier: 3 Analysen kostenlos. Business (19€/Monat): 25 Analysen. Enterprise (29€/Monat): Unbegrenzte Analysen und alle Features.</p>
               </details>
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>

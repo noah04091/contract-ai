@@ -402,7 +402,7 @@ const Optimierung: React.FC = () => {
                   Was kostet die Vertragsoptimierung?
                   <span className={styles.faqIcon}>▼</span>
                 </summary>
-                <p className={styles.faqAnswer}>Im Free-Tier: 3 Optimierungen pro Monat. Premium-Pläne ab 19€/Monat mit unbegrenzten Optimierungen und erweiterten Features.</p>
+                <p className={styles.faqAnswer}>Der KI-Optimizer ist ab Business (19€/Monat) mit 15 Optimierungen verfügbar. Enterprise (29€/Monat): Unbegrenzte Optimierungen.</p>
               </details>
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>

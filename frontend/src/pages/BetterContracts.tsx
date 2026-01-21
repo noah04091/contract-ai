@@ -151,7 +151,7 @@ const BetterContracts: React.FC = () => {
     
     // ✅ Premium Check
     if (!isPremium) {
-      setError("Diese Funktion ist nur für Premium-Nutzer verfügbar.");
+      setError("Diese Funktion ist nur für Business- oder Enterprise-Nutzer verfügbar.");
       return;
     }
     
@@ -177,7 +177,7 @@ const BetterContracts: React.FC = () => {
 
   const handleFileSelect = () => {
     if (!isPremium) {
-      setError("Diese Funktion ist nur für Premium-Nutzer verfügbar.");
+      setError("Diese Funktion ist nur für Business- oder Enterprise-Nutzer verfügbar.");
       return;
     }
 
@@ -266,7 +266,7 @@ const BetterContracts: React.FC = () => {
   const handleAnalyze = async () => {
     // ✅ Premium Check
     if (!isPremium) {
-      setError("Diese Funktion ist nur für Premium-Nutzer verfügbar.");
+      setError("Diese Funktion ist nur für Business- oder Enterprise-Nutzer verfügbar.");
       return;
     }
     

@@ -22,8 +22,8 @@ const organizationSchema = new mongoose.Schema({
   // Subscription vom Owner geerbt
   subscriptionPlan: {
     type: String,
-    enum: ['free', 'business', 'premium'],
-    default: 'premium'
+    enum: ['free', 'business', 'enterprise'],
+    default: 'enterprise'
   },
 
   // Team-Limits

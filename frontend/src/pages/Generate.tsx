@@ -5058,7 +5058,7 @@ export default function Generate() {
                           onClick={() => {
                             if (userPlan === 'free') {
                               // Free users: show upgrade notice
-                              toast.info('🔒 Vertragserstellung nur mit Business/Premium verfügbar');
+                              toast.info('🔒 Vertragserstellung nur mit Business/Enterprise verfügbar');
                               return;
                             }
                             handleTypeSelect(type);

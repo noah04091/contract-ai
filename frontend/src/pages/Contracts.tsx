@@ -4497,7 +4497,7 @@ export default function Contracts() {
                         ? "Probiere andere Suchbegriffe oder Filter-Einstellungen."
                         : canUpload
                           ? "Lade deinen ersten Vertrag hoch, um ihn hier zu sehen."
-                          : "Upgrade auf Business oder Premium für Vertragsanalyse."
+                          : "Upgrade auf Business oder Enterprise für Vertragsanalyse."
                       }
                     </p>
                     {(activeFiltersCount() > 0 || searchQuery) ? (

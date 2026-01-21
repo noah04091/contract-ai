@@ -2352,7 +2352,8 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     }
 
     // 🚨 STRIKTE SEITEN-LIMIT PRÜFUNG - Kostenkontrolle!
-    const isUnlimited = user.subscriptionPlan === 'premium' || user.subscriptionPlan === 'enterprise';
+    // ✅ KORRIGIERT: Zentrale Funktion statt hardcoded Plan-Check
+    const isUnlimited = isEnterpriseOrHigher(user.subscriptionPlan);
     const maxPages = isUnlimited ? ANALYSIS_LIMITS.PREMIUM_MAX_PDF_PAGES : ANALYSIS_LIMITS.MAX_PDF_PAGES;
 
     if (pdfData.numpages > maxPages) {
@@ -2805,8 +2806,9 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         }
 
         // ⚡ NEW: LEGAL PULSE RISK ANALYSIS (Async Background Job) for existing contract
-        // 🔐 NUR für Premium/Business/Enterprise User - Free User bekommen kein Legal Pulse
-        const canAccessLegalPulse = ['premium', 'business', 'enterprise', 'legendary'].includes(plan?.toLowerCase());
+        // 🔐 NUR für Business/Enterprise User - Free User bekommen kein Legal Pulse
+        // ✅ KORRIGIERT: Zentrale Funktion statt hardcoded Plan-Array
+        const canAccessLegalPulse = isBusinessOrHigher(plan);
 
         if (canAccessLegalPulse) {
           (async () => {
@@ -3090,8 +3092,9 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
         // ⚡ NEW: LEGAL PULSE RISK ANALYSIS (Async Background Job)
         // This runs in the background and updates the contract with full risk analysis
-        // 🔐 NUR für Premium/Business/Enterprise User - Free User bekommen kein Legal Pulse
-        const canAccessLegalPulseNew = ['premium', 'business', 'enterprise', 'legendary'].includes(plan?.toLowerCase());
+        // 🔐 NUR für Business/Enterprise User - Free User bekommen kein Legal Pulse
+        // ✅ KORRIGIERT: Zentrale Funktion statt hardcoded Plan-Array
+        const canAccessLegalPulseNew = isBusinessOrHigher(plan);
 
         if (canAccessLegalPulseNew) {
           (async () => {

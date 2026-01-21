@@ -373,7 +373,7 @@ const Generator: React.FC = () => {
                   Wie viele Verträge kann ich generieren?
                   <span className={styles.faqIcon}>▼</span>
                 </summary>
-                <p className={styles.faqAnswer}>Je nach Plan: Premium 5/Monat, Business 20/Monat, Legendary unbegrenzt. Alle mit Export-Funktion und digitaler Signatur.</p>
+                <p className={styles.faqAnswer}>Je nach Plan: Business 10/Monat, Enterprise unbegrenzt. Alle mit Export-Funktion und digitaler Signatur.</p>
               </details>
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>

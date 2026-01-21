@@ -288,8 +288,8 @@ async function sendWeeklyAdminSummary() {
       { $group: { _id: "$subscriptionPlan", count: { $sum: 1 } } }
     ]).toArray();
 
-    // Conversion rate
-    const paidUsers = planCounts.filter(p => ['business', 'premium', 'legendary'].includes(p._id))
+    // Conversion rate - ✅ KORRIGIERT: enterprise statt premium + legacy "premium" User
+    const paidUsers = planCounts.filter(p => ['business', 'enterprise', 'premium', 'legendary'].includes(p._id))
                                  .reduce((sum, p) => sum + p.count, 0);
     const conversionRate = totalUsers > 0 ? ((paidUsers / totalUsers) * 100).toFixed(1) : 0;
 

@@ -5,6 +5,7 @@ const aws = require("aws-sdk");
 const https = require("https");
 const http = require("http");
 const { ObjectId } = require("mongodb");
+const { isEnterpriseOrHigher } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
 
 const s3 = new aws.S3({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -44,13 +45,14 @@ async function convertS3ToBase64(url) {
  * Holt Company Logo für User (White-Label PDF Export)
  * @param {Object} db - MongoDB Database Connection
  * @param {string} userId - User ID
- * @param {string} userPlan - User Subscription Plan (free, business, premium)
+ * @param {string} userPlan - User Subscription Plan (free, business, enterprise)
  * @returns {Promise<Object>} { hasLogo, logoBase64, logoPath, isEnterprise }
  */
 async function getCompanyLogo(db, userId, userPlan) {
   try {
-    // 🔒 Enterprise-Check: Nur Premium/Enterprise haben White-Label
-    const isEnterprise = userPlan === 'premium';
+    // 🔒 Enterprise-Check: Nur Enterprise+ haben White-Label
+    // ✅ KORRIGIERT: Zentrale Funktion statt hardcoded Plan-Check
+    const isEnterprise = isEnterpriseOrHigher(userPlan);
 
     if (!isEnterprise) {
       console.log(`⚠️ [White-Label] User ${userId} ist nicht Enterprise (Plan: ${userPlan})`);

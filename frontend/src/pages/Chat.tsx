@@ -481,13 +481,13 @@ export default function Chat() {
     return (
       <>
         <Helmet>
-          <title>Vertrags-Chat – Premium Feature | Contract AI</title>
+          <title>Vertrags-Chat – Business Feature | Contract AI</title>
         </Helmet>
         <div className={styles.premiumRequired}>
           <div className={styles.premiumIcon}>⚖️</div>
-          <h2>Legal Chat 2.0 – Premium Feature</h2>
+          <h2>Legal Chat 2.0 – Business Feature</h2>
           <p>
-            Der professionelle Vertrags-Chat ist nur für Premium- und Business-Nutzer verfügbar.
+            Der professionelle Vertrags-Chat ist nur für Business- und Enterprise-Nutzer verfügbar.
           </p>
           <a href="/subscribe" className={styles.upgradeButton}>
             Jetzt upgraden

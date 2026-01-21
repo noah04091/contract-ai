@@ -12,6 +12,7 @@ const sendEmail = require("../utils/sendEmail");
 const { generateEmailTemplate } = require("../utils/emailTemplate");
 const { normalizeEmail } = require("../utils/normalizeEmail");
 const { validatePassword } = require("../utils/passwordValidator");
+const { getFeatureLimit, isBusinessOrHigher } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
 require("dotenv").config();
 
 // 🔐 Konfiguration
@@ -437,15 +438,13 @@ router.get("/me", verifyToken, async (req, res) => {
       }
     }
 
-    // 📊 ANALYSE LIMITS - gemäß subscriptionPlans.js
-    let analysisLimit = 3;  // ✅ Free: 3 Analysen (einmalig, kein Reset)
-    if (plan === "business") analysisLimit = 25;  // 📊 Business: 25 pro Monat
-    if (plan === "enterprise" || plan === "legendary") analysisLimit = Infinity; // ♾️ Enterprise/Legendary: Unbegrenzt
+    // 📊 ANALYSE LIMITS - aus zentraler Konfiguration (subscriptionPlans.js)
+    // ✅ KORRIGIERT: Zentrale Funktion statt hardcoded Limits
+    const analysisLimit = getFeatureLimit(plan, 'analyze');
 
-    // 🔧 OPTIMIERUNG LIMITS - gemäß subscriptionPlans.js
-    let optimizationLimit = 0; // ✅ Free: 0 Optimierungen
-    if (plan === "business") optimizationLimit = 15; // 📊 Business: 15 Optimierungen
-    if (plan === "enterprise" || plan === "legendary") optimizationLimit = Infinity; // ♾️ Enterprise/Legendary: Unbegrenzt
+    // 🔧 OPTIMIERUNG LIMITS - aus zentraler Konfiguration (subscriptionPlans.js)
+    // ✅ KORRIGIERT: Zentrale Funktion statt hardcoded Limits
+    const optimizationLimit = getFeatureLimit(plan, 'optimize');
 
     const userData = {
       email: user.email,

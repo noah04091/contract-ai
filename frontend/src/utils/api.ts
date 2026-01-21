@@ -1181,7 +1181,7 @@ export const validateBatchUpload = (
   
   // ✅ KORRIGIERT: Free-User Check
   if (subscriptionPlan === 'free') {
-    errors.push('Vertragsanalyse ist nur für Business- und Premium-Nutzer verfügbar.');
+    errors.push('Vertragsanalyse ist nur für Business- und Enterprise-Nutzer verfügbar.');
     return { valid: false, errors, warnings };
   }
   

@@ -372,7 +372,7 @@ const LegalPulse: React.FC = () => {
                   Was kostet Legal Pulse?
                   <span className={styles.faqIcon}>▼</span>
                 </summary>
-                <p className={styles.faqAnswer}>Legal Pulse ist ab dem Business-Plan (49€/Monat) enthalten. Free- und Premium-Nutzer erhalten monatliche Zusammenfassungen der wichtigsten Änderungen.</p>
+                <p className={styles.faqAnswer}>Legal Pulse ist ab dem Business-Plan (19€/Monat) enthalten. Free-Nutzer können auf Business oder Enterprise upgraden.</p>
               </details>
             </div>
           </section>

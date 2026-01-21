@@ -26,27 +26,9 @@ export default function PremiumStatus() {
     fetchStatus();
   }, []);
 
-  const handleUpgrade = async () => {
-    try {
-      const res = await fetch("/api/stripe/create-checkout-session", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ plan: "premium" })
-      });
-
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        alert("❌ Fehler beim Weiterleiten zu Stripe");
-      }
-    } catch (err) {
-      console.error("❌ Stripe Fehler:", err);
-      alert("❌ Upgrade fehlgeschlagen.");
-    }
+  const handleUpgrade = () => {
+    // Redirect zur Pricing-Seite, wo User Business oder Enterprise wählen kann
+    window.location.href = "/pricing";
   };
 
   if (loading || isPremium === null) {

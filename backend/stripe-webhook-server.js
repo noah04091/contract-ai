@@ -318,11 +318,12 @@ async function handleStripeEvent(event) {
           [process.env.STRIPE_BUSINESS_YEARLY_PRICE_ID]: "business",
           [process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID]: "enterprise",
           [process.env.STRIPE_ENTERPRISE_YEARLY_PRICE_ID]: "enterprise",
-          // Legacy: "premium" wird zu "business" gemappt
-          [process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID]: "business",
-          [process.env.STRIPE_PREMIUM_YEARLY_PRICE_ID]: "business",
+          // Legacy: "premium" Price IDs → enterprise (29€ Plan!)
+          // WICHTIG: Premium war der alte Name für Enterprise (29€), nicht Business (19€)!
+          [process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID]: "enterprise",
+          [process.env.STRIPE_PREMIUM_YEARLY_PRICE_ID]: "enterprise",
           [process.env.STRIPE_BUSINESS_PRICE_ID]: "business",
-          [process.env.STRIPE_PREMIUM_PRICE_ID]: "business",
+          [process.env.STRIPE_PREMIUM_PRICE_ID]: "enterprise",
         };
         const plan = priceMap[priceId] || user.subscriptionPlan || "free";
 
@@ -527,10 +528,11 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
       [process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID]: "enterprise",
       [process.env.STRIPE_ENTERPRISE_YEARLY_PRICE_ID]: "enterprise",
       [process.env.STRIPE_ENTERPRISE_PRICE_ID]: "enterprise",
-      // ⚠️ LEGACY: "premium" wird zu "business" gemappt (für Bestandskunden)
-      [process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID]: "business",
-      [process.env.STRIPE_PREMIUM_YEARLY_PRICE_ID]: "business",
-      [process.env.STRIPE_PREMIUM_PRICE_ID]: "business",
+      // ✅ KORRIGIERT: Legacy "premium" Price IDs → enterprise (29€ Plan!)
+      // Premium war der alte Name für Enterprise (29€), nicht Business (19€)
+      [process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID]: "enterprise",
+      [process.env.STRIPE_PREMIUM_YEARLY_PRICE_ID]: "enterprise",
+      [process.env.STRIPE_PREMIUM_PRICE_ID]: "enterprise",
     };
 
     // Fallback auf "free" statt "unknown" für unbekannte Pläne

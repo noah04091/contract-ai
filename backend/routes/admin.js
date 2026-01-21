@@ -86,7 +86,10 @@ router.get("/stats", verifyToken, verifyAdmin, async (req, res) => {
     const totalUsers = await usersCollection.countDocuments();
     const freeUsers = await usersCollection.countDocuments({ subscriptionPlan: 'free' });
     const businessUsers = await usersCollection.countDocuments({ subscriptionPlan: 'business' });
-    const premiumUsers = await usersCollection.countDocuments({ subscriptionPlan: 'premium' });
+    // ✅ KORRIGIERT: Enterprise + Legacy "premium" User zählen
+    const enterpriseUsers = await usersCollection.countDocuments({
+      subscriptionPlan: { $in: ['enterprise', 'premium'] }
+    });
     const activeSubscriptions = await usersCollection.countDocuments({ subscriptionActive: true });
     const verifiedUsers = await usersCollection.countDocuments({ verified: true });
 
@@ -118,17 +121,17 @@ router.get("/stats", verifyToken, verifyAdmin, async (req, res) => {
 
     // ===== 📈 CONVERSION METRICS =====
     // Calculate conversion rates
-    const totalPaidUsers = businessUsers + premiumUsers;
+    const totalPaidUsers = businessUsers + enterpriseUsers;
     const conversionRate = totalUsers > 0 ? (totalPaidUsers / totalUsers) * 100 : 0;
 
     // Premium upgrade rate (from all paid users)
-    const premiumUpgradeRate = totalPaidUsers > 0 ? (premiumUsers / totalPaidUsers) * 100 : 0;
+    const enterpriseUpgradeRate = totalPaidUsers > 0 ? (enterpriseUsers / totalPaidUsers) * 100 : 0;
 
     // ===== 💼 REVENUE PROJECTIONS =====
     // Monthly recurring revenue (MRR)
     const businessMRR = businessUsers * 19; // €19/month
-    const premiumMRR = premiumUsers * 29;   // €29/month
-    const totalMRR = businessMRR + premiumMRR;
+    const enterpriseMRR = enterpriseUsers * 29;   // €29/month
+    const totalMRR = businessMRR + enterpriseMRR;
 
     // Annual recurring revenue (ARR)
     const totalARR = totalMRR * 12;
@@ -213,7 +216,7 @@ router.get("/stats", verifyToken, verifyAdmin, async (req, res) => {
         total: totalUsers,
         free: freeUsers,
         business: businessUsers,
-        premium: premiumUsers,
+        enterprise: enterpriseUsers,
         activeSubscriptions,
         verified: verifiedUsers,
         newLast30Days: newUsersLast30Days,
@@ -226,7 +229,7 @@ router.get("/stats", verifyToken, verifyAdmin, async (req, res) => {
       // Conversion Metrics
       conversion: {
         rate: parseFloat(conversionRate.toFixed(2)),
-        premiumUpgradeRate: parseFloat(premiumUpgradeRate.toFixed(2)),
+        enterpriseUpgradeRate: parseFloat(enterpriseUpgradeRate.toFixed(2)),
         totalPaidUsers
       },
 
@@ -237,7 +240,7 @@ router.get("/stats", verifyToken, verifyAdmin, async (req, res) => {
         arpu: parseFloat(arpu.toFixed(2)),
         breakdown: {
           business: businessMRR,
-          premium: premiumMRR
+          enterprise: enterpriseMRR
         }
       },
 
@@ -848,14 +851,14 @@ router.get("/deleted-accounts", verifyToken, verifyAdmin, async (req, res) => {
 
 // ===== 📝 UPDATE USER PLAN =====
 // PUT /api/admin/users/:userId/plan
-// Body: { plan: "free" | "business" | "premium" | "legendary" }
+// Body: { plan: "free" | "business" | "enterprise" | "legendary" }
 router.put("/users/:userId/plan", verifyToken, verifyAdmin, async (req, res) => {
   try {
     const { userId } = req.params;
     const { plan } = req.body;
 
-    // Validate plan
-    const validPlans = ['free', 'business', 'premium', 'legendary'];
+    // Validate plan - ✅ KORRIGIERT: "enterprise" statt "premium"
+    const validPlans = ['free', 'business', 'enterprise', 'legendary'];
     if (!plan || !validPlans.includes(plan)) {
       return res.status(400).json({
         success: false,
@@ -890,11 +893,14 @@ router.put("/users/:userId/plan", verifyToken, verifyAdmin, async (req, res) => 
     const oldPlan = user.subscriptionPlan || 'free';
 
     // Update plan and related fields
+    // ✅ KORRIGIERT: isPremium = alle bezahlten Pläne (business, enterprise, legendary)
     const updateFields = {
       subscriptionPlan: plan,
       subscriptionStatus: plan === 'free' ? 'inactive' : 'active',
       subscriptionActive: plan !== 'free',
-      isPremium: ['premium', 'legendary'].includes(plan),
+      isPremium: ['business', 'enterprise', 'legendary'].includes(plan),
+      isBusiness: plan === 'business',
+      isEnterprise: plan === 'enterprise' || plan === 'legendary',
       updatedAt: new Date(),
       updatedBy: req.user.email,
       lastPlanChange: {
