@@ -42,6 +42,15 @@ type UsageStats = {
 
 const API = "/api/chat";
 
+// ✅ Helper für Auth-Header
+function getAuthHeaders(): HeadersInit {
+  const token = localStorage.getItem("token");
+  return {
+    "Content-Type": "application/json",
+    ...(token && { "Authorization": `Bearer ${token}` })
+  };
+}
+
 export default function Chat() {
   const { user, isLoading } = useAuth();
   const isPremium = user?.subscriptionActive === true;
@@ -102,7 +111,10 @@ export default function Chat() {
 
   async function loadChats() {
     try {
-      const res = await fetch(API, { credentials: "include" });
+      const res = await fetch(API, {
+        headers: getAuthHeaders(),
+        credentials: "include"
+      });
       if (!res.ok) throw new Error("Failed to load chats");
       const data = await res.json();
       setChats(data);
@@ -113,7 +125,10 @@ export default function Chat() {
 
   async function loadUsage() {
     try {
-      const res = await fetch(`${API}/usage/stats`, { credentials: "include" });
+      const res = await fetch(`${API}/usage/stats`, {
+        headers: getAuthHeaders(),
+        credentials: "include"
+      });
       if (!res.ok) throw new Error("Failed to load usage");
       const data = await res.json();
       setUsage(data);
@@ -127,7 +142,7 @@ export default function Chat() {
       const res = await fetch(`${API}/new`, {
         method: "POST",
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ initialQuestion }),
       });
 
@@ -158,7 +173,10 @@ export default function Chat() {
 
   async function openChat(id: string) {
     try {
-      const res = await fetch(`${API}/${id}`, { credentials: "include" });
+      const res = await fetch(`${API}/${id}`, {
+        headers: getAuthHeaders(),
+        credentials: "include"
+      });
       if (!res.ok) throw new Error("Failed to load chat");
       const chat: ChatFull = await res.json();
       setActive(chat);
@@ -190,7 +208,7 @@ export default function Chat() {
       const res = await fetch(`${API}/${chatId}/message`, {
         method: "POST",
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ content: text }),
       });
 
@@ -289,7 +307,7 @@ export default function Chat() {
       const res = await fetch(`${API}/${chatId}`, {
         method: "PATCH",
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ title: newTitle }),
       });
 
@@ -317,6 +335,7 @@ export default function Chat() {
       const res = await fetch(`${API}/${chatId}`, {
         method: "DELETE",
         credentials: "include",
+        headers: getAuthHeaders(),
       });
 
       if (!res.ok) throw new Error("Failed to delete chat");
@@ -364,9 +383,11 @@ export default function Chat() {
       const formData = new FormData();
       formData.append("file", file);
 
+      const token = localStorage.getItem("token");
       const res = await fetch(`${API}/${active._id}/upload`, {
         method: "POST",
         credentials: "include",
+        headers: token ? { "Authorization": `Bearer ${token}` } : {},
         body: formData,
       });
 
