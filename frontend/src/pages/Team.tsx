@@ -4,10 +4,14 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
-import { Users, Plus, Shield, Eye, Trash2, Crown, CheckCircle, AlertCircle, X } from "lucide-react";
+import { Users, Plus, Shield, Eye, Trash2, Crown, CheckCircle, AlertCircle, X, Lock } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
 import styles from "../styles/Team.module.css";
+
+// Enterprise-only Feature
+const ENTERPRISE_PLANS = ["enterprise", "legendary"];
 
 interface Organization {
   id: string;
@@ -70,19 +74,18 @@ export default function Team() {
   const [inviteRole, setInviteRole] = useState<"admin" | "member" | "viewer">("member");
   const [isInviting, setIsInviting] = useState(false);
 
-  // Enterprise-Check
-  useEffect(() => {
-    if (!isLoading && user && user.subscriptionPlan !== "enterprise") {
-      navigate("/pricing");
-    }
-  }, [user, isLoading, navigate]);
+  // ✅ Enterprise-Zugriff prüfen (kein Redirect mehr!)
+  const hasAccess = user ? ENTERPRISE_PLANS.includes(user.subscriptionPlan || "free") : false;
 
-  // Load Organization Data
+  // Load Organization Data (nur für Enterprise+)
   useEffect(() => {
-    if (user && user.subscriptionPlan === "enterprise") {
+    if (user && hasAccess) {
       fetchOrganization();
+    } else if (user && !hasAccess) {
+      // Nicht-Enterprise User: Loading sofort beenden
+      setIsLoadingData(false);
     }
-  }, [user]);
+  }, [user, hasAccess]);
 
   const fetchOrganization = async () => {
     setIsLoadingData(true);
@@ -405,7 +408,8 @@ export default function Team() {
     }
   };
 
-  if (isLoading || (user && user.subscriptionPlan !== "enterprise")) {
+  // Nur während Auth-Loading null zurückgeben
+  if (isLoading) {
     return null;
   }
 
@@ -414,6 +418,15 @@ export default function Team() {
       <Helmet>
         <title>Team-Management - Contract AI</title>
       </Helmet>
+
+      {/* 🔒 Enterprise Banner - für nicht-Enterprise User */}
+      {!hasAccess && (
+        <UnifiedPremiumNotice
+          featureName="Team-Management"
+          variant="fullWidth"
+          requiredPlan="enterprise"
+        />
+      )}
 
       <div className={styles.container}>
         <motion.div
@@ -457,17 +470,33 @@ export default function Team() {
           {isLoadingData ? (
             <div className={styles.loading}>Lade Team-Daten...</div>
           ) : !organization ? (
-            /* Keine Organisation -> Create UI */
+            /* Keine Organisation -> Create UI oder Enterprise-Hinweis */
             <div className={styles.emptyState}>
-              <Users size={64} className={styles.emptyIcon} />
-              <h3>Noch keine Organisation</h3>
-              <p>Erstelle eine Organisation, um mit deinem Team zusammenzuarbeiten.</p>
-              <button
-                className={styles.createButton}
-                onClick={() => setShowCreateModal(true)}
-              >
-                Organisation erstellen
-              </button>
+              {hasAccess ? (
+                <>
+                  <Users size={64} className={styles.emptyIcon} />
+                  <h3>Noch keine Organisation</h3>
+                  <p>Erstelle eine Organisation, um mit deinem Team zusammenzuarbeiten.</p>
+                  <button
+                    className={styles.createButton}
+                    onClick={() => setShowCreateModal(true)}
+                  >
+                    Organisation erstellen
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Lock size={64} className={styles.emptyIcon} style={{ opacity: 0.5 }} />
+                  <h3>Team-Management</h3>
+                  <p>Mit Enterprise kannst du dein Team verwalten, Mitglieder einladen und Verträge gemeinsam bearbeiten.</p>
+                  <button
+                    className={styles.createButton}
+                    onClick={() => navigate("/pricing")}
+                  >
+                    Jetzt auf Enterprise upgraden
+                  </button>
+                </>
+              )}
             </div>
           ) : (
             /* Organisation vorhanden -> Team UI */

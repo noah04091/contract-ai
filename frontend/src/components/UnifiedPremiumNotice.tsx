@@ -10,6 +10,12 @@ interface UnifiedPremiumNoticeProps {
    * - "fullWidth": Volle Breite, direkt unter Navbar (für Optimizer, Compare)
    */
   variant?: "default" | "fullWidth";
+  /**
+   * Mindest-Plan für diese Funktion:
+   * - "business": Business oder höher (default)
+   * - "enterprise": Nur Enterprise
+   */
+  requiredPlan?: "business" | "enterprise";
 }
 
 /**
@@ -19,10 +25,18 @@ interface UnifiedPremiumNoticeProps {
 export default function UnifiedPremiumNotice({
   featureName = "Diese Funktion",
   className = "",
-  variant = "default"
+  variant = "default",
+  requiredPlan = "business"
 }: UnifiedPremiumNoticeProps) {
 
   const isFullWidth = variant === "fullWidth";
+  const isEnterpriseOnly = requiredPlan === "enterprise";
+
+  // Texte je nach erforderlichem Plan
+  const titleText = isEnterpriseOnly ? "Enterprise Feature" : "Business Feature";
+  const descriptionText = isEnterpriseOnly
+    ? `${featureName} ist nur mit Enterprise verfügbar`
+    : `${featureName} ist nur mit Business oder Enterprise verfügbar`;
 
   // Full-Width: Volle Bildschirmbreite mit negativem Margin
   const fullWidthStyles: React.CSSProperties = {
@@ -89,14 +103,14 @@ export default function UnifiedPremiumNotice({
             fontWeight: 600,
             margin: 0
           }}>
-            Business Feature
+            {titleText}
           </h3>
           <p style={{
             color: 'rgba(255, 255, 255, 0.85)',
             fontSize: isFullWidth ? '13px' : '14px',
             margin: 0
           }}>
-            {featureName} ist nur mit Business oder Enterprise verfügbar
+            {descriptionText}
           </p>
         </div>
       </div>
