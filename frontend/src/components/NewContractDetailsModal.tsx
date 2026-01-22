@@ -285,8 +285,10 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         });
         if (res.ok) {
           const data = await res.json();
-          setUserPlan(data.subscriptionPlan || data.plan || 'free');
-          console.log('🔐 [Modal] User Plan:', data.subscriptionPlan || data.plan || 'free');
+          // API gibt { user: { subscriptionPlan: ... } } zurück
+          const user = data.user || data;
+          setUserPlan(user.subscriptionPlan || user.plan || 'free');
+          console.log('🔐 [Modal] User Plan:', user.subscriptionPlan || user.plan || 'free');
         }
       } catch (err) {
         console.error('Error fetching user plan:', err);

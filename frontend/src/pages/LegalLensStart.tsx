@@ -67,7 +67,9 @@ const LegalLensStart = () => {
         });
         if (response.ok) {
           const data = await response.json();
-          setUserPlan(data.subscriptionPlan || data.plan || 'free');
+          // API gibt { user: { subscriptionPlan: ... } } zurück
+          const user = data.user || data;
+          setUserPlan(user.subscriptionPlan || user.plan || 'free');
         }
       } catch (err) {
         console.error('[Legal Lens] Error fetching user plan:', err);

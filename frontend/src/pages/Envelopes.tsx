@@ -166,7 +166,9 @@ export default function Envelopes() {
         });
         if (response.ok) {
           const data = await response.json();
-          setUserPlan(data.subscriptionPlan || data.user?.subscriptionPlan || 'free');
+          // API gibt { user: { subscriptionPlan: ... } } zurück
+          const user = data.user || data;
+          setUserPlan(user.subscriptionPlan || user.plan || 'free');
         }
       } catch (err) {
         console.error('Error fetching user plan:', err);
