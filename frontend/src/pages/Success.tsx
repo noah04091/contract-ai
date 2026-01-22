@@ -10,10 +10,45 @@ const Success: React.FC = () => {
   const [subscriptionActive, setSubscriptionActive] = useState(false);
   const [planName, setPlanName] = useState<string>('');
 
-  // Subscription Status Polling
+  // Subscription Status Polling with Fallback
   useEffect(() => {
     let pollCount = 0;
-    const maxPolls = 30; // Max 1 Minute polling
+    const maxPolls = 30; // 60 Sekunden polling
+    let fallbackAttempts = 0;
+
+    // Fallback: Direkt bei Stripe verifizieren
+    const verifyWithStripe = async (): Promise<boolean> => {
+      try {
+        const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+        if (!token) return false;
+
+        console.log('🚀 [FALLBACK] Versuche direkte Stripe-Verifizierung...');
+
+        const response = await fetch('/api/stripe/verify-subscription', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          credentials: 'include'
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.subscriptionActive) {
+            setSubscriptionActive(true);
+            setPlanName(data.subscriptionPlan === 'business' ? 'Business' : 'Enterprise');
+            setIsLoading(false);
+            console.log(`✅ [FALLBACK] Subscription aktiviert: ${data.subscriptionPlan}`);
+            return true;
+          }
+        }
+        return false;
+      } catch (error) {
+        console.error('❌ [FALLBACK] Fehler:', error);
+        return false;
+      }
+    };
 
     const checkSubscriptionStatus = async () => {
       try {
@@ -31,9 +66,27 @@ const Success: React.FC = () => {
         pollCount++;
         console.log(`🔄 Polling subscription status... (${pollCount}/${maxPolls})`);
 
+        // Automatischer Fallback bei mehreren Intervallen (10s, 20s, 30s, 45s)
+        const fallbackIntervals = [5, 10, 15, 22];
+        if (fallbackIntervals.includes(pollCount) && fallbackAttempts < 4) {
+          fallbackAttempts++;
+          console.log(`⏰ Automatischer Fallback #${fallbackAttempts} wird ausgelöst...`);
+          const fallbackSuccess = await verifyWithStripe();
+          if (fallbackSuccess) {
+            return true; // Stop polling
+          }
+        }
+
         if (pollCount >= maxPolls) {
+          // Letzter Versuch mit Fallback
+          console.log('🔄 Letzter Fallback-Versuch...');
+          const fallbackSuccess = await verifyWithStripe();
+          if (fallbackSuccess) {
+            return true;
+          }
+          // Auch wenn nicht aktiviert, Loading beenden - User kann zum Dashboard
           setIsLoading(false);
-          console.log('⚠️ Max polling attempts reached');
+          console.log('⚠️ Max polling attempts reached - User kann trotzdem fortfahren');
           return true; // Stop polling
         }
 

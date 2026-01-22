@@ -124,6 +124,129 @@ router.post("/create-checkout-session", verifyToken, async (req, res) => {
   }
 });
 
+// ============================================
+// 🚀 FALLBACK: Direkte Subscription-Verifizierung mit Stripe
+// Wird aufgerufen wenn Webhook zu langsam ist
+// ============================================
+router.post("/verify-subscription", verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const email = req.user.email;
+
+    console.log(`🔍 [VERIFY] Prüfe Subscription für User ${email}`);
+
+    const user = await usersCollection.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "Benutzer nicht gefunden" });
+    }
+
+    // Wenn bereits aktiv, sofort zurückgeben
+    if (user.subscriptionActive && user.subscriptionPlan !== 'free') {
+      console.log(`✅ [VERIFY] User ${email} bereits aktiv: ${user.subscriptionPlan}`);
+      return res.json({
+        success: true,
+        subscriptionActive: true,
+        subscriptionPlan: user.subscriptionPlan,
+        message: "Subscription bereits aktiv"
+      });
+    }
+
+    // Prüfe ob User eine stripeCustomerId hat
+    if (!user.stripeCustomerId) {
+      console.log(`⚠️ [VERIFY] User ${email} hat keine stripeCustomerId`);
+      return res.json({
+        success: false,
+        subscriptionActive: false,
+        message: "Keine Stripe-Kundendaten vorhanden"
+      });
+    }
+
+    // Direkt bei Stripe nach aktiven Subscriptions fragen
+    const subscriptions = await stripe.subscriptions.list({
+      customer: user.stripeCustomerId,
+      status: 'active',
+      limit: 1
+    });
+
+    if (subscriptions.data.length === 0) {
+      // Auch "trialing" prüfen
+      const trialingSubscriptions = await stripe.subscriptions.list({
+        customer: user.stripeCustomerId,
+        status: 'trialing',
+        limit: 1
+      });
+
+      if (trialingSubscriptions.data.length === 0) {
+        console.log(`⚠️ [VERIFY] Keine aktive Subscription bei Stripe für ${email}`);
+        return res.json({
+          success: false,
+          subscriptionActive: false,
+          message: "Keine aktive Subscription bei Stripe gefunden"
+        });
+      }
+
+      subscriptions.data = trialingSubscriptions.data;
+    }
+
+    // Aktive Subscription gefunden - Plan ermitteln
+    const subscription = subscriptions.data[0];
+    const priceId = subscription.items.data[0]?.price?.id;
+
+    const priceMap = {
+      [process.env.STRIPE_BUSINESS_MONTHLY_PRICE_ID]: "business",
+      [process.env.STRIPE_BUSINESS_YEARLY_PRICE_ID]: "business",
+      [process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID]: "enterprise",
+      [process.env.STRIPE_ENTERPRISE_YEARLY_PRICE_ID]: "enterprise",
+      [process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID]: "enterprise",
+      [process.env.STRIPE_PREMIUM_YEARLY_PRICE_ID]: "enterprise",
+      [process.env.STRIPE_BUSINESS_PRICE_ID]: "business",
+      [process.env.STRIPE_PREMIUM_PRICE_ID]: "enterprise",
+    };
+
+    const plan = priceMap[priceId] || "business";
+
+    console.log(`🎉 [VERIFY] Aktive Subscription gefunden für ${email}: ${plan} (Price: ${priceId})`);
+
+    // User in Datenbank aktualisieren (gleiche Logik wie Webhook)
+    const updateData = {
+      subscriptionActive: true,
+      isPremium: plan === "business" || plan === "enterprise",
+      isBusiness: plan === "business",
+      isEnterprise: plan === "enterprise",
+      subscriptionPlan: plan,
+      stripeSubscriptionId: subscription.id,
+      subscriptionStatus: subscription.status,
+      // Limits basierend auf Plan setzen
+      analysisLimit: plan === "enterprise" ? Infinity : (plan === "business" ? 25 : 3),
+      optimizationLimit: plan === "enterprise" ? Infinity : (plan === "business" ? 15 : 0),
+      verifiedByFallback: true,
+      verifiedAt: new Date()
+    };
+
+    await usersCollection.updateOne(
+      { email },
+      { $set: updateData }
+    );
+
+    console.log(`✅ [VERIFY] User ${email} erfolgreich auf ${plan} aktualisiert (Fallback)`);
+
+    return res.json({
+      success: true,
+      subscriptionActive: true,
+      subscriptionPlan: plan,
+      message: `Subscription ${plan} erfolgreich aktiviert`
+    });
+
+  } catch (error) {
+    console.error("❌ [VERIFY] Fehler bei Subscription-Verifizierung:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Fehler bei der Verifizierung",
+      error: error.message
+    });
+  }
+});
+
 // TEMPORARY TEST ENDPOINT - REMOVE AFTER TESTING
 router.post("/test-price-mapping", async (req, res) => {
   const { plan, billing = 'monthly' } = req.body;

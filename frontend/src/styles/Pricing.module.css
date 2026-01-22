@@ -713,6 +713,18 @@
   cursor: not-allowed;
 }
 
+/* Current Plan Button - Shows user's active subscription */
+.currentPlanButton {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  cursor: default !important;
+  opacity: 1 !important;
+}
+
+.currentPlanButton:hover {
+  transform: none !important;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35) !important;
+}
+
 .enterpriseButton {
   background: linear-gradient(135deg, #0066FF 0%, #0052CC 100%);
   font-size: 1.1rem;

@@ -14,7 +14,43 @@ export default function Pricing() {
   const [filledSpots, setFilledSpots] = useState(47);
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [currentPlan, setCurrentPlan] = useState<'free' | 'business' | 'enterprise' | null>(null);
   const navigate = useNavigate();
+
+  // Load current subscription status
+  useEffect(() => {
+    const checkSubscription = async () => {
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+      if (!token) {
+        setCurrentPlan(null);
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/auth/me', {
+          headers: { 'Authorization': `Bearer ${token}` },
+          credentials: 'include'
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const user = data.user || data;
+
+          if (user.subscriptionPlan === 'enterprise' || user.isEnterprise) {
+            setCurrentPlan('enterprise');
+          } else if (user.subscriptionPlan === 'business' || user.isBusiness) {
+            setCurrentPlan('business');
+          } else {
+            setCurrentPlan('free');
+          }
+        }
+      } catch (error) {
+        console.error('Fehler beim Laden des Abo-Status:', error);
+      }
+    };
+
+    checkSubscription();
+  }, []);
 
   // Urgency Data - 14-Tage Zyklen
   const urgencyData = {
@@ -70,8 +106,50 @@ export default function Pricing() {
     return () => clearInterval(spotsTimer);
   }, []);
 
-  // Stripe Checkout
+  // Open Stripe Portal for existing subscribers (upgrades/downgrades)
+  const openStripePortal = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+      const res = await fetch('/api/stripe-portal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        credentials: 'include'
+      });
+
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('Keine Portal-URL erhalten');
+      }
+    } catch (error) {
+      console.error('Fehler beim Öffnen des Portals:', error);
+      alert('Fehler beim Öffnen der Abo-Verwaltung');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Stripe Checkout (only for new subscriptions)
   const startCheckout = async (plan: string) => {
+    // If user already has a subscription, redirect to Stripe Portal for upgrade
+    if (currentPlan && currentPlan !== 'free') {
+      // Same plan clicked - do nothing or show info
+      if ((plan === 'business' && currentPlan === 'business') ||
+          ((plan === 'premium' || plan === 'enterprise') && currentPlan === 'enterprise')) {
+        alert('Du hast diesen Plan bereits!');
+        return;
+      }
+
+      // Upgrade or downgrade - go to Stripe Portal
+      openStripePortal();
+      return;
+    }
+
     setLoading(true);
     setLoadingPlan(plan);
     let res: Response | undefined;
@@ -353,16 +431,26 @@ export default function Pricing() {
               </div>
 
               <motion.button
-                className={styles.planButton}
+                className={`${styles.planButton} ${currentPlan === 'business' ? styles.currentPlanButton : ''}`}
                 onClick={() => startCheckout('business')}
-                disabled={loading}
-                whileHover={{ scale: 1.02, y: -2 }}
-                whileTap={{ scale: 0.98 }}
+                disabled={loading || currentPlan === 'business'}
+                whileHover={currentPlan !== 'business' ? { scale: 1.02, y: -2 } : {}}
+                whileTap={currentPlan !== 'business' ? { scale: 0.98 } : {}}
               >
                 {loadingPlan === 'business' ? (
                   <>
                     <span className={styles.spinner}></span>
                     Lade...
+                  </>
+                ) : currentPlan === 'business' ? (
+                  <>
+                    <Check size={18} />
+                    Dein aktueller Plan
+                  </>
+                ) : currentPlan === 'enterprise' ? (
+                  <>
+                    Zu Business wechseln
+                    <ArrowRight size={18} />
                   </>
                 ) : (
                   <>
@@ -435,16 +523,26 @@ export default function Pricing() {
               </div>
 
               <motion.button
-                className={`${styles.planButton} ${styles.enterpriseButton}`}
+                className={`${styles.planButton} ${styles.enterpriseButton} ${currentPlan === 'enterprise' ? styles.currentPlanButton : ''}`}
                 onClick={() => startCheckout('premium')}
-                disabled={loading}
-                whileHover={{ scale: 1.02, y: -2 }}
-                whileTap={{ scale: 0.98 }}
+                disabled={loading || currentPlan === 'enterprise'}
+                whileHover={currentPlan !== 'enterprise' ? { scale: 1.02, y: -2 } : {}}
+                whileTap={currentPlan !== 'enterprise' ? { scale: 0.98 } : {}}
               >
                 {loadingPlan === 'premium' ? (
                   <>
                     <span className={styles.spinner}></span>
                     Lade...
+                  </>
+                ) : currentPlan === 'enterprise' ? (
+                  <>
+                    <Check size={18} />
+                    Dein aktueller Plan
+                  </>
+                ) : currentPlan === 'business' ? (
+                  <>
+                    Auf Enterprise upgraden
+                    <ArrowRight size={18} />
                   </>
                 ) : (
                   <>
@@ -604,23 +702,56 @@ export default function Pricing() {
             </p>
 
             <div className="final-cta-buttons">
-              <button
-                className="final-cta-primary"
-                onClick={() => startCheckout('premium')}
-                disabled={loading}
-              >
-                {loadingPlan === 'premium' ? 'Lade...' : 'Enterprise starten'}
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
-              </button>
-              <button
-                className="final-cta-secondary"
-                onClick={() => startCheckout('business')}
-                disabled={loading}
-              >
-                {loadingPlan === 'business' ? 'Lade...' : 'Oder Business wählen'}
-              </button>
+              {currentPlan === 'enterprise' ? (
+                <button
+                  className="final-cta-primary"
+                  onClick={() => navigate('/dashboard')}
+                >
+                  Zum Dashboard
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                  </svg>
+                </button>
+              ) : currentPlan === 'business' ? (
+                <>
+                  <button
+                    className="final-cta-primary"
+                    onClick={() => startCheckout('premium')}
+                    disabled={loading}
+                  >
+                    {loadingPlan === 'premium' ? 'Lade...' : 'Auf Enterprise upgraden'}
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                  </button>
+                  <button
+                    className="final-cta-secondary"
+                    onClick={() => navigate('/dashboard')}
+                  >
+                    Zum Dashboard
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    className="final-cta-primary"
+                    onClick={() => startCheckout('premium')}
+                    disabled={loading}
+                  >
+                    {loadingPlan === 'premium' ? 'Lade...' : 'Enterprise starten'}
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                  </button>
+                  <button
+                    className="final-cta-secondary"
+                    onClick={() => startCheckout('business')}
+                    disabled={loading}
+                  >
+                    {loadingPlan === 'business' ? 'Lade...' : 'Oder Business wählen'}
+                  </button>
+                </>
+              )}
             </div>
 
             <div className="final-cta-trust-badges">
