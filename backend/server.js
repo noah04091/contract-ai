@@ -1597,7 +1597,7 @@ const connectDB = async () => {
       });
 
       // 📧 NEU: Onboarding E-Mail Sequence (täglich um 8:30 Uhr morgens)
-      // Sendet automatisch Day 2 und Day 7 E-Mails an neue User
+      // Sendet automatisch Day 2, Day 7, Day 14 und Day 30 E-Mails an neue/Free User
       cron.schedule("30 8 * * *", async () => {
         console.log("📧 [ONBOARDING] Starte E-Mail Sequence Verarbeitung...");
         try {
@@ -1607,6 +1607,20 @@ const connectDB = async () => {
         } catch (error) {
           console.error("❌ Onboarding E-Mail Cron Error:", error);
           await captureError(error, { route: 'CRON:onboarding-emails', method: 'SCHEDULED', severity: 'medium' });
+        }
+      });
+
+      // 📧 Winback E-Mails für inaktive User (täglich um 10:00 Uhr)
+      // Sendet Re-Engagement E-Mails an User, die 30+ Tage inaktiv sind
+      cron.schedule("0 10 * * *", async () => {
+        console.log("📧 [WINBACK] Starte Winback E-Mail Verarbeitung...");
+        try {
+          const { processWinbackEmails } = require("./services/triggerEmailService");
+          const emailsSent = await processWinbackEmails(db);
+          console.log(`📧 [WINBACK] ${emailsSent} Winback E-Mail(s) gesendet`);
+        } catch (error) {
+          console.error("❌ Winback E-Mail Cron Error:", error);
+          await captureError(error, { route: 'CRON:winback-emails', method: 'SCHEDULED', severity: 'low' });
         }
       });
 

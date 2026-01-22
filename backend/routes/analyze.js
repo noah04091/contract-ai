@@ -15,6 +15,7 @@ const AILegalPulse = require("../services/aiLegalPulse"); // ⚡ NEW: Legal Puls
 const { getInstance: getCostTrackingService } = require("../services/costTracking"); // 💰 NEW: Cost Tracking
 const { clauseParser } = require("../services/legalLens"); // 🔍 Legal Lens Pre-Processing
 const { isBusinessOrHigher, isEnterpriseOrHigher, getFeatureLimit, PLANS } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
+const { sendLimitReachedEmail, sendAlmostAtLimitEmail } = require("../services/triggerEmailService"); // 📧 Behavior-based Emails
 
 const router = express.Router();
 
@@ -2261,6 +2262,14 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         }
       }
 
+      // 📧 Send "Limit Reached" trigger email (async, don't block response)
+      if (plan === 'free') {
+        sendLimitReachedEmail(db, user, {
+          usedAnalyses: user.analysisCount ?? 3,
+          maxAnalyses: limit
+        }).catch(err => console.error(`📧 Error sending limit email:`, err.message));
+      }
+
       return res.status(403).json({
         success: false,
         message: "❌ Monatliches Analyse-Limit erreicht. Bitte upgraden Sie Ihr Paket.",
@@ -2287,6 +2296,14 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
     // User-Referenz aktualisieren für spätere Verwendung
     user.analysisCount = newCount;
+
+    // 📧 Send "Almost at Limit" email when user has 1 analysis left (async)
+    if (plan === 'free' && newCount === limit - 1) {
+      sendAlmostAtLimitEmail(db, user, {
+        usedAnalyses: newCount,
+        maxAnalyses: limit
+      }).catch(err => console.error(`📧 Error sending almost-at-limit email:`, err.message));
+    }
 
     console.log(`📄 [${requestId}] Reading uploaded file from local disk...`);
 

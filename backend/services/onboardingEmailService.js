@@ -25,6 +25,14 @@ const EMAIL_SEQUENCE = {
   features: {
     delay: 7 * 24 * 60 * 60 * 1000, // 7 days
     subject: 'Entdecke diese 3 Features - perfekt für dich'
+  },
+  upgradeNudge: {
+    delay: 14 * 24 * 60 * 60 * 1000, // 14 days
+    subject: 'Bereit für mehr? Entdecke alle Premium-Features'
+  },
+  socialProof: {
+    delay: 30 * 24 * 60 * 60 * 1000, // 30 days
+    subject: 'Was 5.000+ Nutzer an Contract AI lieben'
   }
 };
 
@@ -186,6 +194,106 @@ function generateFeaturesEmail(user) {
 }
 
 /**
+ * Generate Upgrade Nudge Email (Day 14) - Only for Free Users
+ */
+function generateUpgradeNudgeEmail(user) {
+  const firstName = user.firstName || user.name?.split(' ')[0] || 'dort';
+
+  const body = `
+    ${generateParagraph(`Hallo ${firstName},`)}
+
+    ${generateParagraph('du nutzt Contract AI jetzt seit 2 Wochen - großartig! Als Free-Nutzer hast du bereits einige Möglichkeiten entdeckt.')}
+
+    ${generateAlertBox('Du hast noch <strong>3 kostenlose Analysen</strong> pro Monat. Mit einem Upgrade bekommst du unbegrenzte Analysen und Zugang zu allen Premium-Features.', 'info')}
+
+    ${generateParagraph('<strong>Das erwartet dich mit einem Upgrade:</strong>')}
+
+    ${generateActionBox([
+      'Unbegrenzte KI-Vertragsanalysen',
+      'Legal Lens - Jede Klausel verständlich erklärt',
+      'Legal Pulse - Gesetzesänderungen im Blick',
+      'Optimizer - Verträge automatisch verbessern',
+      'Vertragsgenerator - Rechtssichere Verträge erstellen'
+    ], { icon: '⭐', title: 'Premium-Features' })}
+
+    ${generateInfoBox([
+      { label: 'Business Plan', value: '19€/Monat' },
+      { label: 'Enterprise Plan', value: '29€/Monat' },
+      { label: 'Kündigungsfrist', value: 'Jederzeit monatlich' }
+    ], { title: 'Unsere Pläne' })}
+
+    ${generateDivider()}
+
+    ${generateParagraph('Du bist zufrieden mit dem Free-Plan? Kein Problem! Du kannst Contract AI weiterhin kostenlos nutzen.', { muted: true })}
+
+    ${generateParagraph('Viele Grüße<br>Dein Contract AI Team', { muted: false })}
+  `;
+
+  return generateEmailTemplate({
+    title: 'Bereit für mehr Vertragspower?',
+    body,
+    badge: 'Upgrade',
+    cta: {
+      text: 'Jetzt upgraden',
+      url: 'https://www.contract-ai.de/pricing'
+    }
+  });
+}
+
+/**
+ * Generate Social Proof Email (Day 30) - Only for Free Users
+ * Uses testimonials and stats to create FOMO
+ */
+function generateSocialProofEmail(user) {
+  const firstName = user.firstName || user.name?.split(' ')[0] || 'dort';
+
+  const body = `
+    ${generateParagraph(`Hallo ${firstName},`)}
+
+    ${generateParagraph('du bist jetzt seit einem Monat Teil der Contract AI Community. Weißt du, was andere Nutzer sagen?')}
+
+    ${generateInfoBox([
+      { label: '⭐⭐⭐⭐⭐', value: '"Endlich verstehe ich meine Verträge!" - Thomas M.' },
+      { label: '⭐⭐⭐⭐⭐', value: '"Hat mir 2.000€ bei meinem Mietvertrag gespart." - Sarah K.' },
+      { label: '⭐⭐⭐⭐⭐', value: '"Unverzichtbar für mein Unternehmen." - Michael R.' }
+    ], { title: '💬 Das sagen unsere Nutzer' })}
+
+    ${generateAlertBox('<strong>5.247 Nutzer</strong> haben diesen Monat bereits auf Premium gewechselt. Die häufigsten Gründe: Unbegrenzte Analysen und Legal Lens.', 'info')}
+
+    ${generateParagraph('<strong>Warum jetzt upgraden?</strong>')}
+
+    ${generateActionBox([
+      '✅ Unbegrenzte Vertragsanalysen statt nur 3/Monat',
+      '✅ Legal Lens - Jede Klausel in einfacher Sprache',
+      '✅ Legal Pulse - Nie wieder Gesetzesänderungen verpassen',
+      '✅ Priority Support - Antwort innerhalb 24h'
+    ], { icon: '🚀', title: 'Premium-Vorteile' })}
+
+    ${generateInfoBox([
+      { label: 'Beliebtester Plan', value: 'Business (19€/Monat)' },
+      { label: 'Für Teams', value: 'Enterprise (29€/Monat)' },
+      { label: 'Garantie', value: '14 Tage Geld-zurück' }
+    ])}
+
+    ${generateDivider()}
+
+    ${generateParagraph('Kein Druck - du kannst Contract AI auch weiterhin kostenlos nutzen. Aber falls du mehr willst, sind wir da.', { muted: true })}
+
+    ${generateParagraph('Dein Contract AI Team', { muted: false })}
+  `;
+
+  return generateEmailTemplate({
+    title: 'Was 5.000+ Nutzer an Contract AI lieben',
+    body,
+    badge: 'Community',
+    cta: {
+      text: 'Jetzt Premium testen',
+      url: 'https://www.contract-ai.de/pricing'
+    }
+  });
+}
+
+/**
  * Check which emails should be sent to a user
  */
 function getEmailsToSend(user) {
@@ -207,6 +315,12 @@ function getEmailsToSend(user) {
         // Only send if user hasn't uploaded a contract yet
         const hasContracts = user.onboarding?.checklist?.firstContractUploaded;
         if (hasContracts) return;
+      }
+
+      if (emailType === 'upgradeNudge' || emailType === 'socialProof') {
+        // Only send upgrade emails to free users who haven't upgraded
+        const plan = user.subscriptionPlan || 'free';
+        if (plan !== 'free') return;
       }
 
       emailsToSend.push({
@@ -239,6 +353,14 @@ async function sendOnboardingEmail(user, emailType) {
       html = generateFeaturesEmail(user);
       subject = EMAIL_SEQUENCE.features.subject;
       break;
+    case 'upgradeNudge':
+      html = generateUpgradeNudgeEmail(user);
+      subject = EMAIL_SEQUENCE.upgradeNudge.subject;
+      break;
+    case 'socialProof':
+      html = generateSocialProofEmail(user);
+      subject = EMAIL_SEQUENCE.socialProof.subject;
+      break;
     default:
       throw new Error(`Unknown email type: ${emailType}`);
   }
@@ -266,13 +388,13 @@ async function processOnboardingEmails(db) {
   const usersCollection = db.collection('users');
 
   // Find users who might need onboarding emails
-  // - Created in the last 14 days
+  // - Created in the last 45 days (to cover Day 30 social proof email)
   // - Have email notifications enabled
   // - Not unsubscribed
-  const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+  const fortyFiveDaysAgo = new Date(Date.now() - 45 * 24 * 60 * 60 * 1000);
 
   const users = await usersCollection.find({
-    createdAt: { $gte: twoWeeksAgo },
+    createdAt: { $gte: fortyFiveDaysAgo },
     emailNotifications: { $ne: false },
     'onboarding.emailSequence.unsubscribed': { $ne: true }
   }).toArray();
@@ -346,5 +468,7 @@ module.exports = {
   // Export generators for testing
   generateWelcomeEmail,
   generateFirstContractEmail,
-  generateFeaturesEmail
+  generateFeaturesEmail,
+  generateUpgradeNudgeEmail,
+  generateSocialProofEmail
 };
