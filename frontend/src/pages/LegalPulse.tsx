@@ -1776,6 +1776,55 @@ export default function LegalPulse() {
 
       {/* Contracts Overview */}
       <div ref={contractsSectionRef} className={styles.contractsSection}>
+        {/* 🆕 Professional Empty State when NO contracts exist */}
+        {!isInitialLoading && pagination.total === 0 && !searchQuery && riskFilter === 'all' ? (
+          <div className={styles.professionalEmptyState}>
+            <div className={styles.emptyStateHeader}>
+              <div className={styles.emptyStateIconLarge}>
+                <Activity size={48} strokeWidth={1.5} />
+              </div>
+              <h2>Starten Sie Ihre Vertragsüberwachung</h2>
+              <p>Legal Pulse analysiert Ihre Verträge kontinuierlich auf rechtliche Risiken und Gesetzesänderungen.</p>
+            </div>
+
+            <div className={styles.emptyStateFeatures}>
+              <div className={styles.emptyStateFeature}>
+                <div className={styles.featureIcon}>
+                  <Zap size={24} />
+                </div>
+                <h4>Echtzeit-Monitoring</h4>
+                <p>Automatische Überwachung aller Verträge rund um die Uhr</p>
+              </div>
+              <div className={styles.emptyStateFeature}>
+                <div className={styles.featureIcon}>
+                  <Bell size={24} />
+                </div>
+                <h4>Gesetzesänderungs-Alerts</h4>
+                <p>Sofortige Benachrichtigung bei relevanten Rechtsänderungen</p>
+              </div>
+              <div className={styles.emptyStateFeature}>
+                <div className={styles.featureIcon}>
+                  <ArrowRight size={24} />
+                </div>
+                <h4>Handlungsempfehlungen</h4>
+                <p>Konkrete Schritte zur Risikominimierung</p>
+              </div>
+            </div>
+
+            <div className={styles.emptyStateCTA}>
+              <Link to="/contracts?upload=true" className={styles.emptyStatePrimaryButton}>
+                <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
+                  <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+                Ersten Vertrag hochladen
+              </Link>
+              <Link to="/dashboard" className={styles.emptyStateSecondaryButton}>
+                Zum Dashboard
+              </Link>
+            </div>
+          </div>
+        ) : (
+        <>
         {/* Header with Title (left) and Action Buttons (right) in ONE row */}
         <div className={styles.sectionHeaderWithActions}>
           <h2 className={styles.sectionTitle}>
@@ -2020,9 +2069,12 @@ export default function LegalPulse() {
             )}
           </div>
         )}
+        </>
+        )}
       </div>
 
-      {/* Bottom CTA - Passend zu Legal Pulse */}
+      {/* Bottom CTA - Passend zu Legal Pulse - Only show when contracts exist */}
+      {pagination.total > 0 && (
       <div className={styles.bottomCTALight}>
         <div className={styles.ctaLightContent}>
           <div className={styles.ctaLightIcon}>
@@ -2054,6 +2106,7 @@ export default function LegalPulse() {
           </div>
         </div>
       </div>
+      )}
 
       {/* Settings Sidebar */}
       {showSettingsSidebar && (
