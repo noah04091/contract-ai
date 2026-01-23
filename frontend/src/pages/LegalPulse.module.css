@@ -2,7 +2,7 @@
 .legalPulseContainer {
   min-height: 100vh;
   min-height: 100dvh; /* iOS Safari fix */
-  background: #fafafa;
+  background: #f8fafc; /* Same as Legal Lens */
   padding: 40px 60px;
   width: 100%;
   margin: 0;
