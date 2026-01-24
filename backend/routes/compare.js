@@ -5,6 +5,7 @@ const verifyToken = require("../middleware/verifyToken");
 const pdfParse = require("pdf-parse");
 const multer = require("multer");
 const fs = require("fs");
+const fsPromises = require("fs").promises;
 const path = require("path");
 const { MongoClient, ObjectId } = require("mongodb");
 
@@ -124,10 +125,114 @@ Berücksichtige sowohl operative als auch rechtliche Risiken.
 `
 };
 
+// 🧠 Smart Chunking: Intelligent text preparation for large contracts
+const CHUNK_CONFIG = {
+  MAX_DIRECT_LENGTH: 6000,        // Under 6000 chars: use directly
+  MAX_SINGLE_SUMMARY: 15000,      // 6000-15000 chars: single summary
+  CHUNK_SIZE: 8000,               // For very large texts: chunk size
+  MAX_CHUNKS: 4                   // Maximum chunks to process
+};
+
+async function summarizeContractChunk(text, chunkNumber = null, totalChunks = null) {
+  const chunkInfo = chunkNumber ? `(Teil ${chunkNumber}/${totalChunks})` : '';
+
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4-turbo",
+    messages: [
+      {
+        role: "system",
+        content: "Du bist ein Experte für Vertragsanalyse. Extrahiere die wichtigsten Klauseln und Bedingungen aus dem Vertragstext."
+      },
+      {
+        role: "user",
+        content: `Erstelle eine strukturierte Zusammenfassung dieses Vertragstexts ${chunkInfo}.
+Fokussiere auf:
+- Hauptpflichten der Parteien
+- Zahlungsbedingungen und Fristen
+- Kündigungsfristen und -bedingungen
+- Haftungsklauseln und Gewährleistung
+- Besondere Klauseln (Wettbewerbsverbot, Geheimhaltung, etc.)
+- Laufzeit und Verlängerung
+
+Fasse die wichtigsten Punkte kurz und präzise zusammen (max. 1500 Zeichen).
+
+VERTRAGSTEXT:
+"""
+${text}
+"""`
+      }
+    ],
+    temperature: 0.2,
+    max_tokens: 800,
+  });
+
+  return completion.choices[0].message.content;
+}
+
+async function prepareContractText(fullText) {
+  const textLength = fullText.length;
+
+  // Small text: use directly
+  if (textLength <= CHUNK_CONFIG.MAX_DIRECT_LENGTH) {
+    console.log(`📄 Text kurz genug (${textLength} Zeichen) - direkte Verwendung`);
+    return fullText;
+  }
+
+  // Medium text: single summary
+  if (textLength <= CHUNK_CONFIG.MAX_SINGLE_SUMMARY) {
+    console.log(`📄 Mittlerer Text (${textLength} Zeichen) - erstelle Summary...`);
+    const summary = await summarizeContractChunk(fullText);
+    console.log(`✅ Summary erstellt (${summary.length} Zeichen)`);
+    return summary;
+  }
+
+  // Large text: multi-chunk processing
+  console.log(`📄 Großer Text (${textLength} Zeichen) - Multi-Chunk Verarbeitung...`);
+
+  const chunks = [];
+  const chunkSize = CHUNK_CONFIG.CHUNK_SIZE;
+  const maxChunks = Math.min(
+    Math.ceil(textLength / chunkSize),
+    CHUNK_CONFIG.MAX_CHUNKS
+  );
+
+  // Calculate optimal chunk positions to cover the whole document
+  const step = Math.floor(textLength / maxChunks);
+
+  for (let i = 0; i < maxChunks; i++) {
+    const start = i * step;
+    const end = Math.min(start + chunkSize, textLength);
+    chunks.push(fullText.substring(start, end));
+  }
+
+  console.log(`🔄 Verarbeite ${chunks.length} Chunks parallel...`);
+
+  // Process all chunks in parallel
+  const summaries = await Promise.all(
+    chunks.map((chunk, idx) =>
+      summarizeContractChunk(chunk, idx + 1, chunks.length)
+    )
+  );
+
+  // Combine summaries
+  const combined = summaries.join('\n\n--- Abschnitt ---\n\n');
+  console.log(`✅ Alle Chunks zusammengefasst (${combined.length} Zeichen)`);
+
+  return combined;
+}
+
 // Enhanced comparison analysis function
 async function analyzeContracts(contract1Text, contract2Text, userProfile = 'individual') {
   const systemPrompt = SYSTEM_PROMPTS[userProfile] || SYSTEM_PROMPTS.individual;
-  
+
+  // 🧠 Smart Chunking: Prepare large contracts
+  console.log("🧠 Smart Chunking: Bereite Verträge vor...");
+  const [preparedText1, preparedText2] = await Promise.all([
+    prepareContractText(contract1Text),
+    prepareContractText(contract2Text)
+  ]);
+  console.log(`📊 Verarbeitet: V1=${preparedText1.length} chars, V2=${preparedText2.length} chars`);
+
   const analysisPrompt = `
 ${systemPrompt}
 
@@ -135,12 +240,12 @@ AUFGABE: Vergleiche diese zwei Verträge systematisch und erstelle eine struktur
 
 VERTRAG 1:
 """
-${contract1Text.substring(0, 8000)}
+${preparedText1}
 """
 
 VERTRAG 2:
 """
-${contract2Text.substring(0, 8000)}
+${preparedText2}
 """
 
 Erstelle eine JSON-Antwort mit folgender Struktur:
@@ -290,10 +395,12 @@ router.post("/", verifyToken, upload.fields([
 
     console.log(`📄 Processing files: ${file1.originalname} & ${file2.originalname}`);
 
-    // Parse PDF contents
+    // Parse PDF contents (async for better performance)
     console.log("📄 Parsing PDF files...");
-    const buffer1 = fs.readFileSync(file1.path);
-    const buffer2 = fs.readFileSync(file2.path);
+    const [buffer1, buffer2] = await Promise.all([
+      fsPromises.readFile(file1.path),
+      fsPromises.readFile(file2.path)
+    ]);
     
     const pdfData1 = await pdfParse(buffer1);
     const pdfData2 = await pdfParse(buffer2);
@@ -381,15 +488,17 @@ router.post("/", verifyToken, upload.fields([
       console.error("⚠️ Warning: Could not update usage count:", updateError.message);
     }
 
-    // Clean up uploaded files (optional - keep them for audit purposes)
-    setTimeout(() => {
-      try {
-        fs.unlinkSync(file1.path);
-        fs.unlinkSync(file2.path);
-      } catch (err) {
-        console.log("🗑️ File cleanup warning:", err.message);
-      }
-    }, 24 * 60 * 60 * 1000); // Delete after 24 hours
+    // 🛡️ DSGVO-Compliance: Sofortige Dateilöschung nach Verarbeitung
+    console.log("🗑️ Lösche temporäre Dateien (DSGVO-konform)...");
+    try {
+      await Promise.all([
+        fsPromises.unlink(file1.path),
+        fsPromises.unlink(file2.path)
+      ]);
+      console.log("✅ Temporäre Dateien gelöscht");
+    } catch (cleanupErr) {
+      console.error("⚠️ File cleanup warning:", cleanupErr.message);
+    }
 
     console.log("✅ Comparison completed successfully");
     res.json(analysisResult);
@@ -397,15 +506,14 @@ router.post("/", verifyToken, upload.fields([
   } catch (error) {
     console.error("❌ Comparison error:", error);
     
-    // Clean up files on error
+    // Clean up files on error (async)
     if (req.files) {
-      Object.values(req.files).flat().forEach(file => {
-        try {
-          fs.unlinkSync(file.path);
-        } catch (err) {
-          console.log("🗑️ Error cleanup warning:", err.message);
-        }
-      });
+      const cleanupPromises = Object.values(req.files).flat().map(file =>
+        fsPromises.unlink(file.path).catch(err =>
+          console.log("🗑️ Error cleanup warning:", err.message)
+        )
+      );
+      await Promise.all(cleanupPromises);
     }
 
     res.status(500).json({ 
