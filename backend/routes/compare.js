@@ -345,30 +345,65 @@ function enhanceAnalysis(analysis) {
   return analysis;
 }
 
-// Main comparison endpoint
+// 📡 SSE Progress Helper
+const sendProgress = (res, step, progress, message, isSSE = false) => {
+  if (isSSE) {
+    res.write(`data: ${JSON.stringify({ type: 'progress', step, progress, message })}\n\n`);
+  }
+  console.log(`📊 [${progress}%] ${step}: ${message}`);
+};
+
+// Main comparison endpoint with SSE support
 router.post("/", verifyToken, upload.fields([
   { name: 'file1', maxCount: 1 },
   { name: 'file2', maxCount: 1 }
 ]), async (req, res) => {
+  // Check if client wants SSE (streaming progress)
+  const wantsSSE = req.headers.accept?.includes('text/event-stream') || req.query.stream === 'true';
+
+  if (wantsSSE) {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx buffering
+    res.flushHeaders();
+  }
+
   try {
-    console.log("🚀 Contract comparison started");
-    
+    console.log("🚀 Contract comparison started" + (wantsSSE ? " (SSE Mode)" : ""));
+    sendProgress(res, 'init', 5, 'Vergleich wird gestartet...', wantsSSE);
+
     // Check if files were uploaded
     if (!req.files || !req.files.file1 || !req.files.file2) {
-      return res.status(400).json({ 
-        message: "Beide Vertragsdateien müssen hochgeladen werden" 
-      });
+      const error = { message: "Beide Vertragsdateien müssen hochgeladen werden" };
+      if (wantsSSE) {
+        res.write(`data: ${JSON.stringify({ type: 'error', ...error })}\n\n`);
+        return res.end();
+      }
+      return res.status(400).json(error);
     }
+
+    sendProgress(res, 'auth', 10, 'Authentifizierung wird geprüft...', wantsSSE);
 
     // Get user info and check premium status
     const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
     if (!user) {
-      return res.status(404).json({ message: "Nutzer nicht gefunden" });
+      const error = { message: "Nutzer nicht gefunden" };
+      if (wantsSSE) {
+        res.write(`data: ${JSON.stringify({ type: 'error', ...error })}\n\n`);
+        return res.end();
+      }
+      return res.status(404).json(error);
     }
 
     const isPremium = user.subscriptionActive === true || user.isPremium === true;
     if (!isPremium) {
-      return res.status(403).json({ message: "Premium-Funktion erforderlich" });
+      const error = { message: "Premium-Funktion erforderlich" };
+      if (wantsSSE) {
+        res.write(`data: ${JSON.stringify({ type: 'error', ...error })}\n\n`);
+        return res.end();
+      }
+      return res.status(403).json(error);
     }
 
     // Check usage limits
@@ -379,47 +414,63 @@ router.post("/", verifyToken, upload.fields([
     const limit = getFeatureLimit(plan, 'compare');
 
     if (compareCount >= limit && !isEnterpriseOrHigher(plan)) {
-      return res.status(403).json({
-        message: "❌ Vergleichs-Limit erreicht. Bitte Paket upgraden."
-      });
+      const error = { message: "❌ Vergleichs-Limit erreicht. Bitte Paket upgraden." };
+      if (wantsSSE) {
+        res.write(`data: ${JSON.stringify({ type: 'error', ...error })}\n\n`);
+        return res.end();
+      }
+      return res.status(403).json(error);
     }
 
     // Get user profile from request
     const userProfile = req.body.userProfile || 'individual';
     if (!['individual', 'freelancer', 'business'].includes(userProfile)) {
-      return res.status(400).json({ message: "Ungültiges Nutzerprofil" });
+      const error = { message: "Ungültiges Nutzerprofil" };
+      if (wantsSSE) {
+        res.write(`data: ${JSON.stringify({ type: 'error', ...error })}\n\n`);
+        return res.end();
+      }
+      return res.status(400).json(error);
     }
 
     const file1 = req.files.file1[0];
     const file2 = req.files.file2[0];
 
     console.log(`📄 Processing files: ${file1.originalname} & ${file2.originalname}`);
+    sendProgress(res, 'parsing', 15, 'PDFs werden gelesen...', wantsSSE);
 
     // Parse PDF contents (async for better performance)
-    console.log("📄 Parsing PDF files...");
     const [buffer1, buffer2] = await Promise.all([
       fsPromises.readFile(file1.path),
       fsPromises.readFile(file2.path)
     ]);
-    
+
+    sendProgress(res, 'extracting', 25, 'Text wird extrahiert...', wantsSSE);
+
     const pdfData1 = await pdfParse(buffer1);
     const pdfData2 = await pdfParse(buffer2);
-    
+
     const contract1Text = pdfData1.text.trim();
     const contract2Text = pdfData2.text.trim();
 
     if (!contract1Text || !contract2Text) {
-      return res.status(400).json({ 
-        message: "Mindestens eine PDF-Datei konnte nicht gelesen werden oder ist leer" 
-      });
+      const error = { message: "Mindestens eine PDF-Datei konnte nicht gelesen werden oder ist leer" };
+      if (wantsSSE) {
+        res.write(`data: ${JSON.stringify({ type: 'error', ...error })}\n\n`);
+        return res.end();
+      }
+      return res.status(400).json(error);
     }
 
     console.log(`📝 Text extracted: Contract 1 (${contract1Text.length} chars), Contract 2 (${contract2Text.length} chars)`);
+    sendProgress(res, 'chunking', 35, 'Verträge werden vorbereitet...', wantsSSE);
 
-    // Perform AI analysis
+    // Perform AI analysis with progress updates
+    sendProgress(res, 'analyzing', 50, 'KI-Analyse läuft...', wantsSSE);
     console.log("🤖 Starting AI analysis...");
     const analysisResult = await analyzeContracts(contract1Text, contract2Text, userProfile);
 
+    sendProgress(res, 'saving', 85, 'Ergebnis wird gespeichert...', wantsSSE);
     // ✅ FIXED: Save contracts and analysis to database with proper error handling
     console.log("💾 Saving contracts to database...");
     try {
@@ -489,6 +540,7 @@ router.post("/", verifyToken, upload.fields([
     }
 
     // 🛡️ DSGVO-Compliance: Sofortige Dateilöschung nach Verarbeitung
+    sendProgress(res, 'cleanup', 95, 'Aufräumen...', wantsSSE);
     console.log("🗑️ Lösche temporäre Dateien (DSGVO-konform)...");
     try {
       await Promise.all([
@@ -501,11 +553,19 @@ router.post("/", verifyToken, upload.fields([
     }
 
     console.log("✅ Comparison completed successfully");
-    res.json(analysisResult);
+
+    // Send final result
+    if (wantsSSE) {
+      sendProgress(res, 'complete', 100, 'Analyse abgeschlossen!', true);
+      res.write(`data: ${JSON.stringify({ type: 'result', data: analysisResult })}\n\n`);
+      res.end();
+    } else {
+      res.json(analysisResult);
+    }
 
   } catch (error) {
     console.error("❌ Comparison error:", error);
-    
+
     // Clean up files on error (async)
     if (req.files) {
       const cleanupPromises = Object.values(req.files).flat().map(file =>
@@ -516,9 +576,16 @@ router.post("/", verifyToken, upload.fields([
       await Promise.all(cleanupPromises);
     }
 
-    res.status(500).json({ 
+    const errorResponse = {
       message: "Fehler beim Vertragsvergleich: " + (error.message || "Unbekannter Fehler")
-    });
+    };
+
+    if (wantsSSE) {
+      res.write(`data: ${JSON.stringify({ type: 'error', ...errorResponse })}\n\n`);
+      res.end();
+    } else {
+      res.status(500).json(errorResponse);
+    }
   }
 });
 

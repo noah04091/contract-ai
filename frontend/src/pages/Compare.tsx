@@ -310,6 +310,13 @@ const DifferenceView: React.FC<{
   );
 };
 
+// Progress Step Interface for SSE
+interface ProgressStep {
+  step: string;
+  progress: number;
+  message: string;
+}
+
 // Main Enhanced Compare Component
 export default function EnhancedCompare() {
   const [searchParams] = useSearchParams();
@@ -327,6 +334,8 @@ export default function EnhancedCompare() {
     recommendation: true
   });
   const [preloadedContractName, setPreloadedContractName] = useState<string | null>(null);
+  // 📊 SSE Progress State
+  const [progress, setProgress] = useState<ProgressStep | null>(null);
 
   const resultRef = useRef<HTMLDivElement>(null);
   const file1InputRef = useRef<HTMLInputElement>(null);
@@ -479,34 +488,79 @@ export default function EnhancedCompare() {
 
     setLoading(true);
     setResult(null);
+    setProgress({ step: 'init', progress: 0, message: 'Starte Vergleich...' });
 
-    // PRODUCTION API CALL
     const formData = new FormData();
     formData.append("file1", file1);
     formData.append("file2", file2);
     formData.append("userProfile", userProfile);
 
     try {
-      const res = await fetch("/api/compare", {
+      // 📡 SSE Request with streaming progress
+      const res = await fetch("/api/compare?stream=true", {
         method: "POST",
         credentials: "include",
+        headers: {
+          'Accept': 'text/event-stream'
+        },
         body: formData,
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Vergleich fehlgeschlagen");
+      if (!res.ok && !res.body) {
+        throw new Error("Vergleich fehlgeschlagen");
+      }
 
-      setResult(data);
-      setNotification({
-        message: "Vertragsvergleich erfolgreich durchgeführt!",
-        type: "success"
-      });
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        throw new Error("Stream nicht verfügbar");
+      }
+
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const eventData = JSON.parse(line.slice(6));
+
+              if (eventData.type === 'progress') {
+                setProgress({
+                  step: eventData.step,
+                  progress: eventData.progress,
+                  message: eventData.message
+                });
+              } else if (eventData.type === 'result') {
+                setResult(eventData.data);
+                setProgress(null);
+                setNotification({
+                  message: "Vertragsvergleich erfolgreich durchgeführt!",
+                  type: "success"
+                });
+              } else if (eventData.type === 'error') {
+                throw new Error(eventData.message);
+              }
+            } catch (parseErr) {
+              console.warn("SSE parse error:", parseErr, line);
+            }
+          }
+        }
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unbekannter Fehler beim Vergleich.";
       setNotification({
         message: "Fehler: " + message,
         type: "error"
       });
+      setProgress(null);
     } finally {
       setLoading(false);
     }
@@ -784,6 +838,47 @@ export default function EnhancedCompare() {
               </motion.div>
             </div>
             
+            {/* 📊 SSE Progress Bar */}
+            {loading && progress && (
+              <motion.div
+                style={{
+                  marginBottom: '1.5rem',
+                  padding: '1rem 1.5rem',
+                  background: 'rgba(0, 113, 227, 0.05)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(0, 113, 227, 0.1)'
+                }}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <span style={{ fontSize: '0.9rem', fontWeight: 500, color: '#0071e3' }}>
+                    {progress.message}
+                  </span>
+                  <span style={{ fontSize: '0.85rem', color: '#6e6e73' }}>
+                    {progress.progress}%
+                  </span>
+                </div>
+                <div style={{
+                  height: '6px',
+                  backgroundColor: 'rgba(0, 113, 227, 0.1)',
+                  borderRadius: '3px',
+                  overflow: 'hidden'
+                }}>
+                  <motion.div
+                    style={{
+                      height: '100%',
+                      background: 'linear-gradient(90deg, #0071e3, #00c7be)',
+                      borderRadius: '3px'
+                    }}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${progress.progress}%` }}
+                    transition={{ duration: 0.3, ease: 'easeOut' }}
+                  />
+                </div>
+              </motion.div>
+            )}
+
             <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem' }}>
               <motion.button
                 style={{
@@ -812,7 +907,7 @@ export default function EnhancedCompare() {
                 {loading ? (
                   <>
                     <div style={{ width: '18px', height: '18px', border: '2px solid rgba(255, 255, 255, 0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 1s linear infinite', marginRight: '0.3rem' }}></div>
-                    <span>Wird analysiert...</span>
+                    <span>{progress?.message || 'Wird analysiert...'}</span>
                   </>
                 ) : (
                   <>
