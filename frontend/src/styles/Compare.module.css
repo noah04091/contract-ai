@@ -391,7 +391,7 @@
   --error-red: #ff453a;
 
   font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-  background-color: white;
+  background-color: #f8fafc; /* Same as Legal Lens */
   min-height: 100vh;
   min-height: 100dvh; /* Dynamic viewport height für iOS Safari */
   color: var(--apple-gray-800);
