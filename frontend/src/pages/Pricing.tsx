@@ -249,15 +249,15 @@ export default function Pricing() {
     { icon: <Clock size={20} />, text: "Priority Support innerhalb von 24 Stunden" },
   ];
 
-  // Enterprise Features - Freiheit, Kontrolle, Status
+  // Enterprise Features - Freiheit, Kontrolle, Verantwortung
   const enterpriseFeatures = [
-    { icon: <Sparkles size={20} />, text: "Unbegrenzte KI-Analysen & Optimierungen", highlight: true },
-    { icon: <Search size={20} />, text: "Better Contracts: bessere Alternativen finden", highlight: true },
-    { icon: <Smartphone size={20} />, text: "SMS-Warnungen vor jeder wichtigen Frist", highlight: true },
-    { icon: <Calendar size={20} />, text: "Kalender-Sync mit Google & Outlook" },
-    { icon: <Download size={20} />, text: "White-Label PDFs mit eigenem Branding" },
-    { icon: <Users size={20} />, text: "Team-Zugriff für bis zu 10 Nutzer" },
-    { icon: <Lock size={20} />, text: "API-Zugang & Custom Templates" },
+    { icon: <Sparkles size={20} />, text: "Analysiere unbegrenzt – ohne Limit, ohne Stress", highlight: true },
+    { icon: <Search size={20} />, text: "KI findet automatisch bessere & günstigere Alternativen", highlight: true },
+    { icon: <Smartphone size={20} />, text: "Kritische Fristen werden aktiv überwacht & gemeldet", highlight: true },
+    { icon: <Calendar size={20} />, text: "Alle Fristen direkt in deinem Kalender – automatisch" },
+    { icon: <Users size={20} />, text: "Dein ganzes Team auf einer zentralen Plattform" },
+    { icon: <Download size={20} />, text: "Professionelle Reports mit deinem eigenen Branding" },
+    { icon: <Lock size={20} />, text: "API-Zugang für individuelle Integrationen" },
   ];
 
   return (
