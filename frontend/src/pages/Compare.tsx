@@ -1183,49 +1183,49 @@ export default function EnhancedCompare() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div style={{ position: 'relative' }}>
-            <PageHeader
-              icon={Scale}
-              title="Vertragsvergleich"
-              subtitle="Vergleiche zwei Verträge und erhalte eine KI-Empfehlung"
-              iconColor="blue"
-              features={[
-                { text: 'Side-by-Side', icon: Eye },
-                { text: 'Unterschiede markiert', icon: AlertTriangle },
-                { text: 'KI-Empfehlung', icon: Star }
-              ]}
-            />
+          <PageHeader
+            icon={Scale}
+            title="Vertragsvergleich"
+            subtitle="Vergleiche zwei Verträge und erhalte eine KI-Empfehlung"
+            iconColor="blue"
+            features={[
+              { text: 'Side-by-Side', icon: Eye },
+              { text: 'Unterschiede markiert', icon: AlertTriangle },
+              { text: 'KI-Empfehlung', icon: Star }
+            ]}
+          />
 
-            {/* History Button */}
-            {historyItems.length > 0 && (
+          {/* History Button - Separate Row */}
+          {historyItems.length > 0 && (
+            <motion.div
+              style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                marginBottom: '1rem',
+                marginTop: '-0.5rem'
+              }}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+            >
               <motion.button
                 onClick={() => setShowHistory(!showHistory)}
-                style={{
-                  position: 'absolute',
-                  top: '1rem',
-                  right: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.6rem 1rem',
-                  background: showHistory ? '#0071e3' : 'white',
-                  color: showHistory ? 'white' : '#1d1d1f',
-                  border: '1px solid #e8e8ed',
-                  borderRadius: '10px',
-                  cursor: 'pointer',
-                  fontSize: '0.9rem',
-                  fontWeight: 500,
-                  fontFamily: 'inherit',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)'
-                }}
-                whileHover={{ scale: 1.02 }}
+                className={`history-toggle-btn ${showHistory ? 'active' : ''}`}
+                whileHover={{ y: -2 }}
                 whileTap={{ scale: 0.98 }}
               >
                 <History size={16} />
                 <span>Historie ({historyItems.length})</span>
+                <ChevronDown
+                  size={14}
+                  style={{
+                    transform: showHistory ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.3s ease'
+                  }}
+                />
               </motion.button>
-            )}
-          </div>
+            </motion.div>
+          )}
 
           {/* History Panel */}
           <AnimatePresence>
@@ -2583,6 +2583,36 @@ export default function EnhancedCompare() {
 
           .reset-btn:hover {
             background: rgba(0, 0, 0, 0.08);
+          }
+
+          /* History Toggle Button */
+          .history-toggle-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            background: white;
+            color: #1d1d1f;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+          }
+
+          .history-toggle-btn:hover {
+            background: #f5f5f7;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+          }
+
+          .history-toggle-btn.active {
+            background: linear-gradient(135deg, #0071e3 0%, #00c7be 100%);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 15px rgba(0, 113, 227, 0.3);
           }
 
           .contract-score {

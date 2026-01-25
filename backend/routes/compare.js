@@ -908,30 +908,34 @@ router.post("/export-pdf", verifyToken, async (req, res) => {
     // Contract 1 Score
     const score1Color = result.contract1Analysis.riskLevel === 'low' ? successColor :
                         result.contract1Analysis.riskLevel === 'medium' ? warningColor : dangerColor;
+    const risk1Text = result.contract1Analysis.riskLevel === 'low' ? 'Niedrig' :
+                      result.contract1Analysis.riskLevel === 'medium' ? 'Mittel' : 'Hoch';
+
     doc.fontSize(14)
        .fillColor(score1Color)
        .text(`Vertrag 1: ${result.contract1Analysis.score}/100`, { continued: true })
        .fillColor(mutedColor)
-       .text(` (Risiko: ${result.contract1Analysis.riskLevel === 'low' ? 'Niedrig' :
-              result.contract1Analysis.riskLevel === 'medium' ? 'Mittel' : 'Hoch'})`);
+       .text(` (Risiko: ${risk1Text})`, { continued: result.overallRecommendation.recommended === 1 });
 
     if (result.overallRecommendation.recommended === 1) {
-      doc.fontSize(10).fillColor(successColor).text('  ★ Empfohlen');
+      doc.fontSize(10).fillColor(successColor).text('  [EMPFOHLEN]');
     }
     doc.moveDown(0.3);
 
     // Contract 2 Score
     const score2Color = result.contract2Analysis.riskLevel === 'low' ? successColor :
                         result.contract2Analysis.riskLevel === 'medium' ? warningColor : dangerColor;
+    const risk2Text = result.contract2Analysis.riskLevel === 'low' ? 'Niedrig' :
+                      result.contract2Analysis.riskLevel === 'medium' ? 'Mittel' : 'Hoch';
+
     doc.fontSize(14)
        .fillColor(score2Color)
        .text(`Vertrag 2: ${result.contract2Analysis.score}/100`, { continued: true })
        .fillColor(mutedColor)
-       .text(` (Risiko: ${result.contract2Analysis.riskLevel === 'low' ? 'Niedrig' :
-              result.contract2Analysis.riskLevel === 'medium' ? 'Mittel' : 'Hoch'})`);
+       .text(` (Risiko: ${risk2Text})`, { continued: result.overallRecommendation.recommended === 2 });
 
     if (result.overallRecommendation.recommended === 2) {
-      doc.fontSize(10).fillColor(successColor).text('  ★ Empfohlen');
+      doc.fontSize(10).fillColor(successColor).text('  [EMPFOHLEN]');
     }
     doc.moveDown(1.5);
 
@@ -943,25 +947,25 @@ router.post("/export-pdf", verifyToken, async (req, res) => {
 
     // Vertrag 1
     doc.fontSize(13).fillColor(primaryColor).text('Vertrag 1');
-    doc.fontSize(11).fillColor(successColor).text('Stärken:', { continued: false });
+    doc.fontSize(11).fillColor(successColor).text('Staerken:');
     result.contract1Analysis.strengths.slice(0, 3).forEach(s => {
-      doc.fontSize(10).fillColor(textColor).text(`  • ${s}`);
+      doc.fontSize(10).fillColor(textColor).text(`  - ${s}`);
     });
-    doc.fontSize(11).fillColor(dangerColor).text('Schwächen:', { continued: false });
+    doc.fontSize(11).fillColor(dangerColor).text('Schwaechen:');
     result.contract1Analysis.weaknesses.slice(0, 3).forEach(w => {
-      doc.fontSize(10).fillColor(textColor).text(`  • ${w}`);
+      doc.fontSize(10).fillColor(textColor).text(`  - ${w}`);
     });
     doc.moveDown(0.5);
 
     // Vertrag 2
     doc.fontSize(13).fillColor(primaryColor).text('Vertrag 2');
-    doc.fontSize(11).fillColor(successColor).text('Stärken:', { continued: false });
+    doc.fontSize(11).fillColor(successColor).text('Staerken:');
     result.contract2Analysis.strengths.slice(0, 3).forEach(s => {
-      doc.fontSize(10).fillColor(textColor).text(`  • ${s}`);
+      doc.fontSize(10).fillColor(textColor).text(`  - ${s}`);
     });
-    doc.fontSize(11).fillColor(dangerColor).text('Schwächen:', { continued: false });
+    doc.fontSize(11).fillColor(dangerColor).text('Schwaechen:');
     result.contract2Analysis.weaknesses.slice(0, 3).forEach(w => {
-      doc.fontSize(10).fillColor(textColor).text(`  • ${w}`);
+      doc.fontSize(10).fillColor(textColor).text(`  - ${w}`);
     });
     doc.moveDown(1.5);
 
@@ -1004,7 +1008,7 @@ router.post("/export-pdf", verifyToken, async (req, res) => {
       // Recommendation
       doc.fontSize(10)
          .fillColor(primaryColor)
-         .text(`→ ${diff.recommendation}`, { width: 495 });
+         .text(`Tipp: ${diff.recommendation}`, { width: 495 });
 
       doc.moveDown(0.8);
     });
@@ -1024,11 +1028,19 @@ router.post("/export-pdf", verifyToken, async (req, res) => {
       doc.moveDown(1);
     }
 
-    // Footer
+    // Footer - draw a line instead of using characters
+    doc.moveDown(0.5);
+    const footerY = doc.y;
+    doc.moveTo(50, footerY)
+       .lineTo(545, footerY)
+       .strokeColor(mutedColor)
+       .lineWidth(0.5)
+       .stroke();
+
+    doc.moveDown(1);
     doc.fontSize(9)
        .fillColor(mutedColor)
-       .text('─'.repeat(80), { align: 'center' });
-    doc.text('Erstellt mit Contract AI - www.contract-ai.de', { align: 'center' });
+       .text('Erstellt mit Contract AI - www.contract-ai.de', { align: 'center' });
     doc.text('Dieser Bericht dient nur zur Information und ersetzt keine Rechtsberatung.', { align: 'center' });
 
     // Finalize PDF
