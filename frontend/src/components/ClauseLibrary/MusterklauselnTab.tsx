@@ -1,14 +1,13 @@
 // MusterklauselnTab.tsx - Tab für Musterklauseln-Vorlagen
 
 import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+// Navigation entfernt - Generator-Integration kommt später bei Contract Builder / Generate letzter Schritt
 import {
   Search,
   Filter,
   Copy,
   ChevronDown,
   ChevronUp,
-  ExternalLink,
   AlertCircle,
   Check,
   X,
@@ -24,12 +23,7 @@ import {
 import { templateClauses } from '../../data/templateClauses';
 import styles from '../../styles/ClauseLibraryPage.module.css';
 
-interface MusterklauselnTabProps {
-  onUseInGenerator?: (clause: TemplateClause) => void;
-}
-
-const MusterklauselnTab: React.FC<MusterklauselnTabProps> = ({ onUseInGenerator }) => {
-  const navigate = useNavigate();
+const MusterklauselnTab: React.FC = () => {
 
   // State
   const [searchQuery, setSearchQuery] = useState('');
@@ -78,15 +72,6 @@ const MusterklauselnTab: React.FC<MusterklauselnTabProps> = ({ onUseInGenerator 
     }
   };
 
-  // Navigate to generator with clause
-  const handleUseInGenerator = (clause: TemplateClause) => {
-    if (onUseInGenerator) {
-      onUseInGenerator(clause);
-    } else {
-      // Navigate to generator with clause text as parameter
-      navigate('/generate', { state: { prefillClause: clause.clauseText } });
-    }
-  };
 
   // Get category counts
   const categoryCounts = useMemo(() => {
@@ -297,16 +282,6 @@ const MusterklauselnTab: React.FC<MusterklauselnTabProps> = ({ onUseInGenerator 
                       >
                         {isCopied ? <Check size={16} /> : <Copy size={16} />}
                         {isCopied ? 'Kopiert!' : 'Kopieren'}
-                      </button>
-                      <button
-                        className={styles.useInGeneratorBtn}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleUseInGenerator(clause);
-                        }}
-                      >
-                        <ExternalLink size={16} />
-                        In Generator verwenden
                       </button>
                     </div>
                   </div>
