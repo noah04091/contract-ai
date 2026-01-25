@@ -929,8 +929,6 @@ export default function EnhancedCompare() {
     } catch (err) {
       console.warn('Could not load comparison history from backend:', err);
       setHistoryItems([]);
-    } finally {
-      setHistoryLoading(false);
     }
   };
 
