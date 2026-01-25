@@ -912,15 +912,25 @@ export default function EnhancedCompare() {
       const data = await res.json();
 
       // Transform backend data to frontend format
+      interface BackendHistoryItem {
+        id: string;
+        timestamp: string;
+        file1Name: string;
+        file2Name: string;
+        comparisonMode?: string;
+        result: ComparisonResult | null;
+        recommendedContract: 1 | 2;
+      }
+
       const items: ComparisonHistoryItem[] = (data.history || [])
-        .filter((h: any) => h.result !== null) // Only items with full result
-        .map((h: any) => ({
+        .filter((h: BackendHistoryItem) => h.result !== null)
+        .map((h: BackendHistoryItem) => ({
           id: h.id,
           timestamp: new Date(h.timestamp).getTime(),
           file1Name: h.file1Name,
           file2Name: h.file2Name,
           mode: h.comparisonMode || 'standard',
-          result: h.result,
+          result: h.result as ComparisonResult,
           recommended: h.recommendedContract
         }));
 
