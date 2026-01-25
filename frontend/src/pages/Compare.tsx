@@ -7,7 +7,8 @@ import {
   RefreshCw, Upload, Info, PlusCircle, MinusCircle,
   Users, Briefcase, Building, Zap, Scale, AlertTriangle,
   Eye, EyeOff, Star, Award, ThumbsUp, ThumbsDown,
-  GitCompare, FileCheck, Trophy, Layers
+  GitCompare, FileCheck, Trophy, Layers,
+  ChevronUp, ChevronDown, History, Trash2, X
 } from "lucide-react";
 import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
 import { WelcomePopup } from "../components/Tour";
@@ -390,10 +391,57 @@ const DifferenceView: React.FC<{
   recommendedContract?: 1 | 2;
 }> = ({ differences, selectedCategory, onCategoryChange, showSideBySide, onToggleView, recommendedContract = 1 }) => {
   const [showInlineDiff, setShowInlineDiff] = useState(true);
+  const [activeDiffIndex, setActiveDiffIndex] = useState<number>(0);
+  const diffRefs = useRef<(HTMLDivElement | null)[]>([]);
+
   const categories = [...new Set(differences.map(d => d.category))];
   const filteredDifferences = selectedCategory === 'all'
     ? differences
     : differences.filter(d => d.category === selectedCategory);
+
+  // Reset active index when category changes or differences change
+  useEffect(() => {
+    setActiveDiffIndex(0);
+  }, [selectedCategory, differences.length]);
+
+  // Scroll to active difference
+  const scrollToActiveDiff = (index: number) => {
+    if (diffRefs.current[index]) {
+      diffRefs.current[index]?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+    }
+  };
+
+  // Navigation handlers
+  const goToPrevious = () => {
+    const newIndex = activeDiffIndex > 0 ? activeDiffIndex - 1 : filteredDifferences.length - 1;
+    setActiveDiffIndex(newIndex);
+    scrollToActiveDiff(newIndex);
+  };
+
+  const goToNext = () => {
+    const newIndex = activeDiffIndex < filteredDifferences.length - 1 ? activeDiffIndex + 1 : 0;
+    setActiveDiffIndex(newIndex);
+    scrollToActiveDiff(newIndex);
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowUp' && e.altKey) {
+        e.preventDefault();
+        goToPrevious();
+      } else if (e.key === 'ArrowDown' && e.altKey) {
+        e.preventDefault();
+        goToNext();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeDiffIndex, filteredDifferences.length]);
 
   // Severity stats
   const severityStats = {
@@ -467,6 +515,33 @@ const DifferenceView: React.FC<{
           </select>
         </div>
 
+        {/* Diff Navigation */}
+        {filteredDifferences.length > 1 && (
+          <div className="diff-navigation">
+            <motion.button
+              className="nav-button"
+              onClick={goToPrevious}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              title="Vorheriger Unterschied (Alt + ↑)"
+            >
+              <ChevronUp size={18} />
+            </motion.button>
+            <span className="nav-counter">
+              {activeDiffIndex + 1} / {filteredDifferences.length}
+            </span>
+            <motion.button
+              className="nav-button"
+              onClick={goToNext}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              title="Nächster Unterschied (Alt + ↓)"
+            >
+              <ChevronDown size={18} />
+            </motion.button>
+          </div>
+        )}
+
         <div className="view-toggles">
           <motion.button
             className={`view-toggle ${showInlineDiff ? 'active' : ''}`}
@@ -495,15 +570,21 @@ const DifferenceView: React.FC<{
         {filteredDifferences.map((diff, index) => {
           const SeverityIcon = getSeverityIcon(diff.severity);
           const severityColor = getSeverityColor(diff.severity);
+          const isActive = index === activeDiffIndex;
 
           return (
             <motion.div
               key={index}
-              className={`difference-item severity-${diff.severity}`}
+              ref={(el) => { diffRefs.current[index] = el; }}
+              className={`difference-item severity-${diff.severity} ${isActive ? 'diff-active' : ''}`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05, duration: 0.3 }}
-              style={{ borderLeftColor: severityColor }}
+              style={{
+                borderLeftColor: severityColor,
+                boxShadow: isActive ? `0 0 0 2px ${severityColor}40, 0 4px 12px rgba(0, 0, 0, 0.12)` : undefined
+              }}
+              onClick={() => setActiveDiffIndex(index)}
             >
               <div className="difference-header-item">
                 <div className="section-info">
@@ -587,6 +668,21 @@ interface ProgressStep {
   message: string;
 }
 
+// History Item Interface for storing comparisons
+interface ComparisonHistoryItem {
+  id: string;
+  timestamp: number;
+  file1Name: string;
+  file2Name: string;
+  mode: string;
+  result: ComparisonResult;
+  recommended: 1 | 2;
+}
+
+// History Storage Key
+const COMPARISON_HISTORY_KEY = 'contract-ai-comparison-history';
+const MAX_HISTORY_ITEMS = 10;
+
 // Main Enhanced Compare Component
 export default function EnhancedCompare() {
   const [searchParams] = useSearchParams();
@@ -607,6 +703,10 @@ export default function EnhancedCompare() {
   const [preloadedContractName, setPreloadedContractName] = useState<string | null>(null);
   // 📊 SSE Progress State
   const [progress, setProgress] = useState<ProgressStep | null>(null);
+
+  // 📜 History State
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyItems, setHistoryItems] = useState<ComparisonHistoryItem[]>([]);
 
   const resultRef = useRef<HTMLDivElement>(null);
   const file1InputRef = useRef<HTMLInputElement>(null);
@@ -741,6 +841,78 @@ export default function EnhancedCompare() {
     }
   }, [result]);
 
+  // 📜 Load history on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(COMPARISON_HISTORY_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored) as ComparisonHistoryItem[];
+        setHistoryItems(parsed);
+      }
+    } catch (err) {
+      console.warn('Could not load comparison history:', err);
+    }
+  }, []);
+
+  // 📜 Save comparison to history
+  const saveToHistory = (comparisonResult: ComparisonResult, f1Name: string, f2Name: string) => {
+    const newItem: ComparisonHistoryItem = {
+      id: `compare-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      timestamp: Date.now(),
+      file1Name: f1Name,
+      file2Name: f2Name,
+      mode: comparisonMode,
+      result: comparisonResult,
+      recommended: comparisonResult.overallRecommendation.recommended
+    };
+
+    const updatedHistory = [newItem, ...historyItems].slice(0, MAX_HISTORY_ITEMS);
+    setHistoryItems(updatedHistory);
+
+    try {
+      localStorage.setItem(COMPARISON_HISTORY_KEY, JSON.stringify(updatedHistory));
+    } catch (err) {
+      console.warn('Could not save comparison history:', err);
+    }
+  };
+
+  // 📜 Load comparison from history
+  const loadFromHistory = (item: ComparisonHistoryItem) => {
+    setResult(item.result);
+    setComparisonMode(item.mode);
+    setShowHistory(false);
+    setNotification({
+      message: `Vergleich vom ${new Date(item.timestamp).toLocaleDateString('de-DE')} geladen`,
+      type: 'success'
+    });
+  };
+
+  // 📜 Delete from history
+  const deleteFromHistory = (id: string) => {
+    const updatedHistory = historyItems.filter(item => item.id !== id);
+    setHistoryItems(updatedHistory);
+
+    try {
+      localStorage.setItem(COMPARISON_HISTORY_KEY, JSON.stringify(updatedHistory));
+    } catch (err) {
+      console.warn('Could not update comparison history:', err);
+    }
+  };
+
+  // 📜 Clear all history
+  const clearHistory = () => {
+    setHistoryItems([]);
+    try {
+      localStorage.removeItem(COMPARISON_HISTORY_KEY);
+    } catch (err) {
+      console.warn('Could not clear comparison history:', err);
+    }
+    setNotification({
+      message: 'Historie wurde gelöscht',
+      type: 'success'
+    });
+  };
+
   const toggleSection = (section: string) => {
     setExpandedSections(prev => ({
       ...prev,
@@ -813,6 +985,8 @@ export default function EnhancedCompare() {
               } else if (eventData.type === 'result') {
                 setResult(eventData.data);
                 setProgress(null);
+                // Save to history
+                saveToHistory(eventData.data, file1?.name || 'Vertrag 1', file2?.name || 'Vertrag 2');
                 setNotification({
                   message: "Vertragsvergleich erfolgreich durchgeführt!",
                   type: "success"
@@ -957,17 +1131,241 @@ export default function EnhancedCompare() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <PageHeader
-            icon={Scale}
-            title="Vertragsvergleich"
-            subtitle="Vergleiche zwei Verträge und erhalte eine KI-Empfehlung"
-            iconColor="blue"
-            features={[
-              { text: 'Side-by-Side', icon: Eye },
-              { text: 'Unterschiede markiert', icon: AlertTriangle },
-              { text: 'KI-Empfehlung', icon: Star }
-            ]}
-          />
+          <div style={{ position: 'relative' }}>
+            <PageHeader
+              icon={Scale}
+              title="Vertragsvergleich"
+              subtitle="Vergleiche zwei Verträge und erhalte eine KI-Empfehlung"
+              iconColor="blue"
+              features={[
+                { text: 'Side-by-Side', icon: Eye },
+                { text: 'Unterschiede markiert', icon: AlertTriangle },
+                { text: 'KI-Empfehlung', icon: Star }
+              ]}
+            />
+
+            {/* History Button */}
+            {historyItems.length > 0 && (
+              <motion.button
+                onClick={() => setShowHistory(!showHistory)}
+                style={{
+                  position: 'absolute',
+                  top: '1rem',
+                  right: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.6rem 1rem',
+                  background: showHistory ? '#0071e3' : 'white',
+                  color: showHistory ? 'white' : '#1d1d1f',
+                  border: '1px solid #e8e8ed',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem',
+                  fontWeight: 500,
+                  fontFamily: 'inherit',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)'
+                }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <History size={16} />
+                <span>Historie ({historyItems.length})</span>
+              </motion.button>
+            )}
+          </div>
+
+          {/* History Panel */}
+          <AnimatePresence>
+            {showHistory && (
+              <motion.div
+                className="history-panel"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3 }}
+                style={{
+                  marginBottom: '2rem',
+                  background: 'white',
+                  borderRadius: '16px',
+                  border: '1px solid #e8e8ed',
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+                  overflow: 'hidden'
+                }}
+              >
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '1rem 1.5rem',
+                  borderBottom: '1px solid #e8e8ed',
+                  background: '#f5f5f7'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                    <History size={18} style={{ color: '#0071e3' }} />
+                    <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: '#1d1d1f' }}>
+                      Vergleichs-Historie
+                    </h3>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <motion.button
+                      onClick={clearHistory}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.4rem',
+                        padding: '0.4rem 0.8rem',
+                        background: 'rgba(255, 69, 58, 0.1)',
+                        color: '#ff453a',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '0.8rem',
+                        fontWeight: 500,
+                        fontFamily: 'inherit'
+                      }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <Trash2 size={14} />
+                      Alle löschen
+                    </motion.button>
+                    <motion.button
+                      onClick={() => setShowHistory(false)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '28px',
+                        height: '28px',
+                        background: '#e8e8ed',
+                        color: '#6e6e73',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer'
+                      }}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <X size={16} />
+                    </motion.button>
+                  </div>
+                </div>
+
+                <div style={{ padding: '1rem', maxHeight: '400px', overflowY: 'auto' }}>
+                  {historyItems.map((item, index) => {
+                    const modeLabels: Record<string, string> = {
+                      standard: 'Standard',
+                      version: 'Versionen',
+                      bestPractice: 'Best Practice',
+                      competition: 'Anbieter'
+                    };
+
+                    return (
+                      <motion.div
+                        key={item.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '1rem',
+                          borderRadius: '10px',
+                          border: '1px solid #e8e8ed',
+                          marginBottom: index < historyItems.length - 1 ? '0.75rem' : 0,
+                          background: '#fafafa',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                        whileHover={{
+                          background: 'rgba(0, 113, 227, 0.05)',
+                          borderColor: '#0071e3'
+                        }}
+                        onClick={() => loadFromHistory(item)}
+                      >
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                            <span style={{
+                              fontSize: '0.75rem',
+                              fontWeight: 500,
+                              padding: '0.2rem 0.5rem',
+                              borderRadius: '4px',
+                              background: 'rgba(0, 113, 227, 0.1)',
+                              color: '#0071e3'
+                            }}>
+                              {modeLabels[item.mode] || item.mode}
+                            </span>
+                            <span style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
+                              {new Date(item.timestamp).toLocaleDateString('de-DE', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <FileText size={14} style={{ color: '#6e6e73' }} />
+                            <span style={{ fontSize: '0.9rem', color: '#1d1d1f', fontWeight: 500 }}>
+                              {item.file1Name}
+                            </span>
+                            <ArrowRight size={14} style={{ color: '#6e6e73' }} />
+                            <span style={{ fontSize: '0.9rem', color: '#1d1d1f', fontWeight: 500 }}>
+                              {item.file2Name}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.3rem',
+                            padding: '0.3rem 0.6rem',
+                            borderRadius: '6px',
+                            background: item.recommended === 1 ? 'rgba(52, 199, 89, 0.1)' : 'rgba(88, 86, 214, 0.1)',
+                            color: item.recommended === 1 ? '#34c759' : '#5856d6',
+                            fontSize: '0.8rem',
+                            fontWeight: 500
+                          }}>
+                            <Star size={12} />
+                            Vertrag {item.recommended}
+                          </div>
+
+                          <motion.button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteFromHistory(item.id);
+                            }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              width: '28px',
+                              height: '28px',
+                              background: 'transparent',
+                              color: '#ff453a',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              opacity: 0.6
+                            }}
+                            whileHover={{ opacity: 1, scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                          >
+                            <Trash2 size={14} />
+                          </motion.button>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <UserProfileSelector
             selectedProfile={userProfile}
@@ -1881,6 +2279,61 @@ export default function EnhancedCompare() {
             color: #0071e3;
           }
 
+          /* Diff Navigation Styles */
+          .diff-navigation {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #f5f5f7;
+            padding: 0.4rem 0.8rem;
+            border-radius: 10px;
+          }
+
+          .nav-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 8px;
+            background: white;
+            color: #0071e3;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+          }
+
+          .nav-button:hover {
+            background: #0071e3;
+            color: white;
+          }
+
+          .nav-counter {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #1d1d1f;
+            min-width: 60px;
+            text-align: center;
+          }
+
+          /* Active Difference Styling */
+          .difference-item.diff-active {
+            transform: translateY(-2px);
+            border-left-width: 5px;
+          }
+
+          .difference-item.diff-active::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--severity-color, #0071e3), transparent);
+            border-radius: 12px 12px 0 0;
+          }
+
           /* Diff Highlighting Styles */
           .diff-text {
             display: inline;
@@ -1917,12 +2370,14 @@ export default function EnhancedCompare() {
           }
 
           .difference-item {
+            position: relative;
             border: 1px solid #e8e8ed;
             border-radius: 12px;
             padding: 1.5rem;
             background: white;
             border-left: 4px solid #e8e8ed;
             transition: all 0.2s ease;
+            cursor: pointer;
           }
 
           .difference-item:hover {
