@@ -713,10 +713,13 @@ router.get("/history", verifyToken, async (req, res) => {
         file1Name: h.file1Name,
         file2Name: h.file2Name,
         userProfile: h.userProfile,
+        comparisonMode: h.comparisonMode || 'standard',
         recommendedContract: h.recommendedContract,
         confidence: h.confidence,
         differencesCount: h.differencesCount,
-        timestamp: h.timestamp
+        timestamp: h.timestamp,
+        // Include full result for history reload feature
+        result: h.fullResult || null
       })),
       totalComparisons: user.compareCount || 0,
       remainingComparisons: (() => {
@@ -731,6 +734,48 @@ router.get("/history", verifyToken, async (req, res) => {
   } catch (error) {
     console.error("❌ History fetch error:", error);
     res.status(500).json({ message: "Fehler beim Laden der Historie" });
+  }
+});
+
+// Delete single history item
+router.delete("/history/:id", verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Verify ownership - only delete if it belongs to this user
+    const result = await contractsCollection.deleteOne({
+      _id: new ObjectId(id),
+      userId: new ObjectId(req.user.userId),
+      action: "compare_contracts"
+    });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: "Eintrag nicht gefunden oder keine Berechtigung" });
+    }
+
+    res.json({ message: "Eintrag gelöscht", deleted: true });
+  } catch (error) {
+    console.error("❌ Delete history item error:", error);
+    res.status(500).json({ message: "Fehler beim Löschen des Eintrags" });
+  }
+});
+
+// Clear all history for user
+router.delete("/history", verifyToken, async (req, res) => {
+  try {
+    const result = await contractsCollection.deleteMany({
+      userId: new ObjectId(req.user.userId),
+      action: "compare_contracts"
+    });
+
+    res.json({
+      message: "Historie gelöscht",
+      deleted: true,
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    console.error("❌ Clear history error:", error);
+    res.status(500).json({ message: "Fehler beim Löschen der Historie" });
   }
 });
 

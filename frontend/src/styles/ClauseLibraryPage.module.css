@@ -1236,7 +1236,7 @@
   justify-content: center;
   border-radius: 10px;
   font-size: 1.1rem;
-  color: white;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
 }
 
 .categorySectionTitle {

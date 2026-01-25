@@ -219,7 +219,7 @@ const MusterklauselnTab: React.FC = () => {
                   onClick={() => toggleCategory(category)}
                 >
                   <div className={styles.categorySectionLeft}>
-                    <span className={styles.categorySectionIcon} style={{ background: catInfo.color }}>
+                    <span className={styles.categorySectionIcon}>
                       {catInfo.icon}
                     </span>
                     <h3 className={styles.categorySectionTitle}>{catInfo.label}</h3>

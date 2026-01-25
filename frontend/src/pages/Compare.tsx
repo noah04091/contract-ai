@@ -731,15 +731,7 @@ interface ComparisonHistoryItem {
   recommended: 1 | 2;
 }
 
-// History Storage Key - now user-specific
-const COMPARISON_HISTORY_KEY_PREFIX = 'contract-ai-comparison-history-';
-const MAX_HISTORY_ITEMS = 10;
-
-// Helper to get user-specific history key
-const getHistoryKey = (userId: string | null) => {
-  if (!userId) return null;
-  return `${COMPARISON_HISTORY_KEY_PREFIX}${userId}`;
-};
+// History is now stored in backend database (user-specific, device-independent)
 
 // Main Enhanced Compare Component
 export default function EnhancedCompare() {
@@ -762,10 +754,9 @@ export default function EnhancedCompare() {
   // 📊 SSE Progress State
   const [progress, setProgress] = useState<ProgressStep | null>(null);
 
-  // 📜 History State
+  // 📜 History State (loaded from backend API)
   const [showHistory, setShowHistory] = useState(false);
   const [historyItems, setHistoryItems] = useState<ComparisonHistoryItem[]>([]);
-  const [userId, setUserId] = useState<string | null>(null);
 
   const resultRef = useRef<HTMLDivElement>(null);
   const file1InputRef = useRef<HTMLInputElement>(null);
@@ -821,13 +812,6 @@ export default function EnhancedCompare() {
         console.log("🎯 SETTING isPremium to:", hasPremium);
 
         setIsPremium(hasPremium);
-
-        // 📜 Extract userId for user-specific history
-        const extractedUserId = userData._id || userData.id || data.user?._id || data.user?.id;
-        if (extractedUserId) {
-          setUserId(extractedUserId);
-          console.log("🆔 User ID for history:", extractedUserId);
-        }
 
       } catch (err) {
         if (err instanceof DOMException && err.name === "AbortError") return;
@@ -907,60 +891,59 @@ export default function EnhancedCompare() {
     }
   }, [result]);
 
-  // 📜 Load history when userId is available (user-specific)
-  useEffect(() => {
-    const historyKey = getHistoryKey(userId);
-    if (!historyKey) {
-      // No userId yet, clear history until we have one
-      setHistoryItems([]);
-      return;
-    }
+  // 📜 Load history from backend API
+  const loadHistoryFromBackend = async () => {
+    if (!isPremium) return;
 
     try {
-      const stored = localStorage.getItem(historyKey);
-      if (stored) {
-        const parsed = JSON.parse(stored) as ComparisonHistoryItem[];
-        setHistoryItems(parsed);
-        console.log(`📜 Loaded ${parsed.length} history items for user ${userId}`);
-      } else {
-        setHistoryItems([]);
+      const res = await fetch('/api/compare/history', {
+        credentials: 'include'
+      });
+
+      if (!res.ok) {
+        if (res.status === 403) {
+          // Not premium - no history access
+          setHistoryItems([]);
+          return;
+        }
+        throw new Error('Failed to load history');
       }
+
+      const data = await res.json();
+
+      // Transform backend data to frontend format
+      const items: ComparisonHistoryItem[] = (data.history || [])
+        .filter((h: any) => h.result !== null) // Only items with full result
+        .map((h: any) => ({
+          id: h.id,
+          timestamp: new Date(h.timestamp).getTime(),
+          file1Name: h.file1Name,
+          file2Name: h.file2Name,
+          mode: h.comparisonMode || 'standard',
+          result: h.result,
+          recommended: h.recommendedContract
+        }));
+
+      setHistoryItems(items);
+      console.log(`📜 Loaded ${items.length} history items from backend`);
     } catch (err) {
-      console.warn('Could not load comparison history:', err);
+      console.warn('Could not load comparison history from backend:', err);
       setHistoryItems([]);
-    }
-  }, [userId]);
-
-  // 📜 Save comparison to history (user-specific)
-  const saveToHistory = (comparisonResult: ComparisonResult, f1Name: string, f2Name: string) => {
-    const historyKey = getHistoryKey(userId);
-    if (!historyKey) {
-      console.warn('Cannot save history: no userId available');
-      return;
-    }
-
-    const newItem: ComparisonHistoryItem = {
-      id: `compare-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      timestamp: Date.now(),
-      file1Name: f1Name,
-      file2Name: f2Name,
-      mode: comparisonMode,
-      result: comparisonResult,
-      recommended: comparisonResult.overallRecommendation.recommended
-    };
-
-    const updatedHistory = [newItem, ...historyItems].slice(0, MAX_HISTORY_ITEMS);
-    setHistoryItems(updatedHistory);
-
-    try {
-      localStorage.setItem(historyKey, JSON.stringify(updatedHistory));
-      console.log(`📜 Saved history for user ${userId}`);
-    } catch (err) {
-      console.warn('Could not save comparison history:', err);
+    } finally {
+      setHistoryLoading(false);
     }
   };
 
-  // 📜 Load comparison from history
+  // Load history when premium status is confirmed
+  useEffect(() => {
+    if (isPremium === true) {
+      loadHistoryFromBackend();
+    } else if (isPremium === false) {
+      setHistoryItems([]);
+    }
+  }, [isPremium]);
+
+  // 📜 Load comparison from history (display result)
   const loadFromHistory = (item: ComparisonHistoryItem) => {
     setResult(item.result);
     setComparisonMode(item.mode);
@@ -971,36 +954,55 @@ export default function EnhancedCompare() {
     });
   };
 
-  // 📜 Delete from history (user-specific)
-  const deleteFromHistory = (id: string) => {
-    const historyKey = getHistoryKey(userId);
-    if (!historyKey) return;
-
-    const updatedHistory = historyItems.filter(item => item.id !== id);
-    setHistoryItems(updatedHistory);
-
+  // 📜 Delete from history via backend API
+  const deleteFromHistory = async (id: string) => {
     try {
-      localStorage.setItem(historyKey, JSON.stringify(updatedHistory));
+      const res = await fetch(`/api/compare/history/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to delete history item');
+      }
+
+      // Update local state
+      setHistoryItems(prev => prev.filter(item => item.id !== id));
+      console.log('📜 Deleted history item from backend');
     } catch (err) {
-      console.warn('Could not update comparison history:', err);
+      console.warn('Could not delete history item:', err);
+      setNotification({
+        message: 'Fehler beim Löschen des Eintrags',
+        type: 'error'
+      });
     }
   };
 
-  // 📜 Clear all history (user-specific)
-  const clearHistory = () => {
-    const historyKey = getHistoryKey(userId);
-    if (!historyKey) return;
-
-    setHistoryItems([]);
+  // 📜 Clear all history via backend API
+  const clearHistory = async () => {
     try {
-      localStorage.removeItem(historyKey);
+      const res = await fetch('/api/compare/history', {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to clear history');
+      }
+
+      setHistoryItems([]);
+      setNotification({
+        message: 'Historie wurde gelöscht',
+        type: 'success'
+      });
+      console.log('📜 Cleared all history from backend');
     } catch (err) {
-      console.warn('Could not clear comparison history:', err);
+      console.warn('Could not clear history:', err);
+      setNotification({
+        message: 'Fehler beim Löschen der Historie',
+        type: 'error'
+      });
     }
-    setNotification({
-      message: 'Historie wurde gelöscht',
-      type: 'success'
-    });
   };
 
   const toggleSection = (section: string) => {
@@ -1075,8 +1077,8 @@ export default function EnhancedCompare() {
               } else if (eventData.type === 'result') {
                 setResult(eventData.data);
                 setProgress(null);
-                // Save to history
-                saveToHistory(eventData.data, file1?.name || 'Vertrag 1', file2?.name || 'Vertrag 2');
+                // Backend automatically saves to history - reload to get latest
+                loadHistoryFromBackend();
                 setNotification({
                   message: "Vertragsvergleich erfolgreich durchgeführt!",
                   type: "success"
