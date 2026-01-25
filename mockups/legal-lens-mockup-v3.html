@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Legal Lens - Mockup V3 (Linear/Notion Style)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #ffffff;
+      min-height: 100vh;
+      color: #1e293b;
+    }
+
+    .navbar {
+      height: 64px;
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: #64748b;
+    }
+
+    .page {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 64px 24px 100px;
+    }
+
+    /* Header - Super Clean */
+    .header {
+      margin-bottom: 56px;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 12px;
+    }
+
+    .header-icon {
+      width: 40px;
+      height: 40px;
+      background: #3b82f6;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 20px;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+    }
+
+    .header p {
+      font-size: 15px;
+      color: #64748b;
+      max-width: 400px;
+      line-height: 1.5;
+    }
+
+    /* Two Sections Side by Side */
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      margin-bottom: 64px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+    }
+
+    /* Upload Area - Minimal */
+    .upload-box {
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 40px 32px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .upload-box:hover {
+      border-color: #3b82f6;
+      background: #fafbff;
+    }
+
+    .upload-box-icon {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 16px;
+      background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 24px;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+    }
+
+    .upload-box-text {
+      font-size: 14px;
+      color: #475569;
+      margin-bottom: 4px;
+    }
+
+    .upload-box-text a {
+      color: #3b82f6;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .upload-box-text a:hover {
+      text-decoration: underline;
+    }
+
+    .upload-box-hint {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    /* Contracts Section */
+    .contracts-section {
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .search-bar {
+      padding: 12px 16px;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .search-bar svg {
+      width: 16px;
+      height: 16px;
+      color: #94a3b8;
+    }
+
+    .search-bar input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-size: 13px;
+      outline: none;
+      color: #1e293b;
+    }
+
+    .search-bar input::placeholder {
+      color: #94a3b8;
+    }
+
+    .contracts-list {
+      max-height: 280px;
+      overflow-y: auto;
+    }
+
+    .contract-entry {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid #f8fafc;
+      cursor: pointer;
+      transition: background 0.1s ease;
+    }
+
+    .contract-entry:last-child {
+      border-bottom: none;
+    }
+
+    .contract-entry:hover {
+      background: #fafbfc;
+    }
+
+    .contract-entry-icon {
+      width: 36px;
+      height: 36px;
+      background: #f1f5f9;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      font-size: 16px;
+      transition: all 0.1s ease;
+    }
+
+    .contract-entry:hover .contract-entry-icon {
+      background: #e0e7ff;
+      color: #3b82f6;
+    }
+
+    .contract-entry-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .contract-entry-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: #1e293b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .contract-entry-meta {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-top: 1px;
+    }
+
+    .contract-entry-arrow {
+      font-size: 14px;
+      color: #cbd5e1;
+      transition: all 0.1s ease;
+    }
+
+    .contract-entry:hover .contract-entry-arrow {
+      color: #3b82f6;
+      transform: translateX(2px);
+    }
+
+    /* Features - Inline */
+    .features-line {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+      padding-top: 32px;
+      border-top: 1px solid #f1f5f9;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    .feature-item-icon {
+      font-size: 16px;
+    }
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">[CONTRACT AI NAVBAR]</nav>
+
+  <div class="page">
+    <!-- Clean Header -->
+    <header class="header">
+      <div class="header-top">
+        <div class="header-icon">⚖️</div>
+        <h1>Legal Lens</h1>
+      </div>
+      <p>Interaktive Vertragsanalyse - verstehen Sie jede Klausel mit KI-Unterstützung</p>
+    </header>
+
+    <!-- Content Grid -->
+    <div class="content-grid">
+      <!-- Upload -->
+      <div>
+        <div class="section-label">Neuer Vertrag</div>
+        <div class="upload-box">
+          <div class="upload-box-icon">📄</div>
+          <p class="upload-box-text">
+            PDF ablegen oder <a href="#">auswählen</a>
+          </p>
+          <p class="upload-box-hint">Max. 20 MB</p>
+        </div>
+      </div>
+
+      <!-- Contracts -->
+      <div>
+        <div class="section-label">Meine Verträge</div>
+        <div class="contracts-section">
+          <div class="search-bar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" placeholder="Suchen...">
+          </div>
+          <div class="contracts-list">
+            <div class="contract-entry">
+              <div class="contract-entry-icon">📄</div>
+              <div class="contract-entry-info">
+                <div class="contract-entry-name">Mietvertrag-Hauptstr-42.pdf</div>
+                <div class="contract-entry-meta">Mietvertrag • 15.12.2025</div>
+              </div>
+              <div class="contract-entry-arrow">→</div>
+            </div>
+            <div class="contract-entry">
+              <div class="contract-entry-icon">📄</div>
+              <div class="contract-entry-info">
+                <div class="contract-entry-name">Arbeitsvertrag-Schmidt.pdf</div>
+                <div class="contract-entry-meta">Arbeitsvertrag • 10.12.2025</div>
+              </div>
+              <div class="contract-entry-arrow">→</div>
+            </div>
+            <div class="contract-entry">
+              <div class="contract-entry-icon">📄</div>
+              <div class="contract-entry-info">
+                <div class="contract-entry-name">Dienstleistungsvertrag.pdf</div>
+                <div class="contract-entry-meta">Dienstleistung • 05.12.2025</div>
+              </div>
+              <div class="contract-entry-arrow">→</div>
+            </div>
+            <div class="contract-entry">
+              <div class="contract-entry-icon">📄</div>
+              <div class="contract-entry-info">
+                <div class="contract-entry-name">NDA-Partner-GmbH.pdf</div>
+                <div class="contract-entry-meta">NDA • 01.12.2025</div>
+              </div>
+              <div class="contract-entry-arrow">→</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Features Line -->
+    <div class="features-line">
+      <div class="feature-item">
+        <span class="feature-item-icon">👁️</span>
+        4 Perspektiven
+      </div>
+      <div class="feature-item">
+        <span class="feature-item-icon">⚖️</span>
+        Risikobewertung
+      </div>
+      <div class="feature-item">
+        <span class="feature-item-icon">💡</span>
+        Alternativen
+      </div>
+      <div class="feature-item">
+        <span class="feature-item-icon">💬</span>
+        Verhandlungstipps
+      </div>
+    </div>
+  </div>
+</body>
+</html>

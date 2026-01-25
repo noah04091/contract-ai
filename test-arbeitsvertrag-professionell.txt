@@ -1,0 +1,133 @@
+ARBEITSVERTRAG
+
+zwischen
+
+Muster GmbH
+Musterstraße 123
+80333 München
+- nachfolgend "Arbeitgeber" genannt -
+
+und
+
+Max Mustermann
+Beispielweg 45
+80335 München
+- nachfolgend "Arbeitnehmer" genannt -
+
+
+§ 1 Beginn und Dauer des Arbeitsverhältnisses
+
+(1) Das Arbeitsverhältnis beginnt am 01.02.2025 und wird auf unbestimmte Zeit geschlossen.
+
+(2) Die ersten sechs Monate gelten als Probezeit. Während der Probezeit kann das Arbeitsverhältnis von beiden Seiten mit einer Frist von zwei Wochen gekündigt werden.
+
+
+§ 2 Tätigkeit und Aufgabenbereich
+
+(1) Der Arbeitnehmer wird als Senior Software Developer eingestellt.
+
+(2) Zu seinen Aufgaben gehören insbesondere:
+- Entwicklung und Wartung von Softwareanwendungen
+- Technische Konzeption und Architektur
+- Code-Reviews und Qualitätssicherung
+- Mentoring von Junior-Entwicklern
+
+(3) Der Arbeitgeber behält sich vor, dem Arbeitnehmer andere zumutbare Aufgaben zuzuweisen, die seinen Fähigkeiten und Qualifikationen entsprechen.
+
+
+§ 3 Arbeitsort
+
+(1) Der Arbeitsort ist der Firmensitz in München.
+
+(2) Der Arbeitnehmer erklärt sich bereit, auch an anderen Orten des Arbeitgebers tätig zu werden, soweit dies zumutbar ist.
+
+(3) Nach Absprache ist mobiles Arbeiten (Home Office) an bis zu drei Tagen pro Woche möglich.
+
+
+§ 4 Arbeitszeit
+
+(1) Die regelmäßige wöchentliche Arbeitszeit beträgt 40 Stunden.
+
+(2) Die Verteilung der Arbeitszeit richtet sich nach den betrieblichen Erfordernissen und wird in Abstimmung mit dem Vorgesetzten festgelegt.
+
+(3) Der Arbeitnehmer ist verpflichtet, bei betrieblichem Bedarf Mehrarbeit zu leisten. Mehrarbeit wird durch Freizeitausgleich oder gesonderte Vergütung abgegolten.
+
+
+§ 5 Vergütung
+
+(1) Der Arbeitnehmer erhält ein monatliches Bruttogehalt von 6.500,00 Euro (in Worten: sechstausendfünfhundert Euro).
+
+(2) Die Zahlung erfolgt jeweils zum Ende des Monats auf ein vom Arbeitnehmer angegebenes Bankkonto.
+
+(3) Zusätzlich erhält der Arbeitnehmer einen leistungsabhängigen Bonus von bis zu 10% des Jahresgehalts, dessen Auszahlung und Höhe sich nach der Erreichung vereinbarter Ziele richtet.
+
+
+§ 6 Urlaub
+
+(1) Der Arbeitnehmer hat Anspruch auf 30 Arbeitstage bezahlten Erholungsurlaub pro Kalenderjahr.
+
+(2) Der Urlaub ist in Abstimmung mit dem Vorgesetzten und unter Berücksichtigung betrieblicher Belange zu nehmen.
+
+(3) Im Eintrittsjahr und im Austrittsjahr wird der Urlaub anteilig berechnet.
+
+
+§ 7 Entgeltfortzahlung im Krankheitsfall
+
+(1) Im Falle einer Arbeitsunfähigkeit durch Krankheit erhält der Arbeitnehmer Entgeltfortzahlung nach den gesetzlichen Bestimmungen.
+
+(2) Der Arbeitnehmer ist verpflichtet, eine Arbeitsunfähigkeit unverzüglich anzuzeigen und spätestens am dritten Kalendertag der Arbeitsunfähigkeit eine ärztliche Bescheinigung vorzulegen.
+
+
+§ 8 Kündigung
+
+(1) Nach Ablauf der Probezeit kann das Arbeitsverhältnis von beiden Seiten mit einer Frist von drei Monaten zum Monatsende gekündigt werden.
+
+(2) Die Kündigung bedarf zu ihrer Wirksamkeit der Schriftform. Die elektronische Form ist ausgeschlossen.
+
+(3) Das Recht zur außerordentlichen Kündigung aus wichtigem Grund bleibt unberührt.
+
+
+§ 9 Nebentätigkeiten
+
+(1) Nebentätigkeiten bedürfen der vorherigen schriftlichen Zustimmung des Arbeitgebers.
+
+(2) Die Zustimmung ist zu erteilen, wenn die Nebentätigkeit die Arbeitsleistung nicht beeinträchtigt und keine berechtigten Interessen des Arbeitgebers entgegenstehen.
+
+
+§ 10 Geheimhaltung
+
+(1) Der Arbeitnehmer verpflichtet sich, über alle betrieblichen Angelegenheiten, insbesondere Geschäfts- und Betriebsgeheimnisse, Stillschweigen zu bewahren.
+
+(2) Diese Verpflichtung gilt auch nach Beendigung des Arbeitsverhältnisses fort.
+
+(3) Bei Beendigung des Arbeitsverhältnisses sind alle Unterlagen, Datenträger und sonstigen Materialien, die dem Arbeitnehmer im Rahmen seiner Tätigkeit überlassen wurden oder die er selbst angefertigt hat, vollständig an den Arbeitgeber zurückzugeben.
+
+
+§ 11 Wettbewerbsverbot
+
+Während der Dauer des Arbeitsverhältnisses ist es dem Arbeitnehmer untersagt, in selbstständiger, unselbstständiger oder sonstiger Weise für ein Konkurrenzunternehmen tätig zu werden oder ein solches zu errichten.
+
+
+§ 12 Vertragsänderungen und Nebenabreden
+
+(1) Änderungen und Ergänzungen dieses Vertrages bedürfen zu ihrer Wirksamkeit der Schriftform.
+
+(2) Mündliche Nebenabreden bestehen nicht.
+
+(3) Sollten einzelne Bestimmungen dieses Vertrages unwirksam sein oder werden, wird die Wirksamkeit der übrigen Bestimmungen hierdurch nicht berührt.
+
+
+§ 13 Schlussbestimmungen
+
+(1) Auf dieses Arbeitsverhältnis findet deutsches Recht Anwendung.
+
+(2) Gerichtsstand für alle Streitigkeiten aus diesem Vertrag ist München.
+
+
+München, den 15.01.2025
+
+
+
+_________________________          _________________________
+Arbeitgeber                        Arbeitnehmer
+(Muster GmbH)                      (Max Mustermann)

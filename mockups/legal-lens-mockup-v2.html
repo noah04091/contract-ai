@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Legal Lens - Mockup V2 (Stripe Style)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(180deg, #f0f4ff 0%, #fafbff 50%, #f8fafc 100%);
+      min-height: 100vh;
+      color: #1e293b;
+    }
+
+    .navbar {
+      height: 64px;
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: #64748b;
+    }
+
+    .page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 56px 24px 80px;
+    }
+
+    /* Header - Centered & Compact */
+    .header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #3b82f6;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+
+    .header-badge-dot {
+      width: 8px;
+      height: 8px;
+      background: #3b82f6;
+      border-radius: 50%;
+    }
+
+    .header h1 {
+      font-size: 32px;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      font-size: 16px;
+      color: #64748b;
+    }
+
+    /* Main Card - Single Card Design */
+    .main-card {
+      background: white;
+      border-radius: 20px;
+      border: 1px solid rgba(0,0,0,0.06);
+      box-shadow:
+        0 2px 4px rgba(0,0,0,0.02),
+        0 8px 16px rgba(0,0,0,0.04);
+      overflow: hidden;
+      margin-bottom: 40px;
+    }
+
+    .main-card-inner {
+      display: grid;
+      grid-template-columns: 1fr 1px 1fr;
+    }
+
+    .divider {
+      background: #f1f5f9;
+    }
+
+    .card-section {
+      padding: 32px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #0f172a;
+      margin-bottom: 8px;
+    }
+
+    .section-title svg {
+      width: 18px;
+      height: 18px;
+      color: #3b82f6;
+    }
+
+    .section-subtitle {
+      font-size: 13px;
+      color: #64748b;
+      margin-bottom: 24px;
+    }
+
+    /* Upload Zone */
+    .upload-zone {
+      border: 2px dashed #e2e8f0;
+      border-radius: 16px;
+      padding: 40px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: linear-gradient(180deg, #fafbff 0%, #f8fafc 100%);
+    }
+
+    .upload-zone:hover {
+      border-color: #3b82f6;
+      background: linear-gradient(180deg, #f0f7ff 0%, #eff6ff 100%);
+    }
+
+    .upload-icon-wrapper {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 20px;
+      background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+    }
+
+    .upload-icon-wrapper svg {
+      width: 32px;
+      height: 32px;
+      color: white;
+    }
+
+    .upload-title {
+      font-size: 15px;
+      font-weight: 500;
+      color: #1e293b;
+      margin-bottom: 4px;
+    }
+
+    .upload-title span {
+      color: #3b82f6;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .upload-meta {
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    /* Search */
+    .search-box {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .search-box svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+      color: #94a3b8;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 12px 14px 12px 44px;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 14px;
+      background: #f8fafc;
+      transition: all 0.2s ease;
+    }
+
+    .search-box input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Contract List */
+    .contracts {
+      max-height: 260px;
+      overflow-y: auto;
+    }
+
+    .contract-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .contract-row:hover {
+      background: #f8fafc;
+    }
+
+    .contract-row:hover .contract-row-icon {
+      background: #dbeafe;
+      color: #3b82f6;
+    }
+
+    .contract-row-icon {
+      width: 44px;
+      height: 44px;
+      background: #f1f5f9;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      font-size: 20px;
+      transition: all 0.15s ease;
+    }
+
+    .contract-row-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .contract-row-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: #1e293b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .contract-row-meta {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 2px;
+    }
+
+    .contract-row-arrow {
+      color: #cbd5e1;
+      transition: all 0.15s ease;
+    }
+
+    .contract-row:hover .contract-row-arrow {
+      color: #3b82f6;
+      transform: translateX(2px);
+    }
+
+    /* Features Row */
+    .features-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .feature-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #475569;
+      transition: all 0.2s ease;
+    }
+
+    .feature-pill:hover {
+      border-color: #c7d2fe;
+      background: #fafbff;
+    }
+
+    .feature-pill-icon {
+      font-size: 16px;
+    }
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">[CONTRACT AI NAVBAR]</nav>
+
+  <div class="page">
+    <!-- Centered Header -->
+    <header class="header">
+      <div class="header-badge">
+        <div class="header-badge-dot"></div>
+        KI-gestützte Analyse
+      </div>
+      <h1>Legal Lens</h1>
+      <p>Verstehen Sie jeden Vertrag - Klausel für Klausel</p>
+    </header>
+
+    <!-- Main Card with Two Sections -->
+    <div class="main-card">
+      <div class="main-card-inner">
+        <!-- Upload Section -->
+        <div class="card-section">
+          <h2 class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17,8 12,3 7,8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            Vertrag hochladen
+          </h2>
+          <p class="section-subtitle">PDF-Datei für interaktive Analyse</p>
+
+          <div class="upload-zone">
+            <div class="upload-icon-wrapper">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17,8 12,3 7,8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+            </div>
+            <p class="upload-title">Datei ablegen oder <span>durchsuchen</span></p>
+            <p class="upload-meta">PDF • Max. 20 MB</p>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Contracts Section -->
+        <div class="card-section">
+          <h2 class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14,2 14,8 20,8"/>
+            </svg>
+            Bestehende Verträge
+          </h2>
+          <p class="section-subtitle">Bereits hochgeladene Dokumente</p>
+
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" placeholder="Suchen...">
+          </div>
+
+          <div class="contracts">
+            <div class="contract-row">
+              <div class="contract-row-icon">📄</div>
+              <div class="contract-row-content">
+                <div class="contract-row-name">Mietvertrag-Hauptstr-42.pdf</div>
+                <div class="contract-row-meta">Mietvertrag • 15.12.2025</div>
+              </div>
+              <div class="contract-row-arrow">→</div>
+            </div>
+            <div class="contract-row">
+              <div class="contract-row-icon">📄</div>
+              <div class="contract-row-content">
+                <div class="contract-row-name">Arbeitsvertrag-Schmidt.pdf</div>
+                <div class="contract-row-meta">Arbeitsvertrag • 10.12.2025</div>
+              </div>
+              <div class="contract-row-arrow">→</div>
+            </div>
+            <div class="contract-row">
+              <div class="contract-row-icon">📄</div>
+              <div class="contract-row-content">
+                <div class="contract-row-name">NDA-Partner-GmbH.pdf</div>
+                <div class="contract-row-meta">NDA • 01.12.2025</div>
+              </div>
+              <div class="contract-row-arrow">→</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Features as Pills -->
+    <div class="features-row">
+      <div class="feature-pill">
+        <span class="feature-pill-icon">👁️</span>
+        4 Perspektiven
+      </div>
+      <div class="feature-pill">
+        <span class="feature-pill-icon">⚖️</span>
+        Risikobewertung
+      </div>
+      <div class="feature-pill">
+        <span class="feature-pill-icon">💡</span>
+        Alternativen
+      </div>
+      <div class="feature-pill">
+        <span class="feature-pill-icon">💬</span>
+        Verhandlungstipps
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Better Contracts - Mockup V4 (Premium Tabs)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f8fafc;
+      min-height: 100vh;
+      color: #1e293b;
+    }
+
+    .navbar {
+      height: 64px;
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: #64748b;
+    }
+
+    .page {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      border: 1px solid #bfdbfe;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #2563eb;
+      margin-bottom: 16px;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      font-size: 15px;
+      color: #64748b;
+      line-height: 1.5;
+    }
+
+    /* Main Card */
+    .main-card {
+      background: white;
+      border-radius: 20px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02), 0 12px 24px rgba(0, 0, 0, 0.04);
+      overflow: hidden;
+    }
+
+    /* Step Tabs */
+    .step-tabs {
+      display: flex;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .step-tab {
+      flex: 1;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #94a3b8;
+      background: #f8fafc;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .step-tab:not(:last-child) {
+      border-right: 1px solid #e2e8f0;
+    }
+
+    .step-tab.active {
+      background: white;
+      color: #0f172a;
+    }
+
+    .step-tab.active::after {
+      content: "";
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: #3b82f6;
+      border-radius: 3px 3px 0 0;
+    }
+
+    .step-tab.completed {
+      color: #10b981;
+    }
+
+    .step-tab-number {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+    }
+
+    .step-tab.active .step-tab-number {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .step-tab.completed .step-tab-number {
+      background: #10b981;
+      color: white;
+    }
+
+    /* Card Body */
+    .card-body {
+      padding: 32px;
+    }
+
+    /* Upload Zone */
+    .upload-zone {
+      border: 2px dashed #d1d5db;
+      border-radius: 16px;
+      padding: 48px 32px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      background: linear-gradient(180deg, #fafbfc 0%, #f8fafc 100%);
+    }
+
+    .upload-zone:hover {
+      border-color: #3b82f6;
+      background: linear-gradient(180deg, #f8faff 0%, #eff6ff 100%);
+    }
+
+    .upload-zone-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 20px;
+      background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      box-shadow: 0 12px 28px rgba(59, 130, 246, 0.3);
+      transition: transform 0.25s ease;
+    }
+
+    .upload-zone:hover .upload-zone-icon {
+      transform: scale(1.05);
+    }
+
+    .upload-zone-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #0f172a;
+      margin-bottom: 6px;
+    }
+
+    .upload-zone-title span {
+      color: #3b82f6;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .upload-zone-meta {
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    /* Divider */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 28px 0;
+    }
+
+    .divider-line {
+      flex: 1;
+      height: 1px;
+      background: #e2e8f0;
+    }
+
+    .divider-text {
+      font-size: 13px;
+      color: #94a3b8;
+      font-weight: 500;
+      background: white;
+      padding: 0 12px;
+    }
+
+    /* Text Area Section */
+    .text-area-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .text-area-section label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    .text-area-section textarea {
+      width: 100%;
+      padding: 16px;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      font-size: 14px;
+      background: #f8fafc;
+      resize: vertical;
+      min-height: 140px;
+      transition: all 0.2s ease;
+      line-height: 1.6;
+    }
+
+    .text-area-section textarea:focus {
+      outline: none;
+      border-color: #3b82f6;
+      background: white;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    }
+
+    .text-area-section textarea::placeholder {
+      color: #94a3b8;
+    }
+
+    /* Card Footer */
+    .card-footer {
+      padding: 20px 32px;
+      background: #f8fafc;
+      border-top: 1px solid #f1f5f9;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .footer-info {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    .primary-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .primary-btn:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    /* Feature Pills */
+    .feature-pills {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 28px;
+      flex-wrap: wrap;
+    }
+
+    .feature-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #64748b;
+    }
+
+    svg {
+      width: 24px;
+      height: 24px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">[CONTRACT AI NAVBAR]</nav>
+
+  <div class="page">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-badge">
+        <span>🔍</span>
+        Premium Feature
+      </div>
+      <h1>Bessere Alternativen finden</h1>
+      <p>Wir analysieren Ihren Vertrag und finden automatisch bessere Anbieter mit echten Preisen</p>
+    </header>
+
+    <!-- Main Card -->
+    <div class="main-card">
+      <!-- Step Tabs -->
+      <div class="step-tabs">
+        <button class="step-tab active">
+          <span class="step-tab-number">1</span>
+          Vertrag
+        </button>
+        <button class="step-tab">
+          <span class="step-tab-number">2</span>
+          Details
+        </button>
+        <button class="step-tab">
+          <span class="step-tab-number">3</span>
+          Alternativen
+        </button>
+      </div>
+
+      <!-- Card Body -->
+      <div class="card-body">
+        <!-- Upload Zone -->
+        <div class="upload-zone">
+          <div class="upload-zone-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17,8 12,3 7,8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <p class="upload-zone-title">PDF hier ablegen oder <span>durchsuchen</span></p>
+          <p class="upload-zone-meta">PDF, DOCX, TXT • Max. 20 MB</p>
+        </div>
+
+        <!-- Divider -->
+        <div class="divider">
+          <div class="divider-line"></div>
+          <span class="divider-text">oder manuell eingeben</span>
+          <div class="divider-line"></div>
+        </div>
+
+        <!-- Text Area -->
+        <div class="text-area-section">
+          <label>Vertragstext</label>
+          <textarea placeholder="Fügen Sie hier Ihren Vertragstext ein..."></textarea>
+        </div>
+      </div>
+
+      <!-- Card Footer -->
+      <div class="card-footer">
+        <div class="footer-info">
+          <span>🔒</span>
+          Ihre Daten sind sicher
+        </div>
+        <button class="primary-btn">
+          Weiter
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+            <path d="M5 12h14"/>
+            <path d="m12 5 7 7-7 7"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Feature Pills -->
+    <div class="feature-pills">
+      <div class="feature-pill">
+        <span>💰</span>
+        Preisvergleich
+      </div>
+      <div class="feature-pill">
+        <span>🔎</span>
+        Echte Angebote
+      </div>
+      <div class="feature-pill">
+        <span>⚡</span>
+        Sofort-Ergebnis
+      </div>
+      <div class="feature-pill">
+        <span>📊</span>
+        Detailanalyse
+      </div>
+    </div>
+  </div>
+</body>
+</html>

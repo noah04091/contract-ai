@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PageHeader Mockups - Kompakt & Modern</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f5f5f7;
+      color: #1d1d1f;
+      padding: 2rem;
+      line-height: 1.5;
+    }
+
+    .mockup-section {
+      margin-bottom: 3rem;
+      background: white;
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    }
+
+    .mockup-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #86868b;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #e5e5e5;
+    }
+
+    .mockup-note {
+      font-size: 0.875rem;
+      color: #86868b;
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px dashed #e5e5e5;
+    }
+
+    /* ===== VARIANTE 1: Stripe/Linear Style (Horizontal kompakt) ===== */
+    .header-v1 {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.5rem;
+      background: white;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .header-v1-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .header-v1-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .header-v1-icon.blue { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
+    .header-v1-icon.purple { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); }
+    .header-v1-icon.green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+    .header-v1-icon.orange { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); }
+
+    .header-v1-text h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #111827;
+      letter-spacing: -0.02em;
+    }
+
+    .header-v1-text p {
+      font-size: 0.875rem;
+      color: #6b7280;
+      margin-top: 2px;
+    }
+
+    .header-v1-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .header-v1-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: #f3f4f6;
+      border-radius: 8px;
+      font-size: 0.8125rem;
+      color: #374151;
+      font-weight: 500;
+    }
+
+    .header-v1-badge svg {
+      color: #10b981;
+    }
+
+    /* ===== VARIANTE 2: Notion Style (Minimal mit Breadcrumb-Feel) ===== */
+    .header-v2 {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.5rem;
+      background: white;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .header-v2-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .header-v2-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f3f4f6;
+      color: #6b7280;
+    }
+
+    .header-v2-text h1 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .header-v2-text p {
+      font-size: 0.75rem;
+      color: #9ca3af;
+    }
+
+    .header-v2-pills {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .header-v2-pill {
+      padding: 4px 10px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      color: #6b7280;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .header-v2-pill svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    /* ===== VARIANTE 3: Vercel/Linear Style (Modern mit Gradient-Akzent) ===== */
+    .header-v3 {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.5rem 2rem;
+      background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+      border-bottom: 1px solid #eaeaea;
+    }
+
+    .header-v3-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .header-v3-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .header-v3-icon.gradient-1 {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .header-v3-icon.gradient-2 {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    .header-v3-icon.gradient-3 {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    .header-v3-icon.gradient-4 {
+      background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+
+    .header-v3-content {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .header-v3-content h1 {
+      font-size: 1.375rem;
+      font-weight: 700;
+      color: #000;
+      letter-spacing: -0.03em;
+    }
+
+    .header-v3-content p {
+      font-size: 0.875rem;
+      color: #666;
+    }
+
+    .header-v3-features {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .header-v3-feature {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8125rem;
+      color: #444;
+    }
+
+    .header-v3-feature-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      background: #f0fdf4;
+      color: #22c55e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ===== VARIANTE 4: Apple Style (Clean mit Breathing Room) ===== */
+    .header-v4 {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 2rem;
+      background: #fbfbfd;
+    }
+
+    .header-v4-left {
+      display: flex;
+      align-items: flex-start;
+      gap: 1.25rem;
+    }
+
+    .header-v4-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .header-v4-icon.sf-blue {
+      background: #007AFF;
+      box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
+    }
+    .header-v4-icon.sf-purple {
+      background: #AF52DE;
+      box-shadow: 0 4px 16px rgba(175, 82, 222, 0.3);
+    }
+    .header-v4-icon.sf-green {
+      background: #34C759;
+      box-shadow: 0 4px 16px rgba(52, 199, 89, 0.3);
+    }
+
+    .header-v4-content h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #1d1d1f;
+      letter-spacing: -0.02em;
+      margin-bottom: 4px;
+    }
+
+    .header-v4-content p {
+      font-size: 0.9375rem;
+      color: #86868b;
+      max-width: 400px;
+    }
+
+    .header-v4-highlights {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      align-items: flex-end;
+    }
+
+    .header-v4-highlight {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8125rem;
+      color: #1d1d1f;
+      background: white;
+      padding: 8px 14px;
+      border-radius: 10px;
+      border: 1px solid #e5e5e5;
+    }
+
+    .header-v4-highlight svg {
+      color: #34C759;
+    }
+
+    /* ===== VARIANTE 5: Ultra-Compact (GitHub/GitLab Style) ===== */
+    .header-v5 {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.875rem 1.25rem;
+      background: #f6f8fa;
+      border-bottom: 1px solid #d0d7de;
+    }
+
+    .header-v5-left {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+
+    .header-v5-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0969da;
+      color: white;
+    }
+
+    .header-v5-left h1 {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: #24292f;
+    }
+
+    .header-v5-left span {
+      font-size: 0.8125rem;
+      color: #656d76;
+      margin-left: 0.5rem;
+    }
+
+    .header-v5-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .header-v5-btn {
+      padding: 5px 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      border-radius: 6px;
+      border: 1px solid #d0d7de;
+      background: white;
+      color: #24292f;
+      cursor: pointer;
+    }
+
+    .header-v5-btn.primary {
+      background: #2da44e;
+      border-color: #2da44e;
+      color: white;
+    }
+
+    /* ===== SEITEN-SPEZIFISCHE BEISPIELE ===== */
+    .page-example {
+      background: #f8fafc;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 1rem;
+    }
+
+    .page-content-placeholder {
+      padding: 2rem;
+      background: repeating-linear-gradient(
+        45deg,
+        #f1f5f9,
+        #f1f5f9 10px,
+        #e2e8f0 10px,
+        #e2e8f0 20px
+      );
+      min-height: 150px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #94a3b8;
+      font-size: 0.875rem;
+    }
+
+    /* SVG Icons */
+    .icon-sparkles { }
+    .icon-scale { }
+    .icon-search { }
+    .icon-eye { }
+
+    h2.section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 2rem;
+      color: #111;
+    }
+  </style>
+</head>
+<body>
+  <h2 class="section-title">PageHeader Mockups - Kompakt & Modern</h2>
+
+  <!-- VARIANTE 1: Stripe/Linear Style -->
+  <div class="mockup-section">
+    <div class="mockup-label">Variante 1: Stripe/Linear Style - Horizontal Kompakt</div>
+
+    <div class="page-example">
+      <div class="header-v1">
+        <div class="header-v1-left">
+          <div class="header-v1-icon purple">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 3l1.912 5.813a2 2 0 001.272 1.272L21 12l-5.813 1.912a2 2 0 00-1.272 1.272L12 21l-1.912-5.813a2 2 0 00-1.272-1.272L3 12l5.813-1.912a2 2 0 001.272-1.272L12 3z"/>
+            </svg>
+          </div>
+          <div class="header-v1-text">
+            <h1>KI-Vertragsoptimierung</h1>
+            <p>Automatische Verbesserungsvorschläge für deine Verträge</p>
+          </div>
+        </div>
+        <div class="header-v1-right">
+          <div class="header-v1-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+            </svg>
+            KI-gestützt
+          </div>
+          <div class="header-v1-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            DSGVO-konform
+          </div>
+          <div class="header-v1-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Sofort einsetzbar
+          </div>
+        </div>
+      </div>
+      <div class="page-content-placeholder">Seiten-Inhalt</div>
+    </div>
+
+    <div class="mockup-note">
+      <strong>Pro:</strong> Sehr kompakt, professionell, Platz für Feature-Badges rechts<br>
+      <strong>Contra:</strong> Weniger visueller Impact
+    </div>
+  </div>
+
+  <!-- VARIANTE 2: Notion Style -->
+  <div class="mockup-section">
+    <div class="mockup-label">Variante 2: Notion Style - Ultra-Minimal</div>
+
+    <div class="page-example">
+      <div class="header-v2">
+        <div class="header-v2-left">
+          <div class="header-v2-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 3l1.912 5.813a2 2 0 001.272 1.272L21 12l-5.813 1.912a2 2 0 00-1.272 1.272L12 21l-1.912-5.813a2 2 0 00-1.272-1.272L3 12l5.813-1.912a2 2 0 001.272-1.272L12 3z"/>
+            </svg>
+          </div>
+          <div class="header-v2-text">
+            <h1>KI-Vertragsoptimierung</h1>
+            <p>Automatische Verbesserungen</p>
+          </div>
+        </div>
+        <div class="header-v2-pills">
+          <div class="header-v2-pill">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+            </svg>
+            KI
+          </div>
+          <div class="header-v2-pill">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            DSGVO
+          </div>
+        </div>
+      </div>
+      <div class="page-content-placeholder">Seiten-Inhalt</div>
+    </div>
+
+    <div class="mockup-note">
+      <strong>Pro:</strong> Extrem platzsparend, clean<br>
+      <strong>Contra:</strong> Evtl. zu minimal für Premium-Gefühl
+    </div>
+  </div>
+
+  <!-- VARIANTE 3: Vercel/Linear Style -->
+  <div class="mockup-section">
+    <div class="mockup-label">Variante 3: Vercel/Linear Style - Modern mit Gradient-Akzent</div>
+
+    <div class="page-example">
+      <div class="header-v3">
+        <div class="header-v3-left">
+          <div class="header-v3-icon gradient-1">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 3l1.912 5.813a2 2 0 001.272 1.272L21 12l-5.813 1.912a2 2 0 00-1.272 1.272L12 21l-1.912-5.813a2 2 0 00-1.272-1.272L3 12l5.813-1.912a2 2 0 001.272-1.272L12 3z"/>
+            </svg>
+          </div>
+          <div class="header-v3-content">
+            <h1>KI-Vertragsoptimierung</h1>
+            <p>Automatische Verbesserungsvorschläge für deine Verträge</p>
+          </div>
+        </div>
+        <div class="header-v3-features">
+          <div class="header-v3-feature">
+            <div class="header-v3-feature-icon">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            KI-gestützte Analyse
+          </div>
+          <div class="header-v3-feature">
+            <div class="header-v3-feature-icon">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            DSGVO-konform
+          </div>
+          <div class="header-v3-feature">
+            <div class="header-v3-feature-icon">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            Sofort einsetzbar
+          </div>
+        </div>
+      </div>
+      <div class="page-content-placeholder">Seiten-Inhalt</div>
+    </div>
+
+    <div class="mockup-note">
+      <strong>Pro:</strong> Modernes Gradient-Icon, Features gut sichtbar, Premium-Gefühl<br>
+      <strong>Contra:</strong> Etwas mehr Platz als V1/V2
+    </div>
+  </div>
+
+  <!-- VARIANTE 4: Apple Style -->
+  <div class="mockup-section">
+    <div class="mockup-label">Variante 4: Apple Style - Clean mit Breathing Room</div>
+
+    <div class="page-example">
+      <div class="header-v4">
+        <div class="header-v4-left">
+          <div class="header-v4-icon sf-purple">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 3l1.912 5.813a2 2 0 001.272 1.272L21 12l-5.813 1.912a2 2 0 00-1.272 1.272L12 21l-1.912-5.813a2 2 0 00-1.272-1.272L3 12l5.813-1.912a2 2 0 001.272-1.272L12 3z"/>
+            </svg>
+          </div>
+          <div class="header-v4-content">
+            <h1>KI-Vertragsoptimierung</h1>
+            <p>Lade deinen Vertrag hoch und erhalte sofort Verbesserungsvorschläge.</p>
+          </div>
+        </div>
+        <div class="header-v4-highlights">
+          <div class="header-v4-highlight">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            KI-gestützte Analyse
+          </div>
+          <div class="header-v4-highlight">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            DSGVO-konform
+          </div>
+          <div class="header-v4-highlight">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Sofort einsetzbar
+          </div>
+        </div>
+      </div>
+      <div class="page-content-placeholder">Seiten-Inhalt</div>
+    </div>
+
+    <div class="mockup-note">
+      <strong>Pro:</strong> Sehr Apple-like, Feature-Cards sehen hochwertig aus<br>
+      <strong>Contra:</strong> Nimmt etwas mehr vertikalen Platz
+    </div>
+  </div>
+
+  <!-- SEITEN-BEISPIELE -->
+  <h2 class="section-title" style="margin-top: 3rem;">Angewandt auf alle Seiten (Variante 3)</h2>
+
+  <!-- Optimizer -->
+  <div class="mockup-section">
+    <div class="mockup-label">Optimizer</div>
+    <div class="page-example">
+      <div class="header-v3">
+        <div class="header-v3-left">
+          <div class="header-v3-icon gradient-1">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 3l1.912 5.813a2 2 0 001.272 1.272L21 12l-5.813 1.912a2 2 0 00-1.272 1.272L12 21l-1.912-5.813a2 2 0 00-1.272-1.272L3 12l5.813-1.912a2 2 0 001.272-1.272L12 3z"/>
+            </svg>
+          </div>
+          <div class="header-v3-content">
+            <h1>KI-Vertragsoptimierung</h1>
+            <p>Automatische Verbesserungsvorschläge für deine Verträge</p>
+          </div>
+        </div>
+        <div class="header-v3-features">
+          <div class="header-v3-feature">
+            <div class="header-v3-feature-icon">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            Risiko-Erkennung
+          </div>
+          <div class="header-v3-feature">
+            <div class="header-v3-feature-icon">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            Klausel-Vorschläge
+          </div>
+          <div class="header-v3-feature">
+            <div class="header-v3-feature-icon">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            PDF-Export
+          </div>
+        </div>
+      </div>
+      <div class="page-content-placeholder">Upload-Bereich, Ergebnisse...</div>
+    </div>
+  </div>
+
+  <!-- Compare -->
+  <div class="mockup-section">
+    <div class="mockup-label">Compare / Vertragsvergleich</div>
+    <div class="page-example">
+      <div class="header-v3">
+        <div class="header-v3-left">
+          <div class="header-v3-icon gradient-3">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+              <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+              <path d="M9 14l2 2 4-4"/>
+            </svg>
+          </div>
+          <div class="header-v3-content">
+            <h1>Vertragsvergleich</h1>
+            <p>Vergleiche zwei Verträge und erhalte eine KI-Empfehlung</p>
+          </div>
+        </div>
+        <div class="header-v3-features">
+          <div class="header-v3-feature">
+            <div class="header-v3-feature-icon">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            Side-by-Side
+          </div>
+          <div class="header-v3-feature">
+            <div class="header-v3-feature-icon">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            Unterschiede markiert
+          </div>
+          <div class="header-v3-feature">
+            <div class="header-v3-feature-icon">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            Empfehlung
+          </div>
+        </div>
+      </div>
+      <div class="page-content-placeholder">Zwei Upload-Bereiche, Vergleich...</div>
+    </div>
+  </div>
+
+  <!-- Better Contracts -->
+  <div class="mockup-section">
+    <div class="mockup-label">Better Contracts</div>
+    <div class="page-example">
+      <div class="header-v3">
+        <div class="header-v3-left">
+          <div class="header-v3-icon gradient-4">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.3-4.3"/>
+              <path d="m8 11 2 2 4-4"/>
+            </svg>
+          </div>
+          <div class="header-v3-content">
+            <h1>Bessere Alternativen</h1>
+            <p>Finde günstigere Anbieter für deine bestehenden Verträge</p>
+          </div>
+        </div>
+        <div class="header-v3-features">
+          <div class="header-v3-feature">
+            <div class="header-v3-feature-icon">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            Preisvergleich
+          </div>
+          <div class="header-v3-feature">
+            <div class="header-v3-feature-icon">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            Echte Angebote
+          </div>
+          <div class="header-v3-feature">
+            <div class="header-v3-feature-icon">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            Merkliste
+          </div>
+        </div>
+      </div>
+      <div class="page-content-placeholder">3-Step-Prozess, Alternativen...</div>
+    </div>
+  </div>
+
+  <!-- Legal Lens -->
+  <div class="mockup-section">
+    <div class="mockup-label">Legal Lens (bleibt Toolbar-Style)</div>
+    <div class="page-example">
+      <div class="header-v3">
+        <div class="header-v3-left">
+          <div class="header-v3-icon" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </div>
+          <div class="header-v3-content">
+            <h1>Legal Lens</h1>
+            <p>Interaktive Vertragsanalyse mit KI-Erklärungen</p>
+          </div>
+        </div>
+        <div class="header-v3-features">
+          <div class="header-v3-feature">
+            <div class="header-v3-feature-icon">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            Klick = Erklärung
+          </div>
+          <div class="header-v3-feature">
+            <div class="header-v3-feature-icon">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            Risiko-Bewertung
+          </div>
+          <div class="header-v3-feature">
+            <div class="header-v3-feature-icon">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            PDF-Export
+          </div>
+        </div>
+      </div>
+      <div class="page-content-placeholder">PDF-Viewer, Klausel-Liste, Analyse-Panel...</div>
+    </div>
+  </div>
+
+</body>
+</html>

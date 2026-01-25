@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Legal Lens - Mockup V1 (Clean Minimal)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f8fafc;
+      min-height: 100vh;
+      color: #1e293b;
+    }
+
+    /* Navbar Placeholder */
+    .navbar {
+      height: 64px;
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: #64748b;
+    }
+
+    /* Page Container */
+    .page {
+      padding: 48px 24px 80px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    /* Compact Header */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+
+    .header-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 24px;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+    }
+
+    .header-text h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+    }
+
+    .header-text p {
+      font-size: 14px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    /* Cards Grid - CENTERED */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 48px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      padding: 28px;
+      transition: all 0.2s ease;
+    }
+
+    .card:hover {
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+      border-color: #cbd5e1;
+    }
+
+    .card-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #0f172a;
+      margin-bottom: 20px;
+    }
+
+    .card-title svg {
+      color: #3b82f6;
+    }
+
+    /* Upload Area */
+    .upload-area {
+      border: 2px dashed #e2e8f0;
+      border-radius: 12px;
+      padding: 48px 32px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: #fafbfc;
+    }
+
+    .upload-area:hover {
+      border-color: #3b82f6;
+      background: #f8faff;
+    }
+
+    .upload-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 16px;
+      background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 28px;
+      box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+    }
+
+    .upload-text {
+      font-size: 15px;
+      color: #475569;
+      margin-bottom: 6px;
+    }
+
+    .upload-link {
+      color: #3b82f6;
+      font-weight: 500;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    .upload-hint {
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    /* Search */
+    .search-wrapper {
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 12px 14px 12px 42px;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 14px;
+      background: #f8fafc;
+      transition: all 0.2s ease;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Contract List */
+    .contract-list {
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    .contract-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .contract-item:hover {
+      background: #f1f5f9;
+    }
+
+    .contract-icon {
+      width: 40px;
+      height: 40px;
+      background: #f1f5f9;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+    }
+
+    .contract-item:hover .contract-icon {
+      background: #e0e7ff;
+      color: #3b82f6;
+    }
+
+    .contract-info {
+      flex: 1;
+    }
+
+    .contract-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: #1e293b;
+    }
+
+    .contract-meta {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    .contract-arrow {
+      color: #cbd5e1;
+    }
+
+    .contract-item:hover .contract-arrow {
+      color: #3b82f6;
+    }
+
+    /* Features */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .feature {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 24px 20px;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+
+    .feature:hover {
+      border-color: #c7d2fe;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    }
+
+    .feature-icon {
+      width: 44px;
+      height: 44px;
+      margin: 0 auto 12px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+
+    .feature-icon.blue { background: #dbeafe; }
+    .feature-icon.purple { background: #ede9fe; }
+    .feature-icon.green { background: #dcfce7; }
+    .feature-icon.amber { background: #fef3c7; }
+
+    .feature-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 4px;
+    }
+
+    .feature-text {
+      font-size: 12px;
+      color: #64748b;
+      line-height: 1.4;
+    }
+
+    /* SVG Icons */
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">[CONTRACT AI NAVBAR]</nav>
+
+  <div class="page">
+    <!-- Compact Header -->
+    <header class="header">
+      <div class="header-icon">⚖️</div>
+      <div class="header-text">
+        <h1>Legal Lens</h1>
+        <p>Interaktive Vertragsanalyse mit KI</p>
+      </div>
+    </header>
+
+    <!-- Cards Grid - Centered -->
+    <div class="cards-grid">
+      <!-- Upload Card -->
+      <div class="card">
+        <h2 class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17,8 12,3 7,8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          Neuen Vertrag analysieren
+        </h2>
+        <div class="upload-area">
+          <div class="upload-icon">📄</div>
+          <p class="upload-text">
+            PDF hier ablegen oder <span class="upload-link">durchsuchen</span>
+          </p>
+          <p class="upload-hint">Max. 20 MB • Automatische Analyse</p>
+        </div>
+      </div>
+
+      <!-- Contract List Card -->
+      <div class="card">
+        <h2 class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+          </svg>
+          Bestehenden Vertrag auswählen
+        </h2>
+
+        <div class="search-wrapper">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" class="search-input" placeholder="Vertrag suchen...">
+        </div>
+
+        <div class="contract-list">
+          <div class="contract-item">
+            <div class="contract-icon">📄</div>
+            <div class="contract-info">
+              <div class="contract-name">Mietvertrag-Hauptstr-42.pdf</div>
+              <div class="contract-meta">Mietvertrag • 15.12.2025</div>
+            </div>
+            <div class="contract-arrow">→</div>
+          </div>
+          <div class="contract-item">
+            <div class="contract-icon">📄</div>
+            <div class="contract-info">
+              <div class="contract-name">Arbeitsvertrag-Schmidt.pdf</div>
+              <div class="contract-meta">Arbeitsvertrag • 10.12.2025</div>
+            </div>
+            <div class="contract-arrow">→</div>
+          </div>
+          <div class="contract-item">
+            <div class="contract-icon">📄</div>
+            <div class="contract-info">
+              <div class="contract-name">Dienstleistungsvertrag-ABC.pdf</div>
+              <div class="contract-meta">Dienstleistung • 05.12.2025</div>
+            </div>
+            <div class="contract-arrow">→</div>
+          </div>
+          <div class="contract-item">
+            <div class="contract-icon">📄</div>
+            <div class="contract-info">
+              <div class="contract-name">NDA-Partner-GmbH.pdf</div>
+              <div class="contract-meta">NDA • 01.12.2025</div>
+            </div>
+            <div class="contract-arrow">→</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Features -->
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon blue">👁️</div>
+        <div class="feature-title">4 Perspektiven</div>
+        <div class="feature-text">Klauseln aus verschiedenen Blickwinkeln</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon purple">⚖️</div>
+        <div class="feature-title">Risikobewertung</div>
+        <div class="feature-text">Kritische Klauseln erkennen</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon green">💡</div>
+        <div class="feature-title">Alternativen</div>
+        <div class="feature-text">Bessere Formulierungen</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon amber">💬</div>
+        <div class="feature-title">Verhandlungstipps</div>
+        <div class="feature-text">Praktische Tipps</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

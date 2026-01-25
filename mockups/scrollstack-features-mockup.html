@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScrollStack Features Mockup - Contract AI</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+      color: #1a1a2e;
+      line-height: 1.6;
+    }
+
+    /* Header Section */
+    .hero {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+      background: linear-gradient(180deg, #f0f7ff 0%, #ffffff 100%);
+    }
+
+    .section-badge {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      background: linear-gradient(135deg, rgba(0, 102, 255, 0.1), rgba(59, 130, 246, 0.1));
+      color: #0066FF;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      border-radius: 100px;
+      margin-bottom: 1.5rem;
+      border: 1px solid rgba(0, 102, 255, 0.2);
+    }
+
+    .hero h1 {
+      font-size: 3.5rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+    }
+
+    .hero h1 span {
+      background: linear-gradient(135deg, #0052cc 0%, #0066FF 50%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      font-size: 1.25rem;
+      color: #64748b;
+      max-width: 600px;
+      margin-bottom: 2rem;
+    }
+
+    .scroll-hint {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      color: #94a3b8;
+      font-size: 0.9rem;
+      animation: bounce 2s infinite;
+    }
+
+    .scroll-hint svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(10px); }
+    }
+
+    /* ScrollStack Container */
+    .scrollstack-section {
+      position: relative;
+      padding: 0 2rem;
+    }
+
+    .scrollstack-container {
+      position: relative;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding-bottom: 100vh;
+    }
+
+    /* Feature Cards */
+    .feature-card {
+      position: sticky;
+      top: 10vh;
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 3rem;
+      margin-bottom: 80px;
+      box-shadow: 0 10px 60px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      transform-origin: top center;
+      transition: transform 0.1s ease-out;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      align-items: center;
+      min-height: 450px;
+    }
+
+    /* Stacking effect with different scales */
+    .feature-card:nth-child(1) { z-index: 9; }
+    .feature-card:nth-child(2) { z-index: 8; top: 12vh; }
+    .feature-card:nth-child(3) { z-index: 7; top: 14vh; }
+    .feature-card:nth-child(4) { z-index: 6; top: 16vh; }
+    .feature-card:nth-child(5) { z-index: 5; top: 18vh; }
+    .feature-card:nth-child(6) { z-index: 4; top: 20vh; }
+    .feature-card:nth-child(7) { z-index: 3; top: 22vh; }
+    .feature-card:nth-child(8) { z-index: 2; top: 24vh; }
+    .feature-card:nth-child(9) { z-index: 1; top: 26vh; }
+
+    /* Alternating layout */
+    .feature-card:nth-child(even) {
+      direction: rtl;
+    }
+
+    .feature-card:nth-child(even) > * {
+      direction: ltr;
+    }
+
+    /* Card content */
+    .card-content {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .card-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: linear-gradient(135deg, rgba(0, 102, 255, 0.1), rgba(59, 130, 246, 0.05));
+      color: #0066FF;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border-radius: 100px;
+      width: fit-content;
+    }
+
+    .card-badge.purple { background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(139, 92, 246, 0.05)); color: #8b5cf6; }
+    .card-badge.green { background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05)); color: #22c55e; }
+    .card-badge.orange { background: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(249, 115, 22, 0.05)); color: #f97316; }
+    .card-badge.cyan { background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(6, 182, 212, 0.05)); color: #06b6d4; }
+
+    .card-content h2 {
+      font-size: 2.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+
+    .card-content h2 span {
+      background: linear-gradient(135deg, #0052cc 0%, #0066FF 50%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .card-content p {
+      font-size: 1.1rem;
+      color: #64748b;
+      line-height: 1.7;
+    }
+
+    .card-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #0066FF;
+      font-weight: 600;
+      text-decoration: none;
+      font-size: 1rem;
+      transition: gap 0.2s;
+    }
+
+    .card-link:hover {
+      gap: 0.75rem;
+    }
+
+    /* Card visual */
+    .card-visual {
+      background: linear-gradient(135deg, #f0f7ff 0%, #e0edff 100%);
+      border-radius: 16px;
+      height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-visual-icon {
+      font-size: 5rem;
+      opacity: 0.3;
+    }
+
+    .card-visual-label {
+      position: absolute;
+      bottom: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,0.9);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      color: #64748b;
+    }
+
+    /* Feature indicator dots */
+    .feature-dots {
+      position: fixed;
+      right: 2rem;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      z-index: 100;
+    }
+
+    .feature-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #d1d5db;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+    }
+
+    .feature-dot:hover {
+      background: #0066FF;
+      transform: scale(1.2);
+    }
+
+    .feature-dot::after {
+      content: attr(data-label);
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #1a1a2e;
+      color: white;
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    .feature-dot:hover::after {
+      opacity: 1;
+    }
+
+    /* Footer spacer */
+    .footer-spacer {
+      height: 50vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(180deg, #f8fafc 0%, #f0f7ff 100%);
+    }
+
+    .footer-spacer p {
+      color: #94a3b8;
+      font-size: 1.1rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .feature-card {
+        grid-template-columns: 1fr;
+        padding: 2rem;
+        min-height: auto;
+      }
+
+      .feature-card:nth-child(even) {
+        direction: ltr;
+      }
+
+      .card-visual {
+        height: 200px;
+        order: -1;
+      }
+
+      .hero h1 {
+        font-size: 2.5rem;
+      }
+
+      .card-content h2 {
+        font-size: 1.75rem;
+      }
+
+      .feature-dots {
+        display: none;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .hero h1 {
+        font-size: 2rem;
+      }
+
+      .feature-card {
+        padding: 1.5rem;
+        margin-bottom: 60px;
+        border-radius: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation dots -->
+  <div class="feature-dots">
+    <div class="feature-dot" data-label="Analyse"></div>
+    <div class="feature-dot" data-label="Optimierung"></div>
+    <div class="feature-dot" data-label="Fristen"></div>
+    <div class="feature-dot" data-label="Vergleich"></div>
+    <div class="feature-dot" data-label="Generator"></div>
+    <div class="feature-dot" data-label="Legal Pulse"></div>
+    <div class="feature-dot" data-label="Signatur"></div>
+    <div class="feature-dot" data-label="Builder"></div>
+    <div class="feature-dot" data-label="Legal Lens"></div>
+  </div>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <span class="section-badge">FUNKTIONEN</span>
+    <h1>Alles, was Sie für Ihre<br><span>Verträge brauchen</span></h1>
+    <p>Von der Analyse bis zur Unterschrift – unsere KI-Tools automatisieren Ihren kompletten Vertragsworkflow.</p>
+    <div class="scroll-hint">
+      <span>Scrollen um Features zu entdecken</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 5v14M5 12l7 7 7-7"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- ScrollStack Features -->
+  <section class="scrollstack-section">
+    <div class="scrollstack-container">
+
+      <!-- Feature 1: Analyse -->
+      <div class="feature-card">
+        <div class="card-content">
+          <span class="card-badge">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            KI-Powered
+          </span>
+          <h2>Vertragsanalyse<br>mit <span>KI-Score</span></h2>
+          <p>Risiken, Chancen und Verständlichkeit auf einen Blick. Unsere KI bewertet Ihre Verträge und deckt versteckte Fallstricke auf.</p>
+          <a href="#" class="card-link">
+            Zur Vertragsanalyse
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+        <div class="card-visual">
+          <span class="card-visual-icon">🔍</span>
+          <span class="card-visual-label">Video/Screenshot hier</span>
+        </div>
+      </div>
+
+      <!-- Feature 2: Optimierung -->
+      <div class="feature-card">
+        <div class="card-content">
+          <span class="card-badge purple">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            Intelligent
+          </span>
+          <h2>Verträge<br><span>optimieren</span></h2>
+          <p>Schwache oder unfaire Klauseln? Unsere KI findet sie und schlägt sofort bessere Formulierungen vor — für fairere, stärkere Verträge.</p>
+          <a href="#" class="card-link">
+            Zum Optimierer
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+        <div class="card-visual">
+          <span class="card-visual-icon">⚡</span>
+          <span class="card-visual-label">Video/Screenshot hier</span>
+        </div>
+      </div>
+
+      <!-- Feature 3: Fristen -->
+      <div class="feature-card">
+        <div class="card-content">
+          <span class="card-badge green">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            Automatisch
+          </span>
+          <h2>Fristen<br><span>nie verpassen</span></h2>
+          <p>Verpassen Sie nie wieder eine Kündigungsfrist. Contract AI erkennt wichtige Fristen und erinnert Sie rechtzeitig.</p>
+          <a href="#" class="card-link">
+            Zum Fristenkalender
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+        <div class="card-visual">
+          <span class="card-visual-icon">📅</span>
+          <span class="card-visual-label">Video/Screenshot hier</span>
+        </div>
+      </div>
+
+      <!-- Feature 4: Vergleich -->
+      <div class="feature-card">
+        <div class="card-content">
+          <span class="card-badge orange">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M8 3H3v5M3 16v5h5M16 21h5v-5"/></svg>
+            Präzise
+          </span>
+          <h2>Verträge<br><span>vergleichen</span></h2>
+          <p>Lassen Sie zwei Verträge gegeneinander antreten. Contract AI zeigt Unterschiede, Fairness und empfiehlt den besseren Weg.</p>
+          <a href="#" class="card-link">
+            Zum Vergleich
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+        <div class="card-visual">
+          <span class="card-visual-icon">📊</span>
+          <span class="card-visual-label">Video/Screenshot hier</span>
+        </div>
+      </div>
+
+      <!-- Feature 5: Generator -->
+      <div class="feature-card">
+        <div class="card-content">
+          <span class="card-badge cyan">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M12 18v-6M9 15h6"/></svg>
+            Kreativ
+          </span>
+          <h2>Verträge<br><span>erstellen</span></h2>
+          <p>Erstellen Sie rechtssichere, individuelle Verträge aus geprüften Vorlagen — in Minuten statt Stunden.</p>
+          <a href="#" class="card-link">
+            Zum Generator
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+        <div class="card-visual">
+          <span class="card-visual-icon">📝</span>
+          <span class="card-visual-label">Video/Screenshot hier</span>
+        </div>
+      </div>
+
+      <!-- Feature 6: Legal Pulse -->
+      <div class="feature-card">
+        <div class="card-content">
+          <span class="card-badge">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            Proaktiv
+          </span>
+          <h2>Legal Pulse:<br><span>Frühwarnsystem</span></h2>
+          <p>Verfolgen Sie rechtliche Änderungen und bleiben Sie immer up to date. Contract AI schützt Sie vor neuen Risiken.</p>
+          <a href="#" class="card-link">
+            Zu Legal Pulse
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+        <div class="card-visual">
+          <span class="card-visual-icon">💡</span>
+          <span class="card-visual-label">Video/Screenshot hier</span>
+        </div>
+      </div>
+
+      <!-- Feature 7: Signatur -->
+      <div class="feature-card">
+        <div class="card-content">
+          <span class="card-badge green">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+            Rechtssicher
+          </span>
+          <h2>Digitale<br><span>Signatur</span></h2>
+          <p>Versenden Sie Verträge zur digitalen Unterschrift, verfolgen Sie den Status in Echtzeit und erhalten Sie versiegelte PDFs.</p>
+          <a href="#" class="card-link">
+            Zur Signatur
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+        <div class="card-visual">
+          <span class="card-visual-icon">✍️</span>
+          <span class="card-visual-label">Video/Screenshot hier</span>
+        </div>
+      </div>
+
+      <!-- Feature 8: Contract Builder -->
+      <div class="feature-card">
+        <div class="card-content">
+          <span class="card-badge purple">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Baukasten
+          </span>
+          <h2>Contract<br><span>Builder</span></h2>
+          <p>Erstellen Sie professionelle Verträge per Drag & Drop. Mit Smart Variables, KI-Klauselgenerierung und automatischem Seitenumbruch.</p>
+          <a href="#" class="card-link">
+            Zum Builder
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+        <div class="card-visual">
+          <span class="card-visual-icon">🔧</span>
+          <span class="card-visual-label">Video/Screenshot hier</span>
+        </div>
+      </div>
+
+      <!-- Feature 9: Legal Lens -->
+      <div class="feature-card">
+        <div class="card-content">
+          <span class="card-badge orange">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
+            Deep Dive
+          </span>
+          <h2>Legal Lens:<br><span>Tiefenanalyse</span></h2>
+          <p>Tauchen Sie tief in Ihre Verträge ein. Mit Risk Score, Smart Summary und Verhandlungs-Checkliste.</p>
+          <a href="#" class="card-link">
+            Zu Legal Lens
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+        <div class="card-visual">
+          <span class="card-visual-icon">🔬</span>
+          <span class="card-visual-label">Video/Screenshot hier</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Footer spacer -->
+  <div class="footer-spacer">
+    <p>↑ Scroll zurück um alle Features zu sehen</p>
+  </div>
+
+  <script>
+    // Simple scroll-based scaling effect
+    const cards = document.querySelectorAll('.feature-card');
+    const dots = document.querySelectorAll('.feature-dot');
+
+    function updateCards() {
+      const scrollY = window.scrollY;
+      const windowHeight = window.innerHeight;
+
+      cards.forEach((card, index) => {
+        const rect = card.getBoundingClientRect();
+        const cardTop = rect.top;
+
+        // Calculate how "stacked" this card should appear
+        if (cardTop < windowHeight * 0.3) {
+          const progress = Math.max(0, Math.min(1, (windowHeight * 0.3 - cardTop) / (windowHeight * 0.5)));
+          const scale = 1 - (progress * 0.05 * (cards.length - index - 1));
+          card.style.transform = `scale(${Math.max(0.85, scale)})`;
+          card.style.opacity = 1 - (progress * 0.3);
+        } else {
+          card.style.transform = 'scale(1)';
+          card.style.opacity = 1;
+        }
+
+        // Update dots
+        if (dots[index]) {
+          if (cardTop < windowHeight * 0.5 && cardTop > -rect.height * 0.5) {
+            dots[index].style.background = '#0066FF';
+            dots[index].style.transform = 'scale(1.3)';
+          } else {
+            dots[index].style.background = '#d1d5db';
+            dots[index].style.transform = 'scale(1)';
+          }
+        }
+      });
+    }
+
+    window.addEventListener('scroll', updateCards);
+    updateCards();
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analyse-Unterscheidung Mockup - Vorher/Nachher</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f8fafc;
+      padding: 40px;
+      color: #1e293b;
+    }
+
+    .page-title {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .page-title h1 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .page-title p {
+      color: #64748b;
+      font-size: 16px;
+    }
+
+    .comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      max-width: 1400px;
+      margin: 0 auto 80px;
+    }
+
+    .version {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    .version-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .version-badge {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .version-badge.before {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    .version-badge.after {
+      background: #dcfce7;
+      color: #16a34a;
+    }
+
+    .version h2 {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    /* ============ VORHER STYLES ============ */
+    .before-content {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .old-card {
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .old-card h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .old-card p {
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    .problem-note {
+      background: #fef3c7;
+      border: 1px solid #fcd34d;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #92400e;
+      margin-top: 16px;
+    }
+
+    .problem-note strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    /* ============ NACHHER STYLES ============ */
+    .after-content {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .new-card {
+      border-radius: 16px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .new-card.rechtspruefung {
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      border: 2px solid #3b82f6;
+    }
+
+    .new-card.monitoring {
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      border: 2px solid #22c55e;
+    }
+
+    .new-card-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .new-card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .rechtspruefung .new-card-icon {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .monitoring .new-card-icon {
+      background: #22c55e;
+      color: white;
+    }
+
+    .new-card-title {
+      flex: 1;
+    }
+
+    .new-card-title h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .type-badge {
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .rechtspruefung .type-badge {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .monitoring .type-badge {
+      background: #22c55e;
+      color: white;
+    }
+
+    .new-card-title p {
+      font-size: 14px;
+      color: #64748b;
+      line-height: 1.5;
+    }
+
+    .new-card-features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .feature-tag {
+      background: white;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .rechtspruefung .feature-tag {
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+    }
+
+    .monitoring .feature-tag {
+      color: #15803d;
+      border: 1px solid #bbf7d0;
+    }
+
+    /* ============ FLOW DIAGRAM ============ */
+    .flow-section {
+      max-width: 1000px;
+      margin: 0 auto 80px;
+    }
+
+    .section-title {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .section-title h2 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .section-title p {
+      color: #64748b;
+    }
+
+    .flow-diagram {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    .flow-steps {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .flow-steps::before {
+      content: '';
+      position: absolute;
+      top: 40px;
+      left: 80px;
+      right: 80px;
+      height: 3px;
+      background: linear-gradient(90deg, #3b82f6 0%, #3b82f6 33%, #e5e7eb 33%, #e5e7eb 66%, #22c55e 66%, #22c55e 100%);
+      z-index: 0;
+    }
+
+    .flow-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      width: 180px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .flow-step-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      font-size: 32px;
+    }
+
+    .flow-step.upload .flow-step-icon {
+      background: #eff6ff;
+      border: 3px solid #3b82f6;
+    }
+
+    .flow-step.analyse .flow-step-icon {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .flow-step.verwaltung .flow-step-icon {
+      background: #f8fafc;
+      border: 3px solid #94a3b8;
+    }
+
+    .flow-step.pulse .flow-step-icon {
+      background: #22c55e;
+      color: white;
+    }
+
+    .flow-step h4 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .flow-step p {
+      font-size: 12px;
+      color: #64748b;
+      line-height: 1.4;
+    }
+
+    .flow-step .step-badge {
+      position: absolute;
+      top: -8px;
+      right: 40px;
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .flow-step.analyse .step-badge {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .flow-step.pulse .step-badge {
+      background: #22c55e;
+      color: white;
+    }
+
+    /* ============ UI SUGGESTIONS ============ */
+    .suggestions-section {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .suggestions-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+
+    .suggestion-card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    .suggestion-card h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .suggestion-card h3 span {
+      font-size: 20px;
+    }
+
+    .suggestion-card p {
+      font-size: 14px;
+      color: #64748b;
+      line-height: 1.6;
+    }
+
+    .suggestion-card ul {
+      margin-top: 12px;
+      padding-left: 20px;
+    }
+
+    .suggestion-card li {
+      font-size: 13px;
+      color: #475569;
+      margin-bottom: 6px;
+    }
+
+    /* ============ SIDEBAR PREVIEW ============ */
+    .sidebar-preview {
+      max-width: 600px;
+      margin: 60px auto 0;
+    }
+
+    .sidebar-preview h3 {
+      text-align: center;
+      font-size: 18px;
+      margin-bottom: 24px;
+    }
+
+    .sidebar-mock {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      width: 280px;
+      margin: 0 auto;
+    }
+
+    .sidebar-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #9ca3af;
+      margin-bottom: 12px;
+      padding: 0 12px;
+    }
+
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 4px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .sidebar-item:hover {
+      background: #f3f4f6;
+    }
+
+    .sidebar-item.active {
+      background: rgba(59, 130, 246, 0.08);
+    }
+
+    .sidebar-item.active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      width: 3px;
+      height: 20px;
+      background: #3b82f6;
+      border-radius: 0 3px 3px 0;
+    }
+
+    .sidebar-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .sidebar-icon.blue {
+      background: #eff6ff;
+      color: #3b82f6;
+    }
+
+    .sidebar-icon.green {
+      background: #f0fdf4;
+      color: #22c55e;
+    }
+
+    .sidebar-text {
+      flex: 1;
+    }
+
+    .sidebar-text h4 {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+
+    .sidebar-text p {
+      font-size: 11px;
+      color: #9ca3af;
+    }
+
+    .sidebar-badge {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    .sidebar-badge.blue {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .sidebar-badge.green {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .divider {
+      height: 1px;
+      background: #e5e7eb;
+      margin: 16px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-title">
+    <h1>Analyse-Typen Unterscheidung</h1>
+    <p>Vorher/Nachher Vergleich - Wie User die beiden Analysen besser verstehen</p>
+  </div>
+
+  <!-- VORHER / NACHHER VERGLEICH -->
+  <div class="comparison">
+    <!-- VORHER -->
+    <div class="version">
+      <div class="version-header">
+        <span class="version-badge before">Vorher</span>
+        <h2>Aktuelle Situation</h2>
+      </div>
+      <div class="before-content">
+        <div class="old-card">
+          <h3>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Vertragsanalyse
+          </h3>
+          <p>Analysiert den Vertrag...</p>
+        </div>
+        <div class="old-card">
+          <h3>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+            Legal Pulse
+          </h3>
+          <p>Analysiert den Vertrag...</p>
+        </div>
+        <div class="problem-note">
+          <strong>Problem:</strong>
+          Beide heißen "Analyse" - User versteht nicht den Unterschied. Warum zwei Analysen? Was macht welche?
+        </div>
+      </div>
+    </div>
+
+    <!-- NACHHER -->
+    <div class="version">
+      <div class="version-header">
+        <span class="version-badge after">Nachher</span>
+        <h2>Optimierte Lösung</h2>
+      </div>
+      <div class="after-content">
+        <div class="new-card rechtspruefung">
+          <div class="new-card-header">
+            <div class="new-card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"/></svg>
+            </div>
+            <div class="new-card-title">
+              <h3>
+                Rechtsprüfung
+                <span class="type-badge">Einmalig</span>
+              </h3>
+              <p>Detaillierte juristische Analyse deines Vertrags - wie von einem Anwalt geprüft.</p>
+            </div>
+          </div>
+          <div class="new-card-features">
+            <span class="feature-tag">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              Risiko-Score
+            </span>
+            <span class="feature-tag">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              Klausel-Analyse
+            </span>
+            <span class="feature-tag">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              Empfehlungen
+            </span>
+          </div>
+        </div>
+
+        <div class="new-card monitoring">
+          <div class="new-card-header">
+            <div class="new-card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+            </div>
+            <div class="new-card-title">
+              <h3>
+                Legal Pulse
+                <span class="type-badge">Laufend</span>
+              </h3>
+              <p>Kontinuierliche Überwachung - wir informieren dich bei Änderungen & Risiken.</p>
+            </div>
+          </div>
+          <div class="new-card-features">
+            <span class="feature-tag">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              Gesetzesänderungen
+            </span>
+            <span class="feature-tag">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              Fristen-Alerts
+            </span>
+            <span class="feature-tag">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              Live-Updates
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOW DIAGRAM -->
+  <div class="flow-section">
+    <div class="section-title">
+      <h2>Der optimierte User-Flow</h2>
+      <p>So versteht der User den Zusammenhang</p>
+    </div>
+
+    <div class="flow-diagram">
+      <div class="flow-steps">
+        <div class="flow-step upload">
+          <div class="flow-step-icon">📄</div>
+          <h4>1. Upload</h4>
+          <p>User lädt Vertrag hoch</p>
+        </div>
+
+        <div class="flow-step analyse">
+          <span class="step-badge">Rechtsprüfung</span>
+          <div class="flow-step-icon">⚖️</div>
+          <h4>2. Rechtsprüfung</h4>
+          <p>Einmalige, tiefe Analyse wie vom Anwalt</p>
+        </div>
+
+        <div class="flow-step verwaltung">
+          <div class="flow-step-icon">📁</div>
+          <h4>3. Verwaltung</h4>
+          <p>Vertrag wird gespeichert</p>
+        </div>
+
+        <div class="flow-step pulse">
+          <span class="step-badge">Monitoring</span>
+          <div class="flow-step-icon">📡</div>
+          <h4>4. Legal Pulse</h4>
+          <p>Laufende Überwachung startet automatisch</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KONKRETE UI-VORSCHLÄGE -->
+  <div class="suggestions-section">
+    <div class="section-title">
+      <h2>Konkrete UI-Änderungen</h2>
+      <p>Was wir anpassen könnten</p>
+    </div>
+
+    <div class="suggestions-grid">
+      <div class="suggestion-card">
+        <h3><span>1️⃣</span> Begriffe ändern</h3>
+        <p>Klarere Unterscheidung durch Namen:</p>
+        <ul>
+          <li><strong>"Vertragsanalyse"</strong> → <strong>"Rechtsprüfung"</strong></li>
+          <li><strong>"Legal Pulse"</strong> bleibt (aber mit Subtitle "Monitoring")</li>
+        </ul>
+      </div>
+
+      <div class="suggestion-card">
+        <h3><span>2️⃣</span> Badges hinzufügen</h3>
+        <p>Kleine Labels die den Typ zeigen:</p>
+        <ul>
+          <li>Rechtsprüfung: <span style="background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;">EINMALIG</span></li>
+          <li>Legal Pulse: <span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;">LAUFEND</span></li>
+        </ul>
+      </div>
+
+      <div class="suggestion-card">
+        <h3><span>3️⃣</span> Subtitles in der UI</h3>
+        <p>Kurze Erklärung unter jedem Titel:</p>
+        <ul>
+          <li>"Rechtsprüfung" - <em style="color:#64748b;">Einmalige Analyse deines Vertrags</em></li>
+          <li>"Legal Pulse" - <em style="color:#64748b;">Dein Vertrag wird überwacht</em></li>
+        </ul>
+      </div>
+
+      <div class="suggestion-card">
+        <h3><span>4️⃣</span> Farb-Codierung</h3>
+        <p>Konsistente Farben für jeden Typ:</p>
+        <ul>
+          <li>Rechtsprüfung: <span style="color:#3b82f6;font-weight:600;">Blau</span> (Analyse, Prüfung)</li>
+          <li>Legal Pulse: <span style="color:#22c55e;font-weight:600;">Grün</span> (Live, Monitoring)</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- SIDEBAR PREVIEW -->
+    <div class="sidebar-preview">
+      <h3>So könnte die Sidebar aussehen:</h3>
+      <div class="sidebar-mock">
+        <div class="sidebar-section-title">Analyse-Tools</div>
+
+        <div class="sidebar-item">
+          <div class="sidebar-icon blue">⚖️</div>
+          <div class="sidebar-text">
+            <h4>Rechtsprüfung</h4>
+            <p>Einmalige Vertragsanalyse</p>
+          </div>
+          <span class="sidebar-badge blue">Einmalig</span>
+        </div>
+
+        <div class="sidebar-item">
+          <div class="sidebar-icon green">📡</div>
+          <div class="sidebar-text">
+            <h4>Legal Pulse</h4>
+            <p>Laufende Überwachung</p>
+          </div>
+          <span class="sidebar-badge green">Live</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="sidebar-section-title">Weitere Tools</div>
+
+        <div class="sidebar-item">
+          <div class="sidebar-icon" style="background:#fef3c7;color:#d97706;">🔧</div>
+          <div class="sidebar-text">
+            <h4>Optimierung</h4>
+            <p>Vertrag verbessern</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

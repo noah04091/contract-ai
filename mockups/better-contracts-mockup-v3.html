@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Better Contracts - Mockup V3 (Compact Wizard)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+      min-height: 100vh;
+      color: #1e293b;
+    }
+
+    .navbar {
+      height: 64px;
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: #64748b;
+    }
+
+    .page {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    /* Breadcrumb Progress */
+    .breadcrumb-progress {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 32px;
+    }
+
+    .breadcrumb-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #94a3b8;
+    }
+
+    .breadcrumb-item.active {
+      color: #3b82f6;
+    }
+
+    .breadcrumb-item.completed {
+      color: #10b981;
+    }
+
+    .breadcrumb-number {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .breadcrumb-item.active .breadcrumb-number {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .breadcrumb-item.completed .breadcrumb-number {
+      background: #10b981;
+      color: white;
+    }
+
+    .breadcrumb-separator {
+      width: 24px;
+      height: 2px;
+      background: #e2e8f0;
+    }
+
+    /* Main Card */
+    .wizard-card {
+      background: white;
+      border-radius: 24px;
+      border: 1px solid rgba(0,0,0,0.06);
+      box-shadow:
+        0 0 0 1px rgba(0,0,0,0.02),
+        0 2px 4px rgba(0,0,0,0.02),
+        0 12px 24px rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+
+    .wizard-header {
+      padding: 28px 32px 24px;
+      text-align: center;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .wizard-header-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 16px;
+      background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      box-shadow: 0 8px 20px rgba(59, 130, 246, 0.25);
+    }
+
+    .wizard-header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+    }
+
+    .wizard-header p {
+      font-size: 14px;
+      color: #64748b;
+    }
+
+    .wizard-body {
+      padding: 28px 32px;
+    }
+
+    /* Upload Options */
+    .upload-options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .upload-option {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: white;
+    }
+
+    .upload-option:hover {
+      border-color: #3b82f6;
+      background: #f8faff;
+    }
+
+    .upload-option.selected {
+      border-color: #3b82f6;
+      background: #eff6ff;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .upload-option-icon {
+      width: 44px;
+      height: 44px;
+      background: #f1f5f9;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      transition: all 0.2s ease;
+    }
+
+    .upload-option:hover .upload-option-icon,
+    .upload-option.selected .upload-option-icon {
+      background: #dbeafe;
+      color: #3b82f6;
+    }
+
+    .upload-option-text {
+      flex: 1;
+    }
+
+    .upload-option-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #0f172a;
+      margin-bottom: 2px;
+    }
+
+    .upload-option-desc {
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    .upload-option-badge {
+      padding: 4px 10px;
+      background: #dbeafe;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #3b82f6;
+    }
+
+    /* Textarea */
+    .text-input-wrapper {
+      margin-bottom: 20px;
+    }
+
+    .text-input-wrapper textarea {
+      width: 100%;
+      padding: 16px;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 14px;
+      background: #f8fafc;
+      resize: vertical;
+      min-height: 140px;
+      transition: all 0.2s ease;
+    }
+
+    .text-input-wrapper textarea:focus {
+      outline: none;
+      border-color: #3b82f6;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .text-input-wrapper textarea::placeholder {
+      color: #94a3b8;
+    }
+
+    /* Primary Button */
+    .primary-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 14px 24px;
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+    }
+
+    .primary-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(59, 130, 246, 0.35);
+    }
+
+    /* Wizard Footer */
+    .wizard-footer {
+      padding: 20px 32px;
+      background: #f8fafc;
+      border-top: 1px solid #f1f5f9;
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+    }
+
+    .footer-feature {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    .footer-feature-icon {
+      font-size: 14px;
+    }
+
+    svg {
+      width: 22px;
+      height: 22px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">[CONTRACT AI NAVBAR]</nav>
+
+  <div class="page">
+    <!-- Breadcrumb Progress -->
+    <div class="breadcrumb-progress">
+      <div class="breadcrumb-item active">
+        <span class="breadcrumb-number">1</span>
+        Vertrag
+      </div>
+      <div class="breadcrumb-separator"></div>
+      <div class="breadcrumb-item">
+        <span class="breadcrumb-number">2</span>
+        Details
+      </div>
+      <div class="breadcrumb-separator"></div>
+      <div class="breadcrumb-item">
+        <span class="breadcrumb-number">3</span>
+        Alternativen
+      </div>
+    </div>
+
+    <!-- Wizard Card -->
+    <div class="wizard-card">
+      <div class="wizard-header">
+        <div class="wizard-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="m21 21-4.3-4.3"/>
+            <path d="M8 11h6"/>
+            <path d="M11 8v6"/>
+          </svg>
+        </div>
+        <h1>Bessere Alternativen finden</h1>
+        <p>Laden Sie Ihren Vertrag hoch oder geben Sie den Text ein</p>
+      </div>
+
+      <div class="wizard-body">
+        <!-- Upload Options -->
+        <div class="upload-options">
+          <div class="upload-option selected">
+            <div class="upload-option-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17,8 12,3 7,8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+            </div>
+            <div class="upload-option-text">
+              <div class="upload-option-title">Datei hochladen</div>
+              <div class="upload-option-desc">PDF, DOCX oder TXT</div>
+            </div>
+            <span class="upload-option-badge">Empfohlen</span>
+          </div>
+
+          <div class="upload-option">
+            <div class="upload-option-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+            </div>
+            <div class="upload-option-text">
+              <div class="upload-option-title">Text eingeben</div>
+              <div class="upload-option-desc">Vertragstext manuell einfügen</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Text Input -->
+        <div class="text-input-wrapper">
+          <textarea placeholder="Vertragstext hier einfügen oder oben eine Datei hochladen..."></textarea>
+        </div>
+
+        <!-- Primary Button -->
+        <button class="primary-btn">
+          Weiter zu Details
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
+            <path d="M5 12h14"/>
+            <path d="m12 5 7 7-7 7"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="wizard-footer">
+        <div class="footer-feature">
+          <span class="footer-feature-icon">🔒</span>
+          SSL-verschlüsselt
+        </div>
+        <div class="footer-feature">
+          <span class="footer-feature-icon">⚡</span>
+          Sofort-Analyse
+        </div>
+        <div class="footer-feature">
+          <span class="footer-feature-icon">💰</span>
+          Geld sparen
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

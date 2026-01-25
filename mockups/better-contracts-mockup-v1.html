@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Better Contracts - Mockup V1 (Stripe Style)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(180deg, #f0f4ff 0%, #fafbff 50%, #f8fafc 100%);
+      min-height: 100vh;
+      color: #1e293b;
+    }
+
+    .navbar {
+      height: 64px;
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: #64748b;
+    }
+
+    .page {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    /* Header - Centered & Compact like Legal Lens */
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #3b82f6;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+
+    .header-badge-icon {
+      font-size: 14px;
+    }
+
+    .header h1 {
+      font-size: 32px;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      font-size: 16px;
+      color: #64748b;
+    }
+
+    /* Progress Pills - Horizontal */
+    .progress-pills {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 32px;
+    }
+
+    .progress-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #94a3b8;
+      transition: all 0.2s ease;
+    }
+
+    .progress-pill.active {
+      background: #3b82f6;
+      border-color: #3b82f6;
+      color: white;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+    }
+
+    .progress-pill.completed {
+      background: #10b981;
+      border-color: #10b981;
+      color: white;
+    }
+
+    .progress-pill-number {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .progress-pill.active .progress-pill-number,
+    .progress-pill.completed .progress-pill-number {
+      background: rgba(255,255,255,0.25);
+    }
+
+    /* Main Card */
+    .main-card {
+      background: white;
+      border-radius: 20px;
+      border: 1px solid rgba(0,0,0,0.06);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02), 0 8px 16px rgba(0,0,0,0.04);
+      overflow: hidden;
+      margin-bottom: 32px;
+    }
+
+    .card-body {
+      padding: 32px;
+    }
+
+    /* Upload Zone */
+    .upload-zone {
+      border: 2px dashed #e2e8f0;
+      border-radius: 16px;
+      padding: 48px 32px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: linear-gradient(180deg, #fafbff 0%, #f8fafc 100%);
+      margin-bottom: 24px;
+    }
+
+    .upload-zone:hover {
+      border-color: #3b82f6;
+      background: linear-gradient(180deg, #f0f7ff 0%, #eff6ff 100%);
+    }
+
+    .upload-icon {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 20px;
+      background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 28px;
+      box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+    }
+
+    .upload-title {
+      font-size: 15px;
+      font-weight: 500;
+      color: #1e293b;
+      margin-bottom: 4px;
+    }
+
+    .upload-title span {
+      color: #3b82f6;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .upload-meta {
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    /* Divider */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 24px 0;
+    }
+
+    .divider-line {
+      flex: 1;
+      height: 1px;
+      background: #e2e8f0;
+    }
+
+    .divider-text {
+      font-size: 13px;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+
+    /* Text Input */
+    .text-input-section label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: #0f172a;
+      margin-bottom: 10px;
+    }
+
+    .text-input-section textarea {
+      width: 100%;
+      padding: 16px;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 14px;
+      background: #f8fafc;
+      resize: vertical;
+      min-height: 120px;
+      transition: all 0.2s ease;
+    }
+
+    .text-input-section textarea:focus {
+      outline: none;
+      border-color: #3b82f6;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Continue Button */
+    .continue-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 14px 24px;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-top: 20px;
+    }
+
+    .continue-btn:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+    }
+
+    /* Features Pills */
+    .features-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .feature-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #475569;
+    }
+
+    .feature-pill-icon {
+      font-size: 16px;
+    }
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">[CONTRACT AI NAVBAR]</nav>
+
+  <div class="page">
+    <!-- Centered Header like Legal Lens -->
+    <header class="header">
+      <div class="header-badge">
+        <span class="header-badge-icon">🔍</span>
+        Vertragsvergleich
+      </div>
+      <h1>Bessere Alternativen finden</h1>
+      <p>Wir analysieren Ihren Vertrag und finden bessere Anbieter</p>
+    </header>
+
+    <!-- Progress Pills instead of classic steps -->
+    <div class="progress-pills">
+      <div class="progress-pill active">
+        <span class="progress-pill-number">1</span>
+        Vertrag
+      </div>
+      <div class="progress-pill">
+        <span class="progress-pill-number">2</span>
+        Details
+      </div>
+      <div class="progress-pill">
+        <span class="progress-pill-number">3</span>
+        Alternativen
+      </div>
+    </div>
+
+    <!-- Main Card -->
+    <div class="main-card">
+      <div class="card-body">
+        <!-- Upload Zone -->
+        <div class="upload-zone">
+          <div class="upload-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17,8 12,3 7,8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <p class="upload-title">PDF ablegen oder <span>durchsuchen</span></p>
+          <p class="upload-meta">PDF, DOCX, TXT • Max. 20 MB</p>
+        </div>
+
+        <!-- Divider -->
+        <div class="divider">
+          <div class="divider-line"></div>
+          <span class="divider-text">oder manuell eingeben</span>
+          <div class="divider-line"></div>
+        </div>
+
+        <!-- Text Input -->
+        <div class="text-input-section">
+          <label>Vertragstext</label>
+          <textarea placeholder="Fügen Sie Ihren Vertragstext hier ein..."></textarea>
+        </div>
+
+        <!-- Continue Button -->
+        <button class="continue-btn">
+          Weiter
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14"/>
+            <path d="m12 5 7 7-7 7"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Features Pills -->
+    <div class="features-row">
+      <div class="feature-pill">
+        <span class="feature-pill-icon">💰</span>
+        Preisvergleich
+      </div>
+      <div class="feature-pill">
+        <span class="feature-pill-icon">🔎</span>
+        Top-Anbieter
+      </div>
+      <div class="feature-pill">
+        <span class="feature-pill-icon">⚡</span>
+        Sofort-Ergebnis
+      </div>
+      <div class="feature-pill">
+        <span class="feature-pill-icon">🏆</span>
+        Beste Konditionen
+      </div>
+    </div>
+  </div>
+</body>
+</html>

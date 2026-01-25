@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feature Section Mockups - Contract AI</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8fafc;
+      color: #1a1a2e;
+      line-height: 1.6;
+    }
+
+    .mockup-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: #fff;
+      padding: 1rem 2rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      z-index: 100;
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .mockup-nav a {
+      padding: 0.5rem 1rem;
+      background: #0066FF;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .mockup-nav a:hover {
+      background: #0052cc;
+    }
+
+    .mockup-section {
+      padding: 120px 40px 80px;
+      max-width: 1200px;
+      margin: 0 auto;
+      border-bottom: 2px solid #e5e7eb;
+    }
+
+    .mockup-title {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      color: #0066FF;
+    }
+
+    .mockup-desc {
+      color: #64748b;
+      margin-bottom: 2rem;
+      font-size: 1.1rem;
+    }
+
+    /* ========== OPTION 1: TABS ========== */
+    .tabs-container {
+      background: #fff;
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    .tabs-nav {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      border-bottom: 1px solid #e5e7eb;
+      padding-bottom: 1rem;
+    }
+
+    .tab-btn {
+      padding: 0.75rem 1.25rem;
+      border: none;
+      background: transparent;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #64748b;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+
+    .tab-btn:hover {
+      background: #f1f5f9;
+      color: #1a1a2e;
+    }
+
+    .tab-btn.active {
+      background: #0066FF;
+      color: white;
+    }
+
+    .tab-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      align-items: center;
+    }
+
+    .tab-text h3 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .tab-text p {
+      color: #64748b;
+      font-size: 1.1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .tab-text .cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.875rem 1.5rem;
+      background: #0066FF;
+      color: white;
+      text-decoration: none;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    .tab-image {
+      background: linear-gradient(135deg, #f0f7ff, #e0edff);
+      border-radius: 16px;
+      height: 350px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      font-size: 1.2rem;
+    }
+
+    /* ========== OPTION 2: CAROUSEL ========== */
+    .carousel-container {
+      background: #fff;
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      position: relative;
+    }
+
+    .carousel-wrapper {
+      display: flex;
+      gap: 2rem;
+      overflow: hidden;
+    }
+
+    .carousel-card {
+      min-width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      align-items: center;
+    }
+
+    .carousel-nav {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 2rem;
+    }
+
+    .carousel-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #d1d5db;
+      border: none;
+      cursor: pointer;
+    }
+
+    .carousel-dot.active {
+      background: #0066FF;
+      width: 30px;
+      border-radius: 5px;
+    }
+
+    .carousel-arrows {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 1rem;
+      pointer-events: none;
+    }
+
+    .carousel-arrow {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: white;
+      border: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      pointer-events: auto;
+      font-size: 1.5rem;
+      color: #64748b;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    /* ========== OPTION 3: COMPACT GRID ========== */
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+
+    .grid-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      border: 1px solid #e5e7eb;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .grid-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+      border-color: #0066FF;
+    }
+
+    .grid-card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #0066FF, #38bdf8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .grid-card h4 {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .grid-card p {
+      font-size: 0.9rem;
+      color: #64748b;
+      margin-bottom: 1rem;
+    }
+
+    .grid-card-image {
+      background: linear-gradient(135deg, #f0f7ff, #e0edff);
+      border-radius: 8px;
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+
+    /* ========== OPTION 4: MINIMALIST ========== */
+    .minimal-container {
+      display: flex;
+      flex-direction: column;
+      gap: 4rem;
+    }
+
+    .minimal-item {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+    }
+
+    .minimal-item.reverse {
+      direction: rtl;
+    }
+
+    .minimal-item.reverse > * {
+      direction: ltr;
+    }
+
+    .minimal-text h3 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      letter-spacing: -0.02em;
+    }
+
+    .minimal-text h3 span {
+      background: linear-gradient(135deg, #0066FF, #38bdf8);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .minimal-text p {
+      font-size: 1.2rem;
+      color: #64748b;
+      line-height: 1.7;
+    }
+
+    .minimal-image {
+      background: #fff;
+      border-radius: 20px;
+      height: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #94a3b8;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+    }
+
+    /* ========== OPTION 5: SPOTLIGHT + LIST ========== */
+    .spotlight-container {
+      display: flex;
+      flex-direction: column;
+      gap: 4rem;
+    }
+
+    .spotlight-main {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+    }
+
+    .spotlight-card {
+      background: #fff;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      transition: all 0.3s;
+    }
+
+    .spotlight-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+
+    .spotlight-card-image {
+      background: linear-gradient(135deg, #0066FF, #38bdf8);
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 3rem;
+    }
+
+    .spotlight-card-content {
+      padding: 1.5rem;
+    }
+
+    .spotlight-card h4 {
+      font-size: 1.25rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .spotlight-card p {
+      color: #64748b;
+      font-size: 0.95rem;
+    }
+
+    .spotlight-list {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    .spotlight-list-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.5rem;
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      transition: all 0.2s;
+    }
+
+    .spotlight-list-item:hover {
+      border-color: #0066FF;
+      background: #f0f7ff;
+    }
+
+    .spotlight-list-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #0066FF, #38bdf8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .spotlight-list-text h5 {
+      font-size: 0.95rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .spotlight-list-text span {
+      font-size: 0.8rem;
+      color: #64748b;
+    }
+
+    /* Section Header */
+    .section-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .section-badge {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      background: linear-gradient(135deg, rgba(0, 102, 255, 0.1), rgba(59, 130, 246, 0.1));
+      color: #0066FF;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      border-radius: 100px;
+      margin-bottom: 1rem;
+      border: 1px solid rgba(0, 102, 255, 0.2);
+    }
+
+    .section-header h2 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    .section-header h2 span {
+      background: linear-gradient(135deg, #0052cc, #0066FF, #38bdf8);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .section-header p {
+      color: #64748b;
+      font-size: 1.1rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 900px) {
+      .tab-content,
+      .carousel-card,
+      .minimal-item,
+      .spotlight-main {
+        grid-template-columns: 1fr;
+      }
+
+      .grid-container,
+      .spotlight-list {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .grid-container,
+      .spotlight-list {
+        grid-template-columns: 1fr;
+      }
+
+      .tabs-nav {
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="mockup-nav">
+    <a href="#option1">Option 1: Tabs</a>
+    <a href="#option2">Option 2: Carousel</a>
+    <a href="#option3">Option 3: Compact Grid</a>
+    <a href="#option4">Option 4: Minimalist</a>
+    <a href="#option5">Option 5: Spotlight + Liste</a>
+  </nav>
+
+  <!-- OPTION 1: TABS -->
+  <section class="mockup-section" id="option1">
+    <h2 class="mockup-title">Option 1: Tabs Navigation</h2>
+    <p class="mockup-desc">User klickt auf Tab und sieht nur dieses Feature. Weniger Scrollen, fokussierter. (Stripe/Intercom Style)</p>
+
+    <div class="section-header">
+      <span class="section-badge">FUNKTIONEN</span>
+      <h2>Alles, was Sie fur Ihre<br><span>Vertrage brauchen</span></h2>
+      <p>Von der Analyse bis zur Unterschrift - unsere KI-Tools automatisieren Ihren kompletten Vertragsworkflow.</p>
+    </div>
+
+    <div class="tabs-container">
+      <div class="tabs-nav">
+        <button class="tab-btn active">Analyse</button>
+        <button class="tab-btn">Optimierung</button>
+        <button class="tab-btn">Fristen</button>
+        <button class="tab-btn">Vergleich</button>
+        <button class="tab-btn">Generator</button>
+        <button class="tab-btn">Legal Pulse</button>
+        <button class="tab-btn">Signatur</button>
+        <button class="tab-btn">Builder</button>
+        <button class="tab-btn">Legal Lens</button>
+      </div>
+
+      <div class="tab-content">
+        <div class="tab-text">
+          <h3>Vertragsanalyse mit Score</h3>
+          <p>Risiken, Chancen und Verstandlichkeit auf einen Blick. Unsere KI bewertet Ihre Vertrage und deckt versteckte Fallstricke auf.</p>
+          <a href="#" class="cta-btn">Zur Vertragsanalyse &rarr;</a>
+        </div>
+        <div class="tab-image">
+          [Video/Screenshot hier]
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- OPTION 2: CAROUSEL -->
+  <section class="mockup-section" id="option2">
+    <h2 class="mockup-title">Option 2: Horizontal Carousel</h2>
+    <p class="mockup-desc">Features als horizontaler Slider mit Pfeilen. Interaktiver, moderner. (Linear/Figma Style)</p>
+
+    <div class="section-header">
+      <span class="section-badge">FUNKTIONEN</span>
+      <h2>Alles, was Sie fur Ihre<br><span>Vertrage brauchen</span></h2>
+      <p>Von der Analyse bis zur Unterschrift - unsere KI-Tools automatisieren Ihren kompletten Vertragsworkflow.</p>
+    </div>
+
+    <div class="carousel-container">
+      <div class="carousel-arrows">
+        <button class="carousel-arrow">&larr;</button>
+        <button class="carousel-arrow">&rarr;</button>
+      </div>
+
+      <div class="carousel-wrapper">
+        <div class="carousel-card">
+          <div class="tab-text">
+            <h3>Vertragsanalyse mit Score</h3>
+            <p>Risiken, Chancen und Verstandlichkeit auf einen Blick. Unsere KI bewertet Ihre Vertrage und deckt versteckte Fallstricke auf.</p>
+            <a href="#" class="cta-btn">Zur Vertragsanalyse &rarr;</a>
+          </div>
+          <div class="tab-image">
+            [Video/Screenshot hier]
+          </div>
+        </div>
+      </div>
+
+      <div class="carousel-nav">
+        <button class="carousel-dot active"></button>
+        <button class="carousel-dot"></button>
+        <button class="carousel-dot"></button>
+        <button class="carousel-dot"></button>
+        <button class="carousel-dot"></button>
+        <button class="carousel-dot"></button>
+        <button class="carousel-dot"></button>
+        <button class="carousel-dot"></button>
+        <button class="carousel-dot"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- OPTION 3: COMPACT GRID -->
+  <section class="mockup-section" id="option3">
+    <h2 class="mockup-title">Option 3: Compact Grid</h2>
+    <p class="mockup-desc">Alle Features auf einen Blick in einem 3x3 Grid. Bei Hover mehr Details. (Notion Style)</p>
+
+    <div class="section-header">
+      <span class="section-badge">FUNKTIONEN</span>
+      <h2>Alles, was Sie fur Ihre<br><span>Vertrage brauchen</span></h2>
+      <p>Von der Analyse bis zur Unterschrift - unsere KI-Tools automatisieren Ihren kompletten Vertragsworkflow.</p>
+    </div>
+
+    <div class="grid-container">
+      <div class="grid-card">
+        <div class="grid-card-icon">&#128269;</div>
+        <h4>Vertragsanalyse</h4>
+        <p>Risiken und Chancen auf einen Blick erkennen.</p>
+        <div class="grid-card-image">[Screenshot]</div>
+      </div>
+      <div class="grid-card">
+        <div class="grid-card-icon">&#9889;</div>
+        <h4>Optimierung</h4>
+        <p>Schwache Klauseln finden und verbessern.</p>
+        <div class="grid-card-image">[Screenshot]</div>
+      </div>
+      <div class="grid-card">
+        <div class="grid-card-icon">&#128197;</div>
+        <h4>Fristen</h4>
+        <p>Nie wieder eine Kundigung verpassen.</p>
+        <div class="grid-card-image">[Screenshot]</div>
+      </div>
+      <div class="grid-card">
+        <div class="grid-card-icon">&#128200;</div>
+        <h4>Vergleich</h4>
+        <p>Zwei Vertrage intelligent vergleichen.</p>
+        <div class="grid-card-image">[Screenshot]</div>
+      </div>
+      <div class="grid-card">
+        <div class="grid-card-icon">&#128221;</div>
+        <h4>Generator</h4>
+        <p>Rechtssichere Vertrage erstellen.</p>
+        <div class="grid-card-image">[Screenshot]</div>
+      </div>
+      <div class="grid-card">
+        <div class="grid-card-icon">&#128161;</div>
+        <h4>Legal Pulse</h4>
+        <p>Fruhwarnsystem fur rechtliche Anderungen.</p>
+        <div class="grid-card-image">[Screenshot]</div>
+      </div>
+      <div class="grid-card">
+        <div class="grid-card-icon">&#9997;</div>
+        <h4>Digitale Signatur</h4>
+        <p>Vertrage rechtssicher unterschreiben.</p>
+        <div class="grid-card-image">[Screenshot]</div>
+      </div>
+      <div class="grid-card">
+        <div class="grid-card-icon">&#128736;</div>
+        <h4>Contract Builder</h4>
+        <p>Vertrage per Drag & Drop erstellen.</p>
+        <div class="grid-card-image">[Screenshot]</div>
+      </div>
+      <div class="grid-card">
+        <div class="grid-card-icon">&#128270;</div>
+        <h4>Legal Lens</h4>
+        <p>Interaktive Tiefenanalyse jeder Klausel.</p>
+        <div class="grid-card-image">[Screenshot]</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- OPTION 4: MINIMALIST -->
+  <section class="mockup-section" id="option4">
+    <h2 class="mockup-title">Option 4: Minimalist (weniger Text)</h2>
+    <p class="mockup-desc">Gleiches Layout wie jetzt, aber viel weniger Text. Nur Titel + 1-2 Satze. (Apple Style)</p>
+
+    <div class="section-header">
+      <span class="section-badge">FUNKTIONEN</span>
+      <h2>Alles, was Sie fur Ihre<br><span>Vertrage brauchen</span></h2>
+      <p>Von der Analyse bis zur Unterschrift - unsere KI-Tools automatisieren Ihren kompletten Vertragsworkflow.</p>
+    </div>
+
+    <div class="minimal-container">
+      <div class="minimal-item">
+        <div class="minimal-text">
+          <h3>Vertragsanalyse<br>mit <span>KI-Score</span></h3>
+          <p>Risiken, Chancen und Verstandlichkeit auf einen Blick. Unsere KI bewertet Ihre Vertrage automatisch.</p>
+        </div>
+        <div class="minimal-image">[Grosses Video/Screenshot - spricht fur sich]</div>
+      </div>
+
+      <div class="minimal-item reverse">
+        <div class="minimal-text">
+          <h3>Vertrage<br><span>optimieren</span></h3>
+          <p>Schwache Klauseln? Unsere KI findet sie und schlagt sofort bessere Formulierungen vor.</p>
+        </div>
+        <div class="minimal-image">[Grosses Video/Screenshot]</div>
+      </div>
+
+      <div class="minimal-item">
+        <div class="minimal-text">
+          <h3>Fristen<br><span>nie verpassen</span></h3>
+          <p>Automatische Erkennung und Erinnerung bei wichtigen Kundigungsfristen.</p>
+        </div>
+        <div class="minimal-image">[Grosses Video/Screenshot]</div>
+      </div>
+    </div>
+
+    <p style="text-align: center; margin-top: 2rem; color: #64748b;">... und so weiter fur alle Features (ohne Bullet Points!)</p>
+  </section>
+
+  <!-- OPTION 5: SPOTLIGHT + LIST -->
+  <section class="mockup-section" id="option5">
+    <h2 class="mockup-title">Option 5: Spotlight + Kompakte Liste</h2>
+    <p class="mockup-desc">Top 3 Features gross, Rest als kompakte Icon-Liste. 80/20 Fokus. (Meine Empfehlung)</p>
+
+    <div class="section-header">
+      <span class="section-badge">FUNKTIONEN</span>
+      <h2>Alles, was Sie fur Ihre<br><span>Vertrage brauchen</span></h2>
+      <p>Von der Analyse bis zur Unterschrift - unsere KI-Tools automatisieren Ihren kompletten Vertragsworkflow.</p>
+    </div>
+
+    <div class="spotlight-container">
+      <!-- Top 3 Features gross -->
+      <div class="spotlight-main">
+        <div class="spotlight-card">
+          <div class="spotlight-card-image">&#128269;</div>
+          <div class="spotlight-card-content">
+            <h4>Vertragsanalyse</h4>
+            <p>Risiken, Chancen und Verstandlichkeit auf einen Blick bewerten.</p>
+          </div>
+        </div>
+        <div class="spotlight-card">
+          <div class="spotlight-card-image">&#9889;</div>
+          <div class="spotlight-card-content">
+            <h4>Optimierung</h4>
+            <p>Schwache Klauseln finden und automatisch verbessern.</p>
+          </div>
+        </div>
+        <div class="spotlight-card">
+          <div class="spotlight-card-image">&#128736;</div>
+          <div class="spotlight-card-content">
+            <h4>Contract Builder</h4>
+            <p>Vertrage visuell per Drag & Drop erstellen.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rest als kompakte Liste -->
+      <div class="spotlight-list">
+        <div class="spotlight-list-item">
+          <div class="spotlight-list-icon">&#128197;</div>
+          <div class="spotlight-list-text">
+            <h5>Fristen-Kalender</h5>
+            <span>Automatische Erinnerungen</span>
+          </div>
+        </div>
+        <div class="spotlight-list-item">
+          <div class="spotlight-list-icon">&#128200;</div>
+          <div class="spotlight-list-text">
+            <h5>Vertragsvergleich</h5>
+            <span>Zwei Vertrage vergleichen</span>
+          </div>
+        </div>
+        <div class="spotlight-list-item">
+          <div class="spotlight-list-icon">&#128221;</div>
+          <div class="spotlight-list-text">
+            <h5>Generator</h5>
+            <span>Vertrage aus Vorlagen</span>
+          </div>
+        </div>
+        <div class="spotlight-list-item">
+          <div class="spotlight-list-icon">&#128161;</div>
+          <div class="spotlight-list-text">
+            <h5>Legal Pulse</h5>
+            <span>Rechtliche Anderungen</span>
+          </div>
+        </div>
+        <div class="spotlight-list-item">
+          <div class="spotlight-list-icon">&#9997;</div>
+          <div class="spotlight-list-text">
+            <h5>Digitale Signatur</h5>
+            <span>Rechtssicher unterschreiben</span>
+          </div>
+        </div>
+        <div class="spotlight-list-item">
+          <div class="spotlight-list-icon">&#128270;</div>
+          <div class="spotlight-list-text">
+            <h5>Legal Lens</h5>
+            <span>Interaktive Tiefenanalyse</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</body>
+</html>

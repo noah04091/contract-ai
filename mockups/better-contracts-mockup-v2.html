@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Better Contracts - Mockup V2 (Linear Style)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #ffffff;
+      min-height: 100vh;
+      color: #1e293b;
+    }
+
+    .navbar {
+      height: 64px;
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: #64748b;
+    }
+
+    .page {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 56px 24px 80px;
+    }
+
+    /* Header Row */
+    .header-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 40px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .header-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 20px;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+    }
+
+    .header-text h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+    }
+
+    .header-text p {
+      font-size: 13px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    /* Steps Indicator - Linear style */
+    .steps-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .step-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      transition: all 0.2s ease;
+    }
+
+    .step-dot.active {
+      width: 32px;
+      border-radius: 5px;
+      background: #3b82f6;
+    }
+
+    .step-dot.completed {
+      background: #10b981;
+    }
+
+    /* Main Grid */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+    }
+
+    /* Section */
+    .section {
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .section-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-header svg {
+      width: 18px;
+      height: 18px;
+      color: #3b82f6;
+    }
+
+    .section-header h2 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    .section-body {
+      padding: 24px;
+    }
+
+    /* Upload Zone - Minimal */
+    .upload-zone {
+      border: 1px dashed #d1d5db;
+      border-radius: 12px;
+      padding: 40px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: #fafbfc;
+    }
+
+    .upload-zone:hover {
+      border-color: #3b82f6;
+      border-style: solid;
+      background: #f8faff;
+    }
+
+    .upload-zone-icon {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 16px;
+      background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 24px;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+    }
+
+    .upload-zone-text {
+      font-size: 14px;
+      color: #475569;
+      margin-bottom: 4px;
+    }
+
+    .upload-zone-text a {
+      color: #3b82f6;
+      font-weight: 500;
+    }
+
+    .upload-zone-hint {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    /* Text Input */
+    .text-section {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      height: 100%;
+    }
+
+    .text-section label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    .text-section textarea {
+      flex: 1;
+      width: 100%;
+      padding: 16px;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 14px;
+      background: #f8fafc;
+      resize: none;
+      min-height: 180px;
+      transition: all 0.2s ease;
+    }
+
+    .text-section textarea:focus {
+      outline: none;
+      border-color: #3b82f6;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
+    }
+
+    .text-section textarea::placeholder {
+      color: #94a3b8;
+    }
+
+    /* Continue Button */
+    .continue-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 12px 20px;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .continue-btn:hover {
+      background: #2563eb;
+    }
+
+    /* Bottom Info */
+    .bottom-info {
+      margin-top: 40px;
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+    }
+
+    .info-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    .info-item-icon {
+      font-size: 16px;
+    }
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">[CONTRACT AI NAVBAR]</nav>
+
+  <div class="page">
+    <!-- Header Row -->
+    <header class="header-row">
+      <div class="header-left">
+        <div class="header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="m21 21-4.3-4.3"/>
+            <path d="M8 11h6"/>
+            <path d="M11 8v6"/>
+          </svg>
+        </div>
+        <div class="header-text">
+          <h1>Bessere Alternativen</h1>
+          <p>Finden Sie automatisch bessere Anbieter</p>
+        </div>
+      </div>
+
+      <!-- Linear-style step dots -->
+      <div class="steps-indicator">
+        <div class="step-dot active"></div>
+        <div class="step-dot"></div>
+        <div class="step-dot"></div>
+      </div>
+    </header>
+
+    <!-- Main Grid -->
+    <div class="main-grid">
+      <!-- Upload Section -->
+      <div class="section">
+        <div class="section-header">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17,8 12,3 7,8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <h2>Vertrag hochladen</h2>
+        </div>
+        <div class="section-body">
+          <div class="upload-zone">
+            <div class="upload-zone-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 24px; height: 24px;">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14,2 14,8 20,8"/>
+              </svg>
+            </div>
+            <p class="upload-zone-text">
+              PDF ablegen oder <a href="#">durchsuchen</a>
+            </p>
+            <p class="upload-zone-hint">PDF, DOCX oder TXT</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Text Input Section -->
+      <div class="section">
+        <div class="section-header">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+          <h2>Oder Text eingeben</h2>
+        </div>
+        <div class="section-body">
+          <div class="text-section">
+            <textarea placeholder="Vertragstext hier einfügen..."></textarea>
+            <button class="continue-btn">
+              Weiter zu Details
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                <path d="M5 12h14"/>
+                <path d="m12 5 7 7-7 7"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Info -->
+    <div class="bottom-info">
+      <div class="info-item">
+        <span class="info-item-icon">💰</span>
+        Preisvergleich
+      </div>
+      <div class="info-item">
+        <span class="info-item-icon">🔎</span>
+        Echte Angebote
+      </div>
+      <div class="info-item">
+        <span class="info-item-icon">⚡</span>
+        Sofort-Analyse
+      </div>
+      <div class="info-item">
+        <span class="info-item-icon">📊</span>
+        Detailvergleich
+      </div>
+    </div>
+  </div>
+</body>
+</html>

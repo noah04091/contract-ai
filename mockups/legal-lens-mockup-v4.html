@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Legal Lens - Mockup V4 (Premium Centered)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f8fafc;
+      min-height: 100vh;
+      color: #1e293b;
+    }
+
+    .navbar {
+      height: 64px;
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: #64748b;
+    }
+
+    .page {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    /* Header Row */
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 36px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .header-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 20px;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+    }
+
+    .header-text h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+    }
+
+    .header-text p {
+      font-size: 13px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    .header-features {
+      display: flex;
+      gap: 20px;
+    }
+
+    .header-feature {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    .header-feature-icon {
+      font-size: 14px;
+    }
+
+    /* Main Content */
+    .main-content {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+      gap: 28px;
+    }
+
+    /* Card Base */
+    .card {
+      background: white;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      overflow: hidden;
+      transition: box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    }
+
+    .card-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-header svg {
+      width: 18px;
+      height: 18px;
+      color: #3b82f6;
+    }
+
+    .card-header h2 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    .card-body {
+      padding: 24px;
+    }
+
+    /* Upload Zone */
+    .upload-zone {
+      border: 2px dashed #e2e8f0;
+      border-radius: 12px;
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: #fafbfc;
+    }
+
+    .upload-zone:hover {
+      border-color: #3b82f6;
+      background: #f8faff;
+    }
+
+    .upload-zone-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 16px;
+      background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 26px;
+      box-shadow: 0 8px 20px rgba(59, 130, 246, 0.25);
+    }
+
+    .upload-zone-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: #1e293b;
+      margin-bottom: 4px;
+    }
+
+    .upload-zone-title span {
+      color: #3b82f6;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .upload-zone-hint {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    /* Search */
+    .search-wrapper {
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    .search-wrapper svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      color: #94a3b8;
+    }
+
+    .search-wrapper input {
+      width: 100%;
+      padding: 10px 12px 10px 38px;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 13px;
+      background: #f8fafc;
+      transition: all 0.2s ease;
+    }
+
+    .search-wrapper input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
+    }
+
+    /* Contract List */
+    .contract-list {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .contract-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      margin-bottom: 2px;
+    }
+
+    .contract-item:hover {
+      background: #f8fafc;
+    }
+
+    .contract-item-icon {
+      width: 38px;
+      height: 38px;
+      background: #f1f5f9;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      font-size: 16px;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .contract-item:hover .contract-item-icon {
+      background: #dbeafe;
+      color: #3b82f6;
+    }
+
+    .contract-item-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .contract-item-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: #1e293b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .contract-item-meta {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-top: 1px;
+    }
+
+    .contract-item-arrow {
+      font-size: 14px;
+      color: #cbd5e1;
+      flex-shrink: 0;
+      transition: all 0.15s ease;
+    }
+
+    .contract-item:hover .contract-item-arrow {
+      color: #3b82f6;
+      transform: translateX(2px);
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 32px;
+      color: #94a3b8;
+    }
+
+    .empty-state-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+
+    .empty-state-text {
+      font-size: 13px;
+    }
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">[CONTRACT AI NAVBAR]</nav>
+
+  <div class="page">
+    <!-- Header Row with Features -->
+    <header class="header-row">
+      <div class="header-left">
+        <div class="header-icon">⚖️</div>
+        <div class="header-text">
+          <h1>Legal Lens</h1>
+          <p>Interaktive Vertragsanalyse mit KI</p>
+        </div>
+      </div>
+      <div class="header-features">
+        <div class="header-feature">
+          <span class="header-feature-icon">👁️</span>
+          4 Perspektiven
+        </div>
+        <div class="header-feature">
+          <span class="header-feature-icon">⚖️</span>
+          Risiken
+        </div>
+        <div class="header-feature">
+          <span class="header-feature-icon">💡</span>
+          Alternativen
+        </div>
+        <div class="header-feature">
+          <span class="header-feature-icon">💬</span>
+          Tipps
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Upload Card -->
+      <div class="card">
+        <div class="card-header">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17,8 12,3 7,8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <h2>Vertrag hochladen</h2>
+        </div>
+        <div class="card-body">
+          <div class="upload-zone">
+            <div class="upload-zone-icon">📄</div>
+            <p class="upload-zone-title">
+              PDF hier ablegen oder <span>durchsuchen</span>
+            </p>
+            <p class="upload-zone-hint">Max. 20 MB • Automatische Analyse</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contracts Card -->
+      <div class="card">
+        <div class="card-header">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+          </svg>
+          <h2>Meine Verträge</h2>
+        </div>
+        <div class="card-body">
+          <div class="search-wrapper">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" placeholder="Vertrag suchen...">
+          </div>
+
+          <div class="contract-list">
+            <div class="contract-item">
+              <div class="contract-item-icon">📄</div>
+              <div class="contract-item-info">
+                <div class="contract-item-name">Mietvertrag-Hauptstr-42.pdf</div>
+                <div class="contract-item-meta">Mietvertrag • 15.12.2025</div>
+              </div>
+              <div class="contract-item-arrow">→</div>
+            </div>
+            <div class="contract-item">
+              <div class="contract-item-icon">📄</div>
+              <div class="contract-item-info">
+                <div class="contract-item-name">Arbeitsvertrag-Schmidt.pdf</div>
+                <div class="contract-item-meta">Arbeitsvertrag • 10.12.2025</div>
+              </div>
+              <div class="contract-item-arrow">→</div>
+            </div>
+            <div class="contract-item">
+              <div class="contract-item-icon">📄</div>
+              <div class="contract-item-info">
+                <div class="contract-item-name">Dienstleistungsvertrag-ABC.pdf</div>
+                <div class="contract-item-meta">Dienstleistung • 05.12.2025</div>
+              </div>
+              <div class="contract-item-arrow">→</div>
+            </div>
+            <div class="contract-item">
+              <div class="contract-item-icon">📄</div>
+              <div class="contract-item-info">
+                <div class="contract-item-name">NDA-Partner-GmbH.pdf</div>
+                <div class="contract-item-meta">NDA • 01.12.2025</div>
+              </div>
+              <div class="contract-item-arrow">→</div>
+            </div>
+            <div class="contract-item">
+              <div class="contract-item-icon">📄</div>
+              <div class="contract-item-info">
+                <div class="contract-item-name">Kaufvertrag-Immobilie.pdf</div>
+                <div class="contract-item-meta">Kaufvertrag • 28.11.2025</div>
+              </div>
+              <div class="contract-item-arrow">→</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

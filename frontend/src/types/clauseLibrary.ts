@@ -251,3 +251,156 @@ export const CLAUSE_AREA_INFO: Record<ClauseArea, { label: string; icon: string 
   non_compete: { label: 'Wettbewerbsverbot', icon: '🚫' },
   other: { label: 'Sonstiges', icon: '📋' }
 };
+
+// =============================================
+// MUSTERKLAUSELN (Template Clauses)
+// =============================================
+
+/**
+ * Kategorien für Musterklauseln
+ */
+export type TemplateClauseCategory =
+  | 'termination'       // Kündigung
+  | 'liability'         // Haftung
+  | 'payment'           // Zahlung
+  | 'confidentiality'   // Geheimhaltung
+  | 'data_protection'   // DSGVO
+  | 'warranty'          // Gewährleistung
+  | 'penalty'           // Vertragsstrafe
+  | 'force_majeure'     // Force Majeure
+  | 'jurisdiction'      // Gerichtsstand
+  | 'non_compete'       // Wettbewerbsverbot
+  | 'retention_of_title'// Eigentumsvorbehalt
+  | 'amendments'        // Vertragsänderungen
+  | 'severability';     // Salvatorische Klausel
+
+/**
+ * Branchen-Tags für Musterklauseln
+ */
+export type IndustryTag =
+  | 'it'
+  | 'handel'
+  | 'dienstleistung'
+  | 'handwerk'
+  | 'immobilien'
+  | 'gesundheit'
+  | 'finanzen'
+  | 'produktion'
+  | 'allgemein';
+
+/**
+ * Risiko-Level für Musterklauseln
+ */
+export type ClauseRiskLevel = 'neutral' | 'arbeitnehmerfreundlich' | 'arbeitgeberfreundlich';
+
+/**
+ * Variation einer Musterklausel
+ */
+export interface ClauseVariation {
+  title: string;
+  text: string;
+  description: string;
+}
+
+/**
+ * Musterklausel
+ */
+export interface TemplateClause {
+  id: string;
+  title: string;
+  clauseText: string;           // Vollständiger deutscher Rechtstext
+  category: TemplateClauseCategory;
+  riskLevel: ClauseRiskLevel;
+  usageContext: string;         // Wann verwenden
+  industryTags: IndustryTag[];  // Branchenzuordnung
+  legalBasis?: string;          // z.B. "§ 622 BGB"
+  warnings?: string[];          // Wichtige Hinweise
+  variations?: ClauseVariation[];
+}
+
+/**
+ * Kategorie-Info für Musterklauseln
+ */
+export const TEMPLATE_CLAUSE_CATEGORY_INFO: Record<TemplateClauseCategory, { label: string; icon: string }> = {
+  termination: { label: 'Kündigung', icon: '🚪' },
+  liability: { label: 'Haftung', icon: '⚖️' },
+  payment: { label: 'Zahlung', icon: '💰' },
+  confidentiality: { label: 'Geheimhaltung', icon: '🔒' },
+  data_protection: { label: 'DSGVO', icon: '🔐' },
+  warranty: { label: 'Gewährleistung', icon: '🛡️' },
+  penalty: { label: 'Vertragsstrafe', icon: '⚡' },
+  force_majeure: { label: 'Force Majeure', icon: '🌊' },
+  jurisdiction: { label: 'Gerichtsstand', icon: '🏛️' },
+  non_compete: { label: 'Wettbewerbsverbot', icon: '🚫' },
+  retention_of_title: { label: 'Eigentumsvorbehalt', icon: '🏷️' },
+  amendments: { label: 'Vertragsänderungen', icon: '📝' },
+  severability: { label: 'Salvatorische Klausel', icon: '🔧' }
+};
+
+/**
+ * Branchen-Info
+ */
+export const INDUSTRY_TAG_INFO: Record<IndustryTag, { label: string; icon: string }> = {
+  it: { label: 'IT & Software', icon: '💻' },
+  handel: { label: 'Handel', icon: '🛒' },
+  dienstleistung: { label: 'Dienstleistung', icon: '🤝' },
+  handwerk: { label: 'Handwerk', icon: '🔧' },
+  immobilien: { label: 'Immobilien', icon: '🏠' },
+  gesundheit: { label: 'Gesundheit', icon: '⚕️' },
+  finanzen: { label: 'Finanzen', icon: '💳' },
+  produktion: { label: 'Produktion', icon: '🏭' },
+  allgemein: { label: 'Allgemein', icon: '📄' }
+};
+
+/**
+ * Risiko-Level-Info
+ */
+export const RISK_LEVEL_INFO: Record<ClauseRiskLevel, { label: string; color: string; bgColor: string }> = {
+  neutral: { label: 'Neutral', color: '#64748b', bgColor: '#f1f5f9' },
+  arbeitnehmerfreundlich: { label: 'Arbeitnehmerfreundlich', color: '#16a34a', bgColor: '#f0fdf4' },
+  arbeitgeberfreundlich: { label: 'Arbeitgeberfreundlich', color: '#dc2626', bgColor: '#fef2f2' }
+};
+
+// =============================================
+// RECHTSLEXIKON (Legal Lexicon)
+// =============================================
+
+/**
+ * Rechtsgebiete für Lexikon-Einträge
+ */
+export type LegalArea =
+  | 'vertragsrecht'
+  | 'arbeitsrecht'
+  | 'mietrecht'
+  | 'dsgvo'
+  | 'handelsrecht'
+  | 'gesellschaftsrecht'
+  | 'allgemein';
+
+/**
+ * Rechtslexikon-Eintrag
+ */
+export interface LegalTerm {
+  id: string;
+  term: string;                 // Juristischer Begriff
+  simpleExplanation: string;    // Laien-Erklärung
+  legalDefinition: string;      // Formale Definition
+  examples: string[];           // Praxisbeispiele
+  relatedTerms: string[];       // Verwandte Begriffe (IDs)
+  legalArea: LegalArea;
+  legalBasis?: string;          // Gesetzesreferenz
+  letterGroup: string;          // A-Z für Navigation
+}
+
+/**
+ * Rechtsgebiet-Info
+ */
+export const LEGAL_AREA_INFO: Record<LegalArea, { label: string; icon: string; color: string }> = {
+  vertragsrecht: { label: 'Vertragsrecht', icon: '📜', color: '#3b82f6' },
+  arbeitsrecht: { label: 'Arbeitsrecht', icon: '💼', color: '#8b5cf6' },
+  mietrecht: { label: 'Mietrecht', icon: '🏠', color: '#10b981' },
+  dsgvo: { label: 'DSGVO', icon: '🔐', color: '#f59e0b' },
+  handelsrecht: { label: 'Handelsrecht', icon: '🏪', color: '#ef4444' },
+  gesellschaftsrecht: { label: 'Gesellschaftsrecht', icon: '🏢', color: '#06b6d4' },
+  allgemein: { label: 'Allgemein', icon: '⚖️', color: '#64748b' }
+};
