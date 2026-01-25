@@ -239,25 +239,25 @@ export default function Pricing() {
     { feature: "Support", free: "Community", business: "Priority (24h)", premium: "Priority + Onboarding" },
   ];
 
-  // Business Features - Benefit-focused, seriös
+  // Business Features - kurz & knackig
   const businessFeatures = [
-    { icon: <Search size={20} />, text: "KI erkennt Risiken & Kündigungsfristen automatisch" },
-    { icon: <Eye size={20} />, text: "Legal Lens: Klauseln verständlich erklärt" },
+    { icon: <Search size={20} />, text: "Risiken & Fristen automatisch erkennen" },
+    { icon: <Eye size={20} />, text: "Legal Lens: Klauseln verstehen" },
     { icon: <PenTool size={20} />, text: "Rechtssichere digitale Unterschriften" },
-    { icon: <Bell size={20} />, text: "Automatische Erinnerungen – nie wieder Fristen verpassen" },
-    { icon: <FolderOpen size={20} />, text: "Alle Verträge zentral & übersichtlich verwalten" },
-    { icon: <Clock size={20} />, text: "Priority Support innerhalb von 24 Stunden" },
+    { icon: <Bell size={20} />, text: "Nie wieder Fristen verpassen" },
+    { icon: <FolderOpen size={20} />, text: "Zentrale Vertragsverwaltung" },
+    { icon: <Clock size={20} />, text: "Priority Support (24h)" },
   ];
 
-  // Enterprise Features - Freiheit, Kontrolle, Verantwortung
+  // Enterprise Features - kurz & premium
   const enterpriseFeatures = [
-    { icon: <Sparkles size={20} />, text: "Analysiere unbegrenzt – ohne Limit, ohne Stress", highlight: true },
-    { icon: <Search size={20} />, text: "KI findet automatisch bessere & günstigere Alternativen", highlight: true },
-    { icon: <Smartphone size={20} />, text: "Kritische Fristen werden aktiv überwacht & gemeldet", highlight: true },
-    { icon: <Calendar size={20} />, text: "Alle Fristen direkt in deinem Kalender – automatisch" },
-    { icon: <Users size={20} />, text: "Dein ganzes Team auf einer zentralen Plattform" },
-    { icon: <Download size={20} />, text: "Professionelle Reports mit deinem eigenen Branding" },
-    { icon: <Lock size={20} />, text: "API-Zugang für individuelle Integrationen" },
+    { icon: <Sparkles size={20} />, text: "Unbegrenzt analysieren – ohne Stress", highlight: true },
+    { icon: <Search size={20} />, text: "Bessere Vertragsalternativen finden", highlight: true },
+    { icon: <Smartphone size={20} />, text: "Fristen aktiv überwacht & gemeldet", highlight: true },
+    { icon: <Calendar size={20} />, text: "Automatischer Kalender-Sync" },
+    { icon: <Users size={20} />, text: "Team-Zugriff (bis 10 User)" },
+    { icon: <Download size={20} />, text: "White-Label PDF-Reports" },
+    { icon: <Lock size={20} />, text: "API-Zugang" },
   ];
 
   return (

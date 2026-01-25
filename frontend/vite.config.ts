@@ -67,6 +67,7 @@ export default defineConfig(({ mode: _mode }) => ({
     outDir: "dist",
     sourcemap: false,
     minify: "esbuild",
+    cssMinify: "lightningcss", // 🔧 Besserer CSS-Parser, keine Warnings
     chunkSizeWarningLimit: 1000,
     modulePreload: false, // 🔧 Deaktiviert modulepreload komplett - verhindert CSS-Preload-Fehler
     cssCodeSplit: true, // CSS wird in separate Dateien gesplittet

@@ -4481,8 +4481,7 @@ a {
 .enterprise-plan .plan-cta,
 [href*="kontakt"],
 a[href*="kontakt"],
-button:contains("Kontakt"),
-.kontakt-button, 
+.kontakt-button,
 .kontakt-aufnehmen,
 .enterprise-cta {
   background-color: var(--primary-color) !important;
