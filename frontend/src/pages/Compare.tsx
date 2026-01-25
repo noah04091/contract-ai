@@ -6,7 +6,8 @@ import {
   FileText, Download, ArrowRight, CheckCircle, AlertCircle,
   RefreshCw, Upload, Info, PlusCircle, MinusCircle,
   Users, Briefcase, Building, Zap, Scale, AlertTriangle,
-  Eye, EyeOff, Star, Award, ThumbsUp, ThumbsDown
+  Eye, EyeOff, Star, Award, ThumbsUp, ThumbsDown,
+  GitCompare, FileCheck, Trophy, Layers
 } from "lucide-react";
 import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
 import { WelcomePopup } from "../components/Tour";
@@ -44,6 +45,85 @@ interface ComparisonResult {
 }
 
 // PremiumNotice Wrapper entfernt - verwende UnifiedPremiumNotice direkt mit variant="fullWidth"
+
+// 🎯 Comparison Mode Selector Component
+const ComparisonModeSelector: React.FC<{
+  selectedMode: string;
+  onModeChange: (mode: string) => void;
+}> = ({ selectedMode, onModeChange }) => {
+  const modes = [
+    {
+      id: 'standard',
+      name: 'Standard',
+      icon: Scale,
+      description: 'Allgemeiner Vergleich zweier Verträge',
+      color: '#0071e3'
+    },
+    {
+      id: 'version',
+      name: 'Versionen',
+      icon: GitCompare,
+      description: 'Alt vs. Neu - Änderungen erkennen',
+      color: '#5856d6'
+    },
+    {
+      id: 'bestPractice',
+      name: 'Best Practice',
+      icon: FileCheck,
+      description: 'Prüfung gegen branchenübliche Standards',
+      color: '#34c759'
+    },
+    {
+      id: 'competition',
+      name: 'Anbieter',
+      icon: Trophy,
+      description: 'Angebote verschiedener Anbieter vergleichen',
+      color: '#ff9500'
+    }
+  ];
+
+  return (
+    <motion.div
+      className="mode-selector"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.15, duration: 0.5 }}
+    >
+      <h3>Vergleichs-Modus:</h3>
+      <div className="mode-options">
+        {modes.map((mode) => {
+          const IconComponent = mode.icon;
+          const isActive = selectedMode === mode.id;
+          return (
+            <motion.button
+              key={mode.id}
+              className={`mode-option ${isActive ? 'active' : ''}`}
+              onClick={() => onModeChange(mode.id)}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              style={{
+                borderColor: isActive ? mode.color : undefined,
+                backgroundColor: isActive ? `${mode.color}08` : undefined
+              }}
+            >
+              <IconComponent
+                size={20}
+                className="mode-icon"
+                style={{ color: isActive ? mode.color : '#6e6e73' }}
+              />
+              <div className="mode-info">
+                <span className="mode-name" style={{ color: isActive ? mode.color : '#1d1d1f' }}>
+                  {mode.name}
+                </span>
+                <span className="mode-description">{mode.description}</span>
+              </div>
+            </motion.button>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+};
 
 // User Profile Selector Component
 const UserProfileSelector: React.FC<{
@@ -326,6 +406,7 @@ export default function EnhancedCompare() {
   const [result, setResult] = useState<ComparisonResult | null>(null);
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
   const [userProfile, setUserProfile] = useState('individual');
+  const [comparisonMode, setComparisonMode] = useState('standard');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showSideBySide, setShowSideBySide] = useState(true);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
@@ -494,6 +575,7 @@ export default function EnhancedCompare() {
     formData.append("file1", file1);
     formData.append("file2", file2);
     formData.append("userProfile", userProfile);
+    formData.append("comparisonMode", comparisonMode);
 
     try {
       // 📡 SSE Request with streaming progress
@@ -700,6 +782,11 @@ export default function EnhancedCompare() {
           <UserProfileSelector
             selectedProfile={userProfile}
             onProfileChange={setUserProfile}
+          />
+
+          <ComparisonModeSelector
+            selectedMode={comparisonMode}
+            onModeChange={setComparisonMode}
           />
 
           {preloadedContractName && (
@@ -1299,6 +1386,70 @@ export default function EnhancedCompare() {
             font-size: 0.85rem;
             color: #6e6e73;
             line-height: 1.3;
+          }
+
+          /* 🎯 Mode Selector Styles */
+          .mode-selector {
+            margin-bottom: 2rem;
+            text-align: center;
+          }
+
+          .mode-selector h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0 0 1rem;
+            color: #1d1d1f;
+          }
+
+          .mode-options {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+            flex-wrap: wrap;
+          }
+
+          .mode-option {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.75rem 1.2rem;
+            border: 2px solid #e8e8ed;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-width: 140px;
+          }
+
+          .mode-option:hover {
+            border-color: #0071e3;
+            transform: translateY(-1px);
+          }
+
+          .mode-option.active {
+            border-width: 2px;
+          }
+
+          .mode-icon {
+            flex-shrink: 0;
+          }
+
+          .mode-info {
+            text-align: left;
+          }
+
+          .mode-name {
+            display: block;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.1rem;
+          }
+
+          .mode-description {
+            display: block;
+            font-size: 0.75rem;
+            color: #6e6e73;
+            line-height: 1.2;
           }
 
           .contract-score {

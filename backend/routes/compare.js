@@ -126,6 +126,72 @@ Berücksichtige sowohl operative als auch rechtliche Risiken.
 `
 };
 
+// 🎯 Comparison Modes - Different analysis approaches
+const COMPARISON_MODES = {
+  standard: {
+    name: 'Standard-Vergleich',
+    description: 'Allgemeiner Vergleich zweier Verträge',
+    promptAddition: `
+VERGLEICHSMODUS: Standard-Vergleich
+Vergleiche beide Verträge neutral und identifiziere alle relevanten Unterschiede.
+Bewerte objektiv, welcher Vertrag insgesamt vorteilhafter ist.
+`
+  },
+  version: {
+    name: 'Versions-Vergleich',
+    description: 'Alt vs. Neu - Änderungen zwischen Vertragsversionen',
+    promptAddition: `
+VERGLEICHSMODUS: Versions-Vergleich (Alt vs. Neu)
+Vertrag 1 ist die ALTE Version, Vertrag 2 ist die NEUE Version.
+Fokussiere besonders auf:
+- Was wurde hinzugefügt? (neue Klauseln, erweiterte Rechte/Pflichten)
+- Was wurde entfernt? (gestrichene Klauseln, reduzierte Garantien)
+- Was wurde geändert? (modifizierte Bedingungen, neue Fristen)
+- Sind die Änderungen zum Vorteil oder Nachteil des Vertragspartners?
+- Gibt es versteckte Verschlechterungen?
+
+Bewerte: Ist die neue Version besser oder schlechter für den Unterzeichner?
+`
+  },
+  bestPractice: {
+    name: 'Best-Practice Check',
+    description: 'Prüfung gegen branchenübliche Standards',
+    promptAddition: `
+VERGLEICHSMODUS: Best-Practice Check
+Vertrag 1 ist der zu prüfende Vertrag.
+Vertrag 2 dient als Referenz/Template oder wird ignoriert falls leer.
+
+Prüfe den Vertrag gegen branchenübliche Best Practices:
+- Enthält er alle wichtigen Standardklauseln?
+- Sind Formulierungen klar und eindeutig?
+- Sind Fristen und Bedingungen marktüblich?
+- Fehlen wichtige Schutzklauseln?
+- Gibt es ungewöhnlich einseitige Regelungen?
+
+Gib konkrete Verbesserungsvorschläge basierend auf Best Practices.
+`
+  },
+  competition: {
+    name: 'Anbieter-Vergleich',
+    description: 'Vergleich von Angeboten verschiedener Anbieter',
+    promptAddition: `
+VERGLEICHSMODUS: Anbieter-/Wettbewerbs-Vergleich
+Beide Verträge sind Angebote von verschiedenen Anbietern für ähnliche Leistungen.
+
+Vergleiche besonders:
+- Preis-Leistungs-Verhältnis
+- Vertragslaufzeit und Kündigungsfristen
+- Leistungsumfang und Garantien
+- Haftung und Gewährleistung
+- Zusatzkosten und versteckte Gebühren
+- Flexibilität und Anpassungsmöglichkeiten
+- Service-Level und Support
+
+Erstelle eine klare Empfehlung: Welcher Anbieter bietet das bessere Gesamtpaket?
+`
+  }
+};
+
 // 🧠 Smart Chunking: Intelligent text preparation for large contracts
 const CHUNK_CONFIG = {
   MAX_DIRECT_LENGTH: 6000,        // Under 6000 chars: use directly
@@ -222,9 +288,12 @@ async function prepareContractText(fullText) {
   return combined;
 }
 
-// Enhanced comparison analysis function
-async function analyzeContracts(contract1Text, contract2Text, userProfile = 'individual') {
+// Enhanced comparison analysis function with mode support
+async function analyzeContracts(contract1Text, contract2Text, userProfile = 'individual', comparisonMode = 'standard') {
   const systemPrompt = SYSTEM_PROMPTS[userProfile] || SYSTEM_PROMPTS.individual;
+  const modeConfig = COMPARISON_MODES[comparisonMode] || COMPARISON_MODES.standard;
+
+  console.log(`🎯 Vergleichs-Modus: ${modeConfig.name}`);
 
   // 🧠 Smart Chunking: Prepare large contracts
   console.log("🧠 Smart Chunking: Bereite Verträge vor...");
@@ -236,6 +305,8 @@ async function analyzeContracts(contract1Text, contract2Text, userProfile = 'ind
 
   const analysisPrompt = `
 ${systemPrompt}
+
+${modeConfig.promptAddition}
 
 AUFGABE: Vergleiche diese zwei Verträge systematisch und erstelle eine strukturierte Analyse.
 
@@ -434,10 +505,23 @@ router.post("/", verifyToken, upload.fields([
       return res.status(400).json(error);
     }
 
+    // 🎯 Get comparison mode from request
+    const comparisonMode = req.body.comparisonMode || 'standard';
+    const validModes = ['standard', 'version', 'bestPractice', 'competition'];
+    if (!validModes.includes(comparisonMode)) {
+      const error = { message: "Ungültiger Vergleichs-Modus" };
+      if (wantsSSE) {
+        res.write(`data: ${JSON.stringify({ type: 'error', ...error })}\n\n`);
+        return res.end();
+      }
+      return res.status(400).json(error);
+    }
+
     const file1 = req.files.file1[0];
     const file2 = req.files.file2[0];
 
-    console.log(`📄 Processing files: ${file1.originalname} & ${file2.originalname}`);
+    console.log(`📄 Processing files: ${file1.originalname} & ${file2.originalname} (Mode: ${comparisonMode})`);
+    sendProgress(res, 'mode', 12, `Modus: ${COMPARISON_MODES[comparisonMode].name}`, wantsSSE);
     sendProgress(res, 'parsing', 15, 'PDFs werden gelesen...', wantsSSE);
 
     // Parse PDF contents (async for better performance)
@@ -467,9 +551,16 @@ router.post("/", verifyToken, upload.fields([
     sendProgress(res, 'chunking', 35, 'Verträge werden vorbereitet...', wantsSSE);
 
     // Perform AI analysis with progress updates
-    sendProgress(res, 'analyzing', 50, 'KI-Analyse läuft...', wantsSSE);
+    sendProgress(res, 'analyzing', 50, `KI-Analyse läuft (${COMPARISON_MODES[comparisonMode].name})...`, wantsSSE);
     console.log("🤖 Starting AI analysis...");
-    const analysisResult = await analyzeContracts(contract1Text, contract2Text, userProfile);
+    const analysisResult = await analyzeContracts(contract1Text, contract2Text, userProfile, comparisonMode);
+
+    // Add mode info to result
+    analysisResult.comparisonMode = {
+      id: comparisonMode,
+      name: COMPARISON_MODES[comparisonMode].name,
+      description: COMPARISON_MODES[comparisonMode].description
+    };
 
     sendProgress(res, 'saving', 85, 'Ergebnis wird gespeichert...', wantsSSE);
     // ✅ FIXED: Save contracts and analysis to database with proper error handling
@@ -519,6 +610,7 @@ router.post("/", verifyToken, upload.fields([
         action: "compare_contracts",
         tool: "contract_compare",
         userProfile,
+        comparisonMode,
         file1Name: file1.originalname,
         file2Name: file2.originalname,
         recommendedContract: analysisResult.overallRecommendation.recommended,
