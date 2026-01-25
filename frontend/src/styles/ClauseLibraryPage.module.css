@@ -979,6 +979,26 @@
     font-size: 0.75rem;
   }
 
+  .lexikonToolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .lexikonToolbar .searchBox {
+    flex: 1;
+  }
+
+  .alphabetNavInline {
+    margin-left: 0;
+    justify-content: center;
+  }
+
+  .alphabetBtnSmall {
+    width: 24px;
+    height: 24px;
+    font-size: 0.65rem;
+  }
+
   .templateClauseCard {
     padding: 1rem;
   }
@@ -1474,6 +1494,62 @@
   padding: 0 1.5rem;
 }
 
+/* Combined Toolbar for Lexikon */
+.lexikonToolbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.lexikonToolbar .searchBox {
+  flex: 0 0 280px;
+}
+
+/* Inline A-Z Navigation */
+.alphabetNavInline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-left: auto;
+}
+
+.alphabetBtnSmall {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.alphabetBtnSmall:hover:not(.disabled) {
+  background: #f0fdf4;
+  border-color: #10b981;
+  color: #10b981;
+}
+
+.alphabetBtnSmall.active {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-color: transparent;
+  color: white;
+}
+
+.alphabetBtnSmall.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Old alphabetNav - keep for backwards compatibility */
 .alphabetNav {
   display: flex;
   flex-wrap: wrap;

@@ -109,26 +109,8 @@ const RechtslexikonTab: React.FC = () => {
 
   return (
     <div className={styles.lexikonTab}>
-      {/* A-Z Navigation */}
-      <div className={styles.alphabetNav}>
-        {letterGroups.map(letter => {
-          const isAvailable = availableLetters.includes(letter);
-          const isActive = activeLetter === letter;
-          return (
-            <button
-              key={letter}
-              className={`${styles.alphabetBtn} ${isActive ? styles.active : ''} ${!isAvailable ? styles.disabled : ''}`}
-              onClick={() => isAvailable && scrollToLetter(letter)}
-              disabled={!isAvailable}
-            >
-              {letter}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Search & Filters */}
-      <div className={styles.templateToolbar}>
+      {/* Combined Toolbar: Search, Filter & A-Z */}
+      <div className={styles.lexikonToolbar}>
         <div className={styles.searchBox}>
           <Search size={18} className={styles.searchIcon} />
           <input
@@ -156,6 +138,24 @@ const RechtslexikonTab: React.FC = () => {
           Rechtsgebiet
           <ChevronDown size={16} className={showFilters ? styles.rotated : ''} />
         </button>
+
+        {/* A-Z Navigation inline */}
+        <div className={styles.alphabetNavInline}>
+          {letterGroups.map(letter => {
+            const isAvailable = availableLetters.includes(letter);
+            const isActive = activeLetter === letter;
+            return (
+              <button
+                key={letter}
+                className={`${styles.alphabetBtnSmall} ${isActive ? styles.active : ''} ${!isAvailable ? styles.disabled : ''}`}
+                onClick={() => isAvailable && scrollToLetter(letter)}
+                disabled={!isAvailable}
+              >
+                {letter}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Expanded Filters */}
