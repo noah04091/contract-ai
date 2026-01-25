@@ -47,7 +47,7 @@ interface ComparisonResult {
 
 // PremiumNotice Wrapper entfernt - verwende UnifiedPremiumNotice direkt mit variant="fullWidth"
 
-// 🎯 Comparison Mode Selector Component
+// 🎯 Premium Comparison Mode Selector Component
 const ComparisonModeSelector: React.FC<{
   selectedMode: string;
   onModeChange: (mode: string) => void;
@@ -57,67 +57,96 @@ const ComparisonModeSelector: React.FC<{
       id: 'standard',
       name: 'Standard',
       icon: Scale,
-      description: 'Allgemeiner Vergleich zweier Verträge',
-      color: '#0071e3'
+      description: 'Allgemeiner Vergleich',
+      color: '#0071e3',
+      gradient: 'linear-gradient(135deg, #0071e3 0%, #00c7be 100%)'
     },
     {
       id: 'version',
       name: 'Versionen',
       icon: GitCompare,
-      description: 'Alt vs. Neu - Änderungen erkennen',
-      color: '#5856d6'
+      description: 'Alt vs. Neu',
+      color: '#5856d6',
+      gradient: 'linear-gradient(135deg, #5856d6 0%, #af52de 100%)'
     },
     {
       id: 'bestPractice',
       name: 'Best Practice',
       icon: FileCheck,
-      description: 'Prüfung gegen branchenübliche Standards',
-      color: '#34c759'
+      description: 'Standards prüfen',
+      color: '#34c759',
+      gradient: 'linear-gradient(135deg, #34c759 0%, #30d158 100%)'
     },
     {
       id: 'competition',
       name: 'Anbieter',
       icon: Trophy,
-      description: 'Angebote verschiedener Anbieter vergleichen',
-      color: '#ff9500'
+      description: 'Angebote vergleichen',
+      color: '#ff9500',
+      gradient: 'linear-gradient(135deg, #ff9500 0%, #ff6b00 100%)'
     }
   ];
 
   return (
     <motion.div
-      className="mode-selector"
+      className="premium-mode-selector"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.15, duration: 0.5 }}
     >
-      <h3>Vergleichs-Modus:</h3>
-      <div className="mode-options">
-        {modes.map((mode) => {
+      <div className="selector-header">
+        <span className="selector-label">Vergleichs-Modus</span>
+      </div>
+      <div className="mode-chips">
+        {modes.map((mode, index) => {
           const IconComponent = mode.icon;
           const isActive = selectedMode === mode.id;
           return (
             <motion.button
               key={mode.id}
-              className={`mode-option ${isActive ? 'active' : ''}`}
+              className={`mode-chip ${isActive ? 'active' : ''}`}
               onClick={() => onModeChange(mode.id)}
-              whileHover={{ scale: 1.02 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 + index * 0.05 }}
+              whileHover={{ y: -2, boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)' }}
               whileTap={{ scale: 0.98 }}
               style={{
-                borderColor: isActive ? mode.color : undefined,
-                backgroundColor: isActive ? `${mode.color}08` : undefined
+                background: isActive ? mode.gradient : 'rgba(255, 255, 255, 0.9)',
+                boxShadow: isActive
+                  ? `0 4px 20px ${mode.color}40, 0 0 0 1px ${mode.color}30`
+                  : '0 2px 8px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04)'
               }}
             >
-              <IconComponent
-                size={20}
-                className="mode-icon"
-                style={{ color: isActive ? mode.color : '#6e6e73' }}
-              />
-              <div className="mode-info">
-                <span className="mode-name" style={{ color: isActive ? mode.color : '#1d1d1f' }}>
+              <div
+                className="chip-icon-wrapper"
+                style={{
+                  background: isActive ? 'rgba(255, 255, 255, 0.25)' : `${mode.color}15`,
+                }}
+              >
+                <IconComponent
+                  size={18}
+                  style={{ color: isActive ? 'white' : mode.color }}
+                />
+              </div>
+              <div className="chip-content">
+                <span className="chip-name" style={{ color: isActive ? 'white' : '#1d1d1f' }}>
                   {mode.name}
                 </span>
-                <span className="mode-description">{mode.description}</span>
+                <span className="chip-description" style={{ color: isActive ? 'rgba(255,255,255,0.8)' : '#86868b' }}>
+                  {mode.description}
+                </span>
               </div>
+              {isActive && (
+                <motion.div
+                  className="chip-check"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                >
+                  <CheckCircle size={16} style={{ color: 'white' }} />
+                </motion.div>
+              )}
             </motion.button>
           );
         })}
@@ -126,7 +155,7 @@ const ComparisonModeSelector: React.FC<{
   );
 };
 
-// User Profile Selector Component
+// Premium User Profile Selector Component
 const UserProfileSelector: React.FC<{
   selectedProfile: string;
   onProfileChange: (profile: string) => void;
@@ -136,46 +165,69 @@ const UserProfileSelector: React.FC<{
       id: 'individual',
       name: 'Privatperson',
       icon: Users,
-      description: 'Fokus auf Verbraucherrechte und einfache Sprache'
+      description: 'Verbraucherrechte',
+      color: '#00c7be'
     },
     {
       id: 'freelancer',
       name: 'Freelancer',
       icon: Briefcase,
-      description: 'Betonung auf Haftung, Zahlungsbedingungen und IP-Rechte'
+      description: 'Haftung & IP',
+      color: '#5856d6'
     },
     {
       id: 'business',
       name: 'Unternehmen',
       icon: Building,
-      description: 'Umfassende Analyse aller Geschäftsbedingungen'
+      description: 'Vollständige Analyse',
+      color: '#0071e3'
     }
   ];
 
   return (
-    <motion.div 
-      className="profile-selector"
+    <motion.div
+      className="premium-profile-selector"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.2, duration: 0.5 }}
+      transition={{ delay: 0.1, duration: 0.5 }}
     >
-      <h3>Vergleich optimiert für:</h3>
-      <div className="profile-options">
-        {profiles.map((profile) => {
+      <div className="selector-header">
+        <span className="selector-label">Optimiert für</span>
+      </div>
+      <div className="profile-pills">
+        {profiles.map((profile, index) => {
           const IconComponent = profile.icon;
+          const isActive = selectedProfile === profile.id;
           return (
             <motion.button
               key={profile.id}
-              className={`profile-option ${selectedProfile === profile.id ? 'active' : ''}`}
+              className={`profile-pill ${isActive ? 'active' : ''}`}
               onClick={() => onProfileChange(profile.id)}
-              whileHover={{ scale: 1.02 }}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.05 + index * 0.05 }}
+              whileHover={{ y: -2 }}
               whileTap={{ scale: 0.98 }}
+              style={{
+                background: isActive
+                  ? `linear-gradient(135deg, ${profile.color} 0%, ${profile.color}dd 100%)`
+                  : 'rgba(255, 255, 255, 0.8)',
+                boxShadow: isActive
+                  ? `0 4px 15px ${profile.color}35`
+                  : '0 2px 8px rgba(0, 0, 0, 0.04)'
+              }}
             >
-              <IconComponent size={24} className="profile-icon" />
-              <div className="profile-info">
-                <span className="profile-name">{profile.name}</span>
-                <span className="profile-description">{profile.description}</span>
+              <div
+                className="pill-icon"
+                style={{
+                  background: isActive ? 'rgba(255,255,255,0.2)' : `${profile.color}12`,
+                }}
+              >
+                <IconComponent size={16} style={{ color: isActive ? 'white' : profile.color }} />
               </div>
+              <span className="pill-name" style={{ color: isActive ? 'white' : '#1d1d1f' }}>
+                {profile.name}
+              </span>
             </motion.button>
           );
         })}
@@ -1401,40 +1453,35 @@ export default function EnhancedCompare() {
             </motion.div>
           )}
 
+          {/* Premium Upload Section */}
           <motion.div
-            style={{
-              marginBottom: '3rem',
-              background: 'white',
-              borderRadius: '20px',
-              border: '1px solid rgba(0, 0, 0, 0.06)',
-              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.02), 0 8px 16px rgba(0, 0, 0, 0.04)',
-              padding: '40px'
-            }}
+            className="premium-upload-section"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.5 }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '2rem', justifyContent: 'center' }}>
-              <motion.div 
-                style={{ 
-                  background: 'white', 
-                  borderRadius: '16px', 
-                  border: `1px solid ${file1 ? '#0071e3' : '#e8e8ed'}`, 
-                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)', 
-                  padding: '2rem', 
-                  width: '320px', 
-                  height: '220px', 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  cursor: isPremium ? 'pointer' : 'not-allowed',
-                  opacity: isPremium ? 1 : 0.7,
-                  backgroundColor: file1 ? 'rgba(0, 113, 227, 0.03)' : 'white'
-                }}
-                whileHover={isPremium ? { y: -5, boxShadow: "0 10px 25px rgba(0, 0, 0, 0.08)" } : {}}
+            {/* Section Header */}
+            <div className="upload-section-header">
+              <div className="upload-header-icon">
+                <Scale size={20} />
+              </div>
+              <div className="upload-header-text">
+                <h3>Verträge hochladen</h3>
+                <p>Wählen Sie zwei PDF-Dateien für den Vergleich aus</p>
+              </div>
+            </div>
+
+            {/* Upload Cards Container */}
+            <div className="upload-cards-container">
+              {/* Contract 1 Card */}
+              <motion.div
+                className={`premium-upload-card ${file1 ? 'has-file' : ''} ${!isPremium ? 'disabled' : ''}`}
+                whileHover={isPremium && !file1 ? {
+                  y: -4,
+                  boxShadow: '0 20px 40px rgba(0, 113, 227, 0.15), 0 0 0 1px rgba(0, 113, 227, 0.2)'
+                } : {}}
+                whileTap={isPremium ? { scale: 0.99 } : {}}
                 onClick={() => isPremium && file1InputRef.current?.click()}
-                transition={{ duration: 0.3 }}
               >
                 <input
                   ref={file1InputRef}
@@ -1444,50 +1491,90 @@ export default function EnhancedCompare() {
                   style={{ display: 'none' }}
                   onChange={(e) => e.target.files?.[0] && setFile1(e.target.files[0])}
                 />
-                
+
+                {/* Decorative Background */}
+                <div className="card-bg-decoration" />
+
+                {/* Card Label */}
+                <div className="card-label">
+                  <span className="label-number">1</span>
+                  <span className="label-text">Erster Vertrag</span>
+                </div>
+
                 {file1 ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', position: 'relative' }}>
-                    <FileText size={32} style={{ color: '#0071e3', marginBottom: '1rem' }} />
-                    <div style={{ textAlign: 'center', width: '100%' }}>
-                      <h3 style={{ fontSize: '1rem', fontWeight: 500, margin: '0 0 0.3rem', color: '#1d1d1f', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '90%' }}>{file1.name}</h3>
-                      <p style={{ fontSize: '0.85rem', color: '#6e6e73', margin: 0 }}>{(file1.size / 1024 / 1024).toFixed(2)} MB</p>
+                  <motion.div
+                    className="file-preview"
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                  >
+                    <div className="file-icon-wrapper success">
+                      <FileText size={28} />
+                      <motion.div
+                        className="success-check"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 0.2, type: 'spring' }}
+                      >
+                        <CheckCircle size={16} />
+                      </motion.div>
                     </div>
-                    <CheckCircle size={20} style={{ position: 'absolute', top: 0, right: 0, color: '#34c759' }} />
-                  </div>
+                    <div className="file-info">
+                      <span className="file-name">{file1.name}</span>
+                      <span className="file-size">{(file1.size / 1024 / 1024).toFixed(2)} MB</span>
+                    </div>
+                    <motion.button
+                      className="remove-file"
+                      onClick={(e) => { e.stopPropagation(); setFile1(null); }}
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      <X size={14} />
+                    </motion.button>
+                  </motion.div>
                 ) : (
-                  <>
-                    <Upload size={32} style={{ color: '#0071e3', marginBottom: '1rem' }} />
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: '0 0 0.5rem', color: '#1d1d1f' }}>Vertrag 1</h3>
-                    <p style={{ fontSize: '0.95rem', color: '#6e6e73', margin: 0 }}>PDF auswählen</p>
-                    {!isPremium && <span style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'linear-gradient(135deg, #facf0f, #fb8c00)', color: 'white', fontSize: '0.8rem', fontWeight: 500, padding: '0.3rem 0.8rem', borderRadius: '20px' }}>Premium</span>}
-                  </>
+                  <div className="upload-placeholder">
+                    <div className="upload-icon-wrapper">
+                      <Upload size={24} />
+                      <div className="upload-icon-ring" />
+                    </div>
+                    <span className="upload-text">PDF auswählen</span>
+                    <span className="upload-hint">oder hierher ziehen</span>
+                  </div>
+                )}
+
+                {!isPremium && (
+                  <div className="premium-overlay">
+                    <span className="premium-badge-card">
+                      <Star size={12} />
+                      Premium
+                    </span>
+                  </div>
                 )}
               </motion.div>
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', backgroundColor: '#f5f5f7', borderRadius: '50%' }}>
-                <ArrowRight size={24} style={{ color: '#6e6e73' }} />
+              {/* VS Connector */}
+              <div className="vs-connector">
+                <div className="connector-line" />
+                <motion.div
+                  className="vs-badge"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.4, type: 'spring', stiffness: 300 }}
+                >
+                  <span>VS</span>
+                </motion.div>
+                <div className="connector-line" />
               </div>
 
-              <motion.div 
-                style={{ 
-                  background: 'white', 
-                  borderRadius: '16px', 
-                  border: `1px solid ${file2 ? '#0071e3' : '#e8e8ed'}`, 
-                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)', 
-                  padding: '2rem', 
-                  width: '320px', 
-                  height: '220px', 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  cursor: isPremium ? 'pointer' : 'not-allowed',
-                  opacity: isPremium ? 1 : 0.7,
-                  backgroundColor: file2 ? 'rgba(0, 113, 227, 0.03)' : 'white'
-                }}
-                whileHover={isPremium ? { y: -5, boxShadow: "0 10px 25px rgba(0, 0, 0, 0.08)" } : {}}
+              {/* Contract 2 Card */}
+              <motion.div
+                className={`premium-upload-card ${file2 ? 'has-file' : ''} ${!isPremium ? 'disabled' : ''}`}
+                whileHover={isPremium && !file2 ? {
+                  y: -4,
+                  boxShadow: '0 20px 40px rgba(88, 86, 214, 0.15), 0 0 0 1px rgba(88, 86, 214, 0.2)'
+                } : {}}
+                whileTap={isPremium ? { scale: 0.99 } : {}}
                 onClick={() => isPremium && file2InputRef.current?.click()}
-                transition={{ duration: 0.3 }}
               >
                 <input
                   ref={file2InputRef}
@@ -1497,23 +1584,64 @@ export default function EnhancedCompare() {
                   style={{ display: 'none' }}
                   onChange={(e) => e.target.files?.[0] && setFile2(e.target.files[0])}
                 />
-                
+
+                {/* Decorative Background */}
+                <div className="card-bg-decoration alt" />
+
+                {/* Card Label */}
+                <div className="card-label alt">
+                  <span className="label-number">2</span>
+                  <span className="label-text">Zweiter Vertrag</span>
+                </div>
+
                 {file2 ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', position: 'relative' }}>
-                    <FileText size={32} style={{ color: '#0071e3', marginBottom: '1rem' }} />
-                    <div style={{ textAlign: 'center', width: '100%' }}>
-                      <h3 style={{ fontSize: '1rem', fontWeight: 500, margin: '0 0 0.3rem', color: '#1d1d1f', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '90%' }}>{file2.name}</h3>
-                      <p style={{ fontSize: '0.85rem', color: '#6e6e73', margin: 0 }}>{(file2.size / 1024 / 1024).toFixed(2)} MB</p>
+                  <motion.div
+                    className="file-preview"
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                  >
+                    <div className="file-icon-wrapper success alt">
+                      <FileText size={28} />
+                      <motion.div
+                        className="success-check"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 0.2, type: 'spring' }}
+                      >
+                        <CheckCircle size={16} />
+                      </motion.div>
                     </div>
-                    <CheckCircle size={20} style={{ position: 'absolute', top: 0, right: 0, color: '#34c759' }} />
-                  </div>
+                    <div className="file-info">
+                      <span className="file-name">{file2.name}</span>
+                      <span className="file-size">{(file2.size / 1024 / 1024).toFixed(2)} MB</span>
+                    </div>
+                    <motion.button
+                      className="remove-file"
+                      onClick={(e) => { e.stopPropagation(); setFile2(null); }}
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      <X size={14} />
+                    </motion.button>
+                  </motion.div>
                 ) : (
-                  <>
-                    <Upload size={32} style={{ color: '#0071e3', marginBottom: '1rem' }} />
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: '0 0 0.5rem', color: '#1d1d1f' }}>Vertrag 2</h3>
-                    <p style={{ fontSize: '0.95rem', color: '#6e6e73', margin: 0 }}>PDF auswählen</p>
-                    {!isPremium && <span style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'linear-gradient(135deg, #facf0f, #fb8c00)', color: 'white', fontSize: '0.8rem', fontWeight: 500, padding: '0.3rem 0.8rem', borderRadius: '20px' }}>Premium</span>}
-                  </>
+                  <div className="upload-placeholder">
+                    <div className="upload-icon-wrapper alt">
+                      <Upload size={24} />
+                      <div className="upload-icon-ring" />
+                    </div>
+                    <span className="upload-text">PDF auswählen</span>
+                    <span className="upload-hint">oder hierher ziehen</span>
+                  </div>
+                )}
+
+                {!isPremium && (
+                  <div className="premium-overlay">
+                    <span className="premium-badge-card">
+                      <Star size={12} />
+                      Premium
+                    </span>
+                  </div>
                 )}
               </motion.div>
             </div>
@@ -1559,65 +1687,39 @@ export default function EnhancedCompare() {
               </motion.div>
             )}
 
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem' }}>
+            {/* Premium Action Buttons */}
+            <div className="action-buttons">
               <motion.button
-                style={{
-                  backgroundColor: (!file1 || !file2 || loading || !isPremium) ? '#6e6e73' : '#0071e3',
-                  color: 'white',
-                  border: 'none',
-                  fontFamily: 'inherit',
-                  fontSize: '1rem',
-                  fontWeight: 500,
-                  padding: '0.9rem 1.8rem',
-                  borderRadius: '10px',
-                  cursor: (!file1 || !file2 || loading || !isPremium) ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.7rem',
-                  minWidth: '200px',
-                  opacity: (!file1 || !file2 || loading || !isPremium) ? 0.6 : 1
-                }}
+                className={`premium-submit-btn ${(!file1 || !file2 || loading || !isPremium) ? 'disabled' : ''}`}
                 onClick={handleSubmit}
                 disabled={!file1 || !file2 || loading || !isPremium}
-                whileHover={file1 && file2 && !loading && isPremium ? { scale: 1.02 } : {}}
+                whileHover={file1 && file2 && !loading && isPremium ? {
+                  y: -2,
+                  boxShadow: '0 12px 35px rgba(0, 113, 227, 0.35)'
+                } : {}}
                 whileTap={file1 && file2 && !loading && isPremium ? { scale: 0.98 } : {}}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
               >
+                <span className="btn-bg" />
                 {loading ? (
                   <>
-                    <div style={{ width: '18px', height: '18px', border: '2px solid rgba(255, 255, 255, 0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 1s linear infinite', marginRight: '0.3rem' }}></div>
-                    <span>{progress?.message || 'Wird analysiert...'}</span>
+                    <div className="loading-spinner" />
+                    <span className="btn-text">{progress?.message || 'Analysiere...'}</span>
                   </>
                 ) : (
                   <>
-                    <FileText size={18} />
-                    <span>Vergleich starten</span>
+                    <Zap size={18} className="btn-icon" />
+                    <span className="btn-text">Vergleich starten</span>
+                    <ArrowRight size={16} className="btn-arrow" />
                   </>
                 )}
               </motion.button>
 
               {(file1 || file2) && (
-                <motion.button 
-                  onClick={handleReset} 
-                  style={{
-                    backgroundColor: '#e8e8ed',
-                    color: '#1d1d1f',
-                    border: 'none',
-                    fontFamily: 'inherit',
-                    fontSize: '1rem',
-                    fontWeight: 500,
-                    padding: '0.9rem 1.8rem',
-                    borderRadius: '10px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.7rem'
-                  }}
-                  whileHover={{ scale: 1.02, backgroundColor: '#d2d2d7' }}
+                <motion.button
+                  className="reset-btn"
+                  onClick={handleReset}
+                  whileHover={{ y: -2 }}
                   whileTap={{ scale: 0.98 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
                 >
                   <RefreshCw size={16} />
                   <span>Zurücksetzen</span>
@@ -1908,137 +2010,579 @@ export default function EnhancedCompare() {
 
         <style>{`
           @keyframes spin {
-            to {
-              transform: rotate(360deg);
-            }
+            to { transform: rotate(360deg); }
           }
 
-          .profile-selector {
-            margin-bottom: 2rem;
-            text-align: center;
+          @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(1.4); opacity: 0; }
           }
 
-          .profile-selector h3 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin: 0 0 1rem;
-            color: #1d1d1f;
+          @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
           }
 
-          .profile-options {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            flex-wrap: wrap;
+          /* ============================================
+             🎨 PREMIUM PROFILE SELECTOR
+             ============================================ */
+          .premium-profile-selector {
+            margin-bottom: 1.5rem;
           }
 
-          .profile-option {
+          .selector-header {
             display: flex;
             align-items: center;
-            gap: 0.8rem;
-            padding: 1rem 1.5rem;
-            border: 2px solid #e8e8ed;
-            border-radius: 12px;
-            background: white;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            min-width: 200px;
+            justify-content: center;
+            margin-bottom: 1rem;
           }
 
-          .profile-option:hover {
-            border-color: #0071e3;
-          }
-
-          .profile-option.active {
-            border-color: #0071e3;
-            background: rgba(0, 113, 227, 0.05);
-          }
-
-          .profile-icon {
-            color: #0071e3;
-            flex-shrink: 0;
-          }
-
-          .profile-info {
-            text-align: left;
-          }
-
-          .profile-name {
-            display: block;
+          .selector-label {
+            font-size: 0.8rem;
             font-weight: 600;
-            color: #1d1d1f;
-            margin-bottom: 0.2rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #86868b;
           }
 
-          .profile-description {
-            display: block;
-            font-size: 0.85rem;
-            color: #6e6e73;
-            line-height: 1.3;
-          }
-
-          /* 🎯 Mode Selector Styles */
-          .mode-selector {
-            margin-bottom: 2rem;
-            text-align: center;
-          }
-
-          .mode-selector h3 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin: 0 0 1rem;
-            color: #1d1d1f;
-          }
-
-          .mode-options {
+          .profile-pills {
             display: flex;
             gap: 0.75rem;
             justify-content: center;
             flex-wrap: wrap;
           }
 
-          .mode-option {
+          .profile-pill {
             display: flex;
             align-items: center;
             gap: 0.6rem;
-            padding: 0.75rem 1.2rem;
-            border: 2px solid #e8e8ed;
-            border-radius: 10px;
-            background: white;
+            padding: 0.65rem 1.1rem;
+            border: none;
+            border-radius: 50px;
             cursor: pointer;
-            transition: all 0.2s ease;
-            min-width: 140px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
           }
 
-          .mode-option:hover {
-            border-color: #0071e3;
-            transform: translateY(-1px);
+          .pill-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
           }
 
-          .mode-option.active {
-            border-width: 2px;
+          .pill-name {
+            font-weight: 500;
           }
 
-          .mode-icon {
-            flex-shrink: 0;
+          /* ============================================
+             🎯 PREMIUM MODE SELECTOR
+             ============================================ */
+          .premium-mode-selector {
+            margin-bottom: 2rem;
           }
 
-          .mode-info {
+          .mode-chips {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+          }
+
+          @media (max-width: 900px) {
+            .mode-chips {
+              grid-template-columns: repeat(2, 1fr);
+            }
+          }
+
+          @media (max-width: 500px) {
+            .mode-chips {
+              grid-template-columns: 1fr;
+            }
+          }
+
+          .mode-chip {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 1rem 1.2rem;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: inherit;
             text-align: left;
+            position: relative;
+            overflow: hidden;
           }
 
-          .mode-name {
+          .chip-icon-wrapper {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+          }
+
+          .chip-content {
+            flex: 1;
+            min-width: 0;
+          }
+
+          .chip-name {
             display: block;
             font-weight: 600;
-            font-size: 0.9rem;
-            margin-bottom: 0.1rem;
+            font-size: 0.95rem;
+            margin-bottom: 0.15rem;
           }
 
-          .mode-description {
+          .chip-description {
             display: block;
             font-size: 0.75rem;
-            color: #6e6e73;
-            line-height: 1.2;
+            line-height: 1.3;
+          }
+
+          .chip-check {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+
+          /* ============================================
+             📤 PREMIUM UPLOAD SECTION
+             ============================================ */
+          .premium-upload-section {
+            background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            box-shadow:
+              0 1px 1px rgba(0, 0, 0, 0.02),
+              0 4px 8px rgba(0, 0, 0, 0.04),
+              0 16px 32px rgba(0, 0, 0, 0.04);
+            padding: 2rem;
+            margin-bottom: 2rem;
+          }
+
+          .upload-section-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+          }
+
+          .upload-header-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #0071e3 0%, #00c7be 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 113, 227, 0.3);
+          }
+
+          .upload-header-text h3 {
+            margin: 0 0 0.25rem 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1d1d1f;
+          }
+
+          .upload-header-text p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: #86868b;
+          }
+
+          .upload-cards-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+          }
+
+          @media (max-width: 768px) {
+            .upload-cards-container {
+              flex-direction: column;
+            }
+            .vs-connector {
+              transform: rotate(90deg);
+              margin: 0.5rem 0;
+            }
+          }
+
+          .premium-upload-card {
+            position: relative;
+            width: 280px;
+            height: 200px;
+            border-radius: 20px;
+            background: white;
+            border: 2px dashed rgba(0, 113, 227, 0.2);
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+          }
+
+          .premium-upload-card:hover {
+            border-style: solid;
+            border-color: rgba(0, 113, 227, 0.4);
+          }
+
+          .premium-upload-card.has-file {
+            border-style: solid;
+            border-color: #34c759;
+            background: linear-gradient(180deg, rgba(52, 199, 89, 0.03) 0%, rgba(52, 199, 89, 0.08) 100%);
+          }
+
+          .premium-upload-card.disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+          }
+
+          .card-bg-decoration {
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 150%;
+            height: 150%;
+            background: radial-gradient(circle at center, rgba(0, 113, 227, 0.03) 0%, transparent 70%);
+            pointer-events: none;
+          }
+
+          .card-bg-decoration.alt {
+            background: radial-gradient(circle at center, rgba(88, 86, 214, 0.03) 0%, transparent 70%);
+          }
+
+          .card-label {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+          }
+
+          .label-number {
+            width: 24px;
+            height: 24px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #0071e3 0%, #00c7be 100%);
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+
+          .card-label.alt .label-number {
+            background: linear-gradient(135deg, #5856d6 0%, #af52de 100%);
+          }
+
+          .label-text {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #86868b;
+          }
+
+          .upload-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+          }
+
+          .upload-icon-wrapper {
+            position: relative;
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(0, 113, 227, 0.1) 0%, rgba(0, 199, 190, 0.1) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0071e3;
+          }
+
+          .upload-icon-wrapper.alt {
+            background: linear-gradient(135deg, rgba(88, 86, 214, 0.1) 0%, rgba(175, 82, 222, 0.1) 100%);
+            color: #5856d6;
+          }
+
+          .upload-icon-ring {
+            position: absolute;
+            inset: -4px;
+            border-radius: 20px;
+            border: 2px dashed currentColor;
+            opacity: 0.3;
+            animation: pulse-ring 2s ease-out infinite;
+          }
+
+          .upload-text {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #1d1d1f;
+          }
+
+          .upload-hint {
+            font-size: 0.8rem;
+            color: #86868b;
+          }
+
+          .file-preview {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+            width: 100%;
+            padding: 0 1.5rem;
+          }
+
+          .file-icon-wrapper {
+            position: relative;
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(0, 113, 227, 0.1) 0%, rgba(0, 199, 190, 0.1) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0071e3;
+          }
+
+          .file-icon-wrapper.success {
+            background: linear-gradient(135deg, rgba(52, 199, 89, 0.1) 0%, rgba(48, 209, 88, 0.15) 100%);
+            color: #34c759;
+          }
+
+          .file-icon-wrapper.alt {
+            background: linear-gradient(135deg, rgba(88, 86, 214, 0.1) 0%, rgba(175, 82, 222, 0.15) 100%);
+            color: #5856d6;
+          }
+
+          .success-check {
+            position: absolute;
+            bottom: -4px;
+            right: -4px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #34c759;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(52, 199, 89, 0.4);
+          }
+
+          .file-info {
+            text-align: center;
+            width: 100%;
+          }
+
+          .file-name {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #1d1d1f;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+            margin: 0 auto;
+          }
+
+          .file-size {
+            display: block;
+            font-size: 0.8rem;
+            color: #86868b;
+            margin-top: 0.2rem;
+          }
+
+          .remove-file {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: rgba(255, 69, 58, 0.1);
+            border: none;
+            color: #ff453a;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+          }
+
+          .remove-file:hover {
+            background: #ff453a;
+            color: white;
+          }
+
+          .premium-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(2px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+
+          .premium-badge-card {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, #f7b500 0%, #ff9500 100%);
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-radius: 50px;
+            box-shadow: 0 4px 12px rgba(247, 181, 0, 0.4);
+          }
+
+          /* VS Connector */
+          .vs-connector {
+            display: flex;
+            align-items: center;
+            gap: 0;
+          }
+
+          .connector-line {
+            width: 20px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, #e8e8ed 50%, transparent 100%);
+          }
+
+          .vs-badge {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f5f5f7 0%, #e8e8ed 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #86868b;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+          }
+
+          /* ============================================
+             🚀 PREMIUM ACTION BUTTONS
+             ============================================ */
+          .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+          }
+
+          .premium-submit-btn {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            min-width: 220px;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #0071e3 0%, #0077ed 50%, #00c7be 100%);
+            background-size: 200% 100%;
+            color: white;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 20px rgba(0, 113, 227, 0.3);
+          }
+
+          .premium-submit-btn:hover:not(.disabled) {
+            background-position: 100% 0;
+          }
+
+          .premium-submit-btn.disabled {
+            background: linear-gradient(135deg, #86868b 0%, #6e6e73 100%);
+            cursor: not-allowed;
+            box-shadow: none;
+          }
+
+          .premium-submit-btn .btn-bg {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%);
+            background-size: 200% 100%;
+            animation: shimmer 2s ease-in-out infinite;
+          }
+
+          .premium-submit-btn .btn-icon {
+            position: relative;
+          }
+
+          .premium-submit-btn .btn-text {
+            position: relative;
+          }
+
+          .premium-submit-btn .btn-arrow {
+            position: relative;
+            transition: transform 0.3s ease;
+          }
+
+          .premium-submit-btn:hover:not(.disabled) .btn-arrow {
+            transform: translateX(4px);
+          }
+
+          .premium-submit-btn .loading-spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+          }
+
+          .reset-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 1rem 1.5rem;
+            background: rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: 14px;
+            color: #1d1d1f;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+          }
+
+          .reset-btn:hover {
+            background: rgba(0, 0, 0, 0.08);
           }
 
           .contract-score {
