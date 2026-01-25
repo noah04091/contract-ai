@@ -2,7 +2,7 @@
  * BlockToolbar - Linke Seitenleiste zum Hinzufügen von Blöcken
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useContractBuilderStore, BlockType, Variable } from '../../../stores/contractBuilderStore';
 import {
   FileText,
@@ -27,8 +27,13 @@ import {
   Loader2,
   Book,
   Info,
+  BookOpen,
 } from 'lucide-react';
 import styles from './BlockToolbar.module.css';
+import { templateClauses } from '../../../data/templateClauses';
+import { TEMPLATE_CLAUSE_CATEGORY_INFO } from '../../../types/clauseLibrary';
+import type { TemplateClause, SavedClause, TemplateClauseCategory } from '../../../types/clauseLibrary';
+import * as clauseLibraryAPI from '../../../services/clauseLibraryAPI';
 
 interface BlockToolbarProps {
   className?: string;
@@ -81,7 +86,76 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({ className }) => {
   const [aiPrompt, setAiPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
 
+  // Library Modal State
+  const [showLibraryModal, setShowLibraryModal] = useState(false);
+  const [libraryTab, setLibraryTab] = useState<'muster' | 'meine'>('muster');
+  const [librarySearch, setLibrarySearch] = useState('');
+  const [libraryCategory, setLibraryCategory] = useState<TemplateClauseCategory | ''>('');
+  const [savedClauses, setSavedClauses] = useState<SavedClause[]>([]);
+  const [isLoadingSavedClauses, setIsLoadingSavedClauses] = useState(false);
+
   const { addBlock, generateClause, addVariable } = useContractBuilderStore();
+
+  // Lade gespeicherte Klauseln wenn Tab gewechselt wird
+  useEffect(() => {
+    if (showLibraryModal && libraryTab === 'meine') {
+      loadSavedClauses();
+    }
+  }, [showLibraryModal, libraryTab]);
+
+  const loadSavedClauses = async () => {
+    setIsLoadingSavedClauses(true);
+    try {
+      const response = await clauseLibraryAPI.getSavedClauses({ limit: 100 });
+      setSavedClauses(response.clauses);
+    } catch (error) {
+      console.error('Fehler beim Laden der Klauseln:', error);
+    } finally {
+      setIsLoadingSavedClauses(false);
+    }
+  };
+
+  // Klausel aus Bibliothek einfügen
+  const handleInsertFromLibrary = (clause: TemplateClause | SavedClause) => {
+    const isTemplate = 'usageContext' in clause;
+    const title = isTemplate ? clause.title : (clause as SavedClause).clausePreview?.substring(0, 50) || 'Gespeicherte Klausel';
+
+    const newBlock = {
+      type: 'clause' as BlockType,
+      content: {
+        number: 'auto',
+        clauseTitle: isTemplate ? clause.title : title,
+        body: clause.clauseText,
+        subclauses: [],
+      },
+      style: {},
+      locked: false,
+      aiGenerated: false,
+      librarySource: true,
+    };
+    addBlock(newBlock);
+    setShowLibraryModal(false);
+    setLibrarySearch('');
+    setLibraryCategory('');
+  };
+
+  // Gefilterte Musterklauseln
+  const filteredTemplateClauses = templateClauses.filter(clause => {
+    const matchesSearch = !librarySearch ||
+      clause.title.toLowerCase().includes(librarySearch.toLowerCase()) ||
+      clause.clauseText.toLowerCase().includes(librarySearch.toLowerCase()) ||
+      clause.usageContext.toLowerCase().includes(librarySearch.toLowerCase());
+    const matchesCategory = !libraryCategory || clause.category === libraryCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  // Gefilterte gespeicherte Klauseln
+  const filteredSavedClauses = savedClauses.filter(clause => {
+    const matchesSearch = !librarySearch ||
+      clause.clauseText.toLowerCase().includes(librarySearch.toLowerCase()) ||
+      clause.clausePreview?.toLowerCase().includes(librarySearch.toLowerCase());
+    return matchesSearch;
+  });
 
   // KI-Klausel generieren über echte API
   const handleGenerateClause = async () => {
@@ -193,6 +267,10 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({ className }) => {
           <Sparkles size={16} />
           <span>KI-Klausel generieren</span>
         </button>
+        <button className={styles.libraryButton} onClick={() => setShowLibraryModal(true)}>
+          <BookOpen size={16} />
+          <span>Aus Bibliothek</span>
+        </button>
       </div>
 
       {/* KI-Modal */}
@@ -233,6 +311,150 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({ className }) => {
                   <><Sparkles size={14} /> Generieren</>
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bibliothek-Modal */}
+      {showLibraryModal && (
+        <div className={styles.libraryModalOverlay} onClick={() => setShowLibraryModal(false)}>
+          <div className={styles.libraryModal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.libraryModalHeader}>
+              <span><BookOpen size={16} /> Klausel aus Bibliothek einfügen</span>
+              <button onClick={() => setShowLibraryModal(false)}>
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Tabs */}
+            <div className={styles.libraryTabs}>
+              <button
+                className={`${styles.libraryTab} ${libraryTab === 'muster' ? styles.active : ''}`}
+                onClick={() => setLibraryTab('muster')}
+              >
+                Musterklauseln
+              </button>
+              <button
+                className={`${styles.libraryTab} ${libraryTab === 'meine' ? styles.active : ''}`}
+                onClick={() => setLibraryTab('meine')}
+              >
+                Meine Klauseln
+              </button>
+            </div>
+
+            {/* Search & Filter */}
+            <div className={styles.libraryFilters}>
+              <div className={styles.librarySearchWrapper}>
+                <Search size={14} className={styles.librarySearchIcon} />
+                <input
+                  type="text"
+                  className={styles.librarySearchInput}
+                  placeholder="Klausel suchen..."
+                  value={librarySearch}
+                  onChange={(e) => setLibrarySearch(e.target.value)}
+                />
+              </div>
+              {libraryTab === 'muster' && (
+                <select
+                  className={styles.libraryCategorySelect}
+                  value={libraryCategory}
+                  onChange={(e) => setLibraryCategory(e.target.value as TemplateClauseCategory | '')}
+                >
+                  <option value="">Alle Kategorien</option>
+                  {Object.entries(TEMPLATE_CLAUSE_CATEGORY_INFO).map(([key, info]) => (
+                    <option key={key} value={key}>
+                      {info.icon} {info.label}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            {/* Klausel-Liste */}
+            <div className={styles.libraryClauseList}>
+              {libraryTab === 'muster' ? (
+                filteredTemplateClauses.length > 0 ? (
+                  filteredTemplateClauses.map(clause => {
+                    const categoryInfo = TEMPLATE_CLAUSE_CATEGORY_INFO[clause.category];
+                    return (
+                      <div key={clause.id} className={styles.libraryClauseCard}>
+                        <div className={styles.libraryClauseHeader}>
+                          <span className={styles.libraryClauseTitle}>
+                            {categoryInfo?.icon} {clause.title}
+                          </span>
+                          <button
+                            className={styles.libraryInsertBtn}
+                            onClick={() => handleInsertFromLibrary(clause)}
+                          >
+                            Einfügen
+                          </button>
+                        </div>
+                        <div className={styles.libraryClauseMeta}>
+                          <span className={styles.libraryClauseCategory}>
+                            {categoryInfo?.label}
+                          </span>
+                          {clause.legalBasis && (
+                            <span className={styles.libraryClauseLegalBasis}>
+                              {clause.legalBasis}
+                            </span>
+                          )}
+                        </div>
+                        <p className={styles.libraryClausePreview}>
+                          {clause.clauseText.substring(0, 150)}...
+                        </p>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className={styles.libraryEmpty}>
+                    Keine Musterklauseln gefunden
+                  </div>
+                )
+              ) : (
+                isLoadingSavedClauses ? (
+                  <div className={styles.libraryLoading}>
+                    <Loader2 size={20} className={styles.spinner} />
+                    <span>Lade Klauseln...</span>
+                  </div>
+                ) : filteredSavedClauses.length > 0 ? (
+                  filteredSavedClauses.map(clause => (
+                    <div key={clause._id} className={styles.libraryClauseCard}>
+                      <div className={styles.libraryClauseHeader}>
+                        <span className={styles.libraryClauseTitle}>
+                          {clause.clausePreview?.substring(0, 50) || 'Gespeicherte Klausel'}
+                        </span>
+                        <button
+                          className={styles.libraryInsertBtn}
+                          onClick={() => handleInsertFromLibrary(clause)}
+                        >
+                          Einfügen
+                        </button>
+                      </div>
+                      <div className={styles.libraryClauseMeta}>
+                        {clause.sourceContractName && (
+                          <span className={styles.libraryClauseSource}>
+                            Aus: {clause.sourceContractName}
+                          </span>
+                        )}
+                        {clause.tags.length > 0 && (
+                          <span className={styles.libraryClauseTags}>
+                            {clause.tags.slice(0, 2).join(', ')}
+                          </span>
+                        )}
+                      </div>
+                      <p className={styles.libraryClausePreview}>
+                        {clause.clauseText.substring(0, 150)}...
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <div className={styles.libraryEmpty}>
+                    <p>Noch keine Klauseln gespeichert</p>
+                    <span>Speichern Sie Klauseln aus der Vertragsanalyse, um sie hier wiederzuverwenden.</span>
+                  </div>
+                )
+              )}
             </div>
           </div>
         </div>
