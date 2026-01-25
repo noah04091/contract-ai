@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, X, Zap, Star, Shield, Clock, ChevronDown, TrendingUp, Users, Calendar, FileText, Bell, Download, Sparkles, Lock, ArrowRight } from "lucide-react";
+import { Check, X, Zap, Star, Shield, ChevronDown, TrendingUp, Users, Calendar, FileText, Bell, Download, Sparkles, Lock, ArrowRight, Eye, Search } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import Footer from "../components/Footer";
@@ -207,14 +207,22 @@ export default function Pricing() {
     }
   ];
 
-  // Feature Matrix für Vergleichstabelle (wie vorher)
+  // Feature Matrix für Vergleichstabelle
   const featureMatrix = [
+    // KI-Analyse Features
     { feature: "KI-Vertragsanalysen", free: "3 (einmalig)", business: "25/Monat", premium: "Unbegrenzt" },
     { feature: "KI-Optimierung", free: "–", business: "15/Monat", premium: "Unbegrenzt" },
     { feature: "Vertragsvergleich", free: "–", business: "20/Monat", premium: "Unbegrenzt" },
     { feature: "KI-Chat mit Vertrag", free: "–", business: "50 Fragen/Monat", premium: "Unbegrenzt" },
+    { feature: "Legal Lens", free: "–", business: "✓", premium: "✓" },
+    { feature: "Better Contracts (Anbieterwechsel)", free: "–", business: "✓", premium: "✓" },
+    // Erstellung & Vorlagen
     { feature: "KI-Vertragserstellung", free: "–", business: "10/Monat", premium: "Unbegrenzt" },
-    { feature: "Priority Processing", free: "–", business: "–", premium: "✓" },
+    { feature: "Contract Builder", free: "✓ Basis", business: "✓ + Vorlagen speichern", premium: "✓ + Vorlagen speichern" },
+    { feature: "Klausel-Bibliothek", free: "✓", business: "✓", premium: "✓" },
+    { feature: "Digitale Signaturen", free: "–", business: "✓ Unbegrenzt", premium: "✓ Unbegrenzt" },
+    // Verwaltung & Organisation
+    { feature: "Vertragsverwaltung", free: "✓ Basis", business: "✓ Unbegrenzt", premium: "✓ Unbegrenzt" },
     { feature: "Verträge hochladen", free: "✓ Nur ansehen", business: "✓ Unbegrenzt", premium: "✓ Unbegrenzt" },
     { feature: "Ordner-Organisation", free: "–", business: "✓ + KI-Vorschläge", premium: "✓ + KI-Vorschläge" },
     { feature: "Kalender & Fristen", free: "✓ Nur ansehen", business: "✓ Vollzugriff", premium: "✓ Vollzugriff" },
@@ -222,10 +230,11 @@ export default function Pricing() {
     { feature: "Kalender-Sync", free: "–", business: "–", premium: "✓ Google/Outlook" },
     { feature: "SMS-Fristenwarnungen", free: "–", business: "–", premium: "✓" },
     { feature: "Legal Pulse Feed", free: "✓ Nur ansehen", business: "✓ Aktiv", premium: "✓ Aktiv" },
-    { feature: "Digitale Signaturen", free: "–", business: "✓ Unbegrenzt", premium: "✓ Unbegrenzt" },
+    // Export & Extras
     { feature: "PDF-Download", free: "✓ Nur ansehen", business: "✓ + Analyse-Reports", premium: "✓ White-Label" },
     { feature: "Excel-Export", free: "–", business: "–", premium: "✓" },
     { feature: "REST API-Zugang", free: "–", business: "–", premium: "✓" },
+    { feature: "Priority Processing", free: "–", business: "–", premium: "✓" },
     { feature: "Team-Management", free: "–", business: "–", premium: "✓ (bis 10 User)" },
     { feature: "Support", free: "Community", business: "Priority (24h)", premium: "Priority + Onboarding" },
   ];
@@ -234,10 +243,10 @@ export default function Pricing() {
   const businessFeatures = [
     { icon: <FileText size={20} />, text: "25 KI-Analysen pro Monat" },
     { icon: <Sparkles size={20} />, text: "15 Optimierungen & 20 Vergleiche" },
+    { icon: <Eye size={20} />, text: "Legal Lens & Contract Builder" },
+    { icon: <Search size={20} />, text: "Better Contracts (Anbieterwechsel)" },
     { icon: <Users size={20} />, text: "Unbegrenzte digitale Signaturen" },
     { icon: <Bell size={20} />, text: "Email-Erinnerungen & Alerts" },
-    { icon: <Calendar size={20} />, text: "Smart Folders & Kalender" },
-    { icon: <Clock size={20} />, text: "Priority Support (24h)" },
   ];
 
   // Enterprise Features
