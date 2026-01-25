@@ -549,9 +549,7 @@ export default function Profile() {
     }
   };
 
-  // Helper functions for subscription checks
-  const isBusinessOrHigher = user?.subscriptionActive &&
-    (user.subscriptionPlan === 'business' || user.subscriptionPlan === 'enterprise');
+  // Helper function for subscription check
   const isEnterprise = user?.subscriptionActive && user.subscriptionPlan === 'enterprise';
 
   // Get initials for avatar placeholder
@@ -878,37 +876,37 @@ export default function Profile() {
                 </div>
               </motion.section>
 
-              {/* Business Features Section */}
+              {/* Enterprise Features Section */}
               <motion.section
                 className={styles.sectionGroup}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.6 }}
+                transition={{ duration: 0.5, delay: 0.7 }}
               >
                 <div className={styles.sectionHeader}>
-                  <div className={`${styles.sectionIcon} ${styles.business}`}>💼</div>
-                  <h2 className={styles.sectionTitle}>Business Features</h2>
-                  <span className={`${styles.sectionBadge} ${isBusinessOrHigher ? styles.included : styles.locked}`}>
-                    {isBusinessOrHigher ? '✓ In deinem Abo' : '🔒 Upgrade erforderlich'}
+                  <div className={`${styles.sectionIcon} ${styles.enterprise}`}>🏆</div>
+                  <h2 className={styles.sectionTitle}>Enterprise Features</h2>
+                  <span className={`${styles.sectionBadge} ${isEnterprise ? styles.included : styles.locked}`}>
+                    {isEnterprise ? '✓ In deinem Abo' : '🔒 Upgrade erforderlich'}
                   </span>
                 </div>
 
                 <div className={styles.featureGrid}>
                   {/* Company Profile */}
-                  <div className={`${styles.featureCard} ${!isBusinessOrHigher ? styles.locked : ''}`}>
+                  <div className={`${styles.featureCard} ${!isEnterprise ? styles.locked : ''}`}>
                     <div className={styles.featureHeader}>
                       <div className={`${styles.featureIcon} ${styles.blue}`}>🏢</div>
                       <div className={styles.featureContent}>
                         <h3 className={styles.featureTitle}>
                           Firmenprofil
-                          {!isBusinessOrHigher && <span className={styles.featureLockBadge}>Business</span>}
+                          {!isEnterprise && <span className={styles.featureLockBadge}>Enterprise</span>}
                         </h3>
                         <p className={styles.featureDescription}>
                           Hinterlege deine Firmendaten für automatisches Ausfüllen in generierten Verträgen.
                         </p>
                       </div>
                     </div>
-                    {isBusinessOrHigher ? (
+                    {isEnterprise ? (
                       <motion.button
                         className={`${styles.featureButton} ${styles.primary}`}
                         onClick={() => window.location.href = '/company-profile'}
@@ -926,26 +924,26 @@ export default function Profile() {
                         whileTap={{ scale: 0.98 }}
                       >
                         <Star size={16} />
-                        Upgrade auf Business (19€/Monat)
+                        Upgrade auf Enterprise (29€/Monat)
                       </motion.button>
                     )}
                   </div>
 
-                  {/* Team Management - Now available for Business+ */}
-                  <div className={`${styles.featureCard} ${!isBusinessOrHigher ? styles.locked : ''}`}>
+                  {/* Team Management */}
+                  <div className={`${styles.featureCard} ${!isEnterprise ? styles.locked : ''}`}>
                     <div className={styles.featureHeader}>
                       <div className={`${styles.featureIcon} ${styles.orange}`}>👥</div>
                       <div className={styles.featureContent}>
                         <h3 className={styles.featureTitle}>
                           Team-Management
-                          {!isBusinessOrHigher && <span className={styles.featureLockBadge}>Business</span>}
+                          {!isEnterprise && <span className={styles.featureLockBadge}>Enterprise</span>}
                         </h3>
                         <p className={styles.featureDescription}>
                           Erstelle Teams, lade Mitglieder ein und arbeite gemeinsam an Verträgen.
                         </p>
                       </div>
                     </div>
-                    {isBusinessOrHigher ? (
+                    {isEnterprise ? (
                       <motion.button
                         className={`${styles.featureButton} ${styles.primary}`}
                         onClick={() => window.location.href = '/team'}
@@ -963,29 +961,11 @@ export default function Profile() {
                         whileTap={{ scale: 0.98 }}
                       >
                         <Star size={16} />
-                        Upgrade auf Business (19€/Monat)
+                        Upgrade auf Enterprise (29€/Monat)
                       </motion.button>
                     )}
                   </div>
-                </div>
-              </motion.section>
 
-              {/* Enterprise Features Section */}
-              <motion.section
-                className={styles.sectionGroup}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.7 }}
-              >
-                <div className={styles.sectionHeader}>
-                  <div className={`${styles.sectionIcon} ${styles.enterprise}`}>🏆</div>
-                  <h2 className={styles.sectionTitle}>Enterprise Features</h2>
-                  <span className={`${styles.sectionBadge} ${isEnterprise ? styles.included : styles.locked}`}>
-                    {isEnterprise ? '✓ In deinem Abo' : '🔒 Upgrade erforderlich'}
-                  </span>
-                </div>
-
-                <div className={styles.featureGrid}>
                   {/* REST API Access */}
                   <div className={`${styles.featureCard} ${!isEnterprise ? styles.locked : ''}`}>
                     <div className={styles.featureHeader}>
