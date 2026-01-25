@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import styles from "../styles/Home.module.css";
-import logo from "../assets/logo-contractai.png";
+import logo from "../assets/logo-contractai.webp";
 import { Helmet } from "react-helmet-async";
 
 interface UserResponse {
