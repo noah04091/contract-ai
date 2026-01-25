@@ -274,6 +274,112 @@ const ContractScore: React.FC<{
   );
 };
 
+// 🔍 Word-Diff Algorithm for Inline Highlighting
+interface DiffSegment {
+  text: string;
+  type: 'same' | 'added' | 'removed' | 'changed';
+}
+
+function computeWordDiff(text1: string, text2: string): { segments1: DiffSegment[], segments2: DiffSegment[] } {
+  // Normalize and split into words
+  const words1 = text1.trim().split(/\s+/).filter(w => w.length > 0);
+  const words2 = text2.trim().split(/\s+/).filter(w => w.length > 0);
+
+  const segments1: DiffSegment[] = [];
+  const segments2: DiffSegment[] = [];
+
+  // Simple LCS-based diff
+  const lcs = findLCS(words1, words2);
+
+  let i = 0, j = 0, k = 0;
+
+  while (k < lcs.length) {
+    // Add removed words from text1
+    while (i < words1.length && words1[i] !== lcs[k]) {
+      segments1.push({ text: words1[i] + ' ', type: 'removed' });
+      i++;
+    }
+    // Add added words from text2
+    while (j < words2.length && words2[j] !== lcs[k]) {
+      segments2.push({ text: words2[j] + ' ', type: 'added' });
+      j++;
+    }
+    // Add common word
+    if (i < words1.length && j < words2.length) {
+      segments1.push({ text: words1[i] + ' ', type: 'same' });
+      segments2.push({ text: words2[j] + ' ', type: 'same' });
+      i++; j++; k++;
+    }
+  }
+
+  // Add remaining words
+  while (i < words1.length) {
+    segments1.push({ text: words1[i] + ' ', type: 'removed' });
+    i++;
+  }
+  while (j < words2.length) {
+    segments2.push({ text: words2[j] + ' ', type: 'added' });
+    j++;
+  }
+
+  return { segments1, segments2 };
+}
+
+function findLCS(arr1: string[], arr2: string[]): string[] {
+  const m = arr1.length;
+  const n = arr2.length;
+  const dp: number[][] = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
+
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (arr1[i - 1].toLowerCase() === arr2[j - 1].toLowerCase()) {
+        dp[i][j] = dp[i - 1][j - 1] + 1;
+      } else {
+        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+      }
+    }
+  }
+
+  // Backtrack to find LCS
+  const lcs: string[] = [];
+  let i = m, j = n;
+  while (i > 0 && j > 0) {
+    if (arr1[i - 1].toLowerCase() === arr2[j - 1].toLowerCase()) {
+      lcs.unshift(arr1[i - 1]);
+      i--; j--;
+    } else if (dp[i - 1][j] > dp[i][j - 1]) {
+      i--;
+    } else {
+      j--;
+    }
+  }
+
+  return lcs;
+}
+
+// Render diff segments with highlighting
+const DiffText: React.FC<{ segments: DiffSegment[], variant: 'source' | 'target' }> = ({ segments, variant }) => {
+  return (
+    <span className="diff-text">
+      {segments.map((seg, idx) => {
+        let className = 'diff-segment';
+        if (seg.type === 'removed' && variant === 'source') {
+          className += ' diff-removed';
+        } else if (seg.type === 'added' && variant === 'target') {
+          className += ' diff-added';
+        } else if (seg.type === 'same') {
+          className += ' diff-same';
+        }
+        return (
+          <span key={idx} className={className}>
+            {seg.text}
+          </span>
+        );
+      })}
+    </span>
+  );
+};
+
 // Side-by-Side Difference View Component with Visual Diff
 const DifferenceView: React.FC<{
   differences: ComparisonDifference[];
@@ -283,6 +389,7 @@ const DifferenceView: React.FC<{
   onToggleView: () => void;
   recommendedContract?: 1 | 2;
 }> = ({ differences, selectedCategory, onCategoryChange, showSideBySide, onToggleView, recommendedContract = 1 }) => {
+  const [showInlineDiff, setShowInlineDiff] = useState(true);
   const categories = [...new Set(differences.map(d => d.category))];
   const filteredDifferences = selectedCategory === 'all'
     ? differences
@@ -360,15 +467,28 @@ const DifferenceView: React.FC<{
           </select>
         </div>
 
-        <motion.button
-          className="view-toggle"
-          onClick={onToggleView}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          {showSideBySide ? <EyeOff size={16} /> : <Eye size={16} />}
-          <span>{showSideBySide ? 'Liste' : 'Vergleich'}</span>
-        </motion.button>
+        <div className="view-toggles">
+          <motion.button
+            className={`view-toggle ${showInlineDiff ? 'active' : ''}`}
+            onClick={() => setShowInlineDiff(!showInlineDiff)}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            title="Unterschiede farbig markieren"
+          >
+            <Layers size={16} />
+            <span>Diff</span>
+          </motion.button>
+
+          <motion.button
+            className="view-toggle"
+            onClick={onToggleView}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            {showSideBySide ? <EyeOff size={16} /> : <Eye size={16} />}
+            <span>{showSideBySide ? 'Liste' : 'Vergleich'}</span>
+          </motion.button>
+        </div>
       </div>
 
       <div className={`differences-container ${showSideBySide ? 'side-by-side' : 'list-view'}`}>
@@ -400,25 +520,46 @@ const DifferenceView: React.FC<{
               </div>
 
               {showSideBySide ? (
-                <div className="side-by-side-content">
-                  <div className={`contract-column ${recommendedContract === 1 ? 'recommended' : 'not-recommended'}`}>
-                    <h5>
-                      Vertrag 1
-                      {recommendedContract === 1 && <span className="rec-badge">✓</span>}
-                    </h5>
-                    <div className="contract-text">{diff.contract1}</div>
-                  </div>
-                  <div className="vs-divider" style={{ backgroundColor: severityColor }}>
-                    <span>VS</span>
-                  </div>
-                  <div className={`contract-column ${recommendedContract === 2 ? 'recommended' : 'not-recommended'}`}>
-                    <h5>
-                      Vertrag 2
-                      {recommendedContract === 2 && <span className="rec-badge">✓</span>}
-                    </h5>
-                    <div className="contract-text">{diff.contract2}</div>
-                  </div>
-                </div>
+                (() => {
+                  // Compute diff if enabled
+                  const diffResult = showInlineDiff && diff.contract1 && diff.contract2
+                    ? computeWordDiff(diff.contract1, diff.contract2)
+                    : null;
+
+                  return (
+                    <div className="side-by-side-content">
+                      <div className={`contract-column ${recommendedContract === 1 ? 'recommended' : 'not-recommended'}`}>
+                        <h5>
+                          Vertrag 1
+                          {recommendedContract === 1 && <span className="rec-badge">✓</span>}
+                        </h5>
+                        <div className="contract-text">
+                          {diffResult ? (
+                            <DiffText segments={diffResult.segments1} variant="source" />
+                          ) : (
+                            diff.contract1
+                          )}
+                        </div>
+                      </div>
+                      <div className="vs-divider" style={{ backgroundColor: severityColor }}>
+                        <span>VS</span>
+                      </div>
+                      <div className={`contract-column ${recommendedContract === 2 ? 'recommended' : 'not-recommended'}`}>
+                        <h5>
+                          Vertrag 2
+                          {recommendedContract === 2 && <span className="rec-badge">✓</span>}
+                        </h5>
+                        <div className="contract-text">
+                          {diffResult ? (
+                            <DiffText segments={diffResult.segments2} variant="target" />
+                          ) : (
+                            diff.contract2
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
               ) : (
                 <div className="list-content">
                   <div className="impact">
@@ -1710,6 +1851,11 @@ export default function EnhancedCompare() {
             cursor: pointer;
           }
 
+          .view-toggles {
+            display: flex;
+            gap: 0.5rem;
+          }
+
           .view-toggle {
             display: flex;
             align-items: center;
@@ -1727,6 +1873,41 @@ export default function EnhancedCompare() {
 
           .view-toggle:hover {
             background: #f5f5f7;
+          }
+
+          .view-toggle.active {
+            background: rgba(0, 113, 227, 0.1);
+            border-color: #0071e3;
+            color: #0071e3;
+          }
+
+          /* Diff Highlighting Styles */
+          .diff-text {
+            display: inline;
+          }
+
+          .diff-segment {
+            transition: background-color 0.2s ease;
+          }
+
+          .diff-same {
+            color: inherit;
+          }
+
+          .diff-removed {
+            background-color: rgba(255, 69, 58, 0.2);
+            color: #d70015;
+            text-decoration: line-through;
+            border-radius: 2px;
+            padding: 0 2px;
+          }
+
+          .diff-added {
+            background-color: rgba(52, 199, 89, 0.2);
+            color: #248a3d;
+            font-weight: 500;
+            border-radius: 2px;
+            padding: 0 2px;
           }
 
           .differences-container {
