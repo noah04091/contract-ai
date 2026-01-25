@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, X, Zap, Star, Shield, ChevronDown, TrendingUp, Users, Calendar, FileText, Bell, Download, Sparkles, Lock, ArrowRight, Eye, Search } from "lucide-react";
+import { Check, X, Zap, Star, Shield, ChevronDown, TrendingUp, Users, Calendar, Bell, Download, Sparkles, Lock, ArrowRight, Eye, Search, FolderOpen, Clock, Smartphone, PenTool } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import Footer from "../components/Footer";
@@ -239,24 +239,25 @@ export default function Pricing() {
     { feature: "Support", free: "Community", business: "Priority (24h)", premium: "Priority + Onboarding" },
   ];
 
-  // Business Features
+  // Business Features - Benefit-focused, seriös
   const businessFeatures = [
-    { icon: <FileText size={20} />, text: "25 KI-Analysen pro Monat" },
-    { icon: <Sparkles size={20} />, text: "15 Optimierungen & 20 Vergleiche" },
-    { icon: <Eye size={20} />, text: "Legal Lens & Contract Builder" },
-    { icon: <Search size={20} />, text: "Better Contracts (Anbieterwechsel)" },
-    { icon: <Users size={20} />, text: "Unbegrenzte digitale Signaturen" },
-    { icon: <Bell size={20} />, text: "Email-Erinnerungen & Alerts" },
+    { icon: <Search size={20} />, text: "KI erkennt Risiken & Kündigungsfristen automatisch" },
+    { icon: <Eye size={20} />, text: "Legal Lens: Klauseln verständlich erklärt" },
+    { icon: <PenTool size={20} />, text: "Rechtssichere digitale Unterschriften" },
+    { icon: <Bell size={20} />, text: "Automatische Erinnerungen – nie wieder Fristen verpassen" },
+    { icon: <FolderOpen size={20} />, text: "Alle Verträge zentral & übersichtlich verwalten" },
+    { icon: <Clock size={20} />, text: "Priority Support innerhalb von 24 Stunden" },
   ];
 
-  // Enterprise Features
+  // Enterprise Features - Freiheit, Kontrolle, Status
   const enterpriseFeatures = [
-    { icon: <Sparkles size={20} />, text: "Unbegrenzte Analysen & Optimierungen", highlight: true },
-    { icon: <Calendar size={20} />, text: "Kalender-Sync (Google/Outlook)", highlight: true },
-    { icon: <Bell size={20} />, text: "Automatische Fristenwarnungen per SMS", highlight: true },
-    { icon: <Download size={20} />, text: "White-Label PDF-Export" },
+    { icon: <Sparkles size={20} />, text: "Unbegrenzte KI-Analysen & Optimierungen", highlight: true },
+    { icon: <Search size={20} />, text: "Better Contracts: bessere Alternativen finden", highlight: true },
+    { icon: <Smartphone size={20} />, text: "SMS-Warnungen vor jeder wichtigen Frist", highlight: true },
+    { icon: <Calendar size={20} />, text: "Kalender-Sync mit Google & Outlook" },
+    { icon: <Download size={20} />, text: "White-Label PDFs mit eigenem Branding" },
+    { icon: <Users size={20} />, text: "Team-Zugriff für bis zu 10 Nutzer" },
     { icon: <Lock size={20} />, text: "API-Zugang & Custom Templates" },
-    { icon: <Users size={20} />, text: "Team-Management (bis 10 User)" },
   ];
 
   return (
