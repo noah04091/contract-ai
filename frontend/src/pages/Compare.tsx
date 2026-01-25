@@ -1195,14 +1195,14 @@ export default function EnhancedCompare() {
             ]}
           />
 
-          {/* History Button - Separate Row */}
+          {/* History Button - Compact Row */}
           {historyItems.length > 0 && (
             <motion.div
               style={{
                 display: 'flex',
                 justifyContent: 'flex-end',
-                marginBottom: '1rem',
-                marginTop: '-0.5rem'
+                marginBottom: '0.5rem',
+                marginTop: '-1.5rem'
               }}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -2589,30 +2589,31 @@ export default function EnhancedCompare() {
           .history-toggle-btn {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            padding: 0.6rem 1.2rem;
+            gap: 0.4rem;
+            padding: 0.5rem 1rem;
             background: white;
-            color: #1d1d1f;
+            color: #6e6e73;
             border: 1px solid rgba(0, 0, 0, 0.08);
-            border-radius: 12px;
+            border-radius: 10px;
             cursor: pointer;
             font-family: inherit;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 500;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
           }
 
           .history-toggle-btn:hover {
             background: #f5f5f7;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            color: #1d1d1f;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
           }
 
           .history-toggle-btn.active {
-            background: linear-gradient(135deg, #0071e3 0%, #00c7be 100%);
+            background: #0071e3;
             color: white;
             border-color: transparent;
-            box-shadow: 0 4px 15px rgba(0, 113, 227, 0.3);
+            box-shadow: 0 2px 10px rgba(0, 113, 227, 0.25);
           }
 
           .contract-score {

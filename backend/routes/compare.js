@@ -880,8 +880,16 @@ router.post("/export-pdf", verifyToken, async (req, res) => {
     }
 
     // === RECOMMENDATION BOX ===
+    // Calculate text height first
+    const reasoningText = result.overallRecommendation.reasoning;
+    const confidenceText = `Konfidenz: ${result.overallRecommendation.confidence}%`;
+
+    // Estimate box height based on text length (roughly 80 chars per line at fontSize 11)
+    const estimatedLines = Math.ceil(reasoningText.length / 70);
+    const boxHeight = Math.max(90, 50 + (estimatedLines * 14) + 20);
+
     const recY = doc.y;
-    doc.rect(50, recY, 495, 80)
+    doc.rect(50, recY, 495, boxHeight)
        .fill('#f0f7ff');
 
     doc.fontSize(16)
@@ -890,14 +898,17 @@ router.post("/export-pdf", verifyToken, async (req, res) => {
 
     doc.fontSize(11)
        .fillColor(textColor)
-       .text(result.overallRecommendation.reasoning, 70, recY + 40, { width: 455 });
+       .text(reasoningText, 70, recY + 40, { width: 455 });
 
-    doc.fontSize(10)
+    // Get actual Y position after reasoning text
+    const afterReasoningY = doc.y;
+
+    doc.fontSize(9)
        .fillColor(mutedColor)
-       .text(`Vertrauen: ${result.overallRecommendation.confidence}%`, 70, recY + 60);
+       .text(confidenceText, 70, afterReasoningY + 5);
 
-    doc.y = recY + 95;
-    doc.moveDown(1);
+    doc.y = recY + boxHeight + 10;
+    doc.moveDown(0.5);
 
     // === SCORES COMPARISON ===
     doc.fontSize(16)
