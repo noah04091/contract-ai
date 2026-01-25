@@ -603,7 +603,7 @@ router.post("/", verifyToken, upload.fields([
       // Continue with the comparison even if saving fails
     }
 
-    // Log the comparison activity
+    // Log the comparison activity with full result for history feature
     try {
       await contractsCollection.insertOne({
         userId: new ObjectId(req.user.userId),
@@ -616,6 +616,8 @@ router.post("/", verifyToken, upload.fields([
         recommendedContract: analysisResult.overallRecommendation.recommended,
         confidence: analysisResult.overallRecommendation.confidence,
         differencesCount: analysisResult.differences.length,
+        // Store full result for history reload feature
+        fullResult: analysisResult,
         timestamp: new Date()
       });
     } catch (logError) {

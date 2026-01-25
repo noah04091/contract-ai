@@ -288,7 +288,13 @@
       "Bash(pushd:*)",
       "Bash(ping:*)",
       "Bash(start \"\" \"C:\\\\Users\\\\liebo\\\\Documents\\\\contract-ai\\\\mockups\\\\pageheader-compact-mockups.html\")",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "Bash(for img in \"Analyse.webp\" \"Fristen.webp\" \"Generator.webp\" \"Legal Pulse.webp\" \"logo.webp\" \"Optimierung.webp\" \"Vergleich.webp\" \"dsgvo-badge.webp\" \"logo-contractai.webp\" \"logo-header.webp\" \"trustpilot-badge.webp\" \"team/laura-mueller.jpg.png\" \"team/michael-weber.jpg.png\" \"team/noah-liebold.jpg.png\")",
+      "Bash(do if [ -f \"$img\" ])",
+      "Bash(then echo \"✅ $img EXISTIERT\")",
+      "Bash(else echo \"❌ $img FEHLT!!!\")",
+      "Bash(fi)",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []

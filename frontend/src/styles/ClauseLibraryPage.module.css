@@ -1183,7 +1183,8 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding-bottom: 1rem;
+  padding: 1rem 0 1.25rem 0;
+  margin-top: 0.5rem;
   border-bottom: 1px solid #f1f5f9;
 }
 
@@ -1196,7 +1197,78 @@
 .templateClausesList {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem;
+}
+
+/* Category Section */
+.categorySection {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.categorySectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.categorySectionHeader:hover {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+}
+
+.categorySectionLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.categorySectionIcon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  color: white;
+}
+
+.categorySectionTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.categorySectionCount {
+  font-size: 0.8rem;
+  color: #64748b;
+  background: #e2e8f0;
+  padding: 0.25rem 0.625rem;
+  border-radius: 12px;
+}
+
+.categorySectionContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-top: 1px solid #e2e8f0;
+}
+
+.categorySectionContent .templateClauseCard {
+  border: none;
+  border-radius: 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.categorySectionContent .templateClauseCard:last-child {
+  border-bottom: none;
 }
 
 .templateClauseCard {

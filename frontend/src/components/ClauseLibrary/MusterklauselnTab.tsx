@@ -82,6 +82,35 @@ const MusterklauselnTab: React.FC = () => {
     return counts;
   }, []);
 
+  // Group filtered clauses by category
+  const groupedClauses = useMemo(() => {
+    const groups: Record<TemplateClauseCategory, TemplateClause[]> = {} as Record<TemplateClauseCategory, TemplateClause[]>;
+    filteredClauses.forEach(clause => {
+      if (!groups[clause.category]) {
+        groups[clause.category] = [];
+      }
+      groups[clause.category].push(clause);
+    });
+    return groups;
+  }, [filteredClauses]);
+
+  // State for expanded categories
+  const [expandedCategories, setExpandedCategories] = useState<Set<TemplateClauseCategory>>(
+    new Set(Object.keys(TEMPLATE_CLAUSE_CATEGORY_INFO) as TemplateClauseCategory[])
+  );
+
+  const toggleCategory = (category: TemplateClauseCategory) => {
+    setExpandedCategories(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(category)) {
+        newSet.delete(category);
+      } else {
+        newSet.add(category);
+      }
+      return newSet;
+    });
+  };
+
   return (
     <div className={styles.musterklauselnTab}>
       {/* Search & Filters */}
@@ -166,7 +195,7 @@ const MusterklauselnTab: React.FC = () => {
         <span>{filteredClauses.length} von {templateClauses.length} Musterklauseln</span>
       </div>
 
-      {/* Clauses List */}
+      {/* Clauses List - Grouped by Category */}
       <div className={styles.templateClausesList}>
         {filteredClauses.length === 0 ? (
           <div className={styles.noResults}>
@@ -175,115 +204,143 @@ const MusterklauselnTab: React.FC = () => {
             <p>Versuche andere Suchbegriffe oder Filter.</p>
           </div>
         ) : (
-          filteredClauses.map(clause => {
-            const catInfo = TEMPLATE_CLAUSE_CATEGORY_INFO[clause.category];
-            const riskInfo = RISK_LEVEL_INFO[clause.riskLevel];
-            const isExpanded = expandedClause === clause.id;
-            const isCopied = copiedId === clause.id;
+          (Object.keys(groupedClauses) as TemplateClauseCategory[]).map(category => {
+            const catInfo = TEMPLATE_CLAUSE_CATEGORY_INFO[category];
+            const clausesInCategory = groupedClauses[category];
+            const isCategoryExpanded = expandedCategories.has(category);
+
+            if (!clausesInCategory || clausesInCategory.length === 0) return null;
 
             return (
-              <div
-                key={clause.id}
-                className={`${styles.templateClauseCard} ${isExpanded ? styles.expanded : ''}`}
-              >
-                {/* Card Header */}
+              <div key={category} className={styles.categorySection}>
+                {/* Category Header */}
                 <div
-                  className={styles.templateCardHeader}
-                  onClick={() => setExpandedClause(isExpanded ? null : clause.id)}
+                  className={styles.categorySectionHeader}
+                  onClick={() => toggleCategory(category)}
                 >
-                  <div className={styles.templateCardLeft}>
-                    <span className={styles.templateCategoryBadge}>
-                      {catInfo.icon} {catInfo.label}
+                  <div className={styles.categorySectionLeft}>
+                    <span className={styles.categorySectionIcon} style={{ background: catInfo.color }}>
+                      {catInfo.icon}
                     </span>
-                    <h4 className={styles.templateTitle}>{clause.title}</h4>
+                    <h3 className={styles.categorySectionTitle}>{catInfo.label}</h3>
+                    <span className={styles.categorySectionCount}>{clausesInCategory.length} Klauseln</span>
                   </div>
-                  <div className={styles.templateCardRight}>
-                    <span
-                      className={styles.riskLevelBadge}
-                      style={{ color: riskInfo.color, background: riskInfo.bgColor }}
-                    >
-                      <Scale size={12} />
-                      {riskInfo.label}
-                    </span>
-                    {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                  </div>
+                  {isCategoryExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                 </div>
 
-                {/* Card Preview (always visible) */}
-                <div className={styles.templatePreview}>
-                  <p>{clause.usageContext}</p>
-                  {clause.legalBasis && (
-                    <span className={styles.legalBasisBadge}>
-                      {clause.legalBasis}
-                    </span>
-                  )}
-                </div>
+                {/* Category Clauses */}
+                {isCategoryExpanded && (
+                  <div className={styles.categorySectionContent}>
+                    {clausesInCategory.map(clause => {
+                      const riskInfo = RISK_LEVEL_INFO[clause.riskLevel];
+                      const isExpanded = expandedClause === clause.id;
+                      const isCopied = copiedId === clause.id;
 
-                {/* Expanded Content */}
-                {isExpanded && (
-                  <div className={styles.templateExpanded}>
-                    {/* Full Clause Text */}
-                    <div className={styles.templateClauseText}>
-                      <h5>Klauseltext</h5>
-                      <div className={styles.clauseTextBox}>
-                        {clause.clauseText}
-                      </div>
-                    </div>
-
-                    {/* Industry Tags */}
-                    <div className={styles.templateIndustries}>
-                      <h5>Branchen</h5>
-                      <div className={styles.industryTags}>
-                        {clause.industryTags.map(tag => (
-                          <span key={tag} className={styles.industryTag}>
-                            {INDUSTRY_TAG_INFO[tag].icon} {INDUSTRY_TAG_INFO[tag].label}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Warnings */}
-                    {clause.warnings && clause.warnings.length > 0 && (
-                      <div className={styles.templateWarnings}>
-                        <h5>
-                          <AlertCircle size={14} />
-                          Hinweise
-                        </h5>
-                        <ul>
-                          {clause.warnings.map((warning, idx) => (
-                            <li key={idx}>{warning}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {/* Variations */}
-                    {clause.variations && clause.variations.length > 0 && (
-                      <div className={styles.templateVariations}>
-                        <h5>Variationen</h5>
-                        {clause.variations.map((variation, idx) => (
-                          <div key={idx} className={styles.variationItem}>
-                            <strong>{variation.title}</strong>
-                            <p className={styles.variationDescription}>{variation.description}</p>
-                            <div className={styles.variationText}>{variation.text}</div>
+                      return (
+                        <div
+                          key={clause.id}
+                          className={`${styles.templateClauseCard} ${isExpanded ? styles.expanded : ''}`}
+                        >
+                          {/* Card Header */}
+                          <div
+                            className={styles.templateCardHeader}
+                            onClick={() => setExpandedClause(isExpanded ? null : clause.id)}
+                          >
+                            <div className={styles.templateCardLeft}>
+                              <h4 className={styles.templateTitle}>{clause.title}</h4>
+                            </div>
+                            <div className={styles.templateCardRight}>
+                              <span
+                                className={styles.riskLevelBadge}
+                                style={{ color: riskInfo.color, background: riskInfo.bgColor }}
+                              >
+                                <Scale size={12} />
+                                {riskInfo.label}
+                              </span>
+                              {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                            </div>
                           </div>
-                        ))}
-                      </div>
-                    )}
 
-                    {/* Actions */}
-                    <div className={styles.templateActions}>
-                      <button
-                        className={`${styles.copyBtn} ${isCopied ? styles.copied : ''}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCopy(clause);
-                        }}
-                      >
-                        {isCopied ? <Check size={16} /> : <Copy size={16} />}
-                        {isCopied ? 'Kopiert!' : 'Kopieren'}
-                      </button>
-                    </div>
+                          {/* Card Preview (always visible) */}
+                          <div className={styles.templatePreview}>
+                            <p>{clause.usageContext}</p>
+                            {clause.legalBasis && (
+                              <span className={styles.legalBasisBadge}>
+                                {clause.legalBasis}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Expanded Content */}
+                          {isExpanded && (
+                            <div className={styles.templateExpanded}>
+                              {/* Full Clause Text */}
+                              <div className={styles.templateClauseText}>
+                                <h5>Klauseltext</h5>
+                                <div className={styles.clauseTextBox}>
+                                  {clause.clauseText}
+                                </div>
+                              </div>
+
+                              {/* Industry Tags */}
+                              <div className={styles.templateIndustries}>
+                                <h5>Branchen</h5>
+                                <div className={styles.industryTags}>
+                                  {clause.industryTags.map(tag => (
+                                    <span key={tag} className={styles.industryTag}>
+                                      {INDUSTRY_TAG_INFO[tag].icon} {INDUSTRY_TAG_INFO[tag].label}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Warnings */}
+                              {clause.warnings && clause.warnings.length > 0 && (
+                                <div className={styles.templateWarnings}>
+                                  <h5>
+                                    <AlertCircle size={14} />
+                                    Hinweise
+                                  </h5>
+                                  <ul>
+                                    {clause.warnings.map((warning, idx) => (
+                                      <li key={idx}>{warning}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+
+                              {/* Variations */}
+                              {clause.variations && clause.variations.length > 0 && (
+                                <div className={styles.templateVariations}>
+                                  <h5>Variationen</h5>
+                                  {clause.variations.map((variation, idx) => (
+                                    <div key={idx} className={styles.variationItem}>
+                                      <strong>{variation.title}</strong>
+                                      <p className={styles.variationDescription}>{variation.description}</p>
+                                      <div className={styles.variationText}>{variation.text}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Actions */}
+                              <div className={styles.templateActions}>
+                                <button
+                                  className={`${styles.copyBtn} ${isCopied ? styles.copied : ''}`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCopy(clause);
+                                  }}
+                                >
+                                  {isCopied ? <Check size={16} /> : <Copy size={16} />}
+                                  {isCopied ? 'Kopiert!' : 'Kopieren'}
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
