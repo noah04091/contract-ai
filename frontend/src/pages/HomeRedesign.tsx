@@ -7,14 +7,14 @@ import AutoPlayVideo from "../components/AutoPlayVideo";
 import "../styles/landing.css";
 
 // Importiere Bilder
-import logo from "../assets/logo-contractai.png";
-import logoHeader from "../assets/logo-header.png";
-import analyseImg from "../assets/Analyse.png";
-import fristenImg from "../assets/Fristen.png";
-import optimierungImg from "../assets/Optimierung.png";
-import vergleichImg from "../assets/Vergleich.png";
-import dsgvoBadge from "../assets/dsgvo-badge.png";
-import trustpilotBadge from "../assets/trustpilot-badge.png";
+import logo from "../assets/logo-contractai.webp";
+import logoHeader from "../assets/logo-header.webp";
+import analyseImg from "../assets/Analyse.webp";
+import fristenImg from "../assets/Fristen.webp";
+import optimierungImg from "../assets/Optimierung.webp";
+import vergleichImg from "../assets/Vergleich.webp";
+import dsgvoBadge from "../assets/dsgvo-badge.webp";
+import trustpilotBadge from "../assets/trustpilot-badge.webp";
 
 // Video-Pfade (aus public-Ordner)
 const analyseVideo = "/Videos/analyse.mp4";

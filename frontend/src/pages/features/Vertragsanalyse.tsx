@@ -9,7 +9,7 @@ import { Search, Target, CheckCircle, AlertTriangle, FileText, Shield, Zap, Brie
 
 // Video
 const analyseVideo = "/Videos/analyse.mp4";
-import analyseImg from "../../assets/Analyse.png";
+import analyseImg from "../../assets/Analyse.webp";
 
 const Vertragsanalyse: React.FC = () => {
   const { user } = useAuth();

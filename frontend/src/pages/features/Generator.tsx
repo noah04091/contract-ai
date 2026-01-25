@@ -9,7 +9,7 @@ import { FileText, Zap, Shield, PenTool, Target, CheckCircle, ArrowRight, Play }
 
 // Video
 const generatorVideo = "/Videos/generator.mp4";
-import generatorImg from "../../assets/Generator.png";
+import generatorImg from "../../assets/Generator.webp";
 
 const Generator: React.FC = () => {
   const { user } = useAuth();

@@ -9,7 +9,7 @@ import { Activity, TrendingUp, AlertTriangle, Bell, Shield, CheckCircle, ArrowRi
 
 // Video
 const legalpulseVideo = "/Videos/legalpulse.mp4";
-import legalpulseImg from "../../assets/Legal Pulse.png";
+import legalpulseImg from "../../assets/Legal Pulse.webp";
 
 const LegalPulse: React.FC = () => {
   const { user } = useAuth();

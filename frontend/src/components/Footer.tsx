@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import logo from "../assets/logo-contractai.png";
-import dsgvoBadge from "../assets/dsgvo-badge.png";
-import trustpilotBadge from "../assets/trustpilot-badge.png";
+import logo from "../assets/logo-contractai.webp";
+import dsgvoBadge from "../assets/dsgvo-badge.webp";
+import trustpilotBadge from "../assets/trustpilot-badge.webp";
 
 const Footer: React.FC = () => {
   const handleOpenCookieSettings = (e: React.MouseEvent) => {

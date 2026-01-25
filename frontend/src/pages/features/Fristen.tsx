@@ -9,7 +9,7 @@ import { Calendar, Clock, AlertCircle, Mail, Shield, CheckCircle, ArrowRight, Pl
 
 // Video
 const fristenVideo = "/Videos/fristen.mp4";
-import fristenImg from "../../assets/Fristen.png";
+import fristenImg from "../../assets/Fristen.webp";
 
 const Fristen: React.FC = () => {
   const { user } = useAuth();

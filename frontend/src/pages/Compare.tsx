@@ -731,9 +731,15 @@ interface ComparisonHistoryItem {
   recommended: 1 | 2;
 }
 
-// History Storage Key
-const COMPARISON_HISTORY_KEY = 'contract-ai-comparison-history';
+// History Storage Key - now user-specific
+const COMPARISON_HISTORY_KEY_PREFIX = 'contract-ai-comparison-history-';
 const MAX_HISTORY_ITEMS = 10;
+
+// Helper to get user-specific history key
+const getHistoryKey = (userId: string | null) => {
+  if (!userId) return null;
+  return `${COMPARISON_HISTORY_KEY_PREFIX}${userId}`;
+};
 
 // Main Enhanced Compare Component
 export default function EnhancedCompare() {
@@ -759,6 +765,7 @@ export default function EnhancedCompare() {
   // 📜 History State
   const [showHistory, setShowHistory] = useState(false);
   const [historyItems, setHistoryItems] = useState<ComparisonHistoryItem[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
 
   const resultRef = useRef<HTMLDivElement>(null);
   const file1InputRef = useRef<HTMLInputElement>(null);
@@ -814,6 +821,13 @@ export default function EnhancedCompare() {
         console.log("🎯 SETTING isPremium to:", hasPremium);
 
         setIsPremium(hasPremium);
+
+        // 📜 Extract userId for user-specific history
+        const extractedUserId = userData._id || userData.id || data.user?._id || data.user?.id;
+        if (extractedUserId) {
+          setUserId(extractedUserId);
+          console.log("🆔 User ID for history:", extractedUserId);
+        }
 
       } catch (err) {
         if (err instanceof DOMException && err.name === "AbortError") return;
@@ -893,21 +907,38 @@ export default function EnhancedCompare() {
     }
   }, [result]);
 
-  // 📜 Load history on mount
+  // 📜 Load history when userId is available (user-specific)
   useEffect(() => {
+    const historyKey = getHistoryKey(userId);
+    if (!historyKey) {
+      // No userId yet, clear history until we have one
+      setHistoryItems([]);
+      return;
+    }
+
     try {
-      const stored = localStorage.getItem(COMPARISON_HISTORY_KEY);
+      const stored = localStorage.getItem(historyKey);
       if (stored) {
         const parsed = JSON.parse(stored) as ComparisonHistoryItem[];
         setHistoryItems(parsed);
+        console.log(`📜 Loaded ${parsed.length} history items for user ${userId}`);
+      } else {
+        setHistoryItems([]);
       }
     } catch (err) {
       console.warn('Could not load comparison history:', err);
+      setHistoryItems([]);
     }
-  }, []);
+  }, [userId]);
 
-  // 📜 Save comparison to history
+  // 📜 Save comparison to history (user-specific)
   const saveToHistory = (comparisonResult: ComparisonResult, f1Name: string, f2Name: string) => {
+    const historyKey = getHistoryKey(userId);
+    if (!historyKey) {
+      console.warn('Cannot save history: no userId available');
+      return;
+    }
+
     const newItem: ComparisonHistoryItem = {
       id: `compare-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       timestamp: Date.now(),
@@ -922,7 +953,8 @@ export default function EnhancedCompare() {
     setHistoryItems(updatedHistory);
 
     try {
-      localStorage.setItem(COMPARISON_HISTORY_KEY, JSON.stringify(updatedHistory));
+      localStorage.setItem(historyKey, JSON.stringify(updatedHistory));
+      console.log(`📜 Saved history for user ${userId}`);
     } catch (err) {
       console.warn('Could not save comparison history:', err);
     }
@@ -939,23 +971,29 @@ export default function EnhancedCompare() {
     });
   };
 
-  // 📜 Delete from history
+  // 📜 Delete from history (user-specific)
   const deleteFromHistory = (id: string) => {
+    const historyKey = getHistoryKey(userId);
+    if (!historyKey) return;
+
     const updatedHistory = historyItems.filter(item => item.id !== id);
     setHistoryItems(updatedHistory);
 
     try {
-      localStorage.setItem(COMPARISON_HISTORY_KEY, JSON.stringify(updatedHistory));
+      localStorage.setItem(historyKey, JSON.stringify(updatedHistory));
     } catch (err) {
       console.warn('Could not update comparison history:', err);
     }
   };
 
-  // 📜 Clear all history
+  // 📜 Clear all history (user-specific)
   const clearHistory = () => {
+    const historyKey = getHistoryKey(userId);
+    if (!historyKey) return;
+
     setHistoryItems([]);
     try {
-      localStorage.removeItem(COMPARISON_HISTORY_KEY);
+      localStorage.removeItem(historyKey);
     } catch (err) {
       console.warn('Could not clear comparison history:', err);
     }

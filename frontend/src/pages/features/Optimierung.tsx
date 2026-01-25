@@ -9,7 +9,7 @@ import { Wrench, Target, CheckCircle, AlertTriangle, FileText, Shield, Zap, Arro
 
 // Video
 const optimierungVideo = "/Videos/optimierung.mp4";
-import optimierungImg from "../../assets/Optimierung.png";
+import optimierungImg from "../../assets/Optimierung.webp";
 
 const Optimierung: React.FC = () => {
   const { user } = useAuth();

@@ -9,7 +9,7 @@ import { GitCompare, Target, BarChart3, AlertTriangle, FileText, Shield, CheckCi
 
 // Video
 const vergleichVideo = "/Videos/vergleich.mp4";
-import vergleichImg from "../../assets/Vergleich.png";
+import vergleichImg from "../../assets/Vergleich.webp";
 
 const Vergleich: React.FC = () => {
   const { user } = useAuth();

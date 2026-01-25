@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import styles from "../styles/Navbar.module.css";
 import Notification from "./Notification";
-import logo from "../assets/logo.png";
+import logo from "../assets/logo.webp";
 import { clearAuthData } from "../utils/api";
 import { useAuth } from "../hooks/useAuth";
 
