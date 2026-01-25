@@ -274,18 +274,27 @@ const ContractScore: React.FC<{
   );
 };
 
-// Side-by-Side Difference View Component
+// Side-by-Side Difference View Component with Visual Diff
 const DifferenceView: React.FC<{
   differences: ComparisonDifference[];
   selectedCategory: string;
   onCategoryChange: (category: string) => void;
   showSideBySide: boolean;
   onToggleView: () => void;
-}> = ({ differences, selectedCategory, onCategoryChange, showSideBySide, onToggleView }) => {
+  recommendedContract?: 1 | 2;
+}> = ({ differences, selectedCategory, onCategoryChange, showSideBySide, onToggleView, recommendedContract = 1 }) => {
   const categories = [...new Set(differences.map(d => d.category))];
-  const filteredDifferences = selectedCategory === 'all' 
-    ? differences 
+  const filteredDifferences = selectedCategory === 'all'
+    ? differences
     : differences.filter(d => d.category === selectedCategory);
+
+  // Severity stats
+  const severityStats = {
+    critical: filteredDifferences.filter(d => d.severity === 'critical').length,
+    high: filteredDifferences.filter(d => d.severity === 'high').length,
+    medium: filteredDifferences.filter(d => d.severity === 'medium').length,
+    low: filteredDifferences.filter(d => d.severity === 'low').length
+  };
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
@@ -309,20 +318,48 @@ const DifferenceView: React.FC<{
 
   return (
     <div className="difference-view">
+      {/* Severity Overview Bar */}
+      <div className="severity-overview">
+        <div className="severity-stats">
+          {severityStats.critical > 0 && (
+            <span className="stat-badge stat-critical">
+              <AlertTriangle size={12} /> {severityStats.critical} Kritisch
+            </span>
+          )}
+          {severityStats.high > 0 && (
+            <span className="stat-badge stat-high">
+              <AlertCircle size={12} /> {severityStats.high} Hoch
+            </span>
+          )}
+          {severityStats.medium > 0 && (
+            <span className="stat-badge stat-medium">
+              <AlertTriangle size={12} /> {severityStats.medium} Mittel
+            </span>
+          )}
+          {severityStats.low > 0 && (
+            <span className="stat-badge stat-low">
+              <CheckCircle size={12} /> {severityStats.low} Niedrig
+            </span>
+          )}
+        </div>
+      </div>
+
       <div className="difference-header">
         <div className="category-filter">
-          <select 
-            value={selectedCategory} 
+          <select
+            value={selectedCategory}
             onChange={(e) => onCategoryChange(e.target.value)}
             className="category-select"
           >
-            <option value="all">Alle Kategorien</option>
+            <option value="all">Alle Kategorien ({filteredDifferences.length})</option>
             {categories.map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
+              <option key={cat} value={cat}>
+                {cat} ({differences.filter(d => d.category === cat).length})
+              </option>
             ))}
           </select>
         </div>
-        
+
         <motion.button
           className="view-toggle"
           onClick={onToggleView}
@@ -337,23 +374,25 @@ const DifferenceView: React.FC<{
       <div className={`differences-container ${showSideBySide ? 'side-by-side' : 'list-view'}`}>
         {filteredDifferences.map((diff, index) => {
           const SeverityIcon = getSeverityIcon(diff.severity);
-          
+          const severityColor = getSeverityColor(diff.severity);
+
           return (
             <motion.div
               key={index}
-              className="difference-item"
+              className={`difference-item severity-${diff.severity}`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1, duration: 0.3 }}
+              transition={{ delay: index * 0.05, duration: 0.3 }}
+              style={{ borderLeftColor: severityColor }}
             >
               <div className="difference-header-item">
                 <div className="section-info">
                   <span className="category-badge">{diff.category}</span>
                   <h4>{diff.section}</h4>
                 </div>
-                <div 
+                <div
                   className="severity-badge"
-                  style={{ backgroundColor: getSeverityColor(diff.severity) }}
+                  style={{ backgroundColor: severityColor }}
                 >
                   <SeverityIcon size={14} />
                   <span>{diff.severity}</span>
@@ -362,24 +401,34 @@ const DifferenceView: React.FC<{
 
               {showSideBySide ? (
                 <div className="side-by-side-content">
-                  <div className="contract-column">
-                    <h5>Vertrag 1</h5>
+                  <div className={`contract-column ${recommendedContract === 1 ? 'recommended' : 'not-recommended'}`}>
+                    <h5>
+                      Vertrag 1
+                      {recommendedContract === 1 && <span className="rec-badge">✓</span>}
+                    </h5>
                     <div className="contract-text">{diff.contract1}</div>
                   </div>
-                  <div className="vs-divider">VS</div>
-                  <div className="contract-column">
-                    <h5>Vertrag 2</h5>
+                  <div className="vs-divider" style={{ backgroundColor: severityColor }}>
+                    <span>VS</span>
+                  </div>
+                  <div className={`contract-column ${recommendedContract === 2 ? 'recommended' : 'not-recommended'}`}>
+                    <h5>
+                      Vertrag 2
+                      {recommendedContract === 2 && <span className="rec-badge">✓</span>}
+                    </h5>
                     <div className="contract-text">{diff.contract2}</div>
                   </div>
                 </div>
               ) : (
                 <div className="list-content">
-                  <div className="impact">{diff.impact}</div>
+                  <div className="impact">
+                    <strong style={{ color: severityColor }}>Auswirkung:</strong> {diff.impact}
+                  </div>
                 </div>
               )}
 
-              <div className="recommendation">
-                <Zap size={14} />
+              <div className="recommendation" style={{ borderColor: `${severityColor}30` }}>
+                <Zap size={14} style={{ color: '#0071e3' }} />
                 <span>{diff.recommendation}</span>
               </div>
             </motion.div>
@@ -1212,6 +1261,7 @@ export default function EnhancedCompare() {
                         onCategoryChange={setSelectedCategory}
                         showSideBySide={showSideBySide}
                         onToggleView={() => setShowSideBySide(!showSideBySide)}
+                        recommendedContract={result.overallRecommendation.recommended}
                       />
                     </div>
                   )}
@@ -1597,6 +1647,50 @@ export default function EnhancedCompare() {
             width: 100%;
           }
 
+          /* Severity Overview Bar */
+          .severity-overview {
+            margin-bottom: 1rem;
+            padding: 0.75rem 1rem;
+            background: #f5f5f7;
+            border-radius: 10px;
+          }
+
+          .severity-stats {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+          }
+
+          .stat-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 500;
+          }
+
+          .stat-critical {
+            background: rgba(215, 0, 21, 0.1);
+            color: #d70015;
+          }
+
+          .stat-high {
+            background: rgba(255, 69, 58, 0.1);
+            color: #ff453a;
+          }
+
+          .stat-medium {
+            background: rgba(255, 149, 0, 0.1);
+            color: #ff9500;
+          }
+
+          .stat-low {
+            background: rgba(52, 199, 89, 0.1);
+            color: #34c759;
+          }
+
           .difference-header {
             display: flex;
             align-items: center;
@@ -1646,6 +1740,21 @@ export default function EnhancedCompare() {
             border-radius: 12px;
             padding: 1.5rem;
             background: white;
+            border-left: 4px solid #e8e8ed;
+            transition: all 0.2s ease;
+          }
+
+          .difference-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transform: translateY(-1px);
+          }
+
+          .difference-item.severity-critical {
+            background: rgba(215, 0, 21, 0.02);
+          }
+
+          .difference-item.severity-high {
+            background: rgba(255, 69, 58, 0.02);
           }
 
           .difference-header-item {
@@ -1700,8 +1809,19 @@ export default function EnhancedCompare() {
 
           .contract-column {
             padding: 1rem;
-            border: 1px solid #e8e8ed;
+            border: 2px solid #e8e8ed;
             border-radius: 8px;
+            background: #f9f9f9;
+            transition: all 0.2s ease;
+          }
+
+          .contract-column.recommended {
+            border-color: #34c759;
+            background: rgba(52, 199, 89, 0.05);
+          }
+
+          .contract-column.not-recommended {
+            border-color: #e8e8ed;
             background: #f9f9f9;
           }
 
@@ -1710,12 +1830,32 @@ export default function EnhancedCompare() {
             color: #1d1d1f;
             font-size: 0.9rem;
             font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+          }
+
+          .rec-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            background: #34c759;
+            color: white;
+            border-radius: 50%;
+            font-size: 0.7rem;
+            font-weight: 700;
           }
 
           .contract-text {
             font-size: 0.85rem;
             color: #6e6e73;
-            line-height: 1.4;
+            line-height: 1.5;
+          }
+
+          .contract-column.recommended .contract-text {
+            color: #1d1d1f;
           }
 
           .vs-divider {
@@ -1724,11 +1864,16 @@ export default function EnhancedCompare() {
             justify-content: center;
             width: 40px;
             height: 40px;
-            background: #0071e3;
             color: white;
             border-radius: 50%;
-            font-size: 0.8rem;
-            font-weight: 600;
+            font-size: 0.75rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+          }
+
+          .vs-divider span {
+            line-height: 1;
           }
 
           .list-content {
