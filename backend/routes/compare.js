@@ -7,6 +7,7 @@ const multer = require("multer");
 const fs = require("fs");
 const fsPromises = require("fs").promises;
 const path = require("path");
+const PDFDocument = require("pdfkit");
 const { MongoClient, ObjectId } = require("mongodb");
 
 const { isBusinessOrHigher, isEnterpriseOrHigher, getFeatureLimit } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
@@ -702,6 +703,250 @@ router.get("/stats", verifyToken, async (req, res) => {
   } catch (error) {
     console.error("❌ Stats fetch error:", error);
     res.status(500).json({ message: "Fehler beim Laden der Statistiken" });
+  }
+});
+
+// 📄 PDF Export Endpoint
+router.post("/export-pdf", verifyToken, async (req, res) => {
+  try {
+    // Verify premium status
+    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
+    if (!user) {
+      return res.status(404).json({ message: "Nutzer nicht gefunden" });
+    }
+
+    const isPremium = user.subscriptionActive === true || user.isPremium === true;
+    if (!isPremium) {
+      return res.status(403).json({ message: "PDF-Export ist ein Premium-Feature" });
+    }
+
+    const { result, file1Name, file2Name } = req.body;
+
+    if (!result || !result.differences || !result.contract1Analysis || !result.contract2Analysis) {
+      return res.status(400).json({ message: "Ungültige Vergleichsdaten" });
+    }
+
+    console.log("📄 Generating PDF export...");
+
+    // Create PDF document
+    const doc = new PDFDocument({
+      size: 'A4',
+      margins: { top: 50, bottom: 50, left: 50, right: 50 },
+      info: {
+        Title: 'Vertragsvergleich - Contract AI',
+        Author: 'Contract AI',
+        Subject: 'Vertragsvergleich',
+        CreationDate: new Date()
+      }
+    });
+
+    // Set response headers
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="Vertragsvergleich_${new Date().toISOString().split('T')[0]}.pdf"`);
+
+    // Pipe PDF to response
+    doc.pipe(res);
+
+    // Colors
+    const primaryColor = '#0071e3';
+    const successColor = '#34c759';
+    const warningColor = '#ff9500';
+    const dangerColor = '#ff453a';
+    const textColor = '#1d1d1f';
+    const mutedColor = '#6e6e73';
+
+    // Helper function for severity colors
+    const getSeverityColor = (severity) => {
+      switch (severity) {
+        case 'low': return successColor;
+        case 'medium': return warningColor;
+        case 'high': return dangerColor;
+        case 'critical': return '#d70015';
+        default: return mutedColor;
+      }
+    };
+
+    // === HEADER ===
+    doc.fontSize(28)
+       .fillColor(primaryColor)
+       .text('Vertragsvergleich', { align: 'center' });
+
+    doc.moveDown(0.5);
+    doc.fontSize(12)
+       .fillColor(mutedColor)
+       .text(`Erstellt am ${new Date().toLocaleDateString('de-DE')} mit Contract AI`, { align: 'center' });
+
+    doc.moveDown(1);
+
+    // === FILE NAMES ===
+    if (file1Name || file2Name) {
+      doc.fontSize(10)
+         .fillColor(mutedColor)
+         .text(`Vertrag 1: ${file1Name || 'Unbekannt'}`, { align: 'left' })
+         .text(`Vertrag 2: ${file2Name || 'Unbekannt'}`, { align: 'left' });
+      doc.moveDown(1);
+    }
+
+    // === RECOMMENDATION BOX ===
+    const recY = doc.y;
+    doc.rect(50, recY, 495, 80)
+       .fill('#f0f7ff');
+
+    doc.fontSize(16)
+       .fillColor(primaryColor)
+       .text(`Empfehlung: Vertrag ${result.overallRecommendation.recommended}`, 70, recY + 15);
+
+    doc.fontSize(11)
+       .fillColor(textColor)
+       .text(result.overallRecommendation.reasoning, 70, recY + 40, { width: 455 });
+
+    doc.fontSize(10)
+       .fillColor(mutedColor)
+       .text(`Vertrauen: ${result.overallRecommendation.confidence}%`, 70, recY + 60);
+
+    doc.y = recY + 95;
+    doc.moveDown(1);
+
+    // === SCORES COMPARISON ===
+    doc.fontSize(16)
+       .fillColor(textColor)
+       .text('Bewertung im Vergleich', { underline: true });
+    doc.moveDown(0.5);
+
+    // Contract 1 Score
+    const score1Color = result.contract1Analysis.riskLevel === 'low' ? successColor :
+                        result.contract1Analysis.riskLevel === 'medium' ? warningColor : dangerColor;
+    doc.fontSize(14)
+       .fillColor(score1Color)
+       .text(`Vertrag 1: ${result.contract1Analysis.score}/100`, { continued: true })
+       .fillColor(mutedColor)
+       .text(` (Risiko: ${result.contract1Analysis.riskLevel === 'low' ? 'Niedrig' :
+              result.contract1Analysis.riskLevel === 'medium' ? 'Mittel' : 'Hoch'})`);
+
+    if (result.overallRecommendation.recommended === 1) {
+      doc.fontSize(10).fillColor(successColor).text('  ★ Empfohlen');
+    }
+    doc.moveDown(0.3);
+
+    // Contract 2 Score
+    const score2Color = result.contract2Analysis.riskLevel === 'low' ? successColor :
+                        result.contract2Analysis.riskLevel === 'medium' ? warningColor : dangerColor;
+    doc.fontSize(14)
+       .fillColor(score2Color)
+       .text(`Vertrag 2: ${result.contract2Analysis.score}/100`, { continued: true })
+       .fillColor(mutedColor)
+       .text(` (Risiko: ${result.contract2Analysis.riskLevel === 'low' ? 'Niedrig' :
+              result.contract2Analysis.riskLevel === 'medium' ? 'Mittel' : 'Hoch'})`);
+
+    if (result.overallRecommendation.recommended === 2) {
+      doc.fontSize(10).fillColor(successColor).text('  ★ Empfohlen');
+    }
+    doc.moveDown(1.5);
+
+    // === STRENGTHS & WEAKNESSES ===
+    doc.fontSize(16)
+       .fillColor(textColor)
+       .text('Stärken & Schwächen', { underline: true });
+    doc.moveDown(0.5);
+
+    // Vertrag 1
+    doc.fontSize(13).fillColor(primaryColor).text('Vertrag 1');
+    doc.fontSize(11).fillColor(successColor).text('Stärken:', { continued: false });
+    result.contract1Analysis.strengths.slice(0, 3).forEach(s => {
+      doc.fontSize(10).fillColor(textColor).text(`  • ${s}`);
+    });
+    doc.fontSize(11).fillColor(dangerColor).text('Schwächen:', { continued: false });
+    result.contract1Analysis.weaknesses.slice(0, 3).forEach(w => {
+      doc.fontSize(10).fillColor(textColor).text(`  • ${w}`);
+    });
+    doc.moveDown(0.5);
+
+    // Vertrag 2
+    doc.fontSize(13).fillColor(primaryColor).text('Vertrag 2');
+    doc.fontSize(11).fillColor(successColor).text('Stärken:', { continued: false });
+    result.contract2Analysis.strengths.slice(0, 3).forEach(s => {
+      doc.fontSize(10).fillColor(textColor).text(`  • ${s}`);
+    });
+    doc.fontSize(11).fillColor(dangerColor).text('Schwächen:', { continued: false });
+    result.contract2Analysis.weaknesses.slice(0, 3).forEach(w => {
+      doc.fontSize(10).fillColor(textColor).text(`  • ${w}`);
+    });
+    doc.moveDown(1.5);
+
+    // === NEW PAGE FOR DIFFERENCES ===
+    doc.addPage();
+
+    doc.fontSize(16)
+       .fillColor(textColor)
+       .text('Wichtigste Unterschiede', { underline: true });
+    doc.moveDown(0.5);
+
+    // List differences
+    result.differences.forEach((diff, index) => {
+      // Check if we need a new page
+      if (doc.y > 700) {
+        doc.addPage();
+      }
+
+      const diffY = doc.y;
+      const severityColor = getSeverityColor(diff.severity);
+
+      // Category & Section
+      doc.fontSize(12)
+         .fillColor(primaryColor)
+         .text(`${index + 1}. ${diff.section}`, { continued: true })
+         .fontSize(9)
+         .fillColor(mutedColor)
+         .text(`  [${diff.category}]`);
+
+      // Severity badge
+      doc.fontSize(9)
+         .fillColor(severityColor)
+         .text(`Schweregrad: ${diff.severity.toUpperCase()}`);
+
+      // Impact
+      doc.fontSize(10)
+         .fillColor(textColor)
+         .text(diff.impact, { width: 495 });
+
+      // Recommendation
+      doc.fontSize(10)
+         .fillColor(primaryColor)
+         .text(`→ ${diff.recommendation}`, { width: 495 });
+
+      doc.moveDown(0.8);
+    });
+
+    // === FOOTER ON LAST PAGE ===
+    doc.moveDown(2);
+
+    // Summary
+    if (result.summary) {
+      doc.fontSize(14)
+         .fillColor(textColor)
+         .text('Zusammenfassung', { underline: true });
+      doc.moveDown(0.3);
+      doc.fontSize(10)
+         .fillColor(mutedColor)
+         .text(result.summary, { width: 495 });
+      doc.moveDown(1);
+    }
+
+    // Footer
+    doc.fontSize(9)
+       .fillColor(mutedColor)
+       .text('─'.repeat(80), { align: 'center' });
+    doc.text('Erstellt mit Contract AI - www.contract-ai.de', { align: 'center' });
+    doc.text('Dieser Bericht dient nur zur Information und ersetzt keine Rechtsberatung.', { align: 'center' });
+
+    // Finalize PDF
+    doc.end();
+
+    console.log("✅ PDF export completed");
+
+  } catch (error) {
+    console.error("❌ PDF export error:", error);
+    res.status(500).json({ message: "Fehler beim PDF-Export: " + error.message });
   }
 });
 

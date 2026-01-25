@@ -573,60 +573,65 @@ export default function EnhancedCompare() {
     setSelectedCategory('all');
   };
 
-  const exportToPDF = () => {
+  const [pdfExporting, setPdfExporting] = useState(false);
+
+  const exportToPDF = async () => {
     if (!result) return;
 
     // ✅ Premium-Check: PDF Export nur für Premium
     if (!isPremium) {
-      alert('📄 PDF-Export ist ein Premium-Feature.\n\n🚀 Upgrade auf Premium für diese Funktion!');
-      window.location.href = '/pricing';
+      setNotification({
+        message: 'PDF-Export ist ein Premium-Feature. Upgrade für diese Funktion!',
+        type: 'error'
+      });
       return;
     }
 
-    // Enhanced PDF export with comparison results
-    const element = document.createElement("div");
-    element.innerHTML = `
-      <div style="font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; padding: 2rem; max-width: 800px; margin: 0 auto;">
-        <h1 style="font-weight: 600; font-size: 2rem; margin-bottom: 1rem; color: #1d1d1f; text-align: center;">Vertragsvergleich</h1>
-        <div style="text-align: center; margin-bottom: 2rem; padding: 1rem; background: #f5f5f7; border-radius: 12px;">
-          <h2 style="color: #0071e3;">Empfehlung: Vertrag ${result.overallRecommendation.recommended}</h2>
-          <p style="color: #6e6e73; margin: 0.5rem 0;">${result.overallRecommendation.reasoning}</p>
-          <p style="color: #6e6e73; font-size: 0.9rem;">Vertrauen: ${result.overallRecommendation.confidence}%</p>
-        </div>
-        
-        <div style="display: flex; gap: 2rem; margin-bottom: 2rem;">
-          <div style="flex: 1; padding: 1rem; border: 1px solid #e8e8ed; border-radius: 12px;">
-            <h3 style="color: #1d1d1f;">Vertrag 1 - Score: ${result.contract1Analysis.score}/100</h3>
-            <p style="color: #34c759; margin: 0.5rem 0;"><strong>Stärken:</strong></p>
-            <ul style="color: #6e6e73; margin: 0;">${result.contract1Analysis.strengths.map(s => `<li>${s}</li>`).join('')}</ul>
-          </div>
-          <div style="flex: 1; padding: 1rem; border: 1px solid #e8e8ed; border-radius: 12px;">
-            <h3 style="color: #1d1d1f;">Vertrag 2 - Score: ${result.contract2Analysis.score}/100</h3>
-            <p style="color: #34c759; margin: 0.5rem 0;"><strong>Stärken:</strong></p>
-            <ul style="color: #6e6e73; margin: 0;">${result.contract2Analysis.strengths.map(s => `<li>${s}</li>`).join('')}</ul>
-          </div>
-        </div>
+    setPdfExporting(true);
 
-        <h3 style="font-weight: 500; font-size: 1.4rem; margin-top: 2rem; color: #1d1d1f;">Wichtigste Unterschiede</h3>
-        ${result.differences.map(diff => `
-          <div style="margin: 1rem 0; padding: 1rem; border-left: 4px solid ${diff.severity === 'critical' ? '#d70015' : diff.severity === 'high' ? '#ff453a' : diff.severity === 'medium' ? '#ff9500' : '#34c759'}; background: #f9f9f9;">
-            <h4 style="margin: 0 0 0.5rem; color: #1d1d1f;">${diff.section} (${diff.category})</h4>
-            <p style="margin: 0; color: #6e6e73;">${diff.impact}</p>
-            <p style="margin: 0.5rem 0 0; font-weight: 500; color: #0071e3;">${diff.recommendation}</p>
-          </div>
-        `).join('')}
-        
-        <div style="margin-top: 3rem; text-align: center; font-size: 0.9rem; color: #86868b;">
-          Erstellt mit Contract AI - ${new Date().toLocaleDateString()}
-        </div>
-      </div>
-    `;
+    try {
+      const response = await fetch('/api/compare/export-pdf', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          result,
+          file1Name: file1?.name || 'Vertrag 1',
+          file2Name: file2?.name || 'Vertrag 2'
+        })
+      });
 
-    // Create and trigger download
-    const link = document.createElement('a');
-    link.download = `Vertragsvergleich_${new Date().toISOString().split('T')[0]}.html`;
-    link.href = 'data:text/html,' + encodeURIComponent(element.innerHTML);
-    link.click();
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'PDF-Export fehlgeschlagen');
+      }
+
+      // Download the PDF
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Vertragsvergleich_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      setNotification({
+        message: 'PDF wurde erfolgreich erstellt!',
+        type: 'success'
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unbekannter Fehler beim PDF-Export';
+      setNotification({
+        message: 'Fehler: ' + message,
+        type: 'error'
+      });
+    } finally {
+      setPdfExporting(false);
+    }
   };
 
   if (isPremium === null) {
@@ -964,28 +969,39 @@ export default function EnhancedCompare() {
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.5rem 2rem', borderBottom: '1px solid #e8e8ed' }}>
                   <h2 style={{ fontSize: '1.3rem', fontWeight: 600, margin: 0, color: '#1d1d1f' }}>Vergleichsergebnis</h2>
-                  <motion.button 
-                    onClick={exportToPDF} 
+                  <motion.button
+                    onClick={exportToPDF}
+                    disabled={pdfExporting}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.5rem',
                       padding: '0.7rem 1.2rem',
                       borderRadius: '10px',
-                      backgroundColor: '#f5f5f7',
+                      backgroundColor: pdfExporting ? '#e8e8ed' : '#f5f5f7',
                       color: '#1d1d1f',
                       border: 'none',
                       fontFamily: 'inherit',
                       fontSize: '0.95rem',
                       fontWeight: 500,
-                      cursor: 'pointer'
+                      cursor: pdfExporting ? 'wait' : 'pointer',
+                      opacity: pdfExporting ? 0.7 : 1
                     }}
-                    whileHover={{ scale: 1.02, backgroundColor: '#e8e8ed' }}
-                    whileTap={{ scale: 0.98 }}
+                    whileHover={!pdfExporting ? { scale: 1.02, backgroundColor: '#e8e8ed' } : {}}
+                    whileTap={!pdfExporting ? { scale: 0.98 } : {}}
                     transition={{ type: "spring", stiffness: 400, damping: 17 }}
                   >
-                    <Download size={16} />
-                    <span>Als PDF speichern</span>
+                    {pdfExporting ? (
+                      <>
+                        <div style={{ width: '16px', height: '16px', border: '2px solid rgba(0, 0, 0, 0.2)', borderTopColor: '#0071e3', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                        <span>PDF wird erstellt...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Download size={16} />
+                        <span>Als PDF speichern</span>
+                      </>
+                    )}
                   </motion.button>
                 </div>
 
