@@ -158,7 +158,7 @@ function AppWithLoader() {
       <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         {loading && <PageLoader />}
         {!shouldHideNavbar && <Navbar />}
-        <main id="main-content" style={{ flex: 1, paddingTop: shouldHideNavbar ? "0" : "60px" }}>
+        <main id="main-content" style={{ flex: 1 }}>
           <Suspense fallback={<PageLoader />}>
             <Routes>
             {/* 🔓 Öffentliche Seiten */}

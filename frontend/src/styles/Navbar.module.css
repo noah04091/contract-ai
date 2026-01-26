@@ -16,8 +16,7 @@
 }
 
 .navbar {
-  position: sticky;
-  top: 0;
+  position: relative;
   width: 100%;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(12px);
