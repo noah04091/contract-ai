@@ -189,6 +189,27 @@ interface NewContractDetailsModalProps {
 
 type TabType = 'overview' | 'pdf' | 'analysis' | 'optimizations' | 'optimizedPdf' | 'signature';
 
+/**
+ * 🔍 Zentrale Helper-Funktion: Prüft ob Analyse-Daten vorhanden sind
+ * Wird für Tab-Aktivierung und bedingte Anzeige verwendet.
+ *
+ * Prüft alle möglichen Analyse-Felder für maximale Kompatibilität:
+ * - analyzed: Neues Flag (Backend setzt dies bei jeder Analyse)
+ * - contractScore: Numerischer Score der Analyse
+ * - summary: Zusammenfassung der Analyse
+ * - legalAssessment: Rechtliche Bewertung
+ * - legalPulse: Erweiterte Risikoanalyse (Business+ Feature)
+ */
+const hasAnalysisData = (contract: Contract): boolean => {
+  return !!(
+    contract.analyzed ||
+    contract.contractScore ||
+    contract.summary ||
+    contract.legalAssessment ||
+    contract.legalPulse
+  );
+};
+
 const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   contract: initialContract,
   onClose,
@@ -1841,14 +1862,14 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
               <button
                 className={`${styles.tabButton} ${activeTab === 'analysis' ? styles.tabActive : ''}`}
                 onClick={() => {
-                  console.log('🔍 [Modal] Analyse Tab clicked. analyzed:', contract.analyzed, 'contractScore:', contract.contractScore, 'summary:', !!contract.summary, 'legalPulse:', !!contract.legalPulse);
+                  console.log('🔍 [Modal] Analyse Tab clicked. hasAnalysisData:', hasAnalysisData(contract));
                   setActiveTab('analysis');
                 }}
-                disabled={!contract.analyzed && !contract.contractScore && !contract.summary && !contract.legalAssessment && !contract.legalPulse}
+                disabled={!hasAnalysisData(contract)}
               >
                 <BarChart3 size={18} />
                 <span>Analyse</span>
-                {!contract.analyzed && !contract.contractScore && !contract.summary && !contract.legalAssessment && !contract.legalPulse && (
+                {!hasAnalysisData(contract) && (
                   <span className={styles.tabDisabled}>(nicht verfügbar)</span>
                 )}
               </button>
@@ -1897,7 +1918,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
               )}
 
               {/* Analysis Tab Actions */}
-              {activeTab === 'analysis' && (contract.analyzed || contract.contractScore || contract.summary || contract.legalPulse) && (
+              {activeTab === 'analysis' && hasAnalysisData(contract) && (
                 <button
                   onClick={handleDownloadAnalysisPDF}
                   className={styles.tabActionButton}
