@@ -612,7 +612,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         <div className={styles.detailsGrid}>
           <div className={styles.detailItem}>
             <span className={styles.label}>Vertragsname:</span>
-            <span className={styles.value}>{contract.name}</span>
+            <span className={styles.valueTruncate} title={contract.name}>{contract.name}</span>
           </div>
           <div className={styles.detailItem}>
             <span className={styles.label}>Status:</span>
@@ -1535,7 +1535,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
           <div className={styles.detailsGrid}>
             <div className={styles.detailItem}>
               <span className={styles.label}>Titel:</span>
-              <span className={styles.value}>{envelope.title}</span>
+              <span className={styles.valueTruncate} title={envelope.title}>{envelope.title}</span>
             </div>
             <div className={styles.detailItem}>
               <span className={styles.label}>Status:</span>

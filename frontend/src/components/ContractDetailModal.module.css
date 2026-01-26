@@ -73,6 +73,13 @@
   min-width: 0;
 }
 
+/* Container für Titel - ermöglicht text-overflow in Flex-Children */
+.headerLeft > div {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
 .headerLeft svg {
   flex-shrink: 0;
   color: #3b82f6;
@@ -285,6 +292,18 @@
   font-size: 0.9375rem;
   color: #111827;
   font-weight: 500;
+}
+
+/* Truncated value - für potenziell lange Einzelwerte (Namen, Titel) */
+.valueTruncate {
+  font-size: 0.9375rem;
+  color: #111827;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  display: block;
 }
 
 /* Message Box */
