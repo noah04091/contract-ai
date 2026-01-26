@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
-import { Shield, Sparkles, Zap, Users, ArrowRight } from "lucide-react";
+import { Shield, Sparkles, Zap, Users, ArrowRight, Quote, Brain, Cloud, CreditCard } from "lucide-react";
 import styles from "../styles/About.module.css";
 import Footer from "../components/Footer";
 
@@ -82,7 +82,57 @@ const milestones = [
   }
 ];
 
+// Partner-Daten
+const partners = [
+  { name: "OpenAI", icon: <Brain size={32} />, description: "KI-Technologie" },
+  { name: "AWS", icon: <Cloud size={32} />, description: "Cloud-Infrastruktur" },
+  { name: "Stripe", icon: <CreditCard size={32} />, description: "Zahlungsabwicklung" }
+];
+
+// Testimonial-Daten
+const testimonial = {
+  quote: "Contract AI hat unsere Vertragsabwicklung revolutioniert. Was früher Tage dauerte, erledigen wir jetzt in Minuten.",
+  author: "Dr. Thomas Schneider",
+  role: "Geschäftsführer",
+  company: "Schneider & Partner Rechtsanwälte"
+};
+
 const About: React.FC = () => {
+  const timelineRef = useRef<HTMLDivElement>(null);
+  const parallaxRef = useRef<HTMLDivElement>(null);
+
+  // Intersection Observer für Timeline-Animation
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add(styles.visible);
+          }
+        });
+      },
+      { threshold: 0.2, rootMargin: '0px 0px -50px 0px' }
+    );
+
+    const timelineItems = document.querySelectorAll(`.${styles.timelineItem}`);
+    timelineItems.forEach((item) => observer.observe(item));
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Parallax-Effekt
+  useEffect(() => {
+    const handleScroll = () => {
+      if (parallaxRef.current) {
+        const scrolled = window.scrollY;
+        parallaxRef.current.style.transform = `translateY(${scrolled * 0.3}px)`;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
     <>
       <Helmet>
@@ -104,8 +154,9 @@ const About: React.FC = () => {
       </Helmet>
       
       <div className={styles.aboutPage}>
-        {/* Hero Section */}
+        {/* Hero Section with Parallax */}
         <section className={styles.heroSection}>
+          <div className={styles.heroParallaxBg} ref={parallaxRef} />
           <h1 className={`${styles.heroTitle} fadeInUp`}>
             Unsere Mission:<br />
             <span className={styles.heroTitleHighlight}>Klarheit in jedem Vertrag.</span>
@@ -114,18 +165,30 @@ const About: React.FC = () => {
 
         {/* Philosophy Section */}
         <section className={styles.philosophySection}>
-          <div className={`${styles.contentContainer} fadeInUp`} style={{ animationDelay: '0.2s' }}>
-            <p className={styles.leadParagraph}>
-              Contract AI wurde mit einem klaren Ziel gegründet: die Komplexität aus dem Vertragsmanagement zu entfernen und durch Einfachheit zu ersetzen.
-            </p>
+          <div className={styles.philosophyWrapper}>
+            <div className={`${styles.contentContainer} fadeInUp`} style={{ animationDelay: '0.2s' }}>
+              <p className={styles.leadParagraph}>
+                Contract AI wurde mit einem klaren Ziel gegründet: die Komplexität aus dem Vertragsmanagement zu entfernen und durch Einfachheit zu ersetzen.
+              </p>
 
-            <p className={styles.bodyParagraph}>
-              In einer Welt, in der Verträge immer umfangreicher und komplizierter werden, nutzen wir die neuesten Entwicklungen der künstlichen Intelligenz, um den Kern jedes Dokuments freizulegen. Unsere Technologie analysiert, interpretiert und präsentiert die wichtigsten Vertragselemente in einer intuitiven, zugänglichen Form.
-            </p>
+              <p className={styles.bodyParagraph}>
+                In einer Welt, in der Verträge immer umfangreicher und komplizierter werden, nutzen wir die neuesten Entwicklungen der künstlichen Intelligenz, um den Kern jedes Dokuments freizulegen. Unsere Technologie analysiert, interpretiert und präsentiert die wichtigsten Vertragselemente in einer intuitiven, zugänglichen Form.
+              </p>
+            </div>
 
-            <p className={styles.bodyParagraph}>
-              Wir glauben, dass Einfachheit nicht nur ein ästhetisches Ideal ist, sondern eine funktionale Notwendigkeit. Mit Contract AI transformieren wir die Art und Weise, wie Unternehmen ihre vertraglichen Verpflichtungen verstehen und verwalten – mit Präzision, Eleganz und unübertroffener Klarheit.
-            </p>
+            {/* Highlighted Quote */}
+            <div className={`${styles.highlightQuote} fadeInUp`} style={{ animationDelay: '0.4s' }}>
+              <Quote className={styles.quoteIcon} size={40} />
+              <blockquote className={styles.quoteText}>
+                Einfachheit ist nicht nur ein ästhetisches Ideal – sie ist eine funktionale Notwendigkeit.
+              </blockquote>
+            </div>
+
+            <div className={`${styles.contentContainer} fadeInUp`} style={{ animationDelay: '0.5s' }}>
+              <p className={styles.bodyParagraph}>
+                Mit Contract AI transformieren wir die Art und Weise, wie Unternehmen ihre vertraglichen Verpflichtungen verstehen und verwalten – mit Präzision, Eleganz und unübertroffener Klarheit.
+              </p>
+            </div>
           </div>
         </section>
 
@@ -151,17 +214,39 @@ const About: React.FC = () => {
           </div>
         </section>
 
+        {/* Partners Section */}
+        <section className={styles.partnersSection}>
+          <h2 className={`${styles.sectionTitle} scaleIn`}>
+            Powered by
+          </h2>
+          <p className={styles.partnersSubtitle}>
+            Vertrauen Sie auf bewährte Technologie-Partner
+          </p>
+          <div className={styles.partnersGrid}>
+            {partners.map((partner, index) => (
+              <div
+                key={partner.name}
+                className={`${styles.partnerCard} fadeInUp`}
+                style={{ animationDelay: `${0.2 + index * 0.1}s` }}
+              >
+                <div className={styles.partnerIcon}>{partner.icon}</div>
+                <span className={styles.partnerName}>{partner.name}</span>
+                <span className={styles.partnerDescription}>{partner.description}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* Timeline Section */}
         <section className={styles.timelineSection}>
           <h2 className={`${styles.sectionTitle} scaleIn`} style={{ animationDelay: '0.4s' }}>
             Unsere Geschichte
           </h2>
-          <div className={styles.timeline}>
+          <div className={styles.timeline} ref={timelineRef}>
             {milestones.map((milestone, index) => (
               <div
                 key={index}
-                className={`${styles.timelineItem} fadeInUp`}
-                style={{ animationDelay: `${0.5 + index * 0.15}s` }}
+                className={styles.timelineItem}
               >
                 <div className={styles.timelineDot} />
                 <div className={styles.timelineContent}>
@@ -171,6 +256,20 @@ const About: React.FC = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* Testimonial Section */}
+        <section className={styles.testimonialSection}>
+          <div className={styles.testimonialContent}>
+            <Quote className={styles.testimonialQuoteIcon} size={48} />
+            <blockquote className={`${styles.testimonialQuote} fadeInUp`}>
+              "{testimonial.quote}"
+            </blockquote>
+            <div className={`${styles.testimonialAuthor} fadeInUp`} style={{ animationDelay: '0.2s' }}>
+              <span className={styles.authorName}>{testimonial.author}</span>
+              <span className={styles.authorRole}>{testimonial.role}, {testimonial.company}</span>
+            </div>
           </div>
         </section>
 
