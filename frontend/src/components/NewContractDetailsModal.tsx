@@ -163,7 +163,9 @@ interface Contract {
     displayName?: string;
     name?: string;
     category?: string;
+    confidence?: number; // 🔒 Konfidenz der Provider-Erkennung (0-100)
   };
+  providerConfidence?: number; // 🔒 Alternative: Konfidenz auf Contract-Ebene
   quickFacts?: Array<{
     label: string;
     value: string;
@@ -643,13 +645,19 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             <span className={styles.label}>Status:</span>
             <span className={styles.value}>{renderStatusBadge()}</span>
           </div>
-          {/* 🆕 Anbieter/Provider */}
-          {(contract.provider?.displayName || contract.provider?.name) && (
-            <div className={styles.detailItem}>
-              <span className={styles.label}>Anbieter:</span>
-              <span className={styles.value}>{contract.provider?.displayName || contract.provider?.name}</span>
-            </div>
-          )}
+          {/* 🆕 Anbieter/Provider - NUR anzeigen wenn Konfidenz >= 90% oder keine Konfidenz-Info (Rückwärtskompatibilität) */}
+          {(() => {
+            const hasProvider = contract.provider?.displayName || contract.provider?.name;
+            const confidence = contract.provider?.confidence ?? contract.providerConfidence;
+            // Anzeigen wenn: Provider existiert UND (keine Konfidenz-Info ODER Konfidenz >= 90)
+            const shouldShow = hasProvider && (confidence === undefined || confidence >= 90);
+            return shouldShow ? (
+              <div className={styles.detailItem}>
+                <span className={styles.label}>Anbieter:</span>
+                <span className={styles.value}>{contract.provider?.displayName || contract.provider?.name}</span>
+              </div>
+            ) : null;
+          })()}
           {/* 🆕 Vertragstyp */}
           {contract.contractType && (
             <div className={styles.detailItem}>

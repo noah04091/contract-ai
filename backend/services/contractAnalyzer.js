@@ -350,30 +350,39 @@ class ContractAnalyzer {
   extractProviderFromText(text) {
     console.log('🔍 Extrahiere Provider direkt aus Text...');
 
+    // 🔒 MINIMUM CONFIDENCE THRESHOLD - Provider wird NUR angezeigt wenn >= 90%
+    const MIN_CONFIDENCE_THRESHOLD = 90;
+
     // First check for known providers with special patterns
+    // ⚠️ WICHTIG: Nur eindeutige Patterns mit hoher Konfidenz verwenden!
     const specialProviders = [
       { pattern: /adam\s*riese/gi, name: 'Adam Riese', confidence: 95 },
       { pattern: /ADAM\s*RIESE/g, name: 'Adam Riese', confidence: 95 },
-      { pattern: /allianz/gi, name: 'Allianz', confidence: 90 },
-      { pattern: /ing[\s\-]?diba/gi, name: 'ING-DiBa', confidence: 90 },
-      { pattern: /\bing\b/gi, name: 'ING', confidence: 85 },
-      { pattern: /telekom/gi, name: 'Telekom', confidence: 90 },
-      { pattern: /vodafone/gi, name: 'Vodafone', confidence: 90 },
-      { pattern: /o2\s*telefonica/gi, name: 'O2 Telefonica', confidence: 90 },
-      { pattern: /axa/gi, name: 'AXA', confidence: 85 },
-      { pattern: /ergo/gi, name: 'ERGO', confidence: 85 },
-      { pattern: /huk[\s\-]?coburg/gi, name: 'HUK-Coburg', confidence: 90 },
-      { pattern: /\bhuk\b/gi, name: 'HUK', confidence: 85 },
-      { pattern: /debeka/gi, name: 'Debeka', confidence: 85 },
-      { pattern: /r\+v/gi, name: 'R+V Versicherung', confidence: 85 },
-      { pattern: /generali/gi, name: 'Generali', confidence: 85 },
-      { pattern: /zurich/gi, name: 'Zurich', confidence: 85 },
-      { pattern: /signal\s*iduna/gi, name: 'Signal Iduna', confidence: 90 },
-      { pattern: /techniker\s*krankenkasse/gi, name: 'Techniker Krankenkasse', confidence: 90 },
-      { pattern: /\btk\b/gi, name: 'Techniker Krankenkasse', confidence: 80 },
-      { pattern: /aok/gi, name: 'AOK', confidence: 85 },
-      { pattern: /barmer/gi, name: 'Barmer', confidence: 85 },
-      { pattern: /dak/gi, name: 'DAK', confidence: 85 },
+      { pattern: /allianz\s*(?:versicherung|direct|ag)?/gi, name: 'Allianz', confidence: 95 },
+      { pattern: /ing[\s\-]?diba/gi, name: 'ING-DiBa', confidence: 95 },
+      // ⚠️ ENTFERNT: /\bing\b/gi war zu aggressiv - matchte jedes "ing" im Text
+      // ING muss jetzt als "ING-DiBa" oder mit Bank-Kontext erkannt werden
+      { pattern: /\bING\s+(?:Bank|Konto|Girokonto)/g, name: 'ING', confidence: 92 },
+      { pattern: /deutsche?\s*telekom/gi, name: 'Telekom', confidence: 95 },
+      { pattern: /telekom\s*deutschland/gi, name: 'Telekom', confidence: 95 },
+      { pattern: /vodafone\s*(?:gmbh|deutschland)?/gi, name: 'Vodafone', confidence: 95 },
+      { pattern: /o2\s*telefonica/gi, name: 'O2 Telefonica', confidence: 95 },
+      { pattern: /telefonica\s*germany/gi, name: 'O2 Telefonica', confidence: 95 },
+      { pattern: /\baxa\s*(?:versicherung|ag)?/gi, name: 'AXA', confidence: 92 },
+      { pattern: /\bergo\s*(?:versicherung|group|ag)?/gi, name: 'ERGO', confidence: 92 },
+      { pattern: /huk[\s\-]?coburg/gi, name: 'HUK-Coburg', confidence: 95 },
+      // ⚠️ ENTFERNT: /\bhuk\b/gi war zu kurz und unspezifisch
+      { pattern: /debeka\s*(?:versicherung|krankenversicherung)?/gi, name: 'Debeka', confidence: 92 },
+      { pattern: /r\+v\s*versicherung/gi, name: 'R+V Versicherung', confidence: 95 },
+      { pattern: /generali\s*(?:versicherung|deutschland)?/gi, name: 'Generali', confidence: 92 },
+      { pattern: /zurich\s*(?:versicherung|insurance)?/gi, name: 'Zurich', confidence: 92 },
+      { pattern: /signal\s*iduna/gi, name: 'Signal Iduna', confidence: 95 },
+      { pattern: /techniker\s*krankenkasse/gi, name: 'Techniker Krankenkasse', confidence: 95 },
+      // ⚠️ ENTFERNT: /\btk\b/gi war zu kurz - "TK" könnte vieles sein
+      { pattern: /\baok\s*(?:plus|bayern|niedersachsen|nordost|rheinland)?/gi, name: 'AOK', confidence: 92 },
+      { pattern: /barmer\s*(?:gek|ersatzkasse)?/gi, name: 'Barmer', confidence: 92 },
+      { pattern: /dak[\s\-]?gesundheit/gi, name: 'DAK-Gesundheit', confidence: 95 },
+      // ⚠️ ENTFERNT: /dak/gi war zu kurz
       { pattern: /bavariadirekt/gi, name: 'BavariaDirekt Versicherung AG', confidence: 95 },
       { pattern: /bavaria\s*direkt/gi, name: 'BavariaDirekt Versicherung AG', confidence: 95 }
     ];
@@ -382,13 +391,18 @@ class ContractAnalyzer {
     for (const special of specialProviders) {
       const matches = text.match(special.pattern);
       if (matches && matches.length > 0) {
-        console.log(`✅ Bekannter Provider gefunden: "${special.name}" (Konfidenz: ${special.confidence}%)`);
-        return {
-          name: special.name,
-          displayName: special.name,
-          confidence: special.confidence,
-          extractedFromText: true
-        };
+        // 🔒 NUR zurückgeben wenn Konfidenz >= Schwellenwert
+        if (special.confidence >= MIN_CONFIDENCE_THRESHOLD) {
+          console.log(`✅ Bekannter Provider gefunden: "${special.name}" (Konfidenz: ${special.confidence}% >= ${MIN_CONFIDENCE_THRESHOLD}%)`);
+          return {
+            name: special.name,
+            displayName: special.name,
+            confidence: special.confidence,
+            extractedFromText: true
+          };
+        } else {
+          console.log(`⚠️ Provider "${special.name}" gefunden, aber Konfidenz zu niedrig: ${special.confidence}% < ${MIN_CONFIDENCE_THRESHOLD}%`);
+        }
       }
     }
 
@@ -441,22 +455,27 @@ class ContractAnalyzer {
     }
 
     if (bestMatch) {
-      console.log(`✅ Bester Provider-Match: "${bestMatch}" (Konfidenz: ${highestConfidence}%)`);
+      // 🔒 NUR zurückgeben wenn Konfidenz >= Schwellenwert
+      if (highestConfidence >= MIN_CONFIDENCE_THRESHOLD) {
+        console.log(`✅ Bester Provider-Match: "${bestMatch}" (Konfidenz: ${highestConfidence}% >= ${MIN_CONFIDENCE_THRESHOLD}%)`);
 
-      // Clean up display name
-      const displayName = bestMatch
-        .replace(/(?:AG|GmbH|SE|KG|OHG|e\.V\.|mbH|GmbH\s&\sCo\.\sKG).*$/i, '')
-        .trim();
+        // Clean up display name
+        const displayName = bestMatch
+          .replace(/(?:AG|GmbH|SE|KG|OHG|e\.V\.|mbH|GmbH\s&\sCo\.\sKG).*$/i, '')
+          .trim();
 
-      return {
-        name: bestMatch,
-        displayName: displayName,
-        confidence: highestConfidence,
-        extractedFromText: true
-      };
+        return {
+          name: bestMatch,
+          displayName: displayName,
+          confidence: highestConfidence,
+          extractedFromText: true
+        };
+      } else {
+        console.log(`⚠️ Provider "${bestMatch}" gefunden, aber Konfidenz zu niedrig: ${highestConfidence}% < ${MIN_CONFIDENCE_THRESHOLD}% - NICHT VERWENDEN`);
+      }
     }
 
-    console.log('⚠️ Kein Provider im Text gefunden - returning NULL');
+    console.log('⚠️ Kein Provider mit ausreichender Konfidenz gefunden - returning NULL (besser NULL als falsche Daten!)');
     return null; // Better NULL than wrong data!
   }
 
