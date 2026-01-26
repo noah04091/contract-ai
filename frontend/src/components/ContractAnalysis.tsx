@@ -9,11 +9,13 @@ import {
   Copy, Eye, X,
   CheckSquare, XCircle,
   Gavel, Scale, Star,
-  Shield, Lightbulb, TrendingUp, Check // Enterprise Icons
+  Shield, Lightbulb, TrendingUp, Check, // Enterprise Icons
+  MessageSquare // Chat Icon
 } from "lucide-react";
 import styles from "./ContractAnalysis.module.css";
 import { uploadAndAnalyze, checkAnalyzeHealth } from "../utils/api";
 import { useCalendarStore } from "../stores/calendarStore"; // 📅 Calendar Cache Invalidation
+import { useAuth } from "../context/AuthContext"; // 💬 User subscription check
 
 interface ContractAnalysisProps {
   file?: File; // Optional - für Upload-Flow
@@ -119,6 +121,12 @@ export default function ContractAnalysis({ file, contractName, onReset, onNaviga
   // Nutze file.name oder contractName als Fallback
   const displayName = file?.name || contractName || 'Vertrag';
   const displaySize = file ? (file.size / 1024 / 1024).toFixed(2) : null;
+
+  // 💬 Auth für Chat-Button (Business/Enterprise only)
+  const { user } = useAuth();
+  const isBusinessOrHigher = user?.subscriptionPlan === 'business' ||
+                              user?.subscriptionPlan === 'enterprise';
+
   const [analyzing, setAnalyzing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -139,6 +147,9 @@ export default function ContractAnalysis({ file, contractName, onReset, onNaviga
   const [legalPulseLoading, setLegalPulseLoading] = useState(false);
   const [legalPulseData, setLegalPulseData] = useState<LegalPulseData | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 💬 Chat Loading State
+  const [openingChat, setOpeningChat] = useState(false);
 
   const navigate = useNavigate();
   const { clearCache: clearCalendarCache } = useCalendarStore(); // 📅 Calendar Cache Invalidation
@@ -507,6 +518,105 @@ export default function ContractAnalysis({ file, contractName, onReset, onNaviga
       alert('PDF-Generierung fehlgeschlagen. Bitte versuche es erneut.');
     } finally {
       setGeneratingPdf(false);
+    }
+  };
+
+  // 💬 Handler: Mit KI-Rechtsbot besprechen
+  const handleOpenInChat = async () => {
+    const analysisData = result || initialResult;
+    const contractId = analysisData?.originalContractId;
+
+    if (!contractId) {
+      alert('Kein Vertrag für den Chat gefunden.');
+      return;
+    }
+
+    setOpeningChat(true);
+
+    try {
+      const token = localStorage.getItem('token');
+
+      // Build analysis context
+      const contextParts: string[] = [];
+
+      if (analysisData?.summary) {
+        const summaryText = Array.isArray(analysisData.summary)
+          ? analysisData.summary.join(' ')
+          : analysisData.summary;
+        contextParts.push(`**Zusammenfassung:** ${summaryText}`);
+      }
+
+      if (analysisData?.contractScore) {
+        contextParts.push(`**Vertragsbewertung:** ${analysisData.contractScore}/100`);
+      }
+
+      if (analysisData?.positiveAspects) {
+        const aspects = Array.isArray(analysisData.positiveAspects)
+          ? analysisData.positiveAspects
+          : [];
+        if (aspects.length > 0) {
+          contextParts.push(`\n**Positive Aspekte:**`);
+          aspects.forEach((a: PositiveAspect | string) => {
+            const title = typeof a === 'string' ? a : a.title;
+            contextParts.push(`- ${title}`);
+          });
+        }
+      }
+
+      if (analysisData?.criticalIssues) {
+        const issues = Array.isArray(analysisData.criticalIssues)
+          ? analysisData.criticalIssues
+          : [];
+        if (issues.length > 0) {
+          contextParts.push(`\n**Kritische Punkte:**`);
+          issues.forEach((i: CriticalIssue | string) => {
+            const title = typeof i === 'string' ? i : i.title;
+            contextParts.push(`- ${title}`);
+          });
+        }
+      }
+
+      if (analysisData?.recommendations) {
+        const recs = Array.isArray(analysisData.recommendations)
+          ? analysisData.recommendations
+          : [];
+        if (recs.length > 0) {
+          contextParts.push(`\n**Empfehlungen:**`);
+          recs.forEach((r: Recommendation | string) => {
+            const title = typeof r === 'string' ? r : r.title;
+            contextParts.push(`- ${title}`);
+          });
+        }
+      }
+
+      const analysisContext = contextParts.join('\n');
+
+      const response = await fetch('/api/chat/new-with-contract', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        },
+        body: JSON.stringify({
+          contractId: contractId,
+          contractName: displayName,
+          analysisContext: analysisContext,
+          s3Key: null // Will be fetched from contract in backend
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Chat konnte nicht erstellt werden');
+      }
+
+      const data = await response.json();
+      navigate(`/chat?id=${data.chatId}`);
+    } catch (error) {
+      console.error('Error opening chat:', error);
+      alert('Chat konnte nicht geöffnet werden. Bitte versuche es erneut.');
+    } finally {
+      setOpeningChat(false);
     }
   };
 
@@ -1431,13 +1541,36 @@ export default function ContractAnalysis({ file, contractName, onReset, onNaviga
               )}
             </button>
 
-            {/* New Analysis Button */}
+            {/* 💬 Mit KI besprechen Button - Business/Enterprise only */}
             <button
-              className={`${styles.secondaryButton} ${styles.newAnalysisButton}`}
-              onClick={handleReset}
+              className={`${styles.secondaryButton} ${styles.chatButton}`}
+              onClick={handleOpenInChat}
+              disabled={openingChat || !isBusinessOrHigher}
+              title={!isBusinessOrHigher ? 'Nur für Business & Enterprise Nutzer verfügbar' : 'Vertrag mit KI-Rechtsbot besprechen'}
+              style={{
+                opacity: !isBusinessOrHigher ? 0.5 : 1,
+                cursor: !isBusinessOrHigher ? 'not-allowed' : openingChat ? 'wait' : 'pointer',
+                background: isBusinessOrHigher ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : undefined,
+                color: isBusinessOrHigher ? 'white' : undefined,
+                border: isBusinessOrHigher ? 'none' : undefined
+              }}
             >
-              <FileText size={18} />
-              <span>Neue Analyse</span>
+              {openingChat ? (
+                <>
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  >
+                    <Loader size={18} />
+                  </motion.div>
+                  <span>Öffne Chat...</span>
+                </>
+              ) : (
+                <>
+                  <MessageSquare size={18} />
+                  <span>{isBusinessOrHigher ? 'Mit KI besprechen' : 'Chat (Business)'}</span>
+                </>
+              )}
             </button>
           </div>
 

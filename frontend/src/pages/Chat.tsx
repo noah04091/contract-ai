@@ -1,6 +1,7 @@
 // 📁 frontend/src/pages/Chat.tsx - Legal Chat 2.0 with Sidebar, SSE Streaming & Markdown
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Helmet } from "react-helmet-async";
+import { useLocation } from "react-router-dom";
 import styles from "../styles/Chat.module.css";
 import { useAuth } from "../context/AuthContext";
 import { WelcomePopup } from "../components/Tour";
@@ -54,10 +55,12 @@ function getAuthHeaders(): HeadersInit {
 export default function Chat() {
   const { user, isLoading } = useAuth();
   const isPremium = user?.subscriptionActive === true;
+  const location = useLocation();
 
   // State
   const [chats, setChats] = useState<ChatLite[]>([]);
   const [active, setActive] = useState<ChatFull | null>(null);
+  const [initialChatIdLoaded, setInitialChatIdLoaded] = useState(false);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [usage, setUsage] = useState<UsageStats | null>(null);
@@ -79,8 +82,26 @@ export default function Chat() {
     }
   }, [isPremium]);
 
+  // ✅ Handle URL parameter ?id= to open specific chat
+  useEffect(() => {
+    if (!isPremium || isLoading || initialChatIdLoaded) return;
+
+    const urlParams = new URLSearchParams(location.search);
+    const chatIdFromUrl = urlParams.get('id');
+
+    if (chatIdFromUrl) {
+      setInitialChatIdLoaded(true);
+      openChat(chatIdFromUrl);
+    }
+  }, [isPremium, isLoading, location.search, initialChatIdLoaded]);
+
   // ✅ Auto-open latest chat or create new one if none exist
   useEffect(() => {
+    // Skip auto-open if we're loading a specific chat from URL
+    const urlParams = new URLSearchParams(location.search);
+    const chatIdFromUrl = urlParams.get('id');
+    if (chatIdFromUrl) return;
+
     if (chats.length > 0 && !active) {
       // Open the most recent chat
       openChat(chats[0]._id);
@@ -88,7 +109,7 @@ export default function Chat() {
       // No chats exist, create a new one automatically
       newChat();
     }
-  }, [chats, active, isPremium, isLoading]);
+  }, [chats, active, isPremium, isLoading, location.search]);
 
   // ✅ Autoscroll on new messages AND during streaming
   useEffect(() => {

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
+import { MessageSquare } from "lucide-react";
 import styles from "../styles/ContractDetails.module.css";
 import { generateICS } from "../utils/icsGenerator";
 import Notification from "../components/Notification";
@@ -27,6 +28,7 @@ interface Contract {
   expiryDate?: string;
   status?: string;
   filePath?: string;
+  s3Key?: string;              // S3-Key für Original-PDF
   reminder?: boolean;
   reminderLastSentAt?: string;
   content?: string;           // ✅ NEU: Für generierten Vertragsinhalt
@@ -316,6 +318,86 @@ export default function ContractDetails() {
       case 'medium': return styles.riskMedium;
       case 'low': return styles.riskLow;
       case 'unrated': return styles.riskUnrated;
+    }
+  };
+
+  // Helper: Build analysis context for chat
+  const buildAnalysisContext = (contractData: Contract): string => {
+    const parts: string[] = [];
+
+    if (contractData.analysis) {
+      if (contractData.analysis.summary) {
+        parts.push(`**Zusammenfassung:** ${contractData.analysis.summary}`);
+      }
+
+      if (contractData.analysis.contractType) {
+        parts.push(`**Vertragsart:** ${contractData.analysis.contractType}`);
+      }
+
+      if (contractData.analysis.positiveAspects?.length) {
+        parts.push(`\n**Positive Aspekte:**`);
+        contractData.analysis.positiveAspects.forEach(a => parts.push(`- ${a.title}`));
+      }
+
+      if (contractData.analysis.concerningAspects?.length) {
+        parts.push(`\n**Kritische Punkte:**`);
+        contractData.analysis.concerningAspects.forEach(a => parts.push(`- ${a.title}`));
+      }
+
+      if (contractData.analysis.recommendations?.length) {
+        parts.push(`\n**Empfehlungen:**`);
+        contractData.analysis.recommendations.forEach(r => {
+          const recText = typeof r === 'string' ? r : (r as { title?: string }).title || '';
+          if (recText) parts.push(`- ${recText}`);
+        });
+      }
+    }
+
+    if (contractData.legalPulse) {
+      if (contractData.legalPulse.riskScore !== null && contractData.legalPulse.riskScore !== undefined) {
+        parts.push(`\n**Legal Pulse Score:** ${contractData.legalPulse.riskScore}/100`);
+      }
+      if (contractData.legalPulse.riskFactors?.length) {
+        parts.push(`**Risikofaktoren:**`);
+        contractData.legalPulse.riskFactors.forEach(r => parts.push(`- ${r}`));
+      }
+    }
+
+    return parts.join('\n');
+  };
+
+  // Handler: Open contract in KI-Rechtsbot Chat
+  const handleOpenInChat = async () => {
+    if (!contract) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const analysisContext = buildAnalysisContext(contract);
+
+      const response = await fetch('/api/chat/new-with-contract', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        },
+        body: JSON.stringify({
+          contractId: contract._id,
+          contractName: contract.name,
+          analysisContext: analysisContext,
+          s3Key: contract.s3Key || null
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Chat konnte nicht erstellt werden');
+      }
+
+      const data = await response.json();
+      navigate(`/chat?id=${data.chatId}`);
+    } catch (error) {
+      console.error('Error opening chat:', error);
+      setNotification({ message: 'Chat konnte nicht geöffnet werden', type: 'error' });
     }
   };
 
@@ -1006,6 +1088,21 @@ export default function ContractDetails() {
                     stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
                 Legal Lens
+              </button>
+
+              {/* 💬 Mit KI-Rechtsbot besprechen */}
+              <button
+                onClick={handleOpenInChat}
+                className={styles.actionButton}
+                style={{
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  color: 'white',
+                  border: 'none'
+                }}
+                title="Vertrag mit KI-Rechtsbot besprechen - Fragen stellen, Details klären"
+              >
+                <MessageSquare size={16} />
+                Mit KI besprechen
               </button>
 
               <button

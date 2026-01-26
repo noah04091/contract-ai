@@ -302,6 +302,109 @@ router.post("/new", verifyToken, async (req, res) => {
   }
 });
 
+// ✅ POST /api/chat/new-with-contract - Create new chat with pre-loaded contract analysis
+router.post("/new-with-contract", verifyToken, async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+    const { contractId, contractName, analysisContext, s3Key } = req.body || {};
+
+    if (!contractId || !contractName) {
+      return res.status(400).json({ error: "contractId and contractName required" });
+    }
+
+    const chats = req.db.collection("chats");
+    const contracts = req.db.collection("contracts");
+
+    // Verify contract ownership
+    const contract = await contracts.findOne({
+      _id: new ObjectId(contractId),
+      userId: new ObjectId(userId)
+    });
+
+    if (!contract) {
+      return res.status(404).json({ error: "Contract not found" });
+    }
+
+    // Extract PDF text if s3Key is available
+    let extractedText = "";
+    const effectiveS3Key = s3Key || contract.s3Key;
+
+    if (effectiveS3Key) {
+      try {
+        const AWS = require("aws-sdk");
+        const s3 = new AWS.S3({
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+          region: process.env.AWS_REGION,
+        });
+
+        const s3Object = await s3.getObject({
+          Bucket: process.env.S3_BUCKET_NAME,
+          Key: effectiveS3Key
+        }).promise();
+
+        const pdfData = await pdfParse(s3Object.Body);
+        extractedText = pdfData.text.substring(0, 15000); // Limit to 15k chars
+      } catch (s3Error) {
+        console.warn("⚠️ Could not extract PDF text from S3:", s3Error.message);
+        // Continue without PDF text - analysis context is still available
+      }
+    }
+
+    // Detect contract type from existing analysis or from text
+    let contractType = contract.analysis?.contractType || "Vertrag";
+
+    // Build welcome message with analysis context
+    const welcomeMessage = `Ich habe die Analyse deines Vertrags "${contractName}" geladen.
+
+${analysisContext || "Keine Analysedaten verfügbar."}
+
+**Was möchtest du zu diesem Vertrag wissen?**
+
+Du kannst mir spezifische Fragen stellen, z.B.:
+- Was bedeutet eine bestimmte Klausel?
+- Welche Risiken sollte ich beachten?
+- Wie kann ich bestimmte Punkte nachverhandeln?`;
+
+    // Create attachment object for context
+    const attachment = {
+      name: contractName,
+      contractId: contractId,
+      contractType: contractType,
+      extractedText: extractedText,
+      analysisContext: analysisContext,
+      s3Key: effectiveS3Key || null,
+      uploadedAt: new Date()
+    };
+
+    // Create chat document
+    const chatDocument = {
+      userId: new ObjectId(userId),
+      title: `Analyse: ${contractName}`,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "assistant", content: welcomeMessage }
+      ],
+      attachments: [attachment],
+      linkedContractId: new ObjectId(contractId) // Reference to original contract
+    };
+
+    const { insertedId } = await chats.insertOne(chatDocument);
+
+    res.json({
+      chatId: insertedId,
+      success: true
+    });
+  } catch (error) {
+    console.error("❌ Error creating chat with contract:", error);
+    res.status(500).json({ error: "Failed to create chat with contract" });
+  }
+});
+
 // ✅ GET /api/chat - List all chats for user
 router.get("/", verifyToken, async (req, res) => {
   try {
