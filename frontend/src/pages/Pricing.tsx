@@ -251,7 +251,7 @@ export default function Pricing() {
 
   // Enterprise Features - kurz & premium
   const enterpriseFeatures = [
-    { icon: <Sparkles size={20} />, text: "Unbegrenzt analysieren – ohne Stress", highlight: true },
+    { icon: <Sparkles size={20} />, text: "Unbegrenzt analysieren", highlight: true },
     { icon: <Search size={20} />, text: "Bessere Vertragsalternativen finden", highlight: true },
     { icon: <Smartphone size={20} />, text: "Fristen aktiv überwacht & gemeldet", highlight: true },
     { icon: <Calendar size={20} />, text: "Automatischer Kalender-Sync" },
