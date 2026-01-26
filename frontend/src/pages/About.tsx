@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
-import { Shield, Sparkles, Zap, Users, ArrowRight, Quote, Brain, Cloud, CreditCard } from "lucide-react";
+import { Shield, Sparkles, Zap, Users, ArrowRight, Quote } from "lucide-react";
 import styles from "../styles/About.module.css";
 import Footer from "../components/Footer";
 
@@ -82,19 +82,12 @@ const milestones = [
   }
 ];
 
-// Partner-Daten
-const partners = [
-  { name: "OpenAI", icon: <Brain size={32} />, description: "KI-Technologie" },
-  { name: "AWS", icon: <Cloud size={32} />, description: "Cloud-Infrastruktur" },
-  { name: "Stripe", icon: <CreditCard size={32} />, description: "Zahlungsabwicklung" }
-];
-
 // Testimonial-Daten
 const testimonial = {
   quote: "Contract AI hat unsere Vertragsabwicklung revolutioniert. Was früher Tage dauerte, erledigen wir jetzt in Minuten.",
-  author: "Dr. Thomas Schneider",
+  author: "Dr. Markus Brennwald",
   role: "Geschäftsführer",
-  company: "Schneider & Partner Rechtsanwälte"
+  company: "Brennwald Legal Consulting"
 };
 
 const About: React.FC = () => {
@@ -180,7 +173,8 @@ const About: React.FC = () => {
             <div className={`${styles.highlightQuote} fadeInUp`} style={{ animationDelay: '0.4s' }}>
               <Quote className={styles.quoteIcon} size={40} />
               <blockquote className={styles.quoteText}>
-                Einfachheit ist nicht nur ein ästhetisches Ideal – sie ist eine funktionale Notwendigkeit.
+                Einfachheit ist nicht nur ein ästhetisches Ideal –<br />
+                sie ist eine funktionale Notwendigkeit.
               </blockquote>
             </div>
 
@@ -209,29 +203,6 @@ const About: React.FC = () => {
                 </div>
                 <h3 className={styles.valueTitle}>{value.title}</h3>
                 <p className={styles.valueDescription}>{value.description}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Partners Section */}
-        <section className={styles.partnersSection}>
-          <h2 className={`${styles.sectionTitle} scaleIn`}>
-            Powered by
-          </h2>
-          <p className={styles.partnersSubtitle}>
-            Vertrauen Sie auf bewährte Technologie-Partner
-          </p>
-          <div className={styles.partnersGrid}>
-            {partners.map((partner, index) => (
-              <div
-                key={partner.name}
-                className={`${styles.partnerCard} fadeInUp`}
-                style={{ animationDelay: `${0.2 + index * 0.1}s` }}
-              >
-                <div className={styles.partnerIcon}>{partner.icon}</div>
-                <span className={styles.partnerName}>{partner.name}</span>
-                <span className={styles.partnerDescription}>{partner.description}</span>
               </div>
             ))}
           </div>
