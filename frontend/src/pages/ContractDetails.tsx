@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Loader } from "lucide-react";
 import styles from "../styles/ContractDetails.module.css";
 import { generateICS } from "../utils/icsGenerator";
 import Notification from "../components/Notification";
 import ContractContentViewer from "../components/ContractContentViewer";
 import ReminderSettingsModal from "../components/ReminderSettingsModal";
 import ImportantDatesSection from "../components/ImportantDatesSection";
+import { useAuth } from "../context/AuthContext";
 
 // Interface für wichtige Datums aus der KI-Analyse
 interface ImportantDate {
@@ -104,6 +105,13 @@ export default function ContractDetails() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showReminderModal, setShowReminderModal] = useState(false);
+  const [openingChat, setOpeningChat] = useState(false);
+
+  // 💬 Auth für Chat-Button (Business/Enterprise only)
+  const { user } = useAuth();
+  const isBusinessOrHigher = user?.subscriptionPlan === 'business' ||
+                              user?.subscriptionPlan === 'enterprise';
+
   const [calendarEvents, setCalendarEvents] = useState<Array<{
     _id: string;
     title: string;
@@ -368,7 +376,15 @@ export default function ContractDetails() {
 
   // Handler: Open contract in KI-Rechtsbot Chat
   const handleOpenInChat = async () => {
-    if (!contract) return;
+    if (!contract || openingChat) return;
+
+    // Double-check subscription on frontend
+    if (!isBusinessOrHigher) {
+      setNotification({ message: 'Diese Funktion ist nur für Business/Enterprise Nutzer verfügbar', type: 'error' });
+      return;
+    }
+
+    setOpeningChat(true);
 
     try {
       const token = localStorage.getItem('token');
@@ -390,14 +406,18 @@ export default function ContractDetails() {
       });
 
       if (!response.ok) {
-        throw new Error('Chat konnte nicht erstellt werden');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Chat konnte nicht erstellt werden');
       }
 
       const data = await response.json();
       navigate(`/chat?id=${data.chatId}`);
     } catch (error) {
       console.error('Error opening chat:', error);
-      setNotification({ message: 'Chat konnte nicht geöffnet werden', type: 'error' });
+      const errorMessage = error instanceof Error ? error.message : 'Chat konnte nicht geöffnet werden';
+      setNotification({ message: errorMessage, type: 'error' });
+    } finally {
+      setOpeningChat(false);
     }
   };
 
@@ -1090,19 +1110,35 @@ export default function ContractDetails() {
                 Legal Lens
               </button>
 
-              {/* 💬 Mit KI-Rechtsbot besprechen */}
+              {/* 💬 Mit KI-Rechtsbot besprechen - Business/Enterprise only */}
               <button
                 onClick={handleOpenInChat}
                 className={styles.actionButton}
+                disabled={openingChat || !isBusinessOrHigher}
                 style={{
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  background: isBusinessOrHigher
+                    ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                    : '#9ca3af',
                   color: 'white',
-                  border: 'none'
+                  border: 'none',
+                  opacity: !isBusinessOrHigher ? 0.6 : openingChat ? 0.8 : 1,
+                  cursor: !isBusinessOrHigher ? 'not-allowed' : openingChat ? 'wait' : 'pointer'
                 }}
-                title="Vertrag mit KI-Rechtsbot besprechen - Fragen stellen, Details klären"
+                title={!isBusinessOrHigher
+                  ? 'Nur für Business & Enterprise Nutzer verfügbar'
+                  : 'Vertrag mit KI-Rechtsbot besprechen - Fragen stellen, Details klären'}
               >
-                <MessageSquare size={16} />
-                Mit KI besprechen
+                {openingChat ? (
+                  <>
+                    <Loader size={16} className={styles.spinningLoader} />
+                    Öffne Chat...
+                  </>
+                ) : (
+                  <>
+                    <MessageSquare size={16} />
+                    {isBusinessOrHigher ? 'Mit KI besprechen' : 'Chat (Business)'}
+                  </>
+                )}
               </button>
 
               <button

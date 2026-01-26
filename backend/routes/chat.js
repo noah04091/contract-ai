@@ -310,12 +310,36 @@ router.post("/new-with-contract", verifyToken, async (req, res) => {
 
     const { contractId, contractName, analysisContext, s3Key } = req.body || {};
 
+    // Validate required fields
     if (!contractId || !contractName) {
       return res.status(400).json({ error: "contractId and contractName required" });
     }
 
+    // Validate ObjectId format
+    if (!ObjectId.isValid(contractId)) {
+      return res.status(400).json({ error: "Invalid contractId format" });
+    }
+
+    const usersCollection = req.db.collection("users");
     const chats = req.db.collection("chats");
     const contracts = req.db.collection("contracts");
+
+    // ✅ CRITICAL: Check subscription - Business/Enterprise only
+    const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const plan = user.subscriptionPlan || "free";
+    const hasAccess = isBusinessOrHigher(plan);
+
+    if (!hasAccess) {
+      return res.status(403).json({
+        error: "Subscription required",
+        message: "Diese Funktion ist nur für Business und Enterprise Nutzer verfügbar.",
+        requiredPlan: "business"
+      });
+    }
 
     // Verify contract ownership
     const contract = await contracts.findOne({
