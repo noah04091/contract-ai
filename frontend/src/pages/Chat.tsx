@@ -933,6 +933,51 @@ function EmptyState({ suggestions, onPick }: { suggestions: string[]; onPick: (s
   );
 }
 
+// ✅ HELPER: Convert court decision references to clickable links
+function convertCourtDecisionLinks(text: string): string {
+  // Pattern to match court decisions like:
+  // - BGH, Az. VIII ZR 277/16
+  // - BAG 2 AZR 424/19
+  // - BGH VIII ZR 277/16
+  // - Az. XII ZR 123/20
+  // - OLG München, 7 U 1234/20
+
+  const courts = 'BGH|BAG|BVerfG|BFH|BSG|BVerwG|OLG|LAG|LG|AG|ArbG';
+
+  // Match: Court + optional comma + optional "Az." + case number
+  // Case number format: Roman numeral or number + letters + number/year
+  const caseNumberPattern = `(?:[IVX]+\\s+)?[A-Za-z]+\\s+\\d+\\/\\d{2,4}`;
+
+  const courtDecisionRegex = new RegExp(
+    `(${courts})(?:\\s+[A-Za-zäöüÄÖÜ]+)?[,\\s]+(?:Az\\.?\\s*)?(${caseNumberPattern})`,
+    'gi'
+  );
+
+  // Also match standalone "Az. XII ZR 123/20" format
+  const azOnlyRegex = new RegExp(
+    `Az\\.?\\s*(${caseNumberPattern})`,
+    'gi'
+  );
+
+  // Replace court decisions with links to OpenJur
+  let result = text.replace(courtDecisionRegex, (match, _court, caseNum) => {
+    const searchQuery = encodeURIComponent(caseNum.trim());
+    const url = `https://openjur.de/suche/?q=${searchQuery}`;
+    return `[${match}](${url})`;
+  });
+
+  // Replace standalone Az. references (that weren't already matched)
+  result = result.replace(azOnlyRegex, (match, caseNum) => {
+    // Skip if already a link
+    if (result.includes(`[${match}]`)) return match;
+    const searchQuery = encodeURIComponent(caseNum.trim());
+    const url = `https://openjur.de/suche/?q=${searchQuery}`;
+    return `[${match}](${url})`;
+  });
+
+  return result;
+}
+
 // ✅ HELPER: Convert law references to clickable links
 function convertLawReferencesToLinks(text: string): string {
   // Map of German law abbreviations to their gesetze-im-internet.de paths
@@ -1016,10 +1061,13 @@ function MarkdownContent({ content }: { content: string }) {
           gfm: true, // GitHub Flavored Markdown
         });
 
-        // ✅ Convert law references to clickable links BEFORE markdown parsing
-        const contentWithLawLinks = convertLawReferencesToLinks(content);
+        // ✅ Convert legal references to clickable links BEFORE markdown parsing
+        // 1. First convert court decisions (BGH VIII ZR 277/16 → link to OpenJur)
+        const contentWithCourtLinks = convertCourtDecisionLinks(content);
+        // 2. Then convert law references (§ 622 BGB → link to gesetze-im-internet.de)
+        const contentWithAllLinks = convertLawReferencesToLinks(contentWithCourtLinks);
 
-        const rawHtml = await marked.parse(contentWithLawLinks);
+        const rawHtml = await marked.parse(contentWithAllLinks);
         let clean = DOMPurify.sanitize(rawHtml, {
           ALLOWED_TAGS: [
             "p",

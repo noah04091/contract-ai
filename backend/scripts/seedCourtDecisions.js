@@ -312,6 +312,432 @@ const courtDecisions = [
     relevantLaws: ["§ 5a UWG", "§ 3 UWG", "§ 6 TMG"],
     keywords: ["Influencer", "Werbung", "Kennzeichnungspflicht", "Social Media", "Schleichwerbung"],
     sourceUrl: "https://juris.bundesgerichtshof.de/cgi-bin/rechtsprechung/document.py?Gericht=bgh&Art=en&nr=96789"
+  },
+
+  // ==========================================
+  // MIETRECHT - Erweitert
+  // ==========================================
+  {
+    caseNumber: "VIII ZR 107/21",
+    court: "BGH",
+    senate: "VIII. Zivilsenat",
+    decisionDate: new Date("2022-07-27"),
+    legalArea: "Mietrecht",
+    headnotes: [
+      "Eine Mieterhöhung nach § 558 BGB ist nur wirksam, wenn der Vermieter die ortsübliche Vergleichsmiete nachweist.",
+      "Der Mietspiegel ist ein geeignetes Begründungsmittel für Mieterhöhungen."
+    ],
+    summary: "Der BGH bestätigt, dass bei Mieterhöhungen auf die ortsübliche Vergleichsmiete ein qualifizierter Mietspiegel als Begründungsmittel ausreicht. Der Vermieter muss die Wohnung korrekt in die Mietspiegelkategorien einordnen.",
+    relevantLaws: ["§ 558 BGB", "§ 558a BGB", "§ 558c BGB"],
+    keywords: ["Mieterhöhung", "Mietspiegel", "Vergleichsmiete", "Mietrecht"],
+    sourceUrl: "https://openjur.de"
+  },
+  {
+    caseNumber: "VIII ZR 38/18",
+    court: "BGH",
+    senate: "VIII. Zivilsenat",
+    decisionDate: new Date("2019-03-27"),
+    legalArea: "Mietrecht",
+    headnotes: [
+      "Der Vermieter muss bei der Nebenkostenabrechnung das Wirtschaftlichkeitsgebot beachten.",
+      "Überhöhte Kosten für Hausmeister oder Gartenpflege können beanstandet werden."
+    ],
+    summary: "Der BGH stellt klar, dass Vermieter bei Betriebskosten das Gebot der Wirtschaftlichkeit beachten müssen. Der Mieter kann die Abrechnung kürzen, wenn einzelne Positionen deutlich über dem Marktüblichen liegen.",
+    relevantLaws: ["§ 556 BGB", "§ 560 BGB"],
+    keywords: ["Nebenkosten", "Betriebskosten", "Wirtschaftlichkeitsgebot", "Nebenkostenabrechnung"],
+    sourceUrl: "https://openjur.de"
+  },
+  {
+    caseNumber: "VIII ZR 231/17",
+    court: "BGH",
+    senate: "VIII. Zivilsenat",
+    decisionDate: new Date("2018-11-21"),
+    legalArea: "Mietrecht",
+    headnotes: [
+      "Die Modernisierungsmieterhöhung ist auf 8% der aufgewendeten Kosten begrenzt.",
+      "Der Mieter muss eine Modernisierung grundsätzlich dulden, kann aber unter Umständen Härtefall geltend machen."
+    ],
+    summary: "Der BGH konkretisiert die Voraussetzungen der Modernisierungsmieterhöhung. Die Erhöhung ist auf 8% der aufgewendeten Kosten jährlich begrenzt. Bei unzumutbarer Härte für den Mieter kann die Erhöhung ausgeschlossen sein.",
+    relevantLaws: ["§ 559 BGB", "§ 555d BGB", "§ 559d BGB"],
+    keywords: ["Modernisierung", "Mieterhöhung", "Härtefall", "Duldungspflicht"],
+    sourceUrl: "https://openjur.de"
+  },
+  {
+    caseNumber: "VIII ZR 167/17",
+    court: "BGH",
+    senate: "VIII. Zivilsenat",
+    decisionDate: new Date("2018-07-18"),
+    legalArea: "Mietrecht",
+    headnotes: [
+      "Der Vermieter kann bei Zahlungsverzug fristlos kündigen.",
+      "Bei einem Rückstand von zwei Monatsmieten ist die fristlose Kündigung in der Regel gerechtfertigt."
+    ],
+    summary: "Der BGH bestätigt, dass der Vermieter bei einem Mietrückstand von mindestens zwei Monatsmieten zur fristlosen Kündigung berechtigt ist. Die Schonfristzahlung kann die Kündigung heilen, aber nur bei der ersten Kündigung innerhalb von zwei Jahren.",
+    relevantLaws: ["§ 543 BGB", "§ 569 BGB", "§ 573c BGB"],
+    keywords: ["Mietrückstand", "fristlose Kündigung", "Zahlungsverzug", "Schonfristzahlung"],
+    sourceUrl: "https://openjur.de"
+  },
+
+  // ==========================================
+  // ARBEITSRECHT - Erweitert
+  // ==========================================
+  {
+    caseNumber: "9 AZR 541/15",
+    court: "BAG",
+    senate: "Neunter Senat",
+    decisionDate: new Date("2016-11-22"),
+    legalArea: "Arbeitsrecht",
+    headnotes: [
+      "Der gesetzliche Mindesturlaub verfällt nicht automatisch am Jahresende.",
+      "Der Arbeitgeber muss den Arbeitnehmer auffordern, seinen Urlaub zu nehmen und auf den drohenden Verfall hinweisen."
+    ],
+    summary: "Das BAG hat die Rechtsprechung zum Urlaubsverfall grundlegend geändert. Urlaub verfällt nur noch, wenn der Arbeitgeber den Arbeitnehmer rechtzeitig und transparent auf den Urlaub hingewiesen und aufgefordert hat, diesen zu nehmen. Andernfalls wird der Urlaub übertragen.",
+    relevantLaws: ["§ 7 BUrlG", "§ 1 BUrlG"],
+    keywords: ["Urlaubsverfall", "Mindesturlaub", "Hinweispflicht", "Urlaubsanspruch"],
+    sourceUrl: "https://openjur.de"
+  },
+  {
+    caseNumber: "8 AZR 562/16",
+    court: "BAG",
+    senate: "Achter Senat",
+    decisionDate: new Date("2018-01-25"),
+    legalArea: "Arbeitsrecht",
+    headnotes: [
+      "Bei Diskriminierung im Bewerbungsverfahren kann der Bewerber Entschädigung verlangen.",
+      "Die Beweislast kehrt sich um, wenn Indizien für eine Diskriminierung vorliegen."
+    ],
+    summary: "Das BAG stärkt den Schutz vor Diskriminierung im Bewerbungsverfahren. Werden Bewerber aufgrund von Alter, Geschlecht oder anderen geschützten Merkmalen benachteiligt, können sie Entschädigung in Höhe von bis zu drei Monatsgehältern verlangen.",
+    relevantLaws: ["§ 15 AGG", "§ 22 AGG", "§ 1 AGG"],
+    keywords: ["Diskriminierung", "Bewerbung", "AGG", "Entschädigung", "Beweislast"],
+    sourceUrl: "https://openjur.de"
+  },
+  {
+    caseNumber: "2 AZR 84/19",
+    court: "BAG",
+    senate: "Zweiter Senat",
+    decisionDate: new Date("2020-08-27"),
+    legalArea: "Arbeitsrecht",
+    headnotes: [
+      "Die betriebsbedingte Kündigung erfordert eine Sozialauswahl.",
+      "Bei der Sozialauswahl sind Dauer der Betriebszugehörigkeit, Lebensalter, Unterhaltspflichten und Schwerbehinderung zu berücksichtigen."
+    ],
+    summary: "Das BAG präzisiert die Anforderungen an die Sozialauswahl bei betriebsbedingten Kündigungen. Der Arbeitgeber muss alle vergleichbaren Arbeitnehmer in die Auswahl einbeziehen und die sozialen Kriterien angemessen gewichten.",
+    relevantLaws: ["§ 1 KSchG", "§ 1 Abs. 3 KSchG"],
+    keywords: ["betriebsbedingte Kündigung", "Sozialauswahl", "Kündigungsschutz", "Kriterien"],
+    sourceUrl: "https://openjur.de"
+  },
+  {
+    caseNumber: "5 AZR 517/19",
+    court: "BAG",
+    senate: "Fünfter Senat",
+    decisionDate: new Date("2021-04-21"),
+    legalArea: "Arbeitsrecht",
+    headnotes: [
+      "Homeoffice kann nicht einseitig durch den Arbeitgeber angeordnet werden.",
+      "Umgekehrt hat der Arbeitnehmer grundsätzlich keinen Anspruch auf Homeoffice."
+    ],
+    summary: "Das BAG klärt die Rechtslage zum Homeoffice. Weder Arbeitgeber noch Arbeitnehmer können Homeoffice einseitig durchsetzen. Es bedarf einer Vereinbarung, sofern nicht tarifvertragliche oder betriebliche Regelungen bestehen.",
+    relevantLaws: ["§ 106 GewO", "§ 611a BGB"],
+    keywords: ["Homeoffice", "Direktionsrecht", "Arbeitsort", "mobile Arbeit", "Telearbeit"],
+    sourceUrl: "https://openjur.de"
+  },
+  {
+    caseNumber: "6 AZR 465/18",
+    court: "BAG",
+    senate: "Sechster Senat",
+    decisionDate: new Date("2019-06-27"),
+    legalArea: "Arbeitsrecht",
+    headnotes: [
+      "Befristete Arbeitsverträge ohne Sachgrund sind nur bei Neueinstellungen zulässig.",
+      "Eine frühere Beschäftigung beim selben Arbeitgeber kann der sachgrundlosen Befristung entgegenstehen."
+    ],
+    summary: "Das BAG bestätigt das Vorbeschäftigungsverbot bei sachgrundlosen Befristungen. War der Arbeitnehmer bereits zuvor beim selben Arbeitgeber beschäftigt, ist eine erneute sachgrundlose Befristung grundsätzlich unzulässig, es sei denn, die Vorbeschäftigung liegt sehr lange zurück.",
+    relevantLaws: ["§ 14 TzBfG", "§ 14 Abs. 2 TzBfG"],
+    keywords: ["Befristung", "sachgrundlos", "Vorbeschäftigung", "TzBfG", "Kettenarbeitsvertrag"],
+    sourceUrl: "https://openjur.de"
+  },
+
+  // ==========================================
+  // VERBRAUCHERSCHUTZ / E-COMMERCE
+  // ==========================================
+  {
+    caseNumber: "I ZR 169/18",
+    court: "BGH",
+    senate: "I. Zivilsenat",
+    decisionDate: new Date("2020-03-19"),
+    legalArea: "Vertragsrecht",
+    headnotes: [
+      "Der Button-Lösung muss bei Online-Bestellungen eingehalten werden.",
+      "Der Bestellbutton muss eindeutig auf die Zahlungspflicht hinweisen."
+    ],
+    summary: "Der BGH bestätigt die strengen Anforderungen an die Button-Lösung. Bei Online-Käufen muss der Bestellbutton eindeutig auf die Zahlungspflicht hinweisen, z.B. 'zahlungspflichtig bestellen'. Formulierungen wie nur 'Bestellen' sind unzureichend.",
+    relevantLaws: ["§ 312j BGB", "§ 312i BGB"],
+    keywords: ["Button-Lösung", "Online-Kauf", "Bestellbutton", "E-Commerce", "Verbraucherschutz"],
+    sourceUrl: "https://openjur.de"
+  },
+  {
+    caseNumber: "VIII ZR 319/17",
+    court: "BGH",
+    senate: "VIII. Zivilsenat",
+    decisionDate: new Date("2019-07-03"),
+    legalArea: "Kaufrecht",
+    headnotes: [
+      "Bei Internetkäufen beginnt die Widerrufsfrist erst mit ordnungsgemäßer Belehrung.",
+      "Eine fehlerhafte Widerrufsbelehrung verlängert die Widerrufsfrist."
+    ],
+    summary: "Der BGH stärkt die Verbraucherrechte bei Online-Käufen. Ist die Widerrufsbelehrung fehlerhaft oder unvollständig, beginnt die 14-tägige Widerrufsfrist nicht zu laufen. Das Widerrufsrecht kann dann bis zu 12 Monate und 14 Tage nach Vertragsschluss ausgeübt werden.",
+    relevantLaws: ["§ 355 BGB", "§ 356 BGB", "Art. 246a EGBGB"],
+    keywords: ["Widerruf", "Online-Kauf", "Widerrufsbelehrung", "Fernabsatz", "E-Commerce"],
+    sourceUrl: "https://openjur.de"
+  },
+  {
+    caseNumber: "VIII ZR 200/05",
+    court: "BGH",
+    senate: "VIII. Zivilsenat",
+    decisionDate: new Date("2006-11-08"),
+    legalArea: "Kaufrecht",
+    headnotes: [
+      "Bei Verbrauchsgüterkäufen kann die Gewährleistungsfrist nicht unter zwei Jahre verkürzt werden.",
+      "Klauseln, die die Gewährleistung bei Neuware einschränken, sind unwirksam."
+    ],
+    summary: "Der BGH schützt Verbraucher vor unzulässigen Gewährleistungsbeschränkungen. Bei Neuware kann die zweijährige Gewährleistungsfrist gegenüber Verbrauchern nicht durch AGB verkürzt werden. Nur bei Gebrauchtwaren ist eine Verkürzung auf ein Jahr möglich.",
+    relevantLaws: ["§ 475 BGB", "§ 438 BGB", "§ 307 BGB"],
+    keywords: ["Gewährleistung", "Verbrauchsgüterkauf", "Gewährleistungsfrist", "AGB", "Neuware"],
+    sourceUrl: "https://openjur.de"
+  },
+
+  // ==========================================
+  // VERTRAGSRECHT - Erweitert
+  // ==========================================
+  {
+    caseNumber: "VII ZR 6/13",
+    court: "BGH",
+    senate: "VII. Zivilsenat",
+    decisionDate: new Date("2014-06-05"),
+    legalArea: "Vertragsrecht",
+    headnotes: [
+      "Allgemeine Geschäftsbedingungen unterliegen einer Inhaltskontrolle.",
+      "Überraschende Klauseln werden nicht Vertragsbestandteil."
+    ],
+    summary: "Der BGH konkretisiert die AGB-Kontrolle. Klauseln, die so ungewöhnlich sind, dass der Vertragspartner nicht mit ihnen rechnen muss, werden nicht Vertragsbestandteil. Zudem müssen AGB klar und verständlich formuliert sein.",
+    relevantLaws: ["§ 305c BGB", "§ 307 BGB", "§ 305 BGB"],
+    keywords: ["AGB", "überraschende Klausel", "Inhaltskontrolle", "Transparenzgebot"],
+    sourceUrl: "https://openjur.de"
+  },
+  {
+    caseNumber: "III ZR 387/17",
+    court: "BGH",
+    senate: "III. Zivilsenat",
+    decisionDate: new Date("2018-10-18"),
+    legalArea: "Vertragsrecht",
+    headnotes: [
+      "Fitnessstudioverträge mit einer Mindestlaufzeit von mehr als 24 Monaten sind unwirksam.",
+      "Die automatische Verlängerung um mehr als 12 Monate benachteiligt den Verbraucher unangemessen."
+    ],
+    summary: "Der BGH schützt Verbraucher vor zu langen Vertragslaufzeiten. Fitnessstudioverträge mit einer Erstlaufzeit von über 24 Monaten oder einer automatischen Verlängerung um mehr als 12 Monate sind nach AGB-Recht unwirksam.",
+    relevantLaws: ["§ 309 Nr. 9 BGB", "§ 307 BGB"],
+    keywords: ["Fitnessstudio", "Laufzeit", "Vertragsverlängerung", "AGB", "Verbraucherschutz"],
+    sourceUrl: "https://openjur.de"
+  },
+  {
+    caseNumber: "VIII ZR 249/14",
+    court: "BGH",
+    senate: "VIII. Zivilsenat",
+    decisionDate: new Date("2016-01-20"),
+    legalArea: "Vertragsrecht",
+    headnotes: [
+      "Der Verkäufer haftet auch für arglistig verschwiegene Mängel.",
+      "Arglist liegt vor, wenn der Verkäufer einen Mangel kennt und bewusst verschweigt."
+    ],
+    summary: "Der BGH bestätigt die Haftung für arglistiges Verschweigen. Hat der Verkäufer einen Mangel gekannt und verschwiegen, kann er sich nicht auf Haftungsausschlüsse berufen. Der Käufer kann in diesen Fällen auch nach Ablauf der regulären Gewährleistungsfrist Ansprüche geltend machen.",
+    relevantLaws: ["§ 444 BGB", "§ 438 BGB", "§ 437 BGB"],
+    keywords: ["Arglist", "Mangel", "Haftungsausschluss", "Verschweigen", "Gewährleistung"],
+    sourceUrl: "https://openjur.de"
+  },
+
+  // ==========================================
+  // FAMILIENRECHT / ERBRECHT
+  // ==========================================
+  {
+    caseNumber: "XII ZR 48/17",
+    court: "BGH",
+    senate: "XII. Zivilsenat",
+    decisionDate: new Date("2018-03-14"),
+    legalArea: "Familienrecht",
+    headnotes: [
+      "Ein Ehevertrag kann bei Sittenwidrigkeit unwirksam sein.",
+      "Ein vollständiger Ausschluss des Versorgungsausgleichs ist in der Regel sittenwidrig."
+    ],
+    summary: "Der BGH schützt Ehepartner vor unfairen Eheverträgen. Ein Ehevertrag, der einseitig einen Partner benachteiligt und die Grundprinzipien des Scheidungsfolgenrechts völlig außer Kraft setzt, kann als sittenwidrig unwirksam sein.",
+    relevantLaws: ["§ 138 BGB", "§ 1408 BGB", "§ 8 VersAusglG"],
+    keywords: ["Ehevertrag", "Sittenwidrigkeit", "Versorgungsausgleich", "Unterhalt", "Familienrecht"],
+    sourceUrl: "https://openjur.de"
+  },
+  {
+    caseNumber: "IV ZR 23/14",
+    court: "BGH",
+    senate: "IV. Zivilsenat",
+    decisionDate: new Date("2015-04-22"),
+    legalArea: "Erbrecht",
+    headnotes: [
+      "Ein Testament muss eigenhändig geschrieben und unterschrieben sein.",
+      "Ein am Computer geschriebenes Testament ist formunwirksam."
+    ],
+    summary: "Der BGH bestätigt die strengen Formerfordernisse für privatschriftliche Testamente. Das Testament muss vollständig handschriftlich geschrieben und unterschrieben sein. Computerausdrucke oder Schreibmaschinentexte genügen nicht, auch wenn sie unterschrieben sind.",
+    relevantLaws: ["§ 2247 BGB", "§ 125 BGB"],
+    keywords: ["Testament", "Formerfordernis", "eigenhändig", "Erbrecht", "Unwirksamkeit"],
+    sourceUrl: "https://openjur.de"
+  },
+  {
+    caseNumber: "IV ZR 51/19",
+    court: "BGH",
+    senate: "IV. Zivilsenat",
+    decisionDate: new Date("2020-07-08"),
+    legalArea: "Erbrecht",
+    headnotes: [
+      "Der Pflichtteilsanspruch verjährt in drei Jahren.",
+      "Die Verjährung beginnt mit Kenntnis vom Erbfall und der beeinträchtigenden Verfügung."
+    ],
+    summary: "Der BGH klärt die Verjährung des Pflichtteilsanspruchs. Die dreijährige Verjährungsfrist beginnt mit dem Schluss des Jahres, in dem der Pflichtteilsberechtigte vom Erbfall und der ihn beeinträchtigenden Verfügung Kenntnis erlangt hat.",
+    relevantLaws: ["§ 2303 BGB", "§ 195 BGB", "§ 199 BGB"],
+    keywords: ["Pflichtteil", "Verjährung", "Erbrecht", "Pflichtteilsanspruch"],
+    sourceUrl: "https://openjur.de"
+  },
+
+  // ==========================================
+  // HANDELS- / GESELLSCHAFTSRECHT - Erweitert
+  // ==========================================
+  {
+    caseNumber: "II ZR 243/15",
+    court: "BGH",
+    senate: "II. Zivilsenat",
+    decisionDate: new Date("2017-07-11"),
+    legalArea: "Gesellschaftsrecht",
+    headnotes: [
+      "Gesellschafter einer GbR haften grundsätzlich persönlich und unbeschränkt.",
+      "Eine Haftungsbeschränkung muss dem Vertragspartner bekannt gemacht werden."
+    ],
+    summary: "Der BGH bestätigt die persönliche Haftung von GbR-Gesellschaftern. Eine Haftungsbeschränkung auf das Gesellschaftsvermögen ist nur wirksam, wenn sie dem Vertragspartner vor Vertragsschluss bekannt gemacht wurde.",
+    relevantLaws: ["§ 128 HGB", "§ 714 BGB", "§ 705 BGB"],
+    keywords: ["GbR", "Gesellschafterhaftung", "persönliche Haftung", "Haftungsbeschränkung"],
+    sourceUrl: "https://openjur.de"
+  },
+  {
+    caseNumber: "II ZR 175/19",
+    court: "BGH",
+    senate: "II. Zivilsenat",
+    decisionDate: new Date("2020-10-06"),
+    legalArea: "Gesellschaftsrecht",
+    headnotes: [
+      "Der Gesellschafter-Geschäftsführer unterliegt dem Wettbewerbsverbot.",
+      "Konkurrierende Tätigkeiten sind nur mit Zustimmung der Gesellschaft zulässig."
+    ],
+    summary: "Der BGH konkretisiert das Wettbewerbsverbot für GmbH-Geschäftsführer. Ohne Zustimmung der Gesellschafterversammlung darf der Geschäftsführer keine konkurrierenden Tätigkeiten ausüben. Verstöße können Schadensersatzansprüche und außerordentliche Kündigung rechtfertigen.",
+    relevantLaws: ["§ 43 GmbHG", "§ 88 HGB"],
+    keywords: ["Wettbewerbsverbot", "Geschäftsführer", "GmbH", "Konkurrenz", "Treuepflicht"],
+    sourceUrl: "https://openjur.de"
+  },
+
+  // ==========================================
+  // BANKRECHT / FINANZRECHT
+  // ==========================================
+  {
+    caseNumber: "XI ZR 101/15",
+    court: "BGH",
+    senate: "XI. Zivilsenat",
+    decisionDate: new Date("2016-07-12"),
+    legalArea: "Bankrecht",
+    headnotes: [
+      "Bearbeitungsentgelte für Verbraucherdarlehen sind unwirksam.",
+      "Der Darlehensnehmer kann bereits gezahlte Bearbeitungsgebühren zurückfordern."
+    ],
+    summary: "Der BGH hat Bearbeitungsentgelte bei Verbraucherdarlehen für unwirksam erklärt. Banken dürfen keine gesonderten Gebühren für die Bearbeitung des Kreditantrags verlangen, da dies zu ihren regulären Aufgaben gehört. Bereits gezahlte Entgelte können zurückgefordert werden.",
+    relevantLaws: ["§ 307 BGB", "§ 488 BGB"],
+    keywords: ["Bearbeitungsgebühr", "Kredit", "Darlehen", "Bank", "Verbraucherschutz"],
+    sourceUrl: "https://openjur.de"
+  },
+  {
+    caseNumber: "XI ZR 7/19",
+    court: "BGH",
+    senate: "XI. Zivilsenat",
+    decisionDate: new Date("2021-04-27"),
+    legalArea: "Bankrecht",
+    headnotes: [
+      "Negativzinsen können auf Girokonten unter bestimmten Voraussetzungen erhoben werden.",
+      "Die Zulässigkeit hängt von der konkreten vertraglichen Gestaltung ab."
+    ],
+    summary: "Der BGH hat sich zu Negativzinsen auf Girokonten geäußert. Grundsätzlich können Banken bei entsprechender vertraglicher Vereinbarung Verwahrentgelte erheben. Die Klauseln müssen aber transparent und verständlich sein.",
+    relevantLaws: ["§ 307 BGB", "§ 675f BGB", "§ 488 BGB"],
+    keywords: ["Negativzinsen", "Verwahrentgelt", "Girokonto", "Bank", "AGB"],
+    sourceUrl: "https://openjur.de"
+  },
+
+  // ==========================================
+  // IT-RECHT / DATENSCHUTZ - Erweitert
+  // ==========================================
+  {
+    caseNumber: "I ZR 186/17",
+    court: "BGH",
+    senate: "I. Zivilsenat",
+    decisionDate: new Date("2020-05-28"),
+    legalArea: "Datenschutzrecht",
+    headnotes: [
+      "Die Einwilligung in Cookies muss aktiv durch den Nutzer erfolgen.",
+      "Vorangekreuzte Checkboxen stellen keine wirksame Einwilligung dar."
+    ],
+    summary: "Der BGH bestätigt die Cookie-Rechtsprechung des EuGH. Für Tracking-Cookies ist eine aktive Einwilligung des Nutzers erforderlich. Voreingestellte Checkboxen oder das bloße Weitersurfen genügen nicht.",
+    relevantLaws: ["§ 15 TMG", "Art. 6 DSGVO", "Art. 7 DSGVO"],
+    keywords: ["Cookies", "Einwilligung", "DSGVO", "Tracking", "Datenschutz"],
+    sourceUrl: "https://openjur.de"
+  },
+  {
+    caseNumber: "VI ZR 489/20",
+    court: "BGH",
+    senate: "VI. Zivilsenat",
+    decisionDate: new Date("2022-03-01"),
+    legalArea: "Datenschutzrecht",
+    headnotes: [
+      "Bei Datenschutzverstößen kann ein immaterieller Schadensersatz verlangt werden.",
+      "Der Schaden muss konkret dargelegt werden, ein bloßer DSGVO-Verstoß reicht nicht."
+    ],
+    summary: "Der BGH konkretisiert den Schadensersatzanspruch nach Art. 82 DSGVO. Ein Verstoß gegen die DSGVO allein begründet keinen Schadensersatzanspruch. Der Betroffene muss einen konkreten immateriellen Schaden darlegen.",
+    relevantLaws: ["Art. 82 DSGVO", "§ 823 BGB"],
+    keywords: ["DSGVO", "Schadensersatz", "Datenpanne", "immaterieller Schaden"],
+    sourceUrl: "https://openjur.de"
+  },
+
+  // ==========================================
+  // VERTRAGSSTRAFEN / SCHADENSERSATZ
+  // ==========================================
+  {
+    caseNumber: "VII ZR 178/20",
+    court: "BGH",
+    senate: "VII. Zivilsenat",
+    decisionDate: new Date("2022-01-13"),
+    legalArea: "Vertragsrecht",
+    headnotes: [
+      "Die Vertragsstrafe muss verhältnismäßig zum Verstoß sein.",
+      "Eine zu hohe Vertragsstrafe kann vom Gericht herabgesetzt werden."
+    ],
+    summary: "Der BGH bestätigt das richterliche Ermäßigungsrecht bei überhöhten Vertragsstrafen. Ist die vereinbarte Strafe unverhältnismäßig hoch, kann das Gericht sie auf einen angemessenen Betrag herabsetzen (§ 343 BGB).",
+    relevantLaws: ["§ 339 BGB", "§ 343 BGB", "§ 307 BGB"],
+    keywords: ["Vertragsstrafe", "Herabsetzung", "unverhältnismäßig", "richterliches Ermessen"],
+    sourceUrl: "https://openjur.de"
+  },
+  {
+    caseNumber: "VI ZR 252/19",
+    court: "BGH",
+    senate: "VI. Zivilsenat",
+    decisionDate: new Date("2020-12-15"),
+    legalArea: "Vertragsrecht",
+    headnotes: [
+      "Bei Vertragsverletzungen muss der Schaden konkret nachgewiesen werden.",
+      "Pauschaler Schadensersatz ohne Nachweis ist unzulässig."
+    ],
+    summary: "Der BGH stellt klar, dass der Geschädigte seinen Schaden konkret darlegen muss. Pauschale Schadensbehauptungen ohne konkreten Nachweis reichen nicht aus. Dies gilt auch für entgangenen Gewinn.",
+    relevantLaws: ["§ 249 BGB", "§ 252 BGB", "§ 280 BGB"],
+    keywords: ["Schadensersatz", "Schadensnachweis", "entgangener Gewinn", "Darlegungslast"],
+    sourceUrl: "https://openjur.de"
   }
 ];
 

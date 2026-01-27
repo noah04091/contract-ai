@@ -792,6 +792,32 @@
   font-size: 0.85em;
 }
 
+/* Special styling for court decision links (BGH, BAG, etc.) */
+.bubbleContent a[href*="openjur.de"] {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid #fcd34d;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  font-size: 0.9em;
+  white-space: nowrap;
+  color: #92400e;
+}
+
+.bubbleContent a[href*="openjur.de"]:hover {
+  background: linear-gradient(135deg, #fde68a 0%, #fbbf24 100%);
+  border-color: #f59e0b;
+  text-decoration: none;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
+  color: #78350f;
+}
+
+.bubbleContent a[href*="openjur.de"]::before {
+  content: "📜 ";
+  font-size: 0.85em;
+}
+
 /* ==========================================
    EMPTY STATE
    ========================================== */
