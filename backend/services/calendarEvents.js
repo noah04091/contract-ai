@@ -11,14 +11,22 @@ function createLocalDate(dateString) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0, 0);
 }
 
+// 🔒 KONFIDENZ-SCHWELLENWERTE für Event-Generierung
+const EVENT_CONFIDENCE_THRESHOLDS = {
+  CRITICAL_EVENTS: 50,    // Kündigungs-Events: Auch bei niedrigerer Konfidenz erstellen (wichtig!)
+  STANDARD_EVENTS: 60,    // Standard-Events: Mittlere Konfidenz erforderlich
+  REMINDER_EVENTS: 50     // Reminder: Auch bei niedrigerer Konfidenz
+};
+
 /**
  * Generiert automatisch Kalenderereignisse basierend auf Vertragsdaten
  * NEU: Unterstützt Auto-Renewal für "alte" aber aktive Verträge
+ * 🔒 NEU: Konfidenz-basierte Event-Generierung
  */
 async function generateEventsForContract(db, contract) {
   const events = [];
   const now = new Date();
-  
+
   try {
     // 🔧 FIX: Flexible Feldnamen-Unterstützung für verschiedene Datenquellen
     let expiryDate = contract.expiryDate 

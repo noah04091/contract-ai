@@ -251,11 +251,132 @@ const uploadToS3 = async (localFilePath, originalFilename, userId) => {
 };
 
 /**
+ * 🔒 PLAUSIBILITÄTS-VALIDIERUNG für importantDates
+ * Stellt sicher dass GPT keine unsinnigen Daten liefert
+ * @returns {object} { valid: boolean, reason?: string, confidence: number }
+ */
+const validateImportantDate = (dateObj, contract, requestId) => {
+  if (!dateObj || !dateObj.date) {
+    return { valid: false, reason: 'missing_date', confidence: 0 };
+  }
+
+  // Parse das Datum
+  let date;
+  try {
+    if (/^\d{4}-\d{2}-\d{2}/.test(dateObj.date)) {
+      date = new Date(dateObj.date);
+    } else if (/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(dateObj.date)) {
+      const parts = dateObj.date.split('.');
+      date = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+    } else {
+      date = new Date(dateObj.date);
+    }
+  } catch (e) {
+    return { valid: false, reason: 'parse_error', confidence: 0 };
+  }
+
+  if (!date || isNaN(date.getTime())) {
+    return { valid: false, reason: 'invalid_date', confidence: 0 };
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // 🔒 PLAUSIBILITÄTS-CHECKS:
+
+  // 1. Nicht mehr als 30 Jahre in der Zukunft (unrealistisch für die meisten Verträge)
+  const maxFuture = new Date();
+  maxFuture.setFullYear(maxFuture.getFullYear() + 30);
+  if (date > maxFuture) {
+    console.log(`⚠️ [${requestId}] importantDate rejected: ${dateObj.type} - zu weit in Zukunft (${dateObj.date})`);
+    return { valid: false, reason: 'too_far_future', confidence: 0 };
+  }
+
+  // 2. Nicht mehr als 50 Jahre in der Vergangenheit (außer für historische Verträge)
+  const maxPast = new Date();
+  maxPast.setFullYear(maxPast.getFullYear() - 50);
+  if (date < maxPast) {
+    console.log(`⚠️ [${requestId}] importantDate rejected: ${dateObj.type} - zu weit in Vergangenheit (${dateObj.date})`);
+    return { valid: false, reason: 'too_far_past', confidence: 0 };
+  }
+
+  // 3. end_date muss nach start_date liegen (wenn beide vorhanden)
+  if (dateObj.type === 'end_date' && contract?.startDate) {
+    const startDate = new Date(contract.startDate);
+    if (date < startDate) {
+      console.log(`⚠️ [${requestId}] importantDate rejected: end_date vor start_date (${dateObj.date} < ${contract.startDate})`);
+      return { valid: false, reason: 'end_before_start', confidence: 0 };
+    }
+  }
+
+  // 4. cancellation_deadline sollte vor end_date liegen
+  if (dateObj.type === 'cancellation_deadline' && contract?.expiryDate) {
+    const endDate = new Date(contract.expiryDate);
+    if (date > endDate) {
+      console.log(`⚠️ [${requestId}] importantDate rejected: cancellation_deadline nach end_date (${dateObj.date} > ${contract.expiryDate})`);
+      return { valid: false, reason: 'cancellation_after_end', confidence: 0 };
+    }
+  }
+
+  // 5. minimum_term_end sollte nach start_date liegen
+  if (dateObj.type === 'minimum_term_end' && contract?.startDate) {
+    const startDate = new Date(contract.startDate);
+    if (date < startDate) {
+      console.log(`⚠️ [${requestId}] importantDate rejected: minimum_term_end vor start_date`);
+      return { valid: false, reason: 'minimum_before_start', confidence: 0 };
+    }
+  }
+
+  // ✅ Bestimme Konfidenz basierend auf calculated Flag und Typ
+  let confidence = 90; // Base für explizit extrahierte Daten
+
+  if (dateObj.calculated === true) {
+    confidence = 70; // Berechnete Daten haben niedrigere Konfidenz
+  }
+
+  // Kritische Typen bekommen leicht niedrigere Konfidenz wenn berechnet
+  const criticalTypes = ['cancellation_deadline', 'end_date', 'minimum_term_end'];
+  if (criticalTypes.includes(dateObj.type) && dateObj.calculated) {
+    confidence = 65;
+  }
+
+  console.log(`✅ [${requestId}] importantDate validated: ${dateObj.type} = ${dateObj.date} (Konfidenz: ${confidence}%)`);
+  return { valid: true, confidence, parsedDate: date };
+};
+
+/**
+ * 🔒 Filtert und validiert alle importantDates
+ * Entfernt ungültige Einträge und fügt Konfidenz hinzu
+ */
+const validateAndFilterImportantDates = (importantDates, contract, requestId) => {
+  if (!importantDates || !Array.isArray(importantDates)) {
+    return [];
+  }
+
+  const validatedDates = [];
+
+  for (const dateObj of importantDates) {
+    const validation = validateImportantDate(dateObj, contract, requestId);
+
+    if (validation.valid) {
+      validatedDates.push({
+        ...dateObj,
+        confidence: validation.confidence,
+        validated: true
+      });
+    }
+  }
+
+  console.log(`📊 [${requestId}] importantDates Validierung: ${validatedDates.length}/${importantDates.length} gültig`);
+  return validatedDates;
+};
+
+/**
  * 🔧 FIX: Extract end_date from AI-analyzed importantDates
- * AI analysis is more accurate than regex extraction for dates!
+ * 🔒 NEU: Nur verwenden wenn Regex-Konfidenz niedrig ist!
  * If importantDates contains type='end_date', use that to update expiryDate
  */
-const extractEndDateFromImportantDates = (importantDates) => {
+const extractEndDateFromImportantDates = (importantDates, regexEndDateConfidence = 0, requestId = '') => {
   if (!importantDates || !Array.isArray(importantDates)) {
     return null;
   }
@@ -264,6 +385,15 @@ const extractEndDateFromImportantDates = (importantDates) => {
   const endDateEntry = importantDates.find(d => d.type === 'end_date');
   if (!endDateEntry || !endDateEntry.date) {
     return null;
+  }
+
+  // 🔒 SICHERHEITS-CHECK: Nur GPT-Datum verwenden wenn Regex unsicher ist
+  // Wenn Regex bereits ein hochkonfidentes Datum hat, NICHT überschreiben!
+  const MIN_REGEX_CONFIDENCE_TO_KEEP = 70; // Wenn Regex >= 70%, behalte Regex-Datum
+
+  if (regexEndDateConfidence >= MIN_REGEX_CONFIDENCE_TO_KEEP) {
+    console.log(`🔒 [${requestId}] GPT end_date NICHT verwendet - Regex-Konfidenz ausreichend (${regexEndDateConfidence}% >= ${MIN_REGEX_CONFIDENCE_TO_KEEP}%)`);
+    return null; // Regex-Datum behalten
   }
 
   try {
@@ -287,11 +417,21 @@ const extractEndDateFromImportantDates = (importantDates) => {
 
     // Validate the date
     if (parsedDate && !isNaN(parsedDate.getTime())) {
-      console.log(`🔧 [FIX] Extracted end_date from AI importantDates: ${parsedDate.toISOString()} (from "${dateStr}")`);
+      // 🔒 Zusätzlicher Plausibilitätscheck
+      const today = new Date();
+      const maxFuture = new Date();
+      maxFuture.setFullYear(maxFuture.getFullYear() + 30);
+
+      if (parsedDate > maxFuture) {
+        console.warn(`⚠️ [${requestId}] GPT end_date REJECTED - zu weit in Zukunft: ${parsedDate.toISOString()}`);
+        return null;
+      }
+
+      console.log(`✅ [${requestId}] GPT end_date akzeptiert (Regex-Konfidenz war nur ${regexEndDateConfidence}%): ${parsedDate.toISOString()}`);
       return parsedDate;
     }
   } catch (err) {
-    console.warn(`⚠️ [FIX] Failed to parse end_date from importantDates: ${endDateEntry.date}`, err.message);
+    console.warn(`⚠️ [${requestId}] Failed to parse end_date from importantDates: ${endDateEntry.date}`, err.message);
   }
 
   return null;
@@ -2773,11 +2913,13 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           quickFacts: result.quickFacts || [],
           legalPulseHooks: result.legalPulseHooks || [],
           detailedLegalOpinion: result.detailedLegalOpinion || '', // ✅ NEU: Ausführliches Rechtsgutachten
-          importantDates: result.importantDates || [] // ✅ NEU: KI-extrahierte Datums für Kalender
+          // 🔒 importantDates werden validiert bevor sie gespeichert werden
+          importantDates: validateAndFilterImportantDates(result.importantDates || [], { startDate: extractedStartDate, expiryDate: extractedEndDate }, requestId)
         };
 
-        // 🔧 FIX: Override expiryDate from AI importantDates if available (more accurate than regex)
-        const aiEndDate = extractEndDateFromImportantDates(result.importantDates);
+        // 🔧 FIX: Override expiryDate from AI importantDates if available
+        // 🔒 NEU: Nur wenn Regex-Konfidenz niedrig ist (< 70%)!
+        const aiEndDate = extractEndDateFromImportantDates(result.importantDates, endDateConfidence, requestId);
         if (aiEndDate) {
           const oldExpiry = updateData.expiryDate ? (updateData.expiryDate instanceof Date ? updateData.expiryDate.toISOString() : updateData.expiryDate) : 'null';
           console.log(`🔧 [${requestId}] Updating expiryDate from AI importantDates: ${oldExpiry} → ${aiEndDate.toISOString()}`);
@@ -3041,7 +3183,8 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         );
 
         // 🔧 FIX: Extract AI end date for new contracts too
-        const aiEndDateNew = extractEndDateFromImportantDates(result.importantDates);
+        // 🔒 NEU: Nur wenn Regex-Konfidenz niedrig ist (< 70%)!
+        const aiEndDateNew = extractEndDateFromImportantDates(result.importantDates, endDateConfidence, requestId);
 
         // 🛡️ PLAUSIBILITY CHECK for new contracts
         let expiryDateUpdate = {};
@@ -3106,7 +3249,8 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
               quickFacts: result.quickFacts || [],
               legalPulseHooks: result.legalPulseHooks || [],
               detailedLegalOpinion: result.detailedLegalOpinion || '', // ✅ NEU: Ausführliches Rechtsgutachten
-              importantDates: result.importantDates || [], // ✅ NEU: KI-extrahierte Datums für Kalender
+              // 🔒 importantDates werden validiert bevor sie gespeichert werden
+              importantDates: validateAndFilterImportantDates(result.importantDates || [], { startDate: extractedStartDate, expiryDate: extractedEndDate }, requestId),
 
               'extraRefs.analysisId': inserted.insertedId,
               'extraRefs.documentType': validationResult.documentType,

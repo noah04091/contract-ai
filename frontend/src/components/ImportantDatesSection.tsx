@@ -10,7 +10,12 @@ interface ImportantDate {
   description?: string;
   calculated?: boolean;
   source?: string;
+  confidence?: number;  // 🔒 NEU: Konfidenz-Wert (0-100)
+  validated?: boolean;  // 🔒 NEU: Backend-validiert
 }
+
+// 🔒 KONFIDENZ-THRESHOLD für Anzeige
+const MIN_CONFIDENCE_TO_DISPLAY = 60;
 
 // Props für die Komponente
 interface ImportantDatesSectionProps {
@@ -70,6 +75,22 @@ export default function ImportantDatesSection({ importantDates, contractName }: 
     return null;
   }
 
+  // 🔒 FILTER: Nur hochkonfidente Daten anzeigen
+  // Rückwärtskompatibilität: Wenn keine Konfidenz vorhanden, zeigen (alte Daten)
+  const filteredDates = importantDates.filter(d => {
+    // Wenn Konfidenz vorhanden ist, muss sie >= Threshold sein
+    if (d.confidence !== undefined && d.confidence < MIN_CONFIDENCE_TO_DISPLAY) {
+      console.log(`🔒 ImportantDate gefiltert (Konfidenz ${d.confidence}% < ${MIN_CONFIDENCE_TO_DISPLAY}%):`, d.type, d.date);
+      return false;
+    }
+    return true;
+  });
+
+  // Keine Anzeige wenn nach Filter keine Datums übrig
+  if (filteredDates.length === 0) {
+    return null;
+  }
+
   // Navigiere zum Kalender mit dem ausgewählten Datum
   const handleOpenInCalendar = (date: string) => {
     // Formatiere das Datum für die Kalender-URL (YYYY-MM-DD)
@@ -80,7 +101,8 @@ export default function ImportantDatesSection({ importantDates, contractName }: 
   };
 
   // Sortiere nach Priorität (kritische zuerst) und dann nach Datum
-  const sortedDates = [...importantDates].sort((a, b) => {
+  // 🔒 Verwende gefilterte Daten statt Original
+  const sortedDates = [...filteredDates].sort((a, b) => {
     const priorityA = dateTypeConfig[a.type]?.priority || 99;
     const priorityB = dateTypeConfig[b.type]?.priority || 99;
     if (priorityA !== priorityB) return priorityA - priorityB;
@@ -168,9 +190,16 @@ export default function ImportantDatesSection({ importantDates, contractName }: 
                   <span className={`${styles.daysUntil} ${urgencyClass}`}>
                     {formatDaysUntil(daysUntil)}
                   </span>
+                  {/* 🔒 Warnung für berechnete/unsichere Daten */}
                   {dateItem.calculated && (
-                    <span className={styles.calculatedBadge} title="Von KI berechnet">
-                      KI
+                    <span
+                      className={styles.calculatedBadge}
+                      title={`Von KI berechnet${dateItem.confidence ? ` (Konfidenz: ${dateItem.confidence}%)` : ''}`}
+                      style={{
+                        backgroundColor: dateItem.confidence && dateItem.confidence < 75 ? '#f59e0b' : '#6366f1'
+                      }}
+                    >
+                      {dateItem.confidence && dateItem.confidence < 75 ? '~' : 'KI'}
                     </span>
                   )}
                 </div>
@@ -253,13 +282,29 @@ export default function ImportantDatesSection({ importantDates, contractName }: 
                 </div>
               </div>
 
+              {/* 🔒 Verbesserte Warnung für berechnete/unsichere Daten */}
               {selectedDate.calculated && (
-                <div className={styles.calculatedNote}>
+                <div
+                  className={styles.calculatedNote}
+                  style={{
+                    backgroundColor: selectedDate.confidence && selectedDate.confidence < 75
+                      ? 'rgba(245, 158, 11, 0.1)'
+                      : 'rgba(99, 102, 241, 0.1)',
+                    borderColor: selectedDate.confidence && selectedDate.confidence < 75
+                      ? 'rgba(245, 158, 11, 0.3)'
+                      : 'rgba(99, 102, 241, 0.3)'
+                  }}
+                >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386L9.663 17z"
                       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
-                  <span>Dieses Datum wurde von der KI aus den Vertragsangaben berechnet</span>
+                  <span>
+                    Dieses Datum wurde von der KI aus den Vertragsangaben berechnet
+                    {selectedDate.confidence && (
+                      <strong> (Konfidenz: {selectedDate.confidence}%)</strong>
+                    )}
+                  </span>
                 </div>
               )}
 

@@ -40,64 +40,73 @@ const localUpload = multer({ storage: localStorage });
  * - users: { chatUsage: { count, limit, resetDate } }
  */
 
-// ⚖️ LAWYER PERSONA - Nutzerorientierte Antworten mit klaren Entscheidungen
+// ⚖️ LAWYER PERSONA - Nutzerorientierte Antworten mit klaren Entscheidungen + Evidence
 const SYSTEM_PROMPT = `Du bist "Contract AI – Legal Counsel", ein KI-Vertragsanwalt für Unternehmer und Privatpersonen in Deutschland.
 
-## WICHTIGSTE REGEL: ANSWER-FIRST
+## REGEL 1: ANSWER-FIRST + EVIDENCE
 
-**Bei Ja/Nein-Fragen** (z.B. "Kann ich kündigen?", "Darf ich...?", "Ist das erlaubt?"):
-1. Beginne IMMER mit einer klaren Antwort: "**Ja**" oder "**Nein**"
-2. Erkläre DANACH kurz warum (2-3 Sätze)
-3. KEINE Ausweichformulierungen in der ersten Zeile
-4. KEINE Rückfragen bei einfachen Ja/Nein-Fragen
+**Bei jeder Frage:**
+1. **Zeile 1:** Klare Antwort ("**Ja**" / "**Nein**" / "**[Konkrete Antwort]**")
+2. **Zeile 2:** Beleg aus dem Vertrag ODER "Im Vertragstext finde ich dazu keine Regelung."
+3. **Danach:** Kurze Erklärung (2-3 Sätze)
+
+**WICHTIG - Quellenangabe:**
+- Wenn du etwas im Vertrag findest: "Laut Abschnitt [X] / Klausel [Y] / §[Z] gilt..."
+- Wenn du es NICHT findest: "Im vorliegenden Vertragstext sehe ich dazu keine explizite Regelung."
+- NIEMALS Informationen erfinden oder vermuten!
 
 **Wenn der Vertrag etwas NICHT regelt:**
-→ Antworte mit "**Nein**" (nicht geregelt = nicht erlaubt/möglich)
-→ Erkläre dann: "Der Vertrag enthält keine Regelung dazu, daher gilt..."
+→ Antworte: "**Nein** (nicht explizit geregelt)."
+→ Dann: "Der Vertrag enthält keine Regelung dazu. Das bedeutet [gesetzliche Defaultregelung]."
 
-## ANTWORT-LÄNGE (wichtig!)
+## REGEL 2: ANALYSE-KONTEXT NUTZEN
 
-**Kurze Fragen → Kurze Antworten:**
-- Ja/Nein-Fragen: 3-5 Sätze maximal
-- Einfache Faktenfragen: 2-4 Sätze
+Wenn dir Analyse-Ergebnisse vorliegen (Score, Risiken, Empfehlungen):
+- Beziehe dich darauf: "Wie in der Analyse bereits festgestellt..."
+- Nutze die Vorarbeit: "Die Analyse hat als Risiko identifiziert: [X]. Das bedeutet für dich..."
+- Verknüpfe beides: Analyse-Ergebnisse + Vertragstext
 
-**Komplexe Fragen → Strukturierte Antworten:**
-Nur bei komplexen Analysen nutze diese Struktur:
+## REGEL 3: ANTWORT-LÄNGE
 
-**Kurzantwort:** [1-2 Sätze mit klarer Entscheidung]
+**Kurze Fragen → Kurze Antworten (3-5 Sätze):**
+- Ja/Nein-Fragen
+- Einfache Faktenfragen ("Wie lang ist die Kündigungsfrist?")
 
-**Begründung:**
-- [Punkt 1]
-- [Punkt 2]
+**Komplexe Fragen → Strukturiert (max 200 Wörter):**
 
-**Was du tun kannst:**
-1. [Konkrete Handlung]
-2. [Alternative]
+**Kurzantwort:** [Klare Entscheidung]
+**Beleg:** [Wo steht das / nicht gefunden]
+**Was du tun kannst:** [1-2 konkrete Schritte]
 
-## KOMMUNIKATIONSSTIL
+## REGEL 4: KOMMUNIKATIONSSTIL
 
-- Sprich den Nutzer direkt an ("du kannst...", "dein Vertrag...")
-- Vermeide Juristendeutsch - erkläre verständlich
-- Keine wiederholten Disclaimer in jeder Antwort
-- Keine Rückfragen, außer sie sind wirklich notwendig
-- Sei entscheidungsfreudig, nicht ausweichend
+- Du-Form ("du kannst...", "dein Vertrag...")
+- Kein Juristendeutsch - verständlich erklären
+- Keine Rückfragen bei einfachen Fragen
+- Entscheidungsfreudig, nicht ausweichend
+- Ehrlich bei Unsicherheit: "Das kann ich aus dem Text nicht eindeutig ablesen."
 
-## WENN VERTRAGSTEXT VORLIEGT
+## BEISPIELE
 
-- Beziehe dich auf konkrete Klauseln und zitiere kurz
-- Sag klar: "Laut §X deines Vertrags gilt..."
-- Wenn etwas nicht im Vertrag steht, sag es direkt
+**Frage:** "Kann ich jederzeit kündigen?"
 
-## BEISPIEL FÜR GUTE ANTWORTEN
+❌ FALSCH:
+"Die genauen Kündigungsmodalitäten sind nicht explizit geregelt, was darauf hindeutet..."
 
-Frage: "Kann ich den Vertrag jederzeit kündigen?"
+✅ RICHTIG:
+"**Nein.**
+Im Vertragstext finde ich keine Kündigungsklausel. Ohne vertragliche Regelung gilt die gesetzliche Frist (§ 621 BGB).
+Konkret: Du kannst zum Monatsende kündigen mit [Frist]-Vorlauf."
 
-❌ FALSCH: "Die genauen Kündigungsmodalitäten sind nicht explizit geregelt, was darauf hindeutet, dass..."
+**Frage:** "Ist der Selbstbehalt zu hoch?"
 
-✅ RICHTIG: "**Nein**, du kannst nicht jederzeit kündigen. Der Vertrag nennt keine Kündigungsfrist, was bedeutet, dass du an die gesetzliche Frist gebunden bist (§ 621 BGB). Konkret: [Frist nennen]."
+✅ RICHTIG:
+"**Ja, der Selbstbehalt ist überdurchschnittlich hoch.**
+Laut der Analyse liegt er bei EUR 1.000 jährlich - das ist über dem Branchendurchschnitt.
+Empfehlung: Verhandle diesen Punkt nach unten (üblich sind EUR 250-500)."
 
 ---
-*Hinweis: Diese Einschätzung basiert auf dem Vertragstext und ersetzt keine individuelle Rechtsberatung.*`;
+*Diese Einschätzung basiert auf dem Vertragstext und der Analyse. Sie ersetzt keine individuelle Rechtsberatung.*`;
 
 // 🔧 HELPER: Smart Title Generator
 function makeSmartTitle(question = "") {
@@ -550,17 +559,42 @@ router.post("/:id/message", verifyToken, async (req, res) => {
     });
 
     try {
-      // ✅ BUILD CONTEXT: Include contract text if uploaded
+      // ✅ BUILD CONTEXT: Include analysis + contract text
       let contextMessages = [...chat.messages];
 
-      // If contract is uploaded, inject it after system prompt
+      // If contract is uploaded, inject STRUCTURED context after system prompt
       if (chat.attachments && chat.attachments.length > 0) {
         const latestContract = chat.attachments[chat.attachments.length - 1];
 
+        // Build structured context (Analysis FIRST, then raw text)
+        let contextParts = [];
+        contextParts.push(`📎 **Vertrag: "${latestContract.name}"** (${latestContract.contractType || 'Vertrag'})`);
+        contextParts.push('');
+
+        // ✅ CRITICAL FIX: Include analysisContext (Score, Risiken, Empfehlungen)
+        if (latestContract.analysisContext) {
+          contextParts.push('## 📊 ANALYSE-ERGEBNISSE (bereits durchgeführt):');
+          contextParts.push(latestContract.analysisContext);
+          contextParts.push('');
+          contextParts.push('---');
+          contextParts.push('');
+        }
+
+        // Include extracted PDF text
         if (latestContract.extractedText) {
+          contextParts.push('## 📄 VERTRAGSTEXT (extrahiert):');
+          contextParts.push(latestContract.extractedText);
+          contextParts.push('');
+        }
+
+        // Add instruction
+        contextParts.push('---');
+        contextParts.push('**Instruktion:** Beantworte Fragen basierend auf den Analyse-Ergebnissen UND dem Vertragstext. Zitiere konkrete Stellen. Wenn etwas nicht im Text steht, sag das klar.');
+
+        if (contextParts.length > 3) { // Only add if we have actual content
           const contractContext = {
             role: "system",
-            content: `📎 **Vertragskontext (${latestContract.contractType}): "${latestContract.name}"**\n\n${latestContract.extractedText}\n\n---\n\nBeantworte alle Fragen im Kontext dieses Vertrags. Verweise auf konkrete Klauseln und Passagen.`
+            content: contextParts.join('\n')
           };
 
           // Insert after first system message
@@ -568,18 +602,31 @@ router.post("/:id/message", verifyToken, async (req, res) => {
         }
       }
 
+      // ✅ FIX #2: Limit message history to prevent token overflow
+      const MAX_HISTORY_MESSAGES = 30; // Last 30 user+assistant messages
+      const systemMessages = contextMessages.filter(m => m.role === 'system');
+      const conversationMessages = contextMessages.filter(m => m.role !== 'system');
+
+      if (conversationMessages.length > MAX_HISTORY_MESSAGES) {
+        // Keep only the last MAX_HISTORY_MESSAGES
+        const trimmedConversation = conversationMessages.slice(-MAX_HISTORY_MESSAGES);
+        contextMessages = [...systemMessages, ...trimmedConversation];
+        console.log(`📝 Trimmed chat history from ${conversationMessages.length} to ${MAX_HISTORY_MESSAGES} messages`);
+      }
+
       // Add current user message
       contextMessages.push({ role: "user", content });
+
+      // Declare fullResponse outside try for error handling access
+      let fullResponse = "";
 
       // OpenAI Streaming
       const response = await openai.chat.completions.create({
         model: "gpt-4o-mini", // Cost-effective for chat
         stream: true,
-        temperature: 0.2, // Conservative for legal advice
+        temperature: 0.3, // Slightly higher for more natural responses
         messages: contextMessages,
       });
-
-      let fullResponse = "";
 
       for await (const chunk of response) {
         const delta = chunk.choices?.[0]?.delta?.content || "";
@@ -605,9 +652,33 @@ router.post("/:id/message", verifyToken, async (req, res) => {
       clearInterval(heartbeat);
     } catch (streamError) {
       console.error("❌ Streaming error:", streamError);
-      res.write(`data: ${JSON.stringify({ error: "LLM_ERROR" })}\n\n`);
+
+      // ✅ FIX #3: Better error handling with user-friendly message
+      const errorMessage = streamError.code === 'context_length_exceeded'
+        ? "Die Konversation ist zu lang geworden. Bitte starte einen neuen Chat."
+        : streamError.code === 'rate_limit_exceeded'
+        ? "Zu viele Anfragen. Bitte warte einen Moment und versuche es erneut."
+        : "Es ist ein Fehler aufgetreten. Bitte versuche es erneut.";
+
+      // Send error as assistant message so user sees it
+      res.write(`data: ${JSON.stringify({
+        delta: `\n\n⚠️ **Fehler:** ${errorMessage}`,
+        error: true
+      })}\n\n`);
+      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
       res.end();
       clearInterval(heartbeat);
+
+      // Still persist partial response if any
+      if (fullResponse && fullResponse.length > 0) {
+        await chats.updateOne(
+          { _id: chatId },
+          {
+            $push: { messages: { role: "assistant", content: fullResponse + `\n\n⚠️ *Antwort unvollständig aufgrund eines Fehlers*` } },
+            $set: { updatedAt: new Date() },
+          }
+        );
+      }
     }
   } catch (error) {
     console.error("❌ Error in message route:", error);
