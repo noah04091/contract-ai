@@ -27,9 +27,11 @@ export default function Pricing() {
       }
 
       try {
-        const res = await fetch('/api/auth/me', {
+        // Cache-Busting: Immer frische Daten holen (wichtig nach Abo-Abschluss!)
+        const res = await fetch(`/api/auth/me?_t=${Date.now()}`, {
           headers: { 'Authorization': `Bearer ${token}` },
-          credentials: 'include'
+          credentials: 'include',
+          cache: 'no-store'
         });
 
         if (res.ok) {
@@ -111,7 +113,7 @@ export default function Pricing() {
     setLoading(true);
     try {
       const token = localStorage.getItem('authToken') || localStorage.getItem('token');
-      const res = await fetch('/api/stripe-portal', {
+      const res = await fetch('/api/stripe/portal', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

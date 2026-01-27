@@ -32,17 +32,17 @@ export default function PremiumStatus() {
   };
 
   if (loading || isPremium === null) {
-    return <p>🔄 Lade Premium-Status...</p>;
+    return <p>🔄 Lade Abo-Status...</p>;
   }
 
   return isPremium ? (
     <p style={{ color: "green", fontWeight: "bold" }}>
-      💎 Du hast ein aktives Premium-Abo!
+      💎 Du hast ein aktives Abo!
     </p>
   ) : (
     <div>
       <p style={{ color: "red", fontWeight: "bold" }}>⚠️ Kein aktives Abo</p>
-      <button onClick={handleUpgrade}>💳 Jetzt auf Premium upgraden</button>
+      <button onClick={handleUpgrade}>💳 Jetzt upgraden</button>
     </div>
   );
 }

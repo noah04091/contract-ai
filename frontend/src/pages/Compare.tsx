@@ -1124,10 +1124,10 @@ export default function EnhancedCompare() {
   const exportToPDF = async () => {
     if (!result) return;
 
-    // ✅ Premium-Check: PDF Export nur für Premium
+    // ✅ Enterprise-Check: PDF Export nur für Business/Enterprise
     if (!isPremium) {
       setNotification({
-        message: 'PDF-Export ist ein Premium-Feature. Upgrade für diese Funktion!',
+        message: 'PDF-Export ist ein Enterprise-Feature. Upgrade für diese Funktion!',
         type: 'error'
       });
       return;

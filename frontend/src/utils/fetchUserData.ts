@@ -44,10 +44,12 @@ export const fetchUserData = async (): Promise<UserData> => {
       console.log("🔑 Using Authorization Header für /api/auth/me");
     }
 
-    const response = await fetch("/api/auth/me", {
+    // Cache-Busting: Immer frische Daten (wichtig nach Abo-Änderungen!)
+    const response = await fetch(`/api/auth/me?_t=${Date.now()}`, {
       method: "GET",
       credentials: "include", // ✅ Für Cookies (falls sie funktionieren)
       headers,
+      cache: 'no-store'
     });
 
     if (!response.ok) {

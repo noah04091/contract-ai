@@ -161,7 +161,7 @@ const Features: React.FC = () => {
           name: 'Legal Pulse',
           desc: 'Frühwarnsystem für rechtliche Änderungen',
           link: '/features/legalpulse',
-          badge: 'Premium'
+          badge: 'Enterprise'
         },
         {
           icon: <FolderOpen size={22} />,

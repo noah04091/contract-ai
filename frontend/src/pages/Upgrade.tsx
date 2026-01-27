@@ -96,20 +96,20 @@ export default function Upgrade() {
   return (
     <>
       <Helmet>
-        <title>Upgrade auf Premium | Contract AI</title>
-        <meta name="description" content="Upgrade dein Contract AI Konto auf Premium und erhalte Zugang zu erweiterten Analyse- und Optimierungsfunktionen für deine Verträge." />
-        <meta name="keywords" content="Upgrade, Contract AI Premium, Premium Funktionen, Vertragsmanagement Upgrade" />
+        <title>Upgrade | Contract AI</title>
+        <meta name="description" content="Upgrade dein Contract AI Konto und erhalte Zugang zu erweiterten Analyse- und Optimierungsfunktionen für deine Verträge." />
+        <meta name="keywords" content="Upgrade, Contract AI Business, Contract AI Enterprise, Vertragsmanagement Upgrade" />
         <link rel="canonical" href="https://www.contract-ai.de/upgrade" />
         {/* Open Graph / Facebook */}
-        <meta property="og:title" content="Upgrade auf Premium | Contract AI" />
-        <meta property="og:description" content="Wechsle jetzt auf Premium und profitiere von allen Profi-Funktionen für deine Vertragsanalyse." />
+        <meta property="og:title" content="Upgrade | Contract AI" />
+        <meta property="og:description" content="Wechsle jetzt auf Business oder Enterprise und profitiere von allen Profi-Funktionen für deine Vertragsanalyse." />
         <meta property="og:url" content="https://www.contract-ai.de/upgrade" />
         <meta property="og:type" content="website" />
         <meta property="og:image" content="https://www.contract-ai.de/og-image.jpg" />
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Upgrade auf Premium | Contract AI" />
-        <meta name="twitter:description" content="Starte mit Contract AI Premium durch und hol das Maximum aus deinen Verträgen heraus." />
+        <meta name="twitter:title" content="Upgrade | Contract AI" />
+        <meta name="twitter:description" content="Starte mit Contract AI Business durch und hol das Maximum aus deinen Verträgen heraus." />
         <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
       </Helmet>
 

@@ -118,19 +118,19 @@ export default function Subscribe() {
     <>
       <Helmet>
         <title>Abo abschließen | Contract AI</title>
-        <meta name="description" content="Schließe dein Contract AI Abo ab und schalte alle Premium-Funktionen für deine Vertragsanalyse und -optimierung frei." />
-        <meta name="keywords" content="Abo abschließen, Contract AI Premium, Vertragsanalyse Abo, Upgrade Vertragsmanagement" />
+        <meta name="description" content="Schließe dein Contract AI Abo ab und schalte alle Profi-Funktionen für deine Vertragsanalyse und -optimierung frei." />
+        <meta name="keywords" content="Abo abschließen, Contract AI Business, Contract AI Enterprise, Vertragsanalyse Abo, Upgrade Vertragsmanagement" />
         <link rel="canonical" href="https://www.contract-ai.de/subscribe" />
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Abo abschließen | Contract AI" />
-        <meta property="og:description" content="Entdecke alle Vorteile von Contract AI Premium und starte direkt mit der besten Vertragsanalyse." />
+        <meta property="og:description" content="Entdecke alle Vorteile von Contract AI und starte direkt mit der besten Vertragsanalyse." />
         <meta property="og:url" content="https://www.contract-ai.de/subscribe" />
         <meta property="og:type" content="website" />
         <meta property="og:image" content="https://www.contract-ai.de/og-image.jpg" />
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Abo abschließen | Contract AI" />
-        <meta name="twitter:description" content="Schalte jetzt Contract AI Premium frei und sichere dir alle Profi-Funktionen für deine Verträge." />
+        <meta name="twitter:description" content="Schalte jetzt Contract AI Business frei und sichere dir alle Profi-Funktionen für deine Verträge." />
         <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
       </Helmet>
       
@@ -157,16 +157,16 @@ export default function Subscribe() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3, duration: 0.5 }}
             >
-              Upgrade auf Premium
+              Jetzt upgraden
             </motion.h1>
-            
-            <motion.p 
+
+            <motion.p
               className={styles.subtitle}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4, duration: 0.5 }}
             >
-              Schalte alle Premium-Funktionen frei und verbessere dein Vertragsmanagement
+              Schalte alle Profi-Funktionen frei und verbessere dein Vertragsmanagement
             </motion.p>
           </div>
 

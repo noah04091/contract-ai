@@ -368,6 +368,7 @@ export default function Integrations() {
         <UnifiedPremiumNotice
           featureName="CRM/ERP Integrationen"
           variant="fullWidth"
+          requiredPlan="enterprise"
         />
       )}
 

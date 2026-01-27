@@ -37,7 +37,7 @@ import type { FolderType } from "../components/FolderBar"; // 📁 Folder Type
 import InlineAnalysisProgress from "../components/InlineAnalysisProgress"; // 🎨 Kompakte Inline-Analyse
 import { useCelebrationContext } from "../components/Celebration"; // 🎉 Celebration System
 import { SimpleTour } from "../components/Tour"; // 🎯 Simple Tour (zuverlässiger)
-import { triggerOnboardingSync } from "../hooks/useOnboarding"; // 🎓 Onboarding Sync
+import { triggerOnboardingSync, useOnboarding } from "../hooks/useOnboarding"; // 🎓 Onboarding Sync
 import { useCalendarStore } from "../stores/calendarStore"; // 📅 Calendar Cache Invalidation
 
 interface Contract {
@@ -245,6 +245,7 @@ export default function Contracts() {
   const navigate = useNavigate();
   const { celebrate } = useCelebrationContext(); // 🎉 Celebration System
   const { clearCache: clearCalendarCache } = useCalendarStore(); // 📅 Calendar Cache Invalidation
+  const { onboardingState } = useOnboarding(); // 🎓 Onboarding State für Celebration-Checks
 
   const [contracts, setContracts] = useState<Contract[]>([]);
   // 🚀 OPTIMIERT: contracts State entfernt - war redundant da Backend bereits filtert
@@ -254,6 +255,7 @@ export default function Contracts() {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setError] = useState<string | null>(null);
   const [premiumHint, setPremiumHint] = useState<string | null>(null); // 🔔 Premium Upgrade Hint
+  const [enterpriseHintDismissed, setEnterpriseHintDismissed] = useState(false); // 🔔 Enterprise Hint wegklickbar
   const [dragActive, setDragActive] = useState(false);
   const [activeSection, setActiveSection] = useState<'upload' | 'contracts' | 'email-upload'>('contracts');
   const [refreshing, setRefreshing] = useState(false);
@@ -936,7 +938,7 @@ export default function Contracts() {
     // ✅ Premium-Check: Bulk Download für Business/Enterprise
     const hasPaidPlan = userInfo.subscriptionPlan === 'business' || userInfo.subscriptionPlan === 'enterprise';
     if (!hasPaidPlan) {
-      alert('📦 Bulk-Download ist ein Premium-Feature.\n\n🚀 Upgrade auf Business oder Enterprise für diese Funktion!');
+      alert('📦 Bulk-Download ist ein Enterprise-Feature.\n\n🚀 Upgrade auf Business oder Enterprise für diese Funktion!');
       window.location.href = '/pricing';
       return;
     }
@@ -1836,8 +1838,10 @@ export default function Contracts() {
 
       // Zeige Success Modal
       if (uploadedContracts.length > 0) {
-        // 🎉 Celebration for successful upload!
-        celebrate('first-upload');
+        // 🎉 Celebration NUR beim ERSTEN Upload! (nicht bei jedem)
+        if (!onboardingState?.checklist?.firstContractUploaded) {
+          celebrate('first-upload');
+        }
 
         // 🎓 Onboarding: Sync triggern um Checklist zu aktualisieren
         triggerOnboardingSync();
@@ -2005,8 +2009,10 @@ export default function Contracts() {
       // ✅ WECHSEL zur Upload-Seite - zeigt SOFORT die Analyse-Ergebnisse!
       setActiveSection('upload');
 
-      // 🎉 Celebration for completed analysis!
-      celebrate('first-analysis');
+      // 🎉 Celebration NUR bei der ERSTEN Analyse! (nicht bei jeder)
+      if (!onboardingState?.checklist?.firstAnalysisComplete) {
+        celebrate('first-analysis');
+      }
 
       // 🎓 Onboarding: Sync triggern um Checklist zu aktualisieren
       triggerOnboardingSync();
@@ -3605,11 +3611,11 @@ export default function Contracts() {
                     if (userInfo.isPremium) {
                       setSmartFoldersModalOpen(true);
                     } else {
-                      setPremiumHint('Smart Folders ist ein Premium-Feature. Upgrade jetzt, um KI-basierte Ordnervorschläge zu nutzen!');
+                      setPremiumHint('Smart Folders ist ein Enterprise-Feature. Upgrade jetzt, um KI-basierte Ordnervorschläge zu nutzen!');
                     }
                   }}
                   style={{ color: userInfo.isPremium ? '#a78bfa' : '#64748b' }}
-                  title={userInfo.isPremium ? 'KI-basierte Ordnervorschläge' : 'Premium-Feature – Jetzt upgraden'}
+                  title={userInfo.isPremium ? 'KI-basierte Ordnervorschläge' : 'Enterprise-Feature – Jetzt upgraden'}
                 >
                   {userInfo.isPremium ? <Zap size={16} /> : <Lock size={16} />}
                   <span>Smart Folders</span>
@@ -4014,7 +4020,7 @@ export default function Contracts() {
                       <div className={`${styles.upgradePlan} ${styles.recommendedPlan}`}>
                         <div className={styles.upgradePlanHeader}>
                           <Crown size={20} />
-                          <h3>Premium</h3>
+                          <h3>Enterprise</h3>
                           <span className={styles.recommendedBadge}>Empfohlen</span>
                         </div>
                         <ul>
@@ -4105,26 +4111,14 @@ export default function Contracts() {
                         <div className={styles.limitWarning}>
                           <AlertCircle size={16} />
                           <span>
-                            Analyse-Limit erreicht ({userInfo.analysisCount}/{userInfo.analysisLimit}). 
+                            Analyse-Limit erreicht ({userInfo.analysisCount}/{userInfo.analysisLimit}).
                             <button onClick={() => window.location.href = '/pricing'}>
-                              Upgrade auf Premium
+                              Mehr Analysen freischalten
                             </button>
                           </span>
                         </div>
                       )}
-                      
-                      {/* ✅ NEU: Premium-Upgrade-Hinweis für Business */}
-                      {userInfo.subscriptionPlan === 'business' && hasAnalysesLeft && (
-                        <div className={styles.premiumHint}>
-                          <Crown size={16} />
-                          <span>
-                            Mehrere Verträge gleichzeitig analysieren? 
-                            <button onClick={() => window.location.href = '/pricing'}>
-                              Upgrade auf Premium
-                            </button>
-                          </span>
-                        </div>
-                      )}
+
                     </div>
                     
                     <div
@@ -4288,6 +4282,49 @@ export default function Contracts() {
                             <div className={styles.premiumFeature}>
                               <Crown size={16} />
                               <span>Mehrfach-Upload verfügbar</span>
+                            </div>
+                          )}
+                          {/* ✨ Dezenter Enterprise-Hinweis für Business-Kunden */}
+                          {userInfo.subscriptionPlan === 'business' && !canMultiUpload && hasAnalysesLeft && !enterpriseHintDismissed && (
+                            <div
+                              onClick={(e) => e.stopPropagation()}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px',
+                                marginTop: '8px',
+                                fontSize: '11px',
+                                color: '#94a3b8'
+                              }}
+                            >
+                              <span>Mehrere Verträge gleichzeitig hochladen?</span>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); window.location.href = '/pricing'; }}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: '#3b82f6',
+                                  cursor: 'pointer',
+                                  padding: '0',
+                                  fontSize: '11px'
+                                }}
+                              >
+                                Enterprise
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setEnterpriseHintDismissed(true); }}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: '#cbd5e1',
+                                  cursor: 'pointer',
+                                  padding: '0 0 0 4px',
+                                  fontSize: '11px'
+                                }}
+                              >
+                                ×
+                              </button>
                             </div>
                           )}
                           {!hasAnalysesLeft && (
@@ -4574,7 +4611,7 @@ export default function Contracts() {
                                       ? 'Probiere andere Suchbegriffe oder Filter-Einstellungen.'
                                       : canUpload
                                         ? 'Lade deinen ersten Vertrag hoch, um ihn hier zu sehen.'
-                                        : 'Upgrade auf Business oder Premium für Vertragsanalyse.'
+                                        : 'Upgrade auf Business oder Enterprise für Vertragsanalyse.'
                                     }
                                   </p>
                                   {activeFiltersCount() > 0 || searchQuery ? (

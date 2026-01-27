@@ -423,7 +423,7 @@ const BetterContracts: React.FC = () => {
               { text: 'Echte Angebote', icon: Star },
               { text: 'Merkliste', icon: Bookmark }
             ]}
-            badge={!isPremium ? { text: 'Premium', variant: 'premium' } : undefined}
+            badge={!isPremium ? { text: 'Enterprise', variant: 'premium' } : undefined}
           />
 
           <div className="contract-progress-steps">

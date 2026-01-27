@@ -24,9 +24,9 @@ export function AchievementToast({
       {isVisible && (
         <motion.div
           className={styles.toastContainer}
-          initial={{ opacity: 0, y: -100, scale: 0.8 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -50, scale: 0.8 }}
+          initial={{ opacity: 0, y: -100, scale: 0.8, x: "-50%" }}
+          animate={{ opacity: 1, y: 0, scale: 1, x: "-50%" }}
+          exit={{ opacity: 0, y: -50, scale: 0.8, x: "-50%" }}
           transition={{
             type: 'spring',
             stiffness: 300,

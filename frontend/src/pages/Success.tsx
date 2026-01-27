@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom';
 import { Helmet } from "react-helmet-async";
 import styles from "../styles/Success.module.css";
 import { fetchUserData } from '../utils/fetchUserData';
+import { useAuth } from '../context/AuthContext';
 import Galaxy from '../components/Galaxy';
 
 const Success: React.FC = () => {
+  const { refetchUser } = useAuth(); // 🔄 AuthContext refreshen nach Abo-Kauf
   const [isLoading, setIsLoading] = useState(true);
   const [subscriptionActive, setSubscriptionActive] = useState(false);
   const [planName, setPlanName] = useState<string>('');
@@ -39,6 +41,8 @@ const Success: React.FC = () => {
             setSubscriptionActive(true);
             setPlanName(data.subscriptionPlan === 'business' ? 'Business' : 'Enterprise');
             setIsLoading(false);
+            // 🔄 AuthContext aktualisieren damit alle Seiten den neuen Status haben
+            refetchUser();
             console.log(`✅ [FALLBACK] Subscription aktiviert: ${data.subscriptionPlan}`);
             return true;
           }
@@ -59,6 +63,8 @@ const Success: React.FC = () => {
           setSubscriptionActive(true);
           setPlanName(data.subscriptionPlan === 'business' ? 'Business' : 'Enterprise');
           setIsLoading(false);
+          // 🔄 AuthContext aktualisieren damit alle Seiten den neuen Status haben
+          refetchUser();
           console.log(`✅ Subscription aktiviert: ${data.subscriptionPlan}`);
           return true; // Stop polling
         }
