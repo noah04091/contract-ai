@@ -20,6 +20,16 @@ try {
   console.warn("⚠️ Law Embeddings Service nicht verfügbar:", err.message);
 }
 
+// ✅ RAG: Court Decision Embeddings für Rechtsprechungs-Integration
+let courtDecisionEmbeddings = null;
+try {
+  const { getInstance } = require("../services/courtDecisionEmbeddings");
+  courtDecisionEmbeddings = getInstance();
+  console.log("✅ Court Decision Embeddings Service loaded for Chat RAG");
+} catch (err) {
+  console.warn("⚠️ Court Decision Embeddings Service nicht verfügbar:", err.message);
+}
+
 const router = express.Router();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -940,6 +950,48 @@ router.post("/:id/message", verifyToken, async (req, res) => {
         // Find position after contract context
         const insertPosition = contractContext ? 2 : 1;
         contextMessages.splice(insertPosition, 0, lawContext);
+      }
+
+      // ✅ RAG: Query relevant court decisions (BGH/OLG Urteile)
+      let courtContext = null;
+      if (courtDecisionEmbeddings) {
+        try {
+          const relevantDecisions = await courtDecisionEmbeddings.queryRelevantDecisions({
+            text: content, // User's question
+            topK: 3,
+            legalArea: null // Search all areas
+          });
+
+          if (relevantDecisions.length > 0 && relevantDecisions[0].relevance > 0.45) {
+            // Build court decision context for AI
+            const decisionParts = relevantDecisions
+              .filter(d => d.relevance > 0.45) // Only include relevant decisions
+              .map(d => {
+                const date = new Date(d.decisionDate).toLocaleDateString('de-DE');
+                const headnote = d.headnotes[0]?.substring(0, 300) || d.summary.substring(0, 300);
+                return `**${d.court}, ${d.caseNumber}** (${date})\n${d.legalArea} | Relevanz: ${Math.round(d.relevance * 100)}%\n\n> "${headnote}..."${d.relevantLaws.length > 0 ? `\n\nRelevante Normen: ${d.relevantLaws.join(', ')}` : ''}`;
+              })
+              .slice(0, 2); // Max 2 decisions to keep context manageable
+
+            if (decisionParts.length > 0) {
+              courtContext = {
+                role: "system",
+                content: `## ⚖️ RELEVANTE RECHTSPRECHUNG (aus Datenbank):\n\n${decisionParts.join('\n\n---\n\n')}\n\n**Instruktion:** Zitiere diese Urteile wenn relevant. Beispiel: "Der BGH hat in Az. XII ZR 123/20 entschieden, dass..."`
+              };
+              console.log(`📜 RAG: Found ${decisionParts.length} relevant court decisions for query`);
+            }
+          }
+        } catch (courtRagError) {
+          console.warn("⚠️ Court RAG query failed, continuing without court context:", courtRagError.message);
+          // Continue without court context - not critical
+        }
+      }
+
+      // Insert court context after law context (if available)
+      if (courtContext) {
+        // Find position: after lawContext or after contractContext
+        const insertPosition = lawContext ? (contractContext ? 3 : 2) : (contractContext ? 2 : 1);
+        contextMessages.splice(insertPosition, 0, courtContext);
       }
 
       // Add current user message
