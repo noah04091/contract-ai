@@ -50,14 +50,19 @@ const SYSTEM_PROMPT = `Du bist "Contract AI – Legal Counsel", ein KI-Vertragsa
 2. **Zeile 2:** Beleg aus dem Vertrag ODER "Im Vertragstext finde ich dazu keine Regelung."
 3. **Danach:** Kurze Erklärung (2-3 Sätze)
 
-**WICHTIG - Quellenangabe:**
-- Wenn du etwas im Vertrag findest: "Laut Abschnitt [X] / Klausel [Y] / §[Z] gilt..."
-- Wenn du es NICHT findest: "Im vorliegenden Vertragstext sehe ich dazu keine explizite Regelung."
-- NIEMALS Informationen erfinden oder vermuten!
+**WICHTIG - Quellenangabe mit Textzitaten:**
+- Wenn du etwas findest: Zitiere 1-2 Sätze direkt aus dem Vertrag: *"Der Vertrag kann mit einer Frist von 3 Monaten gekündigt werden."*
+- Wenn der Vertrag Paragraphen/Nummern hat: "Gemäß § 5 Abs. 2 des Vertrags..."
+- Wenn du es NICHT findest: "Im extrahierten Vertragstext finde ich keine Passage zu [Thema]."
+- NIEMALS "Abschnitt X" oder ähnliche Referenzen ERFINDEN – nur zitieren was tatsächlich im Text steht!
 
 **Wenn der Vertrag etwas NICHT regelt:**
 → Antworte: "**Nein** (nicht explizit geregelt)."
 → Dann: "Der Vertrag enthält keine Regelung dazu. Das bedeutet [gesetzliche Defaultregelung]."
+
+**WICHTIG - Gesetzliche Defaultregel:**
+- Wenn die gesetzliche Regelung KLAR ist: "Es gilt daher § [X] BGB: [Regelung]."
+- Wenn die Einordnung UNKLAR ist: "Das hängt von der Einordnung des Vertrags ab (Dienst-/Werk-/Dauerschuldverhältnis). Ich kann das aus dem Vertragstext nicht sicher ableiten – hier wäre eine anwaltliche Prüfung sinnvoll."
 
 ## REGEL 2: ANALYSE-KONTEXT NUTZEN
 
@@ -92,11 +97,17 @@ Wenn dir Analyse-Ergebnisse vorliegen (Score, Risiken, Empfehlungen):
 
 ❌ FALSCH:
 "Die genauen Kündigungsmodalitäten sind nicht explizit geregelt, was darauf hindeutet..."
+"Laut Abschnitt 5 des Vertrags..." (wenn kein Abschnitt 5 existiert!)
 
 ✅ RICHTIG:
-"**Nein.**
-Im Vertragstext finde ich keine Kündigungsklausel. Ohne vertragliche Regelung gilt die gesetzliche Frist (§ 621 BGB).
-Konkret: Du kannst zum Monatsende kündigen mit [Frist]-Vorlauf."
+"**Nein, nicht jederzeit.**
+Im Vertrag steht: *"Die Kündigung ist nur zum Quartalsende mit einer Frist von 6 Wochen möglich."*
+Das bedeutet: Du kannst frühestens zum [Datum] kündigen, wenn du jetzt kündigst."
+
+ODER (wenn nichts geregelt):
+"**Nicht explizit geregelt.**
+Im extrahierten Vertragstext finde ich keine Passage zur Kündigung.
+Ohne vertragliche Regelung gilt § 621 BGB – du kannst zum Monatsende kündigen."
 
 **Frage:** "Ist der Selbstbehalt zu hoch?"
 
@@ -602,17 +613,32 @@ router.post("/:id/message", verifyToken, async (req, res) => {
         }
       }
 
-      // ✅ FIX #2: Limit message history to prevent token overflow
+      // ✅ FIX A: Explicit message order guarantee (systemPrompt → contractContext → conversation)
       const MAX_HISTORY_MESSAGES = 30; // Last 30 user+assistant messages
-      const systemMessages = contextMessages.filter(m => m.role === 'system');
+
+      // EXPLICIT ORDER: Separate messages by role and position
+      const systemPrompt = contextMessages.find(m => m.role === 'system' && m.content.includes('Contract AI – Legal Counsel'));
+
+      // TODO (Tech-Debt): Wenn es mehrere contractContext-Messages geben kann (z.B. bei mehreren
+      // Uploads im selben Chat), wäre robuster: Context beim Einfügen mit meta-Feld markieren
+      // (z.B. { role: 'system', meta: 'contractContext', content: ... }) und gezielt filtern.
+      // Aktuell: .find() nimmt die erste Übereinstimmung – bei normalem Flow immer korrekt.
+      const contractContext = contextMessages.find(m => m.role === 'system' && (m.content.includes('VERTRAGSTEXT') || m.content.includes('ANALYSE-ERGEBNISSE')));
       const conversationMessages = contextMessages.filter(m => m.role !== 'system');
 
+      // Trim conversation if too long
+      let trimmedConversation = conversationMessages;
       if (conversationMessages.length > MAX_HISTORY_MESSAGES) {
-        // Keep only the last MAX_HISTORY_MESSAGES
-        const trimmedConversation = conversationMessages.slice(-MAX_HISTORY_MESSAGES);
-        contextMessages = [...systemMessages, ...trimmedConversation];
+        trimmedConversation = conversationMessages.slice(-MAX_HISTORY_MESSAGES);
         console.log(`📝 Trimmed chat history from ${conversationMessages.length} to ${MAX_HISTORY_MESSAGES} messages`);
       }
+
+      // ✅ GUARANTEED ORDER: systemPrompt FIRST, then contractContext, then conversation
+      contextMessages = [
+        systemPrompt,           // 1. Base system prompt (always first)
+        contractContext,        // 2. Contract context (if exists)
+        ...trimmedConversation  // 3. Last N conversation messages
+      ].filter(Boolean);        // Remove undefined entries
 
       // Add current user message
       contextMessages.push({ role: "user", content });

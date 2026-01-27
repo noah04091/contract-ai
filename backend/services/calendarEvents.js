@@ -75,7 +75,8 @@ async function generateEventsForContract(db, contract) {
     const autoRenewMonths = contract.autoRenewMonths || 12;
     
     // 🎯 Extract confidence data from contract
-    const confidence = contract.endDateConfidence || contract.startDateConfidence || 100; // Default to 100 if not available
+    // 🔒 NEU: Kein Default mehr auf 100 - wenn keine Konfidenz, dann 0 (alte Daten)
+    const confidence = contract.endDateConfidence || contract.startDateConfidence || 0;
     const dataSource = contract.dataSource || 'unknown';
     const isEstimated = dataSource === 'estimated' || dataSource === 'calculated' || confidence < 60;
 
@@ -90,9 +91,17 @@ async function generateEventsForContract(db, contract) {
       isEstimated,
       provider: contract.provider?.displayName || contract.provider || 'Unbekannt'
     });
-    
+
+    // 🔒 KONFIDENZ-CHECK für Haupt-Events
+    // Kündigungs-Events sind kritisch - bei zu niedriger Konfidenz WARNUNG loggen
+    const shouldCreateCriticalEvents = confidence === 0 || confidence >= EVENT_CONFIDENCE_THRESHOLDS.CRITICAL_EVENTS;
+
+    if (confidence > 0 && confidence < EVENT_CONFIDENCE_THRESHOLDS.CRITICAL_EVENTS) {
+      console.log(`⚠️ Niedrige Konfidenz (${confidence}%) für "${contract.name}" - Events werden trotzdem erstellt aber als geschätzt markiert`);
+    }
+
     // 🆕 GENERIERE EVENTS AUCH FÜR "ALTE" AKTIVE VERTRÄGE
-    if (expiryDate) { // Entfernt die "> now" Prüfung!
+    if (expiryDate && shouldCreateCriticalEvents) { // 🔒 Mit Konfidenz-Check
       
       // 1. Kündigungsfenster öffnet
       if (noticePeriodDays > 0) {
@@ -874,6 +883,17 @@ async function generateEventsForContract(db, contract) {
 
         const dateObj = createLocalDate(importantDate.date);
         const mapping = typeMapping[importantDate.type] || typeMapping['other'];
+
+        // 🔒 KONFIDENZ-CHECK: Nur Events erstellen wenn Konfidenz ausreichend
+        const dateConfidence = importantDate.confidence || (importantDate.calculated ? 70 : 90);
+        const requiredConfidence = mapping.severity === 'critical'
+          ? EVENT_CONFIDENCE_THRESHOLDS.CRITICAL_EVENTS
+          : EVENT_CONFIDENCE_THRESHOLDS.STANDARD_EVENTS;
+
+        if (dateConfidence < requiredConfidence) {
+          console.log(`  ⚠️ KI-Datum übersprungen (Konfidenz ${dateConfidence}% < ${requiredConfidence}%): ${importantDate.type}`);
+          continue;
+        }
 
         // Nur zukünftige Datums als Events
         if (dateObj > now) {
