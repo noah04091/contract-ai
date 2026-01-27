@@ -879,11 +879,15 @@ router.post("/:id/message", verifyToken, async (req, res) => {
          m.content.includes('KI-Vertragsanwalt'))
       ) || contextMessages.find(m => m.role === 'system'); // Fallback: first system message
 
-      // TODO (Tech-Debt): Wenn es mehrere contractContext-Messages geben kann (z.B. bei mehreren
-      // Uploads im selben Chat), wäre robuster: Context beim Einfügen mit meta-Feld markieren
-      // (z.B. { role: 'system', meta: 'contractContext', content: ... }) und gezielt filtern.
-      // Aktuell: .find() nimmt die erste Übereinstimmung – bei normalem Flow immer korrekt.
-      const contractContext = contextMessages.find(m => m.role === 'system' && (m.content.includes('VERTRAGSTEXT') || m.content.includes('ANALYSE-ERGEBNISSE')));
+      // Find contract context message (contains PDF text or analysis)
+      const contractContext = contextMessages.find(m =>
+        m.role === 'system' &&
+        m !== systemPrompt && // Not the main system prompt
+        (m.content.includes('📄 TEXT') ||
+         m.content.includes('📊 ANALYSE') ||
+         m.content.includes('📎') ||
+         m.content.includes('Vertrag:'))
+      );
       const conversationMessages = contextMessages.filter(m => m.role !== 'system');
 
       // Trim conversation if too long
