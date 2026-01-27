@@ -276,6 +276,11 @@ export default function Chat() {
               });
             }
 
+            // ✅ Handle follow-up questions from done signal
+            if (payload.done && payload.followUpQuestions && payload.followUpQuestions.length > 0) {
+              setSmartQuestions(payload.followUpQuestions);
+            }
+
             if (payload.error) {
               throw new Error(payload.error);
             }

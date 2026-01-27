@@ -389,6 +389,58 @@ async function generateSmartQuestions(contractType, contractText) {
   return questions;
 }
 
+// 🔧 HELPER: Generate dynamic follow-up questions based on conversation
+async function generateFollowUpQuestions(userQuestion, aiResponse, contractType = "Vertrag") {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `Du generierst 3 kurze, natürliche Folgefragen für einen Vertrags-Chat.
+
+REGELN:
+- Maximal 8 Wörter pro Frage
+- Natürlich formuliert (wie ein Mensch fragen würde)
+- Basierend auf dem Kontext der letzten Antwort
+- KEINE Wiederholung der gerade beantworteten Frage
+- Abwechslungsreich: 1x vertiefend, 1x praktisch, 1x neu
+
+BEISPIELE:
+- "Kann ich das nachverhandeln?"
+- "Was passiert bei Verstoß?"
+- "Wann kann ich frühestens kündigen?"
+- "Ist das überhaupt erlaubt?"
+- "Was wäre eine faire Alternative?"
+
+Antworte NUR mit 3 Fragen, eine pro Zeile, ohne Nummerierung.`
+        },
+        {
+          role: "user",
+          content: `Vertragstyp: ${contractType}
+Letzte Frage: "${userQuestion}"
+Letzte Antwort: "${aiResponse.substring(0, 500)}"
+
+Generiere 3 passende Folgefragen:`
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 100
+    });
+
+    const text = response.choices[0].message.content.trim();
+    const questions = text.split('\n')
+      .map(q => q.trim())
+      .filter(q => q.length > 0 && q.length < 60)
+      .slice(0, 3);
+
+    return questions.length > 0 ? questions : null;
+  } catch (error) {
+    console.warn("⚠️ Follow-up questions generation failed:", error.message);
+    return null;
+  }
+}
+
 // ==========================================
 // 📡 API ROUTES
 // ==========================================
@@ -954,8 +1006,32 @@ router.post("/:id/message", verifyToken, async (req, res) => {
         }
       }
 
-      // Send done signal
-      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+      // ✅ Generate dynamic follow-up questions (non-blocking)
+      let followUpQuestions = null;
+      const contractType = chat.attachments?.[0]?.contractType || "Vertrag";
+
+      // Generate in parallel while we send the done signal
+      const followUpPromise = generateFollowUpQuestions(content, fullResponse, contractType)
+        .catch(err => {
+          console.warn("⚠️ Follow-up generation failed:", err.message);
+          return null;
+        });
+
+      // Wait briefly for follow-ups (max 2 seconds, don't block user)
+      try {
+        followUpQuestions = await Promise.race([
+          followUpPromise,
+          new Promise(resolve => setTimeout(() => resolve(null), 2000))
+        ]);
+      } catch (e) {
+        followUpQuestions = null;
+      }
+
+      // Send done signal with follow-up questions
+      res.write(`data: ${JSON.stringify({
+        done: true,
+        followUpQuestions: followUpQuestions || []
+      })}\n\n`);
       res.end();
 
       // Persist assistant message
