@@ -933,7 +933,73 @@ function EmptyState({ suggestions, onPick }: { suggestions: string[]; onPick: (s
   );
 }
 
-// ✅ MARKDOWN RENDERING with DOMPurify + marked
+// ✅ HELPER: Convert law references to clickable links
+function convertLawReferencesToLinks(text: string): string {
+  // Map of German law abbreviations to their gesetze-im-internet.de paths
+  const lawPaths: Record<string, string> = {
+    'BGB': 'bgb',
+    'HGB': 'hgb',
+    'StGB': 'stgb',
+    'StPO': 'stpo',
+    'ZPO': 'zpo',
+    'ArbGG': 'arbgg',
+    'KSchG': 'kschg',
+    'TzBfG': 'tzbfg',
+    'MuSchG': 'muschg',
+    'BetrVG': 'betrvg',
+    'AGG': 'agg',
+    'BDSG': 'bdsg',
+    'UWG': 'uwg',
+    'GmbHG': 'gmbhg',
+    'AktG': 'aktg',
+    'InsO': 'inso',
+    'BauGB': 'baugb',
+    'WEG': 'weg',
+    'VVG': 'vvg',
+    'VOB': 'vob',
+    'UStG': 'ustg',
+    'EStG': 'estg',
+    'AO': 'ao',
+    'GewO': 'gewo',
+    'BUrlG': 'burlg',
+    'ArbZG': 'arbzg',
+    'NachwG': 'nachwg',
+    'EFZG': 'efzg',
+    'MiLoG': 'milog',
+    'TVG': 'tvg',
+  };
+
+  // Build regex pattern from law abbreviations
+  const lawPattern = Object.keys(lawPaths).join('|');
+
+  // Regex to match § references: § 123 BGB, § 123a BGB, § 123 Abs. 1 BGB, etc.
+  const paragraphRegex = new RegExp(
+    `§\\s*(\\d+[a-z]?)\\s*(?:Abs\\.?\\s*\\d+\\s*)?(?:S\\.?\\s*\\d+\\s*)?(?:Nr\\.?\\s*\\d+\\s*)?(${lawPattern})`,
+    'gi'
+  );
+
+  // Regex to match Art. references for GG: Art. 12 GG, Art. 12 Abs. 1 GG
+  const articleRegex = /Art\.?\s*(\d+[a-z]?)\s*(?:Abs\.?\s*\d+\s*)?(GG)/gi;
+
+  // Replace § references with markdown links
+  let result = text.replace(paragraphRegex, (match, section, law) => {
+    const lawPath = lawPaths[law.toUpperCase()];
+    if (!lawPath) return match;
+
+    const url = `https://www.gesetze-im-internet.de/${lawPath}/__${section.toLowerCase()}.html`;
+    return `[${match}](${url})`;
+  });
+
+  // Replace Art. references for Grundgesetz
+  result = result.replace(articleRegex, (match, article) => {
+    const url = `https://www.gesetze-im-internet.de/gg/art_${article.toLowerCase()}.html`;
+    return `[${match}](${url})`;
+  });
+
+  return result;
+}
+
+// ✅ MARKDOWN RENDERING with DOMPurify + marked + Law Links
 function MarkdownContent({ content }: { content: string }) {
   const [sanitizedHtml, setSanitizedHtml] = useState("");
 
@@ -950,8 +1016,11 @@ function MarkdownContent({ content }: { content: string }) {
           gfm: true, // GitHub Flavored Markdown
         });
 
-        const rawHtml = await marked.parse(content);
-        const clean = DOMPurify.sanitize(rawHtml, {
+        // ✅ Convert law references to clickable links BEFORE markdown parsing
+        const contentWithLawLinks = convertLawReferencesToLinks(content);
+
+        const rawHtml = await marked.parse(contentWithLawLinks);
+        let clean = DOMPurify.sanitize(rawHtml, {
           ALLOWED_TAGS: [
             "p",
             "br",
@@ -974,6 +1043,12 @@ function MarkdownContent({ content }: { content: string }) {
           ],
           ALLOWED_ATTR: ["href", "target", "rel"],
         });
+
+        // ✅ Add target="_blank" to external links (gesetze-im-internet.de)
+        clean = clean.replace(
+          /<a href="(https:\/\/www\.gesetze-im-internet\.de[^"]+)">/g,
+          '<a href="$1" target="_blank" rel="noopener noreferrer" class="law-link">'
+        );
 
         setSanitizedHtml(clean);
       } catch (error) {

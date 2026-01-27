@@ -753,6 +753,46 @@
 }
 
 /* ==========================================
+   LAW LINKS (§ 622 BGB → klickbar)
+   ========================================== */
+
+.bubbleContent a {
+  color: var(--brand);
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.bubbleContent a:hover {
+  text-decoration: underline;
+  color: #2563eb;
+}
+
+/* Special styling for law reference links */
+.bubbleContent a[href*="gesetze-im-internet.de"] {
+  background: linear-gradient(135deg, #eff6ff 0%, #e0f2fe 100%);
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid #bfdbfe;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  font-size: 0.9em;
+  white-space: nowrap;
+}
+
+.bubbleContent a[href*="gesetze-im-internet.de"]:hover {
+  background: linear-gradient(135deg, #dbeafe 0%, #bae6fd 100%);
+  border-color: #93c5fd;
+  text-decoration: none;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
+}
+
+.bubbleContent a[href*="gesetze-im-internet.de"]::before {
+  content: "⚖️ ";
+  font-size: 0.85em;
+}
+
+/* ==========================================
    EMPTY STATE
    ========================================== */
 
