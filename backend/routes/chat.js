@@ -10,6 +10,16 @@ const path = require("path");
 
 const { isBusinessOrHigher, isEnterpriseOrHigher, getFeatureLimit } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
 
+// ✅ RAG: Law Embeddings für Gesetzesdatenbank-Integration
+let lawEmbeddings = null;
+try {
+  const { getInstance } = require("../services/lawEmbeddings");
+  lawEmbeddings = getInstance();
+  console.log("✅ Law Embeddings Service loaded for Chat RAG");
+} catch (err) {
+  console.warn("⚠️ Law Embeddings Service nicht verfügbar:", err.message);
+}
+
 const router = express.Router();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -34,6 +44,74 @@ const localStorage = multer.diskStorage({
 });
 const localUpload = multer({ storage: localStorage });
 
+// 🔧 HELPER: Extract PDF text with page numbers for precise citations
+async function extractPdfWithPages(pdfBuffer, maxChars = 15000) {
+  const pages = [];
+  let totalChars = 0;
+
+  // Custom page render function to capture each page separately
+  const renderPage = async (pageData) => {
+    const textContent = await pageData.getTextContent();
+    const pageText = textContent.items.map(item => item.str).join(' ');
+    return pageText;
+  };
+
+  try {
+    const pdfData = await pdfParse(pdfBuffer, { pagerender: renderPage });
+
+    // Split by form feed character (page break) or estimate by character count
+    const rawText = pdfData.text;
+    const numPages = pdfData.numpages || 1;
+
+    // Estimate chars per page
+    const charsPerPage = Math.ceil(rawText.length / numPages);
+
+    // Build page-annotated text
+    let annotatedText = '';
+    let currentPos = 0;
+
+    for (let pageNum = 1; pageNum <= numPages && totalChars < maxChars; pageNum++) {
+      const pageStart = (pageNum - 1) * charsPerPage;
+      const pageEnd = Math.min(pageNum * charsPerPage, rawText.length);
+      const pageText = rawText.substring(pageStart, pageEnd).trim();
+
+      if (pageText.length > 0) {
+        const remainingChars = maxChars - totalChars;
+        const textToAdd = pageText.substring(0, remainingChars);
+
+        annotatedText += `\n\n[📄 Seite ${pageNum}]\n${textToAdd}`;
+        totalChars += textToAdd.length + 20; // +20 for page marker
+
+        pages.push({
+          page: pageNum,
+          text: textToAdd,
+          charStart: currentPos,
+          charEnd: currentPos + textToAdd.length
+        });
+
+        currentPos += textToAdd.length;
+      }
+    }
+
+    return {
+      annotatedText: annotatedText.trim(),
+      pages: pages,
+      totalPages: numPages,
+      extractedPages: pages.length
+    };
+  } catch (error) {
+    console.warn("⚠️ Page-wise extraction failed, falling back to simple extraction:", error.message);
+    // Fallback to simple extraction
+    const pdfData = await pdfParse(pdfBuffer);
+    return {
+      annotatedText: pdfData.text.substring(0, maxChars),
+      pages: [{ page: 1, text: pdfData.text.substring(0, maxChars), charStart: 0, charEnd: maxChars }],
+      totalPages: pdfData.numpages || 1,
+      extractedPages: 1
+    };
+  }
+}
+
 /**
  * MongoDB Collections:
  * - chats: { _id, userId, title, createdAt, updatedAt, messages: [{role, content}], attachments: [{name, url, s3Key}] }
@@ -50,11 +128,12 @@ const SYSTEM_PROMPT = `Du bist "Contract AI – Legal Counsel", ein KI-Vertragsa
 2. **Zeile 2:** Beleg aus dem Vertrag ODER "Im Vertragstext finde ich dazu keine Regelung."
 3. **Danach:** Kurze Erklärung (2-3 Sätze)
 
-**WICHTIG - Quellenangabe mit Textzitaten:**
-- Wenn du etwas findest: Zitiere 1-2 Sätze direkt aus dem Vertrag: *"Der Vertrag kann mit einer Frist von 3 Monaten gekündigt werden."*
-- Wenn der Vertrag Paragraphen/Nummern hat: "Gemäß § 5 Abs. 2 des Vertrags..."
-- Wenn du es NICHT findest: "Im extrahierten Vertragstext finde ich keine Passage zu [Thema]."
-- NIEMALS "Abschnitt X" oder ähnliche Referenzen ERFINDEN – nur zitieren was tatsächlich im Text steht!
+**WICHTIG - Quellenangabe mit Seitenzahl + Textzitaten:**
+- Der Vertragstext ist mit [📄 Seite X] Markern versehen – NUTZE diese für präzise Zitate!
+- Wenn du etwas findest: "Auf **Seite 3** steht: *'Der Vertrag kann mit einer Frist von 3 Monaten gekündigt werden.'*"
+- Wenn der Vertrag Paragraphen/Nummern hat: "Gemäß § 5 Abs. 2 (Seite 2) des Vertrags..."
+- Wenn du es NICHT findest: "Im extrahierten Vertragstext (Seiten 1-X) finde ich keine Passage zu [Thema]."
+- NIEMALS Seitenzahlen oder Abschnitte ERFINDEN – nur zitieren was tatsächlich im Text steht!
 
 **Wenn der Vertrag etwas NICHT regelt:**
 → Antworte: "**Nein** (nicht explizit geregelt)."
@@ -83,7 +162,15 @@ Wenn dir Analyse-Ergebnisse vorliegen (Score, Risiken, Empfehlungen):
 **Beleg:** [Wo steht das / nicht gefunden]
 **Was du tun kannst:** [1-2 konkrete Schritte]
 
-## REGEL 4: KOMMUNIKATIONSSTIL
+## REGEL 4: GESETZES-KONTEXT NUTZEN (RAG)
+
+Wenn dir relevante Gesetze aus der Datenbank vorliegen:
+- Zitiere diese mit korrektem Paragraphen: "Gemäß § 622 Abs. 1 BGB gilt..."
+- Erkläre das Gesetz in einfachen Worten: "Das bedeutet für dich: [Erklärung]"
+- Verknüpfe Vertrag + Gesetz: "Dein Vertrag regelt X, aber laut BGB gilt standardmäßig Y."
+- WICHTIG: Nur Gesetze zitieren die dir angezeigt werden – nichts erfinden!
+
+## REGEL 5: KOMMUNIKATIONSSTIL
 
 - Du-Form ("du kannst...", "dein Vertrag...")
 - Kein Juristendeutsch - verständlich erklären
@@ -98,16 +185,24 @@ Wenn dir Analyse-Ergebnisse vorliegen (Score, Risiken, Empfehlungen):
 ❌ FALSCH:
 "Die genauen Kündigungsmodalitäten sind nicht explizit geregelt, was darauf hindeutet..."
 "Laut Abschnitt 5 des Vertrags..." (wenn kein Abschnitt 5 existiert!)
+"Auf Seite 7 steht..." (wenn du gar keinen Seite-7-Marker siehst!)
 
 ✅ RICHTIG:
 "**Nein, nicht jederzeit.**
-Im Vertrag steht: *"Die Kündigung ist nur zum Quartalsende mit einer Frist von 6 Wochen möglich."*
+Auf **Seite 2** steht: *'Die Kündigung ist nur zum Quartalsende mit einer Frist von 6 Wochen möglich.'*
 Das bedeutet: Du kannst frühestens zum [Datum] kündigen, wenn du jetzt kündigst."
 
 ODER (wenn nichts geregelt):
 "**Nicht explizit geregelt.**
-Im extrahierten Vertragstext finde ich keine Passage zur Kündigung.
+Im extrahierten Vertragstext (Seiten 1-5) finde ich keine Passage zur Kündigung.
 Ohne vertragliche Regelung gilt § 621 BGB – du kannst zum Monatsende kündigen."
+
+**Frage:** "Wie hoch ist die Gebühr?"
+
+✅ RICHTIG:
+"**250 EUR pro Fall.**
+Auf **Seite 3** steht: *'Die Bearbeitungsgebühr beträgt EUR 250,00 je Forderung.'*
+Das ist im Branchenvergleich moderat."
 
 **Frage:** "Ist der Selbstbehalt zu hoch?"
 
@@ -382,8 +477,9 @@ router.post("/new-with-contract", verifyToken, async (req, res) => {
       return res.status(404).json({ error: "Contract not found" });
     }
 
-    // Extract PDF text if s3Key is available
+    // Extract PDF text with page numbers for precise citations
     let extractedText = "";
+    let pdfPages = [];
     const effectiveS3Key = s3Key || contract.s3Key;
 
     if (effectiveS3Key) {
@@ -400,8 +496,12 @@ router.post("/new-with-contract", verifyToken, async (req, res) => {
           Key: effectiveS3Key
         }).promise();
 
-        const pdfData = await pdfParse(s3Object.Body);
-        extractedText = pdfData.text.substring(0, 15000); // Limit to 15k chars
+        // ✅ NEW: Extract with page annotations for precise citations
+        const pdfResult = await extractPdfWithPages(s3Object.Body, 15000);
+        extractedText = pdfResult.annotatedText;
+        pdfPages = pdfResult.pages;
+
+        console.log(`📄 Extracted ${pdfResult.extractedPages}/${pdfResult.totalPages} pages from PDF`);
       } catch (s3Error) {
         console.warn("⚠️ Could not extract PDF text from S3:", s3Error.message);
         // Continue without PDF text - analysis context is still available
@@ -423,12 +523,13 @@ Du kannst mir spezifische Fragen stellen, z.B.:
 - Welche Risiken sollte ich beachten?
 - Wie kann ich bestimmte Punkte nachverhandeln?`;
 
-    // Create attachment object for context
+    // Create attachment object for context (with page info for citations)
     const attachment = {
       name: contractName,
       contractId: contractId,
       contractType: contractType,
       extractedText: extractedText,
+      pdfPages: pdfPages, // ✅ NEW: Page-by-page breakdown for precise citations
       analysisContext: analysisContext,
       s3Key: effectiveS3Key || null,
       uploadedAt: new Date()
@@ -457,6 +558,142 @@ Du kannst mir spezifische Fragen stellen, z.B.:
   } catch (error) {
     console.error("❌ Error creating chat with contract:", error);
     res.status(500).json({ error: "Failed to create chat with contract" });
+  }
+});
+
+// ✅ POST /api/chat/:id/add-contract - Add another contract for comparison (Multi-Document)
+router.post("/:id/add-contract", verifyToken, async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+    const { contractId, contractName, analysisContext, s3Key } = req.body || {};
+    const chatId = req.params.id;
+
+    // Validate required fields
+    if (!contractId || !contractName) {
+      return res.status(400).json({ error: "contractId and contractName required" });
+    }
+
+    if (!ObjectId.isValid(contractId) || !ObjectId.isValid(chatId)) {
+      return res.status(400).json({ error: "Invalid ID format" });
+    }
+
+    const usersCollection = req.db.collection("users");
+    const chats = req.db.collection("chats");
+    const contracts = req.db.collection("contracts");
+
+    // ✅ Check subscription - Enterprise only for multi-doc comparison
+    const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const plan = user.subscriptionPlan || "free";
+    const hasAccess = isEnterpriseOrHigher(plan);
+
+    if (!hasAccess) {
+      return res.status(403).json({
+        error: "Subscription required",
+        message: "Multi-Dokument-Vergleich ist nur für Enterprise Nutzer verfügbar.",
+        requiredPlan: "enterprise"
+      });
+    }
+
+    // Verify chat ownership
+    const chat = await chats.findOne({
+      _id: new ObjectId(chatId),
+      userId: new ObjectId(userId)
+    });
+
+    if (!chat) {
+      return res.status(404).json({ error: "Chat not found" });
+    }
+
+    // Check max attachments (limit to 3 for now)
+    if (chat.attachments && chat.attachments.length >= 3) {
+      return res.status(400).json({
+        error: "Maximum contracts reached",
+        message: "Maximal 3 Verträge pro Chat erlaubt."
+      });
+    }
+
+    // Verify contract ownership
+    const contract = await contracts.findOne({
+      _id: new ObjectId(contractId),
+      userId: new ObjectId(userId)
+    });
+
+    if (!contract) {
+      return res.status(404).json({ error: "Contract not found" });
+    }
+
+    // Extract PDF text with page numbers
+    let extractedText = "";
+    let pdfPages = [];
+    const effectiveS3Key = s3Key || contract.s3Key;
+
+    if (effectiveS3Key) {
+      try {
+        const AWS = require("aws-sdk");
+        const s3 = new AWS.S3({
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+          region: process.env.AWS_REGION,
+        });
+
+        const s3Object = await s3.getObject({
+          Bucket: process.env.S3_BUCKET_NAME,
+          Key: effectiveS3Key
+        }).promise();
+
+        const pdfResult = await extractPdfWithPages(s3Object.Body, 10000); // Smaller limit for comparison
+        extractedText = pdfResult.annotatedText;
+        pdfPages = pdfResult.pages;
+      } catch (s3Error) {
+        console.warn("⚠️ Could not extract PDF text from S3:", s3Error.message);
+      }
+    }
+
+    // Create attachment object
+    const attachment = {
+      name: contractName,
+      contractId: contractId,
+      contractType: contract.analysis?.contractType || "Vertrag",
+      extractedText: extractedText,
+      pdfPages: pdfPages,
+      analysisContext: analysisContext,
+      s3Key: effectiveS3Key || null,
+      uploadedAt: new Date()
+    };
+
+    // Add to chat attachments and create system message
+    const contractLabel = String.fromCharCode(65 + (chat.attachments?.length || 0)); // A, B, C...
+    const systemMessage = {
+      role: "assistant",
+      content: `📎 **Vertrag ${contractLabel}** hinzugefügt: "${contractName}"\n\nDu kannst jetzt die Verträge vergleichen. Frag mich z.B.:\n- "Vergleiche die Kündigungsfristen in beiden Verträgen"\n- "Welcher Vertrag ist günstiger?"\n- "Wo unterscheiden sich die Haftungsregelungen?"`
+    };
+
+    await chats.updateOne(
+      { _id: new ObjectId(chatId) },
+      {
+        $push: {
+          attachments: attachment,
+          messages: systemMessage
+        },
+        $set: { updatedAt: new Date() }
+      }
+    );
+
+    res.json({
+      success: true,
+      contractLabel: `Vertrag ${contractLabel}`,
+      totalContracts: (chat.attachments?.length || 0) + 1
+    });
+
+  } catch (error) {
+    console.error("❌ Error adding contract to chat:", error);
+    res.status(500).json({ error: "Failed to add contract to chat" });
   }
 });
 
@@ -570,37 +807,58 @@ router.post("/:id/message", verifyToken, async (req, res) => {
     });
 
     try {
-      // ✅ BUILD CONTEXT: Include analysis + contract text
+      // ✅ BUILD CONTEXT: Include analysis + contract text (supports MULTIPLE contracts)
       let contextMessages = [...chat.messages];
 
-      // If contract is uploaded, inject STRUCTURED context after system prompt
+      // If contracts are uploaded, inject STRUCTURED context after system prompt
       if (chat.attachments && chat.attachments.length > 0) {
-        const latestContract = chat.attachments[chat.attachments.length - 1];
+        const contracts = chat.attachments;
+        const isMultiDoc = contracts.length > 1;
 
-        // Build structured context (Analysis FIRST, then raw text)
+        // Build structured context for ALL contracts
         let contextParts = [];
-        contextParts.push(`📎 **Vertrag: "${latestContract.name}"** (${latestContract.contractType || 'Vertrag'})`);
-        contextParts.push('');
 
-        // ✅ CRITICAL FIX: Include analysisContext (Score, Risiken, Empfehlungen)
-        if (latestContract.analysisContext) {
-          contextParts.push('## 📊 ANALYSE-ERGEBNISSE (bereits durchgeführt):');
-          contextParts.push(latestContract.analysisContext);
-          contextParts.push('');
-          contextParts.push('---');
+        if (isMultiDoc) {
+          contextParts.push(`## 📑 MULTI-DOKUMENT-MODUS: ${contracts.length} Verträge geladen`);
+          contextParts.push('Du kannst Verträge vergleichen. Referenziere sie als "Vertrag A", "Vertrag B" etc.');
           contextParts.push('');
         }
 
-        // Include extracted PDF text
-        if (latestContract.extractedText) {
-          contextParts.push('## 📄 VERTRAGSTEXT (extrahiert):');
-          contextParts.push(latestContract.extractedText);
-          contextParts.push('');
-        }
+        // Process each contract
+        contracts.forEach((contract, index) => {
+          const label = isMultiDoc ? `Vertrag ${String.fromCharCode(65 + index)}` : 'Vertrag';
+          const charLimit = isMultiDoc ? 6000 : 12000; // Less per doc if multiple
 
-        // Add instruction
+          contextParts.push(`---`);
+          contextParts.push(`# 📎 ${label}: "${contract.name}" (${contract.contractType || 'Vertrag'})`);
+          contextParts.push('');
+
+          // Include analysis context
+          if (contract.analysisContext) {
+            contextParts.push(`## 📊 ANALYSE (${label}):`);
+            contextParts.push(contract.analysisContext);
+            contextParts.push('');
+          }
+
+          // Include extracted PDF text (limited per contract if multiple)
+          if (contract.extractedText) {
+            const limitedText = contract.extractedText.substring(0, charLimit);
+            contextParts.push(`## 📄 TEXT (${label}):`);
+            contextParts.push(limitedText);
+            if (contract.extractedText.length > charLimit) {
+              contextParts.push(`\n[... ${label} gekürzt auf ${charLimit} Zeichen ...]`);
+            }
+            contextParts.push('');
+          }
+        });
+
+        // Add instruction based on mode
         contextParts.push('---');
-        contextParts.push('**Instruktion:** Beantworte Fragen basierend auf den Analyse-Ergebnissen UND dem Vertragstext. Zitiere konkrete Stellen. Wenn etwas nicht im Text steht, sag das klar.');
+        if (isMultiDoc) {
+          contextParts.push('**Instruktion (Multi-Dokument):** Vergleiche die Verträge wenn gefragt. Referenziere klar: "In Vertrag A steht X, während Vertrag B Y regelt." Zitiere mit Seitenzahlen wenn vorhanden.');
+        } else {
+          contextParts.push('**Instruktion:** Beantworte Fragen basierend auf den Analyse-Ergebnissen UND dem Vertragstext. Zitiere konkrete Stellen mit Seitenzahlen. Wenn etwas nicht im Text steht, sag das klar.');
+        }
 
         if (contextParts.length > 3) { // Only add if we have actual content
           const contractContext = {
@@ -639,6 +897,44 @@ router.post("/:id/message", verifyToken, async (req, res) => {
         contractContext,        // 2. Contract context (if exists)
         ...trimmedConversation  // 3. Last N conversation messages
       ].filter(Boolean);        // Remove undefined entries
+
+      // ✅ RAG: Query relevant laws based on user question
+      let lawContext = null;
+      if (lawEmbeddings) {
+        try {
+          const relevantLaws = await lawEmbeddings.queryRelevantSections({
+            text: content, // User's question
+            topK: 5,
+            area: null // Search all areas
+          });
+
+          if (relevantLaws.length > 0 && relevantLaws[0].relevance > 0.5) {
+            // Build law context for AI
+            const lawParts = relevantLaws
+              .filter(law => law.relevance > 0.5) // Only include relevant laws
+              .map(law => `**${law.lawId} ${law.sectionId}** (Relevanz: ${Math.round(law.relevance * 100)}%)\n${law.text?.substring(0, 400) || law.title}`)
+              .slice(0, 3); // Max 3 laws to keep context manageable
+
+            if (lawParts.length > 0) {
+              lawContext = {
+                role: "system",
+                content: `## 📚 RELEVANTE GESETZE (aus Datenbank):\n\n${lawParts.join('\n\n---\n\n')}\n\n**Instruktion:** Zitiere diese Gesetze wenn relevant für die Antwort. Beispiel: "Gemäß § 622 Abs. 1 BGB gilt..."`
+              };
+              console.log(`⚖️ RAG: Found ${lawParts.length} relevant laws for query`);
+            }
+          }
+        } catch (ragError) {
+          console.warn("⚠️ RAG query failed, continuing without law context:", ragError.message);
+          // Continue without law context - not critical
+        }
+      }
+
+      // Insert law context after contract context (if available)
+      if (lawContext) {
+        // Find position after contract context
+        const insertPosition = contractContext ? 2 : 1;
+        contextMessages.splice(insertPosition, 0, lawContext);
+      }
 
       // Add current user message
       contextMessages.push({ role: "user", content });
