@@ -2459,6 +2459,11 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     let extractedMinimumTerm = null; // 🆕 Mindestlaufzeit (z.B. 6 Monate)
     let extractedCanCancelAfterDate = null; // 🆕 Datum ab wann kündbar
 
+    // 🔒 KONFIDENZ-WERTE für Datenintegrität
+    let startDateConfidence = 0;
+    let endDateConfidence = 0;
+    let autoRenewalConfidence = 0;
+
     try {
       const providerAnalysis = await contractAnalyzer.analyzeContract(
         fullTextContent,
@@ -2478,6 +2483,11 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         extractedDocumentCategory = providerAnalysis.data.documentCategory; // 🆕 DOCUMENT CATEGORY
         extractedMinimumTerm = providerAnalysis.data.minimumTerm; // 🆕 MINDESTLAUFZEIT
         extractedCanCancelAfterDate = providerAnalysis.data.canCancelAfterDate; // 🆕 KÜNDBAR AB
+
+        // 🔒 KONFIDENZ-WERTE extrahieren für Datenintegrität
+        startDateConfidence = providerAnalysis.data.startDateConfidence || 0;
+        endDateConfidence = providerAnalysis.data.endDateConfidence || 0;
+        autoRenewalConfidence = providerAnalysis.data.autoRenewalConfidence || 0;
 
         // 🆕 Für Kündigungsbestätigungen: gekuendigtZum = endDate (das ist das Datum wann Vertrag endet)
         if (extractedDocumentCategory === 'cancellation_confirmation' && extractedEndDate) {
@@ -2642,8 +2652,14 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       cancellationPeriod: extractedCancellationPeriod,
       providerDetected: !!extractedProvider,
       providerConfidence: extractedProvider?.confidence || 0,
+      // 🔒 KONFIDENZ-WERTE für Datenintegrität
+      startDateConfidence: startDateConfidence,
+      endDateConfidence: endDateConfidence,
+      autoRenewalConfidence: autoRenewalConfidence,
+      cancellationPeriodConfidence: extractedCancellationPeriod?.confidence || 0,
+      contractDurationConfidence: extractedContractDuration?.confidence || 0,
       isAutoRenewal: extractedIsAutoRenewal || false, // 🆕 AUTO-RENEWAL
-      
+
       // Enhanced metadata from deep lawyer-level analysis
       documentType: validationResult.documentType,
       analysisStrategy: validationResult.strategy,
@@ -2699,6 +2715,13 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           customerNumber: extractedCustomerNumber,
           providerDetected: !!extractedProvider,
           providerConfidence: extractedProvider?.confidence || 0,
+
+          // 🔒 KONFIDENZ-WERTE für Datenintegrität (Frontend prüft diese!)
+          startDateConfidence: startDateConfidence,
+          endDateConfidence: endDateConfidence,
+          autoRenewalConfidence: autoRenewalConfidence,
+          cancellationPeriodConfidence: extractedCancellationPeriod?.confidence || 0,
+          contractDurationConfidence: extractedContractDuration?.confidence || 0,
 
           // Format strings for display
           laufzeit: extractedContractDuration ?
@@ -2989,6 +3012,12 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           customerNumber: extractedCustomerNumber,
           providerDetected: !!extractedProvider,
           providerConfidence: extractedProvider?.confidence || 0,
+          // 🔒 KONFIDENZ-WERTE für Datenintegrität
+          startDateConfidence: startDateConfidence,
+          endDateConfidence: endDateConfidence,
+          autoRenewalConfidence: autoRenewalConfidence,
+          cancellationPeriodConfidence: extractedCancellationPeriod?.confidence || 0,
+          contractDurationConfidence: extractedContractDuration?.confidence || 0,
           contractDuration: extractedContractDuration, // 🆕 CONTRACT DURATION object
           cancellationPeriod: extractedCancellationPeriod,
           isAutoRenewal: extractedIsAutoRenewal || false, // 🆕 AUTO-RENEWAL
@@ -3317,8 +3346,14 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       cancellationPeriod: extractedCancellationPeriod,
       providerDetected: !!extractedProvider,
       providerConfidence: extractedProvider?.confidence || 0,
+      // 🔒 KONFIDENZ-WERTE für Datenintegrität
+      startDateConfidence: startDateConfidence,
+      endDateConfidence: endDateConfidence,
+      autoRenewalConfidence: autoRenewalConfidence,
+      cancellationPeriodConfidence: extractedCancellationPeriod?.confidence || 0,
+      contractDurationConfidence: extractedContractDuration?.confidence || 0,
       isAutoRenewal: extractedIsAutoRenewal || false,
-      
+
       // Formatted strings for display
       laufzeit: extractedContractDuration ? 
         `${extractedContractDuration.value} ${extractedContractDuration.unit}` : 

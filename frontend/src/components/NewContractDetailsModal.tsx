@@ -166,6 +166,12 @@ interface Contract {
     confidence?: number; // 🔒 Konfidenz der Provider-Erkennung (0-100)
   };
   providerConfidence?: number; // 🔒 Alternative: Konfidenz auf Contract-Ebene
+  // 🔒 KONFIDENZ-WERTE für Datenintegrität (Backend speichert diese jetzt)
+  startDateConfidence?: number;
+  endDateConfidence?: number;
+  autoRenewalConfidence?: number;
+  cancellationPeriodConfidence?: number;
+  contractDurationConfidence?: number;
   quickFacts?: Array<{
     label: string;
     value: string;
@@ -190,6 +196,36 @@ interface NewContractDetailsModalProps {
 }
 
 type TabType = 'overview' | 'pdf' | 'analysis' | 'optimizations' | 'optimizedPdf' | 'signature';
+
+/**
+ * 🔒 KONFIDENZ-SCHWELLENWERTE für Datenintegrität
+ * Besser KEINE Daten als FALSCHE Daten!
+ */
+const CONFIDENCE_THRESHOLDS = {
+  PROVIDER: 90,            // Anbieter - nur anzeigen wenn sehr sicher
+  DATE: 60,                // Daten - oft geschätzt, aber wichtig
+  CANCELLATION_PERIOD: 70, // Kündigungsfrist - wichtig für User
+  CONTRACT_DURATION: 60,   // Laufzeit - oft aus Vertragstyp abgeleitet
+  AUTO_RENEWAL: 70         // Auto-Verlängerung - wichtig für User
+} as const;
+
+/**
+ * 🔒 Helper: Prüft ob ein Feld mit ausreichender Konfidenz angezeigt werden soll
+ * @param confidence - Konfidenz-Wert (0-100) oder undefined
+ * @param threshold - Schwellenwert aus CONFIDENCE_THRESHOLDS
+ * @param hasValue - Ob der Wert überhaupt existiert
+ * @returns true wenn angezeigt werden soll
+ */
+const shouldDisplayWithConfidence = (
+  confidence: number | undefined,
+  threshold: number,
+  hasValue: boolean
+): boolean => {
+  if (!hasValue) return false;
+  // Rückwärtskompatibilität: Wenn keine Konfidenz-Info vorhanden, anzeigen
+  if (confidence === undefined) return true;
+  return confidence >= threshold;
+};
 
 /**
  * 🔍 Zentrale Helper-Funktion: Prüft ob Analyse-Daten vorhanden sind
@@ -665,33 +701,56 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
               <span className={styles.value} style={{ textTransform: 'capitalize' }}>{contract.contractType}</span>
             </div>
           )}
-          {/* 🆕 Gekündigt zum (für Kündigungsbestätigungen) */}
-          {contract.gekuendigtZum && (
+          {/* 🆕 Gekündigt zum (für Kündigungsbestätigungen) - 🔒 Mit Konfidenz-Check */}
+          {shouldDisplayWithConfidence(
+            contract.endDateConfidence,
+            CONFIDENCE_THRESHOLDS.DATE,
+            !!contract.gekuendigtZum
+          ) && (
             <div className={styles.detailItem}>
               <span className={styles.label}>Gekündigt zum:</span>
-              <span className={styles.value} style={{ color: '#dc2626', fontWeight: 600 }}>{formatDate(contract.gekuendigtZum)}</span>
+              <span className={styles.value} style={{ color: '#dc2626', fontWeight: 600 }}>{formatDate(contract.gekuendigtZum!)}</span>
             </div>
           )}
-          {contract.kuendigung && (
+          {/* 🔒 Kündigungsfrist - Mit Konfidenz-Check */}
+          {shouldDisplayWithConfidence(
+            contract.cancellationPeriodConfidence,
+            CONFIDENCE_THRESHOLDS.CANCELLATION_PERIOD,
+            !!contract.kuendigung
+          ) && (
             <div className={styles.detailItem}>
               <span className={styles.label}>Kündigungsfrist:</span>
               <span className={styles.value}>{contract.kuendigung}</span>
             </div>
           )}
-          {contract.laufzeit && (
+          {/* 🔒 Laufzeit - Mit Konfidenz-Check */}
+          {shouldDisplayWithConfidence(
+            contract.contractDurationConfidence,
+            CONFIDENCE_THRESHOLDS.CONTRACT_DURATION,
+            !!contract.laufzeit
+          ) && (
             <div className={styles.detailItem}>
               <span className={styles.label}>Laufzeit:</span>
               <span className={styles.value}>{contract.laufzeit}</span>
             </div>
           )}
-          {contract.expiryDate && (
+          {/* 🔒 Enddatum - Mit Konfidenz-Check */}
+          {shouldDisplayWithConfidence(
+            contract.endDateConfidence,
+            CONFIDENCE_THRESHOLDS.DATE,
+            !!contract.expiryDate
+          ) && (
             <div className={styles.detailItem}>
               <span className={styles.label}>Enddatum:</span>
-              <span className={styles.value}>{formatDate(contract.expiryDate)}</span>
+              <span className={styles.value}>{formatDate(contract.expiryDate!)}</span>
             </div>
           )}
-          {/* 🆕 Restlaufzeit */}
-          {(contract.expiryDate || contract.gekuendigtZum) && (
+          {/* 🆕 Restlaufzeit - 🔒 Nur anzeigen wenn Enddatum mit ausreichender Konfidenz vorhanden */}
+          {shouldDisplayWithConfidence(
+            contract.endDateConfidence,
+            CONFIDENCE_THRESHOLDS.DATE,
+            !!(contract.expiryDate || contract.gekuendigtZum)
+          ) && (
             <div className={styles.detailItem}>
               <span className={styles.label}>Restlaufzeit:</span>
               <span className={styles.value} style={{
