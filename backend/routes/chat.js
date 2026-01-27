@@ -871,7 +871,13 @@ router.post("/:id/message", verifyToken, async (req, res) => {
       const MAX_HISTORY_MESSAGES = 30; // Last 30 user+assistant messages
 
       // EXPLICIT ORDER: Separate messages by role and position
-      const systemPrompt = contextMessages.find(m => m.role === 'system' && m.content.includes('Contract AI – Legal Counsel'));
+      // Find the main system prompt (first system message, or one containing key phrases)
+      const systemPrompt = contextMessages.find(m =>
+        m.role === 'system' &&
+        (m.content.includes('freundlicher Vertragsexperte') ||
+         m.content.includes('Contract AI') ||
+         m.content.includes('KI-Vertragsanwalt'))
+      ) || contextMessages.find(m => m.role === 'system'); // Fallback: first system message
 
       // TODO (Tech-Debt): Wenn es mehrere contractContext-Messages geben kann (z.B. bei mehreren
       // Uploads im selben Chat), wäre robuster: Context beim Einfügen mit meta-Feld markieren
