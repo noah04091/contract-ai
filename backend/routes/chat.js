@@ -187,8 +187,6 @@ Bot: "Schwierig. Der BGH ist da streng. Aber du könntest versuchen, einen Härt
 5. Erfinde nichts – nur was wirklich im Text/Gesetz steht
 6. Bei Unsicherheit: sag es ehrlich`;
 
-Sei einfach hilfreich. Kein Roboter, kein Template – ein echter Gesprächspartner.`;
-
 // 🔧 HELPER: Smart Title Generator
 function makeSmartTitle(question = "") {
   const text = question.trim().slice(0, 60);
