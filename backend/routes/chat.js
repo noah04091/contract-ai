@@ -397,41 +397,49 @@ async function generateFollowUpQuestions(userQuestion, aiResponse, contractType 
       messages: [
         {
           role: "system",
-          content: `Du generierst 3 kurze, natürliche Folgefragen für einen Vertrags-Chat.
+          content: `Du generierst 3 SPEZIFISCHE Folgefragen basierend auf dem gerade besprochenen Thema.
 
-REGELN:
-- Maximal 8 Wörter pro Frage
-- Natürlich formuliert (wie ein Mensch fragen würde)
-- Basierend auf dem Kontext der letzten Antwort
-- KEINE Wiederholung der gerade beantworteten Frage
-- Abwechslungsreich: 1x vertiefend, 1x praktisch, 1x neu
+KRITISCH - DIE FRAGEN MÜSSEN:
+1. Direkt auf die letzte Antwort Bezug nehmen
+2. Konkrete Begriffe/Zahlen/Themen aus der Antwort aufgreifen
+3. Dem User helfen, das Thema zu vertiefen
 
-BEISPIELE:
-- "Kann ich das nachverhandeln?"
-- "Was passiert bei Verstoß?"
-- "Wann kann ich frühestens kündigen?"
-- "Ist das überhaupt erlaubt?"
-- "Was wäre eine faire Alternative?"
+VERBOTEN:
+- Generische Fragen die zu jedem Vertrag passen
+- Themen die nichts mit der letzten Antwort zu tun haben
+- Wiederholung der gerade gestellten Frage
 
-Antworte NUR mit 3 Fragen, eine pro Zeile, ohne Nummerierung.`
+FORMAT:
+- Max 10 Wörter
+- Natürlich formuliert
+- Eine Frage pro Zeile, keine Nummerierung
+
+BEISPIEL:
+Wenn Antwort über "3 Monate Kündigungsfrist" war:
+✅ "Kann ich die 3 Monate verkürzen?"
+✅ "Was wenn ich früher raus muss?"
+✅ "Gilt die Frist auch für den Anbieter?"
+❌ "Was sind die Risiken?" (zu generisch)
+❌ "Wie ist die Haftung geregelt?" (anderes Thema)`
         },
         {
           role: "user",
-          content: `Vertragstyp: ${contractType}
-Letzte Frage: "${userQuestion}"
-Letzte Antwort: "${aiResponse.substring(0, 500)}"
+          content: `KONTEXT:
+Vertragstyp: ${contractType}
+User fragte: "${userQuestion}"
+Antwort war: "${aiResponse.substring(0, 800)}"
 
-Generiere 3 passende Folgefragen:`
+Generiere 3 spezifische Folgefragen die DIREKT auf diese Antwort eingehen:`
         }
       ],
-      temperature: 0.7,
-      max_tokens: 100
+      temperature: 0.4, // Niedriger für konsistentere, relevantere Ergebnisse
+      max_tokens: 120
     });
 
     const text = response.choices[0].message.content.trim();
     const questions = text.split('\n')
-      .map(q => q.trim())
-      .filter(q => q.length > 0 && q.length < 60)
+      .map(q => q.replace(/^[-•*\d.)\s]+/, '').trim()) // Remove bullets/numbers
+      .filter(q => q.length > 5 && q.length < 80 && q.includes('?'))
       .slice(0, 3);
 
     return questions.length > 0 ? questions : null;
