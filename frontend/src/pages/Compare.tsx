@@ -1534,7 +1534,7 @@ export default function EnhancedCompare() {
                 <input
                   ref={file1InputRef}
                   type="file"
-                  accept="application/pdf"
+                  accept=".pdf,.docx"
                   disabled={!isPremium}
                   style={{ display: 'none' }}
                   onChange={(e) => e.target.files?.[0] && setFile1(e.target.files[0])}
@@ -1627,7 +1627,7 @@ export default function EnhancedCompare() {
                 <input
                   ref={file2InputRef}
                   type="file"
-                  accept="application/pdf"
+                  accept=".pdf,.docx"
                   disabled={!isPremium}
                   style={{ display: 'none' }}
                   onChange={(e) => e.target.files?.[0] && setFile2(e.target.files[0])}

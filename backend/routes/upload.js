@@ -107,7 +107,7 @@ const uploadToS3 = async (localFilePath, originalFilename, userId) => {
       Bucket: process.env.S3_BUCKET_NAME,
       Key: s3Key,
       Body: fileBuffer,
-      ContentType: 'application/pdf',
+      ContentType: originalFilename?.endsWith('.docx') ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' : 'application/pdf',
       Metadata: {
         uploadDate: new Date().toISOString(),
         userId: userId || 'unknown',

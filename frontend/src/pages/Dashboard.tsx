@@ -1650,12 +1650,12 @@ export default function Dashboard() {
                         Datei auswählen
                         <input
                           type="file"
-                          accept="application/pdf"
+                          accept=".pdf,.docx"
                           onChange={(e) => setFile(e.target.files?.[0] || null)}
                           className={styles.fileInput}
                         />
                       </label>
-                      <p className={styles.fileHint}>Nur PDF-Dateien werden unterstützt</p>
+                      <p className={styles.fileHint}>Nur PDF- und DOCX-Dateien werden unterstützt</p>
                     </>
                   )}
                 </div>

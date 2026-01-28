@@ -5,6 +5,7 @@ const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
+const { extractTextFromBuffer } = require("../services/textExtractor");
 const fs = require("fs");
 const verifyToken = require("../middleware/verifyToken");
 const saveContract = require("../services/saveContract");
@@ -18,7 +19,8 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
 
   try {
     const buffer = fs.readFileSync(req.file.path);
-    const data = await pdfParse(buffer);
+    const fileMimetype = req.file.mimetype || 'application/pdf';
+    const data = await extractTextFromBuffer(buffer, fileMimetype);
     const extractedText = data.text.substring(0, 5000);
 
     // 🗃️ Optional zentral speichern
@@ -60,7 +62,8 @@ router.post("/public", upload.single("file"), async (req, res) => {
     console.log(`📄 Extrahiere Text aus: ${req.file.originalname} (${req.file.size} bytes)`);
     
     const buffer = fs.readFileSync(req.file.path);
-    const data = await pdfParse(buffer);
+    const fileMimetype = req.file.mimetype || 'application/pdf';
+    const data = await extractTextFromBuffer(buffer, fileMimetype);
     const extractedText = data.text.substring(0, 8000); // Etwas mehr Text für Better Contracts
     
     console.log(`✅ Text erfolgreich extrahiert: ${extractedText.length} Zeichen`);

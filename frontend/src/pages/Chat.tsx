@@ -474,10 +474,10 @@ export default function Chat() {
       if (e.dataTransfer.files && e.dataTransfer.files[0]) {
         const file = e.dataTransfer.files[0];
 
-        if (file.type === "application/pdf") {
+        if (file.type === "application/pdf" || file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
           uploadContract(file);
         } else {
-          alert("Bitte nur PDF-Dateien hochladen.");
+          alert("Bitte nur PDF- oder DOCX-Dateien hochladen.");
         }
       }
     },
@@ -842,7 +842,7 @@ export default function Chat() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="application/pdf"
+                accept=".pdf,.docx"
                 onChange={handleFileSelect}
                 style={{ display: "none" }}
               />

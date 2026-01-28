@@ -41,7 +41,7 @@ const EmailUpload: React.FC = () => {
         "name": "Welche Dateiformate werden unterstützt?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Aktuell werden ausschließlich PDF-Dateien unterstützt (max. 15 MB). Andere Formate werden automatisch ignoriert."
+          "text": "Aktuell werden PDF- und DOCX-Dateien unterstützt (max. 15 MB). Andere Formate werden automatisch ignoriert."
         }
       }
     ]
@@ -368,7 +368,7 @@ const EmailUpload: React.FC = () => {
                   Welche Dateiformate werden unterstützt?
                   <span className={styles.faqIcon}>▼</span>
                 </summary>
-                <p className={styles.faqAnswer}>Aktuell werden ausschließlich PDF-Dateien unterstützt (max. 15 MB pro Datei). Andere Formate werden automatisch ignoriert.</p>
+                <p className={styles.faqAnswer}>Aktuell werden PDF- und DOCX-Dateien unterstützt (max. 15 MB pro Datei). Andere Formate werden automatisch ignoriert.</p>
               </details>
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>

@@ -280,7 +280,7 @@ RateLimit-Reset: 1640995200`}
                     <tr>
                       <td><code>file</code></td>
                       <td>file</td>
-                      <td><strong>Required:</strong> PDF-Datei (max 10MB)</td>
+                      <td><strong>Required:</strong> PDF- oder DOCX-Datei (max 10MB)</td>
                     </tr>
                     <tr>
                       <td><code>folderId</code></td>

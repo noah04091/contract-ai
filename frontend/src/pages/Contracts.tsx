@@ -3438,7 +3438,7 @@ export default function Contracts() {
         type="file"
         onChange={handleMultipleFileChange}
         style={{ display: 'none' }}
-        accept=".pdf,.doc,.docx"
+        accept=".pdf,.docx"
         multiple={canMultiUpload}
         id="contractFile"
         ref={fileInputRef}
@@ -4277,7 +4277,7 @@ export default function Contracts() {
                             }
                           </p>
                           <div className={styles.uploadFormats}>
-                            Unterstützte Formate: PDF, DOC, DOCX
+                            Unterstützte Formate: PDF, DOCX
                           </div>
                           {canMultiUpload && hasAnalysesLeft && (
                             <div className={styles.premiumFeature}>

@@ -4,6 +4,7 @@ const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
 const pdfParse = require("pdf-parse");
 const multer = require("multer");
+const { extractTextFromBuffer, isSupportedMimetype } = require("../services/textExtractor");
 const fs = require("fs");
 const fsPromises = require("fs").promises;
 const path = require("path");
@@ -29,10 +30,10 @@ const upload = multer({
   storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
   fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'application/pdf') {
+    if (isSupportedMimetype(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error("Nur PDF-Dateien sind erlaubt"));
+      cb(new Error("Nur PDF- und DOCX-Dateien sind erlaubt"));
     }
   }
 });
@@ -533,14 +534,16 @@ router.post("/", verifyToken, upload.fields([
 
     sendProgress(res, 'extracting', 25, 'Text wird extrahiert...', wantsSSE);
 
-    const pdfData1 = await pdfParse(buffer1);
-    const pdfData2 = await pdfParse(buffer2);
+    const [extracted1, extracted2] = await Promise.all([
+      extractTextFromBuffer(buffer1, file1.mimetype),
+      extractTextFromBuffer(buffer2, file2.mimetype)
+    ]);
 
-    const contract1Text = pdfData1.text.trim();
-    const contract2Text = pdfData2.text.trim();
+    const contract1Text = extracted1.text.trim();
+    const contract2Text = extracted2.text.trim();
 
     if (!contract1Text || !contract2Text) {
-      const error = { message: "Mindestens eine PDF-Datei konnte nicht gelesen werden oder ist leer" };
+      const error = { message: "Mindestens eine Datei konnte nicht gelesen werden oder ist leer" };
       if (wantsSSE) {
         res.write(`data: ${JSON.stringify({ type: 'error', ...error })}\n\n`);
         return res.end();

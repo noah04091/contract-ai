@@ -1,7 +1,8 @@
 /**
- * PDF Text Extractor Service
+ * Document Text Extractor Service
  *
- * Robuste PDF-Textextraktion mit:
+ * Robuste Textextraktion mit:
+ * - PDF und DOCX Unterstützung
  * - Erkennung von gescannten PDFs
  * - Erkennung von verschlüsselten PDFs
  * - Qualitätsprüfung des extrahierten Textes
@@ -10,6 +11,7 @@
  */
 
 const pdfParse = require('pdf-parse');
+const mammoth = require('mammoth');
 const { extractTextWithOCR, isTextractAvailable } = require('./textractService');
 const { checkOcrUsage, incrementOcrUsage, getOcrLimitMessage } = require('./ocrUsageService');
 
@@ -21,7 +23,9 @@ class PdfExtractor {
    * @param {Object} options - Optionen
    * @returns {Object} { success, text, quality, warnings, error }
    */
-  async extractText(pdfBuffer, options = {}) {
+  async extractText(buffer, options = {}) {
+    const mimetype = options.mimetype || 'application/pdf';
+
     const result = {
       success: false,
       text: '',
@@ -39,14 +43,43 @@ class PdfExtractor {
       error: null
     };
 
-    if (!pdfBuffer || pdfBuffer.length === 0) {
-      result.error = 'Leerer PDF-Buffer erhalten';
+    if (!buffer || buffer.length === 0) {
+      result.error = 'Leerer Buffer erhalten';
       return result;
     }
 
     try {
+      // DOCX-Extraktion via mammoth
+      if (mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+        const docxResult = await mammoth.extractRawText({ buffer });
+        result.text = docxResult.value || '';
+        result.quality.charCount = result.text.length;
+        result.quality.wordCount = result.text.split(/\s+/).filter(w => w.length > 0).length;
+        result.quality.pageCount = 0; // DOCX hat kein natives Seitenkonzept
+
+        // DOCX ist nie gescannt, Quality-Check vereinfacht
+        if (result.quality.charCount >= 50) {
+          result.success = true;
+        }
+
+        if (result.quality.charCount < 100) {
+          result.quality.hasMinimalContent = true;
+          result.warnings.push({
+            type: 'minimal_content',
+            message: `Nur ${result.quality.charCount} Zeichen extrahiert. Der Vertrag könnte unvollständig analysiert werden.`,
+            suggestion: 'Prüfen Sie, ob das Dokument vollständig ist.'
+          });
+        }
+
+        const garbageRatio = this.calculateGarbageRatio(result.text);
+        result.quality.qualityScore = this.calculateQualityScore(result.quality, garbageRatio);
+
+        console.log(`📄 [PdfExtractor] DOCX-Extraktion: ${result.quality.charCount} Zeichen, Score: ${result.quality.qualityScore}%`);
+        return result;
+      }
+
       // PDF-Parse mit Optionen für bessere Extraktion
-      const pdfData = await pdfParse(pdfBuffer, {
+      const pdfData = await pdfParse(buffer, {
         // Maximale Seitenanzahl (Schutz vor riesigen PDFs)
         max: options.maxPages || 500,
         // Version Info für Debugging
@@ -211,13 +244,14 @@ class PdfExtractor {
    * @param {string} options.userId - User-ID für OCR-Nutzungstracking (optional)
    * @returns {Object} { success, text, quality, warnings, error, usedOCR, ocrUsage }
    */
-  async extractTextWithOCRFallback(pdfBuffer, options = {}) {
+  async extractTextWithOCRFallback(buffer, options = {}) {
     const enableOCR = options.enableOCR !== false;
     const ocrThreshold = options.ocrThreshold || 50;
     const userId = options.userId;
+    const mimetype = options.mimetype || 'application/pdf';
 
-    // Schritt 1: Normale PDF-Extraktion
-    const result = await this.extractText(pdfBuffer, options);
+    // Schritt 1: Normale Extraktion (PDF oder DOCX)
+    const result = await this.extractText(buffer, options);
     result.usedOCR = false;
     result.ocrUsage = null;
 
@@ -227,8 +261,9 @@ class PdfExtractor {
       return result;
     }
 
-    // Schritt 2: OCR-Fallback wenn Qualität niedrig
-    if (enableOCR && (result.quality.isLikelyScanned || result.quality.qualityScore < ocrThreshold)) {
+    // Schritt 2: OCR-Fallback wenn Qualität niedrig (nur für PDFs, DOCX braucht kein OCR)
+    const isPdf = mimetype === 'application/pdf';
+    if (isPdf && enableOCR && (result.quality.isLikelyScanned || result.quality.qualityScore < ocrThreshold)) {
       console.log(`🔍 [PdfExtractor] Qualität niedrig (${result.quality.qualityScore}%), versuche OCR...`);
 
       // Prüfe ob Textract verfügbar

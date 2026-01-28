@@ -5,6 +5,7 @@
 const express = require("express");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
+const { extractTextFromBuffer, isSupportedMimetype } = require("../services/textExtractor");
 const fs = require("fs").promises;
 const fsSync = require("fs");
 const path = require("path");
@@ -82,7 +83,7 @@ const uploadToS3 = async (localFilePath, originalFilename, userId) => {
       Bucket: process.env.S3_BUCKET_NAME,
       Key: s3Key,
       Body: fileBuffer,
-      ContentType: 'application/pdf',
+      ContentType: originalFilename?.endsWith('.docx') ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' : 'application/pdf',
       Metadata: {
         uploadDate: new Date().toISOString(),
         userId: userId || 'unknown',
@@ -3703,7 +3704,7 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
   }
   
   // Security: File type validation
-  const allowedMimeTypes = ['application/pdf', 'application/x-pdf'];
+  const allowedMimeTypes = ['application/pdf', 'application/x-pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
   if (!allowedMimeTypes.includes(req.file.mimetype)) {
     // Clean up file immediately
     if (req.file.path && fsSync.existsSync(req.file.path)) {
@@ -3711,7 +3712,7 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
     }
     return res.status(415).json({
       success: false,
-      message: "❌ Nur PDF-Dateien erlaubt.",
+      message: "❌ Nur PDF- und DOCX-Dateien erlaubt.",
       error: "INVALID_FILE_TYPE",
       mimeType: req.file.mimetype
     });
@@ -3814,18 +3815,24 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
       throw new Error(`Datei konnte nicht gelesen werden: ${fileError.message}`);
     }
     
-    // PDF-Text-Extraktion with error handling
+    // Text-Extraktion (PDF oder DOCX)
     let parsed;
     try {
-      parsed = await pdfParse(buffer, {
-        max: 0, // Kein Limit
-        version: 'v2.0.550' // Neueste Version für bessere Extraktion
-      });
-      
+      const fileMimetype = req.file.mimetype || 'application/pdf';
+      if (fileMimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+        const docxResult = await extractTextFromBuffer(buffer, fileMimetype);
+        parsed = { text: docxResult.text, numpages: docxResult.pageCount || 0 };
+      } else {
+        parsed = await pdfParse(buffer, {
+          max: 0,
+          version: 'v2.0.550'
+        });
+      }
+
       // Clear buffer from memory after parsing
       buffer = null;
-    } catch (pdfError) {
-      throw new Error(`PDF-Verarbeitung fehlgeschlagen: ${pdfError.message}`);
+    } catch (parseError) {
+      throw new Error(`Datei-Verarbeitung fehlgeschlagen: ${parseError.message}`);
     }
     
     const contractText = parsed.text || '';
@@ -5108,12 +5115,12 @@ router.post("/stream", verifyToken, uploadLimiter, smartRateLimiter, upload.sing
     }
 
     // Security: File type validation
-    const allowedMimeTypes = ['application/pdf', 'application/x-pdf'];
-    if (!allowedMimeTypes.includes(req.file.mimetype)) {
+    const allowedMimeTypes2 = ['application/pdf', 'application/x-pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (!allowedMimeTypes2.includes(req.file.mimetype)) {
       if (req.file.path && fsSync.existsSync(req.file.path)) {
         fsSync.unlinkSync(req.file.path);
       }
-      return sendError("Nur PDF-Dateien erlaubt.", "INVALID_FILE_TYPE");
+      return sendError("Nur PDF- und DOCX-Dateien erlaubt.", "INVALID_FILE_TYPE");
     }
 
     sendProgress(5, "✅ Datei validiert - PDF erkannt");
@@ -5207,13 +5214,19 @@ router.post("/stream", verifyToken, uploadLimiter, smartRateLimiter, upload.sing
 
     let parsed;
     try {
-      parsed = await pdfParse(buffer, {
-        max: 0,
-        version: 'v2.0.550'
-      });
+      const fileMimetype2 = req.file.mimetype || 'application/pdf';
+      if (fileMimetype2 === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+        const docxResult = await extractTextFromBuffer(buffer, fileMimetype2);
+        parsed = { text: docxResult.text, numpages: docxResult.pageCount || 0 };
+      } else {
+        parsed = await pdfParse(buffer, {
+          max: 0,
+          version: 'v2.0.550'
+        });
+      }
       buffer = null; // Clear from memory
-    } catch (pdfError) {
-      return sendError(`PDF-Verarbeitung fehlgeschlagen: ${pdfError.message}`, "PDF_PARSE_ERROR");
+    } catch (parseError) {
+      return sendError(`Datei-Verarbeitung fehlgeschlagen: ${parseError.message}`, "PARSE_ERROR");
     }
 
     const contractText = parsed.text || '';

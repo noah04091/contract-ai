@@ -2,6 +2,7 @@
 const express = require("express");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
+const { extractTextFromBuffer, isSupportedMimetype, SUPPORTED_MIMETYPES } = require("../services/textExtractor");
 const fs = require("fs").promises;
 const fsSync = require("fs");
 const { OpenAI } = require("openai");
@@ -208,10 +209,10 @@ const createUploadMiddleware = () => {
     storage,
     limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
     fileFilter: (req, file, cb) => {
-      if (file.mimetype === 'application/pdf') {
+      if (isSupportedMimetype(file.mimetype)) {
         cb(null, true);
       } else {
-        cb(new Error('Only PDF files are allowed'), false);
+        cb(new Error('Nur PDF- und DOCX-Dateien sind erlaubt'), false);
       }
     }
   });
@@ -229,7 +230,7 @@ const uploadToS3 = async (localFilePath, originalFilename, userId) => {
       Bucket: process.env.S3_BUCKET_NAME,
       Key: s3Key,
       Body: fileBuffer,
-      ContentType: 'application/pdf',
+      ContentType: originalFilename?.endsWith('.docx') ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' : 'application/pdf',
       Metadata: {
         uploadDate: new Date().toISOString(),
         userId: userId || 'unknown',
@@ -1831,13 +1832,27 @@ const createUserFriendlyPDFError = (textQuality, fileName, pages) => {
 };
 
 // Enhanced but kept for fallback compatibility
-const extractTextFromPDFEnhanced = async (buffer, fileName, requestId, onProgress) => {
-  console.log(`📖 [${requestId}] Starting enhanced PDF text extraction...`);
-  console.log(`📄 [${requestId}] File: ${fileName}`);
+const extractTextFromPDFEnhanced = async (buffer, fileName, requestId, onProgress, mimetype) => {
+  console.log(`📖 [${requestId}] Starting enhanced text extraction...`);
+  console.log(`📄 [${requestId}] File: ${fileName} (${mimetype || 'application/pdf'})`);
 
   try {
+    // DOCX-Dateien: Direkte Extraktion via mammoth (kein OCR/Quality-Check nötig)
+    if (mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      console.log(`📄 [${requestId}] DOCX detected, extracting text via mammoth...`);
+      const docxResult = await extractTextFromBuffer(buffer, mimetype);
+      console.log(`✅ [${requestId}] DOCX text extraction successful: ${docxResult.text.length} characters`);
+      return {
+        success: true,
+        text: docxResult.text,
+        quality: { level: 'good', score: 100, reason: 'DOCX text extraction' },
+        pages: docxResult.pageCount || 0,
+        extractionMethod: 'mammoth-docx'
+      };
+    }
+
     console.log(`📄 [${requestId}] Step 1: Normal PDF text extraction...`);
-    
+
     const pdfOptions = {
       normalizeWhitespace: true,
       disableCombineTextItems: false,
@@ -2494,19 +2509,21 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       console.log(`⚠️ [${requestId}] Duplicate check skipped (not available)`);
     }
 
-    // Parse PDF content first
-    console.log(`📖 [${requestId}] Parsing PDF content...`);
+    // Parse document content first (PDF or DOCX)
+    const fileMimetype = req.file.mimetype;
+    console.log(`📖 [${requestId}] Parsing document content (${fileMimetype})...`);
     let pdfData;
     try {
-      pdfData = await pdfParse(buffer);
-      console.log(`📄 [${requestId}] PDF parsed: ${pdfData.numpages} pages, ${pdfData.text.length} characters`);
+      const extracted = await extractTextFromBuffer(buffer, fileMimetype);
+      pdfData = { text: extracted.text, numpages: extracted.pageCount || 0 };
+      console.log(`📄 [${requestId}] Document parsed: ${pdfData.numpages} pages, ${pdfData.text.length} characters`);
     } catch (error) {
-      console.error(`❌ [${requestId}] PDF parsing error:`, error);
+      console.error(`❌ [${requestId}] Document parsing error:`, error);
       return res.status(400).json({
         success: false,
-        message: "📄 PDF-Datei konnte nicht verarbeitet werden",
-        error: "PDF_PARSE_ERROR",
-        details: "Die Datei scheint beschädigt oder kein gültiges PDF zu sein",
+        message: "📄 Datei konnte nicht verarbeitet werden",
+        error: "PARSE_ERROR",
+        details: "Die Datei scheint beschädigt oder kein gültiges PDF/DOCX zu sein",
         requestId
       });
     }

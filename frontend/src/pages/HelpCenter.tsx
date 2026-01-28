@@ -53,7 +53,7 @@ const HelpCenter: React.FC = () => {
         {
           title: '2. Datei auswählen',
           description: 'Klicken Sie auf "Vertrag hochladen" oder ziehen Sie die PDF-Datei einfach per Drag & Drop in den markierten Bereich.',
-          tips: ['Unterstützte Formate: PDF, DOC, DOCX', 'Maximale Dateigröße: 10 MB', 'Mehrere Dateien gleichzeitig möglich']
+          tips: ['Unterstützte Formate: PDF, DOCX', 'Maximale Dateigröße: 10 MB', 'Mehrere Dateien gleichzeitig möglich']
         },
         {
           title: '3. Analyse warten',
@@ -855,7 +855,7 @@ const HelpCenter: React.FC = () => {
         },
         {
           title: '2. Vertrag hochladen',
-          description: 'Laden Sie den Vertrag hoch, den Sie verbessern möchten. Unterstützt werden PDF, DOC und DOCX.',
+          description: 'Laden Sie den Vertrag hoch, den Sie verbessern möchten. Unterstützt werden PDF und DOCX.',
         },
         {
           title: '3. Verbesserungsoptionen wählen',
@@ -918,7 +918,7 @@ const HelpCenter: React.FC = () => {
     },
     {
       question: 'Welche Dateiformate werden unterstützt?',
-      answer: 'Aktuell: PDF, DOC, DOCX. Maximale Dateigröße: 10 MB pro Vertrag. Bald auch: ODT, RTF, TXT. Scanns/Bilder (OCR) sind in Entwicklung.',
+      answer: 'Aktuell: PDF, DOCX. Maximale Dateigröße: 10 MB pro Vertrag. Scanns/Bilder (OCR) sind in Entwicklung.',
       category: 'technical'
     },
     {

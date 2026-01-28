@@ -157,7 +157,7 @@ export default function EmailTutorialModal({
             <div className={styles.notes}>
               <h4>📌 Wichtig:</h4>
               <ul>
-                <li>Nur PDF-Dateien werden verarbeitet (max. 15 MB)</li>
+                <li>PDF- und DOCX-Dateien werden verarbeitet (max. 15 MB)</li>
                 <li>E-Mails werden nicht gespeichert (nur Metadaten)</li>
                 <li>Du kannst deine Adresse jederzeit neu generieren</li>
               </ul>

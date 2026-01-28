@@ -1817,8 +1817,8 @@ export default function Optimizer() {
       const droppedFile = e.dataTransfer.files[0];
       const maxSize = 10 * 1024 * 1024; // 10 MB
 
-      if (droppedFile.type !== "application/pdf") {
-        setError("Nur PDF-Dateien werden unterstützt. Bitte wähle eine .pdf Datei.");
+      if (droppedFile.type !== "application/pdf" && droppedFile.type !== "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+        setError("Nur PDF- und DOCX-Dateien werden unterstützt. Bitte wähle eine .pdf oder .docx Datei.");
         setFile(null);
         return;
       }
@@ -1839,8 +1839,8 @@ export default function Optimizer() {
       const selectedFile = e.target.files[0];
       const maxSize = 10 * 1024 * 1024; // 10 MB
 
-      if (selectedFile.type !== "application/pdf") {
-        setError("Nur PDF-Dateien werden unterstützt. Bitte wähle eine .pdf Datei.");
+      if (selectedFile.type !== "application/pdf" && selectedFile.type !== "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+        setError("Nur PDF- und DOCX-Dateien werden unterstützt. Bitte wähle eine .pdf oder .docx Datei.");
         setFile(null);
         return;
       }
@@ -2680,7 +2680,7 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                 type="file"
                 ref={fileInputRef}
                 style={{ display: 'none' }}
-                accept="application/pdf"
+                accept=".pdf,.docx"
                 disabled={!isPremium}
                 onChange={handleFileChange}
               />

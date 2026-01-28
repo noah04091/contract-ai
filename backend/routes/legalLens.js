@@ -456,8 +456,11 @@ router.post('/smart-summary', verifyToken, async (req, res) => {
           });
         }
 
-        // Robuste PDF-Extraktion mit Qualitätsprüfung und OCR-Nutzungstracking
-        const extractionResult = await pdfExtractor.extractTextWithOCRFallback(pdfBuffer, { userId });
+        // Robuste Dokument-Extraktion mit Qualitätsprüfung und OCR-Nutzungstracking
+        const docMimetype = contract.s3Key?.endsWith('.docx')
+          ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          : 'application/pdf';
+        const extractionResult = await pdfExtractor.extractTextWithOCRFallback(pdfBuffer, { userId, mimetype: docMimetype });
 
         if (!extractionResult.success) {
           console.error(`❌ [Legal Lens] PDF-Extraktion fehlgeschlagen:`, extractionResult.error);
@@ -796,8 +799,11 @@ router.post('/parse', verifyToken, async (req, res) => {
           });
         }
 
-        // Robuste PDF-Extraktion mit Qualitätsprüfung und OCR-Nutzungstracking
-        const extractionResult = await pdfExtractor.extractTextWithOCRFallback(pdfBuffer, { userId });
+        // Robuste Dokument-Extraktion mit Qualitätsprüfung und OCR-Nutzungstracking
+        const docMimetype = contract.s3Key?.endsWith('.docx')
+          ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          : 'application/pdf';
+        const extractionResult = await pdfExtractor.extractTextWithOCRFallback(pdfBuffer, { userId, mimetype: docMimetype });
 
         if (!extractionResult.success) {
           console.error(`❌ [Legal Lens] PDF-Extraktion fehlgeschlagen:`, extractionResult.error);
@@ -2444,8 +2450,11 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
           return res.end();
         }
 
-        // Robuste PDF-Extraktion mit Qualitätsprüfung und OCR-Nutzungstracking
-        const extractionResult = await pdfExtractor.extractTextWithOCRFallback(pdfBuffer, { userId });
+        // Robuste Dokument-Extraktion mit Qualitätsprüfung und OCR-Nutzungstracking
+        const docMimetype = contract.s3Key?.endsWith('.docx')
+          ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          : 'application/pdf';
+        const extractionResult = await pdfExtractor.extractTextWithOCRFallback(pdfBuffer, { userId, mimetype: docMimetype });
         pdfQuality = extractionResult.quality;
 
         if (!extractionResult.success) {

@@ -5,6 +5,7 @@ const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
+const { extractTextFromBuffer } = require("../services/textExtractor");
 const fs = require("fs");
 const path = require("path");
 
@@ -55,8 +56,24 @@ const localStorage = multer.diskStorage({
 });
 const localUpload = multer({ storage: localStorage });
 
-// 🔧 HELPER: Extract PDF text with page numbers for precise citations
-async function extractPdfWithPages(pdfBuffer, maxChars = 15000) {
+// 🔧 HELPER: Extract document text with page numbers for precise citations (PDF + DOCX)
+async function extractPdfWithPages(pdfBuffer, maxChars = 15000, mimetype = 'application/pdf') {
+  // DOCX: Keine Seitenstruktur, direkte Extraktion
+  if (mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+    try {
+      const result = await extractTextFromBuffer(pdfBuffer, mimetype);
+      const text = result.text.substring(0, maxChars);
+      return {
+        annotatedText: text,
+        pages: [{ page: 1, text, charStart: 0, charEnd: text.length }],
+        totalPages: 1,
+        extractedPages: 1
+      };
+    } catch (error) {
+      console.error("❌ DOCX extraction failed:", error.message);
+      throw error;
+    }
+  }
   const pages = [];
   let totalChars = 0;
 
@@ -1241,8 +1258,9 @@ router.post("/:id/upload", verifyToken, localUpload.single("file"), async (req, 
       buffer = fs.readFileSync(req.file.path);
     }
 
-    const pdfData = await pdfParse(buffer);
-    pdfText = pdfData.text.substring(0, 15000); // Limit to 15k chars
+    const fileMimetype = req.file.mimetype || 'application/pdf';
+    const extractedDoc = await extractTextFromBuffer(buffer, fileMimetype);
+    pdfText = extractedDoc.text.substring(0, 15000); // Limit to 15k chars
 
     // Analyze contract type
     const contractType = await analyzeContractType(pdfText);
@@ -1268,7 +1286,7 @@ router.post("/:id/upload", verifyToken, localUpload.single("file"), async (req, 
           Bucket: process.env.S3_BUCKET_NAME,
           Key: s3Key,
           Body: buffer,
-          ContentType: "application/pdf",
+          ContentType: req.file.mimetype || "application/pdf",
         }));
         console.log(`✅ Chat PDF uploaded to S3: ${s3Key}`);
       } catch (s3Err) {

@@ -217,7 +217,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
   // ============================================
   const handleFileUpload = useCallback(async (file: File) => {
     // Validate file type
-    const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
     if (!validTypes.includes(file.type)) {
       setUploadError('Bitte nur PDF oder Word-Dokumente hochladen');
       setUploadState('error');
@@ -528,7 +528,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
             <input
               ref={fileInputRef}
               type="file"
-              accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              accept=".pdf,.docx"
               onChange={handleFileInputChange}
               style={{ display: 'none' }}
             />
@@ -554,7 +554,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
                     <Upload className={styles.uploadIconLarge} size={48} />
                   </motion.div>
                   <p className={styles.uploadTitle}>Drag & Drop oder klicken</p>
-                  <p className={styles.uploadHint}>PDF, DOC, DOCX (max. 10 MB)</p>
+                  <p className={styles.uploadHint}>PDF, DOCX (max. 10 MB)</p>
                 </>
               )}
 

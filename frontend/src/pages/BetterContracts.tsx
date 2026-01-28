@@ -450,7 +450,7 @@ const BetterContracts: React.FC = () => {
                 type="file"
                 ref={fileInputRef}
                 onChange={handleFileChange}
-                accept=".pdf,.docx,.doc,.txt"
+                accept=".pdf,.docx"
                 style={{ display: 'none' }}
                 disabled={!isPremium}
               />
@@ -479,7 +479,7 @@ const BetterContracts: React.FC = () => {
                     <>
                       <p className="upload-title">Vertrag hochladen</p>
                       <p className="upload-subtitle">
-                        {isPremium ? "PDF, DOCX oder Textdateien" : "Premium erforderlich"}
+                        {isPremium ? "PDF oder DOCX" : "Premium erforderlich"}
                       </p>
                     </>
                   )}

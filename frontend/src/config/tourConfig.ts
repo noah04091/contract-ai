@@ -122,7 +122,7 @@ export const contractsTour: TourConfig = {
     },
     {
       target: '[data-tour="contracts-upload-btn"]',
-      content: 'Klicke hier um neue Verträge hochzuladen. Unterstützt werden PDF, DOC und DOCX bis 10 MB. Einfach per Drag & Drop!',
+      content: 'Klicke hier um neue Verträge hochzuladen. Unterstützt werden PDF und DOCX bis 10 MB. Einfach per Drag & Drop!',
       title: '📄 Vertrag hochladen',
       placement: 'center',
     },

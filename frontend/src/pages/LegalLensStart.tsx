@@ -122,8 +122,8 @@ const LegalLensStart = () => {
   }, [searchQuery, contracts]);
 
   const handleFileUpload = async (file: File) => {
-    if (!file.type.includes('pdf')) {
-      setError('Bitte laden Sie eine PDF-Datei hoch');
+    if (!file.type.includes('pdf') && file.type !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      setError('Bitte laden Sie eine PDF- oder DOCX-Datei hoch');
       return;
     }
 
@@ -261,7 +261,7 @@ const LegalLensStart = () => {
                     <Lock size={14} style={{ marginLeft: '8px', color: '#9ca3af' }} />
                   )}
                 </h2>
-                <p className={styles.sectionSubtitle}>PDF hochladen zur Analyse</p>
+                <p className={styles.sectionSubtitle}>PDF oder DOCX hochladen zur Analyse</p>
 
                 <div
                   className={`${styles.uploadZone} ${dragActive ? styles.uploadZoneActive : ''} ${isUploading ? styles.uploadZoneDisabled : ''}`}
@@ -282,7 +282,7 @@ const LegalLensStart = () => {
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept=".pdf"
+                    accept=".pdf,.docx"
                     onChange={handleFileInput}
                     style={{ display: 'none' }}
                     disabled={isUploading || !hasAccess}
@@ -299,7 +299,7 @@ const LegalLensStart = () => {
                         <Upload size={32} />
                       </div>
                       <p className={styles.uploadTitle}>
-                        PDF ablegen oder <span className={styles.uploadLink}>auswählen</span>
+                        PDF oder DOCX ablegen oder <span className={styles.uploadLink}>auswählen</span>
                       </p>
                       <p className={styles.uploadMeta}>Max. 20 MB</p>
                     </>

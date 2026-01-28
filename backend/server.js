@@ -11,6 +11,7 @@ const path = require("path");
 const fs = require("fs").promises;
 const fsSync = require("fs");
 const pdfParse = require("pdf-parse");
+const { extractTextFromBuffer } = require("./services/textExtractor");
 const { OpenAI } = require("openai");
 const nodemailer = require("nodemailer");
 const { MongoClient, ObjectId } = require("mongodb");
@@ -1290,8 +1291,12 @@ const connectDB = async () => {
               Key: req.file.key
             }).promise();
             
-            const pdfData = await pdfParse(s3Object.Body);
-            analysisText = pdfData.text.substring(0, 5000);
+            // Determine mimetype from file key/name
+            const s3FileMimetype = req.file.key?.endsWith('.docx')
+              ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+              : 'application/pdf';
+            const parsedDoc = await extractTextFromBuffer(s3Object.Body, s3FileMimetype);
+            analysisText = parsedDoc.text.substring(0, 5000);
             
             // ✅ CALENDAR: Erweiterte Datenextraktion
             extractedData = await extractContractMetadata(analysisText);
