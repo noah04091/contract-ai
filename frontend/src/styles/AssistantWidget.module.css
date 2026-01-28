@@ -52,8 +52,8 @@
   position: fixed;
   inset: 0;
   z-index: 10001;
-  background: rgba(0, 0, 0, 0.15);
-  backdrop-filter: blur(2px);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.25) 0%, rgba(30, 64, 175, 0.15) 100%);
+  backdrop-filter: blur(4px);
   pointer-events: auto;
 }
 
@@ -74,13 +74,15 @@
 }
 
 .mascotSpeechBubble {
-  background: white;
-  border-radius: 24px;
-  padding: 24px 26px;
-  width: 300px;
-  box-shadow: 0 20px 60px rgba(30, 64, 175, 0.2),
-              0 8px 24px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.15);
+  background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
+  border-radius: 28px;
+  padding: 28px 30px;
+  width: 320px;
+  box-shadow: 0 25px 80px rgba(30, 64, 175, 0.25),
+              0 10px 30px rgba(0, 0, 0, 0.12),
+              0 0 0 1px rgba(59, 130, 246, 0.08),
+              inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(59, 130, 246, 0.12);
   position: relative;
   margin-bottom: 40px;
   margin-right: 8px;
@@ -92,59 +94,77 @@
   bottom: 50px;
   width: 18px;
   height: 18px;
-  background: white;
-  border-right: 1px solid rgba(59, 130, 246, 0.15);
-  border-bottom: 1px solid rgba(59, 130, 246, 0.15);
+  background: linear-gradient(135deg, #f8faff, #ffffff);
+  border-right: 1px solid rgba(59, 130, 246, 0.12);
+  border-bottom: 1px solid rgba(59, 130, 246, 0.12);
   transform: rotate(-45deg);
 }
 
 .mascotGreeting {
-  margin: 0 0 4px 0;
-  font-size: 12px;
-  font-weight: 600;
+  margin: 0 0 6px 0;
+  font-size: 11px;
+  font-weight: 700;
   color: #3b82f6;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.1em;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .mascotTitle {
-  margin: 0 0 10px 0;
-  font-size: 18px;
+  margin: 0 0 12px 0;
+  font-size: 20px;
   font-weight: 800;
   color: #0f172a;
   line-height: 1.3;
+  letter-spacing: -0.02em;
 }
 
 .mascotText {
-  margin: 0 0 18px 0;
+  margin: 0 0 20px 0;
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.7;
   color: #4b5563;
 }
 
 .mascotButton {
   display: block;
   width: 100%;
-  padding: 13px 0;
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  padding: 14px 0;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1e40af 100%);
   color: white;
   border: none;
   border-radius: 14px;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
-  letter-spacing: 0.01em;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35),
+              0 1px 3px rgba(30, 64, 175, 0.2);
+  letter-spacing: 0.02em;
+  position: relative;
+  overflow: hidden;
+}
+
+.mascotButton::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 50%);
+  border-radius: 14px;
 }
 
 .mascotButton:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.45);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5),
+              0 2px 6px rgba(30, 64, 175, 0.3);
 }
 
 .mascotButton:active {
   transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
 /* ============================================ */

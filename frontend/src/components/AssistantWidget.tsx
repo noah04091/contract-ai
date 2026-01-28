@@ -68,7 +68,7 @@ export default function AssistantWidget() {
     if (!onboardingSeen) {
       // First login ever → show onboarding card
       setShowOnboarding(true);
-      const timer = setTimeout(dismissOnboarding, 5000);
+      const timer = setTimeout(dismissOnboarding, 7000);
       return () => clearTimeout(timer);
     } else if (!shownThisSession) {
       // Returning user, new session → show short tooltip
@@ -301,7 +301,7 @@ export default function AssistantWidget() {
                   ease: "easeInOut",
                 }}
               >
-                <LawyerMascot size={180} />
+                <LawyerMascot size={220} />
               </motion.div>
             </motion.div>
           </motion.div>
