@@ -96,7 +96,7 @@ export function useCamera(): UseCameraReturn {
       let hasTorch = false;
       if (videoTrack) {
         try {
-          const capabilities = videoTrack.getCapabilities?.() as any;
+          const capabilities = videoTrack.getCapabilities?.() as MediaTrackCapabilities & { torch?: boolean };
           hasTorch = capabilities?.torch === true;
         } catch {
           // getCapabilities nicht unterstützt
@@ -110,19 +110,20 @@ export function useCamera(): UseCameraReturn {
         error: null,
         hasTorch,
       }));
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const domErr = err as DOMException;
       let errorMsg = "Kamera konnte nicht gestartet werden";
-      if (err.name === "NotAllowedError") {
+      if (domErr.name === "NotAllowedError") {
         errorMsg = "Kamera-Zugriff wurde verweigert";
-      } else if (err.name === "NotFoundError") {
+      } else if (domErr.name === "NotFoundError") {
         errorMsg = "Keine Kamera gefunden";
-      } else if (err.name === "NotReadableError") {
+      } else if (domErr.name === "NotReadableError") {
         errorMsg = "Kamera wird bereits verwendet";
       }
 
       setState((prev) => ({
         ...prev,
-        hasPermission: err.name === "NotAllowedError" ? false : prev.hasPermission,
+        hasPermission: domErr.name === "NotAllowedError" ? false : prev.hasPermission,
         error: errorMsg,
         isActive: false,
       }));
@@ -159,8 +160,8 @@ export function useCamera(): UseCameraReturn {
 
     const newTorchState = !state.torchOn;
     try {
-      await (track as any).applyConstraints({
-        advanced: [{ torch: newTorchState } as any],
+      await track.applyConstraints({
+        advanced: [{ torch: newTorchState } as MediaTrackConstraintSet],
       });
       setState((prev) => ({ ...prev, torchOn: newTorchState }));
     } catch {

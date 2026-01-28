@@ -176,9 +176,9 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
         onComplete(pdfFile);
         handleClose();
       }, 1200);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("[Scanner] Processing Error:", err);
-      setError(err.message || "Verarbeitung fehlgeschlagen");
+      setError(err instanceof Error ? err.message : "Verarbeitung fehlgeschlagen");
       setScannerState("error");
     }
   }, [pageCount, pages, enableOCR, onComplete]);
