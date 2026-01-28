@@ -60,25 +60,42 @@ export default function AssistantWidget() {
     sessionStorage.setItem('assistantShownThisSession', 'true');
   }, []);
 
-  // Smart onboarding/tooltip logic on mount
+  // Smart onboarding/tooltip logic - waits for cookie consent to be dismissed first
   useEffect(() => {
-    const onboardingSeen = localStorage.getItem('assistantOnboardingSeen');
-    const shownThisSession = sessionStorage.getItem('assistantShownThisSession');
+    const triggerOnboarding = () => {
+      const onboardingSeen = localStorage.getItem('assistantOnboardingSeen');
+      const shownThisSession = sessionStorage.getItem('assistantShownThisSession');
 
-    if (!onboardingSeen) {
-      // First login ever → show onboarding card
-      setShowOnboarding(true);
-      const timer = setTimeout(dismissOnboarding, 7000);
-      return () => clearTimeout(timer);
-    } else if (!shownThisSession) {
-      // Returning user, new session → show short tooltip
-      setShowTooltip(true);
-      const timer = setTimeout(dismissTooltip, 3000);
-      return () => clearTimeout(timer);
-    } else {
-      // Already shown this session → start minimized
-      setIsMinimized(true);
+      if (!onboardingSeen) {
+        setShowOnboarding(true);
+        const timer = setTimeout(dismissOnboarding, 7000);
+        return () => clearTimeout(timer);
+      } else if (!shownThisSession) {
+        setShowTooltip(true);
+        const timer = setTimeout(dismissTooltip, 3000);
+        return () => clearTimeout(timer);
+      } else {
+        setIsMinimized(true);
+      }
+    };
+
+    // Check if cookie consent already given
+    const cookieConsent = localStorage.getItem('cookieConsent');
+    if (cookieConsent) {
+      // Cookie consent already accepted → trigger immediately
+      return triggerOnboarding();
     }
+
+    // Cookie consent not yet given → poll until it appears
+    const interval = setInterval(() => {
+      if (localStorage.getItem('cookieConsent')) {
+        clearInterval(interval);
+        // Small delay so cookie banner animation finishes first
+        setTimeout(triggerOnboarding, 600);
+      }
+    }, 300);
+
+    return () => clearInterval(interval);
   }, [dismissOnboarding, dismissTooltip]);
 
   // Listen for changes to bot enabled/disabled setting
