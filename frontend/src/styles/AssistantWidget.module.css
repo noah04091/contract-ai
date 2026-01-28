@@ -51,54 +51,113 @@
 .onboardingTooltip {
   position: absolute;
   bottom: calc(100% + 16px);
-  right: 0;
+  right: -8px;
   background: white;
-  border-radius: 16px;
-  padding: 16px;
-  max-width: 260px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12),
-              0 2px 8px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  padding: 20px;
+  width: 280px;
+  box-shadow: 0 12px 40px rgba(59, 130, 246, 0.15),
+              0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.12);
   z-index: 10000;
-  animation: tooltipFadeIn 0.3s ease;
+  text-align: center;
 }
 
-.onboardingContent {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
+/* Lawyer Avatar */
+.lawyerAvatarWrapper {
+  position: relative;
+  display: inline-block;
   margin-bottom: 12px;
 }
 
-.onboardingEmoji {
-  font-size: 28px;
-  line-height: 1;
-  flex-shrink: 0;
+.lawyerAvatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 3px solid #3b82f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  font-size: 32px;
+  animation: avatarBounceIn 0.5s ease;
+}
+
+.avatarPulse {
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 2px solid rgba(59, 130, 246, 0.3);
+  animation: avatarPulse 2s ease-in-out infinite;
+}
+
+@keyframes avatarBounceIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes avatarPulse {
+  0%, 100% {
+    transform: translateX(-50%) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateX(-50%) scale(1.15);
+    opacity: 0;
+  }
+}
+
+.onboardingContent {
+  margin-bottom: 14px;
+}
+
+.onboardingTitle {
+  margin: 0 0 6px 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e40af;
 }
 
 .onboardingText {
   margin: 0;
   font-size: 13px;
   line-height: 1.5;
-  color: #374151;
+  color: #4b5563;
 }
 
 .onboardingButton {
   display: block;
   width: 100%;
-  padding: 8px 0;
+  padding: 10px 0;
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
   color: white;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.2s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
 .onboardingButton:hover {
   opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
 }
 
 /* ============================================ */

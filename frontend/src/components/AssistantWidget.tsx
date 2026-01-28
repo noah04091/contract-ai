@@ -29,7 +29,9 @@ export default function AssistantWidget() {
     const saved = localStorage.getItem('assistantBotEnabled');
     return saved === null ? true : saved === 'true';
   });
-  const [isHiddenByUser, setIsHiddenByUser] = useState(false);
+  const [isHiddenByUser, setIsHiddenByUser] = useState(() => {
+    return sessionStorage.getItem('assistantHiddenByUser') === 'true';
+  });
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   // Smart visibility states
@@ -255,20 +257,26 @@ export default function AssistantWidget() {
             exit={{ scale: 0, opacity: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
           >
-            {/* Onboarding Tooltip (first login ever) */}
+            {/* Onboarding Tooltip (first login ever) with lawyer avatar */}
             <AnimatePresence>
               {showOnboarding && (
                 <motion.div
                   className={styles.onboardingTooltip}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  transition={{ duration: 0.3 }}
+                  initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.9 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 >
+                  <div className={styles.lawyerAvatarWrapper}>
+                    <div className={styles.lawyerAvatar}>
+                      <span>👨‍⚖️</span>
+                    </div>
+                    <div className={styles.avatarPulse} />
+                  </div>
                   <div className={styles.onboardingContent}>
-                    <span className={styles.onboardingEmoji}>⚖️</span>
+                    <p className={styles.onboardingTitle}>Dein KI-Rechtsassistent</p>
                     <p className={styles.onboardingText}>
-                      Hallo! Ich bin dein KI-Rechtsassistent. Schreib mir jederzeit deine Fragen!
+                      Hallo! Ich bin hier, um dir bei Verträgen und rechtlichen Fragen zu helfen. Schreib mir jederzeit!
                     </p>
                   </div>
                   <button
@@ -307,6 +315,7 @@ export default function AssistantWidget() {
               onClick={(e) => {
                 e.stopPropagation();
                 setIsHiddenByUser(true);
+                sessionStorage.setItem('assistantHiddenByUser', 'true');
               }}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
