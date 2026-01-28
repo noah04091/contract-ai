@@ -590,10 +590,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid #f0f0f0;
   background: var(--panel);
   flex-shrink: 0;
-  box-shadow: 0 1px 3px var(--shadow);
 }
 
 .header > div:first-child {
@@ -658,7 +657,7 @@
   overflow-y: auto;
   overflow-x: hidden;
   padding: 24px;
-  background: var(--bg);
+  background: #ffffff;
   min-height: 0;
 }
 
@@ -681,15 +680,15 @@
 
 .thread {
   display: grid;
-  gap: 20px;
-  max-width: 900px;
+  gap: 24px;
+  max-width: 800px;
   margin: 0 auto;
 }
 
 .bubble {
   display: grid;
-  grid-template-columns: 36px 1fr;
-  gap: 12px;
+  grid-template-columns: 28px 1fr;
+  gap: 10px;
   animation: fadeIn 0.3s ease;
 }
 
@@ -705,22 +704,21 @@
 }
 
 .avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
   display: grid;
   place-items: center;
-  font-size: 18px;
+  font-size: 14px;
   flex-shrink: 0;
-  box-shadow: 0 2px 4px var(--shadow);
 }
 
 .aiAvatar {
-  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+  background: #3b82f6;
 }
 
 .userAvatar {
-  background: #e5e7eb;
+  background: #d1d5db;
 }
 
 .bubbleBody {
@@ -728,28 +726,30 @@
 }
 
 .bubbleHeader {
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .sender {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
-  color: var(--text);
+  color: var(--muted);
 }
 
 .bubbleContent {
-  background: var(--bubble);
-  border: 1px solid var(--border);
-  padding: 14px 16px;
-  border-radius: 14px;
-  line-height: 1.6;
+  background: transparent;
+  border: none;
+  padding: 4px 0;
+  border-radius: 0;
+  line-height: 1.7;
+  font-size: 14px;
   word-wrap: break-word;
-  box-shadow: 0 1px 3px var(--shadow);
 }
 
 .userBubble .bubbleContent {
-  background: var(--bubbleUserBg);
-  border-color: #bfdbfe;
+  background: #f4f4f5;
+  border: none;
+  border-radius: 18px;
+  padding: 12px 16px;
 }
 
 /* ==========================================
@@ -1002,11 +1002,10 @@
    ========================================== */
 
 .inputBar {
-  border-top: 1px solid var(--border);
-  padding: 16px 18px;
+  border-top: 1px solid #f0f0f0;
+  padding: 12px 18px;
   background: var(--panel);
   flex-shrink: 0;
-  box-shadow: 0 -1px 3px var(--shadow);
   transition: all 0.2s;
 }
 
@@ -1030,9 +1029,9 @@
 
 /* Attach Button (Upload) */
 .attachButton {
-  padding: 14px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
+  padding: 0;
+  border-radius: 50%;
+  border: none;
   background: transparent;
   color: var(--muted);
   cursor: pointer;
@@ -1040,8 +1039,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  align-self: stretch;
-  min-height: 56px;
+  width: 40px;
+  height: 40px;
+  align-self: flex-end;
+  flex-shrink: 0;
 }
 
 .attachButton svg {
@@ -1050,10 +1051,8 @@
 }
 
 .attachButton:hover:not(:disabled) {
-  background: #f9fafb;
-  border-color: var(--brand);
+  background: #f4f4f5;
   color: var(--text);
-  box-shadow: 0 2px 4px var(--shadow);
 }
 
 .attachButton:disabled {
@@ -1082,21 +1081,20 @@
   max-height: 180px;
   overflow: auto;
   outline: none;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: #ffffff;
+  border-radius: 24px;
+  border: none;
+  background: #f4f4f5;
   color: var(--text);
-  padding: 14px 16px;
+  padding: 12px 20px;
   font-size: 15px;
   font-family: inherit;
   line-height: 1.5;
   transition: all 0.2s;
-  box-shadow: 0 1px 3px var(--shadow);
 }
 
 .form textarea:focus {
-  border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  background: #efefef;
+  box-shadow: none;
 }
 
 .form textarea:disabled {
@@ -1106,30 +1104,30 @@
 }
 
 .sendButton {
-  padding: 14px 18px;
-  border-radius: 12px;
+  padding: 0;
+  border-radius: 50%;
   border: none;
-  background: linear-gradient(180deg, #3b82f6, #2563eb);
+  background: #3b82f6;
   color: white;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
-  align-self: stretch;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
-  min-height: 56px;
+  width: 40px;
+  height: 40px;
+  align-self: flex-end;
+  flex-shrink: 0;
 }
 
 .sendButton svg {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
 }
 
 .sendButton:hover:not(:disabled) {
-  background: linear-gradient(180deg, #2563eb, #1d4ed8);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  background: #2563eb;
+  transform: scale(1.05);
 }
 
 .sendButton:disabled {
