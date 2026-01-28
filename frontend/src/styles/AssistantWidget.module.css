@@ -48,11 +48,20 @@
 /* MASCOT ONBOARDING (first login ever) */
 /* ============================================ */
 
+.mascotOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  background: rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(2px);
+  pointer-events: auto;
+}
+
 .mascotContainer {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
-  z-index: 10000;
+  bottom: 32px;
+  right: 32px;
+  z-index: 10002;
   display: flex;
   align-items: flex-end;
   gap: 0;
@@ -61,76 +70,81 @@
 .mascotFigure {
   position: relative;
   flex-shrink: 0;
-  animation: mascotWave 2s ease-in-out 1s 3;
-  transform-origin: bottom center;
-}
-
-@keyframes mascotWave {
-  0%, 100% { transform: rotate(0deg); }
-  15% { transform: rotate(-5deg); }
-  30% { transform: rotate(5deg); }
-  45% { transform: rotate(-3deg); }
-  60% { transform: rotate(0deg); }
+  margin-bottom: -10px;
 }
 
 .mascotSpeechBubble {
   background: white;
-  border-radius: 20px;
-  padding: 18px 20px;
-  width: 240px;
-  box-shadow: 0 12px 40px rgba(59, 130, 246, 0.15),
-              0 4px 12px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(59, 130, 246, 0.12);
+  border-radius: 24px;
+  padding: 24px 26px;
+  width: 300px;
+  box-shadow: 0 20px 60px rgba(30, 64, 175, 0.2),
+              0 8px 24px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.15);
   position: relative;
-  margin-bottom: 20px;
+  margin-bottom: 40px;
   margin-right: 8px;
 }
 
 .speechArrow {
   position: absolute;
-  right: -8px;
-  bottom: 28px;
-  width: 16px;
-  height: 16px;
+  right: -9px;
+  bottom: 50px;
+  width: 18px;
+  height: 18px;
   background: white;
-  border-right: 1px solid rgba(59, 130, 246, 0.12);
-  border-bottom: 1px solid rgba(59, 130, 246, 0.12);
+  border-right: 1px solid rgba(59, 130, 246, 0.15);
+  border-bottom: 1px solid rgba(59, 130, 246, 0.15);
   transform: rotate(-45deg);
 }
 
+.mascotGreeting {
+  margin: 0 0 4px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #3b82f6;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 .mascotTitle {
-  margin: 0 0 6px 0;
-  font-size: 15px;
-  font-weight: 700;
-  color: #1e40af;
+  margin: 0 0 10px 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.3;
 }
 
 .mascotText {
-  margin: 0 0 14px 0;
-  font-size: 13px;
-  line-height: 1.5;
+  margin: 0 0 18px 0;
+  font-size: 14px;
+  line-height: 1.6;
   color: #4b5563;
 }
 
 .mascotButton {
   display: block;
   width: 100%;
-  padding: 10px 0;
+  padding: 13px 0;
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
   color: white;
   border: none;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 600;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
+  letter-spacing: 0.01em;
 }
 
 .mascotButton:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.45);
+}
+
+.mascotButton:active {
+  transform: translateY(0);
 }
 
 /* ============================================ */
@@ -575,6 +589,7 @@
   .chatBubbleContainer,
   .chatBubble,
   .chatWindow,
+  .mascotOverlay,
   .mascotContainer {
     display: none !important;
   }

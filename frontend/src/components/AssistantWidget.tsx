@@ -248,39 +248,61 @@ export default function AssistantWidget() {
 
   return (
     <>
-      {/* Mascot Onboarding - pops up from bottom */}
+      {/* Mascot Onboarding - pops up from bottom-right */}
       <AnimatePresence>
         {showOnboarding && !isOpen && (
           <motion.div
-            className={styles.mascotContainer}
-            initial={{ y: 200, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 200, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 200, damping: 18, delay: 0.3 }}
+            className={styles.mascotOverlay}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
           >
-            <div className={styles.mascotFigure}>
-              <LawyerMascot size={110} />
-            </div>
             <motion.div
-              className={styles.mascotSpeechBubble}
-              initial={{ opacity: 0, scale: 0.8, x: 20 }}
-              animate={{ opacity: 1, scale: 1, x: 0 }}
-              transition={{ delay: 0.8, type: "spring", stiffness: 300, damping: 20 }}
+              className={styles.mascotContainer}
+              initial={{ y: 300, opacity: 0, scale: 0.7 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: 300, opacity: 0, scale: 0.7 }}
+              transition={{ type: "spring", stiffness: 150, damping: 16, delay: 0.2 }}
             >
-              <p className={styles.mascotTitle}>Dein KI-Rechtsassistent</p>
-              <p className={styles.mascotText}>
-                Hallo! Ich helfe dir bei Verträgen und rechtlichen Fragen. Schreib mir jederzeit!
-              </p>
-              <button
-                className={styles.mascotButton}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  dismissOnboarding();
+              {/* Speech bubble appears from the left */}
+              <motion.div
+                className={styles.mascotSpeechBubble}
+                initial={{ opacity: 0, scale: 0.5, x: 60 }}
+                animate={{ opacity: 1, scale: 1, x: 0 }}
+                transition={{ delay: 1, type: "spring", stiffness: 250, damping: 18 }}
+              >
+                <p className={styles.mascotGreeting}>Willkommen bei Contract AI!</p>
+                <p className={styles.mascotTitle}>Ich bin dein KI-Rechtsassistent</p>
+                <p className={styles.mascotText}>
+                  Verträge analysieren, optimieren oder erstellen - ich helfe dir bei allen rechtlichen Fragen. Klick einfach auf mich!
+                </p>
+                <button
+                  className={styles.mascotButton}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    dismissOnboarding();
+                  }}
+                >
+                  Los geht's!
+                </button>
+                <div className={styles.speechArrow} />
+              </motion.div>
+
+              {/* Mascot figure */}
+              <motion.div
+                className={styles.mascotFigure}
+                animate={{
+                  y: [0, -8, 0],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut",
                 }}
               >
-                Verstanden
-              </button>
-              <div className={styles.speechArrow} />
+                <LawyerMascot size={180} />
+              </motion.div>
             </motion.div>
           </motion.div>
         )}

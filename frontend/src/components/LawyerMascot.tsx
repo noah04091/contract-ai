@@ -1,137 +1,333 @@
 // 📁 frontend/src/components/LawyerMascot.tsx
-// Fun 3D-style AI Lawyer Mascot for Contract AI
+// Premium AI Robot Lawyer Mascot - Contract AI Brand Character
 
-export default function LawyerMascot({ size = 120 }: { size?: number }) {
+export default function LawyerMascot({ size = 200 }: { size?: number }) {
   return (
     <svg
       width={size}
-      height={size}
-      viewBox="0 0 200 200"
+      height={size * 1.15}
+      viewBox="0 0 300 345"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      style={{ filter: 'drop-shadow(0 4px 12px rgba(30, 64, 175, 0.25))' }}
     >
-      {/* Body / Suit */}
-      <ellipse cx="100" cy="175" rx="52" ry="28" fill="#1e3a5f" />
-      <path
-        d="M58 150 C58 130, 142 130, 142 150 L142 175 C142 185, 58 185, 58 175 Z"
-        fill="url(#suitGradient)"
-      />
-      {/* Suit Lapels */}
-      <path d="M88 130 L100 160 L80 175" fill="#152d4a" opacity="0.7" />
-      <path d="M112 130 L100 160 L120 175" fill="#152d4a" opacity="0.7" />
-      {/* White Shirt / Collar */}
-      <path d="M90 130 L100 155 L110 130" fill="#f0f4ff" />
-      {/* Tie */}
-      <path d="M97 140 L100 165 L103 140 Z" fill="#3b82f6" />
-      <rect x="96" y="135" width="8" height="5" rx="1" fill="#2563eb" />
-
-      {/* Head */}
-      <ellipse cx="100" cy="90" rx="45" ry="48" fill="url(#headGradient)" />
-      {/* Face highlight (3D effect) */}
-      <ellipse cx="92" cy="78" rx="28" ry="30" fill="url(#faceHighlight)" opacity="0.4" />
-
-      {/* Hair */}
-      <path
-        d="M55 80 C55 50, 70 30, 100 28 C130 30, 145 50, 145 80 C145 65, 130 45, 100 43 C70 45, 55 65, 55 80 Z"
-        fill="#1a1a2e"
-      />
-      {/* Hair shine */}
-      <path
-        d="M70 55 C75 45, 90 38, 105 40 C95 42, 80 48, 73 58 Z"
-        fill="#2a2a4e"
-        opacity="0.6"
-      />
-
-      {/* Eyes - friendly */}
-      <ellipse cx="82" cy="88" rx="10" ry="11" fill="white" />
-      <ellipse cx="118" cy="88" rx="10" ry="11" fill="white" />
-      {/* Pupils */}
-      <ellipse cx="85" cy="89" rx="5.5" ry="6" fill="#1e3a5f" />
-      <ellipse cx="121" cy="89" rx="5.5" ry="6" fill="#1e3a5f" />
-      {/* Eye sparkle */}
-      <circle cx="87" cy="86" r="2" fill="white" />
-      <circle cx="123" cy="86" r="2" fill="white" />
-
-      {/* Glasses */}
-      <rect x="68" y="78" width="28" height="22" rx="6" stroke="#1e40af" strokeWidth="2.5" fill="none" />
-      <rect x="104" y="78" width="28" height="22" rx="6" stroke="#1e40af" strokeWidth="2.5" fill="none" />
-      <line x1="96" y1="88" x2="104" y2="88" stroke="#1e40af" strokeWidth="2.5" />
-      <line x1="68" y1="88" x2="58" y2="84" stroke="#1e40af" strokeWidth="2" />
-      <line x1="132" y1="88" x2="142" y2="84" stroke="#1e40af" strokeWidth="2" />
-
-      {/* Eyebrows - friendly raised */}
-      <path d="M72 74 Q82 68, 92 73" stroke="#1a1a2e" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-      <path d="M108 73 Q118 68, 128 74" stroke="#1a1a2e" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-
-      {/* Nose */}
-      <ellipse cx="100" cy="100" rx="4" ry="3" fill="#d4956b" opacity="0.5" />
-
-      {/* Mouth - big friendly smile */}
-      <path
-        d="M82 110 Q92 122, 100 122 Q108 122, 118 110"
-        stroke="#c0392b"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        fill="none"
-      />
-      {/* Teeth hint */}
-      <path
-        d="M88 112 Q94 118, 100 118 Q106 118, 112 112"
-        fill="white"
-        opacity="0.8"
-      />
-
-      {/* Cheeks - blush */}
-      <circle cx="70" cy="105" r="7" fill="#ff9999" opacity="0.25" />
-      <circle cx="130" cy="105" r="7" fill="#ff9999" opacity="0.25" />
-
-      {/* Left hand waving */}
-      <g transform="translate(-12, 8)">
-        <ellipse cx="52" cy="145" rx="10" ry="8" fill="url(#skinGradient)" transform="rotate(-15, 52, 145)" />
-        {/* Fingers */}
-        <rect x="42" y="133" width="5" height="12" rx="2.5" fill="url(#skinGradient)" transform="rotate(-20, 44, 139)" />
-        <rect x="48" y="130" width="5" height="14" rx="2.5" fill="url(#skinGradient)" transform="rotate(-10, 50, 137)" />
-        <rect x="54" y="129" width="5" height="14" rx="2.5" fill="url(#skinGradient)" transform="rotate(0, 56, 136)" />
-        <rect x="60" y="131" width="5" height="12" rx="2.5" fill="url(#skinGradient)" transform="rotate(10, 62, 137)" />
-      </g>
-
-      {/* Right hand holding document */}
-      <g transform="translate(10, 5)">
-        {/* Document */}
-        <rect x="138" y="130" width="22" height="28" rx="2" fill="white" stroke="#d1d5db" strokeWidth="1" transform="rotate(8, 149, 144)" />
-        <line x1="142" y1="137" x2="155" y2="135" stroke="#93c5fd" strokeWidth="1.5" transform="rotate(8, 149, 144)" />
-        <line x1="142" y1="142" x2="155" y2="140" stroke="#93c5fd" strokeWidth="1.5" transform="rotate(8, 149, 144)" />
-        <line x1="142" y1="147" x2="150" y2="146" stroke="#93c5fd" strokeWidth="1.5" transform="rotate(8, 149, 144)" />
-        {/* Checkmark on doc */}
-        <path d="M146 150 L149 154 L157 145" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" transform="rotate(8, 149, 144)" />
-        {/* Hand */}
-        <ellipse cx="148" cy="148" rx="10" ry="8" fill="url(#skinGradient)" transform="rotate(8, 148, 148)" />
-      </g>
-
-      {/* Scale of justice badge on lapel */}
-      <circle cx="85" cy="142" r="6" fill="#3b82f6" opacity="0.9" />
-      <text x="85" y="145" textAnchor="middle" fontSize="8" fill="white">⚖</text>
-
-      {/* Gradients */}
+      {/* === GLOW EFFECTS === */}
       <defs>
-        <linearGradient id="suitGradient" x1="58" y1="130" x2="142" y2="175">
-          <stop offset="0%" stopColor="#1e3a5f" />
-          <stop offset="100%" stopColor="#152d4a" />
+        {/* Main blue glow */}
+        <filter id="blueGlow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="6" result="glow" />
+          <feMerge>
+            <feMergeNode in="glow" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="3" result="glow" />
+          <feMerge>
+            <feMergeNode in="glow" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        <filter id="dropShadow" x="-20%" y="-10%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="8" stdDeviation="12" floodColor="#1e3a5f" floodOpacity="0.3" />
+        </filter>
+
+        {/* Suit gradient - deep navy */}
+        <linearGradient id="suitBody" x1="90" y1="200" x2="210" y2="310">
+          <stop offset="0%" stopColor="#0f172a" />
+          <stop offset="50%" stopColor="#1e293b" />
+          <stop offset="100%" stopColor="#0f172a" />
         </linearGradient>
-        <linearGradient id="headGradient" x1="55" y1="50" x2="145" y2="138">
-          <stop offset="0%" stopColor="#fcd5b0" />
-          <stop offset="100%" stopColor="#e8b88a" />
+        {/* Head metallic gradient */}
+        <linearGradient id="headMetal" x1="100" y1="30" x2="200" y2="180">
+          <stop offset="0%" stopColor="#e2e8f0" />
+          <stop offset="30%" stopColor="#f8fafc" />
+          <stop offset="70%" stopColor="#cbd5e1" />
+          <stop offset="100%" stopColor="#94a3b8" />
         </linearGradient>
-        <radialGradient id="faceHighlight" cx="0.4" cy="0.35" r="0.6">
-          <stop offset="0%" stopColor="white" />
-          <stop offset="100%" stopColor="transparent" />
+        {/* Face screen gradient */}
+        <linearGradient id="faceScreen" x1="115" y1="80" x2="185" y2="160">
+          <stop offset="0%" stopColor="#1e3a8a" />
+          <stop offset="50%" stopColor="#1e40af" />
+          <stop offset="100%" stopColor="#172554" />
+        </linearGradient>
+        {/* Eye glow */}
+        <radialGradient id="eyeGlow" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0%" stopColor="#60a5fa" />
+          <stop offset="60%" stopColor="#3b82f6" />
+          <stop offset="100%" stopColor="#2563eb" />
         </radialGradient>
-        <linearGradient id="skinGradient" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#fcd5b0" />
-          <stop offset="100%" stopColor="#e8b88a" />
+        {/* Tie gradient */}
+        <linearGradient id="tieGrad" x1="145" y1="195" x2="155" y2="260">
+          <stop offset="0%" stopColor="#3b82f6" />
+          <stop offset="100%" stopColor="#1d4ed8" />
+        </linearGradient>
+        {/* Scale glow */}
+        <radialGradient id="scaleGlow" cx="0.5" cy="0.5" r="0.6">
+          <stop offset="0%" stopColor="#fbbf24" />
+          <stop offset="100%" stopColor="#f59e0b" />
+        </radialGradient>
+        {/* Circuit line gradient */}
+        <linearGradient id="circuitGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#3b82f6" stopOpacity="0" />
+          <stop offset="50%" stopColor="#60a5fa" stopOpacity="0.8" />
+          <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+        </linearGradient>
+        {/* Shirt gradient */}
+        <linearGradient id="shirtGrad" x1="130" y1="195" x2="170" y2="220">
+          <stop offset="0%" stopColor="#f1f5f9" />
+          <stop offset="100%" stopColor="#e2e8f0" />
         </linearGradient>
       </defs>
+
+      <g filter="url(#dropShadow)">
+        {/* === BODY / SUIT === */}
+        {/* Shoulders wide */}
+        <path
+          d="M75 230 C75 210, 100 195, 150 195 C200 195, 225 210, 225 230 L230 310 C230 325, 70 325, 70 310 Z"
+          fill="url(#suitBody)"
+        />
+        {/* Suit shine left */}
+        <path
+          d="M85 220 C90 210, 115 200, 140 198 L120 310 L75 310 Z"
+          fill="white"
+          opacity="0.04"
+        />
+        {/* Lapel left */}
+        <path d="M120 198 L150 250 L105 290" fill="#0f172a" opacity="0.6" />
+        {/* Lapel right */}
+        <path d="M180 198 L150 250 L195 290" fill="#0f172a" opacity="0.6" />
+        {/* Lapel outline - subtle */}
+        <path d="M120 198 L150 250" stroke="#334155" strokeWidth="0.8" opacity="0.5" />
+        <path d="M180 198 L150 250" stroke="#334155" strokeWidth="0.8" opacity="0.5" />
+
+        {/* White shirt V */}
+        <path d="M128 198 L150 240 L172 198" fill="url(#shirtGrad)" />
+
+        {/* Tie */}
+        <path d="M146 210 L150 265 L154 210 Z" fill="url(#tieGrad)" />
+        <rect x="144" y="205" width="12" height="7" rx="2" fill="#2563eb" />
+        {/* Tie shine */}
+        <path d="M148 215 L150 260 L149 215 Z" fill="white" opacity="0.15" />
+
+        {/* Pocket square */}
+        <path d="M185 225 L195 218 L200 228 L192 232 Z" fill="#60a5fa" opacity="0.7" />
+
+        {/* === SCALE OF JUSTICE BADGE === */}
+        <g transform="translate(100, 228)" filter="url(#softGlow)">
+          <circle cx="0" cy="0" r="12" fill="url(#scaleGlow)" />
+          {/* Scale post */}
+          <line x1="0" y1="-7" x2="0" y2="5" stroke="#92400e" strokeWidth="1.5" />
+          {/* Scale beam */}
+          <line x1="-7" y1="-5" x2="7" y2="-5" stroke="#92400e" strokeWidth="1.5" />
+          {/* Scale plates */}
+          <path d="M-9 -5 Q-8 -1, -5 -1 Q-2 -1, -1 -5" stroke="#92400e" strokeWidth="1" fill="none" />
+          <path d="M1 -5 Q2 -1, 5 -1 Q8 -1, 9 -5" stroke="#92400e" strokeWidth="1" fill="none" />
+          {/* Scale base */}
+          <path d="M-5 5 L5 5 L3 7 L-3 7 Z" fill="#92400e" />
+        </g>
+
+        {/* === HEAD === */}
+        {/* Head shell - metallic */}
+        <ellipse cx="150" cy="110" rx="62" ry="68" fill="url(#headMetal)" />
+
+        {/* Head top ridge */}
+        <path
+          d="M95 90 C95 55, 120 35, 150 33 C180 35, 205 55, 205 90"
+          fill="none"
+          stroke="#94a3b8"
+          strokeWidth="2"
+          opacity="0.5"
+        />
+
+        {/* Antenna / AI indicator */}
+        <g transform="translate(150, 33)">
+          <line x1="0" y1="0" x2="0" y2="-18" stroke="#94a3b8" strokeWidth="2.5" />
+          <circle cx="0" cy="-22" r="5" fill="#3b82f6" filter="url(#blueGlow)">
+            <animate attributeName="opacity" values="0.6;1;0.6" dur="2s" repeatCount="indefinite" />
+          </circle>
+          <circle cx="0" cy="-22" r="2.5" fill="#93c5fd" />
+        </g>
+
+        {/* Face screen / visor */}
+        <rect x="102" y="75" width="96" height="70" rx="20" fill="url(#faceScreen)" />
+        {/* Screen inner glow */}
+        <rect x="106" y="79" width="88" height="62" rx="17" fill="none" stroke="#3b82f6" strokeWidth="0.5" opacity="0.4" />
+        {/* Screen reflection */}
+        <path
+          d="M110 82 C115 79, 175 79, 185 85 L185 90 C175 84, 120 84, 110 88 Z"
+          fill="white"
+          opacity="0.08"
+        />
+
+        {/* === EYES === */}
+        {/* Left eye */}
+        <g>
+          <ellipse cx="130" cy="108" rx="14" ry="13" fill="url(#eyeGlow)" filter="url(#softGlow)">
+            <animate attributeName="ry" values="13;1;13" dur="4s" begin="2s" repeatCount="indefinite" />
+          </ellipse>
+          <ellipse cx="130" cy="108" rx="8" ry="8" fill="#1e3a8a" />
+          <ellipse cx="130" cy="108" rx="5" ry="5" fill="#60a5fa" />
+          <circle cx="133" cy="105" r="2.5" fill="white" opacity="0.9" />
+          <circle cx="127" cy="111" r="1.2" fill="white" opacity="0.4" />
+        </g>
+        {/* Right eye */}
+        <g>
+          <ellipse cx="170" cy="108" rx="14" ry="13" fill="url(#eyeGlow)" filter="url(#softGlow)">
+            <animate attributeName="ry" values="13;1;13" dur="4s" begin="2s" repeatCount="indefinite" />
+          </ellipse>
+          <ellipse cx="170" cy="108" rx="8" ry="8" fill="#1e3a8a" />
+          <ellipse cx="170" cy="108" rx="5" ry="5" fill="#60a5fa" />
+          <circle cx="173" cy="105" r="2.5" fill="white" opacity="0.9" />
+          <circle cx="167" cy="111" r="1.2" fill="white" opacity="0.4" />
+        </g>
+
+        {/* === SMILE === */}
+        <path
+          d="M130 130 Q140 142, 150 142 Q160 142, 170 130"
+          stroke="#60a5fa"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          fill="none"
+          filter="url(#softGlow)"
+        />
+
+        {/* === CIRCUIT PATTERNS ON HEAD === */}
+        {/* Left side circuits */}
+        <g opacity="0.3">
+          <path d="M92 95 L88 95 L88 110 L92 110" stroke="#3b82f6" strokeWidth="1" fill="none" />
+          <circle cx="88" cy="102" r="2" fill="#3b82f6" />
+          <path d="M92 120 L85 120" stroke="#3b82f6" strokeWidth="1" fill="none" />
+          <circle cx="85" cy="120" r="1.5" fill="#60a5fa" />
+        </g>
+        {/* Right side circuits */}
+        <g opacity="0.3">
+          <path d="M208 95 L212 95 L212 110 L208 110" stroke="#3b82f6" strokeWidth="1" fill="none" />
+          <circle cx="212" cy="102" r="2" fill="#3b82f6" />
+          <path d="M208 120 L215 120" stroke="#3b82f6" strokeWidth="1" fill="none" />
+          <circle cx="215" cy="120" r="1.5" fill="#60a5fa" />
+        </g>
+
+        {/* === EARS / SIDE PANELS === */}
+        <rect x="82" y="95" width="10" height="30" rx="5" fill="#cbd5e1" stroke="#94a3b8" strokeWidth="1" />
+        <rect x="208" y="95" width="10" height="30" rx="5" fill="#cbd5e1" stroke="#94a3b8" strokeWidth="1" />
+        {/* Ear lights */}
+        <circle cx="87" cy="105" r="2.5" fill="#3b82f6" opacity="0.7">
+          <animate attributeName="opacity" values="0.4;0.9;0.4" dur="3s" repeatCount="indefinite" />
+        </circle>
+        <circle cx="213" cy="105" r="2.5" fill="#3b82f6" opacity="0.7">
+          <animate attributeName="opacity" values="0.4;0.9;0.4" dur="3s" begin="1.5s" repeatCount="indefinite" />
+        </circle>
+
+        {/* === NECK === */}
+        <rect x="135" y="172" width="30" height="26" rx="4" fill="#cbd5e1" />
+        <line x1="142" y1="175" x2="142" y2="195" stroke="#94a3b8" strokeWidth="0.5" opacity="0.5" />
+        <line x1="150" y1="175" x2="150" y2="195" stroke="#94a3b8" strokeWidth="0.5" opacity="0.5" />
+        <line x1="158" y1="175" x2="158" y2="195" stroke="#94a3b8" strokeWidth="0.5" opacity="0.5" />
+
+        {/* === LEFT ARM - RAISED WAVING === */}
+        <g>
+          {/* Upper arm */}
+          <path
+            d="M80 220 C60 210, 40 180, 35 160"
+            stroke="#0f172a"
+            strokeWidth="22"
+            strokeLinecap="round"
+            fill="none"
+          />
+          {/* Arm shine */}
+          <path
+            d="M80 220 C60 210, 40 180, 35 160"
+            stroke="#1e293b"
+            strokeWidth="18"
+            strokeLinecap="round"
+            fill="none"
+          />
+          {/* Hand / glove */}
+          <circle cx="33" cy="152" r="16" fill="#e2e8f0" />
+          <circle cx="33" cy="152" r="14" fill="#f1f5f9" />
+          {/* Fingers */}
+          <ellipse cx="22" cy="140" rx="5" ry="8" fill="#f1f5f9" transform="rotate(-20, 22, 140)" />
+          <ellipse cx="30" cy="136" rx="4.5" ry="9" fill="#f1f5f9" transform="rotate(-5, 30, 136)" />
+          <ellipse cx="38" cy="135" rx="4.5" ry="9" fill="#f1f5f9" transform="rotate(5, 38, 135)" />
+          <ellipse cx="46" cy="138" rx="4.5" ry="8" fill="#f1f5f9" transform="rotate(15, 46, 138)" />
+          {/* Wrist detail */}
+          <circle cx="33" cy="160" r="3" fill="#3b82f6" opacity="0.5" />
+        </g>
+
+        {/* === RIGHT ARM - HOLDING SCALES === */}
+        <g>
+          {/* Upper arm */}
+          <path
+            d="M220 220 C240 205, 250 180, 248 160"
+            stroke="#0f172a"
+            strokeWidth="22"
+            strokeLinecap="round"
+            fill="none"
+          />
+          <path
+            d="M220 220 C240 205, 250 180, 248 160"
+            stroke="#1e293b"
+            strokeWidth="18"
+            strokeLinecap="round"
+            fill="none"
+          />
+          {/* Hand */}
+          <circle cx="248" cy="152" r="14" fill="#f1f5f9" />
+
+          {/* === FLOATING SCALES OF JUSTICE === */}
+          <g filter="url(#blueGlow)">
+            {/* Center post */}
+            <line x1="248" y1="100" x2="248" y2="140" stroke="#fbbf24" strokeWidth="2.5" />
+            {/* Top ornament */}
+            <circle cx="248" cy="96" r="5" fill="#fbbf24" />
+            <circle cx="248" cy="96" r="3" fill="#fde68a" />
+            {/* Beam */}
+            <line x1="225" y1="108" x2="271" y2="108" stroke="#fbbf24" strokeWidth="2" />
+            {/* Left chain */}
+            <line x1="228" y1="108" x2="228" y2="122" stroke="#fbbf24" strokeWidth="1.2" />
+            <line x1="225" y1="108" x2="225" y2="120" stroke="#fbbf24" strokeWidth="1" />
+            <line x1="231" y1="108" x2="231" y2="120" stroke="#fbbf24" strokeWidth="1" />
+            {/* Left plate */}
+            <ellipse cx="228" cy="125" rx="10" ry="4" fill="#fbbf24" />
+            <ellipse cx="228" cy="124" rx="9" ry="3" fill="#fde68a" />
+            {/* Right chain */}
+            <line x1="268" y1="108" x2="268" y2="122" stroke="#fbbf24" strokeWidth="1.2" />
+            <line x1="265" y1="108" x2="265" y2="120" stroke="#fbbf24" strokeWidth="1" />
+            <line x1="271" y1="108" x2="271" y2="120" stroke="#fbbf24" strokeWidth="1" />
+            {/* Right plate */}
+            <ellipse cx="268" cy="125" rx="10" ry="4" fill="#fbbf24" />
+            <ellipse cx="268" cy="124" rx="9" ry="3" fill="#fde68a" />
+          </g>
+        </g>
+
+        {/* === SUIT BUTTONS === */}
+        <circle cx="150" cy="270" r="3" fill="#334155" stroke="#475569" strokeWidth="0.5" />
+        <circle cx="150" cy="285" r="3" fill="#334155" stroke="#475569" strokeWidth="0.5" />
+
+        {/* === CIRCUIT PATTERN ON SUIT === */}
+        <g opacity="0.15">
+          <line x1="110" y1="250" x2="110" y2="280" stroke="#3b82f6" strokeWidth="0.8" />
+          <line x1="110" y1="265" x2="120" y2="265" stroke="#3b82f6" strokeWidth="0.8" />
+          <circle cx="120" cy="265" r="1.5" fill="#3b82f6" />
+          <line x1="190" y1="245" x2="190" y2="275" stroke="#3b82f6" strokeWidth="0.8" />
+          <line x1="190" y1="260" x2="180" y2="260" stroke="#3b82f6" strokeWidth="0.8" />
+          <circle cx="180" cy="260" r="1.5" fill="#3b82f6" />
+        </g>
+
+        {/* === FLOATING PARTICLES === */}
+        <circle cx="60" cy="80" r="2" fill="#3b82f6" opacity="0.4">
+          <animate attributeName="cy" values="80;70;80" dur="3s" repeatCount="indefinite" />
+          <animate attributeName="opacity" values="0.2;0.6;0.2" dur="3s" repeatCount="indefinite" />
+        </circle>
+        <circle cx="240" cy="70" r="1.5" fill="#60a5fa" opacity="0.3">
+          <animate attributeName="cy" values="70;60;70" dur="2.5s" repeatCount="indefinite" />
+          <animate attributeName="opacity" values="0.1;0.5;0.1" dur="2.5s" repeatCount="indefinite" />
+        </circle>
+        <circle cx="55" cy="150" r="1.5" fill="#93c5fd" opacity="0.3">
+          <animate attributeName="cy" values="150;140;150" dur="4s" repeatCount="indefinite" />
+          <animate attributeName="opacity" values="0.2;0.5;0.2" dur="4s" repeatCount="indefinite" />
+        </circle>
+      </g>
     </svg>
   );
 }

@@ -16,7 +16,8 @@ import {
   SlidersHorizontal, // 📱 Mobile Filter Icon
   Star, // ⭐ Favoriten-Icon
   Scale, // ⚖️ Rechtsprüfung Icon
-  Radar // 📡 Legal Pulse Icon
+  Radar, // 📡 Legal Pulse Icon
+  Camera // 📸 Document Scanner Icon
 } from "lucide-react";
 import styles from "../styles/Contracts.module.css";
 import ContractAnalysis from "../components/ContractAnalysis";
@@ -40,6 +41,7 @@ import { useCelebrationContext } from "../components/Celebration"; // 🎉 Celeb
 import { SimpleTour } from "../components/Tour"; // 🎯 Simple Tour (zuverlässiger)
 import { triggerOnboardingSync, useOnboarding } from "../hooks/useOnboarding"; // 🎓 Onboarding Sync
 import { useCalendarStore } from "../stores/calendarStore"; // 📅 Calendar Cache Invalidation
+import { useDocumentScanner } from "../hooks/useDocumentScanner";
 
 interface Contract {
   _id: string;
@@ -341,6 +343,18 @@ export default function Contracts() {
   }>({
     show: false,
     contract: null
+  });
+
+  const { openScanner, ScannerModal } = useDocumentScanner((file) => {
+    const newUploadFile: UploadFileItem = {
+      id: `${Date.now()}_0`,
+      file,
+      status: 'pending',
+      progress: 0
+    };
+    setUploadFiles([newUploadFile]);
+    setSelectedFile(file);
+    setActiveSection('upload');
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -4346,6 +4360,31 @@ export default function Contracts() {
                       )}
                     </div>
 
+                    {/* 📸 Dokument scannen Button */}
+                    {uploadFiles.length === 0 && (
+                      <div style={{ marginTop: '12px', textAlign: 'center' }}>
+                        <button
+                          onClick={openScanner}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            padding: "8px 16px",
+                            borderRadius: "8px",
+                            border: "1px solid rgba(99, 102, 241, 0.3)",
+                            background: "rgba(99, 102, 241, 0.1)",
+                            color: "#818cf8",
+                            fontSize: "14px",
+                            cursor: "pointer",
+                            transition: "all 0.2s",
+                          }}
+                        >
+                          <Camera size={16} />
+                          Dokument scannen
+                        </button>
+                      </div>
+                    )}
+
                     {/* 📋 User Flow - Horizontal mit Icons wie im Mockup */}
                     {uploadFiles.length === 0 && (
                       <div className={styles.uploadFlowSteps}>
@@ -5869,6 +5908,7 @@ export default function Contracts() {
         </div>,
         document.body
       )}
+      {ScannerModal}
     </>
   );
 }

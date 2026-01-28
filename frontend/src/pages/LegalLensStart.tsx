@@ -7,10 +7,11 @@ import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Upload, FileText, ChevronRight, Loader, AlertCircle,
-  Eye, Scale, Lightbulb, Lock, Sparkles, X
+  Eye, Scale, Lightbulb, Lock, Sparkles, X, Camera
 } from 'lucide-react';
 import styles from '../styles/LegalLensStart.module.css';
 import UnifiedPremiumNotice from '../components/UnifiedPremiumNotice';
+import { useDocumentScanner } from '../hooks/useDocumentScanner';
 
 // Plans mit vollem Legal Lens Zugriff
 const LEGAL_LENS_ACCESS_PLANS = ['business', 'enterprise'];
@@ -40,6 +41,11 @@ const LegalLensStart = () => {
   const [userPlan, setUserPlan] = useState<string>('free');
   const [planLoading, setPlanLoading] = useState(true);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
+  // 📸 Document Scanner
+  const { openScanner, ScannerModal } = useDocumentScanner((file) => {
+    handleFileUpload(file);
+  });
 
   // Prüfen ob User Zugriff hat
   const hasAccess = LEGAL_LENS_ACCESS_PLANS.includes(userPlan);
@@ -306,6 +312,34 @@ const LegalLensStart = () => {
                   )}
                 </div>
 
+                {/* 📸 Dokument scannen Button */}
+                {hasAccess && !isUploading && (
+                  <div style={{ marginTop: '12px', textAlign: 'center' }}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openScanner();
+                      }}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        padding: "8px 16px",
+                        borderRadius: "8px",
+                        border: "1px solid rgba(99, 102, 241, 0.3)",
+                        background: "rgba(99, 102, 241, 0.1)",
+                        color: "#818cf8",
+                        fontSize: "14px",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                      }}
+                    >
+                      <Camera size={16} />
+                      Dokument scannen
+                    </button>
+                  </div>
+                )}
+
                 {error && (
                   <div className={styles.error}>
                     <AlertCircle size={16} />
@@ -561,6 +595,7 @@ const LegalLensStart = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      {ScannerModal}
     </>
   );
 };

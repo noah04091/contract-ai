@@ -5,7 +5,8 @@ import { useLocation } from "react-router-dom";
 import styles from "../styles/Chat.module.css";
 import { useAuth } from "../context/AuthContext";
 import { WelcomePopup } from "../components/Tour";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Camera } from "lucide-react";
+import { useDocumentScanner } from "../hooks/useDocumentScanner";
 
 type ChatLite = {
   _id: string;
@@ -69,6 +70,11 @@ export default function Chat() {
   const [uploading, setUploading] = useState(false);
   const [smartQuestions, setSmartQuestions] = useState<string[]>([]);
   const [dragActive, setDragActive] = useState(false);
+
+  // 📸 Document Scanner
+  const { openScanner, ScannerModal } = useDocumentScanner((file) => {
+    uploadContract(file);
+  });
 
   const scrollerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -852,6 +858,18 @@ export default function Chat() {
                 <button
                   type="button"
                   className={styles.attachButton}
+                  onClick={openScanner}
+                  disabled={uploading || loading}
+                  title="Dokument scannen"
+                  style={{ marginRight: '4px' }}
+                >
+                  <Camera size={18} />
+                </button>
+              )}
+              {active && (
+                <button
+                  type="button"
+                  className={styles.attachButton}
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploading || loading}
                   title="PDF-Vertrag hochladen"
@@ -907,6 +925,7 @@ export default function Chat() {
           </div>
         </main>
       </div>
+      {ScannerModal}
     </>
   );
 }

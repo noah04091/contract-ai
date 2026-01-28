@@ -8,11 +8,13 @@ import {
   Users, Briefcase, Building, Zap, Scale, AlertTriangle,
   Eye, EyeOff, Star, Award, ThumbsUp, ThumbsDown,
   GitCompare, FileCheck, Trophy, Layers,
-  ChevronUp, ChevronDown, History, Trash2, X
+  ChevronUp, ChevronDown, History, Trash2, X,
+  Camera
 } from "lucide-react";
 import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
 import { WelcomePopup } from "../components/Tour";
 import { PageHeader } from "../components/PageHeader";
+import { useDocumentScanner } from "../hooks/useDocumentScanner";
 
 // Enhanced types for better comparison structure
 interface ComparisonDifference {
@@ -762,6 +764,14 @@ export default function EnhancedCompare() {
   const file1InputRef = useRef<HTMLInputElement>(null);
   const file2InputRef = useRef<HTMLInputElement>(null);
   const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null);
+
+  // 📸 Document Scanners for both file inputs
+  const { openScanner: openScanner1, ScannerModal: ScannerModal1 } = useDocumentScanner((file) => {
+    setFile1(file);
+  });
+  const { openScanner: openScanner2, ScannerModal: ScannerModal2 } = useDocumentScanner((file) => {
+    setFile2(file);
+  });
 
   // 🚨 DEBUG: Component Render Log
   console.log("🚨 COMPONENT RENDER - Current isPremium state:", isPremium);
@@ -1599,6 +1609,30 @@ export default function EnhancedCompare() {
                   </div>
                 )}
               </motion.div>
+              {/* 📸 Scan Button for Contract 1 */}
+              {!file1 && isPremium && (
+                <div style={{ marginTop: '8px', textAlign: 'center' }}>
+                  <button
+                    onClick={openScanner1}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      padding: "8px 16px",
+                      borderRadius: "8px",
+                      border: "1px solid rgba(99, 102, 241, 0.3)",
+                      background: "rgba(99, 102, 241, 0.1)",
+                      color: "#818cf8",
+                      fontSize: "14px",
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                    }}
+                  >
+                    <Camera size={16} />
+                    Dokument scannen
+                  </button>
+                </div>
+              )}
 
               {/* VS Connector */}
               <div className="vs-connector">
@@ -1692,8 +1726,32 @@ export default function EnhancedCompare() {
                   </div>
                 )}
               </motion.div>
+              {/* 📸 Scan Button for Contract 2 */}
+              {!file2 && isPremium && (
+                <div style={{ marginTop: '8px', textAlign: 'center' }}>
+                  <button
+                    onClick={openScanner2}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      padding: "8px 16px",
+                      borderRadius: "8px",
+                      border: "1px solid rgba(99, 102, 241, 0.3)",
+                      background: "rgba(99, 102, 241, 0.1)",
+                      color: "#818cf8",
+                      fontSize: "14px",
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                    }}
+                  >
+                    <Camera size={16} />
+                    Dokument scannen
+                  </button>
+                </div>
+              )}
             </div>
-            
+
             {/* 📊 SSE Progress Bar */}
             {loading && progress && (
               <motion.div
@@ -3190,6 +3248,8 @@ export default function EnhancedCompare() {
           }
         `}</style>
       </div>
+      {ScannerModal1}
+      {ScannerModal2}
     </>
   );
 }

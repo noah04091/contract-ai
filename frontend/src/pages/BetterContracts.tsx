@@ -2,12 +2,13 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { Helmet } from "react-helmet-async";
-import { SearchCheck, TrendingDown, Star, Bookmark } from "lucide-react";
+import { SearchCheck, TrendingDown, Star, Bookmark, Camera } from "lucide-react";
 import BetterContractsResults from "../components/BetterContractsResults";
 import SavedAlternativesFull from "../components/SavedAlternativesFull";
 import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
 import { PageHeader } from "../components/PageHeader";
 import "../styles/ContractPages.css";
+import { useDocumentScanner } from "../hooks/useDocumentScanner";
 
 interface ApiResponse {
   analysis: string;
@@ -60,6 +61,11 @@ const BetterContracts: React.FC = () => {
   // FAB States for saved alternatives
   const [savedAlternativesCount, setSavedAlternativesCount] = useState(0);
   const [showFAB, setShowFAB] = useState(false);
+
+  // 📸 Document Scanner
+  const { openScanner, ScannerModal } = useDocumentScanner((file) => {
+    processFile(file);
+  });
 
   // ✅ AUTH CHECK (vereinfacht - nur redirect wenn nicht eingeloggt):
   useEffect(() => {
@@ -495,6 +501,31 @@ const BetterContracts: React.FC = () => {
                 </div>
               </div>
 
+              {/* 📸 Dokument scannen Button */}
+              {isPremium && (
+                <div style={{ marginTop: '12px', textAlign: 'center' }}>
+                  <button
+                    onClick={openScanner}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      padding: "8px 16px",
+                      borderRadius: "8px",
+                      border: "1px solid rgba(99, 102, 241, 0.3)",
+                      background: "rgba(99, 102, 241, 0.1)",
+                      color: "#818cf8",
+                      fontSize: "14px",
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                    }}
+                  >
+                    <Camera size={16} />
+                    Dokument scannen
+                  </button>
+                </div>
+              )}
+
               <div className="divider-container">
                 <div className="divider"></div>
                 <span className="divider-text">oder</span>
@@ -756,6 +787,7 @@ const BetterContracts: React.FC = () => {
         )}
 
       </div>
+      {ScannerModal}
     </>
   );
 };

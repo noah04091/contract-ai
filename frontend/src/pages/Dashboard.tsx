@@ -20,6 +20,8 @@ import { useAuth } from "../context/AuthContext"; // 🔐 Auth Context
 // 🎛️ Dashboard Customization
 import { useDashboardConfig } from "../hooks/useDashboardConfig";
 import DashboardSettingsModal from "../components/DashboardSettingsModal";
+import { Camera } from "lucide-react";
+import { useDocumentScanner } from "../hooks/useDocumentScanner";
 
 interface Contract {
   _id: string;
@@ -73,6 +75,12 @@ export default function Dashboard() {
   } = useDashboardConfig();
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+
+  // 📸 Document Scanner
+  const { openScanner, ScannerModal } = useDocumentScanner((scannedFile) => {
+    setFile(scannedFile);
+    setShowModal(true);
+  });
 
   // 🎯 SMART PRIORITY LOGIK
   const calculatePriorityContracts = (allContracts: Contract[]) => {
@@ -1656,6 +1664,27 @@ export default function Dashboard() {
                         />
                       </label>
                       <p className={styles.fileHint}>Nur PDF- und DOCX-Dateien werden unterstützt</p>
+                      <div style={{ marginTop: '12px' }}>
+                        <button
+                          onClick={openScanner}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            padding: "8px 16px",
+                            borderRadius: "8px",
+                            border: "1px solid rgba(99, 102, 241, 0.3)",
+                            background: "rgba(99, 102, 241, 0.1)",
+                            color: "#818cf8",
+                            fontSize: "14px",
+                            cursor: "pointer",
+                            transition: "all 0.2s",
+                          }}
+                        >
+                          <Camera size={16} />
+                          Dokument scannen
+                        </button>
+                      </div>
                     </>
                   )}
                 </div>
@@ -1715,6 +1744,7 @@ export default function Dashboard() {
         isEditMode={isEditMode}
         onToggleEditMode={() => setIsEditMode(!isEditMode)}
       />
+      {ScannerModal}
     </div>
   );
 }
