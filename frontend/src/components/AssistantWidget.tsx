@@ -1,7 +1,7 @@
 // 📁 frontend/src/components/AssistantWidget.tsx
 // Globaler KI-Assistent für Contract AI - Floating Chat Widget
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "react-router-dom";
 import { useAssistantContext } from "../hooks/useAssistantContext";
@@ -26,16 +26,57 @@ export default function AssistantWidget() {
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isBotEnabled, setIsBotEnabled] = useState(() => {
-    // Check localStorage for bot enabled/disabled state (default: enabled)
     const saved = localStorage.getItem('assistantBotEnabled');
     return saved === null ? true : saved === 'true';
   });
-  const [isHiddenByUser, setIsHiddenByUser] = useState(false); // Temporär versteckt für diese Session
+  const [isHiddenByUser, setIsHiddenByUser] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  // Smart visibility states
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const assistantContext = useAssistantContext();
+
+  // Dismiss onboarding
+  const dismissOnboarding = useCallback(() => {
+    setShowOnboarding(false);
+    setIsMinimized(true);
+    localStorage.setItem('assistantOnboardingSeen', 'true');
+    sessionStorage.setItem('assistantShownThisSession', 'true');
+  }, []);
+
+  // Dismiss tooltip
+  const dismissTooltip = useCallback(() => {
+    setShowTooltip(false);
+    setIsMinimized(true);
+    sessionStorage.setItem('assistantShownThisSession', 'true');
+  }, []);
+
+  // Smart onboarding/tooltip logic on mount
+  useEffect(() => {
+    const onboardingSeen = localStorage.getItem('assistantOnboardingSeen');
+    const shownThisSession = sessionStorage.getItem('assistantShownThisSession');
+
+    if (!onboardingSeen) {
+      // First login ever → show onboarding card
+      setShowOnboarding(true);
+      const timer = setTimeout(dismissOnboarding, 5000);
+      return () => clearTimeout(timer);
+    } else if (!shownThisSession) {
+      // Returning user, new session → show short tooltip
+      setShowTooltip(true);
+      const timer = setTimeout(dismissTooltip, 3000);
+      return () => clearTimeout(timer);
+    } else {
+      // Already shown this session → start minimized
+      setIsMinimized(true);
+    }
+  }, [dismissOnboarding, dismissTooltip]);
 
   // Listen for changes to bot enabled/disabled setting
   useEffect(() => {
@@ -45,7 +86,6 @@ export default function AssistantWidget() {
     };
 
     window.addEventListener('storage', handleStorageChange);
-    // Also listen for custom event from same tab
     window.addEventListener('assistantBotToggled', handleStorageChange);
 
     return () => {
@@ -76,12 +116,11 @@ export default function AssistantWidget() {
     }
   }, [isOpen]);
 
-  // ✅ RESET Chat wenn Contract ID wechselt (verhindert gecachten alten Context)
+  // Reset chat when contract ID changes
   useEffect(() => {
     if (assistantContext.currentContractId) {
       console.log('🔄 [AssistantWidget] Contract ID gewechselt → Chat zurückgesetzt:', assistantContext.currentContractId);
     }
-    // Lösche Nachrichten wenn sich die Contract ID ändert
     setMessages([]);
   }, [assistantContext.currentContractId]);
 
@@ -133,7 +172,6 @@ export default function AssistantWidget() {
 
       setMessages((prev) => [...prev, assistantMessage]);
 
-      // Show upgrade hint if needed
       if (data.planUpgradeHint) {
         console.log("💎 Upgrade-Hinweis: Legal Copilot ist Premium");
       }
@@ -175,9 +213,16 @@ export default function AssistantWidget() {
     }
   };
 
-  // ============================================
-  // VISIBILITY CONTROL - Hide on specific pages OR if disabled by user
-  // ============================================
+  // Handle bubble click - un-minimize and open chat
+  const handleBubbleClick = () => {
+    // Dismiss any active tooltips
+    if (showOnboarding) dismissOnboarding();
+    if (showTooltip) dismissTooltip();
+    setIsMinimized(false);
+    setIsOpen(true);
+  };
+
+  // Visibility control
   const hiddenRoutes = [
     "/login",
     "/register",
@@ -185,7 +230,6 @@ export default function AssistantWidget() {
     "/pricing",
     "/forgot-password",
     "/reset-password",
-    // Signatur-Prozess - Bot würde wichtige UI-Elemente überdecken
     "/sign/",
     "/signature/",
     "/envelopes/create",
@@ -195,14 +239,13 @@ export default function AssistantWidget() {
     location.pathname.toLowerCase().startsWith(route.toLowerCase())
   );
 
-  // If widget should be hidden OR bot is disabled OR on mobile OR user closed it, don't render
   if (!shouldShowWidget || !isBotEnabled || isMobile || isHiddenByUser) {
     return null;
   }
 
   return (
     <>
-      {/* Chat Bubble Button with Close Option */}
+      {/* Chat Bubble Button with Onboarding/Tooltip */}
       <AnimatePresence>
         {!isOpen && (
           <motion.div
@@ -212,6 +255,52 @@ export default function AssistantWidget() {
             exit={{ scale: 0, opacity: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
           >
+            {/* Onboarding Tooltip (first login ever) */}
+            <AnimatePresence>
+              {showOnboarding && (
+                <motion.div
+                  className={styles.onboardingTooltip}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <div className={styles.onboardingContent}>
+                    <span className={styles.onboardingEmoji}>⚖️</span>
+                    <p className={styles.onboardingText}>
+                      Hallo! Ich bin dein KI-Rechtsassistent. Schreib mir jederzeit deine Fragen!
+                    </p>
+                  </div>
+                  <button
+                    className={styles.onboardingButton}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      dismissOnboarding();
+                    }}
+                  >
+                    Verstanden
+                  </button>
+                  <div className={styles.tooltipArrow} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Session Tooltip (returning user, new session) */}
+            <AnimatePresence>
+              {showTooltip && !showOnboarding && (
+                <motion.div
+                  className={styles.sessionTooltip}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <span>Ich bin hier, falls du Hilfe brauchst!</span>
+                  <div className={styles.tooltipArrow} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* X Button to hide bot */}
             <motion.button
               className={styles.hideBubbleButton}
@@ -229,8 +318,8 @@ export default function AssistantWidget() {
 
             {/* Main Chat Bubble */}
             <motion.button
-              className={styles.chatBubble}
-              onClick={() => setIsOpen(true)}
+              className={`${styles.chatBubble} ${isMinimized ? styles.minimized : ''}`}
+              onClick={handleBubbleClick}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               aria-label="Chat öffnen"
@@ -259,7 +348,10 @@ export default function AssistantWidget() {
               </div>
               <motion.button
                 className={styles.closeButton}
-                onClick={() => setIsOpen(false)}
+                onClick={() => {
+                  setIsOpen(false);
+                  setIsMinimized(true);
+                }}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 aria-label="Chat schließen"
