@@ -76,10 +76,10 @@ export default function ContractRiskGrid({
             <div className={styles.contractCardHeader}>
               <div className={styles.contractInfo}>
                 <h3 className={styles.contractName}>
-                  {contract.name}
+                  {fixUtf8Display(contract.name)}
                   {showTooltip[contract._id] && (
                     <div className={styles.nameTooltip}>
-                      {contract.name}
+                      {fixUtf8Display(contract.name)}
                     </div>
                   )}
                 </h3>
