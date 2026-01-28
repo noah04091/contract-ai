@@ -2776,12 +2776,12 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     // 📋 ÄNDERUNG 3: UPDATE analysisData OBJECT WITH AUTO-RENEWAL & DURATION
     const analysisData = {
       userId: req.user.userId,
-      contractName: req.file.originalname,
+      contractName: fixUtf8Filename(req.file.originalname),
       createdAt: new Date(),
       requestId,
       fullText: fullTextContent,
       extractedText: fullTextContent,
-      originalFileName: req.file.originalname,
+      originalFileName: fixUtf8Filename(req.file.originalname),
       fileSize: buffer.length,
       uploadType: storageInfo.uploadType,
       

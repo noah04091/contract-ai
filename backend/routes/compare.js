@@ -11,6 +11,7 @@ const PDFDocument = require("pdfkit");
 const { MongoClient, ObjectId } = require("mongodb");
 
 const { isBusinessOrHigher, isEnterpriseOrHigher, getFeatureLimit } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
+const { fixUtf8Filename } = require("../utils/fixUtf8"); // ✅ Fix UTF-8 Encoding
 
 const router = express.Router();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -571,7 +572,7 @@ router.post("/", verifyToken, upload.fields([
       await Promise.all([
         saveContract({
           userId: req.user.userId,
-          fileName: file1.originalname,
+          fileName: fixUtf8Filename(file1.originalname),
           toolUsed: "contract_compare",
           filePath: file1.path,
           fileSize: file1.size,
@@ -584,7 +585,7 @@ router.post("/", verifyToken, upload.fields([
         }),
         saveContract({
           userId: req.user.userId,
-          fileName: file2.originalname,
+          fileName: fixUtf8Filename(file2.originalname),
           toolUsed: "contract_compare",
           filePath: file2.path,
           fileSize: file2.size,
@@ -611,8 +612,8 @@ router.post("/", verifyToken, upload.fields([
         tool: "contract_compare",
         userProfile,
         comparisonMode,
-        file1Name: file1.originalname,
-        file2Name: file2.originalname,
+        file1Name: fixUtf8Filename(file1.originalname),
+        file2Name: fixUtf8Filename(file2.originalname),
         recommendedContract: analysisResult.overallRecommendation.recommended,
         confidence: analysisResult.overallRecommendation.confidence,
         differencesCount: analysisResult.differences.length,

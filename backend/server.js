@@ -18,6 +18,8 @@ const mongoose = require("mongoose"); // 📁 Mongoose for Folder Models
 const cron = require("node-cron");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
+const { fixUtf8Filename } = require("./utils/fixUtf8"); // ✅ Fix UTF-8 Encoding
+
 // 🆕 OPTIONAL: Helmet für erweiterte Security
 let helmet;
 try {
@@ -1303,15 +1305,15 @@ const connectDB = async () => {
           if (analysisText) {
             try {
               const analysis = await analyzeContract(analysisText);
-              name = analysis.match(/Vertragsname:\s*(.*)/i)?.[1]?.trim() || req.file.originalname || "Unbekannt";
+              name = analysis.match(/Vertragsname:\s*(.*)/i)?.[1]?.trim() || fixUtf8Filename(req.file.originalname) || "Unbekannt";
               laufzeit = analysis.match(/Laufzeit:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
               kuendigung = analysis.match(/Kündigungsfrist:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
             } catch (aiError) {
               console.warn("⚠️ KI-Analyse fehlgeschlagen:", aiError.message);
-              name = req.file.originalname || "Unbekannt";
+              name = fixUtf8Filename(req.file.originalname) || "Unbekannt";
             }
           } else {
-            name = req.file.originalname || "Unbekannt";
+            name = fixUtf8Filename(req.file.originalname) || "Unbekannt";
           }
 
           const expiryDate = extractExpiryDate(laufzeit);
@@ -1330,7 +1332,7 @@ const connectDB = async () => {
             s3Bucket: req.file.bucket,
             s3Location: req.file.location,
             filename: req.file.key,
-            originalname: req.file.originalname,
+            originalname: fixUtf8Filename(req.file.originalname),
             mimetype: req.file.mimetype,
             size: req.file.size,
             filePath: `/s3/${req.file.key}`,

@@ -16,6 +16,7 @@ const { runBaselineRules } = require("../services/optimizer/rules");
 // 🔥 FIX 4+: Quality Layer imports (mit Sanitizer + Content-Mismatch Guard + Context-Aware Benchmarks)
 const { dedupeIssues, ensureCategory, sanitizeImprovedText, sanitizeText, sanitizeBenchmark, cleanPlaceholders, isTextMatchingCategory, generateContextAwareBenchmark } = require("../services/optimizer/quality");
 const { getFeatureLimit, isEnterpriseOrHigher } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
+const { fixUtf8Filename } = require("../utils/fixUtf8"); // ✅ Fix UTF-8 Encoding
 
 // 🆕 S3 SDK für PDF-Upload
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
@@ -4653,7 +4654,7 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
     normalizedResult.meta = {
       ...normalizedResult.meta,
       ...contractTypeInfo,
-      fileName: req.file.originalname,
+      fileName: fixUtf8Filename(req.file.originalname),
       analysisVersion: '5.0-ultimate-legal',
       gapsFound: gapAnalysis.gaps.length,
       categoriesGenerated: normalizedResult.categories.length,
@@ -4727,7 +4728,7 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
     // Speichere in Datenbank
     const optimizationData = {
       userId: req.user.userId,
-      contractName: req.file.originalname,
+      contractName: fixUtf8Filename(req.file.originalname),
       contractType: normalizedResult.meta.type,
       isAmendment: normalizedResult.meta.isAmendment,
       parentType: normalizedResult.meta.parentType,
@@ -4882,7 +4883,7 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
           // CREATE new contract
           const contractToSave = {
             userId: new ObjectId(req.user.userId), // ✅ FIX: ObjectId für MongoDB-Query-Kompatibilität
-            name: req.file.originalname || "Analysierter Vertrag",
+            name: fixUtf8Filename(req.file.originalname) || "Analysierter Vertrag",
             content: contractText,
             kuendigung: "Unbekannt", // ✅ Basis-Felder für Contracts-Kompatibilität
             laufzeit: "Unbekannt",

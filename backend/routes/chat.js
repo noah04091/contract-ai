@@ -9,6 +9,7 @@ const fs = require("fs");
 const path = require("path");
 
 const { isBusinessOrHigher, isEnterpriseOrHigher, getFeatureLimit } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
+const { fixUtf8Filename } = require("../utils/fixUtf8"); // ✅ Fix UTF-8 Encoding
 
 // ✅ RAG: Law Embeddings für Gesetzesdatenbank-Integration
 let lawEmbeddings = null;
@@ -1251,7 +1252,7 @@ router.post("/:id/upload", verifyToken, localUpload.single("file"), async (req, 
 
     // Create attachment object
     const attachment = {
-      name: req.file.originalname,
+      name: fixUtf8Filename(req.file.originalname),
       s3Key: req.file.key || null,
       s3Bucket: req.file.bucket || null,
       s3Location: req.file.location || null,
@@ -1274,7 +1275,7 @@ router.post("/:id/upload", verifyToken, localUpload.single("file"), async (req, 
     // Add system message about upload
     const systemMessage = {
       role: "system",
-      content: `📎 Vertrag "${req.file.originalname}" (${contractType}) hochgeladen. Der KI-Rechtsanwalt hat nun Zugriff auf den vollständigen Vertragstext und kann spezifische Fragen dazu beantworten.`
+      content: `📎 Vertrag "${fixUtf8Filename(req.file.originalname)}" (${contractType}) hochgeladen. Der KI-Rechtsanwalt hat nun Zugriff auf den vollständigen Vertragstext und kann spezifische Fragen dazu beantworten.`
     };
 
     await chats.updateOne(

@@ -8,6 +8,7 @@ const pdfParse = require("pdf-parse");
 const fs = require("fs");
 const verifyToken = require("../middleware/verifyToken");
 const saveContract = require("../services/saveContract");
+const { fixUtf8Filename } = require("../utils/fixUtf8"); // ✅ Fix UTF-8 Encoding
 
 const upload = multer({ dest: "uploads/" });
 
@@ -23,7 +24,7 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
     // 🗃️ Optional zentral speichern
     await saveContract({
       userId: req.user.userId,
-      fileName: req.file.originalname,
+      fileName: fixUtf8Filename(req.file.originalname),
       toolUsed: "extractText",
       filePath: `/uploads/${req.file.filename}`,
       extraRefs: {
@@ -72,9 +73,9 @@ router.post("/public", upload.single("file"), async (req, res) => {
       });
     }
 
-    res.json({ 
+    res.json({
       text: extractedText,
-      originalFileName: req.file.originalname,
+      originalFileName: fixUtf8Filename(req.file.originalname),
       fileSize: req.file.size,
       extractedLength: extractedText.length,
       success: true

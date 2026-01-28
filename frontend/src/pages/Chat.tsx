@@ -376,6 +376,21 @@ export default function Chat() {
     }
   }
 
+  async function openAttachmentPdf(s3Key?: string) {
+    if (!s3Key) return;
+    try {
+      const res = await fetch(`/api/s3/view?key=${encodeURIComponent(s3Key)}`, {
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) throw new Error("PDF konnte nicht geladen werden");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank");
+    } catch (err) {
+      console.error("❌ Error opening PDF:", err);
+    }
+  }
+
   function exportChat() {
     if (!active) return;
 
@@ -762,7 +777,13 @@ export default function Chat() {
                 {active.attachments && active.attachments.length > 0 && (
                   <div className={styles.uploadedContracts}>
                     {active.attachments.map((att, idx) => (
-                      <div key={idx} className={styles.contractChip}>
+                      <div
+                        key={idx}
+                        className={styles.contractChip}
+                        onClick={() => openAttachmentPdf(att.s3Key)}
+                        title="PDF-Vorschau öffnen"
+                        style={{ cursor: att.s3Key ? "pointer" : "default" }}
+                      >
                         <span className={styles.contractIcon}>📄</span>
                         <div className={styles.contractInfo}>
                           <span className={styles.contractName}>{att.name}</span>
