@@ -1250,12 +1250,39 @@ router.post("/:id/upload", verifyToken, localUpload.single("file"), async (req, 
     // Generate smart questions
     const smartQuestions = await generateSmartQuestions(contractType, pdfText);
 
+    // ✅ Upload to S3 if local file (so PDF preview works)
+    let s3Key = req.file.key || null;
+    if (!s3Key && req.file.path && process.env.S3_BUCKET_NAME) {
+      try {
+        const { PutObjectCommand } = require("@aws-sdk/client-s3");
+        const { S3Client } = require("@aws-sdk/client-s3");
+        const s3Client = new S3Client({
+          region: process.env.AWS_REGION,
+          credentials: {
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+          },
+        });
+        s3Key = `chat-uploads/${Date.now()}_${fixUtf8Filename(req.file.originalname)}`;
+        await s3Client.send(new PutObjectCommand({
+          Bucket: process.env.S3_BUCKET_NAME,
+          Key: s3Key,
+          Body: buffer,
+          ContentType: "application/pdf",
+        }));
+        console.log(`✅ Chat PDF uploaded to S3: ${s3Key}`);
+      } catch (s3Err) {
+        console.warn("⚠️ S3 upload failed, PDF preview won't work:", s3Err.message);
+        s3Key = null;
+      }
+    }
+
     // Create attachment object
     const attachment = {
       name: fixUtf8Filename(req.file.originalname),
-      s3Key: req.file.key || null,
-      s3Bucket: req.file.bucket || null,
-      s3Location: req.file.location || null,
+      s3Key: s3Key,
+      s3Bucket: process.env.S3_BUCKET_NAME || null,
+      s3Location: s3Key ? `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${s3Key}` : null,
       localPath: req.file.path || null,
       uploadedAt: new Date(),
       contractType: contractType,
