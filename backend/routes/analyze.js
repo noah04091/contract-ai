@@ -19,6 +19,9 @@ const { sendLimitReachedEmail, sendAlmostAtLimitEmail } = require("../services/t
 
 const router = express.Router();
 
+// ✅ Fix UTF-8 Encoding für Dateinamen mit deutschen Umlauten
+const { fixUtf8Filename } = require("../utils/fixUtf8");
+
 // 🚦 RATE LIMITING - Schutz vor Missbrauch und Kosten-Explosion
 const analyzeRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 Minuten Zeitfenster
@@ -2011,7 +2014,7 @@ async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, s
   try {
     const contract = {
       userId: new ObjectId(userId),
-      name: analysisData.name || fileInfo.originalname || "Unknown",
+      name: fixUtf8Filename(analysisData.name || fileInfo.originalname) || "Unknown",
       
       // Format Laufzeit (contract duration) - NULL if not found
       laufzeit: analysisData.contractDuration ? 
@@ -2729,7 +2732,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           metadata: {
             documentType: validationResult.documentType,
             strategy: validationResult.strategy,
-            fileName: req.file.originalname
+            fileName: fixUtf8Filename(req.file.originalname)
           }
         });
       } catch (costError) {
@@ -3130,7 +3133,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       } else {
         // 📋 ÄNDERUNG 4: UPDATE contractAnalysisData WITH AUTO-RENEWAL & DURATION
         const contractAnalysisData = {
-          name: Array.isArray(result.summary) ? req.file.originalname : req.file.originalname,
+          name: fixUtf8Filename(req.file.originalname),
 
           // Laufzeit (contract duration) - NULL if not found
           laufzeit: extractedContractDuration ?

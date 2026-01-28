@@ -32,6 +32,7 @@ import ReminderSettingsModal from "../components/ReminderSettingsModal"; // 🔔
 import ContractEditModal from "../components/ContractEditModal"; // ✏️ Quick Edit Modal
 import ImportantDatesSection from "../components/ImportantDatesSection"; // 📅 KI-extrahierte wichtige Termine
 import { apiCall, uploadAndAnalyze, uploadOnly } from "../utils/api"; // ✅ NEU: uploadOnly hinzugefügt
+import { fixUtf8Display } from "../utils/textUtils"; // 🔧 Fix für Umlaut-Encoding
 import { useFolders } from "../hooks/useFolders"; // 📁 Folder Hook
 import type { FolderType } from "../components/FolderBar"; // 📁 Folder Type
 import InlineAnalysisProgress from "../components/InlineAnalysisProgress"; // 🎨 Kompakte Inline-Analyse
@@ -1094,7 +1095,7 @@ export default function Contracts() {
           <div className={styles.modalContent}>
             <div className={styles.legacyInfo}>
               <div className={styles.contractInfo}>
-                <h4>{contract.name}</h4>
+                <h4>{fixUtf8Display(contract.name)}</h4>
                 <p className={styles.contractDate}>
                   Hochgeladen am: {formatDate(contract.createdAt)}
                 </p>
@@ -2062,7 +2063,7 @@ export default function Contracts() {
 
     // Setze Loading States - Button UND Full-Screen Overlay
     setAnalyzingContract(prev => ({ ...prev, [contract._id]: true }));
-    setAnalyzingOverlay({ show: true, contractName: contract.name });
+    setAnalyzingOverlay({ show: true, contractName: fixUtf8Display(contract.name) });
 
     try {
       setError(null);
@@ -2961,7 +2962,7 @@ export default function Contracts() {
             <FileText size={20} />
           </div>
           <div className={styles.cardTitle}>
-            <h3 className={styles.cardFileName}>{contract.name}</h3>
+            <h3 className={styles.cardFileName}>{fixUtf8Display(contract.name)}</h3>
             <div className={styles.cardStatus}>
               <span className={`${styles.statusBadge} ${getStatusColor(calculateSmartStatus(contract))}`}>
                 {calculateSmartStatus(contract)}
@@ -3151,7 +3152,7 @@ export default function Contracts() {
           className={`${styles.cardActionButton} ${styles.deleteAction}`}
           onClick={(e) => {
             e.stopPropagation();
-            handleDeleteContract(contract._id, contract.name);
+            handleDeleteContract(contract._id, fixUtf8Display(contract.name));
           }}
         >
           <Trash2 size={14} />
@@ -3212,7 +3213,7 @@ export default function Contracts() {
         {/* Hauptinhalt: Name + Meta-Info */}
         <div className={styles.listRowContent}>
           <div className={styles.listRowMain}>
-            <span className={styles.listRowName}>{contract.name}</span>
+            <span className={styles.listRowName}>{fixUtf8Display(contract.name)}</span>
             {/* Badges inline */}
             <div className={styles.listRowBadges}>
               {contract.isGenerated && <span className={styles.listRowBadge} data-type="generated">Gen</span>}
@@ -3323,7 +3324,7 @@ export default function Contracts() {
         </div>
 
         {/* Contract Name */}
-        <h3 className={styles.gridCardTitle}>{contract.name}</h3>
+        <h3 className={styles.gridCardTitle}>{fixUtf8Display(contract.name)}</h3>
 
         {/* Quick Info */}
         <div className={styles.gridCardInfo}>
@@ -3392,7 +3393,7 @@ export default function Contracts() {
             className={`${styles.gridActionBtn} ${styles.deleteBtn}`}
             onClick={(e) => {
               e.stopPropagation();
-              handleDeleteContract(contract._id, contract.name);
+              handleDeleteContract(contract._id, fixUtf8Display(contract.name));
             }}
             title="Löschen"
           >
@@ -4681,7 +4682,7 @@ export default function Contracts() {
                                     <FileText size={16} />
                                   </div>
                                   <div>
-                                    <span className={styles.contractNameText}>{contract.name}</span>
+                                    <span className={styles.contractNameText}>{fixUtf8Display(contract.name)}</span>
                                     {(contract.isGenerated || contract.isOptimized || contract.uploadType === 'EMAIL_IMPORT') && (
                                       <div className={styles.contractBadges}>
                                         {contract.isGenerated && (
@@ -4829,7 +4830,7 @@ export default function Contracts() {
                                     className={`${styles.actionButton} ${styles.deleteButton}`}
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      handleDeleteContract(contract._id, contract.name);
+                                      handleDeleteContract(contract._id, fixUtf8Display(contract.name));
                                     }}
                                     title="Löschen"
                                   >
@@ -5419,7 +5420,7 @@ export default function Contracts() {
       {reminderSettingsModal.show && reminderSettingsModal.contract && (
         <ReminderSettingsModal
           contractId={reminderSettingsModal.contract._id}
-          contractName={reminderSettingsModal.contract.name}
+          contractName={fixUtf8Display(reminderSettingsModal.contract.name)}
           currentReminderDays={reminderSettingsModal.contract.reminderDays || []}
           expiryDate={reminderSettingsModal.contract.expiryDate}
           onClose={() => setReminderSettingsModal({ show: false, contract: null })}

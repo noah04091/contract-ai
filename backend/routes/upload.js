@@ -12,6 +12,9 @@ const { preprocessContract } = require("../services/legalLens/clausePreprocessor
 
 const router = express.Router();
 
+// ✅ Fix UTF-8 Encoding für Dateinamen mit deutschen Umlauten
+const { fixUtf8Filename } = require("../utils/fixUtf8");
+
 // ✅ Crypto für File-Hash
 let crypto;
 try {
@@ -286,8 +289,9 @@ router.post("/", uploadMiddleware.single("file"), async (req, res) => {
     }
 
     // Erstelle Contract-Eintrag OHNE Analyse
+    const fixedFilename = fixUtf8Filename(req.file.originalname);
     const contractData = {
-      name: req.file.originalname,
+      name: fixedFilename,
       userId: new ObjectId(req.user.userId), // ✅ FIX: req.user.userId (von verifyToken)
       uploadedAt: new Date(),
       createdAt: new Date(), // ✅ Für Sortierung in Liste
@@ -339,7 +343,7 @@ router.post("/", uploadMiddleware.single("file"), async (req, res) => {
       s3Key: storageInfo.s3Key || null, // ✅ NEU: s3Key direkt in Response für Envelope-Erstellung
       contract: {
         _id: result.insertedId,
-        name: req.file.originalname,
+        name: fixedFilename,
         uploadedAt: contractData.uploadedAt,
         analyzed: false,
         status: "Unbekannt",

@@ -888,11 +888,12 @@
 
 .uploadSection {
   border-top: 1px solid var(--border);
-  padding: 12px 18px;
+  padding: 8px 18px;
   background: var(--panel);
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 /* Uploaded Contracts */
@@ -905,12 +906,15 @@
 .contractChip {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+  gap: 6px;
+  padding: 4px 10px;
   background: #f0fdf4;
   border: 1px solid #86efac;
-  border-radius: 10px;
-  font-size: 13px;
+  border-radius: 999px;
+  font-size: 12px;
+  white-space: nowrap;
+  max-width: 320px;
+  overflow: hidden;
 }
 
 .contractIcon {
@@ -919,13 +923,18 @@
 
 .contractInfo {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .contractName {
   font-weight: 500;
   color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .contractType {
@@ -936,25 +945,49 @@
 /* Smart Questions */
 .smartQuestions {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 8px;
+  flex: 1;
+  min-width: 0;
 }
 
 .smartQuestionsHeader {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 13px;
+  gap: 4px;
+  font-size: 12px;
   font-weight: 500;
-  color: var(--text);
+  color: var(--muted);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .lightbulbIcon {
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .smartQuestionsTitle {
   color: var(--muted);
+}
+
+.smartQuestions .chipRow {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  justify-content: flex-start;
+  gap: 6px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.smartQuestions .chipRow::-webkit-scrollbar {
+  display: none;
+}
+
+.smartQuestions .chip {
+  padding: 5px 12px;
+  font-size: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* ==========================================
