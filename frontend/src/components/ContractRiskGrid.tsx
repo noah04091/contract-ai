@@ -2,6 +2,7 @@
 // Contract Risk Grid - Displays contracts with risk scores in a grid layout
 
 import React from 'react';
+import { fixUtf8Display } from "../utils/textUtils";
 import styles from '../styles/ContractRiskGrid.module.css';
 
 interface Contract {

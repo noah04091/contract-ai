@@ -1,6 +1,7 @@
 // src/components/ContractDetailsModal.tsx
 import styles from "../styles/ContractDetailsModal.module.css";
 import ReminderToggle from "./ReminderToggle";
+import { fixUtf8Display } from "../utils/textUtils";
 
 interface Contract {
   _id: string;
@@ -40,7 +41,7 @@ export default function ContractDetailsModal({ contract, onClose, show }: Contra
         <div className={styles.detailsGrid}>
           <div className={styles.detailRow}>
             <span className={styles.detailLabel}>Vertragsname</span>
-            <span className={styles.detailValue}>{contract.name || "Unbekannt"}</span>
+            <span className={styles.detailValue}>{fixUtf8Display(contract.name) || "Unbekannt"}</span>
           </div>
 
           <div className={styles.detailRow}>

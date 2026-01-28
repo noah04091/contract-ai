@@ -1,6 +1,7 @@
 // LegalPulseOverview.tsx
 import React from 'react';
 import InfoTooltip from '../components/InfoTooltip';
+import { fixUtf8Display } from "../utils/textUtils";
 import styles from "../styles/LegalPulseOverview.module.css";
 
 interface Contract {
@@ -75,7 +76,7 @@ const LegalPulseOverview: React.FC<LegalPulseOverviewProps> = ({ contracts }) =>
                 title={riskScoreText}
               >
                 <div className={styles.contractName}>
-                  {contract.name}
+                  {fixUtf8Display(contract.name)}
                 </div>
                 <div className={styles.riskBadgeContainer}>
                   <span className={`${styles.riskBadge} ${styles[riskLevel]}`}>

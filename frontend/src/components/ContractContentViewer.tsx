@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, Download, Maximize2, X, Eye, Copy, CheckCircle, Printer, Edit, Save, Keyboard } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { fixUtf8Display } from "../utils/textUtils";
 
 // 🎨 BOMBASTISCHE CSS-Styles für Premium-Verträge
 const premiumContractStyles = `
@@ -324,7 +325,7 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
       // Fallback für normale Verträge mit verbesserter Formatierung  
       formatContentForDisplay(contract.content || 
         `<div class="contract-preview-fallback">
-           <h2 style="color: #1e40af; margin-bottom: 20px;">📄 ${contract.name}</h2>
+           <h2 style="color: #1e40af; margin-bottom: 20px;">📄 ${fixUtf8Display(contract.name)}</h2>
            <div class="contract-meta">
              <p>Dieser Vertrag wurde ${contract.isGenerated ? '🤖 <strong>automatisch generiert</strong>' : '📤 <strong>hochgeladen</strong>'} am 
              <strong>${contract.isGenerated ? 
@@ -692,7 +693,7 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
         // 🎨 PDF-OPTIONEN - PROFESSIONAL GRADE (OHNE PROBLEMATISCHE METHODEN)
         const enhancedPdfOptions = {
           margin: contract.contentHTML ? [5, 5, 5, 5] as [number, number, number, number] : [10, 10, 10, 10] as [number, number, number, number],
-          filename: `${contract.name.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
+          filename: `${fixUtf8Display(contract.name).replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
           image: {
             type: 'jpeg' as const,
             quality: 0.98
@@ -769,7 +770,7 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
             console.log("🔄 Versuche Fallback PDF-Export...");
             const simplePdfOptions = {
               margin: 15,
-              filename: `${contract.name}_${new Date().toISOString().split('T')[0]}.pdf`,
+              filename: `${fixUtf8Display(contract.name)}_${new Date().toISOString().split('T')[0]}.pdf`,
               image: { type: 'jpeg' as const, quality: 0.95 },
               html2canvas: { scale: 1.5 },
               jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
@@ -801,7 +802,7 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
       printWindow.document.write(`
         <html>
           <head>
-            <title>${contract.name}</title>
+            <title>${fixUtf8Display(contract.name)}</title>
             <style>
               @page { 
                 size: A4; 
@@ -1466,7 +1467,7 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Eye size={20} style={{ color: '#64748b' }} />
                   <h3 style={{ margin: 0, color: '#1e293b', fontSize: '18px', fontWeight: '600' }}>
-                    {contract.name}
+                    {fixUtf8Display(contract.name)}
                   </h3>
                   {contract.isGenerated && (
                     <span style={{

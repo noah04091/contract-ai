@@ -13,6 +13,7 @@ import ContractShareModal from "./ContractShareModal";
 import ContractEditModal from "./ContractEditModal";
 import AnalysisModal from "./AnalysisModal";
 import SignatureModal from "./SignatureModal";
+import { fixUtf8Display } from "../utils/textUtils";
 
 interface Contract {
   _id: string;
@@ -289,7 +290,7 @@ export default function ContractDetailsView({
   // Desktop PDF view (new tab)
   const handleViewContract = useCallback(async () => {
     if (contract.needsReupload || contract.uploadType === 'LOCAL_LEGACY') {
-      alert(`Dieser Vertrag wurde vor der Cloud-Integration hochgeladen und ist nicht mehr verfügbar.\n\nBitte laden Sie "${contract.name}" erneut hoch.`);
+      alert(`Dieser Vertrag wurde vor der Cloud-Integration hochgeladen und ist nicht mehr verfügbar.\n\nBitte laden Sie "${fixUtf8Display(contract.name)}" erneut hoch.`);
       return;
     }
 
@@ -304,7 +305,7 @@ export default function ContractDetailsView({
           <html>
             <head>
               <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>Lade ${contract.name}...</title>
+              <title>Lade ${fixUtf8Display(contract.name)}...</title>
               <style>
                 body { font-family: -apple-system, system-ui, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f5f5f7; }
                 .spinner { width: 40px; height: 40px; border: 3px solid #e5e5e5; border-top: 3px solid #007aff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
@@ -362,7 +363,7 @@ export default function ContractDetailsView({
 
   const handleDelete = () => {
     setShowMobileMenu(false);
-    if (onDelete) onDelete(contract._id, contract.name);
+    if (onDelete) onDelete(contract._id, fixUtf8Display(contract.name));
   };
 
   const handleContractUpdate = (updatedContract: Contract) => {
@@ -432,7 +433,7 @@ export default function ContractDetailsView({
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${contract.name.replace(/\.[^/.]+$/, "")}_content.txt`;
+    link.download = `${fixUtf8Display(contract.name).replace(/\.[^/.]+$/, "")}_content.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -479,7 +480,7 @@ export default function ContractDetailsView({
               </button>
 
               <div className={styles.mobileHeaderTitle}>
-                <h1>{contract.name}</h1>
+                <h1>{fixUtf8Display(contract.name)}</h1>
                 {contract.isGenerated && (
                   <span className={styles.mobileGeneratedBadge}>
                     <Star size={10} /> KI
@@ -1006,7 +1007,7 @@ export default function ContractDetailsView({
                         <button
                           className={styles.mobileCopyBtn}
                           onClick={() => {
-                            const text = `Vertragsanalyse: ${contract.name}\nScore: ${score || 'N/A'}/100\n\n${contract.analysis?.summary || contract.legalPulse?.summary || ''}`;
+                            const text = `Vertragsanalyse: ${fixUtf8Display(contract.name)}\nScore: ${score || 'N/A'}/100\n\n${contract.analysis?.summary || contract.legalPulse?.summary || ''}`;
                             navigator.clipboard.writeText(text);
                           }}
                         >
@@ -1057,7 +1058,7 @@ export default function ContractDetailsView({
             onClose={() => setShowAnalysisModal(false)}
           />
           <ContractShareModal
-            contract={{ _id: contract._id, name: contract.name }}
+            contract={{ _id: contract._id, name: fixUtf8Display(contract.name) }}
             show={showShareModal}
             onClose={() => setShowShareModal(false)}
           />
@@ -1071,7 +1072,7 @@ export default function ContractDetailsView({
             show={showSignatureModal}
             onClose={() => setShowSignatureModal(false)}
             contractId={contract._id}
-            contractName={contract.name}
+            contractName={fixUtf8Display(contract.name)}
             contractS3Key={contract.s3Key || ""}
           />
         </motion.div>
@@ -1107,7 +1108,7 @@ export default function ContractDetailsView({
                   <FileText size={20} />
                 </div>
                 <div>
-                  <h2 className={styles.contractName}>{contract.name}</h2>
+                  <h2 className={styles.contractName}>{fixUtf8Display(contract.name)}</h2>
                   <div className={styles.contractMeta}>
                     <span className={styles.uploadDate}>
                       Hochgeladen am {formatDate(contract.createdAt)}
@@ -1230,7 +1231,7 @@ export default function ContractDetailsView({
                   <div className={styles.detailGrid}>
                     <div className={styles.detailItem}>
                       <label>Vertragsname</label>
-                      <span>{contract.name || "Unbekannt"}</span>
+                      <span>{fixUtf8Display(contract.name) || "Unbekannt"}</span>
                     </div>
                     <div className={styles.detailItem}>
                       <label>Status</label>
@@ -1411,7 +1412,7 @@ export default function ContractDetailsView({
                       <button
                         className={styles.copyAnalysisButton}
                         onClick={() => {
-                          const text = `Vertragsanalyse: ${contract.name}\nScore: ${score || 'N/A'}/100\n\nZusammenfassung: ${contract.analysis?.summary || contract.legalPulse?.summary || 'Nicht verfügbar'}`;
+                          const text = `Vertragsanalyse: ${fixUtf8Display(contract.name)}\nScore: ${score || 'N/A'}/100\n\nZusammenfassung: ${contract.analysis?.summary || contract.legalPulse?.summary || 'Nicht verfügbar'}`;
                           navigator.clipboard.writeText(text);
                         }}
                       >
@@ -1542,9 +1543,9 @@ export default function ContractDetailsView({
 
         {/* Modals */}
         <AnalysisModal contract={contract} show={showAnalysisModal} onClose={() => setShowAnalysisModal(false)} />
-        <ContractShareModal contract={{ _id: contract._id, name: contract.name }} show={showShareModal} onClose={() => setShowShareModal(false)} />
+        <ContractShareModal contract={{ _id: contract._id, name: fixUtf8Display(contract.name) }} show={showShareModal} onClose={() => setShowShareModal(false)} />
         <ContractEditModal contract={contract} show={showEditModal} onClose={() => setShowEditModal(false)} onUpdate={handleContractUpdate} />
-        <SignatureModal show={showSignatureModal} onClose={() => setShowSignatureModal(false)} contractId={contract._id} contractName={contract.name} contractS3Key={contract.s3Key || ""} />
+        <SignatureModal show={showSignatureModal} onClose={() => setShowSignatureModal(false)} contractId={contract._id} contractName={fixUtf8Display(contract.name)} contractS3Key={contract.s3Key || ""} />
       </motion.div>
     </AnimatePresence>
   );

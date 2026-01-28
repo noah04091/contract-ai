@@ -4,6 +4,7 @@ import {
   X, FileText, Shield, Lightbulb, TrendingUp, Clock,
   Copy, AlertTriangle, BarChart3, Gavel, Scale // ✅ NEU: Icons für Rechtsgutachten
 } from "lucide-react";
+import { fixUtf8Display } from "../utils/textUtils";
 import styles from "../styles/AnalysisModal.module.css";
 
 interface Contract {
@@ -149,7 +150,7 @@ export default function AnalysisModal({ contract, show, onClose }: AnalysisModal
       
       if (contract.analysis) {
         analysisText = `
-Vertragsanalyse: ${contract.name}
+Vertragsanalyse: ${fixUtf8Display(contract.name)}
 Score: ${contract.analysis.contractScore || 'N/A'}/100
 
 Zusammenfassung:
@@ -174,7 +175,7 @@ ${contract.analysis.detailedLegalOpinion}
         `.trim();
       } else if (contract.legalPulse) {
         analysisText = `
-Legal Pulse Analyse: ${contract.name}
+Legal Pulse Analyse: ${fixUtf8Display(contract.name)}
 Score: ${contract.legalPulse.riskScore || 'N/A'}/100
 
 Zusammenfassung:
@@ -250,7 +251,7 @@ ${contract.legalPulse.recommendations?.join('\n- ') || 'Nicht verfügbar'}
                 <h2 id="analysis-modal-title" className={styles.title}>
                   {hasNewAnalysis ? '🤖 KI-Vertragsanalyse' : '🧠 Legal Pulse Analyse'}
                 </h2>
-                <p className={styles.contractName}>{contract.name}</p>
+                <p className={styles.contractName}>{fixUtf8Display(contract.name)}</p>
               </div>
             </div>
             

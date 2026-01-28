@@ -5,6 +5,7 @@ import {
   ExternalLink 
 } from "lucide-react";
 import styles from "../styles/ContractShareModal.module.css";
+import { fixUtf8Display } from "../utils/textUtils";
 
 interface ContractShareModalProps {
   contract: {
@@ -80,10 +81,10 @@ export default function ContractShareModal({
   const contractLink = `https://www.contract-ai.de/contracts/${contract._id}`;
   
   // Erstelle Share-Texte
-  const shareText = `Vertrag "${contract.name}" - Contract AI`;
-  const emailSubject = encodeURIComponent(`Vertrag: ${contract.name}`);
+  const shareText = `Vertrag "${fixUtf8Display(contract.name)}" - Contract AI`;
+  const emailSubject = encodeURIComponent(`Vertrag: ${fixUtf8Display(contract.name)}`);
   const emailBody = encodeURIComponent(
-    `Hallo,\n\nIch teile mit dir den Vertrag "${contract.name}".\n\nLink: ${contractLink}\n\nViele Grüße`
+    `Hallo,\n\nIch teile mit dir den Vertrag "${fixUtf8Display(contract.name)}".\n\nLink: ${contractLink}\n\nViele Grüße`
   );
 
   const handleCopyLink = async () => {
@@ -165,7 +166,7 @@ export default function ContractShareModal({
             </div>
             <div className={styles.headerText}>
               <h2 id="share-modal-title">Vertrag teilen</h2>
-              <p>"{contract.name}"</p>
+              <p>"{fixUtf8Display(contract.name)}"</p>
             </div>
             <button 
               className={styles.closeBtn}

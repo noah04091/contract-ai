@@ -2,6 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './GeneratedContractsSection.module.css';
+import { fixUtf8Display } from "../utils/textUtils";
 
 interface Contract {
   _id: string;
@@ -73,7 +74,7 @@ const GeneratedContractsSection: React.FC<GeneratedContractsSectionProps> = ({ c
             
             <div className={styles.cardContent}>
               <h3 className={styles.contractName}>
-                {contract.name || 'Unbenannter Vertrag'}
+                {fixUtf8Display(contract.name) || 'Unbenannter Vertrag'}
               </h3>
               <div className={styles.contractMeta}>
                 <span className={styles.createdDate}>

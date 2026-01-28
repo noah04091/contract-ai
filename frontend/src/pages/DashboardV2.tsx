@@ -25,6 +25,7 @@ import {
   X
 } from 'lucide-react';
 import { useAuth } from "../context/AuthContext";
+import { fixUtf8Display } from "../utils/textUtils";
 import { DashboardLayout } from "../components/DashboardV2";
 import AdminDashboard from "../components/AdminDashboard"; // 🔐 Admin Dashboard
 import { OnboardingChecklist } from "../components/Onboarding"; // 🎓 Onboarding Checklist
@@ -748,7 +749,7 @@ export default function DashboardV2() {
                       {contract.isGenerated ? <Sparkles size={16} /> : <FileText size={16} />}
                     </div>
                     <div className={styles.listItemContent}>
-                      <span className={styles.listItemTitle}>{contract.name}</span>
+                      <span className={styles.listItemTitle}>{fixUtf8Display(contract.name)}</span>
                       <span className={styles.listItemMeta}>
                         {getRelativeTime(contract.updatedAt || contract.createdAt || contract.uploadedAt)}
                       </span>
@@ -803,7 +804,7 @@ export default function DashboardV2() {
                       <FileText size={16} />
                     </div>
                     <div className={styles.listItemContent}>
-                      <span className={styles.listItemTitle}>{contract.name}</span>
+                      <span className={styles.listItemTitle}>{fixUtf8Display(contract.name)}</span>
                       <span className={styles.listItemMeta}>
                         Vertrag läuft ab • {formatFullDate(contract.expiryDate)}
                       </span>
@@ -933,7 +934,7 @@ export default function DashboardV2() {
                   onKeyDown={(e) => e.key === 'Enter' && handleContractClick(contract._id)}
                 >
                   <Sparkles size={14} />
-                  <span>{contract.name}</span>
+                  <span>{fixUtf8Display(contract.name)}</span>
                   <span className={styles.featureItemMeta}>{getRelativeTime(contract.createdAt)}</span>
                 </div>
               ))}
@@ -982,7 +983,7 @@ export default function DashboardV2() {
                   onKeyDown={(e) => e.key === 'Enter' && handleContractClick(contract._id)}
                 >
                   <Bell size={14} />
-                  <span>{contract.name}</span>
+                  <span>{fixUtf8Display(contract.name)}</span>
                   <span className={styles.featureItemMeta}>Erinnerung aktiv</span>
                 </div>
               ))}
@@ -1034,7 +1035,7 @@ export default function DashboardV2() {
                     onKeyDown={(e) => e.key === 'Enter' && navigate(`/legalpulse/${contract._id}`)}
                   >
                     <Shield size={14} style={{ color }} />
-                    <span>{contract.name}</span>
+                    <span>{fixUtf8Display(contract.name)}</span>
                     <span className={styles.riskScore} style={{ color }}>{score}%</span>
                   </div>
                 );

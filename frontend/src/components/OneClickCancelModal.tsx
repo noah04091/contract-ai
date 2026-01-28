@@ -16,6 +16,7 @@ import {
   Sparkles
 } from "lucide-react";
 import styles from "../styles/OneClickCancelModal.module.css";
+import { fixUtf8Display } from "../utils/textUtils";
 
 // Proper TypeScript interfaces
 interface ProviderAddress {
@@ -170,14 +171,14 @@ ${providerAddress}
 
 ${today}
 
-**Kündigung meines Vertrags ${contract.name}**
+**Kündigung meines Vertrags ${fixUtf8Display(contract.name)}**
 
 Sehr geehrte Damen und Herren,
 
-hiermit kündige ich meinen Vertrag **${contract.name}** ${cancellationDateText}.
+hiermit kündige ich meinen Vertrag **${fixUtf8Display(contract.name)}** ${cancellationDateText}.
 
 **Vertragsdaten:**
-- Vertragsname: ${contract.name}
+- Vertragsname: ${fixUtf8Display(contract.name)}
 ${formData.contractNumber ? `- Vertragsnummer: ${formData.contractNumber}` : ""}
 ${formData.customerNumber ? `- Kundennummer: ${formData.customerNumber}` : ""}
 ${contract.amount ? `- Monatlicher Betrag: ${contract.amount}€` : ""}
@@ -290,7 +291,7 @@ ${formData.customerName}
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `Kündigung_${contract.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.txt`;
+    link.download = `Kündigung_${fixUtf8Display(contract.name).replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -322,7 +323,7 @@ ${formData.customerName}
               </div>
               <div>
                 <h2>1-Klick Kündigung</h2>
-                <p>Kündigen Sie "{contract.name}" mit nur einem Klick</p>
+                <p>Kündigen Sie "{fixUtf8Display(contract.name)}" mit nur einem Klick</p>
                 {providerDetected && (
                   <div className={styles.providerBadge}>
                     <Sparkles size={14} />

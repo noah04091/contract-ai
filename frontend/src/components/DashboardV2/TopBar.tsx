@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { fixUtf8Display } from "../../utils/textUtils";
 import {
   Menu,
   Search,
@@ -684,7 +685,7 @@ export default function TopBar({ onMenuClick, user }: TopBarProps) {
                           <FileText size={18} />
                         </div>
                         <div className={styles.searchResultContent}>
-                          <div className={styles.searchResultName}>{contract.name}</div>
+                          <div className={styles.searchResultName}>{fixUtf8Display(contract.name)}</div>
                           <div className={styles.searchResultMeta}>
                             <Clock size={12} />
                             <span>{formatDate(contract.date)}</span>

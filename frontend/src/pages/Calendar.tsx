@@ -1,6 +1,7 @@
 // src/pages/Calendar.tsx - Custom Calendar Redesign
 import { useEffect, useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
+import { fixUtf8Display } from "../utils/textUtils";
 import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSwipeable } from "react-swipeable";
@@ -1680,7 +1681,7 @@ function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalPro
                 </option>
                 {contracts.map(contract => (
                   <option key={contract._id} value={contract._id}>
-                    {contract.name}
+                    {fixUtf8Display(contract.name)}
                   </option>
                 ))}
               </select>
@@ -2298,7 +2299,7 @@ function EditEventModal({ event, onClose, onSave, onDelete }: EditEventModalProp
                 </option>
                 {contracts.map(contract => (
                   <option key={contract._id} value={contract._id}>
-                    {contract.name}
+                    {fixUtf8Display(contract.name)}
                   </option>
                 ))}
               </select>

@@ -383,9 +383,10 @@ export default function Chat() {
         headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error("PDF konnte nicht geladen werden");
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      window.open(url, "_blank");
+      const data = await res.json();
+      if (data.url) {
+        window.open(data.url, "_blank");
+      }
     } catch (err) {
       console.error("❌ Error opening PDF:", err);
     }

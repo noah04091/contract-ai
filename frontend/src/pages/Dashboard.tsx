@@ -6,6 +6,7 @@ import SavedAlternatives from "../components/SavedAlternatives";
 import InfoTooltip from "../components/InfoTooltip";
 import { tooltipTexts } from "../utils/tooltipTexts";
 import { generateICS } from "../utils/icsGenerator";
+import { fixUtf8Display } from "../utils/textUtils";
 import Notification from "../components/Notification";
 import { Helmet } from "react-helmet-async";
 import {
@@ -507,8 +508,8 @@ export default function Dashboard() {
   const handleExportICS = (contract: Contract, e: React.MouseEvent) => {
     e.stopPropagation();
     if (contract.expiryDate) {
-      generateICS({ name: contract.name, expiryDate: contract.expiryDate });
-      setNotification({ message: `Kalendereintrag für "${contract.name}" erstellt`, type: "success" });
+      generateICS({ name: fixUtf8Display(contract.name), expiryDate: contract.expiryDate });
+      setNotification({ message: `Kalendereintrag für "${fixUtf8Display(contract.name)}" erstellt`, type: "success" });
     } else {
       setNotification({ message: "Kein Ablaufdatum vorhanden", type: "error" });
     }
@@ -1000,7 +1001,7 @@ export default function Dashboard() {
                     >
                       <div className={styles.contractHeader}>
                         <div className={styles.contractTitleSection}>
-                          <h3 className={styles.contractTitle}>{contract.name || "Unbenannter Vertrag"}</h3>
+                          <h3 className={styles.contractTitle}>{fixUtf8Display(contract.name) || "Unbenannter Vertrag"}</h3>
                           {contract.isGenerated && (
                             <span className={styles.generatedBadge}>✨ KI</span>
                           )}
@@ -1166,7 +1167,7 @@ export default function Dashboard() {
                             </td>
                             <td className={styles.nameCell}>
                               <div className={styles.contractNameCell}>
-                                <span className={styles.contractName}>{contract.name || "—"}</span>
+                                <span className={styles.contractName}>{fixUtf8Display(contract.name) || "—"}</span>
                                 {contract.isGenerated && (
                                   <span className={styles.generatedBadge}>✨ KI</span>
                                 )}
@@ -1241,7 +1242,7 @@ export default function Dashboard() {
                         <div className={styles.mobileCardHeader}>
                           <div className={styles.mobileCardTitle}>
                             <div className={styles.mobileCardName}>
-                              {contract.name || "—"}
+                              {fixUtf8Display(contract.name) || "—"}
                               {contract.isGenerated && (
                                 <span className={styles.generatedBadge}>✨ KI</span>
                               )}

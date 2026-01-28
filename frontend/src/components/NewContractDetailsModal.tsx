@@ -7,6 +7,7 @@ import ContractShareModal from './ContractShareModal';
 import ContractEditModal from './ContractEditModal';
 import SignatureModal from './SignatureModal';
 import ImportantDatesSection from './ImportantDatesSection';
+import { fixUtf8Display } from "../utils/textUtils";
 
 // Signature-related interfaces
 interface Signer {
@@ -626,7 +627,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   const handleShare = () => setShowShareModal(true);
   const handleDelete = () => {
     if (onDelete) {
-      onDelete(contract._id, contract.name);
+      onDelete(contract._id, fixUtf8Display(contract.name));
       onClose();
     }
   };
@@ -639,7 +640,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${contract.name}.txt`;
+    link.download = `${fixUtf8Display(contract.name)}.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -675,7 +676,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         <div className={styles.detailsGrid}>
           <div className={styles.detailItem}>
             <span className={styles.label}>Vertragsname:</span>
-            <span className={styles.valueTruncate} title={contract.name}>{contract.name}</span>
+            <span className={styles.valueTruncate} title={fixUtf8Display(contract.name)}>{fixUtf8Display(contract.name)}</span>
           </div>
           <div className={styles.detailItem}>
             <span className={styles.label}>Status:</span>
@@ -779,7 +780,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         <div className={styles.section}>
           <ImportantDatesSection
             importantDates={contract.importantDates}
-            contractName={contract.name}
+            contractName={fixUtf8Display(contract.name)}
           />
         </div>
       )}
@@ -1102,7 +1103,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${contract.name}_Analyse.pdf`;
+      link.download = `${fixUtf8Display(contract.name)}_Analyse.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -1843,7 +1844,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             <div className={styles.headerLeft}>
               <FileText size={24} />
               <div>
-                <h2>{contract.name}</h2>
+                <h2>{fixUtf8Display(contract.name)}</h2>
                 <p className={styles.contractName}>
                   {contract.kuendigung && `Kündigungsfrist: ${contract.kuendigung}`}
                 </p>
@@ -2034,7 +2035,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             show={showSignatureModal}
             onClose={() => setShowSignatureModal(false)}
             contractId={contract._id}
-            contractName={contract.name}
+            contractName={fixUtf8Display(contract.name)}
             contractS3Key={contract.s3Key}
           />
         )}
