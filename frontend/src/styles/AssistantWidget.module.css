@@ -45,101 +45,74 @@
 }
 
 /* ============================================ */
-/* ONBOARDING TOOLTIP (first login ever) */
+/* MASCOT ONBOARDING (first login ever) */
 /* ============================================ */
 
-.onboardingTooltip {
-  position: absolute;
-  bottom: calc(100% + 16px);
-  right: -8px;
+.mascotContainer {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 10000;
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+}
+
+.mascotFigure {
+  position: relative;
+  flex-shrink: 0;
+  animation: mascotWave 2s ease-in-out 1s 3;
+  transform-origin: bottom center;
+}
+
+@keyframes mascotWave {
+  0%, 100% { transform: rotate(0deg); }
+  15% { transform: rotate(-5deg); }
+  30% { transform: rotate(5deg); }
+  45% { transform: rotate(-3deg); }
+  60% { transform: rotate(0deg); }
+}
+
+.mascotSpeechBubble {
   background: white;
   border-radius: 20px;
-  padding: 20px;
-  width: 280px;
+  padding: 18px 20px;
+  width: 240px;
   box-shadow: 0 12px 40px rgba(59, 130, 246, 0.15),
               0 4px 12px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(59, 130, 246, 0.12);
-  z-index: 10000;
-  text-align: center;
-}
-
-/* Lawyer Avatar */
-.lawyerAvatarWrapper {
   position: relative;
-  display: inline-block;
-  margin-bottom: 12px;
+  margin-bottom: 20px;
+  margin-right: 8px;
 }
 
-.lawyerAvatar {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  border: 3px solid #3b82f6;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto;
-  font-size: 32px;
-  animation: avatarBounceIn 0.5s ease;
-}
-
-.avatarPulse {
+.speechArrow {
   position: absolute;
-  top: -4px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  border: 2px solid rgba(59, 130, 246, 0.3);
-  animation: avatarPulse 2s ease-in-out infinite;
+  right: -8px;
+  bottom: 28px;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-right: 1px solid rgba(59, 130, 246, 0.12);
+  border-bottom: 1px solid rgba(59, 130, 246, 0.12);
+  transform: rotate(-45deg);
 }
 
-@keyframes avatarBounceIn {
-  0% {
-    transform: scale(0);
-    opacity: 0;
-  }
-  50% {
-    transform: scale(1.15);
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-@keyframes avatarPulse {
-  0%, 100% {
-    transform: translateX(-50%) scale(1);
-    opacity: 0.6;
-  }
-  50% {
-    transform: translateX(-50%) scale(1.15);
-    opacity: 0;
-  }
-}
-
-.onboardingContent {
-  margin-bottom: 14px;
-}
-
-.onboardingTitle {
+.mascotTitle {
   margin: 0 0 6px 0;
   font-size: 15px;
   font-weight: 700;
   color: #1e40af;
 }
 
-.onboardingText {
-  margin: 0;
+.mascotText {
+  margin: 0 0 14px 0;
   font-size: 13px;
   line-height: 1.5;
   color: #4b5563;
 }
 
-.onboardingButton {
+.mascotButton {
   display: block;
   width: 100%;
   padding: 10px 0;
@@ -154,7 +127,7 @@
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
-.onboardingButton:hover {
+.mascotButton:hover {
   opacity: 0.9;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
@@ -601,7 +574,8 @@
 @media (max-width: 480px) {
   .chatBubbleContainer,
   .chatBubble,
-  .chatWindow {
+  .chatWindow,
+  .mascotContainer {
     display: none !important;
   }
 }

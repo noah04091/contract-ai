@@ -5,6 +5,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "react-router-dom";
 import { useAssistantContext } from "../hooks/useAssistantContext";
+import LawyerMascot from "./LawyerMascot";
 import styles from "../styles/AssistantWidget.module.css";
 
 interface Message {
@@ -247,9 +248,47 @@ export default function AssistantWidget() {
 
   return (
     <>
-      {/* Chat Bubble Button with Onboarding/Tooltip */}
+      {/* Mascot Onboarding - pops up from bottom */}
       <AnimatePresence>
-        {!isOpen && (
+        {showOnboarding && !isOpen && (
+          <motion.div
+            className={styles.mascotContainer}
+            initial={{ y: 200, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 200, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 200, damping: 18, delay: 0.3 }}
+          >
+            <div className={styles.mascotFigure}>
+              <LawyerMascot size={110} />
+            </div>
+            <motion.div
+              className={styles.mascotSpeechBubble}
+              initial={{ opacity: 0, scale: 0.8, x: 20 }}
+              animate={{ opacity: 1, scale: 1, x: 0 }}
+              transition={{ delay: 0.8, type: "spring", stiffness: 300, damping: 20 }}
+            >
+              <p className={styles.mascotTitle}>Dein KI-Rechtsassistent</p>
+              <p className={styles.mascotText}>
+                Hallo! Ich helfe dir bei Verträgen und rechtlichen Fragen. Schreib mir jederzeit!
+              </p>
+              <button
+                className={styles.mascotButton}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  dismissOnboarding();
+                }}
+              >
+                Verstanden
+              </button>
+              <div className={styles.speechArrow} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Chat Bubble Button with Tooltip */}
+      <AnimatePresence>
+        {!isOpen && !showOnboarding && (
           <motion.div
             className={styles.chatBubbleContainer}
             initial={{ scale: 0, opacity: 0 }}
@@ -257,45 +296,9 @@ export default function AssistantWidget() {
             exit={{ scale: 0, opacity: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
           >
-            {/* Onboarding Tooltip (first login ever) with lawyer avatar */}
-            <AnimatePresence>
-              {showOnboarding && (
-                <motion.div
-                  className={styles.onboardingTooltip}
-                  initial={{ opacity: 0, y: 10, scale: 0.9 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.9 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                >
-                  <div className={styles.lawyerAvatarWrapper}>
-                    <div className={styles.lawyerAvatar}>
-                      <span>👨‍⚖️</span>
-                    </div>
-                    <div className={styles.avatarPulse} />
-                  </div>
-                  <div className={styles.onboardingContent}>
-                    <p className={styles.onboardingTitle}>Dein KI-Rechtsassistent</p>
-                    <p className={styles.onboardingText}>
-                      Hallo! Ich bin hier, um dir bei Verträgen und rechtlichen Fragen zu helfen. Schreib mir jederzeit!
-                    </p>
-                  </div>
-                  <button
-                    className={styles.onboardingButton}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      dismissOnboarding();
-                    }}
-                  >
-                    Verstanden
-                  </button>
-                  <div className={styles.tooltipArrow} />
-                </motion.div>
-              )}
-            </AnimatePresence>
-
             {/* Session Tooltip (returning user, new session) */}
             <AnimatePresence>
-              {showTooltip && !showOnboarding && (
+              {showTooltip && (
                 <motion.div
                   className={styles.sessionTooltip}
                   initial={{ opacity: 0, y: 10 }}

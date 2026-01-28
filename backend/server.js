@@ -688,6 +688,14 @@ const connectDB = async () => {
       });
     }
 
+    // ✅ Document Scanner Route
+    try {
+      app.use("/api/scanner", verifyToken, require("./routes/scanner"));
+      console.log("✅ Scanner-Route geladen unter /api/scanner");
+    } catch (err) {
+      console.error("❌ Fehler bei Scanner-Route:", err);
+    }
+
     try {
       app.use("/api/analyze", verifyToken, checkSubscription, require("./routes/analyze"));
       console.log("✅ Analyze-Route geladen unter /api/analyze");

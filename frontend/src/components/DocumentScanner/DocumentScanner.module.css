@@ -1,0 +1,565 @@
+/* ============================================
+   DocumentScanner - Full Screen Modal
+   ============================================ */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.scannerModal {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #000;
+}
+
+/* ============================================
+   Camera View
+   ============================================ */
+
+.cameraContainer {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.cameraVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ============================================
+   Toolbar (Top Bar)
+   ============================================ */
+
+.toolbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  padding-top: calc(12px + env(safe-area-inset-top, 0px));
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6) 0%, transparent 100%);
+  z-index: 10;
+}
+
+.toolbarBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background 0.2s;
+}
+
+.toolbarBtn:active {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.toolbarBtnActive {
+  background: rgba(234, 179, 8, 0.6);
+}
+
+.toolbarRight {
+  display: flex;
+  gap: 8px;
+}
+
+.pageCounter {
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 6px 12px;
+  border-radius: 16px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ============================================
+   Capture Area (Bottom)
+   ============================================ */
+
+.captureArea {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 24px 16px;
+  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, transparent 100%);
+  z-index: 10;
+}
+
+.captureBtn {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 4px solid white;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s;
+  flex-shrink: 0;
+}
+
+.captureBtn:active {
+  transform: scale(0.9);
+}
+
+.captureBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.captureBtnInner {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: white;
+  transition: background 0.15s;
+}
+
+.captureBtn:active .captureBtnInner {
+  background: #ddd;
+}
+
+.finishBtn {
+  padding: 10px 20px;
+  border-radius: 24px;
+  border: none;
+  background: rgba(34, 197, 94, 0.9);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background 0.2s;
+}
+
+.finishBtn:active {
+  background: rgba(22, 163, 74, 0.95);
+}
+
+/* ============================================
+   Fallback (No Camera)
+   ============================================ */
+
+.fallbackContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+
+.fallbackInput {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.2s;
+}
+
+.fallbackInput:active {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.errorText {
+  color: #fbbf24;
+}
+
+/* ============================================
+   Review Container
+   ============================================ */
+
+.reviewContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #111;
+  overflow: hidden;
+}
+
+.reviewFooter {
+  padding: 12px 16px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  justify-content: center;
+  background: #111;
+}
+
+.finishBtnLarge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  border-radius: 12px;
+  border: none;
+  background: #22c55e;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  width: 100%;
+  max-width: 400px;
+  justify-content: center;
+}
+
+.finishBtnLarge:active {
+  background: #16a34a;
+}
+
+.finishBtnLarge:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   Page Preview
+   ============================================ */
+
+.previewContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.previewImageWrapper {
+  flex: 1;
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.previewImage {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+  transition: transform 0.3s ease;
+}
+
+.cornerOverlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.cornerHandle {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 3px solid #22c55e;
+  border-radius: 50%;
+  background: rgba(34, 197, 94, 0.3);
+  transform: translate(-50%, -50%);
+}
+
+.previewControls {
+  display: flex;
+  gap: 12px;
+  padding: 16px 0;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.previewBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+  min-width: 44px;
+  min-height: 44px;
+  justify-content: center;
+}
+
+.previewBtn:active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.previewBtnDanger {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+}
+
+.previewBtnDanger:active {
+  background: rgba(239, 68, 68, 0.4);
+}
+
+.previewBtnPrimary {
+  background: rgba(34, 197, 94, 0.3);
+  color: #86efac;
+}
+
+.previewBtnPrimary:active {
+  background: rgba(34, 197, 94, 0.5);
+}
+
+/* ============================================
+   Batch Manager
+   ============================================ */
+
+.batchContainer {
+  background: rgba(0, 0, 0, 0.8);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 10px 12px;
+}
+
+.batchScroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 2px;
+}
+
+.batchScroll::-webkit-scrollbar {
+  display: none;
+}
+
+.batchItem {
+  position: relative;
+  width: 60px;
+  height: 80px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.2s;
+}
+
+.batchItemActive {
+  border-color: #22c55e;
+}
+
+.batchThumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.batchNumber {
+  position: absolute;
+  bottom: 2px;
+  left: 2px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.batchRemove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(239, 68, 68, 0.8);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.batchItem:hover .batchRemove {
+  opacity: 1;
+}
+
+/* Touch: immer sichtbar */
+@media (hover: none) {
+  .batchRemove {
+    opacity: 1;
+  }
+}
+
+.batchAdd {
+  width: 60px;
+  height: 80px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.batchAdd:active {
+  border-color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ============================================
+   Status Screens (Processing, Done, Error)
+   ============================================ */
+
+.statusContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+  color: #60a5fa;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.statusText {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.successIcon {
+  color: #22c55e;
+}
+
+.errorIcon {
+  color: #f59e0b;
+}
+
+.errorActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.retryBtn {
+  padding: 10px 24px;
+  border-radius: 10px;
+  border: none;
+  background: #3b82f6;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.retryBtn:active {
+  background: #2563eb;
+}
+
+.cancelBtn {
+  padding: 10px 24px;
+  border-radius: 10px;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.cancelBtn:active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ============================================
+   Landscape Support
+   ============================================ */
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .captureArea {
+    padding: 12px 16px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .captureBtn {
+    width: 56px;
+    height: 56px;
+  }
+
+  .captureBtnInner {
+    width: 44px;
+    height: 44px;
+  }
+
+  .batchItem {
+    width: 48px;
+    height: 64px;
+  }
+
+  .batchAdd {
+    width: 48px;
+    height: 64px;
+  }
+}
