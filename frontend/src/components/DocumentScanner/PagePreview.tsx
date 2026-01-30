@@ -1,14 +1,14 @@
 /**
  * PagePreview
  *
- * Zeigt ein aufgenommenes Bild mit:
- * - Draggbaren Eck-Handles zum manuellen Crop
+ * Zeigt das korrigierte Scan-Bild mit:
  * - Rotation-Buttons (90° CW/CCW)
+ * - "Ecken anpassen" → zurück zur CornerAdjustment
  * - "Wiederholen" + "Bestätigen" Buttons
  */
 
 import React, { useMemo } from "react";
-import { RotateCcw, RotateCw, RefreshCw, Check } from "lucide-react";
+import { RotateCcw, RotateCw, RefreshCw, Check, Crop } from "lucide-react";
 import type { ScannedPage } from "./hooks/useBatchPages";
 import styles from "./DocumentScanner.module.css";
 
@@ -17,6 +17,7 @@ interface PagePreviewProps {
   onRotate: (degrees: number) => void;
   onRetake: () => void;
   onConfirm: () => void;
+  onAdjustCorners?: () => void;
 }
 
 const PagePreview: React.FC<PagePreviewProps> = ({
@@ -24,6 +25,7 @@ const PagePreview: React.FC<PagePreviewProps> = ({
   onRotate,
   onRetake,
   onConfirm,
+  onAdjustCorners,
 }) => {
   const rotationStyle = useMemo(
     () => ({ transform: `rotate(${page.rotation}deg)` }),
@@ -35,26 +37,14 @@ const PagePreview: React.FC<PagePreviewProps> = ({
       <div className={styles.previewImageWrapper}>
         <img
           src={page.thumbnailUrl}
-          alt={`Scan Seite`}
+          alt="Scan Seite"
           className={styles.previewImage}
           style={rotationStyle}
+          onError={(e) => {
+            console.warn("[Scanner] Preview image failed to load");
+            (e.target as HTMLImageElement).style.display = "none";
+          }}
         />
-
-        {/* Corner-Handles (visuell) */}
-        {page.corners && page.corners.length === 4 && (
-          <div className={styles.cornerOverlay}>
-            {page.corners.map((corner, i) => (
-              <div
-                key={i}
-                className={styles.cornerHandle}
-                style={{
-                  left: `${corner.x * 100}%`,
-                  top: `${corner.y * 100}%`,
-                }}
-              />
-            ))}
-          </div>
-        )}
       </div>
 
       <div className={styles.previewControls}>
@@ -73,6 +63,17 @@ const PagePreview: React.FC<PagePreviewProps> = ({
         >
           <RotateCw size={20} />
         </button>
+
+        {onAdjustCorners && (
+          <button
+            className={styles.previewBtn}
+            onClick={onAdjustCorners}
+            title="Ecken anpassen"
+          >
+            <Crop size={20} />
+            <span>Ecken</span>
+          </button>
+        )}
 
         <button
           className={`${styles.previewBtn} ${styles.previewBtnDanger}`}

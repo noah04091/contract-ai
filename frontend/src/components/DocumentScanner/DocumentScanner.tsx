@@ -2,7 +2,7 @@
  * DocumentScanner
  *
  * Haupt-Modal für die Dokument-Scan-Funktion.
- * State Machine: idle → capturing → reviewing → processing → done
+ * State Machine: capturing → adjusting → reviewing → processing → done
  *
  * Full-Screen Overlay mit AnimatePresence.
  */
@@ -11,10 +11,13 @@ import React, { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, AlertTriangle, FileText, CheckCircle } from "lucide-react";
 import CameraView from "./CameraView";
+import CornerAdjustment from "./CornerAdjustment";
 import PagePreview from "./PagePreview";
 import BatchManager from "./BatchManager";
 import { useBatchPages } from "./hooks/useBatchPages";
-import type { DetectedEdges } from "./utils/imageProcessing";
+import { useOpenCV } from "./hooks/useOpenCV";
+import { applyPerspectiveCorrection } from "./utils/perspectiveCorrection";
+import type { DetectedEdges, Point } from "./utils/imageProcessing";
 import styles from "./DocumentScanner.module.css";
 
 export interface DocumentScannerProps {
@@ -25,7 +28,7 @@ export interface DocumentScannerProps {
   enableOCR?: boolean;
 }
 
-type ScannerState = "capturing" | "reviewing" | "processing" | "done" | "error";
+type ScannerState = "capturing" | "adjusting" | "reviewing" | "processing" | "done" | "error";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
 
@@ -39,41 +42,90 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
   const [scannerState, setScannerState] = useState<ScannerState>("capturing");
   const [processingProgress, setProcessingProgress] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [isCorrectingPerspective, setIsCorrectingPerspective] = useState(false);
   const lastCapturedEdgesRef = useRef<DetectedEdges | null>(null);
+
+  const { cv } = useOpenCV();
 
   const {
     pages,
     activePage,
     addPage,
     removePage,
+    updatePageCorners,
     updatePageRotation,
+    updateCorrectedImage,
     setActivePage,
     clearPages,
     pageCount,
   } = useBatchPages(maxPages);
 
-  // Foto aufgenommen → zur Review wechseln
+  // Foto aufgenommen → zur Ecken-Anpassung wechseln
   const handleCapture = useCallback(
     (blob: Blob, edges: DetectedEdges | null) => {
       lastCapturedEdgesRef.current = edges;
       addPage(blob, edges?.corners || null);
-      setScannerState("reviewing");
+      setScannerState("adjusting");
     },
     [addPage]
   );
 
-  // Seite bestätigt → zurück zur Kamera
+  // Ecken bestätigt → Perspektiv-Korrektur → Review
+  const handleCornersConfirmed = useCallback(
+    async (corners: Point[]) => {
+      const pageIndex = pages.length - 1;
+      if (pageIndex < 0) return;
+
+      updatePageCorners(pageIndex, corners);
+
+      // Perspektiv-Korrektur anwenden wenn OpenCV verfügbar
+      if (cv) {
+        setIsCorrectingPerspective(true);
+        try {
+          const correctedBlob = await applyPerspectiveCorrection(
+            pages[pageIndex].imageBlob,
+            corners,
+            cv
+          );
+          updateCorrectedImage(pageIndex, correctedBlob);
+        } catch (err) {
+          console.warn("[Scanner] Perspective correction failed:", err);
+          // Fallback: Original-Bild beibehalten
+        } finally {
+          setIsCorrectingPerspective(false);
+        }
+      }
+
+      setScannerState("reviewing");
+    },
+    [pages, cv, updatePageCorners, updateCorrectedImage]
+  );
+
+  // Retake aus Corner-Adjustment
+  const handleRetakeFromAdjust = useCallback(() => {
+    if (pages.length > 0) {
+      removePage(pages.length - 1);
+    }
+    setScannerState("capturing");
+  }, [pages.length, removePage]);
+
+  // Seite bestätigt in Review → zurück zur Kamera
   const handleConfirmPage = useCallback(() => {
     setScannerState("capturing");
   }, []);
 
-  // Seite wiederholen → entfernen und zurück zur Kamera
+  // Seite wiederholen aus Review → entfernen und zurück zur Kamera
   const handleRetakePage = useCallback(() => {
     if (pages.length > 0) {
       removePage(pages.length - 1);
     }
     setScannerState("capturing");
   }, [pages.length, removePage]);
+
+  // Zurück zu Ecken-Anpassung aus Review
+  const handleAdjustCorners = useCallback(() => {
+    setScannerState("adjusting");
+  }, []);
 
   // Weitere Seite aus BatchManager
   const handleAddPage = useCallback(() => {
@@ -100,9 +152,10 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
     try {
       const formData = new FormData();
 
-      // Bilder hinzufügen
+      // Bilder hinzufügen (korrigiert wenn verfügbar, sonst original)
       for (let i = 0; i < pages.length; i++) {
-        formData.append("images", pages[i].imageBlob, `scan_${i + 1}.jpg`);
+        const blob = pages[i].correctedBlob || pages[i].imageBlob;
+        formData.append("images", blob, `scan_${i + 1}.jpg`);
       }
 
       // Corners + Options
@@ -143,7 +196,6 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
       // PDF als File-Objekt erzeugen
       let pdfBlob: Blob;
       if (result.pdfBase64) {
-        // Base64 → Blob
         const binary = atob(result.pdfBase64);
         const bytes = new Uint8Array(binary.length);
         for (let i = 0; i < binary.length; i++) {
@@ -151,7 +203,6 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
         }
         pdfBlob = new Blob([bytes], { type: "application/pdf" });
       } else if (result.pdfUrl) {
-        // S3 URL → Download
         const pdfResponse = await fetch(result.pdfUrl);
         pdfBlob = await pdfResponse.blob();
       } else {
@@ -171,7 +222,6 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
           : `PDF mit ${pageCount} Seiten erstellt`
       );
 
-      // Kurz die Erfolgsmeldung zeigen, dann übergeben
       setTimeout(() => {
         onComplete(pdfFile);
         handleClose();
@@ -198,6 +248,8 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
 
   if (!isOpen) return null;
 
+  const safeActivePage = Math.min(activePage, Math.max(0, pages.length - 1));
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -220,19 +272,34 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
               />
             )}
 
+            {/* ADJUSTING STATE — Ecken-Anpassung */}
+            {scannerState === "adjusting" && pages.length > 0 && (
+              <>
+                {isCorrectingPerspective ? (
+                  <div className={styles.statusContainer}>
+                    <Loader2 size={48} className={styles.spinner} />
+                    <p className={styles.statusText}>Perspektive wird korrigiert...</p>
+                  </div>
+                ) : (
+                  <CornerAdjustment
+                    imageUrl={pages[safeActivePage]?.thumbnailUrl || ""}
+                    initialCorners={pages[safeActivePage]?.corners || null}
+                    onConfirm={handleCornersConfirmed}
+                    onRetake={handleRetakeFromAdjust}
+                  />
+                )}
+              </>
+            )}
+
             {/* REVIEWING STATE */}
             {scannerState === "reviewing" && pages.length > 0 && (
               <div className={styles.reviewContainer}>
                 <PagePreview
-                  page={pages[Math.min(activePage, pages.length - 1)]}
-                  onRotate={(deg) =>
-                    updatePageRotation(
-                      Math.min(activePage, pages.length - 1),
-                      deg
-                    )
-                  }
+                  page={pages[safeActivePage]}
+                  onRotate={(deg) => updatePageRotation(safeActivePage, deg)}
                   onRetake={handleRetakePage}
                   onConfirm={handleConfirmPage}
+                  onAdjustCorners={handleAdjustCorners}
                 />
 
                 <BatchManager

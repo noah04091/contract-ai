@@ -2,12 +2,15 @@
  * EdgeOverlay
  *
  * Canvas-Overlay das erkannte Dokumentkanten als Polygon zeichnet
- * über dem Kamera-Feed. Mit visueller Glättung (lerp) und
- * 3-stufigem Confidence-Farbsystem.
+ * über dem Kamera-Feed. Corners kommen bereits gefiltert
+ * (One Euro Filter) an — kein zusätzliches Smoothing nötig.
+ *
+ * 3-stufiges Confidence-Farbsystem:
+ * Grün (>0.6) = bereit, Gelb (0.3-0.6) = unsicher, Rot (<0.3) = schlecht
  */
 
 import React, { useRef, useEffect } from "react";
-import type { DetectedEdges, Point } from "./utils/imageProcessing";
+import type { DetectedEdges } from "./utils/imageProcessing";
 
 interface EdgeOverlayProps {
   edges: DetectedEdges | null;
@@ -15,13 +18,8 @@ interface EdgeOverlayProps {
   height: number;
 }
 
-function lerp(a: number, b: number, t: number): number {
-  return a + (b - a) * t;
-}
-
 const EdgeOverlay: React.FC<EdgeOverlayProps> = ({ edges, width, height }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const prevCornersRef = useRef<Point[] | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -35,38 +33,27 @@ const EdgeOverlay: React.FC<EdgeOverlayProps> = ({ edges, width, height }) => {
 
     ctx.clearRect(0, 0, width, height);
 
-    if (!edges || edges.corners.length !== 4) {
-      prevCornersRef.current = null;
-      return;
-    }
+    if (!edges || edges.corners.length !== 4) return;
 
     const { corners, confidence } = edges;
 
-    // Visuelle Glättung: Lerp zwischen vorherigen und aktuellen Eckpunkten
-    const smoothFactor = 0.35;
-    const displayCorners: Point[] = corners.map((c, i) => {
-      if (prevCornersRef.current && prevCornersRef.current[i]) {
-        return {
-          x: lerp(prevCornersRef.current[i].x, c.x, smoothFactor),
-          y: lerp(prevCornersRef.current[i].y, c.y, smoothFactor),
-        };
-      }
-      return { x: c.x, y: c.y };
-    });
-    prevCornersRef.current = displayCorners;
+    // Pixel-Koordinaten berechnen
+    const pts = corners.map((c) => ({
+      x: c.x * width,
+      y: c.y * height,
+    }));
 
     // Semi-transparenter Overlay außerhalb des Dokuments
     ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
     ctx.fillRect(0, 0, width, height);
 
     // Dokument-Bereich ausschneiden (transparent)
-    // Corners sind clockwise geordnet: TL=0, TR=1, BR=2, BL=3
     ctx.globalCompositeOperation = "destination-out";
     ctx.beginPath();
-    ctx.moveTo(displayCorners[0].x * width, displayCorners[0].y * height);
-    ctx.lineTo(displayCorners[1].x * width, displayCorners[1].y * height);
-    ctx.lineTo(displayCorners[2].x * width, displayCorners[2].y * height);
-    ctx.lineTo(displayCorners[3].x * width, displayCorners[3].y * height);
+    ctx.moveTo(pts[0].x, pts[0].y);
+    ctx.lineTo(pts[1].x, pts[1].y);
+    ctx.lineTo(pts[2].x, pts[2].y);
+    ctx.lineTo(pts[3].x, pts[3].y);
     ctx.closePath();
     ctx.fill();
 
@@ -87,18 +74,18 @@ const EdgeOverlay: React.FC<EdgeOverlayProps> = ({ edges, width, height }) => {
     ctx.lineJoin = "round";
 
     ctx.beginPath();
-    ctx.moveTo(displayCorners[0].x * width, displayCorners[0].y * height);
-    ctx.lineTo(displayCorners[1].x * width, displayCorners[1].y * height);
-    ctx.lineTo(displayCorners[2].x * width, displayCorners[2].y * height);
-    ctx.lineTo(displayCorners[3].x * width, displayCorners[3].y * height);
+    ctx.moveTo(pts[0].x, pts[0].y);
+    ctx.lineTo(pts[1].x, pts[1].y);
+    ctx.lineTo(pts[2].x, pts[2].y);
+    ctx.lineTo(pts[3].x, pts[3].y);
     ctx.closePath();
     ctx.stroke();
 
     // Eckpunkte
     ctx.fillStyle = color;
-    for (const corner of displayCorners) {
+    for (const pt of pts) {
       ctx.beginPath();
-      ctx.arc(corner.x * width, corner.y * height, 8, 0, Math.PI * 2);
+      ctx.arc(pt.x, pt.y, 8, 0, Math.PI * 2);
       ctx.fill();
     }
   }, [edges, width, height]);

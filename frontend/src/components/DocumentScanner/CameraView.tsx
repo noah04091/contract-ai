@@ -5,7 +5,7 @@
  */
 
 import React, { useEffect, useRef, useState } from "react";
-import { Camera } from "lucide-react";
+import { Camera, Loader2 } from "lucide-react";
 import EdgeOverlay from "./EdgeOverlay";
 import ScannerToolbar from "./ScannerToolbar";
 import { useCamera } from "./hooks/useCamera";
@@ -30,7 +30,7 @@ const CameraView: React.FC<CameraViewProps> = ({
 }) => {
   const { state, videoRef, startCamera, stopCamera, captureFrame, toggleTorch, switchCamera } =
     useCamera();
-  const { edges, startDetection, stopDetection } = useEdgeDetection();
+  const { edges, isOpenCVReady, startDetection, stopDetection } = useEdgeDetection();
   const containerRef = useRef<HTMLDivElement>(null);
   const [videoDimensions, setVideoDimensions] = useState({ width: 0, height: 0 });
 
@@ -132,7 +132,15 @@ const CameraView: React.FC<CameraViewProps> = ({
         muted
       />
 
-      {videoDimensions.width > 0 && (
+      {/* OpenCV Loading Indicator */}
+      {!isOpenCVReady && (
+        <div className={styles.opencvLoading}>
+          <Loader2 size={20} className={styles.spinner} />
+          <span>Lade Scanner-Engine...</span>
+        </div>
+      )}
+
+      {videoDimensions.width > 0 && isOpenCVReady && (
         <EdgeOverlay
           edges={edges}
           width={videoDimensions.width}

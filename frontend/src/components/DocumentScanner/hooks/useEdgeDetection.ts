@@ -1,54 +1,26 @@
 /**
  * useEdgeDetection Hook
  *
- * Führt Edge Detection auf dem Video-Feed durch.
+ * Führt Edge Detection auf dem Video-Feed durch mit OpenCV.js.
  * - ~24fps via requestAnimationFrame (42ms throttle)
  * - 480px Verarbeitungsauflösung
- * - Temporal Smoothing über letzte 4 Frames
- * - Decay: History wird langsam abgebaut wenn keine Erkennung
+ * - One Euro Filter für stabile Eckpunkte (kein Wobbling)
+ * - Decay: Letzte bekannte Corners werden 500ms gehalten
  */
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { detectEdgesFromVideo, type DetectedEdges, type Point } from "../utils/imageProcessing";
+import { detectEdgesFromVideo, type DetectedEdges } from "../utils/imageProcessing";
+import { useOpenCV } from "./useOpenCV";
+import { CornersFilter } from "../utils/oneEuroFilter";
 
 const TARGET_FPS_INTERVAL = 42; // ~24fps
-const SMOOTHING_FRAMES = 4;
 const DETECTION_RESOLUTION = 480;
-
-function smoothCorners(history: DetectedEdges[]): DetectedEdges {
-  if (history.length === 1) return history[0];
-
-  const avgCorners: Point[] = [
-    { x: 0, y: 0 },
-    { x: 0, y: 0 },
-    { x: 0, y: 0 },
-    { x: 0, y: 0 },
-  ];
-
-  // Weight recent frames more heavily (linear: 1, 2, 3, 4...)
-  let totalWeight = 0;
-  for (let f = 0; f < history.length; f++) {
-    const weight = f + 1;
-    totalWeight += weight;
-    for (let c = 0; c < 4; c++) {
-      avgCorners[c].x += history[f].corners[c].x * weight;
-      avgCorners[c].y += history[f].corners[c].y * weight;
-    }
-  }
-  for (let c = 0; c < 4; c++) {
-    avgCorners[c].x /= totalWeight;
-    avgCorners[c].y /= totalWeight;
-  }
-
-  const avgConfidence =
-    history.reduce((s, h) => s + h.confidence, 0) / history.length;
-
-  return { corners: avgCorners, confidence: avgConfidence };
-}
+const DECAY_TIMEOUT = 500; // ms bis null nach letzter Erkennung
 
 interface UseEdgeDetectionReturn {
   edges: DetectedEdges | null;
   isDetecting: boolean;
+  isOpenCVReady: boolean;
   startDetection: (video: HTMLVideoElement) => void;
   stopDetection: () => void;
 }
@@ -57,15 +29,26 @@ export function useEdgeDetection(): UseEdgeDetectionReturn {
   const [edges, setEdges] = useState<DetectedEdges | null>(null);
   const [isDetecting, setIsDetecting] = useState(false);
 
+  const { cv, isReady: isOpenCVReady } = useOpenCV();
+
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const videoRefInternal = useRef<HTMLVideoElement | null>(null);
   const rafRef = useRef<number | null>(null);
   const lastDetectionRef = useRef<number>(0);
-  const historyRef = useRef<DetectedEdges[]>([]);
+  const cornersFilterRef = useRef<CornersFilter>(new CornersFilter());
+  const lastFoundRef = useRef<number>(0);
+  const cvRef = useRef(cv);
+
+  // cv Ref aktuell halten
+  useEffect(() => {
+    cvRef.current = cv;
+  }, [cv]);
 
   const detect = useCallback(() => {
     const video = videoRefInternal.current;
-    if (!video || video.paused || video.ended || !video.videoWidth) {
+    const currentCv = cvRef.current;
+
+    if (!video || video.paused || video.ended || !video.videoWidth || !currentCv) {
       rafRef.current = requestAnimationFrame(detect);
       return;
     }
@@ -80,29 +63,22 @@ export function useEdgeDetection(): UseEdgeDetectionReturn {
 
       const result = detectEdgesFromVideo(
         video,
+        currentCv,
         canvasRef.current,
         DETECTION_RESOLUTION
       );
 
       if (result) {
-        historyRef.current.push(result);
-        if (historyRef.current.length > SMOOTHING_FRAMES) {
-          historyRef.current.shift();
-        }
-        // Smoothed output
-        const smoothed = smoothCorners(historyRef.current);
-        setEdges(smoothed);
+        lastFoundRef.current = now;
+        // One Euro Filter für stabile Eckpunkte
+        const filteredCorners = cornersFilterRef.current.filter(result.corners, now);
+        setEdges({ corners: filteredCorners, confidence: result.confidence });
       } else {
-        // Decay: langsam History abbauen statt sofort null
-        if (historyRef.current.length > 0) {
-          historyRef.current.shift();
-          if (historyRef.current.length > 0) {
-            const smoothed = smoothCorners(historyRef.current);
-            setEdges(smoothed);
-          } else {
-            setEdges(null);
-          }
+        // Decay: Letzte Corners für DECAY_TIMEOUT halten, dann null
+        if (now - lastFoundRef.current > DECAY_TIMEOUT) {
+          setEdges(null);
         }
+        // Sonst: Letzte bekannte Edges behalten
       }
     }
 
@@ -112,7 +88,8 @@ export function useEdgeDetection(): UseEdgeDetectionReturn {
   const startDetection = useCallback(
     (video: HTMLVideoElement) => {
       videoRefInternal.current = video;
-      historyRef.current = [];
+      cornersFilterRef.current.reset();
+      lastFoundRef.current = 0;
       setIsDetecting(true);
       rafRef.current = requestAnimationFrame(detect);
     },
@@ -127,7 +104,7 @@ export function useEdgeDetection(): UseEdgeDetectionReturn {
     setIsDetecting(false);
     setEdges(null);
     videoRefInternal.current = null;
-    historyRef.current = [];
+    cornersFilterRef.current.reset();
   }, []);
 
   // Cleanup
@@ -139,5 +116,5 @@ export function useEdgeDetection(): UseEdgeDetectionReturn {
     };
   }, []);
 
-  return { edges, isDetecting, startDetection, stopDetection };
+  return { edges, isDetecting, isOpenCVReady, startDetection, stopDetection };
 }
