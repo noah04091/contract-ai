@@ -224,10 +224,10 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
             {scannerState === "reviewing" && pages.length > 0 && (
               <div className={styles.reviewContainer}>
                 <PagePreview
-                  page={pages[activePage] || pages[pages.length - 1]}
+                  page={pages[Math.min(activePage, pages.length - 1)]}
                   onRotate={(deg) =>
                     updatePageRotation(
-                      activePage < pages.length ? activePage : pages.length - 1,
+                      Math.min(activePage, pages.length - 1),
                       deg
                     )
                   }

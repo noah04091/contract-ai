@@ -145,7 +145,14 @@ export function useCamera(): UseCameraReturn {
 
     return new Promise<Blob | null>((resolve) => {
       canvas.toBlob(
-        (blob) => resolve(blob),
+        (blob) => {
+          if (!blob || blob.size === 0) {
+            console.warn("[Scanner] canvas.toBlob returned null/empty");
+            resolve(null);
+            return;
+          }
+          resolve(blob);
+        },
         "image/jpeg",
         0.95
       );

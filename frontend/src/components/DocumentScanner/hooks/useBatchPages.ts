@@ -1,11 +1,11 @@
 /**
  * useBatchPages Hook
  *
- * State-Management für gescannte Seiten:
- * Add, Remove, Reorder, Update
+ * State-Management für gescannte Seiten via useReducer.
+ * pages + activePage werden atomar verwaltet — keine stale closures.
  */
 
-import { useState, useCallback } from "react";
+import { useReducer, useCallback } from "react";
 import type { Point } from "../utils/imageProcessing";
 
 export interface ScannedPage {
@@ -15,6 +15,89 @@ export interface ScannedPage {
   corners: Point[] | null;
   rotation: number;
   timestamp: number;
+}
+
+interface BatchState {
+  pages: ScannedPage[];
+  activePage: number;
+}
+
+type BatchAction =
+  | { type: "ADD_PAGE"; blob: Blob; corners: Point[] | null; maxPages: number }
+  | { type: "REMOVE_PAGE"; index: number }
+  | { type: "REORDER"; fromIndex: number; toIndex: number }
+  | { type: "UPDATE_CORNERS"; index: number; corners: Point[] }
+  | { type: "UPDATE_ROTATION"; index: number; rotation: number }
+  | { type: "SET_ACTIVE"; index: number }
+  | { type: "CLEAR" };
+
+let pageIdCounter = 0;
+
+function batchReducer(state: BatchState, action: BatchAction): BatchState {
+  switch (action.type) {
+    case "ADD_PAGE": {
+      if (state.pages.length >= action.maxPages) return state;
+      if (!action.blob || action.blob.size === 0) return state;
+      const url = URL.createObjectURL(action.blob);
+      const newPage: ScannedPage = {
+        id: `page-${++pageIdCounter}`,
+        imageBlob: action.blob,
+        thumbnailUrl: url,
+        corners: action.corners,
+        rotation: 0,
+        timestamp: Date.now(),
+      };
+      const newPages = [...state.pages, newPage];
+      return { pages: newPages, activePage: newPages.length - 1 };
+    }
+
+    case "REMOVE_PAGE": {
+      const { index } = action;
+      if (index < 0 || index >= state.pages.length) return state;
+      URL.revokeObjectURL(state.pages[index].thumbnailUrl);
+      const newPages = state.pages.filter((_, i) => i !== index);
+      const newActive = newPages.length === 0
+        ? 0
+        : Math.min(state.activePage, newPages.length - 1);
+      return { pages: newPages, activePage: newActive };
+    }
+
+    case "REORDER": {
+      const { fromIndex, toIndex } = action;
+      const updated = [...state.pages];
+      const [moved] = updated.splice(fromIndex, 1);
+      updated.splice(toIndex, 0, moved);
+      return { pages: updated, activePage: toIndex };
+    }
+
+    case "UPDATE_CORNERS": {
+      const { index, corners } = action;
+      return {
+        ...state,
+        pages: state.pages.map((p, i) => (i === index ? { ...p, corners } : p)),
+      };
+    }
+
+    case "UPDATE_ROTATION": {
+      const { index, rotation } = action;
+      return {
+        ...state,
+        pages: state.pages.map((p, i) => (i === index ? { ...p, rotation } : p)),
+      };
+    }
+
+    case "SET_ACTIVE": {
+      return { ...state, activePage: action.index };
+    }
+
+    case "CLEAR": {
+      state.pages.forEach((p) => URL.revokeObjectURL(p.thumbnailUrl));
+      return { pages: [], activePage: 0 };
+    }
+
+    default:
+      return state;
+  }
 }
 
 interface UseBatchPagesReturn {
@@ -30,84 +113,46 @@ interface UseBatchPagesReturn {
   pageCount: number;
 }
 
-let pageIdCounter = 0;
-
 export function useBatchPages(maxPages: number = 50): UseBatchPagesReturn {
-  const [pages, setPages] = useState<ScannedPage[]>([]);
-  const [activePage, setActivePage] = useState(0);
+  const [state, dispatch] = useReducer(batchReducer, {
+    pages: [],
+    activePage: 0,
+  });
 
   const addPage = useCallback(
     (blob: Blob, corners: Point[] | null) => {
-      setPages((prev) => {
-        if (prev.length >= maxPages) return prev;
-        const url = URL.createObjectURL(blob);
-        const newPage: ScannedPage = {
-          id: `page-${++pageIdCounter}`,
-          imageBlob: blob,
-          thumbnailUrl: url,
-          corners,
-          rotation: 0,
-          timestamp: Date.now(),
-        };
-        return [...prev, newPage];
-      });
-      setActivePage((prev) =>
-        pages.length < maxPages ? pages.length : prev
-      );
+      dispatch({ type: "ADD_PAGE", blob, corners, maxPages });
     },
-    [maxPages, pages.length]
+    [maxPages]
   );
 
-  const removePage = useCallback(
-    (index: number) => {
-      setPages((prev) => {
-        if (index < 0 || index >= prev.length) return prev;
-        URL.revokeObjectURL(prev[index].thumbnailUrl);
-        return prev.filter((_, i) => i !== index);
-      });
-      setActivePage((prev) => Math.max(0, Math.min(prev, pages.length - 2)));
-    },
-    [pages.length]
-  );
-
-  const reorderPages = useCallback((fromIndex: number, toIndex: number) => {
-    setPages((prev) => {
-      const updated = [...prev];
-      const [moved] = updated.splice(fromIndex, 1);
-      updated.splice(toIndex, 0, moved);
-      return updated;
-    });
+  const removePage = useCallback((index: number) => {
+    dispatch({ type: "REMOVE_PAGE", index });
   }, []);
 
-  const updatePageCorners = useCallback(
-    (index: number, corners: Point[]) => {
-      setPages((prev) =>
-        prev.map((p, i) => (i === index ? { ...p, corners } : p))
-      );
-    },
-    []
-  );
+  const reorderPages = useCallback((fromIndex: number, toIndex: number) => {
+    dispatch({ type: "REORDER", fromIndex, toIndex });
+  }, []);
 
-  const updatePageRotation = useCallback(
-    (index: number, rotation: number) => {
-      setPages((prev) =>
-        prev.map((p, i) => (i === index ? { ...p, rotation } : p))
-      );
-    },
-    []
-  );
+  const updatePageCorners = useCallback((index: number, corners: Point[]) => {
+    dispatch({ type: "UPDATE_CORNERS", index, corners });
+  }, []);
+
+  const updatePageRotation = useCallback((index: number, rotation: number) => {
+    dispatch({ type: "UPDATE_ROTATION", index, rotation });
+  }, []);
+
+  const setActivePage = useCallback((index: number) => {
+    dispatch({ type: "SET_ACTIVE", index });
+  }, []);
 
   const clearPages = useCallback(() => {
-    setPages((prev) => {
-      prev.forEach((p) => URL.revokeObjectURL(p.thumbnailUrl));
-      return [];
-    });
-    setActivePage(0);
+    dispatch({ type: "CLEAR" });
   }, []);
 
   return {
-    pages,
-    activePage,
+    pages: state.pages,
+    activePage: state.activePage,
     addPage,
     removePage,
     reorderPages,
@@ -115,6 +160,6 @@ export function useBatchPages(maxPages: number = 50): UseBatchPagesReturn {
     updatePageRotation,
     setActivePage,
     clearPages,
-    pageCount: pages.length,
+    pageCount: state.pages.length,
   };
 }
