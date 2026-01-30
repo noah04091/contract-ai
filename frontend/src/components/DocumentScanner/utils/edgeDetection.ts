@@ -4,7 +4,7 @@
  * Document edge detection via Sobel + Hough Line Transform.
  * No external dependencies — works on Uint8Array buffers.
  *
- * Pipeline: Grayscale → Blur → Sobel → Threshold → Hough Lines
+ * Pipeline: Grayscale → Blur → Sobel → Threshold → Dilate → Hough Lines
  *           → Find 4 dominant lines → Compute intersections → Quadrilateral
  */
 
@@ -110,10 +110,46 @@ export function adaptiveThreshold(
     }
   }
   const mean = count > 0 ? sum / count : 128;
-  const threshold = Math.max(25, mean * 1.0);
+  const threshold = Math.max(30, mean * 1.2);
 
   for (let i = 0; i < src.length; i++) {
     dst[i] = src[i] >= threshold ? 255 : 0;
+  }
+
+  return dst;
+}
+
+// ─── Morphological Dilation 3×3 ─────────────────────────────
+
+/**
+ * Dilate binary image with a 3×3 square kernel.
+ * Closes small gaps in thin Sobel edges before Hough Transform.
+ */
+export function dilate3x3(
+  src: Uint8Array,
+  width: number,
+  height: number
+): Uint8Array {
+  const dst = new Uint8Array(width * height);
+
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const i = y * width + x;
+      // If any neighbor is 255, output is 255
+      if (
+        src[i] === 255 ||
+        src[i - 1] === 255 ||
+        src[i + 1] === 255 ||
+        src[i - width] === 255 ||
+        src[i + width] === 255 ||
+        src[i - width - 1] === 255 ||
+        src[i - width + 1] === 255 ||
+        src[i + width - 1] === 255 ||
+        src[i + width + 1] === 255
+      ) {
+        dst[i] = 255;
+      }
+    }
   }
 
   return dst;
@@ -175,7 +211,7 @@ export function houghLines(
   }
   const effectiveThreshold = voteThreshold > 0
     ? voteThreshold
-    : Math.max(20, maxVotes * 0.25);
+    : Math.max(30, maxVotes * 0.30);
 
   // Extract lines above threshold
   const lines: HoughLine[] = [];
@@ -255,12 +291,12 @@ export function findQuadFromLines(
 
   for (const line of lines) {
     const angle = line.theta;
-    // Horizontal: theta between 60° and 120° (PI/3 to 2PI/3)
-    if (angle > Math.PI * 0.3 && angle < Math.PI * 0.7) {
+    // Horizontal: theta between 45° and 135° (PI/4 to 3PI/4)
+    if (angle > Math.PI * 0.25 && angle < Math.PI * 0.75) {
       horizontal.push(line);
     }
-    // Vertical: theta < 30° or > 150° (near 0 or PI)
-    else if (angle < Math.PI * 0.2 || angle > Math.PI * 0.8) {
+    // Vertical: theta < 45° or > 135° (near 0 or PI)
+    else {
       vertical.push(line);
     }
   }
@@ -285,7 +321,7 @@ export function findQuadFromLines(
   if (corners.length !== 4) return null;
 
   // Check corners are within frame (with some margin)
-  const margin = -0.1; // Allow slightly outside
+  const margin = -0.03; // Allow slightly outside (3%)
   for (const c of corners) {
     if (
       c.x < frameWidth * margin ||
@@ -331,16 +367,24 @@ function findBestPair(
   lines: HoughLine[],
   minSeparation: number
 ): [HoughLine, HoughLine] | null {
-  // Find the two strongest lines that are sufficiently separated
-  for (let i = 0; i < lines.length; i++) {
-    for (let j = i + 1; j < lines.length; j++) {
+  // Find the pair with highest combined votes that are sufficiently separated
+  let bestPair: [HoughLine, HoughLine] | null = null;
+  let bestScore = 0;
+  const limit = Math.min(lines.length, 8); // Check top 8 lines
+
+  for (let i = 0; i < limit; i++) {
+    for (let j = i + 1; j < limit; j++) {
       const separation = Math.abs(lines[i].rho - lines[j].rho);
       if (separation >= minSeparation) {
-        return [lines[i], lines[j]];
+        const score = lines[i].votes + lines[j].votes;
+        if (score > bestScore) {
+          bestScore = score;
+          bestPair = [lines[i], lines[j]];
+        }
       }
     }
   }
-  return null;
+  return bestPair;
 }
 
 // ─── Line Intersection ──────────────────────────────────────
@@ -389,6 +433,18 @@ export function isValidQuadrilateral(points: Point[]): boolean {
   // Check area is positive (not self-intersecting)
   const area = Math.abs(polygonArea(points));
   if (area < 50) return false;
+
+  // Check aspect ratio (reject extreme shapes)
+  const topWidth = Math.sqrt(
+    (points[1].x - points[0].x) ** 2 + (points[1].y - points[0].y) ** 2
+  );
+  const leftHeight = Math.sqrt(
+    (points[3].x - points[0].x) ** 2 + (points[3].y - points[0].y) ** 2
+  );
+  if (topWidth > 0 && leftHeight > 0) {
+    const aspect = topWidth / leftHeight;
+    if (aspect < 0.3 || aspect > 3.5) return false;
+  }
 
   return true;
 }

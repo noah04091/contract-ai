@@ -3,7 +3,7 @@
  *
  * Drives the document detection loop via requestAnimationFrame.
  * Lazy-loads the DocumentDetector class (non-blocking).
- * Tracks stability for auto-capture.
+ * Tracks stability for auto-capture with EMA smoothing + hysteresis.
  */
 
 import { useState, useRef, useCallback, useEffect } from "react";
@@ -25,15 +25,28 @@ interface UseDocumentDetectionOptions {
 }
 
 const STABILITY_TOLERANCE = 0.025; // 2.5% of frame
+const EMA_ALPHA = 0.4; // 40% new frame, 60% history
+const GRACE_FRAMES = 3; // Tolerate up to 3 unstable frames before reset
+const FADEOUT_MS = 500; // Fade-out duration when detection is lost
 
+/** Euclidean distance check for corner similarity */
 function cornersAreSimilar(a: Point[], b: Point[]): boolean {
   if (a.length !== 4 || b.length !== 4) return false;
   for (let i = 0; i < 4; i++) {
-    const dx = Math.abs(a[i].x - b[i].x);
-    const dy = Math.abs(a[i].y - b[i].y);
-    if (dx > STABILITY_TOLERANCE || dy > STABILITY_TOLERANCE) return false;
+    const dx = a[i].x - b[i].x;
+    const dy = a[i].y - b[i].y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist > STABILITY_TOLERANCE) return false;
   }
   return true;
+}
+
+/** Exponential moving average for corner smoothing */
+function smoothCorners(prev: Point[], curr: Point[], alpha: number): Point[] {
+  return curr.map((c, i) => ({
+    x: prev[i].x + alpha * (c.x - prev[i].x),
+    y: prev[i].y + alpha * (c.y - prev[i].y),
+  }));
 }
 
 export function useDocumentDetection({
@@ -55,11 +68,16 @@ export function useDocumentDetection({
   const rafRef = useRef<number>(0);
   const lastFrameTimeRef = useRef(0);
   const previousCornersRef = useRef<Point[] | null>(null);
+  const smoothedCornersRef = useRef<Point[] | null>(null);
   const stableStartTimeRef = useRef<number | null>(null);
   const consecutiveErrorsRef = useRef(0);
   const disabledRef = useRef(false);
   const autoCapturedRef = useRef(false);
   const onStableDetectionRef = useRef(onStableDetection);
+  const unstableCountRef = useRef(0);
+  const lostTimeRef = useRef<number | null>(null);
+  const lastKnownCornersRef = useRef<Point[] | null>(null);
+  const lastKnownConfidenceRef = useRef(0);
 
   // Keep callback ref in sync
   useEffect(() => {
@@ -88,15 +106,26 @@ export function useDocumentDetection({
         const result = detector.detect(video);
         consecutiveErrorsRef.current = 0;
 
-        if (result && result.confidence > 0.3) {
-          const newCorners = result.corners;
+        if (result && result.confidence > 0.35) {
+          // Clear fade-out state
+          lostTimeRef.current = null;
 
-          // Check stability
+          const rawCorners = result.corners;
+
+          // Apply EMA smoothing
+          const smoothed = smoothedCornersRef.current
+            ? smoothCorners(smoothedCornersRef.current, rawCorners, EMA_ALPHA)
+            : rawCorners;
+          smoothedCornersRef.current = smoothed;
+
+          // Check stability against raw corners (not smoothed, to avoid self-stabilizing)
           if (
             previousCornersRef.current &&
-            cornersAreSimilar(newCorners, previousCornersRef.current)
+            cornersAreSimilar(rawCorners, previousCornersRef.current)
           ) {
-            // Corners are stable
+            // Corners are stable — reset grace counter
+            unstableCountRef.current = 0;
+
             if (!stableStartTimeRef.current) {
               stableStartTimeRef.current = timestamp;
             }
@@ -106,7 +135,7 @@ export function useDocumentDetection({
             const isStable = progress >= 1;
 
             setState({
-              detectedCorners: newCorners,
+              detectedCorners: smoothed,
               confidence: result.confidence,
               isStable,
               stabilityProgress: progress,
@@ -115,34 +144,93 @@ export function useDocumentDetection({
             // Auto-capture trigger
             if (isStable && !autoCapturedRef.current) {
               autoCapturedRef.current = true;
-              onStableDetectionRef.current?.(newCorners);
+              onStableDetectionRef.current?.(smoothed);
             }
           } else {
-            // Corners moved — reset stability
+            // Corners moved — hysteresis: tolerate a few unstable frames
+            unstableCountRef.current++;
+
+            if (unstableCountRef.current > GRACE_FRAMES) {
+              // Too many unstable frames → full reset
+              stableStartTimeRef.current = null;
+              autoCapturedRef.current = false;
+              unstableCountRef.current = 0;
+
+              setState({
+                detectedCorners: smoothed,
+                confidence: result.confidence,
+                isStable: false,
+                stabilityProgress: 0,
+              });
+            } else {
+              // Within grace period — keep current progress, update corners
+              const currentProgress = stableStartTimeRef.current
+                ? Math.min(1, (timestamp - stableStartTimeRef.current) / stabilityThresholdMs)
+                : 0;
+
+              setState({
+                detectedCorners: smoothed,
+                confidence: result.confidence,
+                isStable: false,
+                stabilityProgress: currentProgress,
+              });
+            }
+          }
+
+          previousCornersRef.current = rawCorners;
+          lastKnownCornersRef.current = smoothed;
+          lastKnownConfidenceRef.current = result.confidence;
+        } else {
+          // No document detected — fade out gracefully
+          if (lastKnownCornersRef.current && !lostTimeRef.current) {
+            lostTimeRef.current = timestamp;
+          }
+
+          if (lostTimeRef.current && lastKnownCornersRef.current) {
+            const fadeElapsed = timestamp - lostTimeRef.current;
+            const fadeProgress = Math.min(1, fadeElapsed / FADEOUT_MS);
+
+            if (fadeProgress < 1) {
+              // Still fading — show last known corners with decreasing confidence
+              const fadedConfidence = lastKnownConfidenceRef.current * (1 - fadeProgress);
+              setState({
+                detectedCorners: lastKnownCornersRef.current,
+                confidence: fadedConfidence,
+                isStable: false,
+                stabilityProgress: 0,
+              });
+            } else {
+              // Fade complete — clear everything
+              previousCornersRef.current = null;
+              smoothedCornersRef.current = null;
+              stableStartTimeRef.current = null;
+              autoCapturedRef.current = false;
+              lostTimeRef.current = null;
+              lastKnownCornersRef.current = null;
+              unstableCountRef.current = 0;
+
+              setState({
+                detectedCorners: null,
+                confidence: 0,
+                isStable: false,
+                stabilityProgress: 0,
+              });
+            }
+          } else {
+            // No previous detection to fade
+            previousCornersRef.current = null;
+            smoothedCornersRef.current = null;
             stableStartTimeRef.current = null;
             autoCapturedRef.current = false;
+            unstableCountRef.current = 0;
 
             setState({
-              detectedCorners: newCorners,
-              confidence: result.confidence,
+              detectedCorners: null,
+              confidence: 0,
               isStable: false,
               stabilityProgress: 0,
             });
           }
-
-          previousCornersRef.current = newCorners;
-        } else {
-          // No document detected
-          previousCornersRef.current = null;
-          stableStartTimeRef.current = null;
-          autoCapturedRef.current = false;
-
-          setState({
-            detectedCorners: null,
-            confidence: 0,
-            isStable: false,
-            stabilityProgress: 0,
-          });
         }
       } catch (err) {
         consecutiveErrorsRef.current++;
@@ -193,8 +281,12 @@ export function useDocumentDetection({
         detectorRef.current = null;
       }
       previousCornersRef.current = null;
+      smoothedCornersRef.current = null;
       stableStartTimeRef.current = null;
       autoCapturedRef.current = false;
+      lostTimeRef.current = null;
+      lastKnownCornersRef.current = null;
+      unstableCountRef.current = 0;
     };
   }, [enabled, detectionLoop]);
 
