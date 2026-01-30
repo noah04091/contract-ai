@@ -46,7 +46,7 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
   const [isCorrectingPerspective, setIsCorrectingPerspective] = useState(false);
   const lastCapturedEdgesRef = useRef<DetectedEdges | null>(null);
 
-  const { cv } = useOpenCV();
+  const { cv } = useOpenCV(isOpen);
 
   const {
     pages,

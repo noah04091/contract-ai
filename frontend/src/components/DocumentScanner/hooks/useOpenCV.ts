@@ -88,12 +88,15 @@ async function loadOpenCV(): Promise<OpenCVModule> {
   return cvPromise;
 }
 
-export function useOpenCV(): UseOpenCVReturn {
+export function useOpenCV(enabled: boolean = true): UseOpenCVReturn {
   const [cv, setCv] = useState<OpenCVModule | null>(cvInstance);
   const [isReady, setIsReady] = useState(!!cvInstance);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Nur laden wenn enabled=true (z.B. Scanner ist geöffnet)
+    if (!enabled) return;
+
     if (cvInstance) {
       setCv(cvInstance);
       setIsReady(true);
@@ -113,14 +116,13 @@ export function useOpenCV(): UseOpenCVReturn {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : "OpenCV.js Ladefehler");
           console.warn("[Scanner] OpenCV.js load error:", err);
-          // Kein harter Fehler — Scanner funktioniert auch ohne OpenCV
         }
       });
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [enabled]);
 
   return { cv, isReady, error };
 }
