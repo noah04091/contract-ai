@@ -490,6 +490,14 @@ export default function Contracts() {
     }
   }, [location.search, contracts, loading]);
 
+  // 🤖 Sync URL with modal state so AssistantWidget detects the open contract
+  useEffect(() => {
+    const currentView = new URLSearchParams(location.search).get('view');
+    if (showDetails && selectedContract && currentView !== selectedContract._id) {
+      navigate(`/contracts?view=${selectedContract._id}`, { replace: true });
+    }
+  }, [showDetails, selectedContract, location.search, navigate]);
+
   // 📁 Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = () => {
