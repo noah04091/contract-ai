@@ -728,3 +728,113 @@ export default function LawyerMascot({ size = 220 }: { size?: number }) {
     </svg>
   );
 }
+
+/**
+ * Mini mascot head — for the chat bubble icon.
+ * Shows just the face: head, eyes, smile, antenna, ears.
+ * Renders as a compact circle-friendly icon.
+ */
+export function MascotMini({ size = 36 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="90 10 220 230"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <defs>
+        <radialGradient id="mHeadMain" cx="0.42" cy="0.32" r="0.65">
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="35%" stopColor="#f0f4f8" />
+          <stop offset="65%" stopColor="#dce4ed" />
+          <stop offset="85%" stopColor="#c5d0dc" />
+          <stop offset="100%" stopColor="#b0bfcf" />
+        </radialGradient>
+        <radialGradient id="mHeadHL" cx="0.35" cy="0.22" r="0.4">
+          <stop offset="0%" stopColor="white" stopOpacity="0.95" />
+          <stop offset="100%" stopColor="white" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="mSocket" cx="0.5" cy="0.45" r="0.55">
+          <stop offset="0%" stopColor="#1a2744" />
+          <stop offset="70%" stopColor="#0f1a30" />
+          <stop offset="100%" stopColor="#0a1020" />
+        </radialGradient>
+        <radialGradient id="mIris" cx="0.45" cy="0.4" r="0.5">
+          <stop offset="0%" stopColor="#7cb8ff" />
+          <stop offset="30%" stopColor="#5ba3f5" />
+          <stop offset="60%" stopColor="#3b82f6" />
+          <stop offset="85%" stopColor="#2563eb" />
+          <stop offset="100%" stopColor="#1d4ed8" />
+        </radialGradient>
+        <filter id="mGlow" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="3" result="g" />
+          <feMerge>
+            <feMergeNode in="g" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        <radialGradient id="mBlush" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0%" stopColor="#f0abfc" stopOpacity="0.18" />
+          <stop offset="60%" stopColor="#c084fc" stopOpacity="0.08" />
+          <stop offset="100%" stopColor="#c084fc" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+
+      {/* Head */}
+      <ellipse cx="200" cy="145" rx="88" ry="95" fill="url(#mHeadMain)" />
+      <ellipse cx="200" cy="145" rx="88" ry="95" fill="url(#mHeadHL)" />
+
+      {/* Antenna */}
+      <g transform="translate(200, 48)">
+        <rect x="-2" y="-22" width="4" height="22" rx="2" fill="#c5d0dc" />
+        <circle cx="0" cy="-28" r="7" fill="#3b82f6">
+          <animate attributeName="opacity" values="0.7;1;0.7" dur="2s" repeatCount="indefinite" />
+        </circle>
+        <circle cx="0" cy="-28" r="4.5" fill="#60a5fa" />
+        <circle cx="0" cy="-28" r="2.5" fill="#93c5fd" />
+        <ellipse cx="-1.5" cy="-30.5" rx="2" ry="1.5" fill="white" opacity="0.7" />
+      </g>
+
+      {/* Ear panels */}
+      <rect x="106" y="124" width="12" height="42" rx="6" fill="#dce4ed" stroke="#c0ccda" strokeWidth="0.6" />
+      <circle cx="112" cy="140" r="2.5" fill="#3b82f6" opacity="0.5">
+        <animate attributeName="opacity" values="0.3;0.7;0.3" dur="2s" repeatCount="indefinite" />
+      </circle>
+      <rect x="282" y="124" width="12" height="42" rx="6" fill="#dce4ed" stroke="#c0ccda" strokeWidth="0.6" />
+      <circle cx="288" cy="140" r="2.5" fill="#3b82f6" opacity="0.5">
+        <animate attributeName="opacity" values="0.3;0.7;0.3" dur="2s" begin="1s" repeatCount="indefinite" />
+      </circle>
+
+      {/* Left eye */}
+      <ellipse cx="165" cy="148" rx="30" ry="28" fill="url(#mSocket)" />
+      <ellipse cx="165" cy="148" rx="24" ry="22" fill="#f0f4f8" />
+      <circle cx="165" cy="148" r="16" fill="url(#mIris)" />
+      <circle cx="165" cy="148" r="9" fill="#0a1628" />
+      <circle cx="171" cy="140" r="5.5" fill="white" opacity="0.95" />
+      <circle cx="159" cy="155" r="2.5" fill="white" opacity="0.5" />
+
+      {/* Right eye */}
+      <ellipse cx="235" cy="148" rx="30" ry="28" fill="url(#mSocket)" />
+      <ellipse cx="235" cy="148" rx="24" ry="22" fill="#f0f4f8" />
+      <circle cx="235" cy="148" r="16" fill="url(#mIris)" />
+      <circle cx="235" cy="148" r="9" fill="#0a1628" />
+      <circle cx="241" cy="140" r="5.5" fill="white" opacity="0.95" />
+      <circle cx="229" cy="155" r="2.5" fill="white" opacity="0.5" />
+
+      {/* Cheek blush */}
+      <ellipse cx="132" cy="178" rx="16" ry="10" fill="url(#mBlush)" />
+      <ellipse cx="268" cy="178" rx="16" ry="10" fill="url(#mBlush)" />
+
+      {/* Smile */}
+      <path
+        d="M172 198 Q186 212, 200 212 Q214 212, 228 198"
+        stroke="#3b82f6"
+        strokeWidth="3.5"
+        strokeLinecap="round"
+        fill="none"
+        filter="url(#mGlow)"
+      />
+    </svg>
+  );
+}

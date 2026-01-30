@@ -5,7 +5,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "react-router-dom";
 import { useAssistantContext } from "../hooks/useAssistantContext";
-import LawyerMascot from "./LawyerMascot";
+import LawyerMascot, { MascotMini } from "./LawyerMascot";
 import styles from "../styles/AssistantWidget.module.css";
 
 interface Message {
@@ -375,7 +375,9 @@ export default function AssistantWidget() {
               whileTap={{ scale: 0.95 }}
               aria-label="Chat öffnen"
             >
-              <span className={styles.chatBubbleIcon}>💬</span>
+              <span className={styles.chatBubbleIcon}>
+                <MascotMini size={isMinimized ? 28 : 36} />
+              </span>
             </motion.button>
           </motion.div>
         )}
