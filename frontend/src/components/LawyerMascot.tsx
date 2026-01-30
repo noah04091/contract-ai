@@ -1,19 +1,24 @@
 // 📁 frontend/src/components/LawyerMascot.tsx
-// Ultra-Premium AI Robot Lawyer Mascot - Contract AI Brand Character
-// Designed for maximum visual impact with 3D depth, glass effects, and cinematic lighting
+// Contract AI Brand Entity — Abstract AI Persona
+// Enterprise-grade visual identity: Apple / OpenAI / Palantir level
+// NOT a mascot. A silent, sovereign, abstract KI-Rechtsassistent.
 
 export default function LawyerMascot({ size = 220 }: { size?: number }) {
+  const h = size * 1.25;
   return (
     <svg
       width={size}
-      height={size * 1.18}
-      viewBox="0 0 340 400"
+      height={h}
+      viewBox="0 0 360 450"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
-        {/* === FILTERS === */}
-        <filter id="heroGlow" x="-60%" y="-60%" width="220%" height="220%">
+        {/* ── FILTERS ── */}
+        <filter id="ambientBlur" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="30" />
+        </filter>
+        <filter id="coreGlow" x="-40%" y="-40%" width="180%" height="180%">
           <feGaussianBlur stdDeviation="8" result="g1" />
           <feGaussianBlur stdDeviation="3" result="g2" />
           <feMerge>
@@ -22,549 +27,350 @@ export default function LawyerMascot({ size = 220 }: { size?: number }) {
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
-        <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">
-          <feGaussianBlur stdDeviation="4" result="glow" />
+        <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="5" result="g" />
           <feMerge>
-            <feMergeNode in="glow" />
+            <feMergeNode in="g" />
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
-        <filter id="innerGlow" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="2" result="glow" />
+        <filter id="subtleGlow" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="2.5" result="g" />
           <feMerge>
-            <feMergeNode in="glow" />
+            <feMergeNode in="g" />
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
-        <filter id="mainShadow" x="-15%" y="-5%" width="130%" height="130%">
-          <feDropShadow dx="0" dy="10" stdDeviation="16" floodColor="#0c1222" floodOpacity="0.4" />
-        </filter>
-        <filter id="glassFrost">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="0.5" />
+        <filter id="dropShadow" x="-20%" y="0%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="12" stdDeviation="20" floodColor="#0a0e1a" floodOpacity="0.35" />
         </filter>
 
-        {/* === GRADIENTS === */}
-        {/* Premium suit - 3D depth */}
-        <linearGradient id="suitMain" x1="80" y1="220" x2="260" y2="370">
-          <stop offset="0%" stopColor="#111827" />
-          <stop offset="25%" stopColor="#1f2937" />
-          <stop offset="50%" stopColor="#111827" />
-          <stop offset="75%" stopColor="#1f2937" />
-          <stop offset="100%" stopColor="#0f172a" />
-        </linearGradient>
-        <linearGradient id="suitShine" x1="100" y1="220" x2="180" y2="360">
-          <stop offset="0%" stopColor="white" stopOpacity="0.06" />
-          <stop offset="50%" stopColor="white" stopOpacity="0.02" />
-          <stop offset="100%" stopColor="white" stopOpacity="0" />
-        </linearGradient>
+        {/* ── GRADIENTS ── */}
 
-        {/* Head - brushed chrome */}
-        <linearGradient id="headChrome" x1="95" y1="20" x2="245" y2="195">
-          <stop offset="0%" stopColor="#d1d5db" />
-          <stop offset="15%" stopColor="#f3f4f6" />
-          <stop offset="35%" stopColor="#e5e7eb" />
-          <stop offset="55%" stopColor="#f9fafb" />
-          <stop offset="75%" stopColor="#d1d5db" />
-          <stop offset="100%" stopColor="#9ca3af" />
-        </linearGradient>
-        <radialGradient id="headHighlight" cx="0.35" cy="0.25" r="0.5">
-          <stop offset="0%" stopColor="white" stopOpacity="0.5" />
-          <stop offset="100%" stopColor="white" stopOpacity="0" />
+        {/* Ambient background halo */}
+        <radialGradient id="ambientHalo" cx="0.5" cy="0.42" r="0.48">
+          <stop offset="0%" stopColor="#c4a35a" stopOpacity="0.06" />
+          <stop offset="40%" stopColor="#3b82f6" stopOpacity="0.04" />
+          <stop offset="100%" stopColor="#0a0e1a" stopOpacity="0" />
         </radialGradient>
 
-        {/* Visor - deep glass */}
-        <linearGradient id="visorGlass" x1="112" y1="75" x2="228" y2="170">
-          <stop offset="0%" stopColor="#0c1a3d" />
-          <stop offset="30%" stopColor="#162557" />
-          <stop offset="60%" stopColor="#1e3a8a" />
-          <stop offset="100%" stopColor="#0c1a3d" />
-        </linearGradient>
-        <linearGradient id="visorReflect" x1="120" y1="80" x2="220" y2="90">
-          <stop offset="0%" stopColor="white" stopOpacity="0" />
-          <stop offset="30%" stopColor="white" stopOpacity="0.12" />
-          <stop offset="70%" stopColor="white" stopOpacity="0.08" />
-          <stop offset="100%" stopColor="white" stopOpacity="0" />
+        {/* Primary body — matte titanium / graphite */}
+        <linearGradient id="titanBody" x1="120" y1="90" x2="240" y2="400">
+          <stop offset="0%" stopColor="#2a2d35" />
+          <stop offset="20%" stopColor="#1e2028" />
+          <stop offset="50%" stopColor="#16181f" />
+          <stop offset="80%" stopColor="#1e2028" />
+          <stop offset="100%" stopColor="#12141a" />
         </linearGradient>
 
-        {/* Eye cores */}
-        <radialGradient id="eyeCore" cx="0.45" cy="0.4" r="0.55">
-          <stop offset="0%" stopColor="#93c5fd" />
-          <stop offset="40%" stopColor="#60a5fa" />
-          <stop offset="70%" stopColor="#3b82f6" />
-          <stop offset="100%" stopColor="#1d4ed8" />
+        {/* Head — dark titanium with subtle sheen */}
+        <linearGradient id="titanHead" x1="130" y1="50" x2="230" y2="210">
+          <stop offset="0%" stopColor="#35383f" />
+          <stop offset="25%" stopColor="#2a2d35" />
+          <stop offset="50%" stopColor="#22252c" />
+          <stop offset="75%" stopColor="#2a2d35" />
+          <stop offset="100%" stopColor="#1e2028" />
+        </linearGradient>
+
+        {/* Rim light — very subtle left edge highlight */}
+        <linearGradient id="rimLeft" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#f0f0f0" stopOpacity="0.12" />
+          <stop offset="100%" stopColor="#f0f0f0" stopOpacity="0" />
+        </linearGradient>
+        <linearGradient id="rimRight" x1="1" y1="0" x2="0" y2="0">
+          <stop offset="0%" stopColor="#f0f0f0" stopOpacity="0.06" />
+          <stop offset="100%" stopColor="#f0f0f0" stopOpacity="0" />
+        </linearGradient>
+
+        {/* Visor / sensor strip — controlled blue energy */}
+        <linearGradient id="visorEnergy" x1="135" y1="148" x2="225" y2="148">
+          <stop offset="0%" stopColor="#1e40af" stopOpacity="0" />
+          <stop offset="15%" stopColor="#2563eb" stopOpacity="0.7" />
+          <stop offset="50%" stopColor="#3b82f6" stopOpacity="1" />
+          <stop offset="85%" stopColor="#2563eb" stopOpacity="0.7" />
+          <stop offset="100%" stopColor="#1e40af" stopOpacity="0" />
+        </linearGradient>
+
+        {/* Gold accent */}
+        <linearGradient id="goldAccent" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#c4a35a" stopOpacity="0.8" />
+          <stop offset="50%" stopColor="#d4af37" stopOpacity="1" />
+          <stop offset="100%" stopColor="#b8960b" stopOpacity="0.8" />
+        </linearGradient>
+        <linearGradient id="goldSubtle" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#c4a35a" stopOpacity="0.4" />
+          <stop offset="100%" stopColor="#d4af37" stopOpacity="0.15" />
+        </linearGradient>
+
+        {/* Core chest element — glass energy */}
+        <radialGradient id="coreEnergy" cx="0.5" cy="0.4" r="0.55">
+          <stop offset="0%" stopColor="#93c5fd" stopOpacity="0.9" />
+          <stop offset="40%" stopColor="#3b82f6" stopOpacity="0.6" />
+          <stop offset="100%" stopColor="#1e40af" stopOpacity="0.2" />
         </radialGradient>
-        <radialGradient id="eyeOuter" cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0%" stopColor="#60a5fa" stopOpacity="0.8" />
-          <stop offset="100%" stopColor="#2563eb" stopOpacity="0.3" />
-        </radialGradient>
-        <radialGradient id="pupilGlow" cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0%" stopColor="#bfdbfe" />
-          <stop offset="100%" stopColor="#3b82f6" />
-        </radialGradient>
 
-        {/* Tie silk */}
-        <linearGradient id="tieSilk" x1="160" y1="225" x2="175" y2="310">
-          <stop offset="0%" stopColor="#3b82f6" />
-          <stop offset="30%" stopColor="#60a5fa" />
-          <stop offset="60%" stopColor="#2563eb" />
-          <stop offset="100%" stopColor="#1d4ed8" />
+        {/* Scales of Justice — abstract, geometric */}
+        <linearGradient id="scalesGold" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#d4af37" />
+          <stop offset="50%" stopColor="#c4a35a" />
+          <stop offset="100%" stopColor="#b8960b" />
         </linearGradient>
 
-        {/* Gold premium */}
-        <linearGradient id="goldPremium" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#fde68a" />
-          <stop offset="25%" stopColor="#fbbf24" />
-          <stop offset="50%" stopColor="#f59e0b" />
-          <stop offset="75%" stopColor="#fbbf24" />
-          <stop offset="100%" stopColor="#fde68a" />
+        {/* Shoulder geometry */}
+        <linearGradient id="shoulderGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#2a2d35" />
+          <stop offset="100%" stopColor="#1a1c22" />
         </linearGradient>
-        <linearGradient id="goldDark" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#b45309" />
-          <stop offset="100%" stopColor="#92400e" />
-        </linearGradient>
-
-        {/* Robot hand */}
-        <linearGradient id="handMetal" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#e5e7eb" />
-          <stop offset="50%" stopColor="#f9fafb" />
-          <stop offset="100%" stopColor="#d1d5db" />
-        </linearGradient>
-
-        {/* Shirt crisp */}
-        <linearGradient id="shirtCrisp" x1="145" y1="225" x2="195" y2="260">
-          <stop offset="0%" stopColor="#f8fafc" />
-          <stop offset="50%" stopColor="#f1f5f9" />
-          <stop offset="100%" stopColor="#e2e8f0" />
-        </linearGradient>
-
-        {/* Ambient glow behind character */}
-        <radialGradient id="ambientGlow" cx="0.5" cy="0.45" r="0.5">
-          <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.12" />
-          <stop offset="60%" stopColor="#3b82f6" stopOpacity="0.04" />
-          <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
-        </radialGradient>
       </defs>
 
-      {/* === AMBIENT GLOW BEHIND CHARACTER === */}
-      <ellipse cx="170" cy="200" rx="160" ry="190" fill="url(#ambientGlow)" />
+      {/* ═══════════════════════════════════════════════ */}
+      {/* AMBIENT GLOW — soft halo behind entity         */}
+      {/* ═══════════════════════════════════════════════ */}
+      <ellipse cx="180" cy="200" rx="170" ry="210" fill="url(#ambientHalo)" filter="url(#ambientBlur)">
+        <animate attributeName="rx" values="170;175;170" dur="8s" repeatCount="indefinite" />
+        <animate attributeName="ry" values="210;215;210" dur="8s" repeatCount="indefinite" />
+      </ellipse>
 
-      <g filter="url(#mainShadow)">
+      <g filter="url(#dropShadow)">
 
-        {/* ================================================================ */}
-        {/* BODY / SUIT                                                      */}
-        {/* ================================================================ */}
+        {/* ═══════════════════════════════════════════════ */}
+        {/* TORSO — tapered, abstract, geometric           */}
+        {/* ═══════════════════════════════════════════════ */}
         <path
-          d="M82 268 C82 242, 115 225, 170 225 C225 225, 258 242, 258 268 L264 365 C264 382, 76 382, 76 365 Z"
-          fill="url(#suitMain)"
+          d="M130 240 C130 230, 145 222, 180 220 C215 222, 230 230, 230 240
+             L238 380 C238 400, 122 400, 122 380 Z"
+          fill="url(#titanBody)"
         />
-        {/* 3D suit highlight left */}
+        {/* Torso rim light left */}
         <path
-          d="M92 258 C100 245, 130 232, 160 228 L135 365 L82 365 Z"
-          fill="url(#suitShine)"
+          d="M130 240 C130 230, 145 222, 170 220 L140 380 L122 380 Z"
+          fill="url(#rimLeft)"
         />
-        {/* 3D suit shadow right */}
+        {/* Torso subtle edge right */}
         <path
-          d="M248 258 C240 245, 210 232, 180 228 L205 365 L258 365 Z"
-          fill="black"
-          opacity="0.08"
+          d="M230 240 C230 230, 215 222, 190 220 L220 380 L238 380 Z"
+          fill="url(#rimRight)"
         />
 
-        {/* Lapels - deep cut */}
-        <path d="M135 228 L170 290 L112 345" fill="#0a0f1a" opacity="0.5" />
-        <path d="M205 228 L170 290 L228 345" fill="#0a0f1a" opacity="0.5" />
-        {/* Lapel edges - subtle stitching */}
-        <path d="M135 228 L170 290" stroke="#374151" strokeWidth="0.6" strokeDasharray="3 2" opacity="0.3" />
-        <path d="M205 228 L170 290" stroke="#374151" strokeWidth="0.6" strokeDasharray="3 2" opacity="0.3" />
+        {/* Center seam — precision engineering detail */}
+        <line x1="180" y1="228" x2="180" y2="390" stroke="#3b82f6" strokeWidth="0.4" opacity="0.12" />
 
-        {/* Shirt V */}
-        <path d="M143 228 L170 280 L197 228" fill="url(#shirtCrisp)" />
-        {/* Shirt buttons */}
-        <circle cx="170" cy="245" r="1.5" fill="#d1d5db" />
-        <circle cx="170" cy="255" r="1.5" fill="#d1d5db" />
+        {/* ── Gold accent lines on torso ── */}
+        <line x1="155" y1="260" x2="155" y2="360" stroke="url(#goldSubtle)" strokeWidth="0.6" />
+        <line x1="205" y1="260" x2="205" y2="360" stroke="url(#goldSubtle)" strokeWidth="0.6" />
 
-        {/* Tie - silk */}
-        <path d="M163 242 L170 310 L177 242 Z" fill="url(#tieSilk)" />
-        <rect x="161" y="236" width="18" height="9" rx="3" fill="#2563eb" />
-        {/* Tie dimple */}
-        <ellipse cx="170" cy="241" rx="3" ry="1.5" fill="#1d4ed8" />
-        {/* Tie shine */}
-        <path d="M166 250 L170 305 L168 250 Z" fill="white" opacity="0.12" />
+        {/* ═══════════════════════════════════════════════ */}
+        {/* SHOULDER PANELS — angular, geometric           */}
+        {/* ═══════════════════════════════════════════════ */}
+        {/* Left shoulder */}
+        <path
+          d="M130 240 C120 238, 95 244, 88 260 C85 268, 90 274, 100 272
+             L130 258 Z"
+          fill="url(#shoulderGrad)"
+        />
+        <path
+          d="M130 240 C122 239, 100 244, 94 255"
+          stroke="#c4a35a"
+          strokeWidth="0.5"
+          opacity="0.25"
+          fill="none"
+        />
+        {/* Right shoulder */}
+        <path
+          d="M230 240 C240 238, 265 244, 272 260 C275 268, 270 274, 260 272
+             L230 258 Z"
+          fill="url(#shoulderGrad)"
+        />
+        <path
+          d="M230 240 C238 239, 260 244, 266 255"
+          stroke="#c4a35a"
+          strokeWidth="0.5"
+          opacity="0.25"
+          fill="none"
+        />
 
-        {/* Pocket square - folded */}
-        <g transform="translate(210, 254)">
-          <path d="M0 0 L12 -8 L20 2 L14 8 Z" fill="#60a5fa" opacity="0.8" />
-          <path d="M0 0 L12 -8 L14 -3 L3 4 Z" fill="#93c5fd" opacity="0.5" />
-        </g>
-
-        {/* Suit buttons */}
-        <circle cx="170" cy="318" r="3.5" fill="#1f2937" stroke="#374151" strokeWidth="0.8" />
-        <circle cx="170" cy="336" r="3.5" fill="#1f2937" stroke="#374151" strokeWidth="0.8" />
-        {/* Button shines */}
-        <circle cx="169" cy="317" r="1" fill="#4b5563" />
-        <circle cx="169" cy="335" r="1" fill="#4b5563" />
-
-        {/* === SCALE OF JUSTICE LAPEL PIN === */}
-        <g transform="translate(118, 268)" filter="url(#innerGlow)">
-          <circle cx="0" cy="0" r="11" fill="url(#goldPremium)" />
-          <circle cx="0" cy="0" r="9" fill="url(#goldPremium)" stroke="#92400e" strokeWidth="0.5" />
-          <line x1="0" y1="-5.5" x2="0" y2="4" stroke="url(#goldDark)" strokeWidth="1.3" />
-          <line x1="-6" y1="-3.5" x2="6" y2="-3.5" stroke="url(#goldDark)" strokeWidth="1.3" />
-          <path d="M-7.5 -3.5 Q-6 0.5, -3 0.5 Q0 0.5, 1 -3.5" stroke="url(#goldDark)" strokeWidth="0.8" fill="none" />
-          <path d="M-1 -3.5 Q0 0.5, 3 0.5 Q6 0.5, 7.5 -3.5" stroke="url(#goldDark)" strokeWidth="0.8" fill="none" />
-          <path d="M-4 4 L4 4 L3 6 L-3 6 Z" fill="url(#goldDark)" />
-        </g>
-
-        {/* Circuit patterns on suit */}
-        <g opacity="0.08">
-          <path d="M120 295 L120 330 L130 330" stroke="#60a5fa" strokeWidth="0.8" />
-          <circle cx="130" cy="330" r="2" fill="#60a5fa" />
-          <path d="M220 290 L220 325 L210 325" stroke="#60a5fa" strokeWidth="0.8" />
-          <circle cx="210" cy="325" r="2" fill="#60a5fa" />
-          <path d="M105 310 L105 345" stroke="#60a5fa" strokeWidth="0.6" />
-          <path d="M235 305 L235 340" stroke="#60a5fa" strokeWidth="0.6" />
-        </g>
-
-        {/* ================================================================ */}
-        {/* NECK                                                             */}
-        {/* ================================================================ */}
-        <rect x="152" y="200" width="36" height="30" rx="5" fill="url(#headChrome)" />
+        {/* ═══════════════════════════════════════════════ */}
+        {/* NECK — cylindrical, minimal                    */}
+        {/* ═══════════════════════════════════════════════ */}
+        <rect x="164" y="196" width="32" height="28" rx="4" fill="url(#titanHead)" />
         {/* Neck segments */}
-        <g opacity="0.25">
-          <line x1="157" y1="204" x2="157" y2="228" stroke="#9ca3af" strokeWidth="0.5" />
-          <line x1="164" y1="204" x2="164" y2="228" stroke="#9ca3af" strokeWidth="0.5" />
-          <line x1="170" y1="204" x2="170" y2="228" stroke="#9ca3af" strokeWidth="0.5" />
-          <line x1="176" y1="204" x2="176" y2="228" stroke="#9ca3af" strokeWidth="0.5" />
-          <line x1="183" y1="204" x2="183" y2="228" stroke="#9ca3af" strokeWidth="0.5" />
-        </g>
-        {/* Neck ring */}
-        <ellipse cx="170" cy="204" rx="18" ry="4" fill="none" stroke="#9ca3af" strokeWidth="1" opacity="0.4" />
+        <line x1="168" y1="202" x2="192" y2="202" stroke="#3b3e47" strokeWidth="0.5" opacity="0.3" />
+        <line x1="168" y1="210" x2="192" y2="210" stroke="#3b3e47" strokeWidth="0.5" opacity="0.3" />
+        <line x1="168" y1="218" x2="192" y2="218" stroke="#3b3e47" strokeWidth="0.5" opacity="0.3" />
 
-        {/* ================================================================ */}
-        {/* HEAD                                                             */}
-        {/* ================================================================ */}
-        {/* Head main shape - brushed chrome */}
-        <ellipse cx="170" cy="120" rx="72" ry="78" fill="url(#headChrome)" />
-        {/* Head highlight - top left shine */}
-        <ellipse cx="170" cy="120" rx="72" ry="78" fill="url(#headHighlight)" />
+        {/* ═══════════════════════════════════════════════ */}
+        {/* HEAD — smooth, symmetric, abstract form        */}
+        {/* ═══════════════════════════════════════════════ */}
+        <ellipse cx="180" cy="125" rx="62" ry="72" fill="url(#titanHead)" />
 
-        {/* Head contour line - premium edge */}
-        <ellipse cx="170" cy="120" rx="72" ry="78" fill="none" stroke="#b0b8c4" strokeWidth="0.8" opacity="0.3" />
-
-        {/* Top ridge */}
+        {/* Head rim light — studio quality left highlight */}
         <path
-          d="M105 98 C105 58, 135 35, 170 32 C205 35, 235 58, 235 98"
-          fill="none"
-          stroke="#9ca3af"
+          d="M120 100 C118 80, 130 58, 160 52 C162 52, 140 80, 130 120
+             C125 145, 122 160, 123 175"
+          stroke="#f0f0f0"
           strokeWidth="1.5"
-          opacity="0.4"
-        />
-
-        {/* === ANTENNA === */}
-        <g transform="translate(170, 32)">
-          <rect x="-2" y="-22" width="4" height="22" rx="2" fill="#b0b8c4" />
-          {/* Antenna orb */}
-          <circle cx="0" cy="-26" r="7" fill="#1e40af" filter="url(#heroGlow)">
-            <animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite" />
-          </circle>
-          <circle cx="0" cy="-26" r="4.5" fill="#3b82f6">
-            <animate attributeName="r" values="4.5;5;4.5" dur="2s" repeatCount="indefinite" />
-          </circle>
-          <circle cx="0" cy="-26" r="2.5" fill="#93c5fd" />
-          <circle cx="-1" cy="-28" r="1.2" fill="white" opacity="0.8" />
-          {/* Antenna rings */}
-          <ellipse cx="0" cy="-18" rx="5" ry="1.5" fill="none" stroke="#60a5fa" strokeWidth="0.5" opacity="0.3">
-            <animate attributeName="opacity" values="0.1;0.4;0.1" dur="3s" repeatCount="indefinite" />
-          </ellipse>
-          <ellipse cx="0" cy="-12" rx="4" ry="1" fill="none" stroke="#60a5fa" strokeWidth="0.4" opacity="0.2">
-            <animate attributeName="opacity" values="0.1;0.3;0.1" dur="3s" begin="0.5s" repeatCount="indefinite" />
-          </ellipse>
-        </g>
-
-        {/* === VISOR / FACE SCREEN === */}
-        <rect x="110" y="82" width="120" height="80" rx="24" fill="url(#visorGlass)" />
-        {/* Visor bevel */}
-        <rect x="110" y="82" width="120" height="80" rx="24" fill="none" stroke="#2563eb" strokeWidth="1.2" opacity="0.25" />
-        {/* Visor inner bevel */}
-        <rect x="114" y="86" width="112" height="72" rx="21" fill="none" stroke="#1e40af" strokeWidth="0.5" opacity="0.15" />
-        {/* Glass reflection - top curve */}
-        <path
-          d="M118 90 C125 84, 205 84, 218 92 L218 100 C208 90, 132 90, 118 96 Z"
-          fill="url(#visorReflect)"
-        />
-        {/* Scanline effect */}
-        <g opacity="0.03">
-          <line x1="115" y1="95" x2="225" y2="95" stroke="white" strokeWidth="0.5" />
-          <line x1="115" y1="105" x2="225" y2="105" stroke="white" strokeWidth="0.5" />
-          <line x1="115" y1="115" x2="225" y2="115" stroke="white" strokeWidth="0.5" />
-          <line x1="115" y1="125" x2="225" y2="125" stroke="white" strokeWidth="0.5" />
-          <line x1="115" y1="135" x2="225" y2="135" stroke="white" strokeWidth="0.5" />
-          <line x1="115" y1="145" x2="225" y2="145" stroke="white" strokeWidth="0.5" />
-        </g>
-
-        {/* === EYES === */}
-        {/* Left eye assembly */}
-        <g>
-          {/* Outer glow ring */}
-          <circle cx="145" cy="118" r="20" fill="url(#eyeOuter)" filter="url(#softGlow)" opacity="0.6">
-            <animate attributeName="opacity" values="0.4;0.7;0.4" dur="3s" repeatCount="indefinite" />
-          </circle>
-          {/* Eye socket */}
-          <ellipse cx="145" cy="118" rx="17" ry="16" fill="#0c1a3d" />
-          {/* Iris ring */}
-          <ellipse cx="145" cy="118" rx="14" ry="13" fill="url(#eyeCore)" filter="url(#innerGlow)">
-            <animate attributeName="ry" values="13;1.5;13" dur="5s" begin="2.5s" repeatCount="indefinite" />
-          </ellipse>
-          {/* Pupil */}
-          <ellipse cx="145" cy="118" rx="8" ry="8" fill="#0c2461">
-            <animate attributeName="ry" values="8;1;8" dur="5s" begin="2.5s" repeatCount="indefinite" />
-          </ellipse>
-          {/* Inner light */}
-          <ellipse cx="145" cy="118" rx="5" ry="5" fill="url(#pupilGlow)">
-            <animate attributeName="ry" values="5;0.8;5" dur="5s" begin="2.5s" repeatCount="indefinite" />
-          </ellipse>
-          {/* Sparkle highlights */}
-          <circle cx="149" cy="113" r="3" fill="white" opacity="0.95" />
-          <circle cx="140" cy="122" r="1.5" fill="white" opacity="0.5" />
-          <circle cx="151" cy="120" r="0.8" fill="white" opacity="0.3" />
-        </g>
-
-        {/* Right eye assembly */}
-        <g>
-          <circle cx="195" cy="118" r="20" fill="url(#eyeOuter)" filter="url(#softGlow)" opacity="0.6">
-            <animate attributeName="opacity" values="0.4;0.7;0.4" dur="3s" repeatCount="indefinite" />
-          </circle>
-          <ellipse cx="195" cy="118" rx="17" ry="16" fill="#0c1a3d" />
-          <ellipse cx="195" cy="118" rx="14" ry="13" fill="url(#eyeCore)" filter="url(#innerGlow)">
-            <animate attributeName="ry" values="13;1.5;13" dur="5s" begin="2.5s" repeatCount="indefinite" />
-          </ellipse>
-          <ellipse cx="195" cy="118" rx="8" ry="8" fill="#0c2461">
-            <animate attributeName="ry" values="8;1;8" dur="5s" begin="2.5s" repeatCount="indefinite" />
-          </ellipse>
-          <ellipse cx="195" cy="118" rx="5" ry="5" fill="url(#pupilGlow)">
-            <animate attributeName="ry" values="5;0.8;5" dur="5s" begin="2.5s" repeatCount="indefinite" />
-          </ellipse>
-          <circle cx="199" cy="113" r="3" fill="white" opacity="0.95" />
-          <circle cx="190" cy="122" r="1.5" fill="white" opacity="0.5" />
-          <circle cx="201" cy="120" r="0.8" fill="white" opacity="0.3" />
-        </g>
-
-        {/* === SMILE === */}
-        <path
-          d="M143 148 Q155 162, 170 162 Q185 162, 197 148"
-          stroke="#60a5fa"
-          strokeWidth="3"
-          strokeLinecap="round"
+          opacity="0.08"
           fill="none"
-          filter="url(#softGlow)"
         />
-        {/* Smile glow underneath */}
+
+        {/* Head top ridge — geometric precision */}
         <path
-          d="M148 150 Q160 160, 170 160 Q180 160, 192 150"
-          stroke="#93c5fd"
-          strokeWidth="1.5"
-          strokeLinecap="round"
+          d="M125 95 C128 62, 150 45, 180 43 C210 45, 232 62, 235 95"
           fill="none"
+          stroke="#3b3e47"
+          strokeWidth="0.8"
           opacity="0.3"
         />
 
-        {/* === SIDE PANELS / EARS === */}
-        {/* Left ear */}
-        <g>
-          <rect x="90" y="102" width="14" height="38" rx="7" fill="url(#headChrome)" stroke="#9ca3af" strokeWidth="0.8" />
-          {/* LED strip */}
-          <circle cx="97" cy="112" r="3" fill="#1d4ed8">
-            <animate attributeName="fill" values="#1d4ed8;#60a5fa;#1d4ed8" dur="2s" repeatCount="indefinite" />
-          </circle>
-          <circle cx="97" cy="122" r="2" fill="#3b82f6" opacity="0.5">
-            <animate attributeName="opacity" values="0.3;0.8;0.3" dur="2.5s" begin="0.8s" repeatCount="indefinite" />
-          </circle>
-          <circle cx="97" cy="130" r="2" fill="#3b82f6" opacity="0.3">
-            <animate attributeName="opacity" values="0.2;0.6;0.2" dur="3s" begin="1.5s" repeatCount="indefinite" />
-          </circle>
-        </g>
-        {/* Right ear */}
-        <g>
-          <rect x="236" y="102" width="14" height="38" rx="7" fill="url(#headChrome)" stroke="#9ca3af" strokeWidth="0.8" />
-          <circle cx="243" cy="112" r="3" fill="#1d4ed8">
-            <animate attributeName="fill" values="#1d4ed8;#60a5fa;#1d4ed8" dur="2s" begin="1s" repeatCount="indefinite" />
-          </circle>
-          <circle cx="243" cy="122" r="2" fill="#3b82f6" opacity="0.5">
-            <animate attributeName="opacity" values="0.3;0.8;0.3" dur="2.5s" begin="1.8s" repeatCount="indefinite" />
-          </circle>
-          <circle cx="243" cy="130" r="2" fill="#3b82f6" opacity="0.3">
-            <animate attributeName="opacity" values="0.2;0.6;0.2" dur="3s" begin="0.3s" repeatCount="indefinite" />
-          </circle>
-        </g>
+        {/* Forehead panel line */}
+        <path
+          d="M140 78 L180 72 L220 78"
+          fill="none"
+          stroke="#c4a35a"
+          strokeWidth="0.5"
+          opacity="0.2"
+        />
 
-        {/* === CIRCUIT TRACES ON HEAD === */}
-        <g opacity="0.2">
-          <path d="M100 105 L96 105 L96 125 L100 125" stroke="#3b82f6" strokeWidth="0.8" fill="none" />
-          <path d="M240 105 L244 105 L244 125 L240 125" stroke="#3b82f6" strokeWidth="0.8" fill="none" />
-          <circle cx="96" cy="115" r="1.5" fill="#60a5fa" />
-          <circle cx="244" cy="115" r="1.5" fill="#60a5fa" />
-          <path d="M100 140 L92 140 L92 145" stroke="#3b82f6" strokeWidth="0.6" fill="none" />
-          <path d="M240 140 L248 140 L248 145" stroke="#3b82f6" strokeWidth="0.6" fill="none" />
-        </g>
-
-        {/* ================================================================ */}
-        {/* LEFT ARM - WAVING                                                */}
-        {/* ================================================================ */}
+        {/* ═══════════════════════════════════════════════ */}
+        {/* VISOR — single horizontal energy band          */}
+        {/* NO eyes. NO pupils. Just a sensor strip.       */}
+        {/* ═══════════════════════════════════════════════ */}
         <g>
-          {/* Shoulder joint */}
-          <circle cx="88" cy="255" r="12" fill="#1f2937" />
-          <circle cx="88" cy="255" r="8" fill="#374151" />
-          {/* Upper arm */}
+          {/* Visor recess */}
+          <rect x="128" y="118" width="104" height="22" rx="11" fill="#0a0e1a" />
+
+          {/* Energy strip — the "gaze" */}
+          <rect x="132" y="121" width="96" height="16" rx="8" fill="url(#visorEnergy)" filter="url(#subtleGlow)">
+            <animate
+              attributeName="opacity"
+              values="0.85;1;0.85"
+              dur="4s"
+              repeatCount="indefinite"
+            />
+          </rect>
+
+          {/* Visor inner light — very faint scanline */}
+          <line x1="140" y1="129" x2="220" y2="129" stroke="#93c5fd" strokeWidth="0.4" opacity="0.15">
+            <animate attributeName="opacity" values="0.05;0.2;0.05" dur="6s" repeatCount="indefinite" />
+          </line>
+
+          {/* Visor reflection — glass surface top */}
           <path
-            d="M88 255 C68 242, 48 210, 42 185"
-            stroke="#111827"
-            strokeWidth="26"
-            strokeLinecap="round"
-            fill="none"
-          />
-          <path
-            d="M88 255 C68 242, 48 210, 42 185"
-            stroke="#1f2937"
-            strokeWidth="22"
-            strokeLinecap="round"
-            fill="none"
-          />
-          {/* Arm highlight */}
-          <path
-            d="M85 250 C67 238, 50 212, 45 190"
-            stroke="white"
-            strokeWidth="3"
-            strokeLinecap="round"
-            fill="none"
+            d="M136 123 C150 119, 200 119, 224 123 L222 126 C200 123, 155 123, 138 126 Z"
+            fill="white"
             opacity="0.06"
           />
-          {/* Elbow joint */}
-          <circle cx="42" cy="185" r="8" fill="#374151" stroke="#4b5563" strokeWidth="1" />
-          {/* Hand sphere */}
-          <circle cx="38" cy="172" r="18" fill="url(#handMetal)" />
-          <circle cx="38" cy="172" r="16" fill="#f3f4f6" />
-          {/* Hand shine */}
-          <ellipse cx="34" cy="167" rx="8" ry="6" fill="white" opacity="0.15" />
-          {/* Fingers splayed */}
-          <ellipse cx="24" cy="157" rx="5.5" ry="10" fill="url(#handMetal)" transform="rotate(-25, 24, 157)" />
-          <ellipse cx="34" cy="152" rx="5" ry="11" fill="url(#handMetal)" transform="rotate(-10, 34, 152)" />
-          <ellipse cx="44" cy="150" rx="5" ry="11" fill="url(#handMetal)" transform="rotate(5, 44, 150)" />
-          <ellipse cx="53" cy="154" rx="5" ry="10" fill="url(#handMetal)" transform="rotate(18, 53, 154)" />
-          {/* Finger joints */}
-          <circle cx="24" cy="157" r="1.5" fill="#9ca3af" opacity="0.4" />
-          <circle cx="34" cy="152" r="1.5" fill="#9ca3af" opacity="0.4" />
-          <circle cx="44" cy="150" r="1.5" fill="#9ca3af" opacity="0.4" />
-          <circle cx="53" cy="154" r="1.5" fill="#9ca3af" opacity="0.4" />
-          {/* Wrist glow */}
-          <circle cx="38" cy="182" r="4" fill="#3b82f6" opacity="0.4" filter="url(#innerGlow)">
-            <animate attributeName="opacity" values="0.2;0.5;0.2" dur="2s" repeatCount="indefinite" />
-          </circle>
         </g>
 
-        {/* ================================================================ */}
-        {/* RIGHT ARM - HOLDING GOLDEN SCALES                                */}
-        {/* ================================================================ */}
+        {/* ═══════════════════════════════════════════════ */}
+        {/* SIDE PANELS — minimal sensor arrays            */}
+        {/* ═══════════════════════════════════════════════ */}
+        {/* Left panel */}
+        <rect x="112" y="110" width="8" height="32" rx="4" fill="#1e2028" stroke="#2a2d35" strokeWidth="0.5" />
+        <circle cx="116" cy="120" r="1.5" fill="#3b82f6" opacity="0.4">
+          <animate attributeName="opacity" values="0.2;0.5;0.2" dur="3s" repeatCount="indefinite" />
+        </circle>
+        <circle cx="116" cy="130" r="1" fill="#c4a35a" opacity="0.3">
+          <animate attributeName="opacity" values="0.15;0.35;0.15" dur="4s" begin="1s" repeatCount="indefinite" />
+        </circle>
+
+        {/* Right panel */}
+        <rect x="240" y="110" width="8" height="32" rx="4" fill="#1e2028" stroke="#2a2d35" strokeWidth="0.5" />
+        <circle cx="244" cy="120" r="1.5" fill="#3b82f6" opacity="0.4">
+          <animate attributeName="opacity" values="0.2;0.5;0.2" dur="3s" begin="1.5s" repeatCount="indefinite" />
+        </circle>
+        <circle cx="244" cy="130" r="1" fill="#c4a35a" opacity="0.3">
+          <animate attributeName="opacity" values="0.15;0.35;0.15" dur="4s" begin="2.5s" repeatCount="indefinite" />
+        </circle>
+
+        {/* ═══════════════════════════════════════════════ */}
+        {/* CORE ELEMENT — chest energy source             */}
+        {/* ═══════════════════════════════════════════════ */}
         <g>
-          {/* Shoulder joint */}
-          <circle cx="252" cy="255" r="12" fill="#1f2937" />
-          <circle cx="252" cy="255" r="8" fill="#374151" />
-          {/* Upper arm */}
-          <path
-            d="M252 255 C272 240, 282 210, 278 182"
-            stroke="#111827"
-            strokeWidth="26"
-            strokeLinecap="round"
-            fill="none"
-          />
-          <path
-            d="M252 255 C272 240, 282 210, 278 182"
-            stroke="#1f2937"
-            strokeWidth="22"
-            strokeLinecap="round"
-            fill="none"
-          />
-          {/* Arm highlight */}
-          <path
-            d="M255 250 C273 237, 280 212, 276 188"
-            stroke="white"
-            strokeWidth="3"
-            strokeLinecap="round"
-            fill="none"
-            opacity="0.06"
-          />
-          {/* Elbow */}
-          <circle cx="278" cy="182" r="8" fill="#374151" stroke="#4b5563" strokeWidth="1" />
-          {/* Hand */}
-          <circle cx="278" cy="168" r="16" fill="#f3f4f6" />
+          {/* Outer housing */}
+          <circle cx="180" cy="275" r="22" fill="#12141a" />
+          <circle cx="180" cy="275" r="20" fill="none" stroke="#2a2d35" strokeWidth="0.8" />
 
-          {/* === GOLDEN SCALES OF JUSTICE === */}
-          <g filter="url(#heroGlow)">
-            {/* Main post */}
-            <rect x="276" y="108" width="4" height="50" rx="2" fill="url(#goldPremium)" />
-            {/* Top crown ornament */}
-            <circle cx="278" cy="104" r="8" fill="url(#goldPremium)" />
-            <circle cx="278" cy="104" r="5.5" fill="#fde68a" />
-            <circle cx="276" cy="102" r="1.5" fill="white" opacity="0.6" />
+          {/* Energy core */}
+          <circle cx="180" cy="275" r="14" fill="url(#coreEnergy)" filter="url(#softGlow)">
+            <animate attributeName="r" values="14;15;14" dur="4s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0.8;1;0.8" dur="4s" repeatCount="indefinite" />
+          </circle>
 
-            {/* Beam */}
-            <rect x="248" y="117" width="60" height="3" rx="1.5" fill="url(#goldPremium)" />
+          {/* Core inner ring */}
+          <circle cx="180" cy="275" r="8" fill="none" stroke="#93c5fd" strokeWidth="0.5" opacity="0.5">
+            <animate attributeName="r" values="8;9;8" dur="4s" repeatCount="indefinite" />
+          </circle>
 
-            {/* Left chain + plate */}
-            <line x1="252" y1="120" x2="252" y2="138" stroke="#d97706" strokeWidth="1.5" />
-            <line x1="248" y1="120" x2="248" y2="136" stroke="#d97706" strokeWidth="1" />
-            <line x1="256" y1="120" x2="256" y2="136" stroke="#d97706" strokeWidth="1" />
-            <ellipse cx="252" cy="140" rx="13" ry="5" fill="url(#goldPremium)" />
-            <ellipse cx="252" cy="139" rx="11" ry="3.5" fill="#fde68a" />
-            <ellipse cx="250" cy="138" rx="4" ry="1.5" fill="white" opacity="0.2" />
+          {/* Core center point */}
+          <circle cx="180" cy="275" r="3" fill="#dbeafe" opacity="0.9">
+            <animate attributeName="opacity" values="0.7;1;0.7" dur="3s" repeatCount="indefinite" />
+          </circle>
 
-            {/* Right chain + plate */}
-            <line x1="304" y1="120" x2="304" y2="138" stroke="#d97706" strokeWidth="1.5" />
-            <line x1="300" y1="120" x2="300" y2="136" stroke="#d97706" strokeWidth="1" />
-            <line x1="308" y1="120" x2="308" y2="136" stroke="#d97706" strokeWidth="1" />
-            <ellipse cx="304" cy="140" rx="13" ry="5" fill="url(#goldPremium)" />
-            <ellipse cx="304" cy="139" rx="11" ry="3.5" fill="#fde68a" />
-            <ellipse cx="302" cy="138" rx="4" ry="1.5" fill="white" opacity="0.2" />
-          </g>
+          {/* Energy lines radiating from core */}
+          <line x1="180" y1="253" x2="180" y2="242" stroke="#3b82f6" strokeWidth="0.6" opacity="0.2">
+            <animate attributeName="opacity" values="0.1;0.3;0.1" dur="5s" repeatCount="indefinite" />
+          </line>
+          <line x1="164" y1="260" x2="155" y2="252" stroke="#3b82f6" strokeWidth="0.5" opacity="0.15" />
+          <line x1="196" y1="260" x2="205" y2="252" stroke="#3b82f6" strokeWidth="0.5" opacity="0.15" />
         </g>
 
-        {/* ================================================================ */}
-        {/* FLOATING PARTICLES + ENERGY                                      */}
-        {/* ================================================================ */}
-        <g>
-          {/* Large particles */}
-          <circle cx="65" cy="85" r="3" fill="#3b82f6" opacity="0.5" filter="url(#innerGlow)">
-            <animate attributeName="cy" values="85;72;85" dur="4s" repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0.2;0.6;0.2" dur="4s" repeatCount="indefinite" />
-          </circle>
-          <circle cx="280" cy="72" r="2.5" fill="#60a5fa" opacity="0.4" filter="url(#innerGlow)">
-            <animate attributeName="cy" values="72;58;72" dur="3.5s" repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0.1;0.5;0.1" dur="3.5s" repeatCount="indefinite" />
-          </circle>
-          {/* Small sparkles */}
-          <circle cx="55" cy="160" r="1.5" fill="#93c5fd" opacity="0.3">
-            <animate attributeName="cy" values="160;148;160" dur="5s" repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0.1;0.4;0.1" dur="5s" repeatCount="indefinite" />
-          </circle>
-          <circle cx="72" cy="50" r="2" fill="#60a5fa" opacity="0.3">
-            <animate attributeName="cy" values="50;38;50" dur="3s" begin="1s" repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0.15;0.45;0.15" dur="3s" begin="1s" repeatCount="indefinite" />
-          </circle>
-          <circle cx="260" cy="55" r="1.8" fill="#93c5fd" opacity="0.25">
-            <animate attributeName="cy" values="55;42;55" dur="4.5s" begin="0.5s" repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0.1;0.35;0.1" dur="4.5s" begin="0.5s" repeatCount="indefinite" />
-          </circle>
-          <circle cx="48" cy="120" r="1.2" fill="#bfdbfe" opacity="0.2">
-            <animate attributeName="cy" values="120;110;120" dur="3.2s" begin="2s" repeatCount="indefinite" />
-          </circle>
-          {/* Energy dots near antenna */}
-          <circle cx="155" cy="15" r="1.5" fill="#60a5fa" opacity="0.3">
-            <animate attributeName="opacity" values="0;0.5;0" dur="2s" begin="0.5s" repeatCount="indefinite" />
-          </circle>
-          <circle cx="188" cy="10" r="1" fill="#93c5fd" opacity="0.2">
-            <animate attributeName="opacity" values="0;0.4;0" dur="2.5s" begin="1.2s" repeatCount="indefinite" />
-          </circle>
+        {/* ═══════════════════════════════════════════════ */}
+        {/* SCALES OF JUSTICE — abstract, geometric        */}
+        {/* Integrated into the chest, not held            */}
+        {/* ═══════════════════════════════════════════════ */}
+        <g opacity="0.35" transform="translate(180, 330)">
+          {/* Central pillar */}
+          <line x1="0" y1="-12" x2="0" y2="12" stroke="url(#scalesGold)" strokeWidth="1.2" />
+          {/* Balance beam */}
+          <line x1="-20" y1="-10" x2="20" y2="-10" stroke="url(#scalesGold)" strokeWidth="1" />
+          {/* Left plate */}
+          <path d="M-22 -10 L-18 -10 L-16 -4 L-24 -4 Z" fill="url(#scalesGold)" opacity="0.6" />
+          {/* Right plate */}
+          <path d="M18 -10 L22 -10 L24 -4 L16 -4 Z" fill="url(#scalesGold)" opacity="0.6" />
+          {/* Base */}
+          <path d="M-8 12 L8 12 L6 15 L-6 15 Z" fill="url(#scalesGold)" opacity="0.5" />
+        </g>
+
+        {/* ═══════════════════════════════════════════════ */}
+        {/* GEOMETRIC DETAIL LINES — engineering precision  */}
+        {/* ═══════════════════════════════════════════════ */}
+        <g opacity="0.08">
+          {/* Torso structure lines */}
+          <path d="M145 250 L145 340" stroke="#c4a35a" strokeWidth="0.4" />
+          <path d="M215 250 L215 340" stroke="#c4a35a" strokeWidth="0.4" />
+          {/* Cross details */}
+          <path d="M145 290 L155 290" stroke="#c4a35a" strokeWidth="0.4" />
+          <path d="M205 290 L215 290" stroke="#c4a35a" strokeWidth="0.4" />
+          <path d="M145 320 L155 320" stroke="#c4a35a" strokeWidth="0.4" />
+          <path d="M205 320 L215 320" stroke="#c4a35a" strokeWidth="0.4" />
         </g>
 
       </g>
+
+      {/* ═══════════════════════════════════════════════ */}
+      {/* FLOATING PARTICLES — sparse, controlled         */}
+      {/* ═══════════════════════════════════════════════ */}
+      <g>
+        {/* Subtle energy particles — very few, very slow */}
+        <circle cx="90" cy="100" r="1.5" fill="#3b82f6" opacity="0.2">
+          <animate attributeName="cy" values="100;92;100" dur="7s" repeatCount="indefinite" />
+          <animate attributeName="opacity" values="0.1;0.25;0.1" dur="7s" repeatCount="indefinite" />
+        </circle>
+        <circle cx="270" cy="85" r="1.2" fill="#c4a35a" opacity="0.15">
+          <animate attributeName="cy" values="85;78;85" dur="9s" repeatCount="indefinite" />
+          <animate attributeName="opacity" values="0.08;0.2;0.08" dur="9s" repeatCount="indefinite" />
+        </circle>
+        <circle cx="80" cy="200" r="1" fill="#93c5fd" opacity="0.12">
+          <animate attributeName="cy" values="200;193;200" dur="8s" begin="2s" repeatCount="indefinite" />
+          <animate attributeName="opacity" values="0.06;0.15;0.06" dur="8s" begin="2s" repeatCount="indefinite" />
+        </circle>
+        <circle cx="275" cy="180" r="1.3" fill="#3b82f6" opacity="0.15">
+          <animate attributeName="cy" values="180;172;180" dur="6s" begin="3s" repeatCount="indefinite" />
+          <animate attributeName="opacity" values="0.08;0.18;0.08" dur="6s" begin="3s" repeatCount="indefinite" />
+        </circle>
+      </g>
+
     </svg>
   );
 }
