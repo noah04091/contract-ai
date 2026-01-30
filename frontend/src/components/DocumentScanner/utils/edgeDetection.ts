@@ -110,7 +110,7 @@ export function adaptiveThreshold(
     }
   }
   const mean = count > 0 ? sum / count : 128;
-  const threshold = Math.max(30, mean * 1.2);
+  const threshold = Math.max(15, mean * 0.6);
 
   for (let i = 0; i < src.length; i++) {
     dst[i] = src[i] >= threshold ? 255 : 0;
@@ -211,7 +211,7 @@ export function houghLines(
   }
   const effectiveThreshold = voteThreshold > 0
     ? voteThreshold
-    : Math.max(30, maxVotes * 0.30);
+    : Math.max(15, maxVotes * 0.20);
 
   // Extract lines above threshold
   const lines: HoughLine[] = [];
@@ -304,8 +304,8 @@ export function findQuadFromLines(
   if (horizontal.length < 2 || vertical.length < 2) return null;
 
   // Pick best pair from each group (most separated, strongest votes)
-  const hPair = findBestPair(horizontal, frameHeight * 0.15);
-  const vPair = findBestPair(vertical, frameWidth * 0.15);
+  const hPair = findBestPair(horizontal, frameHeight * 0.08);
+  const vPair = findBestPair(vertical, frameWidth * 0.08);
 
   if (!hPair || !vPair) return null;
 
@@ -321,7 +321,7 @@ export function findQuadFromLines(
   if (corners.length !== 4) return null;
 
   // Check corners are within frame (with some margin)
-  const margin = -0.03; // Allow slightly outside (3%)
+  const margin = -0.08; // Allow slightly outside (8%)
   for (const c of corners) {
     if (
       c.x < frameWidth * margin ||
@@ -427,7 +427,7 @@ export function isValidQuadrilateral(points: Point[]): boolean {
     const next = points[(i + 1) % 4];
 
     const angle = angleBetween(prev, curr, next);
-    if (angle < 40 || angle > 140) return false;
+    if (angle < 30 || angle > 150) return false;
   }
 
   // Check area is positive (not self-intersecting)

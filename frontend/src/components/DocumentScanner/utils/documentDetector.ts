@@ -27,7 +27,7 @@ interface DetectionConfig {
 
 const DEFAULT_CONFIG: DetectionConfig = {
   detectionWidth: 320,
-  minAreaRatio: 0.08,
+  minAreaRatio: 0.05,
 };
 
 export class DocumentDetector {
