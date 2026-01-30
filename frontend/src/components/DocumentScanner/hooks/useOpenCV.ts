@@ -24,7 +24,7 @@ let cvInstance: OpenCVModule | null = null;
 
 // jsDelivr CDN — zuverlässig, schnell, global cached
 const OPENCV_CDN =
-  "https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.10.0-release.1/opencv.js";
+  "https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.10.0-release.1/dist/opencv.js";
 
 function loadOpenCV(): Promise<OpenCVModule> {
   if (cvInstance) return Promise.resolve(cvInstance);
