@@ -14,6 +14,7 @@ interface DetectionState {
   confidence: number;
   isStable: boolean;
   stabilityProgress: number; // 0.0 to 1.0
+  hint: string | null;
 }
 
 interface UseDocumentDetectionOptions {
@@ -28,6 +29,7 @@ const STABILITY_TOLERANCE = 0.025; // 2.5% of frame
 const EMA_ALPHA = 0.4; // 40% new frame, 60% history
 const GRACE_FRAMES = 3; // Tolerate up to 3 unstable frames before reset
 const FADEOUT_MS = 500; // Fade-out duration when detection is lost
+const NO_DETECTION_HINT_MS = 3000; // Show hint after 3s without detection
 
 /** Euclidean distance check for corner similarity */
 function cornersAreSimilar(a: Point[], b: Point[]): boolean {
@@ -61,6 +63,7 @@ export function useDocumentDetection({
     confidence: 0,
     isStable: false,
     stabilityProgress: 0,
+    hint: null,
   });
 
   // Refs for the detection loop (avoid stale closures)
@@ -78,6 +81,9 @@ export function useDocumentDetection({
   const lostTimeRef = useRef<number | null>(null);
   const lastKnownCornersRef = useRef<Point[] | null>(null);
   const lastKnownConfidenceRef = useRef(0);
+  const loopStartTimeRef = useRef<number>(0); // When detection loop started
+  const lastDetectionTimeRef = useRef<number>(0); // Last time a document was detected
+  const stabilityBreakCountRef = useRef(0); // Count of stability resets (for "Ruhig halten")
 
   // Keep callback ref in sync
   useEffect(() => {
@@ -109,6 +115,7 @@ export function useDocumentDetection({
         if (result && result.confidence > 0.3) {
           // Clear fade-out state
           lostTimeRef.current = null;
+          lastDetectionTimeRef.current = timestamp;
 
           const rawCorners = result.corners;
 
@@ -133,12 +140,20 @@ export function useDocumentDetection({
             const stableDuration = timestamp - stableStartTimeRef.current;
             const progress = Math.min(1, stableDuration / stabilityThresholdMs);
             const isStable = progress >= 1;
+            stabilityBreakCountRef.current = 0; // Stable → reset break counter
+
+            const hint = isStable
+              ? "Dokument erkannt"
+              : progress > 0
+                ? "Nicht bewegen…"
+                : null;
 
             setState({
               detectedCorners: smoothed,
               confidence: result.confidence,
               isStable,
               stabilityProgress: progress,
+              hint,
             });
 
             // Auto-capture trigger
@@ -155,12 +170,21 @@ export function useDocumentDetection({
               stableStartTimeRef.current = null;
               autoCapturedRef.current = false;
               unstableCountRef.current = 0;
+              stabilityBreakCountRef.current++;
+
+              // Hint: if stability keeps breaking, tell user to hold still
+              const hint = stabilityBreakCountRef.current >= 3
+                ? "Ruhig halten"
+                : result.confidence < 0.4
+                  ? "Näher ran"
+                  : null;
 
               setState({
                 detectedCorners: smoothed,
                 confidence: result.confidence,
                 isStable: false,
                 stabilityProgress: 0,
+                hint,
               });
             } else {
               // Within grace period — keep current progress, update corners
@@ -173,6 +197,7 @@ export function useDocumentDetection({
                 confidence: result.confidence,
                 isStable: false,
                 stabilityProgress: currentProgress,
+                hint: currentProgress > 0 ? "Nicht bewegen…" : null,
               });
             }
           }
@@ -198,6 +223,7 @@ export function useDocumentDetection({
                 confidence: fadedConfidence,
                 isStable: false,
                 stabilityProgress: 0,
+                hint: null,
               });
             } else {
               // Fade complete — clear everything
@@ -209,11 +235,17 @@ export function useDocumentDetection({
               lastKnownCornersRef.current = null;
               unstableCountRef.current = 0;
 
+              const noDetectHint = (loopStartTimeRef.current > 0 &&
+                timestamp - Math.max(loopStartTimeRef.current, lastDetectionTimeRef.current) > NO_DETECTION_HINT_MS)
+                ? "Dokument ins Bild halten"
+                : null;
+
               setState({
                 detectedCorners: null,
                 confidence: 0,
                 isStable: false,
                 stabilityProgress: 0,
+                hint: noDetectHint,
               });
             }
           } else {
@@ -224,11 +256,17 @@ export function useDocumentDetection({
             autoCapturedRef.current = false;
             unstableCountRef.current = 0;
 
+            const noDetectHint = (loopStartTimeRef.current > 0 &&
+              timestamp - Math.max(loopStartTimeRef.current, lastDetectionTimeRef.current) > NO_DETECTION_HINT_MS)
+              ? "Dokument ins Bild halten"
+              : null;
+
             setState({
               detectedCorners: null,
               confidence: 0,
               isStable: false,
               stabilityProgress: 0,
+              hint: noDetectHint,
             });
           }
         }
@@ -244,6 +282,7 @@ export function useDocumentDetection({
             confidence: 0,
             isStable: false,
             stabilityProgress: 0,
+            hint: null,
           });
         }
       }
@@ -267,6 +306,9 @@ export function useDocumentDetection({
         detectorRef.current = new DocumentDetector();
         disabledRef.current = false;
         consecutiveErrorsRef.current = 0;
+        loopStartTimeRef.current = performance.now();
+        lastDetectionTimeRef.current = performance.now();
+        stabilityBreakCountRef.current = 0;
         rafRef.current = requestAnimationFrame(detectionLoop);
       })
       .catch((err) => {
@@ -287,6 +329,9 @@ export function useDocumentDetection({
       lostTimeRef.current = null;
       lastKnownCornersRef.current = null;
       unstableCountRef.current = 0;
+      loopStartTimeRef.current = 0;
+      lastDetectionTimeRef.current = 0;
+      stabilityBreakCountRef.current = 0;
     };
   }, [enabled, detectionLoop]);
 

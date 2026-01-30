@@ -161,6 +161,7 @@ const CameraView: React.FC<CameraViewProps> = ({
         confidence={detection.confidence}
         isStable={detection.isStable}
         stabilityProgress={detection.stabilityProgress}
+        hint={detection.hint}
         containerRef={containerRef}
       />
 

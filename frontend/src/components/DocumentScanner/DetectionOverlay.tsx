@@ -14,16 +14,52 @@ interface DetectionOverlayProps {
   confidence: number;
   isStable: boolean;
   stabilityProgress: number;
+  hint: string | null;
   containerRef: React.RefObject<HTMLDivElement | null>;
 }
 
 const LERP_FACTOR = 0.35; // Overlay-level interpolation (additional smoothing)
+
+/** Draw a hint text centered near the bottom of the canvas */
+function drawHint(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  canvasW: number,
+  canvasH: number
+): void {
+  const fontSize = Math.max(13, Math.min(16, canvasW * 0.035));
+  ctx.save();
+  ctx.font = `500 ${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  // Background pill
+  const metrics = ctx.measureText(text);
+  const paddingX = 14;
+  const paddingY = 8;
+  const pillW = metrics.width + paddingX * 2;
+  const pillH = fontSize + paddingY * 2;
+  const pillX = canvasW / 2 - pillW / 2;
+  const pillY = canvasH - 150 - pillH / 2;
+
+  ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+  ctx.beginPath();
+  const r = pillH / 2;
+  ctx.roundRect(pillX, pillY, pillW, pillH, r);
+  ctx.fill();
+
+  // Text
+  ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+  ctx.fillText(text, canvasW / 2, pillY + pillH / 2);
+  ctx.restore();
+}
 
 const DetectionOverlay: React.FC<DetectionOverlayProps> = ({
   corners,
   confidence,
   isStable,
   stabilityProgress,
+  hint,
   containerRef,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -71,6 +107,10 @@ const DetectionOverlay: React.FC<DetectionOverlayProps> = ({
     if (!corners || corners.length !== 4) {
       // Fade out previous points
       previousPtsRef.current = null;
+      // Still draw hint when no document detected
+      if (hint) {
+        drawHint(ctx, hint, canvas.width, canvas.height);
+      }
       return;
     }
 
@@ -154,7 +194,12 @@ const DetectionOverlay: React.FC<DetectionOverlayProps> = ({
       ctx.arc(pt.x, pt.y, dotRadius, 0, Math.PI * 2);
       ctx.fill();
     }
-  }, [corners, confidence, isStable, stabilityProgress, containerRef]);
+
+    // Hint text
+    if (hint) {
+      drawHint(ctx, hint, canvas.width, canvas.height);
+    }
+  }, [corners, confidence, isStable, stabilityProgress, hint, containerRef]);
 
   // Redraw on every animation frame for smooth rendering
   useEffect(() => {
@@ -166,7 +211,7 @@ const DetectionOverlay: React.FC<DetectionOverlayProps> = ({
       animFrameRef.current = requestAnimationFrame(loop);
     };
 
-    if (corners && corners.length === 4) {
+    if ((corners && corners.length === 4) || hint) {
       loop();
     } else {
       // One more draw to handle fade-out / flash
@@ -189,7 +234,7 @@ const DetectionOverlay: React.FC<DetectionOverlayProps> = ({
       active = false;
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
-  }, [corners, draw]);
+  }, [corners, hint, draw]);
 
   return (
     <canvas

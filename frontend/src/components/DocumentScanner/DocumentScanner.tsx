@@ -17,6 +17,7 @@ import BatchManager from "./BatchManager";
 import { useBatchPages } from "./hooks/useBatchPages";
 import type { Point } from "./types";
 import type { CaptureResult } from "./hooks/useCamera";
+import { applyPerspectiveCrop } from "./utils/perspectiveTransform";
 import styles from "./DocumentScanner.module.css";
 
 export interface DocumentScannerProps {
@@ -48,6 +49,7 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
     removePage,
     updatePageCorners,
     updatePageRotation,
+    updateCorrectedImage,
     setActivePage,
     clearPages,
     pageCount,
@@ -62,7 +64,7 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
     [addPage]
   );
 
-  // Ecken bestätigt → direkt zu Review (Perspektiv-Korrektur macht das Backend)
+  // Ecken bestätigt → Review + Perspektiv-Korrektur im Hintergrund
   const handleCornersConfirmed = useCallback(
     (corners: Point[]) => {
       const pageIndex = pages.length - 1;
@@ -70,8 +72,18 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
 
       updatePageCorners(pageIndex, corners);
       setScannerState("reviewing");
+
+      // Perspektiv-Korrektur im Hintergrund — Preview aktualisiert sich automatisch
+      const imageUrl = pages[pageIndex].previewDataUrl;
+      applyPerspectiveCrop(imageUrl, corners)
+        .then((blob) => {
+          updateCorrectedImage(pageIndex, blob);
+        })
+        .catch((err) => {
+          console.warn("[Scanner] Perspective crop failed:", err);
+        });
     },
-    [pages, updatePageCorners]
+    [pages, updatePageCorners, updateCorrectedImage]
   );
 
   // Retake aus Corner-Adjustment
