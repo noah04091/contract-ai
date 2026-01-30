@@ -8,8 +8,7 @@
 const PLANS = {
   FREE: 'free',
   BUSINESS: 'business',
-  ENTERPRISE: 'enterprise',
-  LEGENDARY: 'legendary'
+  ENTERPRISE: 'enterprise'
 };
 
 /**
@@ -19,8 +18,7 @@ const PLANS = {
 const PLAN_HIERARCHY = {
   [PLANS.FREE]: 0,
   [PLANS.BUSINESS]: 1,
-  [PLANS.ENTERPRISE]: 2,
-  [PLANS.LEGENDARY]: 3
+  [PLANS.ENTERPRISE]: 2
 };
 
 /**
@@ -29,28 +27,28 @@ const PLAN_HIERARCHY = {
  */
 const FEATURE_ACCESS = {
   // Basis-Features (alle User)
-  dashboard: [PLANS.FREE, PLANS.BUSINESS, PLANS.ENTERPRISE, PLANS.LEGENDARY],
-  contracts: [PLANS.FREE, PLANS.BUSINESS, PLANS.ENTERPRISE, PLANS.LEGENDARY],
-  analyze: [PLANS.FREE, PLANS.BUSINESS, PLANS.ENTERPRISE, PLANS.LEGENDARY], // Mit Limits
+  dashboard: [PLANS.FREE, PLANS.BUSINESS, PLANS.ENTERPRISE],
+  contracts: [PLANS.FREE, PLANS.BUSINESS, PLANS.ENTERPRISE],
+  analyze: [PLANS.FREE, PLANS.BUSINESS, PLANS.ENTERPRISE], // Mit Limits
 
   // Business+ Features
-  optimize: [PLANS.BUSINESS, PLANS.ENTERPRISE, PLANS.LEGENDARY],
-  chat: [PLANS.BUSINESS, PLANS.ENTERPRISE, PLANS.LEGENDARY],
-  generate: [PLANS.BUSINESS, PLANS.ENTERPRISE, PLANS.LEGENDARY],
-  compare: [PLANS.BUSINESS, PLANS.ENTERPRISE, PLANS.LEGENDARY],
-  legalPulse: [PLANS.BUSINESS, PLANS.ENTERPRISE, PLANS.LEGENDARY],
-  legalLens: [PLANS.BUSINESS, PLANS.ENTERPRISE, PLANS.LEGENDARY],
-  envelopes: [PLANS.BUSINESS, PLANS.ENTERPRISE, PLANS.LEGENDARY],
-  betterContracts: [PLANS.BUSINESS, PLANS.ENTERPRISE, PLANS.LEGENDARY],
+  optimize: [PLANS.BUSINESS, PLANS.ENTERPRISE],
+  chat: [PLANS.BUSINESS, PLANS.ENTERPRISE],
+  generate: [PLANS.BUSINESS, PLANS.ENTERPRISE],
+  compare: [PLANS.BUSINESS, PLANS.ENTERPRISE],
+  legalPulse: [PLANS.BUSINESS, PLANS.ENTERPRISE],
+  legalLens: [PLANS.BUSINESS, PLANS.ENTERPRISE],
+  envelopes: [PLANS.BUSINESS, PLANS.ENTERPRISE],
+  betterContracts: [PLANS.BUSINESS, PLANS.ENTERPRISE],
 
   // Enterprise+ Features
-  apiKeys: [PLANS.ENTERPRISE, PLANS.LEGENDARY],
-  excelExport: [PLANS.ENTERPRISE, PLANS.LEGENDARY],
-  integrations: [PLANS.ENTERPRISE, PLANS.LEGENDARY],
-  calendarSync: [PLANS.ENTERPRISE, PLANS.LEGENDARY],
+  apiKeys: [PLANS.ENTERPRISE],
+  excelExport: [PLANS.ENTERPRISE],
+  integrations: [PLANS.ENTERPRISE],
+  calendarSync: [PLANS.ENTERPRISE],
 
-  // Legendary-only Features (Admin, etc.)
-  adminPanel: [PLANS.LEGENDARY]
+  // Enterprise-only Features (Admin, etc.)
+  adminPanel: [PLANS.ENTERPRISE]
 };
 
 /**
@@ -81,14 +79,6 @@ const PLAN_LIMITS = {
     chat: Infinity,
     envelopes: Infinity
   },
-  [PLANS.LEGENDARY]: {
-    analyze: Infinity,
-    optimize: Infinity,
-    generate: Infinity,
-    compare: Infinity,
-    chat: Infinity,
-    envelopes: Infinity
-  }
 };
 
 /**

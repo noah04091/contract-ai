@@ -2,8 +2,22 @@
 // Legal Pulse 2.0 - Impact Evaluation & Alert Generation
 
 const { MongoClient, ObjectId } = require("mongodb");
-const { getInstance: getLawEmbeddings } = require("./lawEmbeddings");
-const { getInstance: getNotificationService } = require("./pulseNotificationService");
+
+// Graceful imports
+let getLawEmbeddings = null;
+let getNotificationService = null;
+
+try {
+  getLawEmbeddings = require("./lawEmbeddings").getInstance;
+} catch (error) {
+  console.warn('[LEGAL-PULSE:TRIGGER] lawEmbeddings nicht verfügbar:', error.message);
+}
+
+try {
+  getNotificationService = require("./pulseNotificationService").getInstance;
+} catch (error) {
+  console.warn('[LEGAL-PULSE:TRIGGER] pulseNotificationService nicht verfügbar:', error.message);
+}
 
 class LegalPulseTrigger {
   constructor() {
@@ -12,11 +26,20 @@ class LegalPulseTrigger {
     this.riskIncreaseBase = 10; // Base risk score increase
     this.maxRiskIncrease = 25; // Maximum risk increase per change
 
-    // Phase 2: Notification Service
-    this.notificationService = getNotificationService();
-    this.createNotifications = true; // Auto-create notifications
+    // Phase 2: Notification Service (graceful)
+    this.notificationService = null;
+    this.createNotifications = false;
 
-    console.log('[LEGAL-PULSE:TRIGGER] Initialized (Phase 2 with Notifications)');
+    try {
+      if (getNotificationService) {
+        this.notificationService = getNotificationService();
+        this.createNotifications = true;
+      }
+    } catch (error) {
+      console.warn('[LEGAL-PULSE:TRIGGER] Notification Service nicht verfügbar:', error.message);
+    }
+
+    console.log(`[LEGAL-PULSE:TRIGGER] Initialized (Notifications: ${this.createNotifications ? 'enabled' : 'disabled'})`);
   }
 
   /**

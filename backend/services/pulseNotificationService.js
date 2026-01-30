@@ -256,10 +256,11 @@ class PulseNotificationService {
       push: false
     };
 
-    // 🔐 Check subscription plan - Free users don't get notifications
-    const userPlan = user?.subscriptionPlan || 'free';
-    if (userPlan === 'free') {
-      console.log(`[PULSE-NOTIFICATION] ⏩ Skipping free user ${user?.email} - Legal Pulse requires Business+`);
+    // 🔐 Check subscription plan - nur Business/Enterprise erhalten Notifications
+    const userPlan = (user?.subscriptionPlan || 'free').toLowerCase();
+    const allowedPlans = ['business', 'enterprise'];
+    if (!allowedPlans.includes(userPlan)) {
+      console.log(`[PULSE-NOTIFICATION] ⏩ Skipping user ${user?.email} (Plan: ${userPlan}) - Legal Pulse requires Business+`);
       return results;
     }
 

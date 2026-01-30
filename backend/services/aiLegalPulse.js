@@ -3,8 +3,22 @@ const { OpenAI } = require("openai");
 const fs = require("fs").promises;
 const pdfParse = require("pdf-parse");
 const path = require("path");
-const { getInstance: getLawEmbeddings } = require("./lawEmbeddings");
-const { getInstance: getCostTrackingService } = require("./costTracking"); // 💰 NEW: Cost Tracking
+const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
+// Graceful imports - Services sind optional
+let getLawEmbeddings = null;
+let getCostTrackingService = null;
+
+try {
+  getLawEmbeddings = require("./lawEmbeddings").getInstance;
+} catch (error) {
+  console.warn('[AI-LEGAL-PULSE] lawEmbeddings nicht verfügbar, RAG deaktiviert:', error.message);
+}
+
+try {
+  getCostTrackingService = require("./costTracking").getInstance;
+} catch (error) {
+  console.warn('[AI-LEGAL-PULSE] costTracking nicht verfügbar:', error.message);
+}
 
 class AILegalPulse {
   constructor() {
@@ -12,9 +26,18 @@ class AILegalPulse {
       apiKey: process.env.OPENAI_API_KEY
     });
 
-    // RAG Integration
-    this.lawEmbeddings = getLawEmbeddings();
-    this.useRAG = true; // Enable RAG by default
+    // RAG Integration (graceful degradation)
+    this.lawEmbeddings = null;
+    this.useRAG = false;
+
+    try {
+      if (getLawEmbeddings) {
+        this.lawEmbeddings = getLawEmbeddings();
+        this.useRAG = true;
+      }
+    } catch (error) {
+      console.warn('[AI-LEGAL-PULSE] RAG-Initialisierung fehlgeschlagen, fahre ohne RAG fort:', error.message);
+    }
 
     // Legal analysis prompts
     this.prompts = {
@@ -22,8 +45,8 @@ class AILegalPulse {
 Analysiere den folgenden Vertrag INDIVIDUELL und bewerte das rechtliche Risiko auf einer Skala von 0-100:
 
 - 0-30: Geringes Risiko (gut ausbalanciert, faire Bedingungen)
-- 31-70: Mittleres Risiko (einige problematische Klauseln)
-- 71-100: Hohes Risiko (unausgewogen, problematische Bedingungen)
+- 31-60: Mittleres Risiko (einige problematische Klauseln)
+- 61-100: Hohes Risiko (unausgewogen, problematische Bedingungen)
 
 WICHTIG:
 - Analysiere NUR die TATSÄCHLICH vorhandenen Risiken in DIESEM spezifischen Vertrag
@@ -31,6 +54,7 @@ WICHTIG:
 - Sei vertragstyp-spezifisch (Arbeitsvertrag ≠ Mietvertrag ≠ Kaufvertrag)
 - KEINE künstlichen Limits - liste ALLE gefundenen Risiken auf (auch wenn es 0, 3 oder 15+ sind)
 - Generiere für JEDES Risiko vollständige Details (Beschreibung, Auswirkungen, Lösung, Empfehlung)
+- Der riskScore MUSS eine PRÄZISE, INDIVIDUELLE Zahl sein (z.B. 17, 43, 68, 82) - NIEMALS runde Standardwerte wie 30, 50 oder 70 verwenden. Berechne den Score granular anhand der tatsächlich gefundenen Risiken.
 
 Antworte NUR mit einem JSON-Objekt in folgendem Format:
 {
@@ -88,28 +112,30 @@ Bewerte jede Compliance-Kategorie und gib konkrete Verbesserungsvorschläge.`
   async analyzeContract(contract) {
     try {
       console.log(`🧠 Starte AI-Analyse für Vertrag: ${contract.name}`);
-      
-      // 1. PDF-Text extrahieren (falls vorhanden)
+
+      // 1. PDF-Text extrahieren (S3 oder lokaler Fallback)
       let contractText = '';
-      if (contract.filePath) {
-        contractText = await this.extractTextFromPDF(contract.filePath);
+      if (contract.s3Key) {
+        contractText = await this.extractTextFromS3(contract.s3Key);
+      } else if (contract.filePath) {
+        contractText = await this.extractTextFromLocalPDF(contract.filePath);
       }
-      
+
       // 2. Basis-Informationen sammeln
       const contractInfo = this.gatherContractInfo(contract);
-      
+
       // 3. KI-Analyse durchführen
       const aiAnalysis = await this.performAIAnalysis(contractText, contractInfo);
-      
+
       // 4. Risk Score berechnen
       const finalRiskScore = this.calculateFinalRiskScore(aiAnalysis, contract);
-      
+
       // 5. Legal Pulse Objekt erstellen
       const legalPulse = this.createLegalPulseResult(aiAnalysis, finalRiskScore, contract);
 
       console.log(`✅ AI-Analyse abgeschlossen für ${contract.name} (Score: ${finalRiskScore}, Health: ${legalPulse.healthScore})`);
       return legalPulse;
-      
+
     } catch (error) {
       console.error(`❌ Fehler bei AI-Analyse für ${contract.name}:`, error);
       // Fallback auf Simulation bei Fehlern
@@ -117,20 +143,50 @@ Bewerte jede Compliance-Kategorie und gib konkrete Verbesserungsvorschläge.`
     }
   }
 
-  // PDF-Text extrahieren
-  async extractTextFromPDF(filePath) {
+  // PDF-Text aus S3 extrahieren
+  async extractTextFromS3(s3Key) {
     try {
-      // Entferne '/uploads/' prefix und erstelle absoluten Pfad
-      const cleanPath = filePath.replace('/uploads/', '');
-      const fullPath = path.join(__dirname, '../uploads', cleanPath);
-      
-      const buffer = await fs.readFile(fullPath);
+      const s3 = new S3Client({
+        region: process.env.AWS_REGION,
+        credentials: {
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        },
+      });
+
+      const command = new GetObjectCommand({
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: s3Key,
+      });
+
+      const response = await s3.send(command);
+      const chunks = [];
+      for await (const chunk of response.Body) {
+        chunks.push(chunk);
+      }
+      const buffer = Buffer.concat(chunks);
+
       const pdfData = await pdfParse(buffer);
-      
-      // Begrenzen auf sinnvolle Textmenge für AI (ca. 10.000 Zeichen)
+      console.log(`📄 S3 PDF extrahiert: ${s3Key} (${pdfData.text.length} Zeichen)`);
       return pdfData.text.substring(0, 10000);
     } catch (error) {
-      console.error('❌ Fehler beim PDF-Text-Extract:', error);
+      console.error(`❌ Fehler beim S3 PDF-Extract (${s3Key}):`, error.message);
+      return '';
+    }
+  }
+
+  // PDF-Text aus lokalem Dateisystem extrahieren (Legacy-Fallback)
+  async extractTextFromLocalPDF(filePath) {
+    try {
+      const cleanPath = filePath.replace('/uploads/', '');
+      const fullPath = path.join(__dirname, '../uploads', cleanPath);
+
+      const buffer = await fs.readFile(fullPath);
+      const pdfData = await pdfParse(buffer);
+
+      return pdfData.text.substring(0, 10000);
+    } catch (error) {
+      console.error('❌ Fehler beim lokalen PDF-Text-Extract:', error.message);
       return '';
     }
   }
@@ -202,7 +258,8 @@ Basiere deine Analyse auf typischen Risiken für diese Art von Vertrag.`;
       // 💰 Track API cost
       if (response.usage) {
         try {
-          const costTracker = getCostTrackingService();
+          const costTracker = getCostTrackingService ? getCostTrackingService() : null;
+          if (!costTracker) return;
           await costTracker.trackAPICall({
             userId: contractInfo?.userId || null,
             model: 'gpt-4',
@@ -272,7 +329,8 @@ ${this.prompts.riskAnalysis}`;
       // 💰 Track API cost
       if (response.usage) {
         try {
-          const costTracker = getCostTrackingService();
+          const costTracker = getCostTrackingService ? getCostTrackingService() : null;
+          if (!costTracker) return;
           await costTracker.trackAPICall({
             userId: contractInfo?.userId || null,
             model: 'gpt-4',
@@ -329,21 +387,27 @@ ${this.prompts.riskAnalysis}`;
 
   // Fallback für Text-Responses
   parseTextResponse(aiResponse) {
-    // Einfache Textanalyse als Fallback
-    const riskKeywords = [
-      'hohes Risiko', 'problematisch', 'bedenklich', 'unfair', 'einseitig',
-      'rechtswidrig', 'unwirksam', 'riskant', 'nachteilig'
-    ];
-    
-    const riskCount = riskKeywords.filter(keyword => 
-      aiResponse.toLowerCase().includes(keyword)
-    ).length;
-    
-    const riskScore = Math.min(100, Math.max(20, riskCount * 15 + 30));
-    
+    const lowerResponse = aiResponse.toLowerCase();
+
+    // Gewichtete Keyword-Analyse für granularen Score
+    const highRiskKeywords = ['rechtswidrig', 'unwirksam', 'nichtig', 'verboten', 'gesetzeswidrig'];
+    const mediumRiskKeywords = ['problematisch', 'bedenklich', 'einseitig', 'nachteilig', 'unfair', 'riskant'];
+    const lowRiskKeywords = ['verbesserungswürdig', 'unklar', 'ungenau', 'prüfenswert'];
+    const positiveKeywords = ['ausgewogen', 'fair', 'angemessen', 'marktüblich', 'korrekt'];
+
+    const highCount = highRiskKeywords.filter(k => lowerResponse.includes(k)).length;
+    const mediumCount = mediumRiskKeywords.filter(k => lowerResponse.includes(k)).length;
+    const lowCount = lowRiskKeywords.filter(k => lowerResponse.includes(k)).length;
+    const positiveCount = positiveKeywords.filter(k => lowerResponse.includes(k)).length;
+
+    // Granularer Score: Gewichtet nach Schwere + kleine Zufallsvarianz für Individualität
+    const baseScore = (highCount * 18) + (mediumCount * 11) + (lowCount * 5) - (positiveCount * 8);
+    const variance = Math.floor(Math.random() * 7) - 3; // -3 bis +3
+    const riskScore = Math.min(100, Math.max(5, baseScore + 22 + variance));
+
     return {
       riskScore,
-      riskLevel: riskScore >= 70 ? 'high' : riskScore >= 40 ? 'medium' : 'low',
+      riskLevel: riskScore > 60 ? 'high' : riskScore > 30 ? 'medium' : 'low',
       summary: aiResponse.substring(0, 200) + '...',
       riskFactors: ['Basis-Analyse durchgeführt'],
       legalRisks: ['Detaillierte Analyse erforderlich'],
@@ -478,14 +542,18 @@ ${this.prompts.riskAnalysis}`;
   fallbackAnalysis(contract) {
     console.log(`⚠️ Fallback-Analyse für ${contract.name}`);
     
-    // Einfache regelbasierte Analyse
-    let riskScore = 50; // Basis-Score
-    
-    if (contract.status === 'Abgelaufen') riskScore += 25;
-    if (contract.status === 'Bald ablaufend') riskScore += 15;
-    if (!contract.expiryDate) riskScore += 10;
-    
-    riskScore = Math.min(100, Math.max(0, riskScore));
+    // Regelbasierte Analyse mit individueller Score-Berechnung
+    let riskScore = 35; // Konservativer Basis-Score (ohne AI-Analyse unsicher)
+
+    if (contract.status === 'Abgelaufen') riskScore += 22;
+    if (contract.status === 'Bald ablaufend') riskScore += 13;
+    if (!contract.expiryDate) riskScore += 8;
+    if (!contract.kuendigung) riskScore += 6;
+    if (contract.laufzeit && contract.laufzeit.includes('unbefristet')) riskScore += 4;
+
+    // Kleine Varianz für Individualität (+/- 3 Punkte)
+    const variance = Math.floor(Math.random() * 7) - 3;
+    riskScore = Math.min(100, Math.max(5, riskScore + variance));
     
     return {
       riskScore,

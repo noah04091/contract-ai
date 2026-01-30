@@ -75,39 +75,16 @@ export default function LegalPulseSettings({ onSaveSuccess, compact = false }: L
     }
   };
 
-  const handleDigestModeChange = async (mode: 'instant' | 'daily' | 'weekly') => {
-    const success = await updateSettings({ digestMode: mode });
-    if (success) {
-      setShowSuccessMessage(true);
-      onSaveSuccess?.();
-    }
-  };
-
-  // Calculate next email date based on digest mode
+  // Calculate next digest email date (always weekly)
   const getNextEmailDate = (): string => {
     if (!settings?.emailNotifications) return 'Deaktiviert';
 
     const now = new Date();
-    let nextDate: Date;
-
-    switch (settings?.digestMode) {
-      case 'instant':
-        return 'Sofort bei neuen Alerts';
-      case 'daily':
-        nextDate = new Date(now);
-        nextDate.setDate(nextDate.getDate() + 1);
-        nextDate.setHours(8, 0, 0, 0);
-        return `Täglich um 8:00 Uhr (Nächste: ${nextDate.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })})`;
-      case 'weekly':
-      default: {
-        // Next Wednesday
-        nextDate = new Date(now);
-        const daysUntilWednesday = (3 - nextDate.getDay() + 7) % 7 || 7;
-        nextDate.setDate(nextDate.getDate() + daysUntilWednesday);
-        nextDate.setHours(9, 0, 0, 0);
-        return `Jeden Mittwoch um 9:00 Uhr (Nächste: ${nextDate.toLocaleDateString('de-DE', { day: 'numeric', month: 'long' })})`;
-      }
-    }
+    const nextDate = new Date(now);
+    const daysUntilWednesday = (3 - nextDate.getDay() + 7) % 7 || 7;
+    nextDate.setDate(nextDate.getDate() + daysUntilWednesday);
+    nextDate.setHours(9, 0, 0, 0);
+    return `Jeden Mittwoch um 9:00 Uhr (Nächste: ${nextDate.toLocaleDateString('de-DE', { day: 'numeric', month: 'long' })})`;
   };
 
   if (isLoading) {
@@ -270,66 +247,24 @@ export default function LegalPulseSettings({ onSaveSuccess, compact = false }: L
             </div>
           </div>
 
-          {/* Digest Mode Selection */}
+          {/* Digest Info */}
           <div className={styles.settingCard}>
             <div className={styles.settingHeader}>
               <div className={styles.settingInfo}>
                 <h4 className={styles.settingTitle}>📬 Digest-Frequenz</h4>
                 <p className={styles.settingDescription}>
-                  Wie oft möchten Sie über Gesetzesänderungen informiert werden?
+                  Alle erkannten Gesetzesänderungen werden wöchentlich als Digest zusammengefasst
                 </p>
               </div>
             </div>
 
-            <div className={styles.digestModeSelector}>
-              <button
-                className={`${styles.digestModeBtn} ${settings.digestMode === 'instant' ? styles.active : ''}`}
-                onClick={() => handleDigestModeChange('instant')}
-                disabled={isSaving}
-              >
-                <span className={styles.digestIcon}>⚡</span>
-                <div className={styles.digestBtnContent}>
-                  <strong>Sofort</strong>
-                  <span>Bei jedem relevanten Alert</span>
-                </div>
-              </button>
-
-              <button
-                className={`${styles.digestModeBtn} ${settings.digestMode === 'daily' ? styles.active : ''}`}
-                onClick={() => handleDigestModeChange('daily')}
-                disabled={isSaving}
-              >
-                <span className={styles.digestIcon}>📅</span>
-                <div className={styles.digestBtnContent}>
-                  <strong>Täglich</strong>
-                  <span>Jeden Morgen um 8:00 Uhr</span>
-                </div>
-              </button>
-
-              <button
-                className={`${styles.digestModeBtn} ${settings.digestMode === 'weekly' ? styles.active : ''} ${styles.recommended}`}
-                onClick={() => handleDigestModeChange('weekly')}
-                disabled={isSaving}
-              >
-                <span className={styles.digestIcon}>📆</span>
-                <div className={styles.digestBtnContent}>
-                  <strong>Wöchentlich</strong>
-                  <span>Jeden Mittwoch (empfohlen)</span>
-                </div>
-                <span className={styles.recommendedBadge}>Empfohlen</span>
-              </button>
-            </div>
-
-            {/* Next Email Preview */}
-            {settings.emailNotifications && (
-              <div className={styles.nextEmailPreview}>
-                <span className={styles.previewIcon}>📧</span>
-                <div className={styles.previewContent}>
-                  <strong>Nächste E-Mail:</strong>
-                  <span>{getNextEmailDate()}</span>
-                </div>
+            <div className={styles.nextEmailPreview}>
+              <span className={styles.previewIcon}>📆</span>
+              <div className={styles.previewContent}>
+                <strong>Wöchentlicher Digest</strong>
+                <span>{getNextEmailDate()}</span>
               </div>
-            )}
+            </div>
           </div>
 
           {/* Email Notifications Toggle */}

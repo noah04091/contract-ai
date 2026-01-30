@@ -7,7 +7,7 @@ export interface LegalPulseSettings {
   enabled: boolean;
   similarityThreshold: number; // 0.5-0.95
   categories: string[];
-  digestMode: 'instant' | 'daily' | 'weekly';
+  digestMode: 'weekly';
   emailNotifications: boolean;
 }
 
@@ -94,7 +94,7 @@ export function useLegalPulseSettings(): UseLegalPulseSettingsReturn {
         enabled: true,
         similarityThreshold: 0.70,
         categories: ['Arbeitsrecht', 'Mietrecht', 'Kaufrecht', 'Vertragsrecht', 'Datenschutz', 'Verbraucherrecht'],
-        digestMode: 'instant',
+        digestMode: 'weekly',
         emailNotifications: true
       });
     } finally {

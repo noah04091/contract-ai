@@ -21,8 +21,8 @@ type RiskLevel = 'high' | 'medium' | 'low' | 'unrated';
 const LegalPulseOverview: React.FC<LegalPulseOverviewProps> = ({ contracts }) => {
   const getRiskLevel = (riskScore: number | null | undefined): RiskLevel => {
     if (riskScore === null || riskScore === undefined) return 'unrated';
-    if (riskScore >= 70) return 'low';
-    if (riskScore >= 40) return 'medium';
+    if (riskScore <= 30) return 'low';
+    if (riskScore <= 60) return 'medium';
     return 'high';
   };
 

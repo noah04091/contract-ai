@@ -1,25 +1,22 @@
 // 📁 backend/middleware/requirePremium.js
-// 🔐 Middleware: Prüft ob User ein bezahltes Abo hat (Business, Enterprise, Legendary)
+// 🔐 Middleware: Prüft ob User ein bezahltes Abo hat (Business oder Enterprise)
 // ✅ FIXED: Erlaubt jetzt alle Premium-Pläne, nicht nur 'premium'
 
-const { MongoClient, ObjectId } = require("mongodb");
-const { isBusinessOrHigher, PLANS } = require("../constants/subscriptionPlans");
+const { ObjectId } = require("mongodb");
+const { isBusinessOrHigher } = require("../constants/subscriptionPlans");
+const database = require("../config/database");
 require('dotenv').config();
 
 /**
  * Middleware: Prüft ob User ein bezahltes Abo hat
- * Erlaubt: business, enterprise, legendary
+ * Erlaubt: business, enterprise
  * Blockiert: free
  */
 const requirePremium = async (req, res, next) => {
-  let client;
-
   try {
-    // MongoDB Verbindung
-    client = new MongoClient(process.env.MONGO_URI);
-    await client.connect();
-
-    const usersCollection = client.db("contract_ai").collection("users");
+    // MongoDB Verbindung via Connection Pool
+    const db = await database.connect();
+    const usersCollection = db.collection("users");
 
     // User laden
     const user = await usersCollection.findOne({
@@ -27,7 +24,6 @@ const requirePremium = async (req, res, next) => {
     });
 
     if (!user) {
-      await client.close();
       return res.status(404).json({
         success: false,
         message: "Benutzer nicht gefunden",
@@ -37,11 +33,9 @@ const requirePremium = async (req, res, next) => {
 
     const userPlan = user.subscriptionPlan || 'free';
 
-    // ✅ FIXED: Prüft ob User Business oder höher hat
+    // Prüft ob User Business oder höher hat
     if (!isBusinessOrHigher(userPlan)) {
       console.log(`⚠️ [PREMIUM-CHECK] User ${user.email} hat kein Premium-Abo (Plan: ${userPlan})`);
-
-      await client.close();
 
       return res.status(403).json({
         success: false,
@@ -49,7 +43,7 @@ const requirePremium = async (req, res, next) => {
         error: "PREMIUM_REQUIRED",
         details: {
           currentPlan: userPlan,
-          requiredPlans: ["business", "enterprise", "legendary"],
+          requiredPlans: ["business", "enterprise"],
           feature: "Premium-Feature",
           description: "Upgrade auf Business für Zugriff auf alle Premium-Features"
         },
@@ -75,17 +69,11 @@ const requirePremium = async (req, res, next) => {
     req.user.email = user.email;
     req.user.subscriptionActive = user.subscriptionActive;
 
-    await client.close();
-
     // Fortfahren
     next();
 
   } catch (error) {
     console.error("❌ [PREMIUM-CHECK] Fehler bei Premium-Prüfung:", error);
-
-    if (client) {
-      await client.close();
-    }
 
     return res.status(500).json({
       success: false,

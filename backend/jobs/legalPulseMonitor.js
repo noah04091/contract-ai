@@ -3,19 +3,31 @@
 
 const cron = require("node-cron");
 const { MongoClient, ObjectId } = require("mongodb");
-const EmbeddingService = require("../services/embeddingService");
-const VectorStore = require("../services/vectorStore");
-const sendEmailHtml = require("../utils/sendEmailHtml");
-const { broadcastToUser } = require("../routes/legalPulseFeed");
-const { getInstance: getAlertExplainer } = require("../services/alertExplainer");
+
+// Graceful imports - Services können fehlen
+let EmbeddingService = null;
+let VectorStore = null;
+let sendEmailHtml = null;
+let broadcastToUser = null;
+let getAlertExplainer = null;
+
+try { EmbeddingService = require("../services/embeddingService"); } catch (e) { console.warn('[LEGAL-PULSE:MONITOR] embeddingService nicht verfügbar:', e.message); }
+try { VectorStore = require("../services/vectorStore"); } catch (e) { console.warn('[LEGAL-PULSE:MONITOR] vectorStore nicht verfügbar:', e.message); }
+try { sendEmailHtml = require("../utils/sendEmailHtml"); } catch (e) { console.warn('[LEGAL-PULSE:MONITOR] sendEmailHtml nicht verfügbar:', e.message); }
+try { broadcastToUser = require("../routes/legalPulseFeed").broadcastToUser; } catch (e) { console.warn('[LEGAL-PULSE:MONITOR] legalPulseFeed nicht verfügbar:', e.message); }
+try { getAlertExplainer = require("../services/alertExplainer").getInstance; } catch (e) { console.warn('[LEGAL-PULSE:MONITOR] alertExplainer nicht verfügbar:', e.message); }
 
 class LegalPulseMonitor {
   constructor() {
-    this.embeddingService = new EmbeddingService();
-    this.vectorStore = new VectorStore();
+    this.embeddingService = EmbeddingService ? new EmbeddingService() : null;
+    this.vectorStore = VectorStore ? new VectorStore() : null;
     this.mongoClient = null;
     this.db = null;
     this.isRunning = false;
+
+    if (!this.embeddingService || !this.vectorStore) {
+      console.warn('[LEGAL-PULSE:MONITOR] Eingeschränkter Modus: Embedding/VectorStore nicht verfügbar');
+    }
   }
 
   /**
