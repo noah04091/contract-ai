@@ -6,7 +6,7 @@
  */
 
 import { useState, useRef, useCallback } from "react";
-import type { Point } from "../utils/imageProcessing";
+import type { Point } from "../types";
 
 const DEFAULT_CORNERS: Point[] = [
   { x: 0.1, y: 0.1 },  // TL

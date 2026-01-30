@@ -7,7 +7,7 @@
  * Full-Screen Overlay mit AnimatePresence.
  */
 
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, AlertTriangle, FileText, CheckCircle } from "lucide-react";
 import CameraView from "./CameraView";
@@ -15,9 +15,7 @@ import CornerAdjustment from "./CornerAdjustment";
 import PagePreview from "./PagePreview";
 import BatchManager from "./BatchManager";
 import { useBatchPages } from "./hooks/useBatchPages";
-import { useOpenCV } from "./hooks/useOpenCV";
-import { applyPerspectiveCorrection } from "./utils/perspectiveCorrection";
-import type { DetectedEdges, Point } from "./utils/imageProcessing";
+import type { Point } from "./types";
 import type { CaptureResult } from "./hooks/useCamera";
 import styles from "./DocumentScanner.module.css";
 
@@ -43,11 +41,6 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
   const [scannerState, setScannerState] = useState<ScannerState>("capturing");
   const [processingProgress, setProcessingProgress] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [isCorrectingPerspective, setIsCorrectingPerspective] = useState(false);
-  const lastCapturedEdgesRef = useRef<DetectedEdges | null>(null);
-
-  const { cv } = useOpenCV(isOpen);
-
   const {
     pages,
     activePage,
@@ -55,7 +48,6 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
     removePage,
     updatePageCorners,
     updatePageRotation,
-    updateCorrectedImage,
     setActivePage,
     clearPages,
     pageCount,
@@ -63,43 +55,23 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
 
   // Foto aufgenommen → zur Ecken-Anpassung wechseln
   const handleCapture = useCallback(
-    (capture: CaptureResult, edges: DetectedEdges | null) => {
-      lastCapturedEdgesRef.current = edges;
-      addPage(capture.blob, capture.dataUrl, edges?.corners || null);
+    (capture: CaptureResult) => {
+      addPage(capture.blob, capture.dataUrl, null);
       setScannerState("adjusting");
     },
     [addPage]
   );
 
-  // Ecken bestätigt → Perspektiv-Korrektur → Review
+  // Ecken bestätigt → direkt zu Review (Perspektiv-Korrektur macht das Backend)
   const handleCornersConfirmed = useCallback(
-    async (corners: Point[]) => {
+    (corners: Point[]) => {
       const pageIndex = pages.length - 1;
       if (pageIndex < 0) return;
 
       updatePageCorners(pageIndex, corners);
-
-      // Perspektiv-Korrektur anwenden wenn OpenCV verfügbar
-      if (cv) {
-        setIsCorrectingPerspective(true);
-        try {
-          const correctedBlob = await applyPerspectiveCorrection(
-            pages[pageIndex].imageBlob,
-            corners,
-            cv
-          );
-          updateCorrectedImage(pageIndex, correctedBlob);
-        } catch (err) {
-          console.warn("[Scanner] Perspective correction failed:", err);
-          // Fallback: Original-Bild beibehalten
-        } finally {
-          setIsCorrectingPerspective(false);
-        }
-      }
-
       setScannerState("reviewing");
     },
-    [pages, cv, updatePageCorners, updateCorrectedImage]
+    [pages, updatePageCorners]
   );
 
   // Retake aus Corner-Adjustment
@@ -275,21 +247,12 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
 
             {/* ADJUSTING STATE — Ecken-Anpassung */}
             {scannerState === "adjusting" && pages.length > 0 && (
-              <>
-                {isCorrectingPerspective ? (
-                  <div className={styles.statusContainer}>
-                    <Loader2 size={48} className={styles.spinner} />
-                    <p className={styles.statusText}>Perspektive wird korrigiert...</p>
-                  </div>
-                ) : (
-                  <CornerAdjustment
-                    imageUrl={pages[safeActivePage]?.previewDataUrl || ""}
-                    initialCorners={pages[safeActivePage]?.corners || null}
-                    onConfirm={handleCornersConfirmed}
-                    onRetake={handleRetakeFromAdjust}
-                  />
-                )}
-              </>
+              <CornerAdjustment
+                imageUrl={pages[safeActivePage]?.previewDataUrl || ""}
+                initialCorners={pages[safeActivePage]?.corners || null}
+                onConfirm={handleCornersConfirmed}
+                onRetake={handleRetakeFromAdjust}
+              />
             )}
 
             {/* REVIEWING STATE */}

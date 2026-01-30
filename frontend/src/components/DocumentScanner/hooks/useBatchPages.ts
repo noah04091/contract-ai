@@ -12,7 +12,7 @@
  */
 
 import { useReducer, useCallback } from "react";
-import type { Point } from "../utils/imageProcessing";
+import type { Point } from "../types";
 
 export interface ScannedPage {
   id: string;

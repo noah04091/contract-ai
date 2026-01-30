@@ -11,7 +11,7 @@
 import React, { useRef, useEffect, useCallback, useState } from "react";
 import { Check, RefreshCw } from "lucide-react";
 import { useCornerAdjustment } from "./hooks/useCornerAdjustment";
-import type { Point } from "./utils/imageProcessing";
+import type { Point } from "./types";
 import styles from "./DocumentScanner.module.css";
 
 interface CornerAdjustmentProps {
