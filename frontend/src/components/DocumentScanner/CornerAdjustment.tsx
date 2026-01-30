@@ -4,6 +4,8 @@
  * Zeigt das aufgenommene Bild mit 4 draggbaren Eckpunkten.
  * Nutzer kann die Ecken per Touch/Mouse anpassen.
  * Quadrilateral wird als Overlay mit Maske gezeichnet.
+ *
+ * Verwendet data URL für sofortige Bildanzeige (kein Blob-URL).
  */
 
 import React, { useRef, useEffect, useCallback, useState } from "react";
@@ -27,13 +29,13 @@ const CornerAdjustment: React.FC<CornerAdjustmentProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [imageLoaded, setImageLoaded] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
   const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
 
   const { corners, activeCorner, onPointerDown, setCorners } =
     useCornerAdjustment(initialCorners, containerRef);
 
-  // Container-Größe tracken (nach Image-Load und bei Resize)
+  // Container-Größe tracken
   const updateContainerSize = useCallback(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -43,9 +45,8 @@ const CornerAdjustment: React.FC<CornerAdjustmentProps> = ({
     }
   }, []);
 
-  // Image Load Handler
+  // Initial + Image Load → Container-Größe messen
   const handleImageLoad = useCallback(() => {
-    setImageLoaded(true);
     // Kurz warten bis Layout aktualisiert ist
     requestAnimationFrame(() => {
       updateContainerSize();
@@ -56,6 +57,9 @@ const CornerAdjustment: React.FC<CornerAdjustmentProps> = ({
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
+
+    // Initial messen
+    updateContainerSize();
 
     const observer = new ResizeObserver(() => {
       updateContainerSize();
@@ -76,9 +80,6 @@ const CornerAdjustment: React.FC<CornerAdjustmentProps> = ({
     if (!ctx) return;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Nur Overlay zeichnen wenn Bild geladen
-    if (!imageLoaded) return;
 
     const pts = corners.map((c) => ({
       x: c.x * canvas.width,
@@ -112,7 +113,7 @@ const CornerAdjustment: React.FC<CornerAdjustmentProps> = ({
     ctx.lineTo(pts[3].x, pts[3].y);
     ctx.closePath();
     ctx.stroke();
-  }, [corners, containerSize, imageLoaded]);
+  }, [corners, containerSize]);
 
   // Corners initialisieren wenn sich initialCorners ändert
   useEffect(() => {
@@ -138,24 +139,22 @@ const CornerAdjustment: React.FC<CornerAdjustmentProps> = ({
       {/* Bild mit Overlay */}
       <div className={styles.adjustImageWrapper} ref={containerRef}>
         <img
+          ref={imgRef}
           src={imageUrl}
           alt="Aufgenommenes Dokument"
           className={styles.adjustImage}
           draggable={false}
           onLoad={handleImageLoad}
-          onError={() => console.error("[Scanner] CornerAdjustment: Image failed to load", imageUrl)}
         />
 
-        {/* Canvas Overlay für Quadrilateral — nur wenn Bild geladen */}
-        {imageLoaded && (
-          <canvas
-            ref={canvasRef}
-            className={styles.adjustCanvas}
-          />
-        )}
+        {/* Canvas Overlay für Quadrilateral */}
+        <canvas
+          ref={canvasRef}
+          className={styles.adjustCanvas}
+        />
 
-        {/* Draggbare Eckpunkte — nur wenn Bild geladen */}
-        {imageLoaded && corners.map((corner, index) => (
+        {/* Draggbare Eckpunkte */}
+        {corners.map((corner, index) => (
           <div
             key={index}
             className={`${styles.cornerHandle} ${activeCorner === index ? styles.cornerHandleActive : ""}`}
@@ -166,13 +165,6 @@ const CornerAdjustment: React.FC<CornerAdjustmentProps> = ({
             onPointerDown={(e) => onPointerDown(index, e)}
           />
         ))}
-
-        {/* Loading-Fallback wenn Bild nicht geladen */}
-        {!imageLoaded && (
-          <div className={styles.adjustLoadingFallback}>
-            Bild wird geladen...
-          </div>
-        )}
       </div>
 
       {/* Toolbar */}

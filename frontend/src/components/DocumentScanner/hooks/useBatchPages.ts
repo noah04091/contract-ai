@@ -3,6 +3,12 @@
  *
  * State-Management für gescannte Seiten via useReducer.
  * pages + activePage werden atomar verwaltet — keine stale closures.
+ *
+ * Jede Seite hat:
+ * - imageBlob: Full-Resolution JPEG für Backend-Upload
+ * - previewDataUrl: Data-URL für sofortige Preview-Anzeige (kein Blob-URL)
+ * - correctedBlob: Optional, nach Perspektiv-Korrektur
+ * - thumbnailUrl: Blob-URL für korrigiertes Bild (nach Korrektur)
  */
 
 import { useReducer, useCallback } from "react";
@@ -12,6 +18,7 @@ export interface ScannedPage {
   id: string;
   imageBlob: Blob;
   correctedBlob: Blob | null;
+  previewDataUrl: string;
   thumbnailUrl: string;
   corners: Point[] | null;
   rotation: number;
@@ -24,7 +31,7 @@ interface BatchState {
 }
 
 type BatchAction =
-  | { type: "ADD_PAGE"; blob: Blob; corners: Point[] | null; maxPages: number }
+  | { type: "ADD_PAGE"; blob: Blob; dataUrl: string; corners: Point[] | null; maxPages: number }
   | { type: "REMOVE_PAGE"; index: number }
   | { type: "REORDER"; fromIndex: number; toIndex: number }
   | { type: "UPDATE_CORNERS"; index: number; corners: Point[] }
@@ -40,12 +47,12 @@ function batchReducer(state: BatchState, action: BatchAction): BatchState {
     case "ADD_PAGE": {
       if (state.pages.length >= action.maxPages) return state;
       if (!action.blob || action.blob.size === 0) return state;
-      const url = URL.createObjectURL(action.blob);
       const newPage: ScannedPage = {
         id: `page-${++pageIdCounter}`,
         imageBlob: action.blob,
         correctedBlob: null,
-        thumbnailUrl: url,
+        previewDataUrl: action.dataUrl,
+        thumbnailUrl: action.dataUrl, // Initial: Data-URL (wird nach Korrektur zu Blob-URL)
         corners: action.corners,
         rotation: 0,
         timestamp: Date.now(),
@@ -57,7 +64,11 @@ function batchReducer(state: BatchState, action: BatchAction): BatchState {
     case "REMOVE_PAGE": {
       const { index } = action;
       if (index < 0 || index >= state.pages.length) return state;
-      URL.revokeObjectURL(state.pages[index].thumbnailUrl);
+      // Nur Blob-URLs revoken (nicht Data-URLs)
+      const page = state.pages[index];
+      if (page.thumbnailUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(page.thumbnailUrl);
+      }
       const newPages = state.pages.filter((_, i) => i !== index);
       const newActive = newPages.length === 0
         ? 0
@@ -92,8 +103,11 @@ function batchReducer(state: BatchState, action: BatchAction): BatchState {
     case "UPDATE_CORRECTED_IMAGE": {
       const { index, blob } = action;
       if (index < 0 || index >= state.pages.length) return state;
-      // Alten thumbnailUrl freigeben und neuen erstellen
-      URL.revokeObjectURL(state.pages[index].thumbnailUrl);
+      // Alten Blob-URL freigeben (nur wenn es ein Blob-URL war)
+      const oldUrl = state.pages[index].thumbnailUrl;
+      if (oldUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(oldUrl);
+      }
       const newUrl = URL.createObjectURL(blob);
       return {
         ...state,
@@ -108,7 +122,11 @@ function batchReducer(state: BatchState, action: BatchAction): BatchState {
     }
 
     case "CLEAR": {
-      state.pages.forEach((p) => URL.revokeObjectURL(p.thumbnailUrl));
+      state.pages.forEach((p) => {
+        if (p.thumbnailUrl.startsWith("blob:")) {
+          URL.revokeObjectURL(p.thumbnailUrl);
+        }
+      });
       return { pages: [], activePage: 0 };
     }
 
@@ -120,7 +138,7 @@ function batchReducer(state: BatchState, action: BatchAction): BatchState {
 interface UseBatchPagesReturn {
   pages: ScannedPage[];
   activePage: number;
-  addPage: (blob: Blob, corners: Point[] | null) => void;
+  addPage: (blob: Blob, dataUrl: string, corners: Point[] | null) => void;
   removePage: (index: number) => void;
   reorderPages: (fromIndex: number, toIndex: number) => void;
   updatePageCorners: (index: number, corners: Point[]) => void;
@@ -138,8 +156,8 @@ export function useBatchPages(maxPages: number = 50): UseBatchPagesReturn {
   });
 
   const addPage = useCallback(
-    (blob: Blob, corners: Point[] | null) => {
-      dispatch({ type: "ADD_PAGE", blob, corners, maxPages });
+    (blob: Blob, dataUrl: string, corners: Point[] | null) => {
+      dispatch({ type: "ADD_PAGE", blob, dataUrl, corners, maxPages });
     },
     [maxPages]
   );

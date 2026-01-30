@@ -18,6 +18,7 @@ import { useBatchPages } from "./hooks/useBatchPages";
 import { useOpenCV } from "./hooks/useOpenCV";
 import { applyPerspectiveCorrection } from "./utils/perspectiveCorrection";
 import type { DetectedEdges, Point } from "./utils/imageProcessing";
+import type { CaptureResult } from "./hooks/useCamera";
 import styles from "./DocumentScanner.module.css";
 
 export interface DocumentScannerProps {
@@ -62,9 +63,9 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
 
   // Foto aufgenommen → zur Ecken-Anpassung wechseln
   const handleCapture = useCallback(
-    (blob: Blob, edges: DetectedEdges | null) => {
+    (capture: CaptureResult, edges: DetectedEdges | null) => {
       lastCapturedEdgesRef.current = edges;
-      addPage(blob, edges?.corners || null);
+      addPage(capture.blob, capture.dataUrl, edges?.corners || null);
       setScannerState("adjusting");
     },
     [addPage]
@@ -282,7 +283,7 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
                   </div>
                 ) : (
                   <CornerAdjustment
-                    imageUrl={pages[safeActivePage]?.thumbnailUrl || ""}
+                    imageUrl={pages[safeActivePage]?.previewDataUrl || ""}
                     initialCorners={pages[safeActivePage]?.corners || null}
                     onConfirm={handleCornersConfirmed}
                     onRetake={handleRetakeFromAdjust}

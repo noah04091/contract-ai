@@ -1,20 +1,22 @@
 /**
  * CameraView
  *
- * Live Kamera-Feed mit Edge Detection Overlay und Capture-Button
+ * Live Kamera-Feed mit Edge Detection Overlay und Capture-Button.
+ * OpenCV ist optional — Kamera + Capture funktionieren auch ohne.
  */
 
 import React, { useEffect, useRef, useState } from "react";
-import { Camera, Loader2 } from "lucide-react";
+import { Camera } from "lucide-react";
 import EdgeOverlay from "./EdgeOverlay";
 import ScannerToolbar from "./ScannerToolbar";
 import { useCamera } from "./hooks/useCamera";
+import type { CaptureResult } from "./hooks/useCamera";
 import { useEdgeDetection } from "./hooks/useEdgeDetection";
 import type { DetectedEdges } from "./utils/imageProcessing";
 import styles from "./DocumentScanner.module.css";
 
 interface CameraViewProps {
-  onCapture: (blob: Blob, edges: DetectedEdges | null) => void;
+  onCapture: (capture: CaptureResult, edges: DetectedEdges | null) => void;
   onClose: () => void;
   pageCount: number;
   maxPages: number;
@@ -66,13 +68,13 @@ const CameraView: React.FC<CameraViewProps> = ({
   const handleCapture = async () => {
     if (pageCount >= maxPages) return;
 
-    const blob = await captureFrame();
-    if (blob) {
+    const result = await captureFrame();
+    if (result) {
       // Haptic Feedback
       if (navigator.vibrate) {
         navigator.vibrate(50);
       }
-      onCapture(blob, edges);
+      onCapture(result, edges);
     }
   };
 
@@ -90,7 +92,15 @@ const CameraView: React.FC<CameraViewProps> = ({
             capture="environment"
             onChange={async (e) => {
               const file = e.target.files?.[0];
-              if (file) onCapture(file, null);
+              if (file) {
+                // File → data URL für Preview
+                const reader = new FileReader();
+                reader.onload = () => {
+                  const dataUrl = reader.result as string;
+                  onCapture({ blob: file, dataUrl }, null);
+                };
+                reader.readAsDataURL(file);
+              }
             }}
             style={{ display: "none" }}
           />
@@ -113,7 +123,14 @@ const CameraView: React.FC<CameraViewProps> = ({
             capture="environment"
             onChange={async (e) => {
               const file = e.target.files?.[0];
-              if (file) onCapture(file, null);
+              if (file) {
+                const reader = new FileReader();
+                reader.onload = () => {
+                  const dataUrl = reader.result as string;
+                  onCapture({ blob: file, dataUrl }, null);
+                };
+                reader.readAsDataURL(file);
+              }
             }}
             style={{ display: "none" }}
           />
@@ -132,14 +149,7 @@ const CameraView: React.FC<CameraViewProps> = ({
         muted
       />
 
-      {/* OpenCV Loading Indicator */}
-      {!isOpenCVReady && (
-        <div className={styles.opencvLoading}>
-          <Loader2 size={20} className={styles.spinner} />
-          <span>Lade Scanner-Engine...</span>
-        </div>
-      )}
-
+      {/* Edge Overlay — nur wenn OpenCV bereit (kein Blocking, kein Loading-Indicator) */}
       {videoDimensions.width > 0 && isOpenCVReady && (
         <EdgeOverlay
           edges={edges}

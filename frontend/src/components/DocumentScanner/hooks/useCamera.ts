@@ -6,9 +6,15 @@
  * - Torch-Control (Blitzlicht)
  * - Kamera wechseln (Front/Back)
  * - Frame Capture via Offscreen Canvas
+ * - Gibt blob UND dataUrl zurück (dataUrl für zuverlässige Preview)
  */
 
 import { useState, useRef, useCallback, useEffect } from "react";
+
+export interface CaptureResult {
+  blob: Blob;
+  dataUrl: string;
+}
 
 interface CameraState {
   isActive: boolean;
@@ -25,10 +31,13 @@ interface UseCameraReturn {
   videoRef: React.RefObject<HTMLVideoElement | null>;
   startCamera: () => Promise<void>;
   stopCamera: () => void;
-  captureFrame: () => Promise<Blob | null>;
+  captureFrame: () => Promise<CaptureResult | null>;
   toggleTorch: () => Promise<void>;
   switchCamera: () => Promise<void>;
 }
+
+// Preview-Breite für Data-URL (kleiner = schneller, spart Memory)
+const PREVIEW_MAX_WIDTH = 1200;
 
 export function useCamera(): UseCameraReturn {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -130,28 +139,64 @@ export function useCamera(): UseCameraReturn {
     }
   }, [state.facingMode, stopCamera]);
 
-  const captureFrame = useCallback(async (): Promise<Blob | null> => {
+  const captureFrame = useCallback(async (): Promise<CaptureResult | null> => {
     const video = videoRef.current;
-    if (!video || !video.videoWidth) return null;
+    if (!video || !video.videoWidth || !video.videoHeight) {
+      console.warn("[Scanner] captureFrame: Video not ready", {
+        exists: !!video,
+        width: video?.videoWidth,
+        height: video?.videoHeight,
+        readyState: video?.readyState,
+      });
+      return null;
+    }
 
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    // Sicherstellen dass Video wirklich Frames hat
+    if (video.readyState < 2) {
+      console.warn("[Scanner] captureFrame: Video readyState too low:", video.readyState);
+      return null;
+    }
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return null;
+    // Full-Resolution Canvas für Blob (Backend-Upload)
+    const fullCanvas = document.createElement("canvas");
+    fullCanvas.width = video.videoWidth;
+    fullCanvas.height = video.videoHeight;
 
-    ctx.drawImage(video, 0, 0);
+    const fullCtx = fullCanvas.getContext("2d");
+    if (!fullCtx) return null;
 
-    return new Promise<Blob | null>((resolve) => {
-      canvas.toBlob(
+    fullCtx.drawImage(video, 0, 0);
+
+    // Preview-Canvas für Data-URL (reduzierte Auflösung)
+    const scale = Math.min(1, PREVIEW_MAX_WIDTH / video.videoWidth);
+    const previewCanvas = document.createElement("canvas");
+    previewCanvas.width = Math.round(video.videoWidth * scale);
+    previewCanvas.height = Math.round(video.videoHeight * scale);
+
+    const previewCtx = previewCanvas.getContext("2d");
+    if (!previewCtx) return null;
+
+    previewCtx.drawImage(video, 0, 0, previewCanvas.width, previewCanvas.height);
+
+    // Data-URL aus Preview-Canvas (sofort verfügbar, kein Blob-URL nötig)
+    const dataUrl = previewCanvas.toDataURL("image/jpeg", 0.85);
+
+    // Blob aus Full-Canvas (für Backend-Upload)
+    return new Promise<CaptureResult | null>((resolve) => {
+      fullCanvas.toBlob(
         (blob) => {
           if (!blob || blob.size === 0) {
             console.warn("[Scanner] canvas.toBlob returned null/empty");
             resolve(null);
             return;
           }
-          resolve(blob);
+          console.log("[Scanner] captureFrame success:", {
+            blobSize: blob.size,
+            dataUrlLength: dataUrl.length,
+            dimensions: `${video.videoWidth}x${video.videoHeight}`,
+            previewDimensions: `${previewCanvas.width}x${previewCanvas.height}`,
+          });
+          resolve({ blob, dataUrl });
         },
         "image/jpeg",
         0.95
