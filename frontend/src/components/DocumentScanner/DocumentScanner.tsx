@@ -56,7 +56,7 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
   // Foto aufgenommen → zur Ecken-Anpassung wechseln
   const handleCapture = useCallback(
     (capture: CaptureResult) => {
-      addPage(capture.blob, capture.dataUrl, null);
+      addPage(capture.blob, capture.dataUrl, capture.detectedCorners || null);
       setScannerState("adjusting");
     },
     [addPage]

@@ -11,9 +11,12 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 
+import type { Point } from "../types";
+
 export interface CaptureResult {
   blob: Blob;
   dataUrl: string;
+  detectedCorners?: Point[];
 }
 
 interface CameraState {

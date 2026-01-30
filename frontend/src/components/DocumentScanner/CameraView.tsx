@@ -1,15 +1,18 @@
 /**
  * CameraView
  *
- * Live Kamera-Feed mit Edge Detection Overlay und Capture-Button.
- * OpenCV ist optional — Kamera + Capture funktionieren auch ohne.
+ * Live Kamera-Feed mit automatischer Dokumenten-Erkennung.
+ * Edge Detection läuft auf 320px Offscreen-Canvas (~4-8ms/Frame).
+ * Auto-Capture bei stabiler Erkennung (1.5s).
  */
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 import { Camera } from "lucide-react";
 import ScannerToolbar from "./ScannerToolbar";
+import DetectionOverlay from "./DetectionOverlay";
 import { useCamera } from "./hooks/useCamera";
 import type { CaptureResult } from "./hooks/useCamera";
+import { useDocumentDetection } from "./hooks/useDocumentDetection";
 import styles from "./DocumentScanner.module.css";
 
 interface CameraViewProps {
@@ -31,6 +34,30 @@ const CameraView: React.FC<CameraViewProps> = ({
     useCamera();
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Auto-Capture Handler (bei stabiler Dokumenten-Erkennung)
+  const handleAutoCapture = useCallback(
+    async (corners: import("./types").Point[]) => {
+      if (pageCount >= maxPages) return;
+
+      const result = await captureFrame();
+      if (result) {
+        // Doppel-Haptic für Auto-Capture
+        navigator.vibrate?.([50, 30, 50]);
+        onCapture({ ...result, detectedCorners: corners });
+      }
+    },
+    [captureFrame, onCapture, pageCount, maxPages]
+  );
+
+  // Edge Detection Hook (lazy geladen, non-blocking)
+  const detection = useDocumentDetection({
+    videoRef,
+    enabled: state.isActive,
+    stabilityThresholdMs: 1500,
+    targetFps: 12,
+    onStableDetection: handleAutoCapture,
+  });
+
   // Kamera starten
   useEffect(() => {
     startCamera();
@@ -49,7 +76,11 @@ const CameraView: React.FC<CameraViewProps> = ({
       if (navigator.vibrate) {
         navigator.vibrate(50);
       }
-      onCapture(result);
+      // Aktuelle Detection-Corners mitgeben falls vorhanden
+      onCapture({
+        ...result,
+        detectedCorners: detection.detectedCorners || undefined,
+      });
     }
   };
 
@@ -122,6 +153,15 @@ const CameraView: React.FC<CameraViewProps> = ({
         autoPlay
         playsInline
         muted
+      />
+
+      {/* Dokumenten-Erkennung Overlay */}
+      <DetectionOverlay
+        corners={detection.detectedCorners}
+        confidence={detection.confidence}
+        isStable={detection.isStable}
+        stabilityProgress={detection.stabilityProgress}
+        containerRef={containerRef}
       />
 
       <ScannerToolbar
