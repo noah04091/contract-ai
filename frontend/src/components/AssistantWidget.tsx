@@ -289,10 +289,10 @@ export default function AssistantWidget() {
                 animate={{ opacity: 1, x: 0, scale: 1 }}
                 transition={{ delay: 0.7, duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
               >
-                <p className={styles.mascotGreeting}>Contract AI</p>
-                <p className={styles.mascotTitle}>Hi! Ich bin dein KI-Assistent</p>
+                <p className={styles.mascotGreeting}>Dein Vertrags-Vorteil</p>
+                <p className={styles.mascotTitle}>Nie wieder Risiken übersehen.</p>
                 <p className={styles.mascotText}>
-                  Verträge analysieren, optimieren und erstellen — ich helfe dir mit juristischer Präzision!
+                  Ich prüfe deine Verträge in Sekunden — und finde, was andere überlesen.
                 </p>
                 <button
                   className={styles.mascotButton}
@@ -301,7 +301,7 @@ export default function AssistantWidget() {
                     dismissOnboarding();
                   }}
                 >
-                  Los geht's
+                  Zeig mir wie
                 </button>
                 <div className={styles.speechArrow} />
               </motion.div>
