@@ -176,16 +176,7 @@ body {
   }
 }
 
-/* Reduced Motion: Nur deaktivieren wenn User es explizit wünscht */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
+/* prefers-reduced-motion is handled per-component in individual CSS modules */
 
 /* ============================================
    🎯 REACT-JOYRIDE ONBOARDING TOUR FIXES
