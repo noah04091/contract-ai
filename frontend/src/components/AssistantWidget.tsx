@@ -277,22 +277,22 @@ export default function AssistantWidget() {
           >
             <motion.div
               className={styles.mascotContainer}
-              initial={{ y: 60, opacity: 0 }}
+              initial={{ y: 80, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 60, opacity: 0 }}
-              transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1], delay: 0.2 }}
+              transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.15 }}
             >
               {/* Speech bubble appears from the left */}
               <motion.div
                 className={styles.mascotSpeechBubble}
-                initial={{ opacity: 0, x: 30 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.9, duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
+                initial={{ opacity: 0, x: 20, scale: 0.95 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                transition={{ delay: 0.7, duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
               >
                 <p className={styles.mascotGreeting}>Contract AI</p>
-                <p className={styles.mascotTitle}>Dein KI-Rechtsassistent</p>
+                <p className={styles.mascotTitle}>Hi! Ich bin dein KI-Assistent</p>
                 <p className={styles.mascotText}>
-                  Verträge analysieren, optimieren und erstellen — mit juristischer Präzision und KI-Intelligenz.
+                  Verträge analysieren, optimieren und erstellen — ich helfe dir mit juristischer Präzision!
                 </p>
                 <button
                   className={styles.mascotButton}
@@ -301,24 +301,24 @@ export default function AssistantWidget() {
                     dismissOnboarding();
                   }}
                 >
-                  Verstanden
+                  Los geht's
                 </button>
                 <div className={styles.speechArrow} />
               </motion.div>
 
-              {/* Brand Entity figure */}
+              {/* Mascot figure */}
               <motion.div
                 className={styles.mascotFigure}
                 animate={{
-                  y: [0, -4, 0],
+                  y: [0, -6, 0],
                 }}
                 transition={{
-                  duration: 6,
+                  duration: 4,
                   repeat: Infinity,
                   ease: "easeInOut",
                 }}
               >
-                <LawyerMascot size={200} />
+                <LawyerMascot size={220} />
               </motion.div>
             </motion.div>
           </motion.div>
