@@ -560,23 +560,36 @@ export default function LawyerMascot({ size = 220 }: { size?: number }) {
           <circle cx="82" cy="200" r="11" fill="#c5d0dc" stroke="#b0bfcf" strokeWidth="1" />
           <circle cx="80" cy="197" r="3" fill="white" opacity="0.15" />
 
-          {/* Hand sphere */}
-          <circle cx="75" cy="180" r="22" fill="url(#handGrad)" />
-          <ellipse cx="71" cy="174" rx="8" ry="6" fill="white" opacity="0.2" />
+          {/* Hand + fingers — with gentle wave animation */}
+          <g>
+            <animateTransform
+              attributeName="transform"
+              type="rotate"
+              values="-8,75,195; 8,75,195; -8,75,195"
+              dur="1.2s"
+              repeatCount="indefinite"
+              calcMode="spline"
+              keySplines="0.45 0.05 0.55 0.95; 0.45 0.05 0.55 0.95"
+            />
 
-          {/* Fingers — waving gesture */}
-          <ellipse cx="58" cy="162" rx="6.5" ry="13" fill="url(#handGrad)" transform="rotate(-28, 58, 162)" />
-          <ellipse cx="70" cy="155" rx="6" ry="14" fill="url(#handGrad)" transform="rotate(-12, 70, 155)" />
-          <ellipse cx="82" cy="153" rx="6" ry="14" fill="url(#handGrad)" transform="rotate(5, 82, 153)" />
-          <ellipse cx="93" cy="158" rx="6" ry="12" fill="url(#handGrad)" transform="rotate(20, 93, 158)" />
-          {/* Thumb */}
-          <ellipse cx="50" cy="175" rx="5.5" ry="10" fill="url(#handGrad)" transform="rotate(-45, 50, 175)" />
+            {/* Hand sphere */}
+            <circle cx="75" cy="180" r="22" fill="url(#handGrad)" />
+            <ellipse cx="71" cy="174" rx="8" ry="6" fill="white" opacity="0.2" />
 
-          {/* Finger joints */}
-          <circle cx="58" cy="162" r="1.8" fill="#b0bfcf" opacity="0.3" />
-          <circle cx="70" cy="155" r="1.8" fill="#b0bfcf" opacity="0.3" />
-          <circle cx="82" cy="153" r="1.8" fill="#b0bfcf" opacity="0.3" />
-          <circle cx="93" cy="158" r="1.8" fill="#b0bfcf" opacity="0.3" />
+            {/* Fingers — waving gesture */}
+            <ellipse cx="58" cy="162" rx="6.5" ry="13" fill="url(#handGrad)" transform="rotate(-28, 58, 162)" />
+            <ellipse cx="70" cy="155" rx="6" ry="14" fill="url(#handGrad)" transform="rotate(-12, 70, 155)" />
+            <ellipse cx="82" cy="153" rx="6" ry="14" fill="url(#handGrad)" transform="rotate(5, 82, 153)" />
+            <ellipse cx="93" cy="158" rx="6" ry="12" fill="url(#handGrad)" transform="rotate(20, 93, 158)" />
+            {/* Thumb */}
+            <ellipse cx="50" cy="175" rx="5.5" ry="10" fill="url(#handGrad)" transform="rotate(-45, 50, 175)" />
+
+            {/* Finger joints */}
+            <circle cx="58" cy="162" r="1.8" fill="#b0bfcf" opacity="0.3" />
+            <circle cx="70" cy="155" r="1.8" fill="#b0bfcf" opacity="0.3" />
+            <circle cx="82" cy="153" r="1.8" fill="#b0bfcf" opacity="0.3" />
+            <circle cx="93" cy="158" r="1.8" fill="#b0bfcf" opacity="0.3" />
+          </g>
 
           {/* Wrist glow */}
           <circle cx="75" cy="194" r="4" fill="#3b82f6" opacity="0.3" filter="url(#softGlow)">
