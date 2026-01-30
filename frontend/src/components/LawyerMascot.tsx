@@ -4,12 +4,12 @@
 // A character people WANT to interact with
 
 export default function LawyerMascot({ size = 220 }: { size?: number }) {
-  const h = size * 1.3;
+  const h = size * 1.35;
   return (
     <svg
       width={size}
       height={h}
-      viewBox="0 0 400 520"
+      viewBox="0 0 400 560"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
@@ -34,15 +34,32 @@ export default function LawyerMascot({ size = 220 }: { size?: number }) {
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
-        <filter id="innerShadow" x="-10%" y="-10%" width="120%" height="120%">
-          <feGaussianBlur stdDeviation="3" result="blur" />
-          <feComposite in2="SourceGraphic" operator="arithmetic" k2="-1" k3="1" result="shadow" />
-          <feFlood floodColor="#1e3a5f" floodOpacity="0.15" result="color" />
-          <feComposite in="color" in2="shadow" operator="in" />
-        </filter>
-        <filter id="specular">
-          <feGaussianBlur stdDeviation="1" />
-        </filter>
+
+        {/* ═══ CLIP PATHS for proper blink ═══ */}
+        <clipPath id="leftEyeClip">
+          <ellipse cx="165" cy="148" rx="28" ry="26">
+            <animate
+              attributeName="ry"
+              values="26;1;26;26"
+              dur="4s"
+              begin="2.5s"
+              repeatCount="indefinite"
+              keyTimes="0;0.04;0.08;1"
+            />
+          </ellipse>
+        </clipPath>
+        <clipPath id="rightEyeClip">
+          <ellipse cx="235" cy="148" rx="28" ry="26">
+            <animate
+              attributeName="ry"
+              values="26;1;26;26"
+              dur="4s"
+              begin="2.5s"
+              repeatCount="indefinite"
+              keyTimes="0;0.04;0.08;1"
+            />
+          </ellipse>
+        </clipPath>
 
         {/* ═══ GRADIENTS ═══ */}
 
@@ -130,13 +147,6 @@ export default function LawyerMascot({ size = 220 }: { size?: number }) {
           <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
         </radialGradient>
 
-        {/* Visor glass reflection */}
-        <linearGradient id="visorReflect" x1="0.2" y1="0" x2="0.8" y2="1">
-          <stop offset="0%" stopColor="white" stopOpacity="0.08" />
-          <stop offset="50%" stopColor="white" stopOpacity="0.02" />
-          <stop offset="100%" stopColor="white" stopOpacity="0" />
-        </linearGradient>
-
         {/* Mouth glow */}
         <linearGradient id="mouthGlow" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0%" stopColor="#3b82f6" stopOpacity="0" />
@@ -150,12 +160,57 @@ export default function LawyerMascot({ size = 220 }: { size?: number }) {
           <stop offset="50%" stopColor="#e0e8f0" />
           <stop offset="100%" stopColor="#c8d4e0" />
         </radialGradient>
+
+        {/* Cheek blush */}
+        <radialGradient id="cheekBlush" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0%" stopColor="#f0abfc" stopOpacity="0.18" />
+          <stop offset="60%" stopColor="#c084fc" stopOpacity="0.08" />
+          <stop offset="100%" stopColor="#c084fc" stopOpacity="0" />
+        </radialGradient>
+
+        {/* Foot gradient */}
+        <radialGradient id="footGrad" cx="0.4" cy="0.3" r="0.7">
+          <stop offset="0%" stopColor="#dce4ed" />
+          <stop offset="100%" stopColor="#b8c6d4" />
+        </radialGradient>
       </defs>
 
+      {/* ═══ GROUND SHADOW ═══ */}
+      <ellipse cx="200" cy="530" rx="100" ry="14" fill="#1e3a5f" opacity="0.10" />
+      <ellipse cx="200" cy="530" rx="70" ry="8" fill="#1e3a5f" opacity="0.08" />
+
       {/* ═══ AMBIENT GLOW ═══ */}
-      <ellipse cx="200" cy="260" rx="180" ry="240" fill="url(#ambGlow)" />
+      <ellipse cx="200" cy="270" rx="180" ry="240" fill="url(#ambGlow)" />
 
       <g filter="url(#bodyShadow)">
+
+        {/* ════════════════════════════════════════════════ */}
+        {/* FEET — rounded boots, grounded, cute            */}
+        {/* ════════════════════════════════════════════════ */}
+
+        {/* Left foot */}
+        <ellipse cx="172" cy="478" rx="28" ry="14" fill="url(#footGrad)" />
+        <ellipse cx="170" cy="476" rx="24" ry="10" fill="#e0e8f0" />
+        <ellipse cx="167" cy="474" rx="10" ry="5" fill="white" opacity="0.2" />
+        {/* Foot sole line */}
+        <ellipse cx="172" cy="484" rx="22" ry="4" fill="#a8b8c8" opacity="0.2" />
+        {/* Toe detail */}
+        <ellipse cx="158" cy="479" rx="8" ry="6" fill="#d8e2ec" />
+        <ellipse cx="172" cy="481" rx="7" ry="5" fill="#d8e2ec" />
+
+        {/* Right foot */}
+        <ellipse cx="228" cy="478" rx="28" ry="14" fill="url(#footGrad)" />
+        <ellipse cx="230" cy="476" rx="24" ry="10" fill="#e0e8f0" />
+        <ellipse cx="233" cy="474" rx="10" ry="5" fill="white" opacity="0.2" />
+        <ellipse cx="228" cy="484" rx="22" ry="4" fill="#a8b8c8" opacity="0.2" />
+        <ellipse cx="242" cy="479" rx="8" ry="6" fill="#d8e2ec" />
+        <ellipse cx="228" cy="481" rx="7" ry="5" fill="#d8e2ec" />
+
+        {/* Leg connectors */}
+        <rect x="160" y="450" width="24" height="30" rx="10" fill="#c5d0dc" />
+        <rect x="163" y="452" width="18" height="26" rx="8" fill="#d0dae6" />
+        <rect x="216" y="450" width="24" height="30" rx="10" fill="#c5d0dc" />
+        <rect x="219" y="452" width="18" height="26" rx="8" fill="#d0dae6" />
 
         {/* ════════════════════════════════════════════════ */}
         {/* BODY — rounded, friendly, premium ceramic look  */}
@@ -164,17 +219,17 @@ export default function LawyerMascot({ size = 220 }: { size?: number }) {
         {/* Body base shape — rounded trapezoid */}
         <path
           d="M138 290 C138 270, 160 255, 200 252 C240 255, 262 270, 262 290
-             L268 430 C268 458, 132 458, 132 430 Z"
+             L268 445 C268 462, 132 462, 132 445 Z"
           fill="url(#bodyMain)"
         />
         {/* Body 3D highlight — left side shine */}
         <path
-          d="M145 285 C150 272, 170 258, 195 254 L162 430 L138 430 Z"
+          d="M145 285 C150 272, 170 258, 195 254 L162 440 L138 440 Z"
           fill="url(#bodyHighlight)"
         />
         {/* Body shadow — right side depth */}
         <path
-          d="M255 285 C250 272, 230 258, 205 254 L238 430 L262 430 Z"
+          d="M255 285 C250 272, 230 258, 205 254 L238 440 L262 440 Z"
           fill="#8fa0b5"
           opacity="0.12"
         />
@@ -329,6 +384,7 @@ export default function LawyerMascot({ size = 220 }: { size?: number }) {
         {/* ════════════════════════════════════════════════ */}
         {/* EYES — the SOUL of the character                */}
         {/* Big, beautiful, expressive, Pixar-quality       */}
+        {/* Now with proper eyelid blink via clipPath       */}
         {/* ════════════════════════════════════════════════ */}
 
         {/* ═══ LEFT EYE ═══ */}
@@ -340,42 +396,50 @@ export default function LawyerMascot({ size = 220 }: { size?: number }) {
 
           {/* Eye socket — deep inset for 3D depth */}
           <ellipse cx="165" cy="148" rx="32" ry="30" fill="url(#eyeSocket)" />
-          {/* Socket inner bevel */}
           <ellipse cx="165" cy="148" rx="30" ry="28" fill="none" stroke="#1e3a5f" strokeWidth="1" opacity="0.3" />
 
-          {/* Eyeball — white sclera with subtle shading */}
-          <ellipse cx="165" cy="148" rx="26" ry="24" fill="#f0f4f8" />
-          <ellipse cx="165" cy="148" rx="26" ry="24" fill="none" stroke="#cdd8e4" strokeWidth="0.5" />
-          {/* Sclera shadow top */}
-          <ellipse cx="165" cy="140" rx="24" ry="12" fill="#cdd8e4" opacity="0.15" />
+          {/* Clipped eye contents — proper blink */}
+          <g clipPath="url(#leftEyeClip)">
+            {/* Eyeball — white sclera */}
+            <ellipse cx="165" cy="148" rx="26" ry="24" fill="#f0f4f8" />
+            <ellipse cx="165" cy="148" rx="26" ry="24" fill="none" stroke="#cdd8e4" strokeWidth="0.5" />
+            {/* Sclera shadow top */}
+            <ellipse cx="165" cy="140" rx="24" ry="12" fill="#cdd8e4" opacity="0.15" />
 
-          {/* Iris — rich, detailed, deep blue */}
-          <circle cx="165" cy="148" r="18" fill="url(#irisLeft)">
-            <animate attributeName="r" values="18;2;18" dur="6s" begin="3s" repeatCount="indefinite" />
-          </circle>
+            {/* Iris — rich, detailed, deep blue */}
+            <circle cx="165" cy="148" r="18" fill="url(#irisLeft)" />
+            {/* Iris detail ring */}
+            <circle cx="165" cy="148" r="15" fill="none" stroke="#4b8ee8" strokeWidth="0.8" opacity="0.4" />
+            {/* Iris texture lines */}
+            <g opacity="0.08">
+              <line x1="165" y1="132" x2="165" y2="164" stroke="#1e40af" strokeWidth="0.5" />
+              <line x1="151" y1="148" x2="179" y2="148" stroke="#1e40af" strokeWidth="0.5" />
+              <line x1="155" y1="138" x2="175" y2="158" stroke="#1e40af" strokeWidth="0.5" />
+              <line x1="155" y1="158" x2="175" y2="138" stroke="#1e40af" strokeWidth="0.5" />
+            </g>
 
-          {/* Iris detail ring */}
-          <circle cx="165" cy="148" r="15" fill="none" stroke="#4b8ee8" strokeWidth="0.8" opacity="0.4">
-            <animate attributeName="r" values="15;1.5;15" dur="6s" begin="3s" repeatCount="indefinite" />
-          </circle>
+            {/* Pupil — deep, dark */}
+            <circle cx="165" cy="148" r="10" fill="#0a1628" />
+            {/* Pupil inner glow */}
+            <circle cx="165" cy="148" r="6" fill="#1e40af" opacity="0.5" />
 
-          {/* Pupil — deep, dark */}
-          <circle cx="165" cy="148" r="10" fill="#0a1628">
-            <animate attributeName="r" values="10;1.2;10" dur="6s" begin="3s" repeatCount="indefinite" />
-          </circle>
+            {/* ─── SPECULAR HIGHLIGHTS (key to making it look alive) ─── */}
+            <circle cx="172" cy="139" r="6" fill="white" opacity="0.95" />
+            <circle cx="158" cy="156" r="3" fill="white" opacity="0.5" />
+            <circle cx="174" cy="145" r="1.5" fill="white" opacity="0.4" />
+          </g>
 
-          {/* Pupil inner glow */}
-          <circle cx="165" cy="148" r="6" fill="#1e40af" opacity="0.5">
-            <animate attributeName="r" values="6;0.8;6" dur="6s" begin="3s" repeatCount="indefinite" />
-          </circle>
-
-          {/* ─── SPECULAR HIGHLIGHTS (key to making it look alive) ─── */}
-          {/* Main specular — big, bright, positioned top-right */}
-          <circle cx="172" cy="139" r="6" fill="white" opacity="0.95" />
-          {/* Secondary specular — smaller, bottom-left */}
-          <circle cx="158" cy="156" r="3" fill="white" opacity="0.5" />
-          {/* Micro sparkle */}
-          <circle cx="174" cy="145" r="1.5" fill="white" opacity="0.4" />
+          {/* Eyelid — closes over eye during blink */}
+          <ellipse cx="165" cy="148" rx="30" ry="28" fill="url(#eyeSocket)" opacity="0">
+            <animate
+              attributeName="opacity"
+              values="0;1;0;0"
+              dur="4s"
+              begin="2.5s"
+              repeatCount="indefinite"
+              keyTimes="0;0.04;0.08;1"
+            />
+          </ellipse>
         </g>
 
         {/* ═══ RIGHT EYE ═══ */}
@@ -387,27 +451,43 @@ export default function LawyerMascot({ size = 220 }: { size?: number }) {
           <ellipse cx="235" cy="148" rx="32" ry="30" fill="url(#eyeSocket)" />
           <ellipse cx="235" cy="148" rx="30" ry="28" fill="none" stroke="#1e3a5f" strokeWidth="1" opacity="0.3" />
 
-          <ellipse cx="235" cy="148" rx="26" ry="24" fill="#f0f4f8" />
-          <ellipse cx="235" cy="148" rx="26" ry="24" fill="none" stroke="#cdd8e4" strokeWidth="0.5" />
-          <ellipse cx="235" cy="140" rx="24" ry="12" fill="#cdd8e4" opacity="0.15" />
+          <g clipPath="url(#rightEyeClip)">
+            <ellipse cx="235" cy="148" rx="26" ry="24" fill="#f0f4f8" />
+            <ellipse cx="235" cy="148" rx="26" ry="24" fill="none" stroke="#cdd8e4" strokeWidth="0.5" />
+            <ellipse cx="235" cy="140" rx="24" ry="12" fill="#cdd8e4" opacity="0.15" />
 
-          <circle cx="235" cy="148" r="18" fill="url(#irisRight)">
-            <animate attributeName="r" values="18;2;18" dur="6s" begin="3s" repeatCount="indefinite" />
-          </circle>
-          <circle cx="235" cy="148" r="15" fill="none" stroke="#4b8ee8" strokeWidth="0.8" opacity="0.4">
-            <animate attributeName="r" values="15;1.5;15" dur="6s" begin="3s" repeatCount="indefinite" />
-          </circle>
-          <circle cx="235" cy="148" r="10" fill="#0a1628">
-            <animate attributeName="r" values="10;1.2;10" dur="6s" begin="3s" repeatCount="indefinite" />
-          </circle>
-          <circle cx="235" cy="148" r="6" fill="#1e40af" opacity="0.5">
-            <animate attributeName="r" values="6;0.8;6" dur="6s" begin="3s" repeatCount="indefinite" />
-          </circle>
+            <circle cx="235" cy="148" r="18" fill="url(#irisRight)" />
+            <circle cx="235" cy="148" r="15" fill="none" stroke="#4b8ee8" strokeWidth="0.8" opacity="0.4" />
+            <g opacity="0.08">
+              <line x1="235" y1="132" x2="235" y2="164" stroke="#1e40af" strokeWidth="0.5" />
+              <line x1="221" y1="148" x2="249" y2="148" stroke="#1e40af" strokeWidth="0.5" />
+              <line x1="225" y1="138" x2="245" y2="158" stroke="#1e40af" strokeWidth="0.5" />
+              <line x1="225" y1="158" x2="245" y2="138" stroke="#1e40af" strokeWidth="0.5" />
+            </g>
 
-          <circle cx="242" cy="139" r="6" fill="white" opacity="0.95" />
-          <circle cx="228" cy="156" r="3" fill="white" opacity="0.5" />
-          <circle cx="244" cy="145" r="1.5" fill="white" opacity="0.4" />
+            <circle cx="235" cy="148" r="10" fill="#0a1628" />
+            <circle cx="235" cy="148" r="6" fill="#1e40af" opacity="0.5" />
+
+            <circle cx="242" cy="139" r="6" fill="white" opacity="0.95" />
+            <circle cx="228" cy="156" r="3" fill="white" opacity="0.5" />
+            <circle cx="244" cy="145" r="1.5" fill="white" opacity="0.4" />
+          </g>
+
+          <ellipse cx="235" cy="148" rx="30" ry="28" fill="url(#eyeSocket)" opacity="0">
+            <animate
+              attributeName="opacity"
+              values="0;1;0;0"
+              dur="4s"
+              begin="2.5s"
+              repeatCount="indefinite"
+              keyTimes="0;0.04;0.08;1"
+            />
+          </ellipse>
         </g>
+
+        {/* ═══ CHEEK BLUSH — Pixar warmth ═══ */}
+        <ellipse cx="132" cy="178" rx="18" ry="12" fill="url(#cheekBlush)" />
+        <ellipse cx="268" cy="178" rx="18" ry="12" fill="url(#cheekBlush)" />
 
         {/* ═══ BROW RIDGE — gives character expression ═══ */}
         <path
@@ -427,9 +507,13 @@ export default function LawyerMascot({ size = 220 }: { size?: number }) {
           opacity="0.5"
         />
 
+        {/* ═══ NOSE — tiny, cute dot ═══ */}
+        <ellipse cx="200" cy="178" rx="4" ry="3" fill="#c5d0dc" opacity="0.4" />
+        <ellipse cx="199" cy="177" rx="2" ry="1.5" fill="white" opacity="0.2" />
+
         {/* ═══ MOUTH — friendly glowing smile ═══ */}
         <path
-          d="M170 195 Q185 210, 200 210 Q215 210, 230 195"
+          d="M170 198 Q185 214, 200 214 Q215 214, 230 198"
           stroke="#3b82f6"
           strokeWidth="3.5"
           strokeLinecap="round"
@@ -438,7 +522,7 @@ export default function LawyerMascot({ size = 220 }: { size?: number }) {
         />
         {/* Smile inner glow */}
         <path
-          d="M175 197 Q188 208, 200 208 Q212 208, 225 197"
+          d="M175 200 Q188 211, 200 211 Q212 211, 225 200"
           stroke="#93c5fd"
           strokeWidth="1.5"
           strokeLinecap="round"
@@ -580,28 +664,52 @@ export default function LawyerMascot({ size = 220 }: { size?: number }) {
       </g>
 
       {/* ════════════════════════════════════════════════ */}
-      {/* FLOATING PARTICLES — subtle magic               */}
+      {/* FLOATING SPARKLES — premium magic particles     */}
       {/* ════════════════════════════════════════════════ */}
       <g>
-        <circle cx="95" cy="100" r="3" fill="#3b82f6" opacity="0.3">
-          <animate attributeName="cy" values="100;88;100" dur="5s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.15;0.35;0.15" dur="5s" repeatCount="indefinite" />
+        {/* Star sparkle 1 — top left */}
+        <g transform="translate(90, 90)" opacity="0.4">
+          <animate attributeName="opacity" values="0.15;0.5;0.15" dur="4s" repeatCount="indefinite" />
+          <line x1="-5" y1="0" x2="5" y2="0" stroke="#60a5fa" strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="0" y1="-5" x2="0" y2="5" stroke="#60a5fa" strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="-3" y1="-3" x2="3" y2="3" stroke="#60a5fa" strokeWidth="1" strokeLinecap="round" />
+          <line x1="-3" y1="3" x2="3" y2="-3" stroke="#60a5fa" strokeWidth="1" strokeLinecap="round" />
+        </g>
+
+        {/* Star sparkle 2 — top right */}
+        <g transform="translate(318, 75)" opacity="0.3">
+          <animate attributeName="opacity" values="0.1;0.4;0.1" dur="3.5s" begin="1.2s" repeatCount="indefinite" />
+          <line x1="-4" y1="0" x2="4" y2="0" stroke="#93c5fd" strokeWidth="1.2" strokeLinecap="round" />
+          <line x1="0" y1="-4" x2="0" y2="4" stroke="#93c5fd" strokeWidth="1.2" strokeLinecap="round" />
+          <line x1="-2.5" y1="-2.5" x2="2.5" y2="2.5" stroke="#93c5fd" strokeWidth="0.8" strokeLinecap="round" />
+          <line x1="-2.5" y1="2.5" x2="2.5" y2="-2.5" stroke="#93c5fd" strokeWidth="0.8" strokeLinecap="round" />
+        </g>
+
+        {/* Small dot particles */}
+        <circle cx="75" cy="200" r="2" fill="#93c5fd" opacity="0.2">
+          <animate attributeName="cy" values="200;188;200" dur="6s" begin="1s" repeatCount="indefinite" />
+          <animate attributeName="opacity" values="0.08;0.25;0.08" dur="6s" begin="1s" repeatCount="indefinite" />
         </circle>
-        <circle cx="310" cy="88" r="2.5" fill="#60a5fa" opacity="0.25">
-          <animate attributeName="cy" values="88;76;88" dur="4s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.1;0.3;0.1" dur="4s" repeatCount="indefinite" />
-        </circle>
-        <circle cx="80" cy="200" r="2" fill="#93c5fd" opacity="0.2">
-          <animate attributeName="cy" values="200;190;200" dur="6s" begin="1s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.08;0.22;0.08" dur="6s" begin="1s" repeatCount="indefinite" />
-        </circle>
-        <circle cx="330" cy="220" r="2" fill="#60a5fa" opacity="0.2">
-          <animate attributeName="cy" values="220;210;220" dur="5.5s" begin="2s" repeatCount="indefinite" />
+        <circle cx="335" cy="210" r="2" fill="#60a5fa" opacity="0.2">
+          <animate attributeName="cy" values="210;198;210" dur="5.5s" begin="2s" repeatCount="indefinite" />
           <animate attributeName="opacity" values="0.1;0.25;0.1" dur="5.5s" begin="2s" repeatCount="indefinite" />
         </circle>
-        <circle cx="108" cy="60" r="1.8" fill="#3b82f6" opacity="0.2">
-          <animate attributeName="cy" values="60;50;60" dur="4.5s" begin="0.5s" repeatCount="indefinite" />
+        <circle cx="105" cy="55" r="1.8" fill="#3b82f6" opacity="0.2">
+          <animate attributeName="cy" values="55;45;55" dur="4.5s" begin="0.5s" repeatCount="indefinite" />
+          <animate attributeName="opacity" values="0.1;0.3;0.1" dur="4.5s" begin="0.5s" repeatCount="indefinite" />
         </circle>
+
+        {/* Tiny diamond sparkle — near scales */}
+        <g transform="translate(345, 140) rotate(45)" opacity="0.25">
+          <animate attributeName="opacity" values="0.1;0.35;0.1" dur="3s" begin="0.8s" repeatCount="indefinite" />
+          <rect x="-3" y="-3" width="6" height="6" fill="#f5d77a" rx="1" />
+        </g>
+
+        {/* Tiny diamond sparkle — near waving hand */}
+        <g transform="translate(52, 145) rotate(45)" opacity="0.2">
+          <animate attributeName="opacity" values="0.1;0.3;0.1" dur="3.8s" begin="1.5s" repeatCount="indefinite" />
+          <rect x="-2.5" y="-2.5" width="5" height="5" fill="#93c5fd" rx="1" />
+        </g>
       </g>
 
     </svg>

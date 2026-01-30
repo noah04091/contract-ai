@@ -6,7 +6,7 @@
  * Quadrilateral wird als Overlay mit Maske gezeichnet.
  */
 
-import React, { useRef, useEffect, useCallback } from "react";
+import React, { useRef, useEffect, useCallback, useState } from "react";
 import { Check, RefreshCw } from "lucide-react";
 import { useCornerAdjustment } from "./hooks/useCornerAdjustment";
 import type { Point } from "./utils/imageProcessing";
@@ -27,24 +27,58 @@ const CornerAdjustment: React.FC<CornerAdjustmentProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
 
   const { corners, activeCorner, onPointerDown, setCorners } =
     useCornerAdjustment(initialCorners, containerRef);
 
-  // Overlay Canvas zeichnen wenn Corners sich ändern
+  // Container-Größe tracken (nach Image-Load und bei Resize)
+  const updateContainerSize = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    if (rect.width > 0 && rect.height > 0) {
+      setContainerSize({ w: rect.width, h: rect.height });
+    }
+  }, []);
+
+  // Image Load Handler
+  const handleImageLoad = useCallback(() => {
+    setImageLoaded(true);
+    // Kurz warten bis Layout aktualisiert ist
+    requestAnimationFrame(() => {
+      updateContainerSize();
+    });
+  }, [updateContainerSize]);
+
+  // Resize Observer für Container
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new ResizeObserver(() => {
+      updateContainerSize();
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [updateContainerSize]);
+
+  // Overlay Canvas zeichnen wenn Corners oder Container-Größe sich ändern
   useEffect(() => {
     const canvas = canvasRef.current;
-    const container = containerRef.current;
-    if (!canvas || !container) return;
+    if (!canvas || containerSize.w === 0 || containerSize.h === 0) return;
 
-    const rect = container.getBoundingClientRect();
-    canvas.width = rect.width;
-    canvas.height = rect.height;
+    canvas.width = containerSize.w;
+    canvas.height = containerSize.h;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Nur Overlay zeichnen wenn Bild geladen
+    if (!imageLoaded) return;
 
     const pts = corners.map((c) => ({
       x: c.x * canvas.width,
@@ -78,7 +112,7 @@ const CornerAdjustment: React.FC<CornerAdjustmentProps> = ({
     ctx.lineTo(pts[3].x, pts[3].y);
     ctx.closePath();
     ctx.stroke();
-  }, [corners]);
+  }, [corners, containerSize, imageLoaded]);
 
   // Corners initialisieren wenn sich initialCorners ändert
   useEffect(() => {
@@ -108,16 +142,20 @@ const CornerAdjustment: React.FC<CornerAdjustmentProps> = ({
           alt="Aufgenommenes Dokument"
           className={styles.adjustImage}
           draggable={false}
+          onLoad={handleImageLoad}
+          onError={() => console.error("[Scanner] CornerAdjustment: Image failed to load", imageUrl)}
         />
 
-        {/* Canvas Overlay für Quadrilateral */}
-        <canvas
-          ref={canvasRef}
-          className={styles.adjustCanvas}
-        />
+        {/* Canvas Overlay für Quadrilateral — nur wenn Bild geladen */}
+        {imageLoaded && (
+          <canvas
+            ref={canvasRef}
+            className={styles.adjustCanvas}
+          />
+        )}
 
-        {/* Draggbare Eckpunkte */}
-        {corners.map((corner, index) => (
+        {/* Draggbare Eckpunkte — nur wenn Bild geladen */}
+        {imageLoaded && corners.map((corner, index) => (
           <div
             key={index}
             className={`${styles.cornerHandle} ${activeCorner === index ? styles.cornerHandleActive : ""}`}
@@ -128,6 +166,13 @@ const CornerAdjustment: React.FC<CornerAdjustmentProps> = ({
             onPointerDown={(e) => onPointerDown(index, e)}
           />
         ))}
+
+        {/* Loading-Fallback wenn Bild nicht geladen */}
+        {!imageLoaded && (
+          <div className={styles.adjustLoadingFallback}>
+            Bild wird geladen...
+          </div>
+        )}
       </div>
 
       {/* Toolbar */}

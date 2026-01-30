@@ -3,6 +3,8 @@
  *
  * Lädt OpenCV.js async via CDN (Singleton).
  * Kamera kann sofort starten, Edge Detection erst wenn OpenCV bereit.
+ *
+ * Verwendet OpenCV.js 4.5.0 (bewährt stabil).
  */
 
 import { useState, useEffect } from "react";
@@ -20,53 +22,72 @@ interface UseOpenCVReturn {
 let cvPromise: Promise<OpenCVModule> | null = null;
 let cvInstance: OpenCVModule | null = null;
 
-const OPENCV_CDN = "https://docs.opencv.org/4.9.0/opencv.js";
+const OPENCV_CDN = "https://docs.opencv.org/4.5.0/opencv.js";
 
 function loadOpenCV(): Promise<OpenCVModule> {
   if (cvInstance) return Promise.resolve(cvInstance);
   if (cvPromise) return cvPromise;
 
   cvPromise = new Promise<OpenCVModule>((resolve, reject) => {
-    // Prüfen ob cv bereits global vorhanden (z.B. vom Cache)
-    if (typeof window !== "undefined" && (window as unknown as Record<string, unknown>).cv) {
-      const existing = (window as unknown as Record<string, unknown>).cv as OpenCVModule;
-      if (existing.Mat) {
-        cvInstance = existing;
-        resolve(existing);
-        return;
-      }
+    // Prüfen ob cv bereits global vorhanden (z.B. vom Browser-Cache)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const win = window as any;
+    if (win.cv && win.cv.Mat) {
+      cvInstance = win.cv;
+      resolve(win.cv);
+      return;
     }
+
+    const timeout = setTimeout(() => {
+      reject(new Error("OpenCV.js Ladezeit überschritten (60s)"));
+    }, 60000);
+
+    // Module.onRuntimeInitialized MUSS vor dem Script-Load gesetzt werden
+    // damit OpenCV.js den Callback aufruft sobald WASM initialisiert ist
+    if (!win.Module) {
+      win.Module = {};
+    }
+    win.Module.onRuntimeInitialized = () => {
+      clearTimeout(timeout);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const cv = (window as any).cv;
+      if (cv) {
+        cvInstance = cv;
+        console.log("[Scanner] OpenCV.js WASM initialized");
+        resolve(cv);
+      } else {
+        reject(new Error("OpenCV.js cv Objekt nicht gefunden nach Init"));
+      }
+    };
 
     const script = document.createElement("script");
     script.src = OPENCV_CDN;
     script.async = true;
     script.id = "opencv-js";
 
-    const timeout = setTimeout(() => {
-      reject(new Error("OpenCV.js Ladezeit überschritten (30s)"));
-    }, 30000);
-
     script.onload = () => {
-      // OpenCV.js setzt cv global, aber WASM muss noch initialisiert werden
-      const checkReady = () => {
-        const cv = (window as unknown as Record<string, unknown>).cv as OpenCVModule;
+      console.log("[Scanner] OpenCV.js script loaded, waiting for WASM init...");
+
+      // Fallback: Polling falls onRuntimeInitialized nicht aufgerufen wird
+      let pollCount = 0;
+      const pollInterval = setInterval(() => {
+        pollCount++;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const cv = (window as any).cv;
         if (cv && cv.Mat) {
+          clearInterval(pollInterval);
           clearTimeout(timeout);
-          cvInstance = cv;
-          resolve(cv);
-        } else if (cv && typeof cv.onRuntimeInitialized === "undefined") {
-          // cv existiert aber noch nicht initialisiert — Callback setzen
-          cv.onRuntimeInitialized = () => {
-            clearTimeout(timeout);
+          if (!cvInstance) {
             cvInstance = cv;
+            console.log("[Scanner] OpenCV.js ready (via polling)");
             resolve(cv);
-          };
-        } else {
-          // Nochmal prüfen in 100ms
-          setTimeout(checkReady, 100);
+          }
         }
-      };
-      checkReady();
+        // Nach 200 Polls (20s) aufgeben
+        if (pollCount > 200) {
+          clearInterval(pollInterval);
+        }
+      }, 100);
     };
 
     script.onerror = () => {
@@ -78,7 +99,6 @@ function loadOpenCV(): Promise<OpenCVModule> {
     document.head.appendChild(script);
   });
 
-  // Bei Fehler den Singleton zurücksetzen damit retry möglich ist
   cvPromise.catch(() => {
     cvPromise = null;
   });
