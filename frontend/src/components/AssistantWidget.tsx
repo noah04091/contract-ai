@@ -290,9 +290,9 @@ export default function AssistantWidget() {
                 transition={{ delay: 0.7, duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
               >
                 <p className={styles.mascotGreeting}>Contract AI</p>
-                <p className={styles.mascotTitle}>Hi! Ich bin dein KI-Assistent</p>
+                <p className={styles.mascotTitle}>Hi! Ich bin dein KI-Assistent.</p>
                 <p className={styles.mascotText}>
-                  Verträge analysieren, optimieren und erstellen — ich helfe dir mit juristischer Präzision!
+                  Ich helfe dir, Verträge zu analysieren, optimieren und erstellen. Frag mich einfach!
                 </p>
                 <button
                   className={styles.mascotButton}
