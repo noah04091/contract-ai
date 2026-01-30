@@ -175,6 +175,9 @@ export default function AssistantWidget() {
         body: JSON.stringify({
           message: userMessage.content,
           context: assistantContext,
+          history: [...messages, userMessage]
+            .slice(-10)
+            .map(({ role, content }) => ({ role, content })),
         }),
       });
 
