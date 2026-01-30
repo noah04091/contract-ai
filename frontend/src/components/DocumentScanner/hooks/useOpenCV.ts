@@ -1,10 +1,10 @@
 /**
  * useOpenCV Hook
  *
- * Lädt OpenCV.js async via jsDelivr CDN (Singleton).
- * Kamera kann sofort starten, Edge Detection erst wenn OpenCV bereit.
+ * Lädt OpenCV.js async via dynamic import (Code-Splitting).
+ * Module-level Singleton — nur einmal laden.
  *
- * Verwendet @techstark/opencv-js via jsDelivr (zuverlässige CDN).
+ * Kamera startet sofort, Edge Detection erst wenn OpenCV bereit.
  */
 
 import { useState, useEffect } from "react";
@@ -22,96 +22,68 @@ interface UseOpenCVReturn {
 let cvPromise: Promise<OpenCVModule> | null = null;
 let cvInstance: OpenCVModule | null = null;
 
-// jsDelivr CDN — zuverlässig, schnell, global cached
-const OPENCV_CDN =
-  "https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.10.0-release.1/dist/opencv.js";
-
-function loadOpenCV(): Promise<OpenCVModule> {
-  if (cvInstance) return Promise.resolve(cvInstance);
+async function loadOpenCV(): Promise<OpenCVModule> {
+  if (cvInstance) return cvInstance;
   if (cvPromise) return cvPromise;
 
-  cvPromise = new Promise<OpenCVModule>((resolve, reject) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const win = window as any;
+  cvPromise = (async () => {
+    try {
+      console.log("[Scanner] Loading OpenCV.js via dynamic import...");
 
-    // Falls cv bereits global vorhanden (z.B. vom Browser-Cache)
-    if (win.cv && win.cv.Mat) {
-      cvInstance = win.cv;
-      resolve(win.cv);
-      return;
+      // Dynamic import — Vite erzeugt separaten Chunk (Code-Splitting)
+      const cvModule = await import("@techstark/opencv-js");
+
+      // Default-Export oder Modul selbst
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let cv: any = cvModule.default || cvModule;
+
+      // Manche Builds geben ein Promise zurück
+      if (cv && typeof cv.then === "function") {
+        console.log("[Scanner] OpenCV module is a Promise, awaiting...");
+        cv = await cv;
+      }
+
+      // Warten auf WASM Runtime-Initialisierung wenn nötig
+      if (cv && typeof cv.Mat !== "function") {
+        console.log("[Scanner] Waiting for OpenCV WASM runtime init...");
+        cv = await new Promise<OpenCVModule>((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            reject(new Error("OpenCV WASM init timeout (30s)"));
+          }, 30000);
+
+          // onRuntimeInitialized Callback
+          if (typeof cv.onRuntimeInitialized === "undefined" || cv.onRuntimeInitialized === null) {
+            cv.onRuntimeInitialized = () => {
+              clearTimeout(timeout);
+              console.log("[Scanner] OpenCV WASM runtime initialized");
+              resolve(cv);
+            };
+          } else {
+            // Bereits initialisiert? Nochmal prüfen
+            const checkInterval = setInterval(() => {
+              if (typeof cv.Mat === "function") {
+                clearInterval(checkInterval);
+                clearTimeout(timeout);
+                resolve(cv);
+              }
+            }, 100);
+          }
+        });
+      }
+
+      // Finale Validierung
+      if (!cv || typeof cv.Mat !== "function") {
+        throw new Error("OpenCV.js loaded but cv.Mat not available");
+      }
+
+      cvInstance = cv;
+      console.log("[Scanner] OpenCV.js ready ✓");
+      return cv;
+    } catch (err) {
+      cvPromise = null; // Bei Fehler nächsten Versuch erlauben
+      throw err;
     }
-
-    // Altes Script-Element entfernen falls vorhanden
-    const existingScript = document.getElementById("opencv-js");
-    if (existingScript) {
-      existingScript.remove();
-    }
-
-    const timeout = setTimeout(() => {
-      reject(new Error("OpenCV.js Ladezeit überschritten (30s)"));
-    }, 30000);
-
-    const script = document.createElement("script");
-    script.src = OPENCV_CDN;
-    script.async = true;
-    script.id = "opencv-js";
-
-    script.onload = () => {
-      console.log("[Scanner] OpenCV.js script loaded, waiting for init...");
-
-      // cv-Objekt wird von @techstark/opencv-js als globale Variable gesetzt
-      // Polling bis cv.Mat verfügbar ist (WASM-Init kann dauern)
-      let pollCount = 0;
-      const pollInterval = setInterval(() => {
-        pollCount++;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const cv = (window as any).cv;
-
-        if (cv && typeof cv.Mat === "function") {
-          clearInterval(pollInterval);
-          clearTimeout(timeout);
-          cvInstance = cv;
-          console.log("[Scanner] OpenCV.js ready");
-          resolve(cv);
-          return;
-        }
-
-        // cv existiert als Promise? (manche Builds returnen ein Promise)
-        if (cv && typeof cv.then === "function") {
-          clearInterval(pollInterval);
-          cv.then((readyCv: OpenCVModule) => {
-            clearTimeout(timeout);
-            cvInstance = readyCv;
-            console.log("[Scanner] OpenCV.js ready (via promise)");
-            resolve(readyCv);
-          }).catch((err: Error) => {
-            clearTimeout(timeout);
-            reject(err);
-          });
-          return;
-        }
-
-        // Nach 300 Polls (30s) aufgeben
-        if (pollCount > 300) {
-          clearInterval(pollInterval);
-          clearTimeout(timeout);
-          reject(new Error("OpenCV.js Init-Timeout"));
-        }
-      }, 100);
-    };
-
-    script.onerror = () => {
-      clearTimeout(timeout);
-      cvPromise = null;
-      reject(new Error("OpenCV.js konnte nicht geladen werden"));
-    };
-
-    document.head.appendChild(script);
-  });
-
-  cvPromise.catch(() => {
-    cvPromise = null;
-  });
+  })();
 
   return cvPromise;
 }
