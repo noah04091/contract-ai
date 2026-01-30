@@ -1,9 +1,11 @@
 /**
  * edgeDetection.ts
  *
- * Pure image processing functions for document edge detection.
+ * Document edge detection via Sobel + Hough Line Transform.
  * No external dependencies — works on Uint8Array buffers.
- * All coordinates are in pixel space of the detection canvas.
+ *
+ * Pipeline: Grayscale → Blur → Sobel → Threshold → Hough Lines
+ *           → Find 4 dominant lines → Compute intersections → Quadrilateral
  */
 
 import type { Point } from "../types";
@@ -70,7 +72,6 @@ export function sobelEdges(
     for (let x = 1; x < width - 1; x++) {
       const i = y * width + x;
 
-      // 3×3 Sobel kernels
       const tl = src[i - width - 1];
       const tc = src[i - width];
       const tr = src[i - width + 1];
@@ -83,7 +84,6 @@ export function sobelEdges(
       const gx = -tl + tr - 2 * ml + 2 * mr - bl + br;
       const gy = -tl - 2 * tc - tr + bl + 2 * bc + br;
 
-      // Approximation: |gx| + |gy| (faster than sqrt)
       const mag = (gx < 0 ? -gx : gx) + (gy < 0 ? -gy : gy);
       dst[i] = mag > 255 ? 255 : mag;
     }
@@ -101,7 +101,6 @@ export function adaptiveThreshold(
 ): Uint8Array {
   const dst = new Uint8Array(width * height);
 
-  // Compute mean edge magnitude (skip border pixels)
   let sum = 0;
   let count = 0;
   for (let i = 0; i < src.length; i++) {
@@ -111,7 +110,7 @@ export function adaptiveThreshold(
     }
   }
   const mean = count > 0 ? sum / count : 128;
-  const threshold = Math.max(30, mean * 1.2);
+  const threshold = Math.max(25, mean * 1.0);
 
   for (let i = 0; i < src.length; i++) {
     dst[i] = src[i] >= threshold ? 255 : 0;
@@ -120,181 +119,245 @@ export function adaptiveThreshold(
   return dst;
 }
 
-// ─── Contour Finding (simplified border following) ──────────
+// ─── Hough Line Transform ───────────────────────────────────
 
-export function findContours(
+interface HoughLine {
+  rho: number;   // Distance from origin
+  theta: number; // Angle in radians
+  votes: number; // Accumulator votes
+}
+
+/**
+ * Simplified Hough Line Transform.
+ * Returns lines sorted by vote count (strongest first).
+ */
+export function houghLines(
   binary: Uint8Array,
   width: number,
-  height: number
-): Point[][] {
-  const visited = new Uint8Array(width * height);
-  const contours: Point[][] = [];
+  height: number,
+  rhoStep: number = 1,
+  thetaSteps: number = 180,
+  voteThreshold: number = 0
+): HoughLine[] {
+  const diagonal = Math.sqrt(width * width + height * height);
+  const maxRho = Math.ceil(diagonal);
+  const rhoSize = 2 * maxRho + 1;
 
-  // Moore neighborhood: 8 directions (clockwise from right)
-  const dx = [1, 1, 0, -1, -1, -1, 0, 1];
-  const dy = [0, 1, 1, 1, 0, -1, -1, -1];
+  // Precompute sin/cos tables
+  const sinTable = new Float32Array(thetaSteps);
+  const cosTable = new Float32Array(thetaSteps);
+  for (let t = 0; t < thetaSteps; t++) {
+    const theta = (t * Math.PI) / thetaSteps;
+    sinTable[t] = Math.sin(theta);
+    cosTable[t] = Math.cos(theta);
+  }
 
-  for (let y = 1; y < height - 1; y++) {
-    for (let x = 1; x < width - 1; x++) {
-      const idx = y * width + x;
-      if (binary[idx] !== 255 || visited[idx]) continue;
+  // Accumulator
+  const accumulator = new Int32Array(rhoSize * thetaSteps);
 
-      // Check if this is a border pixel (has at least one black neighbor)
-      let isBorder = false;
-      for (let d = 0; d < 8; d++) {
-        const ni = (y + dy[d]) * width + (x + dx[d]);
-        if (binary[ni] === 0) {
-          isBorder = true;
-          break;
-        }
-      }
-      if (!isBorder) continue;
+  // Vote for each edge pixel
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (binary[y * width + x] !== 255) continue;
 
-      // Trace contour using Moore neighborhood tracing
-      const contour: Point[] = [];
-      let cx = x, cy = y;
-      let dir = 0; // Start direction
-      const startX = x, startY = y;
-      let steps = 0;
-      const maxSteps = width * height; // Safety limit
-
-      do {
-        visited[cy * width + cx] = 1;
-        contour.push({ x: cx, y: cy });
-
-        // Search for next border pixel in Moore neighborhood
-        let found = false;
-        const searchStart = (dir + 5) % 8; // Start from dir-3 (backtrack)
-
-        for (let i = 0; i < 8; i++) {
-          const d = (searchStart + i) % 8;
-          const nx = cx + dx[d];
-          const ny = cy + dy[d];
-
-          if (nx >= 0 && nx < width && ny >= 0 && ny < height && binary[ny * width + nx] === 255) {
-            cx = nx;
-            cy = ny;
-            dir = d;
-            found = true;
-            break;
-          }
-        }
-
-        if (!found) break;
-        steps++;
-      } while ((cx !== startX || cy !== startY) && steps < maxSteps);
-
-      if (contour.length >= 4) {
-        contours.push(contour);
+      for (let t = 0; t < thetaSteps; t++) {
+        const rho = Math.round(x * cosTable[t] + y * sinTable[t]);
+        const rhoIdx = rho + maxRho;
+        accumulator[rhoIdx * thetaSteps + t]++;
       }
     }
   }
 
-  return contours;
-}
+  // Auto-threshold if not provided: top 20% of max votes
+  let maxVotes = 0;
+  for (let i = 0; i < accumulator.length; i++) {
+    if (accumulator[i] > maxVotes) maxVotes = accumulator[i];
+  }
+  const effectiveThreshold = voteThreshold > 0
+    ? voteThreshold
+    : Math.max(20, maxVotes * 0.25);
 
-// ─── Ramer-Douglas-Peucker Polygon Simplification ───────────
-
-export function simplifyPolygon(contour: Point[], epsilon: number): Point[] {
-  if (contour.length < 3) return contour;
-
-  // Find point with max distance from line (start → end)
-  let maxDist = 0;
-  let maxIdx = 0;
-
-  const start = contour[0];
-  const end = contour[contour.length - 1];
-
-  for (let i = 1; i < contour.length - 1; i++) {
-    const d = pointToLineDistance(contour[i], start, end);
-    if (d > maxDist) {
-      maxDist = d;
-      maxIdx = i;
+  // Extract lines above threshold
+  const lines: HoughLine[] = [];
+  for (let r = 0; r < rhoSize; r++) {
+    for (let t = 0; t < thetaSteps; t++) {
+      const votes = accumulator[r * thetaSteps + t];
+      if (votes >= effectiveThreshold) {
+        lines.push({
+          rho: (r - maxRho) * rhoStep,
+          theta: (t * Math.PI) / thetaSteps,
+          votes,
+        });
+      }
     }
   }
 
-  if (maxDist > epsilon) {
-    const left = simplifyPolygon(contour.slice(0, maxIdx + 1), epsilon);
-    const right = simplifyPolygon(contour.slice(maxIdx), epsilon);
-    return [...left.slice(0, -1), ...right];
-  }
+  // Sort by votes descending
+  lines.sort((a, b) => b.votes - a.votes);
 
-  return [start, end];
+  return lines;
 }
 
-function pointToLineDistance(p: Point, a: Point, b: Point): number {
-  const dx = b.x - a.x;
-  const dy = b.y - a.y;
-  const lenSq = dx * dx + dy * dy;
+// ─── Non-Maximum Suppression for Lines ──────────────────────
 
-  if (lenSq === 0) {
-    const ex = p.x - a.x;
-    const ey = p.y - a.y;
-    return Math.sqrt(ex * ex + ey * ey);
+/**
+ * Merge similar lines (close rho + theta).
+ * Returns up to maxLines distinct lines.
+ */
+export function suppressLines(
+  lines: HoughLine[],
+  rhoThreshold: number,
+  thetaThreshold: number,
+  maxLines: number = 20
+): HoughLine[] {
+  const result: HoughLine[] = [];
+
+  for (const line of lines) {
+    let isDuplicate = false;
+    for (const existing of result) {
+      const rhoDiff = Math.abs(line.rho - existing.rho);
+      let thetaDiff = Math.abs(line.theta - existing.theta);
+      // Handle wrap-around near 0 and PI
+      if (thetaDiff > Math.PI / 2) thetaDiff = Math.PI - thetaDiff;
+
+      if (rhoDiff < rhoThreshold && thetaDiff < thetaThreshold) {
+        isDuplicate = true;
+        break;
+      }
+    }
+    if (!isDuplicate) {
+      result.push(line);
+      if (result.length >= maxLines) break;
+    }
   }
 
-  const cross = Math.abs(dx * (a.y - p.y) - dy * (a.x - p.x));
-  return cross / Math.sqrt(lenSq);
+  return result;
 }
 
-// ─── Find Largest Quadrilateral ─────────────────────────────
+// ─── Find Document Quadrilateral from Lines ─────────────────
 
-export function findLargestQuad(
-  contours: Point[][],
+/**
+ * From a set of lines, find 4 lines forming a rectangle-like shape.
+ * Groups lines into ~horizontal and ~vertical, then picks the best pair from each.
+ */
+export function findQuadFromLines(
+  lines: HoughLine[],
   frameWidth: number,
   frameHeight: number,
-  minAreaRatio: number = 0.10,
-  maxAreaRatio: number = 0.95
+  minAreaRatio: number = 0.08
 ): { corners: Point[]; confidence: number } | null {
-  const frameArea = frameWidth * frameHeight;
-  const minArea = frameArea * minAreaRatio;
-  const maxArea = frameArea * maxAreaRatio;
+  if (lines.length < 4) return null;
 
-  // Sort contours by area (largest first)
-  const withArea = contours
-    .map((c) => ({ contour: c, area: Math.abs(polygonArea(c)) }))
-    .filter((c) => c.area >= minArea && c.area <= maxArea)
-    .sort((a, b) => b.area - a.area);
+  // Classify lines as roughly horizontal or vertical
+  // theta near 0 or PI = vertical, theta near PI/2 = horizontal
+  const horizontal: HoughLine[] = [];
+  const vertical: HoughLine[] = [];
 
-  // Adaptive epsilon based on contour perimeter
-  for (const { contour, area } of withArea.slice(0, 5)) {
-    const perimeter = contourPerimeter(contour);
-    const epsilon = perimeter * 0.02;
-    const simplified = simplifyPolygon(contour, epsilon);
-
-    if (simplified.length === 4 && isValidQuadrilateral(simplified)) {
-      const ordered = orderCorners(simplified);
-      const confidence = calculateConfidence(area, frameArea, ordered);
-
-      return {
-        corners: ordered.map((p) => ({
-          x: p.x / frameWidth,
-          y: p.y / frameHeight,
-        })),
-        confidence,
-      };
+  for (const line of lines) {
+    const angle = line.theta;
+    // Horizontal: theta between 60° and 120° (PI/3 to 2PI/3)
+    if (angle > Math.PI * 0.3 && angle < Math.PI * 0.7) {
+      horizontal.push(line);
     }
-
-    // Try with more aggressive simplification
-    if (simplified.length > 4) {
-      const epsilon2 = perimeter * 0.04;
-      const simplified2 = simplifyPolygon(contour, epsilon2);
-      if (simplified2.length === 4 && isValidQuadrilateral(simplified2)) {
-        const ordered = orderCorners(simplified2);
-        const confidence = calculateConfidence(area, frameArea, ordered) * 0.9;
-
-        return {
-          corners: ordered.map((p) => ({
-            x: p.x / frameWidth,
-            y: p.y / frameHeight,
-          })),
-          confidence,
-        };
-      }
+    // Vertical: theta < 30° or > 150° (near 0 or PI)
+    else if (angle < Math.PI * 0.2 || angle > Math.PI * 0.8) {
+      vertical.push(line);
     }
   }
 
+  if (horizontal.length < 2 || vertical.length < 2) return null;
+
+  // Pick best pair from each group (most separated, strongest votes)
+  const hPair = findBestPair(horizontal, frameHeight * 0.15);
+  const vPair = findBestPair(vertical, frameWidth * 0.15);
+
+  if (!hPair || !vPair) return null;
+
+  // Compute 4 intersection points
+  const corners: Point[] = [];
+  for (const h of hPair) {
+    for (const v of vPair) {
+      const pt = lineIntersection(h, v);
+      if (pt) corners.push(pt);
+    }
+  }
+
+  if (corners.length !== 4) return null;
+
+  // Check corners are within frame (with some margin)
+  const margin = -0.1; // Allow slightly outside
+  for (const c of corners) {
+    if (
+      c.x < frameWidth * margin ||
+      c.x > frameWidth * (1 - margin) ||
+      c.y < frameHeight * margin ||
+      c.y > frameHeight * (1 - margin)
+    ) {
+      return null;
+    }
+  }
+
+  // Order corners: TL, TR, BR, BL
+  const ordered = orderCorners(corners);
+
+  // Check area
+  const area = Math.abs(polygonArea(ordered));
+  const frameArea = frameWidth * frameHeight;
+  if (area < frameArea * minAreaRatio || area > frameArea * 0.98) return null;
+
+  // Check shape validity
+  if (!isValidQuadrilateral(ordered)) return null;
+
+  // Calculate confidence
+  const totalVotes = [...hPair, ...vPair].reduce((s, l) => s + l.votes, 0);
+  const maxPossibleVotes = Math.max(frameWidth, frameHeight) * 4;
+  const voteConfidence = Math.min(1, totalVotes / maxPossibleVotes);
+  const areaConfidence = Math.min(1, (area / frameArea) * 2);
+  const confidence = voteConfidence * 0.5 + areaConfidence * 0.5;
+
+  // Normalize to 0-1
+  return {
+    corners: ordered.map((p) => ({
+      x: Math.max(0, Math.min(1, p.x / frameWidth)),
+      y: Math.max(0, Math.min(1, p.y / frameHeight)),
+    })),
+    confidence,
+  };
+}
+
+// ─── Line Pair Selection ────────────────────────────────────
+
+function findBestPair(
+  lines: HoughLine[],
+  minSeparation: number
+): [HoughLine, HoughLine] | null {
+  // Find the two strongest lines that are sufficiently separated
+  for (let i = 0; i < lines.length; i++) {
+    for (let j = i + 1; j < lines.length; j++) {
+      const separation = Math.abs(lines[i].rho - lines[j].rho);
+      if (separation >= minSeparation) {
+        return [lines[i], lines[j]];
+      }
+    }
+  }
   return null;
+}
+
+// ─── Line Intersection ──────────────────────────────────────
+
+function lineIntersection(a: HoughLine, b: HoughLine): Point | null {
+  const sinA = Math.sin(a.theta);
+  const cosA = Math.cos(a.theta);
+  const sinB = Math.sin(b.theta);
+  const cosB = Math.cos(b.theta);
+
+  const det = cosA * sinB - sinA * cosB;
+  if (Math.abs(det) < 1e-6) return null; // Parallel lines
+
+  const x = (a.rho * sinB - b.rho * sinA) / det;
+  const y = (b.rho * cosA - a.rho * cosB) / det;
+
+  return { x, y };
 }
 
 // ─── Helpers ────────────────────────────────────────────────
@@ -310,33 +373,22 @@ export function polygonArea(points: Point[]): number {
   return area / 2;
 }
 
-function contourPerimeter(points: Point[]): number {
-  let perimeter = 0;
-  for (let i = 0; i < points.length; i++) {
-    const j = (i + 1) % points.length;
-    const dx = points[j].x - points[i].x;
-    const dy = points[j].y - points[i].y;
-    perimeter += Math.sqrt(dx * dx + dy * dy);
-  }
-  return perimeter;
-}
-
 export function isValidQuadrilateral(points: Point[]): boolean {
   if (points.length !== 4) return false;
 
-  // Check all angles are between 45° and 135°
+  // Check all angles are between 40° and 140°
   for (let i = 0; i < 4; i++) {
     const prev = points[(i + 3) % 4];
     const curr = points[i];
     const next = points[(i + 1) % 4];
 
     const angle = angleBetween(prev, curr, next);
-    if (angle < 45 || angle > 135) return false;
+    if (angle < 40 || angle > 140) return false;
   }
 
   // Check area is positive (not self-intersecting)
   const area = Math.abs(polygonArea(points));
-  if (area < 100) return false; // Too small
+  if (area < 50) return false;
 
   return true;
 }
@@ -368,8 +420,7 @@ function orderCorners(points: Point[]): Point[] {
     return angleA - angleB;
   });
 
-  // Rotate so that top-left is first
-  // TL = smallest x + y sum
+  // Rotate so that top-left is first (smallest x + y sum)
   let tlIdx = 0;
   let minSum = Infinity;
   for (let i = 0; i < 4; i++) {
@@ -386,28 +437,4 @@ function orderCorners(points: Point[]): Point[] {
   }
 
   return ordered;
-}
-
-function calculateConfidence(
-  area: number,
-  frameArea: number,
-  corners: Point[]
-): number {
-  // Area ratio component (larger document = higher confidence)
-  const areaRatio = area / frameArea;
-  const areaScore = Math.min(1, areaRatio * 2);
-
-  // Aspect ratio component (closer to standard document ratio = higher)
-  const w1 = Math.sqrt(
-    (corners[1].x - corners[0].x) ** 2 + (corners[1].y - corners[0].y) ** 2
-  );
-  const h1 = Math.sqrt(
-    (corners[3].x - corners[0].x) ** 2 + (corners[3].y - corners[0].y) ** 2
-  );
-  const aspect = Math.max(w1, h1) / (Math.min(w1, h1) || 1);
-  // A4 ≈ 1.41, Letter ≈ 1.29
-  const idealAspect = 1.41;
-  const aspectScore = 1 - Math.min(1, Math.abs(aspect - idealAspect) / idealAspect);
-
-  return areaScore * 0.6 + aspectScore * 0.4;
 }

@@ -1,9 +1,9 @@
 /**
  * DocumentDetector
  *
- * Orchestrates the edge detection pipeline.
- * Owns a reusable detection canvas and pre-allocated buffers.
- * Stateless per-frame — call detect() with a video element.
+ * Orchestrates the edge detection pipeline using Hough Line Transform.
+ * Pipeline: Video → Downscale → Grayscale → Blur → Sobel → Threshold
+ *           → Hough Lines → Suppress → Find Quad
  */
 
 import type { DetectedEdges } from "../types";
@@ -12,23 +12,21 @@ import {
   gaussianBlur3x3,
   sobelEdges,
   adaptiveThreshold,
-  findContours,
-  findLargestQuad,
+  houghLines,
+  suppressLines,
+  findQuadFromLines,
 } from "./edgeDetection";
 
 interface DetectionConfig {
   /** Width of the downscaled detection canvas (default: 320) */
   detectionWidth: number;
-  /** Minimum document area as fraction of frame (default: 0.10) */
+  /** Minimum document area as fraction of frame (default: 0.08) */
   minAreaRatio: number;
-  /** Maximum document area as fraction of frame (default: 0.95) */
-  maxAreaRatio: number;
 }
 
 const DEFAULT_CONFIG: DetectionConfig = {
   detectionWidth: 320,
-  minAreaRatio: 0.10,
-  maxAreaRatio: 0.95,
+  minAreaRatio: 0.08,
 };
 
 export class DocumentDetector {
@@ -41,7 +39,6 @@ export class DocumentDetector {
   constructor(config?: Partial<DetectionConfig>) {
     this.config = { ...DEFAULT_CONFIG, ...config };
 
-    // Offscreen canvas for detection (not added to DOM)
     this.canvas = document.createElement("canvas");
     const ctx = this.canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) throw new Error("Cannot create 2D context for detection");
@@ -86,16 +83,24 @@ export class DocumentDetector {
     // Step 5: Adaptive threshold
     const binary = adaptiveThreshold(edges, dw, dh);
 
-    // Step 6: Find contours
-    const contours = findContours(binary, dw, dh);
+    // Step 6: Hough Line Transform
+    const lines = houghLines(binary, dw, dh, 1, 180, 0);
 
-    // Step 7: Find largest quadrilateral
-    const result = findLargestQuad(
-      contours,
+    // Step 7: Non-maximum suppression (merge similar lines)
+    const diagonal = Math.sqrt(dw * dw + dh * dh);
+    const suppressed = suppressLines(
+      lines,
+      diagonal * 0.05,  // rho threshold: 5% of diagonal
+      Math.PI / 18,      // theta threshold: 10 degrees
+      20
+    );
+
+    // Step 8: Find quadrilateral from lines
+    const result = findQuadFromLines(
+      suppressed,
       dw,
       dh,
-      this.config.minAreaRatio,
-      this.config.maxAreaRatio
+      this.config.minAreaRatio
     );
 
     if (!result) return null;
@@ -112,7 +117,7 @@ export class DocumentDetector {
   reduceResolution(): void {
     if (this.config.detectionWidth > 160) {
       this.config.detectionWidth = Math.round(this.config.detectionWidth * 0.75);
-      this.detectionW = 0; // Force canvas resize on next detect()
+      this.detectionW = 0;
     }
   }
 
