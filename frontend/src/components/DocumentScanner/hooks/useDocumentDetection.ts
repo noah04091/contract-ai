@@ -106,7 +106,7 @@ export function useDocumentDetection({
         const result = detector.detect(video);
         consecutiveErrorsRef.current = 0;
 
-        if (result && result.confidence > 0.2) {
+        if (result && result.confidence > 0.3) {
           // Clear fade-out state
           lostTimeRef.current = null;
 

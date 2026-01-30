@@ -12,7 +12,6 @@ import {
   gaussianBlur3x3,
   sobelEdges,
   adaptiveThreshold,
-  dilate3x3,
   houghLines,
   suppressLines,
   findQuadFromLines,
@@ -27,7 +26,7 @@ interface DetectionConfig {
 
 const DEFAULT_CONFIG: DetectionConfig = {
   detectionWidth: 320,
-  minAreaRatio: 0.05,
+  minAreaRatio: 0.08,
 };
 
 export class DocumentDetector {
@@ -84,11 +83,8 @@ export class DocumentDetector {
     // Step 5: Adaptive threshold
     const binary = adaptiveThreshold(edges, dw, dh);
 
-    // Step 5b: Morphological dilation (close gaps in thin edges)
-    const dilated = dilate3x3(binary, dw, dh);
-
     // Step 6: Hough Line Transform
-    const lines = houghLines(dilated, dw, dh, 1, 180, 0);
+    const lines = houghLines(binary, dw, dh, 1, 180, 0);
 
     // Step 7: Non-maximum suppression (merge similar lines)
     const diagonal = Math.sqrt(dw * dw + dh * dh);

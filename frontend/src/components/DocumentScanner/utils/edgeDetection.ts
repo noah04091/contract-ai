@@ -4,7 +4,7 @@
  * Document edge detection via Sobel + Hough Line Transform.
  * No external dependencies — works on Uint8Array buffers.
  *
- * Pipeline: Grayscale → Blur → Sobel → Threshold → Dilate → Hough Lines
+ * Pipeline: Grayscale → Blur → Sobel → Threshold → Hough Lines
  *           → Find 4 dominant lines → Compute intersections → Quadrilateral
  */
 
@@ -110,7 +110,7 @@ export function adaptiveThreshold(
     }
   }
   const mean = count > 0 ? sum / count : 128;
-  const threshold = Math.max(15, mean * 0.6);
+  const threshold = Math.max(25, mean * 1.0);
 
   for (let i = 0; i < src.length; i++) {
     dst[i] = src[i] >= threshold ? 255 : 0;
@@ -211,7 +211,7 @@ export function houghLines(
   }
   const effectiveThreshold = voteThreshold > 0
     ? voteThreshold
-    : Math.max(15, maxVotes * 0.20);
+    : Math.max(20, maxVotes * 0.25);
 
   // Extract lines above threshold
   const lines: HoughLine[] = [];
@@ -291,12 +291,12 @@ export function findQuadFromLines(
 
   for (const line of lines) {
     const angle = line.theta;
-    // Horizontal: theta between 45° and 135° (PI/4 to 3PI/4)
-    if (angle > Math.PI * 0.25 && angle < Math.PI * 0.75) {
+    // Horizontal: theta between 60° and 120° (PI/3 to 2PI/3)
+    if (angle > Math.PI * 0.3 && angle < Math.PI * 0.7) {
       horizontal.push(line);
     }
-    // Vertical: theta < 45° or > 135° (near 0 or PI)
-    else {
+    // Vertical: theta < 30° or > 150° (near 0 or PI)
+    else if (angle < Math.PI * 0.2 || angle > Math.PI * 0.8) {
       vertical.push(line);
     }
   }
@@ -304,8 +304,8 @@ export function findQuadFromLines(
   if (horizontal.length < 2 || vertical.length < 2) return null;
 
   // Pick best pair from each group (most separated, strongest votes)
-  const hPair = findBestPair(horizontal, frameHeight * 0.08);
-  const vPair = findBestPair(vertical, frameWidth * 0.08);
+  const hPair = findBestPair(horizontal, frameHeight * 0.15);
+  const vPair = findBestPair(vertical, frameWidth * 0.15);
 
   if (!hPair || !vPair) return null;
 
@@ -321,7 +321,7 @@ export function findQuadFromLines(
   if (corners.length !== 4) return null;
 
   // Check corners are within frame (with some margin)
-  const margin = -0.08; // Allow slightly outside (8%)
+  const margin = -0.1; // Allow slightly outside
   for (const c of corners) {
     if (
       c.x < frameWidth * margin ||
@@ -427,7 +427,7 @@ export function isValidQuadrilateral(points: Point[]): boolean {
     const next = points[(i + 1) % 4];
 
     const angle = angleBetween(prev, curr, next);
-    if (angle < 30 || angle > 150) return false;
+    if (angle < 40 || angle > 140) return false;
   }
 
   // Check area is positive (not self-intersecting)
