@@ -137,10 +137,10 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
     try {
       const formData = new FormData();
 
-      // Bilder hinzufügen (korrigiert wenn verfügbar, sonst original)
+      // Immer Original-Bild ans Backend senden (Backend macht eigene Perspektiv-Korrektur)
+      // correctedBlob ist nur für die client-seitige Vorschau
       for (let i = 0; i < pages.length; i++) {
-        const blob = pages[i].correctedBlob || pages[i].imageBlob;
-        formData.append("images", blob, `scan_${i + 1}.jpg`);
+        formData.append("images", pages[i].imageBlob, `scan_${i + 1}.jpg`);
       }
 
       // Corners + Options

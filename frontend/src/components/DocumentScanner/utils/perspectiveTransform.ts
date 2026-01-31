@@ -4,11 +4,18 @@
  * Client-side 4-point perspective warp using Canvas.
  * Maps a quadrilateral (detected/adjusted corners) to a rectangle.
  * Used for preview only — backend does full-quality processing.
+ *
+ * Approach: Uses canvas drawImage with triangulation to avoid
+ * mobile canvas pixel limits (iOS ~16MP). Source image is
+ * downscaled to a safe size before processing.
  */
 
 import type { Point } from "../types";
 
-const MAX_OUTPUT_DIM = 1500; // Cap output for speed
+/** Max source dimension to avoid exceeding mobile canvas limits */
+const MAX_SRC_DIM = 2048;
+/** Max output dimension for preview */
+const MAX_OUTPUT_DIM = 1200;
 
 /**
  * Load an image from a data URL or blob URL.
@@ -23,7 +30,7 @@ function loadImage(src: string): Promise<HTMLImageElement> {
 }
 
 /**
- * Compute 3×3 homography matrix that maps src quad → dst rectangle.
+ * Compute 3×3 homography matrix that maps src quad → dst quad.
  * Uses DLT (Direct Linear Transform) with 4 point correspondences.
  *
  * Returns flat 9-element array [h0..h8] where:
@@ -34,7 +41,6 @@ function computeHomography(
   src: [number, number][],
   dst: [number, number][]
 ): number[] {
-  // Build 8×9 matrix for DLT
   const A: number[][] = [];
   for (let i = 0; i < 4; i++) {
     const [sx, sy] = src[i];
@@ -43,9 +49,6 @@ function computeHomography(
     A.push([0, 0, 0, -sx, -sy, -1, dy * sx, dy * sy, dy]);
   }
 
-  // Solve via Gaussian elimination (8 equations, 9 unknowns → set h8=1)
-  // Rearrange: Ah = 0, with h8 = 1
-  // Move last column to RHS: A'h' = -a9
   const n = 8;
   const M: number[][] = [];
   const b: number[] = [];
@@ -56,7 +59,6 @@ function computeHomography(
 
   // Gaussian elimination with partial pivoting
   for (let col = 0; col < n; col++) {
-    // Find pivot
     let maxVal = Math.abs(M[col][col]);
     let maxRow = col;
     for (let row = col + 1; row < n; row++) {
@@ -65,17 +67,14 @@ function computeHomography(
         maxRow = row;
       }
     }
-    // Swap rows
     [M[col], M[maxRow]] = [M[maxRow], M[col]];
     [b[col], b[maxRow]] = [b[maxRow], b[col]];
 
     const pivot = M[col][col];
     if (Math.abs(pivot) < 1e-10) {
-      // Degenerate — return identity-ish
       return [1, 0, 0, 0, 1, 0, 0, 0, 1];
     }
 
-    // Eliminate below
     for (let row = col + 1; row < n; row++) {
       const factor = M[row][col] / pivot;
       for (let j = col; j < n; j++) {
@@ -85,7 +84,6 @@ function computeHomography(
     }
   }
 
-  // Back substitution
   const h = new Array(8).fill(0);
   for (let i = n - 1; i >= 0; i--) {
     let sum = b[i];
@@ -95,12 +93,9 @@ function computeHomography(
     h[i] = sum / M[i][i];
   }
 
-  return [...h, 1]; // h8 = 1
+  return [...h, 1];
 }
 
-/**
- * Euclidean distance between two 2D points.
- */
 function dist(x1: number, y1: number, x2: number, y2: number): number {
   return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
 }
@@ -118,13 +113,46 @@ export async function applyPerspectiveCrop(
   if (corners.length !== 4) throw new Error("Need exactly 4 corners");
 
   const img = await loadImage(imageUrl);
-  const iw = img.naturalWidth;
-  const ih = img.naturalHeight;
+  const origW = img.naturalWidth;
+  const origH = img.naturalHeight;
 
-  // Convert normalized corners to pixel coordinates
-  const px: [number, number][] = corners.map((c) => [c.x * iw, c.y * ih]);
+  if (origW === 0 || origH === 0) throw new Error("Image has zero dimensions");
 
-  // Output dimensions from edge lengths
+  // Step 1: Downscale source image to stay within mobile canvas limits
+  let srcW = origW;
+  let srcH = origH;
+  const srcMaxDim = Math.max(srcW, srcH);
+  let srcScale = 1;
+  if (srcMaxDim > MAX_SRC_DIM) {
+    srcScale = MAX_SRC_DIM / srcMaxDim;
+    srcW = Math.round(origW * srcScale);
+    srcH = Math.round(origH * srcScale);
+  }
+
+  const srcCanvas = document.createElement("canvas");
+  srcCanvas.width = srcW;
+  srcCanvas.height = srcH;
+  const srcCtx = srcCanvas.getContext("2d", { willReadFrequently: true });
+  if (!srcCtx) throw new Error("Cannot create source canvas context");
+  srcCtx.drawImage(img, 0, 0, srcW, srcH);
+
+  let srcPixels: Uint8ClampedArray;
+  try {
+    srcPixels = srcCtx.getImageData(0, 0, srcW, srcH).data;
+  } catch {
+    // Canvas tainted or OOM — clean up and throw
+    srcCanvas.width = 0;
+    srcCanvas.height = 0;
+    throw new Error("Cannot read source image data");
+  }
+
+  // Step 2: Convert normalized corners to downscaled pixel coords
+  const px: [number, number][] = corners.map((c) => [
+    c.x * srcW,
+    c.y * srcH,
+  ]);
+
+  // Step 3: Compute output dimensions from edge lengths
   const topEdge = dist(px[0][0], px[0][1], px[1][0], px[1][1]);
   const bottomEdge = dist(px[3][0], px[3][1], px[2][0], px[2][1]);
   const leftEdge = dist(px[0][0], px[0][1], px[3][0], px[3][1]);
@@ -133,41 +161,26 @@ export async function applyPerspectiveCrop(
   let outW = Math.round(Math.max(topEdge, bottomEdge));
   let outH = Math.round(Math.max(leftEdge, rightEdge));
 
-  // Cap output size for performance
-  const maxDim = Math.max(outW, outH);
-  if (maxDim > MAX_OUTPUT_DIM) {
-    const scale = MAX_OUTPUT_DIM / maxDim;
+  // Cap output size
+  const outMaxDim = Math.max(outW, outH);
+  if (outMaxDim > MAX_OUTPUT_DIM) {
+    const scale = MAX_OUTPUT_DIM / outMaxDim;
     outW = Math.round(outW * scale);
     outH = Math.round(outH * scale);
   }
-
-  // Ensure minimum size
   outW = Math.max(outW, 10);
   outH = Math.max(outH, 10);
 
-  // Destination rectangle corners: TL, TR, BR, BL
-  const dst: [number, number][] = [
+  // Step 4: Compute homography (output rect → source pixels)
+  const dstRect: [number, number][] = [
     [0, 0],
-    [outW, 0],
-    [outW, outH],
-    [0, outH],
+    [outW - 1, 0],
+    [outW - 1, outH - 1],
+    [0, outH - 1],
   ];
+  const H = computeHomography(dstRect, px);
 
-  // Compute forward homography (dst → src) so we can sample source pixels
-  const H = computeHomography(dst, px);
-  // No need to invert — we compute dst→src directly
-
-  // Draw source image onto a canvas to read pixel data
-  const srcCanvas = document.createElement("canvas");
-  srcCanvas.width = iw;
-  srcCanvas.height = ih;
-  const srcCtx = srcCanvas.getContext("2d", { willReadFrequently: true });
-  if (!srcCtx) throw new Error("Cannot create source canvas context");
-  srcCtx.drawImage(img, 0, 0);
-  const srcData = srcCtx.getImageData(0, 0, iw, ih);
-  const srcPixels = srcData.data;
-
-  // Create output canvas
+  // Step 5: Warp — for each output pixel, sample source via homography
   const outCanvas = document.createElement("canvas");
   outCanvas.width = outW;
   outCanvas.height = outH;
@@ -176,22 +189,18 @@ export async function applyPerspectiveCrop(
   const outData = outCtx.createImageData(outW, outH);
   const outPixels = outData.data;
 
-  // For each output pixel, find the corresponding source pixel via homography
   for (let y = 0; y < outH; y++) {
     for (let x = 0; x < outW; x++) {
-      // Apply homography: src = H * dst
       const w = H[6] * x + H[7] * y + H[8];
+      if (Math.abs(w) < 1e-10) continue; // degenerate
       const sx = (H[0] * x + H[1] * y + H[2]) / w;
       const sy = (H[3] * x + H[4] * y + H[5]) / w;
 
       // Bilinear interpolation
       const x0 = Math.floor(sx);
       const y0 = Math.floor(sy);
-      const x1 = x0 + 1;
-      const y1 = y0 + 1;
 
-      if (x0 < 0 || y0 < 0 || x1 >= iw || y1 >= ih) {
-        // Out of bounds — white
+      if (x0 < 0 || y0 < 0 || x0 + 1 >= srcW || y0 + 1 >= srcH) {
         const oi = (y * outW + x) * 4;
         outPixels[oi] = 255;
         outPixels[oi + 1] = 255;
@@ -207,10 +216,10 @@ export async function applyPerspectiveCrop(
       const w01 = (1 - fx) * fy;
       const w11 = fx * fy;
 
-      const i00 = (y0 * iw + x0) * 4;
-      const i10 = (y0 * iw + x1) * 4;
-      const i01 = (y1 * iw + x0) * 4;
-      const i11 = (y1 * iw + x1) * 4;
+      const i00 = (y0 * srcW + x0) * 4;
+      const i10 = (y0 * srcW + x0 + 1) * 4;
+      const i01 = ((y0 + 1) * srcW + x0) * 4;
+      const i11 = ((y0 + 1) * srcW + x0 + 1) * 4;
 
       const oi = (y * outW + x) * 4;
       outPixels[oi] = w00 * srcPixels[i00] + w10 * srcPixels[i10] + w01 * srcPixels[i01] + w11 * srcPixels[i11];
@@ -226,7 +235,6 @@ export async function applyPerspectiveCrop(
   srcCanvas.width = 0;
   srcCanvas.height = 0;
 
-  // Convert to blob
   return new Promise<Blob>((resolve, reject) => {
     outCanvas.toBlob(
       (blob) => {
