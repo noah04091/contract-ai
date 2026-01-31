@@ -1022,9 +1022,9 @@
   align-items: flex-end;
 }
 
-/* Form with upload button gets 3 columns */
+/* Form with upload buttons gets 4 columns (scanner, upload, textarea, send) */
 .form.formWithUpload {
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto auto 1fr auto;
 }
 
 /* Attach Button (Upload) */
@@ -1079,6 +1079,8 @@
   resize: none;
   min-height: 56px;
   max-height: 180px;
+  min-width: 0;
+  width: 100%;
   overflow: auto;
   outline: none;
   border-radius: 24px;

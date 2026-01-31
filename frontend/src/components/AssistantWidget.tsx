@@ -256,6 +256,7 @@ export default function AssistantWidget() {
     "/sign/",
     "/signature/",
     "/envelopes/create",
+    "/chat",
   ];
 
   const shouldShowWidget = !hiddenRoutes.some((route) =>
