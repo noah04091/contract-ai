@@ -19,7 +19,15 @@ const MAX_OUTPUT_DIM = 1200;
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.onload = () => resolve(img);
+    img.onload = () => {
+      // img.decode() ensures the image is fully decoded before canvas drawing.
+      // Without this, iOS Safari may draw transparent pixels (→ black JPEG).
+      if (typeof img.decode === "function") {
+        img.decode().then(() => resolve(img)).catch(() => resolve(img));
+      } else {
+        resolve(img);
+      }
+    };
     img.onerror = () => reject(new Error("Failed to load image"));
     img.src = src;
   });
@@ -73,6 +81,10 @@ export async function applyPerspectiveCrop(
   canvas.height = outH;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Cannot create canvas context");
+
+  // White background (JPEG converts transparent pixels to black)
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, outW, outH);
 
   // drawImage(source, sx, sy, sw, sh, dx, dy, dw, dh)
   ctx.drawImage(img, left, top, cropW, cropH, 0, 0, outW, outH);

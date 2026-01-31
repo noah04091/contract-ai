@@ -5,7 +5,10 @@
  * Nutzer kann die Ecken per Touch/Mouse anpassen.
  * Quadrilateral wird als Overlay mit Maske gezeichnet.
  *
- * Verwendet data URL für sofortige Bildanzeige (kein Blob-URL).
+ * WICHTIG: Alle Ecken-Koordinaten sind BILD-relativ (0-1),
+ * nicht Container-relativ. Das innere Frame-Div hat exakt die
+ * Dimensionen des angezeigten Bildes, sodass %‑Positionierung
+ * korrekt auf das Bild gemappt wird.
  */
 
 import React, { useRef, useEffect, useCallback, useState } from "react";
@@ -27,54 +30,68 @@ const CornerAdjustment: React.FC<CornerAdjustmentProps> = ({
   onConfirm,
   onRetake,
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
-  const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
+  const [frameDims, setFrameDims] = useState({ w: 0, h: 0 });
 
+  // frameRef is the coordinate reference — matches image display area exactly
   const { corners, activeCorner, onPointerDown, setCorners } =
-    useCornerAdjustment(initialCorners, containerRef);
+    useCornerAdjustment(initialCorners, frameRef);
 
-  // Container-Größe tracken
-  const updateContainerSize = useCallback(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    const rect = container.getBoundingClientRect();
-    if (rect.width > 0 && rect.height > 0) {
-      setContainerSize({ w: rect.width, h: rect.height });
+  // Calculate image display dimensions within the wrapper
+  const updateFrameDims = useCallback(() => {
+    const wrapper = wrapperRef.current;
+    const img = imgRef.current;
+    if (!wrapper || !img || !img.naturalWidth || !img.naturalHeight) return;
+
+    const wrapperRect = wrapper.getBoundingClientRect();
+    if (wrapperRect.width === 0 || wrapperRect.height === 0) return;
+
+    const imgRatio = img.naturalWidth / img.naturalHeight;
+    const wrapperRatio = wrapperRect.width / wrapperRect.height;
+
+    let w: number, h: number;
+    if (imgRatio > wrapperRatio) {
+      // Image wider than wrapper — limited by width
+      w = wrapperRect.width;
+      h = wrapperRect.width / imgRatio;
+    } else {
+      // Image taller than wrapper — limited by height
+      h = wrapperRect.height;
+      w = wrapperRect.height * imgRatio;
     }
+
+    setFrameDims({ w: Math.round(w), h: Math.round(h) });
   }, []);
 
-  // Initial + Image Load → Container-Größe messen
+  // Image loaded → measure layout
   const handleImageLoad = useCallback(() => {
-    // Kurz warten bis Layout aktualisiert ist
-    requestAnimationFrame(() => {
-      updateContainerSize();
-    });
-  }, [updateContainerSize]);
+    requestAnimationFrame(updateFrameDims);
+  }, [updateFrameDims]);
 
-  // Resize Observer für Container
+  // Resize Observer on the outer wrapper
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
 
-    // Initial messen
-    updateContainerSize();
+    updateFrameDims();
 
     const observer = new ResizeObserver(() => {
-      updateContainerSize();
+      updateFrameDims();
     });
-    observer.observe(container);
+    observer.observe(wrapper);
     return () => observer.disconnect();
-  }, [updateContainerSize]);
+  }, [updateFrameDims]);
 
-  // Overlay Canvas zeichnen wenn Corners oder Container-Größe sich ändern
+  // Draw overlay canvas (mask + edges)
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || containerSize.w === 0 || containerSize.h === 0) return;
+    if (!canvas || frameDims.w === 0 || frameDims.h === 0) return;
 
-    canvas.width = containerSize.w;
-    canvas.height = containerSize.h;
+    canvas.width = frameDims.w;
+    canvas.height = frameDims.h;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
@@ -86,11 +103,11 @@ const CornerAdjustment: React.FC<CornerAdjustmentProps> = ({
       y: c.y * canvas.height,
     }));
 
-    // Semi-transparente Maske
+    // Semi-transparent mask
     ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Dokument-Bereich ausschneiden
+    // Cut out document area
     ctx.globalCompositeOperation = "destination-out";
     ctx.beginPath();
     ctx.moveTo(pts[0].x, pts[0].y);
@@ -100,7 +117,7 @@ const CornerAdjustment: React.FC<CornerAdjustmentProps> = ({
     ctx.closePath();
     ctx.fill();
 
-    // Kanten-Linien
+    // Edge lines
     ctx.globalCompositeOperation = "source-over";
     ctx.strokeStyle = "rgba(34, 197, 94, 0.9)";
     ctx.lineWidth = 2;
@@ -113,9 +130,9 @@ const CornerAdjustment: React.FC<CornerAdjustmentProps> = ({
     ctx.lineTo(pts[3].x, pts[3].y);
     ctx.closePath();
     ctx.stroke();
-  }, [corners, containerSize]);
+  }, [corners, frameDims]);
 
-  // Corners initialisieren wenn sich initialCorners ändert
+  // Initialize corners from props
   useEffect(() => {
     if (initialCorners && initialCorners.length === 4) {
       setCorners(initialCorners);
@@ -136,35 +153,43 @@ const CornerAdjustment: React.FC<CornerAdjustmentProps> = ({
         </span>
       </div>
 
-      {/* Bild mit Overlay */}
-      <div className={styles.adjustImageWrapper} ref={containerRef}>
-        <img
-          ref={imgRef}
-          src={imageUrl}
-          alt="Aufgenommenes Dokument"
-          className={styles.adjustImage}
-          draggable={false}
-          onLoad={handleImageLoad}
-        />
-
-        {/* Canvas Overlay für Quadrilateral */}
-        <canvas
-          ref={canvasRef}
-          className={styles.adjustCanvas}
-        />
-
-        {/* Draggbare Eckpunkte */}
-        {corners.map((corner, index) => (
-          <div
-            key={index}
-            className={`${styles.cornerHandle} ${activeCorner === index ? styles.cornerHandleActive : ""}`}
-            style={{
-              left: `${corner.x * 100}%`,
-              top: `${corner.y * 100}%`,
-            }}
-            onPointerDown={(e) => onPointerDown(index, e)}
+      {/* Outer wrapper for centering */}
+      <div className={styles.adjustImageWrapper} ref={wrapperRef}>
+        {/* Inner frame — exact image display dimensions */}
+        <div
+          ref={frameRef}
+          className={styles.adjustImageFrame}
+          style={
+            frameDims.w > 0
+              ? { width: frameDims.w, height: frameDims.h }
+              : undefined
+          }
+        >
+          <img
+            ref={imgRef}
+            src={imageUrl}
+            alt="Aufgenommenes Dokument"
+            className={styles.adjustImage}
+            draggable={false}
+            onLoad={handleImageLoad}
           />
-        ))}
+
+          {/* Canvas Overlay for quadrilateral */}
+          <canvas ref={canvasRef} className={styles.adjustCanvas} />
+
+          {/* Draggable corner handles */}
+          {corners.map((corner, index) => (
+            <div
+              key={index}
+              className={`${styles.cornerHandle} ${activeCorner === index ? styles.cornerHandleActive : ""}`}
+              style={{
+                left: `${corner.x * 100}%`,
+                top: `${corner.y * 100}%`,
+              }}
+              onPointerDown={(e) => onPointerDown(index, e)}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Toolbar */}
