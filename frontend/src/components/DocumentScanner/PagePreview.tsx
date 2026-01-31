@@ -29,31 +29,12 @@ const PagePreview: React.FC<PagePreviewProps> = ({
   onConfirm,
   onAdjustCorners,
 }) => {
-  // CSS-based visual crop: clip-path shows only the document area
-  const previewStyle = useMemo((): React.CSSProperties => {
-    const style: React.CSSProperties = {
+  const previewStyle = useMemo(
+    (): React.CSSProperties => ({
       transform: `rotate(${page.rotation}deg)`,
-    };
-
-    if (page.corners && page.corners.length === 4) {
-      const xs = page.corners.map((c) => c.x);
-      const ys = page.corners.map((c) => c.y);
-      const minX = Math.min(...xs);
-      const maxX = Math.max(...xs);
-      const minY = Math.min(...ys);
-      const maxY = Math.max(...ys);
-
-      const cropW = maxX - minX;
-      const cropH = maxY - minY;
-
-      if (cropW > 0.05 && cropH > 0.05) {
-        // clip-path: inset(top right bottom left) — clips to bounding box
-        style.clipPath = `inset(${minY * 100}% ${(1 - maxX) * 100}% ${(1 - maxY) * 100}% ${minX * 100}%)`;
-      }
-    }
-
-    return style;
-  }, [page.corners, page.rotation]);
+    }),
+    [page.rotation]
+  );
 
   return (
     <div className={styles.previewContainer}>
