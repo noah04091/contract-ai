@@ -17,6 +17,7 @@ const { getInstance: getCostTrackingService } = require("../services/costTrackin
 const { clauseParser } = require("../services/legalLens"); // 🔍 Legal Lens Pre-Processing
 const { isBusinessOrHigher, isEnterpriseOrHigher, getFeatureLimit, PLANS } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
 const { sendLimitReachedEmail, sendAlmostAtLimitEmail } = require("../services/triggerEmailService"); // 📧 Behavior-based Emails
+const { embedContractAsync } = require("../services/contractEmbedder"); // 🔍 Auto-Embedding for Legal Pulse Monitoring
 
 const router = express.Router();
 
@@ -3147,6 +3148,14 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           console.log(`⏭️ [${requestId}] Legal Lens: Existing contract already has pre-parsed clauses`);
         }
 
+        // 🔍 VECTOR EMBEDDING für Legal Pulse Monitoring (Background)
+        embedContractAsync(existingContract._id.toString(), fullTextContent, {
+          userId: req.user.userId,
+          contractName: existingContract.name,
+          contractType: extractedContractType || validationResult.documentType || 'unknown'
+        });
+        console.log(`🔍 [${requestId}] Contract embedding triggered for existing contract ${existingContract._id}`);
+
       } else {
         // 📋 ÄNDERUNG 4: UPDATE contractAnalysisData WITH AUTO-RENEWAL & DURATION
         const contractAnalysisData = {
@@ -3454,6 +3463,14 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
             } catch (e) { /* ignore */ }
           }
         })();
+
+        // 🔍 VECTOR EMBEDDING für Legal Pulse Monitoring (Background)
+        embedContractAsync(savedContract._id.toString(), fullTextContent, {
+          userId: req.user.userId,
+          contractName: savedContract.name,
+          contractType: extractedContractType || validationResult.documentType || 'unknown'
+        });
+        console.log(`🔍 [${requestId}] Contract embedding triggered for new contract ${savedContract._id}`);
       }
 
     } catch (saveError) {

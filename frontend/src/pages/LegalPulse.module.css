@@ -1780,6 +1780,114 @@
   margin: 0;
 }
 
+.clauseQuoteBlock {
+  background: #fef9c3;
+  border-left: 4px solid #f59e0b;
+  border-radius: 0 8px 8px 0;
+  padding: 14px 18px;
+  font-style: italic;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #78350f;
+  white-space: pre-wrap;
+}
+
+.legalBasisText {
+  color: #6b7280 !important;
+  font-weight: 500;
+  background: #f9fafb;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border-left: 3px solid #9ca3af;
+}
+
+.replacementTextBlock {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-left: 4px solid #10b981;
+  border-radius: 0 8px 8px 0;
+  padding: 14px 18px;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #064e3b;
+  font-family: 'Georgia', serif;
+  white-space: pre-wrap;
+}
+
+.reminderSection {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.reminderButton {
+  background: none;
+  border: 1px solid #d1d5db;
+  color: #6b7280;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reminderButton:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.reminderPicker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reminderPicker label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.reminderDateInput {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #374151;
+  max-width: 200px;
+}
+
+.reminderPickerActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.exportReportButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  color: #475569;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.exportReportButton:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.exportReportButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .modalActions {
   display: flex;
   gap: 12px;
@@ -4214,5 +4322,582 @@
 
   .teamSelect {
     flex: 1;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* V7: MONITORING STATUS BAR */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.monitoringStatusBar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 12px 24px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.monitoringStatusItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #475569;
+  white-space: nowrap;
+}
+
+.statusHealthy {
+  color: #10b981;
+}
+
+.statusWarning {
+  color: #f59e0b;
+}
+
+.statusCritical {
+  color: #ef4444;
+}
+
+.statusUnknown {
+  color: #94a3b8;
+}
+
+.alertHistoryButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #dc2626;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin-left: auto;
+  transition: all 0.2s ease;
+}
+
+.alertHistoryButton:hover {
+  background: #fee2e2;
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* V7: ALERT HISTORY PANEL */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.alertHistoryPanel {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.alertHistoryHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.alertHistoryHeader h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.alertHistoryHeader button {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.alertHistoryHeader button:hover {
+  color: #2563eb;
+}
+
+.alertHistoryList {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.alertHistoryItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px 24px;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.15s ease;
+}
+
+.alertHistoryItem:last-child {
+  border-bottom: none;
+}
+
+.alertHistoryItem:hover {
+  background: #f8fafc;
+}
+
+.alertUnread {
+  background: #eff6ff;
+}
+
+.alertUnread:hover {
+  background: #dbeafe;
+}
+
+.alertSeverityBadge {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.alertSeverityBadge[data-severity="critical"] {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.alertSeverityBadge[data-severity="high"] {
+  background: #fff7ed;
+  color: #ea580c;
+}
+
+.alertSeverityBadge[data-severity="medium"] {
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.alertSeverityBadge[data-severity="low"] {
+  background: #eff6ff;
+  color: #3b82f6;
+}
+
+.alertContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.alertContent strong {
+  display: block;
+  font-size: 0.9rem;
+  color: #1e293b;
+  margin-bottom: 4px;
+}
+
+.alertContract {
+  display: block;
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.alertExplanation {
+  font-size: 0.8rem;
+  color: #475569;
+  line-height: 1.5;
+  margin: 4px 0 0;
+}
+
+.alertMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.alertScore {
+  font-weight: 600;
+  color: #64748b;
+}
+
+@media (max-width: 768px) {
+  .monitoringStatusBar {
+    padding: 10px 16px;
+    gap: 12px;
+  }
+
+  .monitoringStatusItem {
+    font-size: 0.8rem;
+  }
+
+  .alertHistoryItem {
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 16px;
+  }
+
+  .alertMeta {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+  }
+}
+
+/* ============================================================
+   WEEKLY LEGAL CHECK SECTION
+   ============================================================ */
+
+.weeklyCheckSection {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.weeklyCheckHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  border-bottom: 1px solid #d1fae5;
+}
+
+.weeklyCheckTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.weeklyCheckTitle h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.weeklyCheckTitle svg {
+  color: #16a34a;
+}
+
+.weeklyCheckBadge {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.weeklyCheckToggle {
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.weeklyCheckToggle:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.weeklyCheckContent {
+  padding: 20px 24px;
+}
+
+.weeklyCheckLoading {
+  text-align: center;
+  padding: 32px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.weeklyCheckEmpty {
+  text-align: center;
+  padding: 32px;
+  color: #6b7280;
+}
+
+.weeklyCheckEmpty p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.weeklyCheckList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.weeklyCheckCard {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.weeklyCheckCard:hover {
+  border-color: #d1d5db;
+}
+
+.weeklyStatus_aktuell {
+  border-left: 4px solid #16a34a;
+}
+
+.weeklyStatus_handlungsbedarf {
+  border-left: 4px solid #f59e0b;
+}
+
+.weeklyStatus_kritisch {
+  border-left: 4px solid #dc2626;
+}
+
+.weeklyCheckCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.weeklyCheckCardHeader:hover {
+  background: #f9fafb;
+}
+
+.weeklyCheckCardInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.weeklyCheckCardInfo strong {
+  font-size: 14px;
+  color: #111827;
+}
+
+.weeklyStatusBadge {
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.weeklyBadge_aktuell {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.weeklyBadge_handlungsbedarf {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.weeklyBadge_kritisch {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.weeklyCheckCardMeta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.weeklyExpandIcon {
+  font-size: 10px;
+  color: #9ca3af;
+}
+
+.weeklyCheckDetails {
+  padding: 0 20px 20px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.weeklyCheckSummary {
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.6;
+  margin: 16px 0;
+  padding: 12px 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.weeklyStage1 {
+  margin-bottom: 16px;
+}
+
+.weeklyStage1 h5 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #4b5563;
+  margin: 0 0 8px;
+}
+
+.weeklyStage1 ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.weeklyStage1 li {
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.6;
+}
+
+.weeklyScore {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.weeklyFindings h5 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #4b5563;
+  margin: 0 0 12px;
+}
+
+.weeklyFinding {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 10px;
+  background: white;
+}
+
+.findingSeverity_critical {
+  border-left: 3px solid #dc2626;
+  background: #fef2f2;
+}
+
+.findingSeverity_warning {
+  border-left: 3px solid #f59e0b;
+  background: #fffbeb;
+}
+
+.findingSeverity_info {
+  border-left: 3px solid #3b82f6;
+  background: #eff6ff;
+}
+
+.weeklyFindingHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.weeklyFindingHeader strong {
+  font-size: 14px;
+  color: #111827;
+}
+
+.findingSeverityBadge {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.severity_critical {
+  background: #dc2626;
+  color: white;
+}
+
+.severity_warning {
+  background: #f59e0b;
+  color: white;
+}
+
+.severity_info {
+  background: #3b82f6;
+  color: white;
+}
+
+.findingType {
+  padding: 2px 8px;
+  background: #f3f4f6;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  color: #6b7280;
+  text-transform: uppercase;
+}
+
+.weeklyFinding p {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.6;
+}
+
+.findingClause,
+.findingLegal,
+.findingRecommendation {
+  font-size: 12px;
+  color: #4b5563;
+  line-height: 1.5;
+  margin-top: 6px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 6px;
+}
+
+.findingClause strong,
+.findingLegal strong,
+.findingRecommendation strong {
+  color: #374151;
+}
+
+.findingRecommendation {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+
+/* Weekly Check Responsive */
+@media (max-width: 768px) {
+  .weeklyCheckHeader {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .weeklyCheckCardHeader {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .weeklyCheckCardMeta {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .weeklyFindingHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
   }
 }

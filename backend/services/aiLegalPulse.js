@@ -70,7 +70,10 @@ Antworte NUR mit einem JSON-Objekt in folgendem Format:
       "impact": "Konkrete Auswirkungen und potenzielle Folgen für DIESEN Vertrag",
       "solution": "Maßgeschneiderter Lösungsvorschlag zur Behebung des Risikos",
       "recommendation": "Spezifische Handlungsempfehlung mit Priorisierung",
-      "affectedClauses": ["Betroffene Vertragsklauseln oder Paragraphen"]
+      "affectedClauses": ["Betroffene Vertragsklauseln oder Paragraphen"],
+      "affectedClauseText": "EXAKTER Wortlaut der betroffenen Klausel aus dem Vertragstext (zitiert). Wenn keine spezifische Klausel identifizierbar: null",
+      "replacementText": "Konkreter Formulierungsvorschlag als Ersatz für die problematische Klausel. Vollständiger, rechtssicherer Alternativtext",
+      "legalBasis": "Rechtsgrundlage: Welches Gesetz/Paragraph betroffen ist und warum (z.B. '§ 622 BGB - Mindest-Kündigungsfristen nicht eingehalten')"
     }
   ],
   "recommendations": [
@@ -80,7 +83,10 @@ Antworte NUR mit einem JSON-Objekt in folgendem Format:
       "priority": "low|medium|high|critical",
       "effort": "Geschätzter Aufwand (gering/mittel/hoch)",
       "impact": "Erwartete Verbesserung durch Umsetzung",
-      "steps": ["Konkrete Umsetzungsschritte"]
+      "steps": ["Konkrete Umsetzungsschritte"],
+      "affectedClauseRef": "Referenz auf die betroffene Vertragsklausel (z.B. '§4 Abs. 2 - Kündigungsfrist' oder 'Abschnitt 3 - Haftung')",
+      "suggestedText": "Konkreter neuer Klauseltext zur Umsetzung dieser Empfehlung. Vollständiger, einsetzbarer Formulierungsvorschlag",
+      "legalBasis": "Rechtsgrundlage für diese Empfehlung (z.B. '§ 309 Nr. 7 BGB - Haftungsausschluss unwirksam')"
     }
   ]
 }`,
@@ -323,7 +329,7 @@ ${this.prompts.riskAnalysis}`;
           { role: "user", content: prompt }
         ],
         temperature: 0.2,
-        max_tokens: 3000
+        max_tokens: 4000
       });
 
       // 💰 Track API cost

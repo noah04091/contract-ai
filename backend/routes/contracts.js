@@ -19,6 +19,7 @@ const analyzeRoute = require("./analyze"); // 🚀 V2 Analysis Functions
 const OrganizationMember = require("../models/OrganizationMember"); // 👥 Team-Management
 const { generateDeepLawyerLevelPrompt, getContractTypeAwareness } = analyzeRoute;
 const { isEnterpriseOrHigher } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen // 🚀 Import V2 functions
+const { embedContractAsync } = require("../services/contractEmbedder"); // 🔍 Auto-Embedding for Legal Pulse Monitoring
 
 const router = express.Router();
 const aiLegalPulse = new AILegalPulse(); // ⚡ Initialize Legal Pulse analyzer
@@ -1476,6 +1477,15 @@ router.post("/", verifyToken, async (req, res) => {
       });
     } else if (isGenerated) {
       console.log(`⚠️ [AUTO-PDF] Übersprungen - kein HTML vorhanden (isGenerated: ${isGenerated}, hasHTML: ${!!finalHTML}, htmlLength: ${finalHTML?.length || 0})`);
+    }
+
+    // 🔍 VECTOR EMBEDDING für Legal Pulse Monitoring (Background)
+    if (content && content.trim().length > 50) {
+      embedContractAsync(contractId.toString(), content, {
+        userId: req.user.userId,
+        contractName: name,
+        contractType: contractType || 'unknown'
+      });
     }
 
     res.status(201).json({

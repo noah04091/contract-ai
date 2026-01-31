@@ -187,11 +187,15 @@ class DigestProcessor {
     const period = isDaily ? 'heute' : 'diese Woche';
     const periodTitle = isDaily ? 'Tägliche' : 'Wöchentliche';
 
-    // Sort alerts by score (highest first)
-    alerts.sort((a, b) => b.score - a.score);
+    // Separate regular alerts from weekly check alerts
+    const regularAlerts = alerts.filter(a => a.type !== 'weekly_legal_check');
+    const weeklyCheckAlerts = alerts.filter(a => a.type === 'weekly_legal_check');
 
-    // Generate alert items HTML
-    const alertItemsHtml = alerts.map(alert => {
+    // Sort alerts by score (highest first)
+    regularAlerts.sort((a, b) => b.score - a.score);
+
+    // Generate regular alert items HTML
+    const alertItemsHtml = regularAlerts.map(alert => {
       const severityColors = {
         critical: { bg: '#fef2f2', border: '#dc2626', text: '#991b1b' },
         high: { bg: '#fff7ed', border: '#ea580c', text: '#9a3412' },
@@ -215,6 +219,9 @@ class DigestProcessor {
         </div>
       `;
     }).join('');
+
+    // Generate weekly check HTML section
+    const weeklyCheckHtml = this.generateWeeklyCheckHtml(weeklyCheckAlerts);
 
     const emailHtml = `
 <!DOCTYPE html>
@@ -253,9 +260,12 @@ class DigestProcessor {
         <p>Wir haben ${alerts.length} Gesetzesänderung${alerts.length === 1 ? '' : 'en'} gefunden, die für Ihre Verträge relevant sein ${alerts.length === 1 ? 'könnte' : 'könnten'}.</p>
       </div>
 
-      <h2 style="color: #111827; margin: 0 0 24px; font-size: 20px;">📋 Alle Änderungen im Überblick</h2>
+      ${weeklyCheckHtml}
 
+      ${regularAlerts.length > 0 ? `
+      <h2 style="color: #111827; margin: 0 0 24px; font-size: 20px;">📋 Gesetzesänderungen im Überblick</h2>
       ${alertItemsHtml}
+      ` : ''}
 
       <div style="background: #f9fafb; border-radius: 12px; padding: 24px; margin-top: 32px; text-align: center;">
         <p style="margin: 0 0 16px; color: #374151; font-size: 15px;">Möchten Sie sofortige Benachrichtigungen erhalten?</p>
@@ -287,6 +297,67 @@ class DigestProcessor {
       `📬 ${periodTitle} Legal Pulse Digest – ${alerts.length} ${alerts.length === 1 ? 'Änderung' : 'Änderungen'}`,
       emailHtml
     );
+  }
+
+  /**
+   * Generate HTML section for weekly legal check results
+   */
+  generateWeeklyCheckHtml(weeklyCheckAlerts) {
+    if (!weeklyCheckAlerts || weeklyCheckAlerts.length === 0) return '';
+
+    const statusColors = {
+      kritisch: { bg: '#fef2f2', border: '#dc2626', text: '#991b1b', label: 'Kritisch' },
+      handlungsbedarf: { bg: '#fffbeb', border: '#f59e0b', text: '#92400e', label: 'Handlungsbedarf' },
+      aktuell: { bg: '#f0fdf4', border: '#16a34a', text: '#166534', label: 'Aktuell' }
+    };
+
+    const findingsHtml = weeklyCheckAlerts.map(alert => {
+      const status = alert.score >= 0.95 ? 'kritisch' : 'handlungsbedarf';
+      const colors = statusColors[status];
+
+      let findingsListHtml = '';
+      if (alert.findings && alert.findings.length > 0) {
+        findingsListHtml = alert.findings.map(f => {
+          const sevColors = {
+            critical: '#dc2626',
+            warning: '#f59e0b',
+            info: '#3b82f6'
+          };
+          const sevColor = sevColors[f.severity] || '#6b7280';
+
+          return `
+            <div style="padding: 12px; border-bottom: 1px solid #e5e7eb;">
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                <span style="background: ${sevColor}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; text-transform: uppercase;">${f.severity}</span>
+                <strong style="color: #111827; font-size: 14px;">${f.title}</strong>
+              </div>
+              <p style="margin: 4px 0; color: #374151; font-size: 13px;">${f.description}</p>
+              ${f.legalBasis ? `<p style="margin: 2px 0 0; color: #6b7280; font-size: 12px;">Rechtsgrundlage: ${f.legalBasis}</p>` : ''}
+              ${f.recommendation ? `<p style="margin: 2px 0 0; color: #059669; font-size: 12px;">Empfehlung: ${f.recommendation}</p>` : ''}
+            </div>
+          `;
+        }).join('');
+      }
+
+      return `
+        <div style="background: ${colors.bg}; border-left: 4px solid ${colors.border}; padding: 20px; margin-bottom: 16px; border-radius: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+            <h3 style="margin: 0; color: ${colors.text}; font-size: 16px; flex: 1;">${alert.contractName}</h3>
+            <span style="background: ${colors.border}; color: white; padding: 4px 12px; border-radius: 12px; font-size: 13px; font-weight: 600; white-space: nowrap; margin-left: 12px;">${colors.label}</span>
+          </div>
+          <p style="margin: 0 0 12px; color: #6b7280; font-size: 14px;">${alert.lawDescription || ''}</p>
+          ${findingsListHtml ? `<div style="background: white; border-radius: 8px; overflow: hidden;">${findingsListHtml}</div>` : ''}
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div style="margin-bottom: 32px;">
+        <h2 style="color: #111827; margin: 0 0 8px; font-size: 20px;">🔍 Wöchentlicher Rechtscheck</h2>
+        <p style="color: #6b7280; margin: 0 0 24px; font-size: 14px;">KI-gestützte Prüfung Ihrer Verträge gegen den aktuellen Rechtsstand</p>
+        ${findingsHtml}
+      </div>
+    `;
   }
 
   /**

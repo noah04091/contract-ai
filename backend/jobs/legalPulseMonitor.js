@@ -54,6 +54,23 @@ class LegalPulseMonitor {
         });
 
         console.log(`✅ [CRON] Legal Pulse monitoring scheduled (${cronExpr})`);
+
+        // Weekly Legal Check - Sonntag 02:00 Uhr (vor dem Monday-Digest)
+        const weeklyCronExpr = process.env.WEEKLY_CHECK_CRON_EXPR || '0 2 * * 0';
+
+        cron.schedule(weeklyCronExpr, async () => {
+          try {
+            const WeeklyLegalCheck = require('./weeklyLegalCheck');
+            const weeklyCheck = new WeeklyLegalCheck();
+            await weeklyCheck.init();
+            await weeklyCheck.runWeeklyCheck();
+            await weeklyCheck.close();
+          } catch (error) {
+            console.error('❌ [CRON] Weekly Legal Check error:', error);
+          }
+        });
+
+        console.log(`✅ [CRON] Weekly Legal Check scheduled (${weeklyCronExpr})`);
       } else {
         console.log("ℹ️  [CRON] Legal Pulse monitoring disabled (set LEGAL_PULSE_CRON_ENABLED=true)");
       }
@@ -132,10 +149,103 @@ class LegalPulseMonitor {
 
       console.log('='.repeat(70) + '\n');
 
+      // V5: Save monitoring health record
+      await this.saveHealthRecord({
+        status: 'success',
+        lawChangesProcessed: changes.length,
+        contractsChecked: totalContractsChecked,
+        alertsSent: totalAlerts,
+        duration: parseFloat(duration),
+        costStats
+      });
+
     } catch (error) {
       console.error('❌ [LEGAL-PULSE] Monitoring error:', error);
+
+      // V5: Save error health record
+      try {
+        await this.saveHealthRecord({
+          status: 'error',
+          error: error.message,
+          duration: ((Date.now() - startTime) / 1000)
+        });
+      } catch (healthErr) {
+        console.error('❌ [LEGAL-PULSE] Health record save failed:', healthErr.message);
+      }
     } finally {
       this.isRunning = false;
+    }
+  }
+
+  /**
+   * V5: Save health record to MongoDB for monitoring
+   */
+  async saveHealthRecord(data) {
+    try {
+      const healthCollection = this.db.collection("monitoring_health");
+
+      await healthCollection.insertOne({
+        service: 'legal_pulse',
+        lastRunAt: new Date(),
+        lastRunStatus: data.status,
+        lawChangesProcessed: data.lawChangesProcessed || 0,
+        contractsChecked: data.contractsChecked || 0,
+        alertsSent: data.alertsSent || 0,
+        duration: data.duration || 0,
+        error: data.error || null,
+        costStats: data.costStats || null,
+        nextExpectedRun: this.getNextExpectedRun(),
+        createdAt: new Date()
+      });
+
+      console.log(`✅ [HEALTH] Monitoring health record saved (${data.status})`);
+    } catch (error) {
+      console.error('❌ [HEALTH] Failed to save health record:', error.message);
+    }
+  }
+
+  /**
+   * V5: Calculate next expected run time based on cron expression
+   */
+  getNextExpectedRun() {
+    // Default cron: 03:15 daily
+    const now = new Date();
+    const next = new Date(now);
+    next.setHours(3, 15, 0, 0);
+    if (next <= now) {
+      next.setDate(next.getDate() + 1);
+    }
+    return next;
+  }
+
+  /**
+   * V5: Check if monitoring is stale (>48h since last successful run)
+   */
+  async checkStaleMonitoring() {
+    try {
+      const healthCollection = this.db.collection("monitoring_health");
+
+      const lastSuccess = await healthCollection.findOne(
+        { service: 'legal_pulse', lastRunStatus: 'success' },
+        { sort: { lastRunAt: -1 } }
+      );
+
+      if (!lastSuccess) {
+        console.warn('⚠️ [STALE-CHECK] No successful monitoring run found!');
+        return { stale: true, lastRun: null, hoursAgo: null };
+      }
+
+      const hoursAgo = (Date.now() - new Date(lastSuccess.lastRunAt).getTime()) / (1000 * 60 * 60);
+
+      if (hoursAgo > 48) {
+        console.warn(`⚠️ [STALE-CHECK] Monitoring is STALE! Last successful run: ${hoursAgo.toFixed(1)}h ago`);
+        return { stale: true, lastRun: lastSuccess.lastRunAt, hoursAgo };
+      }
+
+      return { stale: false, lastRun: lastSuccess.lastRunAt, hoursAgo };
+    } catch (error) {
+      console.error('❌ [STALE-CHECK] Error:', error.message);
+      return { stale: true, lastRun: null, hoursAgo: null, error: error.message };
     }
   }
 
@@ -270,10 +380,11 @@ class LegalPulseMonitor {
   }
 
   /**
-   * Process a single law change
+   * Process a single law change with Hybrid Scoring (V6)
+   * Score = 60% Embedding Similarity + 20% Area Match + 20% Keyword Overlap
    */
   async processLawChange(change) {
-    const threshold = parseFloat(process.env.SIMILARITY_THRESHOLD) || 0.85;
+    const baseThreshold = parseFloat(process.env.SIMILARITY_THRESHOLD) || 0.70;
     const topK = parseInt(process.env.TOP_K) || 30;
 
     try {
@@ -281,35 +392,71 @@ class LegalPulseMonitor {
       const lawText = `${change.title} ${change.description}`;
       const lawEmbedding = await this.embeddingService.embedText(lawText);
 
-      // 2. Query vector store for similar contracts
+      // 2. Extract keywords from law change for keyword overlap scoring
+      const lawKeywords = this.extractKeywords(lawText);
+
+      // 3. Query vector store for similar contracts
       const results = await this.vectorStore.queryContracts(lawEmbedding, topK);
 
-      // 3. Filter by similarity threshold
+      // 4. Calculate hybrid scores with false-positive reduction
       const relevantMatches = [];
 
       for (let i = 0; i < results.ids[0].length; i++) {
         const distance = results.distances[0][i];
-        const score = 1 - distance; // Convert distance to similarity
+        const embeddingSimilarity = 1 - distance;
 
-        if (score >= threshold) {
+        // Skip very low similarity early
+        if (embeddingSimilarity < 0.50) continue;
+
+        const metadata = results.metadatas[0][i];
+        const chunkText = results.documents[0][i] || '';
+
+        // --- HYBRID SCORING ---
+
+        // A) Embedding Similarity (60% weight)
+        const embeddingScore = embeddingSimilarity;
+
+        // B) Area Match (20% weight) - Does the legal area match the contract type?
+        const areaScore = this.calculateAreaMatch(change.area, metadata.contractType, chunkText);
+
+        // C) Keyword Overlap (20% weight)
+        const keywordScore = this.calculateKeywordOverlap(lawKeywords, chunkText);
+
+        // Weighted hybrid score
+        const hybridScore = (embeddingScore * 0.60) + (areaScore * 0.20) + (keywordScore * 0.20);
+
+        // --- FALSE-POSITIVE REDUCTION ---
+        // Minimum requirements before sending an alert:
+        // 1. Embedding similarity >= baseThreshold (0.70)
+        // 2. AND at least one of:
+        //    a) Area match (areaScore > 0)
+        //    b) At least 1 keyword overlap (keywordScore > 0)
+        //    c) Embedding similarity >= 0.85 (so strong that area/keyword don't matter)
+        const passesFilter = embeddingSimilarity >= baseThreshold &&
+          (areaScore > 0 || keywordScore > 0 || embeddingSimilarity >= 0.85);
+
+        if (passesFilter) {
           relevantMatches.push({
-            contractId: results.metadatas[0][i].contractId,
-            userId: results.metadatas[0][i].userId,
-            contractName: results.metadatas[0][i].contractName,
-            score,
-            matchedChunk: results.documents[0][i],
-            chunkIndex: results.metadatas[0][i].chunkIndex
+            contractId: metadata.contractId,
+            userId: metadata.userId,
+            contractName: metadata.contractName,
+            score: hybridScore,
+            embeddingSimilarity,
+            areaScore,
+            keywordScore,
+            matchedChunk: chunkText,
+            chunkIndex: metadata.chunkIndex
           });
         }
       }
 
-      console.log(`   📊 Found ${relevantMatches.length} relevant contracts (threshold: ${threshold})`);
+      console.log(`   📊 Found ${relevantMatches.length} relevant contracts (hybrid threshold, base: ${baseThreshold})`);
 
-      // 4. Deduplicate by contractId (keep highest score)
+      // 5. Deduplicate by contractId (keep highest score)
       const uniqueContracts = this.deduplicateByContract(relevantMatches);
       console.log(`   📊 After deduplication: ${uniqueContracts.length} unique contracts`);
 
-      // 5. Send alerts
+      // 6. Send alerts
       let alertsSent = 0;
       for (const contract of uniqueContracts) {
         const sent = await this.sendAlert(contract, change);
@@ -325,6 +472,88 @@ class LegalPulseMonitor {
       console.error(`   ❌ Error processing law change "${change.title}":`, error);
       return { alertsSent: 0, contractsChecked: 0 };
     }
+  }
+
+  /**
+   * Extract keywords from law text for overlap scoring
+   */
+  extractKeywords(text) {
+    const lowerText = text.toLowerCase();
+    // German legal keywords grouped by area
+    const keywordPatterns = [
+      'kündigung', 'kündigungsfrist', 'arbeitsvertrag', 'arbeitnehmer', 'arbeitgeber',
+      'miete', 'mietvertrag', 'vermieter', 'mieter', 'nebenkosten', 'betriebskosten',
+      'kaufvertrag', 'gewährleistung', 'mangel', 'rücktritt', 'widerruf',
+      'datenschutz', 'dsgvo', 'personenbezogene daten', 'einwilligung', 'auftragsverarbeitung',
+      'agb', 'geschäftsbedingungen', 'klausel', 'vertragsstrafe',
+      'haftung', 'schadensersatz', 'gewährleistung', 'garantie',
+      'laufzeit', 'verlängerung', 'automatische verlängerung',
+      'abmahnung', 'fristlos', 'außerordentlich',
+      'vergütung', 'gehalt', 'entgelt', 'provision',
+      'wettbewerbsverbot', 'geheimhaltung', 'vertraulichkeit',
+      'insolvenz', 'gesellschaft', 'geschäftsführer', 'handelsregister',
+      'steuer', 'umsatzsteuer', 'einkommensteuer'
+    ];
+
+    return keywordPatterns.filter(keyword => lowerText.includes(keyword));
+  }
+
+  /**
+   * Calculate area match score between law change area and contract
+   */
+  calculateAreaMatch(lawArea, contractType, chunkText) {
+    if (!lawArea) return 0;
+
+    const lowerChunk = (chunkText || '').toLowerCase();
+    const lowerType = (contractType || '').toLowerCase();
+
+    // Direct area-to-contract-type mapping
+    const areaPatterns = {
+      'Arbeitsrecht': ['arbeit', 'anstellung', 'employment', 'beschäftigung', 'dienst'],
+      'Mietrecht': ['miet', 'miete', 'pacht', 'wohn', 'gewerberaum'],
+      'Kaufrecht': ['kauf', 'verkauf', 'lieferung', 'bestellung', 'purchase'],
+      'Vertragsrecht': ['vertrag', 'vereinbarung', 'contract', 'abkommen'],
+      'Datenschutz': ['datenschutz', 'dsgvo', 'privacy', 'daten', 'auftragsverarbeitung'],
+      'Verbraucherrecht': ['verbraucher', 'consumer', 'fernabsatz', 'widerruf'],
+      'Steuerrecht': ['steuer', 'tax', 'abgabe', 'finanzamt'],
+      'Gesellschaftsrecht': ['gesellschaft', 'gmbh', 'ag ', 'aktien', 'geschäftsführ'],
+      'Insolvenzrecht': ['insolvenz', 'gläubiger', 'schuldner', 'zahlungsunfähig'],
+      'Handelsrecht': ['handel', 'handels', 'kaufmann', 'hgb']
+    };
+
+    const patterns = areaPatterns[lawArea];
+    if (!patterns) return 0;
+
+    // Check if contract type or text matches the law's area
+    for (const pattern of patterns) {
+      if (lowerType.includes(pattern) || lowerChunk.includes(pattern)) {
+        return 1.0; // Full area match
+      }
+    }
+
+    return 0; // No area match
+  }
+
+  /**
+   * Calculate keyword overlap score between law keywords and contract chunk
+   */
+  calculateKeywordOverlap(lawKeywords, chunkText) {
+    if (!lawKeywords || lawKeywords.length === 0 || !chunkText) return 0;
+
+    const lowerChunk = chunkText.toLowerCase();
+    let matchCount = 0;
+
+    for (const keyword of lawKeywords) {
+      if (lowerChunk.includes(keyword)) {
+        matchCount++;
+      }
+    }
+
+    // Normalize: at least 1 keyword match = some score, more = higher
+    if (matchCount === 0) return 0;
+    if (matchCount === 1) return 0.4;
+    if (matchCount === 2) return 0.7;
+    return 1.0; // 3+ keywords
   }
 
   /**

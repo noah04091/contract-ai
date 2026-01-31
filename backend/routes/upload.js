@@ -9,6 +9,9 @@ const path = require("path");
 
 // 🧠 Legal Lens Vorverarbeitung (für sofortiges Laden in Legal Lens)
 const { preprocessContract } = require("../services/legalLens/clausePreprocessor");
+// 🔍 Vector Embedding für Legal Pulse Monitoring
+const { embedContractAsync } = require("../services/contractEmbedder");
+const { extractTextFromBuffer } = require("../services/textExtractor");
 
 const router = express.Router();
 
@@ -323,6 +326,28 @@ router.post("/", uploadMiddleware.single("file"), async (req, res) => {
     }).catch(err => {
       console.error(`❌ [${requestId}] Legal Lens Vorverarbeitung Exception:`, err.message);
     });
+
+    // 🔍 VECTOR EMBEDDING: Text extrahieren und für Legal Pulse Monitoring embedden
+    // Läuft async - blockiert die Response nicht
+    (async () => {
+      try {
+        const fileBuffer = await fs.readFile(req.file.path);
+        const mimetype = req.file.mimetype || 'application/pdf';
+        const { text } = await extractTextFromBuffer(fileBuffer, mimetype);
+        if (text && text.trim().length > 50) {
+          embedContractAsync(contractId.toString(), text, {
+            userId: req.user.userId,
+            contractName: fixedFilename,
+            contractType: 'unknown'
+          });
+          console.log(`🔍 [${requestId}] Contract embedding triggered for uploaded contract ${contractId}`);
+        }
+      } catch (embedErr) {
+        // File may already be cleaned up if S3 upload succeeded - that's OK
+        // The contract will be embedded when analysis runs
+        console.log(`⏭️ [${requestId}] Upload embedding skipped (file may be cleaned up): ${embedErr.message}`);
+      }
+    })();
 
     // Cleanup local file if uploaded to S3
     if (cleanupLocalFile) {

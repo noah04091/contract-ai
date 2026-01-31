@@ -1,18 +1,19 @@
-// 📁 backend/services/vectorStore.js
-// In-Memory Vector Store with MongoDB Persistence
+// backend/services/vectorStore.js
+// Hybrid Vector Store: MongoDB Atlas Vector Search with In-Memory Fallback
 
 const { MongoClient } = require("mongodb");
 
 class VectorStore {
   constructor() {
-    this.contractVectors = new Map(); // contractId_chunkIdx -> {embedding, metadata, text}
-    this.lawVectors = new Map(); // lawId -> {embedding, metadata, text}
+    this.contractVectors = new Map(); // In-memory fallback
+    this.lawVectors = new Map();
     this.mongoClient = null;
     this.db = null;
+    this.atlasVectorSearchAvailable = false; // Detected at init
   }
 
   /**
-   * Initialize MongoDB connection
+   * Initialize MongoDB connection and detect Atlas Vector Search capability
    */
   async init() {
     try {
@@ -25,20 +26,58 @@ class VectorStore {
       await this.mongoClient.connect();
       this.db = this.mongoClient.db("contract_ai");
 
-      // Create collections if they don't exist
+      // Create standard indexes
       await this.db.collection("vector_contracts").createIndex({ contractId: 1 });
       await this.db.collection("vector_laws").createIndex({ lawId: 1 });
       await this.db.collection("vector_laws").createIndex({ updatedAt: -1 });
 
       console.log("✅ [VECTOR-STORE] MongoDB connected");
 
-      // Load existing vectors into memory
+      // Detect Atlas Vector Search capability
+      await this.detectAtlasVectorSearch();
+
+      // Load existing vectors into memory (always needed as fallback)
       await this.loadFromMongoDB();
 
-      console.log("✅ [VECTOR-STORE] Initialized with", this.contractVectors.size, "contract chunks");
+      const mode = this.atlasVectorSearchAvailable ? 'Atlas Vector Search' : 'In-Memory';
+      console.log(`✅ [VECTOR-STORE] Initialized (${mode}) with ${this.contractVectors.size} contract chunks`);
     } catch (error) {
       console.error("❌ [VECTOR-STORE] Initialization error:", error);
       throw error;
+    }
+  }
+
+  /**
+   * Detect if MongoDB Atlas Vector Search ($vectorSearch) is available
+   */
+  async detectAtlasVectorSearch() {
+    // Can be forced via env var
+    if (process.env.ATLAS_VECTOR_SEARCH === 'false') {
+      console.log("ℹ️  [VECTOR-STORE] Atlas Vector Search disabled via env");
+      this.atlasVectorSearchAvailable = false;
+      return;
+    }
+
+    try {
+      // Try to list search indexes on vector_contracts
+      const collection = this.db.collection("vector_contracts");
+      const indexes = await collection.listSearchIndexes().toArray();
+
+      const hasVectorIndex = indexes.some(idx =>
+        idx.type === 'vectorSearch' || idx.name === 'contract_embedding_index'
+      );
+
+      if (hasVectorIndex) {
+        this.atlasVectorSearchAvailable = true;
+        console.log("✅ [VECTOR-STORE] Atlas Vector Search detected and available");
+      } else {
+        console.log("ℹ️  [VECTOR-STORE] No vector search index found, using in-memory fallback");
+        console.log("   To enable Atlas Vector Search, create an index named 'contract_embedding_index'");
+      }
+    } catch (error) {
+      // listSearchIndexes() fails on non-Atlas deployments
+      console.log("ℹ️  [VECTOR-STORE] Atlas Vector Search not available (local/non-Atlas), using in-memory");
+      this.atlasVectorSearchAvailable = false;
     }
   }
 
@@ -81,7 +120,7 @@ class VectorStore {
     const bulkOps = [];
 
     for (const contract of contracts) {
-      // Store in memory
+      // Store in memory (always, for fallback)
       this.contractVectors.set(contract.id, {
         embedding: contract.embedding,
         metadata: contract.metadata,
@@ -159,15 +198,78 @@ class VectorStore {
 
   /**
    * Query contracts by similarity
-   * @param {number[]} queryEmbedding - Query vector
-   * @param {number} topK - Number of results to return
-   * @param {object} filters - Metadata filters (e.g., {userId: '123'})
-   * @returns {object} Results with ids, distances, metadatas, documents
+   * Uses Atlas Vector Search if available, falls back to in-memory
    */
   async queryContracts(queryEmbedding, topK = 30, filters = {}) {
+    // Try Atlas Vector Search first
+    if (this.atlasVectorSearchAvailable) {
+      try {
+        return await this.queryContractsAtlas(queryEmbedding, topK, filters);
+      } catch (error) {
+        console.warn(`⚠️ [VECTOR-STORE] Atlas Vector Search failed, falling back to in-memory:`, error.message);
+      }
+    }
+
+    // In-memory fallback
+    return this.queryContractsInMemory(queryEmbedding, topK, filters);
+  }
+
+  /**
+   * Atlas Vector Search query for contracts
+   */
+  async queryContractsAtlas(queryEmbedding, topK, filters) {
+    const pipeline = [
+      {
+        $vectorSearch: {
+          index: "contract_embedding_index",
+          path: "embedding",
+          queryVector: queryEmbedding,
+          numCandidates: topK * 5, // Over-fetch for better results
+          limit: topK
+        }
+      },
+      {
+        $addFields: {
+          searchScore: { $meta: "vectorSearchScore" }
+        }
+      }
+    ];
+
+    // Apply userId filter if provided
+    if (filters.userId) {
+      pipeline.push({
+        $match: { "metadata.userId": filters.userId }
+      });
+    }
+
+    pipeline.push({
+      $project: {
+        id: 1,
+        metadata: 1,
+        text: 1,
+        searchScore: 1
+      }
+    });
+
+    const results = await this.db.collection("vector_contracts")
+      .aggregate(pipeline)
+      .toArray();
+
+    // Format to match existing API structure
+    return {
+      ids: [results.map(r => r.id)],
+      distances: [results.map(r => 1 - (r.searchScore || 0))], // Convert score to distance
+      metadatas: [results.map(r => r.metadata)],
+      documents: [results.map(r => r.text)]
+    };
+  }
+
+  /**
+   * In-memory fallback query for contracts
+   */
+  queryContractsInMemory(queryEmbedding, topK, filters) {
     const results = [];
 
-    // Calculate cosine similarity for all contract vectors
     for (const [id, data] of this.contractVectors.entries()) {
       // Apply filters
       if (filters.userId && data.metadata.userId !== filters.userId) {
@@ -175,7 +277,7 @@ class VectorStore {
       }
 
       const similarity = this.cosineSimilarity(queryEmbedding, data.embedding);
-      const distance = 1 - similarity; // Convert to distance
+      const distance = 1 - similarity;
 
       results.push({
         id,
@@ -185,11 +287,9 @@ class VectorStore {
       });
     }
 
-    // Sort by distance (ascending) and take top K
     results.sort((a, b) => a.distance - b.distance);
     const topResults = results.slice(0, topK);
 
-    // Format results to match Chroma API structure
     return {
       ids: [topResults.map(r => r.id)],
       distances: [topResults.map(r => r.distance)],
@@ -200,11 +300,65 @@ class VectorStore {
 
   /**
    * Query laws by similarity
-   * @param {number[]} queryEmbedding - Query vector
-   * @param {number} topK - Number of results to return
-   * @returns {object} Results with ids, distances, metadatas, documents
    */
   async queryLaws(queryEmbedding, topK = 10) {
+    // Try Atlas Vector Search first
+    if (this.atlasVectorSearchAvailable) {
+      try {
+        return await this.queryLawsAtlas(queryEmbedding, topK);
+      } catch (error) {
+        console.warn(`⚠️ [VECTOR-STORE] Atlas law search failed, falling back to in-memory:`, error.message);
+      }
+    }
+
+    return this.queryLawsInMemory(queryEmbedding, topK);
+  }
+
+  /**
+   * Atlas Vector Search query for laws
+   */
+  async queryLawsAtlas(queryEmbedding, topK) {
+    const pipeline = [
+      {
+        $vectorSearch: {
+          index: "law_embedding_index",
+          path: "embedding",
+          queryVector: queryEmbedding,
+          numCandidates: topK * 5,
+          limit: topK
+        }
+      },
+      {
+        $addFields: {
+          searchScore: { $meta: "vectorSearchScore" }
+        }
+      },
+      {
+        $project: {
+          id: 1,
+          metadata: 1,
+          text: 1,
+          searchScore: 1
+        }
+      }
+    ];
+
+    const results = await this.db.collection("vector_laws")
+      .aggregate(pipeline)
+      .toArray();
+
+    return {
+      ids: [results.map(r => r.id)],
+      distances: [results.map(r => 1 - (r.searchScore || 0))],
+      metadatas: [results.map(r => r.metadata)],
+      documents: [results.map(r => r.text)]
+    };
+  }
+
+  /**
+   * In-memory fallback query for laws
+   */
+  queryLawsInMemory(queryEmbedding, topK) {
     const results = [];
 
     for (const [id, data] of this.lawVectors.entries()) {
@@ -232,9 +386,6 @@ class VectorStore {
 
   /**
    * Calculate cosine similarity between two vectors
-   * @param {number[]} vecA
-   * @param {number[]} vecB
-   * @returns {number} similarity score (0-1)
    */
   cosineSimilarity(vecA, vecB) {
     if (vecA.length !== vecB.length) {
@@ -263,7 +414,6 @@ class VectorStore {
 
   /**
    * Delete contract vectors
-   * @param {string} contractId
    */
   async deleteContractVectors(contractId) {
     // Delete from memory
@@ -285,7 +435,8 @@ class VectorStore {
   getStats() {
     return {
       totalContractChunks: this.contractVectors.size,
-      totalLawSections: this.lawVectors.size
+      totalLawSections: this.lawVectors.size,
+      atlasVectorSearch: this.atlasVectorSearchAvailable
     };
   }
 

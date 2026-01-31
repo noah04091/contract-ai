@@ -386,4 +386,400 @@ router.get("/categories", verifyToken, async (req, res) => {
   }
 });
 
+// ═══════════════════════════════════════════════════════════════
+// 📊 AUDIT REPORT - PDF Export
+// ═══════════════════════════════════════════════════════════════
+
+router.get("/report/:contractId", verifyToken, requirePremium, async (req, res) => {
+  try {
+    const contractId = req.params.contractId;
+
+    if (!ObjectId.isValid(contractId)) {
+      return res.status(400).json({ success: false, message: "Ungültige Vertrags-ID" });
+    }
+
+    // Load contract
+    const database = require("../config/database");
+    const db = await database.connect();
+    const contract = await db.collection("contracts").findOne({
+      _id: new ObjectId(contractId),
+      userId: new ObjectId(req.user.userId)
+    });
+
+    if (!contract) {
+      return res.status(404).json({ success: false, message: "Vertrag nicht gefunden" });
+    }
+
+    if (!contract.legalPulse) {
+      return res.status(400).json({ success: false, message: "Keine Legal Pulse Analyse vorhanden" });
+    }
+
+    // Generate PDF
+    const { generateLegalPulseReport } = require("../services/legalPulseReportGenerator");
+    const pdfBuffer = await generateLegalPulseReport(contract);
+
+    // Send PDF
+    const safeName = (contract.name || 'Vertrag').replace(/[^a-zA-Z0-9äöüÄÖÜß\-_\s]/g, '').substring(0, 50);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="Legal-Pulse-Report-${safeName}.pdf"`);
+    res.send(pdfBuffer);
+
+    console.log(`✅ [LEGAL-PULSE:REPORT] PDF generiert für Vertrag ${contractId}`);
+
+  } catch (error) {
+    console.error("❌ [LEGAL-PULSE:REPORT] Fehler:", error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Erstellen des Reports",
+      error: error.message
+    });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// 🏥 HEALTH CHECK ENDPOINT (V5)
+// ═══════════════════════════════════════════════════════════════
+
+router.get("/health", verifyToken, async (req, res) => {
+  try {
+    const database = require("../config/database");
+    const db = await database.connect();
+
+    // Last successful monitoring run
+    const lastHealth = await db.collection("monitoring_health").findOne(
+      { service: 'legal_pulse', lastRunStatus: 'success' },
+      { sort: { lastRunAt: -1 } }
+    );
+
+    // Last run (any status)
+    const lastRun = await db.collection("monitoring_health").findOne(
+      { service: 'legal_pulse' },
+      { sort: { lastRunAt: -1 } }
+    );
+
+    // Feed health stats
+    let feedStats = { active: 0, errored: 0, totalItems: 0 };
+    try {
+      const rssService = require("../services/rssService");
+      const healthReport = rssService.getFeedHealthReport();
+      feedStats = {
+        active: healthReport.filter(f => f.enabled && f.consecutiveFailures < 10).length,
+        errored: healthReport.filter(f => f.consecutiveFailures >= 3).length,
+        totalFeeds: healthReport.length,
+        feeds: healthReport.map(f => ({
+          name: f.name,
+          enabled: f.enabled,
+          failures: f.consecutiveFailures,
+          lastSuccess: f.lastSuccessfulFetch,
+          lastError: f.lastError
+        }))
+      };
+    } catch (e) {
+      feedStats.error = e.message;
+    }
+
+    // Vector store stats
+    const contractChunks = await db.collection("vector_contracts").countDocuments();
+    const lawSections = await db.collection("vector_laws").countDocuments();
+    const indexedContracts = await db.collection("contracts").countDocuments({
+      lastIndexedAt: { $exists: true, $ne: null }
+    });
+    const totalContracts = await db.collection("contracts").countDocuments({});
+
+    // Digest queue stats
+    const pendingDigests = await db.collection("digest_queue").countDocuments({ sent: false });
+
+    // Stale detection
+    const hoursAgo = lastHealth
+      ? (Date.now() - new Date(lastHealth.lastRunAt).getTime()) / (1000 * 60 * 60)
+      : null;
+
+    const status = !lastHealth ? 'unknown'
+      : hoursAgo <= 24 ? 'healthy'
+      : hoursAgo <= 48 ? 'warning'
+      : 'critical';
+
+    res.json({
+      success: true,
+      health: {
+        status,
+        lastSuccessfulRun: lastHealth?.lastRunAt || null,
+        lastRunStatus: lastRun?.lastRunStatus || null,
+        lastRunError: lastRun?.lastRunStatus === 'error' ? lastRun.error : null,
+        hoursAgo: hoursAgo ? parseFloat(hoursAgo.toFixed(1)) : null,
+        nextExpectedRun: lastHealth?.nextExpectedRun || null,
+        feeds: feedStats,
+        vectorStore: {
+          contractChunks,
+          lawSections,
+          indexedContracts,
+          totalContracts,
+          indexCoverage: totalContracts > 0
+            ? parseFloat(((indexedContracts / totalContracts) * 100).toFixed(1))
+            : 0
+        },
+        pendingDigests,
+        lastStats: lastHealth ? {
+          lawChangesProcessed: lastHealth.lawChangesProcessed,
+          contractsChecked: lastHealth.contractsChecked,
+          alertsSent: lastHealth.alertsSent,
+          duration: lastHealth.duration
+        } : null
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ [HEALTH] Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Laden des Health-Status",
+      error: error.message
+    });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// 📜 ALERT HISTORY ENDPOINT (V7)
+// ═══════════════════════════════════════════════════════════════
+
+router.get("/alerts", verifyToken, async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+    const offset = parseInt(req.query.offset) || 0;
+    const severity = req.query.severity; // optional filter
+    const unreadOnly = req.query.unread === 'true';
+
+    const database = require("../config/database");
+    const db = await database.connect();
+    const notificationsCollection = db.collection("pulse_notifications");
+
+    // Build query
+    const query = { userId: req.user.userId };
+    if (severity) {
+      query.severity = severity;
+    }
+    if (unreadOnly) {
+      query.readAt = { $exists: false };
+    }
+
+    // Get total count
+    const total = await notificationsCollection.countDocuments(query);
+
+    // Get paginated alerts
+    const alerts = await notificationsCollection
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip(offset)
+      .limit(limit)
+      .toArray();
+
+    // Also get unread count
+    const unreadCount = await notificationsCollection.countDocuments({
+      userId: req.user.userId,
+      readAt: { $exists: false }
+    });
+
+    res.json({
+      success: true,
+      alerts: alerts.map(a => ({
+        _id: a._id,
+        contractId: a.contractId,
+        contractName: a.contractName,
+        lawTitle: a.lawTitle,
+        lawArea: a.lawArea,
+        score: a.score,
+        severity: a.severity,
+        explanation: a.explanation,
+        read: !!a.readAt,
+        createdAt: a.createdAt
+      })),
+      pagination: {
+        total,
+        offset,
+        limit,
+        hasMore: offset + limit < total
+      },
+      unreadCount
+    });
+
+  } catch (error) {
+    console.error("❌ [ALERTS] Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Laden der Alert-Historie",
+      error: error.message
+    });
+  }
+});
+
+// Mark alerts as read
+router.put("/alerts/read", verifyToken, async (req, res) => {
+  try {
+    const { alertIds } = req.body;
+
+    if (!Array.isArray(alertIds) || alertIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "alertIds Array erforderlich"
+      });
+    }
+
+    const database = require("../config/database");
+    const db = await database.connect();
+
+    const result = await db.collection("pulse_notifications").updateMany(
+      {
+        _id: { $in: alertIds.map(id => new ObjectId(id)) },
+        userId: req.user.userId
+      },
+      { $set: { readAt: new Date() } }
+    );
+
+    res.json({
+      success: true,
+      markedAsRead: result.modifiedCount
+    });
+
+  } catch (error) {
+    console.error("❌ [ALERTS] Mark read error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Markieren als gelesen",
+      error: error.message
+    });
+  }
+});
+
+// ============================================================
+// WEEKLY LEGAL CHECK ENDPOINTS
+// ============================================================
+
+/**
+ * GET /weekly-checks - All weekly checks for the user (last 4 weeks)
+ */
+router.get("/weekly-checks", verifyToken, async (req, res) => {
+  try {
+    const db = req.app.locals.db;
+    const userId = new ObjectId(req.user.userId);
+    const fourWeeksAgo = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000);
+
+    const checks = await db.collection("weekly_legal_checks")
+      .find({
+        userId,
+        checkDate: { $gte: fourWeeksAgo }
+      })
+      .sort({ checkDate: -1 })
+      .toArray();
+
+    // Group by contract for easier frontend consumption
+    const byContract = {};
+    for (const check of checks) {
+      const contractId = check.contractId.toString();
+      if (!byContract[contractId]) {
+        byContract[contractId] = {
+          contractId,
+          contractName: check.contractName,
+          latestCheck: check,
+          history: []
+        };
+      }
+      byContract[contractId].history.push({
+        checkDate: check.checkDate,
+        overallStatus: check.stage2Results?.overallStatus || 'aktuell',
+        findingsCount: check.stage2Results?.findings?.length || 0,
+        summary: check.stage2Results?.summary || ''
+      });
+    }
+
+    res.json({
+      success: true,
+      contracts: Object.values(byContract),
+      totalChecks: checks.length,
+      period: { from: fourWeeksAgo, to: new Date() }
+    });
+  } catch (error) {
+    console.error("❌ Weekly checks fetch error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Laden der Wöchentlichen Rechtschecks",
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /weekly-check/:contractId - Latest weekly check for a specific contract
+ */
+router.get("/weekly-check/:contractId", verifyToken, async (req, res) => {
+  try {
+    const db = req.app.locals.db;
+    const { contractId } = req.params;
+
+    if (!ObjectId.isValid(contractId)) {
+      return res.status(400).json({ success: false, message: "Ungültige Contract-ID" });
+    }
+
+    const check = await db.collection("weekly_legal_checks")
+      .findOne(
+        {
+          userId: new ObjectId(req.user.userId),
+          contractId: new ObjectId(contractId)
+        },
+        { sort: { checkDate: -1 } }
+      );
+
+    if (!check) {
+      return res.json({
+        success: true,
+        check: null,
+        message: "Noch kein Rechtscheck für diesen Vertrag durchgeführt"
+      });
+    }
+
+    res.json({ success: true, check });
+  } catch (error) {
+    console.error("❌ Weekly check fetch error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Laden des Rechtschecks",
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /weekly-check/trigger - Manually trigger weekly check (admin/test)
+ */
+router.post("/weekly-check/trigger", verifyToken, requirePremium, legalPulseRateLimiter, async (req, res) => {
+  try {
+    const WeeklyLegalCheck = require('../jobs/weeklyLegalCheck');
+    const weeklyCheck = new WeeklyLegalCheck();
+    await weeklyCheck.init();
+
+    // Only check this user's contracts
+    const db = req.app.locals.db;
+    const user = await db.collection("users").findOne({ _id: new ObjectId(req.user.userId) });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User nicht gefunden" });
+    }
+
+    const result = await weeklyCheck.checkUserContracts(user);
+    await weeklyCheck.close();
+
+    res.json({
+      success: true,
+      message: "Wöchentlicher Rechtscheck abgeschlossen",
+      result
+    });
+  } catch (error) {
+    console.error("❌ Manual weekly check error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim manuellen Rechtscheck",
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;

@@ -11,7 +11,8 @@ import LegalPulseFeedWidget from "../components/LegalPulseFeedWidget";
 import { useLegalPulseFeed } from "../hooks/useLegalPulseFeed";
 import { WelcomePopup } from "../components/Tour";
 import OneClickCancelModal from "../components/OneClickCancelModal";
-import { Activity, Zap, XCircle, Bell, ArrowRight } from "lucide-react";
+import SaveClauseModal from "../components/LegalLens/SaveClauseModal";
+import { Activity, Zap, XCircle, Bell, ArrowRight, Download, Shield, AlertTriangle, CheckCircle, Clock } from "lucide-react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   AreaChart, Area
@@ -71,6 +72,9 @@ interface RiskDetail {
   solution: string;
   impact: string;
   recommendation: string;
+  affectedClauseText?: string;
+  replacementText?: string;
+  legalBasis?: string;
 }
 
 interface RecommendationStatus {
@@ -86,6 +90,9 @@ interface RiskObject {
   solution?: string;
   recommendation?: string;
   affectedClauses?: string[];
+  affectedClauseText?: string;
+  replacementText?: string;
+  legalBasis?: string;
 }
 
 // Type for recommendation objects (from RecommendationCard component)
@@ -96,11 +103,94 @@ interface RecommendationObject {
   effort?: string;
   impact?: string;
   steps?: string[];
+  affectedClauseRef?: string;
+  suggestedText?: string;
+  legalBasis?: string;
 }
 
 // Union types for backwards compatibility
 type RiskInput = string | RiskObject;
 type RecommendationInput = string | RecommendationObject;
+
+// Monitoring Health Types (V7)
+interface MonitoringHealth {
+  status: 'healthy' | 'warning' | 'critical' | 'unknown';
+  lastSuccessfulRun: string | null;
+  hoursAgo: number | null;
+  nextExpectedRun: string | null;
+  feeds: {
+    active: number;
+    errored: number;
+    totalFeeds: number;
+  };
+  vectorStore: {
+    contractChunks: number;
+    lawSections: number;
+    indexedContracts: number;
+    totalContracts: number;
+    indexCoverage: number;
+  };
+  pendingDigests: number;
+  lastStats: {
+    lawChangesProcessed: number;
+    contractsChecked: number;
+    alertsSent: number;
+    duration: number;
+  } | null;
+}
+
+interface PulseAlert {
+  _id: string;
+  contractId: string;
+  contractName: string;
+  lawTitle: string;
+  lawArea: string | null;
+  score: number;
+  severity: 'critical' | 'high' | 'medium' | 'low';
+  explanation: string | null;
+  read: boolean;
+  createdAt: string;
+}
+
+// Weekly Legal Check Types
+interface WeeklyCheckFinding {
+  type: 'law_change' | 'risk' | 'improvement' | 'compliance';
+  severity: 'info' | 'warning' | 'critical';
+  title: string;
+  description: string;
+  affectedClause?: string;
+  legalBasis?: string;
+  recommendation?: string;
+}
+
+interface WeeklyCheckContract {
+  contractId: string;
+  contractName: string;
+  latestCheck: {
+    checkDate: string;
+    stage1Results: {
+      lawChangesFound: number;
+      relevantChanges: Array<{ lawId: string; title: string; score: number }>;
+    };
+    stage2Results: {
+      hasChanges: boolean;
+      overallStatus: 'aktuell' | 'handlungsbedarf' | 'kritisch';
+      findings: WeeklyCheckFinding[];
+      summary: string;
+    };
+  };
+  history: Array<{
+    checkDate: string;
+    overallStatus: string;
+    findingsCount: number;
+    summary: string;
+  }>;
+}
+
+interface WeeklyChecksData {
+  contracts: WeeklyCheckContract[];
+  totalChecks: number;
+}
 
 // ML Forecast Types
 interface ForecastEvent {
@@ -206,6 +296,29 @@ export default function LegalPulse() {
   const [externalSearchOffset, setExternalSearchOffset] = useState(0);
   const [heroMinimized, setHeroMinimized] = useState(false);
 
+  // Reminder State
+  const [showReminderPicker, setShowReminderPicker] = useState(false);
+  const [reminderDate, setReminderDate] = useState('');
+
+  // Save to Library State
+  const [showSaveClauseModal, setShowSaveClauseModal] = useState(false);
+  const [clauseToSave, setClauseToSave] = useState<{ text: string; sourceContractId?: string; sourceContractName?: string; originalAnalysis?: { riskLevel: 'low' | 'medium' | 'high'; riskScore: number; mainRisk: string } } | null>(null);
+
+  // Export Report State
+  const [isExportingReport, setIsExportingReport] = useState(false);
+
+  // V7: Monitoring Health & Alert History
+  const [monitoringHealth, setMonitoringHealth] = useState<MonitoringHealth | null>(null);
+  const [alertHistory, setAlertHistory] = useState<PulseAlert[]>([]);
+  const [alertsUnreadCount, setAlertsUnreadCount] = useState(0);
+  const [showAlertHistory, setShowAlertHistory] = useState(false);
+
+  // Weekly Legal Check State
+  const [weeklyChecks, setWeeklyChecks] = useState<WeeklyChecksData | null>(null);
+  const [weeklyChecksLoading, setWeeklyChecksLoading] = useState(false);
+  const [showWeeklyChecks, setShowWeeklyChecks] = useState(false);
+  const [expandedWeeklyCheck, setExpandedWeeklyCheck] = useState<string | null>(null);
+
   // ML Forecast State
   const [forecastData, setForecastData] = useState<ForecastData | null>(null);
   const [forecastLoading, setForecastLoading] = useState(false);
@@ -260,10 +373,95 @@ export default function LegalPulse() {
   }, [canAccessLegalPulse]);
 
   // ✅ REMOVED: Mock data logic - now using real data only
-  // Contracts without Legal Pulse data will show "Analysis Pending" state in UI
 
-  // Detaillierte Risiko-Daten
-  // ✅ getRiskDetails removed - now using backend data directly
+  // V7: Fetch Monitoring Health
+  const fetchMonitoringHealth = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const API_BASE = import.meta.env.VITE_API_URL || "";
+      const res = await fetch(`${API_BASE}/api/legal-pulse/health`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) setMonitoringHealth(data.health);
+      }
+    } catch (err) {
+      console.error("Health fetch error:", err);
+    }
+  };
+
+  // V7: Fetch Alert History
+  const fetchAlertHistory = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const API_BASE = import.meta.env.VITE_API_URL || "";
+      const res = await fetch(`${API_BASE}/api/legal-pulse/alerts?limit=20`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setAlertHistory(data.alerts);
+          setAlertsUnreadCount(data.unreadCount);
+        }
+      }
+    } catch (err) {
+      console.error("Alert history fetch error:", err);
+    }
+  };
+
+  // V7: Mark alerts as read
+  const markAlertsAsRead = async (alertIds: string[]) => {
+    try {
+      const token = localStorage.getItem("token");
+      const API_BASE = import.meta.env.VITE_API_URL || "";
+      await fetch(`${API_BASE}/api/legal-pulse/alerts/read`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ alertIds })
+      });
+      // Update local state
+      setAlertHistory(prev => prev.map(a =>
+        alertIds.includes(a._id) ? { ...a, read: true } : a
+      ));
+      setAlertsUnreadCount(prev => Math.max(0, prev - alertIds.length));
+    } catch (err) {
+      console.error("Mark alerts read error:", err);
+    }
+  };
+
+  // Fetch Weekly Legal Checks
+  const fetchWeeklyChecks = async () => {
+    setWeeklyChecksLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const API_BASE = import.meta.env.VITE_API_URL || "";
+      const res = await fetch(`${API_BASE}/api/legal-pulse/weekly-checks`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) setWeeklyChecks(data);
+      }
+    } catch (err) {
+      console.error("Weekly checks fetch error:", err);
+    } finally {
+      setWeeklyChecksLoading(false);
+    }
+  };
+
+  // V7: Fetch health, alerts, and weekly checks on mount (only for premium users)
+  useEffect(() => {
+    if (canAccessLegalPulse) {
+      fetchMonitoringHealth();
+      fetchAlertHistory();
+      fetchWeeklyChecks();
+    }
+  }, [canAccessLegalPulse]);
 
   // ✅ Fetch Contracts mit Server-seitiger Filterung
   const fetchContracts = async () => {
@@ -550,7 +748,10 @@ export default function LegalPulse() {
           severity: validateSeverity(risk.severity),
           solution: risk.solution || 'Lösung wird analysiert',
           impact: risk.impact || 'Auswirkungen werden geprüft',
-          recommendation: risk.recommendation || 'Empfehlung wird erstellt'
+          recommendation: risk.recommendation || 'Empfehlung wird erstellt',
+          affectedClauseText: typeof risk === 'object' ? risk.affectedClauseText : undefined,
+          replacementText: typeof risk === 'object' ? risk.replacementText : undefined,
+          legalBasis: typeof risk === 'object' ? risk.legalBasis : undefined
         };
 
     setSelectedRisk(riskDetail);
@@ -577,7 +778,10 @@ export default function LegalPulse() {
           severity: validateSeverity(risk.severity),
           solution: risk.solution || 'Lösung wird analysiert',
           impact: risk.impact || 'Auswirkungen werden geprüft',
-          recommendation: risk.recommendation || 'Empfehlung wird erstellt'
+          recommendation: risk.recommendation || 'Empfehlung wird erstellt',
+          affectedClauseText: typeof risk === 'object' ? risk.affectedClauseText : undefined,
+          replacementText: typeof risk === 'object' ? risk.replacementText : undefined,
+          legalBasis: typeof risk === 'object' ? risk.legalBasis : undefined
         };
 
     setSelectedRisk(riskDetail);
@@ -612,6 +816,73 @@ export default function LegalPulse() {
         recommendation: recText
       }
     });
+  };
+
+  // Save Risk to Clause Library
+  const handleSaveRiskToLibrary = (risk: RiskObject) => {
+    const parts = [
+      risk.affectedClauseText || risk.description || risk.title,
+      risk.replacementText ? `\n\nVorgeschlagener Ersatz:\n${risk.replacementText}` : '',
+      risk.legalBasis ? `\n\nRechtsgrundlage: ${risk.legalBasis}` : ''
+    ];
+
+    setClauseToSave({
+      text: parts.join(''),
+      sourceContractId: selectedContract?._id,
+      sourceContractName: selectedContract?.name,
+      originalAnalysis: {
+        riskLevel: risk.severity === 'critical' || risk.severity === 'high' ? 'high' : risk.severity === 'medium' ? 'medium' : 'low',
+        riskScore: risk.severity === 'critical' ? 90 : risk.severity === 'high' ? 75 : risk.severity === 'medium' ? 50 : 25,
+        mainRisk: risk.title
+      }
+    });
+    setShowSaveClauseModal(true);
+  };
+
+  // Save Recommendation to Clause Library
+  const handleSaveRecommendationToLibrary = (rec: RecommendationObject) => {
+    const parts = [
+      rec.suggestedText || rec.description || rec.title,
+      rec.affectedClauseRef ? `\n\nBetrifft: ${rec.affectedClauseRef}` : '',
+      rec.legalBasis ? `\n\nRechtsgrundlage: ${rec.legalBasis}` : ''
+    ];
+
+    setClauseToSave({
+      text: parts.join(''),
+      sourceContractId: selectedContract?._id,
+      sourceContractName: selectedContract?.name,
+      originalAnalysis: {
+        riskLevel: rec.priority === 'critical' || rec.priority === 'high' ? 'high' : rec.priority === 'medium' ? 'medium' : 'low',
+        riskScore: rec.priority === 'critical' ? 90 : rec.priority === 'high' ? 75 : rec.priority === 'medium' ? 50 : 25,
+        mainRisk: rec.title
+      }
+    });
+    setShowSaveClauseModal(true);
+  };
+
+  // Export Legal Pulse Report as PDF
+  const handleExportReport = async () => {
+    if (!selectedContract) return;
+    setIsExportingReport(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/legal-pulse/report/${selectedContract._id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Report generation failed');
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Legal-Pulse-Report-${selectedContract.name || 'Vertrag'}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setNotification({ message: 'Report wurde heruntergeladen', type: 'success' });
+    } catch {
+      setNotification({ message: 'Fehler beim Erstellen des Reports', type: 'error' });
+    } finally {
+      setIsExportingReport(false);
+    }
   };
 
   const handleContractCardClick = (contract: Contract) => {
@@ -1105,6 +1376,17 @@ export default function LegalPulse() {
             </svg>
             ML-Prognose
           </button>
+
+          {/* Export Report Button */}
+          <button
+            className={styles.exportReportButton}
+            onClick={handleExportReport}
+            disabled={isExportingReport}
+            title="Legal Pulse Audit-Report als PDF exportieren"
+          >
+            <Download size={14} />
+            {isExportingReport ? 'Wird erstellt...' : 'Report'}
+          </button>
         </div>
 
         {/* Quick Actions Bar - Shows for high-risk contracts */}
@@ -1236,6 +1518,7 @@ export default function LegalPulse() {
                     contractId={selectedContract._id}
                     onShowDetails={handleShowRiskDetails}
                     onShowSolution={handleShowSolution}
+                    onSaveToLibrary={handleSaveRiskToLibrary}
                     onFeedback={(feedback) => {
                       setNotification({
                         message: feedback === 'helpful'
@@ -1272,6 +1555,7 @@ export default function LegalPulse() {
                       isCompleted={isCompleted}
                       onMarkComplete={handleMarkRecommendationComplete}
                       onImplement={handleImplementRecommendation}
+                      onSaveToLibrary={handleSaveRecommendationToLibrary}
                       onFeedback={(feedback) => {
                         setNotification({
                           message: feedback === 'helpful'
@@ -1580,6 +1864,22 @@ export default function LegalPulse() {
                       <h4>⚠️ Auswirkungen</h4>
                       <p>{selectedRisk.impact}</p>
                     </div>
+
+                    {selectedRisk.affectedClauseText && (
+                      <div className={styles.riskDetailSection}>
+                        <h4>📄 Betroffene Klausel</h4>
+                        <div className={styles.clauseQuoteBlock}>
+                          {selectedRisk.affectedClauseText}
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedRisk.legalBasis && (
+                      <div className={styles.riskDetailSection}>
+                        <h4>⚖️ Rechtsgrundlage</h4>
+                        <p className={styles.legalBasisText}>{selectedRisk.legalBasis}</p>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <>
@@ -1593,8 +1893,91 @@ export default function LegalPulse() {
                       <h4>📋 Empfehlung</h4>
                       <p>{selectedRisk.recommendation}</p>
                     </div>
+
+                    {selectedRisk.replacementText && (
+                      <div className={styles.riskDetailSection}>
+                        <h4>✏️ Vorgeschlagener Ersatztext</h4>
+                        <div className={styles.replacementTextBlock}>
+                          {selectedRisk.replacementText}
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedRisk.legalBasis && (
+                      <div className={styles.riskDetailSection}>
+                        <h4>⚖️ Rechtsgrundlage</h4>
+                        <p className={styles.legalBasisText}>{selectedRisk.legalBasis}</p>
+                      </div>
+                    )}
                   </>
                 )}
+
+                {/* Reminder Section */}
+                <div className={styles.reminderSection}>
+                  {!showReminderPicker ? (
+                    <button
+                      className={styles.reminderButton}
+                      onClick={() => setShowReminderPicker(true)}
+                    >
+                      🔔 Erinnerung setzen
+                    </button>
+                  ) : (
+                    <div className={styles.reminderPicker}>
+                      <label>Erinnerungsdatum:</label>
+                      <input
+                        type="date"
+                        value={reminderDate}
+                        onChange={(e) => setReminderDate(e.target.value)}
+                        min={new Date().toISOString().split('T')[0]}
+                        className={styles.reminderDateInput}
+                      />
+                      <div className={styles.reminderPickerActions}>
+                        <button
+                          className={styles.secondaryButton}
+                          onClick={() => setShowReminderPicker(false)}
+                        >
+                          Abbrechen
+                        </button>
+                        <button
+                          className={styles.primaryButton}
+                          disabled={!reminderDate}
+                          onClick={async () => {
+                            if (!reminderDate || !selectedContract) return;
+                            try {
+                              const token = localStorage.getItem('token');
+                              const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/calendar/events`, {
+                                method: 'POST',
+                                headers: {
+                                  'Content-Type': 'application/json',
+                                  'Authorization': `Bearer ${token}`
+                                },
+                                body: JSON.stringify({
+                                  contractId: selectedContract._id,
+                                  title: `Risiko prüfen: ${selectedRisk.title}`,
+                                  description: `Legal Pulse Erinnerung: ${selectedRisk.description}`,
+                                  date: reminderDate,
+                                  type: 'reminder'
+                                })
+                              });
+                              const data = await res.json();
+                              if (data.success || res.ok) {
+                                setNotification({ message: 'Erinnerung erstellt!', type: 'success' });
+                                setShowReminderPicker(false);
+                                setReminderDate('');
+                              } else {
+                                setNotification({ message: 'Fehler beim Erstellen der Erinnerung', type: 'error' });
+                              }
+                            } catch {
+                              setNotification({ message: 'Fehler beim Erstellen der Erinnerung', type: 'error' });
+                            }
+                          }}
+                        >
+                          Erinnerung erstellen
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 <div className={styles.modalActions}>
                   <button
@@ -1623,12 +2006,31 @@ export default function LegalPulse() {
           </div>
         )}
 
+        {/* Save Clause Modal */}
+        {showSaveClauseModal && clauseToSave && (
+          <SaveClauseModal
+            clauseText={clauseToSave.text}
+            sourceContractId={clauseToSave.sourceContractId}
+            sourceContractName={clauseToSave.sourceContractName}
+            originalAnalysis={clauseToSave.originalAnalysis}
+            onClose={() => {
+              setShowSaveClauseModal(false);
+              setClauseToSave(null);
+            }}
+            onSaved={() => {
+              setShowSaveClauseModal(false);
+              setClauseToSave(null);
+              setNotification({ message: 'Klausel in Bibliothek gespeichert!', type: 'success' });
+            }}
+          />
+        )}
+
         {/* Bottom CTA */}
         <div className={styles.bottomCTA}>
           <div className={styles.ctaContent}>
             <h2>Bleiben Sie vorbereitet. Reagieren Sie jetzt.</h2>
             <p>Optimieren Sie Ihren Vertrag mit unserer KI-gestützten Lösung</p>
-            <button 
+            <button
               className={styles.primaryCTAButton}
               onClick={() => navigate('/optimizer')}
             >
@@ -1771,6 +2173,215 @@ export default function LegalPulse() {
             </svg>
             Mehr anzeigen
           </button>
+        </div>
+      )}
+
+      {/* V7: Monitoring Status Widget (Premium only) */}
+      {canAccessLegalPulse && monitoringHealth && (
+        <div className={styles.monitoringStatusBar}>
+          <div className={styles.monitoringStatusItem}>
+            {monitoringHealth.status === 'healthy' ? (
+              <CheckCircle size={16} className={styles.statusHealthy} />
+            ) : monitoringHealth.status === 'warning' ? (
+              <AlertTriangle size={16} className={styles.statusWarning} />
+            ) : monitoringHealth.status === 'critical' ? (
+              <XCircle size={16} className={styles.statusCritical} />
+            ) : (
+              <Clock size={16} className={styles.statusUnknown} />
+            )}
+            <span>
+              {monitoringHealth.lastSuccessfulRun
+                ? `Letzte Pr${String.fromCharCode(252)}fung: vor ${monitoringHealth.hoursAgo?.toFixed(0)}h`
+                : 'Noch keine Pr\u00fcfung durchgef\u00fchrt'}
+            </span>
+          </div>
+          <div className={styles.monitoringStatusItem}>
+            <Shield size={16} />
+            <span>{monitoringHealth.feeds.active} aktive Rechtsquellen</span>
+          </div>
+          <div className={styles.monitoringStatusItem}>
+            <Activity size={16} />
+            <span>{monitoringHealth.vectorStore.indexedContracts}/{monitoringHealth.vectorStore.totalContracts} Vertr{String.fromCharCode(228)}ge {String.fromCharCode(252)}berwacht</span>
+          </div>
+          {alertsUnreadCount > 0 && (
+            <button
+              className={styles.alertHistoryButton}
+              onClick={() => setShowAlertHistory(!showAlertHistory)}
+            >
+              <Bell size={16} />
+              <span>{alertsUnreadCount} neue Warnungen</span>
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* V7: Alert History Panel */}
+      {showAlertHistory && alertHistory.length > 0 && (
+        <div className={styles.alertHistoryPanel}>
+          <div className={styles.alertHistoryHeader}>
+            <h3>Vergangene Warnungen</h3>
+            <button onClick={() => {
+              const unreadIds = alertHistory.filter(a => !a.read).map(a => a._id);
+              if (unreadIds.length > 0) markAlertsAsRead(unreadIds);
+            }}>
+              Alle als gelesen markieren
+            </button>
+          </div>
+          <div className={styles.alertHistoryList}>
+            {alertHistory.map(alert => (
+              <div
+                key={alert._id}
+                className={`${styles.alertHistoryItem} ${!alert.read ? styles.alertUnread : ''}`}
+              >
+                <div className={styles.alertSeverityBadge} data-severity={alert.severity}>
+                  {alert.severity === 'critical' ? 'Kritisch' :
+                   alert.severity === 'high' ? 'Hoch' :
+                   alert.severity === 'medium' ? 'Mittel' : 'Niedrig'}
+                </div>
+                <div className={styles.alertContent}>
+                  <strong>{alert.lawTitle}</strong>
+                  <span className={styles.alertContract}>Betrifft: {alert.contractName}</span>
+                  {alert.explanation && (
+                    <p className={styles.alertExplanation}>{alert.explanation}</p>
+                  )}
+                </div>
+                <div className={styles.alertMeta}>
+                  <span>{new Date(alert.createdAt).toLocaleDateString('de-DE')}</span>
+                  <span className={styles.alertScore}>
+                    {(alert.score * 100).toFixed(0)}% Relevanz
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Weekly Legal Check Section */}
+      {canAccessLegalPulse && (
+        <div className={styles.weeklyCheckSection}>
+          <div className={styles.weeklyCheckHeader}>
+            <div className={styles.weeklyCheckTitle}>
+              <Shield size={20} />
+              <h3>W{String.fromCharCode(246)}chentlicher Rechtscheck</h3>
+              {weeklyChecks && weeklyChecks.contracts.length > 0 && (
+                <span className={styles.weeklyCheckBadge}>
+                  {weeklyChecks.contracts.filter(c => c.latestCheck.stage2Results.overallStatus !== 'aktuell').length} mit Handlungsbedarf
+                </span>
+              )}
+            </div>
+            <button
+              className={styles.weeklyCheckToggle}
+              onClick={() => {
+                if (!showWeeklyChecks && !weeklyChecks) fetchWeeklyChecks();
+                setShowWeeklyChecks(!showWeeklyChecks);
+              }}
+            >
+              {showWeeklyChecks ? 'Ausblenden' : 'Anzeigen'}
+            </button>
+          </div>
+
+          {showWeeklyChecks && (
+            <div className={styles.weeklyCheckContent}>
+              {weeklyChecksLoading ? (
+                <div className={styles.weeklyCheckLoading}>Lade Rechtschecks...</div>
+              ) : !weeklyChecks || weeklyChecks.contracts.length === 0 ? (
+                <div className={styles.weeklyCheckEmpty}>
+                  <p>Noch keine w{String.fromCharCode(246)}chentlichen Rechtschecks durchgef{String.fromCharCode(252)}hrt. Der erste Check erfolgt automatisch am n{String.fromCharCode(228)}chsten Sonntag.</p>
+                </div>
+              ) : (
+                <div className={styles.weeklyCheckList}>
+                  {weeklyChecks.contracts.map(contract => {
+                    const status = contract.latestCheck.stage2Results.overallStatus;
+                    const findings = contract.latestCheck.stage2Results.findings;
+                    const isExpanded = expandedWeeklyCheck === contract.contractId;
+
+                    return (
+                      <div
+                        key={contract.contractId}
+                        className={`${styles.weeklyCheckCard} ${styles[`weeklyStatus_${status}`] || ''}`}
+                      >
+                        <div
+                          className={styles.weeklyCheckCardHeader}
+                          onClick={() => setExpandedWeeklyCheck(isExpanded ? null : contract.contractId)}
+                        >
+                          <div className={styles.weeklyCheckCardInfo}>
+                            <span className={`${styles.weeklyStatusBadge} ${styles[`weeklyBadge_${status}`] || ''}`}>
+                              {status === 'aktuell' ? 'Aktuell' : status === 'handlungsbedarf' ? 'Handlungsbedarf' : 'Kritisch'}
+                            </span>
+                            <strong>{contract.contractName}</strong>
+                          </div>
+                          <div className={styles.weeklyCheckCardMeta}>
+                            <span>{findings.length} {findings.length === 1 ? 'Befund' : 'Befunde'}</span>
+                            <span>{new Date(contract.latestCheck.checkDate).toLocaleDateString('de-DE')}</span>
+                            <span className={styles.weeklyExpandIcon}>{isExpanded ? '\u25B2' : '\u25BC'}</span>
+                          </div>
+                        </div>
+
+                        {isExpanded && (
+                          <div className={styles.weeklyCheckDetails}>
+                            <p className={styles.weeklyCheckSummary}>
+                              {contract.latestCheck.stage2Results.summary}
+                            </p>
+
+                            {contract.latestCheck.stage1Results.relevantChanges.length > 0 && (
+                              <div className={styles.weeklyStage1}>
+                                <h5>Relevante Gesetzes{String.fromCharCode(228)}nderungen (letzte 7 Tage)</h5>
+                                <ul>
+                                  {contract.latestCheck.stage1Results.relevantChanges.map((change, idx) => (
+                                    <li key={idx}>
+                                      {change.title} <span className={styles.weeklyScore}>({(change.score * 100).toFixed(0)}% Relevanz)</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {findings.length > 0 && (
+                              <div className={styles.weeklyFindings}>
+                                <h5>KI-Analyse Befunde</h5>
+                                {findings.map((finding, idx) => (
+                                  <div key={idx} className={`${styles.weeklyFinding} ${styles[`findingSeverity_${finding.severity}`] || ''}`}>
+                                    <div className={styles.weeklyFindingHeader}>
+                                      <span className={`${styles.findingSeverityBadge} ${styles[`severity_${finding.severity}`] || ''}`}>
+                                        {finding.severity === 'critical' ? 'Kritisch' : finding.severity === 'warning' ? 'Warnung' : 'Info'}
+                                      </span>
+                                      <span className={styles.findingType}>
+                                        {finding.type === 'law_change' ? 'Gesetzes{String.fromCharCode(228)}nderung' :
+                                         finding.type === 'risk' ? 'Risiko' :
+                                         finding.type === 'compliance' ? 'Compliance' : 'Verbesserung'}
+                                      </span>
+                                      <strong>{finding.title}</strong>
+                                    </div>
+                                    <p>{finding.description}</p>
+                                    {finding.affectedClause && (
+                                      <div className={styles.findingClause}>
+                                        <strong>Betroffene Klausel:</strong> {finding.affectedClause}
+                                      </div>
+                                    )}
+                                    {finding.legalBasis && (
+                                      <div className={styles.findingLegal}>
+                                        <strong>Rechtsgrundlage:</strong> {finding.legalBasis}
+                                      </div>
+                                    )}
+                                    {finding.recommendation && (
+                                      <div className={styles.findingRecommendation}>
+                                        <strong>Empfehlung:</strong> {finding.recommendation}
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

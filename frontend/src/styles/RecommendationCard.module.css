@@ -116,6 +116,68 @@
   background: #059669;
 }
 
+.clauseRefBadge {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 3px 10px;
+  border-radius: 6px;
+  margin-left: auto;
+}
+
+.legalBasisInfo {
+  font-size: 0.85rem;
+  color: #6b7280;
+  background: #f9fafb;
+  border-left: 3px solid #d1d5db;
+  padding: 8px 12px;
+  margin-bottom: 16px;
+  border-radius: 0 6px 6px 0;
+}
+
+.suggestedTextSection {
+  margin-bottom: 16px;
+}
+
+.suggestedTextToggle {
+  background: none;
+  border: none;
+  color: #059669;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 0;
+  margin-bottom: 8px;
+}
+
+.suggestedTextToggle:hover {
+  color: #047857;
+}
+
+.suggestedTextBlock {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  padding: 14px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #064e3b;
+  font-family: 'Georgia', serif;
+  white-space: pre-wrap;
+}
+
+.recommendationActionButton.secondary {
+  border-color: #d1d5db;
+  color: #6b7280;
+}
+
+.recommendationActionButton.secondary:hover {
+  background: #f3f4f6;
+  color: #374151;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
 /* Responsive */
 
 @media (max-width: 768px) {
