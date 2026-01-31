@@ -2347,7 +2347,7 @@ export default function LegalPulse() {
                                         {finding.severity === 'critical' ? 'Kritisch' : finding.severity === 'warning' ? 'Warnung' : 'Info'}
                                       </span>
                                       <span className={styles.findingType}>
-                                        {finding.type === 'law_change' ? 'Gesetzes{String.fromCharCode(228)}nderung' :
+                                        {finding.type === 'law_change' ? `Gesetzes${String.fromCharCode(228)}nderung` :
                                          finding.type === 'risk' ? 'Risiko' :
                                          finding.type === 'compliance' ? 'Compliance' : 'Verbesserung'}
                                       </span>

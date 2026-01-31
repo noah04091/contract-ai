@@ -659,7 +659,8 @@ router.put("/alerts/read", verifyToken, async (req, res) => {
  */
 router.get("/weekly-checks", verifyToken, async (req, res) => {
   try {
-    const db = req.app.locals.db;
+    const database = require("../config/database");
+    const db = await database.connect();
     const userId = new ObjectId(req.user.userId);
     const fourWeeksAgo = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000);
 
@@ -712,7 +713,8 @@ router.get("/weekly-checks", verifyToken, async (req, res) => {
  */
 router.get("/weekly-check/:contractId", verifyToken, async (req, res) => {
   try {
-    const db = req.app.locals.db;
+    const database = require("../config/database");
+    const db = await database.connect();
     const { contractId } = req.params;
 
     if (!ObjectId.isValid(contractId)) {
@@ -757,7 +759,8 @@ router.post("/weekly-check/trigger", verifyToken, requirePremium, legalPulseRate
     await weeklyCheck.init();
 
     // Only check this user's contracts
-    const db = req.app.locals.db;
+    const database = require("../config/database");
+    const db = await database.connect();
     const user = await db.collection("users").findOne({ _id: new ObjectId(req.user.userId) });
 
     if (!user) {
