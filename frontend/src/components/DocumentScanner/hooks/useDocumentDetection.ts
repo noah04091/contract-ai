@@ -301,10 +301,11 @@ export function useDocumentDetection({
 
     let disposed = false;
 
-    // Lazy-load the document detector (ML with Hough fallback)
+    // Lazy-load the document detector module, then create detector (Hough starts immediately)
     import("../utils/documentDetector")
-      .then(({ createDocumentDetector }) => createDocumentDetector())
-      .then((detector) => {
+      .then(({ createDocumentDetector }) => {
+        if (disposed) return;
+        const detector = createDocumentDetector(); // sync — returns immediately with Hough
         if (disposed) {
           detector.dispose();
           return;

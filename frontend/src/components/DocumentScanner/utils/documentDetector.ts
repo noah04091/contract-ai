@@ -24,18 +24,25 @@ export interface DocumentDetectorInterface {
  */
 class HybridDetector implements DocumentDetectorInterface {
   private hough: DocumentDetector;
-  private ml: { detectAsync(v: HTMLVideoElement): Promise<DetectedEdges | null>; dispose(): void } | null;
+  private ml: { detectAsync(v: HTMLVideoElement): Promise<DetectedEdges | null>; dispose(): void } | null = null;
   private mlResult: DetectedEdges | null = null;
   private mlRunning = false;
   private mlNullCount = 0;
   private mlDisabled = false;
+  private disposed = false;
 
-  constructor(
-    hough: DocumentDetector,
-    ml: { detectAsync(v: HTMLVideoElement): Promise<DetectedEdges | null>; dispose(): void } | null,
-  ) {
+  constructor(hough: DocumentDetector) {
     this.hough = hough;
+  }
+
+  /** Attach ML detector after it loads in background */
+  attachML(ml: { detectAsync(v: HTMLVideoElement): Promise<DetectedEdges | null>; dispose(): void }): void {
+    if (this.disposed) {
+      ml.dispose();
+      return;
+    }
     this.ml = ml;
+    console.log("[Detection] ML attached to hybrid detector");
   }
 
   /**
@@ -81,6 +88,7 @@ class HybridDetector implements DocumentDetectorInterface {
   }
 
   dispose(): void {
+    this.disposed = true;
     this.hough.dispose();
     if (this.ml) {
       this.ml.dispose();
@@ -90,21 +98,30 @@ class HybridDetector implements DocumentDetectorInterface {
 }
 
 /**
- * Factory: creates hybrid detector (Hough + ML) or pure Hough on ML failure.
+ * Factory: returns Hough detector immediately (no waiting).
+ * ML loads in background and attaches when ready.
  */
-export async function createDocumentDetector(): Promise<DocumentDetectorInterface> {
-  const hough = new DocumentDetector();
+export function createDocumentDetector(): DocumentDetectorInterface {
+  // Use smaller detection canvas on mobile for better performance
+  const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+  const detectionWidth = isMobile ? 240 : 320;
+  const hough = new DocumentDetector({ detectionWidth });
+  const hybrid = new HybridDetector(hough);
 
-  try {
-    const { MLDocumentDetector } = await import("./mlDocumentDetector");
-    const ml = new MLDocumentDetector();
-    await ml.load();
-    console.log("[Detection] Hybrid detector loaded (Hough + ML)");
-    return new HybridDetector(hough, ml);
-  } catch (err) {
-    console.warn("[Detection] ML failed, using Hough only:", err);
-    return new HybridDetector(hough, null);
-  }
+  // Load ML in background — don't block detection start
+  import("./mlDocumentDetector")
+    .then(({ MLDocumentDetector }) => {
+      const ml = new MLDocumentDetector();
+      return ml.load().then(() => ml);
+    })
+    .then((ml) => {
+      hybrid.attachML(ml);
+    })
+    .catch((err) => {
+      console.warn("[Detection] ML failed, using Hough only:", err);
+    });
+
+  return hybrid;
 }
 
 import {
