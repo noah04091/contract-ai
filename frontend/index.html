@@ -55,9 +55,10 @@
       http-equiv="Content-Security-Policy"
       content="
         default-src 'self';
-        script-src 'self' 'unsafe-inline' 'unsafe-eval'
+        script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval'
           https://js.stripe.com
           https://unpkg.com
+          https://cdn.jsdelivr.net
           https://files.check24.net
           https://form.partner-versicherung.de
           https://widgets.tarifcheck.de
@@ -74,6 +75,7 @@
           https://contract-ai-backend.onrender.com
           https://noah-contract-ai-documents.s3.eu-north-1.amazonaws.com
           https://api.stripe.com
+          https://cdn.jsdelivr.net
           https://files.check24.net
           https://form.partner-versicherung.de
           https://www.check24.net
@@ -136,7 +138,7 @@
     <!-- ✅ Zusätzliche Security Headers (X-Frame-Options nur serverseitig, nicht in <meta>) -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
-    <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=()">
+    <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=()">
   </head>
   <body>
     <div id="root"></div>
