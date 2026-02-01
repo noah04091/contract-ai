@@ -31,8 +31,8 @@ const PagePreview: React.FC<PagePreviewProps> = ({
   onAdjustCorners,
   isCorrecting = false,
 }) => {
-  // Bildquelle: correctedBlob → thumbnailUrl (neuer Blob-URL), sonst previewDataUrl (stabile DataURL)
-  const imageSrc = page.correctedBlob ? page.thumbnailUrl : page.previewDataUrl;
+  // Bildquelle: correctedDataUrl (stabile DataURL nach Korrektur), sonst previewDataUrl (Original)
+  const imageSrc = page.correctedDataUrl || page.previewDataUrl;
 
   const previewStyle = useMemo((): React.CSSProperties => {
     const style: React.CSSProperties = {
@@ -40,13 +40,13 @@ const PagePreview: React.FC<PagePreviewProps> = ({
     };
 
     // CSS clip-path nur wenn KEIN korrigiertes Bild vorliegt (sonst ist es bereits entzerrt)
-    if (!page.correctedBlob && page.corners && page.corners.length === 4) {
+    if (!page.correctedDataUrl && page.corners && page.corners.length === 4) {
       const [tl, tr, br, bl] = page.corners;
       style.clipPath = `polygon(${(tl.x * 100).toFixed(1)}% ${(tl.y * 100).toFixed(1)}%, ${(tr.x * 100).toFixed(1)}% ${(tr.y * 100).toFixed(1)}%, ${(br.x * 100).toFixed(1)}% ${(br.y * 100).toFixed(1)}%, ${(bl.x * 100).toFixed(1)}% ${(bl.y * 100).toFixed(1)}%)`;
     }
 
     return style;
-  }, [page.rotation, page.corners, page.correctedBlob]);
+  }, [page.rotation, page.corners, page.correctedDataUrl]);
 
   return (
     <div className={styles.previewContainer}>

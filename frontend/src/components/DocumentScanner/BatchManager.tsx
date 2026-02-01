@@ -41,12 +41,17 @@ const BatchManager: React.FC<BatchManagerProps> = ({
             onClick={() => onSelectPage(index)}
           >
             <img
-              src={page.thumbnailUrl}
+              src={page.correctedDataUrl || page.thumbnailUrl}
               alt={`Seite ${index + 1}`}
               className={styles.batchThumb}
               style={{ transform: `rotate(${page.rotation}deg)` }}
               onError={(e) => {
-                (e.target as HTMLImageElement).style.opacity = "0.3";
+                const img = e.target as HTMLImageElement;
+                if (img.src !== page.previewDataUrl) {
+                  img.src = page.previewDataUrl;
+                } else {
+                  img.style.opacity = "0.3";
+                }
               }}
             />
             <span className={styles.batchNumber}>{index + 1}</span>

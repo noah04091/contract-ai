@@ -82,12 +82,23 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
         if (!imageUrl || imageUrl.length < 100) {
           throw new Error(`previewDataUrl ungültig (Länge: ${imageUrl?.length || 0})`);
         }
+        console.log("[Scanner] Starte Perspektiv-Korrektur, corners:", JSON.stringify(corners));
         const blob = await applyPerspectiveCrop(imageUrl, corners);
         if (!blob || blob.size === 0) {
           throw new Error("Korrektur lieferte leeren Blob");
         }
+
+        // Blob → DataURL konvertieren (zuverlässiger als Blob-URL)
+        const correctedDataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = () => reject(new Error("FileReader fehlgeschlagen"));
+          reader.readAsDataURL(blob);
+        });
+
+        console.log("[Scanner] Korrektur erfolgreich:", Math.round(blob.size / 1024), "KB, DataURL Länge:", correctedDataUrl.length);
         setProcessingProgress(`Korrektur erfolgreich (${Math.round(blob.size / 1024)}KB)`);
-        updateCorrectedImage(pageIndex, blob);
+        updateCorrectedImage(pageIndex, blob, correctedDataUrl);
       } catch (err) {
         const errMsg = err instanceof Error ? err.message : String(err);
         console.error("[Scanner] Perspektiv-Korrektur fehlgeschlagen:", errMsg);
@@ -220,7 +231,7 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
             }
           }
           break; // Erfolg oder nicht-transienter Fehler → kein Retry
-        } catch (networkErr) {
+        } catch {
           if (attempt < MAX_RETRIES) {
             setProcessingProgress(`Netzwerkfehler — neuer Versuch...`);
             await new Promise((r) => setTimeout(r, 2000));

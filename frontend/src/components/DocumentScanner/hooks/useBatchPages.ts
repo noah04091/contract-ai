@@ -18,6 +18,7 @@ export interface ScannedPage {
   id: string;
   imageBlob: Blob;
   correctedBlob: Blob | null;
+  correctedDataUrl: string | null;
   previewDataUrl: string;
   thumbnailUrl: string;
   corners: Point[] | null;
@@ -36,7 +37,7 @@ type BatchAction =
   | { type: "REORDER"; fromIndex: number; toIndex: number }
   | { type: "UPDATE_CORNERS"; index: number; corners: Point[] }
   | { type: "UPDATE_ROTATION"; index: number; rotation: number }
-  | { type: "UPDATE_CORRECTED_IMAGE"; index: number; blob: Blob }
+  | { type: "UPDATE_CORRECTED_IMAGE"; index: number; blob: Blob; dataUrl: string }
   | { type: "SET_ACTIVE"; index: number }
   | { type: "CLEAR" };
 
@@ -51,6 +52,7 @@ function batchReducer(state: BatchState, action: BatchAction): BatchState {
         id: `page-${++pageIdCounter}`,
         imageBlob: action.blob,
         correctedBlob: null,
+        correctedDataUrl: null,
         previewDataUrl: action.previewDataUrl,
         thumbnailUrl: action.thumbnailUrl,
         corners: action.corners,
@@ -99,7 +101,7 @@ function batchReducer(state: BatchState, action: BatchAction): BatchState {
     }
 
     case "UPDATE_CORRECTED_IMAGE": {
-      const { index, blob } = action;
+      const { index, blob, dataUrl } = action;
       if (index < 0 || index >= state.pages.length) return state;
       // Alten Blob-URL freigeben (nur wenn es ein Blob-URL war)
       const oldUrl = state.pages[index].thumbnailUrl;
@@ -110,7 +112,7 @@ function batchReducer(state: BatchState, action: BatchAction): BatchState {
       return {
         ...state,
         pages: state.pages.map((p, i) =>
-          i === index ? { ...p, correctedBlob: blob, thumbnailUrl: newUrl } : p
+          i === index ? { ...p, correctedBlob: blob, correctedDataUrl: dataUrl, thumbnailUrl: newUrl } : p
         ),
       };
     }
@@ -140,7 +142,7 @@ interface UseBatchPagesReturn {
   reorderPages: (fromIndex: number, toIndex: number) => void;
   updatePageCorners: (index: number, corners: Point[]) => void;
   updatePageRotation: (index: number, rotation: number) => void;
-  updateCorrectedImage: (index: number, blob: Blob) => void;
+  updateCorrectedImage: (index: number, blob: Blob, dataUrl: string) => void;
   setActivePage: (index: number) => void;
   clearPages: () => void;
   pageCount: number;
@@ -178,8 +180,8 @@ export function useBatchPages(maxPages: number = 50): UseBatchPagesReturn {
     dispatch({ type: "UPDATE_ROTATION", index, rotation });
   }, []);
 
-  const updateCorrectedImage = useCallback((index: number, blob: Blob) => {
-    dispatch({ type: "UPDATE_CORRECTED_IMAGE", index, blob });
+  const updateCorrectedImage = useCallback((index: number, blob: Blob, dataUrl: string) => {
+    dispatch({ type: "UPDATE_CORRECTED_IMAGE", index, blob, dataUrl });
   }, []);
 
   const setActivePage = useCallback((index: number) => {
