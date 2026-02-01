@@ -25,11 +25,11 @@ interface UseDocumentDetectionOptions {
   onStableDetection?: (corners: Point[]) => void;
 }
 
-const STABILITY_TOLERANCE = 0.025; // 2.5% of frame
-const EMA_ALPHA_SYNC = 0.4; // 40% new frame, 60% history
-const GRACE_FRAMES = 4; // Tolerate up to 4 unstable frames before reset
-const FADEOUT_MS = 500; // Fade-out duration when detection is lost
-const NO_DETECTION_HINT_MS = 3000; // Show hint after 3s without detection
+const STABILITY_TOLERANCE = 0.03; // 3% of frame (forgiving for shaky mobile hands)
+const EMA_ALPHA = 0.35; // 35% new frame, 65% history (smooth but responsive)
+const GRACE_FRAMES = 5; // Tolerate up to 5 unstable frames before reset
+const FADEOUT_MS = 350; // Fade-out duration when detection is lost
+const NO_DETECTION_HINT_MS = 2500; // Show hint after 2.5s without detection
 
 /** Euclidean distance check for corner similarity */
 function cornersAreSimilar(a: Point[], b: Point[]): boolean {
@@ -84,6 +84,8 @@ export function useDocumentDetection({
   const loopStartTimeRef = useRef<number>(0); // When detection loop started
   const lastDetectionTimeRef = useRef<number>(0); // Last time a document was detected
   const stabilityBreakCountRef = useRef(0); // Count of stability resets (for "Ruhig halten")
+  const frameTimesRef = useRef<number[]>([]); // Track recent frame processing times
+  const resolutionReducedRef = useRef(false); // Whether we auto-reduced resolution
 
   // Keep callback ref in sync
   useEffect(() => {
@@ -110,7 +112,24 @@ export function useDocumentDetection({
 
       try {
         // HybridDetector.detect() runs Hough sync + ML async in background
+        const t0 = performance.now();
         const result = detector.detect ? detector.detect(video) : null;
+        const frameMs = performance.now() - t0;
+
+        // Adaptive performance: auto-reduce resolution if frames are consistently slow
+        if (!resolutionReducedRef.current) {
+          const frameTimes = frameTimesRef.current;
+          frameTimes.push(frameMs);
+          if (frameTimes.length > 20) frameTimes.shift();
+          if (frameTimes.length === 20) {
+            const avg = frameTimes.reduce((a, b) => a + b, 0) / frameTimes.length;
+            if (avg > 40) { // >40ms per frame = too slow
+              detector.reduceResolution();
+              resolutionReducedRef.current = true;
+              console.log(`[Detection] Auto-reduced resolution (avg ${avg.toFixed(0)}ms/frame)`);
+            }
+          }
+        }
 
         consecutiveErrorsRef.current = 0;
 
@@ -123,7 +142,7 @@ export function useDocumentDetection({
 
           // Apply EMA smoothing
           const smoothed = smoothedCornersRef.current
-            ? smoothCorners(smoothedCornersRef.current, rawCorners, EMA_ALPHA_SYNC)
+            ? smoothCorners(smoothedCornersRef.current, rawCorners, EMA_ALPHA)
             : rawCorners;
           smoothedCornersRef.current = smoothed;
 

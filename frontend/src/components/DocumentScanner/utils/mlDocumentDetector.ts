@@ -28,7 +28,6 @@ export class MLDocumentDetector {
   // Reusable buffers to avoid GC pressure on mobile
   private floatData: Float32Array;
   private saliency: Float32Array;
-  private frameCount = 0;
 
   constructor() {
     const pixelCount = MODEL_SIZE * MODEL_SIZE;
@@ -69,7 +68,7 @@ export class MLDocumentDetector {
       graphOptimizationLevel: "all",
     });
 
-    console.log("[ML Detector] Model loaded successfully");
+    // Model loaded — detection ready
   }
 
   /**
@@ -120,39 +119,19 @@ export class MLDocumentDetector {
 
     // Step 4: Sigmoid activation on raw output
     const saliency = this.saliency;
-    let minVal = Infinity, maxVal = -Infinity;
     for (let i = 0; i < pixelCount; i++) {
       saliency[i] = 1 / (1 + Math.exp(-rawOutput[i]));
-      if (saliency[i] < minVal) minVal = saliency[i];
-      if (saliency[i] > maxVal) maxVal = saliency[i];
     }
 
-    // Step 5: Threshold to binary mask (lower threshold for better mobile detection)
+    // Step 5: Threshold to binary mask
     let binary = thresholdMask(saliency, MODEL_SIZE, MODEL_SIZE, 0.35);
 
-    // Count mask pixels before morphClose
-    let preMorphCount = 0;
-    for (let i = 0; i < pixelCount; i++) {
-      if (binary[i] === 255) preMorphCount++;
-    }
-
-    // Step 6: Morphological close to fill small holes from noisy mobile cameras
+    // Step 6: Morphological close to fill small holes
     binary = morphClose(binary, MODEL_SIZE, MODEL_SIZE);
 
     // Step 7: Find boundary pixels and extract corners via convex hull
     const boundary = findBoundaryPixels(binary, MODEL_SIZE, MODEL_SIZE);
     const corners = extractCorners(boundary);
-
-    // Debug logging every 10th frame
-    this.frameCount++;
-    const shouldLog = this.frameCount % 10 === 1;
-    if (shouldLog) {
-      let postMorphCount = 0;
-      for (let i = 0; i < pixelCount; i++) {
-        if (binary[i] === 255) postMorphCount++;
-      }
-      console.log(`[ML Debug] frame=${this.frameCount} saliency=[${minVal.toFixed(3)}..${maxVal.toFixed(3)}] mask=${preMorphCount}→${postMorphCount}/${pixelCount} boundary=${boundary.length} corners=${corners ? 'YES' : 'null'}`);
-    }
 
     if (!corners) return null;
 
@@ -164,9 +143,6 @@ export class MLDocumentDetector {
 
     // Step 9: Validate quad - reject if too small or degenerate
     const area = quadArea(normalizedCorners);
-    if (shouldLog) {
-      console.log(`[ML Debug] quadArea=${area.toFixed(4)} corners=${JSON.stringify(normalizedCorners.map(c => ({x: c.x.toFixed(2), y: c.y.toFixed(2)})))}`);
-    }
     if (area < 0.03) return null; // Less than 3% of frame
 
     // Step 10: Compute confidence from mask coverage and quad regularity

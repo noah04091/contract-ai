@@ -42,7 +42,6 @@ class HybridDetector implements DocumentDetectorInterface {
       return;
     }
     this.ml = ml;
-    console.log("[Detection] ML attached to hybrid detector");
   }
 
   /**
@@ -63,9 +62,8 @@ class HybridDetector implements DocumentDetectorInterface {
           this.mlNullCount = 0;
         } else {
           this.mlNullCount++;
-          // After 30 consecutive nulls, disable ML (not working for this camera)
-          if (this.mlNullCount >= 30) {
-            console.warn("[Detection] ML disabled after 30 null results, using Hough only");
+          // After 15 consecutive nulls, disable ML (not working for this camera)
+          if (this.mlNullCount >= 15) {
             this.mlDisabled = true;
             this.mlResult = null;
           }

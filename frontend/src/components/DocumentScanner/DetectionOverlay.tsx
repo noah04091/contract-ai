@@ -18,7 +18,7 @@ interface DetectionOverlayProps {
   containerRef: React.RefObject<HTMLDivElement | null>;
 }
 
-const LERP_FACTOR = 0.35; // Overlay-level interpolation (additional smoothing)
+const LERP_FACTOR = 0.45; // Overlay-level interpolation (responsive but smooth)
 
 /** Rounded rect with fallback for browsers without roundRect (Safari < 16) */
 function drawRoundedRect(
@@ -92,6 +92,7 @@ const DetectionOverlay: React.FC<DetectionOverlayProps> = ({
   const previousPtsRef = useRef<{ x: number; y: number }[] | null>(null);
   const flashStartRef = useRef<number | null>(null);
   const wasStableRef = useRef(false);
+  const fadeInStartRef = useRef<number | null>(null); // Smooth fade-in on first detection
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -130,14 +131,22 @@ const DetectionOverlay: React.FC<DetectionOverlayProps> = ({
     }
 
     if (!corners || corners.length !== 4) {
-      // Fade out previous points
+      // Reset fade-in for next detection
       previousPtsRef.current = null;
+      fadeInStartRef.current = null;
       // Still draw hint when no document detected
       if (hint) {
         drawHint(ctx, hint, canvas.width, canvas.height);
       }
       return;
     }
+
+    // Track fade-in: smooth appearance when corners first detected
+    if (!fadeInStartRef.current) {
+      fadeInStartRef.current = performance.now();
+    }
+    const fadeInElapsed = performance.now() - fadeInStartRef.current;
+    const fadeInAlpha = Math.min(1, fadeInElapsed / 200); // 200ms fade-in
 
     // Convert normalized (0-1) corners to pixel coordinates
     const targetPts = corners.map((c) => ({
@@ -157,33 +166,33 @@ const DetectionOverlay: React.FC<DetectionOverlayProps> = ({
     }
     previousPtsRef.current = pts;
 
-    // Color based on state
-    const alpha = 0.4 + confidence * 0.5; // 0.4 - 0.9
+    // Color based on state (multiplied by fadeInAlpha for smooth entrance)
+    const baseAlpha = (0.4 + confidence * 0.5) * fadeInAlpha;
     let color: string;
     let fillColor: string;
 
     if (isStable) {
       // Bright green — ready for capture
-      color = `rgba(74, 222, 128, ${Math.min(1, alpha + 0.1)})`;
-      fillColor = "rgba(74, 222, 128, 0.10)";
+      color = `rgba(74, 222, 128, ${Math.min(1, baseAlpha + 0.1)})`;
+      fillColor = `rgba(74, 222, 128, ${0.12 * fadeInAlpha})`;
     } else if (confidence >= 0.5) {
       // Green — good detection
-      color = `rgba(34, 197, 94, ${alpha})`;
-      fillColor = "rgba(34, 197, 94, 0.06)";
+      color = `rgba(34, 197, 94, ${baseAlpha})`;
+      fillColor = `rgba(34, 197, 94, ${0.07 * fadeInAlpha})`;
     } else {
       // Orange/Yellow — weak detection
-      color = `rgba(234, 179, 8, ${alpha * 0.9})`;
-      fillColor = "rgba(234, 179, 8, 0.04)";
+      color = `rgba(234, 179, 8, ${baseAlpha * 0.9})`;
+      fillColor = `rgba(234, 179, 8, ${0.05 * fadeInAlpha})`;
     }
 
-    // Line width grows with stability progress (pulsing effect)
+    // Line width grows with stability progress
     const baseLineWidth = 2.5;
     const lineWidth = baseLineWidth + stabilityProgress * 2.0;
 
     // Glow effect during stabilization
     if (stabilityProgress > 0) {
       ctx.shadowColor = isStable ? "rgba(74, 222, 128, 0.6)" : "rgba(34, 197, 94, 0.4)";
-      ctx.shadowBlur = stabilityProgress * 10;
+      ctx.shadowBlur = stabilityProgress * 12;
     } else {
       ctx.shadowColor = "transparent";
       ctx.shadowBlur = 0;
