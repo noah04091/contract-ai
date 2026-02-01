@@ -1484,145 +1484,262 @@ export default function LegalPulse() {
         <div className={styles.tabContent}>
           {activeTab === 'overview' && (
             <div className={styles.overviewTab}>
-              <div className={styles.overviewGrid}>
-                <div className={styles.quickStats}>
-                  <h3>Schnellübersicht</h3>
-                  <div className={styles.statsList}>
-                    <div className={styles.statItem}>
-                      <span className={styles.statLabel}>Risiko-Level:</span>
-                      <span className={styles.statValue} style={{ color: riskLevel.color }}>
-                        {riskLevel.icon} {riskLevel.level}
-                      </span>
+              {!selectedContract.legalPulse ? (
+                <div className={styles.noAnalysisState}>
+                  <div className={styles.noAnalysisIcon}>
+                    <Activity size={32} />
+                  </div>
+                  <h3>Legal Pulse Analyse ausstehend</h3>
+                  <p>Dieser Vertrag wurde noch nicht durch Legal Pulse analysiert. Die Analyse startet automatisch, sobald Sie den Vertrag analysieren lassen.</p>
+                  <div className={styles.noAnalysisSteps}>
+                    <div className={styles.noAnalysisStep}>
+                      <span className={styles.stepNumber}>1</span>
+                      <div>
+                        <strong>Vertrag analysieren</strong>
+                        <p>Lassen Sie den Vertrag von unserer KI analysieren</p>
+                      </div>
                     </div>
-                    <div className={styles.statItem}>
-                      <span className={styles.statLabel}>Identifizierte Risiken:</span>
-                      <span className={styles.statValue}>
-                        {selectedContract.legalPulse?.topRisks?.length || 0}
-                      </span>
+                    <div className={styles.noAnalysisStep}>
+                      <span className={styles.stepNumber}>2</span>
+                      <div>
+                        <strong>Legal Pulse startet automatisch</strong>
+                        <p>Risikoanalyse, Empfehlungen und Monitoring werden erstellt</p>
+                      </div>
                     </div>
-                    <div className={styles.statItem}>
-                      <span className={styles.statLabel}>Empfohlene Maßnahmen:</span>
-                      <span className={styles.statValue}>
-                        {selectedContract.legalPulse?.recommendations?.length || 0}
-                      </span>
+                    <div className={styles.noAnalysisStep}>
+                      <span className={styles.stepNumber}>3</span>
+                      <div>
+                        <strong>Laufende Überwachung</strong>
+                        <p>Wöchentliche Prüfung auf relevante Rechtsänderungen</p>
+                      </div>
                     </div>
-                    <div className={styles.statItem}>
-                      <span className={styles.statLabel}>Letzte Empfehlung:</span>
-                      <span className={styles.statValue}>
-                        {selectedContract.legalPulse?.lastRecommendation || 'Keine verfügbar'}
-                      </span>
+                  </div>
+                  <button
+                    className={styles.noAnalysisCta}
+                    onClick={() => navigate(`/contracts`)}
+                  >
+                    <Zap size={16} />
+                    Zur Vertragsanalyse
+                    <ArrowRight size={16} />
+                  </button>
+                </div>
+              ) : (
+                <div className={styles.overviewGrid}>
+                  <div className={styles.quickStats}>
+                    <h3>Schnellübersicht</h3>
+                    <div className={styles.statsList}>
+                      <div className={styles.statItem}>
+                        <span className={styles.statLabel}>Risiko-Level:</span>
+                        <span className={styles.statValue} style={{ color: riskLevel.color }}>
+                          {riskLevel.icon} {riskLevel.level}
+                        </span>
+                      </div>
+                      <div className={styles.statItem}>
+                        <span className={styles.statLabel}>Identifizierte Risiken:</span>
+                        <span className={styles.statValue}>
+                          {selectedContract.legalPulse?.topRisks?.length || 0}
+                        </span>
+                      </div>
+                      <div className={styles.statItem}>
+                        <span className={styles.statLabel}>Empfohlene Maßnahmen:</span>
+                        <span className={styles.statValue}>
+                          {selectedContract.legalPulse?.recommendations?.length || 0}
+                        </span>
+                      </div>
+                      <div className={styles.statItem}>
+                        <span className={styles.statLabel}>Letzte Empfehlung:</span>
+                        <span className={styles.statValue}>
+                          {selectedContract.legalPulse?.lastRecommendation || 'Keine verfügbar'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={styles.overviewActions}>
+                    <h3>Nächste Schritte</h3>
+                    <div className={styles.actionsList}>
+                      <button
+                        className={styles.actionButton}
+                        onClick={() => setActiveTab('risks')}
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12 9V13" stroke="currentColor" strokeWidth="2"/>
+                          <path d="M12 17H12.01" stroke="currentColor" strokeWidth="2"/>
+                          <path d="M10.29 3.86L1.82 18A2 2 0 003.64 21H20.36A2 2 0 0022.18 18L13.71 3.86A2 2 0 0010.29 3.86Z" stroke="currentColor" strokeWidth="2"/>
+                        </svg>
+                        Risiken analysieren
+                      </button>
+                      <button
+                        className={styles.actionButton}
+                        onClick={() => setActiveTab('recommendations')}
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M9 11L12 14L22 4" stroke="currentColor" strokeWidth="2"/>
+                        </svg>
+                        Empfehlungen umsetzen
+                      </button>
+                      <button
+                        className={`${styles.actionButton} ${styles.primaryAction}`}
+                        onClick={handleStartOptimizer}
+                        disabled={isStartingOptimizer}
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12 2L15.09 8.26L22 9L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9L8.91 8.26L12 2Z" stroke="currentColor" strokeWidth="2"/>
+                        </svg>
+                        {isStartingOptimizer ? 'Wird gestartet...' : 'Vertrag optimieren'}
+                      </button>
                     </div>
                   </div>
                 </div>
-                
-                <div className={styles.overviewActions}>
-                  <h3>Nächste Schritte</h3>
-                  <div className={styles.actionsList}>
-                    <button 
-                      className={styles.actionButton}
-                      onClick={() => setActiveTab('risks')}
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 9V13" stroke="currentColor" strokeWidth="2"/>
-                        <path d="M12 17H12.01" stroke="currentColor" strokeWidth="2"/>
-                        <path d="M10.29 3.86L1.82 18A2 2 0 003.64 21H20.36A2 2 0 0022.18 18L13.71 3.86A2 2 0 0010.29 3.86Z" stroke="currentColor" strokeWidth="2"/>
-                      </svg>
-                      Risiken analysieren
-                    </button>
-                    <button 
-                      className={styles.actionButton}
-                      onClick={() => setActiveTab('recommendations')}
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M9 11L12 14L22 4" stroke="currentColor" strokeWidth="2"/>
-                      </svg>
-                      Empfehlungen umsetzen
-                    </button>
-                    <button
-                      className={`${styles.actionButton} ${styles.primaryAction}`}
-                      onClick={handleStartOptimizer}
-                      disabled={isStartingOptimizer}
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2L15.09 8.26L22 9L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9L8.91 8.26L12 2Z" stroke="currentColor" strokeWidth="2"/>
-                      </svg>
-                      {isStartingOptimizer ? 'Wird gestartet...' : 'Vertrag optimieren'}
-                    </button>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
           )}
 
           {activeTab === 'risks' && (
             <div className={styles.risksTab}>
-              <div className={styles.sectionHeader}>
-                <h3>🔴 Identifizierte Risiken</h3>
-                <p>Diese rechtlichen Risiken wurden in Ihrem Vertrag identifiziert</p>
-              </div>
-              <div className={styles.risksList}>
-                {selectedContract.legalPulse?.topRisks?.map((risk, index) => (
-                  <RiskCard
-                    key={index}
-                    risk={risk}
-                    index={index}
-                    contractId={selectedContract._id}
-                    onShowDetails={handleShowRiskDetails}
-                    onShowSolution={handleShowSolution}
-                    onSaveToLibrary={handleSaveRiskToLibrary}
-                    onFeedback={(feedback) => {
-                      setNotification({
-                        message: feedback === 'helpful'
-                          ? "✓ Danke für Ihr Feedback!"
-                          : "✓ Feedback gespeichert",
-                        type: "success"
-                      });
-                    }}
-                  />
-                )) || (
-                  <div className={styles.emptyState}>
-                    <p>Keine Risiken identifiziert</p>
+              {!selectedContract.legalPulse ? (
+                <div className={styles.noAnalysisState}>
+                  <div className={styles.noAnalysisIcon} style={{ background: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)' }}>
+                    <AlertTriangle size={32} color="#ef4444" />
                   </div>
-                )}
-              </div>
+                  <h3>Risikoanalyse nicht verf{String.fromCharCode(252)}gbar</h3>
+                  <p>Um Risiken zu identifizieren, muss der Vertrag zuerst analysiert werden. Die Legal Pulse Risikoanalyse erkennt automatisch rechtliche Schwachstellen und bewertet deren Kritikalit{String.fromCharCode(228)}t.</p>
+                  <div className={styles.noAnalysisFeatures}>
+                    <div className={styles.noAnalysisFeature}>
+                      <AlertTriangle size={18} color="#ef4444" />
+                      <span>Automatische Risikoerkennung</span>
+                    </div>
+                    <div className={styles.noAnalysisFeature}>
+                      <Shield size={18} color="#3b82f6" />
+                      <span>Schwachstellen-Bewertung</span>
+                    </div>
+                    <div className={styles.noAnalysisFeature}>
+                      <Activity size={18} color="#10b981" />
+                      <span>Handlungsempfehlungen</span>
+                    </div>
+                  </div>
+                  <button
+                    className={styles.noAnalysisCta}
+                    onClick={() => navigate(`/contracts`)}
+                  >
+                    <Zap size={16} />
+                    Vertrag analysieren
+                    <ArrowRight size={16} />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className={styles.sectionHeader}>
+                    <h3>Identifizierte Risiken</h3>
+                    <p>Diese rechtlichen Risiken wurden in Ihrem Vertrag identifiziert</p>
+                  </div>
+                  <div className={styles.risksList}>
+                    {selectedContract.legalPulse?.topRisks?.length ? (
+                      selectedContract.legalPulse.topRisks.map((risk, index) => (
+                        <RiskCard
+                          key={index}
+                          risk={risk}
+                          index={index}
+                          contractId={selectedContract._id}
+                          onShowDetails={handleShowRiskDetails}
+                          onShowSolution={handleShowSolution}
+                          onSaveToLibrary={handleSaveRiskToLibrary}
+                          onFeedback={(feedback) => {
+                            setNotification({
+                              message: feedback === 'helpful'
+                                ? "\u2713 Danke f\u00fcr Ihr Feedback!"
+                                : "\u2713 Feedback gespeichert",
+                              type: "success"
+                            });
+                          }}
+                        />
+                      ))
+                    ) : (
+                      <div className={styles.noAnalysisState} style={{ padding: '48px 32px' }}>
+                        <CheckCircle size={40} color="#10b981" />
+                        <h3 style={{ color: '#10b981' }}>Keine Risiken erkannt</h3>
+                        <p>Die Analyse hat keine kritischen rechtlichen Risiken in diesem Vertrag identifiziert.</p>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           )}
 
           {activeTab === 'recommendations' && (
             <div className={styles.recommendationsTab}>
-              <div className={styles.sectionHeader}>
-                <h3>💡 Empfohlene Maßnahmen</h3>
-                <p>Konkrete Schritte zur Risikominimierung</p>
-              </div>
-              <div className={styles.recommendationsList}>
-                {selectedContract.legalPulse?.recommendations?.map((recommendation, index) => {
-                  const isCompleted = completedRecommendations[`${selectedContract._id}-${index}`];
-                  return (
-                    <RecommendationCard
-                      key={index}
-                      recommendation={recommendation}
-                      index={index}
-                      contractId={selectedContract._id}
-                      isCompleted={isCompleted}
-                      onMarkComplete={handleMarkRecommendationComplete}
-                      onImplement={handleImplementRecommendation}
-                      onSaveToLibrary={handleSaveRecommendationToLibrary}
-                      onFeedback={(feedback) => {
-                        setNotification({
-                          message: feedback === 'helpful'
-                            ? "✓ Danke für Ihr Feedback!"
-                            : "✓ Feedback gespeichert",
-                          type: "success"
-                        });
-                      }}
-                    />
-                  );
-                }) || (
-                  <div className={styles.emptyState}>
-                    <p>Keine Empfehlungen verfügbar</p>
+              {!selectedContract.legalPulse ? (
+                <div className={styles.noAnalysisState}>
+                  <div className={styles.noAnalysisIcon} style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)' }}>
+                    <CheckCircle size={32} color="#10b981" />
                   </div>
-                )}
-              </div>
+                  <h3>Empfehlungen werden nach Analyse erstellt</h3>
+                  <p>Nach der Vertragsanalyse erhalten Sie konkrete, priorisierte Handlungsempfehlungen zur Risikominimierung und Vertragsoptimierung.</p>
+                  <div className={styles.noAnalysisFeatures}>
+                    <div className={styles.noAnalysisFeature}>
+                      <CheckCircle size={18} color="#10b981" />
+                      <span>Priorisierte Ma{String.fromCharCode(223)}nahmen</span>
+                    </div>
+                    <div className={styles.noAnalysisFeature}>
+                      <Zap size={18} color="#f59e0b" />
+                      <span>1-Klick Umsetzung</span>
+                    </div>
+                    <div className={styles.noAnalysisFeature}>
+                      <Shield size={18} color="#3b82f6" />
+                      <span>Rechtliche Absicherung</span>
+                    </div>
+                  </div>
+                  <button
+                    className={styles.noAnalysisCta}
+                    onClick={() => navigate(`/contracts`)}
+                  >
+                    <Zap size={16} />
+                    Vertrag analysieren
+                    <ArrowRight size={16} />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className={styles.sectionHeader}>
+                    <h3>Empfohlene Ma{String.fromCharCode(223)}nahmen</h3>
+                    <p>Konkrete Schritte zur Risikominimierung</p>
+                  </div>
+                  <div className={styles.recommendationsList}>
+                    {selectedContract.legalPulse?.recommendations?.length ? (
+                      selectedContract.legalPulse.recommendations.map((recommendation, index) => {
+                        const isCompleted = completedRecommendations[`${selectedContract._id}-${index}`];
+                        return (
+                          <RecommendationCard
+                            key={index}
+                            recommendation={recommendation}
+                            index={index}
+                            contractId={selectedContract._id}
+                            isCompleted={isCompleted}
+                            onMarkComplete={handleMarkRecommendationComplete}
+                            onImplement={handleImplementRecommendation}
+                            onSaveToLibrary={handleSaveRecommendationToLibrary}
+                            onFeedback={(feedback) => {
+                              setNotification({
+                                message: feedback === 'helpful'
+                                  ? "\u2713 Danke f\u00fcr Ihr Feedback!"
+                                  : "\u2713 Feedback gespeichert",
+                                type: "success"
+                              });
+                            }}
+                          />
+                        );
+                      })
+                    ) : (
+                      <div className={styles.noAnalysisState} style={{ padding: '48px 32px' }}>
+                        <CheckCircle size={40} color="#10b981" />
+                        <h3 style={{ color: '#10b981' }}>Keine Empfehlungen notwendig</h3>
+                        <p>Dieser Vertrag ist gut aufgestellt. Es wurden keine dringenden Handlungsempfehlungen identifiziert.</p>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           )}
 
@@ -1745,79 +1862,145 @@ export default function LegalPulse() {
 
           {activeTab === 'history' && (
             <div className={styles.historyTab}>
-              <div className={styles.sectionHeader}>
-                <h3>📊 Analyse-Historie</h3>
-                <p>Entwicklung des Risiko-Scores über Zeit</p>
-              </div>
-              <div className={styles.chartLegend}>
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.legendIcon}>
-                  <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" strokeWidth="2"/>
-                </svg>
-                <span>Zeitverlauf des Risiko-Scores (0–100); höher = riskanter</span>
-              </div>
-              <div className={styles.historyContent}>
-                <div className={styles.historyChart}>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <AreaChart data={scoreHistory}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                      <XAxis dataKey="date" stroke="#64748b" fontSize={12} />
-                      <YAxis stroke="#64748b" fontSize={12} domain={[0, 100]} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: '#ffffff',
-                          border: '1px solid #e2e8f0',
-                          borderRadius: '8px',
-                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                          color: '#1f2937'
-                        }}
-                        labelStyle={{
-                          color: '#1f2937',
-                          fontWeight: 600
-                        }}
-                        itemStyle={{
-                          color: '#1f2937'
-                        }}
-                        formatter={(value: number) => [`${Number(value).toFixed(1)}/100`, 'Risiko-Score']}
-                      />
-                      <Area 
-                        type="monotone" 
-                        dataKey="score" 
-                        stroke={getRiskScoreColor(selectedContract.legalPulse?.riskScore || null)}
-                        fill={`${getRiskScoreColor(selectedContract.legalPulse?.riskScore || null)}20`}
-                        strokeWidth={2}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
+              {!selectedContract.legalPulse ? (
+                <div className={styles.noAnalysisState}>
+                  <div className={styles.noAnalysisIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)' }}>
+                    <Clock size={32} color="#3b82f6" />
+                  </div>
+                  <h3>Noch keine Analyse-Historie</h3>
+                  <p>Die Analyse-Historie zeigt die Entwicklung des Risiko-Scores {String.fromCharCode(252)}ber Zeit. Nach der ersten Analyse wird hier der Verlauf sichtbar.</p>
+                  <div className={styles.noAnalysisFeatures}>
+                    <div className={styles.noAnalysisFeature}>
+                      <Activity size={18} color="#3b82f6" />
+                      <span>Score-Verlauf {String.fromCharCode(252)}ber Zeit</span>
+                    </div>
+                    <div className={styles.noAnalysisFeature}>
+                      <AlertTriangle size={18} color="#f59e0b" />
+                      <span>Trend-Erkennung</span>
+                    </div>
+                    <div className={styles.noAnalysisFeature}>
+                      <CheckCircle size={18} color="#10b981" />
+                      <span>Fortschritts-Tracking</span>
+                    </div>
+                  </div>
+                  <button
+                    className={styles.noAnalysisCta}
+                    onClick={() => navigate(`/contracts`)}
+                  >
+                    <Zap size={16} />
+                    Vertrag analysieren
+                    <ArrowRight size={16} />
+                  </button>
                 </div>
-              </div>
+              ) : (
+                <>
+                  <div className={styles.sectionHeader}>
+                    <h3>Analyse-Historie</h3>
+                    <p>Entwicklung des Risiko-Scores {String.fromCharCode(252)}ber Zeit</p>
+                  </div>
+                  <div className={styles.chartLegend}>
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.legendIcon}>
+                      <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" strokeWidth="2"/>
+                    </svg>
+                    <span>Zeitverlauf des Risiko-Scores (0{String.fromCharCode(8211)}100); h{String.fromCharCode(246)}her = riskanter</span>
+                  </div>
+                  <div className={styles.historyContent}>
+                    <div className={styles.historyChart}>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <AreaChart data={scoreHistory}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                          <XAxis dataKey="date" stroke="#64748b" fontSize={12} />
+                          <YAxis stroke="#64748b" fontSize={12} domain={[0, 100]} />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: '#ffffff',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '8px',
+                              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                              color: '#1f2937'
+                            }}
+                            labelStyle={{
+                              color: '#1f2937',
+                              fontWeight: 600
+                            }}
+                            itemStyle={{
+                              color: '#1f2937'
+                            }}
+                            formatter={(value: number) => [`${Number(value).toFixed(1)}/100`, 'Risiko-Score']}
+                          />
+                          <Area
+                            type="monotone"
+                            dataKey="score"
+                            stroke={getRiskScoreColor(selectedContract.legalPulse?.riskScore || null)}
+                            fill={`${getRiskScoreColor(selectedContract.legalPulse?.riskScore || null)}20`}
+                            strokeWidth={2}
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
           {activeTab === 'forecast' && (
             <div className={styles.forecastTab}>
-              <div className={styles.sectionHeader}>
-                <h3>🤖 ML-Prognose</h3>
-                <p>KI-basierte Vorhersagen für Risiken und Vertragsentwicklung</p>
-              </div>
-
-              {/* Loading State */}
-              {forecastLoading && (
-                <div className={styles.forecastLoading}>
-                  <div className={styles.loadingSpinner}></div>
-                  <p>Prognose wird berechnet...</p>
+              {!selectedContract.legalPulse ? (
+                <div className={styles.noAnalysisState}>
+                  <div className={styles.noAnalysisIcon} style={{ background: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)' }}>
+                    <Zap size={32} color="#8b5cf6" />
+                  </div>
+                  <h3>ML-Prognose ben{String.fromCharCode(246)}tigt Analyse-Daten</h3>
+                  <p>Die KI-basierte Risikovorhersage ben{String.fromCharCode(246)}tigt eine abgeschlossene Vertragsanalyse als Grundlage. Nach der Analyse werden Prognosen f{String.fromCharCode(252)}r die n{String.fromCharCode(228)}chsten 6 Monate erstellt.</p>
+                  <div className={styles.noAnalysisFeatures}>
+                    <div className={styles.noAnalysisFeature}>
+                      <Activity size={18} color="#8b5cf6" />
+                      <span>6-Monats-Prognose</span>
+                    </div>
+                    <div className={styles.noAnalysisFeature}>
+                      <AlertTriangle size={18} color="#f59e0b" />
+                      <span>Risiko-Trends</span>
+                    </div>
+                    <div className={styles.noAnalysisFeature}>
+                      <Zap size={18} color="#3b82f6" />
+                      <span>KI-Konfidenzwerte</span>
+                    </div>
+                  </div>
+                  <button
+                    className={styles.noAnalysisCta}
+                    onClick={() => navigate(`/contracts`)}
+                  >
+                    <Zap size={16} />
+                    Vertrag analysieren
+                    <ArrowRight size={16} />
+                  </button>
                 </div>
-              )}
+              ) : (
+                <>
+                  <div className={styles.sectionHeader}>
+                    <h3>ML-Prognose</h3>
+                    <p>KI-basierte Vorhersagen f{String.fromCharCode(252)}r Risiken und Vertragsentwicklung</p>
+                  </div>
 
-              {/* Error State */}
-              {forecastError && !forecastLoading && (
-                <div className={styles.forecastError}>
-                  <div className={styles.infoBox} style={{ borderColor: '#ef4444', background: '#fef2f2' }}>
-                    <div className={styles.infoIcon}>⚠️</div>
-                    <div className={styles.infoContent}>
-                      <h4>Prognose nicht verfügbar</h4>
-                      <p>{forecastError}</p>
-                      <button
-                        className={styles.retryButton}
+                  {/* Loading State */}
+                  {forecastLoading && (
+                    <div className={styles.forecastLoading}>
+                      <div className={styles.loadingSpinner}></div>
+                      <p>Prognose wird berechnet...</p>
+                    </div>
+                  )}
+
+                  {/* Error State */}
+                  {forecastError && !forecastLoading && (
+                    <div className={styles.forecastError}>
+                      <div className={styles.infoBox} style={{ borderColor: '#ef4444', background: '#fef2f2' }}>
+                        <div className={styles.infoIcon}>{String.fromCharCode(9888)}{String.fromCharCode(65039)}</div>
+                        <div className={styles.infoContent}>
+                          <h4>Prognose nicht verf{String.fromCharCode(252)}gbar</h4>
+                          <p>{forecastError}</p>
+                          <button
+                            className={styles.retryButton}
                         onClick={() => selectedContract && fetchForecast(selectedContract._id)}
                       >
                         Erneut versuchen
@@ -1827,10 +2010,10 @@ export default function LegalPulse() {
                 </div>
               )}
 
-              {/* Forecast Data */}
-              {forecastData && !forecastLoading && (
-                <>
-                  {/* Forecast Overview Cards */}
+                  {/* Forecast Data */}
+                  {forecastData && !forecastLoading && (
+                    <>
+                      {/* Forecast Overview Cards */}
                   <div className={styles.forecastCards}>
                     <div className={styles.forecastCard}>
                       <div className={styles.cardIcon}>🎯</div>
@@ -1987,17 +2170,19 @@ export default function LegalPulse() {
                 </>
               )}
 
-              {/* No contract selected */}
-              {!selectedContract && !forecastLoading && (
-                <div className={styles.mlStatus}>
-                  <div className={styles.infoBox}>
-                    <div className={styles.infoIcon}>ℹ️</div>
-                    <div className={styles.infoContent}>
-                      <h4>Kein Vertrag ausgewählt</h4>
-                      <p>Wählen Sie einen Vertrag aus der Liste, um die ML-Prognose anzuzeigen.</p>
+                  {/* No contract selected */}
+                  {!selectedContract && !forecastLoading && (
+                    <div className={styles.mlStatus}>
+                      <div className={styles.infoBox}>
+                        <div className={styles.infoIcon}>{String.fromCharCode(8505)}{String.fromCharCode(65039)}</div>
+                        <div className={styles.infoContent}>
+                          <h4>Kein Vertrag ausgew{String.fromCharCode(228)}hlt</h4>
+                          <p>W{String.fromCharCode(228)}hlen Sie einen Vertrag aus der Liste, um die ML-Prognose anzuzeigen.</p>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
+                  )}
+                </>
               )}
             </div>
           )}
