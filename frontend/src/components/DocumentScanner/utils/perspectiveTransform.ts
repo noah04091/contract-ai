@@ -16,13 +16,17 @@ const MAX_OUTPUT_DIM = 1500;
 
 /**
  * Load an image from a URL (data: or blob:) into an HTMLImageElement.
+ * Note: crossOrigin must NOT be set for data: URLs — Safari taints the canvas otherwise.
  */
 function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);
     img.onerror = () => reject(new Error("Image load failed"));
-    img.crossOrigin = "anonymous";
+    // Only set crossOrigin for http(s) URLs, NEVER for data: or blob: URLs
+    if (url.startsWith("http")) {
+      img.crossOrigin = "anonymous";
+    }
     img.src = url;
   });
 }
@@ -171,16 +175,24 @@ export async function applyPerspectiveCrop(
   const srcCanvas = document.createElement("canvas");
   srcCanvas.width = srcW;
   srcCanvas.height = srcH;
-  const srcCtx = srcCanvas.getContext("2d")!;
+  const srcCtx = srcCanvas.getContext("2d");
+  if (!srcCtx) throw new Error("Failed to get source canvas context");
   srcCtx.drawImage(img, 0, 0);
-  const srcData = srcCtx.getImageData(0, 0, srcW, srcH);
+
+  let srcData: ImageData;
+  try {
+    srcData = srcCtx.getImageData(0, 0, srcW, srcH);
+  } catch (e) {
+    throw new Error("getImageData failed (canvas tainted or security error): " + (e instanceof Error ? e.message : e));
+  }
   const srcPixels = srcData.data;
 
   // Create output canvas
   const outCanvas = document.createElement("canvas");
   outCanvas.width = outW;
   outCanvas.height = outH;
-  const outCtx = outCanvas.getContext("2d")!;
+  const outCtx = outCanvas.getContext("2d");
+  if (!outCtx) throw new Error("Failed to get output canvas context");
   const outImgData = outCtx.createImageData(outW, outH);
   const outPixels = outImgData.data;
 

@@ -10,7 +10,7 @@
  */
 
 import React, { useMemo } from "react";
-import { RotateCcw, RotateCw, RefreshCw, Check, Crop } from "lucide-react";
+import { RotateCcw, RotateCw, RefreshCw, Check, Crop, Loader2 } from "lucide-react";
 import type { ScannedPage } from "./hooks/useBatchPages";
 import styles from "./DocumentScanner.module.css";
 
@@ -20,6 +20,7 @@ interface PagePreviewProps {
   onRetake: () => void;
   onConfirm: () => void;
   onAdjustCorners?: () => void;
+  isCorrecting?: boolean;
 }
 
 const PagePreview: React.FC<PagePreviewProps> = ({
@@ -28,6 +29,7 @@ const PagePreview: React.FC<PagePreviewProps> = ({
   onRetake,
   onConfirm,
   onAdjustCorners,
+  isCorrecting = false,
 }) => {
   // Bildquelle: correctedBlob → thumbnailUrl (neuer Blob-URL), sonst previewDataUrl (stabile DataURL)
   const imageSrc = page.correctedBlob ? page.thumbnailUrl : page.previewDataUrl;
@@ -62,6 +64,12 @@ const PagePreview: React.FC<PagePreviewProps> = ({
             }
           }}
         />
+        {isCorrecting && (
+          <div className={styles.correctingOverlay}>
+            <Loader2 size={32} className={styles.spinner} />
+            <span>Bild wird korrigiert...</span>
+          </div>
+        )}
       </div>
 
       <div className={styles.previewControls}>

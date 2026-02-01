@@ -42,6 +42,7 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
   const [scannerState, setScannerState] = useState<ScannerState>("capturing");
   const [processingProgress, setProcessingProgress] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [isCorrecting, setIsCorrecting] = useState(false);
   const {
     pages,
     activePage,
@@ -72,6 +73,7 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
 
       updatePageCorners(pageIndex, corners);
       setScannerState("reviewing");
+      setIsCorrecting(true);
 
       // Perspektiv-Korrektur im Hintergrund (non-blocking)
       const imageUrl = pages[pageIndex].previewDataUrl;
@@ -80,7 +82,10 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
           updateCorrectedImage(pageIndex, blob);
         })
         .catch((err) => {
-          console.warn("[Scanner] Perspektiv-Korrektur fehlgeschlagen:", err);
+          console.error("[Scanner] Perspektiv-Korrektur fehlgeschlagen:", err);
+        })
+        .finally(() => {
+          setIsCorrecting(false);
         });
     },
     [pages, activePage, updatePageCorners, updateCorrectedImage]
@@ -333,6 +338,7 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
                   onRetake={handleRetakePage}
                   onConfirm={handleConfirmPage}
                   onAdjustCorners={handleAdjustCorners}
+                  isCorrecting={isCorrecting}
                 />
 
                 <BatchManager
