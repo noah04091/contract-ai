@@ -44,8 +44,12 @@ interface Contract {
     lastAnalysis?: string;
     lastChecked?: string;
     lastRecommendation?: string;
-    topRisks?: string[];
-    recommendations?: string[];
+    summary?: string;
+    nextScheduledCheck?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    topRisks?: any[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    recommendations?: any[];
     scoreHistory?: Array<{date: string, score: number}>;
     analysisHistory?: Array<{
       date: string;
@@ -1262,15 +1266,12 @@ export default function LegalPulse() {
         {/* Score Hero Section */}
         <div className={styles.scoreSection}>
           <div className={styles.scoreCard}>
-            <div className={styles.scoreHeader}>
-              <h2>Risiko-Score</h2>
-            </div>
             {isAnalysisLoading ? (
               <div className={styles.loadingState}>
                 <div className={styles.loadingSpinner}></div>
                 <div className={styles.loadingText}>
-                  <h3>Legal Pulse Analyse läuft...</h3>
-                  <p>Die KI-Analyse wird im Hintergrund durchgeführt. Dies kann bis zu 30 Sekunden dauern.</p>
+                  <h3>Legal Pulse Analyse l{String.fromCharCode(228)}uft...</h3>
+                  <p>Die KI-Analyse wird im Hintergrund durchgef{String.fromCharCode(252)}hrt. Dies kann bis zu 30 Sekunden dauern.</p>
                   <button
                     onClick={() => window.location.reload()}
                     className={styles.refreshButton}
@@ -1286,53 +1287,121 @@ export default function LegalPulse() {
                       fontWeight: 500
                     }}
                   >
-                    🔄 Seite aktualisieren
+                    Seite aktualisieren
                   </button>
                 </div>
               </div>
             ) : (
-              <div className={styles.scoreDisplay}>
-                <div
-                  className={styles.scoreCircle}
-                  style={{ '--score-color': riskLevel.color, '--score': selectedContract.legalPulse?.riskScore || 0 } as React.CSSProperties}
-                >
-                  <span className={styles.scoreNumber}>
-                    {selectedContract.legalPulse?.riskScore || '—'}
-                  </span>
-                  <span className={styles.scoreMax}>/100</span>
-                </div>
-                <div className={styles.riskLevel}>
-                  <span className={styles.riskIcon}>{riskLevel.icon}</span>
-                  <span
-                    className={styles.riskLabel}
-                    style={{ color: riskLevel.color }}
+              <div className={styles.scoreHeroLayout}>
+                {/* Left: Score Circle + Level */}
+                <div className={styles.scoreCircleArea}>
+                  <div
+                    className={styles.scoreCircle}
+                    style={{ '--score-color': riskLevel.color, '--score': selectedContract.legalPulse?.riskScore || 0 } as React.CSSProperties}
                   >
-                    {riskLevel.level}
-                  </span>
+                    <span className={styles.scoreNumber}>
+                      {selectedContract.legalPulse?.riskScore || '\u2014'}
+                    </span>
+                    <span className={styles.scoreMax}>/100</span>
+                  </div>
+                  <div className={styles.riskLevel}>
+                    <span className={styles.riskIcon}>{riskLevel.icon}</span>
+                    <span className={styles.riskLabel} style={{ color: riskLevel.color }}>
+                      {riskLevel.level}
+                    </span>
+                  </div>
+                  {/* Score Explanation */}
+                  <p className={styles.scoreExplanation}>
+                    {(() => {
+                      const score = selectedContract.legalPulse?.riskScore;
+                      if (!score) return 'Noch keine Analyse durchgef\u00FChrt.';
+                      if (score <= 30) return 'Niedriges Risiko: Dieser Vertrag weist wenige rechtliche Schwachstellen auf. Regelm\u00E4\u00DFige \u00DCberpr\u00FCfung empfohlen.';
+                      if (score <= 60) return 'Mittleres Risiko: Einige Klauseln sollten \u00FCberpr\u00FCft und angepasst werden, um rechtliche Nachteile zu vermeiden.';
+                      return 'Hohes Risiko: Mehrere kritische Klauseln erfordern dringende \u00DCberarbeitung. Handlungsbedarf besteht.';
+                    })()}
+                  </p>
+                </div>
+
+                {/* Right: Health + Summary + Stats */}
+                <div className={styles.scoreDetailsArea}>
+                  {/* Vertragsgesundheit */}
+                  {selectedContract.legalPulse?.healthScore !== undefined && (
+                    <div className={styles.healthSection}>
+                      <div className={styles.healthHeader}>
+                        <span className={styles.healthTitle}>Vertragsgesundheit</span>
+                        <span
+                          className={styles.healthValue}
+                          style={{
+                            color: selectedContract.legalPulse.healthScore >= 80 ? '#10b981' :
+                                   selectedContract.legalPulse.healthScore >= 50 ? '#f59e0b' : '#ef4444'
+                          }}
+                        >
+                          {selectedContract.legalPulse.healthScore}/100
+                        </span>
+                      </div>
+                      <div className={styles.healthBarTrack}>
+                        <div
+                          className={styles.healthBarFill}
+                          style={{
+                            width: `${selectedContract.legalPulse.healthScore}%`,
+                            background: selectedContract.legalPulse.healthScore >= 80 ? '#10b981' :
+                                        selectedContract.legalPulse.healthScore >= 50 ? '#f59e0b' : '#ef4444'
+                          }}
+                        />
+                      </div>
+                      <p className={styles.healthExplanation}>
+                        Berechnet aus Risiko-Score, Vertragsalter und Vollst{String.fromCharCode(228)}ndigkeit der Klauseln.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* GPT Summary */}
+                  {selectedContract.legalPulse?.summary && (
+                    <div className={styles.summarySection}>
+                      <div className={styles.summaryLabel}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2">
+                          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                          <polyline points="14 2 14 8 20 8"/>
+                          <line x1="16" y1="13" x2="8" y2="13"/>
+                          <line x1="16" y1="17" x2="8" y2="17"/>
+                        </svg>
+                        KI-Zusammenfassung
+                      </div>
+                      <p className={styles.summaryText}>{selectedContract.legalPulse.summary}</p>
+                    </div>
+                  )}
+
+                  {/* Quick Stats Row */}
+                  <div className={styles.scoreStatsRow}>
+                    <div className={styles.scoreStatItem}>
+                      <span className={styles.scoreStatNumber} style={{ color: '#ef4444' }}>
+                        {selectedContract.legalPulse?.topRisks?.length || 0}
+                      </span>
+                      <span className={styles.scoreStatLabel}>Risiken</span>
+                    </div>
+                    <div className={styles.scoreStatItem}>
+                      <span className={styles.scoreStatNumber} style={{ color: '#3b82f6' }}>
+                        {selectedContract.legalPulse?.recommendations?.length || 0}
+                      </span>
+                      <span className={styles.scoreStatLabel}>Empfehlungen</span>
+                    </div>
+                    {selectedContract.legalPulse?.topRisks && (
+                      <div className={styles.scoreStatItem}>
+                        <span className={styles.scoreStatNumber} style={{ color: '#dc2626' }}>
+                          {selectedContract.legalPulse.topRisks.filter((r: { severity?: string }) => r.severity === 'critical' || r.severity === 'high').length}
+                        </span>
+                        <span className={styles.scoreStatLabel}>Kritisch/Hoch</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* Health Score Badge */}
-            {selectedContract.legalPulse?.healthScore !== undefined && (
-              <div className={styles.healthScoreBadge}>
-                <span className={styles.healthLabel}>Legal Health:</span>
-                <span
-                  className={styles.healthValue}
-                  style={{
-                    color: selectedContract.legalPulse.healthScore >= 80 ? '#10b981' :
-                           selectedContract.legalPulse.healthScore >= 50 ? '#f59e0b' : '#ef4444'
-                  }}
-                >
-                  {selectedContract.legalPulse.healthScore}/100
-                </span>
-              </div>
-            )}
-            
-            {scoreHistory.length > 0 && (
+            {scoreHistory.length > 1 && (
               <div className={styles.scoreTrend}>
-                <h4>Entwicklung über Zeit</h4>
-                <ResponsiveContainer width="100%" height={150}>
+                <h4>Score-Entwicklung</h4>
+                <ResponsiveContainer width="100%" height={120}>
                   <LineChart data={scoreHistory}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                     <XAxis dataKey="date" stroke="#64748b" fontSize={11} />
@@ -1345,18 +1414,13 @@ export default function LegalPulse() {
                         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
                         color: '#1f2937'
                       }}
-                      labelStyle={{
-                        color: '#1f2937',
-                        fontWeight: 600
-                      }}
-                      itemStyle={{
-                        color: '#1f2937'
-                      }}
+                      labelStyle={{ color: '#1f2937', fontWeight: 600 }}
+                      itemStyle={{ color: '#1f2937' }}
                       formatter={(value: number) => [`${Number(value).toFixed(1)}/100`, 'Score']}
                     />
-                    <Line 
-                      type="monotone" 
-                      dataKey="score" 
+                    <Line
+                      type="monotone"
+                      dataKey="score"
                       stroke={getRiskScoreColor(selectedContract.legalPulse?.riskScore || null)}
                       strokeWidth={2}
                       dot={{ fill: getRiskScoreColor(selectedContract.legalPulse?.riskScore || null), strokeWidth: 2, r: 4 }}
@@ -1440,14 +1504,35 @@ export default function LegalPulse() {
           </button>
         </div>
 
-        {/* Quick Actions Bar - Shows for high-risk contracts */}
-        {selectedContract && selectedContract.legalPulse?.riskScore && selectedContract.legalPulse.riskScore > 60 && (
-          <div className={styles.quickActionsBar}>
+        {/* Contextual Actions Bar */}
+        {selectedContract && selectedContract.legalPulse?.riskScore && selectedContract.legalPulse.riskScore > 40 && (
+          <div className={styles.quickActionsBar} style={{
+            background: selectedContract.legalPulse.riskScore > 60
+              ? 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)'
+              : 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+            borderColor: selectedContract.legalPulse.riskScore > 60 ? '#fca5a5' : '#fde68a'
+          }}>
             <div className={styles.quickActionsHeader}>
-              <span className={styles.quickActionsIcon}>⚡</span>
               <div>
-                <h4>Empfohlene Aktionen</h4>
-                <p>Dieser Vertrag hat einen hohen Risiko-Score ({selectedContract.legalPulse.riskScore}/100)</p>
+                <h4 style={{ color: selectedContract.legalPulse.riskScore > 60 ? '#991b1b' : '#92400e' }}>
+                  {selectedContract.legalPulse.riskScore > 60
+                    ? `${selectedContract.legalPulse.topRisks?.filter((r: { severity?: string }) => r.severity === 'critical' || r.severity === 'high').length || 0} kritische Risiken erfordern Ihre Aufmerksamkeit`
+                    : 'Optimierungspotenzial erkannt'}
+                </h4>
+                {selectedContract.legalPulse.topRisks && selectedContract.legalPulse.topRisks.length > 0 && (
+                  <div className={styles.quickActionsRiskPreview}>
+                    {selectedContract.legalPulse.topRisks.slice(0, 3).map((risk: { title?: string; severity?: string }, i: number) => (
+                      <span key={i} className={styles.quickRiskTag} style={{
+                        background: risk.severity === 'critical' ? '#dc2626' :
+                                    risk.severity === 'high' ? '#ea580c' :
+                                    risk.severity === 'medium' ? '#d97706' : '#16a34a',
+                        color: 'white'
+                      }}>
+                        {risk.title || `Risiko ${i + 1}`}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
             <div className={styles.quickActionsButtons}>
@@ -1460,14 +1545,11 @@ export default function LegalPulse() {
                 <ArrowRight size={14} />
               </button>
               <button
-                className={`${styles.quickActionBtn} ${styles.cancelBtn}`}
-                onClick={() => {
-                  setContractToCancel(selectedContract);
-                  setShowCancelModal(true);
-                }}
+                className={styles.quickActionBtn}
+                onClick={() => setActiveTab('risks')}
               >
-                <XCircle size={18} />
-                Kündigung vorbereiten
+                <AlertTriangle size={18} />
+                Risiken ansehen
               </button>
               <button
                 className={styles.quickActionBtn}
@@ -1525,57 +1607,118 @@ export default function LegalPulse() {
                 </div>
               ) : (
                 <div className={styles.overviewGrid}>
-                  <div className={styles.quickStats}>
-                    <h3>Schnellübersicht</h3>
-                    <div className={styles.statsList}>
-                      <div className={styles.statItem}>
-                        <span className={styles.statLabel}>Risiko-Level:</span>
-                        <span className={styles.statValue} style={{ color: riskLevel.color }}>
-                          {riskLevel.icon} {riskLevel.level}
-                        </span>
+                  {/* Summary Section */}
+                  {selectedContract.legalPulse?.summary && (
+                    <div className={styles.overviewSummary}>
+                      <div className={styles.overviewSummaryIcon}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2">
+                          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                          <polyline points="14 2 14 8 20 8"/>
+                        </svg>
                       </div>
-                      <div className={styles.statItem}>
-                        <span className={styles.statLabel}>Identifizierte Risiken:</span>
-                        <span className={styles.statValue}>
-                          {selectedContract.legalPulse?.topRisks?.length || 0}
-                        </span>
-                      </div>
-                      <div className={styles.statItem}>
-                        <span className={styles.statLabel}>Empfohlene Maßnahmen:</span>
-                        <span className={styles.statValue}>
-                          {selectedContract.legalPulse?.recommendations?.length || 0}
-                        </span>
-                      </div>
-                      <div className={styles.statItem}>
-                        <span className={styles.statLabel}>Letzte Empfehlung:</span>
-                        <span className={styles.statValue}>
-                          {selectedContract.legalPulse?.lastRecommendation || 'Keine verfügbar'}
-                        </span>
+                      <div>
+                        <h4 className={styles.overviewSummaryTitle}>Analyse-Zusammenfassung</h4>
+                        <p className={styles.overviewSummaryText}>{selectedContract.legalPulse.summary}</p>
                       </div>
                     </div>
+                  )}
+
+                  {/* Risk Distribution */}
+                  {selectedContract.legalPulse?.topRisks && selectedContract.legalPulse.topRisks.length > 0 && (
+                    <div className={styles.overviewRiskDistribution}>
+                      <h4>Risikoverteilung</h4>
+                      <div className={styles.riskDistributionBar}>
+                        {['critical', 'high', 'medium', 'low'].map(sev => {
+                          const count = selectedContract.legalPulse!.topRisks!.filter((r: { severity?: string }) => r.severity === sev).length;
+                          if (count === 0) return null;
+                          const colors: Record<string, string> = { critical: '#dc2626', high: '#ea580c', medium: '#d97706', low: '#16a34a' };
+                          const labels: Record<string, string> = { critical: 'Kritisch', high: 'Hoch', medium: 'Mittel', low: 'Niedrig' };
+                          const total = selectedContract.legalPulse!.topRisks!.length;
+                          return (
+                            <div
+                              key={sev}
+                              className={styles.riskDistSegment}
+                              style={{ width: `${(count / total) * 100}%`, background: colors[sev] }}
+                              title={`${labels[sev]}: ${count}`}
+                            >
+                              {count}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div className={styles.riskDistLegend}>
+                        {['critical', 'high', 'medium', 'low'].map(sev => {
+                          const count = selectedContract.legalPulse!.topRisks!.filter((r: { severity?: string }) => r.severity === sev).length;
+                          if (count === 0) return null;
+                          const colors: Record<string, string> = { critical: '#dc2626', high: '#ea580c', medium: '#d97706', low: '#16a34a' };
+                          const labels: Record<string, string> = { critical: 'Kritisch', high: 'Hoch', medium: 'Mittel', low: 'Niedrig' };
+                          return (
+                            <span key={sev} className={styles.riskDistLegendItem}>
+                              <span className={styles.riskDistDot} style={{ background: colors[sev] }} />
+                              {count}x {labels[sev]}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Top Risks Preview */}
+                  <div className={styles.overviewPreviewSection}>
+                    <div className={styles.overviewPreviewHeader}>
+                      <h4>Top-Risiken</h4>
+                      <button className={styles.overviewPreviewLink} onClick={() => setActiveTab('risks')}>
+                        Alle anzeigen <ArrowRight size={14} />
+                      </button>
+                    </div>
+                    {selectedContract.legalPulse?.topRisks?.slice(0, 3).map((risk: { title?: string; severity?: string; description?: string }, i: number) => (
+                      <div key={i} className={styles.overviewPreviewItem} onClick={() => setActiveTab('risks')} style={{ cursor: 'pointer' }}>
+                        <span className={styles.overviewPreviewBadge} style={{
+                          background: risk.severity === 'critical' ? '#dc2626' : risk.severity === 'high' ? '#ea580c' : risk.severity === 'medium' ? '#d97706' : '#16a34a'
+                        }}>
+                          {risk.severity === 'critical' ? 'Kritisch' : risk.severity === 'high' ? 'Hoch' : risk.severity === 'medium' ? 'Mittel' : 'Niedrig'}
+                        </span>
+                        <div className={styles.overviewPreviewText}>
+                          <strong>{risk.title}</strong>
+                          {risk.description && <span>{risk.description.length > 80 ? risk.description.substring(0, 80) + '\u2026' : risk.description}</span>}
+                        </div>
+                      </div>
+                    )) || <p style={{ color: '#9ca3af', fontSize: '0.9rem' }}>Keine Risiken identifiziert</p>}
                   </div>
 
-                  <div className={styles.overviewActions}>
-                    <h3>Nächste Schritte</h3>
-                    <div className={styles.actionsList}>
-                      <button
-                        className={styles.actionButton}
-                        onClick={() => setActiveTab('risks')}
-                      >
-                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M12 9V13" stroke="currentColor" strokeWidth="2"/>
-                          <path d="M12 17H12.01" stroke="currentColor" strokeWidth="2"/>
-                          <path d="M10.29 3.86L1.82 18A2 2 0 003.64 21H20.36A2 2 0 0022.18 18L13.71 3.86A2 2 0 0010.29 3.86Z" stroke="currentColor" strokeWidth="2"/>
-                        </svg>
-                        Risiken analysieren
+                  {/* Top Recommendations Preview */}
+                  <div className={styles.overviewPreviewSection}>
+                    <div className={styles.overviewPreviewHeader}>
+                      <h4>Top-Empfehlungen</h4>
+                      <button className={styles.overviewPreviewLink} onClick={() => setActiveTab('recommendations')}>
+                        Alle anzeigen <ArrowRight size={14} />
                       </button>
-                      <button
-                        className={styles.actionButton}
-                        onClick={() => setActiveTab('recommendations')}
-                      >
-                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M9 11L12 14L22 4" stroke="currentColor" strokeWidth="2"/>
-                        </svg>
+                    </div>
+                    {selectedContract.legalPulse?.recommendations?.slice(0, 2).map((rec: { title?: string; priority?: string; effort?: string }, i: number) => (
+                      <div key={i} className={styles.overviewPreviewItem} onClick={() => setActiveTab('recommendations')} style={{ cursor: 'pointer' }}>
+                        <span className={styles.overviewPreviewBadge} style={{
+                          background: rec.priority === 'critical' ? '#dc2626' : rec.priority === 'high' ? '#ea580c' : rec.priority === 'medium' ? '#0284c7' : '#16a34a'
+                        }}>
+                          {rec.priority === 'critical' ? 'Kritisch' : rec.priority === 'high' ? 'Hoch' : rec.priority === 'medium' ? 'Mittel' : 'Niedrig'}
+                        </span>
+                        <div className={styles.overviewPreviewText}>
+                          <strong>{rec.title}</strong>
+                          {rec.effort && <span>Aufwand: {rec.effort}</span>}
+                        </div>
+                      </div>
+                    )) || <p style={{ color: '#9ca3af', fontSize: '0.9rem' }}>Keine Empfehlungen vorhanden</p>}
+                  </div>
+
+                  {/* Actions */}
+                  <div className={styles.overviewActions}>
+                    <h4>N{String.fromCharCode(228)}chste Schritte</h4>
+                    <div className={styles.actionsList}>
+                      <button className={styles.actionButton} onClick={() => setActiveTab('risks')}>
+                        <AlertTriangle size={16} />
+                        Risiken im Detail ansehen
+                      </button>
+                      <button className={styles.actionButton} onClick={() => setActiveTab('recommendations')}>
+                        <CheckCircle size={16} />
                         Empfehlungen umsetzen
                       </button>
                       <button
@@ -1583,9 +1726,7 @@ export default function LegalPulse() {
                         onClick={handleStartOptimizer}
                         disabled={isStartingOptimizer}
                       >
-                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M12 2L15.09 8.26L22 9L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9L8.91 8.26L12 2Z" stroke="currentColor" strokeWidth="2"/>
-                        </svg>
+                        <Zap size={16} />
                         {isStartingOptimizer ? 'Wird gestartet...' : 'Vertrag optimieren'}
                       </button>
                     </div>
@@ -1898,47 +2039,85 @@ export default function LegalPulse() {
                     <h3>Analyse-Historie</h3>
                     <p>Entwicklung des Risiko-Scores {String.fromCharCode(252)}ber Zeit</p>
                   </div>
-                  <div className={styles.chartLegend}>
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.legendIcon}>
-                      <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" strokeWidth="2"/>
-                    </svg>
-                    <span>Zeitverlauf des Risiko-Scores (0{String.fromCharCode(8211)}100); h{String.fromCharCode(246)}her = riskanter</span>
-                  </div>
-                  <div className={styles.historyContent}>
-                    <div className={styles.historyChart}>
-                      <ResponsiveContainer width="100%" height={300}>
-                        <AreaChart data={scoreHistory}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                          <XAxis dataKey="date" stroke="#64748b" fontSize={12} />
-                          <YAxis stroke="#64748b" fontSize={12} domain={[0, 100]} />
-                          <Tooltip
-                            contentStyle={{
-                              backgroundColor: '#ffffff',
-                              border: '1px solid #e2e8f0',
-                              borderRadius: '8px',
-                              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                              color: '#1f2937'
-                            }}
-                            labelStyle={{
-                              color: '#1f2937',
-                              fontWeight: 600
-                            }}
-                            itemStyle={{
-                              color: '#1f2937'
-                            }}
-                            formatter={(value: number) => [`${Number(value).toFixed(1)}/100`, 'Risiko-Score']}
-                          />
-                          <Area
-                            type="monotone"
-                            dataKey="score"
-                            stroke={getRiskScoreColor(selectedContract.legalPulse?.riskScore || null)}
-                            fill={`${getRiskScoreColor(selectedContract.legalPulse?.riskScore || null)}20`}
-                            strokeWidth={2}
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
+
+                  {scoreHistory.length <= 1 ? (
+                    <div className={styles.historySinglePoint}>
+                      <div className={styles.historySingleIcon}>
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="1.5">
+                          <circle cx="12" cy="12" r="10"/>
+                          <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                      </div>
+                      <h4>Erste Analyse durchgef{String.fromCharCode(252)}hrt</h4>
+                      {selectedContract.legalPulse?.lastAnalysis && (
+                        <p className={styles.historySingleDate}>
+                          am {new Date(selectedContract.legalPulse.lastAnalysis).toLocaleDateString('de-DE', {
+                            year: 'numeric', month: 'long', day: 'numeric'
+                          })}
+                        </p>
+                      )}
+                      <div className={styles.historySingleScore}>
+                        <span style={{ color: riskLevel.color, fontWeight: 700, fontSize: '1.5rem' }}>
+                          {selectedContract.legalPulse?.riskScore || '\u2014'}
+                        </span>
+                        <span style={{ color: '#6b7280' }}>/100 Risiko-Score</span>
+                        <span style={{ color: riskLevel.color, fontWeight: 600 }}>
+                          {riskLevel.icon} {riskLevel.level}
+                        </span>
+                      </div>
+                      <p className={styles.historySingleHint}>
+                        Der Verlauf wird sichtbar, sobald weitere Analysen durchgef{String.fromCharCode(252)}hrt werden.
+                        Legal Pulse pr{String.fromCharCode(252)}ft Ihren Vertrag automatisch w{String.fromCharCode(246)}chentlich auf Ver{String.fromCharCode(228)}nderungen.
+                      </p>
+                      {selectedContract.legalPulse?.nextScheduledCheck && (
+                        <div className={styles.historySingleNext}>
+                          <Clock size={14} />
+                          N{String.fromCharCode(228)}chste geplante Pr{String.fromCharCode(252)}fung: {new Date(selectedContract.legalPulse.nextScheduledCheck).toLocaleDateString('de-DE', {
+                            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                          })}
+                        </div>
+                      )}
                     </div>
-                  </div>
+                  ) : (
+                    <>
+                      <div className={styles.chartLegend}>
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.legendIcon}>
+                          <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" strokeWidth="2"/>
+                        </svg>
+                        <span>Zeitverlauf des Risiko-Scores (0{String.fromCharCode(8211)}100); h{String.fromCharCode(246)}her = riskanter</span>
+                      </div>
+                      <div className={styles.historyContent}>
+                        <div className={styles.historyChart}>
+                          <ResponsiveContainer width="100%" height={300}>
+                            <AreaChart data={scoreHistory}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                              <XAxis dataKey="date" stroke="#64748b" fontSize={12} />
+                              <YAxis stroke="#64748b" fontSize={12} domain={[0, 100]} />
+                              <Tooltip
+                                contentStyle={{
+                                  backgroundColor: '#ffffff',
+                                  border: '1px solid #e2e8f0',
+                                  borderRadius: '8px',
+                                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                                  color: '#1f2937'
+                                }}
+                                labelStyle={{ color: '#1f2937', fontWeight: 600 }}
+                                itemStyle={{ color: '#1f2937' }}
+                                formatter={(value: number) => [`${Number(value).toFixed(1)}/100`, 'Risiko-Score']}
+                              />
+                              <Area
+                                type="monotone"
+                                dataKey="score"
+                                stroke={getRiskScoreColor(selectedContract.legalPulse?.riskScore || null)}
+                                fill={`${getRiskScoreColor(selectedContract.legalPulse?.riskScore || null)}20`}
+                                strokeWidth={2}
+                              />
+                            </AreaChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </>
               )}
             </div>

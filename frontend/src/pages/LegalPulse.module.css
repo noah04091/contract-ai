@@ -599,19 +599,139 @@
   text-align: center;
 }
 
-.scoreHeader {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 32px;
+/* Score Hero Layout - Two Column */
+.scoreHeroLayout {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 48px;
+  align-items: start;
 }
 
-.scoreHeader h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #1f2937;
+.scoreCircleArea {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  min-width: 200px;
+}
+
+.scoreExplanation {
+  font-size: 0.85rem;
+  color: #6b7280;
+  text-align: center;
+  line-height: 1.5;
+  max-width: 220px;
   margin: 0;
+}
+
+.scoreDetailsArea {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Health Section */
+.healthSection {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px 20px;
+}
+
+.healthHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.healthTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.healthValue {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.healthBarTrack {
+  width: 100%;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.healthBarFill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.8s ease-out;
+}
+
+.healthExplanation {
+  font-size: 0.78rem;
+  color: #9ca3af;
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* Summary Section */
+.summarySection {
+  background: #faf5ff;
+  border: 1px solid #e9d5ff;
+  border-radius: 12px;
+  padding: 16px 20px;
+}
+
+.summaryLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #6366f1;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 8px;
+}
+
+.summaryText {
+  font-size: 0.9rem;
+  color: #374151;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Score Stats Row */
+.scoreStatsRow {
+  display: flex;
+  gap: 16px;
+}
+
+.scoreStatItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.scoreStatNumber {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.scoreStatLabel {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+  margin-top: 2px;
 }
 
 .scoreDisplay {
@@ -812,9 +932,189 @@
 /* Overview tab styles are handled by the parent .tabContent class */
 
 .overviewGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Overview Summary */
+.overviewSummary {
+  display: flex;
+  gap: 16px;
+  background: #faf5ff;
+  border: 1px solid #e9d5ff;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.overviewSummaryIcon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  background: white;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e9d5ff;
+}
+
+.overviewSummaryTitle {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #6366f1;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin: 0 0 6px 0;
+}
+
+.overviewSummaryText {
+  font-size: 0.9rem;
+  color: #374151;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Risk Distribution */
+.overviewRiskDistribution {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.overviewRiskDistribution h4 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #374151;
+  margin: 0 0 12px 0;
+}
+
+.riskDistributionBar {
+  display: flex;
+  height: 28px;
+  border-radius: 8px;
+  overflow: hidden;
+  gap: 2px;
+  margin-bottom: 10px;
+}
+
+.riskDistSegment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  min-width: 28px;
+  transition: all 0.3s ease;
+}
+
+.riskDistLegend {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.riskDistLegendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.riskDistDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+/* Overview Preview Sections */
+.overviewPreviewSection {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.overviewPreviewHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.overviewPreviewHeader h4 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #374151;
+  margin: 0;
+}
+
+.overviewPreviewLink {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: #3b82f6;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.overviewPreviewLink:hover {
+  color: #1d4ed8;
+}
+
+.overviewPreviewItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 8px;
+  transition: background 0.2s;
+  margin-bottom: 4px;
+}
+
+.overviewPreviewItem:hover {
+  background: #f9fafb;
+}
+
+.overviewPreviewBadge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.overviewPreviewText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.overviewPreviewText strong {
+  font-size: 0.88rem;
+  color: #1f2937;
+}
+
+.overviewPreviewText span {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.overviewActions h4 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #374151;
+  margin: 0 0 12px 0;
 }
 
 .quickStats h3,
@@ -1166,6 +1466,76 @@
   border-radius: 12px;
   padding: 24px;
   border: 1px solid #f1f5f9;
+}
+
+/* History Single Data Point */
+.historySinglePoint {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 48px 32px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.historySingleIcon {
+  width: 72px;
+  height: 72px;
+  background: #eff6ff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.historySinglePoint h4 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.historySingleDate {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.historySingleScore {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  margin: 8px 0;
+}
+
+.historySingleHint {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  line-height: 1.5;
+  max-width: 500px;
+  margin: 0;
+}
+
+.historySingleNext {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #3b82f6;
+  font-weight: 600;
+  margin-top: 8px;
+  padding: 8px 16px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
 }
 
 /* ===== CONTRACTS SECTION ===== */
@@ -2642,17 +3012,30 @@
   .scoreCard {
     padding: 32px 24px;
   }
-  
+
+  .scoreHeroLayout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .scoreCircleArea {
+    min-width: unset;
+  }
+
+  .scoreStatsRow {
+    flex-wrap: wrap;
+  }
+
   .scoreCircle {
     width: 140px;
     height: 140px;
   }
-  
+
   .scoreCircle::before {
     width: 100px;
     height: 100px;
   }
-  
+
   .scoreNumber {
     font-size: 2.5rem;
   }
@@ -4385,22 +4768,23 @@
   height: 18px;
 }
 
-.quickActionBtn.cancelBtn {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  border-color: #dc2626;
-  color: white;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+/* Quick Actions Risk Preview */
+.quickActionsRiskPreview {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
 }
 
-.quickActionBtn.cancelBtn:hover {
-  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-  border-color: #b91c1c;
-  color: white;
-  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35);
-}
-
-.quickActionBtn.cancelBtn svg {
-  color: white;
+.quickRiskTag {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 @media (max-width: 768px) {
