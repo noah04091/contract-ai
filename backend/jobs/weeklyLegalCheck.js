@@ -531,7 +531,7 @@ class WeeklyLegalCheck {
     // Build enriched Stage 1 context with full law texts
     let stage1Context = '';
     if (stage1Results.relevantChanges.length > 0) {
-      stage1Context = '\n\nAKTUELLE GESETZESÄNDERUNGEN (letzte 7 Tage):\n';
+      stage1Context = '\n\nERKANNTE RECHTSÄNDERUNGEN (letzte 7 Tage, aus offiziellen Quellen):\n';
       for (const change of stage1Results.relevantChanges) {
         stage1Context += `\n--- ${change.title} (Bereich: ${change.area || 'Allgemein'}, Relevanz: ${(change.score * 100).toFixed(0)}%) ---\n`;
 
@@ -550,11 +550,11 @@ class WeeklyLegalCheck {
       : '';
 
     const systemPrompt = `Du bist ein erfahrener Rechtsanwalt f\u00FCr deutsches Recht, spezialisiert auf Vertragsrecht, Arbeitsrecht, Mietrecht, Handelsrecht, Datenschutzrecht und Verbraucherrecht.
-Du f\u00FChrst eine w\u00F6chentliche Rechtspr\u00FCfung von Vertr\u00E4gen durch. Deine Aufgabe ist es, den Vertrag gegen den AKTUELLEN deutschen Rechtsstand zu pr\u00FCfen.
-Ber\u00FCcksichtige dabei insbesondere die bereitgestellten AKTUELLEN GESETZESÄNDERUNGEN - diese sind verifizierte, aktuelle Rechts\u00E4nderungen der letzten 7 Tage.
+Du f\u00FChrst eine w\u00F6chentliche Rechts\u00E4nderungs-\u00DCberwachung von Vertr\u00E4gen durch. Deine Aufgabe ist es, die Auswirkungen neu erkannter rechtlicher \u00C4nderungen auf den Vertrag zu bewerten.
+Bewerte AUSSCHLIESSLICH auf Basis der bereitgestellten Quellen und deines allgemeinen Rechtswissens. Die bereitgestellten Rechts\u00E4nderungen stammen aus 20 offiziellen deutschen Rechtsquellen der letzten 7 Tage.
 Antworte IMMER auf Deutsch und NUR mit validem JSON.`;
 
-    const userPrompt = `Pr\u00FCfe den folgenden Vertrag gegen den AKTUELLEN deutschen Rechtsstand (Stand: ${today}).
+    const userPrompt = `Bewerte die Auswirkungen neu erkannter Rechts\u00E4nderungen auf den folgenden Vertrag (Pr\u00FCfdatum: ${today}).
 
 VERTRAGSNAME: ${contract.name || 'Unbekannt'}
 VERTRAGSSTATUS: ${contract.status || 'Aktiv'}
@@ -578,7 +578,7 @@ WICHTIG:
 - Wenn der Vertrag rechtlich einwandfrei ist, setze hasChanges auf false und findings als leeres Array
 - Sei KONKRET: Zitiere die betroffenen Klauseln und nenne die genaue Rechtsgrundlage
 - Nur ECHTE, aktuelle rechtliche Probleme melden - keine hypothetischen
-- Beziehe dich auf die bereitgestellten AKTUELLEN GESETZESÄNDERUNGEN wenn relevant
+- Beziehe dich auf die bereitgestellten ERKANNTEN RECHTSÄNDERUNGEN wenn relevant
 
 Antworte NUR mit diesem JSON-Format:
 {
@@ -746,9 +746,9 @@ Antworte NUR mit diesem JSON-Format:
         contractId: contract._id.toString(),
         contractName: contract.name || 'Unbekannt',
         type: 'weekly_legal_check',
-        lawTitle: `W\u00F6chentlicher Rechtscheck: ${analysis.overallStatus === 'kritisch' ? 'Kritische Probleme' : 'Handlungsbedarf'}`,
+        lawTitle: `Rechts\u00E4nderungs-\u00DCberwachung: ${analysis.overallStatus === 'kritisch' ? 'Kritische Probleme' : 'Handlungsbedarf'}`,
         lawDescription: analysis.summary,
-        lawArea: 'Rechtscheck',
+        lawArea: 'Rechts\u00E4nderungs-\u00DCberwachung',
         score: analysis.overallStatus === 'kritisch' ? 0.95 : 0.80,
         findings: analysis.findings,
         findingsSummary,

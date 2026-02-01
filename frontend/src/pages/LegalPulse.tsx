@@ -2285,7 +2285,7 @@ export default function LegalPulse() {
           <div className={styles.weeklyCheckHeader}>
             <div className={styles.weeklyCheckTitle}>
               <Shield size={20} />
-              <h3>W{String.fromCharCode(246)}chentlicher Rechtscheck</h3>
+              <h3>W{String.fromCharCode(246)}chentliche Rechts{String.fromCharCode(228)}nderungs-{String.fromCharCode(220)}berwachung</h3>
               {weeklyChecks && weeklyChecks.contracts.length > 0 && (
                 <span className={styles.weeklyCheckBadge}>
                   {weeklyChecks.contracts.filter(c => c.latestCheck.stage2Results.overallStatus !== 'aktuell').length} mit Handlungsbedarf
@@ -2306,10 +2306,10 @@ export default function LegalPulse() {
           {showWeeklyChecks && (
             <div className={styles.weeklyCheckContent}>
               {weeklyChecksLoading ? (
-                <div className={styles.weeklyCheckLoading}>Lade Rechtschecks...</div>
+                <div className={styles.weeklyCheckLoading}>Lade Rechts{String.fromCharCode(228)}nderungs-Pr{String.fromCharCode(252)}fungen...</div>
               ) : !weeklyChecks || weeklyChecks.contracts.length === 0 ? (
                 <div className={styles.weeklyCheckEmpty}>
-                  <p>Noch keine w{String.fromCharCode(246)}chentlichen Rechtschecks durchgef{String.fromCharCode(252)}hrt. Der erste Check erfolgt automatisch am n{String.fromCharCode(228)}chsten Sonntag.</p>
+                  <p>Noch keine Rechts{String.fromCharCode(228)}nderungs-Pr{String.fromCharCode(252)}fungen durchgef{String.fromCharCode(252)}hrt. Die erste Pr{String.fromCharCode(252)}fung erfolgt automatisch am n{String.fromCharCode(228)}chsten Sonntag.</p>
                 </div>
               ) : (
                 <div className={styles.weeklyCheckList}>
@@ -2348,15 +2348,15 @@ export default function LegalPulse() {
 
                             {contract.latestCheck.metadata && (
                               <div className={styles.analysisMetadata}>
-                                <span>Analysiert: {contract.latestCheck.metadata.analyzedPercentage}%</span>
-                                <span>Quellen: {contract.latestCheck.metadata.dataSourcesUsed?.length || '?'}</span>
+                                <span>Vertrag analysiert: {contract.latestCheck.metadata.analyzedPercentage}%</span>
+                                <span>Gepr{String.fromCharCode(252)}ft gegen: {contract.latestCheck.metadata.dataSourcesUsed?.length || '?'} offizielle Quellen</span>
                                 <span>Konfidenz: {Math.round(contract.latestCheck.metadata.confidenceScore * 100)}%</span>
                               </div>
                             )}
 
                             {contract.latestCheck.stage1Results.relevantChanges.length > 0 && (
                               <div className={styles.weeklyStage1}>
-                                <h5>Relevante Gesetzes{String.fromCharCode(228)}nderungen (letzte 7 Tage)</h5>
+                                <h5>Erkannte Rechts{String.fromCharCode(228)}nderungen der letzten 7 Tage (aus 20 offiziellen Quellen)</h5>
                                 <ul>
                                   {contract.latestCheck.stage1Results.relevantChanges.map((change, idx) => (
                                     <li key={idx}>
@@ -2369,7 +2369,7 @@ export default function LegalPulse() {
 
                             {findings.length > 0 && (
                               <div className={styles.weeklyFindings}>
-                                <h5>KI-Analyse Befunde</h5>
+                                <h5>Erkannte Auswirkungen auf Ihren Vertrag</h5>
                                 {findings.map((finding, idx) => (
                                   <div key={idx} className={`${styles.weeklyFinding} ${styles[`findingSeverity_${finding.severity}`] || ''}`}>
                                     <div className={styles.weeklyFindingHeader}>

@@ -369,8 +369,8 @@ class DigestProcessor {
 
     return `
       <div style="margin-bottom: 32px;">
-        <h2 style="color: #111827; margin: 0 0 8px; font-size: 20px;">🔍 Wöchentlicher Rechtscheck</h2>
-        <p style="color: #6b7280; margin: 0 0 24px; font-size: 14px;">KI-gestützte Prüfung Ihrer Verträge gegen den aktuellen Rechtsstand</p>
+        <h2 style="color: #111827; margin: 0 0 8px; font-size: 20px;">🔍 Wöchentliche Rechtsänderungs-Überwachung</h2>
+        <p style="color: #6b7280; margin: 0 0 24px; font-size: 14px;">Auswirkungen neu erkannter Rechtsänderungen auf Ihre Verträge (basierend auf 20 offiziellen Quellen)</p>
         ${findingsHtml}
       </div>
     `;
