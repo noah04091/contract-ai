@@ -62,6 +62,7 @@ export default function Chat() {
   const [chats, setChats] = useState<ChatLite[]>([]);
   const [active, setActive] = useState<ChatFull | null>(null);
   const [initialChatIdLoaded, setInitialChatIdLoaded] = useState(false);
+  const [chatsLoaded, setChatsLoaded] = useState(false);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [usage, setUsage] = useState<UsageStats | null>(null);
@@ -103,6 +104,8 @@ export default function Chat() {
 
   // ✅ Auto-open latest chat or create new one if none exist
   useEffect(() => {
+    if (!chatsLoaded) return; // Wait until chats are loaded from backend
+
     // Skip auto-open if we're loading a specific chat from URL
     const urlParams = new URLSearchParams(location.search);
     const chatIdFromUrl = urlParams.get('id');
@@ -111,11 +114,11 @@ export default function Chat() {
     if (chats.length > 0 && !active) {
       // Open the most recent chat
       openChat(chats[0]._id);
-    } else if (chats.length === 0 && !active && isPremium && !isLoading) {
+    } else if (chats.length === 0 && !active && isPremium) {
       // No chats exist, create a new one automatically
       newChat();
     }
-  }, [chats, active, isPremium, isLoading, location.search]);
+  }, [chats, active, isPremium, chatsLoaded, location.search]);
 
   // ✅ Autoscroll on new messages AND during streaming
   useEffect(() => {
@@ -145,8 +148,10 @@ export default function Chat() {
       if (!res.ok) throw new Error("Failed to load chats");
       const data = await res.json();
       setChats(data);
+      setChatsLoaded(true);
     } catch (error) {
       console.error("❌ Error loading chats:", error);
+      setChatsLoaded(true);
     }
   }
 
