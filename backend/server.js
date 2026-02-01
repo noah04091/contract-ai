@@ -1611,6 +1611,39 @@ const connectDB = async () => {
         }
       });
 
+      // 📬 Legal Pulse: Täglicher Digest (täglich um 8 Uhr morgens)
+      // Verarbeitet alle Legal-Pulse-Alerts aus der digest_queue und sendet Sammel-Emails
+      cron.schedule("0 8 * * *", async () => {
+        console.log("📬 [LEGAL-PULSE] Starte Daily Digest Verarbeitung...");
+        try {
+          const DigestProcessor = require("./jobs/digestProcessor");
+          const processor = new DigestProcessor();
+          const result = await processor.processDailyDigests();
+          console.log(`📬 [LEGAL-PULSE] Daily Digest: ${result.sent} gesendet, ${result.errors} Fehler`);
+          await processor.close();
+        } catch (error) {
+          console.error("❌ [LEGAL-PULSE] Daily Digest Cron Error:", error);
+          await captureError(error, { route: 'CRON:legal-pulse-daily-digest', method: 'SCHEDULED', severity: 'high' });
+        }
+      });
+
+      // 📬 Legal Pulse: Wöchentlicher Digest (jeden Montag um 8 Uhr morgens)
+      // Weekly Check läuft Sonntag 02:00 → Digest versendet Montag 08:00
+      cron.schedule("0 8 * * 1", async () => {
+        console.log("📬 [LEGAL-PULSE] Starte Weekly Digest Verarbeitung...");
+        try {
+          const DigestProcessor = require("./jobs/digestProcessor");
+          const processor = new DigestProcessor();
+          const result = await processor.processWeeklyDigests();
+          await processor.cleanup(); // Alte Einträge bereinigen
+          console.log(`📬 [LEGAL-PULSE] Weekly Digest: ${result.sent} gesendet, ${result.errors} Fehler`);
+          await processor.close();
+        } catch (error) {
+          console.error("❌ [LEGAL-PULSE] Weekly Digest Cron Error:", error);
+          await captureError(error, { route: 'CRON:legal-pulse-weekly-digest', method: 'SCHEDULED', severity: 'high' });
+        }
+      });
+
       // 📧 NEU: Onboarding E-Mail Sequence (täglich um 8:30 Uhr morgens)
       // Sendet automatisch Day 2, Day 7, Day 14 und Day 30 E-Mails an neue/Free User
       cron.schedule("30 8 * * *", async () => {
