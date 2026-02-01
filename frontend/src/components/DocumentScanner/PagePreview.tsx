@@ -29,6 +29,9 @@ const PagePreview: React.FC<PagePreviewProps> = ({
   onConfirm,
   onAdjustCorners,
 }) => {
+  // Bildquelle: correctedBlob → thumbnailUrl (neuer Blob-URL), sonst previewDataUrl (stabile DataURL)
+  const imageSrc = page.correctedBlob ? page.thumbnailUrl : page.previewDataUrl;
+
   const previewStyle = useMemo((): React.CSSProperties => {
     const style: React.CSSProperties = {
       transform: `rotate(${page.rotation}deg)`,
@@ -47,13 +50,16 @@ const PagePreview: React.FC<PagePreviewProps> = ({
     <div className={styles.previewContainer}>
       <div className={styles.previewImageWrapper}>
         <img
-          src={page.thumbnailUrl}
+          src={imageSrc}
           alt="Scan Seite"
           className={styles.previewImage}
           style={previewStyle}
           onError={(e) => {
-            console.warn("[Scanner] Preview image failed to load");
-            (e.target as HTMLImageElement).style.display = "none";
+            // Fallback auf previewDataUrl wenn Blob-URL fehlschlägt
+            const img = e.target as HTMLImageElement;
+            if (img.src !== page.previewDataUrl) {
+              img.src = page.previewDataUrl;
+            }
           }}
         />
       </div>
