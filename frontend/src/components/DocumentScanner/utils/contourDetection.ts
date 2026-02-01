@@ -69,7 +69,7 @@ export function findLargestContour(
         // Search for next boundary pixel
         let found = false;
         const backDir = (dir + 4) % 8; // opposite direction
-        let searchDir = (backDir + 1) % 8; // start search from one past backtrack
+        const searchDir = (backDir + 1) % 8; // start search from one past backtrack
 
         for (let i = 0; i < 8; i++) {
           const d = (searchDir + i) % 8;
