@@ -26,7 +26,8 @@ interface UseDocumentDetectionOptions {
 }
 
 const STABILITY_TOLERANCE = 0.025; // 2.5% of frame
-const EMA_ALPHA = 0.4; // 40% new frame, 60% history
+const EMA_ALPHA_SYNC = 0.4; // 40% new frame for sync (Hough) detector
+const EMA_ALPHA_ASYNC = 0.25; // 25% new frame for async (ML) — slower updates need gentler smoothing
 const GRACE_FRAMES = 4; // Tolerate up to 4 unstable frames before reset
 const FADEOUT_MS = 500; // Fade-out duration when detection is lost
 const NO_DETECTION_HINT_MS = 3000; // Show hint after 3s without detection
@@ -113,6 +114,8 @@ export function useDocumentDetection({
       try {
         // Support async ML detector alongside sync Hough fallback
         let result: { corners: Point[]; confidence: number } | null | undefined;
+        const isAsync = !!detector.detectAsync;
+        const emaAlpha = isAsync ? EMA_ALPHA_ASYNC : EMA_ALPHA_SYNC;
 
         if (detector.detectAsync) {
           // Fire-and-forget pattern: launch async inference if not already running
@@ -126,6 +129,8 @@ export function useDocumentDetection({
             });
           }
           result = latestResultRef.current;
+          // If ML hasn't produced a result yet, skip this frame (don't reset state)
+          if (result === null && !lastKnownCornersRef.current) return;
         } else if (detector.detect) {
           result = detector.detect(video);
         }
@@ -139,9 +144,9 @@ export function useDocumentDetection({
 
           const rawCorners = result.corners;
 
-          // Apply EMA smoothing
+          // Apply EMA smoothing (gentler alpha for async ML to avoid jumps)
           const smoothed = smoothedCornersRef.current
-            ? smoothCorners(smoothedCornersRef.current, rawCorners, EMA_ALPHA)
+            ? smoothCorners(smoothedCornersRef.current, rawCorners, emaAlpha)
             : rawCorners;
           smoothedCornersRef.current = smoothed;
 

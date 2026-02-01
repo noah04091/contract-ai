@@ -11,9 +11,9 @@ import * as ort from "onnxruntime-web";
 import type { DetectedEdges } from "../types";
 import {
   thresholdMask,
-  findLargestContour,
-  approxQuad,
-  orderCornersCW,
+  morphClose,
+  findBoundaryPixels,
+  extractCorners,
 } from "./contourDetection";
 
 // ImageNet normalization constants
@@ -25,8 +25,15 @@ export class MLDocumentDetector {
   private session: ort.InferenceSession | null = null;
   private canvas: OffscreenCanvas | HTMLCanvasElement;
   private ctx: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
+  // Reusable buffers to avoid GC pressure on mobile
+  private floatData: Float32Array;
+  private saliency: Float32Array;
 
   constructor() {
+    const pixelCount = MODEL_SIZE * MODEL_SIZE;
+    this.floatData = new Float32Array(3 * pixelCount);
+    this.saliency = new Float32Array(pixelCount);
+
     // Use OffscreenCanvas if available, otherwise fallback to regular canvas
     if (typeof OffscreenCanvas !== "undefined") {
       this.canvas = new OffscreenCanvas(MODEL_SIZE, MODEL_SIZE);
@@ -81,16 +88,14 @@ export class MLDocumentDetector {
     const rgba = imageData.data;
 
     // Step 2: Preprocess — RGBA to float32 NCHW tensor, ImageNet normalization
-    const inputSize = 3 * MODEL_SIZE * MODEL_SIZE;
-    const floatData = new Float32Array(inputSize);
     const pixelCount = MODEL_SIZE * MODEL_SIZE;
+    const floatData = this.floatData;
 
     for (let i = 0; i < pixelCount; i++) {
       const rgbaIdx = i * 4;
-      // Normalize to [0,1] then apply ImageNet normalization
-      floatData[i] = (rgba[rgbaIdx] / 255 - MEAN[0]) / STD[0]; // R
-      floatData[pixelCount + i] = (rgba[rgbaIdx + 1] / 255 - MEAN[1]) / STD[1]; // G
-      floatData[2 * pixelCount + i] = (rgba[rgbaIdx + 2] / 255 - MEAN[2]) / STD[2]; // B
+      floatData[i] = (rgba[rgbaIdx] / 255 - MEAN[0]) / STD[0];
+      floatData[pixelCount + i] = (rgba[rgbaIdx + 1] / 255 - MEAN[1]) / STD[1];
+      floatData[2 * pixelCount + i] = (rgba[rgbaIdx + 2] / 255 - MEAN[2]) / STD[2];
     }
 
     const inputTensor = new ort.Tensor("float32", floatData, [
@@ -113,40 +118,43 @@ export class MLDocumentDetector {
     const rawOutput = output.data as Float32Array;
 
     // Step 4: Sigmoid activation on raw output
-    const saliency = new Float32Array(pixelCount);
+    const saliency = this.saliency;
     for (let i = 0; i < pixelCount; i++) {
       saliency[i] = 1 / (1 + Math.exp(-rawOutput[i]));
     }
 
-    // Step 5: Threshold to binary mask
-    const binary = thresholdMask(saliency, MODEL_SIZE, MODEL_SIZE, 0.5);
+    // Step 5: Threshold to binary mask (lower threshold for better mobile detection)
+    let binary = thresholdMask(saliency, MODEL_SIZE, MODEL_SIZE, 0.35);
 
-    // Step 6: Find largest contour
-    const contour = findLargestContour(binary, MODEL_SIZE, MODEL_SIZE);
-    if (contour.length < 20) return null;
+    // Step 6: Morphological close to fill small holes from noisy mobile cameras
+    binary = morphClose(binary, MODEL_SIZE, MODEL_SIZE);
 
-    // Step 7: Approximate as quadrilateral
-    const quad = approxQuad(contour);
-    if (!quad) return null;
+    // Step 7: Find boundary pixels and extract corners via convex hull
+    const boundary = findBoundaryPixels(binary, MODEL_SIZE, MODEL_SIZE);
+    const corners = extractCorners(boundary);
+    if (!corners) return null;
 
-    // Step 8: Order corners TL, TR, BR, BL and normalize to 0-1
-    const ordered = orderCornersCW(quad);
-    const normalizedCorners = ordered.map((p) => ({
+    // Step 8: Normalize corners to 0-1
+    const normalizedCorners = corners.map((p) => ({
       x: p.x / MODEL_SIZE,
       y: p.y / MODEL_SIZE,
     }));
 
-    // Step 9: Compute confidence from mask coverage
+    // Step 9: Validate quad - reject if too small or degenerate
+    const area = quadArea(normalizedCorners);
+    if (area < 0.03) return null; // Less than 3% of frame
+
+    // Step 10: Compute confidence from mask coverage and quad regularity
     let maskPixels = 0;
     for (let i = 0; i < pixelCount; i++) {
       if (binary[i] === 255) maskPixels++;
     }
     const coverage = maskPixels / pixelCount;
-    // Good documents cover 15-85% of the frame
+    // Confidence: based on reasonable coverage range
     const confidence =
-      coverage > 0.05 && coverage < 0.95
-        ? Math.min(1, 0.5 + coverage * 0.5)
-        : 0.3;
+      coverage > 0.03 && coverage < 0.95
+        ? Math.min(1, 0.55 + coverage * 0.4)
+        : 0.35;
 
     return {
       corners: normalizedCorners,
@@ -170,4 +178,16 @@ export class MLDocumentDetector {
       this.session = null;
     }
   }
+}
+
+/** Shoelace formula for quadrilateral area (normalized 0-1 coordinates). */
+function quadArea(pts: { x: number; y: number }[]): number {
+  if (pts.length !== 4) return 0;
+  let area = 0;
+  for (let i = 0; i < 4; i++) {
+    const j = (i + 1) % 4;
+    area += pts[i].x * pts[j].y;
+    area -= pts[j].x * pts[i].y;
+  }
+  return Math.abs(area) / 2;
 }

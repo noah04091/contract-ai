@@ -5,7 +5,7 @@
  * Converts a float32 saliency map into 4 ordered document corners.
  *
  * Pipeline: saliency → threshold → binary mask → largest contour
- *           → Douglas-Peucker approximation → 4 ordered corners
+ *           → convex hull → 4 corners from hull
  */
 
 import type { Point } from "../types";
@@ -28,177 +28,160 @@ export function thresholdMask(
 }
 
 /**
- * Find the largest contour in a binary image using Moore neighborhood tracing.
- * Returns an array of pixel coordinates forming the contour boundary.
+ * Simple morphological close (dilate then erode) to fill small holes.
+ * Uses a 3x3 structuring element.
  */
-export function findLargestContour(
+export function morphClose(binary: Uint8Array, w: number, h: number): Uint8Array {
+  // Dilate
+  const dilated = new Uint8Array(w * h);
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      if (
+        binary[y * w + x] === 255 ||
+        binary[(y - 1) * w + x] === 255 ||
+        binary[(y + 1) * w + x] === 255 ||
+        binary[y * w + x - 1] === 255 ||
+        binary[y * w + x + 1] === 255
+      ) {
+        dilated[y * w + x] = 255;
+      }
+    }
+  }
+  // Erode
+  const result = new Uint8Array(w * h);
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      if (
+        dilated[y * w + x] === 255 &&
+        dilated[(y - 1) * w + x] === 255 &&
+        dilated[(y + 1) * w + x] === 255 &&
+        dilated[y * w + x - 1] === 255 &&
+        dilated[y * w + x + 1] === 255
+      ) {
+        result[y * w + x] = 255;
+      }
+    }
+  }
+  return result;
+}
+
+/**
+ * Find all foreground boundary pixels (simpler and more robust than Moore tracing).
+ * A pixel is a boundary pixel if it's foreground and has at least one background neighbor.
+ */
+export function findBoundaryPixels(
   binary: Uint8Array,
   w: number,
   h: number
 ): Point[] {
-  // Moore neighborhood: 8 directions (clockwise from right)
-  const dx = [1, 1, 0, -1, -1, -1, 0, 1];
-  const dy = [0, 1, 1, 1, 0, -1, -1, -1];
-
-  let bestContour: Point[] = [];
-
-  // Track which pixels have been used as starting points
-  const visited = new Uint8Array(w * h);
+  const boundary: Point[] = [];
 
   for (let y = 1; y < h - 1; y++) {
     for (let x = 1; x < w - 1; x++) {
-      const idx = y * w + x;
-      // Look for foreground pixel with background to the left (entry from west)
-      if (binary[idx] !== 255 || visited[idx]) continue;
-      if (binary[idx - 1] !== 0) continue; // Not a boundary from west
+      if (binary[y * w + x] !== 255) continue;
 
-      const contour: Point[] = [];
-      let cx = x;
-      let cy = y;
-      let dir = 0; // Start looking right
-
-      const startX = x;
-      const startY = y;
-      let steps = 0;
-      const maxSteps = w * h * 2; // Safety limit
-
-      do {
-        contour.push({ x: cx, y: cy });
-        visited[cy * w + cx] = 1;
-
-        // Search for next boundary pixel
-        let found = false;
-        const backDir = (dir + 4) % 8; // opposite direction
-        const searchDir = (backDir + 1) % 8; // start search from one past backtrack
-
-        for (let i = 0; i < 8; i++) {
-          const d = (searchDir + i) % 8;
-          const nx = cx + dx[d];
-          const ny = cy + dy[d];
-
-          if (nx >= 0 && nx < w && ny >= 0 && ny < h && binary[ny * w + nx] === 255) {
-            cx = nx;
-            cy = ny;
-            dir = d;
-            found = true;
-            break;
-          }
-        }
-
-        if (!found) break;
-        steps++;
-      } while ((cx !== startX || cy !== startY) && steps < maxSteps);
-
-      if (contour.length > bestContour.length) {
-        bestContour = contour;
+      // Check 4-connectivity neighbors
+      if (
+        binary[(y - 1) * w + x] === 0 ||
+        binary[(y + 1) * w + x] === 0 ||
+        binary[y * w + x - 1] === 0 ||
+        binary[y * w + x + 1] === 0
+      ) {
+        boundary.push({ x, y });
       }
     }
   }
 
-  return bestContour;
+  return boundary;
 }
 
 /**
- * Perpendicular distance from a point to a line segment.
+ * Compute convex hull of a set of points using Andrew's monotone chain algorithm.
+ * Returns points in counter-clockwise order.
  */
-function perpendicularDistance(p: Point, a: Point, b: Point): number {
-  const abx = b.x - a.x;
-  const aby = b.y - a.y;
-  const len = Math.sqrt(abx * abx + aby * aby);
-  if (len === 0) return Math.sqrt((p.x - a.x) ** 2 + (p.y - a.y) ** 2);
-  return Math.abs(abx * (a.y - p.y) - (a.x - p.x) * aby) / len;
-}
+function convexHull(points: Point[]): Point[] {
+  if (points.length < 3) return points;
 
-/**
- * Douglas-Peucker polyline simplification.
- */
-function douglasPeucker(points: Point[], epsilon: number): Point[] {
-  if (points.length <= 2) return points;
+  const sorted = [...points].sort((a, b) => a.x - b.x || a.y - b.y);
 
-  let maxDist = 0;
-  let maxIdx = 0;
-  const end = points.length - 1;
+  const cross = (o: Point, a: Point, b: Point) =>
+    (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
 
-  for (let i = 1; i < end; i++) {
-    const d = perpendicularDistance(points[i], points[0], points[end]);
-    if (d > maxDist) {
-      maxDist = d;
-      maxIdx = i;
+  // Lower hull
+  const lower: Point[] = [];
+  for (const p of sorted) {
+    while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0) {
+      lower.pop();
     }
+    lower.push(p);
   }
 
-  if (maxDist > epsilon) {
-    const left = douglasPeucker(points.slice(0, maxIdx + 1), epsilon);
-    const right = douglasPeucker(points.slice(maxIdx), epsilon);
-    return left.slice(0, -1).concat(right);
+  // Upper hull
+  const upper: Point[] = [];
+  for (let i = sorted.length - 1; i >= 0; i--) {
+    const p = sorted[i];
+    while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0) {
+      upper.pop();
+    }
+    upper.push(p);
   }
 
-  return [points[0], points[end]];
+  // Remove last point of each half because it's repeated
+  lower.pop();
+  upper.pop();
+
+  return lower.concat(upper);
 }
 
 /**
- * Approximate a contour as a quadrilateral (4 vertices).
- * Uses iterative Douglas-Peucker with adaptive epsilon.
- * Returns null if the contour can't be reasonably approximated as a quad.
+ * Find the 4 corners of a quadrilateral from a convex hull.
+ * Uses the 4 points that maximize the enclosed area (farthest apart).
+ * Falls back to extreme points if hull is too small.
  */
-export function approxQuad(contour: Point[]): Point[] | null {
-  if (contour.length < 20) return null;
+export function findQuadFromHull(hull: Point[]): Point[] | null {
+  if (hull.length < 4) return null;
 
-  // Close the contour for simplification
-  const closed = [...contour, contour[0]];
+  if (hull.length === 4) return hull;
 
-  // Compute perimeter for adaptive epsilon
-  let perimeter = 0;
-  for (let i = 1; i < closed.length; i++) {
-    const dx = closed[i].x - closed[i - 1].x;
-    const dy = closed[i].y - closed[i - 1].y;
-    perimeter += Math.sqrt(dx * dx + dy * dy);
+  // Strategy: find 4 hull points that form the largest area quadrilateral.
+  // For efficiency, use the "rotating calipers" approximation:
+  // pick the extreme points in 4 diagonal directions.
+  let tlIdx = 0, trIdx = 0, brIdx = 0, blIdx = 0;
+  let minSum = Infinity, maxSum = -Infinity;
+  let minDiff = Infinity, maxDiff = -Infinity;
+
+  for (let i = 0; i < hull.length; i++) {
+    const p = hull[i];
+    const sum = p.x + p.y;
+    const diff = p.x - p.y;
+
+    if (sum < minSum) { minSum = sum; tlIdx = i; }
+    if (sum > maxSum) { maxSum = sum; brIdx = i; }
+    if (diff > maxDiff) { maxDiff = diff; trIdx = i; }
+    if (diff < minDiff) { minDiff = diff; blIdx = i; }
   }
 
-  // Try increasing epsilon until we get exactly 4 vertices (or give up)
-  for (let pct = 0.01; pct <= 0.08; pct += 0.005) {
-    const epsilon = perimeter * pct;
-    const simplified = douglasPeucker(closed, epsilon);
-    // simplified includes duplicated start/end point, so 5 entries = 4 unique vertices
-    const uniqueCount = simplified.length - 1;
+  // Ensure all 4 are distinct
+  const indices = new Set([tlIdx, trIdx, brIdx, blIdx]);
+  if (indices.size < 4) return null;
 
-    if (uniqueCount === 4) {
-      return simplified.slice(0, 4);
-    }
-  }
-
-  // If we can't get exactly 4, try to pick the 4 most extreme points
-  return pickFourExtremePoints(contour);
+  return [hull[tlIdx], hull[trIdx], hull[brIdx], hull[blIdx]];
 }
 
 /**
- * Fallback: pick the 4 most extreme points from the contour
- * (topmost, rightmost, bottommost, leftmost).
+ * Main entry: extract 4 document corners from boundary pixels.
+ * Returns ordered TL, TR, BR, BL corners or null.
  */
-function pickFourExtremePoints(contour: Point[]): Point[] | null {
-  if (contour.length < 4) return null;
+export function extractCorners(boundary: Point[]): Point[] | null {
+  if (boundary.length < 10) return null;
 
-  let top = contour[0];
-  let right = contour[0];
-  let bottom = contour[0];
-  let left = contour[0];
+  const hull = convexHull(boundary);
+  if (hull.length < 4) return null;
 
-  for (const p of contour) {
-    if (p.y < top.y) top = p;
-    if (p.x > right.x) right = p;
-    if (p.y > bottom.y) bottom = p;
-    if (p.x < left.x) left = p;
-  }
+  const quad = findQuadFromHull(hull);
+  if (!quad) return null;
 
-  // Ensure 4 distinct points
-  const pts = [top, right, bottom, left];
-  for (let i = 0; i < 4; i++) {
-    for (let j = i + 1; j < 4; j++) {
-      if (pts[i].x === pts[j].x && pts[i].y === pts[j].y) return null;
-    }
-  }
-
-  return pts;
+  return orderCornersCW(quad);
 }
 
 /**
