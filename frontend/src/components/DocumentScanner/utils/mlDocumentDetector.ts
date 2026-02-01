@@ -51,7 +51,7 @@ export class MLDocumentDetector {
   async load(): Promise<void> {
     // Configure WASM backend to load from CDN
     ort.env.wasm.wasmPaths =
-      "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.21.0/dist/";
+      "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.2/dist/";
 
     // Prefer WASM backend (most compatible)
     const modelUrl = `${window.location.origin}/models/u2netp.onnx`;
