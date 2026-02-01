@@ -289,7 +289,7 @@ export default function LegalPulse() {
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialLoading, setIsInitialLoading] = useState(true); // ✅ Separate state for initial load
   const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'risks' | 'recommendations' | 'history' | 'forecast'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'risks' | 'recommendations' | 'legalChanges' | 'history' | 'forecast'>('overview');
   const [showRiskModal, setShowRiskModal] = useState(false);
   const [selectedRisk, setSelectedRisk] = useState<RiskDetail | null>(null);
   const [riskModalType, setRiskModalType] = useState<'details' | 'solutions'>('details');
@@ -329,6 +329,10 @@ export default function LegalPulse() {
   const [weeklyChecksLoading, setWeeklyChecksLoading] = useState(false);
   const [showWeeklyChecks, setShowWeeklyChecks] = useState(false);
   const [expandedWeeklyCheck, setExpandedWeeklyCheck] = useState<string | null>(null);
+
+  // Contract-specific Weekly Check State
+  const [contractWeeklyCheck, setContractWeeklyCheck] = useState<WeeklyCheckContract['latestCheck'] | null>(null);
+  const [contractWeeklyCheckLoading, setContractWeeklyCheckLoading] = useState(false);
 
   // ML Forecast State
   const [forecastData, setForecastData] = useState<ForecastData | null>(null);
@@ -465,6 +469,28 @@ export default function LegalPulse() {
     }
   };
 
+  // Fetch weekly check for a specific contract (detail view)
+  const fetchContractWeeklyCheck = async (id: string) => {
+    setContractWeeklyCheckLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const API_BASE = import.meta.env.VITE_API_URL || "";
+      const res = await fetch(`${API_BASE}/api/legal-pulse/weekly-check/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setContractWeeklyCheck(data.check || null);
+        }
+      }
+    } catch (err) {
+      console.error("Contract weekly check fetch error:", err);
+    } finally {
+      setContractWeeklyCheckLoading(false);
+    }
+  };
+
   // V7: Fetch health, alerts, and weekly checks on mount (only for premium users)
   useEffect(() => {
     if (canAccessLegalPulse) {
@@ -473,6 +499,13 @@ export default function LegalPulse() {
       fetchWeeklyChecks();
     }
   }, [canAccessLegalPulse]);
+
+  // Fetch contract-specific weekly check when on detail page
+  useEffect(() => {
+    if (contractId && canAccessLegalPulse) {
+      fetchContractWeeklyCheck(contractId);
+    }
+  }, [contractId, canAccessLegalPulse]);
 
   // ✅ Fetch Contracts mit Server-seitiger Filterung
   const fetchContracts = async () => {
@@ -1358,7 +1391,14 @@ export default function LegalPulse() {
             </svg>
             Risiken ({selectedContract.legalPulse?.topRisks?.length || 0})
           </button>
-          <button 
+          <button
+            className={`${styles.tabButton} ${activeTab === 'legalChanges' ? styles.active : ''}`}
+            onClick={() => setActiveTab('legalChanges')}
+          >
+            <Shield size={16} />
+            Rechts{String.fromCharCode(228)}nderungen{contractWeeklyCheck?.stage2Results?.findings?.length ? ` (${contractWeeklyCheck.stage2Results.findings.length})` : ''}
+          </button>
+          <button
             className={`${styles.tabButton} ${activeTab === 'recommendations' ? styles.active : ''}`}
             onClick={() => setActiveTab('recommendations')}
           >
@@ -1583,6 +1623,123 @@ export default function LegalPulse() {
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {activeTab === 'legalChanges' && (
+            <div className={styles.legalChangesTab}>
+              <div className={styles.sectionHeader}>
+                <h3><Shield size={18} /> Rechts{String.fromCharCode(228)}nderungs-{String.fromCharCode(220)}berwachung</h3>
+                <p>Auswirkungen erkannter Rechts{String.fromCharCode(228)}nderungen auf diesen Vertrag</p>
+              </div>
+
+              {contractWeeklyCheckLoading ? (
+                <div className={styles.legalChangesLoading}>
+                  <div className={styles.loadingSpinner}></div>
+                  <p>Lade Rechts{String.fromCharCode(228)}nderungs-Pr{String.fromCharCode(252)}fung...</p>
+                </div>
+              ) : !contractWeeklyCheck ? (
+                <div className={styles.legalChangesEmpty}>
+                  <Shield size={40} />
+                  <h4>Noch keine Pr{String.fromCharCode(252)}fung durchgef{String.fromCharCode(252)}hrt</h4>
+                  <p>Die automatische Rechts{String.fromCharCode(228)}nderungs-Pr{String.fromCharCode(252)}fung f{String.fromCharCode(252)}r diesen Vertrag erfolgt beim n{String.fromCharCode(228)}chsten w{String.fromCharCode(246)}chentlichen Check (Sonntag 02:00 Uhr).</p>
+                </div>
+              ) : (
+                <>
+                  {/* Status Banner */}
+                  <div className={`${styles.legalChangesStatus} ${styles[`lcStatus_${contractWeeklyCheck.stage2Results.overallStatus}`] || ''}`}>
+                    <div className={styles.legalChangesStatusInfo}>
+                      <span className={styles.legalChangesStatusBadge}>
+                        {contractWeeklyCheck.stage2Results.overallStatus === 'aktuell' ? 'Aktuell' :
+                         contractWeeklyCheck.stage2Results.overallStatus === 'handlungsbedarf' ? 'Handlungsbedarf' : 'Kritisch'}
+                      </span>
+                      <span className={styles.legalChangesStatusDate}>
+                        Letzter Check: {new Date(contractWeeklyCheck.checkDate).toLocaleDateString('de-DE', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                    <span className={styles.legalChangesStatusCount}>
+                      {contractWeeklyCheck.stage2Results.findings.length} {contractWeeklyCheck.stage2Results.findings.length === 1 ? 'Befund' : 'Befunde'}
+                    </span>
+                  </div>
+
+                  {/* Summary */}
+                  {contractWeeklyCheck.stage2Results.summary && (
+                    <p className={styles.legalChangesSummary}>{contractWeeklyCheck.stage2Results.summary}</p>
+                  )}
+
+                  {/* Metadata */}
+                  {contractWeeklyCheck.metadata && (
+                    <div className={styles.legalChangesMeta}>
+                      <span>Vertrag analysiert: {contractWeeklyCheck.metadata.analyzedPercentage}%</span>
+                      <span>Gepr{String.fromCharCode(252)}ft gegen: {contractWeeklyCheck.metadata.dataSourcesUsed?.length || '?'} offizielle Quellen</span>
+                      <span>Konfidenz: {Math.round(contractWeeklyCheck.metadata.confidenceScore * 100)}%</span>
+                      <span>Erkannte {String.fromCharCode(196)}nderungen seit: {new Date(contractWeeklyCheck.metadata.lastDataSync || contractWeeklyCheck.checkDate).toLocaleDateString('de-DE')}</span>
+                    </div>
+                  )}
+
+                  {/* Stage 1: Erkannte Rechtsänderungen */}
+                  {contractWeeklyCheck.stage1Results.relevantChanges.length > 0 && (
+                    <div className={styles.legalChangesStage1}>
+                      <h4>Erkannte Rechts{String.fromCharCode(228)}nderungen der letzten 7 Tage</h4>
+                      <ul>
+                        {contractWeeklyCheck.stage1Results.relevantChanges.map((change, idx) => (
+                          <li key={idx}>
+                            {change.title}
+                            <span className={styles.legalChangesRelevance}>({(change.score * 100).toFixed(0)}% Relevanz)</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Stage 2: Findings */}
+                  {contractWeeklyCheck.stage2Results.findings.length > 0 && (
+                    <div className={styles.legalChangesFindings}>
+                      <h4>Erkannte Auswirkungen auf Ihren Vertrag</h4>
+                      {contractWeeklyCheck.stage2Results.findings.map((finding, idx) => (
+                        <div key={idx} className={`${styles.legalChangesFinding} ${styles[`lcFinding_${finding.severity}`] || ''}`}>
+                          <div className={styles.legalChangesFindingHeader}>
+                            <span className={`${styles.findingSeverityBadge} ${styles[`severity_${finding.severity}`] || ''}`}>
+                              {finding.severity === 'critical' ? 'Kritisch' : finding.severity === 'warning' ? 'Warnung' : 'Info'}
+                            </span>
+                            <span className={styles.legalChangesFindingType}>
+                              {finding.type === 'law_change' ? `Gesetzes${String.fromCharCode(228)}nderung` :
+                               finding.type === 'risk' ? 'Risiko' :
+                               finding.type === 'compliance' ? 'Compliance' : 'Verbesserung'}
+                            </span>
+                            <strong>{finding.title}</strong>
+                          </div>
+                          <p className={styles.legalChangesFindingDesc}>{finding.description}</p>
+                          {finding.affectedClause && (
+                            <div className={styles.legalChangesFindingDetail}>
+                              <strong>Betroffene Klausel:</strong> {finding.affectedClause}
+                            </div>
+                          )}
+                          {finding.legalBasis && (
+                            <div className={styles.legalChangesFindingDetail}>
+                              <strong>Rechtsgrundlage:</strong> {finding.legalBasis}
+                            </div>
+                          )}
+                          {finding.recommendation && (
+                            <div className={styles.legalChangesFindingRec}>
+                              <strong>Empfehlung:</strong> {finding.recommendation}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Disclaimer */}
+                  <div className={styles.legalChangesDisclaimer}>
+                    <Shield size={14} />
+                    <p>
+                      <strong>Wichtiger Hinweis:</strong> Diese Analyse pr{String.fromCharCode(252)}ft erkannte Rechts{String.fromCharCode(228)}nderungen aus 20 offiziellen Quellen.
+                      Sie ersetzt keine anwaltliche Beratung. Alle Angaben ohne Gew{String.fromCharCode(228)}hr.
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
