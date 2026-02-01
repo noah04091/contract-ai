@@ -150,8 +150,8 @@ const LEGAL_RSS_FEEDS = {
   // WEITERE QUELLEN (Additional Sources)
   // ═══════════════════════════════════════════════════
   'bundesrat-presse': {
-    url: 'https://www.bundesrat.de/DE/Service/RSS/rss_node.html',
-    name: 'Bundesrat Pressemitteilungen',
+    url: 'https://www.bundesrat.de/SiteGlobals/Functions/RSSFeed/RSSGenerator_Announcement.xml?nn=4352850',
+    name: 'Bundesrat Beratungsvorgaenge',
     category: 'gesetzgebung',
     enabled: true
   },
@@ -165,6 +165,12 @@ const LEGAL_RSS_FEEDS = {
     url: 'https://rsw.beck.de/rsw/rss/becklink',
     name: 'beck-aktuell Rechtsnachrichten',
     category: 'rechtsnews',
+    enabled: false // NOTE: URL nicht verifiziert, beck.de evtl. Paywall - deaktiviert bis URL bestaetigt
+  },
+  'bundesrat-drucksachen': {
+    url: 'https://www.bundesrat.de/SiteGlobals/Functions/RSSFeed/RSSGenerator_PBPrintout.xml?nn=4352850',
+    name: 'Bundesrat Drucksachen',
+    category: 'gesetzgebung',
     enabled: true
   }
 };

@@ -40,8 +40,12 @@ class LegalPulseMonitor {
       await this.mongoClient.connect();
       this.db = this.mongoClient.db("contract_ai");
 
-      // Initialize vector store
-      await this.vectorStore.init();
+      // Initialize vector store (if available)
+      if (this.vectorStore) {
+        await this.vectorStore.init();
+      } else {
+        console.warn("⚠️  [LEGAL-PULSE:MONITOR] VectorStore not available - using keyword matching only");
+      }
 
       console.log("✅ [LEGAL-PULSE:MONITOR] Initialized");
 

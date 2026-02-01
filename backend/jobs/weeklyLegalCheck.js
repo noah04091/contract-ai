@@ -117,11 +117,15 @@ class WeeklyLegalCheck {
 
     } catch (error) {
       console.error('❌ [WEEKLY-CHECK] Error:', error);
-      await this.saveHealthRecord({
-        status: 'error',
-        error: error.message,
-        duration: ((Date.now() - startTime) / 1000)
-      });
+      try {
+        await this.saveHealthRecord({
+          status: 'error',
+          error: error.message,
+          duration: ((Date.now() - startTime) / 1000)
+        });
+      } catch (healthErr) {
+        console.error('❌ [WEEKLY-CHECK] Failed to save health record:', healthErr.message);
+      }
     } finally {
       this.isRunning = false;
     }
@@ -338,6 +342,7 @@ class WeeklyLegalCheck {
     const seen = new Map();
 
     for (const finding of findings) {
+      if (!finding || !finding.title) continue; // Skip malformed findings
       // Normalize title for comparison
       const key = finding.title.toLowerCase().replace(/\s+/g, ' ').trim();
 

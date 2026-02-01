@@ -721,6 +721,16 @@ router.get("/weekly-check/:contractId", verifyToken, async (req, res) => {
       return res.status(400).json({ success: false, message: "Ungültige Contract-ID" });
     }
 
+    // Verify contract belongs to this user (defense-in-depth)
+    const contract = await db.collection("contracts").findOne({
+      _id: new ObjectId(contractId),
+      userId: new ObjectId(req.user.userId)
+    });
+
+    if (!contract) {
+      return res.status(404).json({ success: false, message: "Vertrag nicht gefunden" });
+    }
+
     const check = await db.collection("weekly_legal_checks")
       .findOne(
         {
