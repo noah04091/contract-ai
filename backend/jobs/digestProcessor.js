@@ -3,6 +3,14 @@
 
 const { MongoClient, ObjectId } = require('mongodb');
 const sendEmailHtml = require('../utils/sendEmailHtml');
+const {
+  generateEmailTemplate,
+  generateInfoBox,
+  generateAlertBox,
+  generateStatsRow,
+  generateDivider,
+  generateParagraph
+} = require('../utils/emailTemplate');
 
 class DigestProcessor {
   constructor() {
@@ -180,7 +188,7 @@ class DigestProcessor {
   }
 
   /**
-   * Send digest email to user
+   * Send digest email to user (uses shared Clean3 email template)
    */
   async sendDigestEmail(user, alerts, digestMode) {
     const isDaily = digestMode === 'daily';
@@ -194,186 +202,191 @@ class DigestProcessor {
     // Sort alerts by score (highest first)
     regularAlerts.sort((a, b) => b.score - a.score);
 
-    // Generate regular alert items HTML
-    const alertItemsHtml = regularAlerts.map(alert => {
-      const severityColors = {
-        critical: { bg: '#fef2f2', border: '#dc2626', text: '#991b1b' },
-        high: { bg: '#fff7ed', border: '#ea580c', text: '#9a3412' },
-        medium: { bg: '#fffbeb', border: '#f59e0b', text: '#92400e' },
-        low: { bg: '#eff6ff', border: '#3b82f6', text: '#1e40af' }
-      };
+    // === Build body HTML using shared template helpers ===
+    let body = '';
 
-      const severity = this.calculateSeverity(alert.score);
-      const colors = severityColors[severity];
+    // Summary stats
+    const totalFindings = alerts.reduce((sum, a) => sum + (a.findings?.length || 0), 0);
+    body += generateStatsRow([
+      { value: alerts.length, label: alerts.length === 1 ? 'Änderung' : 'Änderungen', color: '#3b82f6' },
+      { value: totalFindings, label: totalFindings === 1 ? 'Befund' : 'Befunde', color: totalFindings > 0 ? '#f59e0b' : '#22c55e' },
+      { value: weeklyCheckAlerts.length, label: weeklyCheckAlerts.length === 1 ? 'Vertrag' : 'Verträge', color: '#0f172a' }
+    ]);
 
-      return `
-        <div style="background: ${colors.bg}; border-left: 4px solid ${colors.border}; padding: 20px; margin-bottom: 16px; border-radius: 8px;">
-          <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
-            <h3 style="margin: 0; color: ${colors.text}; font-size: 16px; flex: 1;">${alert.lawTitle}</h3>
-            <span style="background: ${colors.border}; color: white; padding: 4px 12px; border-radius: 12px; font-size: 13px; font-weight: 600; white-space: nowrap; margin-left: 12px;">${(alert.score * 100).toFixed(0)}%</span>
-          </div>
-          <p style="margin: 0 0 8px; color: #6b7280; font-size: 14px;">${alert.lawDescription || ''}</p>
-          <p style="margin: 0; color: #9ca3af; font-size: 13px;">
-            <strong>Betroffener Vertrag:</strong> ${alert.contractName}
-          </p>
-        </div>
-      `;
-    }).join('');
+    body += generateParagraph(
+      `Wir haben ${period} <strong>${alerts.length} relevante ${alerts.length === 1 ? 'Änderung' : 'Änderungen'}</strong> gefunden, die Ihre Verträge betreffen ${alerts.length === 1 ? 'könnte' : 'könnten'}.`
+    );
 
-    // Generate weekly check HTML section
-    const weeklyCheckHtml = this.generateWeeklyCheckHtml(weeklyCheckAlerts);
+    // === Weekly Check Results ===
+    if (weeklyCheckAlerts.length > 0) {
+      body += generateDivider();
+      body += `<p style="margin: 0 0 4px 0; font-size: 16px; font-weight: 700; color: #0f172a;">Rechtsänderungs-Überwachung</p>`;
+      body += generateParagraph('Auswirkungen neu erkannter Rechtsänderungen auf Ihre Verträge (basierend auf 20 offiziellen Quellen)', { muted: true });
 
-    const emailHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${periodTitle} Legal Pulse Digest</title>
-  <style>
-    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f3f4f6; }
-    .container { max-width: 650px; margin: 0 auto; background: white; }
-    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 30px; text-align: center; }
-    .header h1 { margin: 0 0 8px; font-size: 28px; }
-    .header p { margin: 0; opacity: 0.95; font-size: 15px; }
-    .content { padding: 40px 30px; }
-    .summary-box { background: #f0f9ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 24px; margin-bottom: 32px; text-align: center; }
-    .summary-box h2 { margin: 0 0 12px; color: #1e40af; font-size: 20px; }
-    .summary-box p { margin: 0; color: #1e40af; font-size: 15px; }
-    .footer { background: #f9fafb; padding: 24px 30px; text-align: center; border-top: 1px solid #e5e7eb; }
-    .footer p { margin: 4px 0; color: #6b7280; font-size: 13px; }
-    .footer a { color: #3b82f6; text-decoration: none; }
-    .cta-button { display: inline-block; margin-top: 24px; padding: 14px 32px; background: #3b82f6; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; }
-    .cta-button:hover { background: #2563eb; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>📬 ${periodTitle} Legal Pulse Digest</h1>
-      <p>Ihre Gesetzesänderungs-Zusammenfassung</p>
-    </div>
+      for (const alert of weeklyCheckAlerts) {
+        body += this.generateWeeklyCheckCardHtml(alert);
+      }
+    }
 
-    <div class="content">
-      <div class="summary-box">
-        <h2>${alerts.length} ${alerts.length === 1 ? 'relevante Änderung' : 'relevante Änderungen'} ${period}</h2>
-        <p>Wir haben ${alerts.length} Gesetzesänderung${alerts.length === 1 ? '' : 'en'} gefunden, die für Ihre Verträge relevant sein ${alerts.length === 1 ? 'könnte' : 'könnten'}.</p>
-      </div>
+    // === Regular Alerts ===
+    if (regularAlerts.length > 0) {
+      body += generateDivider();
+      body += `<p style="margin: 0 0 16px 0; font-size: 16px; font-weight: 700; color: #0f172a;">Gesetzesänderungen im Überblick</p>`;
 
-      ${weeklyCheckHtml}
+      for (const alert of regularAlerts) {
+        body += this.generateRegularAlertCardHtml(alert);
+      }
+    }
 
-      ${regularAlerts.length > 0 ? `
-      <h2 style="color: #111827; margin: 0 0 24px; font-size: 20px;">📋 Gesetzesänderungen im Überblick</h2>
-      ${alertItemsHtml}
-      ` : ''}
+    // === How it works ===
+    body += generateDivider();
+    body += generateInfoBox([
+      { label: 'Wie funktioniert das?', value: `Unsere KI analysiert neue Rechtsänderungen aus 20 offiziellen Quellen und prüft automatisch die Auswirkungen auf Ihre Verträge. Sie erhalten ${isDaily ? 'täglich' : 'wöchentlich'} eine Zusammenfassung.` }
+    ]);
 
-      <div style="background: #f9fafb; border-radius: 12px; padding: 24px; margin-top: 32px; text-align: center;">
-        <p style="margin: 0 0 16px; color: #374151; font-size: 15px;">Möchten Sie sofortige Benachrichtigungen erhalten?</p>
-        <a href="https://www.contract-ai.de/profile" class="cta-button">Einstellungen ändern</a>
-      </div>
+    // === Disclaimer ===
+    body += generateAlertBox(
+      '<strong>Wichtiger Hinweis:</strong> Diese Analyse wurde KI-gestützt erstellt und dient ausschließlich der Vorinformation. Sie ersetzt keine anwaltliche Beratung und stellt keine Rechtsberatung dar. Für verbindliche rechtliche Einschätzungen wenden Sie sich bitte an einen Rechtsanwalt. Alle Angaben ohne Gewähr.',
+      'warning'
+    );
 
-      <p style="color: #6b7280; font-size: 14px; margin-top: 32px; line-height: 1.6;">
-        <strong>Wie funktioniert das?</strong><br>
-        Unsere KI analysiert täglich neue Gesetze und vergleicht sie automatisch mit allen Ihren Verträgen. Sie erhalten ${isDaily ? 'jeden Tag' : 'jede Woche'} eine Zusammenfassung aller relevanten Änderungen.
-      </p>
-
-      <div style="background: #fef3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 16px; margin-top: 24px;">
-        <p style="margin: 0; color: #856404; font-size: 13px; line-height: 1.6;">
-          <strong>Wichtiger Hinweis:</strong> Diese Analyse wurde KI-gest${String.fromCharCode(252)}tzt erstellt und dient
-          ausschlie${String.fromCharCode(223)}lich der Vorinformation. Sie ersetzt keine anwaltliche Beratung und stellt
-          keine Rechtsberatung dar. F${String.fromCharCode(252)}r verbindliche rechtliche Einsch${String.fromCharCode(228)}tzungen wenden Sie sich
-          bitte an einen Rechtsanwalt. Alle Angaben ohne Gew${String.fromCharCode(228)}hr.
-        </p>
-      </div>
-    </div>
-
-    <div class="footer">
-      <p><strong>Contract AI</strong> – Legal Pulse Monitoring</p>
-      <p>
-        <a href="https://www.contract-ai.de/legal-pulse">Legal Pulse</a> •
-        <a href="https://www.contract-ai.de/optimizer">Optimizer</a> •
-        <a href="https://www.contract-ai.de/profile">Einstellungen</a>
-      </p>
-      <p style="margin-top: 16px;">© ${new Date().getFullYear()} Contract AI. Alle Rechte vorbehalten.</p>
-    </div>
-  </div>
-</body>
-</html>
-    `;
+    // === Generate email with shared template ===
+    const emailHtml = generateEmailTemplate({
+      title: `${periodTitle} Legal Pulse Digest`,
+      badge: `${alerts.length} ${alerts.length === 1 ? 'Änderung' : 'Änderungen'}`,
+      preheader: `${alerts.length} relevante Rechtsänderungen ${period} erkannt`,
+      body,
+      cta: {
+        text: 'Legal Pulse öffnen',
+        url: 'https://www.contract-ai.de/legal-pulse'
+      }
+    });
 
     await sendEmailHtml(
       user.email,
-      `📬 ${periodTitle} Legal Pulse Digest – ${alerts.length} ${alerts.length === 1 ? 'Änderung' : 'Änderungen'}`,
+      `${periodTitle} Legal Pulse Digest – ${alerts.length} ${alerts.length === 1 ? 'Änderung' : 'Änderungen'}`,
       emailHtml
     );
   }
 
   /**
-   * Generate HTML section for weekly legal check results
+   * Generate a single weekly check alert card (table-based, email-safe)
    */
-  generateWeeklyCheckHtml(weeklyCheckAlerts) {
-    if (!weeklyCheckAlerts || weeklyCheckAlerts.length === 0) return '';
-
-    const statusColors = {
-      kritisch: { bg: '#fef2f2', border: '#dc2626', text: '#991b1b', label: 'Kritisch' },
-      handlungsbedarf: { bg: '#fffbeb', border: '#f59e0b', text: '#92400e', label: 'Handlungsbedarf' },
-      aktuell: { bg: '#f0fdf4', border: '#16a34a', text: '#166534', label: 'Aktuell' }
+  generateWeeklyCheckCardHtml(alert) {
+    const severityConfig = {
+      kritisch: { bg: '#fef2f2', border: '#ef4444', text: '#991b1b', label: 'Kritisch' },
+      handlungsbedarf: { bg: '#fef3c7', border: '#f59e0b', text: '#92400e', label: 'Handlungsbedarf' },
+      aktuell: { bg: '#f0fdf4', border: '#22c55e', text: '#166534', label: 'Aktuell' }
     };
 
-    const findingsHtml = weeklyCheckAlerts.map(alert => {
-      const status = alert.score >= 0.95 ? 'kritisch' : 'handlungsbedarf';
-      const colors = statusColors[status];
+    const status = alert.score >= 0.95 ? 'kritisch' : (alert.score >= 0.5 ? 'handlungsbedarf' : 'aktuell');
+    const colors = severityConfig[status];
 
-      let findingsListHtml = '';
-      if (alert.findings && alert.findings.length > 0) {
-        findingsListHtml = alert.findings.map(f => {
-          const sevColors = {
-            critical: '#dc2626',
-            warning: '#f59e0b',
-            info: '#3b82f6'
-          };
-          const sevColor = sevColors[f.severity] || '#6b7280';
+    // Metadata row
+    let metadataHtml = '';
+    if (alert.metadata) {
+      metadataHtml = `
+              <tr>
+                <td style="padding: 8px 16px; font-size: 12px; color: #64748b; background-color: #f8fafc; border-top: 1px solid #e2e8f0;">
+                  Analysiert: ${alert.metadata.analyzedPercentage || 100}% · Geprüft gegen: ${alert.metadata.dataSourcesUsed?.length || '?'} Quellen · Konfidenz: ${Math.round((alert.metadata.confidenceScore || 0.5) * 100)}%
+                </td>
+              </tr>`;
+    }
 
-          return `
-            <div style="padding: 12px; border-bottom: 1px solid #e5e7eb;">
-              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                <span style="background: ${sevColor}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; text-transform: uppercase;">${f.severity}</span>
-                <strong style="color: #111827; font-size: 14px;">${f.title}</strong>
-              </div>
-              <p style="margin: 4px 0; color: #374151; font-size: 13px;">${f.description}</p>
-              ${f.legalBasis ? `<p style="margin: 2px 0 0; color: #6b7280; font-size: 12px;">Rechtsgrundlage: ${f.legalBasis}</p>` : ''}
-              ${f.recommendation ? `<p style="margin: 2px 0 0; color: #059669; font-size: 12px;">Empfehlung: ${f.recommendation}</p>` : ''}
-            </div>
-          `;
-        }).join('');
-      }
+    // Findings list
+    let findingsHtml = '';
+    if (alert.findings && alert.findings.length > 0) {
+      const findingRows = alert.findings.map(f => {
+        const sevColors = { critical: '#dc2626', warning: '#f59e0b', info: '#3b82f6' };
+        const sevLabels = { critical: 'Kritisch', warning: 'Warnung', info: 'Info' };
+        const sevColor = sevColors[f.severity] || '#64748b';
+        const sevLabel = sevLabels[f.severity] || f.severity;
 
-      return `
-        <div style="background: ${colors.bg}; border-left: 4px solid ${colors.border}; padding: 20px; margin-bottom: 16px; border-radius: 8px;">
-          <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
-            <h3 style="margin: 0; color: ${colors.text}; font-size: 16px; flex: 1;">${alert.contractName}</h3>
-            <span style="background: ${colors.border}; color: white; padding: 4px 12px; border-radius: 12px; font-size: 13px; font-weight: 600; white-space: nowrap; margin-left: 12px;">${colors.label}</span>
-          </div>
-          <p style="margin: 0 0 12px; color: #6b7280; font-size: 14px;">${alert.lawDescription || ''}</p>
-          ${alert.metadata ? `
-          <div style="display: flex; gap: 16px; padding: 8px 12px; background: rgba(255,255,255,0.6); border-radius: 6px; margin-bottom: 12px; font-size: 12px; color: #6b7280;">
-            <span>Analysiert: ${alert.metadata.analyzedPercentage || 100}%</span>
-            <span>Quellen: ${alert.metadata.dataSourcesUsed?.length || '?'}</span>
-            <span>Konfidenz: ${Math.round((alert.metadata.confidenceScore || 0.5) * 100)}%</span>
-          </div>
-          ` : ''}
-          ${findingsListHtml ? `<div style="background: white; border-radius: 8px; overflow: hidden;">${findingsListHtml}</div>` : ''}
-        </div>
-      `;
-    }).join('');
+        let findingContent = `
+                <tr>
+                  <td style="padding: 12px 16px; border-top: 1px solid #e2e8f0;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td>
+                          <span style="display: inline-block; padding: 2px 8px; background-color: ${sevColor}; color: #ffffff; font-size: 10px; font-weight: 600; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.3px;">${sevLabel}</span>
+                          <span style="margin-left: 8px; font-size: 14px; font-weight: 600; color: #0f172a;">${f.title || ''}</span>
+                        </td>
+                      </tr>
+                    </table>
+                    <p style="margin: 6px 0 0 0; font-size: 13px; color: #334155; line-height: 1.5;">${f.description || ''}</p>`;
+
+        if (f.legalBasis) {
+          findingContent += `<p style="margin: 4px 0 0 0; font-size: 12px; color: #64748b;">Rechtsgrundlage: ${f.legalBasis}</p>`;
+        }
+        if (f.recommendation) {
+          findingContent += `<p style="margin: 4px 0 0 0; font-size: 12px; color: #059669;">Empfehlung: ${f.recommendation}</p>`;
+        }
+
+        findingContent += `
+                  </td>
+                </tr>`;
+        return findingContent;
+      }).join('');
+
+      findingsHtml = findingRows;
+    }
 
     return `
-      <div style="margin-bottom: 32px;">
-        <h2 style="color: #111827; margin: 0 0 8px; font-size: 20px;">🔍 Wöchentliche Rechtsänderungs-Überwachung</h2>
-        <p style="color: #6b7280; margin: 0 0 24px; font-size: 14px;">Auswirkungen neu erkannter Rechtsänderungen auf Ihre Verträge (basierend auf 20 offiziellen Quellen)</p>
-        ${findingsHtml}
-      </div>
-    `;
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 12px 0; border-radius: 8px; overflow: hidden; border-left: 4px solid ${colors.border};">
+                <tr>
+                  <td style="background-color: ${colors.bg}; padding: 16px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="vertical-align: top;">
+                          <p style="margin: 0; font-size: 15px; font-weight: 700; color: ${colors.text};">${alert.contractName}</p>
+                          <p style="margin: 4px 0 0 0; font-size: 13px; color: #64748b; line-height: 1.5;">${alert.lawDescription || ''}</p>
+                        </td>
+                        <td style="vertical-align: top; text-align: right; width: 110px;">
+                          <span style="display: inline-block; padding: 4px 12px; background-color: ${colors.border}; color: #ffffff; font-size: 11px; font-weight: 600; border-radius: 12px;">${colors.label}</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                ${metadataHtml}
+                ${findingsHtml}
+              </table>`;
+  }
+
+  /**
+   * Generate a single regular alert card (table-based, email-safe)
+   */
+  generateRegularAlertCardHtml(alert) {
+    const severityColors = {
+      critical: { bg: '#fef2f2', border: '#ef4444', text: '#991b1b' },
+      high: { bg: '#fff7ed', border: '#ea580c', text: '#9a3412' },
+      medium: { bg: '#fef3c7', border: '#f59e0b', text: '#92400e' },
+      low: { bg: '#eff6ff', border: '#3b82f6', text: '#1e40af' }
+    };
+
+    const severity = this.calculateSeverity(alert.score);
+    const colors = severityColors[severity];
+    const scorePercent = (alert.score * 100).toFixed(0);
+
+    return `
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 12px 0; border-radius: 8px; overflow: hidden; border-left: 4px solid ${colors.border};">
+                <tr>
+                  <td style="background-color: ${colors.bg}; padding: 16px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="vertical-align: top;">
+                          <p style="margin: 0; font-size: 15px; font-weight: 700; color: ${colors.text};">${alert.lawTitle}</p>
+                          <p style="margin: 6px 0 0 0; font-size: 13px; color: #64748b; line-height: 1.5;">${alert.lawDescription || ''}</p>
+                          <p style="margin: 6px 0 0 0; font-size: 12px; color: #64748b;">Betroffener Vertrag: <strong style="color: #334155;">${alert.contractName}</strong></p>
+                        </td>
+                        <td style="vertical-align: top; text-align: right; width: 60px;">
+                          <span style="display: inline-block; padding: 4px 10px; background-color: ${colors.border}; color: #ffffff; font-size: 13px; font-weight: 700; border-radius: 12px;">${scorePercent}%</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>`;
   }
 
   /**
