@@ -7,6 +7,33 @@
  */
 
 import type { DetectedEdges } from "../types";
+
+/**
+ * Shared interface for both Hough-based and ML-based detectors.
+ */
+export interface DocumentDetectorInterface {
+  detect?(video: HTMLVideoElement): DetectedEdges | null;
+  detectAsync?(video: HTMLVideoElement): Promise<DetectedEdges | null>;
+  reduceResolution(): void;
+  dispose(): void;
+}
+
+/**
+ * Factory function that tries ML detector first, falls back to Hough.
+ */
+export async function createDocumentDetector(): Promise<DocumentDetectorInterface> {
+  try {
+    const { MLDocumentDetector } = await import("./mlDocumentDetector");
+    const detector = new MLDocumentDetector();
+    await detector.load();
+    console.log("[Detection] ML detector loaded");
+    return detector;
+  } catch (err) {
+    console.warn("[Detection] ML failed, falling back to Hough:", err);
+    return new DocumentDetector();
+  }
+}
+
 import {
   rgbaToGrayscale,
   gaussianBlur3x3,

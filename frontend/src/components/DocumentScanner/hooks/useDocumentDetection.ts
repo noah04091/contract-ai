@@ -27,7 +27,7 @@ interface UseDocumentDetectionOptions {
 
 const STABILITY_TOLERANCE = 0.025; // 2.5% of frame
 const EMA_ALPHA = 0.4; // 40% new frame, 60% history
-const GRACE_FRAMES = 3; // Tolerate up to 3 unstable frames before reset
+const GRACE_FRAMES = 4; // Tolerate up to 4 unstable frames before reset
 const FADEOUT_MS = 500; // Fade-out duration when detection is lost
 const NO_DETECTION_HINT_MS = 3000; // Show hint after 3s without detection
 
@@ -54,7 +54,7 @@ function smoothCorners(prev: Point[], curr: Point[], alpha: number): Point[] {
 export function useDocumentDetection({
   videoRef,
   enabled,
-  stabilityThresholdMs = 1500,
+  stabilityThresholdMs = 1200,
   targetFps = 12,
   onStableDetection,
 }: UseDocumentDetectionOptions): DetectionState {
@@ -67,7 +67,9 @@ export function useDocumentDetection({
   });
 
   // Refs for the detection loop (avoid stale closures)
-  const detectorRef = useRef<import("../utils/documentDetector").DocumentDetector | null>(null);
+  const detectorRef = useRef<import("../utils/documentDetector").DocumentDetectorInterface | null>(null);
+  const inferenceRunningRef = useRef(false);
+  const latestResultRef = useRef<{ corners: Point[]; confidence: number } | null>(null);
   const rafRef = useRef<number>(0);
   const lastFrameTimeRef = useRef(0);
   const previousCornersRef = useRef<Point[] | null>(null);
@@ -109,10 +111,28 @@ export function useDocumentDetection({
       if (document.hidden) return; // Skip when tab is hidden
 
       try {
-        const result = detector.detect(video);
+        // Support async ML detector alongside sync Hough fallback
+        let result: { corners: Point[]; confidence: number } | null | undefined;
+
+        if (detector.detectAsync) {
+          // Fire-and-forget pattern: launch async inference if not already running
+          if (!inferenceRunningRef.current) {
+            inferenceRunningRef.current = true;
+            detector.detectAsync(video).then((r) => {
+              inferenceRunningRef.current = false;
+              latestResultRef.current = r ?? null;
+            }).catch(() => {
+              inferenceRunningRef.current = false;
+            });
+          }
+          result = latestResultRef.current;
+        } else if (detector.detect) {
+          result = detector.detect(video);
+        }
+
         consecutiveErrorsRef.current = 0;
 
-        if (result && result.confidence > 0.3) {
+        if (result && result.confidence > 0.4) {
           // Clear fade-out state
           lostTimeRef.current = null;
           lastDetectionTimeRef.current = timestamp;
@@ -299,13 +319,19 @@ export function useDocumentDetection({
 
     let disposed = false;
 
-    // Lazy-load the DocumentDetector class
+    // Lazy-load the document detector (ML with Hough fallback)
     import("../utils/documentDetector")
-      .then(({ DocumentDetector }) => {
-        if (disposed) return;
-        detectorRef.current = new DocumentDetector();
+      .then(({ createDocumentDetector }) => createDocumentDetector())
+      .then((detector) => {
+        if (disposed) {
+          detector.dispose();
+          return;
+        }
+        detectorRef.current = detector;
         disabledRef.current = false;
         consecutiveErrorsRef.current = 0;
+        inferenceRunningRef.current = false;
+        latestResultRef.current = null;
         loopStartTimeRef.current = performance.now();
         lastDetectionTimeRef.current = performance.now();
         stabilityBreakCountRef.current = 0;

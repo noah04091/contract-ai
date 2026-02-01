@@ -84,6 +84,9 @@ export default defineConfig(({ mode: _mode }) => ({
 
           // 🔐 Auth & Utils
           'utils-vendor': ['axios', 'jwt-decode'],
+
+          // 🧠 ML Document Detection (ONNX Runtime)
+          'onnx-runtime': ['onnxruntime-web'],
         },
       },
     },
