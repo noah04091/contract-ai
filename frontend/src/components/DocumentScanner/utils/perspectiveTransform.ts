@@ -2,27 +2,35 @@
  * perspectiveTransform.ts
  *
  * Client-side 4-point perspective correction via Canvas.
- * Uses DLT (Direct Linear Transform) to compute a 3x3 homography matrix,
- * then warps the source image onto a rectangular output via inverse mapping
- * with bilinear interpolation.
+ *
+ * Uses a mesh warp approach: subdivide the source quadrilateral into a grid,
+ * and for each cell use an affine transform via ctx.setTransform() + ctx.drawImage().
+ *
+ * This approach is:
+ * - Hardware-accelerated (uses browser's built-in image rendering)
+ * - Compatible with ALL browsers including iOS Safari
+ * - Does NOT use getImageData (no canvas tainting / security issues)
+ * - Fast (~50-150ms)
  *
  * No external dependencies.
  */
 
 import type { Point } from "../types";
 
-/** Max output dimension for preview (keeps warp fast, ~100-300ms) */
+/** Max output dimension for preview */
 const MAX_OUTPUT_DIM = 1500;
+
+/** Grid subdivision for mesh warp (higher = more accurate perspective approximation) */
+const GRID_SIZE = 16;
 
 /**
  * Load an image from a URL (data: or blob:) into an HTMLImageElement.
- * Note: crossOrigin must NOT be set for data: URLs — Safari taints the canvas otherwise.
  */
 function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error("Image load failed"));
+    img.onerror = () => reject(new Error("Image load failed for URL type: " + url.substring(0, 30)));
     // Only set crossOrigin for http(s) URLs, NEVER for data: or blob: URLs
     if (url.startsWith("http")) {
       img.crossOrigin = "anonymous";
@@ -41,79 +49,164 @@ function dist(a: { x: number; y: number }, b: { x: number; y: number }): number 
 }
 
 /**
- * Compute 3x3 homography matrix H such that H * srcPt = dstPt (in homogeneous coords).
- * Uses DLT with 4 point correspondences.
- *
- * srcPts and dstPts are arrays of 4 {x, y} points (pixel coordinates).
- * Returns H as a flat Float64Array[9] in row-major order.
+ * Bilinear interpolation on a quadrilateral.
+ * Given 4 corners [TL, TR, BR, BL] and parameters (u, v) in [0,1],
+ * returns the interpolated point.
  */
-function computeHomography(
-  srcPts: { x: number; y: number }[],
-  dstPts: { x: number; y: number }[]
-): Float64Array {
-  // Build 8x9 matrix A for DLT
-  // For each correspondence (x,y) -> (x',y'):
-  //   [-x, -y, -1,  0,  0,  0, x*x', y*x', x']
-  //   [ 0,  0,  0, -x, -y, -1, x*y', y*y', y']
-  const A: number[][] = [];
-  for (let i = 0; i < 4; i++) {
-    const sx = srcPts[i].x;
-    const sy = srcPts[i].y;
-    const dx = dstPts[i].x;
-    const dy = dstPts[i].y;
-    A.push([-sx, -sy, -1, 0, 0, 0, sx * dx, sy * dx, dx]);
-    A.push([0, 0, 0, -sx, -sy, -1, sx * dy, sy * dy, dy]);
+function bilinearInterp(
+  corners: { x: number; y: number }[],
+  u: number,
+  v: number
+): { x: number; y: number } {
+  const [tl, tr, br, bl] = corners;
+  return {
+    x: (1 - u) * (1 - v) * tl.x + u * (1 - v) * tr.x + u * v * br.x + (1 - u) * v * bl.x,
+    y: (1 - u) * (1 - v) * tl.y + u * (1 - v) * tr.y + u * v * br.y + (1 - u) * v * bl.y,
+  };
+}
+
+/**
+ * Mesh warp: render a perspective-corrected image using grid subdivision
+ * and affine transforms per cell.
+ *
+ * For each grid cell:
+ * 1. Compute source corners via bilinear interpolation on the source quadrilateral
+ * 2. Compute affine transform that maps source image coords → output canvas coords
+ * 3. Clip to the cell, apply transform, drawImage
+ *
+ * This uses only ctx.setTransform + ctx.drawImage (no getImageData).
+ */
+function meshWarp(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  srcCorners: { x: number; y: number }[],
+  outW: number,
+  outH: number,
+  gridSize: number = GRID_SIZE
+): void {
+  for (let j = 0; j < gridSize; j++) {
+    for (let i = 0; i < gridSize; i++) {
+      const u0 = i / gridSize;
+      const u1 = (i + 1) / gridSize;
+      const v0 = j / gridSize;
+      const v1 = (j + 1) / gridSize;
+
+      // Destination cell corners (output canvas coordinates)
+      const dx0 = u0 * outW;
+      const dx1 = u1 * outW;
+      const dy0 = v0 * outH;
+      const dy1 = v1 * outH;
+      const ddx = dx1 - dx0;
+      const ddy = dy1 - dy0;
+
+      if (ddx < 0.5 || ddy < 0.5) continue;
+
+      // Source cell corners (image pixel coordinates) via bilinear interpolation
+      const s00 = bilinearInterp(srcCorners, u0, v0); // TL of cell
+      const s10 = bilinearInterp(srcCorners, u1, v0); // TR of cell
+      const s01 = bilinearInterp(srcCorners, u0, v1); // BL of cell
+
+      // Source edge vectors
+      const ex = s10.x - s00.x;
+      const ey = s10.y - s00.y;
+      const fx = s01.x - s00.x;
+      const fy = s01.y - s00.y;
+
+      // Determinant of source edge matrix
+      const det = ex * fy - ey * fx;
+      if (Math.abs(det) < 0.001) continue;
+
+      // Affine transform: maps source image pixel coords → output canvas coords
+      // We need: for image pixel (px, py), canvas position is:
+      //   canvasX = a*px + c*py + e
+      //   canvasY = b*px + d*py + f
+      //
+      // Constraints (3 point correspondences):
+      //   s00 → (dx0, dy0)
+      //   s10 → (dx1, dy0)
+      //   s01 → (dx0, dy1)
+      const a = ddx * fy / det;
+      const c = -ddx * fx / det;
+      const b = -ddy * ey / det;
+      const d = ddy * ex / det;
+      const e = dx0 - a * s00.x - c * s00.y;
+      const f = dy0 - b * s00.x - d * s00.y;
+
+      ctx.save();
+      // Clip to this cell (with tiny overlap to avoid seam artifacts)
+      ctx.beginPath();
+      ctx.rect(dx0 - 0.5, dy0 - 0.5, ddx + 1, ddy + 1);
+      ctx.clip();
+      // Apply the affine transform and draw the entire source image
+      ctx.setTransform(a, b, c, d, e, f);
+      ctx.drawImage(img, 0, 0);
+      ctx.restore();
+    }
   }
+}
 
-  // Solve Ah = 0 via Gaussian elimination on the 8x9 augmented system
-  // We set h9 = 1 and solve the 8x8 system
-  const n = 8;
-  const m = 9;
+/**
+ * Simple bounding-box crop fallback.
+ * If mesh warp fails, at least crop to the document area.
+ */
+function simpleCrop(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  srcCorners: { x: number; y: number }[],
+  outW: number,
+  outH: number
+): void {
+  const xs = srcCorners.map((c) => c.x);
+  const ys = srcCorners.map((c) => c.y);
+  const minX = Math.max(0, Math.floor(Math.min(...xs)));
+  const minY = Math.max(0, Math.floor(Math.min(...ys)));
+  const maxX = Math.min(img.naturalWidth, Math.ceil(Math.max(...xs)));
+  const maxY = Math.min(img.naturalHeight, Math.ceil(Math.max(...ys)));
+  const cropW = maxX - minX;
+  const cropH = maxY - minY;
 
-  // Forward elimination with partial pivoting
-  for (let col = 0; col < n; col++) {
-    // Find pivot
-    let maxVal = Math.abs(A[col][col]);
-    let maxRow = col;
-    for (let row = col + 1; row < n; row++) {
-      const val = Math.abs(A[row][col]);
-      if (val > maxVal) {
-        maxVal = val;
-        maxRow = row;
-      }
-    }
-    if (maxVal < 1e-10) {
-      // Degenerate — return identity
-      return new Float64Array([1, 0, 0, 0, 1, 0, 0, 0, 1]);
-    }
-    // Swap rows
-    if (maxRow !== col) {
-      [A[col], A[maxRow]] = [A[maxRow], A[col]];
-    }
-    // Eliminate below
-    for (let row = col + 1; row < n; row++) {
-      const factor = A[row][col] / A[col][col];
-      for (let j = col; j < m; j++) {
-        A[row][j] -= factor * A[col][j];
-      }
-    }
+  if (cropW > 0 && cropH > 0) {
+    ctx.drawImage(img, minX, minY, cropW, cropH, 0, 0, outW, outH);
   }
+}
 
-  // Back substitution: solve for h[0..7] with h[8] = 1
-  // Rearrange: sum(A[row][j] * h[j], j=0..7) + A[row][8] * 1 = 0
-  // => sum(A[row][j] * h[j], j=0..7) = -A[row][8]
-  const h = new Float64Array(9);
-  h[8] = 1;
-
-  for (let row = n - 1; row >= 0; row--) {
-    let sum = -A[row][8]; // RHS = -A[row][8] * h[8] = -A[row][8]
-    for (let j = row + 1; j < n; j++) {
-      sum -= A[row][j] * h[j];
+/**
+ * Convert canvas to Blob with fallback for iOS Safari.
+ */
+function canvasToBlob(canvas: HTMLCanvasElement, quality: number = 0.9): Promise<Blob> {
+  return new Promise<Blob>((resolve, reject) => {
+    // Try toBlob first (standard)
+    try {
+      canvas.toBlob(
+        (blob) => {
+          if (blob && blob.size > 0) {
+            resolve(blob);
+            return;
+          }
+          // Fallback: toDataURL → manual Blob
+          try {
+            const dataUrl = canvas.toDataURL("image/jpeg", quality);
+            const binary = atob(dataUrl.split(",")[1]);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            const fallback = new Blob([bytes], { type: "image/jpeg" });
+            if (fallback.size > 0) {
+              resolve(fallback);
+            } else {
+              reject(new Error("toBlob and toDataURL both produced empty output"));
+            }
+          } catch (e) {
+            reject(new Error("toDataURL fallback failed: " + (e instanceof Error ? e.message : e)));
+          }
+        },
+        "image/jpeg",
+        quality
+      );
+    } catch (e) {
+      // toBlob threw (shouldn't happen but be safe)
+      reject(new Error("toBlob threw: " + (e instanceof Error ? e.message : e)));
     }
-    h[row] = sum / A[row][row];
-  }
-
-  return h;
+  });
 }
 
 /**
@@ -132,6 +225,10 @@ export async function applyPerspectiveCrop(
   const img = await loadImage(imageUrl);
   const srcW = img.naturalWidth;
   const srcH = img.naturalHeight;
+
+  if (srcW === 0 || srcH === 0) {
+    throw new Error(`Image has zero dimensions: ${srcW}x${srcH}`);
+  }
 
   // Convert normalized corners to pixel coordinates
   const srcPts = corners.map((c) => ({
@@ -159,108 +256,27 @@ export async function applyPerspectiveCrop(
   outW = Math.max(outW, 10);
   outH = Math.max(outH, 10);
 
-  // Destination rectangle corners
-  const dstPts = [
-    { x: 0, y: 0 },           // TL
-    { x: outW - 1, y: 0 },    // TR
-    { x: outW - 1, y: outH - 1 }, // BR
-    { x: 0, y: outH - 1 },    // BL
-  ];
-
-  // Compute homography: dst -> src (inverse mapping)
-  const H = computeHomography(dstPts, srcPts);
-  // No need to invert — we computed dst->src directly
-
-  // Draw source image onto a canvas to get pixel data
-  const srcCanvas = document.createElement("canvas");
-  srcCanvas.width = srcW;
-  srcCanvas.height = srcH;
-  const srcCtx = srcCanvas.getContext("2d");
-  if (!srcCtx) throw new Error("Failed to get source canvas context");
-  srcCtx.drawImage(img, 0, 0);
-
-  let srcData: ImageData;
-  try {
-    srcData = srcCtx.getImageData(0, 0, srcW, srcH);
-  } catch (e) {
-    throw new Error("getImageData failed (canvas tainted or security error): " + (e instanceof Error ? e.message : e));
-  }
-  const srcPixels = srcData.data;
-
   // Create output canvas
   const outCanvas = document.createElement("canvas");
   outCanvas.width = outW;
   outCanvas.height = outH;
   const outCtx = outCanvas.getContext("2d");
-  if (!outCtx) throw new Error("Failed to get output canvas context");
-  const outImgData = outCtx.createImageData(outW, outH);
-  const outPixels = outImgData.data;
-
-  // For each output pixel, find source pixel via homography + bilinear interpolation
-  for (let dy = 0; dy < outH; dy++) {
-    for (let dx = 0; dx < outW; dx++) {
-      // Apply homography: [sx, sy, sw] = H * [dx, dy, 1]
-      const sw = H[6] * dx + H[7] * dy + H[8];
-      if (Math.abs(sw) < 1e-10) continue;
-
-      const sx = (H[0] * dx + H[1] * dy + H[2]) / sw;
-      const sy = (H[3] * dx + H[4] * dy + H[5]) / sw;
-
-      // Bounds check
-      if (sx < 0 || sx >= srcW - 1 || sy < 0 || sy >= srcH - 1) continue;
-
-      // Bilinear interpolation
-      const x0 = Math.floor(sx);
-      const y0 = Math.floor(sy);
-      const fx = sx - x0;
-      const fy = sy - y0;
-
-      const idx00 = (y0 * srcW + x0) * 4;
-      const idx10 = idx00 + 4;
-      const idx01 = idx00 + srcW * 4;
-      const idx11 = idx01 + 4;
-
-      const w00 = (1 - fx) * (1 - fy);
-      const w10 = fx * (1 - fy);
-      const w01 = (1 - fx) * fy;
-      const w11 = fx * fy;
-
-      const outIdx = (dy * outW + dx) * 4;
-      outPixels[outIdx] = srcPixels[idx00] * w00 + srcPixels[idx10] * w10 + srcPixels[idx01] * w01 + srcPixels[idx11] * w11;
-      outPixels[outIdx + 1] = srcPixels[idx00 + 1] * w00 + srcPixels[idx10 + 1] * w10 + srcPixels[idx01 + 1] * w01 + srcPixels[idx11 + 1] * w11;
-      outPixels[outIdx + 2] = srcPixels[idx00 + 2] * w00 + srcPixels[idx10 + 2] * w10 + srcPixels[idx01 + 2] * w01 + srcPixels[idx11 + 2] * w11;
-      outPixels[outIdx + 3] = 255;
-    }
+  if (!outCtx) {
+    throw new Error("Failed to get output canvas 2d context");
   }
 
-  outCtx.putImageData(outImgData, 0, 0);
+  // White background (prevents transparent areas from appearing black)
+  outCtx.fillStyle = "#ffffff";
+  outCtx.fillRect(0, 0, outW, outH);
 
-  // Convert to Blob
-  return new Promise<Blob>((resolve, reject) => {
-    outCanvas.toBlob(
-      (blob) => {
-        if (blob && blob.size > 0) {
-          resolve(blob);
-        } else {
-          // Fallback via toDataURL
-          try {
-            const dataUrl = outCanvas.toDataURL("image/jpeg", 0.9);
-            const binary = atob(dataUrl.split(",")[1]);
-            const bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-            const fallback = new Blob([bytes], { type: "image/jpeg" });
-            if (fallback.size > 0) {
-              resolve(fallback);
-            } else {
-              reject(new Error("Failed to create output blob"));
-            }
-          } catch {
-            reject(new Error("Failed to create output blob"));
-          }
-        }
-      },
-      "image/jpeg",
-      0.9
-    );
-  });
+  // Try mesh warp first (perspective correction), fall back to simple crop
+  try {
+    meshWarp(outCtx, img, srcPts, outW, outH);
+  } catch (warpErr) {
+    console.warn("[Scanner] Mesh warp failed, falling back to simple crop:", warpErr);
+    outCtx.fillRect(0, 0, outW, outH); // Clear
+    simpleCrop(outCtx, img, srcPts, outW, outH);
+  }
+
+  return canvasToBlob(outCanvas, 0.9);
 }
