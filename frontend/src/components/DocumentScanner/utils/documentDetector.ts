@@ -19,18 +19,91 @@ export interface DocumentDetectorInterface {
 }
 
 /**
- * Factory function that tries ML detector first, falls back to Hough.
+ * Hybrid detector: Hough runs synchronously every frame (guaranteed overlay),
+ * ML runs in parallel and overrides when it produces better results.
+ */
+class HybridDetector implements DocumentDetectorInterface {
+  private hough: DocumentDetector;
+  private ml: { detectAsync(v: HTMLVideoElement): Promise<DetectedEdges | null>; dispose(): void } | null;
+  private mlResult: DetectedEdges | null = null;
+  private mlRunning = false;
+  private mlNullCount = 0;
+  private mlDisabled = false;
+
+  constructor(
+    hough: DocumentDetector,
+    ml: { detectAsync(v: HTMLVideoElement): Promise<DetectedEdges | null>; dispose(): void } | null,
+  ) {
+    this.hough = hough;
+    this.ml = ml;
+  }
+
+  /**
+   * Sync detection: always runs Hough for immediate overlay.
+   * Also kicks off ML in background. If ML has a result, prefer it.
+   */
+  detect(video: HTMLVideoElement): DetectedEdges | null {
+    // Always run Hough for guaranteed overlay
+    const houghResult = this.hough.detect(video);
+
+    // Kick off ML in background (if available and not disabled)
+    if (this.ml && !this.mlRunning && !this.mlDisabled) {
+      this.mlRunning = true;
+      this.ml.detectAsync(video).then((r) => {
+        this.mlRunning = false;
+        if (r) {
+          this.mlResult = r;
+          this.mlNullCount = 0;
+        } else {
+          this.mlNullCount++;
+          // After 30 consecutive nulls, disable ML (not working for this camera)
+          if (this.mlNullCount >= 30) {
+            console.warn("[Detection] ML disabled after 30 null results, using Hough only");
+            this.mlDisabled = true;
+            this.mlResult = null;
+          }
+        }
+      }).catch(() => {
+        this.mlRunning = false;
+      });
+    }
+
+    // Prefer ML result if available and recent, otherwise use Hough
+    if (this.mlResult && this.mlResult.confidence > 0.4) {
+      return this.mlResult;
+    }
+
+    return houghResult;
+  }
+
+  reduceResolution(): void {
+    this.hough.reduceResolution();
+  }
+
+  dispose(): void {
+    this.hough.dispose();
+    if (this.ml) {
+      this.ml.dispose();
+      this.ml = null;
+    }
+  }
+}
+
+/**
+ * Factory: creates hybrid detector (Hough + ML) or pure Hough on ML failure.
  */
 export async function createDocumentDetector(): Promise<DocumentDetectorInterface> {
+  const hough = new DocumentDetector();
+
   try {
     const { MLDocumentDetector } = await import("./mlDocumentDetector");
-    const detector = new MLDocumentDetector();
-    await detector.load();
-    console.log("[Detection] ML detector loaded");
-    return detector;
+    const ml = new MLDocumentDetector();
+    await ml.load();
+    console.log("[Detection] Hybrid detector loaded (Hough + ML)");
+    return new HybridDetector(hough, ml);
   } catch (err) {
-    console.warn("[Detection] ML failed, falling back to Hough:", err);
-    return new DocumentDetector();
+    console.warn("[Detection] ML failed, using Hough only:", err);
+    return new HybridDetector(hough, null);
   }
 }
 

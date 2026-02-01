@@ -110,7 +110,7 @@ export function adaptiveThreshold(
     }
   }
   const mean = count > 0 ? sum / count : 128;
-  const threshold = Math.max(25, mean * 1.0);
+  const threshold = Math.max(15, mean * 0.8);
 
   for (let i = 0; i < src.length; i++) {
     dst[i] = src[i] >= threshold ? 255 : 0;
@@ -175,7 +175,7 @@ export function houghLines(
   }
   const effectiveThreshold = voteThreshold > 0
     ? voteThreshold
-    : Math.max(20, maxVotes * 0.25);
+    : Math.max(20, maxVotes * 0.3);
 
   // Extract lines above threshold
   const lines: HoughLine[] = [];
@@ -244,7 +244,7 @@ export function findQuadFromLines(
   lines: HoughLine[],
   frameWidth: number,
   frameHeight: number,
-  minAreaRatio: number = 0.08
+  minAreaRatio: number = 0.10
 ): { corners: Point[]; confidence: number } | null {
   if (lines.length < 4) return null;
 

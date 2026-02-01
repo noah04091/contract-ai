@@ -140,6 +140,29 @@ const CornerAdjustment: React.FC<CornerAdjustmentProps> = ({
   }, [initialCorners, setCorners]);
 
   const handleConfirm = useCallback(() => {
+    // Convexity check: all cross products must have the same sign
+    const isConvex = (() => {
+      let sign = 0;
+      for (let i = 0; i < 4; i++) {
+        const a = corners[i];
+        const b = corners[(i + 1) % 4];
+        const c = corners[(i + 2) % 4];
+        const cross = (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x);
+        if (cross === 0) continue;
+        if (sign === 0) {
+          sign = cross > 0 ? 1 : -1;
+        } else if ((cross > 0 ? 1 : -1) !== sign) {
+          return false;
+        }
+      }
+      return true;
+    })();
+
+    if (!isConvex) {
+      // Non-convex quad — don't confirm, corners are invalid
+      return;
+    }
+
     onConfirm(corners);
   }, [corners, onConfirm]);
 

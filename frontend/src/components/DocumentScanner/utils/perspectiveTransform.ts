@@ -21,7 +21,7 @@ import type { Point } from "../types";
 const MAX_OUTPUT_DIM = 1500;
 
 /** Grid subdivision for mesh warp (higher = more accurate perspective approximation) */
-const GRID_SIZE = 16;
+const GRID_SIZE = 24;
 
 /**
  * Load an image from a URL (data: or blob:) into an HTMLImageElement.
@@ -99,7 +99,7 @@ function meshWarp(
       const ddx = dx1 - dx0;
       const ddy = dy1 - dy0;
 
-      if (ddx < 0.5 || ddy < 0.5) continue;
+      if (ddx < 0.75 || ddy < 0.75) continue;
 
       // Source cell corners (image pixel coordinates) via bilinear interpolation
       const s00 = bilinearInterp(srcCorners, u0, v0); // TL of cell
@@ -114,7 +114,7 @@ function meshWarp(
 
       // Determinant of source edge matrix
       const det = ex * fy - ey * fx;
-      if (Math.abs(det) < 0.001) continue;
+      if (Math.abs(det) < 0.01) continue;
 
       // Affine transform: maps source image pixel coords → output canvas coords
       // We need: for image pixel (px, py), canvas position is:
@@ -135,7 +135,7 @@ function meshWarp(
       ctx.save();
       // Clip to this cell (with tiny overlap to avoid seam artifacts)
       ctx.beginPath();
-      ctx.rect(dx0 - 0.5, dy0 - 0.5, ddx + 1, ddy + 1);
+      ctx.rect(dx0 - 0.75, dy0 - 0.75, ddx + 1.5, ddy + 1.5);
       ctx.clip();
       // Apply the affine transform and draw the entire source image
       ctx.setTransform(a, b, c, d, e, f);
@@ -278,5 +278,5 @@ export async function applyPerspectiveCrop(
     simpleCrop(outCtx, img, srcPts, outW, outH);
   }
 
-  return canvasToBlob(outCanvas, 0.9);
+  return canvasToBlob(outCanvas, 0.85);
 }

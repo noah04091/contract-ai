@@ -26,8 +26,7 @@ interface UseDocumentDetectionOptions {
 }
 
 const STABILITY_TOLERANCE = 0.025; // 2.5% of frame
-const EMA_ALPHA_SYNC = 0.4; // 40% new frame for sync (Hough) detector
-const EMA_ALPHA_ASYNC = 0.25; // 25% new frame for async (ML) — slower updates need gentler smoothing
+const EMA_ALPHA_SYNC = 0.4; // 40% new frame, 60% history
 const GRACE_FRAMES = 4; // Tolerate up to 4 unstable frames before reset
 const FADEOUT_MS = 500; // Fade-out duration when detection is lost
 const NO_DETECTION_HINT_MS = 3000; // Show hint after 3s without detection
@@ -69,8 +68,6 @@ export function useDocumentDetection({
 
   // Refs for the detection loop (avoid stale closures)
   const detectorRef = useRef<import("../utils/documentDetector").DocumentDetectorInterface | null>(null);
-  const inferenceRunningRef = useRef(false);
-  const latestResultRef = useRef<{ corners: Point[]; confidence: number } | null>(null);
   const rafRef = useRef<number>(0);
   const lastFrameTimeRef = useRef(0);
   const previousCornersRef = useRef<Point[] | null>(null);
@@ -112,28 +109,8 @@ export function useDocumentDetection({
       if (document.hidden) return; // Skip when tab is hidden
 
       try {
-        // Support async ML detector alongside sync Hough fallback
-        let result: { corners: Point[]; confidence: number } | null | undefined;
-        const isAsync = !!detector.detectAsync;
-        const emaAlpha = isAsync ? EMA_ALPHA_ASYNC : EMA_ALPHA_SYNC;
-
-        if (detector.detectAsync) {
-          // Fire-and-forget pattern: launch async inference if not already running
-          if (!inferenceRunningRef.current) {
-            inferenceRunningRef.current = true;
-            detector.detectAsync(video).then((r) => {
-              inferenceRunningRef.current = false;
-              latestResultRef.current = r ?? null;
-            }).catch(() => {
-              inferenceRunningRef.current = false;
-            });
-          }
-          result = latestResultRef.current;
-          // If ML hasn't produced a result yet, skip this frame (don't reset state)
-          if (result === null && !lastKnownCornersRef.current) return;
-        } else if (detector.detect) {
-          result = detector.detect(video);
-        }
+        // HybridDetector.detect() runs Hough sync + ML async in background
+        const result = detector.detect ? detector.detect(video) : null;
 
         consecutiveErrorsRef.current = 0;
 
@@ -144,9 +121,9 @@ export function useDocumentDetection({
 
           const rawCorners = result.corners;
 
-          // Apply EMA smoothing (gentler alpha for async ML to avoid jumps)
+          // Apply EMA smoothing
           const smoothed = smoothedCornersRef.current
-            ? smoothCorners(smoothedCornersRef.current, rawCorners, emaAlpha)
+            ? smoothCorners(smoothedCornersRef.current, rawCorners, EMA_ALPHA_SYNC)
             : rawCorners;
           smoothedCornersRef.current = smoothed;
 
@@ -335,8 +312,6 @@ export function useDocumentDetection({
         detectorRef.current = detector;
         disabledRef.current = false;
         consecutiveErrorsRef.current = 0;
-        inferenceRunningRef.current = false;
-        latestResultRef.current = null;
         loopStartTimeRef.current = performance.now();
         lastDetectionTimeRef.current = performance.now();
         stabilityBreakCountRef.current = 0;
