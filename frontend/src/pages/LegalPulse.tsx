@@ -2351,6 +2351,7 @@ export default function LegalPulse() {
                                 <span>Vertrag analysiert: {contract.latestCheck.metadata.analyzedPercentage}%</span>
                                 <span>Gepr{String.fromCharCode(252)}ft gegen: {contract.latestCheck.metadata.dataSourcesUsed?.length || '?'} offizielle Quellen</span>
                                 <span>Konfidenz: {Math.round(contract.latestCheck.metadata.confidenceScore * 100)}%</span>
+                                <span>Erkannte {String.fromCharCode(196)}nderungen seit: {new Date(contract.latestCheck.metadata.lastDataSync || contract.latestCheck.checkDate).toLocaleDateString('de-DE')}</span>
                               </div>
                             )}
 

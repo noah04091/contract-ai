@@ -1,7 +1,13 @@
 // backend/jobs/weeklyLegalCheck.js
-// Weekly GPT-4 Legal Check - Universelles Vertragsmonitoring
+// Weekly Legal Change Monitoring - Universelles Vertragsmonitoring
 // Stufe 1: Datenbank-Check (RSS/Laws der letzten 7 Tage) mit Volltext-Kontext
 // Stufe 2: GPT-4o-mini Chunked Analysis (100% des Vertrags)
+//
+// IMPORTANT:
+// This system evaluates detected legal changes from known sources (20 official RSS feeds).
+// It does NOT claim completeness of the legal landscape.
+// Never use wording like "aktueller Rechtsstand" or "vollstaendige Rechtspruefung" -
+// the system checks RECOGNIZED changes from SPECIFIC sources, not all of German law.
 
 const { MongoClient, ObjectId } = require("mongodb");
 const { OpenAI } = require("openai");
