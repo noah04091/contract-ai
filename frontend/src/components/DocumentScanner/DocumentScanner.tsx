@@ -28,7 +28,7 @@ export interface DocumentScannerProps {
   enableOCR?: boolean;
 }
 
-type ScannerState = "capturing" | "adjusting" | "reviewing" | "processing" | "done" | "error";
+type ScannerState = "capturing" | "adjusting" | "correcting" | "reviewing" | "processing" | "done" | "error";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
 
@@ -42,7 +42,7 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
   const [scannerState, setScannerState] = useState<ScannerState>("capturing");
   const [processingProgress, setProcessingProgress] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [isCorrecting, setIsCorrecting] = useState(false);
+  // isCorrecting no longer needed - correction completes before review renders
   const {
     pages,
     activePage,
@@ -65,28 +65,39 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
     [addPage]
   );
 
-  // Ecken bestätigt → Review + Perspektiv-Korrektur im Hintergrund
+  // Ecken bestätigt → Korrektur abwarten → dann erst Review zeigen
   const handleCornersConfirmed = useCallback(
-    (corners: Point[]) => {
+    async (corners: Point[]) => {
       const pageIndex = Math.min(activePage, Math.max(0, pages.length - 1));
       if (pageIndex < 0 || pages.length === 0) return;
 
       updatePageCorners(pageIndex, corners);
-      setScannerState("reviewing");
-      setIsCorrecting(true);
 
-      // Perspektiv-Korrektur im Hintergrund (non-blocking)
+      // Lade-Screen zeigen während Korrektur läuft
+      setScannerState("correcting");
+      setProcessingProgress("Dokument wird zugeschnitten...");
+
       const imageUrl = pages[pageIndex].previewDataUrl;
-      applyPerspectiveCrop(imageUrl, corners)
-        .then((blob) => {
-          updateCorrectedImage(pageIndex, blob);
-        })
-        .catch((err) => {
-          console.error("[Scanner] Perspektiv-Korrektur fehlgeschlagen:", err);
-        })
-        .finally(() => {
-          setIsCorrecting(false);
-        });
+      try {
+        if (!imageUrl || imageUrl.length < 100) {
+          throw new Error(`previewDataUrl ungültig (Länge: ${imageUrl?.length || 0})`);
+        }
+        const blob = await applyPerspectiveCrop(imageUrl, corners);
+        if (!blob || blob.size === 0) {
+          throw new Error("Korrektur lieferte leeren Blob");
+        }
+        setProcessingProgress(`Korrektur erfolgreich (${Math.round(blob.size / 1024)}KB)`);
+        updateCorrectedImage(pageIndex, blob);
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        console.error("[Scanner] Perspektiv-Korrektur fehlgeschlagen:", errMsg);
+        setProcessingProgress(`Korrektur fehlgeschlagen: ${errMsg}`);
+        // Warte kurz damit User die Fehlermeldung sehen kann
+        await new Promise((r) => setTimeout(r, 2000));
+      }
+
+      // ERST JETZT zur Review wechseln (korrigiertes Bild ist bereits im State)
+      setScannerState("reviewing");
     },
     [pages, activePage, updatePageCorners, updateCorrectedImage]
   );
@@ -329,6 +340,14 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
               />
             )}
 
+            {/* CORRECTING STATE — Perspektiv-Korrektur läuft */}
+            {scannerState === "correcting" && (
+              <div className={styles.statusContainer}>
+                <Loader2 size={48} className={styles.spinner} />
+                <p className={styles.statusText}>{processingProgress || "Dokument wird zugeschnitten..."}</p>
+              </div>
+            )}
+
             {/* REVIEWING STATE */}
             {scannerState === "reviewing" && pages.length > 0 && (
               <div className={styles.reviewContainer}>
@@ -338,7 +357,7 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
                   onRetake={handleRetakePage}
                   onConfirm={handleConfirmPage}
                   onAdjustCorners={handleAdjustCorners}
-                  isCorrecting={isCorrecting}
+                  isCorrecting={false}
                 />
 
                 <BatchManager
