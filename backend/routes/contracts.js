@@ -2422,9 +2422,40 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
       try {
         console.log(`⚡ [${requestId}] Starting Legal Pulse risk analysis for deferred analysis in background...`);
 
-        // Get full text content
+        // Get full text content (with S3 fallback)
         const contract = await contractsCollection.findOne({ _id: new ObjectId(id) });
-        const fullTextContent = contract.fullText || contract.content || '';
+        let fullTextContent = contract.fullText || contract.content || '';
+
+        // S3 PDF fallback: extract text from S3 if no text in MongoDB
+        if ((!fullTextContent || fullTextContent.length < 100) && contract.s3Key && S3_AVAILABLE && s3Instance && GetObjectCommand) {
+          try {
+            console.log(`📄 [${requestId}] No text in DB, extracting from S3: ${contract.s3Key}`);
+            const command = new GetObjectCommand({
+              Bucket: process.env.S3_BUCKET_NAME,
+              Key: contract.s3Key,
+            });
+            const response = await s3Instance.send(command);
+            const chunks = [];
+            for await (const chunk of response.Body) {
+              chunks.push(chunk);
+            }
+            const buffer = Buffer.concat(chunks);
+            const pdfData = await pdfParse(buffer);
+            fullTextContent = pdfData.text || '';
+            console.log(`✅ [${requestId}] S3 text extracted: ${fullTextContent.length} chars`);
+
+            // Store extracted text back to MongoDB for future use
+            if (fullTextContent.length > 100) {
+              await contractsCollection.updateOne(
+                { _id: new ObjectId(id) },
+                { $set: { fullText: fullTextContent } }
+              );
+              console.log(`💾 [${requestId}] Stored extracted text back to MongoDB`);
+            }
+          } catch (s3Error) {
+            console.error(`❌ [${requestId}] S3 text extraction failed:`, s3Error.message);
+          }
+        }
 
         if (fullTextContent && fullTextContent.length > 100) {
           const contractInfo = {
