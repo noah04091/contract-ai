@@ -17,6 +17,7 @@ import BatchManager from "./BatchManager";
 import { useBatchPages } from "./hooks/useBatchPages";
 import type { Point } from "./types";
 import type { CaptureResult } from "./hooks/useCamera";
+import { applyPerspectiveCrop } from "./utils/perspectiveTransform";
 import styles from "./DocumentScanner.module.css";
 
 export interface DocumentScannerProps {
@@ -48,6 +49,7 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
     removePage,
     updatePageCorners,
     updatePageRotation,
+    updateCorrectedImage,
     setActivePage,
     clearPages,
     pageCount,
@@ -56,31 +58,42 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
   // Foto aufgenommen → zur Ecken-Anpassung wechseln
   const handleCapture = useCallback(
     (capture: CaptureResult) => {
-      addPage(capture.blob, capture.dataUrl, capture.detectedCorners || null);
+      addPage(capture.blob, capture.previewBlob, capture.dataUrl, capture.detectedCorners || null);
       setScannerState("adjusting");
     },
     [addPage]
   );
 
-  // Ecken bestätigt → Review (CSS clip-path zeigt den Crop visuell)
+  // Ecken bestätigt → Review + Perspektiv-Korrektur im Hintergrund
   const handleCornersConfirmed = useCallback(
     (corners: Point[]) => {
-      const pageIndex = pages.length - 1;
-      if (pageIndex < 0) return;
+      const pageIndex = Math.min(activePage, Math.max(0, pages.length - 1));
+      if (pageIndex < 0 || pages.length === 0) return;
 
       updatePageCorners(pageIndex, corners);
       setScannerState("reviewing");
+
+      // Perspektiv-Korrektur im Hintergrund (non-blocking)
+      const imageUrl = pages[pageIndex].previewDataUrl;
+      applyPerspectiveCrop(imageUrl, corners)
+        .then((blob) => {
+          updateCorrectedImage(pageIndex, blob);
+        })
+        .catch((err) => {
+          console.warn("[Scanner] Perspektiv-Korrektur fehlgeschlagen:", err);
+        });
     },
-    [pages, updatePageCorners]
+    [pages, activePage, updatePageCorners, updateCorrectedImage]
   );
 
   // Retake aus Corner-Adjustment
   const handleRetakeFromAdjust = useCallback(() => {
+    const pageIndex = Math.min(activePage, Math.max(0, pages.length - 1));
     if (pages.length > 0) {
-      removePage(pages.length - 1);
+      removePage(pageIndex);
     }
     setScannerState("capturing");
-  }, [pages.length, removePage]);
+  }, [pages.length, activePage, removePage]);
 
   // Seite bestätigt in Review → zurück zur Kamera
   const handleConfirmPage = useCallback(() => {
@@ -89,11 +102,12 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
 
   // Seite wiederholen aus Review → entfernen und zurück zur Kamera
   const handleRetakePage = useCallback(() => {
+    const pageIndex = Math.min(activePage, Math.max(0, pages.length - 1));
     if (pages.length > 0) {
-      removePage(pages.length - 1);
+      removePage(pageIndex);
     }
     setScannerState("capturing");
-  }, [pages.length, removePage]);
+  }, [pages.length, activePage, removePage]);
 
   // Zurück zu Ecken-Anpassung aus Review
   const handleAdjustCorners = useCallback(() => {
@@ -119,67 +133,122 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
     if (pageCount === 0) return;
 
     setScannerState("processing");
-    setProcessingProgress("Bilder werden verarbeitet...");
+    setProcessingProgress("Bilder werden vorbereitet...");
     setError(null);
 
     try {
       const formData = new FormData();
 
-      // Immer Original-Bild ans Backend senden (Backend macht eigene Perspektiv-Korrektur)
-      // correctedBlob ist nur für die client-seitige Vorschau
+      // Corners validieren: nur gültige 4-Punkt-Arrays senden
+      const cornersArray = pages.map((p) => {
+        if (!p.corners || p.corners.length !== 4) return [];
+        const valid = p.corners.every(
+          (c) => typeof c.x === "number" && typeof c.y === "number" &&
+                 c.x >= 0 && c.x <= 1 && c.y >= 0 && c.y <= 1
+        );
+        return valid ? p.corners : [];
+      });
+
+      // Bilder ans Backend — correctedBlob bevorzugen (perspektiv-korrigiert),
+      // Fallback auf imageBlob (Original) wenn keine Korrektur vorhanden
+      let validCount = 0;
       for (let i = 0; i < pages.length; i++) {
-        formData.append("images", pages[i].imageBlob, `scan_${i + 1}.jpg`);
+        const blob = pages[i].correctedBlob || pages[i].imageBlob;
+        if (!blob || blob.size === 0) {
+          console.warn(`[Scanner] Seite ${i + 1} übersprungen (leerer Blob)`);
+          continue;
+        }
+        formData.append("images", blob, `scan_${i + 1}.jpg`);
+        // Wenn correctedBlob gesendet wird, sind Corners bereits angewendet → leere Corners senden
+        if (pages[i].correctedBlob) {
+          cornersArray[i] = [];
+        }
+        validCount++;
       }
 
-      // Corners + Options
-      const cornersArray = pages.map((p) => p.corners || []);
-      formData.append("corners", JSON.stringify(cornersArray));
+      if (validCount === 0) {
+        throw new Error("Keine gültigen Bilder zum Verarbeiten");
+      }
 
-      const options = {
+      formData.append("corners", JSON.stringify(cornersArray));
+      formData.append("options", JSON.stringify({
         rotations: pages.map((p) => p.rotation),
         enhance: true,
         enableOCR,
-      };
-      formData.append("options", JSON.stringify(options));
+      }));
 
-      setProcessingProgress(`${pageCount} Seiten werden verarbeitet...`);
+      setProcessingProgress(`${validCount} ${validCount === 1 ? "Seite wird" : "Seiten werden"} hochgeladen...`);
 
+      // Fetch mit Retry bei transienten Fehlern (408, 429, 503, Netzwerk)
       const token = localStorage.getItem("token");
-      const response = await fetch(`${API_BASE}/api/scanner/process`, {
-        method: "POST",
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: formData,
-      });
+      const MAX_RETRIES = 2;
+      let response: Response | null = null;
 
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.error || `Server-Fehler: ${response.status}`);
+      for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+        try {
+          response = await fetch(`${API_BASE}/api/scanner/process`, {
+            method: "POST",
+            headers: {
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: formData,
+          });
+
+          // Bei transienten HTTP-Fehlern → Retry
+          if (response.status === 408 || response.status === 429 || response.status === 503) {
+            if (attempt < MAX_RETRIES) {
+              const waitMs = (attempt + 1) * 2000; // 2s, 4s
+              setProcessingProgress(`Server beschäftigt — neuer Versuch in ${waitMs / 1000}s...`);
+              await new Promise((r) => setTimeout(r, waitMs));
+              continue;
+            }
+          }
+          break; // Erfolg oder nicht-transienter Fehler → kein Retry
+        } catch (networkErr) {
+          if (attempt < MAX_RETRIES) {
+            setProcessingProgress(`Netzwerkfehler — neuer Versuch...`);
+            await new Promise((r) => setTimeout(r, 2000));
+            continue;
+          }
+          throw new Error("Netzwerkfehler — bitte Verbindung prüfen");
+        }
       }
 
+      if (!response || !response.ok) {
+        const errData = await response?.json().catch(() => ({})) || {};
+        throw new Error((errData as Record<string, string>).error || `Server-Fehler: ${response?.status}`);
+      }
+
+      setProcessingProgress("PDF wird erstellt...");
       const result = await response.json();
 
       if (!result.success) {
         throw new Error(result.error || "Verarbeitung fehlgeschlagen");
       }
 
-      setProcessingProgress("PDF wird erstellt...");
-
       // PDF als File-Objekt erzeugen
       let pdfBlob: Blob;
       if (result.pdfBase64) {
-        const binary = atob(result.pdfBase64);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) {
-          bytes[i] = binary.charCodeAt(i);
+        try {
+          const binary = atob(result.pdfBase64);
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+          }
+          pdfBlob = new Blob([bytes], { type: "application/pdf" });
+        } catch {
+          throw new Error("PDF-Daten beschädigt");
         }
-        pdfBlob = new Blob([bytes], { type: "application/pdf" });
       } else if (result.pdfUrl) {
         const pdfResponse = await fetch(result.pdfUrl);
+        if (!pdfResponse.ok) throw new Error("PDF konnte nicht heruntergeladen werden");
         pdfBlob = await pdfResponse.blob();
       } else {
         throw new Error("Kein PDF in der Antwort");
+      }
+
+      if (pdfBlob.size === 0) {
+        throw new Error("PDF ist leer");
       }
 
       const pdfFile = new File(

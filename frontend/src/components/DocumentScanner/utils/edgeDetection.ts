@@ -119,42 +119,6 @@ export function adaptiveThreshold(
   return dst;
 }
 
-// ─── Morphological Dilation 3×3 ─────────────────────────────
-
-/**
- * Dilate binary image with a 3×3 square kernel.
- * Closes small gaps in thin Sobel edges before Hough Transform.
- */
-export function dilate3x3(
-  src: Uint8Array,
-  width: number,
-  height: number
-): Uint8Array {
-  const dst = new Uint8Array(width * height);
-
-  for (let y = 1; y < height - 1; y++) {
-    for (let x = 1; x < width - 1; x++) {
-      const i = y * width + x;
-      // If any neighbor is 255, output is 255
-      if (
-        src[i] === 255 ||
-        src[i - 1] === 255 ||
-        src[i + 1] === 255 ||
-        src[i - width] === 255 ||
-        src[i + width] === 255 ||
-        src[i - width - 1] === 255 ||
-        src[i - width + 1] === 255 ||
-        src[i + width - 1] === 255 ||
-        src[i + width + 1] === 255
-      ) {
-        dst[i] = 255;
-      }
-    }
-  }
-
-  return dst;
-}
-
 // ─── Hough Line Transform ───────────────────────────────────
 
 interface HoughLine {

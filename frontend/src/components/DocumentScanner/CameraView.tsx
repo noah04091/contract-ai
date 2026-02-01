@@ -99,13 +99,7 @@ const CameraView: React.FC<CameraViewProps> = ({
             onChange={async (e) => {
               const file = e.target.files?.[0];
               if (file) {
-                // File → data URL für Preview
-                const reader = new FileReader();
-                reader.onload = () => {
-                  const dataUrl = reader.result as string;
-                  onCapture({ blob: file, dataUrl });
-                };
-                reader.readAsDataURL(file);
+                onCapture({ blob: file, previewBlob: file, dataUrl: URL.createObjectURL(file) });
               }
             }}
             style={{ display: "none" }}
@@ -130,12 +124,7 @@ const CameraView: React.FC<CameraViewProps> = ({
             onChange={async (e) => {
               const file = e.target.files?.[0];
               if (file) {
-                const reader = new FileReader();
-                reader.onload = () => {
-                  const dataUrl = reader.result as string;
-                  onCapture({ blob: file, dataUrl });
-                };
-                reader.readAsDataURL(file);
+                onCapture({ blob: file, previewBlob: file, dataUrl: URL.createObjectURL(file) });
               }
             }}
             style={{ display: "none" }}

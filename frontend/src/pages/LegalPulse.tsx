@@ -163,6 +163,16 @@ interface WeeklyCheckFinding {
   recommendation?: string;
 }
 
+interface WeeklyCheckMetadata {
+  analyzedPercentage: number;
+  chunksAnalyzed: number;
+  totalCharacters: number;
+  confidenceScore: number;
+  dataSourcesUsed: string[];
+  lastDataSync: string;
+  disclaimer: string;
+}
+
 interface WeeklyCheckContract {
   contractId: string;
   contractName: string;
@@ -178,6 +188,7 @@ interface WeeklyCheckContract {
       findings: WeeklyCheckFinding[];
       summary: string;
     };
+    metadata?: WeeklyCheckMetadata;
   };
   history: Array<{
     checkDate: string;
@@ -2257,6 +2268,17 @@ export default function LegalPulse() {
         </div>
       )}
 
+      {/* Disclaimer Banner */}
+      {canAccessLegalPulse && (
+        <div className={styles.disclaimerBanner}>
+          <Shield size={16} />
+          <p>
+            <strong>Wichtiger Hinweis:</strong> Die KI-gest{String.fromCharCode(252)}tzte Rechtsanalyse dient der
+            Vorinformation und ersetzt keine anwaltliche Beratung. Alle Angaben ohne Gew{String.fromCharCode(228)}hr.
+          </p>
+        </div>
+      )}
+
       {/* Weekly Legal Check Section */}
       {canAccessLegalPulse && (
         <div className={styles.weeklyCheckSection}>
@@ -2323,6 +2345,14 @@ export default function LegalPulse() {
                             <p className={styles.weeklyCheckSummary}>
                               {contract.latestCheck.stage2Results.summary}
                             </p>
+
+                            {contract.latestCheck.metadata && (
+                              <div className={styles.analysisMetadata}>
+                                <span>Analysiert: {contract.latestCheck.metadata.analyzedPercentage}%</span>
+                                <span>Quellen: {contract.latestCheck.metadata.dataSourcesUsed?.length || '?'}</span>
+                                <span>Konfidenz: {Math.round(contract.latestCheck.metadata.confidenceScore * 100)}%</span>
+                              </div>
+                            )}
 
                             {contract.latestCheck.stage1Results.relevantChanges.length > 0 && (
                               <div className={styles.weeklyStage1}>

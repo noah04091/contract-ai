@@ -371,6 +371,18 @@ class LegalPulseMonitor {
 
       console.log(`   ✅ RSS Sync: ${inserted} new, ${updated} updated, ${skipped} skipped, ${deduplicated} deduplicated`);
 
+      // Fetch full content for new/updated laws (graceful - failures don't block sync)
+      if (inserted > 0 || updated > 0) {
+        try {
+          const { getInstance: getContentFetcher } = require('../services/lawContentFetcher');
+          const fetcher = getContentFetcher();
+          const fetchResult = await fetcher.batchFetchForRecentLaws(this.db, 7);
+          console.log(`   ✅ Content Fetch: ${fetchResult.fetched}/${fetchResult.total} law texts fetched`);
+        } catch (fetchError) {
+          console.warn(`   ⚠️  Content fetch failed (non-critical): ${fetchError.message}`);
+        }
+      }
+
       return { inserted, updated, skipped, deduplicated };
 
     } catch (error) {

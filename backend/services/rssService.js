@@ -122,6 +122,50 @@ const LEGAL_RSS_FEEDS = {
     name: 'BFH Entscheidungen',
     category: 'steuerrecht',
     enabled: true
+  },
+
+  // ═══════════════════════════════════════════════════
+  // WEITERE BUNDESGERICHTE (Additional Federal Courts)
+  // ═══════════════════════════════════════════════════
+  'bsg-entscheidungen': {
+    url: 'https://www.rechtsprechung-im-internet.de/jportal/docs/feed/bsjrs-bsg.xml',
+    name: 'BSG Entscheidungen (Sozialrecht)',
+    category: 'sozialrecht',
+    enabled: true
+  },
+  'bverwg-entscheidungen': {
+    url: 'https://www.rechtsprechung-im-internet.de/jportal/docs/feed/bsjrs-bverwg.xml',
+    name: 'BVerwG Entscheidungen (Verwaltungsrecht)',
+    category: 'verwaltungsrecht',
+    enabled: true
+  },
+  'bpatg-entscheidungen': {
+    url: 'https://www.rechtsprechung-im-internet.de/jportal/docs/feed/bsjrs-bpatg.xml',
+    name: 'BPatG Entscheidungen (Patentrecht)',
+    category: 'patentrecht',
+    enabled: true
+  },
+
+  // ═══════════════════════════════════════════════════
+  // WEITERE QUELLEN (Additional Sources)
+  // ═══════════════════════════════════════════════════
+  'bundesrat-presse': {
+    url: 'https://www.bundesrat.de/DE/Service/RSS/rss_node.html',
+    name: 'Bundesrat Pressemitteilungen',
+    category: 'gesetzgebung',
+    enabled: true
+  },
+  'bmi-presse': {
+    url: 'https://www.bmi.bund.de/SiteGlobals/Functions/RSSFeed/DE/RSSNewsfeed/RSSNewsfeed.xml',
+    name: 'Bundesinnenministerium',
+    category: 'bundesrecht',
+    enabled: true
+  },
+  'beck-aktuell': {
+    url: 'https://rsw.beck.de/rsw/rss/becklink',
+    name: 'beck-aktuell Rechtsnachrichten',
+    category: 'rechtsnews',
+    enabled: true
   }
 };
 
@@ -219,6 +263,9 @@ function mapFeedCategoryToArea(feedCategory) {
     'mietrecht': 'Mietrecht',
     'rechtsprechung': 'Vertragsrecht', // General court decisions
     'verfassungsrecht': 'Vertragsrecht', // Constitutional -> general
+    'sozialrecht': 'Arbeitsrecht', // Social law -> labor-related
+    'verwaltungsrecht': 'Vertragsrecht', // Administrative -> general
+    'patentrecht': 'Handelsrecht', // Patent law -> commercial
   };
   return mapping[feedCategory] || null;
 }

@@ -15,6 +15,7 @@ import type { Point } from "../types";
 
 export interface CaptureResult {
   blob: Blob;
+  previewBlob: Blob;
   dataUrl: string;
   detectedCorners?: Point[];
 }
@@ -100,7 +101,14 @@ export function useCamera(): UseCameraReturn {
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+
+        // Timeout: Wenn Video nicht innerhalb von 8s startet, abbrechen
+        await Promise.race([
+          videoRef.current.play(),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Video-Start Timeout")), 8000)
+          ),
+        ]);
       }
 
       // Torch-Capability prüfen
@@ -181,7 +189,27 @@ export function useCamera(): UseCameraReturn {
 
     previewCtx.drawImage(video, 0, 0, previewCanvas.width, previewCanvas.height);
 
-    // Data-URL aus Preview-Canvas (sofort verfügbar, kein Blob-URL nötig)
+    // Preview-Blob für memory-effiziente Speicherung (statt Data-URL im State)
+    const previewBlob = await new Promise<Blob>((resolve) => {
+      previewCanvas.toBlob(
+        (blob) => {
+          if (blob && blob.size > 0) {
+            resolve(blob);
+          } else {
+            // Fallback via toDataURL
+            const fallback = previewCanvas.toDataURL("image/jpeg", 0.85);
+            const binary = atob(fallback.split(",")[1]);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            resolve(new Blob([bytes], { type: "image/jpeg" }));
+          }
+        },
+        "image/jpeg",
+        0.85
+      );
+    });
+
+    // Data-URL nur als initialer Fallback (wird nicht dauerhaft gespeichert)
     const dataUrl = previewCanvas.toDataURL("image/jpeg", 0.85);
 
     // Blob aus Full-Canvas (für Backend-Upload)
@@ -189,17 +217,27 @@ export function useCamera(): UseCameraReturn {
       fullCanvas.toBlob(
         (blob) => {
           if (!blob || blob.size === 0) {
-            console.warn("[Scanner] canvas.toBlob returned null/empty");
+            // Fallback: toDataURL → manueller Blob (iOS Safari Workaround)
+            try {
+              const fallbackDataUrl = fullCanvas.toDataURL("image/jpeg", 0.95);
+              const binary = atob(fallbackDataUrl.split(",")[1]);
+              const bytes = new Uint8Array(binary.length);
+              for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+              }
+              const fallbackBlob = new Blob([bytes], { type: "image/jpeg" });
+              if (fallbackBlob.size > 0) {
+                resolve({ blob: fallbackBlob, previewBlob, dataUrl });
+                return;
+              }
+            } catch {
+              // Fallback auch fehlgeschlagen
+            }
+            console.warn("[Scanner] canvas.toBlob returned null/empty, fallback failed");
             resolve(null);
             return;
           }
-          console.log("[Scanner] captureFrame success:", {
-            blobSize: blob.size,
-            dataUrlLength: dataUrl.length,
-            dimensions: `${video.videoWidth}x${video.videoHeight}`,
-            previewDimensions: `${previewCanvas.width}x${previewCanvas.height}`,
-          });
-          resolve({ blob, dataUrl });
+          resolve({ blob, previewBlob, dataUrl });
         },
         "image/jpeg",
         0.95
@@ -227,6 +265,8 @@ export function useCamera(): UseCameraReturn {
   const switchCamera = useCallback(async () => {
     const newMode = state.facingMode === "environment" ? "user" : "environment";
     setState((prev) => ({ ...prev, facingMode: newMode as "environment" | "user" }));
+    // Kamera direkt mit neuem facingMode neu starten
+    // startCamera liest facingMode aus state, der nächste Aufruf nutzt den neuen Wert
   }, [state.facingMode]);
 
   // Kamera neu starten wenn facingMode sich ändert
@@ -234,6 +274,7 @@ export function useCamera(): UseCameraReturn {
     if (state.isActive) {
       startCamera();
     }
+    // startCamera ist absichtlich nicht in deps — wird über facingMode getriggert
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.facingMode]);
 

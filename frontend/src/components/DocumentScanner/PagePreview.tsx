@@ -29,18 +29,25 @@ const PagePreview: React.FC<PagePreviewProps> = ({
   onConfirm,
   onAdjustCorners,
 }) => {
-  const previewStyle = useMemo(
-    (): React.CSSProperties => ({
+  const previewStyle = useMemo((): React.CSSProperties => {
+    const style: React.CSSProperties = {
       transform: `rotate(${page.rotation}deg)`,
-    }),
-    [page.rotation]
-  );
+    };
+
+    // CSS clip-path nur wenn KEIN korrigiertes Bild vorliegt (sonst ist es bereits entzerrt)
+    if (!page.correctedBlob && page.corners && page.corners.length === 4) {
+      const [tl, tr, br, bl] = page.corners;
+      style.clipPath = `polygon(${(tl.x * 100).toFixed(1)}% ${(tl.y * 100).toFixed(1)}%, ${(tr.x * 100).toFixed(1)}% ${(tr.y * 100).toFixed(1)}%, ${(br.x * 100).toFixed(1)}% ${(br.y * 100).toFixed(1)}%, ${(bl.x * 100).toFixed(1)}% ${(bl.y * 100).toFixed(1)}%)`;
+    }
+
+    return style;
+  }, [page.rotation, page.corners, page.correctedBlob]);
 
   return (
     <div className={styles.previewContainer}>
       <div className={styles.previewImageWrapper}>
         <img
-          src={page.previewDataUrl}
+          src={page.thumbnailUrl}
           alt="Scan Seite"
           className={styles.previewImage}
           style={previewStyle}

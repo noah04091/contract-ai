@@ -294,7 +294,10 @@
       "Bash(then echo \"✅ $img EXISTIERT\")",
       "Bash(else echo \"❌ $img FEHLT!!!\")",
       "Bash(fi)",
-      "Bash(done)"
+      "Bash(done)",
+      "WebFetch(domain:cdn.jsdelivr.net)",
+      "WebFetch(domain:www.bmj.de)",
+      "Bash(python:*)"
     ],
     "deny": [],
     "ask": []

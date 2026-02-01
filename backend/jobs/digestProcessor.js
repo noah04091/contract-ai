@@ -276,6 +276,15 @@ class DigestProcessor {
         <strong>Wie funktioniert das?</strong><br>
         Unsere KI analysiert täglich neue Gesetze und vergleicht sie automatisch mit allen Ihren Verträgen. Sie erhalten ${isDaily ? 'jeden Tag' : 'jede Woche'} eine Zusammenfassung aller relevanten Änderungen.
       </p>
+
+      <div style="background: #fef3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 16px; margin-top: 24px;">
+        <p style="margin: 0; color: #856404; font-size: 13px; line-height: 1.6;">
+          <strong>Wichtiger Hinweis:</strong> Diese Analyse wurde KI-gest${String.fromCharCode(252)}tzt erstellt und dient
+          ausschlie${String.fromCharCode(223)}lich der Vorinformation. Sie ersetzt keine anwaltliche Beratung und stellt
+          keine Rechtsberatung dar. F${String.fromCharCode(252)}r verbindliche rechtliche Einsch${String.fromCharCode(228)}tzungen wenden Sie sich
+          bitte an einen Rechtsanwalt. Alle Angaben ohne Gew${String.fromCharCode(228)}hr.
+        </p>
+      </div>
     </div>
 
     <div class="footer">
@@ -346,6 +355,13 @@ class DigestProcessor {
             <span style="background: ${colors.border}; color: white; padding: 4px 12px; border-radius: 12px; font-size: 13px; font-weight: 600; white-space: nowrap; margin-left: 12px;">${colors.label}</span>
           </div>
           <p style="margin: 0 0 12px; color: #6b7280; font-size: 14px;">${alert.lawDescription || ''}</p>
+          ${alert.metadata ? `
+          <div style="display: flex; gap: 16px; padding: 8px 12px; background: rgba(255,255,255,0.6); border-radius: 6px; margin-bottom: 12px; font-size: 12px; color: #6b7280;">
+            <span>Analysiert: ${alert.metadata.analyzedPercentage || 100}%</span>
+            <span>Quellen: ${alert.metadata.dataSourcesUsed?.length || '?'}</span>
+            <span>Konfidenz: ${Math.round((alert.metadata.confidenceScore || 0.5) * 100)}%</span>
+          </div>
+          ` : ''}
           ${findingsListHtml ? `<div style="background: white; border-radius: 8px; overflow: hidden;">${findingsListHtml}</div>` : ''}
         </div>
       `;

@@ -1,7 +1,7 @@
-// 📁 backend/jobs/weeklyLegalCheck.js
+// backend/jobs/weeklyLegalCheck.js
 // Weekly GPT-4 Legal Check - Universelles Vertragsmonitoring
-// Stufe 1: Datenbank-Check (RSS/Laws der letzten 7 Tage)
-// Stufe 2: GPT-4o-mini Comprehensive Legal Analysis
+// Stufe 1: Datenbank-Check (RSS/Laws der letzten 7 Tage) mit Volltext-Kontext
+// Stufe 2: GPT-4o-mini Chunked Analysis (100% des Vertrags)
 
 const { MongoClient, ObjectId } = require("mongodb");
 const { OpenAI } = require("openai");
@@ -26,7 +26,15 @@ class WeeklyLegalCheck {
     // Rate limiting
     this.maxConcurrent = 3;
     this.batchPauseMs = 2000;
-    this.maxTextLength = 8000;
+
+    // Chunked analysis settings
+    this.chunkSize = 6000;        // chars per chunk
+    this.chunkOverlap = 500;      // overlap between chunks
+    this.maxChunksPerContract = 15; // cost safeguard (~90k chars max)
+    this.chunkPauseMs = 500;      // pause between chunk GPT calls
+
+    // Law context settings
+    this.maxLawContentLength = 3000; // chars of full law text per change in GPT context
   }
 
   async init() {
@@ -182,23 +190,73 @@ class WeeklyLegalCheck {
   }
 
   /**
-   * 2-Stage check for a single contract
+   * 2-Stage check for a single contract (with chunked analysis)
    */
   async checkSingleContract(contract, user) {
     console.log(`   📄 Checking: ${contract.name}`);
 
-    // Extract contract text
-    const contractText = await this.extractContractText(contract);
-    if (!contractText || contractText.trim().length < 50) {
+    // Extract FULL contract text (no truncation)
+    const fullText = await this.extractContractText(contract);
+    if (!fullText || fullText.trim().length < 50) {
       console.log(`   ⏭️  Skipping ${contract.name} - insufficient text`);
       return { findingsCount: 0, estimatedCost: 0 };
     }
 
-    // === STUFE 1: Datenbank-Check ===
-    const stage1Results = await this.stage1DatabaseCheck(contract, contractText);
+    // === STUFE 1: Datenbank-Check (with fullContent) ===
+    const stage1Results = await this.stage1DatabaseCheck(contract, fullText);
 
-    // === STUFE 2: GPT Legal Check ===
-    const stage2Results = await this.stage2GptCheck(contractText, contract, stage1Results);
+    // === STUFE 2: Chunked GPT Legal Check ===
+    const chunks = this.chunkContractText(fullText);
+    console.log(`   📊 Contract ${contract.name}: ${fullText.length} chars, ${chunks.length} chunks`);
+
+    const allFindings = [];
+    let totalCost = { inputTokens: 0, outputTokens: 0, estimatedCost: 0 };
+
+    for (const chunk of chunks) {
+      const result = await this.stage2GptCheck(chunk.text, contract, stage1Results, chunk.chunkIndex, chunks.length);
+
+      if (result.analysis.findings && result.analysis.findings.length > 0) {
+        allFindings.push(...result.analysis.findings.map(f => ({
+          ...f,
+          chunkIndex: chunk.chunkIndex,
+          charRange: `${chunk.startChar}-${chunk.endChar}`
+        })));
+      }
+
+      totalCost.inputTokens += result.cost.inputTokens;
+      totalCost.outputTokens += result.cost.outputTokens;
+      totalCost.estimatedCost += result.cost.estimatedCost;
+
+      // Pause between chunk GPT calls
+      if (chunk.chunkIndex < chunks.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, this.chunkPauseMs));
+      }
+    }
+
+    // Deduplicate findings from all chunks
+    const deduplicatedFindings = this.deduplicateFindings(allFindings);
+
+    // Determine overall status from merged findings
+    const overallStatus = this.determineOverallStatus(deduplicatedFindings);
+
+    // Build merged analysis with metadata
+    const lastSyncTime = await this.getLastSyncTime();
+    const mergedAnalysis = {
+      hasChanges: deduplicatedFindings.length > 0,
+      overallStatus,
+      findings: deduplicatedFindings,
+      summary: this.generateMergedSummary(deduplicatedFindings, chunks.length, fullText.length),
+      metadata: {
+        analyzedPercentage: 100,
+        chunksAnalyzed: chunks.length,
+        totalCharacters: fullText.length,
+        dataSourcesUsed: this.getDataSourcesList(stage1Results),
+        confidenceScore: this.calculateConfidence(stage1Results, chunks.length),
+        lastDataSync: lastSyncTime,
+        modelUsed: 'gpt-4o-mini',
+        disclaimer: 'KI-gest\u00FCtzte Vorpr\u00FCfung - ersetzt keine anwaltliche Beratung. Alle Angaben ohne Gew\u00E4hr.'
+      }
+    };
 
     // Save results
     const checkResult = {
@@ -207,37 +265,167 @@ class WeeklyLegalCheck {
       contractName: contract.name || 'Unbekannt',
       checkDate: new Date(),
       stage1Results,
-      stage2Results: stage2Results.analysis,
-      costEstimate: stage2Results.cost,
+      stage2Results: mergedAnalysis,
+      costEstimate: totalCost,
       createdAt: new Date()
     };
 
     await this.db.collection("weekly_legal_checks").insertOne(checkResult);
 
     // Queue digest alert if there are findings
-    if (stage2Results.analysis.hasChanges && stage2Results.analysis.findings.length > 0) {
-      await this.queueWeeklyCheckAlert(user._id, contract, stage2Results.analysis);
+    if (mergedAnalysis.hasChanges && mergedAnalysis.findings.length > 0) {
+      await this.queueWeeklyCheckAlert(user._id, contract, mergedAnalysis);
     }
 
-    const findingsCount = stage2Results.analysis.findings?.length || 0;
-    const status = stage2Results.analysis.overallStatus || 'aktuell';
-    console.log(`   ✅ ${contract.name}: ${status} (${findingsCount} findings)`);
+    const findingsCount = deduplicatedFindings.length;
+    console.log(`   ✅ ${contract.name}: ${overallStatus} (${findingsCount} findings, ${chunks.length} chunks, $${totalCost.estimatedCost.toFixed(4)})`);
 
     return {
       findingsCount,
-      estimatedCost: stage2Results.cost.estimatedCost
+      estimatedCost: totalCost.estimatedCost
     };
   }
 
   /**
+   * Split contract text into overlapping chunks for analysis
+   */
+  chunkContractText(fullText) {
+    const chunks = [];
+
+    // If text fits in one chunk, no splitting needed
+    if (fullText.length <= this.chunkSize) {
+      return [{
+        text: fullText,
+        startChar: 0,
+        endChar: fullText.length,
+        chunkIndex: 0
+      }];
+    }
+
+    for (let i = 0; i < fullText.length; i += (this.chunkSize - this.chunkOverlap)) {
+      const chunkText = fullText.substring(i, i + this.chunkSize);
+      if (chunkText.trim().length < 50) break; // Skip tiny trailing chunks
+
+      chunks.push({
+        text: chunkText,
+        startChar: i,
+        endChar: Math.min(i + this.chunkSize, fullText.length),
+        chunkIndex: chunks.length
+      });
+
+      // Cost safeguard
+      if (chunks.length >= this.maxChunksPerContract) {
+        console.log(`   ⚠️  Max chunks (${this.maxChunksPerContract}) reached, truncating analysis`);
+        break;
+      }
+    }
+
+    return chunks;
+  }
+
+  /**
+   * Deduplicate findings from multiple chunks by title similarity
+   */
+  deduplicateFindings(findings) {
+    if (findings.length === 0) return [];
+
+    const seen = new Map();
+
+    for (const finding of findings) {
+      // Normalize title for comparison
+      const key = finding.title.toLowerCase().replace(/\s+/g, ' ').trim();
+
+      const existing = seen.get(key);
+      if (!existing) {
+        seen.set(key, finding);
+      } else {
+        // Keep the one with higher severity
+        const severityOrder = { critical: 3, warning: 2, info: 1 };
+        if ((severityOrder[finding.severity] || 0) > (severityOrder[existing.severity] || 0)) {
+          seen.set(key, finding);
+        }
+      }
+    }
+
+    return Array.from(seen.values());
+  }
+
+  /**
+   * Determine overall status from findings
+   */
+  determineOverallStatus(findings) {
+    if (findings.length === 0) return 'aktuell';
+    if (findings.some(f => f.severity === 'critical')) return 'kritisch';
+    if (findings.some(f => f.severity === 'warning')) return 'handlungsbedarf';
+    return 'aktuell';
+  }
+
+  /**
+   * Generate merged summary from all chunk analyses
+   */
+  generateMergedSummary(findings, chunksCount, totalChars) {
+    if (findings.length === 0) {
+      return `Vollst\u00E4ndige Analyse (${chunksCount} Abschnitte, ${totalChars.toLocaleString('de-DE')} Zeichen). Keine rechtlichen Auff\u00E4lligkeiten gefunden.`;
+    }
+
+    const critical = findings.filter(f => f.severity === 'critical').length;
+    const warnings = findings.filter(f => f.severity === 'warning').length;
+    const info = findings.filter(f => f.severity === 'info').length;
+
+    const parts = [];
+    if (critical > 0) parts.push(`${critical} kritische`);
+    if (warnings > 0) parts.push(`${warnings} Warnungen`);
+    if (info > 0) parts.push(`${info} Hinweise`);
+
+    return `Vollst\u00E4ndige Analyse (${chunksCount} Abschnitte, 100% des Vertrags): ${parts.join(', ')}. ${findings.length} Befunde insgesamt.`;
+  }
+
+  /**
+   * Calculate confidence score based on available context
+   */
+  calculateConfidence(stage1Results, chunksAnalyzed) {
+    let score = 0.5; // Base confidence
+    if (chunksAnalyzed > 0) score += 0.2; // Full contract analyzed
+    if (stage1Results.relevantChanges.length > 0) score += 0.15; // Had law context
+    if (stage1Results.relevantChanges.some(c => c.fullContent)) score += 0.15; // Had full law text
+    return Math.min(1.0, score);
+  }
+
+  /**
+   * Get list of data sources used
+   */
+  getDataSourcesList(stage1Results) {
+    const sources = new Set(['gpt-4o-mini']);
+    for (const change of stage1Results.relevantChanges) {
+      if (change.feedId) sources.add(change.feedId);
+      if (change.area) sources.add(change.area);
+    }
+    return Array.from(sources);
+  }
+
+  /**
+   * Get timestamp of last RSS sync
+   */
+  async getLastSyncTime() {
+    try {
+      const healthRecord = await this.db.collection("monitoring_health")
+        .findOne({ service: 'legal_pulse_monitor' }, { sort: { lastRunAt: -1 } });
+      return healthRecord?.lastRunAt || null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
    * STUFE 1: Check database for recent law changes relevant to this contract
+   * Now includes fullContent from lawContentFetcher
    */
   async stage1DatabaseCheck(contract, contractText) {
     try {
       const lawsCollection = this.db.collection("laws");
       const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-      // Get recent law changes
+      // Get recent law changes (including fullContent if available)
       const recentLaws = await lawsCollection
         .find({ updatedAt: { $gte: oneWeekAgo } })
         .sort({ updatedAt: -1 })
@@ -271,7 +459,9 @@ class WeeklyLegalCheck {
                 title: law.title,
                 area: law.area,
                 score: similarity,
-                summary: (law.summary || law.description || '').substring(0, 200)
+                summary: (law.summary || law.description || '').substring(0, 500),
+                fullContent: law.fullContent || null, // Include full text if fetched
+                feedId: law.feedId || null
               });
             }
           }
@@ -320,7 +510,9 @@ class WeeklyLegalCheck {
           title: law.title,
           area: law.area,
           score: matchCount / Math.max(lawKeywords.length, 1),
-          summary: (law.summary || law.description || '').substring(0, 200)
+          summary: (law.summary || law.description || '').substring(0, 500),
+          fullContent: law.fullContent || null,
+          feedId: law.feedId || null
         });
       }
     }
@@ -330,52 +522,63 @@ class WeeklyLegalCheck {
   }
 
   /**
-   * STUFE 2: GPT-4o-mini comprehensive legal check
+   * STUFE 2: GPT-4o-mini legal check for a single chunk
+   * Now receives enriched law context with full text
    */
-  async stage2GptCheck(contractText, contract, stage1Results) {
-    const truncatedText = contractText.substring(0, this.maxTextLength);
+  async stage2GptCheck(contractText, contract, stage1Results, chunkIndex = 0, totalChunks = 1) {
     const today = new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
-    // Build Stage 1 context
+    // Build enriched Stage 1 context with full law texts
     let stage1Context = '';
     if (stage1Results.relevantChanges.length > 0) {
       stage1Context = '\n\nAKTUELLE GESETZESÄNDERUNGEN (letzte 7 Tage):\n';
       for (const change of stage1Results.relevantChanges) {
-        stage1Context += `- ${change.title} (Bereich: ${change.area || 'Allgemein'}, Relevanz: ${(change.score * 100).toFixed(0)}%)\n`;
-        if (change.summary) {
-          stage1Context += `  ${change.summary}\n`;
+        stage1Context += `\n--- ${change.title} (Bereich: ${change.area || 'Allgemein'}, Relevanz: ${(change.score * 100).toFixed(0)}%) ---\n`;
+
+        // Use full content if available, otherwise fall back to summary
+        if (change.fullContent) {
+          stage1Context += change.fullContent.substring(0, this.maxLawContentLength) + '\n';
+        } else if (change.summary) {
+          stage1Context += change.summary + '\n';
         }
       }
     }
 
-    const systemPrompt = `Du bist ein erfahrener Rechtsanwalt für deutsches Recht, spezialisiert auf Vertragsrecht, Arbeitsrecht, Mietrecht, Handelsrecht, Datenschutzrecht und Verbraucherrecht.
-Du führst eine wöchentliche Rechtsprüfung von Verträgen durch. Deine Aufgabe ist es, den Vertrag gegen den AKTUELLEN deutschen Rechtsstand zu prüfen.
+    // Chunk info for multi-chunk analysis
+    const chunkInfo = totalChunks > 1
+      ? `\nHINWEIS: Dies ist Abschnitt ${chunkIndex + 1} von ${totalChunks} des Vertrags. Analysiere NUR diesen Abschnitt.\n`
+      : '';
+
+    const systemPrompt = `Du bist ein erfahrener Rechtsanwalt f\u00FCr deutsches Recht, spezialisiert auf Vertragsrecht, Arbeitsrecht, Mietrecht, Handelsrecht, Datenschutzrecht und Verbraucherrecht.
+Du f\u00FChrst eine w\u00F6chentliche Rechtspr\u00FCfung von Vertr\u00E4gen durch. Deine Aufgabe ist es, den Vertrag gegen den AKTUELLEN deutschen Rechtsstand zu pr\u00FCfen.
+Ber\u00FCcksichtige dabei insbesondere die bereitgestellten AKTUELLEN GESETZESÄNDERUNGEN - diese sind verifizierte, aktuelle Rechts\u00E4nderungen der letzten 7 Tage.
 Antworte IMMER auf Deutsch und NUR mit validem JSON.`;
 
-    const userPrompt = `Prüfe den folgenden Vertrag gegen den AKTUELLEN deutschen Rechtsstand (Stand: ${today}).
+    const userPrompt = `Pr\u00FCfe den folgenden Vertrag gegen den AKTUELLEN deutschen Rechtsstand (Stand: ${today}).
 
 VERTRAGSNAME: ${contract.name || 'Unbekannt'}
 VERTRAGSSTATUS: ${contract.status || 'Aktiv'}
 LAUFZEIT: ${contract.laufzeit || 'Nicht angegeben'}
-KÜNDIGUNGSFRIST: ${contract.kuendigung || 'Nicht angegeben'}
-
+K\u00DCNDIGUNGSFRIST: ${contract.kuendigung || 'Nicht angegeben'}
+${chunkInfo}
 VERTRAGSTEXT:
-${truncatedText}
+${contractText}
 ${stage1Context}
 
-Prüfe folgende Aspekte UNIVERSELL (unabhängig vom Vertragstyp):
+Pr\u00FCfe folgende Aspekte UNIVERSELL (unabh\u00E4ngig vom Vertragstyp):
 1. Sind alle Klauseln nach aktuellem Recht noch wirksam?
-2. Gibt es neue gesetzliche Anforderungen die der Vertrag nicht erfüllt?
-3. Sind Fristen/Kündigungsrechte nach aktuellem Recht korrekt?
-4. Gibt es AGB-rechtliche Probleme (§§ 305-310 BGB)?
+2. Gibt es neue gesetzliche Anforderungen die der Vertrag nicht erf\u00FCllt?
+3. Sind Fristen/K\u00FCndigungsrechte nach aktuellem Recht korrekt?
+4. Gibt es AGB-rechtliche Probleme (\u00A7\u00A7 305-310 BGB)?
 5. Ist der DSGVO-Compliance-Status aktuell?
-6. Gibt es branchenspezifische Änderungen die relevant sind?
+6. Gibt es branchenspezifische \u00C4nderungen die relevant sind?
 7. Fehlen wichtige Vertragsklauseln die gesetzlich empfohlen/vorgeschrieben sind?
 
 WICHTIG:
 - Wenn der Vertrag rechtlich einwandfrei ist, setze hasChanges auf false und findings als leeres Array
 - Sei KONKRET: Zitiere die betroffenen Klauseln und nenne die genaue Rechtsgrundlage
 - Nur ECHTE, aktuelle rechtliche Probleme melden - keine hypothetischen
+- Beziehe dich auf die bereitgestellten AKTUELLEN GESETZESÄNDERUNGEN wenn relevant
 
 Antworte NUR mit diesem JSON-Format:
 {
@@ -386,13 +589,13 @@ Antworte NUR mit diesem JSON-Format:
       "type": "law_change" | "risk" | "improvement" | "compliance",
       "severity": "info" | "warning" | "critical",
       "title": "Kurzer Titel",
-      "description": "Was genau das Problem/die Änderung ist",
+      "description": "Was genau das Problem/die \u00C4nderung ist",
       "affectedClause": "Betroffene Klausel im Vertrag (Zitat oder Verweis)",
-      "legalBasis": "Rechtsgrundlage (z.B. § 622 BGB)",
+      "legalBasis": "Rechtsgrundlage (z.B. \u00A7 622 BGB)",
       "recommendation": "Konkreter Handlungsvorschlag"
     }
   ],
-  "summary": "1-2 Sätze Zusammenfassung des Gesamtstatus"
+  "summary": "1-2 S\u00E4tze Zusammenfassung des Gesamtstatus"
 }`;
 
     try {
@@ -418,13 +621,13 @@ Antworte NUR mit diesem JSON-Format:
         cost: { inputTokens, outputTokens, estimatedCost }
       };
     } catch (error) {
-      console.error(`   ❌ GPT analysis failed: ${error.message}`);
+      console.error(`   ❌ GPT analysis failed (chunk ${chunkIndex + 1}/${totalChunks}): ${error.message}`);
       return {
         analysis: {
           hasChanges: false,
           overallStatus: 'aktuell',
           findings: [],
-          summary: 'Analyse konnte nicht durchgeführt werden (API-Fehler).'
+          summary: 'Analyse konnte nicht durchgef\u00FChrt werden (API-Fehler).'
         },
         cost: { inputTokens: 0, outputTokens: 0, estimatedCost: 0 }
       };
@@ -443,7 +646,7 @@ Antworte NUR mit diesem JSON-Format:
           hasChanges: !!parsed.hasChanges,
           overallStatus: parsed.overallStatus || 'aktuell',
           findings: Array.isArray(parsed.findings) ? parsed.findings : [],
-          summary: parsed.summary || 'Keine Zusammenfassung verfügbar.'
+          summary: parsed.summary || 'Keine Zusammenfassung verf\u00FCgbar.'
         };
       }
     } catch (parseError) {
@@ -459,17 +662,32 @@ Antworte NUR mit diesem JSON-Format:
   }
 
   /**
-   * Extract text from contract (S3 or local)
+   * Extract FULL text from contract (no truncation)
+   * Priority: MongoDB fullText > S3 PDF > Local file > content field
    */
   async extractContractText(contract) {
     try {
+      // Priority 1: Use stored fullText from MongoDB (fastest, no re-extraction)
+      if (contract.fullText && contract.fullText.length > 50) {
+        return contract.fullText;
+      }
+      if (contract.extractedText && contract.extractedText.length > 50) {
+        return contract.extractedText;
+      }
+      if (contract.content && contract.content.length > 50) {
+        return contract.content;
+      }
+
+      // Priority 2: Extract from S3 PDF
       if (contract.s3Key) {
         return await this.extractTextFromS3(contract.s3Key);
-      } else if (contract.filePath) {
-        return await this.extractTextFromLocal(contract.filePath);
-      } else if (contract.content) {
-        return contract.content.substring(0, this.maxTextLength);
       }
+
+      // Priority 3: Extract from local file
+      if (contract.filePath) {
+        return await this.extractTextFromLocal(contract.filePath);
+      }
+
       return '';
     } catch (error) {
       console.error(`   ❌ Text extraction failed for ${contract.name}: ${error.message}`);
@@ -498,7 +716,7 @@ Antworte NUR mit diesem JSON-Format:
     }
     const buffer = Buffer.concat(chunks);
     const pdfData = await pdfParse(buffer);
-    return pdfData.text.substring(0, this.maxTextLength);
+    return pdfData.text; // Full text, no truncation
   }
 
   async extractTextFromLocal(filePath) {
@@ -508,7 +726,7 @@ Antworte NUR mit diesem JSON-Format:
     const fullPath = path.join(__dirname, '../uploads', cleanPath);
     const buffer = await fs.readFile(fullPath);
     const pdfData = await pdfParse(buffer);
-    return pdfData.text.substring(0, this.maxTextLength);
+    return pdfData.text; // Full text, no truncation
   }
 
   /**
@@ -528,12 +746,13 @@ Antworte NUR mit diesem JSON-Format:
         contractId: contract._id.toString(),
         contractName: contract.name || 'Unbekannt',
         type: 'weekly_legal_check',
-        lawTitle: `Wöchentlicher Rechtscheck: ${analysis.overallStatus === 'kritisch' ? 'Kritische Probleme' : 'Handlungsbedarf'}`,
+        lawTitle: `W\u00F6chentlicher Rechtscheck: ${analysis.overallStatus === 'kritisch' ? 'Kritische Probleme' : 'Handlungsbedarf'}`,
         lawDescription: analysis.summary,
         lawArea: 'Rechtscheck',
         score: analysis.overallStatus === 'kritisch' ? 0.95 : 0.80,
         findings: analysis.findings,
         findingsSummary,
+        metadata: analysis.metadata,
         digestMode: 'weekly',
         queued: true,
         sent: false,

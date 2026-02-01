@@ -20,6 +20,31 @@ interface DetectionOverlayProps {
 
 const LERP_FACTOR = 0.35; // Overlay-level interpolation (additional smoothing)
 
+/** Rounded rect with fallback for browsers without roundRect (Safari < 16) */
+function drawRoundedRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number
+): void {
+  if (typeof ctx.roundRect === "function") {
+    ctx.roundRect(x, y, w, h, r);
+  } else {
+    // Manual fallback with arcs
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.arcTo(x + w, y, x + w, y + r, r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+    ctx.lineTo(x + r, y + h);
+    ctx.arcTo(x, y + h, x, y + h - r, r);
+    ctx.lineTo(x, y + r);
+    ctx.arcTo(x, y, x + r, y, r);
+  }
+}
+
 /** Draw a hint text centered near the bottom of the canvas */
 function drawHint(
   ctx: CanvasRenderingContext2D,
@@ -45,7 +70,7 @@ function drawHint(
   ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
   ctx.beginPath();
   const r = pillH / 2;
-  ctx.roundRect(pillX, pillY, pillW, pillH, r);
+  drawRoundedRect(ctx, pillX, pillY, pillW, pillH, r);
   ctx.fill();
 
   // Text
@@ -201,18 +226,23 @@ const DetectionOverlay: React.FC<DetectionOverlayProps> = ({
     }
   }, [corners, confidence, isStable, stabilityProgress, hint, containerRef]);
 
-  // Redraw on every animation frame for smooth rendering
+  // Redraw with frame-rate limiting (~30fps to save battery)
+  const lastDrawTimeRef = useRef(0);
   useEffect(() => {
     let active = true;
+    const FRAME_INTERVAL = 1000 / 30; // ~33ms
 
-    const loop = () => {
+    const loop = (timestamp: number) => {
       if (!active) return;
-      draw();
+      if (timestamp - lastDrawTimeRef.current >= FRAME_INTERVAL) {
+        draw();
+        lastDrawTimeRef.current = timestamp;
+      }
       animFrameRef.current = requestAnimationFrame(loop);
     };
 
     if ((corners && corners.length === 4) || hint) {
-      loop();
+      animFrameRef.current = requestAnimationFrame(loop);
     } else {
       // One more draw to handle fade-out / flash
       draw();

@@ -282,7 +282,7 @@ export function useDocumentDetection({
             confidence: 0,
             isStable: false,
             stabilityProgress: 0,
-            hint: null,
+            hint: "Erkennung nicht verfügbar — bitte manuell aufnehmen",
           });
         }
       }

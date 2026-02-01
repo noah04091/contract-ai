@@ -45,6 +45,9 @@ const BatchManager: React.FC<BatchManagerProps> = ({
               alt={`Seite ${index + 1}`}
               className={styles.batchThumb}
               style={{ transform: `rotate(${page.rotation}deg)` }}
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.opacity = "0.3";
+              }}
             />
             <span className={styles.batchNumber}>{index + 1}</span>
             <button

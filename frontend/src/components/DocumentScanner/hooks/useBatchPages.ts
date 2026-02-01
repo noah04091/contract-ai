@@ -31,7 +31,7 @@ interface BatchState {
 }
 
 type BatchAction =
-  | { type: "ADD_PAGE"; blob: Blob; dataUrl: string; corners: Point[] | null; maxPages: number }
+  | { type: "ADD_PAGE"; blob: Blob; previewDataUrl: string; thumbnailUrl: string; corners: Point[] | null; maxPages: number }
   | { type: "REMOVE_PAGE"; index: number }
   | { type: "REORDER"; fromIndex: number; toIndex: number }
   | { type: "UPDATE_CORNERS"; index: number; corners: Point[] }
@@ -51,8 +51,8 @@ function batchReducer(state: BatchState, action: BatchAction): BatchState {
         id: `page-${++pageIdCounter}`,
         imageBlob: action.blob,
         correctedBlob: null,
-        previewDataUrl: action.dataUrl,
-        thumbnailUrl: action.dataUrl, // Initial: Data-URL (wird nach Korrektur zu Blob-URL)
+        previewDataUrl: action.previewDataUrl,
+        thumbnailUrl: action.thumbnailUrl,
         corners: action.corners,
         rotation: 0,
         timestamp: Date.now(),
@@ -64,11 +64,9 @@ function batchReducer(state: BatchState, action: BatchAction): BatchState {
     case "REMOVE_PAGE": {
       const { index } = action;
       if (index < 0 || index >= state.pages.length) return state;
-      // Nur Blob-URLs revoken (nicht Data-URLs)
       const page = state.pages[index];
-      if (page.thumbnailUrl.startsWith("blob:")) {
-        URL.revokeObjectURL(page.thumbnailUrl);
-      }
+      // Nur Blob-URLs revoken (DataURLs brauchen kein Cleanup)
+      if (page.thumbnailUrl.startsWith("blob:")) URL.revokeObjectURL(page.thumbnailUrl);
       const newPages = state.pages.filter((_, i) => i !== index);
       const newActive = newPages.length === 0
         ? 0
@@ -123,9 +121,8 @@ function batchReducer(state: BatchState, action: BatchAction): BatchState {
 
     case "CLEAR": {
       state.pages.forEach((p) => {
-        if (p.thumbnailUrl.startsWith("blob:")) {
-          URL.revokeObjectURL(p.thumbnailUrl);
-        }
+        // Nur Blob-URLs revoken (DataURLs brauchen kein Cleanup)
+        if (p.thumbnailUrl.startsWith("blob:")) URL.revokeObjectURL(p.thumbnailUrl);
       });
       return { pages: [], activePage: 0 };
     }
@@ -138,7 +135,7 @@ function batchReducer(state: BatchState, action: BatchAction): BatchState {
 interface UseBatchPagesReturn {
   pages: ScannedPage[];
   activePage: number;
-  addPage: (blob: Blob, dataUrl: string, corners: Point[] | null) => void;
+  addPage: (blob: Blob, previewBlob: Blob, dataUrl: string, corners: Point[] | null) => void;
   removePage: (index: number) => void;
   reorderPages: (fromIndex: number, toIndex: number) => void;
   updatePageCorners: (index: number, corners: Point[]) => void;
@@ -156,8 +153,11 @@ export function useBatchPages(maxPages: number = 50): UseBatchPagesReturn {
   });
 
   const addPage = useCallback(
-    (blob: Blob, dataUrl: string, corners: Point[] | null) => {
-      dispatch({ type: "ADD_PAGE", blob, dataUrl, corners, maxPages });
+    (blob: Blob, previewBlob: Blob, dataUrl: string, corners: Point[] | null) => {
+      // thumbnailUrl = Blob-URL (wird bei Korrektur ersetzt + revoked)
+      // previewDataUrl = stabile DataURL (überlebt Blob-URL revocation)
+      const thumbnailUrl = URL.createObjectURL(previewBlob);
+      dispatch({ type: "ADD_PAGE", blob, previewDataUrl: dataUrl, thumbnailUrl, corners, maxPages });
     },
     [maxPages]
   );
