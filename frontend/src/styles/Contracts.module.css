@@ -6470,9 +6470,30 @@
     display: flex;
   }
 
-  /* Upload Tabs anpassen */
+  /* 📱 Upload-Bereich: Seitliches Padding für Mobile */
+  .uploadHeader {
+    padding: 0 1rem;
+  }
+
   .uploadTabs {
-    margin-bottom: 1.25rem;
+    margin: 0 1rem 1.25rem;
+  }
+
+  .uploadArea {
+    margin: 0 1rem;
+  }
+
+  .uploadFlowSteps {
+    margin-left: 1rem;
+    margin-right: 1rem;
+  }
+
+  .emailUploadSection {
+    padding: 1rem;
+  }
+
+  .multiFilePreview {
+    margin: 0 1rem;
   }
 
   .uploadTab {
@@ -6514,6 +6535,33 @@
   .mobileFilterGroup select {
     padding: 0.75rem;
     font-size: 16px; /* iOS Zoom verhindern */
+  }
+
+  /* 📱 Upload-Bereich: Etwas weniger Padding auf sehr kleinen Screens */
+  .uploadHeader {
+    padding: 0 0.75rem;
+  }
+
+  .uploadTabs {
+    margin: 0 0.75rem 1rem;
+  }
+
+  .uploadArea {
+    margin: 0 0.75rem;
+    border-width: 2px;
+  }
+
+  .uploadFlowSteps {
+    margin-left: 0.75rem;
+    margin-right: 0.75rem;
+  }
+
+  .emailUploadSection {
+    padding: 0.75rem;
+  }
+
+  .multiFilePreview {
+    margin: 0 0.75rem;
   }
 
   .uploadTabs {
