@@ -1504,64 +1504,64 @@ export default function LegalPulse() {
           </button>
         </div>
 
-        {/* Contextual Actions Bar */}
-        {selectedContract && selectedContract.legalPulse?.riskScore && selectedContract.legalPulse.riskScore > 40 && (
-          <div className={styles.quickActionsBar} style={{
-            background: selectedContract.legalPulse.riskScore > 60
-              ? 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)'
-              : 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
-            borderColor: selectedContract.legalPulse.riskScore > 60 ? '#fca5a5' : '#fde68a'
-          }}>
-            <div className={styles.quickActionsHeader}>
-              <h4 style={{ color: selectedContract.legalPulse.riskScore > 60 ? '#991b1b' : '#92400e' }}>
-                {selectedContract.legalPulse.riskScore > 60
-                  ? `${selectedContract.legalPulse.topRisks?.filter((r: { severity?: string }) => r.severity === 'critical' || r.severity === 'high').length || 0} kritische Risiken`
-                  : 'Optimierungspotenzial'}
-              </h4>
-              {selectedContract.legalPulse.topRisks && selectedContract.legalPulse.topRisks.length > 0 && (
-                <div className={styles.quickActionsRiskPreview}>
-                  {selectedContract.legalPulse.topRisks.slice(0, 3).map((risk: { title?: string; severity?: string }, i: number) => (
-                    <span key={i} className={styles.quickRiskTag} style={{
-                      background: risk.severity === 'critical' ? '#dc2626' :
-                                  risk.severity === 'high' ? '#ea580c' :
-                                  risk.severity === 'medium' ? '#d97706' : '#16a34a',
-                      color: 'white'
-                    }}>
-                      {risk.title || `Risiko ${i + 1}`}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className={styles.quickActionsButtons}>
-              <button
-                className={styles.quickActionBtn}
-                onClick={() => navigate(`/optimizer?contractId=${selectedContract._id}`)}
-              >
-                <Zap size={18} />
-                Vertrag optimieren
-                <ArrowRight size={14} />
-              </button>
-              <button
-                className={styles.quickActionBtn}
-                onClick={() => setActiveTab('risks')}
-              >
-                <AlertTriangle size={18} />
-                Risiken ansehen
-              </button>
-              <button
-                className={styles.quickActionBtn}
-                onClick={() => navigate(`/calendar?contractId=${selectedContract._id}`)}
-              >
-                <Bell size={18} />
-                Frist-Reminder
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* Tab Content */}
         <div className={styles.tabContent}>
+          {/* Contextual Actions Bar */}
+          {selectedContract && selectedContract.legalPulse?.riskScore && selectedContract.legalPulse.riskScore > 40 && (
+            <div className={styles.quickActionsBar} style={{
+              background: selectedContract.legalPulse.riskScore > 60
+                ? 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)'
+                : 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+              borderColor: selectedContract.legalPulse.riskScore > 60 ? '#fca5a5' : '#fde68a'
+            }}>
+              <div className={styles.quickActionsHeader}>
+                <h4 style={{ color: selectedContract.legalPulse.riskScore > 60 ? '#991b1b' : '#92400e' }}>
+                  {selectedContract.legalPulse.riskScore > 60
+                    ? `${selectedContract.legalPulse.topRisks?.filter((r: { severity?: string }) => r.severity === 'critical' || r.severity === 'high').length || 0} kritische Risiken`
+                    : 'Optimierungspotenzial'}
+                </h4>
+                {selectedContract.legalPulse.topRisks && selectedContract.legalPulse.topRisks.length > 0 && (
+                  <div className={styles.quickActionsRiskPreview}>
+                    {selectedContract.legalPulse.topRisks.slice(0, 3).map((risk: { title?: string; severity?: string }, i: number) => (
+                      <span key={i} className={styles.quickRiskTag} style={{
+                        background: risk.severity === 'critical' ? '#dc2626' :
+                                    risk.severity === 'high' ? '#ea580c' :
+                                    risk.severity === 'medium' ? '#d97706' : '#16a34a',
+                        color: 'white'
+                      }}>
+                        {risk.title || `Risiko ${i + 1}`}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className={styles.quickActionsButtons}>
+                <button
+                  className={styles.quickActionBtn}
+                  onClick={() => navigate(`/optimizer?contractId=${selectedContract._id}`)}
+                >
+                  <Zap size={18} />
+                  Vertrag optimieren
+                  <ArrowRight size={14} />
+                </button>
+                <button
+                  className={styles.quickActionBtn}
+                  onClick={() => setActiveTab('risks')}
+                >
+                  <AlertTriangle size={18} />
+                  Risiken ansehen
+                </button>
+                <button
+                  className={styles.quickActionBtn}
+                  onClick={() => navigate(`/calendar?contractId=${selectedContract._id}`)}
+                >
+                  <Bell size={18} />
+                  Frist-Reminder
+                </button>
+              </div>
+            </div>
+          )}
+
           {activeTab === 'overview' && (
             <div className={styles.overviewTab}>
               {!selectedContract.legalPulse ? (
