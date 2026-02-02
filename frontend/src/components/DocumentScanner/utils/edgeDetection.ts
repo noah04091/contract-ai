@@ -130,13 +130,14 @@ interface HoughLine {
 /**
  * Simplified Hough Line Transform.
  * Returns lines sorted by vote count (strongest first).
+ * Uses 120 theta steps (3° resolution) — sufficient for document edges, faster on mobile.
  */
 export function houghLines(
   binary: Uint8Array,
   width: number,
   height: number,
   rhoStep: number = 1,
-  thetaSteps: number = 180,
+  thetaSteps: number = 120,
   voteThreshold: number = 0
 ): HoughLine[] {
   const diagonal = Math.sqrt(width * width + height * height);
@@ -267,9 +268,10 @@ export function findQuadFromLines(
 
   if (horizontal.length < 2 || vertical.length < 2) return null;
 
-  // Pick best pair from each group (most separated, strongest votes)
-  const hPair = findBestPair(horizontal, frameHeight * 0.15);
-  const vPair = findBestPair(vertical, frameWidth * 0.15);
+  // Pick best pair from each group (well separated, strongest votes)
+  // Minimum 20% separation prevents picking nearby lines (e.g. table edge + document edge)
+  const hPair = findBestPair(horizontal, frameHeight * 0.20);
+  const vPair = findBestPair(vertical, frameWidth * 0.20);
 
   if (!hPair || !vPair) return null;
 
@@ -284,8 +286,8 @@ export function findQuadFromLines(
 
   if (corners.length !== 4) return null;
 
-  // Check corners are within frame (with some margin)
-  const margin = -0.1; // Allow slightly outside
+  // Check corners are within frame (tight margin — reject quads extending far off frame)
+  const margin = -0.03; // Allow max 3% overshoot
   for (const c of corners) {
     if (
       c.x < frameWidth * margin ||
@@ -331,20 +333,28 @@ function findBestPair(
   lines: HoughLine[],
   minSeparation: number
 ): [HoughLine, HoughLine] | null {
-  // Find the pair with highest combined votes that are sufficiently separated
+  // Find the pair with best combined score.
+  // Score rewards: high votes on both lines, reasonable separation.
+  // Score penalizes: one line much weaker than the other (likely noise/table edge).
   let bestPair: [HoughLine, HoughLine] | null = null;
   let bestScore = 0;
-  const limit = Math.min(lines.length, 8); // Check top 8 lines
+  const limit = Math.min(lines.length, 10); // Check top 10 lines
 
   for (let i = 0; i < limit; i++) {
     for (let j = i + 1; j < limit; j++) {
       const separation = Math.abs(lines[i].rho - lines[j].rho);
-      if (separation >= minSeparation) {
-        const score = lines[i].votes + lines[j].votes;
-        if (score > bestScore) {
-          bestScore = score;
-          bestPair = [lines[i], lines[j]];
-        }
+      if (separation < minSeparation) continue;
+
+      // Penalize very unbalanced pairs (one strong line + one weak line = likely noise)
+      const minVotes = Math.min(lines[i].votes, lines[j].votes);
+      const maxVotes = Math.max(lines[i].votes, lines[j].votes);
+      const balance = minVotes / maxVotes; // 0-1, higher = more balanced
+
+      // Combined score: total votes × balance factor
+      const score = (lines[i].votes + lines[j].votes) * (0.5 + 0.5 * balance);
+      if (score > bestScore) {
+        bestScore = score;
+        bestPair = [lines[i], lines[j]];
       }
     }
   }
@@ -384,21 +394,21 @@ export function polygonArea(points: Point[]): number {
 export function isValidQuadrilateral(points: Point[]): boolean {
   if (points.length !== 4) return false;
 
-  // Check all angles are between 40° and 140°
+  // Check all angles are between 50° and 130° (document corners are near-90°)
   for (let i = 0; i < 4; i++) {
     const prev = points[(i + 3) % 4];
     const curr = points[i];
     const next = points[(i + 1) % 4];
 
     const angle = angleBetween(prev, curr, next);
-    if (angle < 40 || angle > 140) return false;
+    if (angle < 50 || angle > 130) return false;
   }
 
   // Check area is positive (not self-intersecting)
   const area = Math.abs(polygonArea(points));
   if (area < 50) return false;
 
-  // Check aspect ratio (reject extreme shapes)
+  // Check aspect ratio (reject extreme shapes — documents are typically 1:1 to 1:2)
   const topWidth = Math.sqrt(
     (points[1].x - points[0].x) ** 2 + (points[1].y - points[0].y) ** 2
   );
@@ -407,7 +417,7 @@ export function isValidQuadrilateral(points: Point[]): boolean {
   );
   if (topWidth > 0 && leftHeight > 0) {
     const aspect = topWidth / leftHeight;
-    if (aspect < 0.3 || aspect > 3.5) return false;
+    if (aspect < 0.35 || aspect > 2.8) return false;
   }
 
   return true;

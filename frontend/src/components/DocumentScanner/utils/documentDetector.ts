@@ -198,16 +198,16 @@ export class DocumentDetector {
     // Step 5: Adaptive threshold
     const binary = adaptiveThreshold(edges, dw, dh);
 
-    // Step 6: Hough Line Transform
-    const lines = houghLines(binary, dw, dh, 1, 180, 0);
+    // Step 6: Hough Line Transform (120 theta steps = 1.5° resolution)
+    const lines = houghLines(binary, dw, dh, 1, 120, 0);
 
     // Step 7: Non-maximum suppression (merge similar lines)
     const diagonal = Math.sqrt(dw * dw + dh * dh);
     const suppressed = suppressLines(
       lines,
-      diagonal * 0.05,  // rho threshold: 5% of diagonal
-      Math.PI / 18,      // theta threshold: 10 degrees
-      20
+      diagonal * 0.06,  // rho threshold: 6% of diagonal (merge nearby parallels)
+      Math.PI / 15,      // theta threshold: 12 degrees (merge similar angles)
+      15                 // Keep top 15 lines (was 20)
     );
 
     // Step 8: Find quadrilateral from lines
