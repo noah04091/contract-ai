@@ -216,7 +216,7 @@ export function useDocumentDetection({
             });
           }
         }
-      } catch (err) {
+      } catch {
         consecutiveErrorsRef.current++;
         if (consecutiveErrorsRef.current >= 10) {
           disabledRef.current = true;
