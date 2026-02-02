@@ -5434,17 +5434,7 @@ export default function Contracts() {
             />
           )}
 
-          {/* ✅ NEU: Duplikat-Modal (nur rendern wenn existingContract vorhanden) */}
-          {duplicateModal?.show && duplicateModal.fileItem && duplicateModal.existingContract && (
-            <DuplicateModal
-              fileItem={duplicateModal.fileItem}
-              existingContract={duplicateModal.existingContract}
-              onClose={() => setDuplicateModal(null)}
-              onViewExisting={handleViewExistingContract}
-              onReplaceFile={handleReplaceExistingFile}
-              onAnalyzeAnyway={handleAnalyzeAnywayFromDuplicate}
-            />
-          )}
+          {/* Duplikat-Modal wurde als Portal nach document.body verschoben (unterhalb) */}
 
           {/* ✅ NEU: Upload Success Modal (Two-Step Upload Flow) */}
           <UploadSuccessModal
@@ -5458,6 +5448,19 @@ export default function Contracts() {
           />
       </div>
       {/* End of pageContainer */}
+
+      {/* ✅ Duplikat-Modal als Portal (außerhalb pageContainer für korrektes fixed-Positioning) */}
+      {duplicateModal?.show && duplicateModal.fileItem && duplicateModal.existingContract && createPortal(
+        <DuplicateModal
+          fileItem={duplicateModal.fileItem}
+          existingContract={duplicateModal.existingContract}
+          onClose={() => setDuplicateModal(null)}
+          onViewExisting={handleViewExistingContract}
+          onReplaceFile={handleReplaceExistingFile}
+          onAnalyzeAnyway={handleAnalyzeAnywayFromDuplicate}
+        />,
+        document.body
+      )}
 
       {/* 📁 Folder Modal */}
       <FolderModal
