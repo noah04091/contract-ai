@@ -504,15 +504,23 @@
 
   .actionsGrid {
     grid-template-columns: 1fr;
-    gap: 14px;
+    gap: 16px;
   }
 
   .actionCard {
-    padding: 20px 16px 18px;
+    padding: 20px 20px 18px;
+    border-radius: 16px;
+  }
+
+  .analyzeCard {
+    border-width: 2px;
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.12);
   }
 
   .recommendedBadge {
     top: -10px;
+    font-size: 10px;
+    padding: 4px 12px;
   }
 
   .cardIcon {
@@ -527,16 +535,28 @@
   }
 
   .cardTitle {
-    font-size: 15px;
+    font-size: 16px;
+  }
+
+  .cardDescription {
+    font-size: 13px;
   }
 
   .featureList li {
-    font-size: 12px;
+    font-size: 12.5px;
+    padding: 4px 0;
   }
 
   .cardButton {
-    min-height: 44px;
-    padding: 12px 16px;
+    min-height: 48px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+  }
+
+  .questionText {
+    font-size: 17px;
+    margin-bottom: 20px;
   }
 
   .legalPulseBanner {
@@ -572,13 +592,13 @@
   }
 
   .successIcon {
-    width: 60px;
-    height: 60px;
+    width: 56px;
+    height: 56px;
   }
 
   .successIcon svg {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
   }
 
   .content {
@@ -601,14 +621,24 @@
 
   .questionText {
     font-size: 15px;
+    margin-bottom: 16px;
+  }
+
+  .actionCard {
+    padding: 16px 16px 14px;
+  }
+
+  .cardTitle {
+    font-size: 15px;
   }
 
   .cardButton {
     font-size: 13px;
+    min-height: 44px;
   }
 
   .footer {
-    padding: 12px 16px 16px;
+    padding: 12px 16px calc(16px + env(safe-area-inset-bottom, 0px));
   }
 
   .footerText {

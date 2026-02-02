@@ -6494,6 +6494,8 @@
 
   .multiFilePreview {
     margin: 0 1rem;
+    padding: 1.25rem;
+    border-radius: 16px;
   }
 
   .uploadTab {
@@ -6507,6 +6509,65 @@
 
   .uploadHeaderTitle h2 {
     font-size: 1.25rem;
+  }
+
+  /* 📱 Limit-Badge & Section-Header: Padding + Zentrierung */
+  .limitBadge {
+    margin-left: 1rem;
+    margin-right: 1rem;
+  }
+
+  .sectionHeader {
+    padding: 0 1rem;
+    text-align: center;
+    align-items: center;
+  }
+
+  .sectionDescription {
+    text-align: center;
+  }
+
+  /* 📱 Multi-File Header: Stapeln auf Mobile */
+  .multiFileHeader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .multiFileInfo {
+    justify-content: center;
+    text-align: center;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .multiFileInfo svg {
+    padding: 0.625rem;
+    border-radius: 12px;
+  }
+
+  .multiFileInfo h3 {
+    font-size: 1.1rem;
+  }
+
+  .multiFileInfo p {
+    font-size: 0.85rem;
+  }
+
+  .multiFileActions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.625rem;
+  }
+
+  .multiFileActions .uploadButton,
+  .clearFilesButton {
+    min-height: 44px;
+    font-size: 0.875rem;
+    justify-content: center;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
   }
 }
 
@@ -6562,6 +6623,27 @@
 
   .multiFilePreview {
     margin: 0 0.75rem;
+    padding: 1rem;
+    border-radius: 14px;
+  }
+
+  .limitBadge {
+    margin-left: 0.75rem;
+    margin-right: 0.75rem;
+  }
+
+  .sectionHeader {
+    padding: 0 0.75rem;
+  }
+
+  .multiFileInfo h3 {
+    font-size: 1rem;
+  }
+
+  .multiFileActions .uploadButton,
+  .clearFilesButton {
+    font-size: 0.8125rem;
+    padding: 0.625rem 0.75rem;
   }
 
   .uploadTabs {
