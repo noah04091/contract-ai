@@ -7,10 +7,11 @@ import ContractRiskGrid from "../components/ContractRiskGrid";
 import LegalPulseSettings from "../components/LegalPulseSettings";
 import LegalPulseFeedWidget from "../components/LegalPulseFeedWidget";
 import { useLegalPulseFeed } from "../hooks/useLegalPulseFeed";
+import { useErrorHandler } from "../hooks/useErrorHandler";
 import { WelcomePopup } from "../components/Tour";
 import OneClickCancelModal from "../components/OneClickCancelModal";
 import SaveClauseModal from "../components/LegalLens/SaveClauseModal";
-import { OverviewTab, RisksTab, RecommendationsTab, LegalChangesTab, HistoryTab, ForecastTab } from "../components/LegalPulse";
+import { OverviewTab, RisksTab, RecommendationsTab, LegalChangesTab, HistoryTab, ForecastTab, SearchSidebar } from "../components/LegalPulse";
 import { Activity, Zap, XCircle, Bell, ArrowRight, Download, Shield, AlertTriangle, CheckCircle, Clock } from "lucide-react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -18,12 +19,13 @@ import {
 import type {
   Contract, RecommendationStatus, RiskObject, RecommendationObject, RecommendationInput,
   MonitoringHealth, PulseAlert, WeeklyCheckContract, WeeklyChecksData,
-  ForecastData, ExternalSearchResult, Organization, TeamMember, Membership
+  ForecastData, Organization, TeamMember, Membership
 } from '../types/legalPulse';
 
 export default function LegalPulse() {
   const { contractId } = useParams();
   const navigate = useNavigate();
+  const { handleError } = useErrorHandler();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,13 +42,6 @@ export default function LegalPulse() {
   const [showSettingsSidebar, setShowSettingsSidebar] = useState(false);
   const [showFeedSidebar, setShowFeedSidebar] = useState(false);
   const [showSearchSidebar, setShowSearchSidebar] = useState(false);
-  const [externalSearchQuery, setExternalSearchQuery] = useState('');
-  const [externalSearchSources, setExternalSearchSources] = useState<string[]>(['eulex', 'bundesanzeiger', 'govdata']);
-  const [externalSearchArea, setExternalSearchArea] = useState('');
-  const [externalSearchResults, setExternalSearchResults] = useState<ExternalSearchResult[]>([]);
-  const [isExternalSearchLoading, setIsExternalSearchLoading] = useState(false);
-  const [externalSearchHasMore, setExternalSearchHasMore] = useState(false);
-  const [externalSearchOffset, setExternalSearchOffset] = useState(0);
   const [heroMinimized, setHeroMinimized] = useState(false);
 
   // Reminder State
@@ -141,7 +136,7 @@ export default function LegalPulse() {
         if (data.success) setMonitoringHealth(data.health);
       }
     } catch (err) {
-      console.error("Health fetch error:", err);
+      handleError(err, 'LegalPulse:fetchHealth');
     }
   };
 
@@ -161,7 +156,7 @@ export default function LegalPulse() {
         }
       }
     } catch (err) {
-      console.error("Alert history fetch error:", err);
+      handleError(err, 'LegalPulse:fetchAlerts');
     }
   };
 
@@ -184,7 +179,7 @@ export default function LegalPulse() {
       ));
       setAlertsUnreadCount(prev => Math.max(0, prev - alertIds.length));
     } catch (err) {
-      console.error("Mark alerts read error:", err);
+      handleError(err, 'LegalPulse:markAlertsRead');
     }
   };
 
@@ -202,7 +197,7 @@ export default function LegalPulse() {
         if (data.success) setWeeklyChecks(data);
       }
     } catch (err) {
-      console.error("Weekly checks fetch error:", err);
+      handleError(err, 'LegalPulse:fetchWeeklyChecks');
     } finally {
       setWeeklyChecksLoading(false);
     }
@@ -224,7 +219,7 @@ export default function LegalPulse() {
         }
       }
     } catch (err) {
-      console.error("Contract weekly check fetch error:", err);
+      handleError(err, 'LegalPulse:fetchContractWeeklyCheck');
     } finally {
       setContractWeeklyCheckLoading(false);
     }
@@ -300,8 +295,7 @@ export default function LegalPulse() {
         }
       }
     } catch (err) {
-      console.error("Error loading contracts:", err);
-      setNotification({ message: "Fehler beim Laden der Daten", type: "error" });
+      handleError(err, 'LegalPulse:fetchContracts');
     } finally {
       setIsLoading(false);
       setIsInitialLoading(false); // ✅ Initial load is done
@@ -329,7 +323,7 @@ export default function LegalPulse() {
           setUserPlan(user.subscriptionPlan || user.plan || 'free');
         }
       } catch (err) {
-        console.error('Error fetching user plan:', err);
+        handleError(err, 'LegalPulse:fetchUserPlan');
         setUserPlan('free');
       }
     };
@@ -369,7 +363,7 @@ export default function LegalPulse() {
           }
         }
       } catch (err) {
-        console.error('Error fetching organization:', err);
+        handleError(err, 'LegalPulse:fetchOrganization');
       }
     };
 
@@ -465,8 +459,7 @@ export default function LegalPulse() {
       // ✅ Use real data only - no mock enrichment
       setContracts(prev => [...prev, ...contractsArray]);
     } catch (err) {
-      console.error("Error loading more contracts:", err);
-      setNotification({ message: "Fehler beim Laden weiterer Verträge", type: "error" });
+      handleError(err, 'LegalPulse:loadMoreContracts');
     } finally {
       setIsLoadingMore(false);
     }
@@ -597,8 +590,8 @@ export default function LegalPulse() {
       a.click();
       URL.revokeObjectURL(url);
       setNotification({ message: 'Report wurde heruntergeladen', type: 'success' });
-    } catch {
-      setNotification({ message: 'Fehler beim Erstellen des Reports', type: 'error' });
+    } catch (err) {
+      handleError(err, 'LegalPulse:exportReport');
     } finally {
       setIsExportingReport(false);
     }
@@ -614,75 +607,6 @@ export default function LegalPulse() {
 
   const handleMouseLeave = (contractId: string) => {
     setShowTooltip(prev => ({ ...prev, [contractId]: false }));
-  };
-
-  // External Legal Search Handler
-  const handleExternalSearch = async (append = false) => {
-    if (!externalSearchQuery.trim()) {
-      setNotification({ message: "Bitte geben Sie einen Suchbegriff ein", type: "error" });
-      return;
-    }
-
-    setIsExternalSearchLoading(true);
-    try {
-      const offset = append ? externalSearchOffset : 0;
-      const params = new URLSearchParams({
-        query: externalSearchQuery,
-        sources: externalSearchSources.join(','),
-        limit: '100',
-        offset: offset.toString()
-      });
-
-      if (externalSearchArea) {
-        params.append('area', externalSearchArea);
-      }
-
-      const response = await fetch(`/api/external-legal/search?${params.toString()}`, {
-        credentials: 'include'
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        const newResults = data.results || [];
-
-        if (append) {
-          setExternalSearchResults(prev => [...prev, ...newResults]);
-        } else {
-          setExternalSearchResults(newResults);
-          setExternalSearchOffset(0);
-        }
-
-        setExternalSearchHasMore(newResults.length === 100);
-        setExternalSearchOffset(append ? offset + newResults.length : newResults.length);
-
-        if (!append) {
-          setNotification({
-            message: `${newResults.length} Ergebnisse gefunden${newResults.length === 100 ? ' (mehr verfügbar)' : ''}`,
-            type: "success"
-          });
-        }
-      } else {
-        setNotification({ message: data.message || "Fehler bei der Suche", type: "error" });
-      }
-    } catch (error) {
-      console.error('External search error:', error);
-      setNotification({ message: "Fehler bei der externen Suche", type: "error" });
-    } finally {
-      setIsExternalSearchLoading(false);
-    }
-  };
-
-  const handleLoadMoreResults = () => {
-    handleExternalSearch(true);
-  };
-
-  const toggleExternalSource = (source: string) => {
-    setExternalSearchSources(prev =>
-      prev.includes(source)
-        ? prev.filter(s => s !== source)
-        : [...prev, source]
-    );
   };
 
   // ML Forecast API Call
@@ -701,7 +625,7 @@ export default function LegalPulse() {
         setForecastError(data.message || 'Prognose konnte nicht geladen werden');
       }
     } catch (error) {
-      console.error('[LEGAL-PULSE] Forecast fetch error:', error);
+      handleError(error, 'LegalPulse:fetchForecast');
       setForecastError('Verbindungsfehler bei der Prognose');
     } finally {
       setForecastLoading(false);
@@ -2000,192 +1924,10 @@ export default function LegalPulse() {
 
       {/* Search Sidebar */}
       {showSearchSidebar && (
-        <div className={styles.sidebarOverlay} onClick={() => setShowSearchSidebar(false)}>
-          <div className={`${styles.sidebar} ${styles.wideSidebar}`} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.sidebarHeader}>
-              <h2>Externe Gesetzessuche</h2>
-              <button className={styles.closeSidebar} onClick={() => setShowSearchSidebar(false)}>×</button>
-            </div>
-            <div className={styles.sidebarContent}>
-              <div className={styles.externalSearchForm}>
-                <div className={styles.searchInputGroup}>
-                  <input
-                    type="text"
-                    className={styles.searchInput}
-                    placeholder="Suchbegriff eingeben (z.B. DSGVO, Arbeitsrecht, ...)"
-                    value={externalSearchQuery}
-                    onChange={(e) => setExternalSearchQuery(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleExternalSearch()}
-                  />
-                  <button
-                    className={styles.searchButton}
-                    onClick={() => handleExternalSearch(false)}
-                    disabled={isExternalSearchLoading}
-                  >
-                    {isExternalSearchLoading ? (
-                      <>
-                        <div className={styles.spinner}></div>
-                        Suche läuft...
-                      </>
-                    ) : (
-                      <>
-                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" strokeWidth="2"/>
-                        </svg>
-                        Suchen
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                {/* Source Filters */}
-                <div className={styles.filterGroup}>
-                  <label className={styles.filterLabel}>Datenquellen:</label>
-                  <div className={styles.checkboxGroup}>
-                    <label className={styles.checkbox}>
-                      <input
-                        type="checkbox"
-                        checked={externalSearchSources.includes('eulex')}
-                        onChange={() => toggleExternalSource('eulex')}
-                      />
-                      <span>🇪🇺 EU-Lex</span>
-                    </label>
-                    <label className={styles.checkbox}>
-                      <input
-                        type="checkbox"
-                        checked={externalSearchSources.includes('bundesanzeiger')}
-                        onChange={() => toggleExternalSource('bundesanzeiger')}
-                      />
-                      <span>🇩🇪 Bundesanzeiger</span>
-                    </label>
-                    <label className={styles.checkbox}>
-                      <input
-                        type="checkbox"
-                        checked={externalSearchSources.includes('govdata')}
-                        onChange={() => toggleExternalSource('govdata')}
-                      />
-                      <span>📊 GovData</span>
-                    </label>
-                  </div>
-                </div>
-
-                {/* Area Filter */}
-                <div className={styles.filterGroup}>
-                  <label className={styles.filterLabel}>Rechtsbereich (optional):</label>
-                  <select
-                    className={styles.areaSelect}
-                    value={externalSearchArea}
-                    onChange={(e) => setExternalSearchArea(e.target.value)}
-                  >
-                    <option value="">Alle Bereiche</option>
-                    <option value="Datenschutz">Datenschutz</option>
-                    <option value="Arbeitsrecht">Arbeitsrecht</option>
-                    <option value="Vertragsrecht">Vertragsrecht</option>
-                    <option value="Handelsrecht">Handelsrecht</option>
-                    <option value="Steuerrecht">Steuerrecht</option>
-                    <option value="IT-Recht">IT-Recht</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Search Results */}
-              <div className={styles.externalSearchResults}>
-                {externalSearchResults.length > 0 ? (
-                  <div className={styles.resultsTable}>
-                    <div className={styles.resultsHeader}>
-                      <h4>Suchergebnisse ({externalSearchResults.length})</h4>
-                    </div>
-                    <div className={styles.resultsList}>
-                      {externalSearchResults.map((result, index) => (
-                        <div key={index} className={styles.resultCard}>
-                          <div className={styles.resultHeader}>
-                            <span className={styles.resultSource}>
-                              {result.source === 'eulex' && '🇪🇺 EU-Lex'}
-                              {result.source === 'bundesanzeiger' && '🇩🇪 Bundesanzeiger'}
-                              {result.source === 'govdata' && '📊 GovData'}
-                            </span>
-                            {result.date && (
-                              <span className={styles.resultDate}>
-                                {new Date(result.date).toLocaleDateString('de-DE')}
-                              </span>
-                            )}
-                          </div>
-                          <h5 className={styles.resultTitle}>{result.title}</h5>
-                          {result.description && (
-                            <p className={styles.resultDescription}>{result.description}</p>
-                          )}
-                          {result.documentId && (
-                            <div className={styles.resultMeta}>
-                              <span className={styles.metaLabel}>Dokument-ID:</span>
-                              <span className={styles.metaValue}>{result.documentId}</span>
-                            </div>
-                          )}
-                          {result.relevance && (
-                            <div className={styles.resultRelevance}>
-                              <span className={styles.relevanceLabel}>Relevanz:</span>
-                              <div className={styles.relevanceBar}>
-                                <div
-                                  className={styles.relevanceFill}
-                                  style={{ width: `${result.relevance}%` }}
-                                ></div>
-                              </div>
-                              <span className={styles.relevanceValue}>{result.relevance}%</span>
-                            </div>
-                          )}
-                          {result.url && (
-                            <a
-                              href={result.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={styles.resultLink}
-                            >
-                              Zur Quelle →
-                            </a>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Load More Button */}
-                    {externalSearchHasMore && (
-                      <div className={styles.loadMoreContainer}>
-                        <button
-                          className={styles.loadMoreButton}
-                          onClick={handleLoadMoreResults}
-                          disabled={isExternalSearchLoading}
-                        >
-                          {isExternalSearchLoading ? (
-                            <>
-                              <div className={styles.spinner}></div>
-                              Lädt...
-                            </>
-                          ) : (
-                            <>
-                              Mehr laden
-                              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M19 9L12 16L5 9" stroke="currentColor" strokeWidth="2"/>
-                              </svg>
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  !isExternalSearchLoading && (
-                    <div className={styles.emptyState}>
-                      <svg className={styles.emptyStateIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" strokeWidth="2"/>
-                      </svg>
-                      <h4>Noch keine Suche durchgeführt</h4>
-                      <p>Geben Sie einen Suchbegriff ein, um externe Gesetze und Änderungen zu finden</p>
-                    </div>
-                  )
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+        <SearchSidebar
+          onClose={() => setShowSearchSidebar(false)}
+          onNotification={setNotification}
+        />
       )}
 
       {/* One-Click Cancel Modal */}

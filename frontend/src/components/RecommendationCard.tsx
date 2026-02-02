@@ -1,18 +1,7 @@
 import { useState } from 'react';
 import FeedbackButtons from './FeedbackButtons';
 import styles from '../styles/RecommendationCard.module.css';
-
-interface RecommendationObject {
-  title: string;
-  description?: string;
-  priority?: string;
-  effort?: string;
-  impact?: string;
-  steps?: string[];
-  affectedClauseRef?: string;
-  suggestedText?: string;
-  legalBasis?: string;
-}
+import type { RecommendationObject } from '../types/legalPulse';
 
 interface RecommendationCardProps {
   recommendation: string | RecommendationObject;

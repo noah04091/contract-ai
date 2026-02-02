@@ -1,19 +1,7 @@
 import { useState } from 'react';
 import FeedbackButtons from './FeedbackButtons';
 import styles from '../styles/RiskCard.module.css';
-
-interface RiskObject {
-  title: string;
-  description?: string;
-  severity?: string;
-  impact?: string;
-  solution?: string;
-  recommendation?: string;
-  affectedClauses?: string[];
-  affectedClauseText?: string;
-  replacementText?: string;
-  legalBasis?: string;
-}
+import type { RiskObject } from '../types/legalPulse';
 
 interface RiskCardProps {
   risk: string | RiskObject;

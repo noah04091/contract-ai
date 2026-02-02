@@ -4,20 +4,7 @@
 import React from 'react';
 import { fixUtf8Display } from "../utils/textUtils";
 import styles from '../styles/ContractRiskGrid.module.css';
-
-interface Contract {
-  _id: string;
-  name: string;
-  laufzeit: string;
-  kuendigung: string;
-  isGenerated?: boolean;
-  legalPulse?: {
-    riskScore: number | null;
-    lastAnalysis?: string;
-    lastRecommendation?: string;
-    [key: string]: unknown;
-  };
-}
+import type { Contract } from '../types/legalPulse';
 
 interface RiskLevel {
   level: string;

@@ -1,5 +1,6 @@
 // 🛡️ components/ErrorBoundary.tsx - Production-Ready Error Boundary
 import { Component, ReactNode, ErrorInfo } from 'react';
+import * as Sentry from '@sentry/react';
 import { motion } from 'framer-motion';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import styles from '../styles/ErrorBoundary.module.css';
@@ -93,9 +94,7 @@ class ErrorBoundary extends Component<Props, State> {
       this.autoRecover();
     }
 
-    // 📊 Hier könntest du später Error-Tracking hinzufügen:
-    // Sentry.captureException(error, { contexts: { react: errorInfo } });
-    // LogRocket.captureException(error);
+    Sentry.captureException(error, { contexts: { react: { componentStack: errorInfo.componentStack } } });
   }
 
   autoRecover = () => {
