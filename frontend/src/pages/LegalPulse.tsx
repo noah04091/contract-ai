@@ -1423,16 +1423,6 @@ export default function LegalPulse() {
             ML-Prognose
           </button>
 
-          {/* Export Report Button */}
-          <button
-            className={styles.exportReportButton}
-            onClick={handleExportReport}
-            disabled={isExportingReport}
-            title="Legal Pulse Audit-Report als PDF exportieren"
-          >
-            <Download size={14} />
-            {isExportingReport ? 'Wird erstellt...' : 'Report'}
-          </button>
         </div>
 
         {/* Tab Content */}
@@ -1484,7 +1474,7 @@ export default function LegalPulse() {
                 </button>
                 <button
                   className={styles.quickActionBtn}
-                  onClick={() => navigate(`/calendar?contractId=${selectedContract._id}`)}
+                  onClick={() => navigate(`/calendar?action=create&contractId=${selectedContract._id}&contractName=${encodeURIComponent(selectedContract.name)}`)}
                 >
                   <Bell size={18} />
                   Frist-Reminder

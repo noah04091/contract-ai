@@ -1252,6 +1252,8 @@ interface CreateEventModalProps {
   date: Date;
   onClose: () => void;
   onEventCreated: (event?: CalendarEvent) => void;
+  initialContractId?: string;
+  initialContractName?: string;
 }
 
 interface SimpleContractForCreate {
@@ -1259,10 +1261,10 @@ interface SimpleContractForCreate {
   name: string;
 }
 
-function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalProps) {
+function CreateEventModal({ date, onClose, onEventCreated, initialContractId, initialContractName }: CreateEventModalProps) {
   useEscapeKey(onClose);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(!!initialContractId);
   const [saving, setSaving] = useState(false);
   const [contracts, setContracts] = useState<SimpleContractForCreate[]>([]);
   const [loadingContracts, setLoadingContracts] = useState(false);
@@ -1278,8 +1280,8 @@ function CreateEventModal({ date, onClose, onEventCreated }: CreateEventModalPro
     type: 'REMINDER' as 'REMINDER' | 'DEADLINE' | 'CANCEL_WINDOW_OPEN' | 'LAST_CANCEL_DAY' | 'AUTO_RENEWAL',
     severity: 'info' as 'info' | 'warning' | 'critical',
     notes: '',
-    contractId: '',
-    contractName: ''
+    contractId: initialContractId || '',
+    contractName: initialContractName || ''
   });
 
   useEffect(() => {
@@ -2489,6 +2491,8 @@ export default function CalendarPage() {
   const [showStatsModal, setShowStatsModal] = useState(false);
   const [selectedStatFilter, setSelectedStatFilter] = useState<"upcoming" | "past" | "cancelable" | "autoRenewal">("upcoming");
   const [showCreateEventModal, setShowCreateEventModal] = useState<Date | null>(null);
+  const [createModalContractId, setCreateModalContractId] = useState<string>('');
+  const [createModalContractName, setCreateModalContractName] = useState<string>('');
   const [allDayEventsForPagination, setAllDayEventsForPagination] = useState<CalendarEvent[]>([]);
   const [showSnoozeModal, setShowSnoozeModal] = useState(false);
   const [snoozeEventId, setSnoozeEventId] = useState<string | null>(null);
@@ -2535,6 +2539,19 @@ export default function CalendarPage() {
       }
     }
   }, [events, searchParams, setSearchParams]);
+
+  // ===== URL PARAMETER: Create Event Modal öffnen wenn action=create =====
+  useEffect(() => {
+    const action = searchParams.get('action');
+    if (action === 'create') {
+      const contractId = searchParams.get('contractId') || '';
+      const contractName = searchParams.get('contractName') || '';
+      setCreateModalContractId(contractId);
+      setCreateModalContractName(decodeURIComponent(contractName));
+      setShowCreateEventModal(new Date());
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   // Filter events
   useEffect(() => {
@@ -3318,11 +3335,17 @@ export default function CalendarPage() {
         {showCreateEventModal && (
           <CreateEventModal
             date={showCreateEventModal}
-            onClose={() => setShowCreateEventModal(null)}
+            onClose={() => {
+              setShowCreateEventModal(null);
+              setCreateModalContractId('');
+              setCreateModalContractName('');
+            }}
             onEventCreated={() => {
               // Event is already added to store directly - no reload needed!
               toast.success('Ereignis erfolgreich erstellt');
             }}
+            initialContractId={createModalContractId}
+            initialContractName={createModalContractName}
           />
         )}
         {editingEvent && (
