@@ -515,24 +515,17 @@ export default function Contracts() {
     return () => document.removeEventListener('click', handleClickOutside);
   }, [folderDropdownOpen, folderContextMenu]);
 
-  // 📱 MOBILE: Body-Scroll blockieren wenn Bottom Sheet offen ist
+  // 📱 MOBILE: Scroll blockieren wenn Bottom Sheet offen ist (nur contentArea, nicht body)
   useEffect(() => {
     if (folderDropdownOpen) {
-      // Speichere aktuelle Scroll-Position
-      const scrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
-      document.body.style.overflow = 'hidden';
-
-      return () => {
-        // Stelle Scroll-Position wieder her
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
-        document.body.style.overflow = '';
-        window.scrollTo(0, scrollY);
-      };
+      const contentArea = document.querySelector('[class*="contentArea"]') as HTMLElement;
+      if (contentArea) {
+        const prevOverflow = contentArea.style.overflow;
+        contentArea.style.overflow = 'hidden';
+        return () => {
+          contentArea.style.overflow = prevOverflow || '';
+        };
+      }
     }
   }, [folderDropdownOpen]);
 

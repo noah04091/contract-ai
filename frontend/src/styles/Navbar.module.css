@@ -64,6 +64,46 @@
   font-size: 14px;
 }
 
+/* Mobile: Navbar-Shrink komplett deaktivieren */
+@media (max-width: 768px) {
+  .navbarScrolled {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+  .navbarScrolled .navbarContent {
+    height: 56px !important;
+    min-height: 56px !important;
+  }
+  .navbarScrolled .logoImage,
+  .navbarScrolled .logoCenterImage {
+    height: 24px !important;
+  }
+  .navbarScrolled .navLink {
+    padding: inherit !important;
+    font-size: inherit !important;
+  }
+  .navbarScrolled .profileButton {
+    padding: inherit !important;
+    font-size: inherit !important;
+  }
+  .navbarScrolled .loginButton,
+  .navbarScrolled .registerButton {
+    padding: inherit !important;
+    font-size: inherit !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbarScrolled .navbarContent {
+    height: 52px !important;
+    min-height: 52px !important;
+  }
+  .navbarScrolled .logoImage,
+  .navbarScrolled .logoCenterImage {
+    height: 22px !important;
+  }
+}
+
 .innerPageNavbar {
   background: rgba(255, 255, 255, 0.93);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
@@ -1494,21 +1534,6 @@
     min-height: 56px;
   }
   
-  .navbarScrolled .navbarContent {
-    padding: 1rem 1.25rem;
-    min-height: 56px;
-  }
-
-  .navbarScrolled {
-    padding-top: 0;
-    padding-bottom: 0;
-  }
-
-  .navbarScrolled .logoImage,
-  .navbarScrolled .logoCenterImage {
-    height: 24px;
-  }
-
   .navbar {
     font-size: 14px;
   }
@@ -1555,21 +1580,6 @@
   .navbarContent {
     padding: 0.8rem 1rem;
     min-height: 52px;
-  }
-
-  .navbarScrolled .navbarContent {
-    padding: 0.8rem 1rem;
-    min-height: 52px;
-  }
-
-  .navbarScrolled {
-    padding-top: 0;
-    padding-bottom: 0;
-  }
-
-  .navbarScrolled .logoImage,
-  .navbarScrolled .logoCenterImage {
-    height: 24px;
   }
 
   .logoImage, .logoCenterImage {
