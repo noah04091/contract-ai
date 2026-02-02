@@ -92,6 +92,7 @@ export function useDocumentDetection({
   const frameTimesRef = useRef<number[]>([]);
   const resolutionReducedRef = useRef(false);
   const lostTimeRef = useRef<number | null>(null); // When we exceeded null tolerance and started fading
+  const lastVideoDimsRef = useRef<{ w: number; h: number }>({ w: 0, h: 0 }); // Track rotation
 
   // Keep callback ref in sync
   useEffect(() => {
@@ -115,6 +116,17 @@ export function useDocumentDetection({
       const detector = detectorRef.current;
       if (!video || !detector || video.readyState < 2) return;
       if (document.hidden) return;
+
+      // Reset detection state on video dimension change (screen rotation)
+      const vw = video.videoWidth;
+      const vh = video.videoHeight;
+      if (vw > 0 && vh > 0) {
+        const prev = lastVideoDimsRef.current;
+        if (prev.w > 0 && prev.h > 0 && (prev.w !== vw || prev.h !== vh)) {
+          resetDetectionState();
+        }
+        lastVideoDimsRef.current = { w: vw, h: vh };
+      }
 
       try {
         const t0 = performance.now();

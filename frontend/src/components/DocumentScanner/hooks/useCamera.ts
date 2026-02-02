@@ -213,7 +213,7 @@ export function useCamera(): UseCameraReturn {
     const dataUrl = previewCanvas.toDataURL("image/jpeg", 0.85);
 
     // Blob aus Full-Canvas (für Backend-Upload)
-    return new Promise<CaptureResult | null>((resolve) => {
+    const result = await new Promise<CaptureResult | null>((resolve) => {
       fullCanvas.toBlob(
         (blob) => {
           if (!blob || blob.size === 0) {
@@ -243,6 +243,14 @@ export function useCamera(): UseCameraReturn {
         0.95
       );
     });
+
+    // Release canvas memory after blob is created
+    fullCanvas.width = 0;
+    fullCanvas.height = 0;
+    previewCanvas.width = 0;
+    previewCanvas.height = 0;
+
+    return result;
   }, []);
 
   const toggleTorch = useCallback(async () => {
@@ -277,6 +285,21 @@ export function useCamera(): UseCameraReturn {
     // startCamera ist absichtlich nicht in deps — wird über facingMode getriggert
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.facingMode]);
+
+  // Pause camera tracks when app goes to background (saves battery)
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (!streamRef.current) return;
+      const tracks = streamRef.current.getVideoTracks();
+      if (document.hidden) {
+        tracks.forEach((t) => (t.enabled = false));
+      } else {
+        tracks.forEach((t) => (t.enabled = true));
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, []);
 
   // Cleanup bei Unmount
   useEffect(() => {

@@ -19,6 +19,28 @@ const { checkOcrUsage, incrementOcrUsage } = require("./ocrUsageService");
 const A4_WIDTH_PX = 2480;
 const A4_HEIGHT_PX = 3508;
 
+// Max erlaubte Bild-Dimensionen (Schutz vor OOM)
+const MAX_IMAGE_DIMENSION = 10000; // 10.000px pro Seite
+const MAX_IMAGE_BUFFER_MB = 30; // 30 MB pro Bild
+
+/**
+ * Prüft Bild-Dimensionen und Buffer-Größe vor der Verarbeitung.
+ * Wirft einen Fehler bei zu großen Bildern.
+ */
+async function validateImageBuffer(imageBuffer) {
+  if (!imageBuffer || imageBuffer.length === 0) {
+    throw new Error("Leerer Bild-Buffer erhalten");
+  }
+  if (imageBuffer.length > MAX_IMAGE_BUFFER_MB * 1024 * 1024) {
+    throw new Error(`Bild zu groß (${(imageBuffer.length / 1024 / 1024).toFixed(1)} MB, max ${MAX_IMAGE_BUFFER_MB} MB)`);
+  }
+  const metadata = await sharp(imageBuffer).metadata();
+  if (metadata.width > MAX_IMAGE_DIMENSION || metadata.height > MAX_IMAGE_DIMENSION) {
+    throw new Error(`Bild-Dimensionen zu groß (${metadata.width}x${metadata.height}, max ${MAX_IMAGE_DIMENSION}px)`);
+  }
+  return metadata;
+}
+
 // ============================================
 // IMAGE PROCESSING
 // ============================================
@@ -37,13 +59,15 @@ const A4_HEIGHT_PX = 3508;
 async function processImage(imageBuffer, corners, options = {}) {
   const { rotation = 0, enhance = true } = options;
 
+  // Validiere Bild-Dimensionen vor Verarbeitung
+  const metadata = await validateImageBuffer(imageBuffer);
+
   let pipeline = sharp(imageBuffer);
 
   // 1. Perspektivkorrektur via Affine Transform
   // sharp unterstützt keine native 4-Punkt-Perspektivkorrektur,
   // daher verwenden wir extract + resize als Approximation
   if (corners && corners.length === 4) {
-    const metadata = await sharp(imageBuffer).metadata();
     const imgW = metadata.width;
     const imgH = metadata.height;
 
@@ -76,8 +100,10 @@ async function processImage(imageBuffer, corners, options = {}) {
   // 3. Kontrast-Optimierung für Dokument-Scans
   if (enhance) {
     pipeline = pipeline
-      .normalize() // Auto-Levels
-      .sharpen({ sigma: 1.5 }) // Schärfe für Text
+      .median(3) // Denoise from phone cameras
+      .modulate({ brightness: 1.05, saturation: 0.9 }) // Slight contrast boost, reduce color cast
+      .clahe({ width: 4, height: 4, maxSlope: 3 }) // Adaptive local contrast (better than normalize for documents)
+      .sharpen({ sigma: 1.2 }) // Moderate sharpening for text
       .gamma(1.1); // Leicht heller für Papier
   }
 
@@ -87,8 +113,8 @@ async function processImage(imageBuffer, corners, options = {}) {
     background: { r: 255, g: 255, b: 255, alpha: 1 },
   });
 
-  // 5. JPEG Output (hohe Qualität)
-  const result = await pipeline.jpeg({ quality: 92 }).toBuffer();
+  // 5. JPEG Output (optimized quality/size balance for scanned documents)
+  const result = await pipeline.jpeg({ quality: 82 }).toBuffer();
 
   return result;
 }
@@ -104,10 +130,12 @@ async function processImage(imageBuffer, corners, options = {}) {
 async function processPreview(imageBuffer, corners, options = {}) {
   const { rotation = 0, enhance = true } = options;
 
+  // Validiere Bild-Dimensionen vor Verarbeitung
+  const metadata = await validateImageBuffer(imageBuffer);
+
   let pipeline = sharp(imageBuffer);
 
   if (corners && corners.length === 4) {
-    const metadata = await sharp(imageBuffer).metadata();
     const imgW = metadata.width;
     const imgH = metadata.height;
 
@@ -136,7 +164,12 @@ async function processPreview(imageBuffer, corners, options = {}) {
   }
 
   if (enhance) {
-    pipeline = pipeline.normalize().sharpen({ sigma: 1.5 }).gamma(1.1);
+    pipeline = pipeline
+      .median(3)
+      .modulate({ brightness: 1.05, saturation: 0.9 })
+      .clahe({ width: 4, height: 4, maxSlope: 3 })
+      .sharpen({ sigma: 1.2 })
+      .gamma(1.1);
   }
 
   // Kleinere Preview-Auflösung
@@ -237,13 +270,13 @@ async function generateScanPDF(processedImages, options = {}) {
             imageHeight: scaledHeight,
           });
           ocrApplied = true;
-        }
 
-        // OCR-Nutzung inkrementieren
-        if (userId) {
-          await incrementOcrUsage(userId, 1);
-          if (ocrPagesRemaining !== null) {
-            ocrPagesRemaining = Math.max(0, ocrPagesRemaining - 1);
+          // OCR-Nutzung nur bei Erfolg inkrementieren
+          if (userId) {
+            await incrementOcrUsage(userId, 1);
+            if (ocrPagesRemaining !== null) {
+              ocrPagesRemaining = Math.max(0, ocrPagesRemaining - 1);
+            }
           }
         }
 

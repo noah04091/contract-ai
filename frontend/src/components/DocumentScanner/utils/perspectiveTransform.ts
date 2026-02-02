@@ -278,5 +278,11 @@ export async function applyPerspectiveCrop(
     simpleCrop(outCtx, img, srcPts, outW, outH);
   }
 
-  return canvasToBlob(outCanvas, 0.85);
+  const blob = await canvasToBlob(outCanvas, 0.85);
+
+  // Release canvas memory (important when processing many pages)
+  outCanvas.width = 0;
+  outCanvas.height = 0;
+
+  return blob;
 }

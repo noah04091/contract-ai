@@ -5,7 +5,7 @@
  * Touch + Mouse Support mit Pointer Events API.
  */
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import type { Point } from "../types";
 
 const DEFAULT_CORNERS: Point[] = [
@@ -129,6 +129,14 @@ export function useCornerAdjustment(
     },
     [getRelativePosition, onPointerMove, onPointerUp]
   );
+
+  // Cleanup: Remove document listeners if component unmounts mid-drag
+  useEffect(() => {
+    return () => {
+      document.removeEventListener("pointermove", onPointerMove);
+      document.removeEventListener("pointerup", onPointerUp);
+    };
+  }, [onPointerMove, onPointerUp]);
 
   return { corners, activeCorner, onPointerDown, setCorners };
 }
