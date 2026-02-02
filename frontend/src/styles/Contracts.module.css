@@ -4627,11 +4627,15 @@
 
   .enterpriseLayout {
     flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
   }
 
   .mainContent {
-    height: auto;
-    min-height: calc(100vh - 64px);
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
   }
 
   /* ✅ MOBILE ENTERPRISE TOOLBAR - Horizontal scrollbar statt abgeschnitten */
@@ -4698,6 +4702,10 @@
 
   .contentArea {
     padding: 1rem;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* Container & Padding */

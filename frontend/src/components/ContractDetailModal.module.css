@@ -730,24 +730,24 @@
     z-index: 9999 !important; /* 🔥 Unter der Navbar (die hat höheren z-index) */
   }
 
-  /* 🔥 MODAL: Absolute Positionierung, volle Größe - MIT NAVBAR OFFSET */
+  /* 🔥 MODAL: Absolute Positionierung, volle Größe - Overlay hat bereits 60px Offset */
   .modal {
     position: absolute !important;
-    top: 60px !important; /* 🔥 Navbar Höhe berücksichtigen */
+    top: 0 !important; /* 🔥 Overlay hat bereits top: 60px, kein doppelter Offset */
     left: 0 !important;
     right: 0 !important;
     bottom: 0 !important;
     width: 100% !important;
-    height: calc(100% - 60px) !important; /* 🔥 Navbar Höhe abziehen */
+    height: 100% !important; /* 🔥 Volle Höhe des Overlays nutzen */
     max-width: 100% !important;
-    max-height: calc(100% - 60px) !important;
+    max-height: 100% !important;
     margin: 0 !important;
     border-radius: 16px 16px 0 0 !important; /* 🔥 Abgerundete Ecken oben */
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1) !important;
     animation: slideUpModal 0.3s ease-out !important;
     display: flex !important;
     flex-direction: column !important;
-    overflow: hidden !important;
+    overflow: visible !important; /* 🔥 visible statt hidden - erlaubt Body-Scrolling */
     background: #f8fafc !important;
     /* Safe-Area für iPhone X+ Notch */
     padding-left: env(safe-area-inset-left, 0px);

@@ -1495,10 +1495,20 @@
   }
   
   .navbarScrolled .navbarContent {
-    padding: 0.8rem 1.25rem;
-    min-height: 48px;
+    padding: 1rem 1.25rem;
+    min-height: 56px;
   }
-  
+
+  .navbarScrolled {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  .navbarScrolled .logoImage,
+  .navbarScrolled .logoCenterImage {
+    height: 24px;
+  }
+
   .navbar {
     font-size: 14px;
   }
@@ -1548,8 +1558,18 @@
   }
 
   .navbarScrolled .navbarContent {
-    padding: 0.6rem 1rem;
-    min-height: 44px;
+    padding: 0.8rem 1rem;
+    min-height: 52px;
+  }
+
+  .navbarScrolled {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  .navbarScrolled .logoImage,
+  .navbarScrolled .logoCenterImage {
+    height: 24px;
   }
 
   .logoImage, .logoCenterImage {
