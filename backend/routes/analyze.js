@@ -2523,7 +2523,9 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       // OCR-Fallback für gescannte PDFs mit wenig/keinem Text
       const isPdf = fileMimetype === 'application/pdf';
       const textTooShort = !pdfData.text || pdfData.text.trim().length < 200;
+      let ocrAttempted = false;
       if (isPdf && textTooShort) {
+        ocrAttempted = true;
         console.log(`🔍 [${requestId}] Wenig Text (${pdfData.text?.trim().length || 0} Zeichen) — versuche OCR-Fallback...`);
         try {
           const ocrResult = await pdfExtractor.extractTextWithOCRFallback(buffer, {
@@ -2536,6 +2538,21 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
             console.log(`✅ [${requestId}] OCR-Fallback erfolgreich: ${ocrResult.text.length} Zeichen (vorher: ${pdfData.text?.length || 0}), OCR=${ocrResult.usedOCR}`);
             pdfData.text = ocrResult.text;
             pdfData.numpages = ocrResult.quality.pageCount || pdfData.numpages;
+          } else if (!pdfData.text || pdfData.text.trim().length === 0) {
+            // OCR tried but still no text — return clear error to user
+            console.warn(`⚠️ [${requestId}] OCR-Fallback lieferte keinen Text — Scan unleserlich`);
+            return res.status(400).json({
+              success: false,
+              message: "📸 Das gescannte Dokument konnte nicht gelesen werden. Die Texterkennung (OCR) hat keinen lesbaren Text gefunden.",
+              error: "OCR_NO_TEXT",
+              details: "Der Scan ist möglicherweise zu unscharf, zu dunkel oder das Dokument war nicht gut sichtbar.",
+              suggestions: [
+                "Dokument erneut scannen — auf gute Beleuchtung und Schärfe achten",
+                "Dokument flach auf einen hellen Hintergrund legen",
+                "Falls möglich, das Originaldokument als digitale PDF hochladen"
+              ],
+              requestId
+            });
           }
         } catch (ocrErr) {
           console.warn(`⚠️ [${requestId}] OCR-Fallback fehlgeschlagen: ${ocrErr.message} — fahre mit Original-Text fort`);
