@@ -532,10 +532,21 @@ export default function Contracts() {
   // 📱 MOBILE: Scroll blockieren wenn Duplikat-Modal offen ist
   useEffect(() => {
     if (duplicateModal?.show) {
-      const prevOverflow = document.body.style.overflow;
+      // Body UND contentArea blockieren
+      const prevBodyOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
+
+      const contentArea = document.querySelector('[class*="contentArea"]') as HTMLElement;
+      const prevContentOverflow = contentArea?.style.overflow || '';
+      if (contentArea) {
+        contentArea.style.overflow = 'hidden';
+      }
+
       return () => {
-        document.body.style.overflow = prevOverflow || '';
+        document.body.style.overflow = prevBodyOverflow || '';
+        if (contentArea) {
+          contentArea.style.overflow = prevContentOverflow || '';
+        }
       };
     }
   }, [duplicateModal?.show]);
@@ -1186,12 +1197,20 @@ export default function Contracts() {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
+        onTouchMove={(e) => {
+          // Nur Scroll innerhalb modalContent erlauben
+          const target = e.target as HTMLElement;
+          if (!target.closest('[class*="modalContent"]')) {
+            e.preventDefault();
+          }
+        }}
       >
         <motion.div
           className={styles.duplicateModal}
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          initial={{ opacity: 0, y: '100%' }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: '100%' }}
+          transition={{ type: 'spring', damping: 30, stiffness: 300 }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* ✅ Modernisierter Header mit Badge */}

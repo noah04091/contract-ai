@@ -503,13 +503,13 @@
   }
 
   .actionsGrid {
-    grid-template-columns: 1fr;
-    gap: 16px;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
   }
 
   .actionCard {
-    padding: 20px 20px 18px;
-    border-radius: 16px;
+    padding: 16px 12px 14px;
+    border-radius: 14px;
   }
 
   .analyzeCard {
@@ -518,45 +518,57 @@
   }
 
   .recommendedBadge {
-    top: -10px;
-    font-size: 10px;
-    padding: 4px 12px;
+    top: -9px;
+    font-size: 9px;
+    padding: 3px 10px;
   }
 
   .cardIcon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    margin-bottom: 8px;
   }
 
   .cardIcon svg {
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
   }
 
   .cardTitle {
-    font-size: 16px;
+    font-size: 14px;
+    margin-bottom: 2px;
   }
 
   .cardDescription {
-    font-size: 13px;
+    font-size: 11.5px;
+    margin-bottom: 8px;
+  }
+
+  .featureList {
+    margin-bottom: 6px;
   }
 
   .featureList li {
-    font-size: 12.5px;
-    padding: 4px 0;
+    font-size: 11px;
+    padding: 2px 0;
+  }
+
+  .cardInfo {
+    font-size: 11px;
+    margin-bottom: 10px;
   }
 
   .cardButton {
-    min-height: 48px;
-    padding: 14px 16px;
-    border-radius: 12px;
-    font-size: 14px;
+    min-height: 44px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 13px;
   }
 
   .questionText {
-    font-size: 17px;
-    margin-bottom: 20px;
+    font-size: 16px;
+    margin-bottom: 16px;
   }
 
   .legalPulseBanner {
@@ -624,17 +636,58 @@
     margin-bottom: 16px;
   }
 
+  .actionsGrid {
+    gap: 10px;
+  }
+
   .actionCard {
-    padding: 16px 16px 14px;
+    padding: 14px 10px 12px;
+    border-radius: 12px;
+  }
+
+  .recommendedBadge {
+    font-size: 8px;
+    padding: 3px 8px;
+    top: -8px;
+  }
+
+  .cardIcon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+  }
+
+  .cardIcon svg {
+    width: 18px;
+    height: 18px;
   }
 
   .cardTitle {
-    font-size: 15px;
+    font-size: 13px;
+  }
+
+  .cardDescription {
+    font-size: 11px;
+    margin-bottom: 6px;
+  }
+
+  .featureList li {
+    font-size: 10.5px;
+    padding: 1.5px 0;
+    gap: 4px;
+  }
+
+  .featureList li svg {
+    width: 12px;
+    height: 12px;
   }
 
   .cardButton {
-    font-size: 13px;
-    min-height: 44px;
+    font-size: 12px;
+    min-height: 40px;
+    padding: 8px 10px;
+    border-radius: 8px;
   }
 
   .footer {
