@@ -4683,35 +4683,34 @@
 
 /* ===== QUICK ACTIONS BAR (One-Click Actions) ===== */
 .quickActionsBar {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  border: 2px solid #f59e0b;
-  border-radius: 12px;
-  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  border: 1.5px solid #f59e0b;
+  border-radius: 10px;
+  padding: 12px 18px;
   margin-bottom: 24px;
   animation: slideDown 0.3s ease;
 }
 
 @keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .quickActionsHeader {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
-  margin-bottom: 10px;
+  flex: 1;
+  min-width: 0;
 }
 
 .quickActionsIcon {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   line-height: 1;
+  flex-shrink: 0;
 }
 
 .quickActionsHeader svg {
@@ -4720,82 +4719,87 @@
 
 .quickActionsHeader h4 {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-weight: 700;
   color: #92400e;
+  white-space: nowrap;
 }
 
 .quickActionsHeader p {
-  margin: 2px 0 0 0;
-  font-size: 0.82rem;
-  color: #a16207;
+  display: none;
 }
 
 .quickActionsButtons {
   display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .quickActionBtn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
+  gap: 5px;
+  padding: 6px 12px;
   background: white;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 0.82rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.78rem;
   font-weight: 600;
   color: #374151;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  white-space: nowrap;
 }
 
 .quickActionBtn:hover {
   background: #f9fafb;
   border-color: #3b82f6;
   color: #3b82f6;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
 }
 
 .quickActionBtn svg {
-  width: 15px;
-  height: 15px;
+  width: 14px;
+  height: 14px;
 }
 
 /* Quick Actions Risk Preview */
 .quickActionsRiskPreview {
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 8px;
+  gap: 6px;
+  flex-wrap: nowrap;
+  margin-top: 0;
+  margin-left: 4px;
 }
 
 .quickRiskTag {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 600;
-  padding: 3px 10px;
-  border-radius: 6px;
+  padding: 2px 8px;
+  border-radius: 4px;
   white-space: nowrap;
-  max-width: 200px;
+  max-width: 180px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 @media (max-width: 768px) {
   .quickActionsBar {
+    flex-direction: column;
+    align-items: flex-start;
     padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .quickActionsHeader h4 {
+    white-space: normal;
   }
 
   .quickActionsButtons {
-    flex-direction: column;
+    flex-wrap: wrap;
   }
 
   .quickActionBtn {
-    width: 100%;
+    flex: 1;
     justify-content: center;
   }
 }

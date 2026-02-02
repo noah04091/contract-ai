@@ -1513,27 +1513,25 @@ export default function LegalPulse() {
             borderColor: selectedContract.legalPulse.riskScore > 60 ? '#fca5a5' : '#fde68a'
           }}>
             <div className={styles.quickActionsHeader}>
-              <div>
-                <h4 style={{ color: selectedContract.legalPulse.riskScore > 60 ? '#991b1b' : '#92400e' }}>
-                  {selectedContract.legalPulse.riskScore > 60
-                    ? `${selectedContract.legalPulse.topRisks?.filter((r: { severity?: string }) => r.severity === 'critical' || r.severity === 'high').length || 0} kritische Risiken erfordern Ihre Aufmerksamkeit`
-                    : 'Optimierungspotenzial erkannt'}
-                </h4>
-                {selectedContract.legalPulse.topRisks && selectedContract.legalPulse.topRisks.length > 0 && (
-                  <div className={styles.quickActionsRiskPreview}>
-                    {selectedContract.legalPulse.topRisks.slice(0, 3).map((risk: { title?: string; severity?: string }, i: number) => (
-                      <span key={i} className={styles.quickRiskTag} style={{
-                        background: risk.severity === 'critical' ? '#dc2626' :
-                                    risk.severity === 'high' ? '#ea580c' :
-                                    risk.severity === 'medium' ? '#d97706' : '#16a34a',
-                        color: 'white'
-                      }}>
-                        {risk.title || `Risiko ${i + 1}`}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <h4 style={{ color: selectedContract.legalPulse.riskScore > 60 ? '#991b1b' : '#92400e' }}>
+                {selectedContract.legalPulse.riskScore > 60
+                  ? `${selectedContract.legalPulse.topRisks?.filter((r: { severity?: string }) => r.severity === 'critical' || r.severity === 'high').length || 0} kritische Risiken`
+                  : 'Optimierungspotenzial'}
+              </h4>
+              {selectedContract.legalPulse.topRisks && selectedContract.legalPulse.topRisks.length > 0 && (
+                <div className={styles.quickActionsRiskPreview}>
+                  {selectedContract.legalPulse.topRisks.slice(0, 3).map((risk: { title?: string; severity?: string }, i: number) => (
+                    <span key={i} className={styles.quickRiskTag} style={{
+                      background: risk.severity === 'critical' ? '#dc2626' :
+                                  risk.severity === 'high' ? '#ea580c' :
+                                  risk.severity === 'medium' ? '#d97706' : '#16a34a',
+                      color: 'white'
+                    }}>
+                      {risk.title || `Risiko ${i + 1}`}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
             <div className={styles.quickActionsButtons}>
               <button
