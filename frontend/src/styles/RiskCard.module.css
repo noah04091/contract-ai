@@ -1,146 +1,277 @@
-/* 📁 frontend/src/styles/RiskCard.module.css */
-/* Risk Card Component - Premium Apple-Inspired Design */
+/* RiskCard - Modern Professional Design */
 
 .riskCard {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 16px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-left: 4px solid #dc2626;
+  border-radius: 12px;
   padding: 24px;
-  transition: all 0.3s ease;
-  animation: riskCardSlide 0.4s ease-out;
+  transition: all 0.2s ease;
+  animation: riskCardSlide 0.3s ease-out;
 }
 
 @keyframes riskCardSlide {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .riskCard:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
+/* Header */
 .riskHeader {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
 }
 
-.riskIcon {
-  font-size: 1.25rem;
-}
-
-.riskSeverity {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #dc2626;
-  background: #fee2e2;
-  padding: 4px 12px;
-  border-radius: 8px;
-}
-
-.riskDescription {
-  color: #7f1d1d;
-  font-size: 1rem;
-  line-height: 1.6;
-  margin: 0 0 20px 0;
-}
-
-.riskActions {
-  display: flex;
-  gap: 12px;
-}
-
-.riskActionButton {
-  padding: 10px 18px;
-  border: 1px solid #fca5a5;
-  background: transparent;
-  color: #dc2626;
-  border-radius: 10px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.riskActionButton.primary {
-  background: #dc2626;
+.severityBadge {
+  font-size: 0.75rem;
+  font-weight: 700;
   color: white;
-  border-color: #dc2626;
-}
-
-.riskActionButton:hover {
-  background: #fee2e2;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
-}
-
-.riskActionButton.primary:hover {
-  background: #b91c1c;
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+  padding: 3px 10px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .legalBadge {
   font-size: 0.8rem;
-  font-weight: 500;
-  color: #6b7280;
+  font-weight: 600;
+  color: #4b5563;
   background: #f3f4f6;
   padding: 3px 10px;
   border-radius: 6px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+.clauseTags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
   margin-left: auto;
 }
 
-.clauseBadge {
+.clauseTag {
+  font-size: 0.75rem;
+  color: #6b7280;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* Title */
+.riskTitle {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 8px 0;
+  line-height: 1.4;
+}
+
+/* Description */
+.riskDescription {
+  color: #4b5563;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 0 0 16px 0;
+}
+
+/* Clause Quote (collapsed preview) */
+.clauseQuote {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  background: #fef9c3;
+  flex-direction: column;
+  gap: 4px;
+  background: #fefce8;
   border: 1px solid #fde68a;
   border-radius: 8px;
   padding: 10px 14px;
   margin-bottom: 16px;
   font-size: 0.85rem;
+}
+
+.clauseQuoteLabel {
+  color: #92400e;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.clauseQuoteText {
+  color: #78350f;
+  font-style: italic;
   line-height: 1.5;
 }
 
-.clauseBadgeLabel {
-  color: #92400e;
+/* Expand Button */
+.expandButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 0;
+  background: none;
+  border: none;
+  border-top: 1px solid #f3f4f6;
+  color: #3b82f6;
+  font-size: 0.875rem;
   font-weight: 600;
-  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.2s;
+  margin-bottom: 4px;
 }
 
-.clauseBadgeText {
-  color: #78350f;
-  font-style: italic;
+.expandButton:hover {
+  color: #1d4ed8;
 }
 
-.riskActionButton.secondary {
-  border-color: #d1d5db;
-  color: #6b7280;
+/* Expanded Content */
+.expandedContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 8px;
+  animation: expandIn 0.2s ease-out;
 }
 
-.riskActionButton.secondary:hover {
-  background: #f3f4f6;
+@keyframes expandIn {
+  from { opacity: 0; max-height: 0; }
+  to { opacity: 1; max-height: 2000px; }
+}
+
+.detailSection {
+  border-left: 3px solid #ef4444;
+  padding: 12px 16px;
+  background: #fafafa;
+  border-radius: 0 8px 8px 0;
+}
+
+.detailLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #ef4444;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 6px;
+}
+
+.detailText {
+  font-size: 0.9rem;
   color: #374151;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.clauseBlockquote {
+  font-size: 0.9rem;
+  color: #78350f;
+  background: #fffbeb;
+  border-radius: 6px;
+  padding: 12px;
+  margin: 6px 0 0 0;
+  font-style: italic;
+  line-height: 1.6;
+  border: 1px solid #fde68a;
+}
+
+.replacementBlock {
+  font-size: 0.9rem;
+  color: #1e3a5f;
+  background: #eff6ff;
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 6px;
+  line-height: 1.6;
+  border: 1px solid #bfdbfe;
+  font-family: 'Georgia', serif;
+  white-space: pre-wrap;
+}
+
+.copyButton {
+  margin-left: auto;
+  padding: 3px 10px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.copyButton:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.legalBasisFull {
+  font-size: 0.85rem;
+  color: #6b7280;
+  padding: 10px 14px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  line-height: 1.5;
+}
+
+.legalBasisFull strong {
+  color: #374151;
+}
+
+/* Actions Footer */
+.riskActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f3f4f6;
+  margin-top: 8px;
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.actionBtn:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  color: #374151;
 }
 
 /* Responsive */
-
 @media (max-width: 768px) {
-  .riskActions {
-    flex-direction: column;
+  .riskCard {
+    padding: 16px;
   }
 
-  .riskActionButton {
-    width: 100%;
-    justify-content: center;
+  .clauseTags {
+    margin-left: 0;
+    margin-top: 4px;
+  }
+
+  .riskHeader {
+    flex-wrap: wrap;
   }
 }

@@ -15,8 +15,7 @@ interface Contract {
     riskScore: number | null;
     lastAnalysis?: string;
     lastRecommendation?: string;
-    topRisks?: string[];
-    recommendations?: string[];
+    [key: string]: unknown;
   };
 }
 

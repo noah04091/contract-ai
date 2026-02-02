@@ -46,10 +46,8 @@ interface Contract {
     lastRecommendation?: string;
     summary?: string;
     nextScheduledCheck?: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    topRisks?: any[];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    recommendations?: any[];
+    topRisks?: RiskObject[];
+    recommendations?: RecommendationObject[];
     scoreHistory?: Array<{date: string, score: number}>;
     analysisHistory?: Array<{
       date: string;
@@ -66,19 +64,6 @@ interface Contract {
       area?: string;
     }>;
   };
-}
-
-interface RiskDetail {
-  id: string;
-  title: string;
-  description: string;
-  severity: 'low' | 'medium' | 'high';
-  solution: string;
-  impact: string;
-  recommendation: string;
-  affectedClauseText?: string;
-  replacementText?: string;
-  legalBasis?: string;
 }
 
 interface RecommendationStatus {
@@ -113,7 +98,6 @@ interface RecommendationObject {
 }
 
 // Union types for backwards compatibility
-type RiskInput = string | RiskObject;
 type RecommendationInput = string | RecommendationObject;
 
 // Monitoring Health Types (V7)
@@ -294,10 +278,12 @@ export default function LegalPulse() {
   const [isInitialLoading, setIsInitialLoading] = useState(true); // ✅ Separate state for initial load
   const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'risks' | 'recommendations' | 'legalChanges' | 'history' | 'forecast'>('overview');
-  const [showRiskModal, setShowRiskModal] = useState(false);
-  const [selectedRisk, setSelectedRisk] = useState<RiskDetail | null>(null);
-  const [riskModalType, setRiskModalType] = useState<'details' | 'solutions'>('details');
-  const [completedRecommendations, setCompletedRecommendations] = useState<RecommendationStatus>({});
+  const [completedRecommendations, setCompletedRecommendations] = useState<RecommendationStatus>(() => {
+    try {
+      const saved = localStorage.getItem('lp-completed-recommendations');
+      return saved ? JSON.parse(saved) : {};
+    } catch { return {}; }
+  });
   const [showTooltip, setShowTooltip] = useState<{ [key: string]: boolean }>({});
   const [showSettingsSidebar, setShowSettingsSidebar] = useState(false);
   const [showFeedSidebar, setShowFeedSidebar] = useState(false);
@@ -312,8 +298,6 @@ export default function LegalPulse() {
   const [heroMinimized, setHeroMinimized] = useState(false);
 
   // Reminder State
-  const [showReminderPicker, setShowReminderPicker] = useState(false);
-  const [reminderDate, setReminderDate] = useState('');
 
   // Save to Library State
   const [showSaveClauseModal, setShowSaveClauseModal] = useState(false);
@@ -769,84 +753,20 @@ export default function LegalPulse() {
 
   // ✅ Keine lokale Filterung mehr - Backend macht das jetzt!
 
-  // Helper to validate severity type
-  const validateSeverity = (severity?: string): 'low' | 'medium' | 'high' => {
-    if (severity === 'low' || severity === 'high') return severity;
-    return 'medium'; // default
-  };
-
-  // Event Handlers
-  const handleShowRiskDetails = (risk: RiskInput) => {
-    // Convert to RiskDetail format (supports both string and object)
-    const riskDetail: RiskDetail = typeof risk === 'string'
-      ? {
-          id: 'legacy-risk',
-          title: risk,
-          description: risk,
-          severity: 'medium',
-          solution: 'Detaillierte Analyse erforderlich',
-          impact: 'Potenzielle rechtliche Auswirkungen',
-          recommendation: 'Rechtliche Prüfung empfohlen'
-        }
-      : {
-          id: risk.title || 'risk',
-          title: risk.title || 'Unbekanntes Risiko',
-          description: risk.description || risk.title || 'Keine Beschreibung verfügbar',
-          severity: validateSeverity(risk.severity),
-          solution: risk.solution || 'Lösung wird analysiert',
-          impact: risk.impact || 'Auswirkungen werden geprüft',
-          recommendation: risk.recommendation || 'Empfehlung wird erstellt',
-          affectedClauseText: typeof risk === 'object' ? risk.affectedClauseText : undefined,
-          replacementText: typeof risk === 'object' ? risk.replacementText : undefined,
-          legalBasis: typeof risk === 'object' ? risk.legalBasis : undefined
-        };
-
-    setSelectedRisk(riskDetail);
-    setRiskModalType('details');
-    setShowRiskModal(true);
-  };
-
-  const handleShowSolution = (risk: RiskInput) => {
-    // Convert to RiskDetail format (supports both string and object)
-    const riskDetail: RiskDetail = typeof risk === 'string'
-      ? {
-          id: 'legacy-risk',
-          title: risk,
-          description: risk,
-          severity: 'medium',
-          solution: 'Detaillierte Analyse erforderlich',
-          impact: 'Potenzielle rechtliche Auswirkungen',
-          recommendation: 'Rechtliche Prüfung empfohlen'
-        }
-      : {
-          id: risk.title || 'risk',
-          title: risk.title || 'Unbekanntes Risiko',
-          description: risk.description || risk.title || 'Keine Beschreibung verfügbar',
-          severity: validateSeverity(risk.severity),
-          solution: risk.solution || 'Lösung wird analysiert',
-          impact: risk.impact || 'Auswirkungen werden geprüft',
-          recommendation: risk.recommendation || 'Empfehlung wird erstellt',
-          affectedClauseText: typeof risk === 'object' ? risk.affectedClauseText : undefined,
-          replacementText: typeof risk === 'object' ? risk.replacementText : undefined,
-          legalBasis: typeof risk === 'object' ? risk.legalBasis : undefined
-        };
-
-    setSelectedRisk(riskDetail);
-    setRiskModalType('solutions');
-    setShowRiskModal(true);
-  };
 
   const handleMarkRecommendationComplete = (recommendationIndex: number) => {
     const key = `${selectedContract?._id}-${recommendationIndex}`;
-    setCompletedRecommendations(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
-    
+    const updated = {
+      ...completedRecommendations,
+      [key]: !completedRecommendations[key]
+    };
+    setCompletedRecommendations(updated);
+    try { localStorage.setItem('lp-completed-recommendations', JSON.stringify(updated)); } catch { /* quota exceeded */ }
+
     const action = completedRecommendations[key] ? "als offen markiert" : "als erledigt markiert";
-    setNotification({ 
-      message: `Empfehlung ${action}`, 
-      type: "success" 
+    setNotification({
+      message: `Empfehlung ${action}`,
+      type: "success"
     });
   };
 
@@ -1051,9 +971,21 @@ export default function LegalPulse() {
 
 
 
+  // Loading state when contractId is set but contract not yet loaded
+  if (contractId && !selectedContract) {
+    return (
+      <div className={styles.legalPulseContainer}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: '16px' }}>
+          <div className={styles.spinner} style={{ width: '40px', height: '40px', borderWidth: '4px' }}></div>
+          <p style={{ color: '#6b7280', fontSize: '0.95rem' }}>Vertrag wird geladen...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Detailansicht für einzelnen Vertrag
   if (contractId && selectedContract) {
-    const riskLevel = getRiskLevel(selectedContract.legalPulse?.riskScore || null);
+    const riskLevel = getRiskLevel(selectedContract.legalPulse?.riskScore ?? null);
     const scoreHistory = selectedContract.legalPulse?.scoreHistory || [];
 
     // Check if Legal Pulse analysis is still loading/running
@@ -1201,8 +1133,8 @@ export default function LegalPulse() {
               <div className={styles.loadingState}>
                 <div className={styles.loadingSpinner}></div>
                 <div className={styles.loadingText}>
-                  <h3>Legal Pulse Analyse l{String.fromCharCode(228)}uft...</h3>
-                  <p>Die KI-Analyse wird im Hintergrund durchgef{String.fromCharCode(252)}hrt. Dies kann bis zu 30 Sekunden dauern.</p>
+                  <h3>Legal Pulse Analyse läuft...</h3>
+                  <p>Die KI-Analyse wird im Hintergrund durchgeführt. Dies kann bis zu 30 Sekunden dauern.</p>
                   <button
                     onClick={() => window.location.reload()}
                     className={styles.refreshButton}
@@ -1228,10 +1160,10 @@ export default function LegalPulse() {
                 <div className={styles.scoreCircleArea}>
                   <div
                     className={styles.scoreCircle}
-                    style={{ '--score-color': riskLevel.color, '--score': selectedContract.legalPulse?.riskScore || 0 } as React.CSSProperties}
+                    style={{ '--score-color': riskLevel.color, '--score': selectedContract.legalPulse?.riskScore ?? 0 } as React.CSSProperties}
                   >
                     <span className={styles.scoreNumber}>
-                      {selectedContract.legalPulse?.riskScore || '\u2014'}
+                      {selectedContract.legalPulse?.riskScore ?? '\u2014'}
                     </span>
                     <span className={styles.scoreMax}>/100</span>
                   </div>
@@ -1281,7 +1213,7 @@ export default function LegalPulse() {
                         />
                       </div>
                       <p className={styles.healthExplanation}>
-                        Berechnet aus Risiko-Score, Vertragsalter und Vollst{String.fromCharCode(228)}ndigkeit der Klauseln.
+                        Berechnet aus Risiko-Score, Vertragsalter und Vollständigkeit der Klauseln.
                       </p>
                     </div>
                   )}
@@ -1319,7 +1251,7 @@ export default function LegalPulse() {
                     {selectedContract.legalPulse?.topRisks && (
                       <div className={styles.scoreStatItem}>
                         <span className={styles.scoreStatNumber} style={{ color: '#dc2626' }}>
-                          {selectedContract.legalPulse.topRisks.filter((r: { severity?: string }) => r.severity === 'critical' || r.severity === 'high').length}
+                          {selectedContract.legalPulse.topRisks.filter((r) => r.severity === 'critical' || r.severity === 'high').length}
                         </span>
                         <span className={styles.scoreStatLabel}>Kritisch/Hoch</span>
                       </div>
@@ -1352,9 +1284,9 @@ export default function LegalPulse() {
                     <Line
                       type="monotone"
                       dataKey="score"
-                      stroke={getRiskScoreColor(selectedContract.legalPulse?.riskScore || null)}
+                      stroke={getRiskScoreColor(selectedContract.legalPulse?.riskScore ?? null)}
                       strokeWidth={2}
-                      dot={{ fill: getRiskScoreColor(selectedContract.legalPulse?.riskScore || null), strokeWidth: 2, r: 4 }}
+                      dot={{ fill: getRiskScoreColor(selectedContract.legalPulse?.riskScore ?? null), strokeWidth: 2, r: 4 }}
                       activeDot={{ r: 6 }}
                     />
                   </LineChart>
@@ -1391,7 +1323,7 @@ export default function LegalPulse() {
             onClick={() => setActiveTab('legalChanges')}
           >
             <Shield size={16} />
-            Rechts{String.fromCharCode(228)}nderungen{contractWeeklyCheck?.stage2Results?.findings?.length ? ` (${contractWeeklyCheck.stage2Results.findings.length})` : ''}
+            Rechtsänderungen{contractWeeklyCheck?.stage2Results?.findings?.length ? ` (${contractWeeklyCheck.stage2Results.findings.length})` : ''}
           </button>
           <button
             className={`${styles.tabButton} ${activeTab === 'recommendations' ? styles.active : ''}`}
@@ -1438,12 +1370,12 @@ export default function LegalPulse() {
               <div className={styles.quickActionsHeader}>
                 <h4 style={{ color: selectedContract.legalPulse.riskScore > 60 ? '#991b1b' : '#92400e' }}>
                   {selectedContract.legalPulse.riskScore > 60
-                    ? `${selectedContract.legalPulse.topRisks?.filter((r: { severity?: string }) => r.severity === 'critical' || r.severity === 'high').length || 0} kritische Risiken`
+                    ? `${selectedContract.legalPulse.topRisks?.filter((r) => r.severity === 'critical' || r.severity === 'high').length || 0} kritische Risiken`
                     : 'Optimierungspotenzial'}
                 </h4>
                 {selectedContract.legalPulse.topRisks && selectedContract.legalPulse.topRisks.length > 0 && (
                   <div className={styles.quickActionsRiskPreview}>
-                    {selectedContract.legalPulse.topRisks.slice(0, 3).map((risk: { title?: string; severity?: string }, i: number) => (
+                    {selectedContract.legalPulse.topRisks.slice(0, 3).map((risk, i) => (
                       <span key={i} className={styles.quickRiskTag} style={{
                         background: risk.severity === 'critical' ? '#dc2626' :
                                     risk.severity === 'high' ? '#ea580c' :
@@ -1532,7 +1464,7 @@ export default function LegalPulse() {
                       <h4>Risikoverteilung</h4>
                       <div className={styles.riskDistributionBar}>
                         {['critical', 'high', 'medium', 'low'].map(sev => {
-                          const count = selectedContract.legalPulse!.topRisks!.filter((r: { severity?: string }) => r.severity === sev).length;
+                          const count = selectedContract.legalPulse!.topRisks!.filter((r) => r.severity === sev).length;
                           if (count === 0) return null;
                           const colors: Record<string, string> = { critical: '#dc2626', high: '#ea580c', medium: '#d97706', low: '#16a34a' };
                           const labels: Record<string, string> = { critical: 'Kritisch', high: 'Hoch', medium: 'Mittel', low: 'Niedrig' };
@@ -1551,7 +1483,7 @@ export default function LegalPulse() {
                       </div>
                       <div className={styles.riskDistLegend}>
                         {['critical', 'high', 'medium', 'low'].map(sev => {
-                          const count = selectedContract.legalPulse!.topRisks!.filter((r: { severity?: string }) => r.severity === sev).length;
+                          const count = selectedContract.legalPulse!.topRisks!.filter((r) => r.severity === sev).length;
                           if (count === 0) return null;
                           const colors: Record<string, string> = { critical: '#dc2626', high: '#ea580c', medium: '#d97706', low: '#16a34a' };
                           const labels: Record<string, string> = { critical: 'Kritisch', high: 'Hoch', medium: 'Mittel', low: 'Niedrig' };
@@ -1574,7 +1506,7 @@ export default function LegalPulse() {
                         Alle anzeigen <ArrowRight size={14} />
                       </button>
                     </div>
-                    {selectedContract.legalPulse?.topRisks?.slice(0, 3).map((risk: { title?: string; severity?: string; description?: string }, i: number) => (
+                    {selectedContract.legalPulse?.topRisks?.slice(0, 3).map((risk, i) => (
                       <div key={i} className={styles.overviewPreviewItem} onClick={() => setActiveTab('risks')} style={{ cursor: 'pointer' }}>
                         <span className={styles.overviewPreviewBadge} style={{
                           background: risk.severity === 'critical' ? '#dc2626' : risk.severity === 'high' ? '#ea580c' : risk.severity === 'medium' ? '#d97706' : '#16a34a'
@@ -1597,7 +1529,7 @@ export default function LegalPulse() {
                         Alle anzeigen <ArrowRight size={14} />
                       </button>
                     </div>
-                    {selectedContract.legalPulse?.recommendations?.slice(0, 2).map((rec: { title?: string; priority?: string; effort?: string }, i: number) => (
+                    {selectedContract.legalPulse?.recommendations?.slice(0, 2).map((rec, i) => (
                       <div key={i} className={styles.overviewPreviewItem} onClick={() => setActiveTab('recommendations')} style={{ cursor: 'pointer' }}>
                         <span className={styles.overviewPreviewBadge} style={{
                           background: rec.priority === 'critical' ? '#dc2626' : rec.priority === 'high' ? '#ea580c' : rec.priority === 'medium' ? '#0284c7' : '#16a34a'
@@ -1614,7 +1546,7 @@ export default function LegalPulse() {
 
                   {/* Actions */}
                   <div className={styles.overviewActions}>
-                    <h4>N{String.fromCharCode(228)}chste Schritte</h4>
+                    <h4>Nächste Schritte</h4>
                     <div className={styles.actionsList}>
                       <button className={styles.actionButton} onClick={() => setActiveTab('risks')}>
                         <AlertTriangle size={16} />
@@ -1645,8 +1577,8 @@ export default function LegalPulse() {
                   <div className={styles.noAnalysisIcon} style={{ background: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)' }}>
                     <AlertTriangle size={32} color="#ef4444" />
                   </div>
-                  <h3>Risikoanalyse nicht verf{String.fromCharCode(252)}gbar</h3>
-                  <p>Um Risiken zu identifizieren, muss der Vertrag zuerst analysiert werden. Die Legal Pulse Risikoanalyse erkennt automatisch rechtliche Schwachstellen und bewertet deren Kritikalit{String.fromCharCode(228)}t.</p>
+                  <h3>Risikoanalyse nicht verfügbar</h3>
+                  <p>Um Risiken zu identifizieren, muss der Vertrag zuerst analysiert werden. Die Legal Pulse Risikoanalyse erkennt automatisch rechtliche Schwachstellen und bewertet deren Kritikalität.</p>
                   <div className={styles.noAnalysisFeatures}>
                     <div className={styles.noAnalysisFeature}>
                       <AlertTriangle size={18} color="#ef4444" />
@@ -1684,8 +1616,6 @@ export default function LegalPulse() {
                           risk={risk}
                           index={index}
                           contractId={selectedContract._id}
-                          onShowDetails={handleShowRiskDetails}
-                          onShowSolution={handleShowSolution}
                           onSaveToLibrary={handleSaveRiskToLibrary}
                           onFeedback={(feedback) => {
                             setNotification({
@@ -1722,7 +1652,7 @@ export default function LegalPulse() {
                   <div className={styles.noAnalysisFeatures}>
                     <div className={styles.noAnalysisFeature}>
                       <CheckCircle size={18} color="#10b981" />
-                      <span>Priorisierte Ma{String.fromCharCode(223)}nahmen</span>
+                      <span>Priorisierte Maßnahmen</span>
                     </div>
                     <div className={styles.noAnalysisFeature}>
                       <Zap size={18} color="#f59e0b" />
@@ -1745,7 +1675,7 @@ export default function LegalPulse() {
               ) : (
                 <>
                   <div className={styles.sectionHeader}>
-                    <h3>Empfohlene Ma{String.fromCharCode(223)}nahmen</h3>
+                    <h3>Empfohlene Maßnahmen</h3>
                     <p>Konkrete Schritte zur Risikominimierung</p>
                   </div>
                   <div className={styles.recommendationsList}>
@@ -1789,20 +1719,20 @@ export default function LegalPulse() {
           {activeTab === 'legalChanges' && (
             <div className={styles.legalChangesTab}>
               <div className={styles.sectionHeader}>
-                <h3><Shield size={18} /> Rechts{String.fromCharCode(228)}nderungs-{String.fromCharCode(220)}berwachung</h3>
-                <p>Auswirkungen erkannter Rechts{String.fromCharCode(228)}nderungen auf diesen Vertrag</p>
+                <h3><Shield size={18} /> Rechtsänderungs-Überwachung</h3>
+                <p>Auswirkungen erkannter Rechtsänderungen auf diesen Vertrag</p>
               </div>
 
               {contractWeeklyCheckLoading ? (
                 <div className={styles.legalChangesLoading}>
                   <div className={styles.loadingSpinner}></div>
-                  <p>Lade Rechts{String.fromCharCode(228)}nderungs-Pr{String.fromCharCode(252)}fung...</p>
+                  <p>Lade Rechtsänderungs-Prüfung...</p>
                 </div>
               ) : !contractWeeklyCheck ? (
                 <div className={styles.legalChangesEmpty}>
                   <Shield size={40} />
-                  <h4>Noch keine Pr{String.fromCharCode(252)}fung durchgef{String.fromCharCode(252)}hrt</h4>
-                  <p>Die automatische Rechts{String.fromCharCode(228)}nderungs-Pr{String.fromCharCode(252)}fung f{String.fromCharCode(252)}r diesen Vertrag erfolgt beim n{String.fromCharCode(228)}chsten w{String.fromCharCode(246)}chentlichen Check (Sonntag 02:00 Uhr).</p>
+                  <h4>Noch keine Prüfung durchgeführt</h4>
+                  <p>Die automatische Rechtsänderungs-Prüfung für diesen Vertrag erfolgt beim nächsten wöchentlichen Check (Sonntag 02:00 Uhr).</p>
                 </div>
               ) : (
                 <>
@@ -1831,16 +1761,16 @@ export default function LegalPulse() {
                   {contractWeeklyCheck.metadata && (
                     <div className={styles.legalChangesMeta}>
                       <span>Vertrag analysiert: {contractWeeklyCheck.metadata.analyzedPercentage}%</span>
-                      <span>Gepr{String.fromCharCode(252)}ft gegen: {contractWeeklyCheck.metadata.dataSourcesUsed?.length || '?'} offizielle Quellen</span>
+                      <span>Geprüft gegen: {contractWeeklyCheck.metadata.dataSourcesUsed?.length || '?'} offizielle Quellen</span>
                       <span>Konfidenz: {Math.round(contractWeeklyCheck.metadata.confidenceScore * 100)}%</span>
-                      <span>Erkannte {String.fromCharCode(196)}nderungen seit: {new Date(contractWeeklyCheck.metadata.lastDataSync || contractWeeklyCheck.checkDate).toLocaleDateString('de-DE')}</span>
+                      <span>Erkannte Änderungen seit: {new Date(contractWeeklyCheck.metadata.lastDataSync || contractWeeklyCheck.checkDate).toLocaleDateString('de-DE')}</span>
                     </div>
                   )}
 
                   {/* Stage 1: Erkannte Rechtsänderungen */}
                   {contractWeeklyCheck.stage1Results.relevantChanges.length > 0 && (
                     <div className={styles.legalChangesStage1}>
-                      <h4>Erkannte Rechts{String.fromCharCode(228)}nderungen der letzten 7 Tage</h4>
+                      <h4>Erkannte Rechtsänderungen der letzten 7 Tage</h4>
                       <ul>
                         {contractWeeklyCheck.stage1Results.relevantChanges.map((change, idx) => (
                           <li key={idx}>
@@ -1863,7 +1793,7 @@ export default function LegalPulse() {
                               {finding.severity === 'critical' ? 'Kritisch' : finding.severity === 'warning' ? 'Warnung' : 'Info'}
                             </span>
                             <span className={styles.legalChangesFindingType}>
-                              {finding.type === 'law_change' ? `Gesetzes${String.fromCharCode(228)}nderung` :
+                              {finding.type === 'law_change' ? `Gesetzes$änderung` :
                                finding.type === 'risk' ? 'Risiko' :
                                finding.type === 'compliance' ? 'Compliance' : 'Verbesserung'}
                             </span>
@@ -1894,8 +1824,8 @@ export default function LegalPulse() {
                   <div className={styles.legalChangesDisclaimer}>
                     <Shield size={14} />
                     <p>
-                      <strong>Wichtiger Hinweis:</strong> Diese Analyse pr{String.fromCharCode(252)}ft erkannte Rechts{String.fromCharCode(228)}nderungen aus 20 offiziellen Quellen.
-                      Sie ersetzt keine anwaltliche Beratung. Alle Angaben ohne Gew{String.fromCharCode(228)}hr.
+                      <strong>Wichtiger Hinweis:</strong> Diese Analyse prüft erkannte Rechtsänderungen aus 20 offiziellen Quellen.
+                      Sie ersetzt keine anwaltliche Beratung. Alle Angaben ohne Gewähr.
                     </p>
                   </div>
                 </>
@@ -1911,11 +1841,11 @@ export default function LegalPulse() {
                     <Clock size={32} color="#3b82f6" />
                   </div>
                   <h3>Noch keine Analyse-Historie</h3>
-                  <p>Die Analyse-Historie zeigt die Entwicklung des Risiko-Scores {String.fromCharCode(252)}ber Zeit. Nach der ersten Analyse wird hier der Verlauf sichtbar.</p>
+                  <p>Die Analyse-Historie zeigt die Entwicklung des Risiko-Scores über Zeit. Nach der ersten Analyse wird hier der Verlauf sichtbar.</p>
                   <div className={styles.noAnalysisFeatures}>
                     <div className={styles.noAnalysisFeature}>
                       <Activity size={18} color="#3b82f6" />
-                      <span>Score-Verlauf {String.fromCharCode(252)}ber Zeit</span>
+                      <span>Score-Verlauf über Zeit</span>
                     </div>
                     <div className={styles.noAnalysisFeature}>
                       <AlertTriangle size={18} color="#f59e0b" />
@@ -1939,7 +1869,7 @@ export default function LegalPulse() {
                 <>
                   <div className={styles.sectionHeader}>
                     <h3>Analyse-Historie</h3>
-                    <p>Entwicklung des Risiko-Scores {String.fromCharCode(252)}ber Zeit</p>
+                    <p>Entwicklung des Risiko-Scores über Zeit</p>
                   </div>
 
                   {scoreHistory.length <= 1 ? (
@@ -1950,7 +1880,7 @@ export default function LegalPulse() {
                           <polyline points="12 6 12 12 16 14"/>
                         </svg>
                       </div>
-                      <h4>Erste Analyse durchgef{String.fromCharCode(252)}hrt</h4>
+                      <h4>Erste Analyse durchgeführt</h4>
                       {selectedContract.legalPulse?.lastAnalysis && (
                         <p className={styles.historySingleDate}>
                           am {new Date(selectedContract.legalPulse.lastAnalysis).toLocaleDateString('de-DE', {
@@ -1960,7 +1890,7 @@ export default function LegalPulse() {
                       )}
                       <div className={styles.historySingleScore}>
                         <span style={{ color: riskLevel.color, fontWeight: 700, fontSize: '1.5rem' }}>
-                          {selectedContract.legalPulse?.riskScore || '\u2014'}
+                          {selectedContract.legalPulse?.riskScore ?? '\u2014'}
                         </span>
                         <span style={{ color: '#6b7280' }}>/100 Risiko-Score</span>
                         <span style={{ color: riskLevel.color, fontWeight: 600 }}>
@@ -1968,13 +1898,13 @@ export default function LegalPulse() {
                         </span>
                       </div>
                       <p className={styles.historySingleHint}>
-                        Der Verlauf wird sichtbar, sobald weitere Analysen durchgef{String.fromCharCode(252)}hrt werden.
-                        Legal Pulse pr{String.fromCharCode(252)}ft Ihren Vertrag automatisch w{String.fromCharCode(246)}chentlich auf Ver{String.fromCharCode(228)}nderungen.
+                        Der Verlauf wird sichtbar, sobald weitere Analysen durchgeführt werden.
+                        Legal Pulse prüft Ihren Vertrag automatisch wöchentlich auf Veränderungen.
                       </p>
                       {selectedContract.legalPulse?.nextScheduledCheck && (
                         <div className={styles.historySingleNext}>
                           <Clock size={14} />
-                          N{String.fromCharCode(228)}chste geplante Pr{String.fromCharCode(252)}fung: {new Date(selectedContract.legalPulse.nextScheduledCheck).toLocaleDateString('de-DE', {
+                          Nächste geplante Prüfung: {new Date(selectedContract.legalPulse.nextScheduledCheck).toLocaleDateString('de-DE', {
                             weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
                           })}
                         </div>
@@ -1986,7 +1916,7 @@ export default function LegalPulse() {
                         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.legendIcon}>
                           <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" strokeWidth="2"/>
                         </svg>
-                        <span>Zeitverlauf des Risiko-Scores (0{String.fromCharCode(8211)}100); h{String.fromCharCode(246)}her = riskanter</span>
+                        <span>Zeitverlauf des Risiko-Scores (0–100); höher = riskanter</span>
                       </div>
                       <div className={styles.historyContent}>
                         <div className={styles.historyChart}>
@@ -2010,8 +1940,8 @@ export default function LegalPulse() {
                               <Area
                                 type="monotone"
                                 dataKey="score"
-                                stroke={getRiskScoreColor(selectedContract.legalPulse?.riskScore || null)}
-                                fill={`${getRiskScoreColor(selectedContract.legalPulse?.riskScore || null)}20`}
+                                stroke={getRiskScoreColor(selectedContract.legalPulse?.riskScore ?? null)}
+                                fill={`${getRiskScoreColor(selectedContract.legalPulse?.riskScore ?? null)}20`}
                                 strokeWidth={2}
                               />
                             </AreaChart>
@@ -2032,8 +1962,8 @@ export default function LegalPulse() {
                   <div className={styles.noAnalysisIcon} style={{ background: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)' }}>
                     <Zap size={32} color="#8b5cf6" />
                   </div>
-                  <h3>ML-Prognose ben{String.fromCharCode(246)}tigt Analyse-Daten</h3>
-                  <p>Die KI-basierte Risikovorhersage ben{String.fromCharCode(246)}tigt eine abgeschlossene Vertragsanalyse als Grundlage. Nach der Analyse werden Prognosen f{String.fromCharCode(252)}r die n{String.fromCharCode(228)}chsten 6 Monate erstellt.</p>
+                  <h3>ML-Prognose benötigt Analyse-Daten</h3>
+                  <p>Die KI-basierte Risikovorhersage benötigt eine abgeschlossene Vertragsanalyse als Grundlage. Nach der Analyse werden Prognosen für die nächsten 6 Monate erstellt.</p>
                   <div className={styles.noAnalysisFeatures}>
                     <div className={styles.noAnalysisFeature}>
                       <Activity size={18} color="#8b5cf6" />
@@ -2061,7 +1991,7 @@ export default function LegalPulse() {
                 <>
                   <div className={styles.sectionHeader}>
                     <h3>ML-Prognose</h3>
-                    <p>KI-basierte Vorhersagen f{String.fromCharCode(252)}r Risiken und Vertragsentwicklung</p>
+                    <p>KI-basierte Vorhersagen für Risiken und Vertragsentwicklung</p>
                   </div>
 
                   {/* Loading State */}
@@ -2076,9 +2006,9 @@ export default function LegalPulse() {
                   {forecastError && !forecastLoading && (
                     <div className={styles.forecastError}>
                       <div className={styles.infoBox} style={{ borderColor: '#ef4444', background: '#fef2f2' }}>
-                        <div className={styles.infoIcon}>{String.fromCharCode(9888)}{String.fromCharCode(65039)}</div>
+                        <div className={styles.infoIcon}>⚠️</div>
                         <div className={styles.infoContent}>
-                          <h4>Prognose nicht verf{String.fromCharCode(252)}gbar</h4>
+                          <h4>Prognose nicht verfügbar</h4>
                           <p>{forecastError}</p>
                           <button
                             className={styles.retryButton}
@@ -2255,10 +2185,10 @@ export default function LegalPulse() {
                   {!selectedContract && !forecastLoading && (
                     <div className={styles.mlStatus}>
                       <div className={styles.infoBox}>
-                        <div className={styles.infoIcon}>{String.fromCharCode(8505)}{String.fromCharCode(65039)}</div>
+                        <div className={styles.infoIcon}>ℹ️</div>
                         <div className={styles.infoContent}>
-                          <h4>Kein Vertrag ausgew{String.fromCharCode(228)}hlt</h4>
-                          <p>W{String.fromCharCode(228)}hlen Sie einen Vertrag aus der Liste, um die ML-Prognose anzuzeigen.</p>
+                          <h4>Kein Vertrag ausgewählt</h4>
+                          <p>Wählen Sie einen Vertrag aus der Liste, um die ML-Prognose anzuzeigen.</p>
                         </div>
                       </div>
                     </div>
@@ -2269,176 +2199,6 @@ export default function LegalPulse() {
           )}
         </div>
 
-        {/* Risk Details Modal */}
-        {showRiskModal && selectedRisk && (
-          <div className={styles.modalOverlay} onClick={() => setShowRiskModal(false)}>
-            <div className={styles.riskModal} onClick={(e) => e.stopPropagation()}>
-              <div className={styles.modalHeader}>
-                <h2>{selectedRisk.title}</h2>
-                <button
-                  className={styles.modalCloseButton}
-                  onClick={() => setShowRiskModal(false)}
-                >
-                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2"/>
-                    <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2"/>
-                  </svg>
-                </button>
-              </div>
-              <div className={styles.modalBody}>
-                {riskModalType === 'details' ? (
-                  <>
-                    {/* Details View: Beschreibung + Auswirkungen */}
-                    <div className={styles.riskDetailSection}>
-                      <h4>🔍 Beschreibung</h4>
-                      <p>{selectedRisk.description}</p>
-                    </div>
-
-                    <div className={styles.riskDetailSection}>
-                      <h4>⚠️ Auswirkungen</h4>
-                      <p>{selectedRisk.impact}</p>
-                    </div>
-
-                    {selectedRisk.affectedClauseText && (
-                      <div className={styles.riskDetailSection}>
-                        <h4>📄 Betroffene Klausel</h4>
-                        <div className={styles.clauseQuoteBlock}>
-                          {selectedRisk.affectedClauseText}
-                        </div>
-                      </div>
-                    )}
-
-                    {selectedRisk.legalBasis && (
-                      <div className={styles.riskDetailSection}>
-                        <h4>⚖️ Rechtsgrundlage</h4>
-                        <p className={styles.legalBasisText}>{selectedRisk.legalBasis}</p>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    {/* Solutions View: Lösungsvorschlag + Empfehlung */}
-                    <div className={styles.riskDetailSection}>
-                      <h4>💡 Lösungsvorschlag</h4>
-                      <p>{selectedRisk.solution}</p>
-                    </div>
-
-                    <div className={styles.riskDetailSection}>
-                      <h4>📋 Empfehlung</h4>
-                      <p>{selectedRisk.recommendation}</p>
-                    </div>
-
-                    {selectedRisk.replacementText && (
-                      <div className={styles.riskDetailSection}>
-                        <h4>✏️ Vorgeschlagener Ersatztext</h4>
-                        <div className={styles.replacementTextBlock}>
-                          {selectedRisk.replacementText}
-                        </div>
-                      </div>
-                    )}
-
-                    {selectedRisk.legalBasis && (
-                      <div className={styles.riskDetailSection}>
-                        <h4>⚖️ Rechtsgrundlage</h4>
-                        <p className={styles.legalBasisText}>{selectedRisk.legalBasis}</p>
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {/* Reminder Section */}
-                <div className={styles.reminderSection}>
-                  {!showReminderPicker ? (
-                    <button
-                      className={styles.reminderButton}
-                      onClick={() => setShowReminderPicker(true)}
-                    >
-                      🔔 Erinnerung setzen
-                    </button>
-                  ) : (
-                    <div className={styles.reminderPicker}>
-                      <label>Erinnerungsdatum:</label>
-                      <input
-                        type="date"
-                        value={reminderDate}
-                        onChange={(e) => setReminderDate(e.target.value)}
-                        min={new Date().toISOString().split('T')[0]}
-                        className={styles.reminderDateInput}
-                      />
-                      <div className={styles.reminderPickerActions}>
-                        <button
-                          className={styles.secondaryButton}
-                          onClick={() => setShowReminderPicker(false)}
-                        >
-                          Abbrechen
-                        </button>
-                        <button
-                          className={styles.primaryButton}
-                          disabled={!reminderDate}
-                          onClick={async () => {
-                            if (!reminderDate || !selectedContract) return;
-                            try {
-                              const token = localStorage.getItem('token');
-                              const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/calendar/events`, {
-                                method: 'POST',
-                                headers: {
-                                  'Content-Type': 'application/json',
-                                  'Authorization': `Bearer ${token}`
-                                },
-                                body: JSON.stringify({
-                                  contractId: selectedContract._id,
-                                  title: `Risiko prüfen: ${selectedRisk.title}`,
-                                  description: `Legal Pulse Erinnerung: ${selectedRisk.description}`,
-                                  date: reminderDate,
-                                  type: 'reminder'
-                                })
-                              });
-                              const data = await res.json();
-                              if (data.success || res.ok) {
-                                setNotification({ message: 'Erinnerung erstellt!', type: 'success' });
-                                setShowReminderPicker(false);
-                                setReminderDate('');
-                              } else {
-                                setNotification({ message: 'Fehler beim Erstellen der Erinnerung', type: 'error' });
-                              }
-                            } catch {
-                              setNotification({ message: 'Fehler beim Erstellen der Erinnerung', type: 'error' });
-                            }
-                          }}
-                        >
-                          Erinnerung erstellen
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className={styles.modalActions}>
-                  <button
-                    className={styles.secondaryButton}
-                    onClick={() => setShowRiskModal(false)}
-                  >
-                    Schließen
-                  </button>
-                  <button
-                    className={styles.primaryButton}
-                    onClick={() => {
-                      setShowRiskModal(false);
-                      navigate('/optimizer', {
-                        state: {
-                          contractId: selectedContract._id,
-                          riskToFix: selectedRisk
-                        }
-                      });
-                    }}
-                  >
-                    Jetzt optimieren
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Save Clause Modal */}
         {showSaveClauseModal && clauseToSave && (
@@ -2462,8 +2222,8 @@ export default function LegalPulse() {
         {/* Bottom CTA */}
         <div className={styles.bottomCTA}>
           <div className={styles.ctaContent}>
-            <h2>Behalten Sie den {String.fromCharCode(220)}berblick</h2>
-            <p>Alle Ihre Vertr{String.fromCharCode(228)}ge auf einen Blick {String.fromCharCode(8211)} {String.fromCharCode(252)}berwacht und analysiert</p>
+            <h2>Behalten Sie den Überblick</h2>
+            <p>Alle Ihre Verträge auf einen Blick – überwacht und analysiert</p>
             <button
               className={styles.primaryCTAButton}
               onClick={() => navigate('/legalpulse')}
@@ -2471,7 +2231,7 @@ export default function LegalPulse() {
               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              Zur{String.fromCharCode(252)}ck zur {String.fromCharCode(220)}bersicht
+              Zurück zur Übersicht
             </button>
           </div>
         </div>
@@ -2625,7 +2385,7 @@ export default function LegalPulse() {
             )}
             <span>
               {monitoringHealth.lastSuccessfulRun
-                ? `Letzte Pr${String.fromCharCode(252)}fung: vor ${monitoringHealth.hoursAgo?.toFixed(0)}h`
+                ? `Letzte Pr$üfung: vor ${monitoringHealth.hoursAgo?.toFixed(0)}h`
                 : 'Noch keine Pr\u00fcfung durchgef\u00fchrt'}
             </span>
           </div>
@@ -2635,7 +2395,7 @@ export default function LegalPulse() {
           </div>
           <div className={styles.monitoringStatusItem}>
             <Activity size={16} />
-            <span>{monitoringHealth.vectorStore.indexedContracts}/{monitoringHealth.vectorStore.totalContracts} Vertr{String.fromCharCode(228)}ge {String.fromCharCode(252)}berwacht</span>
+            <span>{monitoringHealth.vectorStore.indexedContracts}/{monitoringHealth.vectorStore.totalContracts} Verträge überwacht</span>
           </div>
           {alertsUnreadCount > 0 && (
             <button
@@ -2696,8 +2456,8 @@ export default function LegalPulse() {
         <div className={styles.disclaimerBanner}>
           <Shield size={16} />
           <p>
-            <strong>Wichtiger Hinweis:</strong> Die KI-gest{String.fromCharCode(252)}tzte Rechtsanalyse dient der
-            Vorinformation und ersetzt keine anwaltliche Beratung. Alle Angaben ohne Gew{String.fromCharCode(228)}hr.
+            <strong>Wichtiger Hinweis:</strong> Die KI-gestützte Rechtsanalyse dient der
+            Vorinformation und ersetzt keine anwaltliche Beratung. Alle Angaben ohne Gewähr.
           </p>
         </div>
       )}
@@ -2708,7 +2468,7 @@ export default function LegalPulse() {
           <div className={styles.weeklyCheckHeader}>
             <div className={styles.weeklyCheckTitle}>
               <Shield size={20} />
-              <h3>W{String.fromCharCode(246)}chentliche Rechts{String.fromCharCode(228)}nderungs-{String.fromCharCode(220)}berwachung</h3>
+              <h3>Wöchentliche Rechtsänderungs-Überwachung</h3>
               {weeklyChecks && weeklyChecks.contracts.length > 0 && (
                 <span className={styles.weeklyCheckBadge}>
                   {weeklyChecks.contracts.filter(c => c.latestCheck.stage2Results.overallStatus !== 'aktuell').length} mit Handlungsbedarf
@@ -2729,10 +2489,10 @@ export default function LegalPulse() {
           {showWeeklyChecks && (
             <div className={styles.weeklyCheckContent}>
               {weeklyChecksLoading ? (
-                <div className={styles.weeklyCheckLoading}>Lade Rechts{String.fromCharCode(228)}nderungs-Pr{String.fromCharCode(252)}fungen...</div>
+                <div className={styles.weeklyCheckLoading}>Lade Rechtsänderungs-Prüfungen...</div>
               ) : !weeklyChecks || weeklyChecks.contracts.length === 0 ? (
                 <div className={styles.weeklyCheckEmpty}>
-                  <p>Noch keine Rechts{String.fromCharCode(228)}nderungs-Pr{String.fromCharCode(252)}fungen durchgef{String.fromCharCode(252)}hrt. Die erste Pr{String.fromCharCode(252)}fung erfolgt automatisch am n{String.fromCharCode(228)}chsten Sonntag.</p>
+                  <p>Noch keine Rechtsänderungs-Prüfungen durchgeführt. Die erste Prüfung erfolgt automatisch am nächsten Sonntag.</p>
                 </div>
               ) : (
                 <div className={styles.weeklyCheckList}>
@@ -2772,15 +2532,15 @@ export default function LegalPulse() {
                             {contract.latestCheck.metadata && (
                               <div className={styles.analysisMetadata}>
                                 <span>Vertrag analysiert: {contract.latestCheck.metadata.analyzedPercentage}%</span>
-                                <span>Gepr{String.fromCharCode(252)}ft gegen: {contract.latestCheck.metadata.dataSourcesUsed?.length || '?'} offizielle Quellen</span>
+                                <span>Geprüft gegen: {contract.latestCheck.metadata.dataSourcesUsed?.length || '?'} offizielle Quellen</span>
                                 <span>Konfidenz: {Math.round(contract.latestCheck.metadata.confidenceScore * 100)}%</span>
-                                <span>Erkannte {String.fromCharCode(196)}nderungen seit: {new Date(contract.latestCheck.metadata.lastDataSync || contract.latestCheck.checkDate).toLocaleDateString('de-DE')}</span>
+                                <span>Erkannte Änderungen seit: {new Date(contract.latestCheck.metadata.lastDataSync || contract.latestCheck.checkDate).toLocaleDateString('de-DE')}</span>
                               </div>
                             )}
 
                             {contract.latestCheck.stage1Results.relevantChanges.length > 0 && (
                               <div className={styles.weeklyStage1}>
-                                <h5>Erkannte Rechts{String.fromCharCode(228)}nderungen der letzten 7 Tage (aus 20 offiziellen Quellen)</h5>
+                                <h5>Erkannte Rechtsänderungen der letzten 7 Tage (aus 20 offiziellen Quellen)</h5>
                                 <ul>
                                   {contract.latestCheck.stage1Results.relevantChanges.map((change, idx) => (
                                     <li key={idx}>
@@ -2801,7 +2561,7 @@ export default function LegalPulse() {
                                         {finding.severity === 'critical' ? 'Kritisch' : finding.severity === 'warning' ? 'Warnung' : 'Info'}
                                       </span>
                                       <span className={styles.findingType}>
-                                        {finding.type === 'law_change' ? `Gesetzes${String.fromCharCode(228)}nderung` :
+                                        {finding.type === 'law_change' ? `Gesetzes$änderung` :
                                          finding.type === 'risk' ? 'Risiko' :
                                          finding.type === 'compliance' ? 'Compliance' : 'Verbesserung'}
                                       </span>
