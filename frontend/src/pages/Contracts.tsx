@@ -529,6 +529,17 @@ export default function Contracts() {
     }
   }, [folderDropdownOpen]);
 
+  // 📱 MOBILE: Scroll blockieren wenn Duplikat-Modal offen ist
+  useEffect(() => {
+    if (duplicateModal?.show) {
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = prevOverflow || '';
+      };
+    }
+  }, [duplicateModal?.show]);
+
   // 📁 Handle folder reorder (move up/down)
   const handleMoveFolderUp = async (folderId: string) => {
     const currentIndex = folders.findIndex(f => f._id === folderId);
