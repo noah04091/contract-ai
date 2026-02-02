@@ -53,7 +53,7 @@ const CameraView: React.FC<CameraViewProps> = ({
   const detection = useDocumentDetection({
     videoRef,
     enabled: state.isActive,
-    stabilityThresholdMs: 1500,
+    stabilityThresholdMs: 1000,
     targetFps: 12,
     onStableDetection: handleAutoCapture,
   });

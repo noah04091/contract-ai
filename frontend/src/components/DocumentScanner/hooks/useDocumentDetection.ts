@@ -4,6 +4,11 @@
  * Drives the document detection loop via requestAnimationFrame.
  * Lazy-loads the DocumentDetector class (non-blocking).
  * Tracks stability for auto-capture with EMA smoothing + hysteresis.
+ *
+ * Key design decisions:
+ * - Null frames (Hough misses) are tolerated — overlay stays visible
+ * - Stability is checked against SMOOTHED corners (not raw jittery Hough output)
+ * - Grace period for both "corners moved" AND "no detection" frames
  */
 
 import { useState, useRef, useCallback, useEffect } from "react";
@@ -20,25 +25,26 @@ interface DetectionState {
 interface UseDocumentDetectionOptions {
   videoRef: React.RefObject<HTMLVideoElement | null>;
   enabled: boolean;
-  stabilityThresholdMs?: number; // default 1500
+  stabilityThresholdMs?: number; // default 1000
   targetFps?: number; // default 12
   onStableDetection?: (corners: Point[]) => void;
 }
 
-const STABILITY_TOLERANCE = 0.03; // 3% of frame (forgiving for shaky mobile hands)
-const EMA_ALPHA = 0.35; // 35% new frame, 65% history (smooth but responsive)
-const GRACE_FRAMES = 5; // Tolerate up to 5 unstable frames before reset
-const FADEOUT_MS = 350; // Fade-out duration when detection is lost
-const NO_DETECTION_HINT_MS = 2500; // Show hint after 2.5s without detection
+// ─── Tuning Constants ────────────────────────────────────────
+const STABILITY_TOLERANCE = 0.035; // 3.5% of frame — forgiving for mobile hand shake
+const EMA_ALPHA = 0.3; // 30% new, 70% history — smooth, absorbs Hough jitter
+const GRACE_FRAMES_UNSTABLE = 6; // Tolerate 6 frames where corners moved before resetting
+const NULL_FRAME_TOLERANCE = 10; // Tolerate 10 frames (~800ms) of no detection before giving up
+const FADEOUT_MS = 400; // Fade-out duration after null tolerance exceeded
+const NO_DETECTION_HINT_MS = 3000; // Show "Dokument ins Bild halten" after 3s without ANY detection
 
-/** Euclidean distance check for corner similarity */
+/** Check if smoothed corners are similar enough to count as "stable" */
 function cornersAreSimilar(a: Point[], b: Point[]): boolean {
   if (a.length !== 4 || b.length !== 4) return false;
   for (let i = 0; i < 4; i++) {
     const dx = a[i].x - b[i].x;
     const dy = a[i].y - b[i].y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist > STABILITY_TOLERANCE) return false;
+    if (dx * dx + dy * dy > STABILITY_TOLERANCE * STABILITY_TOLERANCE) return false;
   }
   return true;
 }
@@ -54,7 +60,7 @@ function smoothCorners(prev: Point[], curr: Point[], alpha: number): Point[] {
 export function useDocumentDetection({
   videoRef,
   enabled,
-  stabilityThresholdMs = 1200,
+  stabilityThresholdMs = 1000,
   targetFps = 12,
   onStableDetection,
 }: UseDocumentDetectionOptions): DetectionState {
@@ -66,26 +72,26 @@ export function useDocumentDetection({
     hint: null,
   });
 
-  // Refs for the detection loop (avoid stale closures)
+  // Refs for the detection loop
   const detectorRef = useRef<import("../utils/documentDetector").DocumentDetectorInterface | null>(null);
   const rafRef = useRef<number>(0);
   const lastFrameTimeRef = useRef(0);
-  const previousCornersRef = useRef<Point[] | null>(null);
   const smoothedCornersRef = useRef<Point[] | null>(null);
+  const prevSmoothedRef = useRef<Point[] | null>(null); // Previous frame's smoothed (for stability check)
   const stableStartTimeRef = useRef<number | null>(null);
   const consecutiveErrorsRef = useRef(0);
   const disabledRef = useRef(false);
   const autoCapturedRef = useRef(false);
   const onStableDetectionRef = useRef(onStableDetection);
   const unstableCountRef = useRef(0);
-  const lostTimeRef = useRef<number | null>(null);
-  const lastKnownCornersRef = useRef<Point[] | null>(null);
+  const nullFrameCountRef = useRef(0); // Consecutive frames with no detection
   const lastKnownConfidenceRef = useRef(0);
-  const loopStartTimeRef = useRef<number>(0); // When detection loop started
-  const lastDetectionTimeRef = useRef<number>(0); // Last time a document was detected
-  const stabilityBreakCountRef = useRef(0); // Count of stability resets (for "Ruhig halten")
-  const frameTimesRef = useRef<number[]>([]); // Track recent frame processing times
-  const resolutionReducedRef = useRef(false); // Whether we auto-reduced resolution
+  const loopStartTimeRef = useRef<number>(0);
+  const lastDetectionTimeRef = useRef<number>(0); // Last time Hough returned something
+  const stabilityBreakCountRef = useRef(0);
+  const frameTimesRef = useRef<number[]>([]);
+  const resolutionReducedRef = useRef(false);
+  const lostTimeRef = useRef<number | null>(null); // When we exceeded null tolerance and started fading
 
   // Keep callback ref in sync
   useEffect(() => {
@@ -108,159 +114,86 @@ export function useDocumentDetection({
       const video = videoRef.current;
       const detector = detectorRef.current;
       if (!video || !detector || video.readyState < 2) return;
-      if (document.hidden) return; // Skip when tab is hidden
+      if (document.hidden) return;
 
       try {
-        // HybridDetector.detect() runs Hough sync + ML async in background
         const t0 = performance.now();
         const result = detector.detect ? detector.detect(video) : null;
         const frameMs = performance.now() - t0;
 
-        // Adaptive performance: auto-reduce resolution if frames are consistently slow
+        // Adaptive performance: auto-reduce resolution if consistently slow
         if (!resolutionReducedRef.current) {
           const frameTimes = frameTimesRef.current;
           frameTimes.push(frameMs);
           if (frameTimes.length > 20) frameTimes.shift();
           if (frameTimes.length === 20) {
             const avg = frameTimes.reduce((a, b) => a + b, 0) / frameTimes.length;
-            if (avg > 40) { // >40ms per frame = too slow
+            if (avg > 40) {
               detector.reduceResolution();
               resolutionReducedRef.current = true;
-              console.log(`[Detection] Auto-reduced resolution (avg ${avg.toFixed(0)}ms/frame)`);
             }
           }
         }
 
         consecutiveErrorsRef.current = 0;
 
-        if (result && result.confidence > 0.4) {
-          // Clear fade-out state
+        const hasDetection = result && result.confidence > 0.35;
+
+        if (hasDetection) {
+          // ─── DETECTION SUCCESS ───────────────────────────
+          nullFrameCountRef.current = 0;
           lostTimeRef.current = null;
           lastDetectionTimeRef.current = timestamp;
 
           const rawCorners = result.corners;
 
-          // Apply EMA smoothing
+          // Apply EMA smoothing — this absorbs Hough jitter
           const smoothed = smoothedCornersRef.current
             ? smoothCorners(smoothedCornersRef.current, rawCorners, EMA_ALPHA)
             : rawCorners;
           smoothedCornersRef.current = smoothed;
-
-          // Check stability against raw corners (not smoothed, to avoid self-stabilizing)
-          if (
-            previousCornersRef.current &&
-            cornersAreSimilar(rawCorners, previousCornersRef.current)
-          ) {
-            // Corners are stable — reset grace counter
-            unstableCountRef.current = 0;
-
-            if (!stableStartTimeRef.current) {
-              stableStartTimeRef.current = timestamp;
-            }
-
-            const stableDuration = timestamp - stableStartTimeRef.current;
-            const progress = Math.min(1, stableDuration / stabilityThresholdMs);
-            const isStable = progress >= 1;
-            stabilityBreakCountRef.current = 0; // Stable → reset break counter
-
-            const hint = isStable
-              ? "Dokument erkannt"
-              : progress > 0
-                ? "Nicht bewegen…"
-                : null;
-
-            setState({
-              detectedCorners: smoothed,
-              confidence: result.confidence,
-              isStable,
-              stabilityProgress: progress,
-              hint,
-            });
-
-            // Auto-capture trigger
-            if (isStable && !autoCapturedRef.current) {
-              autoCapturedRef.current = true;
-              onStableDetectionRef.current?.(smoothed);
-            }
-          } else {
-            // Corners moved — hysteresis: tolerate a few unstable frames
-            unstableCountRef.current++;
-
-            if (unstableCountRef.current > GRACE_FRAMES) {
-              // Too many unstable frames → full reset
-              stableStartTimeRef.current = null;
-              autoCapturedRef.current = false;
-              unstableCountRef.current = 0;
-              stabilityBreakCountRef.current++;
-
-              // Hint: if stability keeps breaking, tell user to hold still
-              const hint = stabilityBreakCountRef.current >= 3
-                ? "Ruhig halten"
-                : result.confidence < 0.4
-                  ? "Näher ran"
-                  : null;
-
-              setState({
-                detectedCorners: smoothed,
-                confidence: result.confidence,
-                isStable: false,
-                stabilityProgress: 0,
-                hint,
-              });
-            } else {
-              // Within grace period — keep current progress, update corners
-              const currentProgress = stableStartTimeRef.current
-                ? Math.min(1, (timestamp - stableStartTimeRef.current) / stabilityThresholdMs)
-                : 0;
-
-              setState({
-                detectedCorners: smoothed,
-                confidence: result.confidence,
-                isStable: false,
-                stabilityProgress: currentProgress,
-                hint: currentProgress > 0 ? "Nicht bewegen…" : null,
-              });
-            }
-          }
-
-          previousCornersRef.current = rawCorners;
-          lastKnownCornersRef.current = smoothed;
           lastKnownConfidenceRef.current = result.confidence;
-        } else {
-          // No document detected — fade out gracefully
-          if (lastKnownCornersRef.current && !lostTimeRef.current) {
-            lostTimeRef.current = timestamp;
-          }
 
-          if (lostTimeRef.current && lastKnownCornersRef.current) {
+          // ─── STABILITY CHECK (against smoothed corners, not raw) ───
+          handleStabilityCheck(smoothed, result.confidence, timestamp);
+
+          prevSmoothedRef.current = smoothed;
+        } else {
+          // ─── NO DETECTION ────────────────────────────────
+          nullFrameCountRef.current++;
+
+          if (smoothedCornersRef.current && nullFrameCountRef.current <= NULL_FRAME_TOLERANCE) {
+            // Within tolerance — keep showing last known overlay, keep stability timer running
+            // This is THE key fix: Hough missing a frame doesn't kill the overlay
+            handleStabilityCheck(
+              smoothedCornersRef.current,
+              lastKnownConfidenceRef.current * 0.95, // Slightly reduce confidence
+              timestamp
+            );
+          } else if (smoothedCornersRef.current && nullFrameCountRef.current > NULL_FRAME_TOLERANCE) {
+            // Exceeded tolerance — start fading out
+            if (!lostTimeRef.current) {
+              lostTimeRef.current = timestamp;
+            }
+
             const fadeElapsed = timestamp - lostTimeRef.current;
             const fadeProgress = Math.min(1, fadeElapsed / FADEOUT_MS);
 
             if (fadeProgress < 1) {
-              // Still fading — show last known corners with decreasing confidence
               const fadedConfidence = lastKnownConfidenceRef.current * (1 - fadeProgress);
               setState({
-                detectedCorners: lastKnownCornersRef.current,
+                detectedCorners: smoothedCornersRef.current,
                 confidence: fadedConfidence,
                 isStable: false,
                 stabilityProgress: 0,
                 hint: null,
               });
             } else {
-              // Fade complete — clear everything
-              previousCornersRef.current = null;
-              smoothedCornersRef.current = null;
-              stableStartTimeRef.current = null;
-              autoCapturedRef.current = false;
-              lostTimeRef.current = null;
-              lastKnownCornersRef.current = null;
-              unstableCountRef.current = 0;
-
-              const noDetectHint = (loopStartTimeRef.current > 0 &&
-                timestamp - Math.max(loopStartTimeRef.current, lastDetectionTimeRef.current) > NO_DETECTION_HINT_MS)
+              // Fade complete — full reset
+              resetDetectionState();
+              const noDetectHint = shouldShowNoDetectionHint(timestamp)
                 ? "Dokument ins Bild halten"
                 : null;
-
               setState({
                 detectedCorners: null,
                 confidence: 0,
@@ -270,18 +203,10 @@ export function useDocumentDetection({
               });
             }
           } else {
-            // No previous detection to fade
-            previousCornersRef.current = null;
-            smoothedCornersRef.current = null;
-            stableStartTimeRef.current = null;
-            autoCapturedRef.current = false;
-            unstableCountRef.current = 0;
-
-            const noDetectHint = (loopStartTimeRef.current > 0 &&
-              timestamp - Math.max(loopStartTimeRef.current, lastDetectionTimeRef.current) > NO_DETECTION_HINT_MS)
+            // Never had a detection yet
+            const noDetectHint = shouldShowNoDetectionHint(timestamp)
               ? "Dokument ins Bild halten"
               : null;
-
             setState({
               detectedCorners: null,
               confidence: 0,
@@ -293,10 +218,7 @@ export function useDocumentDetection({
         }
       } catch (err) {
         consecutiveErrorsRef.current++;
-        console.warn("[Detection] Frame error:", err);
-
         if (consecutiveErrorsRef.current >= 10) {
-          console.warn("[Detection] Too many errors, disabling detection");
           disabledRef.current = true;
           setState({
             detectedCorners: null,
@@ -311,6 +233,91 @@ export function useDocumentDetection({
     [videoRef, frameInterval, stabilityThresholdMs]
   );
 
+  /** Shared stability logic — called for both real detections AND null-tolerance frames */
+  function handleStabilityCheck(smoothed: Point[], confidence: number, timestamp: number) {
+    if (
+      prevSmoothedRef.current &&
+      cornersAreSimilar(smoothed, prevSmoothedRef.current)
+    ) {
+      // Corners stable — advance timer
+      unstableCountRef.current = 0;
+
+      if (!stableStartTimeRef.current) {
+        stableStartTimeRef.current = timestamp;
+      }
+
+      const stableDuration = timestamp - stableStartTimeRef.current;
+      const progress = Math.min(1, stableDuration / stabilityThresholdMs);
+      const isStable = progress >= 1;
+      stabilityBreakCountRef.current = 0;
+
+      setState({
+        detectedCorners: smoothed,
+        confidence,
+        isStable,
+        stabilityProgress: progress,
+        hint: isStable
+          ? "Dokument erkannt"
+          : progress > 0.1
+            ? "Nicht bewegen…"
+            : null,
+      });
+
+      // Auto-capture trigger
+      if (isStable && !autoCapturedRef.current) {
+        autoCapturedRef.current = true;
+        onStableDetectionRef.current?.(smoothed);
+      }
+    } else {
+      // Corners moved — hysteresis
+      unstableCountRef.current++;
+
+      if (unstableCountRef.current > GRACE_FRAMES_UNSTABLE) {
+        // Too many unstable frames → reset stability timer (but keep showing overlay!)
+        stableStartTimeRef.current = null;
+        autoCapturedRef.current = false;
+        unstableCountRef.current = 0;
+        stabilityBreakCountRef.current++;
+
+        setState({
+          detectedCorners: smoothed,
+          confidence,
+          isStable: false,
+          stabilityProgress: 0,
+          hint: stabilityBreakCountRef.current >= 3 ? "Ruhig halten" : null,
+        });
+      } else {
+        // Within grace period — keep current progress
+        const currentProgress = stableStartTimeRef.current
+          ? Math.min(1, (timestamp - stableStartTimeRef.current) / stabilityThresholdMs)
+          : 0;
+
+        setState({
+          detectedCorners: smoothed,
+          confidence,
+          isStable: false,
+          stabilityProgress: currentProgress,
+          hint: currentProgress > 0.1 ? "Nicht bewegen…" : null,
+        });
+      }
+    }
+  }
+
+  function shouldShowNoDetectionHint(timestamp: number): boolean {
+    return loopStartTimeRef.current > 0 &&
+      timestamp - Math.max(loopStartTimeRef.current, lastDetectionTimeRef.current) > NO_DETECTION_HINT_MS;
+  }
+
+  function resetDetectionState() {
+    smoothedCornersRef.current = null;
+    prevSmoothedRef.current = null;
+    stableStartTimeRef.current = null;
+    autoCapturedRef.current = false;
+    lostTimeRef.current = null;
+    unstableCountRef.current = 0;
+    nullFrameCountRef.current = 0;
+  }
+
   // Start/stop detection loop
   useEffect(() => {
     if (!enabled) {
@@ -324,7 +331,7 @@ export function useDocumentDetection({
     import("../utils/documentDetector")
       .then(({ createDocumentDetector }) => {
         if (disposed) return;
-        const detector = createDocumentDetector(); // sync — returns immediately with Hough
+        const detector = createDocumentDetector();
         if (disposed) {
           detector.dispose();
           return;
@@ -348,13 +355,7 @@ export function useDocumentDetection({
         detectorRef.current.dispose();
         detectorRef.current = null;
       }
-      previousCornersRef.current = null;
-      smoothedCornersRef.current = null;
-      stableStartTimeRef.current = null;
-      autoCapturedRef.current = false;
-      lostTimeRef.current = null;
-      lastKnownCornersRef.current = null;
-      unstableCountRef.current = 0;
+      resetDetectionState();
       loopStartTimeRef.current = 0;
       lastDetectionTimeRef.current = 0;
       stabilityBreakCountRef.current = 0;

@@ -15,6 +15,43 @@ const DEFAULT_CORNERS: Point[] = [
   { x: 0.1, y: 0.9 },  // BL
 ];
 
+/** Minimum distance between adjacent corners (5% of frame) */
+const MIN_CORNER_DISTANCE = 0.05;
+
+/**
+ * Constrain a corner so it doesn't cross adjacent corners.
+ * Order: [TL=0, TR=1, BR=2, BL=3]
+ */
+function constrainCorner(idx: number, pos: Point, corners: Point[]): Point {
+  let { x, y } = pos;
+  const d = MIN_CORNER_DISTANCE;
+
+  switch (idx) {
+    case 0: // TL: must be left-of TR, above BL
+      x = Math.min(x, corners[1].x - d);
+      y = Math.min(y, corners[3].y - d);
+      break;
+    case 1: // TR: must be right-of TL, above BR
+      x = Math.max(x, corners[0].x + d);
+      y = Math.min(y, corners[2].y - d);
+      break;
+    case 2: // BR: must be right-of BL, below TR
+      x = Math.max(x, corners[3].x + d);
+      y = Math.max(y, corners[1].y + d);
+      break;
+    case 3: // BL: must be left-of BR, below TL
+      x = Math.min(x, corners[2].x - d);
+      y = Math.max(y, corners[0].y + d);
+      break;
+  }
+
+  // Clamp to [0, 1]
+  x = Math.max(0, Math.min(1, x));
+  y = Math.max(0, Math.min(1, y));
+
+  return { x, y };
+}
+
 interface UseCornerAdjustmentReturn {
   corners: Point[];
   activeCorner: number | null;
@@ -58,7 +95,7 @@ export function useCornerAdjustment(
 
       setCorners((prev) => {
         const next = [...prev];
-        next[idx] = pos;
+        next[idx] = constrainCorner(idx, pos, prev);
         return next;
       });
     },
@@ -83,7 +120,7 @@ export function useCornerAdjustment(
       const pos = getRelativePosition(e.clientX, e.clientY);
       setCorners((prev) => {
         const next = [...prev];
-        next[index] = pos;
+        next[index] = constrainCorner(index, pos, prev);
         return next;
       });
 
