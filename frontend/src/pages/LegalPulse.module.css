@@ -4687,7 +4687,7 @@
   border: 2px solid #f59e0b;
   border-radius: 12px;
   padding: 14px 20px;
-  margin-bottom: 24px;
+  margin: 0 auto 24px auto;
   max-width: 900px;
   animation: slideDown 0.3s ease;
 }
