@@ -12,7 +12,7 @@ import { useLegalPulseFeed } from "../hooks/useLegalPulseFeed";
 import { WelcomePopup } from "../components/Tour";
 import OneClickCancelModal from "../components/OneClickCancelModal";
 import SaveClauseModal from "../components/LegalLens/SaveClauseModal";
-import { Activity, Zap, XCircle, Bell, ArrowRight, Download, Shield, AlertTriangle, CheckCircle, Clock } from "lucide-react";
+import { Activity, Zap, XCircle, Bell, ArrowRight, Download, Shield, AlertTriangle, CheckCircle, Clock, FileText } from "lucide-react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   AreaChart, Area
@@ -370,8 +370,7 @@ export default function LegalPulse() {
   const isFirstMountRef = useRef(true); // ✅ Skip first mount in filter useEffect
   const contractsSectionRef = useRef<HTMLDivElement>(null); // ✅ Ref für "Jetzt Risiken prüfen" Scroll
 
-  // Optimizer Integration
-  const [isStartingOptimizer, setIsStartingOptimizer] = useState(false);
+
 
   // 🔐 User Subscription Check für Premium-Gating - MUSS vor Feed Hook sein!
   const [userPlan, setUserPlan] = useState<string>('free');
@@ -1050,73 +1049,7 @@ export default function LegalPulse() {
     setForecastError(null);
   }, [selectedContract?._id]);
 
-  // Legal Pulse → Optimizer Handoff
-  const handleStartOptimizer = async () => {
-    if (!selectedContract) {
-      console.log('[LP-OPTIMIZER] Kein Vertrag ausgewählt');
-      return;
-    }
 
-    console.log('[LP-OPTIMIZER] Starting optimizer for contract:', selectedContract._id);
-    console.log('[LP-OPTIMIZER] Contract has S3 Key:', !!selectedContract.s3Key);
-    console.log('[LP-OPTIMIZER] Contract has filePath:', !!selectedContract.filePath);
-    console.log('[LP-OPTIMIZER] Full contract storage info:', {
-      s3Key: selectedContract.s3Key,
-      s3Location: selectedContract.s3Location,
-      filePath: selectedContract.filePath
-    });
-
-    setIsStartingOptimizer(true);
-    try {
-      console.log('[LP-OPTIMIZER] Sending API request...');
-
-      // Send contract ID and any available storage info
-      // Backend will handle both S3 and legacy local storage
-      const response = await fetch('/api/optimize/start-from-legalpulse', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          contractId: selectedContract._id,
-          s3Key: selectedContract.s3Key, // May be undefined for legacy contracts
-          s3Location: selectedContract.s3Location, // May be undefined for legacy contracts
-          risks: selectedContract.legalPulse?.topRisks || [],
-          recommendations: selectedContract.legalPulse?.recommendations || []
-        })
-      });
-
-      console.log('[LP-OPTIMIZER] Response status:', response.status);
-      const data = await response.json();
-      console.log('[LP-OPTIMIZER] Response data:', data);
-
-      if (data.success && data.jobId) {
-        console.log('[LP-OPTIMIZER] Job created successfully:', data.jobId);
-        setNotification({
-          message: 'Optimierung wird gestartet...',
-          type: 'success'
-        });
-        // Navigate to optimizer page with jobId
-        setTimeout(() => {
-          navigate(`/optimizer/${data.jobId}`);
-        }, 500);
-      } else {
-        setNotification({
-          message: data.message || 'Fehler beim Starten der Optimierung',
-          type: 'error'
-        });
-      }
-    } catch (error) {
-      console.error('[LP-OPTIMIZER] Error:', error);
-      setNotification({
-        message: 'Fehler beim Starten der Optimierung',
-        type: 'error'
-      });
-    } finally {
-      setIsStartingOptimizer(false);
-    }
-  };
 
   // Detailansicht für einzelnen Vertrag
   if (contractId && selectedContract) {
@@ -1225,20 +1158,18 @@ export default function LegalPulse() {
 
             <button
               className={styles.optimizeButton}
-              onClick={handleStartOptimizer}
-              disabled={isStartingOptimizer}
+              onClick={handleExportReport}
+              disabled={isExportingReport}
             >
-              {isStartingOptimizer ? (
+              {isExportingReport ? (
                 <>
                   <div className={styles.spinner}></div>
-                  Wird gestartet...
+                  Wird erstellt...
                 </>
               ) : (
                 <>
-                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M13 10V3L4 14h7v7l9-11h-7z" fill="currentColor"/>
-                  </svg>
-                  Vertrag optimieren
+                  <Download size={16} />
+                  Audit-Report
                 </>
               )}
             </button>
@@ -1705,11 +1636,10 @@ export default function LegalPulse() {
                       </button>
                       <button
                         className={`${styles.actionButton} ${styles.primaryAction}`}
-                        onClick={handleStartOptimizer}
-                        disabled={isStartingOptimizer}
+                        onClick={() => navigate(`/compare?contractId=${selectedContract._id}`)}
                       >
-                        <Zap size={16} />
-                        {isStartingOptimizer ? 'Wird gestartet...' : 'Vertrag optimieren'}
+                        <FileText size={16} />
+                        Vertrag vergleichen
                       </button>
                     </div>
                   </div>
@@ -2542,16 +2472,16 @@ export default function LegalPulse() {
         {/* Bottom CTA */}
         <div className={styles.bottomCTA}>
           <div className={styles.ctaContent}>
-            <h2>Bleiben Sie vorbereitet. Reagieren Sie jetzt.</h2>
-            <p>Optimieren Sie Ihren Vertrag mit unserer KI-gestützten Lösung</p>
+            <h2>Behalten Sie den {String.fromCharCode(220)}berblick</h2>
+            <p>Alle Ihre Vertr{String.fromCharCode(228)}ge auf einen Blick {String.fromCharCode(8211)} {String.fromCharCode(252)}berwacht und analysiert</p>
             <button
               className={styles.primaryCTAButton}
-              onClick={() => navigate('/optimizer')}
+              onClick={() => navigate('/legalpulse')}
             >
               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L15.09 8.26L22 9L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9L8.91 8.26L12 2Z" stroke="currentColor" strokeWidth="2"/>
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              Vertrag jetzt optimieren
+              Zur{String.fromCharCode(252)}ck zur {String.fromCharCode(220)}bersicht
             </button>
           </div>
         </div>
