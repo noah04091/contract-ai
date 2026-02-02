@@ -584,26 +584,25 @@
 
 /* ===== SCORE SECTION ===== */
 .scoreSection {
-  margin-bottom: 48px;
-  max-width: 1600px;
+  margin-bottom: 32px;
+  max-width: 900px;
   margin-left: auto;
   margin-right: auto;
 }
 
 .scoreCard {
   background: white;
-  border-radius: 24px;
-  padding: 48px;
+  border-radius: 20px;
+  padding: 32px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   border: 1px solid #f1f5f9;
-  text-align: center;
 }
 
 /* Score Hero Layout - Two Column */
 .scoreHeroLayout {
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 48px;
+  grid-template-columns: 180px 1fr;
+  gap: 32px;
   align-items: start;
 }
 
@@ -611,8 +610,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  min-width: 200px;
+  gap: 12px;
 }
 
 .scoreExplanation {
@@ -744,8 +742,8 @@
 
 .scoreCircle {
   position: relative;
-  width: 160px;
-  height: 160px;
+  width: 140px;
+  height: 140px;
   border-radius: 50%;
   background: conic-gradient(
     var(--score-color, #6b7280) 0deg,
@@ -775,8 +773,8 @@
 .scoreCircle::before {
   content: '';
   position: absolute;
-  width: 120px;
-  height: 120px;
+  width: 104px;
+  height: 104px;
   background: white;
   border-radius: 50%;
   top: 50%;
@@ -787,7 +785,7 @@
 .scoreNumber {
   position: relative;
   z-index: 1;
-  font-size: 3rem;
+  font-size: 2.5rem;
   font-weight: 800;
   color: var(--score-color, #6b7280);
   animation: scoreNumberPop 0.6s ease-out 0.2s both;
