@@ -309,7 +309,7 @@ class PdfExtractor {
       }
 
       try {
-        const ocrResult = await extractTextWithOCR(pdfBuffer);
+        const ocrResult = await extractTextWithOCR(buffer);
 
         if (ocrResult.success && ocrResult.text.length > result.text.length) {
           // OCR war erfolgreich und hat mehr Text gefunden

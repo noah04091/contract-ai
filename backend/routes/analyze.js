@@ -3,6 +3,7 @@ const express = require("express");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
 const { extractTextFromBuffer, isSupportedMimetype, SUPPORTED_MIMETYPES } = require("../services/textExtractor");
+const pdfExtractor = require("../services/pdfExtractor");
 const fs = require("fs").promises;
 const fsSync = require("fs");
 const { OpenAI } = require("openai");
@@ -2518,6 +2519,28 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       const extracted = await extractTextFromBuffer(buffer, fileMimetype);
       pdfData = { text: extracted.text, numpages: extracted.pageCount || 0 };
       console.log(`📄 [${requestId}] Document parsed: ${pdfData.numpages} pages, ${pdfData.text.length} characters`);
+
+      // OCR-Fallback für gescannte PDFs mit wenig/keinem Text
+      const isPdf = fileMimetype === 'application/pdf';
+      const textTooShort = !pdfData.text || pdfData.text.trim().length < 200;
+      if (isPdf && textTooShort) {
+        console.log(`🔍 [${requestId}] Wenig Text (${pdfData.text?.trim().length || 0} Zeichen) — versuche OCR-Fallback...`);
+        try {
+          const ocrResult = await pdfExtractor.extractTextWithOCRFallback(buffer, {
+            mimetype: fileMimetype,
+            enableOCR: true,
+            ocrThreshold: 50,
+            userId: req.user?.userId
+          });
+          if (ocrResult.success && ocrResult.text.trim().length > (pdfData.text?.trim().length || 0)) {
+            console.log(`✅ [${requestId}] OCR-Fallback erfolgreich: ${ocrResult.text.length} Zeichen (vorher: ${pdfData.text?.length || 0}), OCR=${ocrResult.usedOCR}`);
+            pdfData.text = ocrResult.text;
+            pdfData.numpages = ocrResult.quality.pageCount || pdfData.numpages;
+          }
+        } catch (ocrErr) {
+          console.warn(`⚠️ [${requestId}] OCR-Fallback fehlgeschlagen: ${ocrErr.message} — fahre mit Original-Text fort`);
+        }
+      }
     } catch (error) {
       console.error(`❌ [${requestId}] Document parsing error:`, error);
       return res.status(400).json({
