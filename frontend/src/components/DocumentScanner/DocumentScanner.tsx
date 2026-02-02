@@ -20,6 +20,56 @@ import type { CaptureResult } from "./hooks/useCamera";
 import { applyPerspectiveCrop } from "./utils/perspectiveTransform";
 import styles from "./DocumentScanner.module.css";
 
+/** Max pixel dimension for images before upload (saves bandwidth on mobile) */
+const UPLOAD_MAX_DIM = 2000;
+const UPLOAD_JPEG_QUALITY = 0.85;
+
+/**
+ * Compress a Blob image to max UPLOAD_MAX_DIM px and JPEG quality before upload.
+ * Returns original if already small enough or if compression fails.
+ */
+async function compressForUpload(blob: Blob): Promise<Blob> {
+  // Skip tiny images (already compressed or preview-only)
+  if (blob.size < 200_000) return blob;
+
+  try {
+    const bmp = await createImageBitmap(blob);
+    const { width, height } = bmp;
+
+    // Already within limits and small enough — skip
+    if (width <= UPLOAD_MAX_DIM && height <= UPLOAD_MAX_DIM && blob.size < 1_500_000) {
+      bmp.close();
+      return blob;
+    }
+
+    // Calculate scale to fit within UPLOAD_MAX_DIM
+    const scale = Math.min(1, UPLOAD_MAX_DIM / Math.max(width, height));
+    const outW = Math.round(width * scale);
+    const outH = Math.round(height * scale);
+
+    const canvas = new OffscreenCanvas(outW, outH);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      bmp.close();
+      return blob;
+    }
+
+    ctx.drawImage(bmp, 0, 0, outW, outH);
+    bmp.close();
+
+    const compressed = await canvas.convertToBlob({ type: "image/jpeg", quality: UPLOAD_JPEG_QUALITY });
+
+    // Only use compressed if it's actually smaller
+    if (compressed.size < blob.size) {
+      return compressed;
+    }
+    return blob;
+  } catch {
+    // OffscreenCanvas not supported (older browsers) — use original
+    return blob;
+  }
+}
+
 export interface DocumentScannerProps {
   isOpen: boolean;
   onClose: () => void;
@@ -155,12 +205,15 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
     [setActivePage]
   );
 
+  const [uploadProgress, setUploadProgress] = useState(0); // 0-100
+
   // Fertig → PDF generieren
   const handleFinish = useCallback(async () => {
     if (pageCount === 0) return;
 
     setScannerState("processing");
     setProcessingProgress("Bilder werden vorbereitet...");
+    setUploadProgress(0);
     setError(null);
 
     try {
@@ -176,15 +229,16 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
         return valid ? p.corners : [];
       });
 
-      // Bilder ans Backend — correctedBlob bevorzugen (perspektiv-korrigiert),
-      // Fallback auf imageBlob (Original) wenn keine Korrektur vorhanden
+      // Bilder komprimieren und ans Backend senden
       let validCount = 0;
       for (let i = 0; i < pages.length; i++) {
-        const blob = pages[i].correctedBlob || pages[i].imageBlob;
-        if (!blob || blob.size === 0) {
+        const rawBlob = pages[i].correctedBlob || pages[i].imageBlob;
+        if (!rawBlob || rawBlob.size === 0) {
           console.warn(`[Scanner] Seite ${i + 1} übersprungen (leerer Blob)`);
           continue;
         }
+        setProcessingProgress(`Bild ${i + 1}/${pages.length} wird komprimiert...`);
+        const blob = await compressForUpload(rawBlob);
         formData.append("images", blob, `scan_${i + 1}.jpg`);
         // Wenn correctedBlob gesendet wird, sind Corners bereits angewendet → leere Corners senden
         if (pages[i].correctedBlob) {
@@ -206,34 +260,55 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
 
       setProcessingProgress(`${validCount} ${validCount === 1 ? "Seite wird" : "Seiten werden"} hochgeladen...`);
 
-      // Fetch mit Retry bei transienten Fehlern (408, 429, 503, Netzwerk)
+      // Upload mit XMLHttpRequest für echtes Progress-Tracking + Retry
       const token = localStorage.getItem("token");
       const MAX_RETRIES = 2;
-      let response: Response | null = null;
+
+      const doUpload = (): Promise<{ status: number; body: string }> =>
+        new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("POST", `${API_BASE}/api/scanner/process`);
+          if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+
+          xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+              const pct = Math.round((e.loaded / e.total) * 100);
+              setUploadProgress(pct);
+              setProcessingProgress(
+                pct < 100
+                  ? `Hochladen... ${pct}%`
+                  : "Server verarbeitet..."
+              );
+            }
+          };
+
+          xhr.onload = () => resolve({ status: xhr.status, body: xhr.responseText });
+          xhr.onerror = () => reject(new Error("network"));
+          xhr.ontimeout = () => reject(new Error("timeout"));
+          xhr.timeout = 120_000;
+          xhr.send(formData);
+        });
+
+      let lastResult: { status: number; body: string } | null = null;
 
       for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
         try {
-          response = await fetch(`${API_BASE}/api/scanner/process`, {
-            method: "POST",
-            headers: {
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
-            body: formData,
-          });
+          lastResult = await doUpload();
 
-          // Bei transienten HTTP-Fehlern → Retry
-          if (response.status === 408 || response.status === 429 || response.status === 503) {
+          if (lastResult.status === 408 || lastResult.status === 429 || lastResult.status === 503) {
             if (attempt < MAX_RETRIES) {
-              const waitMs = (attempt + 1) * 2000; // 2s, 4s
+              const waitMs = (attempt + 1) * 2000;
               setProcessingProgress(`Server beschäftigt — neuer Versuch in ${waitMs / 1000}s...`);
+              setUploadProgress(0);
               await new Promise((r) => setTimeout(r, waitMs));
               continue;
             }
           }
-          break; // Erfolg oder nicht-transienter Fehler → kein Retry
+          break;
         } catch {
           if (attempt < MAX_RETRIES) {
-            setProcessingProgress(`Netzwerkfehler — neuer Versuch...`);
+            setProcessingProgress("Netzwerkfehler — neuer Versuch...");
+            setUploadProgress(0);
             await new Promise((r) => setTimeout(r, 2000));
             continue;
           }
@@ -241,13 +316,18 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
         }
       }
 
-      if (!response || !response.ok) {
-        const errData = await response?.json().catch(() => ({})) || {};
-        throw new Error((errData as Record<string, string>).error || `Server-Fehler: ${response?.status}`);
+      if (!lastResult || lastResult.status < 200 || lastResult.status >= 300) {
+        let errMsg = `Server-Fehler: ${lastResult?.status}`;
+        try {
+          const errData = JSON.parse(lastResult?.body || "{}");
+          if (errData.error) errMsg = errData.error;
+        } catch { /* ignore parse error */ }
+        throw new Error(errMsg);
       }
 
       setProcessingProgress("PDF wird erstellt...");
-      const result = await response.json();
+      setUploadProgress(100);
+      const result = JSON.parse(lastResult.body);
 
       if (!result.success) {
         throw new Error(result.error || "Verarbeitung fehlgeschlagen");
@@ -398,6 +478,14 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({
               <div className={styles.statusContainer}>
                 <Loader2 size={48} className={styles.spinner} />
                 <p className={styles.statusText}>{processingProgress}</p>
+                {uploadProgress > 0 && uploadProgress < 100 && (
+                  <div className={styles.progressBarOuter}>
+                    <div
+                      className={styles.progressBarInner}
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                )}
               </div>
             )}
 

@@ -513,6 +513,22 @@
   color: rgba(255, 255, 255, 0.8);
 }
 
+.progressBarOuter {
+  width: 100%;
+  max-width: 280px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.15);
+  overflow: hidden;
+}
+
+.progressBarInner {
+  height: 100%;
+  border-radius: 3px;
+  background: #60a5fa;
+  transition: width 0.3s ease;
+}
+
 .successIcon {
   color: #22c55e;
 }
