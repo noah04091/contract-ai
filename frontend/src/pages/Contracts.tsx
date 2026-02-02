@@ -4038,6 +4038,14 @@ export default function Contracts() {
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.3 }}
                   >
+                    {/* 📱 Mobile Back-Button */}
+                    <button
+                      className={styles.mobileBackButton}
+                      onClick={() => setActiveSection('contracts')}
+                    >
+                      <ChevronLeft size={20} />
+                      <span>Zurück zu Verträgen</span>
+                    </button>
                     {/* ✅ KORRIGIERT: Free-User Upgrade-Bereich */}
                 {!canUpload ? (
                   <div className={styles.upgradeSection}>
@@ -5809,6 +5817,7 @@ export default function Contracts() {
             onClick={() => {
               setMobileNavTab('alle');
               setStatusFilter('alle');
+              setActiveSection('contracts');
             }}
           >
             <FileText />
