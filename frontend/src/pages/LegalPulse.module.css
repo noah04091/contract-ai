@@ -1160,24 +1160,26 @@
 
 .actionsList {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 12px;
 }
 
 .actionButton {
   display: flex;
+  flex: 1;
   align-items: center;
-  gap: 12px;
-  padding: 16px 20px;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 16px;
   background: #f8fafc;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   color: #374151;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  text-align: left;
+  text-align: center;
 }
 
 .actionButton:hover {
@@ -2926,7 +2928,12 @@
   .recommendationActionButton {
     min-height: 44px;
   }
-  
+
+  /* Actions-Buttons vertikal auf Mobile */
+  .actionsList {
+    flex-direction: column;
+  }
+
   .heroSection {
     flex-direction: column;
     text-align: center;

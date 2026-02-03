@@ -24,7 +24,7 @@ export default function LegalChangesTab({ contractWeeklyCheck, contractWeeklyChe
         <div className={styles.legalChangesEmpty}>
           <Shield size={40} />
           <h4>Noch keine Prüfung durchgeführt</h4>
-          <p>Die automatische Rechtsänderungs-Prüfung für diesen Vertrag erfolgt beim nächsten wöchentlichen Check (Sonntag 02:00 Uhr).</p>
+          <p>Die automatische Rechtsänderungs-Prüfung für diesen Vertrag erfolgt beim nächsten wöchentlichen Check.</p>
         </div>
       ) : (
         <>
