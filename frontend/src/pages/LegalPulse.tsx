@@ -12,7 +12,7 @@ import { WelcomePopup } from "../components/Tour";
 import OneClickCancelModal from "../components/OneClickCancelModal";
 import SaveClauseModal from "../components/LegalLens/SaveClauseModal";
 import { OverviewTab, RisksTab, RecommendationsTab, LegalChangesTab, HistoryTab, ForecastTab, SearchSidebar } from "../components/LegalPulse";
-import { Activity, Zap, Bell, ArrowRight, Download, Shield, AlertTriangle, CheckCircle, Clock } from "lucide-react";
+import { Activity, Zap, Bell, ArrowRight, Download, Shield, AlertTriangle } from "lucide-react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
@@ -53,10 +53,9 @@ export default function LegalPulse() {
   // Export Report State
   const [isExportingReport, setIsExportingReport] = useState(false);
 
-  // V7: Alert History
-  const [alertHistory, setAlertHistory] = useState<PulseAlert[]>([]);
-  const [alertsUnreadCount, setAlertsUnreadCount] = useState(0);
-  const [showAlertHistory, setShowAlertHistory] = useState(false);
+  // V7: Alert History (kept for API compatibility, panel removed as redundant)
+  const [, setAlertHistory] = useState<PulseAlert[]>([]);
+  const [, setAlertsUnreadCount] = useState(0);
 
   // Weekly Legal Check State
   const [weeklyChecks, setWeeklyChecks] = useState<WeeklyChecksData | null>(null);
@@ -139,29 +138,6 @@ export default function LegalPulse() {
       }
     } catch (err) {
       handleError(err, 'LegalPulse:fetchAlerts');
-    }
-  };
-
-  // V7: Mark alerts as read
-  const markAlertsAsRead = async (alertIds: string[]) => {
-    try {
-      const token = localStorage.getItem("token");
-      const API_BASE = import.meta.env.VITE_API_URL || "";
-      await fetch(`${API_BASE}/api/legal-pulse/alerts/read`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ alertIds })
-      });
-      // Update local state
-      setAlertHistory(prev => prev.map(a =>
-        alertIds.includes(a._id) ? { ...a, read: true } : a
-      ));
-      setAlertsUnreadCount(prev => Math.max(0, prev - alertIds.length));
-    } catch (err) {
-      handleError(err, 'LegalPulse:markAlertsRead');
     }
   };
 
@@ -1350,89 +1326,6 @@ export default function LegalPulse() {
             </svg>
             Mehr anzeigen
           </button>
-        </div>
-      )}
-
-      {/* V7: Monitoring Status Widget (Premium only) - User-specific stats */}
-      {canAccessLegalPulse && contracts.length > 0 && (() => {
-        // Only count contracts that have actually been analyzed (have lastAnalysis date)
-        const analyzedContracts = contracts.filter(c => c.legalPulse?.lastAnalysis);
-        const riskContracts = analyzedContracts.filter(c => c.legalPulse?.riskScore != null && c.legalPulse.riskScore >= 50);
-
-        return (
-        <div className={styles.monitoringStatusBar}>
-          <div className={styles.monitoringStatusItem}>
-            {analyzedContracts.length === contracts.length ? (
-              <CheckCircle size={16} className={styles.statusHealthy} />
-            ) : analyzedContracts.length > 0 ? (
-              <Activity size={16} className={styles.statusWarning} />
-            ) : (
-              <Clock size={16} className={styles.statusUnknown} />
-            )}
-            <span>
-              {analyzedContracts.length} von {contracts.length} Verträgen analysiert
-            </span>
-          </div>
-          {analyzedContracts.length > 0 && (
-          <div className={styles.monitoringStatusItem}>
-            <Shield size={16} />
-            <span>
-              {riskContracts.length} mit erhöhtem Risiko
-            </span>
-          </div>
-          )}
-          {alertsUnreadCount > 0 && (
-            <button
-              className={styles.alertHistoryButton}
-              onClick={() => setShowAlertHistory(!showAlertHistory)}
-            >
-              <Bell size={16} />
-              <span>{alertsUnreadCount} neue Warnungen</span>
-            </button>
-          )}
-        </div>
-        );
-      })()}
-
-      {/* V7: Alert History Panel */}
-      {showAlertHistory && alertHistory.length > 0 && (
-        <div className={styles.alertHistoryPanel}>
-          <div className={styles.alertHistoryHeader}>
-            <h3>Vergangene Warnungen</h3>
-            <button onClick={() => {
-              const unreadIds = alertHistory.filter(a => !a.read).map(a => a._id);
-              if (unreadIds.length > 0) markAlertsAsRead(unreadIds);
-            }}>
-              Alle als gelesen markieren
-            </button>
-          </div>
-          <div className={styles.alertHistoryList}>
-            {alertHistory.map(alert => (
-              <div
-                key={alert._id}
-                className={`${styles.alertHistoryItem} ${!alert.read ? styles.alertUnread : ''}`}
-              >
-                <div className={styles.alertSeverityBadge} data-severity={alert.severity}>
-                  {alert.severity === 'critical' ? 'Kritisch' :
-                   alert.severity === 'high' ? 'Hoch' :
-                   alert.severity === 'medium' ? 'Mittel' : 'Niedrig'}
-                </div>
-                <div className={styles.alertContent}>
-                  <strong>{alert.lawTitle}</strong>
-                  <span className={styles.alertContract}>Betrifft: {alert.contractName}</span>
-                  {alert.explanation && (
-                    <p className={styles.alertExplanation}>{alert.explanation}</p>
-                  )}
-                </div>
-                <div className={styles.alertMeta}>
-                  <span>{new Date(alert.createdAt).toLocaleDateString('de-DE')}</span>
-                  <span className={styles.alertScore}>
-                    {(alert.score * 100).toFixed(0)}% Relevanz
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       )}
 
