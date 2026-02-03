@@ -1,6 +1,5 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import RecommendationsTab from '../RecommendationsTab';
 import { mockContract, mockContractNoAnalysis } from '../__fixtures__/testData';
 import type { Contract } from '../../../types/legalPulse';
