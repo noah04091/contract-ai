@@ -1010,6 +1010,22 @@
     font-weight: 600 !important;
     text-align: left !important;
     color: #1e293b !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    hyphens: auto !important;
+  }
+
+  /* 📱 Truncated Values auf Mobile: 2 Zeilen erlauben statt abschneiden */
+  .valueTruncate {
+    font-size: 0.875rem !important;
+    white-space: normal !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    word-break: break-word !important;
+    line-height: 1.4 !important;
   }
 
   /* Status Badge angepasst */
@@ -1382,22 +1398,36 @@
     margin-bottom: 10px !important;
   }
 
-  /* Details Grid: 2 Spalten beibehalten, aber kompakter */
+  /* Details Grid: 1 Spalte auf kleinen Screens für bessere Lesbarkeit */
   .detailsGrid {
-    gap: 6px !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
   }
 
   .detailItem {
-    padding: 10px !important;
+    padding: 12px !important;
     border-radius: 10px !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
   }
 
   .label {
-    font-size: 0.6875rem !important;
+    font-size: 0.75rem !important;
+    flex-shrink: 0 !important;
+    margin-right: 12px !important;
   }
 
   .value {
     font-size: 0.8125rem !important;
+    text-align: right !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+
+  .valueTruncate {
+    text-align: right !important;
+    -webkit-line-clamp: 1 !important;
   }
 
   /* Status Badge */
