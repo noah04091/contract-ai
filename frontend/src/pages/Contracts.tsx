@@ -551,6 +551,28 @@ export default function Contracts() {
     }
   }, [duplicateModal?.show]);
 
+  // 📱 MOBILE: Scroll blockieren wenn Contract-Details-Modal offen ist
+  useEffect(() => {
+    if (showDetails && selectedContract) {
+      // Body UND contentArea blockieren
+      const prevBodyOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+
+      const contentArea = document.querySelector('[class*="contentArea"]') as HTMLElement;
+      const prevContentOverflow = contentArea?.style.overflow || '';
+      if (contentArea) {
+        contentArea.style.overflow = 'hidden';
+      }
+
+      return () => {
+        document.body.style.overflow = prevBodyOverflow || '';
+        if (contentArea) {
+          contentArea.style.overflow = prevContentOverflow || '';
+        }
+      };
+    }
+  }, [showDetails, selectedContract]);
+
   // 📁 Handle folder reorder (move up/down)
   const handleMoveFolderUp = async (folderId: string) => {
     const currentIndex = folders.findIndex(f => f._id === folderId);
@@ -5355,34 +5377,7 @@ export default function Contracts() {
         </div>
         {/* End of enterpriseLayout */}
 
-        {/* 🎨 NEW: Professional Contract Details Modal */}
-          {selectedContract && showDetails && (
-            <NewContractDetailsModal
-              key={`${selectedContract._id}-${!!selectedContract.analysis}-${!!selectedContract.legalPulse}`}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              contract={selectedContract as any}
-              onClose={() => {
-                setShowDetails(false);
-                setOpenEditModalDirectly(false); // ✅ Reset beim Schließen
-
-                // ✅ RESET URL zurück zur Liste (triggert useLocation Hook!)
-                navigate('/contracts', { replace: true });
-              }}
-              openEditModalDirectly={openEditModalDirectly} // ✅ NEU: Diese Prop wird das Edit-Modal direkt öffnen
-              onEdit={async (contractId) => {
-                console.log("Contract updated:", contractId);
-                const updatedContracts = await fetchContracts(); // ✅ Verträge neu laden nach Edit
-                // ✅ FIX: selectedContract auch mit neuen Daten aktualisieren
-                if (updatedContracts) {
-                  const updatedContract = updatedContracts.find((c: Contract) => c._id === contractId);
-                  if (updatedContract) {
-                    setSelectedContract(updatedContract);
-                  }
-                }
-              }}
-              onDelete={handleDeleteContract}
-            />
-          )}
+        {/* 🎨 Contract Details Modal wurde als Portal nach document.body verschoben (unterhalb) */}
 
           {/* ⚡ NEU: Schnellanalyse-Modal - zeigt ausführliche Analyse nach Schnellanalyse */}
           {quickAnalysisModal.show && quickAnalysisModal.analysisResult && (
@@ -5456,6 +5451,33 @@ export default function Contracts() {
           />
       </div>
       {/* End of pageContainer */}
+
+      {/* 🎨 Contract Details Modal als Portal (außerhalb pageContainer für korrektes Scroll-Verhalten) */}
+      {selectedContract && showDetails && createPortal(
+        <NewContractDetailsModal
+          key={`${selectedContract._id}-${!!selectedContract.analysis}-${!!selectedContract.legalPulse}`}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          contract={selectedContract as any}
+          onClose={() => {
+            setShowDetails(false);
+            setOpenEditModalDirectly(false);
+            navigate('/contracts', { replace: true });
+          }}
+          openEditModalDirectly={openEditModalDirectly}
+          onEdit={async (contractId) => {
+            console.log("Contract updated:", contractId);
+            const updatedContracts = await fetchContracts();
+            if (updatedContracts) {
+              const updatedContract = updatedContracts.find((c: Contract) => c._id === contractId);
+              if (updatedContract) {
+                setSelectedContract(updatedContract);
+              }
+            }
+          }}
+          onDelete={handleDeleteContract}
+        />,
+        document.body
+      )}
 
       {/* ✅ Duplikat-Modal als Portal (außerhalb pageContainer für korrektes fixed-Positioning) */}
       {duplicateModal?.show && duplicateModal.fileItem && duplicateModal.existingContract && createPortal(
