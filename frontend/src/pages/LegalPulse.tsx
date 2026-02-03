@@ -12,13 +12,13 @@ import { WelcomePopup } from "../components/Tour";
 import OneClickCancelModal from "../components/OneClickCancelModal";
 import SaveClauseModal from "../components/LegalLens/SaveClauseModal";
 import { OverviewTab, RisksTab, RecommendationsTab, LegalChangesTab, HistoryTab, ForecastTab, SearchSidebar } from "../components/LegalPulse";
-import { Activity, Zap, XCircle, Bell, ArrowRight, Download, Shield, AlertTriangle, CheckCircle, Clock } from "lucide-react";
+import { Activity, Zap, Bell, ArrowRight, Download, Shield, AlertTriangle, CheckCircle, Clock } from "lucide-react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
 import type {
   Contract, RecommendationStatus, RiskObject, RecommendationObject, RecommendationInput,
-  MonitoringHealth, PulseAlert, WeeklyCheckContract, WeeklyChecksData,
+  PulseAlert, WeeklyCheckContract, WeeklyChecksData,
   ForecastData, Organization, TeamMember, Membership
 } from '../types/legalPulse';
 
@@ -53,8 +53,7 @@ export default function LegalPulse() {
   // Export Report State
   const [isExportingReport, setIsExportingReport] = useState(false);
 
-  // V7: Monitoring Health & Alert History
-  const [monitoringHealth, setMonitoringHealth] = useState<MonitoringHealth | null>(null);
+  // V7: Alert History
   const [alertHistory, setAlertHistory] = useState<PulseAlert[]>([]);
   const [alertsUnreadCount, setAlertsUnreadCount] = useState(0);
   const [showAlertHistory, setShowAlertHistory] = useState(false);
@@ -122,23 +121,6 @@ export default function LegalPulse() {
   }, [canAccessLegalPulse]);
 
   // ✅ REMOVED: Mock data logic - now using real data only
-
-  // V7: Fetch Monitoring Health
-  const fetchMonitoringHealth = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const API_BASE = import.meta.env.VITE_API_URL || "";
-      const res = await fetch(`${API_BASE}/api/legal-pulse/health`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success) setMonitoringHealth(data.health);
-      }
-    } catch (err) {
-      handleError(err, 'LegalPulse:fetchHealth');
-    }
-  };
 
   // V7: Fetch Alert History
   const fetchAlertHistory = async () => {
@@ -225,10 +207,9 @@ export default function LegalPulse() {
     }
   };
 
-  // V7: Fetch health, alerts, and weekly checks on mount (only for premium users)
+  // V7: Fetch alerts and weekly checks on mount (only for premium users)
   useEffect(() => {
     if (canAccessLegalPulse) {
-      fetchMonitoringHealth();
       fetchAlertHistory();
       fetchWeeklyChecks();
     }
@@ -1372,32 +1353,26 @@ export default function LegalPulse() {
         </div>
       )}
 
-      {/* V7: Monitoring Status Widget (Premium only) */}
-      {canAccessLegalPulse && monitoringHealth && (
+      {/* V7: Monitoring Status Widget (Premium only) - User-specific stats */}
+      {canAccessLegalPulse && contracts.length > 0 && (
         <div className={styles.monitoringStatusBar}>
           <div className={styles.monitoringStatusItem}>
-            {monitoringHealth.status === 'healthy' ? (
+            {contracts.filter(c => c.legalPulse?.riskScore != null).length === contracts.length ? (
               <CheckCircle size={16} className={styles.statusHealthy} />
-            ) : monitoringHealth.status === 'warning' ? (
-              <AlertTriangle size={16} className={styles.statusWarning} />
-            ) : monitoringHealth.status === 'critical' ? (
-              <XCircle size={16} className={styles.statusCritical} />
+            ) : contracts.filter(c => c.legalPulse?.riskScore != null).length > 0 ? (
+              <Activity size={16} className={styles.statusWarning} />
             ) : (
               <Clock size={16} className={styles.statusUnknown} />
             )}
             <span>
-              {monitoringHealth.lastSuccessfulRun
-                ? `Letzte Pr$üfung: vor ${monitoringHealth.hoursAgo?.toFixed(0)}h`
-                : 'Noch keine Pr\u00fcfung durchgef\u00fchrt'}
+              {contracts.filter(c => c.legalPulse?.riskScore != null).length} von {contracts.length} Verträgen analysiert
             </span>
           </div>
           <div className={styles.monitoringStatusItem}>
             <Shield size={16} />
-            <span>{monitoringHealth.feeds.active} aktive Rechtsquellen</span>
-          </div>
-          <div className={styles.monitoringStatusItem}>
-            <Activity size={16} />
-            <span>{monitoringHealth.vectorStore.indexedContracts}/{monitoringHealth.vectorStore.totalContracts} Verträge überwacht</span>
+            <span>
+              {contracts.filter(c => c.legalPulse?.riskScore != null && c.legalPulse.riskScore >= 50).length} mit erhöhtem Risiko
+            </span>
           </div>
           {alertsUnreadCount > 0 && (
             <button
@@ -1450,17 +1425,6 @@ export default function LegalPulse() {
               </div>
             ))}
           </div>
-        </div>
-      )}
-
-      {/* Disclaimer Banner */}
-      {canAccessLegalPulse && (
-        <div className={styles.disclaimerBanner}>
-          <Shield size={16} />
-          <p>
-            <strong>Wichtiger Hinweis:</strong> Die KI-gestützte Rechtsanalyse dient der
-            Vorinformation und ersetzt keine anwaltliche Beratung. Alle Angaben ohne Gewähr.
-          </p>
         </div>
       )}
 
@@ -2005,6 +1969,15 @@ export default function LegalPulse() {
             setContractToCancel(null);
           }}
         />
+      )}
+
+      {/* Disclaimer - ganz unten auf der Seite */}
+      {canAccessLegalPulse && (
+        <div className={styles.disclaimerFooter}>
+          <p>
+            Hinweis: Die KI-gestützte Rechtsanalyse dient der Vorinformation und ersetzt keine anwaltliche Beratung. Alle Angaben ohne Gewähr.
+          </p>
+        </div>
       )}
     </div>
   );

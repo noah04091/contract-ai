@@ -5124,6 +5124,21 @@
   line-height: 1.6;
 }
 
+/* Dezenter Disclaimer-Footer ganz unten */
+.disclaimerFooter {
+  text-align: center;
+  padding: 24px 16px;
+  margin-top: 40px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.disclaimerFooter p {
+  margin: 0;
+  color: #9ca3af;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .analysisMetadata {
   display: flex;
   gap: 16px;
