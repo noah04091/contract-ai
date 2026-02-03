@@ -5832,6 +5832,7 @@ export default function Contracts() {
             onClick={() => {
               setMobileNavTab('aktiv');
               setStatusFilter('aktiv');
+              setActiveSection('contracts');
             }}
           >
             <CheckCircle />
@@ -5843,6 +5844,7 @@ export default function Contracts() {
             onClick={() => {
               setMobileNavTab('faellig');
               setStatusFilter('bald_ablaufend');
+              setActiveSection('contracts');
             }}
           >
             <Bell />
@@ -5864,6 +5866,7 @@ export default function Contracts() {
             onClick={() => {
               setMobileNavTab('archiv');
               setStatusFilter('gekündigt');
+              setActiveSection('contracts');
             }}
           >
             <Folder />
@@ -5875,6 +5878,7 @@ export default function Contracts() {
             onClick={() => {
               setMobileNavTab('suche');
               setShowMobileSearch(true);
+              setActiveSection('contracts');
             }}
           >
             <Search />
@@ -5901,7 +5905,9 @@ export default function Contracts() {
               onClick={() => {
                 setShowMobileSearch(false);
                 setMobileSearchQuery('');
+                setSearchQuery('');
                 setMobileNavTab('alle');
+                setStatusFilter('alle');
               }}
             >
               <ChevronLeft size={24} />
