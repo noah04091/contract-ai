@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import styles from "./LegalPulse.module.css";
@@ -531,6 +531,28 @@ export default function LegalPulse() {
   };
 
   // Save Risk to Clause Library
+  // Keyboard navigation for ARIA tablist (Left/Right arrow keys)
+  const tabOrder = ['overview', 'risks', 'legalChanges', 'recommendations', 'history', 'forecast'] as const;
+  const handleTabKeyDown = useCallback((e: React.KeyboardEvent) => {
+    const currentIndex = tabOrder.indexOf(activeTab);
+    let newIndex = currentIndex;
+    if (e.key === 'ArrowRight') {
+      newIndex = (currentIndex + 1) % tabOrder.length;
+    } else if (e.key === 'ArrowLeft') {
+      newIndex = (currentIndex - 1 + tabOrder.length) % tabOrder.length;
+    } else if (e.key === 'Home') {
+      newIndex = 0;
+    } else if (e.key === 'End') {
+      newIndex = tabOrder.length - 1;
+    } else {
+      return;
+    }
+    e.preventDefault();
+    setActiveTab(tabOrder[newIndex]);
+    const nextTab = document.getElementById(`tab-${tabOrder[newIndex]}`);
+    nextTab?.focus();
+  }, [activeTab]);
+
   const handleSaveRiskToLibrary = (risk: RiskObject) => {
     const parts = [
       risk.affectedClauseText || risk.description || risk.title,
@@ -972,22 +994,32 @@ export default function LegalPulse() {
           </div>
         </div>
 
-        {/* Tab Navigation */}
-        <div className={styles.tabNavigation}>
-          <button 
+        {/* Tab Navigation - ARIA Tablist Pattern */}
+        <div className={styles.tabNavigation} role="tablist" aria-label="Legal Pulse Analysen" onKeyDown={handleTabKeyDown}>
+          <button
+            role="tab"
+            id="tab-overview"
+            aria-selected={activeTab === 'overview'}
+            aria-controls="tabpanel-overview"
+            tabIndex={activeTab === 'overview' ? 0 : -1}
             className={`${styles.tabButton} ${activeTab === 'overview' ? styles.active : ''}`}
             onClick={() => setActiveTab('overview')}
           >
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M3 12L5 10L12 17L22 7" stroke="currentColor" strokeWidth="2"/>
             </svg>
             Übersicht
           </button>
-          <button 
+          <button
+            role="tab"
+            id="tab-risks"
+            aria-selected={activeTab === 'risks'}
+            aria-controls="tabpanel-risks"
+            tabIndex={activeTab === 'risks' ? 0 : -1}
             className={`${styles.tabButton} ${activeTab === 'risks' ? styles.active : ''}`}
             onClick={() => setActiveTab('risks')}
           >
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 9V13" stroke="currentColor" strokeWidth="2"/>
               <path d="M12 17H12.01" stroke="currentColor" strokeWidth="2"/>
               <path d="M10.29 3.86L1.82 18A2 2 0 003.64 21H20.36A2 2 0 0022.18 18L13.71 3.86A2 2 0 0010.29 3.86Z" stroke="currentColor" strokeWidth="2"/>
@@ -995,37 +1027,57 @@ export default function LegalPulse() {
             Risiken ({selectedContract.legalPulse?.topRisks?.length || 0})
           </button>
           <button
+            role="tab"
+            id="tab-legalChanges"
+            aria-selected={activeTab === 'legalChanges'}
+            aria-controls="tabpanel-legalChanges"
+            tabIndex={activeTab === 'legalChanges' ? 0 : -1}
             className={`${styles.tabButton} ${activeTab === 'legalChanges' ? styles.active : ''}`}
             onClick={() => setActiveTab('legalChanges')}
           >
-            <Shield size={16} />
+            <Shield size={16} aria-hidden="true" />
             Rechtsänderungen{contractWeeklyCheck?.stage2Results?.findings?.length ? ` (${contractWeeklyCheck.stage2Results.findings.length})` : ''}
           </button>
           <button
+            role="tab"
+            id="tab-recommendations"
+            aria-selected={activeTab === 'recommendations'}
+            aria-controls="tabpanel-recommendations"
+            tabIndex={activeTab === 'recommendations' ? 0 : -1}
             className={`${styles.tabButton} ${activeTab === 'recommendations' ? styles.active : ''}`}
             onClick={() => setActiveTab('recommendations')}
           >
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M9 11L12 14L22 4" stroke="currentColor" strokeWidth="2"/>
               <path d="M21 12V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 2.96086 3.58579 2.58579C3.96086 2.21071 4.46957 2 5 2H16" stroke="currentColor" strokeWidth="2"/>
             </svg>
             Empfehlungen ({selectedContract.legalPulse?.recommendations?.length || 0})
           </button>
           <button
+            role="tab"
+            id="tab-history"
+            aria-selected={activeTab === 'history'}
+            aria-controls="tabpanel-history"
+            tabIndex={activeTab === 'history' ? 0 : -1}
             className={`${styles.tabButton} ${activeTab === 'history' ? styles.active : ''}`}
             onClick={() => setActiveTab('history')}
           >
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 8V12L16 14" stroke="currentColor" strokeWidth="2"/>
               <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2"/>
             </svg>
             Historie
           </button>
           <button
+            role="tab"
+            id="tab-forecast"
+            aria-selected={activeTab === 'forecast'}
+            aria-controls="tabpanel-forecast"
+            tabIndex={activeTab === 'forecast' ? 0 : -1}
             className={`${styles.tabButton} ${activeTab === 'forecast' ? styles.active : ''}`}
             onClick={() => setActiveTab('forecast')}
           >
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M22 12H18L15 21L9 3L6 12H2" stroke="currentColor" strokeWidth="2"/>
             </svg>
             ML-Prognose
@@ -1034,7 +1086,7 @@ export default function LegalPulse() {
         </div>
 
         {/* Tab Content */}
-        <div className={styles.tabContent}>
+        <div className={styles.tabContent} role="tabpanel" id={`tabpanel-${activeTab}`} aria-labelledby={`tab-${activeTab}`}>
           {/* Contextual Actions Bar */}
           {selectedContract && selectedContract.legalPulse?.riskScore && selectedContract.legalPulse.riskScore > 40 && (
             <div className={styles.quickActionsBar} style={{
@@ -1889,7 +1941,7 @@ export default function LegalPulse() {
           <div className={styles.sidebar} onClick={(e) => e.stopPropagation()}>
             <div className={styles.sidebarHeader}>
               <h2>Legal Pulse Einstellungen</h2>
-              <button className={styles.closeSidebar} onClick={() => setShowSettingsSidebar(false)}>×</button>
+              <button className={styles.closeSidebar} onClick={() => setShowSettingsSidebar(false)} aria-label="Einstellungen schließen">×</button>
             </div>
             <div className={styles.sidebarContent}>
               <LegalPulseSettings
@@ -1909,7 +1961,7 @@ export default function LegalPulse() {
           <div className={styles.sidebar} onClick={(e) => e.stopPropagation()}>
             <div className={styles.sidebarHeader}>
               <h2>Live Feed</h2>
-              <button className={styles.closeSidebar} onClick={() => setShowFeedSidebar(false)}>×</button>
+              <button className={styles.closeSidebar} onClick={() => setShowFeedSidebar(false)} aria-label="Feed schließen">×</button>
             </div>
             <div className={styles.sidebarContent}>
               <LegalPulseFeedWidget

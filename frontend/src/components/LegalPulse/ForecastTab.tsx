@@ -66,8 +66,8 @@ export default function ForecastTab({
 
       {/* Loading State */}
       {forecastLoading && (
-        <div className={styles.forecastLoading}>
-          <div className={styles.loadingSpinner}></div>
+        <div className={styles.forecastLoading} role="status" aria-busy="true">
+          <div className={styles.loadingSpinner} aria-hidden="true"></div>
           <p>Prognose wird berechnet...</p>
         </div>
       )}

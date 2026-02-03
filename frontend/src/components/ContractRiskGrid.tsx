@@ -56,8 +56,12 @@ export default function ContractRiskGrid({
             key={contract._id}
             className={styles.contractCard}
             onClick={() => onContractClick(contract)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onContractClick(contract); } }}
             onMouseEnter={() => onMouseEnter(contract._id)}
             onMouseLeave={() => onMouseLeave(contract._id)}
+            role="button"
+            tabIndex={0}
+            aria-label={`Vertrag: ${contract.name}, Risiko-Score: ${contract.legalPulse?.riskScore || 'nicht analysiert'}`}
           >
             <div className={styles.contractCardHeader}>
               <div className={styles.contractInfo}>

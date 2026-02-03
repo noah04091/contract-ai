@@ -11,10 +11,11 @@ export default {
   transform: {
     '^.+\\.tsx?$': ['ts-jest', {
       tsconfig: {
-        jsx: 'react',
+        jsx: 'react-jsx',
         esModuleInterop: true,
         allowSyntheticDefaultImports: true
-      }
+      },
+      diagnostics: false
     }]
   },
   moduleNameMapper: {
@@ -26,6 +27,9 @@ export default {
 
     // Handle image imports
     '\\.(jpg|jpeg|png|gif|svg)$': '<rootDir>/__mocks__/fileMock.js',
+
+    // Mock recharts for jsdom
+    '^recharts$': '<rootDir>/src/__mocks__/recharts.tsx',
 
     // Handle module aliases (if you're using them)
     '^@/(.*)$': '<rootDir>/src/$1'

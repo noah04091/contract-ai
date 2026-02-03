@@ -125,8 +125,11 @@ export default function RecommendationCard({
         <button
           className={styles.expandButton}
           onClick={() => setExpanded(!expanded)}
+          aria-expanded={expanded}
+          aria-controls={`rec-details-${index}`}
         >
           <svg
+            aria-hidden="true"
             width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
             style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}
           >
@@ -138,7 +141,7 @@ export default function RecommendationCard({
 
       {/* Expanded */}
       {expanded && (
-        <div className={styles.expandedContent}>
+        <div className={styles.expandedContent} id={`rec-details-${index}`}>
           {/* Steps */}
           {steps && steps.length > 0 && (
             <div className={styles.stepsSection}>

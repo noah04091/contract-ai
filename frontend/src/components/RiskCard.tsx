@@ -120,8 +120,11 @@ export default function RiskCard({
         <button
           className={styles.expandButton}
           onClick={() => setExpanded(!expanded)}
+          aria-expanded={expanded}
+          aria-controls={`risk-details-${index}`}
         >
           <svg
+            aria-hidden="true"
             width="16"
             height="16"
             viewBox="0 0 24 24"
@@ -138,7 +141,7 @@ export default function RiskCard({
 
       {/* Expanded Content */}
       {expanded && (
-        <div className={styles.expandedContent}>
+        <div className={styles.expandedContent} id={`risk-details-${index}`}>
           {/* Impact */}
           {impact && (
             <div className={styles.detailSection}>
@@ -218,6 +221,7 @@ export default function RiskCard({
             className={styles.actionBtn}
             onClick={() => onSaveToLibrary(riskObj)}
             title="In Klauselbibliothek speichern"
+            aria-label="In Klauselbibliothek speichern"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/>

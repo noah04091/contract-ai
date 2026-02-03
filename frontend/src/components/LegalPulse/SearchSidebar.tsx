@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { ExternalSearchResult } from '../../types/legalPulse';
 import styles from '../../pages/LegalPulse.module.css';
 
@@ -15,6 +15,46 @@ export default function SearchSidebar({ onClose, onNotification }: SearchSidebar
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [offset, setOffset] = useState(0);
+
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-focus search input on mount
+  useEffect(() => {
+    searchInputRef.current?.focus();
+  }, []);
+
+  // Escape key closes sidebar
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  // Focus trap within sidebar
+  const handleFocusTrap = useCallback((e: React.KeyboardEvent) => {
+    if (e.key !== 'Tab' || !sidebarRef.current) return;
+
+    const focusableElements = sidebarRef.current.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    if (focusableElements.length === 0) return;
+
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    if (e.shiftKey && document.activeElement === firstElement) {
+      e.preventDefault();
+      lastElement.focus();
+    } else if (!e.shiftKey && document.activeElement === lastElement) {
+      e.preventDefault();
+      firstElement.focus();
+    }
+  }, []);
 
   const handleSearch = async (append = false) => {
     if (!searchQuery.trim()) {
@@ -82,15 +122,24 @@ export default function SearchSidebar({ onClose, onNotification }: SearchSidebar
 
   return (
     <div className={styles.sidebarOverlay} onClick={onClose}>
-      <div className={`${styles.sidebar} ${styles.wideSidebar}`} onClick={(e) => e.stopPropagation()}>
+      <div
+        ref={sidebarRef}
+        className={`${styles.sidebar} ${styles.wideSidebar}`}
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={handleFocusTrap}
+        role="dialog"
+        aria-label="Externe Gesetzessuche"
+        aria-modal="true"
+      >
         <div className={styles.sidebarHeader}>
           <h2>Externe Gesetzessuche</h2>
-          <button className={styles.closeSidebar} onClick={onClose}>×</button>
+          <button className={styles.closeSidebar} onClick={onClose} aria-label="Sidebar schließen">×</button>
         </div>
         <div className={styles.sidebarContent}>
           <div className={styles.externalSearchForm}>
             <div className={styles.searchInputGroup}>
               <input
+                ref={searchInputRef}
                 type="text"
                 className={styles.searchInput}
                 placeholder="Suchbegriff eingeben (z.B. DSGVO, Arbeitsrecht, ...)"
@@ -105,12 +154,12 @@ export default function SearchSidebar({ onClose, onNotification }: SearchSidebar
               >
                 {isLoading ? (
                   <>
-                    <div className={styles.spinner}></div>
+                    <div className={styles.spinner} aria-hidden="true"></div>
                     Suche läuft...
                   </>
                 ) : (
                   <>
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" strokeWidth="2"/>
                     </svg>
                     Suchen
@@ -120,8 +169,8 @@ export default function SearchSidebar({ onClose, onNotification }: SearchSidebar
             </div>
 
             {/* Source Filters */}
-            <div className={styles.filterGroup}>
-              <label className={styles.filterLabel}>Datenquellen:</label>
+            <fieldset className={styles.filterGroup}>
+              <legend className={styles.filterLabel}>Datenquellen:</legend>
               <div className={styles.checkboxGroup}>
                 <label className={styles.checkbox}>
                   <input
@@ -129,7 +178,7 @@ export default function SearchSidebar({ onClose, onNotification }: SearchSidebar
                     checked={searchSources.includes('eulex')}
                     onChange={() => toggleSource('eulex')}
                   />
-                  <span>🇪🇺 EU-Lex</span>
+                  <span>EU-Lex</span>
                 </label>
                 <label className={styles.checkbox}>
                   <input
@@ -137,7 +186,7 @@ export default function SearchSidebar({ onClose, onNotification }: SearchSidebar
                     checked={searchSources.includes('bundesanzeiger')}
                     onChange={() => toggleSource('bundesanzeiger')}
                   />
-                  <span>🇩🇪 Bundesanzeiger</span>
+                  <span>Bundesanzeiger</span>
                 </label>
                 <label className={styles.checkbox}>
                   <input
@@ -145,15 +194,16 @@ export default function SearchSidebar({ onClose, onNotification }: SearchSidebar
                     checked={searchSources.includes('govdata')}
                     onChange={() => toggleSource('govdata')}
                   />
-                  <span>📊 GovData</span>
+                  <span>GovData</span>
                 </label>
               </div>
-            </div>
+            </fieldset>
 
             {/* Area Filter */}
             <div className={styles.filterGroup}>
-              <label className={styles.filterLabel}>Rechtsbereich (optional):</label>
+              <label className={styles.filterLabel} htmlFor="search-area">Rechtsbereich (optional):</label>
               <select
+                id="search-area"
                 className={styles.areaSelect}
                 value={searchArea}
                 onChange={(e) => setSearchArea(e.target.value)}
@@ -170,7 +220,12 @@ export default function SearchSidebar({ onClose, onNotification }: SearchSidebar
           </div>
 
           {/* Search Results */}
-          <div className={styles.externalSearchResults}>
+          <div className={styles.externalSearchResults} aria-live="polite">
+            {isLoading && (
+              <div role="status" aria-busy="true">
+                <span className="sr-only">Suche wird durchgeführt...</span>
+              </div>
+            )}
             {searchResults.length > 0 ? (
               <div className={styles.resultsTable}>
                 <div className={styles.resultsHeader}>
@@ -181,9 +236,9 @@ export default function SearchSidebar({ onClose, onNotification }: SearchSidebar
                     <div key={index} className={styles.resultCard}>
                       <div className={styles.resultHeader}>
                         <span className={styles.resultSource}>
-                          {result.source === 'eulex' && '🇪🇺 EU-Lex'}
-                          {result.source === 'bundesanzeiger' && '🇩🇪 Bundesanzeiger'}
-                          {result.source === 'govdata' && '📊 GovData'}
+                          {result.source === 'eulex' && 'EU-Lex'}
+                          {result.source === 'bundesanzeiger' && 'Bundesanzeiger'}
+                          {result.source === 'govdata' && 'GovData'}
                         </span>
                         {result.date && (
                           <span className={styles.resultDate}>
@@ -204,7 +259,7 @@ export default function SearchSidebar({ onClose, onNotification }: SearchSidebar
                       {result.relevance && (
                         <div className={styles.resultRelevance}>
                           <span className={styles.relevanceLabel}>Relevanz:</span>
-                          <div className={styles.relevanceBar}>
+                          <div className={styles.relevanceBar} role="progressbar" aria-valuenow={result.relevance} aria-valuemin={0} aria-valuemax={100}>
                             <div
                               className={styles.relevanceFill}
                               style={{ width: `${result.relevance}%` }}
@@ -237,13 +292,13 @@ export default function SearchSidebar({ onClose, onNotification }: SearchSidebar
                     >
                       {isLoading ? (
                         <>
-                          <div className={styles.spinner}></div>
+                          <div className={styles.spinner} aria-hidden="true"></div>
                           Lädt...
                         </>
                       ) : (
                         <>
                           Mehr laden
-                          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M19 9L12 16L5 9" stroke="currentColor" strokeWidth="2"/>
                           </svg>
                         </>
@@ -255,7 +310,7 @@ export default function SearchSidebar({ onClose, onNotification }: SearchSidebar
             ) : (
               !isLoading && (
                 <div className={styles.emptyState}>
-                  <svg className={styles.emptyStateIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <svg aria-hidden="true" className={styles.emptyStateIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" strokeWidth="2"/>
                   </svg>
                   <h4>Noch keine Suche durchgeführt</h4>

@@ -16,8 +16,8 @@ export default function LegalChangesTab({ contractWeeklyCheck, contractWeeklyChe
       </div>
 
       {contractWeeklyCheckLoading ? (
-        <div className={styles.legalChangesLoading}>
-          <div className={styles.loadingSpinner}></div>
+        <div className={styles.legalChangesLoading} role="status" aria-busy="true">
+          <div className={styles.loadingSpinner} aria-hidden="true"></div>
           <p>Lade Rechtsänderungs-Prüfung...</p>
         </div>
       ) : !contractWeeklyCheck ? (
