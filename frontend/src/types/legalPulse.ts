@@ -219,6 +219,10 @@ export interface ExternalSearchResult {
   documentId?: string;
   relevance?: number;
   url?: string;
+  area?: string;
+  type?: string;
+  celex?: string;
+  court?: string;
 }
 
 export interface Organization {

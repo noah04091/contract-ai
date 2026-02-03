@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { ExternalSearchResult } from '../../types/legalPulse';
+import { saveClause } from '../../services/clauseLibraryAPI';
+import type { ClauseCategory, ClauseArea } from '../../types/clauseLibrary';
 import styles from '../../pages/LegalPulse.module.css';
 
 interface SearchSidebarProps {
@@ -9,12 +11,13 @@ interface SearchSidebarProps {
 
 export default function SearchSidebar({ onClose, onNotification }: SearchSidebarProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchSources, setSearchSources] = useState<string[]>(['eulex', 'bundesanzeiger', 'govdata']);
+  const [searchSources, setSearchSources] = useState<string[]>(['openlegaldata', 'gesetze-im-internet', 'eulex', 'bundesanzeiger', 'govdata']);
   const [searchArea, setSearchArea] = useState('');
   const [searchResults, setSearchResults] = useState<ExternalSearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [offset, setOffset] = useState(0);
+  const [savingId, setSavingId] = useState<string | null>(null);
 
   const sidebarRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -120,6 +123,96 @@ export default function SearchSidebar({ onClose, onNotification }: SearchSidebar
     );
   };
 
+  /**
+   * Map legal area string to ClauseArea type
+   */
+  const mapToClauseArea = (area?: string): ClauseArea => {
+    if (!area) return 'other';
+    const areaLower = area.toLowerCase();
+
+    if (areaLower.includes('haftung')) return 'liability';
+    if (areaLower.includes('kündigung') || areaLower.includes('arbeitsrecht')) return 'termination';
+    if (areaLower.includes('zahlung') || areaLower.includes('steuer')) return 'payment';
+    if (areaLower.includes('vertraulich') || areaLower.includes('geheimhaltung')) return 'confidentiality';
+    if (areaLower.includes('eigentum') || areaLower.includes('urheberrecht')) return 'intellectual_property';
+    if (areaLower.includes('gewährleistung') || areaLower.includes('garantie')) return 'warranty';
+    if (areaLower.includes('datenschutz') || areaLower.includes('dsgvo') || areaLower.includes('privacy')) return 'data_protection';
+    if (areaLower.includes('wettbewerb')) return 'non_compete';
+    if (areaLower.includes('streit') || areaLower.includes('gericht')) return 'dispute';
+
+    return 'other';
+  };
+
+  /**
+   * Get source display name
+   */
+  const getSourceName = (source: string): string => {
+    const sourceNames: Record<string, string> = {
+      'eulex': 'EU-Lex',
+      'eu-lex': 'EU-Lex',
+      'bundesanzeiger': 'Bundesanzeiger',
+      'govdata': 'GovData',
+      'openlegaldata': 'Open Legal Data',
+      'gesetze-im-internet': 'gesetze-im-internet.de'
+    };
+    return sourceNames[source] || source;
+  };
+
+  /**
+   * Save search result to clause library
+   */
+  const handleSaveToLibrary = async (result: ExternalSearchResult, index: number) => {
+    const resultId = result.documentId || `result-${index}`;
+    setSavingId(resultId);
+
+    try {
+      // Prepare clause text
+      const clauseText = result.description || result.title;
+
+      // Determine category based on result type
+      let category: ClauseCategory = 'standard';
+      if (result.type === 'regulation' || result.type === 'law') {
+        category = 'important';
+      }
+
+      await saveClause({
+        clauseText,
+        category,
+        clauseArea: mapToClauseArea(result.area),
+        sourceContractName: result.title,
+        userNotes: `Quelle: ${getSourceName(result.source)}${result.url ? `\nURL: ${result.url}` : ''}${result.date ? `\nDatum: ${result.date}` : ''}`,
+        tags: [
+          'Gesetz',
+          getSourceName(result.source),
+          result.area || 'Allgemein',
+          ...(result.type ? [result.type] : [])
+        ].filter(Boolean)
+      });
+
+      onNotification({
+        message: `"${result.title.substring(0, 40)}..." in Klausel-Bibliothek gespeichert`,
+        type: 'success'
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
+
+      // Check for duplicate error
+      if (errorMessage.startsWith('DUPLICATE:')) {
+        onNotification({
+          message: 'Diese Klausel ist bereits in der Bibliothek gespeichert',
+          type: 'error'
+        });
+      } else {
+        onNotification({
+          message: `Fehler beim Speichern: ${errorMessage}`,
+          type: 'error'
+        });
+      }
+    } finally {
+      setSavingId(null);
+    }
+  };
+
   return (
     <div className={styles.sidebarOverlay} onClick={onClose}>
       <div
@@ -172,6 +265,22 @@ export default function SearchSidebar({ onClose, onNotification }: SearchSidebar
             <fieldset className={styles.filterGroup}>
               <legend className={styles.filterLabel}>Datenquellen:</legend>
               <div className={styles.checkboxGroup}>
+                <label className={styles.checkbox}>
+                  <input
+                    type="checkbox"
+                    checked={searchSources.includes('openlegaldata')}
+                    onChange={() => toggleSource('openlegaldata')}
+                  />
+                  <span>Open Legal Data</span>
+                </label>
+                <label className={styles.checkbox}>
+                  <input
+                    type="checkbox"
+                    checked={searchSources.includes('gesetze-im-internet')}
+                    onChange={() => toggleSource('gesetze-im-internet')}
+                  />
+                  <span>gesetze-im-internet.de</span>
+                </label>
                 <label className={styles.checkbox}>
                   <input
                     type="checkbox"
@@ -232,54 +341,85 @@ export default function SearchSidebar({ onClose, onNotification }: SearchSidebar
                   <h4>Suchergebnisse ({searchResults.length})</h4>
                 </div>
                 <div className={styles.resultsList}>
-                  {searchResults.map((result, index) => (
-                    <div key={index} className={styles.resultCard}>
-                      <div className={styles.resultHeader}>
-                        <span className={styles.resultSource}>
-                          {result.source === 'eulex' && 'EU-Lex'}
-                          {result.source === 'bundesanzeiger' && 'Bundesanzeiger'}
-                          {result.source === 'govdata' && 'GovData'}
-                        </span>
-                        {result.date && (
-                          <span className={styles.resultDate}>
-                            {new Date(result.date).toLocaleDateString('de-DE')}
+                  {searchResults.map((result, index) => {
+                    const resultId = result.documentId || `result-${index}`;
+                    const isSaving = savingId === resultId;
+
+                    return (
+                      <div key={index} className={styles.resultCard}>
+                        <div className={styles.resultHeader}>
+                          <span className={styles.resultSource}>
+                            {getSourceName(result.source)}
                           </span>
-                        )}
-                      </div>
-                      <h5 className={styles.resultTitle}>{result.title}</h5>
-                      {result.description && (
-                        <p className={styles.resultDescription}>{result.description}</p>
-                      )}
-                      {result.documentId && (
-                        <div className={styles.resultMeta}>
-                          <span className={styles.metaLabel}>Dokument-ID:</span>
-                          <span className={styles.metaValue}>{result.documentId}</span>
+                          {result.date && (
+                            <span className={styles.resultDate}>
+                              {new Date(result.date).toLocaleDateString('de-DE')}
+                            </span>
+                          )}
                         </div>
-                      )}
-                      {result.relevance && (
-                        <div className={styles.resultRelevance}>
-                          <span className={styles.relevanceLabel}>Relevanz:</span>
-                          <div className={styles.relevanceBar} role="progressbar" aria-valuenow={result.relevance} aria-valuemin={0} aria-valuemax={100}>
-                            <div
-                              className={styles.relevanceFill}
-                              style={{ width: `${result.relevance}%` }}
-                            ></div>
+                        <h5 className={styles.resultTitle}>{result.title}</h5>
+                        {result.area && (
+                          <div className={styles.resultMeta}>
+                            <span className={styles.metaLabel}>Rechtsbereich:</span>
+                            <span className={styles.metaValue}>{result.area}</span>
                           </div>
-                          <span className={styles.relevanceValue}>{result.relevance}%</span>
+                        )}
+                        {result.description && (
+                          <p className={styles.resultDescription}>{result.description}</p>
+                        )}
+                        {result.documentId && (
+                          <div className={styles.resultMeta}>
+                            <span className={styles.metaLabel}>Dokument-ID:</span>
+                            <span className={styles.metaValue}>{result.documentId}</span>
+                          </div>
+                        )}
+                        {result.relevance !== undefined && result.relevance > 0 && (
+                          <div className={styles.resultRelevance}>
+                            <span className={styles.relevanceLabel}>Relevanz:</span>
+                            <div className={styles.relevanceBar} role="progressbar" aria-valuenow={Math.round(result.relevance * 100)} aria-valuemin={0} aria-valuemax={100}>
+                              <div
+                                className={styles.relevanceFill}
+                                style={{ width: `${Math.round(result.relevance * 100)}%` }}
+                              ></div>
+                            </div>
+                            <span className={styles.relevanceValue}>{Math.round(result.relevance * 100)}%</span>
+                          </div>
+                        )}
+                        <div className={styles.resultActions}>
+                          {result.url && (
+                            <a
+                              href={result.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={styles.resultLink}
+                            >
+                              Zur Quelle →
+                            </a>
+                          )}
+                          <button
+                            className={styles.saveButton}
+                            onClick={() => handleSaveToLibrary(result, index)}
+                            disabled={isSaving}
+                            title="In Klausel-Bibliothek speichern"
+                          >
+                            {isSaving ? (
+                              <>
+                                <div className={styles.spinner} aria-hidden="true"></div>
+                                Speichern...
+                              </>
+                            ) : (
+                              <>
+                                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
+                                  <path d="M19 21L12 16L5 21V5C5 4.46957 5.21071 3.96086 5.58579 3.58579C5.96086 3.21071 6.46957 3 7 3H17C17.5304 3 18.0391 3.21071 18.4142 3.58579C18.7893 3.96086 19 4.46957 19 5V21Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                                Speichern
+                              </>
+                            )}
+                          </button>
                         </div>
-                      )}
-                      {result.url && (
-                        <a
-                          href={result.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={styles.resultLink}
-                        >
-                          Zur Quelle →
-                        </a>
-                      )}
-                    </div>
-                  ))}
+                      </div>
+                    );
+                  })}
                 </div>
 
                 {/* Load More Button */}

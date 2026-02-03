@@ -19,45 +19,212 @@ class EULexConnector {
   }
 
   /**
-   * Search for EU legal documents
+   * Search for EU legal documents using SPARQL
    * @param {Object} params - Search parameters
    * @returns {Promise<Array>} - Search results
    */
-  async searchDocuments({ query, type = 'directive', sector = null, dateFrom = null, dateTo = null, limit = 10 }) {
-    console.log(`[EU-LEX] Searching documents: "${query}"`);
+  async searchDocuments({ query, type = null, sector = null, dateFrom = null, dateTo = null, limit = 10 }) {
+    console.log(`[EU-LEX] Searching documents via SPARQL: "${query}"`);
 
     try {
-      // EU-Lex uses SPARQL for advanced queries
-      // For simplicity, we'll use their REST API pattern
+      // Build SPARQL query for text search
+      const sparqlQuery = this.buildSearchSparql(query, type, limit);
 
-      const searchUrl = `${this.restBase}/EN/ALL/`;
-      const params = {
-        qid: Date.now(),
-        type: type,
-        text: query
-      };
-
-      // Note: EU-Lex API requires specific formatting
-      // This is a simplified implementation
-      // In production, you'd use their official SOAP/SPARQL API
-
-      const response = await axios.get(searchUrl, {
-        params,
-        timeout: 10000,
+      const response = await axios.post(this.sparqlEndpoint, sparqlQuery, {
         headers: {
+          'Content-Type': 'application/sparql-query',
+          'Accept': 'application/sparql-results+json',
           'User-Agent': 'LegalPulse-ContractAI/2.0'
-        }
+        },
+        timeout: 15000
       });
 
-      // Parse and extract documents
-      // EU-Lex returns HTML/XML, needs parsing
-      return this.parseSearchResults(response.data, limit);
+      const results = this.parseSparqlSearchResults(response.data, query);
+
+      if (results.length > 0) {
+        console.log(`[EU-LEX] SPARQL search found ${results.length} results`);
+        return results;
+      }
+
+      // If SPARQL returns no results, try alternative search
+      console.log('[EU-LEX] SPARQL returned no results, trying keyword expansion');
+      return this.searchWithKeywordExpansion(query, limit);
 
     } catch (error) {
-      console.error('[EU-LEX] Search error:', error.message);
-      // Fallback to mock data for development
-      return this.getMockSearchResults(query, limit);
+      console.error('[EU-LEX] SPARQL search error:', error.message);
+      // Try keyword expansion as fallback
+      return this.searchWithKeywordExpansion(query, limit);
     }
+  }
+
+  /**
+   * Build SPARQL query for search
+   * @param {string} query - Search query
+   * @param {string} type - Document type filter
+   * @param {number} limit - Max results
+   * @returns {string} - SPARQL query
+   */
+  buildSearchSparql(query, type, limit) {
+    // Escape special characters in query
+    const escapedQuery = query.replace(/["\\]/g, '\\$&');
+
+    // Build type filter if specified
+    let typeFilter = '';
+    if (type === 'regulation') {
+      typeFilter = 'FILTER(CONTAINS(LCASE(STR(?type)), "regulation"))';
+    } else if (type === 'directive') {
+      typeFilter = 'FILTER(CONTAINS(LCASE(STR(?type)), "directive"))';
+    }
+
+    return `
+PREFIX cdm: <http://publications.europa.eu/ontology/cdm#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT DISTINCT ?celex ?title ?date ?type ?subject
+WHERE {
+  ?doc cdm:resource_legal_id_celex ?celex .
+  ?doc cdm:work_title ?title .
+
+  OPTIONAL { ?doc cdm:work_date_document ?date }
+  OPTIONAL { ?doc cdm:work_has_resource-type ?type }
+  OPTIONAL { ?doc cdm:work_is_about_concept_eurovoc ?subject }
+
+  FILTER(lang(?title) = "en" || lang(?title) = "de")
+  FILTER(
+    CONTAINS(LCASE(?title), LCASE("${escapedQuery}")) ||
+    CONTAINS(LCASE(?celex), LCASE("${escapedQuery}"))
+  )
+  ${typeFilter}
+}
+ORDER BY DESC(?date)
+LIMIT ${limit}
+    `.trim();
+  }
+
+  /**
+   * Parse SPARQL search results
+   * @param {Object} data - SPARQL JSON results
+   * @param {string} query - Original search query
+   * @returns {Array} - Parsed results
+   */
+  parseSparqlSearchResults(data, query) {
+    if (!data.results || !data.results.bindings) {
+      return [];
+    }
+
+    const queryLower = query.toLowerCase();
+
+    return data.results.bindings.map(binding => {
+      const celex = binding.celex?.value || '';
+      const title = binding.title?.value || '';
+      const titleLower = title.toLowerCase();
+
+      // Calculate relevance
+      let relevance = 0.5;
+      if (titleLower.includes(queryLower)) {
+        relevance = 0.95;
+      } else if (celex.toLowerCase().includes(queryLower)) {
+        relevance = 0.9;
+      }
+
+      return {
+        celex: celex,
+        title: title,
+        date: binding.date?.value || null,
+        type: this.extractDocumentType(binding.type?.value),
+        subject: binding.subject?.value || null,
+        relevance: relevance,
+        source: 'eu-lex',
+        url: `https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:${celex}`
+      };
+    });
+  }
+
+  /**
+   * Extract document type from URI
+   * @param {string} typeUri - Type URI
+   * @returns {string} - Document type
+   */
+  extractDocumentType(typeUri) {
+    if (!typeUri) return 'document';
+    const lower = typeUri.toLowerCase();
+    if (lower.includes('regulation')) return 'regulation';
+    if (lower.includes('directive')) return 'directive';
+    if (lower.includes('decision')) return 'decision';
+    return 'document';
+  }
+
+  /**
+   * Search with keyword expansion for better results
+   * @param {string} query - Search query
+   * @param {number} limit - Max results
+   * @returns {Promise<Array>} - Results
+   */
+  async searchWithKeywordExpansion(query, limit) {
+    console.log(`[EU-LEX] Searching with keyword expansion: "${query}"`);
+
+    // Map German terms to English equivalents for EU-Lex
+    const keywordMap = {
+      'kündigungsfrist': ['notice period', 'termination', 'withdrawal'],
+      'datenschutz': ['data protection', 'GDPR', 'privacy'],
+      'dsgvo': ['GDPR', 'General Data Protection Regulation', '2016/679'],
+      'verbraucher': ['consumer', 'consumer rights', 'consumer protection'],
+      'arbeitsrecht': ['employment', 'labour', 'worker rights'],
+      'arbeitnehmer': ['employee', 'worker', 'employment'],
+      'haftung': ['liability', 'responsibility', 'damages'],
+      'gewährleistung': ['warranty', 'guarantee', 'conformity'],
+      'wettbewerb': ['competition', 'antitrust', 'market'],
+      'vertrag': ['contract', 'agreement', 'terms'],
+      'digital': ['digital', 'electronic', 'online']
+    };
+
+    const queryLower = query.toLowerCase();
+    let searchTerms = [query];
+
+    // Add expanded terms
+    for (const [german, english] of Object.entries(keywordMap)) {
+      if (queryLower.includes(german)) {
+        searchTerms.push(...english);
+      }
+    }
+
+    // Try searching with each term
+    const allResults = [];
+    const seenCelex = new Set();
+
+    for (const term of searchTerms.slice(0, 3)) { // Limit to 3 terms
+      try {
+        const sparqlQuery = this.buildSearchSparql(term, null, Math.ceil(limit / 2));
+
+        const response = await axios.post(this.sparqlEndpoint, sparqlQuery, {
+          headers: {
+            'Content-Type': 'application/sparql-query',
+            'Accept': 'application/sparql-results+json'
+          },
+          timeout: 10000
+        });
+
+        const results = this.parseSparqlSearchResults(response.data, query);
+
+        for (const result of results) {
+          if (!seenCelex.has(result.celex)) {
+            seenCelex.add(result.celex);
+            allResults.push(result);
+          }
+        }
+      } catch (error) {
+        console.warn(`[EU-LEX] Keyword expansion search failed for "${term}":`, error.message);
+      }
+    }
+
+    if (allResults.length > 0) {
+      console.log(`[EU-LEX] Keyword expansion found ${allResults.length} results`);
+      return allResults.slice(0, limit);
+    }
+
+    // Ultimate fallback: return curated results if they match
+    console.log('[EU-LEX] Returning curated results as final fallback');
+    return this.getMockSearchResults(query, limit);
   }
 
   /**
