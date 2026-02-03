@@ -55,7 +55,7 @@ export default function LegalPulseSettings({ onSaveSuccess, compact = false }: L
   const handleToggleCategory = async (category: string) => {
     if (!settings) return;
 
-    const currentCategories = settings.categories || [];
+    const currentCategories = settings.categories ?? [];
     const newCategories = currentCategories.includes(category)
       ? currentCategories.filter(c => c !== category)
       : [...currentCategories, category];
@@ -66,6 +66,9 @@ export default function LegalPulseSettings({ onSaveSuccess, compact = false }: L
       onSaveSuccess?.();
     }
   };
+
+  // Safe getters for potentially undefined arrays
+  const safeCategories = settings?.categories ?? [];
 
   const handleToggleEmailNotifications = async (enabled: boolean) => {
     const success = await updateSettings({ emailNotifications: enabled });
@@ -223,13 +226,13 @@ export default function LegalPulseSettings({ onSaveSuccess, compact = false }: L
                 </p>
               </div>
               <span className={styles.categoryCount}>
-                {settings.categories.length} / {availableCategories.length}
+                {safeCategories.length} / {availableCategories.length}
               </span>
             </div>
 
             <div className={styles.categoryGrid}>
               {availableCategories.map((category) => {
-                const isSelected = settings.categories.includes(category);
+                const isSelected = safeCategories.includes(category);
                 return (
                   <button
                     key={category}
