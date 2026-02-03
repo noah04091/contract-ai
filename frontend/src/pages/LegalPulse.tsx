@@ -1354,26 +1354,33 @@ export default function LegalPulse() {
       )}
 
       {/* V7: Monitoring Status Widget (Premium only) - User-specific stats */}
-      {canAccessLegalPulse && contracts.length > 0 && (
+      {canAccessLegalPulse && contracts.length > 0 && (() => {
+        // Only count contracts that have actually been analyzed (have lastAnalysis date)
+        const analyzedContracts = contracts.filter(c => c.legalPulse?.lastAnalysis);
+        const riskContracts = analyzedContracts.filter(c => c.legalPulse?.riskScore != null && c.legalPulse.riskScore >= 50);
+
+        return (
         <div className={styles.monitoringStatusBar}>
           <div className={styles.monitoringStatusItem}>
-            {contracts.filter(c => c.legalPulse?.riskScore != null).length === contracts.length ? (
+            {analyzedContracts.length === contracts.length ? (
               <CheckCircle size={16} className={styles.statusHealthy} />
-            ) : contracts.filter(c => c.legalPulse?.riskScore != null).length > 0 ? (
+            ) : analyzedContracts.length > 0 ? (
               <Activity size={16} className={styles.statusWarning} />
             ) : (
               <Clock size={16} className={styles.statusUnknown} />
             )}
             <span>
-              {contracts.filter(c => c.legalPulse?.riskScore != null).length} von {contracts.length} Verträgen analysiert
+              {analyzedContracts.length} von {contracts.length} Verträgen analysiert
             </span>
           </div>
+          {analyzedContracts.length > 0 && (
           <div className={styles.monitoringStatusItem}>
             <Shield size={16} />
             <span>
-              {contracts.filter(c => c.legalPulse?.riskScore != null && c.legalPulse.riskScore >= 50).length} mit erhöhtem Risiko
+              {riskContracts.length} mit erhöhtem Risiko
             </span>
           </div>
+          )}
           {alertsUnreadCount > 0 && (
             <button
               className={styles.alertHistoryButton}
@@ -1384,7 +1391,8 @@ export default function LegalPulse() {
             </button>
           )}
         </div>
-      )}
+        );
+      })()}
 
       {/* V7: Alert History Panel */}
       {showAlertHistory && alertHistory.length > 0 && (
