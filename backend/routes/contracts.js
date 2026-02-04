@@ -1113,7 +1113,10 @@ router.get("/", async (req, res) => {
           mongoFilter['legalPulse.riskScore'] = { $gt: 30, $lte: 60 };
           break;
         case 'high':
-          mongoFilter['legalPulse.riskScore'] = { $gt: 60 };
+          mongoFilter['legalPulse.riskScore'] = { $gt: 60, $lte: 80 };
+          break;
+        case 'critical':
+          mongoFilter['legalPulse.riskScore'] = { $gt: 80 };
           break;
       }
     }

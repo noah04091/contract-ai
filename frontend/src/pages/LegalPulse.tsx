@@ -696,17 +696,11 @@ export default function LegalPulse() {
   if (contractId && selectedContract) {
     // Use adjusted scores if available (after risk management), otherwise use original
     const displayRiskScore = selectedContract.legalPulse?.adjustedRiskScore ?? selectedContract.legalPulse?.riskScore ?? null;
-    const displayHealthScore = selectedContract.legalPulse?.adjustedHealthScore ?? selectedContract.legalPulse?.healthScore;
+    const displayHealthScore = selectedContract.legalPulse?.adjustedHealthScore ?? selectedContract.legalPulse?.healthScore ?? null;
     const hasAdjustedScore = selectedContract.legalPulse?.adjustedRiskScore != null && selectedContract.legalPulse?.adjustedRiskScore !== selectedContract.legalPulse?.riskScore;
     const riskLevel = getRiskLevel(displayRiskScore);
 
     // Health level for the hero circle (higher = better)
-    const getHealthLevel = (score: number | undefined) => {
-      if (score === undefined || score === null) return { level: 'Unbekannt', color: '#6b7280', icon: '❓' };
-      if (score >= 75) return { level: 'Gut', color: '#10b981', icon: '✅' };
-      if (score >= 50) return { level: 'Befriedigend', color: '#f59e0b', icon: '⚠️' };
-      return { level: 'Kritisch', color: '#ef4444', icon: '🔴' };
-    };
     const healthLevel = getHealthLevel(displayHealthScore);
 
     // Factor scores for breakdown

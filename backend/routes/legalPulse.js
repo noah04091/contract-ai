@@ -835,9 +835,11 @@ function recalculateAdjustedScores(legalPulse) {
   // Reduction ratio capped at 70%
   const reductionRatio = Math.min(resolvedWeight / totalWeight, 0.7);
   const adjustedRiskScore = Math.round(originalRiskScore * (1 - reductionRatio));
-  const adjustedHealthScore = originalHealthScore != null
-    ? Math.min(100, Math.round(originalHealthScore + (100 - originalHealthScore) * reductionRatio))
-    : null;
+  // If healthScore is missing, derive it from riskScore (same formula as aiLegalPulse.calculateHealthScore)
+  const effectiveHealthScore = originalHealthScore != null
+    ? originalHealthScore
+    : Math.max(0, Math.round(100 - (originalRiskScore * 0.5)));
+  const adjustedHealthScore = Math.min(100, Math.round(effectiveHealthScore + (100 - effectiveHealthScore) * reductionRatio));
 
   return { adjustedRiskScore, adjustedHealthScore };
 }

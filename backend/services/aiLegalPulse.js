@@ -561,8 +561,11 @@ ${this.prompts.riskAnalysis}`;
     const variance = Math.floor(Math.random() * 7) - 3;
     riskScore = Math.min(100, Math.max(5, riskScore + variance));
     
+    const healthScore = this.calculateHealthScore(riskScore, contract);
+
     return {
       riskScore,
+      healthScore,
       summary: `Basis-Analyse für ${contract.name}. Für detaillierte Bewertung ist eine manuelle Prüfung erforderlich.`,
       lastChecked: new Date(),
       lawInsights: ['Detaillierte rechtliche Prüfung empfohlen'],
