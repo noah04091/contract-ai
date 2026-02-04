@@ -10,9 +10,37 @@ class OpenLegalDataConnector {
     this.baseUrl = 'https://de.openlegaldata.io/api';
     this.timeout = 15000;
     this.cache = new Map();
+    this.bookSlugCache = new Map(); // Cache book ID → slug mapping
     this.cacheExpiry = 1800000; // 30 minutes
 
     console.log('[OPEN-LEGAL-DATA] Connector initialized');
+  }
+
+  /**
+   * Get book slug by book ID (for constructing working URLs)
+   * @param {number} bookId - Book ID from law result
+   * @returns {Promise<string|null>} - Book slug or null
+   */
+  async getBookSlug(bookId) {
+    if (!bookId) return null;
+    if (this.bookSlugCache.has(bookId)) return this.bookSlugCache.get(bookId);
+
+    try {
+      const response = await axios.get(`${this.baseUrl}/law_books/${bookId}/`, {
+        timeout: 5000,
+        headers: {
+          'User-Agent': 'LegalPulse-ContractAI/2.0',
+          'Accept': 'application/json'
+        }
+      });
+      const slug = response.data?.slug || null;
+      this.bookSlugCache.set(bookId, slug);
+      return slug;
+    } catch (error) {
+      console.error(`[OPEN-LEGAL-DATA] Book slug lookup failed for ${bookId}:`, error.message);
+      this.bookSlugCache.set(bookId, null);
+      return null;
+    }
   }
 
   /**
@@ -83,6 +111,10 @@ class OpenLegalDataConnector {
         return [];
       }
 
+      // Pre-fetch book slugs for URL construction
+      const bookIds = [...new Set(response.data.results.map(law => law.book).filter(Boolean))];
+      await Promise.all(bookIds.map(id => this.getBookSlug(id)));
+
       return response.data.results.map(law => this.normalizeLawResult(law, query));
 
     } catch (error) {
@@ -130,8 +162,19 @@ class OpenLegalDataConnector {
    * @returns {Object} - Normalized result
    */
   normalizeLawResult(law, query) {
-    const title = law.title || law.name || 'Unbekanntes Gesetz';
+    const title = law.title || law.section || law.name || 'Unbekanntes Gesetz';
     const relevance = this.calculateRelevance(title, law.content || '', query);
+
+    // Construct working URL using cached book slug
+    let url = null;
+    if (law.source_url) {
+      url = law.source_url;
+    } else {
+      const bookSlug = law.book ? this.bookSlugCache.get(law.book) : null;
+      if (bookSlug) {
+        url = `https://de.openlegaldata.io/law/${bookSlug}/`;
+      }
+    }
 
     return {
       id: law.id?.toString() || `old-law-${Date.now()}`,
@@ -140,7 +183,7 @@ class OpenLegalDataConnector {
       date: law.date || law.enactment_date || null,
       type: 'law',
       source: 'openlegaldata',
-      url: law.source_url || `https://de.openlegaldata.io/law/${law.id}/`,
+      url: url,
       relevance: relevance,
       area: this.detectLegalArea(title, law.content || ''),
       documentId: law.slug || law.id?.toString()
@@ -157,6 +200,14 @@ class OpenLegalDataConnector {
     const title = caseItem.name || caseItem.file_number || 'Unbekanntes Urteil';
     const relevance = this.calculateRelevance(title, caseItem.content || '', query);
 
+    // Construct working URL using case slug
+    let url = null;
+    if (caseItem.source_url) {
+      url = caseItem.source_url;
+    } else if (caseItem.slug) {
+      url = `https://de.openlegaldata.io/case/${caseItem.slug}/`;
+    }
+
     return {
       id: caseItem.id?.toString() || `old-case-${Date.now()}`,
       title: `${caseItem.court?.name || 'Gericht'}: ${title}`,
@@ -164,7 +215,7 @@ class OpenLegalDataConnector {
       date: caseItem.date || null,
       type: 'case',
       source: 'openlegaldata',
-      url: caseItem.source_url || `https://de.openlegaldata.io/case/${caseItem.id}/`,
+      url: url,
       relevance: relevance * 0.9, // Cases slightly lower relevance than laws
       area: this.detectLegalArea(title, caseItem.content || ''),
       documentId: caseItem.file_number || caseItem.id?.toString(),
@@ -281,6 +332,10 @@ class OpenLegalDataConnector {
         return [];
       }
 
+      // Pre-fetch book slugs for URL construction
+      const bookIds = [...new Set(response.data.results.map(law => law.book).filter(Boolean))];
+      await Promise.all(bookIds.map(id => this.getBookSlug(id)));
+
       return response.data.results.map(law => this.normalizeLawResult(law, ''));
 
     } catch (error) {
@@ -305,6 +360,11 @@ class OpenLegalDataConnector {
           'Accept': 'application/json'
         }
       });
+
+      // Pre-fetch book slug for URL
+      if (response.data?.book) {
+        await this.getBookSlug(response.data.book);
+      }
 
       return this.normalizeLawResult(response.data, '');
 
