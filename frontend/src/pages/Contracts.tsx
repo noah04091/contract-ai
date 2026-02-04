@@ -5832,7 +5832,7 @@ export default function Contracts() {
       )}
 
       {/* 📱 MOBILE-FIRST 2025: Bottom Navigation - nur bei Vertrags-Liste anzeigen */}
-      {activeSection === 'contracts' && !showDetails && (
+      {activeSection === 'contracts' && !showDetails && !quickAnalysisModal.show && (
       <nav className={styles.mobileBottomNav}>
         <div className={styles.mobileNavTabs}>
           <button
@@ -5912,7 +5912,7 @@ export default function Contracts() {
       )}
 
       {/* 📱 MOBILE-FIRST 2025: Floating Action Button - nur bei Vertrags-Liste anzeigen */}
-      {activeSection === 'contracts' && !showDetails && (
+      {activeSection === 'contracts' && !showDetails && !quickAnalysisModal.show && (
       <button
         className={styles.mobileFab}
         onClick={() => fileInputRef.current?.click()}
