@@ -879,6 +879,7 @@ export default function LegalPulse() {
                 </div>
               </div>
             ) : (
+              <>
               <div className={styles.scoreHeroLayout}>
                 {/* Left: Health Score Circle + Level */}
                 <div className={styles.scoreCircleArea}>
@@ -1002,48 +1003,48 @@ export default function LegalPulse() {
                       </div>
                     )}
                   </div>
-
-                  {/* GPT Summary */}
-                  {selectedContract.legalPulse?.summary && (
-                    <div className={styles.summarySection}>
-                      <div className={styles.summaryLabel}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2">
-                          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                          <polyline points="14 2 14 8 20 8"/>
-                          <line x1="16" y1="13" x2="8" y2="13"/>
-                          <line x1="16" y1="17" x2="8" y2="17"/>
-                        </svg>
-                        KI-Zusammenfassung
-                      </div>
-                      <p className={styles.summaryText}>{selectedContract.legalPulse.summary}</p>
-                    </div>
-                  )}
-
-                  {/* Quick Stats Row */}
-                  <div className={styles.scoreStatsRow}>
-                    <div className={styles.scoreStatItem}>
-                      <span className={styles.scoreStatNumber} style={{ color: '#ef4444' }}>
-                        {selectedContract.legalPulse?.topRisks?.length || 0}
-                      </span>
-                      <span className={styles.scoreStatLabel}>Risiken</span>
-                    </div>
-                    <div className={styles.scoreStatItem}>
-                      <span className={styles.scoreStatNumber} style={{ color: '#3b82f6' }}>
-                        {selectedContract.legalPulse?.recommendations?.length || 0}
-                      </span>
-                      <span className={styles.scoreStatLabel}>Empfehlungen</span>
-                    </div>
-                    {selectedContract.legalPulse?.topRisks && (
-                      <div className={styles.scoreStatItem}>
-                        <span className={styles.scoreStatNumber} style={{ color: '#dc2626' }}>
-                          {selectedContract.legalPulse.topRisks.filter((r) => r.severity === 'critical' || r.severity === 'high').length}
-                        </span>
-                        <span className={styles.scoreStatLabel}>Kritisch/Hoch</span>
-                      </div>
-                    )}
-                  </div>
                 </div>
               </div>
+
+              {/* Below: Summary + Stats (full width) */}
+              {selectedContract.legalPulse?.summary && (
+                <div className={styles.summarySection}>
+                  <div className={styles.summaryLabel}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2">
+                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                      <line x1="16" y1="13" x2="8" y2="13"/>
+                      <line x1="16" y1="17" x2="8" y2="17"/>
+                    </svg>
+                    KI-Zusammenfassung
+                  </div>
+                  <p className={styles.summaryText}>{selectedContract.legalPulse.summary}</p>
+                </div>
+              )}
+
+              <div className={styles.scoreStatsRow}>
+                <div className={styles.scoreStatItem}>
+                  <span className={styles.scoreStatNumber} style={{ color: '#ef4444' }}>
+                    {selectedContract.legalPulse?.topRisks?.length || 0}
+                  </span>
+                  <span className={styles.scoreStatLabel}>Risiken</span>
+                </div>
+                <div className={styles.scoreStatItem}>
+                  <span className={styles.scoreStatNumber} style={{ color: '#3b82f6' }}>
+                    {selectedContract.legalPulse?.recommendations?.length || 0}
+                  </span>
+                  <span className={styles.scoreStatLabel}>Empfehlungen</span>
+                </div>
+                {selectedContract.legalPulse?.topRisks && (
+                  <div className={styles.scoreStatItem}>
+                    <span className={styles.scoreStatNumber} style={{ color: '#dc2626' }}>
+                      {selectedContract.legalPulse.topRisks.filter((r) => r.severity === 'critical' || r.severity === 'high').length}
+                    </span>
+                    <span className={styles.scoreStatLabel}>Kritisch/Hoch</span>
+                  </div>
+                )}
+              </div>
+              </>
             )}
 
             {scoreHistory.length > 1 && (
