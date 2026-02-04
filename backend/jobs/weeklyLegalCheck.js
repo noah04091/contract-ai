@@ -213,7 +213,7 @@ class WeeklyLegalCheck {
     }
 
     // === STUFE 1: Datenbank-Check (with fullContent) ===
-    const stage1Results = await this.stage1DatabaseCheck(contract, fullText);
+    const stage1Results = await this.stage1DatabaseCheck(contract, fullText, user);
 
     // === STUFE 2: Chunked GPT Legal Check ===
     const chunks = this.chunkContractText(fullText);
@@ -431,14 +431,27 @@ class WeeklyLegalCheck {
    * STUFE 1: Check database for recent law changes relevant to this contract
    * Now includes fullContent from lawContentFetcher
    */
-  async stage1DatabaseCheck(contract, contractText) {
+  async stage1DatabaseCheck(contract, contractText, user) {
     try {
       const lawsCollection = this.db.collection("laws");
       const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
+      // Read user's Legal Pulse settings
+      const userSettings = user?.legalPulseSettings || {};
+      const userThreshold = userSettings.similarityThreshold || 0.70;
+      const userCategories = Array.isArray(userSettings.categories) && userSettings.categories.length > 0
+        ? userSettings.categories
+        : null; // null = all categories (no filter)
+
+      // Build query - filter by user's selected categories if set
+      const lawQuery = { updatedAt: { $gte: oneWeekAgo } };
+      if (userCategories) {
+        lawQuery.area = { $in: userCategories };
+      }
+
       // Get recent law changes (including fullContent if available)
       const recentLaws = await lawsCollection
-        .find({ updatedAt: { $gte: oneWeekAgo } })
+        .find(lawQuery)
         .sort({ updatedAt: -1 })
         .limit(50)
         .toArray();
@@ -464,7 +477,7 @@ class WeeklyLegalCheck {
             const lawEmbedding = await this.embeddingService.embedText(lawText);
             const similarity = this.cosineSimilarity(contractEmbedding, lawEmbedding);
 
-            if (similarity >= 0.60) {
+            if (similarity >= userThreshold) {
               relevantChanges.push({
                 lawId: law.lawId || law._id.toString(),
                 title: law.title,
