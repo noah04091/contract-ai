@@ -241,7 +241,8 @@
   .ctaButton {
     width: 100%;
     text-align: center;
-    padding: 0.9rem 1.5rem;
+    padding: 1rem 1.5rem;
+    min-height: 48px;
   }
 
   .features {
@@ -280,9 +281,10 @@
   }
 
   .ctaButton {
-    padding: 0.8rem 1.25rem;
+    padding: 0.875rem 1.25rem;
     font-size: 0.9rem;
     border-radius: 8px;
+    min-height: 44px;
   }
 
   .features {

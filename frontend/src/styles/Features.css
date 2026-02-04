@@ -974,6 +974,11 @@
   .fp-cta-secondary-btn {
     padding: 12px 24px;
     font-size: 15px;
+    min-height: 44px;
+  }
+
+  .fp-section {
+    padding: 50px 16px;
   }
 }
 
