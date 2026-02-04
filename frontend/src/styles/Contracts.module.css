@@ -8142,6 +8142,12 @@
     overscroll-behavior: contain;
   }
 
+  /* Wenn Bottom-Nav versteckt ist (Upload/Analyse-Ansicht) */
+  .contentAreaNoNav {
+    padding: 0.5rem 0.75rem !important;
+    padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
+  }
+
   /* 📱 Mobile Back-Button (nur sichtbar auf Mobile) */
   .mobileBackButton {
     display: flex;

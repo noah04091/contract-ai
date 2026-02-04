@@ -4049,7 +4049,7 @@ export default function Contracts() {
             </AnimatePresence>
 
             {/* Content Area - nur dieser Bereich scrollt */}
-            <div className={styles.contentArea} ref={contentAreaRef} data-tour="contracts-list">
+            <div className={`${styles.contentArea} ${activeSection !== 'contracts' ? styles.contentAreaNoNav : ''}`} ref={contentAreaRef} data-tour="contracts-list">
               <AnimatePresence mode="wait" initial={false}>
                 {activeSection === 'upload' && (
                   <motion.div
@@ -5831,7 +5831,8 @@ export default function Contracts() {
         document.body
       )}
 
-      {/* 📱 MOBILE-FIRST 2025: Bottom Navigation */}
+      {/* 📱 MOBILE-FIRST 2025: Bottom Navigation - nur bei Vertrags-Liste anzeigen */}
+      {activeSection === 'contracts' && !showDetails && (
       <nav className={styles.mobileBottomNav}>
         <div className={styles.mobileNavTabs}>
           <button
@@ -5908,8 +5909,10 @@ export default function Contracts() {
           </button>
         </div>
       </nav>
+      )}
 
-      {/* 📱 MOBILE-FIRST 2025: Floating Action Button */}
+      {/* 📱 MOBILE-FIRST 2025: Floating Action Button - nur bei Vertrags-Liste anzeigen */}
+      {activeSection === 'contracts' && !showDetails && (
       <button
         className={styles.mobileFab}
         onClick={() => fileInputRef.current?.click()}
@@ -5917,6 +5920,7 @@ export default function Contracts() {
       >
         <Plus />
       </button>
+      )}
 
       {/* 📱 MOBILE-FIRST 2025: Search Overlay */}
       {showMobileSearch && createPortal(
