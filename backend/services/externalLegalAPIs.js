@@ -6,6 +6,7 @@ const { getInstance: getBundesanzeiger } = require('./bundesanzeigerConnector');
 const { getInstance: getGovData } = require('./govDataConnector');
 const { getInstance: getOpenLegalData } = require('./openLegalDataConnector');
 const { getInstance: getGesetzImInternet } = require('./gesetzImInternetConnector');
+const { getInstance: getRechtsinformationen } = require('./rechtsinformationenConnector');
 const { getInstance: getLawEmbeddings } = require('./lawEmbeddings');
 const Law = require('../models/Law');
 
@@ -16,13 +17,14 @@ class ExternalLegalAPIs {
     this.govData = getGovData();
     this.openLegalData = getOpenLegalData();
     this.gesetzImInternet = getGesetzImInternet();
+    this.rechtsinformationen = getRechtsinformationen();
     this.lawEmbeddings = getLawEmbeddings();
 
-    // New primary sources first, then legacy sources
-    this.enabledSources = ['openlegaldata', 'gesetze-im-internet', 'eu-lex', 'bundesanzeiger', 'govdata'];
+    // Rechtsinformationsportal is highest priority (full-text search), then existing sources
+    this.enabledSources = ['rechtsinformationen', 'openlegaldata', 'gesetze-im-internet', 'eu-lex', 'bundesanzeiger', 'govdata'];
     this.cacheExpiry = 3600000; // 1 hour
 
-    console.log('[EXTERNAL-LEGAL-APIS] Orchestrator initialized with enhanced sources');
+    console.log('[EXTERNAL-LEGAL-APIS] Orchestrator initialized with Rechtsinformationsportal + enhanced sources');
   }
 
   /**
@@ -30,22 +32,49 @@ class ExternalLegalAPIs {
    * @param {Object} params - Search parameters
    * @returns {Promise<Object>} - Aggregated results
    */
-  async searchAllSources({ query, area = null, limit = 30 }) {
-    console.log(`[EXTERNAL-LEGAL-APIS] Searching all sources: "${query}"`);
+  async searchAllSources({ query, area = null, sources = null, limit = 30 }) {
+    // sources: optional array of source names to filter by (null = all sources)
+    const isSourceEnabled = (name) => !sources || sources.includes(name);
 
-    // Distribute limit across sources - prioritize primary sources
-    const primaryLimit = Math.ceil(limit / 2);
-    const secondaryLimit = Math.ceil(limit / 4);
+    const activeSources = this.enabledSources.filter(isSourceEnabled);
+    console.log(`[EXTERNAL-LEGAL-APIS] Searching sources: "${query}" → [${activeSources.join(', ')}]`);
 
-    const results = await Promise.allSettled([
-      // Primary sources (German laws)
-      this.searchOpenLegalData(query, area, primaryLimit),
-      this.searchGesetzImInternet(query, area, primaryLimit),
-      // Secondary sources
-      this.searchEULex(query, area, secondaryLimit),
-      this.searchBundesanzeiger(query, area, secondaryLimit),
-      this.searchGovData(query, area, secondaryLimit)
-    ]);
+    // Distribute limit across active sources - Rechtsinformationsportal gets highest priority
+    const activeCount = activeSources.length;
+    const primaryLimit = Math.ceil(limit / Math.max(activeCount, 1));
+    const secondaryLimit = Math.ceil(limit / Math.max(activeCount, 2));
+    const tertiaryLimit = Math.ceil(limit / Math.max(activeCount, 3));
+
+    // Build search promises only for enabled sources
+    const searchTasks = [];
+    const sourceNames = [];
+
+    if (isSourceEnabled('rechtsinformationen')) {
+      searchTasks.push(this.searchRechtsinformationen(query, area, primaryLimit));
+      sourceNames.push('rechtsinformationen');
+    }
+    if (isSourceEnabled('openlegaldata')) {
+      searchTasks.push(this.searchOpenLegalData(query, area, secondaryLimit));
+      sourceNames.push('openlegaldata');
+    }
+    if (isSourceEnabled('gesetze-im-internet')) {
+      searchTasks.push(this.searchGesetzImInternet(query, area, secondaryLimit));
+      sourceNames.push('gesetze-im-internet');
+    }
+    if (isSourceEnabled('eulex') || isSourceEnabled('eu-lex')) {
+      searchTasks.push(this.searchEULex(query, area, tertiaryLimit));
+      sourceNames.push('eu-lex');
+    }
+    if (isSourceEnabled('bundesanzeiger')) {
+      searchTasks.push(this.searchBundesanzeiger(query, area, tertiaryLimit));
+      sourceNames.push('bundesanzeiger');
+    }
+    if (isSourceEnabled('govdata')) {
+      searchTasks.push(this.searchGovData(query, area, tertiaryLimit));
+      sourceNames.push('govdata');
+    }
+
+    const results = await Promise.allSettled(searchTasks);
 
     const aggregated = {
       query,
@@ -54,9 +83,6 @@ class ExternalLegalAPIs {
       results: [],
       timestamp: new Date()
     };
-
-    // Process results from all sources
-    const sourceNames = ['openlegaldata', 'gesetze-im-internet', 'eu-lex', 'bundesanzeiger', 'govdata'];
 
     results.forEach((result, index) => {
       const sourceName = sourceNames[index];
@@ -147,6 +173,31 @@ class ExternalLegalAPIs {
   }
 
   /**
+   * Search Rechtsinformationsportal des Bundes (primary full-text source)
+   * @param {string} query - Search query
+   * @param {string} area - Legal area
+   * @param {number} limit - Max results
+   * @returns {Promise<Array>} - Results
+   */
+  async searchRechtsinformationen(query, area, limit) {
+    try {
+      const results = await this.rechtsinformationen.searchLaws({
+        query,
+        limit
+      });
+
+      return results.map(result => ({
+        ...result,
+        area: result.area || this.rechtsinformationen.mapAreaToContractArea(result.area),
+        source: 'rechtsinformationen'
+      }));
+    } catch (error) {
+      console.error('[EXTERNAL-LEGAL-APIS] Rechtsinformationsportal search error:', error.message);
+      return [];
+    }
+  }
+
+  /**
    * Search EU-Lex
    * @param {string} query - Search query
    * @param {string} area - Legal area
@@ -227,6 +278,7 @@ class ExternalLegalAPIs {
     console.log(`[EXTERNAL-LEGAL-APIS] Fetching recent changes (${days} days)`);
 
     const results = await Promise.allSettled([
+      this.rechtsinformationen.getRecentChanges(days),
       this.openLegalData.getRecentChanges(days),
       this.gesetzImInternet.getRecentChanges(days),
       this.euLex.getRecentChanges(days),
@@ -242,9 +294,19 @@ class ExternalLegalAPIs {
       timestamp: new Date()
     };
 
-    // Process Open Legal Data
+    // Process Rechtsinformationsportal
     if (results[0].status === 'fulfilled') {
-      const oldChanges = results[0].value;
+      const riChanges = results[0].value;
+      changes.bySource['rechtsinformationen'] = riChanges.length;
+      changes.changes.push(...riChanges.map(c => ({
+        ...c,
+        source: 'rechtsinformationen'
+      })));
+    }
+
+    // Process Open Legal Data
+    if (results[1].status === 'fulfilled') {
+      const oldChanges = results[1].value;
       changes.bySource['openlegaldata'] = oldChanges.length;
       changes.changes.push(...oldChanges.map(c => ({
         ...c,
@@ -253,8 +315,8 @@ class ExternalLegalAPIs {
     }
 
     // Process gesetze-im-internet.de
-    if (results[1].status === 'fulfilled') {
-      const giiChanges = results[1].value;
+    if (results[2].status === 'fulfilled') {
+      const giiChanges = results[2].value;
       changes.bySource['gesetze-im-internet'] = giiChanges.length;
       changes.changes.push(...giiChanges.map(c => ({
         ...c,
@@ -263,8 +325,8 @@ class ExternalLegalAPIs {
     }
 
     // Process EU-Lex
-    if (results[2].status === 'fulfilled') {
-      const euLexChanges = results[2].value;
+    if (results[3].status === 'fulfilled') {
+      const euLexChanges = results[3].value;
       changes.bySource['eu-lex'] = euLexChanges.length;
       changes.changes.push(...euLexChanges.map(c => ({
         ...c,
@@ -274,8 +336,8 @@ class ExternalLegalAPIs {
     }
 
     // Process Bundesanzeiger
-    if (results[3].status === 'fulfilled') {
-      const baChanges = results[3].value;
+    if (results[4].status === 'fulfilled') {
+      const baChanges = results[4].value;
       changes.bySource['bundesanzeiger'] = baChanges.length;
       changes.changes.push(...baChanges.map(c => ({
         ...c,
@@ -284,8 +346,8 @@ class ExternalLegalAPIs {
     }
 
     // Process GovData
-    if (results[4].status === 'fulfilled') {
-      const gdChanges = results[4].value;
+    if (results[5].status === 'fulfilled') {
+      const gdChanges = results[5].value;
       changes.bySource['govdata'] = gdChanges.length;
       changes.changes.push(...gdChanges.map(c => ({
         ...c,
@@ -452,6 +514,7 @@ class ExternalLegalAPIs {
     console.log('[EXTERNAL-LEGAL-APIS] Checking API health');
 
     const healthChecks = await Promise.allSettled([
+      this.rechtsinformationen.checkHealth(),
       this.openLegalData.checkHealth(),
       this.gesetzImInternet.checkHealth(),
       this.euLex.checkHealth(),
@@ -465,7 +528,7 @@ class ExternalLegalAPIs {
       timestamp: new Date()
     };
 
-    const sourceNames = ['openlegaldata', 'gesetze-im-internet', 'eu-lex', 'bundesanzeiger', 'govdata'];
+    const sourceNames = ['rechtsinformationen', 'openlegaldata', 'gesetze-im-internet', 'eu-lex', 'bundesanzeiger', 'govdata'];
 
     healthChecks.forEach((check, index) => {
       const sourceName = sourceNames[index];
@@ -501,7 +564,7 @@ class ExternalLegalAPIs {
    * @returns {Promise<Object>} - Statistics
    */
   async getStatistics() {
-    const allSources = ['eu-lex', 'bundesanzeiger', 'govdata', 'openlegaldata', 'gesetze-im-internet'];
+    const allSources = ['rechtsinformationen', 'eu-lex', 'bundesanzeiger', 'govdata', 'openlegaldata', 'gesetze-im-internet'];
     const localLaws = await Law.countDocuments({ source: { $in: allSources } });
     const bySource = await Law.aggregate([
       { $match: { source: { $in: allSources } } },

@@ -12,7 +12,7 @@ const { getInstance: getExternalAPIs } = require('../services/externalLegalAPIs'
  */
 router.get('/search', verifyToken, async (req, res) => {
   try {
-    const { query, area, limit = 30 } = req.query;
+    const { query, area, sources, limit = 30 } = req.query;
 
     if (!query || query.trim().length === 0) {
       return res.status(400).json({
@@ -21,10 +21,14 @@ router.get('/search', verifyToken, async (req, res) => {
       });
     }
 
+    // Parse sources filter (comma-separated string from frontend)
+    const sourcesFilter = sources ? sources.split(',').map(s => s.trim()).filter(Boolean) : null;
+
     const externalAPIs = getExternalAPIs();
     const results = await externalAPIs.searchAllSources({
       query,
       area,
+      sources: sourcesFilter,
       limit: parseInt(limit)
     });
 

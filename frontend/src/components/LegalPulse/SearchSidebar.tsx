@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { ExternalSearchResult } from '../../types/legalPulse';
 import { saveClause } from '../../services/clauseLibraryAPI';
+import { fetchWithAuth } from '../../context/authUtils';
 import type { ClauseCategory, ClauseArea } from '../../types/clauseLibrary';
 import styles from '../../pages/LegalPulse.module.css';
 
@@ -11,7 +12,7 @@ interface SearchSidebarProps {
 
 export default function SearchSidebar({ onClose, onNotification }: SearchSidebarProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchSources, setSearchSources] = useState<string[]>(['openlegaldata', 'gesetze-im-internet', 'eulex', 'bundesanzeiger', 'govdata']);
+  const [searchSources, setSearchSources] = useState<string[]>(['rechtsinformationen', 'openlegaldata', 'gesetze-im-internet', 'eulex', 'bundesanzeiger', 'govdata']);
   const [searchArea, setSearchArea] = useState('');
   const [searchResults, setSearchResults] = useState<ExternalSearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -79,9 +80,7 @@ export default function SearchSidebar({ onClose, onNotification }: SearchSidebar
         params.append('area', searchArea);
       }
 
-      const response = await fetch(`/api/external-legal/search?${params.toString()}`, {
-        credentials: 'include'
-      });
+      const response = await fetchWithAuth(`/api/external-legal/search?${params.toString()}`);
 
       const data = await response.json();
 
@@ -148,6 +147,7 @@ export default function SearchSidebar({ onClose, onNotification }: SearchSidebar
    */
   const getSourceName = (source: string): string => {
     const sourceNames: Record<string, string> = {
+      'rechtsinformationen': 'Rechtsinformationsportal',
       'eulex': 'EU-Lex',
       'eu-lex': 'EU-Lex',
       'bundesanzeiger': 'Bundesanzeiger',
@@ -265,6 +265,14 @@ export default function SearchSidebar({ onClose, onNotification }: SearchSidebar
             <fieldset className={styles.filterGroup}>
               <legend className={styles.filterLabel}>Datenquellen:</legend>
               <div className={styles.checkboxGroup}>
+                <label className={styles.checkbox}>
+                  <input
+                    type="checkbox"
+                    checked={searchSources.includes('rechtsinformationen')}
+                    onChange={() => toggleSource('rechtsinformationen')}
+                  />
+                  <span>Rechtsinformationsportal (Volltextsuche)</span>
+                </label>
                 <label className={styles.checkbox}>
                   <input
                     type="checkbox"
