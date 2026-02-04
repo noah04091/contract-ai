@@ -7788,11 +7788,11 @@
   position: fixed;
   bottom: calc(80px + env(safe-area-inset-bottom));
   right: 1rem;
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   border: none;
-  border-radius: 16px;
+  border-radius: 14px;
   box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
   cursor: pointer;
   z-index: 99;
@@ -7805,8 +7805,8 @@
 }
 
 .mobileFab svg {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   color: white;
 }
 
