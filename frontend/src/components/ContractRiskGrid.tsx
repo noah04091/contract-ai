@@ -50,7 +50,7 @@ export default function ContractRiskGrid({
   return (
     <div className={styles.contractsGrid}>
       {contracts.map((contract) => {
-        const hasAnalysis = !!contract.legalPulse?.lastAnalysis;
+        const hasAnalysis = contract.legalPulse?.riskScore != null;
         const healthScore = hasAnalysis ? (contract.legalPulse?.adjustedHealthScore ?? contract.legalPulse?.healthScore ?? null) : null;
         const riskLevel = getRiskLevel(healthScore);
         return (
@@ -108,10 +108,12 @@ export default function ContractRiskGrid({
                     <div className={styles.metaItem}>
                       <span className={styles.metaLabel}>Letzter Scan:</span>
                       <span className={styles.metaValue}>
-                        {contract.legalPulse?.lastAnalysis
-                          ? new Date(contract.legalPulse.lastAnalysis).toLocaleDateString('de-DE')
-                          : 'Noch nicht analysiert'
-                        }
+                        {(() => {
+                          const scanDate = contract.legalPulse?.lastChecked || contract.legalPulse?.lastAnalysis;
+                          return scanDate
+                            ? new Date(scanDate).toLocaleDateString('de-DE')
+                            : 'Noch nicht analysiert';
+                        })()}
                       </span>
                     </div>
                     <div className={styles.metaItem}>
