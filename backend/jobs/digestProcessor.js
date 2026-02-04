@@ -73,6 +73,12 @@ class DigestProcessor {
           continue;
         }
 
+        // Respect user's email notification preference
+        if (user.legalPulseSettings?.emailNotifications === false) {
+          console.log(`   ⏭️  User ${user.email} has email notifications disabled, skipping`);
+          continue;
+        }
+
         await this.sendDigestEmail(user, alerts, 'daily');
 
         // Mark alerts as sent
@@ -141,6 +147,12 @@ class DigestProcessor {
 
         if (!user) {
           console.log(`   ⚠️  User ${userId} not found, skipping`);
+          continue;
+        }
+
+        // Respect user's email notification preference
+        if (user.legalPulseSettings?.emailNotifications === false) {
+          console.log(`   ⏭️  User ${user.email} has email notifications disabled, skipping`);
           continue;
         }
 

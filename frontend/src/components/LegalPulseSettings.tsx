@@ -78,17 +78,6 @@ export default function LegalPulseSettings({ onSaveSuccess, compact = false }: L
     }
   };
 
-  // Calculate next digest email date (always weekly)
-  const getNextEmailDate = (): string => {
-    if (!settings?.emailNotifications) return 'Deaktiviert';
-
-    const now = new Date();
-    const nextDate = new Date(now);
-    const daysUntilWednesday = (3 - nextDate.getDay() + 7) % 7 || 7;
-    nextDate.setDate(nextDate.getDate() + daysUntilWednesday);
-    nextDate.setHours(9, 0, 0, 0);
-    return `Jeden Mittwoch um 9:00 Uhr (Nächste: ${nextDate.toLocaleDateString('de-DE', { day: 'numeric', month: 'long' })})`;
-  };
 
   if (isLoading) {
     return (
@@ -247,26 +236,6 @@ export default function LegalPulseSettings({ onSaveSuccess, compact = false }: L
                   </button>
                 );
               })}
-            </div>
-          </div>
-
-          {/* Digest Info */}
-          <div className={styles.settingCard}>
-            <div className={styles.settingHeader}>
-              <div className={styles.settingInfo}>
-                <h4 className={styles.settingTitle}>📬 Digest-Frequenz</h4>
-                <p className={styles.settingDescription}>
-                  Alle erkannten Gesetzesänderungen werden wöchentlich als Digest zusammengefasst
-                </p>
-              </div>
-            </div>
-
-            <div className={styles.nextEmailPreview}>
-              <span className={styles.previewIcon}>📆</span>
-              <div className={styles.previewContent}>
-                <strong>Wöchentlicher Digest</strong>
-                <span>{getNextEmailDate()}</span>
-              </div>
             </div>
           </div>
 
