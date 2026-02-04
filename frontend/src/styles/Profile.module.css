@@ -1410,10 +1410,38 @@
   .featureButton {
     padding: 10px 16px;
     font-size: 13px;
+    min-height: 44px;
   }
 
   .input {
     font-size: 16px; /* Prevents iOS zoom */
+    min-height: 44px;
+  }
+
+  .emailPrefsDropdown {
+    min-height: 44px;
+    font-size: 16px; /* Prevents iOS zoom */
+  }
+
+  .saveButton,
+  .cancelButton {
+    min-height: 44px;
+  }
+
+  .settingsOpenButton {
+    min-height: 44px;
+  }
+
+  .passwordButton {
+    min-height: 44px;
+  }
+
+  .deleteButton {
+    min-height: 44px;
+  }
+
+  .upgradeButton {
+    min-height: 44px;
   }
 
   .notification {

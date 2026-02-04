@@ -1544,6 +1544,7 @@ html {
     padding: 10px 16px;
     font-size: 13px;
     border-radius: 10px;
+    min-height: 44px;
   }
 
   .ctaHint {
@@ -2763,6 +2764,7 @@ html {
   .categoryTab {
     padding: var(--space-2) var(--space-3);
     font-size: 13px;
+    min-height: 44px;
   }
 
   .categoryTab svg {
@@ -2850,6 +2852,7 @@ html {
     width: 100%;
     justify-content: center;
     padding: var(--space-3);
+    min-height: 44px;
   }
 
   /* Neue Analyse Button Mobile */
@@ -2891,6 +2894,7 @@ html {
   .heroActionBtn {
     width: 100%;
     justify-content: center;
+    min-height: 44px;
   }
 
   .categoryTab span:not(.categoryTabBadge) {
@@ -3599,6 +3603,7 @@ html {
 
   .resetBtn {
     width: 100%;
+    min-height: 44px;
   }
 }
 
@@ -3703,6 +3708,7 @@ html {
 
   .perspectiveOption {
     width: 100%;
+    min-height: 44px;
   }
 }
 
@@ -4065,6 +4071,7 @@ html {
   .hintToggle {
     margin-left: 0;
     align-self: flex-start;
+    min-height: 44px;
   }
 }
 

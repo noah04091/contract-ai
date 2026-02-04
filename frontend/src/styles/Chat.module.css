@@ -155,7 +155,7 @@
   .form textarea {
     min-height: 48px;
     padding: 12px 14px;
-    font-size: 14px;
+    font-size: 16px; /* Prevents iOS auto-zoom */
   }
 
   .sendButton,
@@ -163,6 +163,17 @@
     padding: 12px;
     min-height: 48px;
     min-width: 48px;
+  }
+
+  /* Show history actions on touch devices (hover doesn't work) */
+  .historyActions {
+    display: flex;
+  }
+
+  .iconButton {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 8px;
   }
 }
 
@@ -210,10 +221,14 @@
   .chip {
     padding: 6px 10px;
     font-size: 12px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
   }
 
   .inputBar {
     padding: 10px 12px;
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
   }
 
   .form {
@@ -222,7 +237,7 @@
 
   .form textarea {
     padding: 10px 12px;
-    font-size: 14px;
+    font-size: 16px; /* Prevents iOS auto-zoom */
   }
 
   .note {
@@ -253,6 +268,7 @@
     font-size: 14px;
     width: 100%;
     text-align: center;
+    min-height: 44px;
   }
 }
 

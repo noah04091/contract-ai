@@ -3011,6 +3011,7 @@
 
   .step3ActionButton {
     padding: 0.875rem 1.25rem;
+    min-height: 44px;
   }
 
   .step3Header h2 {
@@ -3641,6 +3642,7 @@
   .upgradeButton {
     width: 100%;
     justify-content: center;
+    min-height: 44px;
   }
 
   /* Steps Mobile */
@@ -4050,6 +4052,7 @@
   .signatureButton {
     width: 100%;
     justify-content: center;
+    min-height: 44px;
   }
 
   .contractTypeCard,
