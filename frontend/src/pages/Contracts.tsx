@@ -8,7 +8,7 @@ import {
   FileText, RefreshCw, Upload, CheckCircle, AlertCircle,
   Plus, Calendar, Clock, Trash2, Eye, Edit, Edit3,
   Search, X, Crown, Users, Loader,
-  Lock, Zap, BarChart3, ExternalLink, ArrowRight, Folder,
+  Lock, Zap, BarChart3, ExternalLink, ArrowRight, Folder, Archive,
   CheckSquare, Square, Mail, Bell, Download,
   LayoutGrid, List, FolderPlus,
   FileUp, AlertTriangle, Sparkles, RotateCcw, CreditCard,
@@ -408,9 +408,10 @@ export default function Contracts() {
   const [selectedEnvelopeId, setSelectedEnvelopeId] = useState<string | null>(null);
 
   // 📱 MOBILE-FIRST 2025: Neue States für Bottom Nav, Filter Chips, Search Overlay
-  const [mobileNavTab, setMobileNavTab] = useState<'alle' | 'aktiv' | 'faellig' | 'archiv' | 'suche'>('alle');
+  const [mobileNavTab, setMobileNavTab] = useState<'alle' | 'aktiv' | 'faellig' | 'archiv' | 'ordner'>('alle');
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [mobileSearchQuery, setMobileSearchQuery] = useState('');
+  const [showMobileFolderSheet, setShowMobileFolderSheet] = useState(false);
 
   // 🆕 Handle navigation state from Optimizer page
   useEffect(() => {
@@ -4048,6 +4049,108 @@ export default function Contracts() {
               )}
             </AnimatePresence>
 
+            {/* 📱 MOBILE: Folder Bottom-Sheet */}
+            <AnimatePresence>
+              {showMobileFolderSheet && (
+                <>
+                  <motion.div
+                    className={styles.mobileFilterOverlay}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => setShowMobileFolderSheet(false)}
+                  />
+                  <motion.div
+                    className={styles.mobileFolderSheet}
+                    initial={{ y: '100%' }}
+                    animate={{ y: 0 }}
+                    exit={{ y: '100%' }}
+                    transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                  >
+                    <div className={styles.mobileFilterHandle} />
+                    <div className={styles.mobileFilterHeader}>
+                      <h3>Ordner</h3>
+                      <button
+                        className={styles.mobileFilterClose}
+                        onClick={() => setShowMobileFolderSheet(false)}
+                      >
+                        <X size={20} />
+                      </button>
+                    </div>
+
+                    <div className={styles.mobileFolderList}>
+                      {/* Alle Verträge */}
+                      <button
+                        className={`${styles.mobileFolderItem} ${activeFolder === null ? styles.active : ''}`}
+                        onClick={() => {
+                          setActiveFolder(null);
+                          setShowMobileFolderSheet(false);
+                        }}
+                      >
+                        <span className={styles.mobileFolderIcon} style={{ color: '#3b82f6' }}>
+                          <FileText size={20} />
+                        </span>
+                        <span className={styles.mobileFolderName}>Alle Verträge</span>
+                        <span className={styles.mobileFolderBadge}>{paginationInfo.total}</span>
+                        {activeFolder === null && <CheckCircle size={16} className={styles.mobileFolderCheck} />}
+                      </button>
+
+                      {/* Ohne Ordner */}
+                      <button
+                        className={`${styles.mobileFolderItem} ${activeFolder === 'unassigned' ? styles.active : ''}`}
+                        onClick={() => {
+                          setActiveFolder('unassigned');
+                          setShowMobileFolderSheet(false);
+                        }}
+                      >
+                        <span className={styles.mobileFolderIcon} style={{ color: '#94a3b8' }}>
+                          <Folder size={20} />
+                        </span>
+                        <span className={styles.mobileFolderName}>Ohne Ordner</span>
+                        <span className={styles.mobileFolderBadge}>{contracts.filter(c => !c.folderId).length}</span>
+                        {activeFolder === 'unassigned' && <CheckCircle size={16} className={styles.mobileFolderCheck} />}
+                      </button>
+
+                      {/* User Folders */}
+                      {folders.map((folder: FolderType) => (
+                        <button
+                          key={folder._id}
+                          className={`${styles.mobileFolderItem} ${activeFolder === folder._id ? styles.active : ''}`}
+                          onClick={() => {
+                            setActiveFolder(folder._id);
+                            setShowMobileFolderSheet(false);
+                          }}
+                        >
+                          <span className={styles.mobileFolderIcon} style={{ color: folder.color || '#fbbf24' }}>
+                            {folder.icon ? <span style={{ fontSize: '1.25rem' }}>{folder.icon}</span> : <Folder size={20} />}
+                          </span>
+                          <span className={styles.mobileFolderName}>{folder.name}</span>
+                          {favoriteFolder === folder._id && (
+                            <Star size={14} className={styles.mobileFolderStar} fill="currentColor" />
+                          )}
+                          <span className={styles.mobileFolderBadge}>{folder.contractCount ?? 0}</span>
+                          {activeFolder === folder._id && <CheckCircle size={16} className={styles.mobileFolderCheck} />}
+                        </button>
+                      ))}
+
+                      {/* Ordner erstellen */}
+                      <button
+                        className={styles.mobileFolderAdd}
+                        onClick={() => {
+                          setShowMobileFolderSheet(false);
+                          setEditingFolder(null);
+                          setFolderModalOpen(true);
+                        }}
+                      >
+                        <FolderPlus size={20} />
+                        <span>Neuen Ordner erstellen</span>
+                      </button>
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+
             {/* Content Area - nur dieser Bereich scrollt */}
             <div className={`${styles.contentArea} ${activeSection !== 'contracts' ? styles.contentAreaNoNav : ''}`} ref={contentAreaRef} data-tour="contracts-list">
               <AnimatePresence mode="wait" initial={false}>
@@ -5832,7 +5935,7 @@ export default function Contracts() {
       )}
 
       {/* 📱 MOBILE-FIRST 2025: Bottom Navigation - nur bei Vertrags-Liste anzeigen */}
-      {activeSection === 'contracts' && !showDetails && !quickAnalysisModal.show && !showMobileFilterSheet && (
+      {activeSection === 'contracts' && !showDetails && !quickAnalysisModal.show && !showMobileFilterSheet && !showMobileFolderSheet && (
       <nav className={styles.mobileBottomNav}>
         <div className={styles.mobileNavTabs}>
           <button
@@ -5892,27 +5995,27 @@ export default function Contracts() {
               setActiveSection('contracts');
             }}
           >
-            <Folder />
+            <Archive />
             <span>Archiv</span>
           </button>
 
           <button
-            className={`${styles.mobileNavTab} ${mobileNavTab === 'suche' ? styles.active : ''}`}
+            className={`${styles.mobileNavTab} ${mobileNavTab === 'ordner' ? styles.active : ''}`}
             onClick={() => {
-              setMobileNavTab('suche');
-              setShowMobileSearch(true);
+              setMobileNavTab('ordner');
+              setShowMobileFolderSheet(true);
               setActiveSection('contracts');
             }}
           >
-            <Search />
-            <span>Suche</span>
+            <Folder />
+            <span>Ordner</span>
           </button>
         </div>
       </nav>
       )}
 
       {/* 📱 MOBILE-FIRST 2025: Floating Action Button - nur bei Vertrags-Liste anzeigen */}
-      {activeSection === 'contracts' && !showDetails && !quickAnalysisModal.show && !showMobileFilterSheet && (
+      {activeSection === 'contracts' && !showDetails && !quickAnalysisModal.show && !showMobileFilterSheet && !showMobileFolderSheet && (
       <button
         className={styles.mobileFab}
         onClick={() => fileInputRef.current?.click()}

@@ -6336,6 +6336,124 @@
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
 
+/* === MOBILE FOLDER BOTTOM SHEET === */
+.mobileFolderSheet {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2);
+  z-index: 10000;
+  max-height: 80vh;
+  overflow: hidden;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.mobileFolderList {
+  padding: 0.5rem 0;
+  overflow-y: auto;
+  max-height: calc(80vh - 100px);
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobileFolderItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.875rem 1.25rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  font-size: 0.9375rem;
+  color: #1f2937;
+  text-align: left;
+  min-height: 52px;
+}
+
+.mobileFolderItem:active {
+  background: #f3f4f6;
+}
+
+.mobileFolderItem.active {
+  background: #eff6ff;
+}
+
+.mobileFolderIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #f3f4f6;
+  flex-shrink: 0;
+}
+
+.mobileFolderItem.active .mobileFolderIcon {
+  background: #dbeafe;
+}
+
+.mobileFolderName {
+  flex: 1;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobileFolderBadge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  min-width: 24px;
+  text-align: center;
+}
+
+.mobileFolderItem.active .mobileFolderBadge {
+  background: #dbeafe;
+  color: #3b82f6;
+}
+
+.mobileFolderCheck {
+  color: #3b82f6;
+  flex-shrink: 0;
+}
+
+.mobileFolderStar {
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
+.mobileFolderAdd {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.875rem 1.25rem;
+  margin-top: 0.25rem;
+  background: transparent;
+  border: none;
+  border-top: 1px solid #f3f4f6;
+  cursor: pointer;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #3b82f6;
+  min-height: 52px;
+  transition: background 0.15s ease;
+}
+
+.mobileFolderAdd:active {
+  background: #eff6ff;
+}
+
 /* Desktop Filter Selects - versteckt auf Mobile */
 .desktopFilters {
   display: flex;
@@ -6454,7 +6572,8 @@
 
   /* Filter Bottom-Sheet anzeigen (wenn aktiviert) */
   .mobileFilterOverlay,
-  .mobileFilterSheet {
+  .mobileFilterSheet,
+  .mobileFolderSheet {
     display: block;
   }
 
