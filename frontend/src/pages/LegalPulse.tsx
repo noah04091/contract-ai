@@ -690,6 +690,26 @@ export default function LegalPulse() {
     const displayHealthScore = selectedContract.legalPulse?.adjustedHealthScore ?? selectedContract.legalPulse?.healthScore;
     const hasAdjustedScore = selectedContract.legalPulse?.adjustedRiskScore != null && selectedContract.legalPulse?.adjustedRiskScore !== selectedContract.legalPulse?.riskScore;
     const riskLevel = getRiskLevel(displayRiskScore);
+
+    // Health level for the hero circle (higher = better)
+    const getHealthLevel = (score: number | undefined) => {
+      if (score === undefined || score === null) return { level: 'Unbekannt', color: '#6b7280', icon: '❓' };
+      if (score >= 75) return { level: 'Gut', color: '#10b981', icon: '✅' };
+      if (score >= 50) return { level: 'Befriedigend', color: '#f59e0b', icon: '⚠️' };
+      return { level: 'Kritisch', color: '#ef4444', icon: '🔴' };
+    };
+    const healthLevel = getHealthLevel(displayHealthScore);
+
+    // Factor scores for breakdown
+    const riskFactor = displayRiskScore !== null ? Math.max(0, 100 - displayRiskScore) : null;
+    const risks = selectedContract.legalPulse?.topRisks || [];
+    const totalRisks = risks.length;
+    const resolvedRisks = risks.filter(r => r.status === 'resolved' || r.status === 'accepted').length;
+    const progressFactor = totalRisks > 0 ? Math.round((resolvedRisks / totalRisks) * 100) : null;
+    // Freshness: days since last analysis
+    const lastAnalysisDate = selectedContract.legalPulse?.lastAnalysis || selectedContract.legalPulse?.lastChecked;
+    const daysSinceAnalysis = lastAnalysisDate ? Math.floor((Date.now() - new Date(lastAnalysisDate).getTime()) / (1000 * 60 * 60 * 24)) : null;
+    const freshnessFactor = daysSinceAnalysis !== null ? Math.max(0, Math.round(100 - daysSinceAnalysis * 1.5)) : null;
     const scoreHistory = selectedContract.legalPulse?.scoreHistory || [];
 
     // Check if Legal Pulse analysis is still loading/running
@@ -860,24 +880,23 @@ export default function LegalPulse() {
               </div>
             ) : (
               <div className={styles.scoreHeroLayout}>
-                {/* Left: Score Circle + Level */}
+                {/* Left: Health Score Circle + Level */}
                 <div className={styles.scoreCircleArea}>
                   <div
                     className={styles.scoreCircle}
-                    style={{ '--score-color': riskLevel.color, '--score': displayRiskScore ?? 0 } as React.CSSProperties}
+                    style={{ '--score-color': healthLevel.color, '--score': displayHealthScore ?? 0 } as React.CSSProperties}
                   >
                     <span className={styles.scoreNumber}>
-                      {displayRiskScore ?? '\u2014'}
+                      {displayHealthScore ?? '\u2014'}
                     </span>
                     <span className={styles.scoreMax}>/100</span>
                   </div>
                   <div className={styles.riskLevel}>
-                    <span className={styles.riskIcon}>{riskLevel.icon}</span>
-                    <span className={styles.riskLabel} style={{ color: riskLevel.color }}>
-                      {riskLevel.level}
+                    <span className={styles.riskIcon}>{healthLevel.icon}</span>
+                    <span className={styles.riskLabel} style={{ color: healthLevel.color }}>
+                      {healthLevel.level}
                     </span>
                   </div>
-                  {/* Adjusted Score Indicator */}
                   {hasAdjustedScore && (
                     <div style={{
                       display: 'flex',
@@ -891,57 +910,98 @@ export default function LegalPulse() {
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                         <polyline points="20 6 9 17 4 12" />
                       </svg>
-                      <span>
-                        Original: {selectedContract.legalPulse?.riskScore}
-                        {' \u2192 '}
-                        Angepasst: {selectedContract.legalPulse?.adjustedRiskScore}
-                      </span>
+                      <span>Durch Risiko-Management verbessert</span>
                     </div>
                   )}
-                  {/* Score Explanation */}
                   <p className={styles.scoreExplanation}>
                     {(() => {
-                      const score = displayRiskScore;
-                      if (!score) return 'Noch keine Analyse durchgef\u00FChrt.';
-                      if (score <= 30) return 'Niedriges Risiko: Dieser Vertrag weist wenige rechtliche Schwachstellen auf. Regelm\u00E4\u00DFige \u00DCberpr\u00FCfung empfohlen.';
-                      if (score <= 60) return 'Mittleres Risiko: Einige Klauseln sollten \u00FCberpr\u00FCft und angepasst werden, um rechtliche Nachteile zu vermeiden.';
-                      return 'Hohes Risiko: Mehrere kritische Klauseln erfordern dringende \u00DCberarbeitung. Handlungsbedarf besteht.';
+                      const score = displayHealthScore;
+                      if (!score) return 'Noch keine Analyse durchgeführt.';
+                      if (score >= 75) return 'Guter Zustand: Der Vertrag ist rechtlich solide aufgestellt.';
+                      if (score >= 50) return 'Verbesserungsbedarf: Einige Bereiche sollten überprüft werden.';
+                      return 'Kritischer Zustand: Dringender Handlungsbedarf bei mehreren Klauseln.';
                     })()}
                   </p>
                 </div>
 
-                {/* Right: Health + Summary + Stats */}
+                {/* Right: Factor Breakdown + Summary + Stats */}
                 <div className={styles.scoreDetailsArea}>
-                  {/* Vertragsgesundheit */}
-                  {displayHealthScore !== undefined && (
-                    <div className={styles.healthSection}>
-                      <div className={styles.healthHeader}>
-                        <span className={styles.healthTitle}>Vertragsgesundheit</span>
-                        <span
-                          className={styles.healthValue}
-                          style={{
-                            color: displayHealthScore >= 80 ? '#10b981' :
-                                   displayHealthScore >= 50 ? '#f59e0b' : '#ef4444'
-                          }}
-                        >
-                          {displayHealthScore}/100
+                  {/* Factor Breakdown */}
+                  <div className={styles.factorBreakdown}>
+                    <span className={styles.factorBreakdownTitle}>Zusammensetzung</span>
+
+                    {/* Factor 1: Risikobewertung */}
+                    {riskFactor !== null && (
+                      <div className={styles.factorItem}>
+                        <div className={styles.factorHeader}>
+                          <span className={styles.factorLabel}>Risikobewertung</span>
+                          <span className={styles.factorValue} style={{
+                            color: riskFactor >= 70 ? '#10b981' : riskFactor >= 40 ? '#f59e0b' : '#ef4444'
+                          }}>{riskFactor}/100</span>
+                        </div>
+                        <div className={styles.factorBarTrack}>
+                          <div className={styles.factorBarFill} style={{
+                            width: `${riskFactor}%`,
+                            background: riskFactor >= 70 ? '#10b981' : riskFactor >= 40 ? '#f59e0b' : '#ef4444'
+                          }} />
+                        </div>
+                        <span className={styles.factorSubtext}>
+                          {totalRisks} {totalRisks === 1 ? 'Risiko' : 'Risiken'} identifiziert
+                          {resolvedRisks > 0 && ` · ${resolvedRisks} behoben`}
                         </span>
                       </div>
-                      <div className={styles.healthBarTrack}>
-                        <div
-                          className={styles.healthBarFill}
-                          style={{
-                            width: `${displayHealthScore}%`,
-                            background: displayHealthScore >= 80 ? '#10b981' :
-                                        displayHealthScore >= 50 ? '#f59e0b' : '#ef4444'
-                          }}
-                        />
+                    )}
+
+                    {/* Factor 2: Risiko-Fortschritt */}
+                    {totalRisks > 0 && (
+                      <div className={styles.factorItem}>
+                        <div className={styles.factorHeader}>
+                          <span className={styles.factorLabel}>Risiko-Fortschritt</span>
+                          <span className={styles.factorValue} style={{
+                            color: (progressFactor ?? 0) >= 70 ? '#10b981' : (progressFactor ?? 0) >= 30 ? '#f59e0b' : '#6b7280'
+                          }}>{resolvedRisks}/{totalRisks}</span>
+                        </div>
+                        <div className={styles.factorBarTrack}>
+                          <div className={styles.factorBarFill} style={{
+                            width: `${progressFactor ?? 0}%`,
+                            background: (progressFactor ?? 0) >= 70 ? '#10b981' : (progressFactor ?? 0) >= 30 ? '#f59e0b' : '#e5e7eb'
+                          }} />
+                        </div>
+                        <span className={styles.factorSubtext}>
+                          {resolvedRisks === 0
+                            ? 'Noch keine Risiken bearbeitet'
+                            : resolvedRisks === totalRisks
+                              ? 'Alle Risiken behoben'
+                              : `${progressFactor}% der Risiken bearbeitet`}
+                        </span>
                       </div>
-                      <p className={styles.healthExplanation}>
-                        Berechnet aus Risiko-Score, Vertragsalter und Vollständigkeit der Klauseln.
-                      </p>
-                    </div>
-                  )}
+                    )}
+
+                    {/* Factor 3: Aktualität */}
+                    {freshnessFactor !== null && (
+                      <div className={styles.factorItem}>
+                        <div className={styles.factorHeader}>
+                          <span className={styles.factorLabel}>Aktualität</span>
+                          <span className={styles.factorValue} style={{
+                            color: freshnessFactor >= 70 ? '#10b981' : freshnessFactor >= 40 ? '#f59e0b' : '#ef4444'
+                          }}>{freshnessFactor}/100</span>
+                        </div>
+                        <div className={styles.factorBarTrack}>
+                          <div className={styles.factorBarFill} style={{
+                            width: `${freshnessFactor}%`,
+                            background: freshnessFactor >= 70 ? '#10b981' : freshnessFactor >= 40 ? '#f59e0b' : '#ef4444'
+                          }} />
+                        </div>
+                        <span className={styles.factorSubtext}>
+                          {daysSinceAnalysis === 0
+                            ? 'Heute analysiert'
+                            : daysSinceAnalysis === 1
+                              ? 'Gestern analysiert'
+                              : `Vor ${daysSinceAnalysis} Tagen analysiert`}
+                        </span>
+                      </div>
+                    )}
+                  </div>
 
                   {/* GPT Summary */}
                   {selectedContract.legalPulse?.summary && (
