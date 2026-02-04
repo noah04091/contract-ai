@@ -190,12 +190,10 @@ class RechtsinformationenConnector {
     const identifier = item.legislationIdentifier || null;
     const legalForce = item.workExample?.legislationLegalForce || null;
 
-    // Build URL from @id field
+    // Build URL: link to gesetze-im-internet.de (human-readable) instead of raw API
     let url = null;
-    if (item['@id']) {
-      url = `${this.portalUrl}${item['@id']}`;
-    } else if (abbreviation) {
-      const slug = abbreviation.toLowerCase().replace(/[^a-z0-9äöüß]/g, '');
+    if (abbreviation) {
+      const slug = abbreviation.toLowerCase().replace(/[^a-z0-9äöüß_]/g, '');
       url = `https://www.gesetze-im-internet.de/${slug}/index.html`;
     }
 
@@ -256,10 +254,10 @@ class RechtsinformationenConnector {
       title = `${court} - ${fileNumber}`.trim() || 'Entscheidung';
     }
 
-    // Build URL from @id
+    // Build URL: link to rechtsprechung-im-internet.de (human-readable) using documentNumber
     let url = null;
-    if (item['@id']) {
-      url = `${this.portalUrl}${item['@id']}`;
+    if (documentNumber) {
+      url = `https://www.rechtsprechung-im-internet.de/jportal/?quelle=jlink&docid=${encodeURIComponent(documentNumber)}&psml=bsjrsprod.psml`;
     }
 
     let relevance = Math.max(0.4, 0.9 - (index / Math.max(total, 1)) * 0.5);
