@@ -1761,6 +1761,7 @@
 
   .calendar-nav-row .current-month {
     flex: 1;
+    min-width: 0; /* Override desktop min-width: 180px */
     text-align: center;
     font-size: 18px;
     font-weight: 700;
@@ -1769,6 +1770,8 @@
     margin: 0;
     letter-spacing: -0.3px;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .calendar-nav-row .nav-btn {
@@ -2140,10 +2143,14 @@
 
   .premium-modal {
     width: 100%;
-    max-width: 100%;
+    max-width: 100vw;
     max-height: 90vh;
+    max-height: 90dvh;
     border-radius: 24px 24px 0 0;
     animation: modalSlideUp 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 
   @keyframes modalSlideUp {
@@ -2158,7 +2165,8 @@
   }
 
   .modal-header-premium {
-    padding: 20px;
+    padding: 20px 16px;
+    flex-shrink: 0;
   }
 
   .severity-badge-premium {
@@ -2180,10 +2188,12 @@
   }
 
   .modal-content-premium {
-    padding: 16px 20px 24px;
+    padding: 16px 16px 24px;
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
     overflow-y: auto;
-  overflow-x: hidden;
-    max-height: calc(90vh - 120px);
+    overflow-x: hidden;
+    flex: 1;
+    min-height: 0;
     -webkit-overflow-scrolling: touch;
   }
 
@@ -2210,14 +2220,19 @@
   }
 
   .modal-actions-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 8px;
   }
 
   .action-btn-premium {
     padding: 14px 12px;
-    font-size: 13px;
+    font-size: 14px;
     min-height: 48px;
+    width: 100%;
+  }
+
+  .action-btn-premium.primary {
+    grid-column: auto;
   }
 
   .action-btn-premium.primary {
@@ -2407,6 +2422,7 @@
 
   .modal-content-premium {
     padding: 14px 16px 20px;
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
   }
 
   .event-meta-grid {
