@@ -795,4 +795,185 @@ router.post("/weekly-check/trigger", verifyToken, requirePremium, legalPulseRate
   }
 });
 
+// ═══════════════════════════════════════════════════════════════
+// 🎯 RISK MANAGEMENT - Resolve, Comment, Edit Individual Risks
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Recalculate adjusted scores based on resolved/accepted risks.
+ * - Each risk has a severity weight: critical=4, high=3, medium=2, low=1
+ * - Resolved risks reduce the score proportionally
+ * - Max 70% reduction (structural contract risk remains)
+ */
+function recalculateAdjustedScores(legalPulse) {
+  const risks = legalPulse.topRisks || [];
+  const originalRiskScore = legalPulse.riskScore;
+  const originalHealthScore = legalPulse.healthScore;
+
+  if (!risks.length || originalRiskScore == null) {
+    return { adjustedRiskScore: originalRiskScore, adjustedHealthScore: originalHealthScore };
+  }
+
+  const severityWeight = { critical: 4, high: 3, medium: 2, low: 1 };
+
+  let totalWeight = 0;
+  let resolvedWeight = 0;
+
+  for (const risk of risks) {
+    const effectiveSeverity = risk.userEdits?.severity || risk.severity || 'medium';
+    const weight = severityWeight[effectiveSeverity] || 2;
+    totalWeight += weight;
+    if (risk.status === 'resolved' || risk.status === 'accepted') {
+      resolvedWeight += weight;
+    }
+  }
+
+  if (totalWeight === 0) {
+    return { adjustedRiskScore: originalRiskScore, adjustedHealthScore: originalHealthScore };
+  }
+
+  // Reduction ratio capped at 70%
+  const reductionRatio = Math.min(resolvedWeight / totalWeight, 0.7);
+  const adjustedRiskScore = Math.round(originalRiskScore * (1 - reductionRatio));
+  const adjustedHealthScore = originalHealthScore != null
+    ? Math.min(100, Math.round(originalHealthScore + (100 - originalHealthScore) * reductionRatio))
+    : null;
+
+  return { adjustedRiskScore, adjustedHealthScore };
+}
+
+/**
+ * PATCH /api/legal-pulse/:contractId/risks/:riskIndex
+ * Update a specific risk's status, comment, or user edits.
+ */
+router.patch("/:contractId/risks/:riskIndex", verifyToken, requirePremium, async (req, res) => {
+  try {
+    const { contractId, riskIndex } = req.params;
+    const idx = parseInt(riskIndex, 10);
+
+    if (!ObjectId.isValid(contractId)) {
+      return res.status(400).json({ success: false, message: "Ungültige Contract-ID" });
+    }
+    if (isNaN(idx) || idx < 0) {
+      return res.status(400).json({ success: false, message: "Ungültiger Risiko-Index" });
+    }
+
+    const { status, userComment, userEdits } = req.body;
+
+    // Validate status
+    const validStatuses = ['open', 'resolved', 'accepted'];
+    if (status && !validStatuses.includes(status)) {
+      return res.status(400).json({ success: false, message: "Ungültiger Status. Erlaubt: open, resolved, accepted" });
+    }
+
+    // Validate userEdits.severity
+    const validSeverities = ['critical', 'high', 'medium', 'low'];
+    if (userEdits?.severity && !validSeverities.includes(userEdits.severity)) {
+      return res.status(400).json({ success: false, message: "Ungültiger Schweregrad" });
+    }
+
+    // Sanitize userComment
+    const sanitizedComment = userComment != null
+      ? String(userComment).substring(0, 1000).trim()
+      : undefined;
+
+    // Sanitize userEdits
+    const sanitizedEdits = userEdits ? {} : undefined;
+    if (userEdits) {
+      if (userEdits.title) sanitizedEdits.title = String(userEdits.title).substring(0, 200).trim();
+      if (userEdits.description) sanitizedEdits.description = String(userEdits.description).substring(0, 2000).trim();
+      if (userEdits.severity) sanitizedEdits.severity = userEdits.severity;
+    }
+
+    const database = require("../config/database");
+    const db = await database.connect();
+
+    // Load contract and verify ownership
+    const contract = await db.collection("contracts").findOne({
+      _id: new ObjectId(contractId),
+      userId: new ObjectId(req.user.userId)
+    });
+
+    if (!contract) {
+      return res.status(404).json({ success: false, message: "Vertrag nicht gefunden" });
+    }
+
+    if (!contract.legalPulse?.topRisks || idx >= contract.legalPulse.topRisks.length) {
+      return res.status(400).json({ success: false, message: "Risiko-Index außerhalb des Bereichs" });
+    }
+
+    // Build update fields
+    const updateFields = {};
+
+    if (status !== undefined) {
+      updateFields[`legalPulse.topRisks.${idx}.status`] = status;
+      if (status === 'resolved' || status === 'accepted') {
+        updateFields[`legalPulse.topRisks.${idx}.resolvedAt`] = new Date().toISOString();
+      } else {
+        updateFields[`legalPulse.topRisks.${idx}.resolvedAt`] = null;
+      }
+    }
+
+    if (sanitizedComment !== undefined) {
+      updateFields[`legalPulse.topRisks.${idx}.userComment`] = sanitizedComment;
+    }
+
+    if (sanitizedEdits) {
+      if (sanitizedEdits.title) updateFields[`legalPulse.topRisks.${idx}.userEdits.title`] = sanitizedEdits.title;
+      if (sanitizedEdits.description) updateFields[`legalPulse.topRisks.${idx}.userEdits.description`] = sanitizedEdits.description;
+      if (sanitizedEdits.severity) updateFields[`legalPulse.topRisks.${idx}.userEdits.severity`] = sanitizedEdits.severity;
+    }
+
+    if (Object.keys(updateFields).length === 0) {
+      return res.status(400).json({ success: false, message: "Keine Änderungen angegeben" });
+    }
+
+    // Apply risk-level updates first
+    await db.collection("contracts").updateOne(
+      { _id: new ObjectId(contractId) },
+      { $set: updateFields }
+    );
+
+    // Reload to recalculate scores
+    const updatedContract = await db.collection("contracts").findOne({ _id: new ObjectId(contractId) });
+    const { adjustedRiskScore, adjustedHealthScore } = recalculateAdjustedScores(updatedContract.legalPulse);
+
+    // Save adjusted scores
+    await db.collection("contracts").updateOne(
+      { _id: new ObjectId(contractId) },
+      {
+        $set: {
+          'legalPulse.adjustedRiskScore': adjustedRiskScore,
+          'legalPulse.adjustedHealthScore': adjustedHealthScore
+        }
+      }
+    );
+
+    // Return updated risk + scores
+    const finalContract = await db.collection("contracts").findOne({ _id: new ObjectId(contractId) });
+    const updatedRisk = finalContract.legalPulse.topRisks[idx];
+
+    console.log(`✅ [RISK-MGMT] Risk ${idx} updated for contract ${contractId} | status=${status || 'unchanged'} | adjustedScore=${adjustedRiskScore}`);
+
+    res.json({
+      success: true,
+      message: "Risiko erfolgreich aktualisiert",
+      risk: updatedRisk,
+      riskIndex: idx,
+      adjustedRiskScore,
+      adjustedHealthScore,
+      originalRiskScore: finalContract.legalPulse.riskScore,
+      originalHealthScore: finalContract.legalPulse.healthScore
+    });
+
+  } catch (error) {
+    console.error("❌ [RISK-MGMT] Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Aktualisieren des Risikos",
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;

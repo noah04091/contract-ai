@@ -59,44 +59,77 @@ export default function OverviewTab({ selectedContract, onNavigate, onSetActiveT
     <div className={styles.overviewTab}>
       <div className={styles.overviewGrid}>
         {/* Risk Distribution */}
-        {selectedContract.legalPulse?.topRisks && selectedContract.legalPulse.topRisks.length > 0 && (
-          <div className={styles.overviewRiskDistribution}>
-            <h4>Risikoverteilung</h4>
-            <div className={styles.riskDistributionBar}>
-              {['critical', 'high', 'medium', 'low'].map(sev => {
-                const count = selectedContract.legalPulse!.topRisks!.filter((r) => r.severity === sev).length;
-                if (count === 0) return null;
-                const colors: Record<string, string> = { critical: '#dc2626', high: '#ea580c', medium: '#d97706', low: '#16a34a' };
-                const labels: Record<string, string> = { critical: 'Kritisch', high: 'Hoch', medium: 'Mittel', low: 'Niedrig' };
-                const total = selectedContract.legalPulse!.topRisks!.length;
-                return (
+        {selectedContract.legalPulse?.topRisks && selectedContract.legalPulse.topRisks.length > 0 && (() => {
+          const risks = selectedContract.legalPulse!.topRisks!;
+          const resolvedCount = risks.filter(r => r.status === 'resolved' || r.status === 'accepted').length;
+          const total = risks.length;
+          return (
+            <div className={styles.overviewRiskDistribution}>
+              <h4>Risikoverteilung</h4>
+              {resolvedCount > 0 && (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                  marginBottom: '8px', fontSize: '0.82rem', color: '#10b981', fontWeight: 500
+                }}>
+                  <CheckCircle size={14} />
+                  {resolvedCount}/{total} Risiken behoben
+                </div>
+              )}
+              <div className={styles.riskDistributionBar}>
+                {['critical', 'high', 'medium', 'low'].map(sev => {
+                  const count = risks.filter((r) => (r.userEdits?.severity || r.severity) === sev && r.status !== 'resolved' && r.status !== 'accepted').length;
+                  if (count === 0) return null;
+                  const colors: Record<string, string> = { critical: '#dc2626', high: '#ea580c', medium: '#d97706', low: '#16a34a' };
+                  const labels: Record<string, string> = { critical: 'Kritisch', high: 'Hoch', medium: 'Mittel', low: 'Niedrig' };
+                  const openTotal = total - resolvedCount;
+                  return (
+                    <div
+                      key={sev}
+                      className={styles.riskDistSegment}
+                      style={{ width: openTotal > 0 ? `${(count / openTotal) * 100}%` : '0%', background: colors[sev] }}
+                      title={`${labels[sev]}: ${count} (offen)`}
+                    >
+                      {count}
+                    </div>
+                  );
+                })}
+                {resolvedCount > 0 && (
                   <div
-                    key={sev}
                     className={styles.riskDistSegment}
-                    style={{ width: `${(count / total) * 100}%`, background: colors[sev] }}
-                    title={`${labels[sev]}: ${count}`}
+                    style={{
+                      width: `${(resolvedCount / total) * 100}%`,
+                      background: '#9ca3af',
+                      fontSize: '0.7rem'
+                    }}
+                    title={`Behoben: ${resolvedCount}`}
                   >
-                    {count}
+                    {resolvedCount}
                   </div>
-                );
-              })}
-            </div>
-            <div className={styles.riskDistLegend}>
-              {['critical', 'high', 'medium', 'low'].map(sev => {
-                const count = selectedContract.legalPulse!.topRisks!.filter((r) => r.severity === sev).length;
-                if (count === 0) return null;
-                const colors: Record<string, string> = { critical: '#dc2626', high: '#ea580c', medium: '#d97706', low: '#16a34a' };
-                const labels: Record<string, string> = { critical: 'Kritisch', high: 'Hoch', medium: 'Mittel', low: 'Niedrig' };
-                return (
-                  <span key={sev} className={styles.riskDistLegendItem}>
-                    <span className={styles.riskDistDot} style={{ background: colors[sev] }} />
-                    {count}x {labels[sev]}
+                )}
+              </div>
+              <div className={styles.riskDistLegend}>
+                {['critical', 'high', 'medium', 'low'].map(sev => {
+                  const count = risks.filter((r) => (r.userEdits?.severity || r.severity) === sev && r.status !== 'resolved' && r.status !== 'accepted').length;
+                  if (count === 0) return null;
+                  const colors: Record<string, string> = { critical: '#dc2626', high: '#ea580c', medium: '#d97706', low: '#16a34a' };
+                  const labels: Record<string, string> = { critical: 'Kritisch', high: 'Hoch', medium: 'Mittel', low: 'Niedrig' };
+                  return (
+                    <span key={sev} className={styles.riskDistLegendItem}>
+                      <span className={styles.riskDistDot} style={{ background: colors[sev] }} />
+                      {count}x {labels[sev]}
+                    </span>
+                  );
+                })}
+                {resolvedCount > 0 && (
+                  <span className={styles.riskDistLegendItem}>
+                    <span className={styles.riskDistDot} style={{ background: '#9ca3af' }} />
+                    {resolvedCount}x Behoben
                   </span>
-                );
-              })}
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Top Risks Preview */}
         <div className={styles.overviewPreviewSection}>
@@ -106,19 +139,23 @@ export default function OverviewTab({ selectedContract, onNavigate, onSetActiveT
               Alle anzeigen <ArrowRight size={14} />
             </button>
           </div>
-          {selectedContract.legalPulse?.topRisks?.slice(0, 3).map((risk, i) => (
-            <div key={i} className={styles.overviewPreviewItem} onClick={() => onSetActiveTab('risks')} style={{ cursor: 'pointer' }}>
-              <span className={styles.overviewPreviewBadge} style={{
-                background: risk.severity === 'critical' ? '#dc2626' : risk.severity === 'high' ? '#ea580c' : risk.severity === 'medium' ? '#d97706' : '#16a34a'
-              }}>
-                {risk.severity === 'critical' ? 'Kritisch' : risk.severity === 'high' ? 'Hoch' : risk.severity === 'medium' ? 'Mittel' : 'Niedrig'}
-              </span>
-              <div className={styles.overviewPreviewText}>
-                <strong>{risk.title}</strong>
-                {risk.description && <span>{risk.description.length > 80 ? risk.description.substring(0, 80) + '\u2026' : risk.description}</span>}
+          {selectedContract.legalPulse?.topRisks?.slice(0, 3).map((risk, i) => {
+            const isResolved = risk.status === 'resolved' || risk.status === 'accepted';
+            const effectiveSeverity = risk.userEdits?.severity || risk.severity;
+            return (
+              <div key={i} className={styles.overviewPreviewItem} onClick={() => onSetActiveTab('risks')} style={{ cursor: 'pointer', opacity: isResolved ? 0.6 : 1 }}>
+                <span className={styles.overviewPreviewBadge} style={{
+                  background: isResolved ? '#9ca3af' : effectiveSeverity === 'critical' ? '#dc2626' : effectiveSeverity === 'high' ? '#ea580c' : effectiveSeverity === 'medium' ? '#d97706' : '#16a34a'
+                }}>
+                  {isResolved ? 'Behoben' : effectiveSeverity === 'critical' ? 'Kritisch' : effectiveSeverity === 'high' ? 'Hoch' : effectiveSeverity === 'medium' ? 'Mittel' : 'Niedrig'}
+                </span>
+                <div className={styles.overviewPreviewText}>
+                  <strong style={{ textDecoration: isResolved ? 'line-through' : 'none' }}>{risk.userEdits?.title || risk.title}</strong>
+                  {risk.description && <span>{risk.description.length > 80 ? risk.description.substring(0, 80) + '\u2026' : risk.description}</span>}
+                </div>
               </div>
-            </div>
-          )) || <p style={{ color: '#9ca3af', fontSize: '0.9rem' }}>Keine Risiken identifiziert</p>}
+            );
+          }) || <p style={{ color: '#9ca3af', fontSize: '0.9rem' }}>Keine Risiken identifiziert</p>}
         </div>
 
         {/* Top Recommendations Preview */}

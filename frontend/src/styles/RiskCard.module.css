@@ -8,6 +8,7 @@
   padding: 24px;
   transition: all 0.2s ease;
   animation: riskCardSlide 0.3s ease-out;
+  position: relative;
 }
 
 @keyframes riskCardSlide {
@@ -17,6 +18,94 @@
 
 .riskCard:hover {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+/* Resolved State */
+.riskCardResolved {
+  opacity: 0.65;
+  border-left-color: #10b981 !important;
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.riskCardResolved:hover {
+  opacity: 0.85;
+}
+
+.resolvedBadge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  background: #10b981;
+  color: white;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Resolve Toggle */
+.resolveToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  padding: 0;
+  background: none;
+  border: 2px solid #d1d5db;
+  border-radius: 50%;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.resolveToggle:hover {
+  border-color: #10b981;
+  color: #10b981;
+  background: #f0fdf4;
+}
+
+.resolveToggleActive {
+  border-color: #10b981;
+  color: #10b981;
+  background: #f0fdf4;
+}
+
+.resolveToggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.miniSpinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #e5e7eb;
+  border-top-color: #10b981;
+  border-radius: 50%;
+  animation: miniSpin 0.6s linear infinite;
+}
+
+@keyframes miniSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* Title Resolved */
+.riskTitleResolved {
+  text-decoration: line-through;
+  color: #6b7280 !important;
+}
+
+.riskTextResolved {
+  text-decoration: line-through;
+  color: #9ca3af !important;
 }
 
 /* Header */
@@ -36,6 +125,23 @@
   border-radius: 6px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.severitySelect {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.5);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.severitySelect option {
+  color: #111827;
+  background: white;
 }
 
 .legalBadge {
@@ -71,6 +177,81 @@
   color: #111827;
   margin: 0 0 8px 0;
   line-height: 1.4;
+}
+
+/* Edit Mode Inputs */
+.editTitleInput {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 8px 0;
+  line-height: 1.4;
+  width: 100%;
+  padding: 8px 12px;
+  border: 2px solid #3b82f6;
+  border-radius: 8px;
+  background: #eff6ff;
+  outline: none;
+  font-family: inherit;
+}
+
+.editDescriptionInput {
+  font-size: 0.9rem;
+  color: #374151;
+  line-height: 1.6;
+  width: 100%;
+  padding: 8px 12px;
+  border: 2px solid #3b82f6;
+  border-radius: 8px;
+  background: #eff6ff;
+  outline: none;
+  font-family: inherit;
+  resize: vertical;
+  margin-bottom: 8px;
+}
+
+.editActions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.editSaveBtn {
+  padding: 6px 16px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.editSaveBtn:hover {
+  background: #2563eb;
+}
+
+.editSaveBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.editCancelBtn {
+  padding: 6px 16px;
+  background: white;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.editCancelBtn:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
 }
 
 /* Description */
@@ -229,6 +410,94 @@
   color: #374151;
 }
 
+/* Comment Section */
+.commentSection {
+  margin-top: 12px;
+  padding: 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  animation: expandIn 0.2s ease-out;
+}
+
+.commentTextarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s;
+  color: #374151;
+  background: white;
+}
+
+.commentTextarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.commentActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.commentCount {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.commentSaveBtn {
+  padding: 5px 14px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.commentSaveBtn:hover {
+  background: #2563eb;
+}
+
+.commentSaveBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Existing Comment Preview */
+.existingComment {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #f3f4f6;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  color: #6b7280;
+  cursor: pointer;
+  transition: background 0.2s;
+  line-height: 1.5;
+}
+
+.existingComment:hover {
+  background: #e5e7eb;
+}
+
+.existingComment svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
 /* Actions Footer */
 .riskActions {
   display: flex;
@@ -237,6 +506,7 @@
   padding-top: 12px;
   border-top: 1px solid #f3f4f6;
   margin-top: 8px;
+  flex-wrap: wrap;
 }
 
 .actionBtn {
@@ -260,6 +530,12 @@
   color: #374151;
 }
 
+.actionBtnActive {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .riskCard {
@@ -273,5 +549,20 @@
 
   .riskHeader {
     flex-wrap: wrap;
+  }
+
+  .resolvedBadge {
+    position: static;
+    align-self: flex-start;
+    margin-bottom: 8px;
+  }
+
+  .riskActions {
+    gap: 8px;
+  }
+
+  .actionBtn {
+    padding: 6px 10px;
+    font-size: 0.75rem;
   }
 }

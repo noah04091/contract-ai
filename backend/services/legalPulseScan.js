@@ -3,6 +3,65 @@ const { ObjectId } = require("mongodb");
 const AILegalPulse = require("./aiLegalPulse");
 const database = require("../config/database");
 
+/**
+ * Preserve user risk management data (status, comments, edits) during re-analysis.
+ * Matches old risks to new risks by title similarity, then copies over user data.
+ */
+function preserveRiskManagement(oldLegalPulse, newResult) {
+  if (!oldLegalPulse?.topRisks || !newResult?.topRisks) return newResult;
+
+  const oldRisks = oldLegalPulse.topRisks;
+  const hasUserData = oldRisks.some(r => r.status || r.userComment || r.userEdits);
+  if (!hasUserData) return newResult;
+
+  // Build a map of old risks by normalized title for matching
+  const normalize = (str) => (str || '').toLowerCase().trim().replace(/\s+/g, ' ');
+  const oldRiskMap = new Map();
+  for (const risk of oldRisks) {
+    const key = normalize(risk.title);
+    if (key) oldRiskMap.set(key, risk);
+  }
+
+  // Transfer user data to matching new risks
+  const mergedRisks = newResult.topRisks.map(newRisk => {
+    const key = normalize(newRisk.title);
+    const oldRisk = oldRiskMap.get(key);
+    if (oldRisk) {
+      const merged = { ...newRisk };
+      if (oldRisk.status) merged.status = oldRisk.status;
+      if (oldRisk.resolvedAt) merged.resolvedAt = oldRisk.resolvedAt;
+      if (oldRisk.userComment) merged.userComment = oldRisk.userComment;
+      if (oldRisk.userEdits) merged.userEdits = oldRisk.userEdits;
+      return merged;
+    }
+    return newRisk;
+  });
+
+  // Recalculate adjusted scores
+  const severityWeight = { critical: 4, high: 3, medium: 2, low: 1 };
+  let totalWeight = 0;
+  let resolvedWeight = 0;
+  for (const risk of mergedRisks) {
+    const sev = risk.userEdits?.severity || risk.severity || 'medium';
+    const w = severityWeight[sev] || 2;
+    totalWeight += w;
+    if (risk.status === 'resolved' || risk.status === 'accepted') {
+      resolvedWeight += w;
+    }
+  }
+
+  const merged = { ...newResult, topRisks: mergedRisks };
+  if (totalWeight > 0 && resolvedWeight > 0) {
+    const ratio = Math.min(resolvedWeight / totalWeight, 0.7);
+    merged.adjustedRiskScore = Math.round(newResult.riskScore * (1 - ratio));
+    if (newResult.healthScore != null) {
+      merged.adjustedHealthScore = Math.min(100, Math.round(newResult.healthScore + (100 - newResult.healthScore) * ratio));
+    }
+  }
+
+  return merged;
+}
+
 async function runLegalPulseScan() {
   console.log("🧠 Starte AI-powered Legal Pulse Scan...");
 
@@ -49,12 +108,15 @@ async function runLegalPulseScan() {
         const contract = contracts[i];
         const aiResult = aiResults[i];
 
+        // Preserve user risk management data from previous analysis
+        const mergedResult = preserveRiskManagement(contract.legalPulse, aiResult);
+
         // Update Contract in Database
         await contractsCollection.updateOne(
           { _id: contract._id },
           {
             $set: {
-              'legalPulse': aiResult
+              'legalPulse': mergedResult
             }
           }
         );
@@ -124,10 +186,13 @@ async function scanSingleContract(contractId) {
     const aiLegalPulse = new AILegalPulse();
     const aiResult = await aiLegalPulse.analyzeContract(contract);
 
+    // Preserve user risk management data from previous analysis
+    const mergedResult = preserveRiskManagement(contract.legalPulse, aiResult);
+
     // In DB speichern
     await contractsCollection.updateOne(
       { _id: contract._id },
-      { $set: { 'legalPulse': aiResult } }
+      { $set: { 'legalPulse': mergedResult } }
     );
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);

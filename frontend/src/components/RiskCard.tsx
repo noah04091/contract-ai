@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import FeedbackButtons from './FeedbackButtons';
 import styles from '../styles/RiskCard.module.css';
-import type { RiskObject } from '../types/legalPulse';
+import type { RiskObject, RiskStatus } from '../types/legalPulse';
 
 interface RiskCardProps {
   risk: string | RiskObject;
@@ -9,6 +9,7 @@ interface RiskCardProps {
   contractId: string;
   onSaveToLibrary?: (risk: RiskObject) => void;
   onFeedback?: (feedback: 'helpful' | 'not_helpful') => void;
+  onRiskUpdate?: (index: number, updates: { status?: RiskStatus; userComment?: string; userEdits?: { title?: string; description?: string; severity?: string } }) => Promise<void>;
 }
 
 export default function RiskCard({
@@ -16,21 +17,35 @@ export default function RiskCard({
   index,
   contractId,
   onSaveToLibrary,
-  onFeedback
+  onFeedback,
+  onRiskUpdate
 }: RiskCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showComment, setShowComment] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const riskTitle = typeof risk === 'string' ? risk : risk.title;
   const riskObj = typeof risk === 'object' ? risk : null;
-  const riskSeverity = riskObj?.severity || 'medium';
-  const description = riskObj?.description;
+  const riskSeverity = riskObj?.userEdits?.severity || riskObj?.severity || 'medium';
+  const riskStatus: RiskStatus = riskObj?.status || 'open';
+  const isResolved = riskStatus === 'resolved' || riskStatus === 'accepted';
+  const description = riskObj?.userEdits?.description || riskObj?.description;
+  const displayTitle = riskObj?.userEdits?.title || riskTitle;
   const impact = riskObj?.impact;
   const solution = riskObj?.solution;
   const affectedClauses = riskObj?.affectedClauses;
   const affectedClauseText = riskObj?.affectedClauseText;
   const replacementText = riskObj?.replacementText;
   const legalBasis = riskObj?.legalBasis;
+  const userComment = riskObj?.userComment || '';
+
+  // Edit state
+  const [editTitle, setEditTitle] = useState(displayTitle);
+  const [editDescription, setEditDescription] = useState(description || '');
+  const [editSeverity, setEditSeverity] = useState(riskSeverity);
+  const [commentText, setCommentText] = useState(userComment);
 
   const getSeverityConfig = (severity: string) => {
     switch (severity) {
@@ -53,7 +68,6 @@ export default function RiskCard({
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       } catch {
-        // Fallback for non-secure contexts
         const textarea = document.createElement('textarea');
         textarea.value = replacementText;
         textarea.style.position = 'fixed';
@@ -68,18 +82,108 @@ export default function RiskCard({
     }
   };
 
+  const handleToggleResolve = async () => {
+    if (!onRiskUpdate) return;
+    setIsSaving(true);
+    try {
+      const newStatus: RiskStatus = isResolved ? 'open' : 'resolved';
+      await onRiskUpdate(index, { status: newStatus });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveComment = async () => {
+    if (!onRiskUpdate) return;
+    setIsSaving(true);
+    try {
+      await onRiskUpdate(index, { userComment: commentText });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveEdits = async () => {
+    if (!onRiskUpdate) return;
+    setIsSaving(true);
+    try {
+      const edits: { title?: string; description?: string; severity?: string } = {};
+      if (editTitle !== riskTitle) edits.title = editTitle;
+      if (editDescription !== (riskObj?.description || '')) edits.description = editDescription;
+      if (editSeverity !== (riskObj?.severity || 'medium')) edits.severity = editSeverity;
+      await onRiskUpdate(index, { userEdits: edits });
+      setIsEditing(false);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditTitle(displayTitle);
+    setEditDescription(description || '');
+    setEditSeverity(riskSeverity);
+    setIsEditing(false);
+  };
+
   return (
     <div
-      className={styles.riskCard}
-      style={{ borderLeftColor: severityConfig.color }}
+      className={`${styles.riskCard} ${isResolved ? styles.riskCardResolved : ''}`}
+      style={{ borderLeftColor: isResolved ? '#10b981' : severityConfig.color }}
     >
+      {/* Resolved Badge */}
+      {isResolved && (
+        <div className={styles.resolvedBadge}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          {riskStatus === 'accepted' ? 'Akzeptiert' : 'Behoben'}
+        </div>
+      )}
+
       {/* Header */}
       <div className={styles.riskHeader}>
+        {/* Resolve Toggle */}
+        {onRiskUpdate && (
+          <button
+            className={`${styles.resolveToggle} ${isResolved ? styles.resolveToggleActive : ''}`}
+            onClick={handleToggleResolve}
+            disabled={isSaving}
+            title={isResolved ? 'Als offen markieren' : 'Als behoben markieren'}
+            aria-label={isResolved ? 'Als offen markieren' : 'Als behoben markieren'}
+          >
+            {isSaving ? (
+              <div className={styles.miniSpinner} />
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill={isResolved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+                {isResolved ? (
+                  <path d="M22 11.08V12a10 10 0 11-5.93-9.14M22 4L12 14.01l-3-3" />
+                ) : (
+                  <circle cx="12" cy="12" r="10" />
+                )}
+              </svg>
+            )}
+          </button>
+        )}
+
         <span
           className={styles.severityBadge}
-          style={{ background: severityConfig.color }}
+          style={{ background: isResolved ? '#6b7280' : severityConfig.color }}
         >
-          {severityConfig.label}
+          {isEditing ? (
+            <select
+              className={styles.severitySelect}
+              value={editSeverity}
+              onChange={(e) => setEditSeverity(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <option value="critical">Kritisch</option>
+              <option value="high">Hoch</option>
+              <option value="medium">Mittel</option>
+              <option value="low">Niedrig</option>
+            </select>
+          ) : (
+            severityConfig.label
+          )}
         </span>
         {legalBasis && (
           <span className={styles.legalBadge}>
@@ -96,15 +200,46 @@ export default function RiskCard({
       </div>
 
       {/* Title */}
-      <h4 className={styles.riskTitle}>{riskTitle}</h4>
+      {isEditing ? (
+        <input
+          className={styles.editTitleInput}
+          value={editTitle}
+          onChange={(e) => setEditTitle(e.target.value)}
+          placeholder="Risiko-Titel"
+        />
+      ) : (
+        <h4 className={`${styles.riskTitle} ${isResolved ? styles.riskTitleResolved : ''}`}>{displayTitle}</h4>
+      )}
 
       {/* Description - always visible */}
-      {description && description !== riskTitle && (
-        <p className={styles.riskDescription}>{description}</p>
+      {isEditing ? (
+        <textarea
+          className={styles.editDescriptionInput}
+          value={editDescription}
+          onChange={(e) => setEditDescription(e.target.value)}
+          placeholder="Beschreibung"
+          rows={3}
+        />
+      ) : (
+        description && description !== displayTitle && (
+          <p className={`${styles.riskDescription} ${isResolved ? styles.riskTextResolved : ''}`}>{description}</p>
+        )
+      )}
+
+      {/* Edit Actions */}
+      {isEditing && (
+        <div className={styles.editActions}>
+          <button className={styles.editSaveBtn} onClick={handleSaveEdits} disabled={isSaving}>
+            {isSaving ? 'Speichern...' : 'Speichern'}
+          </button>
+          <button className={styles.editCancelBtn} onClick={handleCancelEdit}>
+            Abbrechen
+          </button>
+        </div>
       )}
 
       {/* Affected Clause Quote */}
-      {affectedClauseText && !expanded && (
+      {affectedClauseText && !expanded && !isEditing && (
         <div className={styles.clauseQuote}>
           <span className={styles.clauseQuoteLabel}>Betroffene Klausel:</span>
           <span className={styles.clauseQuoteText}>
@@ -116,7 +251,7 @@ export default function RiskCard({
       )}
 
       {/* Expand/Collapse */}
-      {hasExpandableContent && (
+      {hasExpandableContent && !isEditing && (
         <button
           className={styles.expandButton}
           onClick={() => setExpanded(!expanded)}
@@ -140,9 +275,8 @@ export default function RiskCard({
       )}
 
       {/* Expanded Content */}
-      {expanded && (
+      {expanded && !isEditing && (
         <div className={styles.expandedContent} id={`risk-details-${index}`}>
-          {/* Impact */}
           {impact && (
             <div className={styles.detailSection}>
               <div className={styles.detailLabel}>
@@ -156,7 +290,6 @@ export default function RiskCard({
             </div>
           )}
 
-          {/* Solution */}
           {solution && (
             <div className={styles.detailSection} style={{ borderLeftColor: '#10b981' }}>
               <div className={styles.detailLabel} style={{ color: '#10b981' }}>
@@ -170,7 +303,6 @@ export default function RiskCard({
             </div>
           )}
 
-          {/* Full Affected Clause */}
           {affectedClauseText && (
             <div className={styles.detailSection} style={{ borderLeftColor: '#f59e0b' }}>
               <div className={styles.detailLabel} style={{ color: '#92400e' }}>
@@ -186,7 +318,6 @@ export default function RiskCard({
             </div>
           )}
 
-          {/* Replacement Text */}
           {replacementText && (
             <div className={styles.detailSection} style={{ borderLeftColor: '#3b82f6' }}>
               <div className={styles.detailLabel} style={{ color: '#1d4ed8' }}>
@@ -205,7 +336,6 @@ export default function RiskCard({
             </div>
           )}
 
-          {/* Legal Basis Full */}
           {legalBasis && (
             <div className={styles.legalBasisFull}>
               <strong>Rechtsgrundlage:</strong> {legalBasis}
@@ -214,8 +344,75 @@ export default function RiskCard({
         </div>
       )}
 
+      {/* User Comment Section */}
+      {showComment && (
+        <div className={styles.commentSection}>
+          <textarea
+            className={styles.commentTextarea}
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            placeholder="Kommentar hinzuf\u00FCgen (z.B. Ma\u00DFnahmen, Notizen)..."
+            rows={3}
+            maxLength={1000}
+          />
+          <div className={styles.commentActions}>
+            <span className={styles.commentCount}>{commentText.length}/1000</span>
+            <button
+              className={styles.commentSaveBtn}
+              onClick={handleSaveComment}
+              disabled={isSaving || commentText === userComment}
+            >
+              {isSaving ? 'Speichern...' : 'Kommentar speichern'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Existing Comment Display (when comment section is closed) */}
+      {!showComment && userComment && (
+        <div className={styles.existingComment} onClick={() => setShowComment(true)}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2">
+            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+          </svg>
+          <span>{userComment.length > 100 ? userComment.substring(0, 100) + '\u2026' : userComment}</span>
+        </div>
+      )}
+
       {/* Actions */}
       <div className={styles.riskActions}>
+        {onRiskUpdate && (
+          <>
+            <button
+              className={styles.actionBtn}
+              onClick={() => setShowComment(!showComment)}
+              title="Kommentar"
+              aria-label="Kommentar hinzuf\u00FCgen"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+              </svg>
+              Kommentar
+            </button>
+            <button
+              className={`${styles.actionBtn} ${isEditing ? styles.actionBtnActive : ''}`}
+              onClick={() => {
+                if (isEditing) {
+                  handleCancelEdit();
+                } else {
+                  setIsEditing(true);
+                }
+              }}
+              title="Bearbeiten"
+              aria-label="Risiko bearbeiten"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+              Bearbeiten
+            </button>
+          </>
+        )}
         {onSaveToLibrary && riskObj && (
           <button
             className={styles.actionBtn}

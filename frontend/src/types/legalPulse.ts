@@ -23,6 +23,8 @@ export interface Contract {
   legalPulse?: {
     riskScore: number | null;
     healthScore?: number;
+    adjustedRiskScore?: number | null;
+    adjustedHealthScore?: number | null;
     lastAnalysis?: string;
     lastChecked?: string;
     lastRecommendation?: string;
@@ -52,6 +54,8 @@ export interface RecommendationStatus {
   [key: string]: boolean;
 }
 
+export type RiskStatus = 'open' | 'resolved' | 'accepted';
+
 export interface RiskObject {
   title: string;
   description?: string;
@@ -63,6 +67,15 @@ export interface RiskObject {
   affectedClauseText?: string;
   replacementText?: string;
   legalBasis?: string;
+  // Risk management fields
+  status?: RiskStatus;
+  resolvedAt?: string;
+  userComment?: string;
+  userEdits?: {
+    title?: string;
+    description?: string;
+    severity?: string;
+  };
 }
 
 export interface RecommendationObject {

@@ -17,7 +17,7 @@ import {
 import type {
   Contract, RecommendationStatus, RiskObject, RecommendationObject, RecommendationInput,
   PulseAlert, WeeklyCheckContract, WeeklyChecksData,
-  ForecastData, Organization, TeamMember, Membership
+  ForecastData, Organization, TeamMember, Membership, RiskStatus
 } from '../types/legalPulse';
 
 export default function LegalPulse() {
@@ -534,6 +534,68 @@ export default function LegalPulse() {
     setShowSaveClauseModal(true);
   };
 
+  // Risk Management: Update a risk (resolve, comment, edit)
+  const handleRiskUpdate = async (riskIndex: number, updates: { status?: RiskStatus; userComment?: string; userEdits?: { title?: string; description?: string; severity?: string } }) => {
+    if (!selectedContract) return;
+    try {
+      const token = localStorage.getItem('token');
+      const API_BASE = import.meta.env.VITE_API_URL || '';
+      const res = await fetch(`${API_BASE}/api/legal-pulse/${selectedContract._id}/risks/${riskIndex}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(updates)
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || 'Fehler beim Aktualisieren');
+      }
+
+      const data = await res.json();
+
+      if (data.success && selectedContract.legalPulse) {
+        // Update the local contract state with the returned data
+        const updatedRisks = [...(selectedContract.legalPulse.topRisks || [])];
+        updatedRisks[riskIndex] = data.risk;
+
+        const updatedContract: Contract = {
+          ...selectedContract,
+          legalPulse: {
+            ...selectedContract.legalPulse,
+            topRisks: updatedRisks,
+            adjustedRiskScore: data.adjustedRiskScore,
+            adjustedHealthScore: data.adjustedHealthScore
+          }
+        };
+
+        setSelectedContract(updatedContract);
+
+        // Also update in the contracts list
+        setContracts(prev => prev.map(c =>
+          c._id === updatedContract._id ? updatedContract : c
+        ));
+
+        // Show notification based on action
+        if (updates.status === 'resolved') {
+          setNotification({ message: 'Risiko als behoben markiert', type: 'success' });
+        } else if (updates.status === 'open') {
+          setNotification({ message: 'Risiko als offen markiert', type: 'success' });
+        } else if (updates.userComment !== undefined) {
+          setNotification({ message: 'Kommentar gespeichert', type: 'success' });
+        } else if (updates.userEdits) {
+          setNotification({ message: 'Risiko aktualisiert', type: 'success' });
+        }
+      }
+    } catch (err) {
+      handleError(err, 'LegalPulse:handleRiskUpdate');
+      setNotification({ message: 'Fehler beim Aktualisieren des Risikos', type: 'error' });
+      throw err; // Re-throw so RiskCard knows it failed
+    }
+  };
+
   // Export Legal Pulse Report as PDF
   const handleExportReport = async () => {
     if (!selectedContract) return;
@@ -623,7 +685,11 @@ export default function LegalPulse() {
 
   // Detailansicht für einzelnen Vertrag
   if (contractId && selectedContract) {
-    const riskLevel = getRiskLevel(selectedContract.legalPulse?.riskScore ?? null);
+    // Use adjusted scores if available (after risk management), otherwise use original
+    const displayRiskScore = selectedContract.legalPulse?.adjustedRiskScore ?? selectedContract.legalPulse?.riskScore ?? null;
+    const displayHealthScore = selectedContract.legalPulse?.adjustedHealthScore ?? selectedContract.legalPulse?.healthScore;
+    const hasAdjustedScore = selectedContract.legalPulse?.adjustedRiskScore != null && selectedContract.legalPulse?.adjustedRiskScore !== selectedContract.legalPulse?.riskScore;
+    const riskLevel = getRiskLevel(displayRiskScore);
     const scoreHistory = selectedContract.legalPulse?.scoreHistory || [];
 
     // Check if Legal Pulse analysis is still loading/running
@@ -798,10 +864,10 @@ export default function LegalPulse() {
                 <div className={styles.scoreCircleArea}>
                   <div
                     className={styles.scoreCircle}
-                    style={{ '--score-color': riskLevel.color, '--score': selectedContract.legalPulse?.riskScore ?? 0 } as React.CSSProperties}
+                    style={{ '--score-color': riskLevel.color, '--score': displayRiskScore ?? 0 } as React.CSSProperties}
                   >
                     <span className={styles.scoreNumber}>
-                      {selectedContract.legalPulse?.riskScore ?? '\u2014'}
+                      {displayRiskScore ?? '\u2014'}
                     </span>
                     <span className={styles.scoreMax}>/100</span>
                   </div>
@@ -811,10 +877,31 @@ export default function LegalPulse() {
                       {riskLevel.level}
                     </span>
                   </div>
+                  {/* Adjusted Score Indicator */}
+                  {hasAdjustedScore && (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      marginTop: '4px',
+                      fontSize: '0.78rem',
+                      color: '#10b981',
+                      fontWeight: 500
+                    }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      <span>
+                        Original: {selectedContract.legalPulse?.riskScore}
+                        {' \u2192 '}
+                        Angepasst: {selectedContract.legalPulse?.adjustedRiskScore}
+                      </span>
+                    </div>
+                  )}
                   {/* Score Explanation */}
                   <p className={styles.scoreExplanation}>
                     {(() => {
-                      const score = selectedContract.legalPulse?.riskScore;
+                      const score = displayRiskScore;
                       if (!score) return 'Noch keine Analyse durchgef\u00FChrt.';
                       if (score <= 30) return 'Niedriges Risiko: Dieser Vertrag weist wenige rechtliche Schwachstellen auf. Regelm\u00E4\u00DFige \u00DCberpr\u00FCfung empfohlen.';
                       if (score <= 60) return 'Mittleres Risiko: Einige Klauseln sollten \u00FCberpr\u00FCft und angepasst werden, um rechtliche Nachteile zu vermeiden.';
@@ -826,27 +913,27 @@ export default function LegalPulse() {
                 {/* Right: Health + Summary + Stats */}
                 <div className={styles.scoreDetailsArea}>
                   {/* Vertragsgesundheit */}
-                  {selectedContract.legalPulse?.healthScore !== undefined && (
+                  {displayHealthScore !== undefined && (
                     <div className={styles.healthSection}>
                       <div className={styles.healthHeader}>
                         <span className={styles.healthTitle}>Vertragsgesundheit</span>
                         <span
                           className={styles.healthValue}
                           style={{
-                            color: selectedContract.legalPulse.healthScore >= 80 ? '#10b981' :
-                                   selectedContract.legalPulse.healthScore >= 50 ? '#f59e0b' : '#ef4444'
+                            color: displayHealthScore >= 80 ? '#10b981' :
+                                   displayHealthScore >= 50 ? '#f59e0b' : '#ef4444'
                           }}
                         >
-                          {selectedContract.legalPulse.healthScore}/100
+                          {displayHealthScore}/100
                         </span>
                       </div>
                       <div className={styles.healthBarTrack}>
                         <div
                           className={styles.healthBarFill}
                           style={{
-                            width: `${selectedContract.legalPulse.healthScore}%`,
-                            background: selectedContract.legalPulse.healthScore >= 80 ? '#10b981' :
-                                        selectedContract.legalPulse.healthScore >= 50 ? '#f59e0b' : '#ef4444'
+                            width: `${displayHealthScore}%`,
+                            background: displayHealthScore >= 80 ? '#10b981' :
+                                        displayHealthScore >= 50 ? '#f59e0b' : '#ef4444'
                           }}
                         />
                       </div>
@@ -922,9 +1009,9 @@ export default function LegalPulse() {
                     <Line
                       type="monotone"
                       dataKey="score"
-                      stroke={getRiskScoreColor(selectedContract.legalPulse?.riskScore ?? null)}
+                      stroke={getRiskScoreColor(displayRiskScore)}
                       strokeWidth={2}
-                      dot={{ fill: getRiskScoreColor(selectedContract.legalPulse?.riskScore ?? null), strokeWidth: 2, r: 4 }}
+                      dot={{ fill: getRiskScoreColor(displayRiskScore), strokeWidth: 2, r: 4 }}
                       activeDot={{ r: 6 }}
                     />
                   </LineChart>
@@ -1097,6 +1184,7 @@ export default function LegalPulse() {
               onNavigate={navigate}
               onSaveRiskToLibrary={handleSaveRiskToLibrary}
               onSetNotification={setNotification}
+              onRiskUpdate={handleRiskUpdate}
             />
           )}
 
