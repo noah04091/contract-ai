@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import FeedbackButtons from './FeedbackButtons';
 import styles from '../styles/RiskCard.module.css';
 import type { RiskObject, RiskStatus } from '../types/legalPulse';
 
@@ -8,16 +7,14 @@ interface RiskCardProps {
   index: number;
   contractId: string;
   onSaveToLibrary?: (risk: RiskObject) => void;
-  onFeedback?: (feedback: 'helpful' | 'not_helpful') => void;
   onRiskUpdate?: (index: number, updates: { status?: RiskStatus; userComment?: string; userEdits?: { title?: string; description?: string; severity?: string } }) => Promise<void>;
 }
 
 export default function RiskCard({
   risk,
   index,
-  contractId,
+  contractId: _contractId,
   onSaveToLibrary,
-  onFeedback,
   onRiskUpdate
 }: RiskCardProps) {
   const [expanded, setExpanded] = useState(false);
@@ -426,11 +423,6 @@ export default function RiskCard({
             Speichern
           </button>
         )}
-        <FeedbackButtons
-          itemId={`${contractId}-risk-${index}`}
-          itemType="risk"
-          onFeedback={onFeedback}
-        />
       </div>
     </div>
   );
