@@ -694,11 +694,15 @@ export default function LegalPulse() {
 
   // Detailansicht für einzelnen Vertrag
   if (contractId && selectedContract) {
+    // Check if this is a real AI analysis or just a heuristic fallback
+    const isAiGenerated = selectedContract.legalPulse?.aiGenerated !== false; // true or undefined = real AI
     // Use adjusted scores if available (after risk management), otherwise use original
     const displayRiskScore = selectedContract.legalPulse?.adjustedRiskScore ?? selectedContract.legalPulse?.riskScore ?? null;
     const rawHealthScore = selectedContract.legalPulse?.adjustedHealthScore ?? selectedContract.legalPulse?.healthScore ?? null;
     // Fallback: derive healthScore from riskScore for older analyses that didn't store healthScore
-    const displayHealthScore = rawHealthScore ?? (displayRiskScore !== null ? Math.max(0, Math.round(100 - (displayRiskScore * 0.5))) : null);
+    const displayHealthScore = isAiGenerated
+      ? (rawHealthScore ?? (displayRiskScore !== null ? Math.max(0, Math.round(100 - (displayRiskScore * 0.5))) : null))
+      : null; // Don't show fabricated scores for non-AI analyses
     const hasAdjustedScore = selectedContract.legalPulse?.adjustedRiskScore != null && selectedContract.legalPulse?.adjustedRiskScore !== selectedContract.legalPulse?.riskScore;
     const riskLevel = getRiskLevel(displayRiskScore);
 
@@ -844,16 +848,49 @@ export default function LegalPulse() {
               )}
             </div>
             <p className={styles.lastAnalysis}>
-              Letzte Analyse: {new Date(selectedContract.legalPulse?.lastAnalysis || Date.now()).toLocaleDateString('de-DE', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
+              {(() => {
+                const analysisDate = selectedContract.legalPulse?.lastChecked || selectedContract.legalPulse?.lastAnalysis || selectedContract.legalPulse?.analysisDate;
+                if (!analysisDate) return 'Noch keine Analyse durchgeführt';
+                return `Letzte Analyse: ${new Date(analysisDate).toLocaleDateString('de-DE', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}`;
+              })()}
             </p>
           </div>
         </div>
+
+        {/* Warning banner for non-AI (heuristic fallback) analyses */}
+        {!isAiGenerated && selectedContract.legalPulse && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '12px',
+            padding: '16px 20px',
+            background: 'linear-gradient(135deg, #fefce8 0%, #fef9c3 100%)',
+            border: '1px solid #fde68a',
+            borderRadius: '12px',
+            marginBottom: '24px',
+            fontSize: '0.9rem',
+            lineHeight: 1.5,
+            color: '#92400e'
+          }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" style={{ flexShrink: 0, marginTop: '2px' }}>
+              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <div>
+              <strong style={{ color: '#78350f' }}>Basis-Analyse (keine KI-Analyse)</strong>
+              <p style={{ margin: '4px 0 0 0', color: '#a16207' }}>
+                Dieser Vertrag wurde nur mit einer regelbasierten Basis-Analyse bewertet, nicht mit einer vollständigen KI-Analyse.
+                Die angezeigten Daten sind Schätzwerte. Führen Sie eine vollständige Vertragsanalyse durch, um präzise KI-basierte Ergebnisse zu erhalten.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Score Hero Section */}
         <div className={styles.scoreSection}>
@@ -932,7 +969,8 @@ export default function LegalPulse() {
 
                 {/* Right: Factor Breakdown + Summary + Stats */}
                 <div className={styles.scoreDetailsArea}>
-                  {/* Factor Breakdown */}
+                  {/* Factor Breakdown - only for real AI analyses */}
+                  {isAiGenerated ? (
                   <div className={styles.factorBreakdown}>
                     <span className={styles.factorBreakdownTitle}>Zusammensetzung</span>
 
@@ -1008,6 +1046,18 @@ export default function LegalPulse() {
                       </div>
                     )}
                   </div>
+                  ) : (
+                    <div className={styles.factorBreakdown}>
+                      <span className={styles.factorBreakdownTitle}>Basis-Analyse</span>
+                      <p style={{ fontSize: '0.88rem', color: '#6b7280', lineHeight: 1.6, margin: '8px 0 0 0' }}>
+                        Dieser Vertrag wurde nur mit einer automatischen Basis-Analyse bewertet.
+                        Die Bewertung basiert auf einfachen Regeln (Vertragsstatus, Laufzeit), nicht auf einer KI-Analyse des Vertragsinhalts.
+                      </p>
+                      <p style={{ fontSize: '0.85rem', color: '#8b5cf6', fontWeight: 500, margin: '12px 0 0 0' }}>
+                        Führen Sie eine vollständige Vertragsanalyse durch, um präzise Ergebnisse zu erhalten.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1021,7 +1071,7 @@ export default function LegalPulse() {
                       <line x1="16" y1="13" x2="8" y2="13"/>
                       <line x1="16" y1="17" x2="8" y2="17"/>
                     </svg>
-                    KI-Zusammenfassung
+                    {isAiGenerated ? 'KI-Zusammenfassung' : 'Zusammenfassung (Basis-Analyse)'}
                   </div>
                   <p className={styles.summaryText}>{selectedContract.legalPulse.summary}</p>
                 </div>

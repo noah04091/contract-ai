@@ -25,8 +25,10 @@ export interface Contract {
     healthScore?: number;
     adjustedRiskScore?: number | null;
     adjustedHealthScore?: number | null;
+    aiGenerated?: boolean;
     lastAnalysis?: string;
     lastChecked?: string;
+    analysisDate?: string;
     lastRecommendation?: string;
     summary?: string;
     nextScheduledCheck?: string;

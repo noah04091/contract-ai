@@ -51,12 +51,13 @@ export default function ContractRiskGrid({
     <div className={styles.contractsGrid}>
       {contracts.map((contract) => {
         const hasAnalysis = contract.legalPulse?.riskScore != null;
+        const isAiGenerated = contract.legalPulse?.aiGenerated !== false; // true or undefined = real AI
         const rawHealthScore = contract.legalPulse?.adjustedHealthScore ?? contract.legalPulse?.healthScore ?? null;
         // Fallback: derive healthScore from riskScore for older analyses that didn't store healthScore
         const healthScore = hasAnalysis
           ? (rawHealthScore ?? Math.max(0, Math.round(100 - (contract.legalPulse!.riskScore! * 0.5))))
           : null;
-        const riskLevel = getRiskLevel(healthScore);
+        const riskLevel = hasAnalysis && isAiGenerated ? getRiskLevel(healthScore) : getRiskLevel(null);
         return (
           <div
             key={contract._id}
@@ -86,11 +87,12 @@ export default function ContractRiskGrid({
               {canAccessLegalPulse ? (
               <div
                 className={styles.riskBadge}
-                style={{ '--risk-color': riskLevel.color } as React.CSSProperties}
+                style={{ '--risk-color': hasAnalysis && !isAiGenerated ? '#94a3b8' : riskLevel.color } as React.CSSProperties}
+                title={hasAnalysis && !isAiGenerated ? 'Basis-Analyse (keine KI-Analyse)' : undefined}
               >
-                <span className={styles.riskIcon}>{riskLevel.icon}</span>
+                <span className={styles.riskIcon}>{hasAnalysis && !isAiGenerated ? '📋' : riskLevel.icon}</span>
                 <span className={styles.riskScore}>
-                  {healthScore !== null ? healthScore : '—'}
+                  {hasAnalysis && !isAiGenerated ? 'Basis' : (healthScore !== null ? healthScore : '—')}
                 </span>
               </div>
             ) : (
@@ -124,9 +126,9 @@ export default function ContractRiskGrid({
                       <span className={styles.metaLabel}>Status:</span>
                       <span
                         className={styles.metaValue}
-                        style={{ color: riskLevel.color }}
+                        style={{ color: hasAnalysis && !isAiGenerated ? '#94a3b8' : riskLevel.color }}
                       >
-                        {riskLevel.level}
+                        {hasAnalysis && !isAiGenerated ? 'Basis-Analyse' : riskLevel.level}
                       </span>
                     </div>
                   </div>
