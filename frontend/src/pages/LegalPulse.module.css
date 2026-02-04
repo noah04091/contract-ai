@@ -599,11 +599,9 @@
 /* Score Hero Layout - Two Column */
 .scoreHeroLayout {
   display: grid;
-  grid-template-columns: 200px 1fr;
+  grid-template-columns: 180px 1fr;
   gap: 32px;
   align-items: start;
-  max-width: 900px;
-  margin: 0 auto;
 }
 
 .scoreCircleArea {
