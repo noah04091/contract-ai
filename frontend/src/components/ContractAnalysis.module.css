@@ -64,6 +64,8 @@
   margin: 0 0 2px;
   color: #0f172a;
   line-height: 1.3;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .fileSize {
@@ -937,6 +939,8 @@
   font-size: 13px;
   line-height: 1.5;
   margin: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 /* Structured Lists */
@@ -976,6 +980,9 @@
   color: #0f172a;
   margin: 0;
   flex: 1;
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .structuredDescription {
@@ -984,6 +991,8 @@
   line-height: 1.5;
   margin: 0;
   padding-left: 24px;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 /* Risk and Priority Badges - Clean */
@@ -1184,6 +1193,11 @@
   /* Inherit from secondaryButton */
 }
 
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .spinner {
   animation: spin 1s linear infinite;
 }
@@ -1259,6 +1273,8 @@
   color: #334155;
   font-size: 14px;
   line-height: 1.7;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .legalOpinionParagraph:last-child {
@@ -1823,15 +1839,6 @@
   }
 }
 
-/* Animation utilities */
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.spinner {
-  animation: spin 1s linear infinite;
-}
 
 .loadingIcon {
   animation: spin 1s linear infinite;

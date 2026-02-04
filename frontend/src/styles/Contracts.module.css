@@ -1683,15 +1683,6 @@
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .toolbarSearch {
   flex: 1;
   max-width: 400px;
@@ -4662,7 +4653,7 @@
     flex-shrink: 0;
     padding: 0.5rem 0.75rem;
     font-size: 0.75rem;
-    min-height: 40px;
+    min-height: 44px;
     white-space: nowrap;
   }
 
@@ -5237,8 +5228,8 @@
   }
 
   .fileItemActions button {
-    min-height: 40px;
-    min-width: 40px;
+    min-height: 44px;
+    min-width: 44px;
     border-radius: 10px;
   }
 
@@ -5892,7 +5883,7 @@
   .bulkCancelButton {
     padding: 0.5rem 0.625rem;
     font-size: 0.75rem;
-    min-height: 40px;
+    min-height: 44px;
   }
 
   /* Modal */
@@ -6137,14 +6128,14 @@
 
 .mobileSearchClear {
   position: absolute;
-  right: 1.75rem;
+  right: 1rem;
   top: 50%;
   transform: translateY(-50%);
   background: #e5e7eb;
   border: none;
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -6238,8 +6229,8 @@
   background: #f3f4f6;
   border: none;
   border-radius: 50%;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -6703,7 +6694,7 @@
     padding: 8px 14px;
     border-radius: 8px;
     font-size: 13px;
-    min-height: 36px;
+    min-height: 44px;
   }
 
   /* 📱 Premium-Hint-Banner: Wrapping auf Mobile */
@@ -7257,8 +7248,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border: none;
   background: #f1f5f9;
   border-radius: 50%;
@@ -7487,8 +7478,8 @@
   }
 
   .listRowAction {
-    width: 28px;
-    height: 28px;
+    width: 44px;
+    height: 44px;
   }
 }
 
@@ -7935,11 +7926,6 @@
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
 .pullToRefreshText {
   font-size: 0.8125rem;
   font-weight: 500;
@@ -8016,11 +8002,6 @@
   display: flex;
   flex-direction: column;
   animation: fadeIn 0.2s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
 }
 
 .mobileSearchHeader {

@@ -1175,21 +1175,21 @@ export default function ContractAnalysis({ file, contractName, onReset, onNaviga
               </h5>
               
               <div className={styles.scoreSectionContent}>
-                <ScoreCircle score={result?.contractScore || initialResult?.contractScore || 0} />
+                <ScoreCircle score={result?.contractScore ?? initialResult?.contractScore ?? 0} />
               </div>
               
               <div className={styles.scoreInfoContainer}>
-                {getScoreIcon(result?.contractScore || initialResult?.contractScore || 0)}
-                <span className={styles.scoreLabel} style={{ color: getScoreColor(result?.contractScore || initialResult?.contractScore || 0) }}>
-                  {getScoreLabel(result?.contractScore || initialResult?.contractScore || 0)}
+                {getScoreIcon(result?.contractScore ?? initialResult?.contractScore ?? 0)}
+                <span className={styles.scoreLabel} style={{ color: getScoreColor(result?.contractScore ?? initialResult?.contractScore ?? 0) }}>
+                  {getScoreLabel(result?.contractScore ?? initialResult?.contractScore ?? 0)}
                 </span>
               </div>
               
               <p className={styles.scoreDescription}>
-                {(result?.contractScore || initialResult?.contractScore || 0) >= 80 && "Dieser Vertrag bietet eine sehr gute Rechtssicherheit und faire Konditionen."}
-                {(result?.contractScore || initialResult?.contractScore || 0) >= 60 && (result?.contractScore || initialResult?.contractScore || 0) < 80 && "Dieser Vertrag ist grundsätzlich in Ordnung, hat aber Verbesserungspotential."}
-                {(result?.contractScore || initialResult?.contractScore || 0) >= 40 && (result?.contractScore || initialResult?.contractScore || 0) < 60 && "Dieser Vertrag weist einige Schwächen auf und sollte überprüft werden."}
-                {(result?.contractScore || initialResult?.contractScore || 0) < 40 && "Dieser Vertrag enthält kritische Punkte und sollte dringend überarbeitet werden."}
+                {(result?.contractScore ?? initialResult?.contractScore ?? 0) >= 80 && "Dieser Vertrag bietet eine sehr gute Rechtssicherheit und faire Konditionen."}
+                {(result?.contractScore ?? initialResult?.contractScore ?? 0) >= 60 && (result?.contractScore ?? initialResult?.contractScore ?? 0) < 80 && "Dieser Vertrag ist grundsätzlich in Ordnung, hat aber Verbesserungspotential."}
+                {(result?.contractScore ?? initialResult?.contractScore ?? 0) >= 40 && (result?.contractScore ?? initialResult?.contractScore ?? 0) < 60 && "Dieser Vertrag weist einige Schwächen auf und sollte überprüft werden."}
+                {(result?.contractScore ?? initialResult?.contractScore ?? 0) < 40 && "Dieser Vertrag enthält kritische Punkte und sollte dringend überarbeitet werden."}
               </p>
             </div>
           )}
