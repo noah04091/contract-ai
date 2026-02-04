@@ -200,13 +200,10 @@ class OpenLegalDataConnector {
     const title = caseItem.name || caseItem.file_number || 'Unbekanntes Urteil';
     const relevance = this.calculateRelevance(title, caseItem.content || '', query);
 
-    // Construct working URL using case slug
-    let url = null;
-    if (caseItem.source_url) {
-      url = caseItem.source_url;
-    } else if (caseItem.slug) {
-      url = `https://de.openlegaldata.io/case/${caseItem.slug}/`;
-    }
+    // Open Legal Data case detail pages are broken (404 for all slugs).
+    // Only use source_url if explicitly provided by API, otherwise null
+    // (frontend hides "Zur Quelle" button when url is null).
+    const url = caseItem.source_url || null;
 
     return {
       id: caseItem.id?.toString() || `old-case-${Date.now()}`,
