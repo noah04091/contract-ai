@@ -1548,39 +1548,48 @@
 
 @media (max-width: 768px) {
   .analysisContainer {
-    border-radius: 12px;
-    margin-top: 1rem;
+    border-radius: 16px;
+    margin-top: 0.75rem;
+    overflow: visible;
   }
 
   .header {
-    padding: 16px 20px;
+    padding: 20px;
   }
 
   .headerContent {
     flex-direction: column;
     gap: 16px;
+    align-items: center;
+    text-align: center;
+  }
+
+  .fileInfo {
+    justify-content: center;
   }
 
   .actions {
-    justify-content: flex-start;
+    justify-content: center;
     width: 100%;
   }
 
   .detailsGrid {
     grid-template-columns: 1fr;
-    padding: 16px;
+    padding: 20px;
     gap: 12px;
   }
 
   .successHeader {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
+    text-align: center;
     gap: 12px;
-    padding: 16px 20px;
+    padding: 20px;
   }
 
   .scoreSection {
-    padding: 24px 20px;
+    padding: 28px 20px;
+    text-align: center;
   }
 
   .scoreCircleWrapper {
@@ -1595,6 +1604,7 @@
   .actionButtonsContainer {
     flex-direction: column;
     padding: 16px 20px;
+    gap: 10px;
   }
 
   .primaryActionButton,
@@ -1634,11 +1644,23 @@
     gap: 8px;
     align-items: center;
   }
+
+  .cardContent {
+    padding: 16px 20px;
+  }
+
+  .detailHeader {
+    padding: 14px 20px;
+  }
 }
 
 @media (max-width: 480px) {
+  .analysisContainer {
+    border-radius: 14px;
+  }
+
   .header {
-    padding: 14px 16px;
+    padding: 16px;
   }
 
   .fileInfo {
@@ -1648,7 +1670,7 @@
   }
 
   .scoreSection {
-    padding: 20px 16px;
+    padding: 24px 16px;
   }
 
   .scoreCircleWrapper {
@@ -1661,20 +1683,20 @@
   }
 
   .detailsGrid {
-    padding: 12px;
+    padding: 16px;
     gap: 10px;
   }
 
   .detailHeader {
-    padding: 12px 14px;
+    padding: 14px 16px;
   }
 
   .cardContent {
-    padding: 12px 14px;
+    padding: 14px 16px;
   }
 
   .actionButtonsContainer {
-    padding: 14px 16px;
+    padding: 16px;
     gap: 10px;
   }
 

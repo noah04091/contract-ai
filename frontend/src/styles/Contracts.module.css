@@ -8144,8 +8144,13 @@
 
   /* Wenn Bottom-Nav versteckt ist (Upload/Analyse-Ansicht) */
   .contentAreaNoNav {
-    padding: 0.5rem 0.75rem !important;
-    padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
+    padding: 1rem !important;
+    padding-bottom: max(24px, env(safe-area-inset-bottom)) !important;
+  }
+
+  /* Analyse-Container: Weniger Top-Margin auf Mobile */
+  .contentAreaNoNav .analysisContainer {
+    margin-top: 1rem;
   }
 
   /* 📱 Mobile Back-Button (nur sichtbar auf Mobile) */
@@ -8217,11 +8222,17 @@
     max-height: 100dvh;
     border-radius: 0;
     margin: 0;
+    padding: 16px;
+    padding-top: 56px; /* Platz für Close-Button */
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+    -webkit-overflow-scrolling: touch;
   }
 
-  /* Overlay: Navbar überdecken auf Mobile */
-  .quickAnalysisModal ~ .mobileBottomNav,
-  .quickAnalysisModal ~ .mobileFab {
-    display: none !important;
+  .quickAnalysisModal .closeButton {
+    top: 12px;
+    right: 12px;
+    width: 44px;
+    height: 44px;
+    z-index: 20;
   }
 }
