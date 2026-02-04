@@ -267,7 +267,7 @@ export default function RiskCard({
           >
             <polyline points="6 9 12 15 18 9" />
           </svg>
-          {expanded ? 'Weniger anzeigen' : 'Details & L\u00F6sung anzeigen'}
+          {expanded ? 'Weniger anzeigen' : 'Details & Lösung anzeigen'}
         </button>
       )}
 
@@ -294,7 +294,7 @@ export default function RiskCard({
                   <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
                   <polyline points="22 4 12 14.01 9 11.01"/>
                 </svg>
-                L{String.fromCharCode(246)}sungsvorschlag
+                Lösungsvorschlag
               </div>
               <p className={styles.detailText}>{solution}</p>
             </div>
@@ -348,7 +348,7 @@ export default function RiskCard({
             className={styles.commentTextarea}
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
-            placeholder="Kommentar hinzuf\u00FCgen (z.B. Ma\u00DFnahmen, Notizen)..."
+            placeholder="Kommentar hinzufügen (z.B. Maßnahmen, Notizen)..."
             rows={3}
             maxLength={1000}
           />
@@ -383,7 +383,7 @@ export default function RiskCard({
               className={styles.actionBtn}
               onClick={() => setShowComment(!showComment)}
               title="Kommentar"
-              aria-label="Kommentar hinzuf\u00FCgen"
+              aria-label="Kommentar hinzufügen"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>

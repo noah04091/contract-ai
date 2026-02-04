@@ -21,8 +21,8 @@ export default function RisksTab({ selectedContract, onNavigate, onSaveRiskToLib
           <div className={styles.noAnalysisIcon} style={{ background: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)' }}>
             <AlertTriangle size={32} color="#ef4444" />
           </div>
-          <h3>Risikoanalyse nicht verf&#252;gbar</h3>
-          <p>Um Risiken zu identifizieren, muss der Vertrag zuerst analysiert werden. Die Legal Pulse Risikoanalyse erkennt automatisch rechtliche Schwachstellen und bewertet deren Kritikalit&#228;t.</p>
+          <h3>Risikoanalyse nicht verfügbar</h3>
+          <p>Um Risiken zu identifizieren, muss der Vertrag zuerst analysiert werden. Die Legal Pulse Risikoanalyse erkennt automatisch rechtliche Schwachstellen und bewertet deren Kritikalität.</p>
           <div className={styles.noAnalysisFeatures}>
             <div className={styles.noAnalysisFeature}>
               <AlertTriangle size={18} color="#ef4444" />
