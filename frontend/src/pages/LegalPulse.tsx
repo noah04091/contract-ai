@@ -11,6 +11,7 @@ import OneClickCancelModal from "../components/OneClickCancelModal";
 import SaveClauseModal from "../components/LegalLens/SaveClauseModal";
 import { OverviewTab, RisksTab, RecommendationsTab, LegalChangesTab, HistoryTab, ForecastTab, SearchSidebar } from "../components/LegalPulse";
 import { Activity, Zap, Bell, ArrowRight, Download, Shield, AlertTriangle } from "lucide-react";
+import { fixUtf8Display } from "../utils/textUtils";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
@@ -412,6 +413,14 @@ export default function LegalPulse() {
     return { level: 'Hoch', color: '#ef4444', icon: '🔴' };
   };
 
+  // Health level for overview cards (higher = better, matches detail view hero circle)
+  const getHealthLevel = (score: number | null) => {
+    if (score === null || score === undefined) return { level: 'Unbekannt', color: '#6b7280', icon: '❓' };
+    if (score >= 75) return { level: 'Gut', color: '#10b981', icon: '✅' };
+    if (score >= 50) return { level: 'Befriedigend', color: '#f59e0b', icon: '⚠️' };
+    return { level: 'Kritisch', color: '#ef4444', icon: '🔴' };
+  };
+
   const getRiskScoreColor = (score: number | null) => {
     if (score === null || score === undefined) return '#6b7280';
     if (score <= 30) return '#10b981';
@@ -610,7 +619,7 @@ export default function LegalPulse() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Legal-Pulse-Report-${selectedContract.name || 'Vertrag'}.pdf`;
+      a.download = `Legal-Pulse-Report-${fixUtf8Display(selectedContract.name) || 'Vertrag'}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
       setNotification({ message: 'Report wurde heruntergeladen', type: 'success' });
@@ -722,7 +731,7 @@ export default function LegalPulse() {
       return (
         <div className={styles.legalPulseContainer}>
           <Helmet>
-            <title>Legal Pulse: {selectedContract.name} – Contract AI</title>
+            <title>Legal Pulse: {fixUtf8Display(selectedContract.name)} – Contract AI</title>
           </Helmet>
 
           <div className={styles.premiumGate}>
@@ -745,7 +754,7 @@ export default function LegalPulse() {
                 </svg>
               </div>
               <h2>Premium-Feature</h2>
-              <h3>{selectedContract.name}</h3>
+              <h3>{fixUtf8Display(selectedContract.name)}</h3>
               <p>Die detaillierte Legal Pulse Analyse mit Risiko-Score, Empfehlungen und Verlaufsdaten ist nur für Business- und Enterprise-Kunden verfügbar.</p>
 
               <div className={styles.premiumGateFeatures}>
@@ -786,8 +795,8 @@ export default function LegalPulse() {
     return (
       <div className={styles.legalPulseContainer}>
         <Helmet>
-          <title>Legal Pulse: {selectedContract.name} – Contract AI</title>
-          <meta name="description" content={`Rechtliche Risikoanalyse für ${selectedContract.name}`} />
+          <title>Legal Pulse: {fixUtf8Display(selectedContract.name)} – Contract AI</title>
+          <meta name="description" content={`Rechtliche Risikoanalyse für ${fixUtf8Display(selectedContract.name)}`} />
         </Helmet>
 
         {notification && (
@@ -833,7 +842,7 @@ export default function LegalPulse() {
 
           <div className={styles.contractHeader}>
             <div className={styles.contractTitle}>
-              <h1>{selectedContract.name}</h1>
+              <h1>{fixUtf8Display(selectedContract.name)}</h1>
               {selectedContract.isGenerated && (
                 <span className={styles.generatedBadge}>✨ KI-Generiert</span>
               )}
@@ -1222,7 +1231,7 @@ export default function LegalPulse() {
                 </button>
                 <button
                   className={styles.quickActionBtn}
-                  onClick={() => navigate(`/calendar?action=create&contractId=${selectedContract._id}&contractName=${encodeURIComponent(selectedContract.name)}`)}
+                  onClick={() => navigate(`/calendar?action=create&contractId=${selectedContract._id}&contractName=${encodeURIComponent(fixUtf8Display(selectedContract.name))}`)}
                 >
                   <Bell size={18} />
                   Frist-Reminder
@@ -1818,7 +1827,7 @@ export default function LegalPulse() {
             searchQuery={searchQuery}
             riskFilter={riskFilter}
             showTooltip={showTooltip}
-            getRiskLevel={getRiskLevel}
+            getRiskLevel={getHealthLevel}
             onContractClick={handleContractCardClick}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}

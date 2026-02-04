@@ -50,7 +50,9 @@ export default function ContractRiskGrid({
   return (
     <div className={styles.contractsGrid}>
       {contracts.map((contract) => {
-        const riskLevel = getRiskLevel(contract.legalPulse?.riskScore || null);
+        const hasAnalysis = !!contract.legalPulse?.lastAnalysis;
+        const healthScore = hasAnalysis ? (contract.legalPulse?.adjustedHealthScore ?? contract.legalPulse?.healthScore ?? null) : null;
+        const riskLevel = getRiskLevel(healthScore);
         return (
           <div
             key={contract._id}
@@ -61,7 +63,7 @@ export default function ContractRiskGrid({
             onMouseLeave={() => onMouseLeave(contract._id)}
             role="button"
             tabIndex={0}
-            aria-label={`Vertrag: ${contract.name}, Risiko-Score: ${contract.legalPulse?.riskScore || 'nicht analysiert'}`}
+            aria-label={`Vertrag: ${contract.name}, Gesundheits-Score: ${healthScore ?? 'nicht analysiert'}`}
           >
             <div className={styles.contractCardHeader}>
               <div className={styles.contractInfo}>
@@ -84,7 +86,7 @@ export default function ContractRiskGrid({
               >
                 <span className={styles.riskIcon}>{riskLevel.icon}</span>
                 <span className={styles.riskScore}>
-                  {contract.legalPulse?.riskScore || '—'}
+                  {healthScore !== null ? healthScore : '—'}
                 </span>
               </div>
             ) : (
