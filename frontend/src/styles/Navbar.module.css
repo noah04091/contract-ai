@@ -64,8 +64,14 @@
   font-size: 14px;
 }
 
-/* Mobile: Navbar-Shrink komplett deaktivieren - alles identisch zu Nicht-Scrolled */
+/* Mobile: Navbar fixiert + Shrink komplett deaktivieren */
 @media (max-width: 768px) {
+  .navbar {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+  }
   .navbarScrolled {
     padding-top: 0 !important;
     padding-bottom: 0 !important;
