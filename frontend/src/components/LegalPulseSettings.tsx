@@ -237,6 +237,16 @@ export default function LegalPulseSettings({ onSaveSuccess, compact = false }: L
                 );
               })}
             </div>
+
+            {safeCategories.length === 0 && (
+              <div className={styles.warningBanner}>
+                <span className={styles.warningIcon}>⚠️</span>
+                <p>
+                  <strong>Keine Rechtsbereiche ausgewählt.</strong> Sie erhalten keine Alerts zu Gesetzesänderungen.
+                  Wählen Sie mindestens einen Rechtsbereich aus.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Email Notifications Toggle */}

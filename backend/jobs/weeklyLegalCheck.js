@@ -439,13 +439,18 @@ class WeeklyLegalCheck {
       // Read user's Legal Pulse settings
       const userSettings = user?.legalPulseSettings || {};
       const userThreshold = userSettings.similarityThreshold || 0.70;
-      const userCategories = Array.isArray(userSettings.categories) && userSettings.categories.length > 0
+      const userCategories = Array.isArray(userSettings.categories)
         ? userSettings.categories
-        : null; // null = all categories (no filter)
+        : null; // null = no setting yet, use all categories (default behavior)
+
+      // Empty categories array = user explicitly deselected all = no results
+      if (userCategories !== null && userCategories.length === 0) {
+        return { lawChangesFound: 0, relevantChanges: [] };
+      }
 
       // Build query - filter by user's selected categories if set
       const lawQuery = { updatedAt: { $gte: oneWeekAgo } };
-      if (userCategories) {
+      if (userCategories && userCategories.length > 0) {
         lawQuery.area = { $in: userCategories };
       }
 

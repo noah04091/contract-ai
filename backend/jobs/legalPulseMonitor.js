@@ -662,6 +662,11 @@ class LegalPulseMonitor {
       }
 
       // 🆕 Check if law category matches user's selected categories
+      // Empty categories array = user explicitly deselected all = no alerts
+      if (Array.isArray(settings.categories) && settings.categories.length === 0) {
+        console.log(`   ⏭️  No categories selected, skipping alerts for: ${user.email}`);
+        return false;
+      }
       if (lawChange.area && Array.isArray(settings.categories) && settings.categories.length > 0) {
         if (!settings.categories.includes(lawChange.area)) {
           console.log(`   ⏭️  Law category "${lawChange.area}" not in user's selected categories: ${user.email}`);
