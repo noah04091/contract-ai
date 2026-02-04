@@ -2219,7 +2219,7 @@ export default function Contracts() {
           contractId: updatedContract._id,
           analysisResult: {
             success: true,
-            contractScore: updatedContract.analysis?.contractScore || updatedContract.contractScore,
+            contractScore: updatedContract.analysis?.contractScore ?? updatedContract.contractScore,
             summary: updatedContract.analysis?.summary || updatedContract.summary,
             legalAssessment: updatedContract.analysis?.legalAssessment || updatedContract.legalAssessment,
             suggestions: updatedContract.analysis?.suggestions || updatedContract.suggestions,
