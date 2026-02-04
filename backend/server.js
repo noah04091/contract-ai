@@ -1077,16 +1077,6 @@ const connectDB = async () => {
       console.error("❌ Fehler bei Legal Pulse Health:", err);
     }
 
-    // ✅ 14.1 LEGAL PULSE FEED (SSE)
-    try {
-      // 🔐 verifyToken + checkSubscription hinzugefügt - Legal Pulse ist Business+ Feature
-      const legalPulseFeedRoutes = require("./routes/legalPulseFeed");
-      app.use("/api/legalpulse", verifyToken, checkSubscription, legalPulseFeedRoutes);
-      console.log("✅ Legal Pulse Feed (SSE) geladen unter /api/legalpulse/stream");
-    } catch (err) {
-      console.error("❌ Fehler bei Legal Pulse Feed Routen:", err);
-    }
-
     // ✅ 14.2 LEGAL PULSE NOTIFICATIONS (Phase 2)
     try {
       const pulseNotificationsRoutes = require("./routes/pulseNotifications");

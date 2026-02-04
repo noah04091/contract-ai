@@ -8,13 +8,11 @@ const { MongoClient, ObjectId } = require("mongodb");
 let EmbeddingService = null;
 let VectorStore = null;
 let sendEmailHtml = null;
-let broadcastToUser = null;
 let getAlertExplainer = null;
 
 try { EmbeddingService = require("../services/embeddingService"); } catch (e) { console.warn('[LEGAL-PULSE:MONITOR] embeddingService nicht verfügbar:', e.message); }
 try { VectorStore = require("../services/vectorStore"); } catch (e) { console.warn('[LEGAL-PULSE:MONITOR] vectorStore nicht verfügbar:', e.message); }
 try { sendEmailHtml = require("../utils/sendEmailHtml"); } catch (e) { console.warn('[LEGAL-PULSE:MONITOR] sendEmailHtml nicht verfügbar:', e.message); }
-try { broadcastToUser = require("../routes/legalPulseFeed").broadcastToUser; } catch (e) { console.warn('[LEGAL-PULSE:MONITOR] legalPulseFeed nicht verfügbar:', e.message); }
 try { getAlertExplainer = require("../services/alertExplainer").getInstance; } catch (e) { console.warn('[LEGAL-PULSE:MONITOR] alertExplainer nicht verfügbar:', e.message); }
 
 class LegalPulseMonitor {
@@ -692,8 +690,6 @@ class LegalPulseMonitor {
         score: contract.score,
         createdAt: new Date()
       };
-      broadcastToUser(contract.userId, alert);
-
       return true; // Count as "sent" for stats
 
     } catch (error) {

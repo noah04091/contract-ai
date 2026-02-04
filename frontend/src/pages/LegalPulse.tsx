@@ -5,8 +5,6 @@ import styles from "./LegalPulse.module.css";
 import Notification from "../components/Notification";
 import ContractRiskGrid from "../components/ContractRiskGrid";
 import LegalPulseSettings from "../components/LegalPulseSettings";
-import LegalPulseFeedWidget from "../components/LegalPulseFeedWidget";
-import { useLegalPulseFeed } from "../hooks/useLegalPulseFeed";
 import { useErrorHandler } from "../hooks/useErrorHandler";
 import { WelcomePopup } from "../components/Tour";
 import OneClickCancelModal from "../components/OneClickCancelModal";
@@ -40,7 +38,6 @@ export default function LegalPulse() {
   });
   const [showTooltip, setShowTooltip] = useState<{ [key: string]: boolean }>({});
   const [showSettingsSidebar, setShowSettingsSidebar] = useState(false);
-  const [showFeedSidebar, setShowFeedSidebar] = useState(false);
   const [showSearchSidebar, setShowSearchSidebar] = useState(false);
   const [heroMinimized, setHeroMinimized] = useState(false);
 
@@ -104,20 +101,6 @@ export default function LegalPulse() {
   // 🔐 User Subscription Check für Premium-Gating - MUSS vor Feed Hook sein!
   const [userPlan, setUserPlan] = useState<string>('free');
   const canAccessLegalPulse = ['business', 'enterprise'].includes(userPlan.toLowerCase());
-
-  // Feed Hook - 🔐 NUR für Premium-User (SSE-Verbindung ist teuer)
-  const feedHook = useLegalPulseFeed();
-  // Für Free-User: leere Events, nicht verbunden
-  const feedEvents = canAccessLegalPulse ? feedHook.events : [];
-  const feedConnected = canAccessLegalPulse ? feedHook.isConnected : false;
-  const clearEvents = canAccessLegalPulse ? feedHook.clearEvents : () => {};
-
-  // 🔐 SSE-Verbindung trennen für Free-User
-  useEffect(() => {
-    if (!canAccessLegalPulse && feedHook.disconnect) {
-      feedHook.disconnect();
-    }
-  }, [canAccessLegalPulse]);
 
   // ✅ REMOVED: Mock data logic - now using real data only
 
@@ -1573,16 +1556,6 @@ export default function LegalPulse() {
           </button>
           <button
             className={styles.dashboardActionButton}
-            onClick={() => setShowFeedSidebar(true)}
-          >
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" strokeWidth="2"/>
-            </svg>
-            Live Feed
-            {feedEvents.length > 0 && <span className={styles.feedBadge}>{feedEvents.length}</span>}
-          </button>
-          <button
-            className={styles.dashboardActionButton}
             onClick={() => setShowSearchSidebar(true)}
           >
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1814,25 +1787,6 @@ export default function LegalPulse() {
                 onSaveSuccess={() => {
                   setNotification({ message: "✓ Einstellungen gespeichert", type: "success" });
                 }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Feed Sidebar */}
-      {showFeedSidebar && (
-        <div className={styles.sidebarOverlay} onClick={() => setShowFeedSidebar(false)}>
-          <div className={styles.sidebar} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.sidebarHeader}>
-              <h2>Live Feed</h2>
-              <button className={styles.closeSidebar} onClick={() => setShowFeedSidebar(false)} aria-label="Feed schließen">×</button>
-            </div>
-            <div className={styles.sidebarContent}>
-              <LegalPulseFeedWidget
-                feedConnected={feedConnected}
-                feedEvents={feedEvents}
-                onClearEvents={clearEvents}
               />
             </div>
           </div>

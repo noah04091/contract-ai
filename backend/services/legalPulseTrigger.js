@@ -414,15 +414,10 @@ class LegalPulseTrigger {
         return;
       }
 
-      // Get SSE broadcast function (if available)
-      const legalPulseFeed = require('../routes/legalPulseFeed');
-      const broadcastToUser = legalPulseFeed.broadcastToUser;
-
-      // Deliver via all channels
+      // Deliver via all channels (SSE broadcast removed)
       await this.notificationService.deliverNotification(
         notification,
-        user,
-        broadcastToUser
+        user
       );
 
       console.log(`[LEGAL-PULSE:TRIGGER] ✓ Notification delivered: ${notification._id}`);
