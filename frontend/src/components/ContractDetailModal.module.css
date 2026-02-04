@@ -104,7 +104,99 @@
   color: #6b7280;
 }
 
-/* Header Actions - Action Buttons Container */
+/* Header Right: 3-Dot + Close - nur auf Mobile sichtbar */
+.headerRight {
+  display: none;
+}
+
+.actionsMenuWrapper {
+  position: relative;
+}
+
+.actionsMenuBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: #f1f5f9;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.actionsMenuBtn:hover {
+  background: #e2e8f0;
+}
+
+.actionsDropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e7eb;
+  padding: 6px;
+  z-index: 100;
+  animation: dropdownFadeIn 0.15s ease;
+}
+
+@keyframes dropdownFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  color: #1e293b;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  text-align: left;
+}
+
+.dropdownItem:hover {
+  background: #f1f5f9;
+}
+
+.dropdownItem svg {
+  width: 16px;
+  height: 16px;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.dropdownItemDanger {
+  color: #dc2626;
+}
+
+.dropdownItemDanger svg {
+  color: #dc2626;
+}
+
+.dropdownItemDanger:hover {
+  background: #fef2f2;
+}
+
+.dropdownDivider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 4px 0;
+}
+
+/* Header Actions - Action Buttons Container (Desktop) */
 .headerActions {
   display: flex;
   align-items: center;
@@ -782,7 +874,7 @@
   /* Header Left: Icon + Title */
   .headerLeft {
     display: flex !important;
-    align-items: center !important;
+    align-items: flex-start !important;
     gap: 10px !important;
     flex: 1 !important;
     min-width: 0 !important;
@@ -798,12 +890,16 @@
   .headerLeft h2 {
     font-size: 1rem !important;
     font-weight: 600 !important;
-    line-height: 1.3 !important;
+    line-height: 1.35 !important;
     margin: 0 !important;
+    color: #1e293b !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
-    white-space: nowrap !important;
-    color: #1e293b !important;
+    white-space: normal !important;
+    word-break: break-word !important;
   }
 
   .headerLeft svg {
@@ -811,60 +907,61 @@
     height: 22px !important;
     flex-shrink: 0 !important;
     color: #3b82f6 !important;
+    margin-top: 2px !important;
   }
 
   .contractName {
     display: none !important;
   }
 
-  /* Header Actions: Horizontal, kompakt */
+  /* Desktop Action Buttons: Auf Mobile verstecken */
   .headerActions {
+    display: none !important;
+  }
+
+  /* Header Right: 3-Dot + Close sichtbar auf Mobile */
+  .headerRight {
     display: flex !important;
+    align-items: center !important;
     gap: 6px !important;
     flex-shrink: 0 !important;
-    align-items: center !important;
-    padding: 0 !important;
-    border: none !important;
   }
 
-  /* Action Buttons: Farbcodiert, kompakt */
-  .actionBtn {
-    width: 38px !important;
-    height: 38px !important;
-    min-width: 38px !important;
-    min-height: 38px !important;
-    padding: 0 !important;
-    border-radius: 10px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    flex-shrink: 0 !important;
-  }
-
-  .actionBtn svg {
-    width: 18px !important;
-    height: 18px !important;
+  .actionsMenuBtn {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    border-radius: 50% !important;
+    background: #f1f5f9 !important;
+    color: #475569 !important;
   }
 
   .closeBtn {
-    width: 38px !important;
-    height: 38px !important;
-    min-width: 38px !important;
-    min-height: 38px !important;
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
     padding: 0 !important;
-    border-radius: 10px !important;
-    margin-left: 4px !important;
+    border-radius: 50% !important;
     background: #f1f5f9 !important;
+    border: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
   }
 
   .closeBtn svg {
-    width: 20px !important;
-    height: 20px !important;
+    width: 18px !important;
+    height: 18px !important;
+    color: #64748b !important;
   }
 
-  /* 🔥 TAB NAVIGATION: Pill-Style horizontal */
+  /* 🔥 TAB NAVIGATION: Pill-Style horizontal, zentriert */
   .tabNav {
     display: flex !important;
+    justify-content: center !important;
     padding: 8px 12px !important;
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch !important;
@@ -881,18 +978,18 @@
 
   .tabNavLeft {
     display: flex !important;
+    justify-content: center !important;
     gap: 6px !important;
-    flex: 1 !important;
   }
 
   .tabButton {
     padding: 8px 14px !important;
     font-size: 0.8125rem !important;
     white-space: nowrap !important;
-    min-height: 40px !important;
+    min-height: 44px !important;
     gap: 6px !important;
     flex-shrink: 0 !important;
-    border-radius: 20px !important;
+    border-radius: 22px !important;
     border: none !important;
     border-bottom: none !important;
     background: #f1f5f9 !important;
@@ -1327,22 +1424,12 @@
     height: 20px !important;
   }
 
-  /* Header Actions - Noch kompakter */
-  .headerActions {
-    gap: 4px !important;
-  }
-
-  .actionBtn {
+  /* 3-Dot Menu + Close: Kompakter */
+  .actionsMenuBtn {
     width: 36px !important;
     height: 36px !important;
     min-width: 36px !important;
     min-height: 36px !important;
-    border-radius: 8px !important;
-  }
-
-  .actionBtn svg {
-    width: 16px !important;
-    height: 16px !important;
   }
 
   .closeBtn {
@@ -1350,33 +1437,37 @@
     height: 36px !important;
     min-width: 36px !important;
     min-height: 36px !important;
-    border-radius: 8px !important;
   }
 
   .closeBtn svg {
-    width: 18px !important;
-    height: 18px !important;
+    width: 16px !important;
+    height: 16px !important;
   }
 
-  /* Tab Navigation - Icon-only auf kleinen Screens */
+  .headerLeft h2 {
+    -webkit-line-clamp: 2 !important;
+  }
+
+  /* Tab Navigation - Text sichtbar, kompakter */
   .tabNav {
     padding: 6px 10px !important;
     gap: 4px !important;
   }
 
   .tabButton {
-    padding: 8px 12px !important;
-    min-height: 36px !important;
-    border-radius: 18px !important;
+    padding: 6px 10px !important;
+    min-height: 40px !important;
+    border-radius: 20px !important;
+    font-size: 0.75rem !important;
   }
 
   .tabButton span {
-    display: none !important; /* Only show icon on small mobile */
+    display: inline !important;
   }
 
   .tabButton svg {
-    width: 18px !important;
-    height: 18px !important;
+    width: 14px !important;
+    height: 14px !important;
   }
 
   .modalBody {
@@ -1704,8 +1795,8 @@
     display: none !important; /* Hide icon on very small screens */
   }
 
-  /* Action Buttons: Minimal kleiner */
-  .actionBtn {
+  /* 3-Dot Menu + Close: Minimal kleiner */
+  .actionsMenuBtn {
     width: 34px !important;
     height: 34px !important;
     min-width: 34px !important;
@@ -1719,16 +1810,22 @@
     min-height: 34px !important;
   }
 
-  /* Tab Buttons: Kompakter */
+  .closeBtn svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
+
+  /* Tab Buttons: Kompakter, mit Text */
   .tabButton {
-    padding: 6px 10px !important;
-    min-height: 34px !important;
-    border-radius: 17px !important;
+    padding: 5px 8px !important;
+    min-height: 36px !important;
+    border-radius: 18px !important;
+    font-size: 0.6875rem !important;
   }
 
   .tabButton svg {
-    width: 16px !important;
-    height: 16px !important;
+    width: 13px !important;
+    height: 13px !important;
   }
 
   /* Details: 1 Spalte auf sehr kleinen Screens */

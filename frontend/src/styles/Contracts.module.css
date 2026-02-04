@@ -4713,9 +4713,9 @@
   /* Container & Padding */
   .pageContainer {
     padding: 0;
-    top: 56px;
-    height: calc(100vh - 56px);
-    max-height: calc(100dvh - 56px);
+    top: calc(56px + env(safe-area-inset-top, 0px));
+    height: calc(100vh - 56px - env(safe-area-inset-top, 0px));
+    max-height: calc(100dvh - 56px - env(safe-area-inset-top, 0px));
   }
 
   .container {
@@ -4913,7 +4913,7 @@
     padding: 0.625rem 1rem;
     font-size: 0.85rem;
     border-radius: 20px;
-    min-height: 40px;
+    min-height: 44px;
   }
 
   .sectionActions {
@@ -4932,8 +4932,10 @@
   }
 
   .refreshButton {
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
   }
 
   /* ✅ BULK ACTION BAR - Mobile: Grid Layout + Safe-Area */
@@ -5129,12 +5131,12 @@
 
   /* Action Buttons als Icon-Only für Platz */
   .cardActionButton {
-    min-height: 40px;
-    min-width: 40px;
+    min-height: 44px;
+    min-width: 44px;
     padding: 0.5rem;
     font-size: 0.75rem;
     justify-content: center;
-    border-radius: 8px;
+    border-radius: 10px;
     font-weight: 500;
     flex: 1;
   }
@@ -6905,8 +6907,8 @@
   }
 
   .mobileGridView .cardActionButton {
-    min-height: 32px;
-    min-width: 32px;
+    min-height: 44px;
+    min-width: 44px;
     padding: 0.375rem;
     flex: 0 0 auto;
   }
@@ -6949,8 +6951,8 @@
   }
 
   .mobileGridView .cardActionButton {
-    min-height: 28px;
-    min-width: 28px;
+    min-height: 44px;
+    min-width: 44px;
     padding: 0.25rem;
   }
 }

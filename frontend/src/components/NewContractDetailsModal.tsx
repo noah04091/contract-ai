@@ -1,6 +1,6 @@
 // 🎨 New Contract Details Modal - Professional contract viewer
 import React, { useState, useEffect, useRef } from 'react';
-import { X, FileText, BarChart3, Share2, Edit, Trash2, PenTool, Eye, Download, AlertCircle, CheckCircle, Clock, XCircle, ExternalLink } from 'lucide-react';
+import { X, FileText, BarChart3, Share2, Edit, Trash2, PenTool, Eye, Download, AlertCircle, CheckCircle, Clock, XCircle, ExternalLink, MoreHorizontal } from 'lucide-react';
 import styles from './ContractDetailModal.module.css'; // Reuse signature modal styles
 import SmartContractInfo from './SmartContractInfo';
 import ContractShareModal from './ContractShareModal';
@@ -294,6 +294,20 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     isManual?: boolean;
   }>>([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
+  const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
+  const actionsMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close actions menu on click outside
+  useEffect(() => {
+    if (!actionsMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (actionsMenuRef.current && !actionsMenuRef.current.contains(e.target as Node)) {
+        setActionsMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [actionsMenuOpen]);
 
   // Update contract when prop changes
   useEffect(() => {
@@ -1851,58 +1865,63 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
               </div>
             </div>
 
+            {/* Header Right: 3-Dot-Menü + Close Button */}
+            <div className={styles.headerRight}>
+              <div className={styles.actionsMenuWrapper} ref={actionsMenuRef}>
+                <button
+                  className={styles.actionsMenuBtn}
+                  onClick={() => setActionsMenuOpen(!actionsMenuOpen)}
+                  aria-label="Aktionen"
+                  aria-expanded={actionsMenuOpen}
+                >
+                  <MoreHorizontal size={20} />
+                </button>
+                {actionsMenuOpen && (
+                  <div className={styles.actionsDropdown}>
+                    <button className={styles.dropdownItem} onClick={() => { window.open(`/contracts/${contract._id}`, '_blank'); setActionsMenuOpen(false); }}>
+                      <ExternalLink size={16} /><span>Vollansicht öffnen</span>
+                    </button>
+                    <button className={styles.dropdownItem} onClick={() => { handleShare(); setActionsMenuOpen(false); }}>
+                      <Share2 size={16} /><span>Teilen</span>
+                    </button>
+                    <button className={styles.dropdownItem} onClick={() => { handleEdit(); setActionsMenuOpen(false); }}>
+                      <Edit size={16} /><span>Bearbeiten</span>
+                    </button>
+                    {contract.s3Key && !contract.needsReupload && !contract.envelope && (
+                      <button className={styles.dropdownItem} onClick={() => { handleSendToSignature(); setActionsMenuOpen(false); }}>
+                        <PenTool size={16} /><span>Signatur senden</span>
+                      </button>
+                    )}
+                    <div className={styles.dropdownDivider} />
+                    <button className={`${styles.dropdownItem} ${styles.dropdownItemDanger}`} onClick={() => { handleDelete(); setActionsMenuOpen(false); }}>
+                      <Trash2 size={16} /><span>Löschen</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+              <button onClick={onClose} className={styles.closeBtn} aria-label="Schließen">
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Desktop: Action Buttons (auf Mobile per CSS versteckt) */}
             <div className={styles.headerActions}>
-              {/* Vollansicht */}
-              <button
-                className={styles.actionBtn}
-                onClick={() => window.open(`/contracts/${contract._id}`, '_blank')}
-                title="Vollansicht öffnen"
-                aria-label="Vertrag in Vollansicht öffnen"
-              >
+              <button className={styles.actionBtn} onClick={() => window.open(`/contracts/${contract._id}`, '_blank')} title="Vollansicht öffnen">
                 <ExternalLink size={18} />
               </button>
-
-              {/* Share */}
-              <button
-                className={styles.actionBtn}
-                onClick={handleShare}
-                title="Teilen"
-              >
+              <button className={styles.actionBtn} onClick={handleShare} title="Teilen">
                 <Share2 size={18} />
               </button>
-
-              {/* Edit */}
-              <button
-                className={styles.actionBtn}
-                onClick={handleEdit}
-                title="Bearbeiten"
-              >
+              <button className={styles.actionBtn} onClick={handleEdit} title="Bearbeiten">
                 <Edit size={18} />
               </button>
-
-              {/* Signature */}
               {contract.s3Key && !contract.needsReupload && !contract.envelope && (
-                <button
-                  className={styles.actionBtn}
-                  onClick={handleSendToSignature}
-                  title="Zur Signatur senden"
-                >
+                <button className={styles.actionBtn} onClick={handleSendToSignature} title="Zur Signatur senden">
                   <PenTool size={18} />
                 </button>
               )}
-
-              {/* Delete */}
-              <button
-                className={`${styles.actionBtn} ${styles.deleteBtn}`}
-                onClick={handleDelete}
-                title="Löschen"
-              >
+              <button className={`${styles.actionBtn} ${styles.deleteBtn}`} onClick={handleDelete} title="Löschen">
                 <Trash2 size={18} />
-              </button>
-
-              {/* Close */}
-              <button onClick={onClose} className={styles.closeBtn} aria-label="Schließen">
-                <X size={24} />
               </button>
             </div>
           </div>
