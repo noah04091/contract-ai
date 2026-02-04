@@ -696,7 +696,9 @@ export default function LegalPulse() {
   if (contractId && selectedContract) {
     // Use adjusted scores if available (after risk management), otherwise use original
     const displayRiskScore = selectedContract.legalPulse?.adjustedRiskScore ?? selectedContract.legalPulse?.riskScore ?? null;
-    const displayHealthScore = selectedContract.legalPulse?.adjustedHealthScore ?? selectedContract.legalPulse?.healthScore ?? null;
+    const rawHealthScore = selectedContract.legalPulse?.adjustedHealthScore ?? selectedContract.legalPulse?.healthScore ?? null;
+    // Fallback: derive healthScore from riskScore for older analyses that didn't store healthScore
+    const displayHealthScore = rawHealthScore ?? (displayRiskScore !== null ? Math.max(0, Math.round(100 - (displayRiskScore * 0.5))) : null);
     const hasAdjustedScore = selectedContract.legalPulse?.adjustedRiskScore != null && selectedContract.legalPulse?.adjustedRiskScore !== selectedContract.legalPulse?.riskScore;
     const riskLevel = getRiskLevel(displayRiskScore);
 

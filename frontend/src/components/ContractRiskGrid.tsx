@@ -51,7 +51,11 @@ export default function ContractRiskGrid({
     <div className={styles.contractsGrid}>
       {contracts.map((contract) => {
         const hasAnalysis = contract.legalPulse?.riskScore != null;
-        const healthScore = hasAnalysis ? (contract.legalPulse?.adjustedHealthScore ?? contract.legalPulse?.healthScore ?? null) : null;
+        const rawHealthScore = contract.legalPulse?.adjustedHealthScore ?? contract.legalPulse?.healthScore ?? null;
+        // Fallback: derive healthScore from riskScore for older analyses that didn't store healthScore
+        const healthScore = hasAnalysis
+          ? (rawHealthScore ?? Math.max(0, Math.round(100 - (contract.legalPulse!.riskScore! * 0.5))))
+          : null;
         const riskLevel = getRiskLevel(healthScore);
         return (
           <div
