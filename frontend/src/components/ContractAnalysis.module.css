@@ -1547,14 +1547,23 @@
 }
 
 @media (max-width: 768px) {
+  /* 🔥 Container: Kein Kasten — transparenter Hintergrund, frei fließend */
   .analysisContainer {
-    border-radius: 16px;
-    margin-top: 0.75rem;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    margin-top: 0;
     overflow: visible;
   }
 
+  /* Header als eigene Karte */
   .header {
     padding: 20px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    margin-bottom: 12px;
   }
 
   .headerContent {
@@ -1573,49 +1582,94 @@
     width: 100%;
   }
 
-  .detailsGrid {
-    grid-template-columns: 1fr;
-    padding: 20px;
-    gap: 12px;
+  /* Results Container: Transparent, Sektionen sind einzelne Karten */
+  .resultsContainer {
+    background: transparent;
   }
 
+  /* Rechtsprüfung Header als eigene Karte */
   .successHeader {
     flex-direction: column;
     align-items: center;
     text-align: center;
     gap: 12px;
     padding: 20px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    border-bottom: none;
+    margin-bottom: 12px;
   }
 
+  /* Score als eigene Karte */
   .scoreSection {
     padding: 28px 20px;
     text-align: center;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    border-bottom: none;
+    margin-bottom: 12px;
   }
 
   .scoreCircleWrapper {
-    width: 90px;
-    height: 90px;
+    width: 100px;
+    height: 100px;
   }
 
   .scoreNumber {
-    font-size: 24px;
+    font-size: 26px;
   }
 
+  /* Details Grid: Transparent, Karten stehen einzeln */
+  .detailsGrid {
+    grid-template-columns: 1fr;
+    padding: 0;
+    gap: 12px;
+    background: transparent;
+  }
+
+  /* Jede Detail-Karte als eigenständige Karte */
+  .detailCard {
+    border-radius: 16px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    border: none;
+  }
+
+  .detailHeader {
+    padding: 16px 20px;
+  }
+
+  .cardContent {
+    padding: 16px 20px;
+  }
+
+  /* Action Buttons als eigene Karte */
   .actionButtonsContainer {
     flex-direction: column;
-    padding: 16px 20px;
+    padding: 20px;
     gap: 10px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    margin-top: 12px;
+    border-top: none;
   }
 
   .primaryActionButton,
   .secondaryButton {
     min-width: 100%;
+    border-radius: 12px;
+    min-height: 48px;
   }
 
+  /* Legal Opinion / Legal Pulse als eigene Karten */
   .legalOpinionSection,
   .legalPulseSection,
   .optimizationResult {
-    margin: 12px 16px;
+    margin: 12px 0;
+    border-radius: 16px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   }
 
   .legalOpinionHeader,
@@ -1636,7 +1690,7 @@
   .lawyerLevelFeatures {
     flex-direction: column;
     gap: 6px;
-    align-items: flex-start;
+    align-items: center;
   }
 
   .progressSteps {
@@ -1644,23 +1698,20 @@
     gap: 8px;
     align-items: center;
   }
-
-  .cardContent {
-    padding: 16px 20px;
-  }
-
-  .detailHeader {
-    padding: 14px 20px;
-  }
 }
 
 @media (max-width: 480px) {
+  /* Container bleibt transparent — kein Kasten */
   .analysisContainer {
-    border-radius: 14px;
+    border-radius: 0;
+    padding: 0;
   }
 
+  /* Header-Karte: Kompakteres Padding */
   .header {
     padding: 16px;
+    border-radius: 14px;
+    margin-bottom: 10px;
   }
 
   .fileInfo {
@@ -1669,8 +1720,18 @@
     gap: 10px;
   }
 
+  /* Success Header: Kompakter */
+  .successHeader {
+    padding: 16px;
+    border-radius: 14px;
+    margin-bottom: 10px;
+  }
+
+  /* Score-Karte: Kompakter */
   .scoreSection {
     padding: 24px 16px;
+    border-radius: 14px;
+    margin-bottom: 10px;
   }
 
   .scoreCircleWrapper {
@@ -1682,9 +1743,15 @@
     font-size: 22px;
   }
 
+  /* Details Grid bleibt transparent, enger Gap */
   .detailsGrid {
-    padding: 16px;
+    padding: 0;
     gap: 10px;
+  }
+
+  /* Detail-Karten: Kompakteres Padding */
+  .detailCard {
+    border-radius: 14px;
   }
 
   .detailHeader {
@@ -1695,15 +1762,20 @@
     padding: 14px 16px;
   }
 
+  /* Action Buttons Karte: Kompakter */
   .actionButtonsContainer {
     padding: 16px;
     gap: 10px;
+    border-radius: 14px;
+    margin-top: 10px;
   }
 
+  /* Legal Sections: Eigene Karten, kein Seitenabstand */
   .legalOpinionSection,
   .legalPulseSection,
   .optimizationResult {
-    margin: 10px 12px;
+    margin: 10px 0;
+    border-radius: 14px;
   }
 
   .legalOpinionContent {

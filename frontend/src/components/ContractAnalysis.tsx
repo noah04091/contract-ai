@@ -1165,7 +1165,7 @@ export default function ContractAnalysis({ file, contractName, onReset, onNaviga
           </div>
 
           {/* ✅ CRITICAL FIX: Contract Score - funktioniert für beide */}
-          {(result?.contractScore || initialResult?.contractScore) && (
+          {((result?.contractScore ?? initialResult?.contractScore ?? 0) > 0) && (
             <div className={styles.scoreSection}>
               <h5 className={styles.scoreSectionTitle}>
                 {(result?.lawyerLevelAnalysis || initialResult?.lawyerLevelAnalysis) 
