@@ -1654,23 +1654,23 @@ function CreateEventModal({ date, onClose, onEventCreated, initialContractId, in
             </div>
 
             {/* Date & Time Row */}
-            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '12px' }}>
-              <div>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '12px', maxWidth: '100%', overflow: 'hidden' }}>
+              <div style={{ minWidth: 0, overflow: 'hidden' }}>
                 <label style={labelStyle}>Datum</label>
                 <input
                   type="date"
                   value={formData.date}
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  style={inputStyle}
+                  style={{ ...inputStyle, display: 'block' }}
                 />
               </div>
-              <div>
+              <div style={{ minWidth: 0, overflow: 'hidden' }}>
                 <label style={labelStyle}>Uhrzeit</label>
                 <input
                   type="time"
                   value={formData.time}
                   onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                  style={inputStyle}
+                  style={{ ...inputStyle, display: 'block' }}
                 />
               </div>
             </div>
