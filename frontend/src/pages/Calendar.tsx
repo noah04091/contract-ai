@@ -1407,12 +1407,14 @@ function CreateEventModal({ date, onClose, onEventCreated, initialContractId, in
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
+    maxWidth: '100%',
     padding: '12px 14px',
     border: '1px solid #e5e7eb',
     borderRadius: '10px',
     fontSize: isMobile ? '16px' : '14px',
     outline: 'none',
-    transition: 'border-color 0.2s ease'
+    transition: 'border-color 0.2s ease',
+    boxSizing: 'border-box'
   };
 
   const labelStyle = {
@@ -1599,7 +1601,7 @@ function CreateEventModal({ date, onClose, onEventCreated, initialContractId, in
           </div>
         ) : (
           /* Event Form */
-          <div style={{ padding: isMobile ? '20px' : '24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+          <div style={{ padding: isMobile ? '16px' : '24px', display: 'flex', flexDirection: 'column', gap: '18px', overflow: 'hidden', maxWidth: '100%' }}>
             {/* Title */}
             <div>
               <label style={labelStyle}>Titel *</label>
