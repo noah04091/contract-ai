@@ -2222,6 +2222,14 @@
   .modal-actions-grid {
     grid-template-columns: 1fr;
     gap: 8px;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .modal-actions-grid > * {
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
   }
 
   .action-btn-premium {
@@ -2229,10 +2237,8 @@
     font-size: 14px;
     min-height: 48px;
     width: 100%;
-  }
-
-  .action-btn-premium.primary {
-    grid-column: auto;
+    max-width: 100%;
+    min-width: 0;
   }
 
   .action-btn-premium.primary {

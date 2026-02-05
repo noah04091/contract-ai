@@ -515,7 +515,8 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
           maxWidth: isMobile ? '100%' : '600px',
           width: isMobile ? '100%' : '600px',
           maxHeight: isMobile ? '90vh' : 'auto',
-          overflowY: isMobile ? 'auto' : 'visible'
+          overflowY: isMobile ? undefined : ('visible' as const),
+          overflowX: isMobile ? 'hidden' : undefined
         }}
       >
         <div className="modal-header-premium" style={{
@@ -640,19 +641,21 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
                   background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
                   color: '#fff',
                   border: 'none',
-                  padding: '14px 20px',
+                  padding: isMobile ? '14px 16px' : '14px 20px',
                   borderRadius: '12px',
                   fontWeight: 600,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '10px',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  maxWidth: '100%',
+                  minWidth: 0
                 }}
               >
-                <FileText size={18} />
-                <span>Vertrag anzeigen</span>
-                <ArrowRight size={16} className="action-arrow" />
+                <FileText size={18} style={{ flexShrink: 0 }} />
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Vertrag anzeigen</span>
+                <ArrowRight size={16} className="action-arrow" style={{ flexShrink: 0 }} />
               </motion.button>
             )}
 
@@ -668,26 +671,29 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
                   background: 'linear-gradient(135deg, #ef4444, #f87171)',
                   color: '#fff',
                   border: 'none',
-                  padding: '14px 20px',
+                  padding: isMobile ? '14px 16px' : '14px 20px',
                   borderRadius: '12px',
                   fontWeight: 600,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '10px',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  maxWidth: '100%',
+                  minWidth: 0
                 }}
               >
-                <Zap size={18} />
-                <span>Jetzt kündigen</span>
-                <ArrowRight size={16} className="action-arrow" />
+                <Zap size={18} style={{ flexShrink: 0 }} />
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Jetzt kündigen</span>
+                <ArrowRight size={16} className="action-arrow" style={{ flexShrink: 0 }} />
               </motion.button>
             )}
 
             {/* Secondary Action Buttons - Different for manual vs contract events */}
             <div style={{
               gridColumn: '1 / -1',
-              display: 'flex',
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)',
               gap: '8px',
               marginTop: '8px'
             }}>
@@ -699,7 +705,6 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
                     whileHover={{ scale: 1.02, background: '#f0fdf4', borderColor: '#10b981' }}
                     whileTap={{ scale: 0.98 }}
                     style={{
-                      flex: 1,
                       background: '#f9fafb',
                       color: '#059669',
                       border: '1px solid #e5e7eb',
@@ -712,11 +717,12 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
                       gap: '6px',
                       cursor: 'pointer',
                       fontSize: '13px',
-                      transition: 'all 0.2s ease'
+                      transition: 'all 0.2s ease',
+                      minWidth: 0
                     }}
                   >
-                    <TrendingUp size={16} />
-                    <span>Vergleichen</span>
+                    <TrendingUp size={16} style={{ flexShrink: 0 }} />
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Vergleichen</span>
                   </motion.button>
 
                   <motion.button
@@ -724,7 +730,6 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
                     whileHover={{ scale: 1.02, background: '#eef2ff', borderColor: '#3b82f6' }}
                     whileTap={{ scale: 0.98 }}
                     style={{
-                      flex: 1,
                       background: '#f9fafb',
                       color: '#3b82f6',
                       border: '1px solid #e5e7eb',
@@ -737,11 +742,12 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
                       gap: '6px',
                       cursor: 'pointer',
                       fontSize: '13px',
-                      transition: 'all 0.2s ease'
+                      transition: 'all 0.2s ease',
+                      minWidth: 0
                     }}
                   >
-                    <RefreshCw size={16} />
-                    <span>Optimieren</span>
+                    <RefreshCw size={16} style={{ flexShrink: 0 }} />
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Optimieren</span>
                   </motion.button>
                 </>
               )}
@@ -756,7 +762,6 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
                   whileHover={{ scale: 1.02, background: '#fef3c7', borderColor: '#f59e0b' }}
                   whileTap={{ scale: 0.98 }}
                   style={{
-                    flex: 1,
                     background: '#f9fafb',
                     color: '#d97706',
                     border: '1px solid #e5e7eb',
@@ -769,11 +774,12 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
                     gap: '6px',
                     cursor: 'pointer',
                     fontSize: '13px',
-                    transition: 'all 0.2s ease'
+                    transition: 'all 0.2s ease',
+                    minWidth: 0
                   }}
                 >
-                  <Pencil size={16} />
-                  <span>Bearbeiten</span>
+                  <Pencil size={16} style={{ flexShrink: 0 }} />
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Bearbeiten</span>
                 </motion.button>
               )}
 
@@ -783,7 +789,6 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
                 whileHover={{ scale: 1.02, background: '#f1f5f9', borderColor: '#64748b' }}
                 whileTap={{ scale: 0.98 }}
                 style={{
-                  flex: 1,
                   background: '#f9fafb',
                   color: '#475569',
                   border: '1px solid #e5e7eb',
@@ -796,11 +801,12 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
                   gap: '6px',
                   cursor: 'pointer',
                   fontSize: '13px',
-                  transition: 'all 0.2s ease'
+                  transition: 'all 0.2s ease',
+                  minWidth: 0
                 }}
               >
-                <Bell size={16} />
-                <span>Erinnern</span>
+                <Bell size={16} style={{ flexShrink: 0 }} />
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Erinnern</span>
               </motion.button>
             </div>
 
@@ -828,11 +834,13 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
                 cursor: 'pointer',
                 fontSize: '13px',
                 transition: 'all 0.2s ease',
-                marginTop: '4px'
+                marginTop: '4px',
+                maxWidth: '100%',
+                minWidth: 0
               }}
             >
-              <EyeOff size={16} />
-              <span>Nicht mehr erinnern</span>
+              <EyeOff size={16} style={{ flexShrink: 0 }} />
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Nicht mehr erinnern</span>
             </motion.button>
           </div>
         </div>
@@ -1397,12 +1405,12 @@ function CreateEventModal({ date, onClose, onEventCreated, initialContractId, in
     }
   };
 
-  const inputStyle = {
+  const inputStyle: React.CSSProperties = {
     width: '100%',
     padding: '12px 14px',
     border: '1px solid #e5e7eb',
     borderRadius: '10px',
-    fontSize: '14px',
+    fontSize: isMobile ? '16px' : '14px',
     outline: 'none',
     transition: 'border-color 0.2s ease'
   };
@@ -1435,6 +1443,7 @@ function CreateEventModal({ date, onClose, onEventCreated, initialContractId, in
           width: isMobile ? '100%' : showForm ? '520px' : '450px',
           maxHeight: isMobile ? '90vh' : '85vh',
           overflowY: 'auto',
+          overflowX: 'hidden',
           background: '#ffffff',
           borderRadius: isMobile ? '20px 20px 0 0' : '20px',
           boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)'
@@ -1626,7 +1635,7 @@ function CreateEventModal({ date, onClose, onEventCreated, initialContractId, in
             </div>
 
             {/* Type & Severity Row */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '12px' }}>
               <div>
                 <label style={labelStyle}>Typ</label>
                 <select
