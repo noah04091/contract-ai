@@ -703,7 +703,7 @@ export default function LegalPulse() {
     const resolvedRisks = risks.filter(r => r.status === 'resolved' || r.status === 'accepted').length;
     const progressFactor = totalRisks > 0 ? Math.round((resolvedRisks / totalRisks) * 100) : null;
     // Freshness: days since last analysis
-    const lastAnalysisDate = selectedContract.legalPulse?.lastAnalysis || selectedContract.legalPulse?.lastChecked || selectedContract.legalPulse?.analysisDate;
+    const lastAnalysisDate = selectedContract.legalPulse?.lastAnalysis || selectedContract.legalPulse?.lastChecked || selectedContract.legalPulse?.analysisDate || selectedContract.lastAnalyzed || selectedContract.analyzedAt;
     const daysSinceAnalysis = lastAnalysisDate ? Math.floor((Date.now() - new Date(lastAnalysisDate).getTime()) / (1000 * 60 * 60 * 24)) : null;
     const freshnessFactor = daysSinceAnalysis !== null ? Math.max(0, Math.round(100 - daysSinceAnalysis * 1.5)) : null;
     const scoreHistory = selectedContract.legalPulse?.scoreHistory || [];
@@ -1021,8 +1021,8 @@ export default function LegalPulse() {
 
                 {/* Right: Factor Breakdown + Summary + Stats */}
                 <div className={styles.scoreDetailsArea}>
-                  {/* Factor Breakdown - show for AI and pending (initial sync has real data) */}
-                  {(isFullAi || isPending) ? (
+                  {/* Factor Breakdown - show for all non-heuristic contracts (real analysis data exists) */}
+                  {!isHeuristic ? (
                   <div className={styles.factorBreakdown}>
                     <span className={styles.factorBreakdownTitle}>Zusammensetzung</span>
 

@@ -52,9 +52,9 @@ export default function ContractRiskGrid({
       {contracts.map((contract) => {
         const hasAnalysis = contract.legalPulse?.riskScore != null;
         const isPending = contract.legalPulse?.status === 'pending';
-        const isFullAi = contract.legalPulse?.aiGenerated === true;
-        // True heuristic = aiGenerated false AND not pending (pending means real analysis, just waiting for deep AI)
-        const isHeuristic = hasAnalysis && !isFullAi && !isPending;
+        // True heuristic = aiGenerated explicitly false AND not pending
+        // When aiGenerated is undefined (old data / backend not yet deployed), treat as real analysis
+        const isHeuristic = hasAnalysis && contract.legalPulse?.aiGenerated === false && !isPending;
         const rawHealthScore = contract.legalPulse?.adjustedHealthScore ?? contract.legalPulse?.healthScore ?? null;
         // Fallback: derive healthScore from riskScore for older analyses that didn't store healthScore
         const healthScore = hasAnalysis
@@ -118,7 +118,7 @@ export default function ContractRiskGrid({
                       <span className={styles.metaLabel}>Letzter Scan:</span>
                       <span className={styles.metaValue}>
                         {(() => {
-                          const scanDate = contract.legalPulse?.lastChecked || contract.legalPulse?.lastAnalysis || contract.legalPulse?.analysisDate;
+                          const scanDate = contract.legalPulse?.lastChecked || contract.legalPulse?.lastAnalysis || contract.legalPulse?.analysisDate || contract.lastAnalyzed || contract.analyzedAt;
                           return scanDate
                             ? new Date(scanDate).toLocaleDateString('de-DE')
                             : 'Noch nicht analysiert';
