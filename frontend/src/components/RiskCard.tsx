@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import styles from '../styles/RiskCard.module.css';
 import type { RiskObject, RiskStatus } from '../types/legalPulse';
 
@@ -22,6 +22,7 @@ export default function RiskCard({
   const [showComment, setShowComment] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const isSavingRef = useRef(false);
 
   const riskTitle = typeof risk === 'string' ? risk : risk.title;
   const riskObj = typeof risk === 'object' ? risk : null;
@@ -80,28 +81,37 @@ export default function RiskCard({
   };
 
   const handleToggleResolve = async () => {
-    if (!onRiskUpdate) return;
+    if (!onRiskUpdate || isSavingRef.current) return;
+    isSavingRef.current = true;
     setIsSaving(true);
     try {
       const newStatus: RiskStatus = isResolved ? 'open' : 'resolved';
       await onRiskUpdate(index, { status: newStatus });
+    } catch {
+      // Error is handled by parent via onRiskUpdate
     } finally {
+      isSavingRef.current = false;
       setIsSaving(false);
     }
   };
 
   const handleSaveComment = async () => {
-    if (!onRiskUpdate) return;
+    if (!onRiskUpdate || isSavingRef.current) return;
+    isSavingRef.current = true;
     setIsSaving(true);
     try {
       await onRiskUpdate(index, { userComment: commentText });
+    } catch {
+      // Error is handled by parent via onRiskUpdate
     } finally {
+      isSavingRef.current = false;
       setIsSaving(false);
     }
   };
 
   const handleSaveEdits = async () => {
-    if (!onRiskUpdate) return;
+    if (!onRiskUpdate || isSavingRef.current) return;
+    isSavingRef.current = true;
     setIsSaving(true);
     try {
       const edits: { title?: string; description?: string; severity?: string } = {};
@@ -110,7 +120,10 @@ export default function RiskCard({
       if (editSeverity !== (riskObj?.severity || 'medium')) edits.severity = editSeverity;
       await onRiskUpdate(index, { userEdits: edits });
       setIsEditing(false);
+    } catch {
+      // Error is handled by parent via onRiskUpdate
     } finally {
+      isSavingRef.current = false;
       setIsSaving(false);
     }
   };

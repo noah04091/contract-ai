@@ -11,13 +11,13 @@ let getCostTrackingService = null;
 try {
   getLawEmbeddings = require("./lawEmbeddings").getInstance;
 } catch (error) {
-  console.warn('[AI-LEGAL-PULSE] lawEmbeddings nicht verfügbar, RAG deaktiviert:', error.message);
+  // lawEmbeddings not available, RAG disabled
 }
 
 try {
   getCostTrackingService = require("./costTracking").getInstance;
 } catch (error) {
-  console.warn('[AI-LEGAL-PULSE] costTracking nicht verfügbar:', error.message);
+  // costTracking not available
 }
 
 class AILegalPulse {
@@ -36,7 +36,7 @@ class AILegalPulse {
         this.useRAG = true;
       }
     } catch (error) {
-      console.warn('[AI-LEGAL-PULSE] RAG-Initialisierung fehlgeschlagen, fahre ohne RAG fort:', error.message);
+      // RAG init failed, continuing without RAG
     }
 
     // Legal analysis prompts
@@ -117,7 +117,6 @@ Bewerte jede Compliance-Kategorie und gib konkrete Verbesserungsvorschläge.`
   // Hauptanalyse-Funktion für einen Vertrag
   async analyzeContract(contract) {
     try {
-      console.log(`🧠 Starte AI-Analyse für Vertrag: ${contract.name}`);
 
       // 1. PDF-Text extrahieren (S3 oder lokaler Fallback)
       let contractText = '';
@@ -139,7 +138,6 @@ Bewerte jede Compliance-Kategorie und gib konkrete Verbesserungsvorschläge.`
       // 5. Legal Pulse Objekt erstellen
       const legalPulse = this.createLegalPulseResult(aiAnalysis, finalRiskScore, contract);
 
-      console.log(`✅ AI-Analyse abgeschlossen für ${contract.name} (Score: ${finalRiskScore}, Health: ${legalPulse.healthScore})`);
       return legalPulse;
 
     } catch (error) {
@@ -173,7 +171,6 @@ Bewerte jede Compliance-Kategorie und gib konkrete Verbesserungsvorschläge.`
       const buffer = Buffer.concat(chunks);
 
       const pdfData = await pdfParse(buffer);
-      console.log(`📄 S3 PDF extrahiert: ${s3Key} (${pdfData.text.length} Zeichen)`);
       return pdfData.text.substring(0, 10000);
     } catch (error) {
       console.error(`❌ Fehler beim S3 PDF-Extract (${s3Key}):`, error.message);
@@ -224,7 +221,6 @@ Bewerte jede Compliance-Kategorie und gib konkrete Verbesserungsvorschläge.`
           text: contractText,
           topK: 5
         });
-        console.log(`[AI-LEGAL-PULSE] RAG: Found ${relevantLaws.length} relevant law sections`);
       } catch (error) {
         console.error('[AI-LEGAL-PULSE] RAG query failed, continuing without:', error);
       }
@@ -416,8 +412,15 @@ ${this.prompts.riskAnalysis}`;
       riskLevel: riskScore > 60 ? 'high' : riskScore > 30 ? 'medium' : 'low',
       summary: aiResponse.substring(0, 200) + '...',
       riskFactors: ['Basis-Analyse durchgeführt'],
+      topRisks: [],
       legalRisks: ['Detaillierte Analyse erforderlich'],
-      recommendations: ['Rechtliche Prüfung empfohlen']
+      recommendations: [{
+        title: 'Rechtliche Prüfung empfohlen',
+        description: 'Die automatische Textanalyse lieferte kein strukturiertes Ergebnis. Eine manuelle rechtliche Prüfung wird empfohlen.',
+        priority: 'high',
+        effort: 'mittel',
+        impact: 'hoch'
+      }]
     };
   }
 
@@ -459,7 +462,8 @@ ${this.prompts.riskAnalysis}`;
       legalRisks: aiAnalysis.legalRisks || [],
       recommendations: aiAnalysis.recommendations || [],
       analysisDate: new Date(),
-      aiGenerated: true
+      aiGenerated: true,
+      scoreHistory: [{ date: new Date(), score: finalRiskScore }]
     };
 
     // Add to analysis history
@@ -546,7 +550,6 @@ ${this.prompts.riskAnalysis}`;
 
   // Fallback-Analyse bei Fehlern
   fallbackAnalysis(contract) {
-    console.log(`⚠️ Fallback-Analyse für ${contract.name}`);
     
     // Regelbasierte Analyse mit individueller Score-Berechnung
     let riskScore = 35; // Konservativer Basis-Score (ohne AI-Analyse unsicher)
@@ -571,8 +574,16 @@ ${this.prompts.riskAnalysis}`;
       lawInsights: ['Detaillierte rechtliche Prüfung empfohlen'],
       marketSuggestions: ['Marktvergleich durchführen'],
       riskFactors: ['Automatische Analyse unvollständig'],
+      topRisks: [],
       legalRisks: ['Manuelle Rechtsprüfung erforderlich'],
-      recommendations: ['Professionelle Vertragsanalyse beauftragen'],
+      recommendations: [{
+        title: 'Professionelle Vertragsanalyse beauftragen',
+        description: 'Die automatische Analyse konnte nicht vollständig durchgeführt werden. Eine manuelle Prüfung durch einen Rechtsexperten wird empfohlen.',
+        priority: 'high',
+        effort: 'mittel',
+        impact: 'hoch'
+      }],
+      scoreHistory: [{ date: new Date(), score: riskScore }],
       analysisDate: new Date(),
       aiGenerated: false
     };

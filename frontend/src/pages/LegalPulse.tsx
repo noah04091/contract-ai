@@ -17,8 +17,8 @@ import {
 } from 'recharts';
 import type {
   Contract, RecommendationStatus, RiskObject, RecommendationObject, RecommendationInput,
-  PulseAlert, WeeklyCheckContract, WeeklyChecksData,
-  ForecastData, Organization, TeamMember, Membership, RiskStatus
+  WeeklyCheckContract, WeeklyChecksData,
+  ForecastData, Organization, TeamMember, RiskStatus
 } from '../types/legalPulse';
 
 export default function LegalPulse() {
@@ -51,9 +51,6 @@ export default function LegalPulse() {
   // Export Report State
   const [isExportingReport, setIsExportingReport] = useState(false);
 
-  // V7: Alert History (kept for API compatibility, panel removed as redundant)
-  const [, setAlertHistory] = useState<PulseAlert[]>([]);
-  const [, setAlertsUnreadCount] = useState(0);
 
   // Weekly Legal Check State
   const [weeklyChecks, setWeeklyChecks] = useState<WeeklyChecksData | null>(null);
@@ -76,7 +73,6 @@ export default function LegalPulse() {
 
   // Team Collaboration State
   const [organization, setOrganization] = useState<Organization | null>(null);
-  const [, setMembership] = useState<Membership | null>(null); // membership stored for future use
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [teamFilter, setTeamFilter] = useState<'my' | 'all' | string>('my'); // 'my', 'all', or specific userId
 
@@ -105,25 +101,6 @@ export default function LegalPulse() {
 
   // ✅ REMOVED: Mock data logic - now using real data only
 
-  // V7: Fetch Alert History
-  const fetchAlertHistory = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const API_BASE = import.meta.env.VITE_API_URL || "";
-      const res = await fetch(`${API_BASE}/api/legal-pulse/alerts?limit=20`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success) {
-          setAlertHistory(data.alerts);
-          setAlertsUnreadCount(data.unreadCount);
-        }
-      }
-    } catch (err) {
-      handleError(err, 'LegalPulse:fetchAlerts');
-    }
-  };
 
   // Fetch Weekly Legal Checks
   const fetchWeeklyChecks = async () => {
@@ -167,10 +144,9 @@ export default function LegalPulse() {
     }
   };
 
-  // V7: Fetch alerts and weekly checks on mount (only for premium users)
+  // Fetch weekly checks on mount (only for premium users)
   useEffect(() => {
     if (canAccessLegalPulse) {
-      fetchAlertHistory();
       fetchWeeklyChecks();
     }
   }, [canAccessLegalPulse]);
@@ -286,7 +262,6 @@ export default function LegalPulse() {
 
           if (data.success && data.organization) {
             setOrganization(data.organization);
-            setMembership(data.membership);
 
             // Fetch team members if user is admin
             if (data.membership?.role === 'admin' || data.membership?.isOwner) {
@@ -336,7 +311,6 @@ export default function LegalPulse() {
     }
 
     const debounceTimer = setTimeout(() => {
-      console.log('🔄 Filter geändert, lade Contracts neu...');
       fetchContracts();
     }, searchQuery ? 500 : 0); // 500ms Debounce für Search
 
@@ -558,6 +532,11 @@ export default function LegalPulse() {
         body: JSON.stringify(updates)
       });
 
+      if (res.status === 429) {
+        setNotification({ message: 'Rate-Limit erreicht. Bitte warten Sie eine Stunde und versuchen Sie es erneut.', type: 'error' });
+        return;
+      }
+
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
         throw new Error(errData.message || 'Fehler beim Aktualisieren');
@@ -614,6 +593,10 @@ export default function LegalPulse() {
       const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/legal-pulse/report/${selectedContract._id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      if (response.status === 429) {
+        setNotification({ message: 'Rate-Limit erreicht. Bitte warten Sie eine Stunde und versuchen Sie es erneut.', type: 'error' });
+        return;
+      }
       if (!response.ok) throw new Error('Report generation failed');
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
@@ -684,7 +667,7 @@ export default function LegalPulse() {
   if (contractId && !selectedContract) {
     return (
       <div className={styles.legalPulseContainer}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: '16px' }}>
+        <div role="status" aria-label="Vertrag wird geladen" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: '16px' }}>
           <div className={styles.spinner} style={{ width: '40px', height: '40px', borderWidth: '4px' }}></div>
           <p style={{ color: '#6b7280', fontSize: '0.95rem' }}>Vertrag wird geladen...</p>
         </div>
@@ -700,9 +683,7 @@ export default function LegalPulse() {
     const displayRiskScore = selectedContract.legalPulse?.adjustedRiskScore ?? selectedContract.legalPulse?.riskScore ?? null;
     const rawHealthScore = selectedContract.legalPulse?.adjustedHealthScore ?? selectedContract.legalPulse?.healthScore ?? null;
     // Fallback: derive healthScore from riskScore for older analyses that didn't store healthScore
-    const displayHealthScore = isAiGenerated
-      ? (rawHealthScore ?? (displayRiskScore !== null ? Math.max(0, Math.round(100 - (displayRiskScore * 0.5))) : null))
-      : null; // Don't show fabricated scores for non-AI analyses
+    const displayHealthScore = rawHealthScore ?? (displayRiskScore !== null ? Math.max(0, Math.round(100 - (displayRiskScore * 0.5))) : null);
     const hasAdjustedScore = selectedContract.legalPulse?.adjustedRiskScore != null && selectedContract.legalPulse?.adjustedRiskScore !== selectedContract.legalPulse?.riskScore;
     const riskLevel = getRiskLevel(displayRiskScore);
 
@@ -723,8 +704,12 @@ export default function LegalPulse() {
 
     // Check if Legal Pulse analysis is still loading/running
     const isAnalysisLoading = !selectedContract.legalPulse ||
+                             selectedContract.legalPulse.status === 'pending' ||
                              (selectedContract.legalPulse.riskScore === null &&
                               !selectedContract.legalPulse.lastChecked);
+
+    // Check if analysis failed
+    const isAnalysisFailed = selectedContract.legalPulse?.status === 'failed';
 
     // 🔐 Premium-Check für Detail-Ansicht
     if (!canAccessLegalPulse) {
@@ -895,8 +880,34 @@ export default function LegalPulse() {
         {/* Score Hero Section */}
         <div className={styles.scoreSection}>
           <div className={styles.scoreCard}>
-            {isAnalysisLoading ? (
+            {isAnalysisFailed ? (
               <div className={styles.loadingState}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                  <AlertTriangle size={32} color="#ef4444" />
+                  <h3 style={{ margin: 0, color: '#ef4444' }}>Analyse fehlgeschlagen</h3>
+                </div>
+                <p style={{ color: '#6b7280', margin: '0 0 1rem' }}>
+                  Die Legal Pulse Analyse konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut.
+                </p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className={styles.refreshButton}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    background: '#ef4444',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    fontWeight: 500
+                  }}
+                >
+                  Erneut versuchen
+                </button>
+              </div>
+            ) : isAnalysisLoading ? (
+              <div className={styles.loadingState} role="status" aria-label="Legal Pulse Analyse wird durchgeführt">
                 <div className={styles.loadingSpinner}></div>
                 <div className={styles.loadingText}>
                   <h3>Legal Pulse Analyse läuft...</h3>

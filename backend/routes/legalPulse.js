@@ -24,7 +24,6 @@ const legalPulseRateLimiter = rateLimit({
     return req.user?.userId || req.ip;
   },
   handler: (req, res) => {
-    console.warn(`⚠️ [RATE-LIMIT] User ${req.user?.userId || req.ip} hat Legal Pulse Limit erreicht`);
     res.status(429).json({
       success: false,
       message: "Zu viele Legal Pulse Analysen. Bitte warten Sie eine Stunde.",
@@ -51,8 +50,6 @@ router.post("/analyze/:contractId", verifyToken, requirePremium, legalPulseRateL
       });
     }
     
-    console.log(`🧠 Starte manuelle AI-Analyse für Vertrag: ${contractId}`);
-    
     // Einzelanalyse durchführen
     const result = await runLegalPulseScan.scanSingle(contractId);
     
@@ -77,8 +74,6 @@ router.post("/analyze/:contractId", verifyToken, requirePremium, legalPulseRateL
 // 🚦 Rate Limiting: Max 5 Scans pro Stunde
 router.post("/scan-all", verifyToken, requirePremium, legalPulseRateLimiter, async (req, res) => {
   try {
-    console.log(`🧠 Starte vollständigen AI-Scan für User: ${req.user.userId}`);
-    
     // Full scan durchführen
     await runLegalPulseScan();
     
@@ -297,8 +292,6 @@ router.put("/settings", verifyToken, validateLegalPulseBody, async (req, res) =>
       });
     }
 
-    console.log(`✅ Legal Pulse Settings aktualisiert für User ${req.user.userId}:`, updates);
-
     res.json({
       success: true,
       message: "Einstellungen erfolgreich aktualisiert",
@@ -424,10 +417,8 @@ router.get("/report/:contractId", verifyToken, requirePremium, async (req, res) 
     res.setHeader('Content-Disposition', `attachment; filename="Legal-Pulse-Report-${safeName}.pdf"`);
     res.send(pdfBuffer);
 
-    console.log(`✅ [LEGAL-PULSE:REPORT] PDF generiert für Vertrag ${contractId}`);
-
   } catch (error) {
-    console.error("❌ [LEGAL-PULSE:REPORT] Fehler:", error);
+    console.error("[LEGAL-PULSE:REPORT] Fehler:", error);
     res.status(500).json({
       success: false,
       message: "Fehler beim Erstellen des Reports",
@@ -940,13 +931,16 @@ router.patch("/:contractId/risks/:riskIndex", verifyToken, requirePremium, async
     const updatedContract = await db.collection("contracts").findOne({ _id: new ObjectId(contractId) });
     const { adjustedRiskScore, adjustedHealthScore } = recalculateAdjustedScores(updatedContract.legalPulse);
 
-    // Save adjusted scores
+    // Save adjusted scores and append to scoreHistory
     await db.collection("contracts").updateOne(
       { _id: new ObjectId(contractId) },
       {
         $set: {
           'legalPulse.adjustedRiskScore': adjustedRiskScore,
           'legalPulse.adjustedHealthScore': adjustedHealthScore
+        },
+        $push: {
+          'legalPulse.scoreHistory': { date: new Date(), score: adjustedRiskScore }
         }
       }
     );
@@ -954,8 +948,6 @@ router.patch("/:contractId/risks/:riskIndex", verifyToken, requirePremium, async
     // Return updated risk + scores
     const finalContract = await db.collection("contracts").findOne({ _id: new ObjectId(contractId) });
     const updatedRisk = finalContract.legalPulse.topRisks[idx];
-
-    console.log(`✅ [RISK-MGMT] Risk ${idx} updated for contract ${contractId} | status=${status || 'unchanged'} | adjustedScore=${adjustedRiskScore}`);
 
     res.json({
       success: true,

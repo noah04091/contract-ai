@@ -34,6 +34,7 @@ export interface Contract {
     nextScheduledCheck?: string;
     topRisks?: RiskObject[];
     recommendations?: RecommendationObject[];
+    status?: 'pending' | 'completed' | 'failed';
     scoreHistory?: Array<{ date: string; score: number }>;
     analysisHistory?: Array<{
       date: string;

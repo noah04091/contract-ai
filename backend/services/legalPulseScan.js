@@ -51,6 +51,23 @@ function preserveRiskManagement(oldLegalPulse, newResult) {
   }
 
   const merged = { ...newResult, topRisks: mergedRisks };
+
+  // Preserve scoreHistory from old data and append new entry
+  if (oldLegalPulse.scoreHistory && Array.isArray(oldLegalPulse.scoreHistory)) {
+    merged.scoreHistory = [...oldLegalPulse.scoreHistory];
+    if (newResult.scoreHistory && newResult.scoreHistory.length > 0) {
+      merged.scoreHistory.push(...newResult.scoreHistory);
+    }
+  }
+
+  // Preserve analysisHistory from old data and append new entries
+  if (oldLegalPulse.analysisHistory && Array.isArray(oldLegalPulse.analysisHistory)) {
+    merged.analysisHistory = [...oldLegalPulse.analysisHistory];
+    if (newResult.analysisHistory && newResult.analysisHistory.length > 0) {
+      merged.analysisHistory.push(...newResult.analysisHistory);
+    }
+  }
+
   if (totalWeight > 0 && resolvedWeight > 0) {
     const ratio = Math.min(resolvedWeight / totalWeight, 0.7);
     merged.adjustedRiskScore = Math.round(newResult.riskScore * (1 - ratio));
@@ -63,8 +80,6 @@ function preserveRiskManagement(oldLegalPulse, newResult) {
 }
 
 async function runLegalPulseScan() {
-  console.log("🧠 Starte AI-powered Legal Pulse Scan...");
-
   try {
     // MongoDB-Verbindung via Connection Pool (Singleton)
     const db = await database.connect();
@@ -89,10 +104,8 @@ async function runLegalPulseScan() {
       ]
     }).toArray();
 
-    console.log(`🔍 Gefunden: ${contracts.length} Verträge für AI Legal Pulse Scan`);
 
     if (contracts.length === 0) {
-      console.log("✅ Alle Verträge sind bereits aktuell analysiert!");
       return;
     }
 
@@ -122,7 +135,6 @@ async function runLegalPulseScan() {
         );
 
         successCount++;
-        console.log(`✅ AI Legal Pulse für "${contract.name}" aktualisiert (Score: ${aiResult.riskScore})`);
 
         // Rate Limiting zwischen Updates
         if (i < contracts.length - 1) {
@@ -134,12 +146,6 @@ async function runLegalPulseScan() {
         console.error(`❌ Fehler beim Speichern für "${contracts[i].name}":`, error);
       }
     }
-
-    // Statistiken loggen
-    console.log(`\n🎉 AI Legal Pulse Scan abgeschlossen!`);
-    console.log(`✅ Erfolgreich: ${successCount} Verträge`);
-    console.log(`❌ Fehler: ${errorCount} Verträge`);
-    console.log(`🧠 AI-Engine: Eingesetzt`);
 
     // Scan-Statistiken in separater Collection speichern
     try {
@@ -169,7 +175,6 @@ module.exports = runLegalPulseScan;
 
 // Optional: Manueller Scan für einzelnen Vertrag
 async function scanSingleContract(contractId) {
-  const startTime = Date.now();
   try {
     const db = await database.connect();
     const contractsCollection = db.collection("contracts");
@@ -179,8 +184,6 @@ async function scanSingleContract(contractId) {
     if (!contract) {
       throw new Error(`Vertrag ${contractId} nicht gefunden`);
     }
-
-    console.log(`⏱️ [LEGAL-PULSE] Start | contract=${contractId} | user=${contract.userId || 'unknown'} | name="${contract.name}"`);
 
     // AI-Analyse durchführen
     const aiLegalPulse = new AILegalPulse();
@@ -195,13 +198,10 @@ async function scanSingleContract(contractId) {
       { $set: { 'legalPulse': mergedResult } }
     );
 
-    const duration = ((Date.now() - startTime) / 1000).toFixed(1);
-    console.log(`✅ [LEGAL-PULSE] Done in ${duration}s | riskScore=${aiResult.riskScore} | topRisks=${aiResult.topRisks?.length || 0} | contract=${contractId}`);
     return aiResult;
 
   } catch (error) {
-    const duration = ((Date.now() - startTime) / 1000).toFixed(1);
-    console.error(`❌ [LEGAL-PULSE] Error after ${duration}s | contract=${contractId} |`, error.message);
+    console.error(`[LEGAL-PULSE] Error | contract=${contractId} |`, error.message);
     throw error;
   }
   // Connection Pool bleibt offen (wird vom Singleton verwaltet)

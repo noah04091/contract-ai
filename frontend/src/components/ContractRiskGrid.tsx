@@ -57,7 +57,7 @@ export default function ContractRiskGrid({
         const healthScore = hasAnalysis
           ? (rawHealthScore ?? Math.max(0, Math.round(100 - (contract.legalPulse!.riskScore! * 0.5))))
           : null;
-        const riskLevel = hasAnalysis && isAiGenerated ? getRiskLevel(healthScore) : getRiskLevel(null);
+        const riskLevel = hasAnalysis ? getRiskLevel(healthScore) : getRiskLevel(null);
         return (
           <div
             key={contract._id}
