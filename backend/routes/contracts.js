@@ -2402,10 +2402,25 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
               expiryDate: contract.expiryDate
             };
 
-            const legalPulseAnalysis = await aiLegalPulse.analyzeFullContract(
+            const rawAnalysis = await aiLegalPulse.analyzeFullContract(
               fullTextContent,
               contractInfo
             );
+
+            // analyzeFullContract returns raw parsed AI response - enrich with required fields
+            const analysisRiskScore = Math.min(100, Math.max(0, rawAnalysis.riskScore || 50));
+            const analysisHealthScore = aiLegalPulse.calculateHealthScore(analysisRiskScore, contract);
+
+            const legalPulseAnalysis = {
+              ...rawAnalysis,
+              riskScore: analysisRiskScore,
+              healthScore: analysisHealthScore,
+              lastChecked: new Date(),
+              analysisDate: new Date(),
+              aiGenerated: true,
+              lawInsights: rawAnalysis.lawInsights || [],
+              marketSuggestions: rawAnalysis.marketSuggestions || [],
+            };
 
             // Preserve scoreHistory/analysisHistory from initial sync analysis
             const currentContract = await contractsCollection.findOne({ _id: new ObjectId(id) });
@@ -2416,11 +2431,17 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
             // Merge histories: keep initial + add new
             legalPulseAnalysis.scoreHistory = [
               ...existingHistory,
-              ...(legalPulseAnalysis.scoreHistory || [])
+              { date: new Date(), score: analysisRiskScore }
             ];
             legalPulseAnalysis.analysisHistory = [
               ...existingAnalysisHistory,
-              ...(legalPulseAnalysis.analysisHistory || [])
+              {
+                date: new Date(),
+                riskScore: analysisRiskScore,
+                healthScore: analysisHealthScore,
+                changes: ['Vollständige KI-Analyse abgeschlossen'],
+                triggeredBy: 'ai_analysis'
+              }
             ];
 
             await contractsCollection.updateOne(
