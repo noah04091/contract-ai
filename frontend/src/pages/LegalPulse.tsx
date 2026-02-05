@@ -677,8 +677,14 @@ export default function LegalPulse() {
 
   // Detailansicht für einzelnen Vertrag
   if (contractId && selectedContract) {
-    // Check if this is a real AI analysis or just a heuristic fallback
-    const isAiGenerated = selectedContract.legalPulse?.aiGenerated !== false; // true or undefined = real AI
+    // Status differentiation:
+    // - isFullAi: Complete AI Legal Pulse analysis done
+    // - isPending: Initial sync from contract analysis exists, deep AI job still running
+    // - isHeuristic: Only heuristic/rules-based fallback (no real contract analysis)
+    const isFullAi = selectedContract.legalPulse?.aiGenerated === true;
+    const isPending = selectedContract.legalPulse?.status === 'pending';
+    const isHeuristic = !isFullAi && !isPending && selectedContract.legalPulse?.aiGenerated === false;
+
     // Use adjusted scores if available (after risk management), otherwise use original
     const displayRiskScore = selectedContract.legalPulse?.adjustedRiskScore ?? selectedContract.legalPulse?.riskScore ?? null;
     const rawHealthScore = selectedContract.legalPulse?.adjustedHealthScore ?? selectedContract.legalPulse?.healthScore ?? null;
@@ -697,15 +703,15 @@ export default function LegalPulse() {
     const resolvedRisks = risks.filter(r => r.status === 'resolved' || r.status === 'accepted').length;
     const progressFactor = totalRisks > 0 ? Math.round((resolvedRisks / totalRisks) * 100) : null;
     // Freshness: days since last analysis
-    const lastAnalysisDate = selectedContract.legalPulse?.lastAnalysis || selectedContract.legalPulse?.lastChecked;
+    const lastAnalysisDate = selectedContract.legalPulse?.lastAnalysis || selectedContract.legalPulse?.lastChecked || selectedContract.legalPulse?.analysisDate;
     const daysSinceAnalysis = lastAnalysisDate ? Math.floor((Date.now() - new Date(lastAnalysisDate).getTime()) / (1000 * 60 * 60 * 24)) : null;
     const freshnessFactor = daysSinceAnalysis !== null ? Math.max(0, Math.round(100 - daysSinceAnalysis * 1.5)) : null;
     const scoreHistory = selectedContract.legalPulse?.scoreHistory || [];
 
-    // Check if Legal Pulse analysis is still loading/running
+    // Only show loading spinner if NO data exists at all
+    // Don't block when status=pending because initial sync already has scores
     const isAnalysisLoading = !selectedContract.legalPulse ||
-                             selectedContract.legalPulse.status === 'pending' ||
-                             (selectedContract.legalPulse.riskScore === null &&
+                             (selectedContract.legalPulse.riskScore == null &&
                               !selectedContract.legalPulse.lastChecked);
 
     // Check if analysis failed
@@ -834,22 +840,53 @@ export default function LegalPulse() {
             </div>
             <p className={styles.lastAnalysis}>
               {(() => {
-                const analysisDate = selectedContract.legalPulse?.lastChecked || selectedContract.legalPulse?.lastAnalysis || selectedContract.legalPulse?.analysisDate;
-                if (!analysisDate) return 'Noch keine Analyse durchgeführt';
-                return `Letzte Analyse: ${new Date(analysisDate).toLocaleDateString('de-DE', {
+                const pulseDate = selectedContract.legalPulse?.lastChecked || selectedContract.legalPulse?.lastAnalysis || selectedContract.legalPulse?.analysisDate;
+                // Also check contract-level analysis date as fallback
+                const contractDate = selectedContract.lastAnalyzed || selectedContract.analyzedAt;
+                const dateToShow = pulseDate || contractDate;
+                if (!dateToShow) return 'Noch keine Analyse durchgeführt';
+                const dateStr = new Date(dateToShow).toLocaleDateString('de-DE', {
                   year: 'numeric',
                   month: 'long',
                   day: 'numeric',
                   hour: '2-digit',
                   minute: '2-digit'
-                })}`;
+                });
+                if (isPending) return `Letzte Analyse: ${dateStr} (KI-Analyse wird verfeinert...)`;
+                return `Letzte Analyse: ${dateStr}`;
               })()}
             </p>
           </div>
         </div>
 
-        {/* Warning banner for non-AI (heuristic fallback) analyses */}
-        {!isAiGenerated && selectedContract.legalPulse && (
+        {/* Info banner for pending state: initial sync done, deep AI running */}
+        {isPending && selectedContract.legalPulse && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '12px',
+            padding: '16px 20px',
+            background: 'linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%)',
+            border: '1px solid #c4b5fd',
+            borderRadius: '12px',
+            marginBottom: '24px',
+            fontSize: '0.9rem',
+            lineHeight: 1.5,
+            color: '#5b21b6'
+          }}>
+            <div className={styles.loadingSpinner} style={{ width: '20px', height: '20px', borderWidth: '2px', flexShrink: 0, marginTop: '2px' }}></div>
+            <div>
+              <strong style={{ color: '#4c1d95' }}>Vollständige KI-Analyse läuft</strong>
+              <p style={{ margin: '4px 0 0 0', color: '#6d28d9' }}>
+                Die vorläufigen Ergebnisse basieren auf Ihrer Vertragsanalyse. Die tiefgehende KI-Analyse wird im Hintergrund
+                durchgeführt und aktualisiert die Daten automatisch. Laden Sie die Seite in wenigen Sekunden neu.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Warning banner for true heuristic (rules-based only, no real analysis) */}
+        {isHeuristic && selectedContract.legalPulse && (
           <div style={{
             display: 'flex',
             alignItems: 'flex-start',
@@ -871,7 +908,7 @@ export default function LegalPulse() {
               <strong style={{ color: '#78350f' }}>Basis-Analyse (keine KI-Analyse)</strong>
               <p style={{ margin: '4px 0 0 0', color: '#a16207' }}>
                 Dieser Vertrag wurde nur mit einer regelbasierten Basis-Analyse bewertet, nicht mit einer vollständigen KI-Analyse.
-                Die angezeigten Daten sind Schätzwerte. Führen Sie eine vollständige Vertragsanalyse durch, um präzise KI-basierte Ergebnisse zu erhalten.
+                Die angezeigten Daten sind Schätzwerte. Führen Sie eine vollständige Vertragsanalyse durch, um präzise Ergebnisse zu erhalten.
               </p>
             </div>
           </div>
@@ -970,18 +1007,22 @@ export default function LegalPulse() {
                   <p className={styles.scoreExplanation}>
                     {(() => {
                       const score = displayHealthScore;
-                      if (!score) return 'Noch keine Analyse durchgeführt.';
+                      if (score === null || score === undefined) return 'Noch keine Analyse durchgeführt.';
                       if (score >= 75) return 'Guter Zustand: Der Vertrag ist rechtlich solide aufgestellt.';
                       if (score >= 50) return 'Verbesserungsbedarf: Einige Bereiche sollten überprüft werden.';
                       return 'Kritischer Zustand: Dringender Handlungsbedarf bei mehreren Klauseln.';
                     })()}
                   </p>
+                  <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '6px', lineHeight: 1.4 }}>
+                    Gesundheits-Score: Berechnet aus Risikobewertung, Vertragsalter und bearbeiteten Risiken.
+                    {!isFullAi && isPending && ' Wird nach Abschluss der KI-Analyse aktualisiert.'}
+                  </p>
                 </div>
 
                 {/* Right: Factor Breakdown + Summary + Stats */}
                 <div className={styles.scoreDetailsArea}>
-                  {/* Factor Breakdown - only for real AI analyses */}
-                  {isAiGenerated ? (
+                  {/* Factor Breakdown - show for AI and pending (initial sync has real data) */}
+                  {(isFullAi || isPending) ? (
                   <div className={styles.factorBreakdown}>
                     <span className={styles.factorBreakdownTitle}>Zusammensetzung</span>
 
@@ -1082,7 +1123,7 @@ export default function LegalPulse() {
                       <line x1="16" y1="13" x2="8" y2="13"/>
                       <line x1="16" y1="17" x2="8" y2="17"/>
                     </svg>
-                    {isAiGenerated ? 'KI-Zusammenfassung' : 'Zusammenfassung (Basis-Analyse)'}
+                    {isFullAi ? 'KI-Zusammenfassung' : isPending ? 'Zusammenfassung (vorläufig)' : 'Zusammenfassung (Basis-Analyse)'}
                   </div>
                   <p className={styles.summaryText}>{selectedContract.legalPulse.summary}</p>
                 </div>

@@ -51,7 +51,10 @@ export default function ContractRiskGrid({
     <div className={styles.contractsGrid}>
       {contracts.map((contract) => {
         const hasAnalysis = contract.legalPulse?.riskScore != null;
-        const isAiGenerated = contract.legalPulse?.aiGenerated !== false; // true or undefined = real AI
+        const isPending = contract.legalPulse?.status === 'pending';
+        const isFullAi = contract.legalPulse?.aiGenerated === true;
+        // True heuristic = aiGenerated false AND not pending (pending means real analysis, just waiting for deep AI)
+        const isHeuristic = hasAnalysis && !isFullAi && !isPending;
         const rawHealthScore = contract.legalPulse?.adjustedHealthScore ?? contract.legalPulse?.healthScore ?? null;
         // Fallback: derive healthScore from riskScore for older analyses that didn't store healthScore
         const healthScore = hasAnalysis
@@ -87,12 +90,12 @@ export default function ContractRiskGrid({
               {canAccessLegalPulse ? (
               <div
                 className={styles.riskBadge}
-                style={{ '--risk-color': hasAnalysis && !isAiGenerated ? '#94a3b8' : riskLevel.color } as React.CSSProperties}
-                title={hasAnalysis && !isAiGenerated ? 'Basis-Analyse (keine KI-Analyse)' : undefined}
+                style={{ '--risk-color': isHeuristic ? '#94a3b8' : riskLevel.color } as React.CSSProperties}
+                title={isHeuristic ? 'Basis-Analyse (keine KI-Analyse)' : isPending ? 'Vollständige KI-Analyse läuft...' : undefined}
               >
-                <span className={styles.riskIcon}>{hasAnalysis && !isAiGenerated ? '📋' : riskLevel.icon}</span>
+                <span className={styles.riskIcon}>{isHeuristic ? '📋' : riskLevel.icon}</span>
                 <span className={styles.riskScore}>
-                  {hasAnalysis && !isAiGenerated ? 'Basis' : (healthScore !== null ? healthScore : '—')}
+                  {isHeuristic ? 'Basis' : (healthScore !== null ? healthScore : '—')}
                 </span>
               </div>
             ) : (
@@ -115,7 +118,7 @@ export default function ContractRiskGrid({
                       <span className={styles.metaLabel}>Letzter Scan:</span>
                       <span className={styles.metaValue}>
                         {(() => {
-                          const scanDate = contract.legalPulse?.lastChecked || contract.legalPulse?.lastAnalysis;
+                          const scanDate = contract.legalPulse?.lastChecked || contract.legalPulse?.lastAnalysis || contract.legalPulse?.analysisDate;
                           return scanDate
                             ? new Date(scanDate).toLocaleDateString('de-DE')
                             : 'Noch nicht analysiert';
@@ -126,9 +129,9 @@ export default function ContractRiskGrid({
                       <span className={styles.metaLabel}>Status:</span>
                       <span
                         className={styles.metaValue}
-                        style={{ color: hasAnalysis && !isAiGenerated ? '#94a3b8' : riskLevel.color }}
+                        style={{ color: isPending ? '#8b5cf6' : isHeuristic ? '#94a3b8' : riskLevel.color }}
                       >
-                        {hasAnalysis && !isAiGenerated ? 'Basis-Analyse' : riskLevel.level}
+                        {isPending ? 'KI-Analyse läuft...' : isHeuristic ? 'Basis-Analyse' : riskLevel.level}
                       </span>
                     </div>
                   </div>

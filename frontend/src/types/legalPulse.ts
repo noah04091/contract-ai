@@ -20,6 +20,8 @@ export interface Contract {
   contractNumber?: string;
   customerNumber?: string;
   amount?: number;
+  lastAnalyzed?: string;
+  analyzedAt?: string;
   legalPulse?: {
     riskScore: number | null;
     healthScore?: number;
