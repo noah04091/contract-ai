@@ -448,6 +448,25 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Lock body scroll on mobile to prevent background scrolling
+  useEffect(() => {
+    if (!isMobile) return;
+    const scrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = '0';
+    document.body.style.right = '0';
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.right = '';
+      document.body.style.overflow = '';
+      window.scrollTo(0, scrollY);
+    };
+  }, [isMobile]);
+
   const handleViewContract = () => {
     window.location.href = `/contracts?view=${currentEvent.contractId}`;
     onClose();
@@ -503,7 +522,10 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={onClose}
-      style={{ padding: isMobile ? 0 : '40px' }}
+      style={{
+        padding: isMobile ? 0 : '40px',
+        ...(isMobile ? { width: '100vw', maxWidth: '100vw', overflow: 'hidden' } : {})
+      }}
     >
       <motion.div
         className="quick-actions-modal premium-modal"
@@ -512,11 +534,12 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
         exit={{ scale: 0.9, opacity: 0, y: 20 }}
         onClick={(e) => e.stopPropagation()}
         style={{
-          maxWidth: isMobile ? '100%' : '600px',
-          width: isMobile ? '100%' : '600px',
-          maxHeight: isMobile ? '90vh' : 'auto',
+          maxWidth: isMobile ? '100vw' : '600px',
+          width: isMobile ? '100vw' : '600px',
+          maxHeight: isMobile ? '90dvh' : 'auto',
           overflowY: isMobile ? undefined : ('visible' as const),
-          overflowX: isMobile ? 'hidden' : undefined
+          overflowX: isMobile ? 'hidden' : undefined,
+          overscrollBehavior: isMobile ? 'contain' : undefined
         }}
       >
         <div className="modal-header-premium" style={{
@@ -1298,6 +1321,25 @@ function CreateEventModal({ date, onClose, onEventCreated, initialContractId, in
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Lock body scroll on mobile to prevent background scrolling
+  useEffect(() => {
+    if (!isMobile) return;
+    const scrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = '0';
+    document.body.style.right = '0';
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.right = '';
+      document.body.style.overflow = '';
+      window.scrollTo(0, scrollY);
+    };
+  }, [isMobile]);
+
   // Fetch contracts when form is shown
   useEffect(() => {
     if (showForm && contracts.length === 0) {
@@ -1432,7 +1474,11 @@ function CreateEventModal({ date, onClose, onEventCreated, initialContractId, in
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={onClose}
-      style={{ padding: isMobile ? 0 : '40px', zIndex: 1001 }}
+      style={{
+        padding: isMobile ? 0 : '40px',
+        zIndex: 1001,
+        ...(isMobile ? { width: '100vw', maxWidth: '100vw', overflow: 'hidden' } : {})
+      }}
     >
       <motion.div
         className="premium-modal"
@@ -1441,14 +1487,16 @@ function CreateEventModal({ date, onClose, onEventCreated, initialContractId, in
         exit={{ scale: 0.95, opacity: 0, y: 20 }}
         onClick={(e) => e.stopPropagation()}
         style={{
-          maxWidth: isMobile ? '100%' : showForm ? '520px' : '450px',
-          width: isMobile ? '100%' : showForm ? '520px' : '450px',
-          maxHeight: isMobile ? '90vh' : '85vh',
+          maxWidth: isMobile ? '100vw' : showForm ? '520px' : '450px',
+          width: isMobile ? '100vw' : showForm ? '520px' : '450px',
+          maxHeight: isMobile ? '90dvh' : '85vh',
           overflowY: 'auto',
           overflowX: 'hidden',
+          overscrollBehavior: 'contain',
+          WebkitOverflowScrolling: 'touch',
           background: '#ffffff',
           borderRadius: isMobile ? '20px 20px 0 0' : '20px',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)'
+          boxShadow: isMobile ? 'none' : '0 20px 60px rgba(0, 0, 0, 0.15)'
         }}
       >
         {/* Header */}
