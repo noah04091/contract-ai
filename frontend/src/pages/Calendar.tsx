@@ -1475,11 +1475,6 @@ function CreateEventModal({ date, onClose, onEventCreated, initialContractId, in
           maxWidth: isMobile ? undefined : showForm ? '520px' : '450px',
           width: isMobile ? undefined : showForm ? '520px' : '450px',
           maxHeight: isMobile ? '90dvh' : '85vh',
-          overflowY: 'auto',
-          overflowX: 'hidden',
-          overscrollBehavior: 'contain',
-          WebkitOverflowScrolling: 'touch',
-          touchAction: 'auto',
           background: '#ffffff',
           borderRadius: isMobile ? '20px 20px 0 0' : '20px',
           boxShadow: isMobile ? 'none' : '0 20px 60px rgba(0, 0, 0, 0.15)'
@@ -1487,15 +1482,13 @@ function CreateEventModal({ date, onClose, onEventCreated, initialContractId, in
       >
         {/* Header */}
         <div style={{
-          padding: isMobile ? '20px' : '24px',
+          padding: isMobile ? '16px 16px 12px' : '24px',
           borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
           background: isMobile ? '#ffffff' : 'linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(67, 56, 202, 0.05))',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          position: 'sticky',
-          top: 0,
-          zIndex: 10
+          flexShrink: 0
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             {showForm && (
@@ -1554,7 +1547,7 @@ function CreateEventModal({ date, onClose, onEventCreated, initialContractId, in
 
         {!showForm ? (
           /* Options */
-          <div style={{ padding: isMobile ? '20px' : '24px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ padding: isMobile ? '16px' : '24px', display: 'flex', flexDirection: 'column', gap: '14px', flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch' as never }}>
             <motion.button
               onClick={() => setShowForm(true)}
               whileHover={{ scale: 1.02, x: 5 }}
@@ -1635,7 +1628,19 @@ function CreateEventModal({ date, onClose, onEventCreated, initialContractId, in
           </div>
         ) : (
           /* Event Form */
-          <div style={{ padding: isMobile ? '16px' : '24px', display: 'flex', flexDirection: 'column', gap: '18px', overflow: 'hidden', maxWidth: '100%' }}>
+          <div style={{
+            padding: isMobile ? '16px' : '24px',
+            paddingBottom: isMobile ? 'max(16px, env(safe-area-inset-bottom))' : '24px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '18px',
+            flex: 1,
+            minHeight: 0,
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            WebkitOverflowScrolling: 'touch' as never,
+            overscrollBehavior: 'contain' as never
+          }}>
             {/* Title */}
             <div>
               <label style={labelStyle}>Titel *</label>
