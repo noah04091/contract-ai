@@ -1453,7 +1453,7 @@ function CreateEventModal({ date, onClose, onEventCreated, initialContractId, in
         <div style={{
           padding: isMobile ? '20px' : '24px',
           borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
-          background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(67, 56, 202, 0.05))',
+          background: isMobile ? '#ffffff' : 'linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(67, 56, 202, 0.05))',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -1613,7 +1613,7 @@ function CreateEventModal({ date, onClose, onEventCreated, initialContractId, in
             </div>
 
             {/* Date & Time Row */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '12px' }}>
               <div>
                 <label style={labelStyle}>Datum</label>
                 <input
