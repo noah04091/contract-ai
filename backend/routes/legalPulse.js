@@ -1312,4 +1312,107 @@ router.post("/admin/weekly-check-trigger", verifyToken, verifyAdmin, async (req,
   }
 });
 
+/**
+ * GET /admin/digest-queue - View pending digest alerts
+ */
+router.get("/admin/digest-queue", verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const database = require("../config/database");
+    const db = await database.connect();
+
+    const pendingAlerts = await db.collection("digest_queue")
+      .find({ sent: false })
+      .sort({ queuedAt: -1 })
+      .limit(50)
+      .toArray();
+
+    res.json({
+      success: true,
+      count: pendingAlerts.length,
+      alerts: pendingAlerts.map(a => ({
+        _id: a._id,
+        type: a.type,
+        userId: a.userId,
+        contractName: a.contractName,
+        lawTitle: a.lawTitle,
+        queuedAt: a.queuedAt,
+        digestMode: a.digestMode,
+        findingsCount: a.findings?.length || 0
+      }))
+    });
+  } catch (error) {
+    console.error("❌ [ADMIN] Digest Queue Error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * DELETE /admin/digest-queue/cleanup - Remove duplicate/old alerts
+ */
+router.delete("/admin/digest-queue/cleanup", verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const database = require("../config/database");
+    const db = await database.connect();
+
+    // Get all pending weekly_legal_check alerts
+    const pendingAlerts = await db.collection("digest_queue")
+      .find({ type: 'weekly_legal_check', sent: false })
+      .sort({ queuedAt: -1 })
+      .toArray();
+
+    // Group by contractId - keep only the newest one per contract
+    const seen = new Map();
+    const toDelete = [];
+
+    for (const alert of pendingAlerts) {
+      const key = `${alert.userId}-${alert.contractId}`;
+      if (seen.has(key)) {
+        toDelete.push(alert._id);
+      } else {
+        seen.set(key, alert._id);
+      }
+    }
+
+    let deletedCount = 0;
+    if (toDelete.length > 0) {
+      const result = await db.collection("digest_queue").deleteMany({
+        _id: { $in: toDelete }
+      });
+      deletedCount = result.deletedCount;
+    }
+
+    res.json({
+      success: true,
+      message: `${deletedCount} Duplikate entfernt, ${seen.size} Alerts behalten`,
+      deleted: deletedCount,
+      remaining: seen.size
+    });
+  } catch (error) {
+    console.error("❌ [ADMIN] Digest Cleanup Error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * DELETE /admin/digest-queue/:id - Delete specific alert
+ */
+router.delete("/admin/digest-queue/:id", verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const database = require("../config/database");
+    const db = await database.connect();
+
+    const result = await db.collection("digest_queue").deleteOne({
+      _id: new ObjectId(req.params.id)
+    });
+
+    res.json({
+      success: result.deletedCount > 0,
+      message: result.deletedCount > 0 ? "Alert gelöscht" : "Alert nicht gefunden"
+    });
+  } catch (error) {
+    console.error("❌ [ADMIN] Digest Delete Error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 module.exports = router;
