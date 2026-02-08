@@ -9,7 +9,6 @@ interface RecommendationsTabProps {
   onNavigate: NavigateFunction;
   onImplementRecommendation: (recommendation: RecommendationInput) => void;
   onSaveRecommendationToLibrary: (recommendation: RecommendationObject) => void;
-  onSetNotification: (notification: { message: string; type: 'success' | 'error' }) => void;
   onRecommendationUpdate?: (index: number, updates: {
     status?: RecommendationState;
     userComment?: string;
@@ -22,7 +21,6 @@ export default function RecommendationsTab({
   onNavigate,
   onImplementRecommendation,
   onSaveRecommendationToLibrary,
-  onSetNotification,
   onRecommendationUpdate
 }: RecommendationsTabProps) {
   if (!selectedContract.legalPulse) {
@@ -69,27 +67,16 @@ export default function RecommendationsTab({
       </div>
       <div className={styles.recommendationsList}>
         {selectedContract.legalPulse?.recommendations?.length ? (
-          selectedContract.legalPulse.recommendations.map((recommendation, index) => {
-            return (
-              <RecommendationCard
-                key={index}
-                recommendation={recommendation}
-                index={index}
-                contractId={selectedContract._id}
-                onImplement={onImplementRecommendation}
-                onSaveToLibrary={onSaveRecommendationToLibrary}
-                onRecommendationUpdate={onRecommendationUpdate}
-                onFeedback={(feedback) => {
-                  onSetNotification({
-                    message: feedback === 'helpful'
-                      ? "\u2713 Danke f\u00fcr Ihr Feedback!"
-                      : "\u2713 Feedback gespeichert",
-                    type: "success"
-                  });
-                }}
-              />
-            );
-          })
+          selectedContract.legalPulse.recommendations.map((recommendation, index) => (
+            <RecommendationCard
+              key={index}
+              recommendation={recommendation}
+              index={index}
+              onImplement={onImplementRecommendation}
+              onSaveToLibrary={onSaveRecommendationToLibrary}
+              onRecommendationUpdate={onRecommendationUpdate}
+            />
+          ))
         ) : (
           <div className={styles.noAnalysisState} style={{ padding: '48px 32px' }}>
             <CheckCircle size={40} color="#10b981" />

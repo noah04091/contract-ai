@@ -1,14 +1,11 @@
 import { useState, useRef } from 'react';
-import FeedbackButtons from './FeedbackButtons';
 import styles from '../styles/RecommendationCard.module.css';
 import type { RecommendationObject, RecommendationState } from '../types/legalPulse';
 
 interface RecommendationCardProps {
   recommendation: string | RecommendationObject;
   index: number;
-  contractId: string;
   onSaveToLibrary?: (rec: RecommendationObject) => void;
-  onFeedback?: (feedback: 'helpful' | 'not_helpful') => void;
   onImplement?: (recommendation: string | RecommendationObject) => void;
   onRecommendationUpdate?: (index: number, updates: {
     status?: RecommendationState;
@@ -20,9 +17,7 @@ interface RecommendationCardProps {
 export default function RecommendationCard({
   recommendation,
   index,
-  contractId,
   onSaveToLibrary,
-  onFeedback,
   onImplement,
   onRecommendationUpdate
 }: RecommendationCardProps) {
@@ -433,11 +428,6 @@ export default function RecommendationCard({
             Speichern
           </button>
         )}
-        <FeedbackButtons
-          itemId={`${contractId}-recommendation-${index}`}
-          itemType="recommendation"
-          onFeedback={onFeedback}
-        />
       </div>
     </div>
   );

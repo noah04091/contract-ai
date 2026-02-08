@@ -1414,7 +1414,6 @@ export default function LegalPulse() {
               onNavigate={navigate}
               onImplementRecommendation={handleImplementRecommendation}
               onSaveRecommendationToLibrary={handleSaveRecommendationToLibrary}
-              onSetNotification={setNotification}
               onRecommendationUpdate={handleRecommendationUpdate}
             />
           )}
