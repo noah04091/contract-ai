@@ -83,6 +83,8 @@ export interface RiskObject {
   };
 }
 
+export type RecommendationState = 'pending' | 'completed' | 'dismissed';
+
 export interface RecommendationObject {
   title: string;
   description?: string;
@@ -93,6 +95,15 @@ export interface RecommendationObject {
   affectedClauseRef?: string;
   suggestedText?: string;
   legalBasis?: string;
+  // Status management fields (like RiskObject)
+  status?: RecommendationState;
+  completedAt?: string;
+  userComment?: string;
+  userEdits?: {
+    title?: string;
+    description?: string;
+    priority?: string;
+  };
 }
 
 export type RecommendationInput = string | RecommendationObject;

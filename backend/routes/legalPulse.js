@@ -798,39 +798,61 @@ router.post("/weekly-check/trigger", verifyToken, requirePremium, legalPulseRate
  */
 function recalculateAdjustedScores(legalPulse) {
   const risks = legalPulse.topRisks || [];
+  const recommendations = legalPulse.recommendations || [];
   const originalRiskScore = legalPulse.riskScore;
   const originalHealthScore = legalPulse.healthScore;
 
-  if (!risks.length || originalRiskScore == null) {
+  if (originalRiskScore == null) {
     return { adjustedRiskScore: originalRiskScore, adjustedHealthScore: originalHealthScore };
   }
 
+  // === Risk reduction calculation ===
   const severityWeight = { critical: 4, high: 3, medium: 2, low: 1 };
 
-  let totalWeight = 0;
-  let resolvedWeight = 0;
+  let totalRiskWeight = 0;
+  let resolvedRiskWeight = 0;
 
   for (const risk of risks) {
     const effectiveSeverity = risk.userEdits?.severity || risk.severity || 'medium';
     const weight = severityWeight[effectiveSeverity] || 2;
-    totalWeight += weight;
+    totalRiskWeight += weight;
     if (risk.status === 'resolved' || risk.status === 'accepted') {
-      resolvedWeight += weight;
+      resolvedRiskWeight += weight;
     }
   }
 
-  if (totalWeight === 0) {
-    return { adjustedRiskScore: originalRiskScore, adjustedHealthScore: originalHealthScore };
+  // Risk reduction ratio capped at 70%
+  let riskReductionRatio = 0;
+  if (totalRiskWeight > 0) {
+    riskReductionRatio = Math.min(resolvedRiskWeight / totalRiskWeight, 0.7);
   }
 
-  // Reduction ratio capped at 70%
-  const reductionRatio = Math.min(resolvedWeight / totalWeight, 0.7);
-  const adjustedRiskScore = Math.round(originalRiskScore * (1 - reductionRatio));
-  // If healthScore is missing, derive it from riskScore (same formula as aiLegalPulse.calculateHealthScore)
+  // === Recommendation bonus calculation ===
+  // Completed recommendations give a small bonus to health score
+  // Each completed recommendation adds 2-3 points (depending on priority)
+  const priorityBonus = { critical: 3, high: 2.5, medium: 2, low: 1.5 };
+  let recommendationBonus = 0;
+
+  for (const rec of recommendations) {
+    if (rec.status === 'completed') {
+      const effectivePriority = rec.userEdits?.priority || rec.priority || 'medium';
+      recommendationBonus += priorityBonus[effectivePriority] || 2;
+    }
+  }
+  // Cap recommendation bonus at 15 points max
+  recommendationBonus = Math.min(recommendationBonus, 15);
+
+  // === Calculate final adjusted scores ===
+  const adjustedRiskScore = Math.round(originalRiskScore * (1 - riskReductionRatio));
+
+  // If healthScore is missing, derive it from riskScore
   const effectiveHealthScore = originalHealthScore != null
     ? originalHealthScore
     : Math.max(0, Math.round(100 - (originalRiskScore * 0.5)));
-  const adjustedHealthScore = Math.min(100, Math.round(effectiveHealthScore + (100 - effectiveHealthScore) * reductionRatio));
+
+  // Health score: improve from risk resolution + recommendation bonus
+  const healthFromRisks = effectiveHealthScore + (100 - effectiveHealthScore) * riskReductionRatio;
+  const adjustedHealthScore = Math.min(100, Math.round(healthFromRisks + recommendationBonus));
 
   return { adjustedRiskScore, adjustedHealthScore };
 }
@@ -965,6 +987,141 @@ router.patch("/:contractId/risks/:riskIndex", verifyToken, requirePremium, async
     res.status(500).json({
       success: false,
       message: "Fehler beim Aktualisieren des Risikos",
+      error: error.message
+    });
+  }
+});
+
+/**
+ * PATCH /api/legal-pulse/:contractId/recommendations/:recIndex
+ * Update a specific recommendation's status, comment, or user edits.
+ */
+router.patch("/:contractId/recommendations/:recIndex", verifyToken, requirePremium, async (req, res) => {
+  try {
+    const { contractId, recIndex } = req.params;
+    const idx = parseInt(recIndex, 10);
+
+    if (!ObjectId.isValid(contractId)) {
+      return res.status(400).json({ success: false, message: "Ungültige Contract-ID" });
+    }
+    if (isNaN(idx) || idx < 0) {
+      return res.status(400).json({ success: false, message: "Ungültiger Empfehlungs-Index" });
+    }
+
+    const { status, userComment, userEdits } = req.body;
+
+    // Validate status
+    const validStatuses = ['pending', 'completed', 'dismissed'];
+    if (status && !validStatuses.includes(status)) {
+      return res.status(400).json({ success: false, message: "Ungültiger Status. Erlaubt: pending, completed, dismissed" });
+    }
+
+    // Validate userEdits.priority
+    const validPriorities = ['critical', 'high', 'medium', 'low'];
+    if (userEdits?.priority && !validPriorities.includes(userEdits.priority)) {
+      return res.status(400).json({ success: false, message: "Ungültige Priorität" });
+    }
+
+    // Sanitize userComment
+    const sanitizedComment = userComment != null
+      ? String(userComment).substring(0, 1000).trim()
+      : undefined;
+
+    // Sanitize userEdits
+    const sanitizedEdits = userEdits ? {} : undefined;
+    if (userEdits) {
+      if (userEdits.title) sanitizedEdits.title = String(userEdits.title).substring(0, 200).trim();
+      if (userEdits.description) sanitizedEdits.description = String(userEdits.description).substring(0, 2000).trim();
+      if (userEdits.priority) sanitizedEdits.priority = userEdits.priority;
+    }
+
+    const database = require("../config/database");
+    const db = await database.connect();
+
+    // Load contract and verify ownership
+    const contract = await db.collection("contracts").findOne({
+      _id: new ObjectId(contractId),
+      userId: new ObjectId(req.user.userId)
+    });
+
+    if (!contract) {
+      return res.status(404).json({ success: false, message: "Vertrag nicht gefunden" });
+    }
+
+    if (!contract.legalPulse?.recommendations || idx >= contract.legalPulse.recommendations.length) {
+      return res.status(400).json({ success: false, message: "Empfehlungs-Index außerhalb des Bereichs" });
+    }
+
+    // Build update fields
+    const updateFields = {};
+
+    if (status !== undefined) {
+      updateFields[`legalPulse.recommendations.${idx}.status`] = status;
+      if (status === 'completed') {
+        updateFields[`legalPulse.recommendations.${idx}.completedAt`] = new Date().toISOString();
+      } else {
+        updateFields[`legalPulse.recommendations.${idx}.completedAt`] = null;
+      }
+    }
+
+    if (sanitizedComment !== undefined) {
+      updateFields[`legalPulse.recommendations.${idx}.userComment`] = sanitizedComment;
+    }
+
+    if (sanitizedEdits) {
+      if (sanitizedEdits.title) updateFields[`legalPulse.recommendations.${idx}.userEdits.title`] = sanitizedEdits.title;
+      if (sanitizedEdits.description) updateFields[`legalPulse.recommendations.${idx}.userEdits.description`] = sanitizedEdits.description;
+      if (sanitizedEdits.priority) updateFields[`legalPulse.recommendations.${idx}.userEdits.priority`] = sanitizedEdits.priority;
+    }
+
+    if (Object.keys(updateFields).length === 0) {
+      return res.status(400).json({ success: false, message: "Keine Änderungen angegeben" });
+    }
+
+    // Apply recommendation-level updates first
+    await db.collection("contracts").updateOne(
+      { _id: new ObjectId(contractId) },
+      { $set: updateFields }
+    );
+
+    // Reload to recalculate scores
+    const updatedContract = await db.collection("contracts").findOne({ _id: new ObjectId(contractId) });
+    const { adjustedRiskScore, adjustedHealthScore } = recalculateAdjustedScores(updatedContract.legalPulse);
+
+    // Save adjusted scores and append to scoreHistory
+    await db.collection("contracts").updateOne(
+      { _id: new ObjectId(contractId) },
+      {
+        $set: {
+          'legalPulse.adjustedRiskScore': adjustedRiskScore,
+          'legalPulse.adjustedHealthScore': adjustedHealthScore
+        },
+        $push: {
+          'legalPulse.scoreHistory': { date: new Date(), score: adjustedRiskScore }
+        }
+      }
+    );
+
+    // Return updated recommendation + scores
+    const finalContract = await db.collection("contracts").findOne({ _id: new ObjectId(contractId) });
+    const updatedRecommendation = finalContract.legalPulse.recommendations[idx];
+
+    res.json({
+      success: true,
+      message: "Empfehlung erfolgreich aktualisiert",
+      recommendation: updatedRecommendation,
+      recIndex: idx,
+      adjustedRiskScore,
+      adjustedHealthScore,
+      originalRiskScore: finalContract.legalPulse.riskScore,
+      originalHealthScore: finalContract.legalPulse.healthScore
+    });
+
+  } catch (error) {
+    console.error("❌ [RECOMMENDATION-MGMT] Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Aktualisieren der Empfehlung",
       error: error.message
     });
   }

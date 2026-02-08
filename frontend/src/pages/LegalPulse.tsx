@@ -16,9 +16,9 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
 import type {
-  Contract, RecommendationStatus, RiskObject, RecommendationObject, RecommendationInput,
+  Contract, RiskObject, RecommendationObject, RecommendationInput,
   WeeklyCheckContract, WeeklyChecksData,
-  ForecastData, Organization, TeamMember, RiskStatus
+  ForecastData, Organization, TeamMember, RiskStatus, RecommendationState
 } from '../types/legalPulse';
 
 export default function LegalPulse() {
@@ -31,12 +31,6 @@ export default function LegalPulse() {
   const [isInitialLoading, setIsInitialLoading] = useState(true); // ✅ Separate state for initial load
   const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'risks' | 'recommendations' | 'legalChanges' | 'history' | 'forecast'>('overview');
-  const [completedRecommendations, setCompletedRecommendations] = useState<RecommendationStatus>(() => {
-    try {
-      const saved = localStorage.getItem('lp-completed-recommendations');
-      return saved ? JSON.parse(saved) : {};
-    } catch { return {}; }
-  });
   const [showTooltip, setShowTooltip] = useState<{ [key: string]: boolean }>({});
   const [showSettingsSidebar, setShowSettingsSidebar] = useState(false);
   const [showSearchSidebar, setShowSearchSidebar] = useState(false);
@@ -422,20 +416,78 @@ export default function LegalPulse() {
   // ✅ Keine lokale Filterung mehr - Backend macht das jetzt!
 
 
-  const handleMarkRecommendationComplete = (recommendationIndex: number) => {
-    const key = `${selectedContract?._id}-${recommendationIndex}`;
-    const updated = {
-      ...completedRecommendations,
-      [key]: !completedRecommendations[key]
-    };
-    setCompletedRecommendations(updated);
-    try { localStorage.setItem('lp-completed-recommendations', JSON.stringify(updated)); } catch { /* quota exceeded */ }
+  // Recommendation Management - Update a recommendation (complete, comment, edit) - DB-backed
+  const handleRecommendationUpdate = async (recIndex: number, updates: {
+    status?: RecommendationState;
+    userComment?: string;
+    userEdits?: { title?: string; description?: string; priority?: string }
+  }) => {
+    if (!selectedContract) return;
+    try {
+      const token = localStorage.getItem('token');
+      const API_BASE = import.meta.env.VITE_API_URL || '';
+      const res = await fetch(`${API_BASE}/api/legal-pulse/${selectedContract._id}/recommendations/${recIndex}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(updates)
+      });
 
-    const action = completedRecommendations[key] ? "als offen markiert" : "als erledigt markiert";
-    setNotification({
-      message: `Empfehlung ${action}`,
-      type: "success"
-    });
+      if (res.status === 429) {
+        setNotification({ message: 'Rate-Limit erreicht. Bitte warten Sie eine Stunde und versuchen Sie es erneut.', type: 'error' });
+        return;
+      }
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || 'Fehler beim Aktualisieren');
+      }
+
+      const data = await res.json();
+
+      if (data.success && selectedContract.legalPulse) {
+        // Update the local contract state with the returned data
+        const updatedRecs = [...(selectedContract.legalPulse.recommendations || [])];
+        updatedRecs[recIndex] = data.recommendation;
+
+        const updatedContract: Contract = {
+          ...selectedContract,
+          legalPulse: {
+            ...selectedContract.legalPulse,
+            recommendations: updatedRecs,
+            adjustedRiskScore: data.adjustedRiskScore,
+            adjustedHealthScore: data.adjustedHealthScore
+          }
+        };
+
+        setSelectedContract(updatedContract);
+
+        // Also update in the contracts list
+        setContracts(prev => prev.map(c =>
+          c._id === updatedContract._id ? updatedContract : c
+        ));
+
+        // Show notification based on action
+        if (updates.status === 'completed') {
+          setNotification({ message: 'Empfehlung als erledigt markiert (+Score Bonus)', type: 'success' });
+        } else if (updates.status === 'pending') {
+          setNotification({ message: 'Empfehlung als offen markiert', type: 'success' });
+        } else if (updates.userComment !== undefined) {
+          setNotification({ message: 'Kommentar gespeichert', type: 'success' });
+        } else if (updates.userEdits) {
+          setNotification({ message: 'Empfehlung aktualisiert', type: 'success' });
+        }
+      }
+    } catch (err) {
+      console.error('Recommendation update error:', err);
+      setNotification({
+        message: err instanceof Error ? err.message : 'Fehler beim Aktualisieren der Empfehlung',
+        type: 'error'
+      });
+      throw err; // Re-throw so RiskCard can handle the error state
+    }
   };
 
   const handleImplementRecommendation = (recommendation: RecommendationInput) => {
@@ -1360,11 +1412,10 @@ export default function LegalPulse() {
             <RecommendationsTab
               selectedContract={selectedContract}
               onNavigate={navigate}
-              completedRecommendations={completedRecommendations}
-              onMarkRecommendationComplete={handleMarkRecommendationComplete}
               onImplementRecommendation={handleImplementRecommendation}
               onSaveRecommendationToLibrary={handleSaveRecommendationToLibrary}
               onSetNotification={setNotification}
+              onRecommendationUpdate={handleRecommendationUpdate}
             />
           )}
 

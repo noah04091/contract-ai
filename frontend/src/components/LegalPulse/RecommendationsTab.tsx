@@ -1,27 +1,29 @@
 import { CheckCircle, Zap, Shield, ArrowRight } from 'lucide-react';
 import { NavigateFunction } from 'react-router-dom';
-import { Contract, RecommendationObject, RecommendationInput, RecommendationStatus } from '../../types/legalPulse';
+import { Contract, RecommendationObject, RecommendationInput, RecommendationState } from '../../types/legalPulse';
 import RecommendationCard from '../RecommendationCard';
 import styles from '../../pages/LegalPulse.module.css';
 
 interface RecommendationsTabProps {
   selectedContract: Contract;
   onNavigate: NavigateFunction;
-  completedRecommendations: RecommendationStatus;
-  onMarkRecommendationComplete: (index: number) => void;
   onImplementRecommendation: (recommendation: RecommendationInput) => void;
   onSaveRecommendationToLibrary: (recommendation: RecommendationObject) => void;
   onSetNotification: (notification: { message: string; type: 'success' | 'error' }) => void;
+  onRecommendationUpdate?: (index: number, updates: {
+    status?: RecommendationState;
+    userComment?: string;
+    userEdits?: { title?: string; description?: string; priority?: string }
+  }) => Promise<void>;
 }
 
 export default function RecommendationsTab({
   selectedContract,
   onNavigate,
-  completedRecommendations,
-  onMarkRecommendationComplete,
   onImplementRecommendation,
   onSaveRecommendationToLibrary,
-  onSetNotification
+  onSetNotification,
+  onRecommendationUpdate
 }: RecommendationsTabProps) {
   if (!selectedContract.legalPulse) {
     return (
@@ -68,17 +70,15 @@ export default function RecommendationsTab({
       <div className={styles.recommendationsList}>
         {selectedContract.legalPulse?.recommendations?.length ? (
           selectedContract.legalPulse.recommendations.map((recommendation, index) => {
-            const isCompleted = completedRecommendations[`${selectedContract._id}-${index}`];
             return (
               <RecommendationCard
                 key={index}
                 recommendation={recommendation}
                 index={index}
                 contractId={selectedContract._id}
-                isCompleted={isCompleted}
-                onMarkComplete={onMarkRecommendationComplete}
                 onImplement={onImplementRecommendation}
                 onSaveToLibrary={onSaveRecommendationToLibrary}
+                onRecommendationUpdate={onRecommendationUpdate}
                 onFeedback={(feedback) => {
                   onSetNotification({
                     message: feedback === 'helpful'
