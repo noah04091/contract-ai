@@ -5,7 +5,6 @@ import type { RiskObject, RiskStatus } from '../types/legalPulse';
 interface RiskCardProps {
   risk: string | RiskObject;
   index: number;
-  contractId: string;
   onSaveToLibrary?: (risk: RiskObject) => void;
   onRiskUpdate?: (index: number, updates: { status?: RiskStatus; userComment?: string; userEdits?: { title?: string; description?: string; severity?: string } }) => Promise<void>;
 }
@@ -13,7 +12,6 @@ interface RiskCardProps {
 export default function RiskCard({
   risk,
   index,
-  contractId: _contractId,
   onSaveToLibrary,
   onRiskUpdate
 }: RiskCardProps) {

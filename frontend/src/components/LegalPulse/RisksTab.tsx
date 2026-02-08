@@ -13,7 +13,7 @@ interface RisksTabProps {
   onContractUpdated?: (contract: Contract) => void;
 }
 
-export default function RisksTab({ selectedContract, onNavigate, onSaveRiskToLibrary, onSetNotification: _onSetNotification, onRiskUpdate }: RisksTabProps) {
+export default function RisksTab({ selectedContract, onNavigate, onSaveRiskToLibrary, onRiskUpdate }: RisksTabProps) {
   if (!selectedContract.legalPulse) {
     return (
       <div className={styles.risksTab}>
@@ -67,7 +67,6 @@ export default function RisksTab({ selectedContract, onNavigate, onSaveRiskToLib
               key={index}
               risk={risk}
               index={index}
-              contractId={selectedContract._id}
               onSaveToLibrary={onSaveRiskToLibrary}
               onRiskUpdate={onRiskUpdate}
             />
