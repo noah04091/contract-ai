@@ -9,7 +9,8 @@ function generateEmailTemplate({
   preheader = '',
   cta = null,
   badge = null,
-  centerContent = false // 🆕 Option für zentrierte Überschrift & Button (z.B. Verifizierungs-E-Mail)
+  centerContent = false, // 🆕 Option für zentrierte Überschrift & Button (z.B. Verifizierungs-E-Mail)
+  unsubscribeUrl = null  // 🆕 GDPR: Unsubscribe-Link (Pflicht für Marketing-Emails)
 }) {
 
   // 🆕 Zentrierter CTA-Button wenn centerContent=true
@@ -103,6 +104,8 @@ function generateEmailTemplate({
                 <a href="https://www.contract-ai.de/datenschutz" style="color: #64748b; text-decoration: none;">Datenschutz</a>
                 <span style="color: #cbd5e1; margin: 0 10px;">|</span>
                 <a href="https://www.contract-ai.de/impressum" style="color: #64748b; text-decoration: none;">Impressum</a>
+                ${unsubscribeUrl ? `<span style="color: #cbd5e1; margin: 0 10px;">|</span>
+                <a href="${unsubscribeUrl}" style="color: #64748b; text-decoration: none;">Benachrichtigungen abmelden</a>` : ''}
               </p>
             </td>
           </tr>

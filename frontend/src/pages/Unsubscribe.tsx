@@ -1,17 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, CheckCircle, XCircle, ArrowLeft, RefreshCw } from 'lucide-react';
+import { Mail, CheckCircle, XCircle, ArrowLeft, RefreshCw, BellOff } from 'lucide-react';
+
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 export default function Unsubscribe() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = searchParams.get('token');
 
-  const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'already'>('loading');
+  const [status, setStatus] = useState<'verifying' | 'confirm' | 'processing' | 'success' | 'error' | 'already'>('verifying');
   const [email, setEmail] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
 
+  // Step 1: Verify the token and get current status
   useEffect(() => {
     if (!token) {
       setStatus('error');
@@ -19,9 +22,9 @@ export default function Unsubscribe() {
       return;
     }
 
-    const processUnsubscribe = async () => {
+    const verifyToken = async () => {
       try {
-        const response = await fetch(`/api/email/unsubscribe?token=${encodeURIComponent(token)}`, {
+        const response = await fetch(`${API_BASE}/api/auth/unsubscribe?token=${encodeURIComponent(token)}`, {
           credentials: 'include'
         });
 
@@ -29,14 +32,17 @@ export default function Unsubscribe() {
 
         if (response.ok && data.success) {
           setEmail(data.email || '');
-          if (data.message?.includes('bereits')) {
+
+          if (!data.currentStatus) {
+            // Already unsubscribed
             setStatus('already');
           } else {
-            setStatus('success');
+            // Show confirmation
+            setStatus('confirm');
           }
         } else {
           setStatus('error');
-          setErrorMessage(data.error || 'Fehler bei der Abmeldung');
+          setErrorMessage(data.message || 'Ungültiger oder abgelaufener Abmelde-Link');
         }
       } catch {
         setStatus('error');
@@ -44,28 +50,63 @@ export default function Unsubscribe() {
       }
     };
 
-    processUnsubscribe();
+    verifyToken();
   }, [token]);
 
-  const handleResubscribe = async () => {
-    if (!email) return;
+  // Step 2: Process unsubscribe when user confirms
+  const handleUnsubscribe = async () => {
+    if (!token) return;
+
+    setStatus('processing');
 
     try {
-      const response = await fetch('/api/email/resubscribe', {
+      const response = await fetch(`${API_BASE}/api/auth/unsubscribe`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ email, category: 'calendar' })
+        body: JSON.stringify({ token })
       });
 
-      if (response.ok) {
-        setStatus('loading');
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 1500);
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setStatus('success');
+      } else {
+        setStatus('error');
+        setErrorMessage(data.message || 'Fehler bei der Abmeldung');
       }
     } catch {
-      // Ignore errors
+      setStatus('error');
+      setErrorMessage('Verbindungsfehler. Bitte versuche es erneut.');
+    }
+  };
+
+  // Resubscribe functionality
+  const handleResubscribe = async () => {
+    if (!token) return;
+
+    setStatus('processing');
+
+    try {
+      const response = await fetch(`${API_BASE}/api/auth/resubscribe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ token })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Successfully resubscribed, navigate to dashboard
+        navigate('/dashboard');
+      } else {
+        setStatus('error');
+        setErrorMessage(data.message || 'Fehler beim Anmelden');
+      }
+    } catch {
+      setStatus('error');
+      setErrorMessage('Verbindungsfehler');
     }
   };
 
@@ -92,7 +133,7 @@ export default function Unsubscribe() {
           boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)'
         }}
       >
-        {status === 'loading' && (
+        {(status === 'verifying' || status === 'processing') && (
           <>
             <div style={{
               width: '80px',
@@ -107,11 +148,80 @@ export default function Unsubscribe() {
               <RefreshCw size={36} color="white" className="animate-spin" />
             </div>
             <h1 style={{ fontSize: '24px', fontWeight: 600, color: '#1a1a1a', marginBottom: '12px' }}>
-              Abmeldung wird verarbeitet...
+              {status === 'verifying' ? 'Link wird überprüft...' : 'Abmeldung wird verarbeitet...'}
             </h1>
             <p style={{ color: '#666', fontSize: '15px' }}>
               Bitte warte einen Moment.
             </p>
+          </>
+        )}
+
+        {status === 'confirm' && (
+          <>
+            <div style={{
+              width: '80px',
+              height: '80px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #F59E0B, #FBBF24)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 24px'
+            }}>
+              <BellOff size={36} color="white" />
+            </div>
+            <h1 style={{ fontSize: '24px', fontWeight: 600, color: '#1a1a1a', marginBottom: '12px' }}>
+              E-Mail-Benachrichtigungen abmelden?
+            </h1>
+            {email && (
+              <p style={{ color: '#999', fontSize: '13px', marginBottom: '8px' }}>
+                E-Mail: <strong>{email}</strong>
+              </p>
+            )}
+            <p style={{ color: '#666', fontSize: '15px', marginBottom: '24px' }}>
+              Du erhältst dann keine Legal Pulse Digest-E-Mails mehr zu Rechtsänderungen, die deine Verträge betreffen könnten.
+            </p>
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => navigate('/')}
+                style={{
+                  padding: '12px 24px',
+                  background: 'white',
+                  border: '1px solid #ddd',
+                  borderRadius: '10px',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  color: '#666',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <ArrowLeft size={16} />
+                Abbrechen
+              </button>
+              <button
+                onClick={handleUnsubscribe}
+                style={{
+                  padding: '12px 24px',
+                  background: '#EF4444',
+                  border: 'none',
+                  borderRadius: '10px',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  color: 'white',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <BellOff size={16} />
+                Ja, abmelden
+              </button>
+            </div>
           </>
         )}
 

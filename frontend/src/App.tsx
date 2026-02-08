@@ -176,6 +176,7 @@ function AppWithLoader() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/abmelden" element={<Unsubscribe />} /> {/* 📧 E-Mail-Abmeldung (DSGVO) */}
+            <Route path="/unsubscribe" element={<Unsubscribe />} /> {/* 📧 Alternative URL for Emails */}
             <Route path="/impressum" element={<Impressum />} />
             <Route path="/datenschutz" element={<Datenschutz />} />
             <Route path="/agb" element={<AGB />} />

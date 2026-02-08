@@ -1526,3 +1526,186 @@ router.get("/export-data", verifyToken, async (req, res) => {
     res.status(500).json({ message: "Serverfehler beim Export" });
   }
 });
+
+// ============================================================
+// 🔕 GDPR-COMPLIANT UNSUBSCRIBE ENDPOINT
+// ============================================================
+
+/**
+ * GET /unsubscribe - Verify token and show unsubscribe confirmation page
+ * POST /unsubscribe - Process the unsubscribe request
+ *
+ * GDPR-Compliant: No login required, token-based identification
+ */
+const { verifyUnsubscribeToken } = require('../utils/unsubscribeToken');
+
+// GET: Verify token (for frontend to check before showing form)
+router.get("/unsubscribe", async (req, res) => {
+  try {
+    const { token } = req.query;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: "Kein Abmelde-Token angegeben"
+      });
+    }
+
+    const userId = verifyUnsubscribeToken(token);
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "Ungültiger oder abgelaufener Abmelde-Link"
+      });
+    }
+
+    // Find user to get current status
+    const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "Benutzer nicht gefunden"
+      });
+    }
+
+    // Return current notification status
+    res.json({
+      success: true,
+      email: user.email.replace(/(.{2}).*(@.*)/, '$1***$2'), // Mask email: ab***@domain.com
+      currentStatus: user.legalPulseSettings?.emailNotifications !== false,
+      message: "Token gültig"
+    });
+
+  } catch (error) {
+    console.error("❌ Unsubscribe verification error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Serverfehler bei der Verifizierung"
+    });
+  }
+});
+
+// POST: Process unsubscribe
+router.post("/unsubscribe", async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: "Kein Abmelde-Token angegeben"
+      });
+    }
+
+    const userId = verifyUnsubscribeToken(token);
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "Ungültiger oder abgelaufener Abmelde-Link"
+      });
+    }
+
+    // Update user's notification settings
+    const result = await usersCollection.updateOne(
+      { _id: new ObjectId(userId) },
+      {
+        $set: {
+          'legalPulseSettings.emailNotifications': false,
+          'unsubscribedAt': new Date()
+        }
+      }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Benutzer nicht gefunden"
+      });
+    }
+
+    // Log the unsubscribe action for GDPR compliance
+    const database = require('../config/database');
+    const db = await database.connect();
+    await db.collection('audit_log').insertOne({
+      action: 'email_unsubscribe',
+      userId: new ObjectId(userId),
+      timestamp: new Date(),
+      source: 'unsubscribe_link',
+      details: { previousStatus: true, newStatus: false }
+    });
+
+    console.log(`🔕 User ${userId} has unsubscribed from email notifications`);
+
+    res.json({
+      success: true,
+      message: "Sie wurden erfolgreich von E-Mail-Benachrichtigungen abgemeldet."
+    });
+
+  } catch (error) {
+    console.error("❌ Unsubscribe error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Serverfehler beim Abmelden"
+    });
+  }
+});
+
+// POST: Resubscribe (if user changes mind)
+router.post("/resubscribe", async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: "Kein Token angegeben"
+      });
+    }
+
+    const userId = verifyUnsubscribeToken(token);
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "Ungültiger Token"
+      });
+    }
+
+    // Re-enable notifications
+    const result = await usersCollection.updateOne(
+      { _id: new ObjectId(userId) },
+      {
+        $set: {
+          'legalPulseSettings.emailNotifications': true
+        },
+        $unset: {
+          'unsubscribedAt': ''
+        }
+      }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Benutzer nicht gefunden"
+      });
+    }
+
+    console.log(`🔔 User ${userId} has resubscribed to email notifications`);
+
+    res.json({
+      success: true,
+      message: "Sie erhalten wieder E-Mail-Benachrichtigungen."
+    });
+
+  } catch (error) {
+    console.error("❌ Resubscribe error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Serverfehler"
+    });
+  }
+});
