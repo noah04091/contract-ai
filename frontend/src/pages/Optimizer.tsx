@@ -964,6 +964,115 @@ export default function Optimizer() {
     }
   }, [location.state]);
 
+  // 🆕 NEW: Handle incoming Legal Pulse context from route state
+  useEffect(() => {
+    const state = location.state as {
+      contractId?: string;
+      legalPulseContext?: {
+        risks: Array<string | { title?: string; description?: string; severity?: string; impact?: string; solution?: string }>;
+        recommendations: Array<string | { title?: string; description?: string; priority?: string; effort?: string; impact?: string; steps?: string[] }>;
+        riskScore: number | null;
+        complianceScore: number | null;
+      };
+      focusRecommendation?: { title?: string; description?: string };
+    } | null;
+
+    if (state?.legalPulseContext) {
+      console.log('[LP-OPTIMIZER] Empfange Legal Pulse Context via Route:', state.legalPulseContext);
+      setLegalPulseContext(state.legalPulseContext);
+
+      if (state.contractId) {
+        console.log('[LP-OPTIMIZER] Empfange ContractId:', state.contractId);
+        setExistingContractId(state.contractId);
+      }
+
+      const riskCount = state.legalPulseContext.risks?.length || 0;
+      const recCount = state.legalPulseContext.recommendations?.length || 0;
+
+      setToast({
+        message: `Legal Pulse Kontext geladen: ${riskCount} Risiken, ${recCount} Empfehlungen`,
+        type: 'success'
+      });
+
+      setTimeout(() => setToast(null), 3000);
+    }
+  }, [location.state]);
+
+  // 🆕 NEW: Load contract PDF when contractId comes from route state (not URL param)
+  useEffect(() => {
+    const state = location.state as { contractId?: string } | null;
+    const stateContractId = state?.contractId;
+
+    // Only run if we have contractId in state but not in URL params
+    if (stateContractId && !contractId && isPremium && !file) {
+      const loadContractFromState = async () => {
+        try {
+          console.log('[LP-OPTIMIZER] Loading contract from state:', stateContractId);
+
+          // Get contract metadata
+          const res = await fetch(`/api/contracts/${stateContractId}`, {
+            credentials: "include"
+          });
+
+          if (!res.ok) throw new Error("Vertrag konnte nicht geladen werden");
+
+          const data = await res.json();
+          const contract = data.contract || data;
+
+          setPreloadedContractName(contract.name || contract.fileName || "Unbekannter Vertrag");
+          setExistingContractId(stateContractId);
+
+          // Load PDF
+          let pdfUrl;
+          if (contract.s3Key) {
+            const s3Res = await fetch(`/api/s3/view?key=${encodeURIComponent(contract.s3Key)}`, {
+              credentials: "include"
+            });
+            if (s3Res.ok) {
+              const s3Data = await s3Res.json();
+              pdfUrl = s3Data.url;
+            }
+          } else if (contract.formData?.text) {
+            // AI-generated contract
+            const pdfRes = await fetch(`/api/contracts/${stateContractId}/pdf-v2?design=${contract.designVariant || 'executive'}`, {
+              credentials: "include"
+            });
+            if (pdfRes.ok) {
+              const blob = await pdfRes.blob();
+              pdfUrl = URL.createObjectURL(blob);
+            }
+          } else {
+            // Legacy local storage
+            const viewRes = await fetch(`/api/s3/view?contractId=${stateContractId}`, {
+              credentials: "include"
+            });
+            if (viewRes.ok) {
+              const viewData = await viewRes.json();
+              pdfUrl = viewData.url;
+            }
+          }
+
+          if (pdfUrl) {
+            const response = await fetch(pdfUrl);
+            const blob = await response.blob();
+            const loadedFile = new File([blob], contract.fileName || `${contract.name}.pdf`, { type: 'application/pdf' });
+            setFile(loadedFile);
+            console.log('[LP-OPTIMIZER] Contract PDF loaded successfully');
+          }
+        } catch (error) {
+          console.error('[LP-OPTIMIZER] Error loading contract:', error);
+          setToast({
+            message: 'Fehler beim Laden des Vertrags',
+            type: 'error'
+          });
+          setTimeout(() => setToast(null), 3000);
+        }
+      };
+
+      loadContractFromState();
+    }
+  }, [location.state, contractId, isPremium, file]);
+
   // 🆕 NEW: Load job from Legal Pulse handoff
   useEffect(() => {
     if (jobId && isPremium && !file) {

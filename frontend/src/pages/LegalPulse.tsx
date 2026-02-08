@@ -490,17 +490,44 @@ export default function LegalPulse() {
     }
   };
 
+  // Build legalPulseContext for optimizer handoff
+  const buildLegalPulseContext = () => {
+    if (!selectedContract?.legalPulse) return null;
+    const lp = selectedContract.legalPulse;
+    return {
+      risks: lp.topRisks || [],
+      recommendations: lp.recommendations || [],
+      riskScore: lp.riskScore ?? null,
+      complianceScore: null // Not available in legalPulse, can be calculated from risks if needed
+    };
+  };
+
+  // Navigate to optimizer with full Legal Pulse context
+  const handleNavigateToOptimizer = () => {
+    setNotification({
+      message: "Weiterleitung zum Optimizer mit Analyse-Kontext...",
+      type: "success"
+    });
+    navigate('/optimizer', {
+      state: {
+        contractId: selectedContract?._id,
+        legalPulseContext: buildLegalPulseContext()
+      }
+    });
+  };
+
   const handleImplementRecommendation = (recommendation: RecommendationInput) => {
-    const recText = typeof recommendation === 'string' ? recommendation : recommendation.title || recommendation.description;
+    const recObj = typeof recommendation === 'object' ? recommendation : { title: recommendation };
     setNotification({
       message: "Weiterleitung zum Optimizer...",
       type: "success"
     });
-    // Navigate to optimizer with recommendation context
+    // Navigate to optimizer with recommendation context + full Legal Pulse data
     navigate('/optimizer', {
       state: {
         contractId: selectedContract?._id,
-        recommendation: recText
+        legalPulseContext: buildLegalPulseContext(),
+        focusRecommendation: recObj
       }
     });
   };
@@ -1366,7 +1393,7 @@ export default function LegalPulse() {
               <div className={styles.quickActionsButtons}>
                 <button
                   className={styles.quickActionBtn}
-                  onClick={() => navigate(`/optimizer?contractId=${selectedContract._id}`)}
+                  onClick={handleNavigateToOptimizer}
                 >
                   <Zap size={18} />
                   Vertrag optimieren
