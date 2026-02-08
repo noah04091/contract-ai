@@ -123,6 +123,9 @@ class WeeklyLegalCheck {
           error: error.message,
           duration: ((Date.now() - startTime) / 1000)
         });
+
+        // Send admin notification email on failure
+        await this.notifyAdminOnFailure(error, startTime);
       } catch (healthErr) {
         console.error('❌ [WEEKLY-CHECK] Failed to save health record:', healthErr.message);
       }
@@ -836,6 +839,56 @@ Antworte NUR mit diesem JSON-Format:
       });
     } catch (error) {
       console.error('❌ [WEEKLY-CHECK] Health record save failed:', error.message);
+    }
+  }
+
+  /**
+   * Notify admin via email when weekly check fails
+   */
+  async notifyAdminOnFailure(error, startTime) {
+    try {
+      const sendEmail = require('../services/mailer');
+      const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
+
+      if (!adminEmail) {
+        console.warn('⚠️ [WEEKLY-CHECK] No admin email configured for failure notifications');
+        return;
+      }
+
+      const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+      const timestamp = new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' });
+
+      const subject = '🚨 Weekly Legal Check FEHLGESCHLAGEN - Contract AI';
+      const body = `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚨 WEEKLY LEGAL CHECK FEHLGESCHLAGEN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Zeitpunkt: ${timestamp}
+Laufzeit bis Fehler: ${duration} Sekunden
+
+❌ FEHLER:
+${error.message}
+
+📋 STACK TRACE:
+${error.stack || 'Nicht verfügbar'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 NÄCHSTE SCHRITTE:
+1. Render Logs prüfen: https://dashboard.render.com
+2. MongoDB Connection überprüfen
+3. OpenAI API Status prüfen
+4. Job manuell neu starten via Admin Dashboard
+
+🔗 Admin Dashboard: https://contract-ai.de/admin
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+`;
+
+      await sendEmail(adminEmail, subject, body);
+      console.log(`📧 [WEEKLY-CHECK] Admin notification sent to ${adminEmail}`);
+
+    } catch (emailError) {
+      console.error('❌ [WEEKLY-CHECK] Failed to send admin notification:', emailError.message);
     }
   }
 

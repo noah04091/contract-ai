@@ -412,6 +412,39 @@ export default function AdminDashboard() {
   }>>([]);
   const [monitoringLoading, setMonitoringLoading] = useState(false);
 
+  // Weekly Legal Check State
+  const [weeklyCheckStats, setWeeklyCheckStats] = useState<{
+    isHealthy: boolean;
+    lastRun: string | null;
+    lastRunStatus: string;
+    lastError: { at: string; message: string } | null;
+    nextScheduledRun: string;
+    cronExpression: string;
+    cronEnabled: boolean;
+    stats: {
+      period: { from: string; to: string };
+      totalChecks: number;
+      uniqueUsers: number;
+      uniqueContracts: number;
+      totalFindings: number;
+      criticalFindings: number;
+      warningFindings: number;
+      alertsSent: number;
+      estimatedCost: string;
+    };
+    healthHistory: Array<{
+      runAt: string;
+      status: string;
+      usersChecked: number;
+      contractsChecked: number;
+      findingsCount: number;
+      duration: number;
+      cost: string;
+      error: string | null;
+    }>;
+  } | null>(null);
+  const [weeklyCheckTriggering, setWeeklyCheckTriggering] = useState(false);
+
   // Fetch Admin Statistics
   const fetchData = async () => {
     try {
@@ -486,9 +519,10 @@ export default function AdminDashboard() {
   const fetchMonitoringData = async () => {
     try {
       setMonitoringLoading(true);
-      const [cronRes, errorsRes] = await Promise.all([
+      const [cronRes, errorsRes, weeklyCheckRes] = await Promise.all([
         fetch(`${API_URL}/api/admin/cron/status`, { credentials: 'include' }),
-        fetch(`${API_URL}/api/admin/errors?hours=24`, { credentials: 'include' })
+        fetch(`${API_URL}/api/admin/errors?hours=24`, { credentials: 'include' }),
+        fetch(`${API_URL}/api/legal-pulse/admin/weekly-check-stats`, { credentials: 'include' })
       ]);
 
       if (cronRes.ok) {
@@ -500,10 +534,40 @@ export default function AdminDashboard() {
         const errorsData = await errorsRes.json();
         setErrorLogs(errorsData.recentErrors || []);
       }
+
+      if (weeklyCheckRes.ok) {
+        const weeklyData = await weeklyCheckRes.json();
+        setWeeklyCheckStats(weeklyData.weeklyCheck || null);
+      }
     } catch (err) {
       console.error('Error fetching monitoring data:', err);
     } finally {
       setMonitoringLoading(false);
+    }
+  };
+
+  // Trigger Weekly Legal Check manually
+  const triggerWeeklyCheck = async () => {
+    if (weeklyCheckTriggering) return;
+    try {
+      setWeeklyCheckTriggering(true);
+      const res = await fetch(`${API_URL}/api/legal-pulse/admin/weekly-check-trigger`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+
+      if (res.ok) {
+        setSuccessMessage('Weekly Legal Check wurde gestartet. Überprüfen Sie die Logs.');
+        setTimeout(() => setSuccessMessage(null), 5000);
+      } else {
+        const data = await res.json();
+        setError(data.message || 'Fehler beim Starten des Weekly Checks');
+      }
+    } catch (err) {
+      console.error('Error triggering weekly check:', err);
+      setError('Fehler beim Starten des Weekly Checks');
+    } finally {
+      setWeeklyCheckTriggering(false);
     }
   };
 
@@ -2780,6 +2844,212 @@ export default function AdminDashboard() {
                   </tbody>
                 </table>
               </div>
+            </div>
+
+            {/* Weekly Legal Check */}
+            <div className={styles.statsSection} style={{ marginTop: '32px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                  <ShieldCheck size={20} />
+                  Weekly Legal Check
+                  {weeklyCheckStats?.isHealthy !== undefined && (
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '4px 10px',
+                      borderRadius: '9999px',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      background: weeklyCheckStats.isHealthy ? '#dcfce7' : '#fee2e2',
+                      color: weeklyCheckStats.isHealthy ? '#166534' : '#991b1b'
+                    }}>
+                      {weeklyCheckStats.isHealthy ? <CheckCircle size={12} /> : <XCircle size={12} />}
+                      {weeklyCheckStats.isHealthy ? 'Healthy' : 'Error'}
+                    </span>
+                  )}
+                  {!weeklyCheckStats?.cronEnabled && (
+                    <span style={{
+                      padding: '4px 10px',
+                      borderRadius: '9999px',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      background: '#fef3c7',
+                      color: '#92400e'
+                    }}>
+                      CRON DISABLED
+                    </span>
+                  )}
+                </h3>
+                <button
+                  onClick={triggerWeeklyCheck}
+                  disabled={weeklyCheckTriggering}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 16px',
+                    background: weeklyCheckTriggering ? '#e5e7eb' : '#3b82f6',
+                    color: weeklyCheckTriggering ? '#9ca3af' : 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    cursor: weeklyCheckTriggering ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  <Zap size={14} />
+                  {weeklyCheckTriggering ? 'Wird gestartet...' : 'Manuell starten'}
+                </button>
+              </div>
+
+              {weeklyCheckStats ? (
+                <>
+                  {/* Status Overview */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+                    <div style={{ background: '#f9fafb', borderRadius: '12px', padding: '16px' }}>
+                      <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Letzter Run</div>
+                      <div style={{ fontSize: '16px', fontWeight: 600, color: '#111827' }}>
+                        {weeklyCheckStats.lastRun ? new Date(weeklyCheckStats.lastRun).toLocaleString('de-DE') : 'Noch nie'}
+                      </div>
+                      <div style={{ fontSize: '12px', color: weeklyCheckStats.lastRunStatus === 'success' ? '#16a34a' : '#dc2626', marginTop: '4px' }}>
+                        Status: {weeklyCheckStats.lastRunStatus}
+                      </div>
+                    </div>
+                    <div style={{ background: '#f9fafb', borderRadius: '12px', padding: '16px' }}>
+                      <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Nächster Run</div>
+                      <div style={{ fontSize: '16px', fontWeight: 600, color: '#111827' }}>
+                        {new Date(weeklyCheckStats.nextScheduledRun).toLocaleString('de-DE')}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#6b7280', fontFamily: 'monospace', marginTop: '4px' }}>
+                        {weeklyCheckStats.cronExpression}
+                      </div>
+                    </div>
+                    <div style={{ background: '#f9fafb', borderRadius: '12px', padding: '16px' }}>
+                      <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Letzte 4 Wochen</div>
+                      <div style={{ fontSize: '16px', fontWeight: 600, color: '#111827' }}>
+                        {weeklyCheckStats.stats.totalChecks} Checks
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                        {weeklyCheckStats.stats.uniqueUsers} User, {weeklyCheckStats.stats.uniqueContracts} Verträge
+                      </div>
+                    </div>
+                    <div style={{ background: '#f9fafb', borderRadius: '12px', padding: '16px' }}>
+                      <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Findings</div>
+                      <div style={{ fontSize: '16px', fontWeight: 600, color: '#111827' }}>
+                        {weeklyCheckStats.stats.totalFindings} gefunden
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px', fontSize: '12px', marginTop: '4px' }}>
+                        <span style={{ color: '#dc2626' }}>{weeklyCheckStats.stats.criticalFindings} kritisch</span>
+                        <span style={{ color: '#f59e0b' }}>{weeklyCheckStats.stats.warningFindings} Warnung</span>
+                      </div>
+                    </div>
+                    <div style={{ background: '#f9fafb', borderRadius: '12px', padding: '16px' }}>
+                      <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Alerts gesendet</div>
+                      <div style={{ fontSize: '16px', fontWeight: 600, color: '#111827' }}>
+                        {weeklyCheckStats.stats.alertsSent}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                        Digest-Queue Einträge
+                      </div>
+                    </div>
+                    <div style={{ background: '#f9fafb', borderRadius: '12px', padding: '16px' }}>
+                      <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Geschätzte Kosten</div>
+                      <div style={{ fontSize: '16px', fontWeight: 600, color: '#111827' }}>
+                        ${weeklyCheckStats.stats.estimatedCost}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                        GPT-4o-mini
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Last Error Alert */}
+                  {weeklyCheckStats.lastError && (
+                    <div style={{
+                      background: '#fef2f2',
+                      border: '1px solid #fecaca',
+                      borderRadius: '12px',
+                      padding: '16px',
+                      marginBottom: '24px'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#dc2626', fontWeight: 600, marginBottom: '8px' }}>
+                        <AlertTriangle size={16} />
+                        Letzter Fehler
+                      </div>
+                      <div style={{ fontSize: '14px', color: '#7f1d1d' }}>
+                        {new Date(weeklyCheckStats.lastError.at).toLocaleString('de-DE')}: {weeklyCheckStats.lastError.message}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Health History Table */}
+                  <h4 style={{ marginBottom: '12px', fontSize: '15px', fontWeight: 600 }}>Run-Historie</h4>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table className={styles.usersTable} style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr>
+                          <th style={{ textAlign: 'left', padding: '10px', borderBottom: '1px solid #e5e7eb', fontSize: '13px' }}>Zeitpunkt</th>
+                          <th style={{ textAlign: 'left', padding: '10px', borderBottom: '1px solid #e5e7eb', fontSize: '13px' }}>Status</th>
+                          <th style={{ textAlign: 'center', padding: '10px', borderBottom: '1px solid #e5e7eb', fontSize: '13px' }}>User</th>
+                          <th style={{ textAlign: 'center', padding: '10px', borderBottom: '1px solid #e5e7eb', fontSize: '13px' }}>Verträge</th>
+                          <th style={{ textAlign: 'center', padding: '10px', borderBottom: '1px solid #e5e7eb', fontSize: '13px' }}>Findings</th>
+                          <th style={{ textAlign: 'center', padding: '10px', borderBottom: '1px solid #e5e7eb', fontSize: '13px' }}>Dauer</th>
+                          <th style={{ textAlign: 'center', padding: '10px', borderBottom: '1px solid #e5e7eb', fontSize: '13px' }}>Kosten</th>
+                          <th style={{ textAlign: 'left', padding: '10px', borderBottom: '1px solid #e5e7eb', fontSize: '13px' }}>Fehler</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {weeklyCheckStats.healthHistory.length === 0 ? (
+                          <tr>
+                            <td colSpan={8} style={{ padding: '24px', textAlign: 'center', color: '#6b7280' }}>
+                              Noch keine Weekly Checks durchgeführt
+                            </td>
+                          </tr>
+                        ) : (
+                          weeklyCheckStats.healthHistory.map((h, idx) => (
+                            <tr key={idx} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                              <td style={{ padding: '10px', fontSize: '13px' }}>
+                                {new Date(h.runAt).toLocaleString('de-DE')}
+                              </td>
+                              <td style={{ padding: '10px' }}>
+                                <span style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '3px 8px',
+                                  borderRadius: '9999px',
+                                  fontSize: '12px',
+                                  fontWeight: 500,
+                                  background: h.status === 'success' ? '#dcfce7' : '#fee2e2',
+                                  color: h.status === 'success' ? '#166534' : '#991b1b'
+                                }}>
+                                  {h.status === 'success' ? <CheckCircle size={12} /> : <XCircle size={12} />}
+                                  {h.status}
+                                </span>
+                              </td>
+                              <td style={{ padding: '10px', textAlign: 'center', fontSize: '13px' }}>{h.usersChecked}</td>
+                              <td style={{ padding: '10px', textAlign: 'center', fontSize: '13px' }}>{h.contractsChecked}</td>
+                              <td style={{ padding: '10px', textAlign: 'center', fontSize: '13px', fontWeight: h.findingsCount > 0 ? 600 : 400 }}>
+                                {h.findingsCount}
+                              </td>
+                              <td style={{ padding: '10px', textAlign: 'center', fontSize: '13px' }}>{h.duration.toFixed(1)}s</td>
+                              <td style={{ padding: '10px', textAlign: 'center', fontSize: '13px' }}>${h.cost}</td>
+                              <td style={{ padding: '10px', fontSize: '12px', color: '#dc2626', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {h.error || '-'}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              ) : (
+                <div style={{ padding: '24px', textAlign: 'center', color: '#6b7280' }}>
+                  {monitoringLoading ? 'Lade Weekly Check Daten...' : 'Keine Daten verfügbar'}
+                </div>
+              )}
             </div>
           </div>
         )}

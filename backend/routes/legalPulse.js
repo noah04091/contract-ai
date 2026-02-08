@@ -1127,4 +1127,189 @@ router.patch("/:contractId/recommendations/:recIndex", verifyToken, requirePremi
   }
 });
 
+// ============================================================
+// ADMIN: WEEKLY LEGAL CHECK MONITORING
+// ============================================================
+
+const verifyAdmin = require("../middleware/verifyAdmin");
+
+/**
+ * GET /admin/weekly-check-stats - Admin-only: Weekly Legal Check health & stats
+ */
+router.get("/admin/weekly-check-stats", verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const database = require("../config/database");
+    const db = await database.connect();
+
+    // Get last 10 health records for Weekly Legal Check
+    const healthRecords = await db.collection("monitoring_health")
+      .find({ service: 'weekly_legal_check' })
+      .sort({ lastRunAt: -1 })
+      .limit(10)
+      .toArray();
+
+    // Get last successful run
+    const lastSuccess = await db.collection("monitoring_health").findOne(
+      { service: 'weekly_legal_check', lastRunStatus: 'success' },
+      { sort: { lastRunAt: -1 } }
+    );
+
+    // Get last failed run (if any)
+    const lastError = await db.collection("monitoring_health").findOne(
+      { service: 'weekly_legal_check', lastRunStatus: 'error' },
+      { sort: { lastRunAt: -1 } }
+    );
+
+    // Get weekly checks from last 4 weeks with aggregated stats
+    const fourWeeksAgo = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000);
+
+    const weeklyCheckStats = await db.collection("weekly_legal_checks").aggregate([
+      { $match: { checkDate: { $gte: fourWeeksAgo } } },
+      {
+        $group: {
+          _id: null,
+          totalChecks: { $sum: 1 },
+          uniqueUsers: { $addToSet: "$userId" },
+          uniqueContracts: { $addToSet: "$contractId" },
+          totalFindings: { $sum: { $size: { $ifNull: ["$stage2Results.findings", []] } } },
+          criticalFindings: {
+            $sum: {
+              $size: {
+                $filter: {
+                  input: { $ifNull: ["$stage2Results.findings", []] },
+                  as: "f",
+                  cond: { $eq: ["$$f.severity", "critical"] }
+                }
+              }
+            }
+          },
+          warningFindings: {
+            $sum: {
+              $size: {
+                $filter: {
+                  input: { $ifNull: ["$stage2Results.findings", []] },
+                  as: "f",
+                  cond: { $eq: ["$$f.severity", "warning"] }
+                }
+              }
+            }
+          },
+          totalCost: { $sum: { $ifNull: ["$costEstimate.estimatedCost", 0] } }
+        }
+      }
+    ]).toArray();
+
+    const stats = weeklyCheckStats[0] || {
+      totalChecks: 0,
+      uniqueUsers: [],
+      uniqueContracts: [],
+      totalFindings: 0,
+      criticalFindings: 0,
+      warningFindings: 0,
+      totalCost: 0
+    };
+
+    // Get digest queue alerts (notifications sent)
+    const alertsSent = await db.collection("digest_queue").countDocuments({
+      type: 'weekly_legal_check',
+      queuedAt: { $gte: fourWeeksAgo }
+    });
+
+    // Calculate next scheduled run (Sunday 02:00 UTC)
+    const now = new Date();
+    const nextSunday = new Date(now);
+    nextSunday.setDate(now.getDate() + (7 - now.getDay()) % 7);
+    nextSunday.setHours(2, 0, 0, 0);
+    if (nextSunday <= now) {
+      nextSunday.setDate(nextSunday.getDate() + 7);
+    }
+
+    res.json({
+      success: true,
+      weeklyCheck: {
+        // Health status
+        isHealthy: lastSuccess && (!lastError || lastSuccess.lastRunAt > lastError?.lastRunAt),
+        lastRun: lastSuccess?.lastRunAt || null,
+        lastRunStatus: healthRecords[0]?.lastRunStatus || 'unknown',
+        lastError: lastError ? {
+          at: lastError.lastRunAt,
+          message: lastError.error
+        } : null,
+        nextScheduledRun: nextSunday,
+        cronExpression: process.env.WEEKLY_CHECK_CRON_EXPR || '0 2 * * 0',
+        cronEnabled: process.env.LEGAL_PULSE_CRON_ENABLED === 'true',
+
+        // Last 4 weeks stats
+        stats: {
+          period: { from: fourWeeksAgo, to: new Date() },
+          totalChecks: stats.totalChecks,
+          uniqueUsers: stats.uniqueUsers?.length || 0,
+          uniqueContracts: stats.uniqueContracts?.length || 0,
+          totalFindings: stats.totalFindings,
+          criticalFindings: stats.criticalFindings,
+          warningFindings: stats.warningFindings,
+          alertsSent,
+          estimatedCost: stats.totalCost?.toFixed(4) || '0.0000'
+        },
+
+        // Recent health history
+        healthHistory: healthRecords.map(r => ({
+          runAt: r.lastRunAt,
+          status: r.lastRunStatus,
+          usersChecked: r.usersChecked || 0,
+          contractsChecked: r.contractsChecked || 0,
+          findingsCount: r.findingsCount || 0,
+          duration: r.duration || 0,
+          cost: r.estimatedCost?.toFixed(4) || '0.0000',
+          error: r.error || null
+        }))
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ [ADMIN] Weekly Check Stats Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Laden der Weekly Check Stats",
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /admin/weekly-check-trigger - Admin-only: Manually trigger weekly check
+ */
+router.post("/admin/weekly-check-trigger", verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const WeeklyLegalCheck = require('../jobs/weeklyLegalCheck');
+    const weeklyCheck = new WeeklyLegalCheck();
+
+    // Start async - don't wait for completion
+    res.json({
+      success: true,
+      message: "Weekly Legal Check wurde gestartet. Überprüfen Sie die Logs für den Fortschritt."
+    });
+
+    // Run in background
+    (async () => {
+      try {
+        await weeklyCheck.init();
+        await weeklyCheck.runWeeklyCheck();
+        await weeklyCheck.close();
+        console.log("✅ [ADMIN] Manual weekly check completed");
+      } catch (error) {
+        console.error("❌ [ADMIN] Manual weekly check failed:", error);
+      }
+    })();
+
+  } catch (error) {
+    console.error("❌ [ADMIN] Weekly Check Trigger Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Starten des Weekly Checks",
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
