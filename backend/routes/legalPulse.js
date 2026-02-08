@@ -1394,6 +1394,73 @@ router.delete("/admin/digest-queue/cleanup", verifyToken, verifyAdmin, async (re
 });
 
 /**
+ * GET /admin/digest-queue/full - Get ALL pending alerts with FULL details
+ * IMPORTANT: This route must come BEFORE /:id to avoid "full" being treated as an id
+ */
+router.get("/admin/digest-queue/full", verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const database = require("../config/database");
+    const db = await database.connect();
+
+    const pendingAlerts = await db.collection("digest_queue")
+      .find({ sent: false })
+      .sort({ queuedAt: -1 })
+      .toArray();
+
+    // Get all user emails
+    const userIds = [...new Set(pendingAlerts.map(a => a.userId))];
+    const users = await db.collection("users").find({
+      _id: { $in: userIds.map(id => typeof id === 'string' ? new ObjectId(id) : id) }
+    }).toArray();
+    const userMap = new Map(users.map(u => [u._id.toString(), u.email]));
+
+    res.json({
+      success: true,
+      count: pendingAlerts.length,
+      alerts: pendingAlerts.map(a => ({
+        ...a,
+        userEmail: userMap.get(a.userId?.toString()) || 'Unknown'
+      }))
+    });
+  } catch (error) {
+    console.error("❌ [ADMIN] Digest Queue Full Error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /admin/digest-queue/:id - Get full details of a specific alert
+ */
+router.get("/admin/digest-queue/:id", verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const database = require("../config/database");
+    const db = await database.connect();
+
+    const alert = await db.collection("digest_queue").findOne({
+      _id: new ObjectId(req.params.id)
+    });
+
+    if (!alert) {
+      return res.status(404).json({ success: false, message: "Alert nicht gefunden" });
+    }
+
+    // Also get user email for verification
+    const user = await db.collection("users").findOne({ _id: alert.userId });
+
+    res.json({
+      success: true,
+      alert: {
+        ...alert,
+        userEmail: user?.email || 'Unknown'
+      }
+    });
+  } catch (error) {
+    console.error("❌ [ADMIN] Digest Get Error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
  * DELETE /admin/digest-queue/:id - Delete specific alert
  */
 router.delete("/admin/digest-queue/:id", verifyToken, verifyAdmin, async (req, res) => {
