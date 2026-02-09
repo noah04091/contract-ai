@@ -114,6 +114,133 @@ Bewerte jede Compliance-Kategorie und gib konkrete Verbesserungsvorschläge.`
     };
   }
 
+  /**
+   * Determine AI model and token limits based on user tier
+   *
+   * Smart Chunking (Klausel-für-Klausel): Available for ALL Business+ users
+   * Deep Analysis (GPT-4-turbo): ONLY for Enterprise users (optional toggle)
+   *
+   * - Free: gpt-4o-mini (shouldn't reach here via requirePremium)
+   * - Business: gpt-4o-mini + Smart Chunking (standard Legal Pulse)
+   * - Enterprise: gpt-4-turbo + Smart Chunking (Deep Analysis, optional toggle)
+   */
+  determineAnalysisConfig(user) {
+    const { isEnterpriseOrHigher } = require('../constants/subscriptionPlans');
+    const plan = user?.subscriptionPlan || 'free';
+
+    // Enterprise: GPT-4-turbo Deep Analysis (optional toggle, default ON)
+    if (isEnterpriseOrHigher(plan)) {
+      const deepEnabled = user?.legalPulseSettings?.deepAnalysis !== false;
+      return deepEnabled
+        ? { model: 'gpt-4-turbo', maxTokens: 8000, deep: true }
+        : { model: 'gpt-4o-mini', maxTokens: 4000, deep: false };
+    }
+
+    // Business: Standard analysis with gpt-4o-mini (Smart Chunking still applies!)
+    // Smart Chunking is handled separately in performAIAnalysis()
+    return { model: 'gpt-4o-mini', maxTokens: 4000, deep: false };
+  }
+
+  /**
+   * Split contract into logical chunks for clause-by-clause analysis
+   */
+  splitIntoChunks(text, maxChunkSize = 6000) {
+    if (text.length <= maxChunkSize) return [text];
+
+    const chunks = [];
+    const sections = text.split(/\n\n+|(?=§\s*\d+)|(?=Artikel\s+\d+)/i);
+
+    let currentChunk = '';
+    for (const section of sections) {
+      if ((currentChunk + section).length > maxChunkSize && currentChunk) {
+        chunks.push(currentChunk.trim());
+        currentChunk = currentChunk.slice(-200) + section; // 200 char overlap
+      } else {
+        currentChunk += (currentChunk ? '\n\n' : '') + section;
+      }
+    }
+    if (currentChunk.trim()) chunks.push(currentChunk.trim());
+    return chunks;
+  }
+
+  /**
+   * Analyze contract in chunks and merge results
+   * Includes error handling for individual chunks - continues even if one fails
+   */
+  async analyzeContractChunks(contractText, contractInfo, relevantLaws = []) {
+    const chunks = this.splitIntoChunks(contractText);
+    console.log(`📊 Analyzing contract in ${chunks.length} chunks`);
+
+    const chunkResults = [];
+    let failedChunks = 0;
+
+    for (let i = 0; i < chunks.length; i++) {
+      try {
+        console.log(`   Chunk ${i + 1}/${chunks.length}...`);
+        const result = await this.analyzeFullContract(chunks[i], contractInfo, relevantLaws);
+        chunkResults.push(result);
+      } catch (error) {
+        failedChunks++;
+        console.error(`   ⚠️ Chunk ${i + 1}/${chunks.length} failed: ${error.message}`);
+        // Continue with other chunks instead of failing completely
+      }
+    }
+
+    // If ALL chunks failed, throw error
+    if (chunkResults.length === 0) {
+      throw new Error(`All ${chunks.length} chunks failed to analyze`);
+    }
+
+    // Log if some chunks failed
+    if (failedChunks > 0) {
+      console.warn(`   ⚠️ ${failedChunks}/${chunks.length} chunks failed, analysis based on ${chunkResults.length} successful chunks`);
+    }
+
+    return this.mergeChunkResults(chunkResults);
+  }
+
+  /**
+   * Merge and deduplicate results from chunks
+   */
+  mergeChunkResults(results) {
+    const merged = { riskScore: 0, topRisks: [], recommendations: [], summary: '', aiGenerated: true };
+
+    // Dedupe risks by title
+    const seenRisks = new Set();
+    for (const r of results) {
+      for (const risk of (r.topRisks || [])) {
+        const key = risk.title?.toLowerCase().substring(0, 50);
+        if (!seenRisks.has(key)) { seenRisks.add(key); merged.topRisks.push(risk); }
+      }
+    }
+
+    // Dedupe recommendations
+    const seenRecs = new Set();
+    for (const r of results) {
+      for (const rec of (r.recommendations || [])) {
+        const key = rec.title?.toLowerCase().substring(0, 50);
+        if (!seenRecs.has(key)) { seenRecs.add(key); merged.recommendations.push(rec); }
+      }
+    }
+
+    // Score: Blend of average and max
+    const scores = results.map(r => r.riskScore || 50).filter(s => s > 0);
+    if (scores.length > 0) {
+      const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+      merged.riskScore = Math.round((avg + Math.max(...scores)) / 2);
+    }
+
+    // Merge other properties from first result
+    if (results.length > 0) {
+      merged.riskLevel = results[0].riskLevel || 'medium';
+      merged.riskFactors = results.flatMap(r => r.riskFactors || []);
+      merged.legalRisks = results.flatMap(r => r.legalRisks || []);
+    }
+
+    merged.summary = results.map(r => r.summary).filter(Boolean).join(' ');
+    return merged;
+  }
+
   // Hauptanalyse-Funktion für einen Vertrag
   async analyzeContract(contract) {
     try {
@@ -206,7 +333,7 @@ Bewerte jede Compliance-Kategorie und gib konkrete Verbesserungsvorschläge.`
     };
   }
 
-  // Haupt-AI-Analyse (Enhanced with RAG)
+  // Haupt-AI-Analyse (Enhanced with RAG + Smart Chunking)
   async performAIAnalysis(contractText, contractInfo) {
     // Wenn kein Text verfügbar, nutze nur Basis-Informationen
     if (!contractText || contractText.length < 100) {
@@ -226,6 +353,12 @@ Bewerte jede Compliance-Kategorie und gib konkrete Verbesserungsvorschläge.`
       }
     }
 
+    // Smart Chunking: Use chunked analysis for long contracts (>15k chars)
+    if (contractText && contractText.length > 15000) {
+      console.log(`📊 [Legal Pulse] Contract is ${contractText.length} chars, using chunked analysis`);
+      return await this.analyzeContractChunks(contractText, contractInfo, relevantLaws);
+    }
+
     // Vollanalyse mit Vertragstext + RAG-Kontext
     return await this.analyzeFullContract(contractText, contractInfo, relevantLaws);
   }
@@ -233,9 +366,9 @@ Bewerte jede Compliance-Kategorie und gib konkrete Verbesserungsvorschläge.`
   // Analyse nur mit Basis-Informationen
   async analyzeBasicInfo(contractInfo) {
     const prompt = `Analysiere diese Vertragseckdaten:
-    
+
 Name: ${contractInfo.name}
-Laufzeit: ${contractInfo.laufzeit}  
+Laufzeit: ${contractInfo.laufzeit}
 Kündigungsfrist: ${contractInfo.kuendigung}
 Status: ${contractInfo.status}
 
@@ -244,8 +377,12 @@ ${this.prompts.riskAnalysis}
 Basiere deine Analyse auf typischen Risiken für diese Art von Vertrag.`;
 
     try {
+      // Determine model based on user tier
+      const config = this.determineAnalysisConfig(contractInfo.user);
+      console.log(`📊 [Legal Pulse] Using ${config.model} (deep: ${config.deep}) for basic analysis`);
+
       const response = await this.openai.chat.completions.create({
-        model: "gpt-4o-mini", // Cost-optimized: 95% günstiger als GPT-4
+        model: config.model,
         messages: [
           {
             role: "system",
@@ -254,7 +391,7 @@ Basiere deine Analyse auf typischen Risiken für diese Art von Vertrag.`;
           { role: "user", content: prompt }
         ],
         temperature: 0.3,
-        max_tokens: 2000
+        max_tokens: config.maxTokens
       });
 
       // 💰 Track API cost
@@ -315,8 +452,12 @@ ${ragContext}
 ${this.prompts.riskAnalysis}`;
 
     try {
+      // Determine model based on user tier
+      const config = this.determineAnalysisConfig(contractInfo.user);
+      console.log(`📊 [Legal Pulse] Using ${config.model} (deep: ${config.deep}) for full contract analysis`);
+
       const response = await this.openai.chat.completions.create({
-        model: "gpt-4o-mini", // Cost-optimized: 95% günstiger als GPT-4
+        model: config.model,
         messages: [
           {
             role: "system",
@@ -325,7 +466,7 @@ ${this.prompts.riskAnalysis}`;
           { role: "user", content: prompt }
         ],
         temperature: 0.2,
-        max_tokens: 4000
+        max_tokens: config.maxTokens
       });
 
       // 💰 Track API cost

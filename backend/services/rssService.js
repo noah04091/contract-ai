@@ -172,6 +172,28 @@ const LEGAL_RSS_FEEDS = {
     name: 'Bundesrat Drucksachen',
     category: 'gesetzgebung',
     enabled: true
+  },
+
+  // ═══════════════════════════════════════════════════
+  // DATENSCHUTZ-AUFSICHTSBEHÖRDEN (Data Protection Authorities)
+  // ═══════════════════════════════════════════════════
+  'bfdi-news': {
+    url: 'https://www.bfdi.bund.de/SiteGlobals/Functions/RSSFeed/Allgemein/rssnewsfeed.xml?nn=252136',
+    name: 'BfDI Bundesbeauftragte Datenschutz',
+    category: 'datenschutz',
+    enabled: true
+  },
+  'baylfdi-news': {
+    url: 'https://www.datenschutz-bayern.de/rss/inhalte.xml',
+    name: 'BayLfD Bayern Datenschutz',
+    category: 'datenschutz',
+    enabled: true
+  },
+  'baylfdi-presse': {
+    url: 'https://www.datenschutz-bayern.de/rss/pressemeldung.xml',
+    name: 'BayLfD Bayern Pressemitteilungen',
+    category: 'datenschutz',
+    enabled: true
   }
 };
 
@@ -267,6 +289,7 @@ function mapFeedCategoryToArea(feedCategory) {
     'steuerrecht': 'Steuerrecht',
     'verbraucherrecht': 'Verbraucherrecht',
     'mietrecht': 'Mietrecht',
+    'datenschutz': 'Datenschutz', // Data protection authorities
     'rechtsprechung': 'Vertragsrecht', // General court decisions
     'verfassungsrecht': 'Vertragsrecht', // Constitutional -> general
     'sozialrecht': 'Arbeitsrecht', // Social law -> labor-related

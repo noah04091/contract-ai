@@ -304,9 +304,9 @@ class LegalPulseMonitor {
       const { getInstance: getLawFingerprinting } = require('../services/lawFingerprinting');
       const fingerprinting = getLawFingerprinting();
 
-      // Fetch RSS feeds (last 7 days to catch recent updates)
-      const rssItems = await rssService.fetchAllFeeds({ maxAge: 7 });
-      console.log(`   📊 Fetched ${rssItems.length} RSS items (last 7 days)`);
+      // Fetch RSS feeds (last 30 days for comprehensive coverage)
+      const rssItems = await rssService.fetchAllFeeds({ maxAge: 30 });
+      console.log(`   📊 Fetched ${rssItems.length} RSS items (last 30 days)`);
 
       if (rssItems.length === 0) {
         return { inserted: 0, updated: 0, skipped: 0, deduplicated: 0 };

@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useLegalPulseSettings } from '../hooks/useLegalPulseSettings';
+import { useAuth } from '../context/AuthContext';
 import styles from '../styles/LegalPulseSettings.module.css';
 
 interface LegalPulseSettingsProps {
@@ -19,6 +20,9 @@ export default function LegalPulseSettings({ onSaveSuccess, compact = false }: L
     availableCategories,
     updateSettings
   } = useLegalPulseSettings();
+
+  const { user } = useAuth();
+  const isEnterprise = user?.subscriptionPlan === 'enterprise';
 
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -78,6 +82,13 @@ export default function LegalPulseSettings({ onSaveSuccess, compact = false }: L
     }
   };
 
+  const handleToggleDeepAnalysis = async (enabled: boolean) => {
+    const success = await updateSettings({ deepAnalysis: enabled });
+    if (success) {
+      setShowSuccessMessage(true);
+      onSaveSuccess?.();
+    }
+  };
 
   if (isLoading) {
     return (
@@ -279,6 +290,33 @@ export default function LegalPulseSettings({ onSaveSuccess, compact = false }: L
               </div>
             )}
           </div>
+
+          {/* Deep Analysis Toggle - Enterprise Only */}
+          {isEnterprise && (
+            <div className={styles.settingCard}>
+              <div className={styles.settingHeader}>
+                <div className={styles.settingInfo}>
+                  <h4 className={styles.settingTitle}>
+                    <span style={{ marginRight: '8px' }}>🧠</span>
+                    Tiefenanalyse (GPT-4 Turbo)
+                  </h4>
+                  <p className={styles.settingDescription}>
+                    Nutzt das fortschrittlichste KI-Modell für präzisere Risikoerkennung.
+                    Als Enterprise-Kunde können Sie dies bei Bedarf deaktivieren.
+                  </p>
+                </div>
+                <label className={styles.toggle}>
+                  <input
+                    type="checkbox"
+                    checked={settings?.deepAnalysis !== false}
+                    onChange={(e) => handleToggleDeepAnalysis(e.target.checked)}
+                    disabled={isSaving}
+                  />
+                  <span className={styles.toggleSlider}></span>
+                </label>
+              </div>
+            </div>
+          )}
         </>
       )}
 

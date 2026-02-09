@@ -9,6 +9,7 @@ export interface LegalPulseSettings {
   categories: string[];
   digestMode: 'weekly';
   emailNotifications: boolean;
+  deepAnalysis?: boolean; // Enterprise users can toggle GPT-4-turbo deep analysis
 }
 
 interface UseLegalPulseSettingsReturn {
@@ -95,7 +96,8 @@ export function useLegalPulseSettings(): UseLegalPulseSettingsReturn {
         similarityThreshold: 0.70,
         categories: ['Arbeitsrecht', 'Mietrecht', 'Kaufrecht', 'Vertragsrecht', 'Datenschutz', 'Verbraucherrecht'],
         digestMode: 'weekly',
-        emailNotifications: true
+        emailNotifications: true,
+        deepAnalysis: true
       });
     } finally {
       setIsLoading(false);

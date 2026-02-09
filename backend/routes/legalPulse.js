@@ -180,7 +180,8 @@ router.get("/settings", verifyToken, async (req, res) => {
         'Datenschutz',
         'Verbraucherrecht'
       ],
-      emailNotifications: true
+      emailNotifications: true,
+      deepAnalysis: true // Enterprise users can toggle this
     };
 
     const settings = user.legalPulseSettings || defaultSettings;
@@ -204,7 +205,7 @@ router.get("/settings", verifyToken, async (req, res) => {
 // 🛡️ Input Validation Middleware für sicheren Body
 router.put("/settings", verifyToken, validateLegalPulseBody, async (req, res) => {
   try {
-    const { enabled, similarityThreshold, categories, digestMode, emailNotifications } = req.body;
+    const { enabled, similarityThreshold, categories, digestMode, emailNotifications, deepAnalysis } = req.body;
 
     // Validation
     const updates = {};
@@ -258,6 +259,11 @@ router.put("/settings", verifyToken, validateLegalPulseBody, async (req, res) =>
 
     if (typeof emailNotifications === 'boolean') {
       updates['legalPulseSettings.emailNotifications'] = emailNotifications;
+    }
+
+    // Deep Analysis toggle (Enterprise-only feature, but we accept it for all - tier check happens in AI service)
+    if (typeof deepAnalysis === 'boolean') {
+      updates['legalPulseSettings.deepAnalysis'] = deepAnalysis;
     }
 
     if (Object.keys(updates).length === 0) {
