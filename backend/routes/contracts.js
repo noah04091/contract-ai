@@ -23,6 +23,21 @@ const { embedContractAsync } = require("../services/contractEmbedder"); // 🔍 
 
 const router = express.Router();
 const aiLegalPulse = new AILegalPulse(); // ⚡ Initialize Legal Pulse analyzer
+
+// 🔧 Fix UTF-8 encoding issues (mojibake: UTF-8 bytes interpreted as Latin-1)
+function fixUtf8Encoding(str) {
+  if (!str || typeof str !== 'string') return str;
+  const fixes = {
+    'Ã¼': 'ü', 'Ã¤': 'ä', 'Ã¶': 'ö', 'Ãœ': 'Ü', 'Ã„': 'Ä', 'Ã–': 'Ö',
+    'ÃŸ': 'ß', 'Ã©': 'é', 'Ã¨': 'è', 'Ã ': 'à', 'Ã¢': 'â', 'Ã®': 'î',
+    'Ã´': 'ô', 'Ã»': 'û', 'Ã§': 'ç', 'Ã±': 'ñ'
+  };
+  let fixed = str;
+  for (const [broken, correct] of Object.entries(fixes)) {
+    fixed = fixed.split(broken).join(correct);
+  }
+  return fixed;
+}
 const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
 const client = new MongoClient(mongoUri);
 let contractsCollection;
@@ -1359,7 +1374,7 @@ router.post("/", verifyToken, async (req, res) => {
     const contractDoc = {
       userId: new ObjectId(req.user.userId),
       organizationId: membership ? membership.organizationId : null, // 👥 Org-Zugehörigkeit
-      name: name || "Unbekannter Vertrag",
+      name: fixUtf8Encoding(name) || "Unbekannter Vertrag",
       laufzeit: laufzeit || "Unbekannt",
       kuendigung: kuendigung || "Unbekannt",
       expiryDate: expiryDate || null,
@@ -3119,7 +3134,7 @@ router.post("/email-import", verifyEmailImportKey, async (req, res) => {
         // Contract-Dokument erstellen
         const newContract = {
           userId: user._id,
-          name: sanitizedFilename.replace('.pdf', ''),
+          name: fixUtf8Encoding(sanitizedFilename.replace('.pdf', '')),
           s3Key: s3Key,
           s3Bucket: process.env.S3_BUCKET_NAME,
           uploadType: 'EMAIL_IMPORT',
