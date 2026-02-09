@@ -1678,11 +1678,37 @@ export default function LegalPulse() {
                   <p>Noch keine Rechtsänderungs-Prüfungen durchgeführt. Die erste Prüfung erfolgt automatisch am nächsten Sonntag.</p>
                 </div>
               ) : (
-                <div className={styles.weeklyCheckList}>
-                  {weeklyChecks.contracts.map(contract => {
-                    const status = contract.latestCheck.stage2Results.overallStatus;
-                    const findings = contract.latestCheck.stage2Results.findings;
-                    const isExpanded = expandedWeeklyCheck === contract.contractId;
+                <>
+                  {/* Zusammenfassung: Verträge ohne Befunde */}
+                  {(() => {
+                    const aktuellContracts = weeklyChecks.contracts.filter(c => c.latestCheck.stage2Results.overallStatus === 'aktuell');
+                    const totalCount = weeklyChecks.contracts.length;
+                    if (aktuellContracts.length > 0) {
+                      return (
+                        <div className={styles.weeklyCheckOkSummary}>
+                          <span className={styles.weeklyCheckOkIcon}>✅</span>
+                          <span>
+                            <strong>{aktuellContracts.length} von {totalCount} Verträgen</strong> zeigen keine relevanten Rechtsänderungen
+                          </span>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+
+                  {/* Nur Verträge mit Handlungsbedarf/Kritisch anzeigen */}
+                  {weeklyChecks.contracts.filter(c => c.latestCheck.stage2Results.overallStatus !== 'aktuell').length === 0 ? (
+                    <div className={styles.weeklyCheckAllGood}>
+                      <p>Alle Ihre Verträge sind auf dem aktuellen Stand. Keine Handlung erforderlich.</p>
+                    </div>
+                  ) : (
+                    <div className={styles.weeklyCheckList}>
+                      {weeklyChecks.contracts
+                        .filter(contract => contract.latestCheck.stage2Results.overallStatus !== 'aktuell')
+                        .map(contract => {
+                          const status = contract.latestCheck.stage2Results.overallStatus;
+                          const findings = contract.latestCheck.stage2Results.findings;
+                          const isExpanded = expandedWeeklyCheck === contract.contractId;
 
                     return (
                       <div
@@ -1774,8 +1800,10 @@ export default function LegalPulse() {
                         )}
                       </div>
                     );
-                  })}
-                </div>
+                        })}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
