@@ -866,14 +866,6 @@ export default function ContractDetailsV2() {
                 {contract.status || "Status unbekannt"}
               </span>
 
-              {contract.legalPulse?.riskScore !== null && contract.legalPulse?.riskScore !== undefined && (
-                <div className={styles.riskScoreBadge}>
-                  <span className={`${styles.riskScoreValue} ${riskInfo.style}`}>
-                    {contract.legalPulse.riskScore}
-                  </span>
-                  <span className={styles.riskScoreLabel}>Legal Score</span>
-                </div>
-              )}
             </div>
           </motion.div>
 
