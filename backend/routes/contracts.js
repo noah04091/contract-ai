@@ -2366,8 +2366,8 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
         changes: ['Initiale Analyse aus Vertragsanalyse abgeleitet'],
         triggeredBy: 'contract_analysis'
       }],
-      aiGenerated: false, // Mark as derived, not full AI Legal Pulse
-      status: 'pending'   // Background deep-analysis still running
+      aiGenerated: true,  // Data comes from real AI contract analysis
+      status: 'synced'    // Initial sync complete, deep Legal Pulse analysis may follow
     };
 
     await contractsCollection.updateOne(
