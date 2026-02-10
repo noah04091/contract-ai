@@ -858,15 +858,16 @@ export default function ContractDetailsV2() {
               </div>
             </div>
 
-            <div className={styles.statusSection}>
-              <span className={`${styles.statusBadge} ${getStatusStyle(contract.status)}`}>
-                {contract.status === 'Aktiv' && <CheckCircle size={14} />}
-                {contract.status === 'Gekündigt' && <XCircle size={14} />}
-                {contract.status === 'Läuft ab' && <AlertTriangle size={14} />}
-                {contract.status || "Status unbekannt"}
-              </span>
-
-            </div>
+            {contract.status && (
+              <div className={styles.statusSection}>
+                <span className={`${styles.statusBadge} ${getStatusStyle(contract.status)}`}>
+                  {contract.status === 'Aktiv' && <CheckCircle size={14} />}
+                  {contract.status === 'Gekündigt' && <XCircle size={14} />}
+                  {contract.status === 'Läuft ab' && <AlertTriangle size={14} />}
+                  {contract.status}
+                </span>
+              </div>
+            )}
           </motion.div>
 
           {/* Tab Navigation */}
