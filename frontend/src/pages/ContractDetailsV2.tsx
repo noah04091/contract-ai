@@ -24,6 +24,7 @@ import {
   ExternalLink,
   Copy,
   ChevronRight,
+  ChevronDown,
   Shield,
   TrendingUp,
   Users,
@@ -39,7 +40,9 @@ import {
   HelpCircle,
   CreditCard,
   Package,
-  Minimize2
+  Minimize2,
+  Award,
+  MessageSquare
 } from "lucide-react";
 import styles from "../styles/ContractDetailsV2.module.css";
 import ContractEditModal from "../components/ContractEditModal";
@@ -91,6 +94,14 @@ interface Contract {
   kosten?: number;
   vertragsnummer?: string;
   notes?: string;
+  // Root-Level Analyse-Felder (vom Backend)
+  contractScore?: number;
+  summary?: string;
+  legalAssessment?: string | string[];
+  suggestions?: string[];
+  risiken?: string[];
+  comparison?: string | string[];
+  laymanSummary?: string[];
   analysis?: {
     summary?: string;
     contractType?: string;
@@ -181,6 +192,12 @@ export default function ContractDetailsV2() {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [pdfScale, setPdfScale] = useState(1.0);
+
+  // Accordion State for Important Clauses
+  const [expandedClauses, setExpandedClauses] = useState<Set<number>>(new Set());
+
+  // Chat State
+  const [openingChat, setOpeningChat] = useState(false);
 
   // ============================================
   // DATA FETCHING
@@ -536,6 +553,114 @@ export default function ContractDetailsV2() {
     }
   };
 
+  // 💬 Handler: Mit KI-Rechtsbot besprechen
+  const handleOpenInChat = async () => {
+    if (!contract) {
+      toast.error('Kein Vertrag für den Chat gefunden.');
+      return;
+    }
+
+    setOpeningChat(true);
+
+    try {
+      const token = localStorage.getItem('token');
+
+      // Build analysis context from available data
+      const contextParts: string[] = [];
+
+      // Summary
+      if (contract.laymanSummary?.length) {
+        contextParts.push(`**Zusammenfassung:** ${contract.laymanSummary.join(' ')}`);
+      } else if (contract.summary) {
+        contextParts.push(`**Zusammenfassung:** ${contract.summary}`);
+      } else if (contract.analysis?.summary) {
+        contextParts.push(`**Zusammenfassung:** ${contract.analysis.summary}`);
+      }
+
+      // Contract Score
+      if (contract.contractScore) {
+        contextParts.push(`**Vertragsbewertung:** ${contract.contractScore}/100`);
+      }
+
+      // Legal Pulse Score
+      if (contract.legalPulse?.riskScore !== null && contract.legalPulse?.riskScore !== undefined) {
+        contextParts.push(`**Legal Pulse Score:** ${contract.legalPulse.riskScore}/100`);
+      }
+
+      // Positive Aspects
+      if (contract.analysis?.positiveAspects?.length) {
+        contextParts.push(`\n**Positive Aspekte:**`);
+        contract.analysis.positiveAspects.forEach(a => {
+          contextParts.push(`- ${a.title}`);
+        });
+      }
+
+      // Concerning Aspects
+      if (contract.analysis?.concerningAspects?.length) {
+        contextParts.push(`\n**Bedenkliche Aspekte:**`);
+        contract.analysis.concerningAspects.forEach(a => {
+          contextParts.push(`- ${a.title}`);
+        });
+      }
+
+      // Root-level Risiken
+      if (contract.risiken?.length) {
+        contextParts.push(`\n**Kritische Risiken:**`);
+        contract.risiken.forEach(r => {
+          contextParts.push(`- ${r}`);
+        });
+      }
+
+      // Legal Pulse Risk Factors
+      if (contract.legalPulse?.riskFactors?.length) {
+        contextParts.push(`\n**Risikofaktoren:**`);
+        contract.legalPulse.riskFactors.forEach(r => {
+          const text = typeof r === 'string' ? r : '';
+          if (text) contextParts.push(`- ${text}`);
+        });
+      }
+
+      // Recommendations
+      if (contract.analysis?.recommendations?.length) {
+        contextParts.push(`\n**Empfehlungen:**`);
+        contract.analysis.recommendations.forEach(r => {
+          const text = typeof r === 'string' ? r : '';
+          if (text) contextParts.push(`- ${text}`);
+        });
+      }
+
+      const analysisContext = contextParts.join('\n');
+
+      const response = await fetch('/api/chat/new-with-contract', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        },
+        body: JSON.stringify({
+          contractId: contract._id,
+          contractName: contract.name,
+          analysisContext: analysisContext,
+          s3Key: contract.s3Key || null
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Chat konnte nicht erstellt werden');
+      }
+
+      const data = await response.json();
+      navigate(`/chat?id=${data.chatId}`);
+    } catch (error) {
+      console.error('Error opening chat:', error);
+      toast.error(error instanceof Error ? error.message : 'Chat konnte nicht geöffnet werden');
+    } finally {
+      setOpeningChat(false);
+    }
+  };
+
   // ============================================
   // HELPER FUNCTIONS
   // ============================================
@@ -584,6 +709,28 @@ export default function ContractDetailsV2() {
     return { level: 'high', label: 'Hohes Risiko', style: styles.riskHigh };
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const getScoreInfo = (score: number | null | undefined) => {
+    if (score === null || score === undefined) return { status: 'Nicht bewertet', color: 'var(--cd-text-tertiary)', bgColor: 'var(--cd-bg)' };
+    if (score >= 80) return { status: 'Ausgezeichnet', color: 'var(--cd-success)', bgColor: 'var(--cd-success-light)' };
+    if (score >= 60) return { status: 'Gut', color: '#22c55e', bgColor: 'rgba(34, 197, 94, 0.1)' };
+    if (score >= 40) return { status: 'Mittel', color: 'var(--cd-warning)', bgColor: 'var(--cd-warning-light)' };
+    return { status: 'Kritisch', color: 'var(--cd-danger)', bgColor: 'var(--cd-danger-light)' };
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const toggleClause = (index: number) => {
+    setExpandedClauses(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
+  };
+
   // ============================================
   // LOADING STATE
   // ============================================
@@ -621,11 +768,13 @@ export default function ContractDetailsV2() {
   }
 
   const riskInfo = getRiskLevel(contract.legalPulse?.riskScore);
+  const scoreInfo = getScoreInfo(contract.contractScore);
+  const hasContractScore = contract.contractScore !== null && contract.contractScore !== undefined;
   const hasAnalysis = contract.analysis && (
     contract.analysis.summary ||
     contract.analysis.positiveAspects?.length ||
     contract.analysis.concerningAspects?.length
-  );
+  ) || contract.legalAssessment || contract.comparison || contract.risiken?.length || contract.laymanSummary?.length;
 
   // ============================================
   // RENDER
@@ -782,8 +931,60 @@ export default function ContractDetailsV2() {
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.2 }}
                   >
-                    {/* Key Metrics */}
-                    <div className={`${styles.card} ${styles.fadeIn}`}>
+                    {/* Contract Score Hero Card */}
+                    {hasContractScore && (
+                      <div className={`${styles.card} ${styles.scoreHeroCard} ${styles.fadeIn}`}>
+                        <div className={styles.scoreHeroContent}>
+                          <div className={styles.scoreCircleContainer}>
+                            <div
+                              className={styles.scoreCircle}
+                              style={{
+                                '--score-color': scoreInfo.color,
+                                '--score-bg': scoreInfo.bgColor,
+                                '--score-progress': `${(contract.contractScore || 0) * 3.6}deg`
+                              } as React.CSSProperties}
+                            >
+                              <div className={styles.scoreCircleInner}>
+                                <span className={styles.scoreValue} style={{ color: scoreInfo.color }}>
+                                  {contract.contractScore}
+                                </span>
+                                <span className={styles.scoreMax}>/100</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className={styles.scoreDetails}>
+                            <div className={styles.scoreHeader}>
+                              <Award size={20} style={{ color: scoreInfo.color }} />
+                              <h3 className={styles.scoreTitle}>Vertragsbewertung</h3>
+                            </div>
+                            <div className={styles.scoreStatus} style={{ color: scoreInfo.color, background: scoreInfo.bgColor }}>
+                              {scoreInfo.status}
+                            </div>
+                            <div className={styles.scoreMetrics}>
+                              <div className={styles.scoreMetric}>
+                                <Shield size={14} />
+                                <span>Risiko: {riskInfo.label}</span>
+                              </div>
+                              {contract.analysis?.positiveAspects && (
+                                <div className={styles.scoreMetric}>
+                                  <CheckCircle size={14} style={{ color: 'var(--cd-success)' }} />
+                                  <span>{contract.analysis.positiveAspects.length} Stärken</span>
+                                </div>
+                              )}
+                              {contract.analysis?.concerningAspects && (
+                                <div className={styles.scoreMetric}>
+                                  <AlertTriangle size={14} style={{ color: 'var(--cd-warning)' }} />
+                                  <span>{contract.analysis.concerningAspects.length} Bedenken</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Key Metrics - Extended */}
+                    <div className={`${styles.card} ${styles.fadeIn} ${hasContractScore ? styles.stagger1 : ''}`}>
                       <div className={styles.cardHeader}>
                         <h3 className={styles.cardTitle}>
                           <span className={styles.cardIcon}><Info size={18} /></span>
@@ -831,18 +1032,46 @@ export default function ContractDetailsV2() {
                             </div>
                           </div>
 
-                          <div className={styles.metricCard}>
-                            <div className={styles.metricHeader}>
-                              <span className={styles.metricLabel}>Legal Score</span>
-                              <div className={styles.metricIconWrapper}>
-                                <Shield size={16} />
+                          {/* NEU: Kosten */}
+                          {contract.kosten !== undefined && contract.kosten !== null && (
+                            <div className={styles.metricCard}>
+                              <div className={styles.metricHeader}>
+                                <span className={styles.metricLabel}>Kosten</span>
+                                <div className={styles.metricIconWrapper}>
+                                  <CreditCard size={16} />
+                                </div>
+                              </div>
+                              <div className={styles.metricValue}>
+                                {contract.kosten.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
                               </div>
                             </div>
-                            <div className={`${styles.metricValue} ${riskInfo.style}`}>
-                              {contract.legalPulse?.riskScore ?? "—"}
+                          )}
+
+                          {/* NEU: Anbieter */}
+                          {contract.anbieter && (
+                            <div className={styles.metricCard}>
+                              <div className={styles.metricHeader}>
+                                <span className={styles.metricLabel}>Anbieter</span>
+                                <div className={styles.metricIconWrapper}>
+                                  <Users size={16} />
+                                </div>
+                              </div>
+                              <div className={styles.metricValue}>{contract.anbieter}</div>
                             </div>
-                            <div className={styles.metricSubtext}>{riskInfo.label}</div>
-                          </div>
+                          )}
+
+                          {/* NEU: Vertragsnummer */}
+                          {contract.vertragsnummer && (
+                            <div className={styles.metricCard}>
+                              <div className={styles.metricHeader}>
+                                <span className={styles.metricLabel}>Vertragsnummer</span>
+                                <div className={styles.metricIconWrapper}>
+                                  <FileText size={16} />
+                                </div>
+                              </div>
+                              <div className={styles.metricValue}>{contract.vertragsnummer}</div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -885,19 +1114,27 @@ export default function ContractDetailsV2() {
                       </div>
                     )}
 
-                    {/* Summary */}
-                    {contract.analysis?.summary && (
+                    {/* Summary - Layman or Analysis Summary */}
+                    {(contract.laymanSummary?.length || contract.analysis?.summary || contract.summary) && (
                       <div className={`${styles.card} ${styles.fadeIn} ${styles.stagger2}`}>
                         <div className={styles.cardHeader}>
                           <h3 className={styles.cardTitle}>
                             <span className={styles.cardIcon}><FileSearch size={18} /></span>
-                            Zusammenfassung
+                            {contract.laymanSummary?.length ? 'Zusammenfassung (einfach erklärt)' : 'Zusammenfassung'}
                           </h3>
                         </div>
                         <div className={styles.cardBody}>
-                          <p style={{ margin: 0, lineHeight: 1.7, color: 'var(--cd-text-secondary)' }}>
-                            {contract.analysis.summary}
-                          </p>
+                          {contract.laymanSummary?.length ? (
+                            <ul className={styles.summaryList}>
+                              {contract.laymanSummary.map((item, idx) => (
+                                <li key={idx}>{item}</li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p style={{ margin: 0, lineHeight: 1.7, color: 'var(--cd-text-secondary)' }}>
+                              {contract.summary || contract.analysis?.summary}
+                            </p>
+                          )}
                         </div>
                       </div>
                     )}
@@ -913,6 +1150,36 @@ export default function ContractDetailsV2() {
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.2 }}
                   >
+                    {/* Analysis Stats Header */}
+                    {hasAnalysis && (
+                      <div className={`${styles.analysisStatsHeader} ${styles.fadeIn}`}>
+                        {hasContractScore && (
+                          <div className={styles.statBadge} style={{ background: scoreInfo.bgColor, color: scoreInfo.color }}>
+                            <Shield size={16} />
+                            <span>Score: {contract.contractScore}</span>
+                          </div>
+                        )}
+                        {(contract.risiken?.length || contract.legalPulse?.riskFactors?.length) ? (
+                          <div className={styles.statBadge} style={{ background: 'var(--cd-danger-light)', color: 'var(--cd-danger)' }}>
+                            <AlertTriangle size={16} />
+                            <span>Risiken: {(contract.risiken?.length || 0) + (contract.legalPulse?.riskFactors?.length || 0)}</span>
+                          </div>
+                        ) : null}
+                        {contract.analysis?.positiveAspects?.length ? (
+                          <div className={styles.statBadge} style={{ background: 'var(--cd-success-light)', color: 'var(--cd-success)' }}>
+                            <CheckCircle size={16} />
+                            <span>Stärken: {contract.analysis.positiveAspects.length}</span>
+                          </div>
+                        ) : null}
+                        {(contract.analysis?.analyzedAt || contract.legalPulse?.analysisDate) && (
+                          <div className={styles.statBadge}>
+                            <Calendar size={16} />
+                            <span>Analyse: {formatDate(contract.analysis?.analyzedAt || contract.legalPulse?.analysisDate)}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     {/* Legal Pulse */}
                     {contract.legalPulse && (
                       <div className={`${styles.card} ${styles.fadeIn}`}>
@@ -1172,7 +1439,7 @@ export default function ContractDetailsV2() {
                       </div>
                     )}
 
-                    {/* Wichtige Klauseln */}
+                    {/* Wichtige Klauseln - Collapsible Accordion */}
                     {contract.analysis?.importantClauses && Array.isArray(contract.analysis.importantClauses) && contract.analysis.importantClauses.length > 0 && (
                       <div className={`${styles.card} ${styles.fadeIn} ${styles.stagger3}`}>
                         <div className={styles.cardHeader}>
@@ -1189,27 +1456,49 @@ export default function ContractDetailsV2() {
                         <div className={styles.cardBody}>
                           <div className={styles.clausesList}>
                             {contract.analysis.importantClauses.map((clause, idx) => clause && (
-                              <div key={idx} className={styles.clauseItem}>
-                                <div className={styles.clauseHeader}>
-                                  <span className={styles.clauseNumber}>{idx + 1}</span>
-                                  <h4 className={styles.clauseTitle}>{clause.title || 'Klausel'}</h4>
-                                </div>
-                                {clause.content && (
-                                  <div className={styles.clauseContent}>
-                                    <strong>Inhalt:</strong> {clause.content}
+                              <div key={idx} className={`${styles.clauseAccordion} ${expandedClauses.has(idx) ? styles.clauseExpanded : ''}`}>
+                                <button
+                                  className={styles.clauseAccordionHeader}
+                                  onClick={() => toggleClause(idx)}
+                                  aria-expanded={expandedClauses.has(idx)}
+                                >
+                                  <div className={styles.clauseAccordionTitle}>
+                                    <span className={styles.clauseNumber}>{idx + 1}</span>
+                                    <h4 className={styles.clauseTitle}>{clause.title || 'Klausel'}</h4>
                                   </div>
-                                )}
-                                {clause.explanation && (
-                                  <div className={styles.clauseExplanation}>
-                                    <strong>Erklärung:</strong> {clause.explanation}
-                                  </div>
-                                )}
-                                {clause.action && (
-                                  <div className={styles.clauseAction}>
-                                    <Lightbulb size={14} style={{ marginRight: 6, flexShrink: 0 }} />
-                                    <span><strong>Handlungsempfehlung:</strong> {clause.action}</span>
-                                  </div>
-                                )}
+                                  <ChevronDown
+                                    size={20}
+                                    className={`${styles.clauseChevron} ${expandedClauses.has(idx) ? styles.clauseChevronOpen : ''}`}
+                                  />
+                                </button>
+                                <AnimatePresence>
+                                  {expandedClauses.has(idx) && (
+                                    <motion.div
+                                      initial={{ height: 0, opacity: 0 }}
+                                      animate={{ height: 'auto', opacity: 1 }}
+                                      exit={{ height: 0, opacity: 0 }}
+                                      transition={{ duration: 0.2 }}
+                                      className={styles.clauseAccordionContent}
+                                    >
+                                      {clause.content && (
+                                        <div className={styles.clauseContent}>
+                                          <strong>Inhalt:</strong> {clause.content}
+                                        </div>
+                                      )}
+                                      {clause.explanation && (
+                                        <div className={styles.clauseExplanation}>
+                                          <strong>Erklärung:</strong> {clause.explanation}
+                                        </div>
+                                      )}
+                                      {clause.action && (
+                                        <div className={styles.clauseAction}>
+                                          <Lightbulb size={14} style={{ marginRight: 6, flexShrink: 0 }} />
+                                          <span><strong>Handlungsempfehlung:</strong> {clause.action}</span>
+                                        </div>
+                                      )}
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
                               </div>
                             ))}
                           </div>
@@ -1285,6 +1574,95 @@ export default function ContractDetailsV2() {
                               );
                             })}
                           </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Root-Level Risiken */}
+                    {contract.risiken && Array.isArray(contract.risiken) && contract.risiken.length > 0 && (
+                      <div className={`${styles.card} ${styles.fadeIn} ${styles.stagger3}`}>
+                        <div className={styles.cardHeader}>
+                          <h3 className={styles.cardTitle}>
+                            <span className={styles.cardIcon} style={{ background: 'var(--cd-danger-light)', color: 'var(--cd-danger)' }}>
+                              <AlertTriangle size={18} />
+                            </span>
+                            Kritische Risiken
+                          </h3>
+                          <span className={styles.tabBadge} style={{ background: 'var(--cd-danger-light)', color: 'var(--cd-danger)' }}>
+                            {contract.risiken.length}
+                          </span>
+                        </div>
+                        <div className={styles.cardBody}>
+                          <div className={styles.analysisList}>
+                            {contract.risiken.map((risk, idx) => {
+                              const riskText = typeof risk === 'string' ? risk : '';
+                              if (!riskText) return null;
+                              return (
+                                <div key={idx} className={`${styles.analysisItem} ${styles.negative}`}>
+                                  <div className={styles.analysisItemIcon}>
+                                    <AlertTriangle size={16} />
+                                  </div>
+                                  <div className={styles.analysisItemContent}>
+                                    <div className={styles.analysisItemText}>{riskText}</div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Rechtliche Bewertung / Legal Assessment */}
+                    {contract.legalAssessment && (
+                      <div className={`${styles.card} ${styles.fadeIn} ${styles.stagger3}`}>
+                        <div className={styles.cardHeader}>
+                          <h3 className={styles.cardTitle}>
+                            <span className={styles.cardIcon} style={{ background: '#e0e7ff', color: '#4f46e5' }}>
+                              <Shield size={18} />
+                            </span>
+                            Rechtliche Bewertung
+                          </h3>
+                        </div>
+                        <div className={styles.cardBody}>
+                          {Array.isArray(contract.legalAssessment) ? (
+                            <ul className={styles.legalAssessmentList}>
+                              {contract.legalAssessment.map((item, idx) => (
+                                <li key={idx}>{item}</li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p style={{ margin: 0, lineHeight: 1.7, color: 'var(--cd-text-secondary)', whiteSpace: 'pre-wrap' }}>
+                              {contract.legalAssessment}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Marktvergleich / Comparison */}
+                    {contract.comparison && (
+                      <div className={`${styles.card} ${styles.fadeIn} ${styles.stagger3}`}>
+                        <div className={styles.cardHeader}>
+                          <h3 className={styles.cardTitle}>
+                            <span className={styles.cardIcon} style={{ background: '#fef3c7', color: '#b45309' }}>
+                              <TrendingUp size={18} />
+                            </span>
+                            Marktvergleich
+                          </h3>
+                        </div>
+                        <div className={styles.cardBody}>
+                          {Array.isArray(contract.comparison) ? (
+                            <ul className={styles.comparisonList}>
+                              {contract.comparison.map((item, idx) => (
+                                <li key={idx}>{item}</li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p style={{ margin: 0, lineHeight: 1.7, color: 'var(--cd-text-secondary)', whiteSpace: 'pre-wrap' }}>
+                              {contract.comparison}
+                            </p>
+                          )}
                         </div>
                       </div>
                     )}
@@ -1668,6 +2046,13 @@ export default function ContractDetailsV2() {
                     )}
                     <button className={styles.quickActionBtn} onClick={() => navigate('/calendar')}>
                       <Calendar size={18} /> Zum Kalender
+                    </button>
+                    <button
+                      className={styles.quickActionBtn}
+                      onClick={handleOpenInChat}
+                      disabled={openingChat}
+                    >
+                      <MessageSquare size={18} /> {openingChat ? 'Wird geöffnet...' : 'Mit KI besprechen'}
                     </button>
                   </div>
                 </div>

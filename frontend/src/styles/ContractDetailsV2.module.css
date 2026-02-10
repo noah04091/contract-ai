@@ -1276,3 +1276,338 @@ input:checked + .toggleSlider:before {
   background: #dbeafe;
   color: #2563eb;
 }
+
+/* ============================================
+   SCORE HERO CARD
+   ============================================ */
+.scoreHeroCard {
+  background: linear-gradient(135deg, var(--cd-surface) 0%, #f8fafc 100%);
+  border: 1px solid var(--cd-border);
+}
+
+.scoreHeroContent {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  padding: 24px;
+}
+
+.scoreCircleContainer {
+  flex-shrink: 0;
+}
+
+.scoreCircle {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--score-color) var(--score-progress),
+    var(--cd-border-light) var(--score-progress)
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--cd-shadow-md);
+}
+
+.scoreCircleInner {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: var(--cd-surface);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.scoreValue {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.scoreMax {
+  font-size: 14px;
+  color: var(--cd-text-tertiary);
+  margin-top: 2px;
+}
+
+.scoreDetails {
+  flex: 1;
+  min-width: 0;
+}
+
+.scoreHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.scoreTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--cd-text-primary);
+  margin: 0;
+}
+
+.scoreStatus {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.scoreMetrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.scoreMetric {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--cd-text-secondary);
+}
+
+/* ============================================
+   ANALYSIS STATS HEADER
+   ============================================ */
+.analysisStatsHeader {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px 20px;
+  background: var(--cd-surface);
+  border: 1px solid var(--cd-border);
+  border-radius: var(--cd-radius-xl);
+  margin-bottom: 24px;
+  box-shadow: var(--cd-shadow-xs);
+}
+
+.statBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: var(--cd-radius-lg);
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--cd-bg);
+  color: var(--cd-text-secondary);
+}
+
+/* ============================================
+   CLAUSE ACCORDION
+   ============================================ */
+.clauseAccordion {
+  background: var(--cd-bg);
+  border-radius: var(--cd-radius-lg);
+  border: 1px solid var(--cd-border-light);
+  overflow: hidden;
+  transition: all var(--cd-transition-fast);
+}
+
+.clauseAccordion:hover {
+  border-color: var(--cd-border);
+}
+
+.clauseExpanded {
+  border-color: var(--cd-primary);
+  box-shadow: var(--cd-shadow-sm);
+}
+
+.clauseAccordionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 16px 20px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--cd-transition-fast);
+}
+
+.clauseAccordionHeader:hover {
+  background: var(--cd-surface-hover);
+}
+
+.clauseAccordionTitle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.clauseChevron {
+  flex-shrink: 0;
+  color: var(--cd-text-tertiary);
+  transition: transform var(--cd-transition-fast);
+}
+
+.clauseChevronOpen {
+  transform: rotate(180deg);
+}
+
+.clauseAccordionContent {
+  padding: 0 20px 20px 52px;
+  overflow: hidden;
+}
+
+/* ============================================
+   SUMMARY LIST
+   ============================================ */
+.summaryList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.summaryList li {
+  position: relative;
+  padding: 12px 0 12px 24px;
+  color: var(--cd-text-secondary);
+  line-height: 1.6;
+  border-bottom: 1px solid var(--cd-border-light);
+}
+
+.summaryList li:last-child {
+  border-bottom: none;
+}
+
+.summaryList li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 18px;
+  width: 8px;
+  height: 8px;
+  background: var(--cd-primary);
+  border-radius: 50%;
+}
+
+/* ============================================
+   LEGAL ASSESSMENT LIST
+   ============================================ */
+.legalAssessmentList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.legalAssessmentList li {
+  position: relative;
+  padding: 12px 0 12px 28px;
+  color: var(--cd-text-secondary);
+  line-height: 1.6;
+  border-bottom: 1px solid var(--cd-border-light);
+}
+
+.legalAssessmentList li:last-child {
+  border-bottom: none;
+}
+
+.legalAssessmentList li::before {
+  content: '⚖️';
+  position: absolute;
+  left: 0;
+  top: 12px;
+  font-size: 14px;
+}
+
+/* ============================================
+   COMPARISON LIST
+   ============================================ */
+.comparisonList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.comparisonList li {
+  position: relative;
+  padding: 12px 0 12px 28px;
+  color: var(--cd-text-secondary);
+  line-height: 1.6;
+  border-bottom: 1px solid var(--cd-border-light);
+}
+
+.comparisonList li:last-child {
+  border-bottom: none;
+}
+
+.comparisonList li::before {
+  content: '📊';
+  position: absolute;
+  left: 0;
+  top: 12px;
+  font-size: 14px;
+}
+
+/* ============================================
+   RESPONSIVE - Score Hero
+   ============================================ */
+@media (max-width: 768px) {
+  .scoreHeroContent {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .scoreCircle {
+    width: 100px;
+    height: 100px;
+  }
+
+  .scoreCircleInner {
+    width: 80px;
+    height: 80px;
+  }
+
+  .scoreValue {
+    font-size: 26px;
+  }
+
+  .scoreHeader {
+    justify-content: center;
+  }
+
+  .scoreMetrics {
+    justify-content: center;
+  }
+
+  .analysisStatsHeader {
+    justify-content: center;
+  }
+}
+
+/* ============================================
+   QUICK ACTION HIGHLIGHT BUTTON
+   ============================================ */
+.quickActionBtnHighlight {
+  background: linear-gradient(135deg, var(--cd-primary) 0%, #7c3aed 100%) !important;
+  color: white !important;
+  border: none !important;
+  font-weight: 600;
+  transition: all var(--cd-transition-fast);
+}
+
+.quickActionBtnHighlight:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+
+.quickActionBtnHighlight:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}

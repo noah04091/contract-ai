@@ -114,6 +114,7 @@ export default function AssistantWidget() {
     };
   }, []);
 
+
   // Detect mobile screen size
   useEffect(() => {
     const handleResize = () => {
