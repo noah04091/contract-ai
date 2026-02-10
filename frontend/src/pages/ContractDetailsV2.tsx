@@ -858,7 +858,7 @@ export default function ContractDetailsV2() {
               </div>
             </div>
 
-            {contract.status && (
+            {contract.status && contract.status !== 'Unbekannt' && (
               <div className={styles.statusSection}>
                 <span className={`${styles.statusBadge} ${getStatusStyle(contract.status)}`}>
                   {contract.status === 'Aktiv' && <CheckCircle size={14} />}
