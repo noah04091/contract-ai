@@ -32,7 +32,8 @@ import {
   SlidersHorizontal,
   Pencil,
   Trash2,
-  Save
+  Save,
+  Mail
 } from "lucide-react";
 import axios from "axios";
 import "../styles/AppleCalendar.css";
@@ -643,6 +644,38 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
               </div>
             </div>
           </div>
+
+          {/* E-Mail Benachrichtigungs-Info */}
+          {(currentEvent.severity === 'warning' || currentEvent.severity === 'critical') && (() => {
+            const eventDate = new Date(currentEvent.date);
+            const now = new Date();
+            const daysUntilEvent = Math.ceil((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+            if (daysUntilEvent <= 0) return null;
+
+            return (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '12px 16px',
+                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(59, 130, 246, 0.04))',
+                borderRadius: '10px',
+                marginTop: '12px',
+                border: '1px solid rgba(59, 130, 246, 0.15)'
+              }}>
+                <Mail size={16} style={{ color: '#3b82f6', flexShrink: 0 }} />
+                <div style={{ fontSize: '13px', color: '#4b5563' }}>
+                  <span style={{ fontWeight: 500 }}>E-Mail-Erinnerung:</span>{' '}
+                  {daysUntilEvent <= 7 ? (
+                    <span style={{ color: '#059669' }}>Innerhalb der nächsten Tage</span>
+                  ) : (
+                    <span>ca. 7 Tage vorher ({new Date(eventDate.getTime() - 7 * 24 * 60 * 60 * 1000).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })})</span>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
 
           <div className="modal-actions-grid">
             {/* Show "Vertrag anzeigen" if contract is associated */}
@@ -1834,9 +1867,10 @@ interface SnoozeModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSnooze: (days: number) => void;
+  eventDate?: string; // Das aktuelle Event-Datum
 }
 
-function SnoozeModal({ isOpen, onClose, onSnooze }: SnoozeModalProps) {
+function SnoozeModal({ isOpen, onClose, onSnooze, eventDate }: SnoozeModalProps) {
   useEscapeKey(onClose);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showCustomInput, setShowCustomInput] = useState(false);
@@ -1850,7 +1884,20 @@ function SnoozeModal({ isOpen, onClose, onSnooze }: SnoozeModalProps) {
 
   if (!isOpen) return null;
 
-  // 4 Preset-Optionen wie im Screenshot
+  // Berechne das neue Datum basierend auf Tagen
+  const calculateNewDate = (days: number): string => {
+    const baseDate = eventDate ? new Date(eventDate) : new Date();
+    const newDate = new Date(baseDate);
+    newDate.setDate(newDate.getDate() + days);
+    return newDate.toLocaleDateString('de-DE', {
+      weekday: 'short',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
+  // 4 Preset-Optionen mit berechneten Daten
   const snoozePresets = [
     { days: 7, label: '7 Tage' },
     { days: 14, label: '14 Tage' },
@@ -1948,18 +1995,24 @@ function SnoozeModal({ isOpen, onClose, onSnooze }: SnoozeModalProps) {
                 whileHover={{ scale: 1.03, borderColor: '#3B82F6' }}
                 whileTap={{ scale: 0.97 }}
                 style={{
-                  padding: '16px',
+                  padding: '14px 16px',
                   background: '#f9fafb',
                   border: '2px solid #e5e7eb',
                   borderRadius: '12px',
                   cursor: 'pointer',
-                  fontSize: '15px',
-                  fontWeight: 600,
-                  color: '#1f2937',
-                  transition: 'all 0.2s ease'
+                  transition: 'all 0.2s ease',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '4px'
                 }}
               >
-                {preset.label}
+                <span style={{ fontSize: '15px', fontWeight: 600, color: '#1f2937' }}>
+                  {preset.label}
+                </span>
+                <span style={{ fontSize: '11px', color: '#6b7280', fontWeight: 400 }}>
+                  → {calculateNewDate(preset.days)}
+                </span>
               </motion.button>
             ))}
           </div>
@@ -3450,6 +3503,7 @@ export default function CalendarPage() {
             onSnooze={(days) => {
               handleQuickAction("snooze", snoozeEventId, days);
             }}
+            eventDate={events.find(e => e.id === snoozeEventId)?.date}
           />
         )}
       </AnimatePresence>
