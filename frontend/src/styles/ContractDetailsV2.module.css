@@ -62,12 +62,18 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden; /* CRITICAL: Prevent horizontal scroll */
+  width: 100%;
+  max-width: 100vw;
 }
 
 .contentWrapper {
   max-width: 1200px;
   margin: 0 auto;
   padding: 24px;
+  overflow-x: hidden; /* Prevent content overflow */
+  box-sizing: border-box;
+  width: 100%;
 }
 
 /* ============================================
@@ -1630,15 +1636,25 @@ input:checked + .toggleSlider:before {
    ENHANCED RESPONSIVE DESIGN - Mobile (768px)
    ============================================ */
 @media (max-width: 768px) {
-  /* Top Header & Breadcrumb */
+  /* CRITICAL: Prevent all overflow */
+  .contentWrapper {
+    padding: 12px;
+    overflow-x: hidden;
+  }
+
+  /* Top Header - Clean single-line layout */
   .topHeader {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: nowrap;
     gap: 12px;
-    align-items: stretch;
+    align-items: center;
+    padding-bottom: 12px;
+    margin-bottom: 16px;
   }
 
   .breadcrumb {
-    flex-wrap: nowrap;
+    flex: 1;
+    min-width: 0;
     overflow: hidden;
   }
 
@@ -1647,59 +1663,70 @@ input:checked + .toggleSlider:before {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    display: block;
   }
 
   .breadcrumbCurrent {
-    max-width: 150px;
+    max-width: none;
     overflow: hidden;
     text-overflow: ellipsis;
-    display: inline-block;
-    vertical-align: bottom;
   }
 
   .headerActions {
-    justify-content: flex-start;
-    width: 100%;
+    flex-shrink: 0;
+    gap: 4px;
   }
 
-  /* Document Viewer Header - Mobile Optimized */
-  .documentHeader {
+  /* HIDE duplicate title section on mobile */
+  .mainHeader {
+    display: none;
+  }
+
+  /* Show mobile-optimized title (will be added via CSS or TSX) */
+  .mobileTitle {
+    display: block;
+    margin-bottom: 16px;
+  }
+
+  /* Tab Navigation */
+  .tabNavigation {
+    margin-bottom: 16px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Content Grid - Full width, no overflow */
+  .contentGrid {
+    display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 12px;
-  }
-
-  .documentHeader > div:first-child {
+    gap: 16px;
     width: 100%;
-    flex-wrap: wrap;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
-  .documentActions {
+  .mainContent {
     width: 100%;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    gap: 8px;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
-  .documentActions .btn {
-    flex: 0 0 auto;
+  .sidebar {
+    width: 100%;
+    max-width: 100%;
+    order: -1;
   }
 
-  /* Sidebar & Quick Actions */
-  .quickActionBtn {
-    padding: 14px 16px;
-    font-size: 15px;
-    min-height: 48px; /* Better touch target */
+  /* Cards - Prevent overflow */
+  .card {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
   }
 
-  .quickActionBtn svg {
-    width: 20px;
-    height: 20px;
-  }
-
-  /* Card Headers */
   .cardHeader {
-    padding: 14px 16px;
+    padding: 12px 14px;
     flex-wrap: wrap;
     gap: 8px;
   }
@@ -1708,57 +1735,187 @@ input:checked + .toggleSlider:before {
     font-size: 14px;
     flex: 1;
     min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .cardBody {
-    padding: 16px;
+    padding: 14px;
+    overflow-x: hidden;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
 
-  /* Analysis Stats Header */
+  /* Analysis Stats Header - CRITICAL FIX */
   .analysisStatsHeader {
-    padding: 12px 14px;
-    gap: 8px;
+    padding: 10px 12px;
+    gap: 6px;
+    flex-wrap: wrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
   }
 
   .statBadge {
     padding: 6px 10px;
+    font-size: 11px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Analysis Items - Full width */
+  .analysisSection {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .analysisList {
+    width: 100%;
+  }
+
+  .analysisItem {
+    padding: 12px;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .analysisItemContent {
+    overflow: hidden;
+    word-wrap: break-word;
+  }
+
+  .analysisItemTitle {
+    font-size: 13px;
+    word-wrap: break-word;
+  }
+
+  .analysisItemText {
+    font-size: 12px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.5;
+  }
+
+  /* Document Viewer - CRITICAL FIX */
+  .documentViewer {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .documentHeader {
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 12px;
+    overflow: hidden;
+  }
+
+  .documentHeader > div:first-child {
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .documentHeader > div:first-child span:first-child {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+  }
+
+  .documentActions {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-start;
+  }
+
+  .documentActions .btn {
+    flex: 0 0 auto;
+    padding: 8px 10px;
     font-size: 12px;
   }
 
+  .documentContent {
+    padding: 8px;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
   /* Metric Cards */
+  .metricsGrid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
   .metricCard {
-    padding: 14px;
+    padding: 12px;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .metricValue {
-    font-size: 16px;
+    font-size: 15px;
     word-break: break-word;
+    overflow-wrap: break-word;
   }
 
   .metricLabel {
     font-size: 11px;
   }
 
-  /* Analysis Items */
-  .analysisItem {
+  /* Parties Grid */
+  .partiesGrid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .partyCard {
     padding: 12px;
+    width: 100%;
+    box-sizing: border-box;
   }
 
-  .analysisItemTitle {
-    font-size: 13px;
+  .partyName {
+    word-wrap: break-word;
+    white-space: normal;
   }
 
-  .analysisItemText {
-    font-size: 12px;
+  /* Sidebar & Quick Actions */
+  .quickActions {
+    gap: 6px;
+  }
+
+  .quickActionBtn {
+    padding: 14px 16px;
+    font-size: 14px;
+    min-height: 48px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .quickActionBtn svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
   }
 
   /* Timeline Items */
+  .timelineList {
+    width: 100%;
+  }
+
   .timelineItem {
     padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .timelineTitle {
     font-size: 13px;
+    word-wrap: break-word;
   }
 
   .timelineDate {
@@ -1766,38 +1923,62 @@ input:checked + .toggleSlider:before {
   }
 
   /* Clause Accordion */
+  .clausesList {
+    width: 100%;
+  }
+
+  .clauseAccordion {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
   .clauseAccordionHeader {
-    padding: 14px 16px;
+    padding: 12px 14px;
   }
 
   .clauseAccordionContent {
-    padding: 0 16px 16px 40px;
+    padding: 0 14px 14px 36px;
   }
 
   .clauseContent,
   .clauseExplanation {
-    font-size: 13px;
+    font-size: 12px;
+    word-wrap: break-word;
   }
 
   .clauseAction {
-    font-size: 12px;
-    padding: 8px 12px;
+    font-size: 11px;
+    padding: 8px 10px;
+    word-wrap: break-word;
   }
 
   /* Reminder Card */
   .reminderCard {
-    padding: 14px;
+    padding: 12px;
   }
 
-  /* Button Sizes for Touch */
+  /* Score Hero Card */
+  .scoreHeroContent {
+    flex-direction: column;
+    text-align: center;
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .scoreMetrics {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  /* Buttons */
   .btn {
     min-height: 44px;
-    padding: 12px 16px;
+    padding: 10px 14px;
   }
 
   .btnSm {
     min-height: 36px;
-    padding: 8px 12px;
+    padding: 8px 10px;
   }
 
   .btnIcon {
@@ -1807,20 +1988,28 @@ input:checked + .toggleSlider:before {
 
   /* Empty States */
   .emptyState {
-    padding: 30px 16px;
+    padding: 24px 14px;
   }
 
   .emptyIcon {
-    width: 56px;
-    height: 56px;
+    width: 48px;
+    height: 48px;
   }
 
   .emptyTitle {
-    font-size: 15px;
+    font-size: 14px;
   }
 
   .emptyText {
-    font-size: 13px;
+    font-size: 12px;
+  }
+
+  /* Summary Lists */
+  .summaryList li,
+  .legalAssessmentList li,
+  .comparisonList li {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
 }
 
@@ -1829,40 +2018,19 @@ input:checked + .toggleSlider:before {
    ============================================ */
 @media (max-width: 480px) {
   .contentWrapper {
-    padding: 12px;
+    padding: 10px;
   }
 
-  /* Title Section */
-  .contractTitle {
-    font-size: 18px;
-    gap: 8px;
-  }
-
-  .aiGeneratedBadge {
-    font-size: 10px;
-    padding: 3px 8px;
-  }
-
-  .contractMeta {
-    gap: 10px;
-  }
-
-  .metaItem {
-    font-size: 12px;
-  }
-
-  /* Status Badge */
-  .statusBadge {
-    padding: 6px 12px;
-    font-size: 12px;
+  /* Back Button smaller */
+  .backButton {
+    width: 32px;
+    height: 32px;
   }
 
   /* Tab Navigation - Scrollable */
   .tabNavigation {
     padding: 2px;
     gap: 2px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     -ms-overflow-style: none;
   }
@@ -1872,199 +2040,21 @@ input:checked + .toggleSlider:before {
   }
 
   .tabButton {
-    padding: 10px 14px;
+    padding: 8px 12px;
     font-size: 12px;
-    white-space: nowrap;
-    flex-shrink: 0;
+  }
+
+  .tabButton .tabIcon {
+    display: none;
   }
 
   .tabBadge {
-    min-width: 18px;
-    height: 18px;
-    font-size: 10px;
+    min-width: 16px;
+    height: 16px;
+    font-size: 9px;
   }
 
   /* Score Hero Card */
-  .scoreHeroContent {
-    padding: 16px;
-    gap: 16px;
-  }
-
-  .scoreCircle {
-    width: 80px;
-    height: 80px;
-  }
-
-  .scoreCircleInner {
-    width: 64px;
-    height: 64px;
-  }
-
-  .scoreValue {
-    font-size: 22px;
-  }
-
-  .scoreMax {
-    font-size: 12px;
-  }
-
-  .scoreTitle {
-    font-size: 15px;
-  }
-
-  .scoreStatus {
-    font-size: 12px;
-    padding: 5px 10px;
-  }
-
-  .scoreMetric {
-    font-size: 11px;
-  }
-
-  /* Document Actions - Stack Vertically */
-  .documentHeader {
-    padding: 10px;
-  }
-
-  .documentActions {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-    gap: 6px;
-  }
-
-  .documentActions .btn {
-    justify-content: center;
-    font-size: 11px;
-  }
-
-  .documentContent {
-    padding: 12px;
-    min-height: 400px;
-  }
-
-  /* Metrics Grid - Full Width */
-  .metricsGrid {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-
-  .metricCard {
-    padding: 12px;
-  }
-
-  .metricIconWrapper {
-    width: 24px;
-    height: 24px;
-  }
-
-  /* Parties Grid */
-  .partiesGrid {
-    gap: 10px;
-  }
-
-  .partyCard {
-    padding: 12px;
-  }
-
-  .partyAvatar {
-    width: 36px;
-    height: 36px;
-    font-size: 13px;
-  }
-
-  .partyName {
-    font-size: 13px;
-  }
-
-  /* Analysis List */
-  .analysisList {
-    gap: 10px;
-  }
-
-  .analysisItemIcon {
-    width: 24px;
-    height: 24px;
-  }
-
-  /* Clauses */
-  .clausesList {
-    gap: 10px;
-  }
-
-  .clauseNumber {
-    width: 24px;
-    height: 24px;
-    font-size: 11px;
-  }
-
-  .clauseTitle {
-    font-size: 13px;
-  }
-
-  /* Cards */
-  .card {
-    border-radius: var(--cd-radius-lg);
-  }
-
-  .cardHeader {
-    padding: 12px 14px;
-  }
-
-  .cardBody {
-    padding: 14px;
-  }
-
-  .cardIcon {
-    width: 28px;
-    height: 28px;
-  }
-
-  /* Quick Actions */
-  .quickActions {
-    gap: 6px;
-  }
-
-  .quickActionBtn {
-    padding: 12px 14px;
-    font-size: 13px;
-    gap: 10px;
-  }
-
-  /* Summary Lists */
-  .summaryList li,
-  .legalAssessmentList li,
-  .comparisonList li {
-    padding: 10px 0 10px 20px;
-    font-size: 13px;
-  }
-
-  /* Danger Zone Button */
-  .btnDanger {
-    font-size: 13px;
-  }
-}
-
-/* ============================================
-   ENHANCED RESPONSIVE DESIGN - Very Small (360px)
-   ============================================ */
-@media (max-width: 360px) {
-  .contentWrapper {
-    padding: 8px;
-  }
-
-  .contractTitle {
-    font-size: 16px;
-  }
-
-  .breadcrumbCurrent {
-    max-width: 100px;
-  }
-
-  .tabButton {
-    padding: 8px 10px;
-    font-size: 11px;
-  }
-
   .scoreCircle {
     width: 70px;
     height: 70px;
@@ -2076,25 +2066,277 @@ input:checked + .toggleSlider:before {
   }
 
   .scoreValue {
-    font-size: 18px;
+    font-size: 20px;
+  }
+
+  .scoreMax {
+    font-size: 11px;
+  }
+
+  .scoreTitle {
+    font-size: 14px;
+  }
+
+  .scoreStatus {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+
+  .scoreMetric {
+    font-size: 10px;
+  }
+
+  /* Document Viewer - Compact */
+  .documentHeader {
+    padding: 8px 10px;
+  }
+
+  .documentActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .documentActions .btn {
+    padding: 6px 8px;
+    font-size: 10px;
+    min-height: 32px;
+  }
+
+  .documentContent {
+    padding: 8px;
+    min-height: 350px;
+  }
+
+  /* Cards smaller padding */
+  .cardHeader {
+    padding: 10px 12px;
+  }
+
+  .cardBody {
+    padding: 12px;
+  }
+
+  .cardIcon {
+    width: 26px;
+    height: 26px;
+  }
+
+  .cardTitle {
+    font-size: 13px;
+  }
+
+  /* Metric Cards */
+  .metricCard {
+    padding: 10px;
   }
 
   .metricValue {
     font-size: 14px;
   }
 
+  .metricLabel {
+    font-size: 10px;
+  }
+
+  .metricIconWrapper {
+    width: 22px;
+    height: 22px;
+  }
+
+  /* Analysis Items */
+  .analysisItem {
+    padding: 10px;
+  }
+
+  .analysisItemIcon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .analysisItemTitle {
+    font-size: 12px;
+  }
+
+  .analysisItemText {
+    font-size: 11px;
+  }
+
+  /* Clauses */
+  .clauseNumber {
+    width: 22px;
+    height: 22px;
+    font-size: 10px;
+  }
+
+  .clauseTitle {
+    font-size: 12px;
+  }
+
+  .clauseAccordionContent {
+    padding: 0 12px 12px 32px;
+  }
+
+  /* Quick Actions */
+  .quickActionBtn {
+    padding: 12px;
+    font-size: 13px;
+    min-height: 44px;
+  }
+
+  /* Timeline */
+  .timelineIcon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .timelineTitle {
+    font-size: 12px;
+  }
+
+  .timelineDate {
+    font-size: 10px;
+  }
+
+  /* Summary Lists */
+  .summaryList li,
+  .legalAssessmentList li,
+  .comparisonList li {
+    padding: 8px 0 8px 18px;
+    font-size: 12px;
+  }
+
+  /* Buttons */
   .btn {
-    padding: 10px 12px;
+    min-height: 40px;
+    padding: 8px 12px;
     font-size: 12px;
   }
 
   .btnSm {
-    padding: 6px 10px;
+    min-height: 32px;
+    padding: 6px 8px;
     font-size: 11px;
   }
 
-  .documentActions {
-    grid-template-columns: repeat(3, 1fr);
+  /* Party Cards */
+  .partyAvatar {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+
+  .partyRole {
+    font-size: 10px;
+  }
+
+  .partyName {
+    font-size: 12px;
+  }
+}
+
+/* ============================================
+   ENHANCED RESPONSIVE DESIGN - Very Small (360px)
+   ============================================ */
+@media (max-width: 360px) {
+  .contentWrapper {
+    padding: 6px;
+  }
+
+  .backButton {
+    width: 28px;
+    height: 28px;
+  }
+
+  .breadcrumbText {
+    font-size: 11px;
+  }
+
+  .tabButton {
+    padding: 6px 8px;
+    font-size: 10px;
+  }
+
+  .tabBadge {
+    min-width: 14px;
+    height: 14px;
+    font-size: 8px;
+  }
+
+  .scoreCircle {
+    width: 60px;
+    height: 60px;
+  }
+
+  .scoreCircleInner {
+    width: 48px;
+    height: 48px;
+  }
+
+  .scoreValue {
+    font-size: 16px;
+  }
+
+  .scoreMax {
+    font-size: 10px;
+  }
+
+  .metricValue {
+    font-size: 12px;
+  }
+
+  .metricLabel {
+    font-size: 9px;
+  }
+
+  .cardTitle {
+    font-size: 11px;
+  }
+
+  .cardIcon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .btn {
+    padding: 6px 10px;
+    font-size: 10px;
+    min-height: 32px;
+  }
+
+  .btnSm {
+    padding: 4px 6px;
+    font-size: 9px;
+    min-height: 26px;
+  }
+
+  .btnIcon {
+    min-width: 32px;
+    min-height: 32px;
+  }
+
+  .quickActionBtn {
+    padding: 10px;
+    font-size: 11px;
+    min-height: 36px;
+  }
+
+  .analysisItemText {
+    font-size: 10px;
+  }
+
+  .analysisItemTitle {
+    font-size: 11px;
+  }
+
+  .statBadge {
+    padding: 4px 6px;
+    font-size: 9px;
+  }
+
+  .documentActions .btn {
+    padding: 4px 6px;
+    font-size: 9px;
   }
 }
 

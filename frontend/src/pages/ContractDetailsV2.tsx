@@ -810,11 +810,11 @@ export default function ContractDetailsV2() {
                 onClick={() => navigate('/contracts')}
                 aria-label="Zurück zur Vertragsübersicht"
               >
-                <ArrowLeft size={18} />
+                <ArrowLeft size={isMobile ? 16 : 18} />
               </button>
               <span className={styles.breadcrumbText}>
-                <Link to="/contracts">Verträge</Link>
-                <span className={styles.breadcrumbSeparator}> / </span>
+                {!isMobile && <Link to="/contracts">Verträge</Link>}
+                {!isMobile && <span className={styles.breadcrumbSeparator}> / </span>}
                 <span className={styles.breadcrumbCurrent}>{contract.name}</span>
               </span>
             </div>
@@ -825,7 +825,7 @@ export default function ContractDetailsV2() {
                 aria-label="Vertrag teilen"
                 onClick={handleShare}
               >
-                <Share2 size={18} />
+                <Share2 size={isMobile ? 16 : 18} />
               </button>
               <button
                 className={`${styles.btn} ${styles.btnGhost} ${styles.btnIcon}`}
@@ -833,52 +833,54 @@ export default function ContractDetailsV2() {
                 aria-label="Vertrag drucken"
                 onClick={handlePrint}
               >
-                <Printer size={18} />
+                <Printer size={isMobile ? 16 : 18} />
               </button>
             </div>
           </motion.div>
 
-          {/* Main Header - Title & Status */}
-          <motion.div
-            className={styles.mainHeader}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-          >
-            <div className={styles.titleSection}>
-              <h1 className={styles.contractTitle}>
-                {contract.name}
-                {contract.isGenerated && (
-                  <span className={styles.aiGeneratedBadge}>
-                    <Zap size={12} /> KI-Generiert
-                  </span>
-                )}
-              </h1>
-              <div className={styles.contractMeta}>
-                <span className={styles.metaItem}>
-                  <Calendar size={14} className={styles.metaIcon} />
-                  {contract.isGenerated ? 'Erstellt' : 'Hochgeladen'}: {formatDate(contract.isGenerated ? contract.createdAt : contract.uploadedAt)}
-                </span>
-                {contract.analysis?.contractType && (
+          {/* Main Header - Title & Status (Hidden on Mobile via CSS) */}
+          {!isMobile && (
+            <motion.div
+              className={styles.mainHeader}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+            >
+              <div className={styles.titleSection}>
+                <h1 className={styles.contractTitle}>
+                  {contract.name}
+                  {contract.isGenerated && (
+                    <span className={styles.aiGeneratedBadge}>
+                      <Zap size={12} /> KI-Generiert
+                    </span>
+                  )}
+                </h1>
+                <div className={styles.contractMeta}>
                   <span className={styles.metaItem}>
-                    <FileText size={14} className={styles.metaIcon} />
-                    {contract.analysis.contractType}
+                    <Calendar size={14} className={styles.metaIcon} />
+                    {contract.isGenerated ? 'Erstellt' : 'Hochgeladen'}: {formatDate(contract.isGenerated ? contract.createdAt : contract.uploadedAt)}
                   </span>
-                )}
+                  {contract.analysis?.contractType && (
+                    <span className={styles.metaItem}>
+                      <FileText size={14} className={styles.metaIcon} />
+                      {contract.analysis.contractType}
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
 
-            {contract.status && contract.status !== 'Unbekannt' && (
-              <div className={styles.statusSection}>
-                <span className={`${styles.statusBadge} ${getStatusStyle(contract.status)}`}>
-                  {contract.status === 'Aktiv' && <CheckCircle size={14} />}
-                  {contract.status === 'Gekündigt' && <XCircle size={14} />}
-                  {contract.status === 'Läuft ab' && <AlertTriangle size={14} />}
-                  {contract.status}
-                </span>
-              </div>
-            )}
-          </motion.div>
+              {contract.status && contract.status !== 'Unbekannt' && (
+                <div className={styles.statusSection}>
+                  <span className={`${styles.statusBadge} ${getStatusStyle(contract.status)}`}>
+                    {contract.status === 'Aktiv' && <CheckCircle size={14} />}
+                    {contract.status === 'Gekündigt' && <XCircle size={14} />}
+                    {contract.status === 'Läuft ab' && <AlertTriangle size={14} />}
+                    {contract.status}
+                  </span>
+                </div>
+              )}
+            </motion.div>
+          )}
 
           {/* Tab Navigation */}
           <motion.div
@@ -1729,21 +1731,63 @@ export default function ContractDetailsV2() {
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <div className={styles.documentViewer}>
+                    <div className={styles.documentViewer} style={{ width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
                       {/* PDF Header with Controls */}
-                      <div className={styles.documentHeader}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                          <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--cd-text-primary)' }}>
-                            <FileText size={16} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-                            {contract.name}
+                      <div className={styles.documentHeader} style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: isMobile ? 8 : 12,
+                        padding: isMobile ? '10px 12px' : '12px 16px',
+                        width: '100%',
+                        boxSizing: 'border-box'
+                      }}>
+                        {/* Top Row: File name and page info */}
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: isMobile ? 8 : 16,
+                          width: '100%',
+                          overflow: 'hidden'
+                        }}>
+                          <span style={{
+                            fontSize: isMobile ? 12 : 14,
+                            fontWeight: 500,
+                            color: 'var(--cd-text-primary)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            flex: 1,
+                            minWidth: 0,
+                            overflow: 'hidden'
+                          }}>
+                            <FileText size={isMobile ? 14 : 16} style={{ flexShrink: 0 }} />
+                            <span style={{
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
+                            }}>
+                              {isMobile ? (contract.name.length > 25 ? contract.name.slice(0, 25) + '...' : contract.name) : contract.name}
+                            </span>
                           </span>
                           {numPages && (
-                            <span style={{ fontSize: 13, color: 'var(--cd-text-tertiary)' }}>
-                              Seite {pageNumber} von {numPages}
+                            <span style={{
+                              fontSize: isMobile ? 11 : 13,
+                              color: 'var(--cd-text-tertiary)',
+                              whiteSpace: 'nowrap',
+                              flexShrink: 0
+                            }}>
+                              {isMobile ? `${pageNumber}/${numPages}` : `Seite ${pageNumber} von ${numPages}`}
                             </span>
                           )}
                         </div>
-                        <div className={styles.documentActions}>
+
+                        {/* Action Buttons Row */}
+                        <div className={styles.documentActions} style={{
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: isMobile ? 4 : 8,
+                          width: '100%'
+                        }}>
                           {/* Zoom Controls */}
                           <button
                             className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
@@ -1754,7 +1798,15 @@ export default function ContractDetailsV2() {
                           >
                             -
                           </button>
-                          <span style={{ fontSize: 12, color: 'var(--cd-text-secondary)', minWidth: 45, textAlign: 'center' }}>
+                          <span style={{
+                            fontSize: isMobile ? 11 : 12,
+                            color: 'var(--cd-text-secondary)',
+                            minWidth: isMobile ? 35 : 45,
+                            textAlign: 'center',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
                             {Math.round(pdfScale * 100)}%
                           </span>
                           <button
@@ -1766,39 +1818,35 @@ export default function ContractDetailsV2() {
                           >
                             +
                           </button>
-                          <div style={{ width: 1, height: 20, background: 'var(--cd-border)', margin: '0 8px' }} />
-                          <button
-                            className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
-                            onClick={handleCopyContent}
-                            disabled={!contract.content}
-                            title="Text kopieren"
-                            aria-label="Vertragstext in Zwischenablage kopieren"
-                          >
-                            <Copy size={14} />
-                          </button>
-                          <button
-                            className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
-                            onClick={handlePrint}
-                            title="Drucken"
-                            aria-label="Vertrag drucken"
-                          >
-                            <Printer size={14} />
-                          </button>
-                          <button
-                            className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
-                            onClick={() => setIsFullscreen(true)}
-                            title="Vollbild"
-                            aria-label="PDF im Vollbild anzeigen"
-                          >
-                            <Maximize2 size={14} />
-                          </button>
+                          {!isMobile && <div style={{ width: 1, height: 20, background: 'var(--cd-border)', margin: '0 4px' }} />}
+                          {!isMobile && (
+                            <button
+                              className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
+                              onClick={handleCopyContent}
+                              disabled={!contract.content}
+                              title="Text kopieren"
+                              aria-label="Vertragstext in Zwischenablage kopieren"
+                            >
+                              <Copy size={14} />
+                            </button>
+                          )}
+                          {!isMobile && (
+                            <button
+                              className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
+                              onClick={() => setIsFullscreen(true)}
+                              title="Vollbild"
+                              aria-label="PDF im Vollbild anzeigen"
+                            >
+                              <Maximize2 size={14} />
+                            </button>
+                          )}
                           <button
                             className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
                             onClick={handleOpenOriginalPDF}
                             title="In neuem Tab öffnen"
                             aria-label="Original-PDF in neuem Tab öffnen"
                           >
-                            <ExternalLink size={14} />
+                            <ExternalLink size={isMobile ? 12 : 14} />
                           </button>
                           <button
                             className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`}
@@ -1806,13 +1854,23 @@ export default function ContractDetailsV2() {
                             disabled={exporting}
                             aria-label="Vertrag als PDF exportieren"
                           >
-                            <Download size={14} /> {exporting ? 'Exportiere...' : 'PDF Export'}
+                            <Download size={isMobile ? 12 : 14} /> {isMobile ? 'PDF' : (exporting ? 'Exportiere...' : 'PDF Export')}
                           </button>
                         </div>
                       </div>
 
                       {/* PDF Content */}
-                      <div className={styles.documentContent} ref={documentRef} style={{ background: '#525659', minHeight: 600, overflow: 'auto' }}>
+                      <div
+                        className={styles.documentContent}
+                        ref={documentRef}
+                        style={{
+                          background: '#525659',
+                          minHeight: isMobile ? 400 : 600,
+                          overflow: 'auto',
+                          width: '100%',
+                          maxWidth: '100%'
+                        }}
+                      >
                         {pdfLoading ? (
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 60, color: 'white' }}>
                             <div className={styles.loadingSpinner} style={{ width: 40, height: 40, marginBottom: 16 }} />
