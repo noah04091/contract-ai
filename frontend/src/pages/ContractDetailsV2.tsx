@@ -803,6 +803,7 @@ export default function ContractDetailsV2() {
             className={styles.topHeader}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
+            style={isMobile ? { marginBottom: 12, paddingBottom: 12 } : undefined}
           >
             <div className={styles.breadcrumb}>
               <button
@@ -810,13 +811,15 @@ export default function ContractDetailsV2() {
                 onClick={() => navigate('/contracts')}
                 aria-label="Zurück zur Vertragsübersicht"
               >
-                <ArrowLeft size={isMobile ? 16 : 18} />
+                <ArrowLeft size={isMobile ? 18 : 18} />
               </button>
-              <span className={styles.breadcrumbText}>
-                {!isMobile && <Link to="/contracts">Verträge</Link>}
-                {!isMobile && <span className={styles.breadcrumbSeparator}> / </span>}
-                <span className={styles.breadcrumbCurrent}>{contract.name}</span>
-              </span>
+              {!isMobile && (
+                <span className={styles.breadcrumbText}>
+                  <Link to="/contracts">Verträge</Link>
+                  <span className={styles.breadcrumbSeparator}> / </span>
+                  <span className={styles.breadcrumbCurrent}>{contract.name}</span>
+                </span>
+              )}
             </div>
             <div className={styles.headerActions}>
               <button
@@ -825,7 +828,7 @@ export default function ContractDetailsV2() {
                 aria-label="Vertrag teilen"
                 onClick={handleShare}
               >
-                <Share2 size={isMobile ? 16 : 18} />
+                <Share2 size={isMobile ? 18 : 18} />
               </button>
               <button
                 className={`${styles.btn} ${styles.btnGhost} ${styles.btnIcon}`}
@@ -833,12 +836,76 @@ export default function ContractDetailsV2() {
                 aria-label="Vertrag drucken"
                 onClick={handlePrint}
               >
-                <Printer size={isMobile ? 16 : 18} />
+                <Printer size={isMobile ? 18 : 18} />
               </button>
             </div>
           </motion.div>
 
-          {/* Main Header - Title & Status (Hidden on Mobile via CSS) */}
+          {/* Mobile Header - Title & Meta (Only on Mobile) */}
+          {isMobile && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              style={{
+                marginBottom: 16,
+                paddingBottom: 16,
+                borderBottom: '1px solid var(--cd-border)'
+              }}
+            >
+              <h1 style={{
+                fontSize: 18,
+                fontWeight: 600,
+                color: 'var(--cd-text-primary)',
+                margin: '0 0 8px 0',
+                lineHeight: 1.3,
+                wordWrap: 'break-word',
+                overflowWrap: 'break-word'
+              }}>
+                {contract.name}
+                {contract.isGenerated && (
+                  <span style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    marginLeft: 8,
+                    padding: '2px 8px',
+                    fontSize: 10,
+                    fontWeight: 500,
+                    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                    color: 'white',
+                    borderRadius: 12,
+                    verticalAlign: 'middle'
+                  }}>
+                    <Zap size={10} /> KI
+                  </span>
+                )}
+              </h1>
+              <div style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                gap: 12,
+                fontSize: 13,
+                color: 'var(--cd-text-secondary)'
+              }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Calendar size={14} />
+                  {contract.isGenerated ? 'Erstellt' : 'Hochgeladen'}: {formatDate(contract.isGenerated ? contract.createdAt : contract.uploadedAt)}
+                </span>
+                {contract.status && contract.status !== 'Unbekannt' && (
+                  <span className={`${styles.statusBadge} ${getStatusStyle(contract.status)}`} style={{ fontSize: 11, padding: '4px 10px' }}>
+                    {contract.status === 'Aktiv' && <CheckCircle size={12} />}
+                    {contract.status === 'Gekündigt' && <XCircle size={12} />}
+                    {contract.status === 'Läuft ab' && <AlertTriangle size={12} />}
+                    {contract.status}
+                  </span>
+                )}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Desktop Header - Title & Status */}
           {!isMobile && (
             <motion.div
               className={styles.mainHeader}
