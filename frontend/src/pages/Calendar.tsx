@@ -645,37 +645,6 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
             </div>
           </div>
 
-          {/* E-Mail Benachrichtigungs-Info */}
-          {(currentEvent.severity === 'warning' || currentEvent.severity === 'critical') && (() => {
-            const eventDate = new Date(currentEvent.date);
-            const now = new Date();
-            const daysUntilEvent = Math.ceil((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-
-            if (daysUntilEvent <= 0) return null;
-
-            return (
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '12px 16px',
-                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(59, 130, 246, 0.04))',
-                borderRadius: '10px',
-                marginTop: '12px',
-                border: '1px solid rgba(59, 130, 246, 0.15)'
-              }}>
-                <Mail size={16} style={{ color: '#3b82f6', flexShrink: 0 }} />
-                <div style={{ fontSize: '13px', color: '#4b5563' }}>
-                  <span style={{ fontWeight: 500 }}>E-Mail-Erinnerung:</span>{' '}
-                  {daysUntilEvent <= 7 ? (
-                    <span style={{ color: '#059669' }}>Innerhalb der nächsten Tage</span>
-                  ) : (
-                    <span>ca. 7 Tage vorher ({new Date(eventDate.getTime() - 7 * 24 * 60 * 60 * 1000).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })})</span>
-                  )}
-                </div>
-              </div>
-            );
-          })()}
 
           <div className="modal-actions-grid">
             {/* Show "Vertrag anzeigen" if contract is associated */}
@@ -1338,7 +1307,8 @@ function CreateEventModal({ date, onClose, onEventCreated, initialContractId, in
     severity: 'info' as 'info' | 'warning' | 'critical',
     notes: '',
     contractId: initialContractId || '',
-    contractName: initialContractName || ''
+    contractName: initialContractName || '',
+    reminderDaysBefore: 0 // 0 = keine separate Erinnerung, >0 = X Tage vorher
   });
 
   useEffect(() => {
@@ -1405,8 +1375,6 @@ function CreateEventModal({ date, onClose, onEventCreated, initialContractId, in
       const [hours, minutes] = formData.time.split(':').map(Number);
       const eventDate = new Date(Date.UTC(year, month - 1, day, hours, minutes, 0));
 
-      // ===== DEBUG: Date.UTC Fix =====
-
       interface ApiEventResponse {
         success: boolean;
         event: {
@@ -1418,6 +1386,8 @@ function CreateEventModal({ date, onClose, onEventCreated, initialContractId, in
 
       // Determine if manual or contract-linked
       const hasContract = !!formData.contractId;
+
+      // 1. Create the main event
       const eventPayload: Record<string, unknown> = {
         title: formData.title,
         description: formData.description,
@@ -1453,6 +1423,53 @@ function CreateEventModal({ date, onClose, onEventCreated, initialContractId, in
           isManual: !hasContract
         };
         addEvent(newEvent);
+      }
+
+      // 2. If reminderDaysBefore > 0, create an additional reminder event
+      if (formData.reminderDaysBefore > 0) {
+        const reminderDate = new Date(eventDate);
+        reminderDate.setDate(reminderDate.getDate() - formData.reminderDaysBefore);
+
+        const reminderPayload: Record<string, unknown> = {
+          title: `⏰ Erinnerung: ${formData.title}`,
+          description: `Erinnerung für "${formData.title}" am ${eventDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}. Noch ${formData.reminderDaysBefore} Tage!`,
+          date: reminderDate.toISOString(),
+          type: 'REMINDER',
+          severity: 'warning', // Warning = triggers email notification
+          notes: formData.notes,
+          contractName: hasContract ? formData.contractName : formData.title,
+          isManual: !hasContract,
+          metadata: {
+            isReminderFor: response.data.event?._id || response.data.event?.id,
+            originalEventDate: eventDate.toISOString(),
+            reminderDaysBefore: formData.reminderDaysBefore
+          }
+        };
+
+        if (hasContract) {
+          reminderPayload.contractId = formData.contractId;
+        }
+
+        const reminderResponse = await axios.post<ApiEventResponse>("/api/calendar/events", reminderPayload, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        // Add reminder event to store
+        if (reminderResponse.data.success && reminderResponse.data.event) {
+          const reminderEvent: CalendarEvent = {
+            id: reminderResponse.data.event._id?.toString() || reminderResponse.data.event.id || (Date.now() + 1).toString(),
+            contractId: formData.contractId || '',
+            contractName: hasContract ? formData.contractName : formData.title,
+            title: `⏰ Erinnerung: ${formData.title}`,
+            description: `Erinnerung für "${formData.title}" am ${eventDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}. Noch ${formData.reminderDaysBefore} Tage!`,
+            date: reminderDate.toISOString(),
+            type: 'REMINDER',
+            severity: 'warning',
+            status: 'scheduled',
+            isManual: !hasContract
+          };
+          addEvent(reminderEvent);
+        }
       }
 
       onEventCreated();
@@ -1799,6 +1816,41 @@ function CreateEventModal({ date, onClose, onEventCreated, initialContractId, in
                 rows={3}
                 style={{ ...inputStyle, resize: 'none' }}
               />
+            </div>
+
+            {/* E-Mail Reminder */}
+            <div style={{
+              padding: '16px',
+              background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.06), rgba(59, 130, 246, 0.02))',
+              borderRadius: '12px',
+              border: '1px solid rgba(59, 130, 246, 0.12)'
+            }}>
+              <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                <Mail size={16} style={{ color: '#3b82f6' }} />
+                E-Mail-Erinnerung
+              </label>
+              <select
+                value={formData.reminderDaysBefore}
+                onChange={(e) => setFormData({ ...formData, reminderDaysBefore: parseInt(e.target.value) })}
+                style={{ ...inputStyle, cursor: 'pointer' }}
+              >
+                <option value={0}>Am Tag des Ereignisses</option>
+                <option value={1}>1 Tag vorher</option>
+                <option value={3}>3 Tage vorher</option>
+                <option value={7}>7 Tage vorher</option>
+                <option value={14}>14 Tage vorher</option>
+                <option value={30}>30 Tage vorher</option>
+              </select>
+              {formData.reminderDaysBefore > 0 && (
+                <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#059669' }}>
+                  📧 Du erhältst eine E-Mail am {(() => {
+                    const [year, month, day] = formData.date.split('-').map(Number);
+                    const reminderDate = new Date(year, month - 1, day);
+                    reminderDate.setDate(reminderDate.getDate() - formData.reminderDaysBefore);
+                    return reminderDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                  })()}
+                </p>
+              )}
             </div>
 
             {/* Actions */}
