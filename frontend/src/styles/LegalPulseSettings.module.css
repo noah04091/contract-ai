@@ -527,6 +527,128 @@
     right: 16px;
     top: 16px;
   }
+
+  .savingIndicator {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    justify-content: center;
+  }
+
+  .toggle {
+    width: 52px;
+    height: 30px;
+  }
+
+  .toggleSlider:before {
+    width: 22px;
+    height: 22px;
+  }
+
+  .toggle input:checked + .toggleSlider:before {
+    transform: translateX(22px);
+  }
+}
+
+@media (max-width: 600px) {
+  .container {
+    padding: 14px;
+  }
+
+  .settingCard {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .settingTitle {
+    font-size: 1rem;
+  }
+
+  .settingDescription {
+    font-size: 0.85rem;
+  }
+
+  .thresholdValue {
+    font-size: 1.25rem;
+  }
+
+  .slider {
+    height: 10px;
+  }
+
+  .slider::-webkit-slider-thumb {
+    width: 28px;
+    height: 28px;
+  }
+
+  .categoryChip {
+    padding: 10px 14px;
+    font-size: 0.85rem;
+  }
+
+  .warningBanner,
+  .infoBanner {
+    padding: 14px;
+    font-size: 0.85rem;
+  }
+
+  .warningIcon,
+  .infoIcon {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 12px;
+  }
+
+  .settingCard {
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+
+  .settingHeader {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .settingTitle {
+    font-size: 0.95rem;
+  }
+
+  .settingDescription {
+    font-size: 0.8rem;
+  }
+
+  .toggle {
+    align-self: flex-start;
+  }
+
+  .sliderLabels {
+    font-size: 0.75rem;
+  }
+
+  .guideItem {
+    font-size: 0.8rem;
+  }
+
+  .loadingState,
+  .errorState {
+    padding: 48px 16px;
+  }
+
+  .successMessage,
+  .errorMessage {
+    padding: 12px 16px;
+    font-size: 0.9rem;
+  }
+
+  .successIcon {
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+  }
 }
 
 /* ===== DIGEST MODE SELECTOR (NEW) ===== */

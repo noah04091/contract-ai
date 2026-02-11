@@ -32,6 +32,7 @@ interface ContractRiskGridProps {
   onLoadMore: () => void;
   onResetFilters?: () => void;
   canAccessLegalPulse?: boolean; // 🔐 Premium-Check
+  viewMode?: 'grid' | 'list'; // 📱 Mobile-optimized list view
 }
 
 export default function ContractRiskGrid({
@@ -45,10 +46,11 @@ export default function ContractRiskGrid({
   onMouseEnter,
   onMouseLeave,
   onLoadMore,
-  canAccessLegalPulse = true // Default: true für Rückwärtskompatibilität
+  canAccessLegalPulse = true, // Default: true für Rückwärtskompatibilität
+  viewMode = 'grid' // Default: grid für Rückwärtskompatibilität
 }: ContractRiskGridProps) {
   return (
-    <div className={styles.contractsGrid}>
+    <div className={viewMode === 'list' ? styles.contractsList : styles.contractsGrid}>
       {contracts.map((contract) => {
         const hasAnalysis = contract.legalPulse?.riskScore != null;
         const isPending = contract.legalPulse?.status === 'pending';

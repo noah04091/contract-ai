@@ -2,8 +2,10 @@
 // Professionelle PDF-Reports mit verschiedenen Design-Varianten
 
 const ReactPDF = require('@react-pdf/renderer');
-const { Document, Page, Text, View, StyleSheet, Font } = ReactPDF;
+const { Document, Page, Text, View, StyleSheet, Font, Image } = ReactPDF;
 const React = require('react');
+const https = require('https');
+const http = require('http');
 
 // ═══════════════════════════════════════════════════════════════════════════
 // FONT REGISTRATION
@@ -363,12 +365,101 @@ const createStyles = (theme) => StyleSheet.create({
     color: theme.colors.text,
     lineHeight: 1.6,
     marginBottom: 8
+  },
+  // 🏢 Enterprise Branding
+  brandingHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 20,
+    paddingBottom: 12,
+    borderBottom: '2px solid #003366'
+  },
+  brandingCompanyInfo: {
+    maxWidth: '60%'
+  },
+  brandingCompanyName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#003366',
+    marginBottom: 4
+  },
+  brandingCompanyAddress: {
+    fontSize: 9,
+    color: '#64748b',
+    lineHeight: 1.4
+  },
+  brandingLogo: {
+    maxWidth: 100,
+    maxHeight: 50,
+    objectFit: 'contain'
+  },
+  brandingFooter: {
+    fontSize: 8,
+    color: '#94a3b8',
+    textAlign: 'center'
   }
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
 // HELPER FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * 🏢 Convert S3 or HTTP URL to Base64 for embedding in PDF
+ */
+async function convertUrlToBase64(url) {
+  if (!url) return null;
+
+  // Already a data URI
+  if (url.startsWith('data:')) {
+    return url;
+  }
+
+  return new Promise((resolve) => {
+    const protocol = url.startsWith('https') ? https : http;
+
+    protocol.get(url, { timeout: 5000 }, (response) => {
+      if (response.statusCode !== 200) {
+        console.warn(`[AnalysisReport] Failed to fetch logo: ${response.statusCode}`);
+        resolve(null);
+        return;
+      }
+
+      const chunks = [];
+      response.on('data', (chunk) => chunks.push(chunk));
+      response.on('end', () => {
+        try {
+          const buffer = Buffer.concat(chunks);
+          const mimeType = response.headers['content-type'] || 'image/png';
+          const base64 = `data:${mimeType};base64,${buffer.toString('base64')}`;
+          resolve(base64);
+        } catch (err) {
+          console.warn('[AnalysisReport] Error converting logo to base64:', err.message);
+          resolve(null);
+        }
+      });
+      response.on('error', () => resolve(null));
+    }).on('error', () => resolve(null));
+  });
+}
+
+/**
+ * 🏢 Build company address string from profile
+ */
+function buildCompanyAddress(profile) {
+  if (!profile) return '';
+
+  const parts = [];
+  if (profile.street) parts.push(profile.street);
+  if (profile.postalCode || profile.city) {
+    parts.push(`${profile.postalCode || ''} ${profile.city || ''}`.trim());
+  }
+  if (profile.contactEmail) parts.push(`E-Mail: ${profile.contactEmail}`);
+  if (profile.contactPhone) parts.push(`Tel: ${profile.contactPhone}`);
+
+  return parts.join(' | ');
+}
 
 function getRiskColor(level, theme) {
   switch (level) {
@@ -401,12 +492,42 @@ function getPriorityColor(priority, theme) {
 // DOCUMENT COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════
 
+// 🏢 Enterprise Branding Header Component
+const BrandingHeader = ({ companyProfile, logoBase64, styles }) => {
+  if (!companyProfile?.companyName) return null;
+
+  const companyName = companyProfile.legalForm
+    ? `${companyProfile.companyName} ${companyProfile.legalForm}`
+    : companyProfile.companyName;
+
+  return React.createElement(View, { style: styles.brandingHeader },
+    React.createElement(View, { style: styles.brandingCompanyInfo },
+      React.createElement(Text, { style: styles.brandingCompanyName }, companyName),
+      React.createElement(Text, { style: styles.brandingCompanyAddress },
+        buildCompanyAddress(companyProfile)
+      )
+    ),
+    logoBase64 && React.createElement(Image, {
+      style: styles.brandingLogo,
+      src: logoBase64
+    })
+  );
+};
+
 // Cover Page Component
-const CoverPage = ({ data, theme, styles }) => {
+const CoverPage = ({ data, theme, styles, logoBase64 }) => {
   const overallRisk = data.riskSummary?.overallRisk || 'medium';
   const riskScore = data.riskSummary?.averageScore || 50;
+  const companyProfile = data.companyProfile;
 
   return React.createElement(Page, { size: 'A4', style: styles.page },
+    // 🏢 Enterprise Branding Header
+    companyProfile?.companyName && React.createElement(BrandingHeader, {
+      companyProfile,
+      logoBase64,
+      styles
+    }),
+
     React.createElement(View, { style: styles.coverPage },
       React.createElement(Text, { style: styles.coverTitle }, 'Vertragsanalyse-Report'),
       React.createElement(Text, { style: styles.coverSubtitle }, data.contractName || 'Vertrag'),
@@ -440,19 +561,24 @@ const CoverPage = ({ data, theme, styles }) => {
       )
     ),
     React.createElement(View, { style: styles.footer },
-      React.createElement(Text, null, 'Legal Lens - Contract AI'),
+      React.createElement(Text, null,
+        companyProfile?.companyName
+          ? `Erstellt für ${companyProfile.companyName} | Legal Lens`
+          : 'Legal Lens - Contract AI'
+      ),
       React.createElement(Text, null, 'Seite 1')
     )
   );
 };
 
 // Executive Summary Page
-const ExecutiveSummaryPage = ({ data, theme, styles, pageNumber }) => {
+const ExecutiveSummaryPage = ({ data, theme, styles, pageNumber, logoBase64 }) => {
   const riskSummary = data.riskSummary || {};
   const totalClauses = data.clauses?.length || 0;
   const highRisk = riskSummary.highRisk || 0;
   const mediumRisk = riskSummary.mediumRisk || 0;
   const lowRisk = riskSummary.lowRisk || 0;
+  const companyProfile = data.companyProfile;
 
   // Calculate percentages for risk bar
   const highPercent = totalClauses ? (highRisk / totalClauses) * 100 : 0;
@@ -460,6 +586,13 @@ const ExecutiveSummaryPage = ({ data, theme, styles, pageNumber }) => {
   const lowPercent = totalClauses ? (lowRisk / totalClauses) * 100 : 0;
 
   return React.createElement(Page, { size: 'A4', style: styles.page },
+    // 🏢 Enterprise Branding Header
+    companyProfile?.companyName && React.createElement(BrandingHeader, {
+      companyProfile,
+      logoBase64,
+      styles
+    }),
+
     React.createElement(View, { style: styles.pageHeader },
       React.createElement(Text, { style: styles.pageTitle }, 'Executive Summary'),
       React.createElement(Text, { style: styles.pageNumber }, `Seite ${pageNumber}`)
@@ -551,14 +684,18 @@ const ExecutiveSummaryPage = ({ data, theme, styles, pageNumber }) => {
     ),
 
     React.createElement(View, { style: styles.footer },
-      React.createElement(Text, null, 'Legal Lens - Contract AI'),
+      React.createElement(Text, null,
+        companyProfile?.companyName
+          ? `Erstellt für ${companyProfile.companyName} | Legal Lens`
+          : 'Legal Lens - Contract AI'
+      ),
       React.createElement(Text, null, `Seite ${pageNumber}`)
     )
   );
 };
 
 // Critical Clauses Page
-const CriticalClausesPage = ({ clauses, theme, styles, pageNumber, startIndex = 0 }) => {
+const CriticalClausesPage = ({ clauses, theme, styles, pageNumber, startIndex = 0, companyProfile }) => {
   return React.createElement(Page, { size: 'A4', style: styles.page },
     React.createElement(View, { style: styles.pageHeader },
       React.createElement(Text, { style: styles.pageTitle }, 'Kritische Klauseln'),
@@ -596,14 +733,18 @@ const CriticalClausesPage = ({ clauses, theme, styles, pageNumber, startIndex = 
     }),
 
     React.createElement(View, { style: styles.footer },
-      React.createElement(Text, null, 'Legal Lens - Contract AI'),
+      React.createElement(Text, null,
+        companyProfile?.companyName
+          ? `Erstellt für ${companyProfile.companyName} | Legal Lens`
+          : 'Legal Lens - Contract AI'
+      ),
       React.createElement(Text, null, `Seite ${pageNumber}`)
     )
   );
 };
 
 // Negotiation Checklist Page
-const NegotiationChecklistPage = ({ checklist, theme, styles, pageNumber }) => {
+const NegotiationChecklistPage = ({ checklist, theme, styles, pageNumber, companyProfile }) => {
   return React.createElement(Page, { size: 'A4', style: styles.page },
     React.createElement(View, { style: styles.pageHeader },
       React.createElement(Text, { style: styles.pageTitle }, 'Verhandlungs-Checkliste'),
@@ -636,14 +777,18 @@ const NegotiationChecklistPage = ({ checklist, theme, styles, pageNumber }) => {
     }),
 
     React.createElement(View, { style: styles.footer },
-      React.createElement(Text, null, 'Legal Lens - Contract AI'),
+      React.createElement(Text, null,
+        companyProfile?.companyName
+          ? `Erstellt für ${companyProfile.companyName} | Legal Lens`
+          : 'Legal Lens - Contract AI'
+      ),
       React.createElement(Text, null, `Seite ${pageNumber}`)
     )
   );
 };
 
 // Main Document Component
-const AnalysisReportDocument = ({ data, design, includeSections }) => {
+const AnalysisReportDocument = ({ data, design, includeSections, logoBase64 }) => {
   const theme = DESIGN_THEMES[design] || DESIGN_THEMES.executive;
   const styles = createStyles(theme);
   let pageNumber = 1;
@@ -655,7 +800,8 @@ const AnalysisReportDocument = ({ data, design, includeSections }) => {
     key: 'cover',
     data,
     theme,
-    styles
+    styles,
+    logoBase64
   }));
   pageNumber++;
 
@@ -666,7 +812,8 @@ const AnalysisReportDocument = ({ data, design, includeSections }) => {
       data,
       theme,
       styles,
-      pageNumber
+      pageNumber,
+      logoBase64
     }));
     pageNumber++;
   }
@@ -683,7 +830,8 @@ const AnalysisReportDocument = ({ data, design, includeSections }) => {
         theme,
         styles,
         pageNumber,
-        startIndex: i
+        startIndex: i,
+        companyProfile: data.companyProfile
       }));
       pageNumber++;
     }
@@ -696,7 +844,8 @@ const AnalysisReportDocument = ({ data, design, includeSections }) => {
       checklist: data.checklist,
       theme,
       styles,
-      pageNumber
+      pageNumber,
+      companyProfile: data.companyProfile
     }));
     pageNumber++;
   }
@@ -718,6 +867,7 @@ const AnalysisReportDocument = ({ data, design, includeSections }) => {
  * @param {Object} data.riskSummary - Zusammenfassung der Risiken
  * @param {Array} data.topRisks - Top 3 Risiken
  * @param {Array} data.checklist - Verhandlungs-Checkliste (optional)
+ * @param {Object} data.companyProfile - Enterprise Company Profile (optional)
  * @param {string} design - Design-Variante (executive, modern, minimal, detailed)
  * @param {Array} includeSections - Welche Sektionen einschließen
  * @returns {Promise<Buffer>} PDF als Buffer
@@ -728,10 +878,21 @@ async function generateAnalysisReport(data, design = 'executive', includeSection
     console.log(`[AnalysisReport] Sections: ${includeSections.join(', ')}`);
     console.log(`[AnalysisReport] Data: ${data.clauses?.length || 0} clauses, ${data.criticalClauses?.length || 0} critical`);
 
+    // 🏢 Convert logo URL to Base64 for embedding in PDF
+    let logoBase64 = null;
+    if (data.companyProfile?.logoUrl) {
+      console.log(`[AnalysisReport] 🏢 Converting logo to Base64 for: ${data.companyProfile.companyName}`);
+      logoBase64 = await convertUrlToBase64(data.companyProfile.logoUrl);
+      if (logoBase64) {
+        console.log(`[AnalysisReport] ✅ Logo converted successfully`);
+      }
+    }
+
     const document = React.createElement(AnalysisReportDocument, {
       data,
       design,
-      includeSections
+      includeSections,
+      logoBase64
     });
 
     const pdfBuffer = await ReactPDF.renderToBuffer(document);

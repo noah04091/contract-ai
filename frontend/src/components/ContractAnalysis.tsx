@@ -16,6 +16,7 @@ import styles from "./ContractAnalysis.module.css";
 import { uploadAndAnalyze, checkAnalyzeHealth } from "../utils/api";
 import { useCalendarStore } from "../stores/calendarStore"; // 📅 Calendar Cache Invalidation
 import { useAuth } from "../context/AuthContext"; // 💬 User subscription check
+import { loadCompanyProfile, createBrandedWrapper, type CompanyProfile } from "../utils/pdfBranding"; // 🏢 Enterprise Branding
 
 interface ContractAnalysisProps {
   file?: File; // Optional - für Upload-Flow
@@ -151,12 +152,20 @@ export default function ContractAnalysis({ file, contractName, onReset, onNaviga
   // 💬 Chat Loading State
   const [openingChat, setOpeningChat] = useState(false);
 
+  // 🏢 Enterprise Branding State
+  const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
+
   const navigate = useNavigate();
   const { clearCache: clearCalendarCache } = useCalendarStore(); // 📅 Calendar Cache Invalidation
   const analysisResultRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     checkAnalyzeHealth().then(setServiceHealth);
+  }, []);
+
+  // 🏢 Load Company Profile for Enterprise Branding
+  useEffect(() => {
+    loadCompanyProfile().then(setCompanyProfile);
   }, []);
 
   // ✅ CRITICAL FIX: useEffect um initialResult zu setzen
@@ -464,55 +473,68 @@ export default function ContractAnalysis({ file, contractName, onReset, onNaviga
 
   const handleDownloadPdf = async () => {
     if (!result || !analysisResultRef.current) return;
-    
+
     setGeneratingPdf(true);
-    
+
     try {
       const html2canvas = (await import('html2canvas')).default;
       const jsPDF = (await import('jspdf')).jsPDF;
-      
+
       const element = analysisResultRef.current;
-      
+
+      // Expand all collapsed elements for PDF
       const collapsedElements = element.querySelectorAll('[data-collapsed="true"]');
       collapsedElements.forEach((el) => {
         (el as HTMLElement).style.display = 'block';
       });
-      
-      const canvas = await html2canvas(element, {
+
+      // 🏢 Create branded wrapper with company header/footer (Enterprise)
+      const brandedWrapper = createBrandedWrapper(element, companyProfile, 'Vertragsanalyse');
+      document.body.appendChild(brandedWrapper);
+
+      // Position off-screen for rendering
+      brandedWrapper.style.position = 'absolute';
+      brandedWrapper.style.left = '-9999px';
+      brandedWrapper.style.width = `${element.scrollWidth}px`;
+
+      const canvas = await html2canvas(brandedWrapper, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
-        height: element.scrollHeight,
-        width: element.scrollWidth,
+        height: brandedWrapper.scrollHeight,
+        width: brandedWrapper.scrollWidth,
       });
-      
+
+      // Clean up branded wrapper
+      document.body.removeChild(brandedWrapper);
+
       collapsedElements.forEach((el) => {
         (el as HTMLElement).style.display = '';
       });
-      
+
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
-      
+
       const imgWidth = 210;
       const pageHeight = 295;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       let heightLeft = imgHeight;
-      
+
       let position = 0;
-      
+
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
-      
+
       while (heightLeft >= 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
         heightLeft -= pageHeight;
       }
-      
+
       pdf.save(`Vertragsanalyse_${displayName.replace('.pdf', '')}_${new Date().toISOString().split('T')[0]}.pdf`);
-      
+
     } catch (error) {
       console.error('❌ PDF-Generierung fehlgeschlagen:', error);
       alert('PDF-Generierung fehlgeschlagen. Bitte versuche es erneut.');

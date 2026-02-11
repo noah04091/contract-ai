@@ -53,7 +53,6 @@ import SimpleExplanationPopup from "../components/SimpleExplanationPopup";
 import AnalysisProgressComponent from "../components/AnalysisProgress";
 import PDFDocumentViewer from "../components/PDFDocumentViewer";
 import { ResultsDashboard } from "../components/optimizer";
-import { PageHeader } from "../components/PageHeader";
 
 // Types für revolutionäre Features
 import {
@@ -67,6 +66,7 @@ import { mapLegacyToProgress } from "../utils/analysisAdapter";
 
 // Styles
 import styles from "../styles/Optimizer.module.css";
+import "../styles/ContractPages.css"; // Better Contracts Design
 import { WelcomePopup } from "../components/Tour";
 import { useDocumentScanner } from "../hooks/useDocumentScanner";
 
@@ -2518,42 +2518,72 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
         />
       )}
 
-      <div className={styles.optimizer}>
-        <motion.div
-          className={styles.container}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8 }}
-          style={{
-            maxWidth: highlightedText ? 'none' : undefined,
-            margin: highlightedText ? '0' : undefined,
-            padding: highlightedText ? '48px 0 48px 0' : undefined
-          }}
+      <div className={`contract-page ${!isPremium ? 'with-premium-banner' : ''}`}>
+        <div
+          className={`contract-container ${optimizations.length > 0 ? 'has-results' : ''}`}
+          style={optimizations.length > 0 ? { maxWidth: '1200px' } : undefined}
           onClick={(e) => {
-            // Nur schließen wenn direkt auf den Container geklickt wurde (nicht auf Buttons/Cards)
             if (highlightedText && e.target === e.currentTarget) {
               setHighlightedText(null);
             }
           }}
         >
-          {/* Header */}
-          <PageHeader
-            icon={Sparkles}
-            title="KI-Vertragsoptimierung"
-            subtitle="Automatische Verbesserungsvorschläge für deine Verträge"
-            iconColor="purple"
-            features={[
-              { text: 'Risiko-Erkennung', icon: Shield },
-              { text: 'Klausel-Vorschläge', icon: Lightbulb },
-              { text: 'PDF-Export', icon: Download }
-            ]}
-            actions={optimizations.length > 0 ? [{
-              label: 'Neue Analyse',
-              icon: RefreshCw,
-              onClick: handleReset,
-              variant: 'secondary'
-            }] : undefined}
-          />
+          {/* Hero Section - Better Contracts Style */}
+          <div className="contract-header">
+            <div className="contract-hero-icon">
+              <Sparkles size={36} />
+            </div>
+
+            {!isPremium && (
+              <div className="contract-hero-badge">Premium Feature</div>
+            )}
+
+            <h1>KI-<span className="gradient-text">Vertragsoptimierung</span></h1>
+
+            <p className="contract-description">
+              Lade deinen Vertrag hoch und erhalte automatisch Verbesserungsvorschläge mit rechtlicher Begründung.
+            </p>
+
+            <div className="contract-feature-pills">
+              <div className="contract-feature-pill">
+                <Shield size={16} />
+                Risiko-Erkennung
+              </div>
+              <div className="contract-feature-pill">
+                <Lightbulb size={16} />
+                Klausel-Vorschläge
+              </div>
+              <div className="contract-feature-pill">
+                <Download size={16} />
+                PDF-Export
+              </div>
+            </div>
+
+            {/* Neue Analyse Button - nur wenn Ergebnisse vorhanden */}
+            {optimizations.length > 0 && (
+              <button
+                onClick={handleReset}
+                style={{
+                  marginTop: '20px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '10px 20px',
+                  background: 'rgba(0, 0, 0, 0.05)',
+                  border: '1px solid rgba(0, 0, 0, 0.1)',
+                  borderRadius: '100px',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  color: '#1d1d1f',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <RefreshCw size={16} />
+                Neue Analyse
+              </button>
+            )}
+          </div>
 
           {/* Preloaded Contract Indicator */}
           {preloadedContractName && (
@@ -2779,238 +2809,215 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
             </motion.div>
           )}
 
-          {/* Upload Area - Enterprise Design v2.0 */}
-          <motion.div
-            className={styles.uploadContainer}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <motion.div
-              className={`${styles.uploadAreaEnhanced} ${dragActive ? styles.dragActive : ''} ${!isPremium ? styles.disabled : ''} ${file ? styles.hasFile : ''} ${error ? styles.hasError : ''}`}
+          {/* Upload Area - Better Contracts Style */}
+          <div className="contract-step-container">
+            {/* File Input (hidden) */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept=".pdf,.docx"
+              style={{ display: 'none' }}
+              disabled={!isPremium}
+            />
+
+            {/* Upload Zone */}
+            <div
+              className={`contract-uploader ${dragActive ? 'drag-active' : ''} ${!isPremium ? 'disabled' : ''}`}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
               onDrop={handleDrop}
               onClick={isPremium && !file ? () => fileInputRef.current?.click() : undefined}
+              style={{
+                opacity: isPremium ? 1 : 0.6,
+                cursor: isPremium && !file ? 'pointer' : file ? 'default' : 'not-allowed'
+              }}
             >
-              <input
-                type="file"
-                ref={fileInputRef}
-                style={{ display: 'none' }}
-                accept=".pdf,.docx"
-                disabled={!isPremium}
-                onChange={handleFileChange}
-              />
-
-              {file ? (
-                <motion.div
-                  className={styles.fileInfoEnhanced}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
-                  <div className={styles.fileIconEnhanced}>
-                    <FileText />
-                  </div>
-                  <div className={styles.fileDetailsEnhanced}>
-                    <div className={styles.fileNameEnhanced}>
-                      {file.name}
-                      <span className={styles.successBadge}>
-                        <CheckCircle size={10} />
-                        Bereit
-                      </span>
+              <div className="uploader-content">
+                {file ? (
+                  <>
+                    <div className="upload-icon-wrapper" style={{ background: 'linear-gradient(135deg, #34C759 0%, #30D158 100%)' }}>
+                      <CheckCircle size={32} color="white" />
                     </div>
-                    <div className={styles.fileMetaEnhanced}>
-                      <span>{(file.size / 1024 / 1024).toFixed(2)} MB</span>
-                      <span>•</span>
-                      <span>PDF-Dokument</span>
-                    </div>
-                  </div>
-                  <div className={styles.fileActionsEnhanced}>
+                    <p className="upload-title">{file.name}</p>
+                    <p className="upload-subtitle">
+                      {(file.size / 1024 / 1024).toFixed(2)} MB • Bereit zur Analyse
+                    </p>
                     <button
-                      className={`${styles.fileActionBtn} ${styles.danger}`}
                       onClick={(e) => { e.stopPropagation(); handleReset(); }}
-                      title="Datei entfernen"
+                      style={{
+                        marginTop: '12px',
+                        padding: '8px 16px',
+                        background: 'rgba(255, 59, 48, 0.1)',
+                        border: '1px solid rgba(255, 59, 48, 0.2)',
+                        borderRadius: '8px',
+                        color: '#FF3B30',
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
                     >
-                      <RefreshCw size={16} />
+                      <RefreshCw size={14} />
+                      Andere Datei wählen
                     </button>
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.div className={styles.uploadPromptEnhanced}>
-                  <motion.div
-                    className={styles.uploadIconEnhanced}
-                    animate={{ y: [0, -8, 0] }}
-                    transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
-                  >
-                    <Upload />
-                  </motion.div>
-                  <h3 className={styles.uploadTitleEnhanced}>Vertrag hochladen</h3>
-                  <p className={styles.uploadSubtitleEnhanced}>
-                    Ziehe deine PDF-Datei hierher oder klicke zum Auswählen
-                  </p>
-                  <div className={styles.uploadHint}>
-                    <Lock size={14} />
-                    <span>Sichere Übertragung • Max. 10 MB</span>
-                  </div>
-                </motion.div>
-              )}
-            </motion.div>
+                  </>
+                ) : (
+                  <>
+                    <div className="upload-icon-wrapper">
+                      <Upload size={32} />
+                    </div>
+                    <p className="upload-title">Vertrag hochladen</p>
+                    <p className="upload-subtitle">
+                      {isPremium ? "Datei hierher ziehen oder klicken" : "Premium erforderlich"}
+                    </p>
+                    {isPremium && (
+                      <div className="upload-formats">
+                        <span className="format-tag">PDF</span>
+                        <span className="format-tag">DOCX</span>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
 
-            {/* 📸 Dokument scannen Button */}
-            {!file && (
-              <div style={{ marginTop: '12px', textAlign: 'center' }}>
-                <button
-                  onClick={openScanner}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    padding: "8px 16px",
-                    borderRadius: "8px",
-                    border: "1px solid rgba(99, 102, 241, 0.3)",
-                    background: "rgba(99, 102, 241, 0.1)",
-                    color: "#818cf8",
-                    fontSize: "14px",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                  }}
-                >
+            {/* Quick Actions - Scan Button */}
+            {isPremium && !file && (
+              <div className="quick-actions">
+                <button className="quick-action-btn" onClick={openScanner}>
                   <Camera size={16} />
-                  Dokument scannen
+                  Foto scannen
                 </button>
               </div>
             )}
 
-            {/* Validation Message */}
-            <AnimatePresence>
-              {error && (
-                <motion.div
-                  className={`${styles.validationMessage} ${styles.error}`}
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <AlertCircle size={16} />
-                  <span>{error}</span>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* File Size Indicator */}
-            {file && (
-              <motion.div
-                className={`${styles.fileSizeIndicator} ${
-                  file.size > 8 * 1024 * 1024 ? styles.warning : ''
-                } ${file.size > 10 * 1024 * 1024 ? styles.error : ''}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-              >
-                <span>{(file.size / 1024 / 1024).toFixed(2)} / 10 MB</span>
-                <div className={styles.fileSizeBar}>
-                  <div
-                    className={`${styles.fileSizeBarFill} ${
-                      file.size > 8 * 1024 * 1024 ? styles.warning : ''
-                    } ${file.size > 10 * 1024 * 1024 ? styles.error : ''}`}
-                    style={{ width: `${Math.min((file.size / (10 * 1024 * 1024)) * 100, 100)}%` }}
-                  />
-                </div>
-              </motion.div>
+            {/* Error Message */}
+            {error && (
+              <div className="error-message">
+                <AlertCircle size={18} />
+                {error}
+              </div>
             )}
 
-            {/* 🆕 Perspektiven-Auswahl - nur vor der Analyse zeigen */}
+            {/* Perspektiven-Auswahl - nur vor der Analyse zeigen */}
             {file && optimizations.length === 0 && !optimizationResult && (
-              <motion.div
-                className={styles.perspectiveSelector}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <div className={styles.perspectiveLabel}>
+              <div style={{ marginTop: '24px' }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '12px',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  color: '#6b7280'
+                }}>
                   <Users size={16} />
                   <span>Optimierung aus Sicht von:</span>
                 </div>
-                <div className={styles.perspectiveOptions}>
-                  <button
-                    type="button"
-                    className={`${styles.perspectiveOption} ${perspective === 'neutral' ? styles.active : ''}`}
-                    onClick={() => setPerspective('neutral')}
-                  >
-                    <Shield size={16} />
-                    <span>Neutral</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`${styles.perspectiveOption} ${perspective === 'creator' ? styles.active : ''}`}
-                    onClick={() => setPerspective('creator')}
-                  >
-                    <Building2 size={16} />
-                    <span>Ersteller</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`${styles.perspectiveOption} ${perspective === 'recipient' ? styles.active : ''}`}
-                    onClick={() => setPerspective('recipient')}
-                  >
-                    <User size={16} />
-                    <span>Empfänger</span>
-                  </button>
+                <div style={{
+                  display: 'flex',
+                  gap: '8px',
+                  flexWrap: 'wrap'
+                }}>
+                  {[
+                    { id: 'neutral', label: 'Neutral', icon: Shield },
+                    { id: 'creator', label: 'Ersteller', icon: Building2 },
+                    { id: 'recipient', label: 'Empfänger', icon: User }
+                  ].map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setPerspective(opt.id as 'neutral' | 'creator' | 'recipient')}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '10px 16px',
+                        borderRadius: '12px',
+                        border: perspective === opt.id ? '2px solid #007AFF' : '1px solid #e2e8f0',
+                        background: perspective === opt.id ? 'rgba(0, 122, 255, 0.08)' : 'white',
+                        color: perspective === opt.id ? '#007AFF' : '#1d1d1f',
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <opt.icon size={16} />
+                      <span>{opt.label}</span>
+                    </button>
+                  ))}
                 </div>
-              </motion.div>
+              </div>
             )}
 
-            {/* Action Buttons - Enhanced - NUR anzeigen wenn noch keine Ergebnisse */}
+            {/* Action Button */}
             {optimizations.length === 0 && !optimizationResult && (
-              <motion.div className={styles.actionButtonsEnhanced}>
-                <motion.button
-                  onClick={handleUpload}
-                  disabled={!file || loading || !isPremium}
-                  className={`${styles.analyzeBtn} ${loading ? styles.loading : ''}`}
-                  whileHover={file && isPremium && !loading ? { scale: 1.02 } : undefined}
-                  whileTap={file && isPremium && !loading ? { scale: 0.98 } : undefined}
-                >
-                  {loading ? (
-                    <>
-                      <div className={styles.spinnerEnhanced}></div>
-                      <span>Analysiere...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles size={20} />
-                      <span>Jetzt analysieren</span>
-                    </>
-                  )}
-                </motion.button>
-              </motion.div>
-            )}
-
-            {/* 🆕 CTA: View Optimized Contracts */}
-            {!file && !isAnalyzing && optimizations.length === 0 && isPremium && (
-              <motion.div
-                className={styles.ctaSection}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
+              <button
+                className="contract-button"
+                onClick={handleUpload}
+                disabled={!file || loading || !isPremium}
+                style={{
+                  marginTop: '24px',
+                  width: '100%',
+                  opacity: file && isPremium && !loading ? 1 : 0.6,
+                  cursor: file && isPremium && !loading ? 'pointer' : 'not-allowed'
+                }}
               >
-                <motion.button
-                  className={styles.ctaButton}
-                  onClick={() => {
-                    // Navigate to Contracts page and set filter to 'optimized'
-                    navigate('/contracts', { state: { sourceFilter: 'optimized' } });
-                  }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <FolderOpen size={20} />
-                  <span>Alle optimierten Verträge anzeigen</span>
-                </motion.button>
-                <p className={styles.ctaHint}>
-                  Bereits optimierte Verträge in Ihrer Verwaltung anzeigen
-                </p>
-              </motion.div>
+                {loading ? (
+                  <>
+                    <div className="spinner"></div>
+                    Analysiere...
+                  </>
+                ) : (
+                  <>
+                    Jetzt optimieren
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12h14"></path>
+                      <path d="m12 5 7 7-7 7"></path>
+                    </svg>
+                  </>
+                )}
+              </button>
             )}
-          </motion.div>
+          </div>
+
+          {/* CTA: View Optimized Contracts */}
+          {!file && !isAnalyzing && optimizations.length === 0 && isPremium && (
+            <div className="contract-step-container" style={{ marginTop: '16px', textAlign: 'center' }}>
+              <button
+                onClick={() => navigate('/contracts', { state: { sourceFilter: 'optimized' } })}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '14px 24px',
+                  background: 'rgba(0, 0, 0, 0.04)',
+                  border: '1px solid rgba(0, 0, 0, 0.08)',
+                  borderRadius: '12px',
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  color: '#1d1d1f',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <FolderOpen size={20} />
+                Alle optimierten Verträge anzeigen
+              </button>
+              <p style={{
+                marginTop: '12px',
+                fontSize: '13px',
+                color: '#6b7280'
+              }}>
+                Bereits optimierte Verträge in Ihrer Verwaltung anzeigen
+              </p>
+            </div>
+          )}
 
           {/* 🎨 Premium Analysis Progress - Apple/Microsoft Level */}
           {isAnalyzing && (
@@ -4528,7 +4535,7 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
               </motion.div>
             )}
           </AnimatePresence>
-        </motion.div>
+        </div>
       </div>
 
       {/* 📄 PDF Document Viewer Section - SLIDE-IN RIGHT PANEL */}

@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Better Contracts - V1: Breiteres Layout</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --apple-blue: #007AFF;
+      --apple-blue-light: #3b82f6;
+      --apple-purple: #AF52DE;
+      --apple-indigo: #5856D6;
+      --apple-green: #34C759;
+      --apple-teal: #5AC8FA;
+      --text-primary: #1d1d1f;
+      --text-secondary: #6b7280;
+      --text-tertiary: #9ca3af;
+      --bg-page: linear-gradient(180deg, #f0f4ff 0%, #fafbff 50%, #f8fafc 100%);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
+      background: var(--bg-page);
+      color: var(--text-primary);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Animated Background */
+    .page-background {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .gradient-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+    }
+
+    .orb-1 {
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+      top: -200px; right: -100px;
+      animation: float1 25s ease-in-out infinite;
+    }
+
+    .orb-2 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, transparent 70%);
+      bottom: -100px; left: -100px;
+      animation: float2 30s ease-in-out infinite;
+    }
+
+    @keyframes float1 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(-40px, 60px) scale(1.1); }
+      66% { transform: translate(30px, -30px) scale(0.95); }
+    }
+
+    @keyframes float2 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(50px, -40px) scale(1.1); }
+    }
+
+    /* ============================================
+       MAIN CONTENT - BREITERES LAYOUT
+       ============================================ */
+    .main-content {
+      position: relative;
+      z-index: 1;
+      max-width: 1400px; /* War 1200px - jetzt breiter */
+      margin: 0 auto;
+      padding: 40px 48px 80px; /* Mehr Padding */
+    }
+
+    /* Hero Section */
+    .hero-section {
+      text-align: center;
+      padding: 40px 0 48px;
+    }
+
+    .hero-icon {
+      width: 72px; height: 72px;
+      margin: 0 auto 24px;
+      background: linear-gradient(135deg, var(--apple-blue) 0%, var(--apple-indigo) 100%);
+      border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 12px 40px rgba(59, 130, 246, 0.25);
+    }
+
+    .hero-icon svg { width: 36px; height: 36px; color: white; }
+
+    .hero-badge {
+      display: inline-flex;
+      padding: 6px 14px;
+      background: linear-gradient(135deg, rgba(175, 82, 222, 0.1) 0%, rgba(88, 86, 214, 0.1) 100%);
+      border: 1px solid rgba(175, 82, 222, 0.2);
+      border-radius: 100px;
+      font-size: 12px; font-weight: 600;
+      color: var(--apple-purple);
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .hero-title {
+      font-size: clamp(32px, 5vw, 48px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: 16px;
+    }
+
+    .gradient-text {
+      background: linear-gradient(135deg, var(--apple-blue) 0%, var(--apple-purple) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-subtitle {
+      font-size: 17px;
+      color: var(--text-secondary);
+      max-width: 550px;
+      margin: 0 auto 32px;
+      line-height: 1.6;
+    }
+
+    .feature-pills {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .feature-pill {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 16px;
+      background: rgba(0, 0, 0, 0.04);
+      border-radius: 100px;
+      font-size: 14px; font-weight: 600;
+    }
+
+    .feature-pill svg { width: 16px; height: 16px; color: var(--apple-blue); }
+
+    /* ============================================
+       TWO COLUMN LAYOUT - BREITER
+       ============================================ */
+    .two-column-layout {
+      display: grid;
+      grid-template-columns: 1fr 380px; /* Hauptbereich + Sidebar */
+      gap: 32px;
+      align-items: start;
+    }
+
+    /* Progress Tracker - Horizontal */
+    .progress-tracker {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 32px;
+      padding: 20px 28px;
+      background: white;
+      border-radius: 18px;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .progress-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .step-circle {
+      width: 48px; height: 48px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      background: #f1f5f9;
+      border: 2px solid #e2e8f0;
+      margin-bottom: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .step-circle svg { width: 22px; height: 22px; color: #94a3b8; }
+
+    .progress-step.active .step-circle {
+      background: linear-gradient(135deg, var(--apple-blue) 0%, var(--apple-indigo) 100%);
+      border-color: transparent;
+      box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+    }
+
+    .progress-step.active .step-circle svg { color: white; }
+
+    .step-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #94a3b8;
+      white-space: nowrap;
+    }
+
+    .progress-step.active .step-label { color: var(--text-primary); }
+
+    .progress-connector {
+      width: 60px; height: 3px;
+      background: #e2e8f0;
+      margin: 0 12px 28px;
+      border-radius: 2px;
+    }
+
+    /* Main Card - Breiter */
+    .main-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      border-radius: 24px;
+      padding: 36px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02), 0 12px 40px rgba(0, 0, 0, 0.06);
+    }
+
+    /* Upload Zone */
+    .upload-zone {
+      border: 2px dashed #d1d5db;
+      border-radius: 20px;
+      padding: 44px 28px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: linear-gradient(180deg, #fafbfc 0%, #f8fafc 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .upload-zone::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.06), transparent);
+      animation: shimmer 3s infinite;
+    }
+
+    @keyframes shimmer {
+      0% { left: -100%; }
+      50%, 100% { left: 100%; }
+    }
+
+    .upload-zone:hover {
+      border-color: var(--apple-blue);
+      background: linear-gradient(180deg, #f0f7ff 0%, #e8f4ff 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(59, 130, 246, 0.12);
+    }
+
+    .upload-icon-wrapper {
+      width: 68px; height: 68px;
+      margin: 0 auto 18px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid rgba(59, 130, 246, 0.15);
+    }
+
+    .upload-icon-wrapper svg { width: 30px; height: 30px; color: var(--apple-blue); }
+
+    .upload-title { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+    .upload-subtitle { font-size: 14px; color: var(--text-secondary); margin-bottom: 18px; }
+
+    .upload-formats { display: flex; justify-content: center; gap: 10px; }
+    .format-tag {
+      padding: 6px 12px;
+      background: rgba(0, 0, 0, 0.04);
+      border-radius: 8px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .quick-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .quick-action-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 10px 16px;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      color: var(--text-secondary);
+      font-size: 13px; font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .quick-action-btn:hover {
+      border-color: var(--apple-blue);
+      color: var(--apple-blue);
+      background: rgba(59, 130, 246, 0.04);
+    }
+
+    .quick-action-btn svg { width: 16px; height: 16px; }
+
+    /* Divider */
+    .divider {
+      display: flex; align-items: center; gap: 16px;
+      margin: 24px 0;
+    }
+    .divider-line { flex: 1; height: 1px; background: #e5e7eb; }
+    .divider-text {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Text Input */
+    .input-label {
+      display: block;
+      font-size: 14px; font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .text-input {
+      width: 100%;
+      min-height: 120px;
+      padding: 16px;
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.7;
+      resize: vertical;
+      transition: all 0.3s ease;
+      font-family: inherit;
+    }
+
+    .text-input:focus {
+      outline: none;
+      border-color: var(--apple-blue);
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+      background: white;
+    }
+
+    /* Primary Button */
+    .btn-primary {
+      display: inline-flex;
+      align-items: center; justify-content: center; gap: 8px;
+      width: 100%;
+      padding: 16px 28px;
+      margin-top: 18px;
+      background: linear-gradient(135deg, var(--apple-blue) 0%, var(--apple-indigo) 100%);
+      border: none;
+      border-radius: 14px;
+      font-size: 15px; font-weight: 600;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 16px rgba(59, 130, 246, 0.25);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(59, 130, 246, 0.35);
+    }
+
+    .btn-primary svg { width: 18px; height: 18px; }
+
+    /* ============================================
+       SIDEBAR - Gespeicherte Alternativen
+       ============================================ */
+    .sidebar {
+      position: sticky;
+      top: 40px;
+    }
+
+    .saved-card {
+      background: white;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    }
+
+    .saved-header {
+      padding: 20px 24px;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    }
+
+    .saved-title-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+
+    .saved-icon {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, var(--apple-blue) 0%, var(--apple-indigo) 100%);
+      border-radius: 11px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+    }
+
+    .saved-icon svg { width: 20px; height: 20px; color: white; }
+
+    .saved-title { font-size: 16px; font-weight: 700; }
+    .saved-subtitle { font-size: 12px; color: var(--text-secondary); margin-left: 52px; }
+
+    .saved-content { padding: 24px; }
+
+    .saved-empty {
+      padding: 32px 16px;
+      text-align: center;
+      background: linear-gradient(180deg, #fafbfc 0%, #f8fafc 100%);
+      border: 2px dashed #e5e7eb;
+      border-radius: 14px;
+    }
+
+    .saved-empty-icon {
+      font-size: 36px;
+      margin-bottom: 10px;
+      animation: bounce 2.5s ease-in-out infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .saved-empty-title {
+      font-size: 14px; font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .saved-empty-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Info Cards in Sidebar */
+    .info-cards {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .info-card {
+      padding: 16px;
+      background: white;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      border-radius: 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .info-card-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .info-card-icon.blue {
+      background: rgba(59, 130, 246, 0.1);
+      color: var(--apple-blue);
+    }
+
+    .info-card-icon.green {
+      background: rgba(52, 199, 89, 0.1);
+      color: var(--apple-green);
+    }
+
+    .info-card-icon.purple {
+      background: rgba(175, 82, 222, 0.1);
+      color: var(--apple-purple);
+    }
+
+    .info-card-icon svg { width: 18px; height: 18px; }
+
+    .info-card-content h4 {
+      font-size: 13px; font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .info-card-content p {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    /* Responsive */
+    @media (max-width: 1100px) {
+      .two-column-layout {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        position: static;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .main-content { padding: 24px 16px 60px; }
+      .main-card { padding: 24px; }
+      .progress-connector { display: none; }
+      .quick-actions { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-background">
+    <div class="gradient-orb orb-1"></div>
+    <div class="gradient-orb orb-2"></div>
+  </div>
+
+  <div class="main-content">
+    <!-- Hero -->
+    <section class="hero-section">
+      <div class="hero-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/>
+        </svg>
+      </div>
+      <div class="hero-badge">Enterprise Feature</div>
+      <h1 class="hero-title">Finde <span class="gradient-text">bessere</span> Alternativen</h1>
+      <p class="hero-subtitle">Lade deinen Vertrag hoch und wir finden automatisch günstigere Anbieter mit besseren Konditionen.</p>
+      <div class="feature-pills">
+        <div class="feature-pill">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Bis zu 60% sparen
+        </div>
+        <div class="feature-pill">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          Echte Marktanalyse
+        </div>
+        <div class="feature-pill">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          Merkliste
+        </div>
+      </div>
+    </section>
+
+    <!-- Two Column Layout -->
+    <div class="two-column-layout">
+      <!-- Main Column -->
+      <div class="main-column">
+        <!-- Progress Tracker -->
+        <div class="progress-tracker">
+          <div class="progress-step active">
+            <div class="step-circle">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+            </div>
+            <span class="step-label">Vertrag hochladen</span>
+          </div>
+          <div class="progress-connector"></div>
+          <div class="progress-step">
+            <div class="step-circle">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg>
+            </div>
+            <span class="step-label">Preis & Analyse</span>
+          </div>
+          <div class="progress-connector"></div>
+          <div class="progress-step">
+            <div class="step-circle">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+            </div>
+            <span class="step-label">Bessere Alternativen</span>
+          </div>
+        </div>
+
+        <!-- Main Card -->
+        <div class="main-card">
+          <div class="upload-zone">
+            <div class="upload-icon-wrapper">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+            </div>
+            <h3 class="upload-title">Vertrag hochladen</h3>
+            <p class="upload-subtitle">Datei hierher ziehen oder klicken</p>
+            <div class="upload-formats">
+              <span class="format-tag">PDF</span>
+              <span class="format-tag">DOCX</span>
+              <span class="format-tag">TXT</span>
+            </div>
+          </div>
+
+          <div class="quick-actions">
+            <button class="quick-action-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+              </svg>
+              Foto scannen
+            </button>
+            <button class="quick-action-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+              </svg>
+              Text einfügen
+            </button>
+          </div>
+
+          <div class="divider">
+            <div class="divider-line"></div>
+            <span class="divider-text">oder manuell eingeben</span>
+            <div class="divider-line"></div>
+          </div>
+
+          <div class="input-section">
+            <label class="input-label">Vertragstext einfügen</label>
+            <textarea class="text-input" placeholder="Fügen Sie hier Ihren Vertragstext ein..."></textarea>
+            <button class="btn-primary">
+              Alternativen finden
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <div class="saved-card">
+          <div class="saved-header">
+            <div class="saved-title-row">
+              <div class="saved-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                </svg>
+              </div>
+              <span class="saved-title">Gespeicherte Alternativen</span>
+            </div>
+            <p class="saved-subtitle">Verwalten Sie Ihre gemerkten Angebote</p>
+          </div>
+          <div class="saved-content">
+            <div class="saved-empty">
+              <div class="saved-empty-icon">📑</div>
+              <h3 class="saved-empty-title">Noch keine Alternativen</h3>
+              <p class="saved-empty-desc">Gefundene Alternativen können Sie hier speichern.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Info Cards -->
+        <div class="info-cards">
+          <div class="info-card">
+            <div class="info-card-icon blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+            </div>
+            <div class="info-card-content">
+              <h4>256-Bit Verschlüsselung</h4>
+              <p>Ihre Daten sind sicher geschützt</p>
+            </div>
+          </div>
+          <div class="info-card">
+            <div class="info-card-icon green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            <div class="info-card-content">
+              <h4>DSGVO-Konform</h4>
+              <p>100% datenschutzkonform</p>
+            </div>
+          </div>
+          <div class="info-card">
+            <div class="info-card-icon purple">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </div>
+            <div class="info-card-content">
+              <h4>Hilfe & Support</h4>
+              <p>Fragen? Wir sind für Sie da</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

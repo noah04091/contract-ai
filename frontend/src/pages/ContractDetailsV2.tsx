@@ -798,48 +798,47 @@ export default function ContractDetailsV2() {
 
       <div className={styles.pageContainer}>
         <div className={styles.contentWrapper}>
-          {/* Top Header - Breadcrumb & Actions */}
-          <motion.div
-            className={styles.topHeader}
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            style={isMobile ? { marginBottom: 12, paddingBottom: 12 } : undefined}
-          >
-            <div className={styles.breadcrumb}>
-              <button
-                className={styles.backButton}
-                onClick={() => navigate('/contracts')}
-                aria-label="Zurück zur Vertragsübersicht"
-              >
-                <ArrowLeft size={isMobile ? 18 : 18} />
-              </button>
-              {!isMobile && (
+          {/* Top Header - Breadcrumb & Actions (Desktop Only) */}
+          {!isMobile && (
+            <motion.div
+              className={styles.topHeader}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <div className={styles.breadcrumb}>
+                <button
+                  className={styles.backButton}
+                  onClick={() => navigate('/contracts')}
+                  aria-label="Zurück zur Vertragsübersicht"
+                >
+                  <ArrowLeft size={18} />
+                </button>
                 <span className={styles.breadcrumbText}>
                   <Link to="/contracts">Verträge</Link>
                   <span className={styles.breadcrumbSeparator}> / </span>
                   <span className={styles.breadcrumbCurrent}>{contract.name}</span>
                 </span>
-              )}
-            </div>
-            <div className={styles.headerActions}>
-              <button
-                className={`${styles.btn} ${styles.btnGhost} ${styles.btnIcon}`}
-                title="Teilen"
-                aria-label="Vertrag teilen"
-                onClick={handleShare}
-              >
-                <Share2 size={isMobile ? 18 : 18} />
-              </button>
-              <button
-                className={`${styles.btn} ${styles.btnGhost} ${styles.btnIcon}`}
-                title="Drucken"
-                aria-label="Vertrag drucken"
-                onClick={handlePrint}
-              >
-                <Printer size={isMobile ? 18 : 18} />
-              </button>
-            </div>
-          </motion.div>
+              </div>
+              <div className={styles.headerActions}>
+                <button
+                  className={`${styles.btn} ${styles.btnGhost} ${styles.btnIcon}`}
+                  title="Teilen"
+                  aria-label="Vertrag teilen"
+                  onClick={handleShare}
+                >
+                  <Share2 size={18} />
+                </button>
+                <button
+                  className={`${styles.btn} ${styles.btnGhost} ${styles.btnIcon}`}
+                  title="Drucken"
+                  aria-label="Vertrag drucken"
+                  onClick={handlePrint}
+                >
+                  <Printer size={18} />
+                </button>
+              </div>
+            </motion.div>
+          )}
 
           {/* Mobile Header - Title & Meta (Only on Mobile) */}
           {isMobile && (
@@ -853,6 +852,72 @@ export default function ContractDetailsV2() {
                 borderBottom: '1px solid var(--cd-border)'
               }}
             >
+              {/* Mobile Top Row: Back Button & Actions */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 12
+              }}>
+                <button
+                  onClick={() => navigate('/contracts')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '8px 12px',
+                    background: 'var(--cd-surface)',
+                    border: '1px solid var(--cd-border)',
+                    borderRadius: 8,
+                    color: 'var(--cd-text-secondary)',
+                    fontSize: 14,
+                    fontWeight: 500,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <ArrowLeft size={16} />
+                  Zurück
+                </button>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={handleShare}
+                    title="Teilen"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 36,
+                      height: 36,
+                      background: 'var(--cd-surface)',
+                      border: '1px solid var(--cd-border)',
+                      borderRadius: 8,
+                      color: 'var(--cd-text-secondary)',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Share2 size={16} />
+                  </button>
+                  <button
+                    onClick={handlePrint}
+                    title="Drucken"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 36,
+                      height: 36,
+                      background: 'var(--cd-surface)',
+                      border: '1px solid var(--cd-border)',
+                      borderRadius: 8,
+                      color: 'var(--cd-text-secondary)',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Printer size={16} />
+                  </button>
+                </div>
+              </div>
+
               <h1 style={{
                 fontSize: 18,
                 fontWeight: 600,

@@ -2,11 +2,10 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { Helmet } from "react-helmet-async";
-import { SearchCheck, TrendingDown, Star, Bookmark, Camera } from "lucide-react";
+import { SearchCheck, TrendingDown, Bookmark, Camera, Upload } from "lucide-react";
 import BetterContractsResults from "../components/BetterContractsResults";
 import SavedAlternativesFull from "../components/SavedAlternativesFull";
 import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
-import { PageHeader } from "../components/PageHeader";
 import "../styles/ContractPages.css";
 import { useDocumentScanner } from "../hooks/useDocumentScanner";
 
@@ -419,35 +418,55 @@ const BetterContracts: React.FC = () => {
 
         {/* WICHTIG: Dynamische Container-Breite für Step 3 */}
         <div className={`contract-container ${step === 3 && results ? 'has-results' : ''}`} style={step === 3 && results ? { maxWidth: '1200px' } : {}}>
-          <PageHeader
-            icon={SearchCheck}
-            title="Bessere Alternativen"
-            subtitle="Finde günstigere Anbieter für deine bestehenden Verträge"
-            iconColor="green"
-            features={[
-              { text: 'Preisvergleich', icon: TrendingDown },
-              { text: 'Echte Angebote', icon: Star },
-              { text: 'Merkliste', icon: Bookmark }
-            ]}
-            badge={!isPremium ? { text: 'Enterprise', variant: 'premium' } : undefined}
-          />
 
-          <div className="contract-progress-steps">
-            <div className={`step ${step >= 1 ? 'active' : ''} ${step > 1 ? 'completed' : ''}`}>
-              <div className="step-number">1</div>
-              <div className="step-label">Vertrag hochladen</div>
+          {/* Hero Section */}
+          <div className="contract-header">
+            <div className="contract-hero-icon">
+              <SearchCheck size={36} />
             </div>
-            <div className="step-connector"></div>
-            <div className={`step ${step >= 2 ? 'active' : ''} ${step > 2 ? 'completed' : ''}`}>
-              <div className="step-number">2</div>
-              <div className="step-label">Preis & Analyse</div>
-            </div>
-            <div className="step-connector"></div>
-            <div className={`step ${step >= 3 ? 'active' : ''}`}>
-              <div className="step-number">3</div>
-              <div className="step-label">Bessere Alternativen</div>
+
+            {!isPremium && (
+              <div className="contract-hero-badge">Enterprise Feature</div>
+            )}
+
+            <h1>Finde <span className="gradient-text">bessere</span> Alternativen</h1>
+
+            <p className="contract-description">
+              Lade deinen Vertrag hoch und wir finden automatisch günstigere Anbieter mit besseren Konditionen.
+            </p>
+
+            <div className="contract-feature-pills">
+              <div className="contract-feature-pill">
+                <TrendingDown size={16} />
+                Bis zu 60% sparen
+              </div>
+              <div className="contract-feature-pill">
+                <SearchCheck size={16} />
+                Echte Marktanalyse
+              </div>
+              <div className="contract-feature-pill">
+                <Bookmark size={16} />
+                Merkliste
+              </div>
             </div>
           </div>
+
+          <div className="contract-progress-steps">
+                <div className={`step ${step >= 1 ? 'active' : ''} ${step > 1 ? 'completed' : ''}`}>
+                  <div className="step-number">1</div>
+                  <div className="step-label">Vertrag hochladen</div>
+                </div>
+                <div className="step-connector"></div>
+                <div className={`step ${step >= 2 ? 'active' : ''} ${step > 2 ? 'completed' : ''}`}>
+                  <div className="step-number">2</div>
+                  <div className="step-label">Preis & Analyse</div>
+                </div>
+                <div className="step-connector"></div>
+                <div className={`step ${step >= 3 ? 'active' : ''}`}>
+                  <div className="step-number">3</div>
+                  <div className="step-label">Bessere Alternativen</div>
+                </div>
+              </div>
 
           {step === 1 && (
             <div className="contract-step-container">
@@ -471,25 +490,31 @@ const BetterContracts: React.FC = () => {
                   cursor: isPremium ? 'pointer' : 'not-allowed'
                 }}
               >
-                
+
                 <div className="uploader-content">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="17 8 12 3 7 8"></polyline>
-                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                  </svg>
-                  
+                  <div className="upload-icon-wrapper">
+                    <Upload size={32} />
+                  </div>
+
                   {fileName ? (
                     <p className="file-name">{fileName}</p>
                   ) : (
                     <>
                       <p className="upload-title">Vertrag hochladen</p>
                       <p className="upload-subtitle">
-                        {isPremium ? "PDF oder DOCX" : "Premium erforderlich"}
+                        {isPremium ? "Datei hierher ziehen oder klicken" : "Premium erforderlich"}
                       </p>
                     </>
                   )}
-                  
+
+                  {isPremium && !fileName && (
+                    <div className="upload-formats">
+                      <span className="format-tag">PDF</span>
+                      <span className="format-tag">DOCX</span>
+                      <span className="format-tag">TXT</span>
+                    </div>
+                  )}
+
                   {uploadProgress > 0 && (
                     <div className="progress-container">
                       <div
@@ -501,27 +526,12 @@ const BetterContracts: React.FC = () => {
                 </div>
               </div>
 
-              {/* 📸 Dokument scannen Button */}
+              {/* Quick Actions */}
               {isPremium && (
-                <div style={{ marginTop: '12px', textAlign: 'center' }}>
-                  <button
-                    onClick={openScanner}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      padding: "8px 16px",
-                      borderRadius: "8px",
-                      border: "1px solid rgba(99, 102, 241, 0.3)",
-                      background: "rgba(99, 102, 241, 0.1)",
-                      color: "#818cf8",
-                      fontSize: "14px",
-                      cursor: "pointer",
-                      transition: "all 0.2s",
-                    }}
-                  >
+                <div className="quick-actions">
+                  <button className="quick-action-btn" onClick={openScanner}>
                     <Camera size={16} />
-                    Dokument scannen
+                    Foto scannen
                   </button>
                 </div>
               )}
@@ -741,7 +751,7 @@ const BetterContracts: React.FC = () => {
               </svg>
               {error}
               {step === 2 && isPremium && (
-                <button 
+                <button
                   className="retry-button"
                   onClick={handleRetry}
                   disabled={loading}
@@ -754,20 +764,22 @@ const BetterContracts: React.FC = () => {
         </div>
 
         {/* 📖 Meine gespeicherten Alternativen - Seiten-Sektion */}
-        <div className="contract-container">
-          <div className="contract-header">
-            <div className="contract-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-              </svg>
+        <div className="saved-alternatives-section">
+          <div className="saved-alternatives-wrapper">
+            <div className="saved-alternatives-header">
+              <div className="saved-alternatives-icon">
+                <Bookmark size={24} />
+              </div>
+              <div className="saved-alternatives-title-group">
+                <h2>Meine gespeicherten Alternativen</h2>
+                <p>Verwalten Sie Ihre gemerkten Vertragsalternativen und behalten Sie den Überblick</p>
+              </div>
             </div>
-            <h1>Meine gespeicherten Alternativen</h1>
-            <p className="contract-subtitle">
-              Verwalten Sie Ihre gemerkten Vertragsalternativen und behalten Sie den Überblick
-            </p>
-          </div>
 
-          <SavedAlternativesFull />
+            <div className="saved-alternatives-content">
+              <SavedAlternativesFull />
+            </div>
+          </div>
         </div>
 
         {/* Floating Action Button für gespeicherte Alternativen */}

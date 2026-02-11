@@ -9,11 +9,19 @@ async function main() {
   const processor = new DigestProcessor();
 
   try {
+    // 🆕 First, process any pending retries from previous failures
+    console.log('\n📧 STEP 1: Processing pending retries...');
+    const retryResult = await processor.processRetries();
+
+    // Then process this week's digests
+    console.log('\n📧 STEP 2: Processing weekly digests...');
     const result = await processor.processWeeklyDigests();
 
     console.log('\n✅ Weekly digest processing completed');
-    console.log(`   Sent: ${result.sent}`);
-    console.log(`   Errors: ${result.errors}`);
+    console.log(`   New Digests Sent: ${result.sent}`);
+    console.log(`   New Digest Errors: ${result.errors}`);
+    console.log(`   Retries Processed: ${retryResult.retried}`);
+    console.log(`   Retries Succeeded: ${retryResult.succeeded}`);
 
     // Cleanup old entries
     await processor.cleanup();

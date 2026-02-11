@@ -22,6 +22,7 @@ export interface Contract {
   amount?: number;
   lastAnalyzed?: string;
   analyzedAt?: string;
+  analyzed?: boolean; // True if contract has been analyzed
   legalPulse?: {
     riskScore: number | null;
     healthScore?: number;
@@ -36,7 +37,7 @@ export interface Contract {
     nextScheduledCheck?: string;
     topRisks?: RiskObject[];
     recommendations?: RecommendationObject[];
-    status?: 'pending' | 'completed' | 'failed';
+    status?: 'pending' | 'synced' | 'completed' | 'failed';
     scoreHistory?: Array<{ date: string; score: number }>;
     analysisHistory?: Array<{
       date: string;

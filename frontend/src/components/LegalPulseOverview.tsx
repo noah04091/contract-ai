@@ -37,7 +37,7 @@ const LegalPulseOverview: React.FC<LegalPulseOverviewProps> = ({ contracts }) =>
 
   const formatRiskScore = (riskScore: number | null | undefined): string => {
     if (riskScore === null || riskScore === undefined) return 'Nicht bewertet';
-    return `Risk Score: ${riskScore}`;
+    return `Risiko-Score: ${riskScore}`;
   };
 
   return (

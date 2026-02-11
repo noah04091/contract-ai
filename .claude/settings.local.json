@@ -297,7 +297,22 @@
       "Bash(done)",
       "WebFetch(domain:cdn.jsdelivr.net)",
       "WebFetch(domain:www.bmj.de)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "WebFetch(domain:dip.bundestag.api.bund.dev)",
+      "WebFetch(domain:docs.rechtsinformationen.bund.de)",
+      "WebFetch(domain:data4parliaments.poltextlab.com)",
+      "WebFetch(domain:lobehub.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:testphase.rechtsinformationen.bund.de)",
+      "WebFetch(domain:www.gesetze-im-internet.de)",
+      "WebFetch(domain:www.rechtsprechung-im-internet.de)",
+      "WebFetch(domain:openjur.de)",
+      "WebFetch(domain:dejure.org)",
+      "WebFetch(domain:de.openlegaldata.io)",
+      "Bash(npx vite build)",
+      "WebFetch(domain:www.bfdi.bund.de)",
+      "WebFetch(domain:www.datenschutz-bayern.de)",
+      "Bash(wc:*)"
     ],
     "deny": [],
     "ask": []

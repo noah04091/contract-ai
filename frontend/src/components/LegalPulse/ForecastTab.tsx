@@ -1,8 +1,32 @@
+import { useState, useEffect } from 'react';
 import { Activity, AlertTriangle, Zap, ArrowRight } from 'lucide-react';
 import { NavigateFunction } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Contract, ForecastData } from '../../types/legalPulse';
 import styles from '../../pages/LegalPulse.module.css';
+
+// Responsive chart height hook
+function useChartHeight() {
+  const [height, setHeight] = useState(300);
+
+  useEffect(() => {
+    const updateHeight = () => {
+      if (window.innerWidth < 480) {
+        setHeight(200);
+      } else if (window.innerWidth < 768) {
+        setHeight(250);
+      } else {
+        setHeight(300);
+      }
+    };
+
+    updateHeight();
+    window.addEventListener('resize', updateHeight);
+    return () => window.removeEventListener('resize', updateHeight);
+  }, []);
+
+  return height;
+}
 
 interface ForecastTabProps {
   selectedContract: Contract;
@@ -21,6 +45,8 @@ export default function ForecastTab({
   forecastError,
   fetchForecast
 }: ForecastTabProps) {
+  const chartHeight = useChartHeight();
+
   if (!selectedContract.legalPulse) {
     return (
       <div className={styles.forecastTab}>
@@ -163,7 +189,7 @@ export default function ForecastTab({
           <div className={styles.forecastSection}>
             <h4>📅 6-Monats-Prognose</h4>
             <div className={styles.forecastChart}>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={chartHeight}>
                 <AreaChart data={forecastData.forecast}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                   <XAxis

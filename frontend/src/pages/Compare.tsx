@@ -13,8 +13,8 @@ import {
 } from "lucide-react";
 import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
 import { WelcomePopup } from "../components/Tour";
-import { PageHeader } from "../components/PageHeader";
 import { useDocumentScanner } from "../hooks/useDocumentScanner";
+import "../styles/ContractPages.css";
 
 // Enhanced types for better comparison structure
 interface ComparisonDifference {
@@ -1226,7 +1226,7 @@ export default function EnhancedCompare() {
         <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
       </Helmet>
 
-      <div style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif", backgroundColor: '#f8fafc', minHeight: '100vh', color: '#1d1d1f' }}>
+      <div className={`contract-page ${!isPremium ? 'with-premium-banner' : ''}`}>
         {/* Full-Width Premium Banner - außerhalb des Containers */}
         {!isPremium && (
           <UnifiedPremiumNotice
@@ -1236,22 +1236,23 @@ export default function EnhancedCompare() {
         )}
 
         <motion.div
-          style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}
+          className="contract-container"
+          style={{ maxWidth: '1200px' }}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <PageHeader
-            icon={Scale}
-            title="Vertragsvergleich"
-            subtitle="Vergleiche zwei Verträge und erhalte eine KI-Empfehlung"
-            iconColor="blue"
-            features={[
-              { text: 'Side-by-Side', icon: Eye },
-              { text: 'Unterschiede markiert', icon: AlertTriangle },
-              { text: 'KI-Empfehlung', icon: Star }
-            ]}
-          />
+          {/* Hero Section - Better Contracts Style */}
+          <div className="contract-header">
+            <div className="contract-hero-icon">
+              <Scale size={36} />
+            </div>
+            {!isPremium && <div className="contract-hero-badge">Premium Feature</div>}
+            <h1>Vertrags<span className="gradient-text">vergleich</span></h1>
+            <p className="contract-description">
+              Vergleiche zwei Verträge und erhalte eine KI-Empfehlung
+            </p>
+          </div>
 
           {/* History Button - Compact Row */}
           {historyItems.length > 0 && (
@@ -1531,33 +1532,35 @@ export default function EnhancedCompare() {
 
             {/* Upload Cards Container */}
             <div className="upload-cards-container">
-              {/* Contract 1 Card */}
-              <motion.div
-                className={`premium-upload-card ${file1 ? 'has-file' : ''} ${!isPremium ? 'disabled' : ''}`}
-                whileHover={isPremium && !file1 ? {
-                  y: -4,
-                  boxShadow: '0 20px 40px rgba(0, 113, 227, 0.15), 0 0 0 1px rgba(0, 113, 227, 0.2)'
-                } : {}}
-                whileTap={isPremium ? { scale: 0.99 } : {}}
-                onClick={() => isPremium && file1InputRef.current?.click()}
-              >
-                <input
-                  ref={file1InputRef}
-                  type="file"
-                  accept=".pdf,.docx"
-                  disabled={!isPremium}
-                  style={{ display: 'none' }}
-                  onChange={(e) => e.target.files?.[0] && setFile1(e.target.files[0])}
-                />
-
-                {/* Decorative Background */}
-                <div className="card-bg-decoration" />
-
-                {/* Card Label */}
+              {/* Contract 1 Card Wrapper */}
+              <div className="card-wrapper">
+                {/* Card Label - outside the card */}
                 <div className="card-label">
                   <span className="label-number">1</span>
                   <span className="label-text">Erster Vertrag</span>
                 </div>
+
+                {/* Contract 1 Card */}
+                <motion.div
+                  className={`premium-upload-card ${file1 ? 'has-file' : ''} ${!isPremium ? 'disabled' : ''}`}
+                  whileHover={isPremium && !file1 ? {
+                    y: -4,
+                    boxShadow: '0 20px 40px rgba(0, 113, 227, 0.15), 0 0 0 1px rgba(0, 113, 227, 0.2)'
+                  } : {}}
+                  whileTap={isPremium ? { scale: 0.99 } : {}}
+                  onClick={() => isPremium && file1InputRef.current?.click()}
+                >
+                  <input
+                    ref={file1InputRef}
+                    type="file"
+                    accept=".pdf,.docx"
+                    disabled={!isPremium}
+                    style={{ display: 'none' }}
+                    onChange={(e) => e.target.files?.[0] && setFile1(e.target.files[0])}
+                  />
+
+                  {/* Decorative Background */}
+                  <div className="card-bg-decoration" />
 
                 {file1 ? (
                   <motion.div
@@ -1597,6 +1600,16 @@ export default function EnhancedCompare() {
                     </div>
                     <span className="upload-text">PDF auswählen</span>
                     <span className="upload-hint">oder hierher ziehen</span>
+                    {/* 📸 Scan Button inside card */}
+                    {isPremium && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); openScanner1(); }}
+                        className="scan-button-inline"
+                      >
+                        <Camera size={14} />
+                        Dokument scannen
+                      </button>
+                    )}
                   </div>
                 )}
 
@@ -1609,30 +1622,7 @@ export default function EnhancedCompare() {
                   </div>
                 )}
               </motion.div>
-              {/* 📸 Scan Button for Contract 1 */}
-              {!file1 && isPremium && (
-                <div style={{ marginTop: '8px', textAlign: 'center' }}>
-                  <button
-                    onClick={openScanner1}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      padding: "8px 16px",
-                      borderRadius: "8px",
-                      border: "1px solid rgba(99, 102, 241, 0.3)",
-                      background: "rgba(99, 102, 241, 0.1)",
-                      color: "#818cf8",
-                      fontSize: "14px",
-                      cursor: "pointer",
-                      transition: "all 0.2s",
-                    }}
-                  >
-                    <Camera size={16} />
-                    Dokument scannen
-                  </button>
-                </div>
-              )}
+              </div>
 
               {/* VS Connector */}
               <div className="vs-connector">
@@ -1648,33 +1638,35 @@ export default function EnhancedCompare() {
                 <div className="connector-line" />
               </div>
 
-              {/* Contract 2 Card */}
-              <motion.div
-                className={`premium-upload-card ${file2 ? 'has-file' : ''} ${!isPremium ? 'disabled' : ''}`}
-                whileHover={isPremium && !file2 ? {
-                  y: -4,
-                  boxShadow: '0 20px 40px rgba(88, 86, 214, 0.15), 0 0 0 1px rgba(88, 86, 214, 0.2)'
-                } : {}}
-                whileTap={isPremium ? { scale: 0.99 } : {}}
-                onClick={() => isPremium && file2InputRef.current?.click()}
-              >
-                <input
-                  ref={file2InputRef}
-                  type="file"
-                  accept=".pdf,.docx"
-                  disabled={!isPremium}
-                  style={{ display: 'none' }}
-                  onChange={(e) => e.target.files?.[0] && setFile2(e.target.files[0])}
-                />
-
-                {/* Decorative Background */}
-                <div className="card-bg-decoration alt" />
-
-                {/* Card Label */}
+              {/* Contract 2 Card Wrapper */}
+              <div className="card-wrapper">
+                {/* Card Label - outside the card */}
                 <div className="card-label alt">
                   <span className="label-number">2</span>
                   <span className="label-text">Zweiter Vertrag</span>
                 </div>
+
+                {/* Contract 2 Card */}
+                <motion.div
+                  className={`premium-upload-card ${file2 ? 'has-file' : ''} ${!isPremium ? 'disabled' : ''}`}
+                  whileHover={isPremium && !file2 ? {
+                    y: -4,
+                    boxShadow: '0 20px 40px rgba(88, 86, 214, 0.15), 0 0 0 1px rgba(88, 86, 214, 0.2)'
+                  } : {}}
+                  whileTap={isPremium ? { scale: 0.99 } : {}}
+                  onClick={() => isPremium && file2InputRef.current?.click()}
+                >
+                  <input
+                    ref={file2InputRef}
+                    type="file"
+                    accept=".pdf,.docx"
+                    disabled={!isPremium}
+                    style={{ display: 'none' }}
+                    onChange={(e) => e.target.files?.[0] && setFile2(e.target.files[0])}
+                  />
+
+                  {/* Decorative Background */}
+                  <div className="card-bg-decoration alt" />
 
                 {file2 ? (
                   <motion.div
@@ -1714,6 +1706,16 @@ export default function EnhancedCompare() {
                     </div>
                     <span className="upload-text">PDF auswählen</span>
                     <span className="upload-hint">oder hierher ziehen</span>
+                    {/* 📸 Scan Button inside card */}
+                    {isPremium && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); openScanner2(); }}
+                        className="scan-button-inline"
+                      >
+                        <Camera size={14} />
+                        Dokument scannen
+                      </button>
+                    )}
                   </div>
                 )}
 
@@ -1726,30 +1728,7 @@ export default function EnhancedCompare() {
                   </div>
                 )}
               </motion.div>
-              {/* 📸 Scan Button for Contract 2 */}
-              {!file2 && isPremium && (
-                <div style={{ marginTop: '8px', textAlign: 'center' }}>
-                  <button
-                    onClick={openScanner2}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      padding: "8px 16px",
-                      borderRadius: "8px",
-                      border: "1px solid rgba(99, 102, 241, 0.3)",
-                      background: "rgba(99, 102, 241, 0.1)",
-                      color: "#818cf8",
-                      fontSize: "14px",
-                      cursor: "pointer",
-                      transition: "all 0.2s",
-                    }}
-                  >
-                    <Camera size={16} />
-                    Dokument scannen
-                  </button>
-                </div>
-              )}
+              </div>
             </div>
 
             {/* 📊 SSE Progress Bar */}
@@ -2133,22 +2112,50 @@ export default function EnhancedCompare() {
              🎨 PREMIUM PROFILE SELECTOR
              ============================================ */
           .premium-profile-selector {
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
+            margin-top: 1.5rem;
           }
 
           .selector-header {
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 1rem;
+            margin-bottom: 1.25rem;
           }
 
           .selector-label {
-            font-size: 0.8rem;
-            font-weight: 600;
+            font-size: 0.85rem;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: #86868b;
+            letter-spacing: 0.1em;
+            color: #1d1d1f;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
+            padding: 8px 20px;
+            border-radius: 100px;
+            border: 1px solid rgba(59, 130, 246, 0.15);
+          }
+
+          /* Scan Button inside Upload Card */
+          .scan-button-inline {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            margin-top: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            background: rgba(99, 102, 241, 0.08);
+            color: #6366f1;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+          }
+
+          .scan-button-inline:hover {
+            background: rgba(99, 102, 241, 0.15);
+            border-color: rgba(99, 102, 241, 0.4);
           }
 
           .profile-pills {
@@ -2378,19 +2385,29 @@ export default function EnhancedCompare() {
             background: radial-gradient(circle at center, rgba(88, 86, 214, 0.03) 0%, transparent 70%);
           }
 
+          .card-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+          }
+
           .card-label {
-            position: absolute;
-            top: 1rem;
-            left: 1rem;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 8px;
+            background: white;
+            padding: 8px 16px 8px 10px;
+            border-radius: 100px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            white-space: nowrap;
           }
 
           .label-number {
             width: 24px;
             height: 24px;
-            border-radius: 8px;
+            border-radius: 50%;
             background: linear-gradient(135deg, #0071e3 0%, #00c7be 100%);
             color: white;
             font-size: 0.8rem;
@@ -2398,6 +2415,7 @@ export default function EnhancedCompare() {
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
           }
 
           .card-label.alt .label-number {
@@ -2405,9 +2423,10 @@ export default function EnhancedCompare() {
           }
 
           .label-text {
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             font-weight: 600;
-            color: #86868b;
+            color: #1d1d1f;
+            white-space: nowrap;
           }
 
           .upload-placeholder {

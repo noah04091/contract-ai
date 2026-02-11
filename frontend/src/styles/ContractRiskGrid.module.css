@@ -363,6 +363,84 @@
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
 }
 
+/* ===== LIST VIEW (Mobile Optimized) ===== */
+.contractsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 1800px;
+  margin: 0 auto;
+}
+
+.contractsList .contractCard {
+  padding: 16px 20px;
+  border-radius: 14px;
+}
+
+.contractsList .contractCardHeader {
+  margin-bottom: 12px;
+}
+
+.contractsList .contractName {
+  font-size: 1rem;
+  max-width: 200px;
+}
+
+.contractsList .riskBadge {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  border-radius: 10px;
+}
+
+.contractsList .riskIcon {
+  font-size: 0.9rem;
+}
+
+.contractsList .riskScore {
+  font-size: 0.95rem;
+}
+
+.contractsList .contractCardBody {
+  margin-bottom: 12px;
+}
+
+.contractsList .contractMeta {
+  gap: 8px;
+  margin-bottom: 0;
+}
+
+.contractsList .metaLabel,
+.contractsList .metaValue {
+  font-size: 0.8rem;
+}
+
+.contractsList .lastRecommendation {
+  display: none;
+}
+
+.contractsList .contractCardFooter {
+  padding-top: 12px;
+}
+
+.contractsList .detailsButton {
+  padding: 8px 0;
+  font-size: 0.85rem;
+}
+
+.contractsList .detailsButton svg {
+  width: 16px;
+  height: 16px;
+}
+
+.contractsList .loadMoreContainer {
+  padding: 24px 0;
+}
+
+.contractsList .loadMoreButton {
+  padding: 12px 24px;
+  font-size: 0.9rem;
+}
+
 /* Responsive */
 
 @media (max-width: 1200px) {
@@ -383,6 +461,15 @@
   .contractName {
     max-width: 200px;
   }
+
+  /* List view is default on tablet */
+  .contractsList .contractCard {
+    padding: 14px 16px;
+  }
+
+  .contractsList .contractName {
+    max-width: 180px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -393,6 +480,43 @@
   .contractName {
     max-width: 150px;
     font-size: 1.1rem;
+  }
+
+  /* Compact list view on mobile */
+  .contractsList .contractCard {
+    padding: 12px 14px;
+    border-radius: 12px;
+  }
+
+  .contractsList .contractCardHeader {
+    margin-bottom: 8px;
+  }
+
+  .contractsList .contractName {
+    font-size: 0.9rem;
+    max-width: 140px;
+  }
+
+  .contractsList .riskBadge {
+    padding: 4px 10px;
+    font-size: 0.75rem;
+  }
+
+  .contractsList .contractMeta {
+    gap: 6px;
+  }
+
+  .contractsList .metaItem {
+    font-size: 0.75rem;
+  }
+
+  .contractsList .contractCardFooter {
+    padding-top: 8px;
+  }
+
+  .contractsList .detailsButton {
+    font-size: 0.8rem;
+    padding: 6px 0;
   }
 }
 

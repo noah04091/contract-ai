@@ -95,6 +95,10 @@ class DigestProcessor {
       } catch (error) {
         console.error(`   ❌ Error sending digest to user ${userId}:`, error);
         errors++;
+
+        // 🆕 Retry Logic: Mark alerts for retry instead of losing them
+        const alertIds = alerts.map(a => a._id);
+        await this.markForRetry(digestQueueCollection, alertIds, error.message);
       }
     }
 
@@ -172,6 +176,10 @@ class DigestProcessor {
       } catch (error) {
         console.error(`   ❌ Error sending digest to user ${userId}:`, error);
         errors++;
+
+        // 🆕 Retry Logic: Mark alerts for retry instead of losing them
+        const alertIds = alerts.map(a => a._id);
+        await this.markForRetry(digestQueueCollection, alertIds, error.message);
       }
     }
 
@@ -179,6 +187,151 @@ class DigestProcessor {
     console.log('='.repeat(70));
 
     return { sent, errors };
+  }
+
+  /**
+   * 🆕 Mark alerts for retry with exponential backoff
+   * Max 3 retries: 1 hour, 4 hours, 24 hours
+   */
+  async markForRetry(collection, alertIds, errorMessage) {
+    const MAX_RETRIES = 3;
+    const RETRY_DELAYS = [60, 240, 1440]; // Minutes: 1h, 4h, 24h
+
+    for (const alertId of alertIds) {
+      try {
+        const alert = await collection.findOne({ _id: alertId });
+        const currentRetries = alert?.retryCount || 0;
+
+        if (currentRetries >= MAX_RETRIES) {
+          // Max retries reached - mark as permanently failed
+          await collection.updateOne(
+            { _id: alertId },
+            {
+              $set: {
+                status: 'failed',
+                failedAt: new Date(),
+                lastError: errorMessage
+              }
+            }
+          );
+          console.log(`   ⛔ Alert ${alertId} permanently failed after ${MAX_RETRIES} retries`);
+        } else {
+          // Schedule retry with exponential backoff
+          const delayMinutes = RETRY_DELAYS[currentRetries];
+          const nextRetryAt = new Date(Date.now() + delayMinutes * 60 * 1000);
+
+          await collection.updateOne(
+            { _id: alertId },
+            {
+              $set: {
+                retryCount: currentRetries + 1,
+                nextRetryAt: nextRetryAt,
+                lastError: errorMessage,
+                lastRetryAt: new Date()
+              }
+            }
+          );
+          console.log(`   🔄 Alert ${alertId} scheduled for retry #${currentRetries + 1} at ${nextRetryAt.toISOString()}`);
+        }
+      } catch (err) {
+        console.error(`   ❌ Failed to mark alert ${alertId} for retry:`, err.message);
+      }
+    }
+  }
+
+  /**
+   * 🆕 Process failed alerts that are due for retry
+   * Called separately or as part of digest processing
+   */
+  async processRetries() {
+    console.log('\n🔄 Processing Retry Queue...');
+    console.log('='.repeat(70));
+
+    await this.connect();
+
+    const digestQueueCollection = this.db.collection('digest_queue');
+    const usersCollection = this.db.collection('users');
+
+    // Find alerts that are due for retry
+    const now = new Date();
+    const retryAlerts = await digestQueueCollection.find({
+      sent: false,
+      retryCount: { $gte: 1, $lte: 3 },
+      nextRetryAt: { $lte: now },
+      status: { $ne: 'failed' }
+    }).toArray();
+
+    console.log(`   Found ${retryAlerts.length} alerts due for retry`);
+
+    if (retryAlerts.length === 0) {
+      console.log('   ✅ No retries pending');
+      return { retried: 0, succeeded: 0, failed: 0 };
+    }
+
+    // Group by user
+    const alertsByUser = this.groupByUser(retryAlerts);
+
+    let retried = 0;
+    let succeeded = 0;
+    let failed = 0;
+
+    for (const [userId, alerts] of alertsByUser) {
+      try {
+        const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+
+        if (!user) {
+          console.log(`   ⚠️  User ${userId} not found, marking as failed`);
+          const alertIds = alerts.map(a => a._id);
+          await digestQueueCollection.updateMany(
+            { _id: { $in: alertIds } },
+            { $set: { status: 'failed', failedAt: new Date(), lastError: 'User not found' } }
+          );
+          failed += alerts.length;
+          continue;
+        }
+
+        // Check if user unsubscribed since the error
+        if (user.legalPulseSettings?.emailNotifications === false) {
+          console.log(`   ⏭️  User ${user.email} has unsubscribed, removing from queue`);
+          const alertIds = alerts.map(a => a._id);
+          await digestQueueCollection.deleteMany({ _id: { $in: alertIds } });
+          continue;
+        }
+
+        // Determine digest mode from first alert
+        const digestMode = alerts[0].digestMode || 'weekly';
+
+        await this.sendDigestEmail(user, alerts, digestMode);
+
+        // Mark as sent
+        const alertIds = alerts.map(a => a._id);
+        await digestQueueCollection.updateMany(
+          { _id: { $in: alertIds } },
+          {
+            $set: { sent: true, sentAt: new Date() },
+            $unset: { nextRetryAt: '', lastError: '' }
+          }
+        );
+
+        retried += alerts.length;
+        succeeded += alerts.length;
+        console.log(`   ✅ Retry successful for ${user.email} (${alerts.length} alerts)`);
+
+      } catch (error) {
+        console.error(`   ❌ Retry failed for user ${userId}:`, error.message);
+        retried += alerts.length;
+        failed += alerts.length;
+
+        // Mark for next retry or permanent failure
+        const alertIds = alerts.map(a => a._id);
+        await this.markForRetry(digestQueueCollection, alertIds, error.message);
+      }
+    }
+
+    console.log(`\n   📊 Retry Summary: ${retried} processed, ${succeeded} succeeded, ${failed} failed`);
+    console.log('='.repeat(70));
+
+    return { retried, succeeded, failed };
   }
 
   /**

@@ -45,6 +45,8 @@ export default function LegalPulse() {
   // Export Report State
   const [isExportingReport, setIsExportingReport] = useState(false);
 
+  // Direct Analysis State (for contracts not yet analyzed)
+  const [isStartingAnalysis, setIsStartingAnalysis] = useState(false);
 
   // Weekly Legal Check State
   const [weeklyChecks, setWeeklyChecks] = useState<WeeklyChecksData | null>(null);
@@ -692,6 +694,53 @@ export default function LegalPulse() {
     }
   };
 
+  // Start Analysis directly from Legal Pulse (for contracts not yet analyzed)
+  const handleStartAnalysis = async () => {
+    if (!selectedContract || isStartingAnalysis) return;
+    setIsStartingAnalysis(true);
+    try {
+      const token = localStorage.getItem('token');
+      const API_BASE = import.meta.env.VITE_API_URL || '';
+      const response = await fetch(`${API_BASE}/api/contracts/${selectedContract._id}/analyze`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        setNotification({ message: 'Analyse gestartet! Die Legal Pulse Daten werden geladen...', type: 'success' });
+        // Reload contract data after analysis
+        setTimeout(async () => {
+          try {
+            const contractRes = await fetch(`${API_BASE}/api/contracts/${selectedContract._id}`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (contractRes.ok) {
+              const updatedContract = await contractRes.json();
+              setSelectedContract(updatedContract);
+              // Also update in contracts list
+              setContracts(prev => prev.map(c =>
+                c._id === updatedContract._id ? updatedContract : c
+              ));
+            }
+          } catch {
+            // Silent fail, user can refresh manually
+          }
+          setIsStartingAnalysis(false);
+        }, 3000); // Wait 3 seconds for analysis to complete
+      } else {
+        const error = await response.json();
+        setNotification({ message: `Analyse fehlgeschlagen: ${error.message || 'Unbekannter Fehler'}`, type: 'error' });
+        setIsStartingAnalysis(false);
+      }
+    } catch (err) {
+      handleError(err, 'LegalPulse:startAnalysis');
+      setIsStartingAnalysis(false);
+    }
+  };
+
   const handleContractCardClick = (contract: Contract) => {
     navigate(`/legalpulse/${contract._id}`);
   };
@@ -787,11 +836,19 @@ export default function LegalPulse() {
     const freshnessFactor = daysSinceAnalysis !== null ? Math.max(0, Math.round(100 - daysSinceAnalysis * 1.5)) : null;
     const scoreHistory = selectedContract.legalPulse?.scoreHistory || [];
 
-    // Only show loading spinner if NO data exists at all
-    // Don't block when status=pending because initial sync already has scores
-    const isAnalysisLoading = !selectedContract.legalPulse ||
+    // Differentiate between "never analyzed" and "analysis running"
+    // Never analyzed: Contract was uploaded but never run through contract analysis
+    const isNeverAnalyzed = selectedContract.analyzed !== true &&
+                            selectedContract.legalPulse?.riskScore == null &&
+                            !selectedContract.legalPulse?.lastChecked &&
+                            selectedContract.legalPulse?.status !== 'pending' &&
+                            selectedContract.legalPulse?.status !== 'synced';
+
+    // Analysis loading: Contract was analyzed, Legal Pulse deep analysis still running
+    const isAnalysisLoading = !isNeverAnalyzed && (
+                             !selectedContract.legalPulse ||
                              (selectedContract.legalPulse.riskScore == null &&
-                              !selectedContract.legalPulse.lastChecked);
+                              !selectedContract.legalPulse.lastChecked));
 
     // Check if analysis failed
     const isAnalysisFailed = selectedContract.legalPulse?.status === 'failed';
@@ -1022,6 +1079,87 @@ export default function LegalPulse() {
                   Erneut versuchen
                 </button>
               </div>
+            ) : isNeverAnalyzed ? (
+              <div className={styles.loadingState} role="status" aria-label="Vertrag noch nicht analysiert">
+                {isStartingAnalysis ? (
+                  <>
+                    <div className={styles.loadingSpinner}></div>
+                    <div className={styles.loadingText}>
+                      <h3 style={{ color: '#3b82f6' }}>Analyse wird gestartet...</h3>
+                      <p style={{ color: '#6b7280' }}>
+                        Ihr Vertrag wird jetzt analysiert. Dies kann einige Sekunden dauern.
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{
+                      width: '64px',
+                      height: '64px',
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: '1rem'
+                    }}>
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="12" y1="18" x2="12" y2="12"></line>
+                        <line x1="9" y1="15" x2="15" y2="15"></line>
+                      </svg>
+                    </div>
+                    <div className={styles.loadingText}>
+                      <h3 style={{ color: '#374151' }}>Noch keine Analyse durchgeführt</h3>
+                      <p style={{ color: '#6b7280', marginBottom: '1rem' }}>
+                        Dieser Vertrag wurde hochgeladen, aber noch nicht analysiert.<br />
+                        Starten Sie jetzt die KI-Analyse, um Legal Pulse zu aktivieren.
+                      </p>
+                      <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                        <button
+                          onClick={handleStartAnalysis}
+                          style={{
+                            padding: '0.75rem 1.5rem',
+                            background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontSize: '0.95rem',
+                            fontWeight: 600,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+                          }}
+                        >
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                          </svg>
+                          Jetzt analysieren
+                        </button>
+                        <button
+                          onClick={() => navigate('/legalpulse')}
+                          style={{
+                            padding: '0.75rem 1.5rem',
+                            background: 'white',
+                            color: '#6b7280',
+                            border: '1px solid #d1d5db',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontSize: '0.95rem',
+                            fontWeight: 500
+                          }}
+                        >
+                          Zurück zur Übersicht
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             ) : isAnalysisLoading ? (
               <div className={styles.loadingState} role="status" aria-label="Legal Pulse Analyse wird durchgeführt">
                 <div className={styles.loadingSpinner}></div>
@@ -1034,7 +1172,7 @@ export default function LegalPulse() {
                     style={{
                       marginTop: '1rem',
                       padding: '0.5rem 1rem',
-                      background: '#8b5cf6',
+                      background: '#3b82f6',
                       color: 'white',
                       border: 'none',
                       borderRadius: '8px',
@@ -1184,7 +1322,7 @@ export default function LegalPulse() {
                         Dieser Vertrag wurde nur mit einer automatischen Basis-Analyse bewertet.
                         Die Bewertung basiert auf einfachen Regeln (Vertragsstatus, Laufzeit), nicht auf einer KI-Analyse des Vertragsinhalts.
                       </p>
-                      <p style={{ fontSize: '0.85rem', color: '#8b5cf6', fontWeight: 500, margin: '12px 0 0 0' }}>
+                      <p style={{ fontSize: '0.85rem', color: '#3b82f6', fontWeight: 500, margin: '12px 0 0 0' }}>
                         Führen Sie eine vollständige Vertragsanalyse durch, um präzise Ergebnisse zu erhalten.
                       </p>
                     </div>
@@ -1239,8 +1377,19 @@ export default function LegalPulse() {
                 <ResponsiveContainer width="100%" height={120}>
                   <LineChart data={scoreHistory}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                    <XAxis dataKey="date" stroke="#64748b" fontSize={11} />
-                    <YAxis stroke="#64748b" fontSize={11} domain={[0, 100]} />
+                    <XAxis
+                      dataKey="date"
+                      stroke="#64748b"
+                      fontSize={10}
+                      interval="preserveStartEnd"
+                      tickFormatter={(date: string) => {
+                        // Kürze das Datum für Mobile: "10.02.26" statt volles Datum
+                        const d = new Date(date);
+                        if (isNaN(d.getTime())) return date.slice(0, 8);
+                        return `${d.getDate()}.${d.getMonth() + 1}`;
+                      }}
+                    />
+                    <YAxis stroke="#64748b" fontSize={11} domain={[0, 100]} width={30} />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: '#ffffff',
@@ -1422,6 +1571,8 @@ export default function LegalPulse() {
               selectedContract={selectedContract}
               onNavigate={navigate}
               onSetActiveTab={setActiveTab}
+              onStartAnalysis={handleStartAnalysis}
+              isStartingAnalysis={isStartingAnalysis}
             />
           )}
 
@@ -2012,7 +2163,8 @@ export default function LegalPulse() {
                   <option value="name">Name (A-Z)</option>
                 </select>
               </div>
-            </div>
+
+              </div>
           </div>
         )}
 
@@ -2041,6 +2193,7 @@ export default function LegalPulse() {
               setSortBy('date');
             }}
             canAccessLegalPulse={canAccessLegalPulse}
+            viewMode="list"
           />
         ) : (
           <div className={styles.emptyState}>

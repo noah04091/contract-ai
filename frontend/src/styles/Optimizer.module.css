@@ -4360,3 +4360,54 @@ html {
     align-self: flex-start;
   }
 }
+/* ========================================
+   FLOATING BLOBS - Better Contracts Style
+   ======================================== */
+
+.optimizer::before {
+  content: '';
+  position: fixed;
+  width: 600px;
+  height: 600px;
+  top: -100px;
+  right: -150px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
+  filter: blur(60px);
+  animation: floatBlobPrimary 25s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.optimizer::after {
+  content: '';
+  position: fixed;
+  width: 500px;
+  height: 500px;
+  bottom: -50px;
+  left: -100px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.06) 0%, transparent 70%);
+  filter: blur(50px);
+  animation: floatBlobSecondary 30s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes floatBlobPrimary {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(-30px, 40px) scale(1.05); }
+  50% { transform: translate(20px, -20px) scale(0.95); }
+  75% { transform: translate(-10px, 30px) scale(1.02); }
+}
+
+@keyframes floatBlobSecondary {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(40px, -30px) scale(1.08); }
+  66% { transform: translate(-25px, 25px) scale(0.95); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .optimizer::before,
+  .optimizer::after {
+    animation: none;
+  }
+}

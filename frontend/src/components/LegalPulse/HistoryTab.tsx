@@ -1,8 +1,32 @@
+import { useState, useEffect } from 'react';
 import { Clock, Activity, AlertTriangle, CheckCircle, Zap, ArrowRight } from 'lucide-react';
 import { NavigateFunction } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Contract } from '../../types/legalPulse';
 import styles from '../../pages/LegalPulse.module.css';
+
+// Responsive chart height hook
+function useChartHeight() {
+  const [height, setHeight] = useState(300);
+
+  useEffect(() => {
+    const updateHeight = () => {
+      if (window.innerWidth < 480) {
+        setHeight(200);
+      } else if (window.innerWidth < 768) {
+        setHeight(250);
+      } else {
+        setHeight(300);
+      }
+    };
+
+    updateHeight();
+    window.addEventListener('resize', updateHeight);
+    return () => window.removeEventListener('resize', updateHeight);
+  }, []);
+
+  return height;
+}
 
 interface HistoryTabProps {
   selectedContract: Contract;
@@ -19,6 +43,8 @@ export default function HistoryTab({
   riskLevel,
   getRiskScoreColor
 }: HistoryTabProps) {
+  const chartHeight = useChartHeight();
+
   if (!selectedContract.legalPulse) {
     return (
       <div className={styles.historyTab}>
@@ -110,11 +136,21 @@ export default function HistoryTab({
           </div>
           <div className={styles.historyContent}>
             <div className={styles.historyChart}>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={chartHeight}>
                 <AreaChart data={scoreHistory}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="date" stroke="#64748b" fontSize={12} />
-                  <YAxis stroke="#64748b" fontSize={12} domain={[0, 100]} />
+                  <XAxis
+                    dataKey="date"
+                    stroke="#64748b"
+                    fontSize={10}
+                    interval="preserveStartEnd"
+                    tickFormatter={(date: string) => {
+                      const d = new Date(date);
+                      if (isNaN(d.getTime())) return date.slice(0, 8);
+                      return `${d.getDate()}.${d.getMonth() + 1}`;
+                    }}
+                  />
+                  <YAxis stroke="#64748b" fontSize={12} domain={[0, 100]} width={35} />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: '#ffffff',

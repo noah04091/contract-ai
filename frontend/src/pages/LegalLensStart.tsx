@@ -228,32 +228,35 @@ const LegalLensStart = () => {
 
         <div className={styles.container}>
 
-          {/* Header Row */}
-          <header className={styles.headerRow}>
-            <div className={styles.headerLeft}>
-              <div className={styles.headerIcon}>
-                <Scale size={22} />
+          {/* Hero Section - Better Contracts Style */}
+          <div className={styles.heroSection}>
+            <div className={styles.heroIcon}>
+              <Search size={36} />
+            </div>
+            {!hasAccess && !planLoading && (
+              <div className={styles.heroBadge}>Premium Feature</div>
+            )}
+            <h1 className={styles.heroTitle}>
+              Legal <span className={styles.gradientText}>Lens</span>
+            </h1>
+            <p className={styles.heroDescription}>
+              Interaktive Vertragsanalyse mit KI - Klauseln verstehen, Risiken erkennen, Alternativen finden.
+            </p>
+            <div className={styles.featurePills}>
+              <div className={styles.featurePill}>
+                <Eye size={16} />
+                4 Perspektiven
               </div>
-              <div className={styles.headerText}>
-                <h1 className={styles.headerTitle}>Legal Lens</h1>
-                <p className={styles.headerSubtitle}>Interaktive Vertragsanalyse mit KI</p>
+              <div className={styles.featurePill}>
+                <Scale size={16} />
+                Risikobewertung
+              </div>
+              <div className={styles.featurePill}>
+                <Lightbulb size={16} />
+                Alternativen
               </div>
             </div>
-            <div className={styles.headerFeatures}>
-              <div className={styles.headerFeature}>
-                <Eye size={14} />
-                <span>4 Perspektiven</span>
-              </div>
-              <div className={styles.headerFeature}>
-                <Scale size={14} />
-                <span>Risikobewertung</span>
-              </div>
-              <div className={styles.headerFeature}>
-                <Lightbulb size={14} />
-                <span>Alternativen</span>
-              </div>
-            </div>
-          </header>
+          </div>
 
           {/* Main Card with Two Sections */}
           <div className={styles.mainCard}>

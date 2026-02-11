@@ -467,4 +467,19 @@
   .footer {
     padding: 12px 16px;
   }
+
+  /* Touch Target Fixes: Apple HIG min 44px */
+  .tab {
+    min-height: 44px;
+  }
+
+  .cancelButton,
+  .saveButton {
+    min-height: 44px;
+  }
+
+  .closeButton {
+    min-width: 44px;
+    min-height: 44px;
+  }
 }

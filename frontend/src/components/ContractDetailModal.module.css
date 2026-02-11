@@ -928,20 +928,20 @@
   }
 
   .actionsMenuBtn {
-    width: 40px !important;
-    height: 40px !important;
-    min-width: 40px !important;
-    min-height: 40px !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
     border-radius: 50% !important;
     background: #f1f5f9 !important;
     color: #475569 !important;
   }
 
   .closeBtn {
-    width: 40px !important;
-    height: 40px !important;
-    min-width: 40px !important;
-    min-height: 40px !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
     padding: 0 !important;
     border-radius: 50% !important;
     background: #f1f5f9 !important;
@@ -1426,17 +1426,17 @@
 
   /* 3-Dot Menu + Close: Kompakter */
   .actionsMenuBtn {
-    width: 36px !important;
-    height: 36px !important;
-    min-width: 36px !important;
-    min-height: 36px !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
   }
 
   .closeBtn {
-    width: 36px !important;
-    height: 36px !important;
-    min-width: 36px !important;
-    min-height: 36px !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
   }
 
   .closeBtn svg {
@@ -1456,8 +1456,8 @@
 
   .tabButton {
     padding: 6px 10px !important;
-    min-height: 40px !important;
-    border-radius: 20px !important;
+    min-height: 44px !important;
+    border-radius: 22px !important;
     font-size: 0.75rem !important;
   }
 
@@ -1795,19 +1795,19 @@
     display: none !important; /* Hide icon on very small screens */
   }
 
-  /* 3-Dot Menu + Close: Minimal kleiner */
+  /* 3-Dot Menu + Close: Min 44px Touch Target */
   .actionsMenuBtn {
-    width: 34px !important;
-    height: 34px !important;
-    min-width: 34px !important;
-    min-height: 34px !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
   }
 
   .closeBtn {
-    width: 34px !important;
-    height: 34px !important;
-    min-width: 34px !important;
-    min-height: 34px !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
   }
 
   .closeBtn svg {
@@ -1815,11 +1815,11 @@
     height: 14px !important;
   }
 
-  /* Tab Buttons: Kompakter, mit Text */
+  /* Tab Buttons: Kompakter, mit Text - min 44px Touch Target */
   .tabButton {
     padding: 5px 8px !important;
-    min-height: 36px !important;
-    border-radius: 18px !important;
+    min-height: 44px !important;
+    border-radius: 22px !important;
     font-size: 0.6875rem !important;
   }
 

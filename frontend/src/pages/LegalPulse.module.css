@@ -545,6 +545,93 @@
   height: 16px;
 }
 
+/* 📱 MOBILE: Contract Detail Header Buttons */
+@media (max-width: 600px) {
+  .headerTop {
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .backButton {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    gap: 6px;
+    border-radius: 8px;
+  }
+
+  .backButton svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .optimizeButton {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    gap: 6px;
+    border-radius: 8px;
+  }
+
+  .optimizeButton svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .contractHeader {
+    margin-bottom: 16px;
+  }
+
+  .contractTitle {
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .contractTitle h1 {
+    font-size: 1.4rem;
+    word-break: break-word;
+  }
+
+  .lastAnalysis {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .headerTop {
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .backButton {
+    flex: 1;
+    padding: 10px 10px;
+    font-size: 0.75rem;
+    justify-content: center;
+    min-height: 40px;
+  }
+
+  .backButton span,
+  .backButton svg + span {
+    display: none;
+  }
+
+  .optimizeButton {
+    flex: 1;
+    padding: 10px 10px;
+    font-size: 0.75rem;
+    justify-content: center;
+    min-height: 40px;
+  }
+
+  .contractTitle h1 {
+    font-size: 1.2rem;
+  }
+
+  .lastAnalysis {
+    font-size: 0.8rem;
+  }
+}
+
 .contractHeader {
   text-align: center;
 }
@@ -1856,6 +1943,50 @@
   outline: none;
 }
 
+/* View Mode Toggle */
+.viewToggle {
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  background: #f3f4f6;
+  border-radius: 10px;
+}
+
+.viewToggleBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.viewToggleBtn:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.viewToggleBtn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.viewToggleActive {
+  background: white;
+  color: #3b82f6;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.viewToggleActive:hover {
+  background: white;
+  color: #3b82f6;
+}
+
 /* Results Info */
 .resultsInfo {
   display: flex;
@@ -2895,10 +3026,19 @@
 }
 
 /* Responsive for Professional Empty State */
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
+  .emptyStateFeatures {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    max-width: 600px;
+  }
+}
+
+@media (max-width: 768px) {
   .emptyStateFeatures {
     grid-template-columns: 1fr;
     max-width: 400px;
+    gap: 16px;
   }
 
   .professionalEmptyState {
@@ -2921,6 +3061,50 @@
     width: 100%;
     max-width: 280px;
     justify-content: center;
+  }
+
+  .professionalEmptyState {
+    padding: 36px 20px;
+  }
+
+  .emptyStateHeader h2 {
+    font-size: 1.35rem;
+  }
+
+  .emptyStateHeader p {
+    font-size: 0.95rem;
+  }
+
+  .emptyStateFeatureCard {
+    padding: 16px;
+  }
+
+  .emptyStateFeatureCard h4 {
+    font-size: 0.95rem;
+  }
+
+  .emptyStateFeatureCard p {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .professionalEmptyState {
+    padding: 28px 16px;
+  }
+
+  .emptyStateHeader h2 {
+    font-size: 1.25rem;
+  }
+
+  .emptyStateHeader p {
+    font-size: 0.9rem;
+  }
+
+  .emptyStatePrimaryButton,
+  .emptyStateSecondaryButton {
+    padding: 14px 20px;
+    font-size: 0.9rem;
   }
 }
 
@@ -3147,6 +3331,419 @@
   
   .modalActions {
     flex-direction: column;
+  }
+}
+
+/* 📱 TABLET SMALL / LARGE PHONE (max-width: 600px) */
+@media (max-width: 600px) {
+  .legalPulseContainer {
+    padding: max(18px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  }
+
+  .heroSection {
+    padding: 48px 24px;
+    gap: 36px;
+  }
+
+  .heroTitle {
+    font-size: 2rem;
+  }
+
+  .heroSubtitle {
+    font-size: 1rem;
+  }
+
+  .heroCTA {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .sectionHeader h2,
+  .sectionTitle {
+    font-size: 1.35rem;
+  }
+
+  .sectionHeader p {
+    font-size: 0.9rem;
+  }
+
+  .tabButton {
+    font-size: 0.8rem;
+    padding: 10px 12px;
+    gap: 6px;
+  }
+
+  .tabButton svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .scoreCard {
+    padding: 24px 20px;
+  }
+
+  .scoreCircle {
+    width: 120px;
+    height: 120px;
+  }
+
+  .scoreCircle::before {
+    width: 86px;
+    height: 86px;
+  }
+
+  .scoreNumber {
+    font-size: 2rem;
+  }
+
+  .scoreLabel {
+    font-size: 0.7rem;
+  }
+
+  .tabContent {
+    padding: 20px;
+  }
+
+  .contractCard {
+    padding: 20px;
+  }
+
+  .contractName {
+    font-size: 1rem;
+    max-width: 180px;
+  }
+
+  .bottomCTA {
+    padding: 48px 24px;
+  }
+
+  .ctaContent h2 {
+    font-size: 1.75rem;
+  }
+
+  .riskModal {
+    margin: 16px;
+    max-height: 85vh;
+  }
+
+  .modalHeader {
+    padding: 16px 20px;
+  }
+
+  .modalHeader h3 {
+    font-size: 1.1rem;
+  }
+
+  .modalBody {
+    padding: 20px;
+  }
+
+  /* Empty State für 600px */
+  .emptyStateFeatures {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .noAnalysisState {
+    padding: 40px 20px;
+  }
+
+  .noAnalysisState h3 {
+    font-size: 1.25rem;
+  }
+
+  .noAnalysisState p {
+    font-size: 0.9rem;
+  }
+
+  .noAnalysisCta {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Overview Tab Cards */
+  .overviewGrid {
+    gap: 20px;
+  }
+
+  .overviewPreviewSection {
+    padding: 16px;
+  }
+
+  .overviewPreviewHeader h4 {
+    font-size: 1rem;
+  }
+
+  .overviewActions {
+    padding: 16px;
+  }
+
+  .actionButton {
+    font-size: 0.85rem;
+    padding: 12px 16px;
+  }
+}
+
+/* 📱 MOBILE MEDIUM (max-width: 480px) */
+@media (max-width: 480px) {
+  .legalPulseContainer {
+    padding: max(16px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+  }
+
+  .heroSection {
+    padding: 40px 16px;
+    gap: 28px;
+  }
+
+  .heroTitle {
+    font-size: 1.85rem;
+    line-height: 1.2;
+  }
+
+  .heroSubtitle {
+    font-size: 0.95rem;
+  }
+
+  .heroDismiss {
+    width: 44px;
+    height: 44px;
+    top: 12px;
+    right: 12px;
+  }
+
+  .sectionHeader {
+    gap: 12px;
+  }
+
+  .sectionHeader h2,
+  .sectionTitle {
+    font-size: 1.25rem;
+  }
+
+  .sectionHeader p {
+    font-size: 0.85rem;
+  }
+
+  .tabNavigation {
+    padding: 6px;
+    gap: 2px;
+    border-radius: 12px;
+  }
+
+  .tabButton {
+    font-size: 0.75rem;
+    padding: 10px 8px;
+    gap: 4px;
+    border-radius: 8px;
+  }
+
+  .tabButton svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* Nur Icon auf sehr kleinen Screens bei vielen Tabs */
+  .tabButton span {
+    display: none;
+  }
+
+  .tabButton.active span {
+    display: inline;
+  }
+
+  .scoreCard {
+    padding: 20px 16px;
+    border-radius: 16px;
+  }
+
+  .scoreCircle {
+    width: 110px;
+    height: 110px;
+  }
+
+  .scoreCircle::before {
+    width: 78px;
+    height: 78px;
+  }
+
+  .scoreNumber {
+    font-size: 1.85rem;
+  }
+
+  .scoreLabel {
+    font-size: 0.65rem;
+  }
+
+  .scoreStats {
+    gap: 12px;
+  }
+
+  .scoreStat {
+    padding: 12px;
+  }
+
+  .scoreStatValue {
+    font-size: 1.25rem;
+  }
+
+  .scoreStatLabel {
+    font-size: 0.7rem;
+  }
+
+  .tabContent {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .contractCard {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .contractName {
+    font-size: 0.95rem;
+    max-width: 160px;
+  }
+
+  .contractMeta {
+    font-size: 0.75rem;
+  }
+
+  .riskBadge {
+    padding: 4px 10px;
+    font-size: 0.7rem;
+  }
+
+  .bottomCTA {
+    padding: 36px 16px;
+    border-radius: 20px;
+  }
+
+  .ctaContent h2 {
+    font-size: 1.5rem;
+  }
+
+  .ctaContent p {
+    font-size: 0.95rem;
+  }
+
+  .riskModal {
+    margin: 12px;
+    max-height: 88vh;
+    border-radius: 16px;
+  }
+
+  .modalHeader {
+    padding: 14px 16px;
+  }
+
+  .modalHeader h3 {
+    font-size: 1rem;
+  }
+
+  .modalBody {
+    padding: 16px;
+  }
+
+  .modalActions button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Empty State für 480px */
+  .noAnalysisState {
+    padding: 32px 16px;
+  }
+
+  .noAnalysisState h3 {
+    font-size: 1.15rem;
+  }
+
+  .noAnalysisSteps {
+    gap: 12px;
+  }
+
+  .noAnalysisStep {
+    padding: 12px;
+  }
+
+  /* Overview Tab für 480px */
+  .overviewGrid {
+    gap: 16px;
+  }
+
+  .overviewPreviewSection {
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .overviewPreviewHeader h4 {
+    font-size: 0.95rem;
+  }
+
+  .overviewPreviewItem {
+    padding: 10px;
+  }
+
+  .overviewPreviewBadge {
+    font-size: 0.65rem;
+    padding: 2px 8px;
+  }
+
+  .overviewPreviewText strong {
+    font-size: 0.85rem;
+  }
+
+  .overviewPreviewText span {
+    font-size: 0.75rem;
+  }
+
+  .overviewActions {
+    padding: 14px;
+  }
+
+  .actionButton {
+    font-size: 0.8rem;
+    padding: 12px 14px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Risk Distribution für 480px */
+  .overviewRiskDistribution h4 {
+    font-size: 0.95rem;
+  }
+
+  .riskDistributionBar {
+    height: 24px;
+  }
+
+  .riskDistSegment {
+    font-size: 0.7rem;
+  }
+
+  .riskDistLegend {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .riskDistLegendItem {
+    font-size: 0.7rem;
+  }
+
+  /* Quick Actions für 480px */
+  .quickActionsBar {
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .quickActionsHeader h4 {
+    font-size: 0.8rem;
+  }
+
+  .quickActionBtn {
+    font-size: 0.75rem;
+    padding: 8px 12px;
   }
 }
 
@@ -4614,17 +5211,44 @@
   .sectionHeaderWithActions {
     flex-direction: column;
     align-items: flex-start;
-    gap: 16px;
+    gap: 10px;
+  }
+
+  .sectionTitle {
+    font-size: 1.3rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px;
+  }
+
+  .contractCount {
+    font-size: 0.85rem;
+    margin-left: 4px;
   }
 
   .dashboardActions {
-    flex-direction: column;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 6px;
     width: 100%;
   }
 
   .dashboardActionButton {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
+    padding: 10px 8px;
+    font-size: 0.7rem;
+    gap: 4px;
     justify-content: center;
+    white-space: nowrap;
+  }
+
+  .dashboardActionButton svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
   }
 
   .sidebar {
@@ -4641,6 +5265,31 @@
 
   .sidebarContent {
     padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .sectionTitle {
+    font-size: 1.15rem;
+  }
+
+  .contractCount {
+    font-size: 0.8rem;
+  }
+
+  .dashboardActions {
+    gap: 4px;
+  }
+
+  .dashboardActionButton {
+    padding: 8px 6px;
+    font-size: 0.65rem;
+    border-radius: 10px;
+  }
+
+  .dashboardActionButton svg {
+    width: 14px;
+    height: 14px;
   }
 }
 
@@ -4860,18 +5509,19 @@
 .quickActionsRiskPreview {
   display: flex;
   gap: 6px;
-  flex-wrap: nowrap;
-  margin-top: 0;
-  margin-left: 4px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+  margin-left: 0;
+  max-width: 100%;
 }
 
 .quickRiskTag {
   font-size: 0.7rem;
   font-weight: 600;
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: 4px;
   white-space: nowrap;
-  max-width: 180px;
+  max-width: 150px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -4879,22 +5529,88 @@
 @media (max-width: 768px) {
   .quickActionsBar {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
     padding: 12px 14px;
     gap: 10px;
   }
 
+  .quickActionsHeader {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
   .quickActionsHeader h4 {
-    white-space: normal;
+    white-space: nowrap;
+    font-size: 0.8rem;
+  }
+
+  .quickActionsRiskPreview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 0;
+  }
+
+  .quickRiskTag {
+    font-size: 0.72rem;
+    padding: 4px 10px;
+    max-width: none;
+    flex-shrink: 0;
   }
 
   .quickActionsButtons {
-    flex-wrap: wrap;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 6px;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .quickActionsButtons::-webkit-scrollbar {
+    display: none;
   }
 
   .quickActionBtn {
-    flex: 1;
-    justify-content: center;
+    flex: 0 0 auto;
+    padding: 8px 12px;
+    font-size: 0.72rem;
+    white-space: nowrap;
+    min-height: 36px;
+  }
+
+  .quickActionBtn svg:last-child {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .quickActionsBar {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .quickActionsHeader h4 {
+    font-size: 0.75rem;
+  }
+
+  .quickRiskTag {
+    font-size: 0.68rem;
+    padding: 3px 8px;
+  }
+
+  .quickActionsButtons {
+    gap: 6px;
+  }
+
+  .quickActionBtn {
+    padding: 8px 10px;
+    font-size: 0.7rem;
+    min-height: 34px;
   }
 }
 
@@ -5608,10 +6324,37 @@
 
 /* Weekly Check Responsive */
 @media (max-width: 768px) {
+  .weeklyCheckSection {
+    margin-bottom: 16px;
+  }
+
   .weeklyCheckHeader {
-    flex-direction: column;
-    gap: 12px;
-    align-items: flex-start;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 10px;
+    align-items: center;
+    padding: 14px 16px;
+  }
+
+  .weeklyCheckTitle {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .weeklyCheckTitle h3 {
+    font-size: 0.85rem;
+    white-space: normal;
+    line-height: 1.3;
+  }
+
+  .weeklyCheckToggle {
+    flex-shrink: 0;
+    padding: 6px 12px;
+    font-size: 0.75rem;
+  }
+
+  .weeklyCheckBadge {
+    display: none;
   }
 
   .weeklyCheckCardHeader {
@@ -5629,6 +6372,21 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .weeklyCheckHeader {
+    padding: 12px 14px;
+  }
+
+  .weeklyCheckTitle h3 {
+    font-size: 0.8rem;
+  }
+
+  .weeklyCheckToggle {
+    padding: 6px 10px;
+    font-size: 0.72rem;
   }
 }
 
@@ -5931,6 +6689,267 @@
 /* ========================================
    FLOATING BLOBS - Better Contracts Style
    ======================================== */
+
+/* ===== ADDITIONAL MOBILE RESPONSIVE FIXES ===== */
+
+/* Search Sidebar Mobile Fixes */
+@media (max-width: 768px) {
+  .externalSearchForm {
+    padding: 20px;
+  }
+
+  .sidebarContent {
+    padding: 20px;
+  }
+
+  .resultsHeader {
+    padding: 16px 20px;
+  }
+
+  .resultsHeader h4 {
+    font-size: 1rem;
+  }
+
+  .checkboxGroup {
+    gap: 16px;
+  }
+
+  .checkbox {
+    flex: 1 1 calc(50% - 8px);
+    min-width: 120px;
+  }
+
+  .searchInputGroup {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .searchButton {
+    width: 100%;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 600px) {
+  .externalSearchForm {
+    padding: 16px;
+  }
+
+  .sidebarContent {
+    padding: 16px;
+  }
+
+  .resultsHeader {
+    padding: 14px 16px;
+  }
+
+  .checkboxGroup {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .checkbox {
+    width: 100%;
+  }
+
+  .checkboxLabel {
+    font-size: 0.85rem;
+  }
+
+  .resultCard {
+    padding: 14px;
+  }
+
+  .resultTitle {
+    font-size: 0.95rem;
+  }
+
+  .resultDescription {
+    font-size: 0.8rem;
+  }
+
+  .resultMeta {
+    font-size: 0.75rem;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .relevanceBar {
+    height: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .externalSearchForm {
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .sidebarContent {
+    padding: 14px;
+  }
+
+  .resultsHeader {
+    padding: 12px 14px;
+  }
+
+  .formLabel {
+    font-size: 0.8rem;
+  }
+
+  .searchInput {
+    padding: 12px;
+    font-size: 0.9rem;
+  }
+
+  .resultCard {
+    padding: 12px;
+    border-radius: 10px;
+  }
+
+  .resultTitle {
+    font-size: 0.9rem;
+  }
+
+  .sourceTag {
+    font-size: 0.65rem;
+    padding: 2px 6px;
+  }
+}
+
+/* Weekly Check Mobile Fixes */
+@media (max-width: 600px) {
+  .weeklyCheckCard {
+    border-radius: 10px;
+  }
+
+  .weeklyCheckCardHeader {
+    padding: 14px;
+  }
+
+  .weeklyCheckCardTitle {
+    font-size: 0.95rem;
+  }
+
+  .weeklyCheckStatusBadge {
+    font-size: 0.7rem;
+    padding: 4px 10px;
+  }
+
+  .weeklyCheckSummary {
+    padding: 14px;
+    font-size: 0.85rem;
+  }
+
+  .weeklyFinding {
+    padding: 12px;
+  }
+
+  .weeklyFindingTitle {
+    font-size: 0.85rem;
+  }
+
+  .weeklyFindingDescription {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .weeklyCheckCard {
+    border-radius: 8px;
+  }
+
+  .weeklyCheckCardHeader {
+    padding: 12px;
+  }
+
+  .weeklyCheckCardTitle {
+    font-size: 0.9rem;
+  }
+
+  .weeklyCheckSummary {
+    padding: 12px;
+    font-size: 0.8rem;
+  }
+
+  .weeklyFinding {
+    padding: 10px;
+  }
+
+  .findingClause,
+  .findingLegal,
+  .findingRecommendation {
+    font-size: 0.75rem;
+    padding: 6px 10px;
+  }
+}
+
+/* Legal Changes Tab Mobile Fixes */
+@media (max-width: 600px) {
+  .legalChangesStatus {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+  }
+
+  .legalChangesEmpty {
+    padding: 32px 16px;
+  }
+
+  .legalChangesEmpty h4 {
+    font-size: 1rem;
+  }
+
+  .legalChangesEmpty p {
+    font-size: 0.85rem;
+  }
+}
+
+/* Alert History Mobile Fixes */
+@media (max-width: 600px) {
+  .alertHistoryHeader {
+    padding: 14px 16px;
+  }
+
+  .alertHistoryItem {
+    padding: 12px 16px;
+  }
+
+  .alertHistoryTitle {
+    font-size: 0.9rem;
+  }
+
+  .alertHistoryDescription {
+    font-size: 0.8rem;
+  }
+
+  .alertHistoryMeta {
+    font-size: 0.75rem;
+  }
+}
+
+/* Monitoring Status Bar Mobile Fixes */
+@media (max-width: 600px) {
+  .monitoringStatusBar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 16px;
+  }
+
+  .monitoringStatusItem {
+    font-size: 0.8rem;
+  }
+}
+
+/* Background Blobs - Hide on mobile for performance */
+@media (max-width: 768px) {
+  .legalPulseContainer::before,
+  .legalPulseContainer::after {
+    display: none;
+  }
+}
 
 .legalPulseContainer::before {
   content: '';

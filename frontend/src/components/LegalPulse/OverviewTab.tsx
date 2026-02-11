@@ -7,49 +7,61 @@ interface OverviewTabProps {
   selectedContract: Contract;
   onNavigate: NavigateFunction;
   onSetActiveTab: (tab: 'overview' | 'risks' | 'recommendations' | 'legalChanges' | 'history' | 'forecast') => void;
+  onStartAnalysis?: () => void;
+  isStartingAnalysis?: boolean;
 }
 
-export default function OverviewTab({ selectedContract, onNavigate, onSetActiveTab }: OverviewTabProps) {
+export default function OverviewTab({ selectedContract, onNavigate, onSetActiveTab, onStartAnalysis, isStartingAnalysis }: OverviewTabProps) {
   if (!selectedContract.legalPulse) {
     return (
       <div className={styles.overviewTab}>
         <div className={styles.noAnalysisState}>
-          <div className={styles.noAnalysisIcon}>
-            <Activity size={32} />
-          </div>
-          <h3>Legal Pulse Analyse ausstehend</h3>
-          <p>Dieser Vertrag wurde noch nicht durch Legal Pulse analysiert. Die Analyse startet automatisch, sobald Sie den Vertrag analysieren lassen.</p>
-          <div className={styles.noAnalysisSteps}>
-            <div className={styles.noAnalysisStep}>
-              <span className={styles.stepNumber}>1</span>
-              <div>
-                <strong>Vertrag analysieren</strong>
-                <p>Lassen Sie den Vertrag von unserer KI analysieren</p>
+          {isStartingAnalysis ? (
+            <>
+              <div className={styles.loadingSpinner} style={{ width: '48px', height: '48px', marginBottom: '1rem' }}></div>
+              <h3 style={{ color: '#3b82f6' }}>Analyse wird durchgeführt...</h3>
+              <p>Ihr Vertrag wird jetzt von unserer KI analysiert. Dies kann einige Sekunden dauern.</p>
+            </>
+          ) : (
+            <>
+              <div className={styles.noAnalysisIcon}>
+                <Activity size={32} />
               </div>
-            </div>
-            <div className={styles.noAnalysisStep}>
-              <span className={styles.stepNumber}>2</span>
-              <div>
-                <strong>Legal Pulse startet automatisch</strong>
-                <p>Risikoanalyse, Empfehlungen und Monitoring werden erstellt</p>
+              <h3>Legal Pulse Analyse ausstehend</h3>
+              <p>Dieser Vertrag wurde noch nicht durch Legal Pulse analysiert. Starten Sie jetzt die Analyse mit einem Klick.</p>
+              <div className={styles.noAnalysisSteps}>
+                <div className={styles.noAnalysisStep}>
+                  <span className={styles.stepNumber}>1</span>
+                  <div>
+                    <strong>Vertrag analysieren</strong>
+                    <p>Lassen Sie den Vertrag von unserer KI analysieren</p>
+                  </div>
+                </div>
+                <div className={styles.noAnalysisStep}>
+                  <span className={styles.stepNumber}>2</span>
+                  <div>
+                    <strong>Legal Pulse startet automatisch</strong>
+                    <p>Risikoanalyse, Empfehlungen und Monitoring werden erstellt</p>
+                  </div>
+                </div>
+                <div className={styles.noAnalysisStep}>
+                  <span className={styles.stepNumber}>3</span>
+                  <div>
+                    <strong>Laufende Überwachung</strong>
+                    <p>Wöchentliche Prüfung auf relevante Rechtsänderungen</p>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className={styles.noAnalysisStep}>
-              <span className={styles.stepNumber}>3</span>
-              <div>
-                <strong>Laufende Überwachung</strong>
-                <p>Wöchentliche Prüfung auf relevante Rechtsänderungen</p>
-              </div>
-            </div>
-          </div>
-          <button
-            className={styles.noAnalysisCta}
-            onClick={() => onNavigate(`/contracts`)}
-          >
-            <Zap size={16} />
-            Zur Vertragsanalyse
-            <ArrowRight size={16} />
-          </button>
+              <button
+                className={styles.noAnalysisCta}
+                onClick={onStartAnalysis || (() => onNavigate(`/contracts`))}
+              >
+                <Zap size={16} />
+                Jetzt analysieren
+                <ArrowRight size={16} />
+              </button>
+            </>
+          )}
         </div>
       </div>
     );
@@ -141,7 +153,7 @@ export default function OverviewTab({ selectedContract, onNavigate, onSetActiveT
           </div>
           {selectedContract.legalPulse?.topRisks?.slice(0, 3).map((risk, i) => {
             const isResolved = risk.status === 'resolved' || risk.status === 'accepted';
-            const effectiveSeverity = risk.userEdits?.severity || risk.severity;
+            const effectiveSeverity = risk.userEdits?.severity || risk.severity || 'medium';
             return (
               <div key={i} className={styles.overviewPreviewItem} onClick={() => onSetActiveTab('risks')} style={{ cursor: 'pointer', opacity: isResolved ? 0.6 : 1 }}>
                 <span className={styles.overviewPreviewBadge} style={{

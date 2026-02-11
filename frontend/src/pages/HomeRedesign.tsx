@@ -922,7 +922,7 @@ const HomeRedesign = () => {
                   </div>
                 </div>
                 <h3>Legal Lens</h3>
-                <p>Interaktive Vertragsanalyse mit Risk Score, Smart Summary & Verhandlungs-Empfehlungen.</p>
+                <p>Interaktive Vertragsanalyse mit Risiko-Score, Smart Summary & Verhandlungs-Empfehlungen.</p>
                 <Link to="/features/legal-lens" className="feature-link">
                   Mehr erfahren
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

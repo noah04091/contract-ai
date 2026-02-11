@@ -177,6 +177,10 @@
   color: #111827;
   margin: 0 0 8px 0;
   line-height: 1.4;
+  /* Mobile text-overflow fix */
+  word-break: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 /* Edit Mode Inputs */
@@ -260,6 +264,9 @@
   font-size: 0.9rem;
   line-height: 1.6;
   margin: 0 0 16px 0;
+  /* Mobile text-overflow fix */
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 /* Clause Quote (collapsed preview) */
@@ -536,10 +543,12 @@
   color: #3b82f6;
 }
 
-/* Responsive */
+/* ===== RESPONSIVE DESIGN ===== */
+
+/* 📱 TABLET (max-width: 768px) */
 @media (max-width: 768px) {
   .riskCard {
-    padding: 16px;
+    padding: 18px;
   }
 
   .clauseTags {
@@ -549,6 +558,7 @@
 
   .riskHeader {
     flex-wrap: wrap;
+    gap: 8px;
   }
 
   .resolvedBadge {
@@ -558,11 +568,284 @@
   }
 
   .riskActions {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  /* WCAG 2.1: Min 44x44px touch targets */
+  .actionBtn {
+    padding: 10px 16px;
+    font-size: 0.875rem;
+    min-height: 44px;
+    min-width: 44px;
+    justify-content: center;
+  }
+
+  .resolveToggle {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+  }
+
+  .copyButton {
+    padding: 8px 14px;
+    min-height: 40px;
+  }
+
+  .expandButton {
+    min-height: 44px;
+    padding: 12px 16px;
+  }
+}
+
+/* 📱 TABLET SMALL / LARGE PHONE (max-width: 600px) */
+@media (max-width: 600px) {
+  .riskCard {
+    padding: 16px;
+    border-radius: 10px;
+  }
+
+  .riskTitle {
+    font-size: 1rem;
+    margin-bottom: 6px;
+  }
+
+  .riskDescription {
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+  }
+
+  .severityBadge {
+    font-size: 0.7rem;
+    padding: 3px 8px;
+  }
+
+  .legalBadge {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+  }
+
+  .clauseTag {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+  }
+
+  .riskActions {
     gap: 8px;
   }
 
   .actionBtn {
-    padding: 6px 10px;
+    padding: 10px 14px;
+    font-size: 0.8rem;
+    flex: 1;
+    min-width: 100px;
+  }
+
+  .expandButton {
+    font-size: 0.8rem;
+  }
+
+  .detailSection {
+    padding: 12px;
+  }
+
+  .detailLabel {
+    font-size: 0.8rem;
+  }
+
+  .detailText {
+    font-size: 0.85rem;
+  }
+
+  .clauseBlockquote {
+    font-size: 0.85rem;
+    padding: 12px;
+  }
+
+  .replacementBlock {
+    font-size: 0.85rem;
+    padding: 12px;
+  }
+
+  .legalBasisFull {
+    font-size: 0.8rem;
+  }
+}
+
+/* 📱 MOBILE MEDIUM (max-width: 480px) */
+@media (max-width: 480px) {
+  .riskCard {
+    padding: 14px;
+    border-left-width: 3px;
+  }
+
+  .riskHeader {
+    gap: 6px;
+  }
+
+  .riskTitle {
+    font-size: 0.95rem;
+    line-height: 1.3;
+  }
+
+  .riskDescription {
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+
+  .severityBadge {
+    font-size: 0.65rem;
+    padding: 2px 7px;
+    letter-spacing: 0.3px;
+  }
+
+  .legalBadge {
+    font-size: 0.7rem;
+  }
+
+  .clauseTags {
+    gap: 4px;
+  }
+
+  .clauseTag {
+    font-size: 0.65rem;
+  }
+
+  /* WCAG 2.1: 44x44px touch targets on mobile */
+  .resolveToggle {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+  }
+
+  .riskActions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .actionBtn {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 0.8rem;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  .copyButton {
+    padding: 10px 14px;
+    min-height: 44px;
     font-size: 0.75rem;
+  }
+
+  .expandButton {
+    min-height: 44px;
+    font-size: 0.8rem;
+    padding: 12px;
+  }
+
+  .expandedContent {
+    margin-top: 12px;
+  }
+
+  .detailSection {
+    padding: 10px;
+    margin-bottom: 10px;
+  }
+
+  .detailLabel {
+    font-size: 0.75rem;
+    margin-bottom: 6px;
+  }
+
+  .detailText {
+    font-size: 0.8rem;
+  }
+
+  .clauseBlockquote {
+    font-size: 0.8rem;
+    padding: 10px;
+  }
+
+  .replacementBlock {
+    font-size: 0.8rem;
+    padding: 10px;
+  }
+
+  .clauseQuote {
+    padding: 10px;
+    margin-top: 10px;
+  }
+
+  .clauseQuoteLabel {
+    font-size: 0.7rem;
+  }
+
+  .clauseQuoteText {
+    font-size: 0.8rem;
+  }
+
+  .commentSection {
+    margin-top: 12px;
+  }
+
+  .commentTextarea {
+    font-size: 0.85rem;
+    padding: 10px;
+  }
+
+  .commentSaveBtn {
+    min-height: 44px;
+  }
+
+  .existingComment {
+    padding: 10px;
+    font-size: 0.8rem;
+  }
+
+  /* Edit Mode auf Mobile */
+  .editTitleInput {
+    font-size: 0.95rem;
+    padding: 10px;
+  }
+
+  .editDescriptionInput {
+    font-size: 0.85rem;
+    padding: 10px;
+  }
+
+  .editActions {
+    flex-direction: column;
+  }
+
+  .editSaveBtn,
+  .editCancelBtn {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+}
+
+/* 📱 EXTRA SMALL MOBILE (max-width: 375px) */
+@media (max-width: 375px) {
+  .riskCard {
+    padding: 12px;
+  }
+
+  .riskTitle {
+    font-size: 0.9rem;
+  }
+
+  .riskDescription {
+    font-size: 0.78rem;
+  }
+
+  .severityBadge {
+    font-size: 0.6rem;
+    padding: 2px 6px;
+  }
+
+  .actionBtn {
+    font-size: 0.75rem;
+    padding: 10px 12px;
   }
 }

@@ -9,7 +9,7 @@
   bottom: 0;
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(10px);
-  z-index: 2000;
+  z-index: 10000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -54,6 +54,8 @@
 
 .headerText {
   flex: 1;
+  min-width: 0; /* Wichtig für text-overflow in Flex-Containern */
+  overflow: hidden;
 }
 
 .headerText h2 {
@@ -61,6 +63,9 @@
   font-weight: 600;
   margin: 0 0 0.25rem;
   color: #1d1d1f;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .headerText p {

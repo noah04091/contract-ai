@@ -2200,6 +2200,19 @@ router.post('/:contractId/export-report', verifyToken, async (req, res) => {
       });
     }
 
+    // 🏢 Load Company Profile for Enterprise Branding
+    let companyProfile = null;
+    try {
+      const User = require('../models/User');
+      const user = await User.findById(userId);
+      if (user?.companyProfile?.companyName) {
+        companyProfile = user.companyProfile;
+        console.log(`🏢 [Legal Lens] Company profile found: ${companyProfile.companyName}`);
+      }
+    } catch (profileErr) {
+      console.warn('[Legal Lens] Could not load company profile:', profileErr.message);
+    }
+
     // Alle Klausel-Analysen laden
     const analyses = await ClauseAnalysis.find({
       contractId: new ObjectId(contractId),
@@ -2280,7 +2293,8 @@ router.post('/:contractId/export-report', verifyToken, async (req, res) => {
       criticalClauses,
       riskSummary,
       topRisks,
-      checklist
+      checklist,
+      companyProfile // 🏢 Enterprise Branding
     };
 
     // PDF generieren

@@ -4706,30 +4706,30 @@
   position: relative;
 }
 
-/* Floating Sidebar - Fixed Position rechts am Rand */
+/* Werkzeuge Modal - Zentriert */
 .step2Sidebar {
   position: fixed;
-  top: 140px;
-  right: 0;
-  width: 300px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.95);
+  width: 420px;
+  max-width: calc(100vw - 32px);
   background: #FFFFFF;
-  border-radius: 16px 0 0 16px; /* Links rund, rechts eckig am Rand */
+  border-radius: 20px;
   border: 1px solid rgba(0, 0, 0, 0.08);
-  border-right: none; /* Kein Border am rechten Rand */
-  box-shadow: -4px 4px 24px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   padding: 0;
-  max-height: calc(100vh - 180px);
+  max-height: calc(100vh - 120px);
   overflow-y: auto;
-  z-index: 50;
+  z-index: 1000;
   opacity: 0;
-  transform: translateX(20px);
   pointer-events: none;
-  transition: all 0.3s ease;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .step2Sidebar.sidebarOpen {
   opacity: 1;
-  transform: translateX(0);
+  transform: translate(-50%, -50%) scale(1);
   pointer-events: auto;
 }
 
@@ -4742,41 +4742,51 @@
   border-radius: 3px;
 }
 
-/* Sidebar Header */
+/* Modal Header */
 .sidebarHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   position: sticky;
   top: 0;
   background: #FFFFFF;
+  border-radius: 20px 20px 0 0;
   z-index: 5;
 }
 
 .sidebarHeader h3 {
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 1.1rem;
+  font-weight: 700;
   color: #0B1324;
   margin: 0;
 }
 
 .sidebarCloseBtn {
-  display: none; /* Show only on mobile */
-  background: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.05);
   border: none;
-  font-size: 1.2rem;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  font-size: 1rem;
   color: #6B7280;
   cursor: pointer;
-  padding: 0.25rem;
-  line-height: 1;
+  transition: all 0.15s ease;
 }
 
-/* Sidebar Section */
+.sidebarCloseBtn:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: #1f2937;
+}
+
+/* Modal Section */
 .sidebarSection {
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .sidebarSection:last-of-type {
@@ -4922,13 +4932,9 @@
   color: #6B7280;
 }
 
-/* Sidebar Footer mit Ausblenden-Button */
+/* Modal Footer - hidden since we have close button in header */
 .sidebarFooter {
-  padding: 0.75rem 1.25rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-  background: #FAFBFC;
-  position: sticky;
-  bottom: 0;
+  display: none;
 }
 
 .sidebarHideBtn {
@@ -4958,16 +4964,17 @@
   height: 16px;
 }
 
-/* Sidebar Overlay (Mobile) */
+/* Modal Overlay (always visible when modal open) */
 .sidebarOverlay {
-  display: none;
+  display: block;
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
-  z-index: 49;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 999;
 }
 
 /* Compact Template Library for Sidebar */
@@ -5033,15 +5040,8 @@
 }
 
 /* =================================
-   RESPONSIVE: SIDEBAR
+   RESPONSIVE: WERKZEUGE MODAL
    ================================= */
-
-/* Large screens: Sidebar am rechten Rand fixiert */
-@media (min-width: 1400px) {
-  .step2Sidebar {
-    right: 0; /* Immer am rechten Rand */
-  }
-}
 
 /* Tablet & smaller desktop */
 @media (max-width: 1024px) {
@@ -5050,40 +5050,15 @@
   }
 
   .step2Sidebar {
-    position: fixed;
-    top: 0;
-    right: 0;
-    width: 320px;
-    height: 100vh;
-    max-height: 100vh;
-    border-radius: 0;
-    z-index: 100;
-    /* Geschlossen: unsichtbar und nicht klickbar */
-    opacity: 0;
-    transform: translateX(100%);
-    pointer-events: none;
-    transition: opacity 0.3s ease, transform 0.3s ease;
-  }
-
-  .step2Sidebar.sidebarOpen {
-    /* Offen: sichtbar und von rechts reinschieben */
-    opacity: 1;
-    transform: translateX(0);
-    pointer-events: auto;
-  }
-
-  .sidebarCloseBtn {
-    display: block;
-  }
-
-  .sidebarOverlay {
-    display: block;
+    width: calc(100vw - 32px);
+    max-width: 420px;
   }
 }
 
 @media (max-width: 640px) {
   .step2Sidebar {
-    width: 100%;
+    width: calc(100vw - 24px);
+    max-height: calc(100vh - 80px);
   }
 
   /* Mobile: Header mit Buttons nebeneinander */

@@ -1516,6 +1516,43 @@
   .searchModalContent {
     max-width: 100%;
   }
+
+  /* Touch Target Fixes: Apple HIG min 44x44px */
+  .menuButton {
+    width: 44px;
+    height: 44px;
+  }
+
+  .iconButton {
+    width: 44px;
+    height: 44px;
+  }
+
+  .searchButton {
+    min-height: 44px;
+  }
+
+  .userButton {
+    min-height: 44px;
+  }
+
+  .dropdownItem {
+    min-height: 44px;
+  }
+
+  .settingsModalClose {
+    width: 44px;
+    height: 44px;
+  }
+
+  .dropdownActionIcon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .settingsTab {
+    min-height: 44px;
+  }
 }
 
 /* ============================================

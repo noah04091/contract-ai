@@ -3561,10 +3561,7 @@ export default function Generate() {
     
     setFormData(initialData);
     setCurrentStep(2);
-    // Sidebar nur auf Desktop automatisch öffnen (> 1024px)
-    if (window.innerWidth > 1024) {
-      setSidebarOpen(true);
-    }
+    // Modal bleibt geschlossen - User öffnet es selbst über "Vorlagen" Button
     initializeAccordion(type); // 📂 Öffne erste Gruppe automatisch
   };
 

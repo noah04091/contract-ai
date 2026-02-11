@@ -994,8 +994,8 @@
   }
 
   .alphabetBtnSmall {
-    width: 28px;
-    height: 28px;
+    width: 44px;
+    height: 44px;
     font-size: 0.75rem;
   }
 
@@ -1005,6 +1005,27 @@
 
   .termCard {
     padding: 1rem;
+  }
+
+  /* Touch Target Fixes: Apple HIG min 44px */
+  .tabBtn {
+    min-height: 44px;
+  }
+
+  .alphabetBtn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .filterBtn {
+    min-height: 44px;
+  }
+
+  .retryButton,
+  .exploreButton,
+  .emptyActionPrimary,
+  .deleteButton {
+    min-height: 44px;
   }
 }
 

@@ -45,6 +45,7 @@ import PDFViewer from "../components/PDFViewer";
 import { QRCodeCanvas } from "qrcode.react";
 import { WelcomePopup } from "../components/Tour";
 import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
+import { loadCompanyProfile, getJsPDFBranding, imageUrlToBase64, type CompanyProfile } from "../utils/pdfBranding"; // 🏢 Enterprise Branding
 
 // Plans mit vollem Envelopes/Signaturen Zugriff
 const ENVELOPES_ACCESS_PLANS = ['business', 'enterprise'];
@@ -142,6 +143,9 @@ export default function Envelopes() {
     onConfirm: () => void;
   } | null>(null);
 
+  // 🏢 Enterprise Branding State
+  const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
+
   // Responsive handler
   useEffect(() => {
     const handleResize = () => {
@@ -150,6 +154,11 @@ export default function Envelopes() {
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // 🏢 Load Company Profile for Enterprise Branding
+  useEffect(() => {
+    loadCompanyProfile().then(setCompanyProfile);
   }, []);
 
   // 🔒 Fetch user plan for premium access check
@@ -903,29 +912,67 @@ export default function Envelopes() {
     setShowQRCode(true);
   };
 
-  // Export Audit Log as PDF
-  const handleExportAuditLog = (envelope: Envelope) => {
+  // Export Audit Log as PDF with Enterprise Branding
+  const handleExportAuditLog = async (envelope: Envelope) => {
     const events = generateTimelineEvents(envelope);
     const doc = new jsPDF();
+
+    // 🏢 Get branding info
+    const branding = getJsPDFBranding(companyProfile, 'Audit-Log');
+    let headerYOffset = 0;
+
+    // 🏢 Enterprise Header with Logo
+    if (branding.hasLogo && branding.logoUrl) {
+      try {
+        const logoBase64 = await imageUrlToBase64(branding.logoUrl);
+        if (logoBase64) {
+          doc.addImage(logoBase64, 'PNG', 150, 10, 40, 20);
+        }
+      } catch (err) {
+        console.warn('Could not add logo to PDF:', err);
+      }
+    }
+
+    if (branding.companyName) {
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(0, 51, 102); // #003366
+      doc.text(branding.companyName, 20, 15);
+
+      if (branding.companyAddress) {
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(100, 116, 139); // #64748b
+        doc.text(branding.companyAddress, 20, 21);
+      }
+
+      // Draw separator line
+      doc.setDrawColor(0, 51, 102);
+      doc.setLineWidth(0.5);
+      doc.line(20, 28, 190, 28);
+
+      headerYOffset = 15;
+      doc.setTextColor(0, 0, 0); // Reset to black
+    }
 
     // Header
     doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
-    doc.text("Audit-Log", 105, 20, { align: "center" });
+    doc.text("Audit-Log", 105, 20 + headerYOffset, { align: "center" });
 
     // Document Info
     doc.setFontSize(11);
     doc.setFont("helvetica", "normal");
-    doc.text(`Dokument: ${envelope.title}`, 20, 35);
-    doc.text(`Erstellt am: ${formatDateTime(envelope.createdAt)}`, 20, 42);
-    doc.text(`Status: ${getStatusLabel(envelope.status)}`, 20, 49);
+    doc.text(`Dokument: ${envelope.title}`, 20, 35 + headerYOffset);
+    doc.text(`Erstellt am: ${formatDateTime(envelope.createdAt)}`, 20, 42 + headerYOffset);
+    doc.text(`Status: ${getStatusLabel(envelope.status)}`, 20, 49 + headerYOffset);
 
     // Timeline Section
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.text("Aktivitätsverlauf", 20, 65);
+    doc.text("Aktivitätsverlauf", 20, 65 + headerYOffset);
 
-    let yPosition = 75;
+    let yPosition = 75 + headerYOffset;
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
 
@@ -983,14 +1030,15 @@ export default function Envelopes() {
       yPosition += 5;
     });
 
-    // Footer
+    // 🏢 Footer with branding
     const pageCount = doc.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
       doc.setFontSize(8);
       doc.setFont("helvetica", "normal");
+      doc.setTextColor(148, 163, 184); // #94a3b8
       doc.text(
-        `Seite ${i} von ${pageCount} | Generiert am ${new Date().toLocaleString("de-DE")}`,
+        `${branding.footerText} | Seite ${i} von ${pageCount}`,
         105,
         290,
         { align: "center" }
