@@ -1611,3 +1611,606 @@ input:checked + .toggleSlider:before {
   opacity: 0.7;
   cursor: wait;
 }
+
+/* ============================================
+   ENHANCED RESPONSIVE DESIGN - Tablet (1024px)
+   ============================================ */
+@media (max-width: 1024px) {
+  .contentWrapper {
+    padding: 20px;
+  }
+
+  .documentActions {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+}
+
+/* ============================================
+   ENHANCED RESPONSIVE DESIGN - Mobile (768px)
+   ============================================ */
+@media (max-width: 768px) {
+  /* Top Header & Breadcrumb */
+  .topHeader {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .breadcrumb {
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+
+  .breadcrumbText {
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .breadcrumbCurrent {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    vertical-align: bottom;
+  }
+
+  .headerActions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  /* Document Viewer Header - Mobile Optimized */
+  .documentHeader {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .documentHeader > div:first-child {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .documentActions {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  .documentActions .btn {
+    flex: 0 0 auto;
+  }
+
+  /* Sidebar & Quick Actions */
+  .quickActionBtn {
+    padding: 14px 16px;
+    font-size: 15px;
+    min-height: 48px; /* Better touch target */
+  }
+
+  .quickActionBtn svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Card Headers */
+  .cardHeader {
+    padding: 14px 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .cardTitle {
+    font-size: 14px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .cardBody {
+    padding: 16px;
+  }
+
+  /* Analysis Stats Header */
+  .analysisStatsHeader {
+    padding: 12px 14px;
+    gap: 8px;
+  }
+
+  .statBadge {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  /* Metric Cards */
+  .metricCard {
+    padding: 14px;
+  }
+
+  .metricValue {
+    font-size: 16px;
+    word-break: break-word;
+  }
+
+  .metricLabel {
+    font-size: 11px;
+  }
+
+  /* Analysis Items */
+  .analysisItem {
+    padding: 12px;
+  }
+
+  .analysisItemTitle {
+    font-size: 13px;
+  }
+
+  .analysisItemText {
+    font-size: 12px;
+  }
+
+  /* Timeline Items */
+  .timelineItem {
+    padding: 10px;
+  }
+
+  .timelineTitle {
+    font-size: 13px;
+  }
+
+  .timelineDate {
+    font-size: 11px;
+  }
+
+  /* Clause Accordion */
+  .clauseAccordionHeader {
+    padding: 14px 16px;
+  }
+
+  .clauseAccordionContent {
+    padding: 0 16px 16px 40px;
+  }
+
+  .clauseContent,
+  .clauseExplanation {
+    font-size: 13px;
+  }
+
+  .clauseAction {
+    font-size: 12px;
+    padding: 8px 12px;
+  }
+
+  /* Reminder Card */
+  .reminderCard {
+    padding: 14px;
+  }
+
+  /* Button Sizes for Touch */
+  .btn {
+    min-height: 44px;
+    padding: 12px 16px;
+  }
+
+  .btnSm {
+    min-height: 36px;
+    padding: 8px 12px;
+  }
+
+  .btnIcon {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Empty States */
+  .emptyState {
+    padding: 30px 16px;
+  }
+
+  .emptyIcon {
+    width: 56px;
+    height: 56px;
+  }
+
+  .emptyTitle {
+    font-size: 15px;
+  }
+
+  .emptyText {
+    font-size: 13px;
+  }
+}
+
+/* ============================================
+   ENHANCED RESPONSIVE DESIGN - Small Mobile (480px)
+   ============================================ */
+@media (max-width: 480px) {
+  .contentWrapper {
+    padding: 12px;
+  }
+
+  /* Title Section */
+  .contractTitle {
+    font-size: 18px;
+    gap: 8px;
+  }
+
+  .aiGeneratedBadge {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+
+  .contractMeta {
+    gap: 10px;
+  }
+
+  .metaItem {
+    font-size: 12px;
+  }
+
+  /* Status Badge */
+  .statusBadge {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  /* Tab Navigation - Scrollable */
+  .tabNavigation {
+    padding: 2px;
+    gap: 2px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .tabNavigation::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tabButton {
+    padding: 10px 14px;
+    font-size: 12px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .tabBadge {
+    min-width: 18px;
+    height: 18px;
+    font-size: 10px;
+  }
+
+  /* Score Hero Card */
+  .scoreHeroContent {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .scoreCircle {
+    width: 80px;
+    height: 80px;
+  }
+
+  .scoreCircleInner {
+    width: 64px;
+    height: 64px;
+  }
+
+  .scoreValue {
+    font-size: 22px;
+  }
+
+  .scoreMax {
+    font-size: 12px;
+  }
+
+  .scoreTitle {
+    font-size: 15px;
+  }
+
+  .scoreStatus {
+    font-size: 12px;
+    padding: 5px 10px;
+  }
+
+  .scoreMetric {
+    font-size: 11px;
+  }
+
+  /* Document Actions - Stack Vertically */
+  .documentHeader {
+    padding: 10px;
+  }
+
+  .documentActions {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 6px;
+  }
+
+  .documentActions .btn {
+    justify-content: center;
+    font-size: 11px;
+  }
+
+  .documentContent {
+    padding: 12px;
+    min-height: 400px;
+  }
+
+  /* Metrics Grid - Full Width */
+  .metricsGrid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .metricCard {
+    padding: 12px;
+  }
+
+  .metricIconWrapper {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* Parties Grid */
+  .partiesGrid {
+    gap: 10px;
+  }
+
+  .partyCard {
+    padding: 12px;
+  }
+
+  .partyAvatar {
+    width: 36px;
+    height: 36px;
+    font-size: 13px;
+  }
+
+  .partyName {
+    font-size: 13px;
+  }
+
+  /* Analysis List */
+  .analysisList {
+    gap: 10px;
+  }
+
+  .analysisItemIcon {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* Clauses */
+  .clausesList {
+    gap: 10px;
+  }
+
+  .clauseNumber {
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+  }
+
+  .clauseTitle {
+    font-size: 13px;
+  }
+
+  /* Cards */
+  .card {
+    border-radius: var(--cd-radius-lg);
+  }
+
+  .cardHeader {
+    padding: 12px 14px;
+  }
+
+  .cardBody {
+    padding: 14px;
+  }
+
+  .cardIcon {
+    width: 28px;
+    height: 28px;
+  }
+
+  /* Quick Actions */
+  .quickActions {
+    gap: 6px;
+  }
+
+  .quickActionBtn {
+    padding: 12px 14px;
+    font-size: 13px;
+    gap: 10px;
+  }
+
+  /* Summary Lists */
+  .summaryList li,
+  .legalAssessmentList li,
+  .comparisonList li {
+    padding: 10px 0 10px 20px;
+    font-size: 13px;
+  }
+
+  /* Danger Zone Button */
+  .btnDanger {
+    font-size: 13px;
+  }
+}
+
+/* ============================================
+   ENHANCED RESPONSIVE DESIGN - Very Small (360px)
+   ============================================ */
+@media (max-width: 360px) {
+  .contentWrapper {
+    padding: 8px;
+  }
+
+  .contractTitle {
+    font-size: 16px;
+  }
+
+  .breadcrumbCurrent {
+    max-width: 100px;
+  }
+
+  .tabButton {
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+
+  .scoreCircle {
+    width: 70px;
+    height: 70px;
+  }
+
+  .scoreCircleInner {
+    width: 56px;
+    height: 56px;
+  }
+
+  .scoreValue {
+    font-size: 18px;
+  }
+
+  .metricValue {
+    font-size: 14px;
+  }
+
+  .btn {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  .btnSm {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .documentActions {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ============================================
+   FULLSCREEN PDF MODAL - Mobile Responsive
+   ============================================ */
+@media (max-width: 768px) {
+  /* These styles will be applied via inline styles in TSX */
+}
+
+/* ============================================
+   TOUCH DEVICE IMPROVEMENTS
+   ============================================ */
+@media (hover: none) and (pointer: coarse) {
+  /* Remove hover effects on touch devices */
+  .metricCard:hover,
+  .card:hover,
+  .quickActionBtn:hover,
+  .clauseAccordion:hover {
+    transform: none;
+    box-shadow: var(--cd-shadow-sm);
+  }
+
+  /* Ensure tap targets are large enough */
+  .backButton {
+    width: 44px;
+    height: 44px;
+  }
+
+  .tabButton {
+    min-height: 44px;
+  }
+
+  .clauseAccordionHeader {
+    min-height: 52px;
+  }
+
+  .reminderToggle {
+    width: 50px;
+    height: 28px;
+  }
+
+  .toggleSlider:before {
+    width: 24px;
+    height: 24px;
+  }
+
+  input:checked + .toggleSlider:before {
+    transform: translateX(22px);
+  }
+
+  /* Active states for touch feedback */
+  .quickActionBtn:active {
+    background: var(--cd-surface-hover);
+    transform: scale(0.98);
+  }
+
+  .btn:active {
+    transform: scale(0.98);
+  }
+}
+
+/* ============================================
+   LANDSCAPE MOBILE OPTIMIZATION
+   ============================================ */
+@media (max-height: 500px) and (orientation: landscape) {
+  .contentWrapper {
+    padding: 8px 16px;
+  }
+
+  .mainHeader {
+    margin-bottom: 16px;
+  }
+
+  .tabNavigation {
+    margin-bottom: 16px;
+  }
+
+  .cardBody {
+    padding: 12px;
+  }
+
+  .emptyState {
+    padding: 20px;
+  }
+
+  .emptyIcon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 10px;
+  }
+}
+
+/* ============================================
+   DARK MODE SUPPORT (if needed in future)
+   ============================================ */
+@media (prefers-color-scheme: dark) {
+  /* Placeholder for dark mode styles */
+}
+
+/* ============================================
+   REDUCED MOTION PREFERENCE
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  .fadeIn,
+  .stagger1,
+  .stagger2,
+  .stagger3,
+  .stagger4 {
+    animation: none;
+  }
+
+  .card,
+  .metricCard,
+  .quickActionBtn,
+  .btn {
+    transition: none;
+  }
+}

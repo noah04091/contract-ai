@@ -199,6 +199,16 @@ export default function ContractDetailsV2() {
   // Chat State
   const [openingChat, setOpeningChat] = useState(false);
 
+  // Mobile Detection
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  // Responsive resize listener
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // ============================================
   // DATA FETCHING
   // ============================================
@@ -2125,23 +2135,66 @@ export default function ContractDetailsV2() {
             {/* Fullscreen Header */}
             <div style={{
               display: 'flex',
+              flexDirection: isMobile ? 'column' : 'row',
               justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '12px 20px',
+              alignItems: isMobile ? 'stretch' : 'center',
+              padding: isMobile ? '10px 12px' : '12px 20px',
+              gap: isMobile ? 10 : 0,
               borderBottom: '1px solid rgba(255,255,255,0.1)'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <h2 style={{ color: 'white', margin: 0, fontSize: 16, fontWeight: 500 }}>
-                  <FileText size={18} style={{ marginRight: 8, verticalAlign: 'middle' }} />
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: isMobile ? 'space-between' : 'flex-start',
+                gap: isMobile ? 8 : 16,
+                width: isMobile ? '100%' : 'auto'
+              }}>
+                <h2 style={{
+                  color: 'white',
+                  margin: 0,
+                  fontSize: isMobile ? 14 : 16,
+                  fontWeight: 500,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  maxWidth: isMobile ? '60%' : 'none'
+                }}>
+                  <FileText size={isMobile ? 16 : 18} style={{ marginRight: 8, verticalAlign: 'middle' }} />
                   {contract.name}
                 </h2>
                 {numPages && (
-                  <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14 }}>
-                    Seite {pageNumber} von {numPages}
+                  <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: isMobile ? 12 : 14, whiteSpace: 'nowrap' }}>
+                    {isMobile ? `${pageNumber}/${numPages}` : `Seite ${pageNumber} von ${numPages}`}
                   </span>
                 )}
+                {/* Close button on mobile - top right */}
+                {isMobile && (
+                  <button
+                    onClick={() => setIsFullscreen(false)}
+                    style={{
+                      background: 'rgba(255,255,255,0.1)',
+                      border: 'none',
+                      borderRadius: 6,
+                      padding: '8px',
+                      color: 'white',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                    aria-label="Vollbild beenden"
+                  >
+                    <Minimize2 size={18} />
+                  </button>
+                )}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: isMobile ? 6 : 8,
+                justifyContent: isMobile ? 'center' : 'flex-end',
+                width: isMobile ? '100%' : 'auto'
+              }}>
                 {/* Zoom Controls */}
                 <button
                   onClick={handlePdfZoomOut}
@@ -2150,16 +2203,18 @@ export default function ContractDetailsV2() {
                     background: 'rgba(255,255,255,0.1)',
                     border: 'none',
                     borderRadius: 6,
-                    padding: '6px 12px',
+                    padding: isMobile ? '8px 10px' : '6px 12px',
                     color: 'white',
                     cursor: pdfScale <= 0.5 ? 'not-allowed' : 'pointer',
-                    opacity: pdfScale <= 0.5 ? 0.5 : 1
+                    opacity: pdfScale <= 0.5 ? 0.5 : 1,
+                    minWidth: isMobile ? 40 : 'auto',
+                    minHeight: isMobile ? 40 : 'auto'
                   }}
                   aria-label="Verkleinern"
                 >
                   −
                 </button>
-                <span style={{ color: 'white', fontSize: 13, minWidth: 50, textAlign: 'center' }}>
+                <span style={{ color: 'white', fontSize: isMobile ? 12 : 13, minWidth: isMobile ? 40 : 50, textAlign: 'center' }}>
                   {Math.round(pdfScale * 100)}%
                 </span>
                 <button
@@ -2169,33 +2224,40 @@ export default function ContractDetailsV2() {
                     background: 'rgba(255,255,255,0.1)',
                     border: 'none',
                     borderRadius: 6,
-                    padding: '6px 12px',
+                    padding: isMobile ? '8px 10px' : '6px 12px',
                     color: 'white',
                     cursor: pdfScale >= 2.5 ? 'not-allowed' : 'pointer',
-                    opacity: pdfScale >= 2.5 ? 0.5 : 1
+                    opacity: pdfScale >= 2.5 ? 0.5 : 1,
+                    minWidth: isMobile ? 40 : 'auto',
+                    minHeight: isMobile ? 40 : 'auto'
                   }}
                   aria-label="Vergrößern"
                 >
                   +
                 </button>
-                <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,0.2)', margin: '0 8px' }} />
-                <button
-                  onClick={() => setIsFullscreen(false)}
-                  style={{
-                    background: 'rgba(255,255,255,0.1)',
-                    border: 'none',
-                    borderRadius: 6,
-                    padding: '8px 16px',
-                    color: 'white',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8
-                  }}
-                  aria-label="Vollbild beenden"
-                >
-                  <Minimize2 size={16} /> Beenden (ESC)
-                </button>
+                {/* Desktop close button */}
+                {!isMobile && (
+                  <>
+                    <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,0.2)', margin: '0 8px' }} />
+                    <button
+                      onClick={() => setIsFullscreen(false)}
+                      style={{
+                        background: 'rgba(255,255,255,0.1)',
+                        border: 'none',
+                        borderRadius: 6,
+                        padding: '8px 16px',
+                        color: 'white',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8
+                      }}
+                      aria-label="Vollbild beenden"
+                    >
+                      <Minimize2 size={16} /> Beenden (ESC)
+                    </button>
+                  </>
+                )}
               </div>
             </div>
 
@@ -2243,9 +2305,9 @@ export default function ContractDetailsV2() {
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 16,
-                      marginTop: 20,
-                      padding: '12px 24px',
+                      gap: isMobile ? 12 : 16,
+                      marginTop: isMobile ? 12 : 20,
+                      padding: isMobile ? '10px 16px' : '12px 24px',
                       background: 'rgba(0,0,0,0.5)',
                       borderRadius: 8
                     }}>
@@ -2256,16 +2318,18 @@ export default function ContractDetailsV2() {
                           background: 'rgba(255,255,255,0.1)',
                           border: 'none',
                           borderRadius: 6,
-                          padding: '8px 16px',
+                          padding: isMobile ? '10px 14px' : '8px 16px',
                           color: 'white',
                           cursor: pageNumber === 1 ? 'not-allowed' : 'pointer',
-                          opacity: pageNumber === 1 ? 0.5 : 1
+                          opacity: pageNumber === 1 ? 0.5 : 1,
+                          minHeight: isMobile ? 44 : 'auto',
+                          fontSize: isMobile ? 13 : 14
                         }}
                         aria-label="Vorherige Seite"
                       >
-                        ← Zurück
+                        {isMobile ? '←' : '← Zurück'}
                       </button>
-                      <span style={{ color: 'white', fontSize: 14 }}>
+                      <span style={{ color: 'white', fontSize: isMobile ? 13 : 14 }}>
                         {pageNumber} / {numPages}
                       </span>
                       <button
@@ -2275,14 +2339,16 @@ export default function ContractDetailsV2() {
                           background: 'rgba(255,255,255,0.1)',
                           border: 'none',
                           borderRadius: 6,
-                          padding: '8px 16px',
+                          padding: isMobile ? '10px 14px' : '8px 16px',
                           color: 'white',
                           cursor: pageNumber === numPages ? 'not-allowed' : 'pointer',
-                          opacity: pageNumber === numPages ? 0.5 : 1
+                          opacity: pageNumber === numPages ? 0.5 : 1,
+                          minHeight: isMobile ? 44 : 'auto',
+                          fontSize: isMobile ? 13 : 14
                         }}
                         aria-label="Nächste Seite"
                       >
-                        Weiter →
+                        {isMobile ? '→' : 'Weiter →'}
                       </button>
                     </div>
                   )}
