@@ -1527,7 +1527,10 @@ function CreateEventModal({ date, onClose, onEventCreated, initialContractId, in
           maxHeight: isMobile ? '90dvh' : '85vh',
           background: '#ffffff',
           borderRadius: isMobile ? '20px 20px 0 0' : '20px',
-          boxShadow: isMobile ? 'none' : '0 20px 60px rgba(0, 0, 0, 0.15)'
+          boxShadow: isMobile ? 'none' : '0 20px 60px rgba(0, 0, 0, 0.15)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden'
         }}
       >
         {/* Header */}
