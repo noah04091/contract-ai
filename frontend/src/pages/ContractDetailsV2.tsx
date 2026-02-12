@@ -787,6 +787,21 @@ export default function ContractDetailsV2() {
     contract.analysis.concerningAspects?.length
   ) || contract.legalAssessment || contract.comparison || contract.risiken?.length || contract.laymanSummary?.length || contract.summary || contract.suggestions?.length || contract.detailedLegalOpinion || contract.contractScore;
 
+  // Legal Pulse: generische Fallback-Daten erkennen und ausblenden
+  const isLegalPulseGeneric = contract.legalPulse && (
+    (contract.legalPulse.summary && (
+      contract.legalPulse.summary.includes('Basis-Analyse') ||
+      contract.legalPulse.summary.includes('manuelle Prüfung') ||
+      contract.legalPulse.summary.includes('nicht vollständig')
+    )) ||
+    (contract.legalPulse.riskFactors && contract.legalPulse.riskFactors.some((r: string) =>
+      typeof r === 'string' && (
+        r.includes('unvollständig') ||
+        r.includes('Automatische Analyse')
+      )
+    ))
+  );
+
   // ============================================
   // RENDER
   // ============================================
@@ -1297,10 +1312,10 @@ export default function ContractDetailsV2() {
                             <span>Score: {contract.contractScore}</span>
                           </div>
                         )}
-                        {(contract.risiken?.length || contract.legalPulse?.riskFactors?.length) ? (
+                        {(contract.risiken?.length || (!isLegalPulseGeneric && contract.legalPulse?.riskFactors?.length)) ? (
                           <div className={styles.statBadge} style={{ background: 'var(--cd-danger-light)', color: 'var(--cd-danger)' }}>
                             <AlertTriangle size={16} />
-                            <span>Risiken: {(contract.risiken?.length || 0) + (contract.legalPulse?.riskFactors?.length || 0)}</span>
+                            <span>Risiken: {(contract.risiken?.length || 0) + (!isLegalPulseGeneric ? (contract.legalPulse?.riskFactors?.length || 0) : 0)}</span>
                           </div>
                         ) : null}
                         {contract.analysis?.positiveAspects?.length ? (
@@ -1508,8 +1523,8 @@ export default function ContractDetailsV2() {
                       </div>
                     )}
 
-                    {/* Legal Pulse */}
-                    {contract.legalPulse && (
+                    {/* Legal Pulse - nur anzeigen wenn echte Analyse-Daten vorhanden */}
+                    {contract.legalPulse && !isLegalPulseGeneric && (
                       <div className={`${styles.card} ${styles.fadeIn}`}>
                         <div className={styles.cardHeader}>
                           <h3 className={styles.cardTitle}>
