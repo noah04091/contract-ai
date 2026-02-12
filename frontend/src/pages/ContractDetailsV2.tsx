@@ -102,6 +102,7 @@ interface Contract {
   risiken?: string[];
   comparison?: string | string[];
   laymanSummary?: string[];
+  detailedLegalOpinion?: string;
   analysis?: {
     summary?: string;
     contractType?: string;
@@ -784,7 +785,7 @@ export default function ContractDetailsV2() {
     contract.analysis.summary ||
     contract.analysis.positiveAspects?.length ||
     contract.analysis.concerningAspects?.length
-  ) || contract.legalAssessment || contract.comparison || contract.risiken?.length || contract.laymanSummary?.length;
+  ) || contract.legalAssessment || contract.comparison || contract.risiken?.length || contract.laymanSummary?.length || contract.summary || contract.suggestions?.length || contract.detailedLegalOpinion || contract.contractScore;
 
   // ============================================
   // RENDER
@@ -1317,6 +1318,196 @@ export default function ContractDetailsV2() {
                       </div>
                     )}
 
+                    {/* Contract Score Hero Card */}
+                    {hasContractScore && (
+                      <div className={`${styles.card} ${styles.scoreHeroCard} ${styles.fadeIn}`}>
+                        <div className={styles.scoreHeroContent}>
+                          <div className={styles.scoreCircleContainer}>
+                            <div
+                              className={styles.scoreCircle}
+                              style={{
+                                '--score-color': scoreInfo.color,
+                                '--score-bg': scoreInfo.bgColor,
+                                '--score-progress': `${(contract.contractScore || 0) * 3.6}deg`
+                              } as React.CSSProperties}
+                            >
+                              <div className={styles.scoreCircleInner}>
+                                <span className={styles.scoreValue} style={{ color: scoreInfo.color }}>
+                                  {contract.contractScore}
+                                </span>
+                                <span className={styles.scoreMax}>/100</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className={styles.scoreDetails}>
+                            <div className={styles.scoreHeader}>
+                              <Award size={20} style={{ color: scoreInfo.color }} />
+                              <h3 className={styles.scoreTitle}>Vertragsbewertung</h3>
+                            </div>
+                            <div className={styles.scoreStatus} style={{ color: scoreInfo.color, background: scoreInfo.bgColor }}>
+                              {scoreInfo.status}
+                            </div>
+                            <div className={styles.scoreMetrics}>
+                              <div className={styles.scoreMetric}>
+                                <Shield size={14} />
+                                <span>Risiko: {riskInfo.label}</span>
+                              </div>
+                              {contract.analysis?.positiveAspects && (
+                                <div className={styles.scoreMetric}>
+                                  <CheckCircle size={14} style={{ color: 'var(--cd-success)' }} />
+                                  <span>{contract.analysis.positiveAspects.length} Stärken</span>
+                                </div>
+                              )}
+                              {contract.analysis?.concerningAspects && (
+                                <div className={styles.scoreMetric}>
+                                  <AlertTriangle size={14} style={{ color: 'var(--cd-warning)' }} />
+                                  <span>{contract.analysis.concerningAspects.length} Bedenken</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Zusammenfassung (Root-Level Summary) */}
+                    {contract.summary && (
+                      <div className={`${styles.card} ${styles.fadeIn} ${styles.stagger1}`}>
+                        <div className={styles.cardHeader}>
+                          <h3 className={styles.cardTitle}>
+                            <span className={styles.cardIcon}>
+                              <FileSearch size={18} />
+                            </span>
+                            Zusammenfassung
+                          </h3>
+                        </div>
+                        <div className={styles.cardBody}>
+                          {Array.isArray(contract.summary) ? (
+                            <ul className={styles.summaryList}>
+                              {(contract.summary as unknown as string[]).map((item: string, idx: number) => (
+                                <li key={idx} style={{ marginBottom: '8px', lineHeight: 1.7, color: 'var(--cd-text-secondary)' }}>{item}</li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p style={{ margin: 0, lineHeight: 1.7, color: 'var(--cd-text-secondary)', whiteSpace: 'pre-wrap' }}>
+                              {contract.summary}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Rechtliche Bewertung / Legal Assessment */}
+                    {contract.legalAssessment && (
+                      <div className={`${styles.card} ${styles.fadeIn} ${styles.stagger1}`}>
+                        <div className={styles.cardHeader}>
+                          <h3 className={styles.cardTitle}>
+                            <span className={styles.cardIcon} style={{ background: '#e0e7ff', color: '#4f46e5' }}>
+                              <Shield size={18} />
+                            </span>
+                            Rechtliche Bewertung
+                          </h3>
+                        </div>
+                        <div className={styles.cardBody}>
+                          {Array.isArray(contract.legalAssessment) ? (
+                            <ul className={styles.legalAssessmentList}>
+                              {contract.legalAssessment.map((item, idx) => (
+                                <li key={idx}>{item}</li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p style={{ margin: 0, lineHeight: 1.7, color: 'var(--cd-text-secondary)', whiteSpace: 'pre-wrap' }}>
+                              {contract.legalAssessment}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Vergleich & Analyse / Comparison */}
+                    {contract.comparison && (
+                      <div className={`${styles.card} ${styles.fadeIn} ${styles.stagger2}`}>
+                        <div className={styles.cardHeader}>
+                          <h3 className={styles.cardTitle}>
+                            <span className={styles.cardIcon} style={{ background: '#fef3c7', color: '#b45309' }}>
+                              <TrendingUp size={18} />
+                            </span>
+                            Vergleich & Analyse
+                          </h3>
+                        </div>
+                        <div className={styles.cardBody}>
+                          {Array.isArray(contract.comparison) ? (
+                            <ul className={styles.comparisonList}>
+                              {contract.comparison.map((item, idx) => (
+                                <li key={idx}>{item}</li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p style={{ margin: 0, lineHeight: 1.7, color: 'var(--cd-text-secondary)', whiteSpace: 'pre-wrap' }}>
+                              {contract.comparison}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Empfehlungen / Vorschläge (Root-Level Suggestions) */}
+                    {contract.suggestions && Array.isArray(contract.suggestions) && contract.suggestions.length > 0 && (
+                      <div className={`${styles.card} ${styles.fadeIn} ${styles.stagger2}`}>
+                        <div className={styles.cardHeader}>
+                          <h3 className={styles.cardTitle}>
+                            <span className={styles.cardIcon} style={{ background: '#dbeafe', color: '#2563eb' }}>
+                              <Lightbulb size={18} />
+                            </span>
+                            Empfehlungen & Vorschläge
+                          </h3>
+                          <span className={styles.tabBadge} style={{ background: '#dbeafe', color: '#2563eb' }}>
+                            {contract.suggestions.length}
+                          </span>
+                        </div>
+                        <div className={styles.cardBody}>
+                          <div className={styles.analysisList}>
+                            {contract.suggestions.map((suggestion, idx) => {
+                              const text = typeof suggestion === 'string' ? suggestion : '';
+                              if (!text) return null;
+                              return (
+                                <div key={idx} className={`${styles.analysisItem} ${styles.neutral}`}>
+                                  <div className={styles.analysisItemIcon} style={{ background: '#dbeafe', color: '#2563eb' }}>
+                                    <Lightbulb size={16} />
+                                  </div>
+                                  <div className={styles.analysisItemContent}>
+                                    <div className={styles.analysisItemText}>{text}</div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Ausführliches Rechtsgutachten */}
+                    {contract.detailedLegalOpinion && (
+                      <div className={`${styles.card} ${styles.fadeIn} ${styles.stagger2}`}>
+                        <div className={styles.cardHeader}>
+                          <h3 className={styles.cardTitle}>
+                            <span className={styles.cardIcon} style={{ background: '#e0e7ff', color: '#4f46e5' }}>
+                              <Shield size={18} />
+                            </span>
+                            Ausführliches Rechtsgutachten
+                          </h3>
+                          <span className={styles.tabBadge} style={{ background: '#fef3c7', color: '#b45309' }}>
+                            Premium
+                          </span>
+                        </div>
+                        <div className={styles.cardBody}>
+                          <p style={{ margin: 0, lineHeight: 1.8, color: 'var(--cd-text-secondary)', whiteSpace: 'pre-wrap' }}>
+                            {contract.detailedLegalOpinion}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Legal Pulse */}
                     {contract.legalPulse && (
                       <div className={`${styles.card} ${styles.fadeIn}`}>
@@ -1746,60 +1937,6 @@ export default function ContractDetailsV2() {
                               );
                             })}
                           </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Rechtliche Bewertung / Legal Assessment */}
-                    {contract.legalAssessment && (
-                      <div className={`${styles.card} ${styles.fadeIn} ${styles.stagger3}`}>
-                        <div className={styles.cardHeader}>
-                          <h3 className={styles.cardTitle}>
-                            <span className={styles.cardIcon} style={{ background: '#e0e7ff', color: '#4f46e5' }}>
-                              <Shield size={18} />
-                            </span>
-                            Rechtliche Bewertung
-                          </h3>
-                        </div>
-                        <div className={styles.cardBody}>
-                          {Array.isArray(contract.legalAssessment) ? (
-                            <ul className={styles.legalAssessmentList}>
-                              {contract.legalAssessment.map((item, idx) => (
-                                <li key={idx}>{item}</li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <p style={{ margin: 0, lineHeight: 1.7, color: 'var(--cd-text-secondary)', whiteSpace: 'pre-wrap' }}>
-                              {contract.legalAssessment}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Marktvergleich / Comparison */}
-                    {contract.comparison && (
-                      <div className={`${styles.card} ${styles.fadeIn} ${styles.stagger3}`}>
-                        <div className={styles.cardHeader}>
-                          <h3 className={styles.cardTitle}>
-                            <span className={styles.cardIcon} style={{ background: '#fef3c7', color: '#b45309' }}>
-                              <TrendingUp size={18} />
-                            </span>
-                            Marktvergleich
-                          </h3>
-                        </div>
-                        <div className={styles.cardBody}>
-                          {Array.isArray(contract.comparison) ? (
-                            <ul className={styles.comparisonList}>
-                              {contract.comparison.map((item, idx) => (
-                                <li key={idx}>{item}</li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <p style={{ margin: 0, lineHeight: 1.7, color: 'var(--cd-text-secondary)', whiteSpace: 'pre-wrap' }}>
-                              {contract.comparison}
-                            </p>
-                          )}
                         </div>
                       </div>
                     )}
