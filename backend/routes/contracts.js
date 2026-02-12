@@ -100,6 +100,7 @@ const extractEndDateFromImportantDates = (importantDates) => {
       return parsedDate;
     }
   } catch (err) {
+    console.warn('⚠️ [DATE-PARSE] Non-critical date parsing error:', err.message);
   }
 
   return null;
@@ -116,6 +117,7 @@ try {
   try {
     puppeteer = require('puppeteer');
   } catch (puppeteerError) {
+    console.warn('⚠️ [PUPPETEER] Puppeteer not available:', puppeteerError.message);
   }
 }
 
@@ -184,7 +186,7 @@ const generatePDFAndUploadToS3ForContract = async (contractId, userId, htmlConte
 
   } catch (error) {
     console.error(`❌ [AUTO-PDF] Fehler:`, error.message);
-    if (browser) { try { await browser.close(); } catch (e) {} }
+    if (browser) { try { await browser.close(); } catch (e) { console.warn('⚠️ [BROWSER] Close failed:', e.message); } }
     return { success: false, error: error.message };
   }
 };
@@ -537,6 +539,7 @@ router.updateOnboardingChecklist = updateOnboardingChecklist;
       );
 
     } catch (indexErr) {
+      console.warn('⚠️ [INDEX] Index creation failed (non-critical):', indexErr.message);
     }
   } catch (err) {
     console.error("❌ MongoDB-Fehler (contracts.js):", err);
@@ -900,6 +903,7 @@ async function enrichContractWithAnalysis(contract) {
         contract.signatureEnvelopeId = envelope._id;
       }
     } catch (envelopeErr) {
+      console.warn('⚠️ [ENVELOPE] Envelope lookup failed:', envelopeErr.message);
     }
 
     return contract;
@@ -1530,11 +1534,12 @@ router.put("/:id", verifyToken, async (req, res) => {
           await onContractChange(client.db("contract_ai"), updatedContract, "update");
         }
       } catch (eventError) {
+        console.warn('⚠️ [CALENDAR] Event update failed:', eventError.message);
       }
     }
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: "Vertrag erfolgreich aktualisiert" 
     });
 
@@ -1558,6 +1563,7 @@ router.delete("/:id", verifyToken, async (req, res) => {
         userId: new ObjectId(req.user.userId)
       });
     } catch (eventError) {
+      console.warn('⚠️ [CALENDAR] Event deletion failed:', eventError.message);
     }
 
     const result = await contractsCollection.deleteOne({
@@ -2502,6 +2508,7 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
         }
       );
     } catch (onboardingErr) {
+      console.warn('⚠️ [ONBOARDING] Checklist update failed:', onboardingErr.message);
     }
 
     res.json({
@@ -3175,6 +3182,7 @@ router.post("/email-import", verifyEmailImportKey, async (req, res) => {
               }
             );
           } catch (onboardingErr) {
+            console.warn('⚠️ [ONBOARDING] Checklist update failed:', onboardingErr.message);
           }
         }
 
@@ -3611,6 +3619,7 @@ router.post("/bulk-delete", verifyToken, async (req, res) => {
         userId: new ObjectId(userId)
       });
     } catch (eventError) {
+      console.warn('⚠️ [CALENDAR] Bulk event deletion failed:', eventError.message);
     }
 
     // 2️⃣ Verträge löschen (nur die vom User!)
@@ -3795,6 +3804,7 @@ router.post('/:id/pdf', verifyToken, async (req, res) => {
         userId: new ObjectId(req.user.userId)
       });
     } catch (profileError) {
+      console.warn('⚠️ [PROFILE] Company profile lookup failed:', profileError.message);
     }
 
     const parties = contract.formData || contract.parties || contract.metadata?.parties || {};
@@ -3951,12 +3961,14 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
               Expires: 3600 // 1 Stunde gültig
             });
           } catch (s3Error) {
+            console.warn('⚠️ [S3] Logo URL generation failed:', s3Error.message);
           }
         } else {
         }
       }
 
     } catch (profileError) {
+      console.warn('⚠️ [PROFILE] Profile processing failed:', profileError.message);
     }
 
     // Parteien-Daten aus formData oder metadata extrahieren
@@ -4122,10 +4134,12 @@ router.post('/:id/pdf-combined', verifyToken, async (req, res) => {
               Expires: 3600
             });
           } catch (s3Error) {
+            console.warn('⚠️ [S3] Logo URL generation failed:', s3Error.message);
           }
         }
       }
     } catch (profileError) {
+      console.warn('⚠️ [PROFILE] Company profile lookup failed:', profileError.message);
     }
 
     const parties = contract.formData || contract.parties || contract.metadata?.parties || {};
