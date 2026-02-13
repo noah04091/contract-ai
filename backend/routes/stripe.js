@@ -83,7 +83,6 @@ router.post("/create-checkout-session", verifyToken, async (req, res) => {
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: customerId,
-      payment_method_types: ["card"],
       allow_promotion_codes: true,
       line_items: [{ price: selectedPriceId, quantity: 1 }],
       subscription_data: {
