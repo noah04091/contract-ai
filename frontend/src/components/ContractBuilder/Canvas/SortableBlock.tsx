@@ -169,14 +169,6 @@ export const SortableBlock: React.FC<SortableBlockProps> = ({
         </div>
       )}
 
-      {/* Risk Indicator Bar */}
-      {block.riskLevel && !isPreview && (
-        <div
-          className={styles.riskIndicator}
-          style={{ backgroundColor: getRiskColor(block.riskLevel) }}
-        />
-      )}
-
       {/* Block Content */}
       <div className={styles.blockContent}>
         <BlockRenderer
