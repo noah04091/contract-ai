@@ -19,8 +19,6 @@ import {
   Printer,
   Edit3,
   Trash2,
-  Bell,
-  BellOff,
   ExternalLink,
   Copy,
   ChevronRight,
@@ -79,7 +77,6 @@ interface Contract {
   status?: string;
   filePath?: string;
   s3Key?: string;
-  reminder?: boolean;
   content?: string;
   contentHTML?: string;
   signature?: string;
@@ -161,7 +158,6 @@ export default function ContractDetailsV2() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
-  const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -507,26 +503,6 @@ export default function ContractDetailsV2() {
     }
   };
 
-  const toggleReminder = useCallback(async () => {
-    if (!contract || saving) return;
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/contracts/${contract._id}/reminder`, {
-        method: "PATCH",
-        credentials: "include",
-      });
-
-      if (!res.ok) throw new Error("Fehler beim Umschalten");
-
-      setContract(prev => prev ? { ...prev, reminder: !prev.reminder } : prev);
-      toast.success(`Erinnerung ${!contract.reminder ? "aktiviert" : "deaktiviert"}`);
-    } catch (error) {
-      console.error("Fehler beim Umschalten:", error);
-      toast.error("Fehler beim Umschalten der Erinnerung");
-    } finally {
-      setSaving(false);
-    }
-  }, [contract, saving]);
 
   const handleCopyContent = async () => {
     if (!contract?.content) {
@@ -2399,32 +2375,6 @@ export default function ContractDetailsV2() {
                     >
                       <MessageSquare size={18} /> {openingChat ? 'Wird geöffnet...' : 'Mit KI besprechen'}
                     </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Reminder */}
-              <div className={styles.card}>
-                <div className={styles.cardBody}>
-                  <div className={styles.reminderCard}>
-                    <div className={styles.reminderHeader}>
-                      <span className={styles.reminderTitle}>
-                        {contract.reminder ? <Bell size={16} /> : <BellOff size={16} />}
-                        {' '}Erinnerungen
-                      </span>
-                      <label className={styles.reminderToggle}>
-                        <input
-                          type="checkbox"
-                          checked={contract.reminder ?? false}
-                          onChange={toggleReminder}
-                          disabled={saving}
-                        />
-                        <span className={styles.toggleSlider}></span>
-                      </label>
-                    </div>
-                    <span className={styles.reminderStatus}>
-                      {contract.reminder ? "Erinnerungen sind aktiviert" : "Keine Erinnerungen"}
-                    </span>
                   </div>
                 </div>
               </div>
