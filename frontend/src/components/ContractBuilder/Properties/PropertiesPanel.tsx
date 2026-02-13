@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Trash2,
   Copy,
+  CopyCheck,
   Lock,
   Unlock,
   Sparkles,
@@ -43,6 +44,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className }) =
     updateBlockContent,
     deleteBlock,
     duplicateBlock,
+    applyStyleToAllOfType,
     optimizeClause,
     addBlockNote,
     updateBlockNote,
@@ -57,6 +59,11 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className }) =
   const selectedBlock = selectedBlockId
     ? currentDocument?.content.blocks.find((b: BlockType) => b.id === selectedBlockId)
     : null;
+
+  // Anzahl gleichartiger Blöcke (für "Auf alle anwenden")
+  const sameTypeCount = selectedBlock
+    ? currentDocument?.content.blocks.filter((b: BlockType) => b.type === selectedBlock.type && b.id !== selectedBlock.id).length || 0
+    : 0;
 
   // Section ein-/ausklappen
   const toggleSection = (section: SectionType) => {
@@ -92,6 +99,13 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className }) =
   const handleDuplicate = () => {
     if (selectedBlock) {
       duplicateBlock(selectedBlock.id);
+    }
+  };
+
+  // Stil auf alle Blöcke desselben Typs anwenden
+  const handleApplyToAll = () => {
+    if (selectedBlock && sameTypeCount > 0) {
+      applyStyleToAllOfType(selectedBlock.id);
     }
   };
 
@@ -148,6 +162,18 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className }) =
           <Trash2 size={14} />
         </button>
       </div>
+
+      {/* Auf alle anwenden */}
+      {sameTypeCount > 0 && (
+        <button
+          className={styles.applyAllButton}
+          onClick={handleApplyToAll}
+          title={`Stil auf alle ${sameTypeCount} weiteren ${getBlockTypeLabel(selectedBlock.type)}-Blöcke anwenden`}
+        >
+          <CopyCheck size={14} />
+          <span>Stil auf alle {getBlockTypeLabel(selectedBlock.type)}n anwenden ({sameTypeCount})</span>
+        </button>
+      )}
 
       {/* AI Generated Badge */}
       {selectedBlock.aiGenerated && (
@@ -484,7 +510,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className }) =
                 checked={selectedBlock.style?.highlight || false}
                 onChange={(e) => updateStyle('highlight', e.target.checked)}
               />
-              <span>Hervorhebung</span>
+              <span>Markierung (Randlinie)</span>
             </label>
           </div>
 

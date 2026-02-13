@@ -7,12 +7,7 @@
 }
 
 .blockWrapper[data-highlight="true"] {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 0, 0.1) 0%,
-    rgba(255, 255, 0, 0.05) 100%
-  );
-  border-left: 3px solid #ffc107;
+  border-left: 3px solid #cbd5e0;
   padding-left: 12px;
   margin-left: -15px;
 }

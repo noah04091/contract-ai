@@ -263,6 +263,27 @@
   color: #3182ce;
 }
 
+.deletePageButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+  padding: 8px 16px;
+  background: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  color: #a0aec0;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.deletePageButton:hover {
+  color: #e53e3e;
+  border-color: #feb2b2;
+  background: rgba(229, 62, 62, 0.05);
+}
+
 /* Seiten-Trenner Label zwischen den Seiten */
 .pageSeparatorLabel {
   display: flex;

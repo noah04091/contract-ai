@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { X } from 'lucide-react';
 import { BlockContent, useContractBuilderStore } from '../../../stores/contractBuilderStore';
 import { VariableHighlight } from '../Variables/VariableHighlight';
 import styles from './ClauseBlock.module.css';
@@ -59,6 +60,19 @@ export const ClauseBlock: React.FC<ClauseBlockProps> = ({
     setEditValue(currentValue);
   }, [isPreview]);
 
+  // Unterklausel löschen und Rest renummerieren
+  const handleDeleteSubclause = useCallback((index: number) => {
+    const newSubclauses = [...(subclauses || [])];
+    newSubclauses.splice(index, 1);
+    // Renummerieren
+    const renumbered = newSubclauses.map((sub, i) => ({
+      ...sub,
+      number: `(${i + 1})`,
+    }));
+    updateBlockContent(blockId, { subclauses: renumbered });
+    syncVariables();
+  }, [subclauses, blockId, updateBlockContent, syncVariables]);
+
   // Speichern der Änderungen
   const handleSave = useCallback(() => {
     if (!editingField) return;
@@ -71,8 +85,18 @@ export const ClauseBlock: React.FC<ClauseBlockProps> = ({
       const index = parseInt(editingField.split('-')[1], 10);
       const newSubclauses = [...(subclauses || [])];
       if (newSubclauses[index]) {
-        newSubclauses[index] = { ...newSubclauses[index], text: editValue };
-        updateBlockContent(blockId, { subclauses: newSubclauses });
+        // Leerer Text → Subclause entfernen
+        if (!editValue.trim()) {
+          newSubclauses.splice(index, 1);
+          const renumbered = newSubclauses.map((sub, i) => ({
+            ...sub,
+            number: `(${i + 1})`,
+          }));
+          updateBlockContent(blockId, { subclauses: renumbered });
+        } else {
+          newSubclauses[index] = { ...newSubclauses[index], text: editValue };
+          updateBlockContent(blockId, { subclauses: newSubclauses });
+        }
       }
     }
 
@@ -199,6 +223,15 @@ export const ClauseBlock: React.FC<ClauseBlockProps> = ({
                   />
                 )}
               </span>
+              {!isPreview && (
+                <button
+                  className={styles.subclauseDelete}
+                  onClick={() => handleDeleteSubclause(index)}
+                  title="Unterklausel entfernen"
+                >
+                  <X size={14} />
+                </button>
+              )}
             </li>
           ))}
         </ol>

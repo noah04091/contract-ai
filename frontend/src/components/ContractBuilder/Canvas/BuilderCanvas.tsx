@@ -22,7 +22,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Trash2 } from 'lucide-react';
 import { useContractBuilderStore, Block } from '../../../stores/contractBuilderStore';
 import { SortableBlock } from './SortableBlock';
 import { BlockRenderer } from '../Blocks/BlockRenderer';
@@ -77,6 +77,7 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
     setActivePage,
     setDragState,
     autoInsertPageBreak,
+    deleteBlock,
   } = useContractBuilderStore();
 
   // Ref-Callback für Page Elemente (für Intersection Observer)
@@ -298,6 +299,17 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
     setActivePage(pageIndex);
   }, [setActivePage]);
 
+  // Leere Seite löschen (entfernt den zugehörigen page-break Block)
+  const handleDeleteEmptyPage = useCallback((pageIndex: number) => {
+    if (pageIndex === 0) return; // Erste Seite kann nicht gelöscht werden
+    // Finde den N-ten page-break Block (pageIndex - 1, da Seite 0 keinen hat)
+    const pageBreakBlocks = blocks.filter((b: Block) => b.type === 'page-break');
+    const pageBreakToDelete = pageBreakBlocks[pageIndex - 1];
+    if (pageBreakToDelete) {
+      deleteBlock(pageBreakToDelete.id);
+    }
+  }, [blocks, deleteBlock]);
+
   // Aktiver Block für DragOverlay
   const activeBlock = activeId ? blocks.find((b: Block) => b.id === activeId) : null;
 
@@ -409,6 +421,18 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
                               ? 'Blöcke werden hier eingefügt'
                               : 'Hierher scrollen um Blöcke einzufügen'}
                           </span>
+                          {pageIndex > 0 && view !== 'preview' && (
+                            <button
+                              className={styles.deletePageButton}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteEmptyPage(pageIndex);
+                              }}
+                            >
+                              <Trash2 size={14} />
+                              <span>Leere Seite entfernen</span>
+                            </button>
+                          )}
                         </div>
                       ) : (
                         pageBlocks.map((block: Block) => (

@@ -92,6 +92,30 @@
   flex: 1;
 }
 
+.subclauseDelete {
+  opacity: 0;
+  background: none;
+  border: none;
+  color: #a0aec0;
+  cursor: pointer;
+  padding: 2px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: opacity 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+}
+
+.subclause:hover .subclauseDelete {
+  opacity: 1;
+}
+
+.subclauseDelete:hover {
+  color: #e53e3e;
+  background-color: rgba(229, 62, 62, 0.08);
+}
+
 /* Inline Editing Styles */
 .editable {
   cursor: text;

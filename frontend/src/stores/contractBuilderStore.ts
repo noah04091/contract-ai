@@ -358,6 +358,7 @@ interface ContractBuilderActions {
   updateBlock: (blockId: string, updates: Partial<Block>) => void;
   updateBlockContent: (blockId: string, content: Partial<BlockContent>) => void;
   updateBlockStyle: (blockId: string, style: Partial<BlockStyle>) => void;
+  applyStyleToAllOfType: (sourceBlockId: string) => void;
   deleteBlock: (blockId: string) => void;
   duplicateBlock: (blockId: string) => void;
   reorderBlocks: (fromIndex: number, toIndex: number) => void;
@@ -575,6 +576,55 @@ function extractVariablesFromBlocks(blocks: Block[]): Variable[] {
       group,
     };
   });
+}
+
+// Helper: Dominanten Style aus bestehenden Clause-Blöcken ermitteln
+function getDominantClauseStyle(blocks: Block[]): BlockStyle {
+  const clauseBlocks = blocks.filter(b => b.type === 'clause' && b.style);
+  if (clauseBlocks.length === 0) return {};
+
+  // Sammle alle Werte pro Style-Key
+  const valueCounts: Record<string, Record<string, number>> = {};
+  const styleKeys: (keyof BlockStyle)[] = [
+    'fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'lineHeight',
+    'letterSpacing', 'textAlign', 'textColor', 'marginBottom',
+  ];
+
+  for (const block of clauseBlocks) {
+    for (const key of styleKeys) {
+      const val = block.style[key];
+      if (val !== undefined && val !== null) {
+        if (!valueCounts[key]) valueCounts[key] = {};
+        const strVal = String(val);
+        valueCounts[key][strVal] = (valueCounts[key][strVal] || 0) + 1;
+      }
+    }
+  }
+
+  // Für jeden Key den häufigsten Wert wählen
+  const dominant: BlockStyle = {};
+  for (const key of styleKeys) {
+    const counts = valueCounts[key];
+    if (!counts) continue;
+    let maxCount = 0;
+    let maxVal = '';
+    for (const [val, count] of Object.entries(counts)) {
+      if (count > maxCount) {
+        maxCount = count;
+        maxVal = val;
+      }
+    }
+    if (maxVal) {
+      // Numerische Keys zurückkonvertieren
+      if (['fontSize', 'fontWeight', 'lineHeight', 'letterSpacing', 'marginBottom'].includes(key)) {
+        (dominant as Record<string, unknown>)[key] = Number(maxVal);
+      } else {
+        (dominant as Record<string, unknown>)[key] = maxVal;
+      }
+    }
+  }
+
+  return dominant;
 }
 
 // Helper: Lokales Dokument erstellen
@@ -1118,13 +1168,19 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
               }
             }
 
+            // Wenn Clause-Block mit leerem Style, dominanten Style übernehmen
+            let resolvedStyle = block.style || {};
+            if (block.type === 'clause' && (!block.style || Object.keys(block.style).length === 0)) {
+              resolvedStyle = getDominantClauseStyle(blocks);
+            }
+
             const newBlock: Block = {
               ...block,
               id: crypto.randomUUID(),
               order: insertPosition,
-              style: block.style || {},
+              style: resolvedStyle,
               locked: false,
-              aiGenerated: false,
+              aiGenerated: block.aiGenerated ?? false,
             };
 
             // Shift existing blocks
@@ -1176,6 +1232,22 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
               block.style = { ...block.style, ...style };
               state.hasUnsavedChanges = true;
             }
+          });
+          get().pushToHistory();
+        },
+
+        applyStyleToAllOfType: (sourceBlockId) => {
+          set((state) => {
+            if (!state.document) return;
+            const sourceBlock = state.document.content.blocks.find((b) => b.id === sourceBlockId);
+            if (!sourceBlock) return;
+            const style = { ...sourceBlock.style };
+            state.document.content.blocks.forEach((b) => {
+              if (b.type === sourceBlock.type && b.id !== sourceBlockId) {
+                b.style = { ...style };
+              }
+            });
+            state.hasUnsavedChanges = true;
           });
           get().pushToHistory();
         },
