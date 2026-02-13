@@ -3130,13 +3130,21 @@
   }
 
   .filterBar {
-    flex-direction: column;
-    gap: 12px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
   }
 
   .searchBox {
-    width: 100%;
-    min-width: 100%;
+    flex: 3;
+    min-width: 0;
+    width: auto;
+  }
+
+  .sortBox {
+    flex: 1;
+    min-width: 0;
+    width: auto;
   }
 
   .quickFilters {
@@ -3218,12 +3226,37 @@
   }
 
   .filterBar {
-    flex-direction: column;
-    gap: 12px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
   }
 
   .searchBox {
+    flex: 3;
+    min-width: 0;
+    width: auto;
+  }
+
+  .sortBox {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+    padding: 8px 10px;
+    gap: 4px;
+  }
+
+  .sortLabel {
+    display: none;
+  }
+
+  .sortSelect {
+    font-size: 0.8rem;
     width: 100%;
+  }
+
+  .searchInput {
+    padding: 10px 40px 10px 12px;
+    font-size: 0.85rem;
   }
 
   .quickFilters {
@@ -3238,10 +3271,6 @@
     font-size: 0.7rem;
     padding: 8px 6px;
     line-height: 1.2;
-  }
-
-  .sortBox {
-    width: 100%;
   }
 
   .resultsInfo {
