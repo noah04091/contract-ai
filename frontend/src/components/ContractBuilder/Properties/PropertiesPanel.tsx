@@ -161,19 +161,16 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className }) =
         >
           <Trash2 size={14} />
         </button>
+        {sameTypeCount > 0 && (
+          <button
+            className={styles.actionButton}
+            onClick={handleApplyToAll}
+            title={`Stil auf alle ${sameTypeCount} weiteren ${getBlockTypeLabel(selectedBlock.type)}-Blöcke anwenden`}
+          >
+            <CopyCheck size={14} />
+          </button>
+        )}
       </div>
-
-      {/* Auf alle anwenden */}
-      {sameTypeCount > 0 && (
-        <button
-          className={styles.applyAllButton}
-          onClick={handleApplyToAll}
-          title={`Stil auf alle ${sameTypeCount} weiteren ${getBlockTypeLabel(selectedBlock.type)}-Blöcke anwenden`}
-        >
-          <CopyCheck size={14} />
-          <span>Stil auf alle {getBlockTypeLabel(selectedBlock.type)}n anwenden ({sameTypeCount})</span>
-        </button>
-      )}
 
       {/* AI Generated Badge */}
       {selectedBlock.aiGenerated && (
