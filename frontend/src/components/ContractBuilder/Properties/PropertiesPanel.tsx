@@ -14,7 +14,7 @@ import {
   ChevronRight,
   Trash2,
   Copy,
-  CopyCheck,
+  Paintbrush,
   Lock,
   Unlock,
   Sparkles,
@@ -167,7 +167,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className }) =
             onClick={handleApplyToAll}
             title={`Stil auf alle ${sameTypeCount} weiteren ${getBlockTypeLabel(selectedBlock.type)}-Blöcke anwenden`}
           >
-            <CopyCheck size={14} />
+            <Paintbrush size={14} />
           </button>
         )}
       </div>
