@@ -3139,16 +3139,19 @@
     flex: 3;
     min-width: 0;
     width: auto;
+    order: 1;
   }
 
   .sortBox {
     flex: 1;
     min-width: 0;
     width: auto;
+    order: 2;
   }
 
   .quickFilters {
     width: 100%;
+    order: 3;
   }
 
   .quickFilterButton {
@@ -3235,6 +3238,7 @@
     flex: 3;
     min-width: 0;
     width: auto;
+    order: 1;
   }
 
   .sortBox {
@@ -3243,6 +3247,7 @@
     width: auto;
     padding: 8px 10px;
     gap: 4px;
+    order: 2;
   }
 
   .sortLabel {
@@ -3263,6 +3268,7 @@
     width: 100%;
     justify-content: space-between;
     gap: 4px;
+    order: 3;
   }
 
   .quickFilterButton {
