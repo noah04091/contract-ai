@@ -2193,7 +2193,7 @@ export default function LegalPulse() {
               setSortBy('date');
             }}
             canAccessLegalPulse={canAccessLegalPulse}
-            viewMode="list"
+            viewMode="grid"
           />
         ) : (
           <div className={styles.emptyState}>
