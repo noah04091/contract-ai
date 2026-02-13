@@ -449,20 +449,78 @@
   }
 }
 
+/* Tablet: kompaktere Cards */
 @media (max-width: 768px) {
   .contractsGrid {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .contractCard {
-    padding: 24px;
+    padding: 16px 18px;
+    border-radius: 14px;
+  }
+
+  .contractCard:hover {
+    transform: none;
+  }
+
+  .contractCardHeader {
+    margin-bottom: 12px;
   }
 
   .contractName {
-    max-width: 200px;
+    font-size: 1rem;
+    max-width: 220px;
   }
 
-  /* List view is default on tablet */
+  .riskBadge {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    border-radius: 10px;
+  }
+
+  .riskIcon {
+    font-size: 0.9rem;
+  }
+
+  .riskScore {
+    font-size: 0.95rem;
+  }
+
+  .contractCardBody {
+    margin-bottom: 12px;
+  }
+
+  .contractMeta {
+    gap: 8px;
+    margin-bottom: 0;
+  }
+
+  .metaLabel,
+  .metaValue {
+    font-size: 0.8rem;
+  }
+
+  .lastRecommendation {
+    display: none;
+  }
+
+  .contractCardFooter {
+    padding-top: 12px;
+  }
+
+  .detailsButton {
+    padding: 8px 0;
+    font-size: 0.85rem;
+  }
+
+  .detailsButton svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* List view on tablet */
   .contractsList .contractCard {
     padding: 14px 16px;
   }
@@ -472,14 +530,94 @@
   }
 }
 
+/* Mobile: sehr kompakte Mini-Cards */
 @media (max-width: 480px) {
+  .contractsGrid {
+    gap: 8px;
+  }
+
   .contractCard {
-    padding: 20px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  }
+
+  .contractCardHeader {
+    margin-bottom: 8px;
+    align-items: center;
   }
 
   .contractName {
-    max-width: 150px;
-    font-size: 1.1rem;
+    font-size: 0.9rem;
+    max-width: 180px;
+    margin-bottom: 0;
+  }
+
+  .generatedBadge {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+    border-radius: 6px;
+  }
+
+  .riskBadge {
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    border-radius: 8px;
+    animation: none;
+  }
+
+  .riskIcon {
+    font-size: 0.8rem;
+  }
+
+  .riskScore {
+    font-size: 0.85rem;
+  }
+
+  .contractCardBody {
+    margin-bottom: 8px;
+  }
+
+  .contractMeta {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    margin-bottom: 0;
+  }
+
+  .metaItem {
+    gap: 4px;
+  }
+
+  .metaLabel {
+    font-size: 0.75rem;
+  }
+
+  .metaValue {
+    font-size: 0.75rem;
+  }
+
+  .lastRecommendation {
+    display: none;
+  }
+
+  .contractCardFooter {
+    padding-top: 8px;
+  }
+
+  .detailsButton {
+    font-size: 0.8rem;
+    padding: 4px 0;
+  }
+
+  .loadMoreContainer {
+    padding: 20px 0;
+  }
+
+  .loadMoreButton {
+    padding: 10px 20px;
+    font-size: 0.85rem;
+    border-radius: 10px;
   }
 
   /* Compact list view on mobile */
