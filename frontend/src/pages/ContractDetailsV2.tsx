@@ -1312,10 +1312,10 @@ export default function ContractDetailsV2() {
                             <span>Score: {contract.contractScore}</span>
                           </div>
                         )}
-                        {(contract.risiken?.length || (!isLegalPulseGeneric && contract.legalPulse?.riskFactors?.length)) ? (
+                        {((contract.risiken?.filter(r => typeof r === 'string' && r.trim()).length || 0) + (!isLegalPulseGeneric ? (contract.legalPulse?.riskFactors?.length || 0) : 0)) > 0 ? (
                           <div className={styles.statBadge} style={{ background: 'var(--cd-danger-light)', color: 'var(--cd-danger)' }}>
                             <AlertTriangle size={16} />
-                            <span>Risiken: {(contract.risiken?.length || 0) + (!isLegalPulseGeneric ? (contract.legalPulse?.riskFactors?.length || 0) : 0)}</span>
+                            <span>Risiken: {(contract.risiken?.filter(r => typeof r === 'string' && r.trim()).length || 0) + (!isLegalPulseGeneric ? (contract.legalPulse?.riskFactors?.length || 0) : 0)}</span>
                           </div>
                         ) : null}
                         {contract.analysis?.positiveAspects?.length ? (
@@ -1921,8 +1921,8 @@ export default function ContractDetailsV2() {
                       </div>
                     )}
 
-                    {/* Root-Level Risiken */}
-                    {contract.risiken && Array.isArray(contract.risiken) && contract.risiken.length > 0 && (
+                    {/* Root-Level Risiken - nur anzeigen wenn echte nicht-leere Risiken vorhanden */}
+                    {contract.risiken && Array.isArray(contract.risiken) && contract.risiken.filter(r => typeof r === 'string' && r.trim()).length > 0 && (
                       <div className={`${styles.card} ${styles.fadeIn} ${styles.stagger3}`}>
                         <div className={styles.cardHeader}>
                           <h3 className={styles.cardTitle}>
@@ -1932,7 +1932,7 @@ export default function ContractDetailsV2() {
                             Kritische Risiken
                           </h3>
                           <span className={styles.tabBadge} style={{ background: 'var(--cd-danger-light)', color: 'var(--cd-danger)' }}>
-                            {contract.risiken.length}
+                            {contract.risiken.filter(r => typeof r === 'string' && r.trim()).length}
                           </span>
                         </div>
                         <div className={styles.cardBody}>
