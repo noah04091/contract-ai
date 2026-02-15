@@ -29,12 +29,38 @@ async function generateEventsForEnvelope(db, envelope) {
   const now = new Date();
 
   try {
+    // 🔧 FIX: Validate required fields before processing
+    if (!envelope) {
+      console.error('❌ generateEventsForEnvelope: envelope is null/undefined');
+      return events;
+    }
+
+    if (!envelope.expiresAt) {
+      console.error(`❌ generateEventsForEnvelope: envelope.expiresAt is missing for "${envelope.title}"`);
+      return events;
+    }
+
+    if (!envelope.ownerId) {
+      console.error(`❌ generateEventsForEnvelope: envelope.ownerId is missing for "${envelope.title}"`);
+      return events;
+    }
+
     const expiresAt = new Date(envelope.expiresAt);
-    const ownerId = envelope.ownerId;
+
+    // 🔧 FIX: Ensure ownerId is a proper ObjectId (handle both Mongoose and native ObjectId)
+    const ownerId = envelope.ownerId instanceof ObjectId
+      ? envelope.ownerId
+      : new ObjectId(envelope.ownerId.toString());
+
+    // 🔧 FIX: Ensure envelopeId is a proper ObjectId
+    const envelopeId = envelope._id instanceof ObjectId
+      ? envelope._id
+      : new ObjectId(envelope._id.toString());
 
     // 🔍 Log für Debugging
     console.log(`📅 Generiere Calendar Events für Envelope "${envelope.title}":`, {
-      envelopeId: envelope._id.toString(),
+      envelopeId: envelopeId.toString(),
+      ownerId: ownerId.toString(),
       status: envelope.status,
       expiresAt: expiresAt.toISOString(),
       signers: envelope.signers?.length || 0
@@ -47,6 +73,11 @@ async function generateEventsForEnvelope(db, envelope) {
     }
 
     // ✅ Nur wenn Ablaufdatum in der Zukunft liegt
+    if (isNaN(expiresAt.getTime())) {
+      console.error(`❌ generateEventsForEnvelope: Invalid expiresAt date for "${envelope.title}"`);
+      return events;
+    }
+
     if (expiresAt <= now) {
       console.log(`⏰ Envelope "${envelope.title}" ist bereits abgelaufen, keine Events erstellen`);
       return events;
@@ -59,9 +90,9 @@ async function generateEventsForEnvelope(db, envelope) {
 
     if (reminder3DayDate > now) {
       events.push({
-        userId: ownerId,
-        envelopeId: envelope._id,
-        sourceType: "ENVELOPE", // ✅ Unterscheidung von Contract-Events
+        userId: ownerId, // 🔧 FIX: Now properly converted to ObjectId
+        envelopeId: envelopeId, // 🔧 FIX: Now properly converted to ObjectId
+        sourceType: "ENVELOPE",
         type: "SIGNATURE_REMINDER_3DAY",
         title: `🔔 Signatur läuft bald ab: ${envelope.title}`,
         description: `Die Signaturanfrage "${envelope.title}" läuft in 3 Tagen ab. ${getPendingSignersText(envelope.signers)}`,
@@ -69,7 +100,7 @@ async function generateEventsForEnvelope(db, envelope) {
         severity: "warning",
         status: "scheduled",
         metadata: {
-          envelopeId: envelope._id.toString(),
+          envelopeId: envelopeId.toString(),
           envelopeTitle: envelope.title,
           signingMode: envelope.signingMode,
           pendingSigners: getPendingSignersCount(envelope.signers),
@@ -90,8 +121,8 @@ async function generateEventsForEnvelope(db, envelope) {
 
     if (reminder1DayDate > now) {
       events.push({
-        userId: ownerId,
-        envelopeId: envelope._id,
+        userId: ownerId, // 🔧 FIX: Properly converted ObjectId
+        envelopeId: envelopeId, // 🔧 FIX: Properly converted ObjectId
         sourceType: "ENVELOPE",
         type: "SIGNATURE_REMINDER_1DAY",
         title: `⚠️ Signatur läuft morgen ab: ${envelope.title}`,
@@ -100,7 +131,7 @@ async function generateEventsForEnvelope(db, envelope) {
         severity: "critical",
         status: "scheduled",
         metadata: {
-          envelopeId: envelope._id.toString(),
+          envelopeId: envelopeId.toString(),
           envelopeTitle: envelope.title,
           signingMode: envelope.signingMode,
           pendingSigners: getPendingSignersCount(envelope.signers),
@@ -119,8 +150,8 @@ async function generateEventsForEnvelope(db, envelope) {
 
     if (expiryDate > now) {
       events.push({
-        userId: ownerId,
-        envelopeId: envelope._id,
+        userId: ownerId, // 🔧 FIX: Properly converted ObjectId
+        envelopeId: envelopeId, // 🔧 FIX: Properly converted ObjectId
         sourceType: "ENVELOPE",
         type: "SIGNATURE_EXPIRING",
         title: `🔴 Signatur läuft heute ab: ${envelope.title}`,
@@ -129,7 +160,7 @@ async function generateEventsForEnvelope(db, envelope) {
         severity: "critical",
         status: "scheduled",
         metadata: {
-          envelopeId: envelope._id.toString(),
+          envelopeId: envelopeId.toString(),
           envelopeTitle: envelope.title,
           signingMode: envelope.signingMode,
           pendingSigners: getPendingSignersCount(envelope.signers),
@@ -147,7 +178,7 @@ async function generateEventsForEnvelope(db, envelope) {
     if (events.length > 0) {
       // Lösche alte Events für diesen Envelope (falls vorhanden)
       await db.collection("contract_events").deleteMany({
-        envelopeId: envelope._id,
+        envelopeId: envelopeId, // 🔧 FIX: Use properly converted ObjectId
         sourceType: "ENVELOPE",
         status: "scheduled"
       });
@@ -171,19 +202,27 @@ async function generateEventsForEnvelope(db, envelope) {
  */
 async function markEnvelopeAsCompleted(db, envelope) {
   try {
+    // 🔧 FIX: Properly convert ObjectIds
+    const envelopeId = envelope._id instanceof ObjectId
+      ? envelope._id
+      : new ObjectId(envelope._id.toString());
+    const ownerId = envelope.ownerId instanceof ObjectId
+      ? envelope.ownerId
+      : new ObjectId(envelope.ownerId.toString());
+
     const completedDate = createLocalDate(envelope.completedAt || new Date());
 
     // Lösche alle ausstehenden Events
     await db.collection("contract_events").deleteMany({
-      envelopeId: envelope._id,
+      envelopeId: envelopeId,
       sourceType: "ENVELOPE",
       status: "scheduled"
     });
 
     // Erstelle "Completed" Event für historische Übersicht
     const completedEvent = {
-      userId: envelope.ownerId,
-      envelopeId: envelope._id,
+      userId: ownerId,
+      envelopeId: envelopeId,
       sourceType: "ENVELOPE",
       type: "SIGNATURE_COMPLETED",
       title: `✅ Signatur abgeschlossen: ${envelope.title}`,
@@ -192,7 +231,7 @@ async function markEnvelopeAsCompleted(db, envelope) {
       severity: "info",
       status: "completed",
       metadata: {
-        envelopeId: envelope._id.toString(),
+        envelopeId: envelopeId.toString(),
         envelopeTitle: envelope.title,
         completedAt: envelope.completedAt,
         totalSigners: envelope.signers?.length || 0,
