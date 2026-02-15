@@ -2225,10 +2225,15 @@ router.post("/sign/:token/decline", signatureDeclineLimiter, async (req, res) =>
 
     // 📧 Send decline notification to document owner
     try {
-      // Get owner email from users collection
+      // 🔧 FIX: Properly convert ownerId to ObjectId (handle both string and ObjectId)
+      const ownerIdStr = envelope.ownerId?.toString() || envelope.ownerId;
+      console.log(`📧 Looking up owner for decline notification: ${ownerIdStr}`);
+
       const owner = await req.db.collection("users").findOne({
-        _id: new ObjectId(envelope.ownerId)
+        _id: new ObjectId(ownerIdStr)
       });
+
+      console.log(`📧 Owner lookup result: ${owner ? owner.email : 'NOT FOUND'}`);
 
       if (owner && owner.email) {
         const declineNotificationData = {
@@ -2253,9 +2258,12 @@ router.post("/sign/:token/decline", signatureDeclineLimiter, async (req, res) =>
         });
 
         console.log(`📧 Decline notification sent to owner: ${owner.email}`);
+      } else {
+        console.error(`⚠️ Owner not found for envelope ${envelope._id}, ownerId: ${ownerIdStr}`);
       }
     } catch (emailError) {
       console.error('⚠️ Could not send decline notification email:', emailError.message);
+      console.error('⚠️ Email error stack:', emailError.stack);
       // Don't fail the decline operation if email fails
     }
 
