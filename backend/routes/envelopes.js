@@ -2250,12 +2250,12 @@ router.post("/sign/:token/decline", signatureDeclineLimiter, async (req, res) =>
           declinedAt: now
         };
 
-        await sendEmail({
-          to: owner.email,
-          subject: `Signatur abgelehnt: ${envelope.title}`,
-          html: generateDeclineNotificationHTML(declineNotificationData),
-          text: generateDeclineNotificationText(declineNotificationData)
-        });
+        await sendEmail(
+          owner.email,
+          `Signatur abgelehnt: ${envelope.title}`,
+          generateDeclineNotificationText(declineNotificationData),
+          generateDeclineNotificationHTML(declineNotificationData)
+        );
 
         console.log(`📧 Decline notification sent to owner: ${owner.email}`);
       } else {

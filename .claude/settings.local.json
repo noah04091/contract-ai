@@ -312,7 +312,11 @@
       "Bash(npx vite build)",
       "WebFetch(domain:www.bfdi.bund.de)",
       "WebFetch(domain:www.datenschutz-bayern.de)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(npx jest:*)",
+      "Bash(npx vercel@50.15.1 --prod)",
+      "Bash(npx vercel@50.15.1 ls:*)",
+      "Bash(npx --yes vercel@50.15.1 --prod)"
     ],
     "deny": [],
     "ask": []
