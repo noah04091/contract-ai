@@ -1384,6 +1384,7 @@ router.get('/activity-log', verifyToken, verifyAdmin, async (req, res) => {
   try {
     const { limit = 50, type, severity, userId, startDate, endDate } = req.query;
 
+    const { MongoClient } = require("mongodb");
     const client = new MongoClient(process.env.MONGO_URI);
     await client.connect();
     const db = client.db("contract_ai");
