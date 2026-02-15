@@ -26,15 +26,26 @@ router.get('/', auth, async (req, res) => {
   try {
     const { status, contractType, limit = 50, skip = 0, sort = '-updatedAt' } = req.query;
 
+    // Validate sort parameter (prevent NoSQL injection)
+    const allowedSorts = [
+      'createdAt', '-createdAt', 'updatedAt', '-updatedAt',
+      'metadata.name', '-metadata.name', 'metadata.status', '-metadata.status'
+    ];
+    const safeSort = allowedSorts.includes(sort) ? sort : '-updatedAt';
+
+    // Validate limit (1-100) and skip (0+)
+    const safeLimit = Math.min(Math.max(parseInt(limit) || 50, 1), 100);
+    const safeSkip = Math.max(parseInt(skip) || 0, 0);
+
     const query = { userId: req.user.userId };
 
-    if (status) query['metadata.status'] = status;
-    if (contractType) query['metadata.contractType'] = contractType;
+    if (status && typeof status === 'string') query['metadata.status'] = status;
+    if (contractType && typeof contractType === 'string') query['metadata.contractType'] = contractType;
 
     const documents = await ContractBuilder.find(query)
-      .sort(sort)
-      .skip(parseInt(skip))
-      .limit(parseInt(limit))
+      .sort(safeSort)
+      .skip(safeSkip)
+      .limit(safeLimit)
       .select('metadata design.preset legalScore.totalScore content.blocks content.variables createdAt updatedAt');
 
     const total = await ContractBuilder.countDocuments(query);
@@ -231,9 +242,12 @@ router.put('/:id', auth, async (req, res) => {
       return res.status(404).json({ success: false, error: 'Dokument nicht gefunden oder keine Berechtigung' });
     }
 
-    // Selektives Update
-    if (metadata) {
-      Object.assign(document.metadata, metadata);
+    // Selektives Update mit explizitem Field-Whitelisting
+    if (metadata && typeof metadata === 'object') {
+      const allowedMetaFields = ['name', 'contractType', 'status', 'language', 'jurisdiction', 'tags', 'description'];
+      for (const key of allowedMetaFields) {
+        if (key in metadata) document.metadata[key] = metadata[key];
+      }
     }
 
     if (content) {
@@ -241,8 +255,11 @@ router.put('/:id', auth, async (req, res) => {
       if (content.variables) document.content.variables = content.variables;
     }
 
-    if (design) {
-      Object.assign(document.design, design);
+    if (design && typeof design === 'object') {
+      const allowedDesignFields = ['preset', 'primaryColor', 'secondaryColor', 'accentColor', 'fontFamily', 'pageSize', 'marginTop', 'marginRight', 'marginBottom', 'marginLeft'];
+      for (const key of allowedDesignFields) {
+        if (key in design) document.design[key] = design[key];
+      }
     }
 
     document.metadata.version++;
@@ -402,8 +419,15 @@ router.put('/:id/blocks/:blockId', auth, async (req, res) => {
       return res.status(404).json({ success: false, error: 'Block nicht gefunden' });
     }
 
-    if (content) Object.assign(block.content, content);
-    if (style) Object.assign(block.style, style);
+    if (content && typeof content === 'object') {
+      // Use spread to avoid prototype pollution — only own enumerable properties
+      const { __proto__, constructor, ...safeContent } = content;
+      Object.assign(block.content, safeContent);
+    }
+    if (style && typeof style === 'object') {
+      const { __proto__, constructor, ...safeStyle } = style;
+      Object.assign(block.style, safeStyle);
+    }
     if (locked !== undefined) block.locked = locked;
 
     document.changelog.push({
@@ -1036,18 +1060,21 @@ router.get('/templates/public', auth, async (req, res) => {
   try {
     const { category, limit = 20 } = req.query;
 
+    // Validate limit (1-50)
+    const safeLimit = Math.min(Math.max(parseInt(limit) || 20, 1), 50);
+
     const query = {
       'template.isTemplate': true,
       'template.isPublic': true
     };
 
-    if (category) {
+    if (category && typeof category === 'string') {
       query['template.category'] = category;
     }
 
     const templates = await ContractBuilder.find(query)
       .sort({ 'template.downloads': -1 })
-      .limit(parseInt(limit))
+      .limit(safeLimit)
       .select('metadata template design.preset');
 
     res.json({ success: true, templates });
