@@ -214,7 +214,7 @@ export default function NewSignatureRequest() {
       if (signatureMode === "BOTH_PARTIES" && currentUser) {
         if (signingOrder === "SENDER_FIRST") {
           allSigners.push({
-            email: currentUser.email,
+            email: currentUser.email.toLowerCase().trim(), // ✅ Normalize sender email
             name: currentUser.name,
             role: "sender",
             order: order++
@@ -235,7 +235,7 @@ export default function NewSignatureRequest() {
       if (signatureMode === "BOTH_PARTIES" && currentUser) {
         if (signingOrder === "RECIPIENT_FIRST") {
           allSigners.push({
-            email: currentUser.email,
+            email: currentUser.email.toLowerCase().trim(), // ✅ Normalize sender email
             name: currentUser.name,
             role: "sender",
             order: order++

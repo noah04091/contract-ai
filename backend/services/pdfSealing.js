@@ -15,8 +15,11 @@ const s3Client = new S3Client({
 
 const BUCKET_NAME = process.env.S3_BUCKET_NAME || 'contract-ai-uploads';
 
+// ✅ Maximum PDF size for sealing (50MB) - prevents DoS via memory exhaustion
+const MAX_PDF_SIZE_BYTES = 50 * 1024 * 1024;
+
 /**
- * Lädt PDF von S3
+ * Lädt PDF von S3 mit Größenlimit
  */
 async function loadPdfFromS3(s3Key) {
   try {
@@ -29,9 +32,24 @@ async function loadPdfFromS3(s3Key) {
 
     const response = await s3Client.send(command);
 
-    // Stream in Buffer konvertieren
+    // ✅ Check Content-Length before loading into memory
+    const contentLength = response.ContentLength;
+    if (contentLength && contentLength > MAX_PDF_SIZE_BYTES) {
+      throw new Error(`PDF zu groß: ${Math.round(contentLength / 1024 / 1024)}MB (max ${MAX_PDF_SIZE_BYTES / 1024 / 1024}MB)`);
+    }
+
+    // Stream in Buffer konvertieren with size tracking
     const chunks = [];
+    let totalSize = 0;
+
     for await (const chunk of response.Body) {
+      totalSize += chunk.length;
+
+      // ✅ Stop if size exceeds limit during streaming (in case Content-Length was wrong/missing)
+      if (totalSize > MAX_PDF_SIZE_BYTES) {
+        throw new Error(`PDF zu groß: >${MAX_PDF_SIZE_BYTES / 1024 / 1024}MB (Limit erreicht während Download)`);
+      }
+
       chunks.push(chunk);
     }
     const buffer = Buffer.concat(chunks);
@@ -40,7 +58,7 @@ async function loadPdfFromS3(s3Key) {
     return buffer;
   } catch (error) {
     console.error('❌ Error loading PDF from S3:', error);
-    throw new Error('Fehler beim Laden des PDFs von S3');
+    throw new Error(error.message.includes('PDF zu groß') ? error.message : 'Fehler beim Laden des PDFs von S3');
   }
 }
 

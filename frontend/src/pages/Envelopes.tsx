@@ -2037,7 +2037,16 @@ export default function Envelopes() {
                             <h3
                               className={styles.cardTitle}
                               onClick={() => handleBlockedAction(() => setSelectedEnvelope(envelope))}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.preventDefault();
+                                  handleBlockedAction(() => setSelectedEnvelope(envelope));
+                                }
+                              }}
                               style={{ cursor: "pointer" }}
+                              tabIndex={0}
+                              role="button"
+                              aria-label={`Envelope öffnen: ${envelope.title}`}
                             >
                               {envelope.title}
                             </h3>
@@ -2249,10 +2258,19 @@ export default function Envelopes() {
                           </td>
                           <td
                             onClick={() => handleBlockedAction(() => setSelectedEnvelope(envelope))}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                handleBlockedAction(() => setSelectedEnvelope(envelope));
+                              }
+                            }}
                             style={{ cursor: "pointer" }}
+                            tabIndex={0}
+                            role="button"
+                            aria-label={`Envelope öffnen: ${envelope.title}`}
                           >
                             <div className={styles.titleCell}>
-                              <FileText size={16} className={styles.fileIcon} />
+                              <FileText size={16} className={styles.fileIcon} aria-hidden="true" />
                               <span>{envelope.title}</span>
                             </div>
                           </td>

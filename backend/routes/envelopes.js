@@ -99,6 +99,37 @@ function getClientIP(req) {
 }
 
 /**
+ * ✅ Sanitize error messages for client responses
+ * Removes sensitive information like stack traces, file paths, database details
+ */
+function sanitizeErrorMessage(error) {
+  const message = error?.message || String(error);
+
+  // Patterns that indicate sensitive information
+  const sensitivePatterns = [
+    /at\s+\S+\s+\(\S+:\d+:\d+\)/gi,           // Stack trace lines
+    /\/[\w\/\.\-]+\.(js|ts|json)/gi,           // File paths
+    /mongodb(\+srv)?:\/\/[^\s]+/gi,            // MongoDB connection strings
+    /aws[_-]?(access|secret|key)/gi,           // AWS credentials references
+    /password\s*[=:]\s*\S+/gi,                 // Password values
+    /token\s*[=:]\s*[a-f0-9]{32,}/gi,          // Token values
+    /Bearer\s+[a-zA-Z0-9\-_.]+/gi,             // Bearer tokens
+  ];
+
+  let sanitized = message;
+  for (const pattern of sensitivePatterns) {
+    sanitized = sanitized.replace(pattern, '[REDACTED]');
+  }
+
+  // If the message is too long or looks like a stack trace, use generic message
+  if (sanitized.length > 200 || sanitized.includes('[REDACTED]')) {
+    return 'Ein interner Fehler ist aufgetreten';
+  }
+
+  return sanitized;
+}
+
+/**
  * Validate signature data (Base64, Size, Empty Check)
  */
 function validateSignature(signatureValue) {
@@ -522,7 +553,7 @@ router.post("/envelopes", verifyToken, requirePremium, async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Fehler beim Erstellen des Envelopes",
-      error: error.message
+      error: sanitizeErrorMessage(error)
     });
   }
 });
@@ -644,7 +675,7 @@ router.get("/envelopes", verifyToken, requirePremium, async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Fehler beim Laden der Envelopes",
-      error: error.message
+      error: sanitizeErrorMessage(error)
     });
   }
 });
@@ -725,7 +756,7 @@ router.get("/envelopes/:id", verifyToken, requirePremium, async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Fehler beim Laden des Envelopes",
-      error: error.message
+      error: sanitizeErrorMessage(error)
     });
   }
 });
@@ -857,7 +888,7 @@ router.post("/envelopes/:id/send", verifyToken, requirePremium, emailSendLimiter
     res.status(500).json({
       success: false,
       message: "Fehler beim Senden der Einladungen",
-      error: error.message
+      error: sanitizeErrorMessage(error)
     });
   }
 });
@@ -966,7 +997,7 @@ router.post("/envelopes/:id/remind", verifyToken, requirePremium, emailSendLimit
     res.status(500).json({
       success: false,
       message: "Fehler beim Senden der Erinnerungen",
-      error: error.message
+      error: sanitizeErrorMessage(error)
     });
   }
 });
@@ -1067,7 +1098,7 @@ router.post("/envelopes/:id/resend", verifyToken, requirePremium, emailSendLimit
     res.status(500).json({
       success: false,
       message: "Fehler beim Senden der Erinnerung",
-      error: error.message
+      error: sanitizeErrorMessage(error)
     });
   }
 });
@@ -1161,7 +1192,7 @@ router.post("/envelopes/:id/seal", verifyToken, requirePremium, async (req, res)
     res.status(500).json({
       success: false,
       message: "Fehler beim Versiegeln des PDFs",
-      error: error.message
+      error: sanitizeErrorMessage(error)
     });
   }
 });
@@ -1333,7 +1364,7 @@ router.patch("/envelopes/:id/note", verifyToken, requirePremium, async (req, res
     res.status(500).json({
       success: false,
       message: "Fehler beim Speichern der Notiz",
-      error: error.message
+      error: sanitizeErrorMessage(error)
     });
   }
 });
@@ -1455,7 +1486,7 @@ router.post("/envelopes/:id/void", verifyToken, requirePremium, async (req, res)
     res.status(500).json({
       success: false,
       message: "Fehler beim Stornieren des Envelopes",
-      error: error.message
+      error: sanitizeErrorMessage(error)
     });
   }
 });
@@ -1537,7 +1568,7 @@ router.post("/envelopes/:id/restore", verifyToken, requirePremium, async (req, r
     res.status(500).json({
       success: false,
       message: "Fehler beim Wiederherstellen des Envelopes",
-      error: error.message
+      error: sanitizeErrorMessage(error)
     });
   }
 });
@@ -1584,7 +1615,7 @@ router.post("/envelopes/archive", verifyToken, requirePremium, async (req, res) 
     res.status(500).json({
       success: false,
       message: "Fehler beim Archivieren",
-      error: error.message
+      error: sanitizeErrorMessage(error)
     });
   }
 });
@@ -1631,7 +1662,7 @@ router.post("/envelopes/unarchive", verifyToken, requirePremium, async (req, res
     res.status(500).json({
       success: false,
       message: "Fehler beim Wiederherstellen",
-      error: error.message
+      error: sanitizeErrorMessage(error)
     });
   }
 });
@@ -1747,7 +1778,7 @@ router.delete("/envelopes/bulk", verifyToken, requirePremium, async (req, res) =
     res.status(500).json({
       success: false,
       message: "Fehler beim Löschen",
-      error: error.message
+      error: sanitizeErrorMessage(error)
     });
   }
 });
@@ -1907,7 +1938,7 @@ router.get("/sign/:token", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Fehler beim Laden der Signature-Sitzung",
-      error: error.message
+      error: sanitizeErrorMessage(error)
     });
   }
 });
@@ -1994,9 +2025,19 @@ router.post("/sign/:token/submit", signatureSubmitLimiter, async (req, res) => {
     }
 
     // 🔄 SEQUENTIAL SIGNING: Check if it's this signer's turn
+    // ✅ FIX TOCTOU: Re-fetch envelope to ensure we have the latest signer states
     if (envelope.signingMode === 'SEQUENTIAL') {
+      // Re-fetch envelope to get latest signer states (prevents race condition)
+      const freshEnvelope = await Envelope.findById(envelope._id).lean();
+      if (!freshEnvelope) {
+        return res.status(404).json({
+          success: false,
+          message: "Envelope nicht mehr gefunden"
+        });
+      }
+
       // Sort signers by order
-      const sortedSigners = [...envelope.signers].sort((a, b) => a.order - b.order);
+      const sortedSigners = [...freshEnvelope.signers].sort((a, b) => a.order - b.order);
 
       // Find all signers with lower order that haven't signed yet
       const previousUnsignedSigners = sortedSigners.filter(
@@ -2086,12 +2127,39 @@ router.post("/sign/:token/submit", signatureSubmitLimiter, async (req, res) => {
 
     // ✅ ATOMIC UPDATE: Update signer status and fields in single operation
     // Uses arrayFilters for precise targeting, prevents race conditions
+    // ✅ FIX: For sequential mode, add additional query condition using $expr
+    const queryConditions = {
+      _id: envelope._id,
+      'signers.token': token,
+      'signers.status': 'PENDING' // Only update if still PENDING (idempotency check)
+    };
+
+    // ✅ SEQUENTIAL MODE: Add atomic check that all lower-order signers are SIGNED
+    if (envelope.signingMode === 'SEQUENTIAL' && signer.order > 1) {
+      queryConditions.$expr = {
+        $eq: [
+          // Count of signers with lower order that are NOT signed
+          {
+            $size: {
+              $filter: {
+                input: '$signers',
+                as: 's',
+                cond: {
+                  $and: [
+                    { $lt: ['$$s.order', signer.order] },
+                    { $ne: ['$$s.status', 'SIGNED'] }
+                  ]
+                }
+              }
+            }
+          },
+          0 // Must be zero (all lower-order signers must be signed)
+        ]
+      };
+    }
+
     const atomicResult = await Envelope.findOneAndUpdate(
-      {
-        _id: envelope._id,
-        'signers.token': token,
-        'signers.status': 'PENDING' // Only update if still PENDING (idempotency check)
-      },
+      queryConditions,
       {
         $set: {
           ...fieldUpdates,
@@ -2384,7 +2452,7 @@ router.post("/sign/:token/submit", signatureSubmitLimiter, async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Fehler beim Übermitteln der Signatur",
-      error: error.message
+      error: sanitizeErrorMessage(error)
     });
   }
 });
@@ -2553,7 +2621,7 @@ router.post("/sign/:token/decline", signatureDeclineLimiter, async (req, res) =>
     res.status(500).json({
       success: false,
       message: "Fehler beim Ablehnen der Signatur",
-      error: error.message
+      error: sanitizeErrorMessage(error)
     });
   }
 });

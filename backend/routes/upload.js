@@ -95,7 +95,7 @@ const uploadMiddleware = multer({
       cb(null, filename);
     },
   }),
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB limit
+  limits: { fileSize: 25 * 1024 * 1024 }, // ✅ 25 MB limit (matches frontend validation)
 });
 
 /**
