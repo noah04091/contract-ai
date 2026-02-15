@@ -93,6 +93,7 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({ className }) => {
   const [libraryCategory, setLibraryCategory] = useState<TemplateClauseCategory | ''>('');
   const [savedClauses, setSavedClauses] = useState<SavedClause[]>([]);
   const [isLoadingSavedClauses, setIsLoadingSavedClauses] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   const { addBlock, generateClause, addVariable } = useContractBuilderStore();
 
@@ -108,8 +109,8 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({ className }) => {
     try {
       const response = await clauseLibraryAPI.getSavedClauses({ limit: 100 });
       setSavedClauses(response.clauses);
-    } catch (error) {
-      console.error('Fehler beim Laden der Klauseln:', error);
+    } catch {
+      // Fehler beim Laden wird still behandelt
     } finally {
       setIsLoadingSavedClauses(false);
     }
@@ -210,9 +211,8 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({ className }) => {
 
       setShowAiModal(false);
       setAiPrompt('');
-    } catch (error) {
-      console.error('Fehler bei KI-Generierung:', error);
-      alert('Fehler bei der KI-Generierung. Bitte versuchen Sie es erneut.');
+    } catch {
+      setAiError('Fehler bei der KI-Generierung. Bitte versuchen Sie es erneut.');
     } finally {
       setIsGenerating(false);
     }
@@ -296,8 +296,11 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({ className }) => {
                 <button onClick={() => setAiPrompt('Kündigungsklausel')}>Kündigung</button>
               </div>
             </div>
+            {aiError && (
+              <p style={{ color: '#dc2626', fontSize: '0.85rem', padding: '0 1rem', margin: '0 0 0.5rem' }}>{aiError}</p>
+            )}
             <div className={styles.aiModalFooter}>
-              <button className={styles.cancelBtn} onClick={() => setShowAiModal(false)}>
+              <button className={styles.cancelBtn} onClick={() => { setShowAiModal(false); setAiError(null); }}>
                 Abbrechen
               </button>
               <button

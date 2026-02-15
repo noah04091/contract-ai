@@ -108,6 +108,16 @@ const ContractBuilder: React.FC = () => {
   const [templateDescription, setTemplateDescription] = useState('');
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
 
+  // Confirm Dialog (ersetzt window.confirm)
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText: string;
+    confirmStyle: 'danger' | 'warning' | 'primary';
+    onConfirm: () => void;
+  } | null>(null);
+
   const {
     document: currentDocument,
     isLoading,
@@ -849,15 +859,22 @@ const ContractBuilder: React.FC = () => {
 
   // Mehr-Menü Actions
   const handleDuplicate = async () => {
-    // Warnung bei ungespeicherten Änderungen
     if (hasUnsavedChanges) {
-      const confirmed = window.confirm(
-        'Sie haben ungespeicherte Änderungen. Diese gehen verloren wenn Sie ein neues Dokument erstellen. Fortfahren?'
-      );
-      if (!confirmed) {
-        setShowMoreMenu(false);
-        return;
-      }
+      setConfirmDialog({
+        isOpen: true,
+        title: 'Ungespeicherte Änderungen',
+        message: 'Sie haben ungespeicherte Änderungen. Diese gehen verloren wenn Sie ein neues Dokument erstellen. Fortfahren?',
+        confirmText: 'Fortfahren',
+        confirmStyle: 'warning',
+        onConfirm: async () => {
+          setConfirmDialog(null);
+          setShowMoreMenu(false);
+          if (currentDocument) {
+            await createDocument(`${currentDocument.metadata.name} (Kopie)`, currentDocument.metadata.contractType);
+          }
+        },
+      });
+      return;
     }
     setShowMoreMenu(false);
     if (currentDocument) {
@@ -868,13 +885,19 @@ const ContractBuilder: React.FC = () => {
   // Sichere Navigation mit Warnung bei ungespeicherten Änderungen
   const handleCloseDocument = () => {
     if (hasUnsavedChanges) {
-      const confirmed = window.confirm(
-        'Sie haben ungespeicherte Änderungen. Möchten Sie wirklich schließen?'
-      );
-      if (!confirmed) {
-        setShowMoreMenu(false);
-        return;
-      }
+      setConfirmDialog({
+        isOpen: true,
+        title: 'Ungespeicherte Änderungen',
+        message: 'Sie haben ungespeicherte Änderungen. Möchten Sie wirklich schließen?',
+        confirmText: 'Schließen',
+        confirmStyle: 'warning',
+        onConfirm: () => {
+          setConfirmDialog(null);
+          setShowMoreMenu(false);
+          navigate('/contracts');
+        },
+      });
+      return;
     }
     setShowMoreMenu(false);
     navigate('/contracts');
@@ -1303,10 +1326,18 @@ const ContractBuilder: React.FC = () => {
             className={styles.backButton}
             onClick={() => {
               if (hasUnsavedChanges) {
-                const confirmed = window.confirm(
-                  'Sie haben ungespeicherte Änderungen. Möchten Sie wirklich zum Dashboard zurückkehren?'
-                );
-                if (!confirmed) return;
+                setConfirmDialog({
+                  isOpen: true,
+                  title: 'Ungespeicherte Änderungen',
+                  message: 'Sie haben ungespeicherte Änderungen. Möchten Sie wirklich zum Dashboard zurückkehren?',
+                  confirmText: 'Zurückkehren',
+                  confirmStyle: 'warning',
+                  onConfirm: () => {
+                    setConfirmDialog(null);
+                    navigate('/dashboard');
+                  },
+                });
+                return;
               }
               navigate('/dashboard');
             }}
@@ -2107,6 +2138,37 @@ const ContractBuilder: React.FC = () => {
                   )}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Dialog Modal */}
+      {confirmDialog?.isOpen && (
+        <div className={styles.modalOverlay} onClick={() => setConfirmDialog(null)}>
+          <div className={styles.confirmModal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.confirmIcon}>
+              <AlertTriangle size={32} />
+            </div>
+            <h3 className={styles.confirmTitle}>{confirmDialog.title}</h3>
+            <p className={styles.confirmMessage}>{confirmDialog.message}</p>
+            <div className={styles.confirmActions}>
+              <button
+                className={styles.confirmCancelBtn}
+                onClick={() => setConfirmDialog(null)}
+              >
+                Abbrechen
+              </button>
+              <button
+                className={`${styles.confirmBtn} ${
+                  confirmDialog.confirmStyle === 'danger' ? styles.confirmBtnDanger :
+                  confirmDialog.confirmStyle === 'warning' ? styles.confirmBtnWarning :
+                  styles.confirmBtnPrimary
+                }`}
+                onClick={confirmDialog.onConfirm}
+              >
+                {confirmDialog.confirmText}
+              </button>
             </div>
           </div>
         </div>

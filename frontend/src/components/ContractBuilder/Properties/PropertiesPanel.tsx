@@ -88,9 +88,9 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className }) =
     });
   };
 
-  // Block löschen
+  // Block löschen (Undo ist verfügbar)
   const handleDelete = () => {
-    if (selectedBlock && window.confirm('Block wirklich löschen?')) {
+    if (selectedBlock) {
       deleteBlock(selectedBlock.id);
     }
   };
@@ -212,8 +212,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className }) =
                     body: result.optimizedText,
                   });
                 }
-              } catch (error) {
-                console.error('Fehler bei Klausel-Optimierung:', error);
+              } catch {
+                // Optimierungsfehler wird über Store-Error behandelt
               } finally {
                 setIsOptimizing(false);
               }

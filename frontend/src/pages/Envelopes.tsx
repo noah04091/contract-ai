@@ -356,33 +356,41 @@ export default function Envelopes() {
   });
 
   // Archive selected envelopes
-  const handleBatchArchive = async () => {
+  const handleBatchArchive = () => {
     if (selectedEnvelopeIds.length === 0) return;
 
-    if (!confirm(`${selectedEnvelopeIds.length} Signaturanfrage(n) archivieren?`)) return;
+    setConfirmDialog({
+      isOpen: true,
+      title: "Signaturanfragen archivieren?",
+      message: `Möchten Sie ${selectedEnvelopeIds.length} Signaturanfrage(n) archivieren?`,
+      confirmText: "Archivieren",
+      confirmStyle: "warning",
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          const token = localStorage.getItem("token");
+          const response = await fetch("/api/envelopes/archive", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json"
+            },
+            credentials: "include",
+            body: JSON.stringify({ envelopeIds: selectedEnvelopeIds })
+          });
 
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("/api/envelopes/archive", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        credentials: "include",
-        body: JSON.stringify({ envelopeIds: selectedEnvelopeIds })
-      });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.message || "Fehler beim Archivieren");
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Fehler beim Archivieren");
-
-      toast.success(`📦 ${data.archivedCount} Signaturanfrage(n) archiviert`);
-      setSelectedEnvelopeIds([]);
-      loadEnvelopes(true, 0);
-    } catch (err) {
-      console.error("Error archiving:", err);
-      toast.error("Fehler beim Archivieren");
-    }
+          toast.success(`${data.archivedCount} Signaturanfrage(n) archiviert`);
+          setSelectedEnvelopeIds([]);
+          loadEnvelopes(true, 0);
+        } catch (err) {
+          console.error("Error archiving:", err);
+          toast.error("Fehler beim Archivieren");
+        }
+      }
+    });
   };
 
   // Unarchive selected envelopes
@@ -455,7 +463,7 @@ export default function Envelopes() {
   const handleCopyLink = (token: string) => {
     const signUrl = `${window.location.origin}/sign/${token}`;
     navigator.clipboard.writeText(signUrl);
-    alert("📋 Link in die Zwischenablage kopiert!");
+    toast.success("Link in die Zwischenablage kopiert!");
   };
 
   // Generate idempotency key for requests
@@ -484,10 +492,10 @@ export default function Envelopes() {
         throw new Error(data.error || "Fehler beim Senden der Erinnerung");
       }
 
-      alert("✅ Erinnerung erfolgreich versendet!");
+      toast.success("Erinnerung erfolgreich versendet!");
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Unbekannter Fehler";
-      alert(`❌ Fehler: ${errorMessage}`);
+      toast.error(`Fehler: ${errorMessage}`);
     }
   };
 
@@ -932,16 +940,24 @@ export default function Envelopes() {
     } catch (err) {
       console.error("❌ Error downloading PDF:", err);
       const errorMessage = err instanceof Error ? err.message : "Unbekannter Fehler";
-      alert(`❌ Fehler: ${errorMessage}`);
+      toast.error(`Fehler: ${errorMessage}`);
     }
   };
 
   // Duplicate envelope
   const handleDuplicate = (envelope: Envelope) => {
-    if (confirm(`Möchten Sie "${envelope.title}" als Vorlage duplizieren?`)) {
-      // TODO: Navigate to create envelope page with pre-filled data
-      alert("Duplizieren-Feature wird demnächst implementiert!");
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: "Envelope duplizieren?",
+      message: `Möchten Sie "${envelope.title}" als Vorlage duplizieren?`,
+      confirmText: "Duplizieren",
+      confirmStyle: "primary",
+      onConfirm: () => {
+        // TODO: Navigate to create envelope page with pre-filled data
+        toast.info("Duplizieren-Feature wird demnächst implementiert!");
+        setConfirmDialog(null);
+      }
+    });
   };
 
   // Generate QR Code
@@ -1267,7 +1283,7 @@ export default function Envelopes() {
     setSelectedEnvelopeIds([]);
   };
 
-  const handleBatchRemind = async () => {
+  const handleBatchRemind = () => {
     const selectedEnvs = envelopes.filter(env => selectedEnvelopeIds.includes(env._id));
     const pendingEnvs = selectedEnvs.filter(env => env.status === "SENT" || env.status === "SIGNED");
 
@@ -1276,29 +1292,36 @@ export default function Envelopes() {
       return;
     }
 
-    if (!confirm(`Möchten Sie ${pendingEnvs.length} Erinnerungen versenden?`)) {
-      return;
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: "Erinnerungen versenden?",
+      message: `Möchten Sie ${pendingEnvs.length} Erinnerung(en) an ausstehende Unterzeichner versenden?`,
+      confirmText: "Versenden",
+      confirmStyle: "primary",
+      onConfirm: async () => {
+        setConfirmDialog(null);
 
-    let success = 0;
-    const failedEnvs: string[] = [];
+        let success = 0;
+        const failedEnvs: string[] = [];
 
-    for (const env of pendingEnvs) {
-      try {
-        await handleRemind(env._id);
-        success++;
-      } catch {
-        failedEnvs.push(env.title);
+        for (const env of pendingEnvs) {
+          try {
+            await handleRemind(env._id);
+            success++;
+          } catch {
+            failedEnvs.push(env.title);
+          }
+        }
+
+        if (failedEnvs.length > 0) {
+          toast.error(`${failedEnvs.length} fehlgeschlagen: ${failedEnvs.slice(0, 3).join(", ")}${failedEnvs.length > 3 ? ` und ${failedEnvs.length - 3} weitere` : ""}`);
+        }
+        if (success > 0) {
+          toast.success(`${success} Erinnerungen versendet`);
+        }
+        handleDeselectAll();
       }
-    }
-
-    if (failedEnvs.length > 0) {
-      toast.error(`${failedEnvs.length} fehlgeschlagen: ${failedEnvs.slice(0, 3).join(", ")}${failedEnvs.length > 3 ? ` und ${failedEnvs.length - 3} weitere` : ""}`);
-    }
-    if (success > 0) {
-      toast.success(`${success} Erinnerungen versendet`);
-    }
-    handleDeselectAll();
+    });
   };
 
   const handleBatchDownload = async () => {

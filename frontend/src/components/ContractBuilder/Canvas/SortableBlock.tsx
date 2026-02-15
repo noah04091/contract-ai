@@ -55,9 +55,7 @@ export const SortableBlock: React.FC<SortableBlockProps> = ({
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (window.confirm('Block wirklich löschen?')) {
-      deleteBlock(block.id);
-    }
+    deleteBlock(block.id);
   };
 
   const style: React.CSSProperties = {

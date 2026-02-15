@@ -2,7 +2,7 @@
  * ContractTypeSelector - Modal zur Auswahl des Vertragstyps
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Briefcase,
   Handshake,
@@ -103,6 +103,8 @@ export const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
   const [userTemplates, setUserTemplates] = useState<UserTemplate[]>([]);
   const [isLoadingUserTemplates, setIsLoadingUserTemplates] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // Helper: Prüft ob User Premium-Features nutzen kann
   const isPremiumUser = userPlan === 'premium' || userPlan === 'business' || userPlan === 'enterprise';
@@ -119,24 +121,25 @@ export const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
     try {
       const templates = await fetchUserTemplates();
       setUserTemplates(templates);
-    } catch (error) {
-      console.error('Fehler beim Laden der Vorlagen:', error);
+    } catch {
+      // Fehler beim Laden wird still behandelt
     } finally {
       setIsLoadingUserTemplates(false);
     }
   };
 
-  const handleDeleteUserTemplate = async (templateId: string) => {
-    if (!window.confirm('Vorlage wirklich löschen?')) return;
+  const handleDeleteUserTemplate = useCallback(async (templateId: string) => {
     try {
       await deleteUserTemplate(templateId);
       setUserTemplates(prev => prev.filter(t => t.id !== templateId));
       setActiveUserTemplateMenu(null);
-    } catch (error) {
-      console.error('Fehler beim Löschen:', error);
-      alert('Fehler beim Löschen der Vorlage');
+      setConfirmDelete(null);
+    } catch {
+      setDeleteError('Fehler beim Löschen der Vorlage');
+      setTimeout(() => setDeleteError(null), 4000);
+      setConfirmDelete(null);
     }
-  };
+  }, []);
 
   if (!isOpen) return null;
 
@@ -378,7 +381,7 @@ export const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
                             className={styles.dangerAction}
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDeleteUserTemplate(template.id);
+                              setConfirmDelete(template.id);
                             }}
                           >
                             <Trash2 size={14} />
@@ -569,6 +572,31 @@ export const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      {confirmDelete && (
+        <div className={styles.confirmOverlay} onClick={() => setConfirmDelete(null)}>
+          <div className={styles.confirmDialog} onClick={(e) => e.stopPropagation()}>
+            <Trash2 size={24} className={styles.confirmDeleteIcon} />
+            <h4>Vorlage löschen?</h4>
+            <p>Diese Vorlage wird unwiderruflich gelöscht.</p>
+            <div className={styles.confirmDialogActions}>
+              <button onClick={() => setConfirmDelete(null)}>Abbrechen</button>
+              <button
+                className={styles.confirmDeleteBtn}
+                onClick={() => handleDeleteUserTemplate(confirmDelete)}
+              >
+                Löschen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error Toast */}
+      {deleteError && (
+        <div className={styles.errorToast}>{deleteError}</div>
+      )}
     </div>
   );
 };

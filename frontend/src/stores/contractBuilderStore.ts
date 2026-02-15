@@ -772,12 +772,12 @@ function isTokenValid(token: string | null): boolean {
     const payload = JSON.parse(atob(parts[1]));
     // exp ist in Sekunden, Date.now() in Millisekunden
     if (payload.exp && payload.exp * 1000 < Date.now()) {
-      console.warn('[Auth] Token abgelaufen');
+      // Token abgelaufen
       return false;
     }
     return true;
   } catch (error) {
-    console.warn('[Auth] Token ungültig:', error);
+    // Token ungültig
     return false;
   }
 }
@@ -943,7 +943,6 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
             return data.document._id;
           } catch {
             // Fallback: Lokales Dokument erstellen wenn API nicht verfügbar
-            console.warn('API nicht verfügbar - erstelle lokales Dokument');
             const localDoc = createLocalDocument(name, contractType);
             set({
               document: localDoc,
@@ -1115,11 +1114,11 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
               historyIndex: 0,
               isLocalMode: false,
             });
-            console.log('[ContractBuilder] Dokument über API erstellt:', data.document._id);
+            // Dokument über API erstellt
             return data.document._id;
           } catch (err) {
             // Fallback: Lokales Dokument mit Template erstellen
-            console.warn('API nicht verfügbar - erstelle lokales Dokument mit Template:', err);
+            // Fallback auf lokales Dokument
             const localDoc = createLocalDocument(name, contractType, template);
             set({
               document: localDoc,
@@ -1147,7 +1146,7 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
               localDocs[document._id] = document;
               localStorage.setItem('contractforge_local_docs', JSON.stringify(localDocs));
               set({ isSaving: false, lastSaved: new Date(), hasUnsavedChanges: false });
-              console.log('Dokument lokal gespeichert:', document._id);
+              // Dokument lokal gespeichert
               return;
             } catch (err) {
               // Bei Speicherplatz-Überschreitung: Anhänge strippen und erneut versuchen
@@ -1169,7 +1168,7 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
                   localDocs[strippedDoc._id] = strippedDoc;
                   localStorage.setItem('contractforge_local_docs', JSON.stringify(localDocs));
                   set({ isSaving: false, lastSaved: new Date(), hasUnsavedChanges: false });
-                  console.warn('Dokument lokal gespeichert (ohne Anhänge - Speicherplatz voll)');
+                  // Dokument ohne Anhänge gespeichert (Speicherplatz voll)
                   return;
                 } catch (retryErr) {
                   console.error('Lokales Speichern auch ohne Anhänge fehlgeschlagen:', retryErr);
