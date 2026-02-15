@@ -55,7 +55,7 @@ function groupBlocksByPage(blocks: Block[]): Block[][] {
 // Paper Padding: ~27mm (12mm oben + 15mm unten) ≈ 102px
 // Nutzbare Höhe: 1122px - 102px = ~1020px
 // MAXIMIERT: Wir nutzen fast den gesamten verfügbaren Platz
-const PAGE_CONTENT_HEIGHT = 1050; // STARK ERHÖHT - nutzt max. A4 Platz
+const PAGE_CONTENT_HEIGHT_FALLBACK = 1002; // Fallback: 265mm bei 96DPI
 
 export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -65,6 +65,7 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [overflowPages, setOverflowPages] = useState<Set<number>>(new Set());
   const autoPageBreakProcessed = useRef<Set<string>>(new Set()); // Verhindert endlose Loops
+  const isAutoBreaking = useRef(false); // Concurrent-Guard
 
   const {
     document: currentDocument,
@@ -165,18 +166,20 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
           const blockHeight = blockEl.offsetHeight + 16; // +16 für margin
           cumulativeHeight += blockHeight;
 
-          // Prüfe ob dieser Block die Seite überläuft
-          if (cumulativeHeight > PAGE_CONTENT_HEIGHT) {
+          // Prüfe ob dieser Block die Seite überläuft (dynamische Höhe vom DOM)
+          if (cumulativeHeight > (pageContentEl.clientHeight || PAGE_CONTENT_HEIGHT_FALLBACK)) {
             newOverflowPages.add(pageIndex);
 
-            // Auto-Seitenumbruch nur wenn nicht bereits verarbeitet
+            // Auto-Seitenumbruch nur wenn nicht bereits verarbeitet und kein anderer läuft
             const processKey = `${pageIndex}-${block.id}`;
-            if (!autoPageBreakProcessed.current.has(processKey) && view !== 'preview') {
+            if (!autoPageBreakProcessed.current.has(processKey) && view !== 'preview' && !isAutoBreaking.current) {
               autoPageBreakProcessed.current.add(processKey);
+              isAutoBreaking.current = true;
 
               // Verzögert den PageBreak einfügen um Race Conditions zu vermeiden
               setTimeout(() => {
                 autoInsertPageBreak(block.id);
+                isAutoBreaking.current = false;
               }, 50);
 
               return; // Nur einen PageBreak pro Durchlauf
@@ -197,10 +200,11 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
     };
   }, [blocks, pages, autoInsertPageBreak, view]);
 
-  // Reset processed list wenn Blocks sich ändern
+  // Reset processed list nur wenn sich Block-IDs ändern (nicht nur Anzahl)
+  const blockIdsKey = useMemo(() => blocks.map(b => b.id).join(','), [blocks]);
   useEffect(() => {
     autoPageBreakProcessed.current.clear();
-  }, [blocks.length]);
+  }, [blockIdsKey]);
 
   // Ref-Callback für pageContent Elemente
   const setPageContentRef = useCallback((pageIndex: number) => (el: HTMLDivElement | null) => {
