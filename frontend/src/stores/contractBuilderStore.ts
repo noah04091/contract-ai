@@ -776,7 +776,7 @@ function isTokenValid(token: string | null): boolean {
       return false;
     }
     return true;
-  } catch (error) {
+  } catch {
     // Token ungültig
     return false;
   }
@@ -1116,8 +1116,7 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
             });
             // Dokument über API erstellt
             return data.document._id;
-          } catch (err) {
-            // Fallback: Lokales Dokument mit Template erstellen
+          } catch {
             // Fallback auf lokales Dokument
             const localDoc = createLocalDocument(name, contractType, template);
             set({
