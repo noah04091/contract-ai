@@ -82,6 +82,7 @@ interface Envelope {
   signers: Signer[];
   createdAt: string;
   updatedAt: string;
+  sentAt?: string; // 🆕 When envelope was sent
   expiresAt?: string;
   completedAt?: string;
   internalNote?: string;
@@ -457,6 +458,11 @@ export default function Envelopes() {
     alert("📋 Link in die Zwischenablage kopiert!");
   };
 
+  // Generate idempotency key for requests
+  const generateIdempotencyKey = (action: string, id: string) => {
+    return `${action}-${id}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  };
+
   // Send reminder email
   const handleRemind = async (envelopeId: string) => {
     try {
@@ -466,7 +472,8 @@ export default function Envelopes() {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "Idempotency-Key": generateIdempotencyKey("remind", envelopeId)
         },
         credentials: "include"
       });
@@ -683,13 +690,13 @@ export default function Envelopes() {
       time: envelope.createdAt
     });
 
-    // Envelope sent
+    // Envelope sent (use sentAt if available, fallback to createdAt for older envelopes)
     if (envelope.status !== "DRAFT") {
       events.push({
         type: "completed",
         title: "Versandt an Empfänger",
         description: `E-Mail wurde an ${envelope.signers.length} Empfänger versendet`,
-        time: envelope.createdAt
+        time: envelope.sentAt || envelope.createdAt
       });
     }
 
@@ -1274,18 +1281,23 @@ export default function Envelopes() {
     }
 
     let success = 0;
-    let failed = 0;
+    const failedEnvs: string[] = [];
 
     for (const env of pendingEnvs) {
       try {
         await handleRemind(env._id);
         success++;
       } catch {
-        failed++;
+        failedEnvs.push(env.title);
       }
     }
 
-    toast.success(`${success} Erinnerungen versendet${failed > 0 ? `, ${failed} fehlgeschlagen` : ""}`);
+    if (failedEnvs.length > 0) {
+      toast.error(`${failedEnvs.length} fehlgeschlagen: ${failedEnvs.slice(0, 3).join(", ")}${failedEnvs.length > 3 ? ` und ${failedEnvs.length - 3} weitere` : ""}`);
+    }
+    if (success > 0) {
+      toast.success(`${success} Erinnerungen versendet`);
+    }
     handleDeselectAll();
   };
 
@@ -1349,9 +1361,10 @@ export default function Envelopes() {
       confirmStyle: "warning",
       onConfirm: async () => {
         let success = 0;
-        let failed = 0;
+        const failedEnvs: string[] = [];
 
         for (const envId of selectedEnvelopeIds) {
+          const env = envelopes.find(e => e._id === envId);
           try {
             const token = localStorage.getItem("token");
 
@@ -1367,14 +1380,19 @@ export default function Envelopes() {
             if (response.ok) {
               success++;
             } else {
-              failed++;
+              failedEnvs.push(env?.title || envId);
             }
           } catch {
-            failed++;
+            failedEnvs.push(env?.title || envId);
           }
         }
 
-        toast.success(`${success} storniert${failed > 0 ? `, ${failed} fehlgeschlagen` : ""}`);
+        if (failedEnvs.length > 0) {
+          toast.error(`${failedEnvs.length} fehlgeschlagen: ${failedEnvs.slice(0, 3).join(", ")}${failedEnvs.length > 3 ? ` und ${failedEnvs.length - 3} weitere` : ""}`);
+        }
+        if (success > 0) {
+          toast.success(`${success} storniert`);
+        }
         handleDeselectAll();
         loadEnvelopes(false);
         setConfirmDialog(null);

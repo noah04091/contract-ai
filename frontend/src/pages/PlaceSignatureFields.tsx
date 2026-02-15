@@ -165,11 +165,15 @@ export default function PlaceSignatureFields() {
       // 2. Send invitations
       console.log('📧 Sending invitations...');
 
+      // Generate idempotency key to prevent duplicate emails on retries
+      const idempotencyKey = `send-${envelopeId}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
       const sendRes = await fetch(`/api/envelopes/${envelopeId}/send`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Idempotency-Key': idempotencyKey
         },
         credentials: 'include'
       });

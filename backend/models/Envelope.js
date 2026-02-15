@@ -310,6 +310,10 @@ const envelopeSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  sentAt: {
+    type: Date,
+    default: null // 🆕 When envelope was first sent
+  },
   voidedAt: {
     type: Date,
     default: null

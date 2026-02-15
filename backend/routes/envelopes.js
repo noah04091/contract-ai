@@ -7,6 +7,7 @@ const crypto = require("crypto");
 const rateLimit = require("express-rate-limit");
 const verifyToken = require("../middleware/verifyToken");
 const requirePremium = require("../middleware/requirePremium"); // 🔐 Business+ Check
+const idempotency = require("../middleware/idempotency"); // 🔒 Prevent duplicate requests
 const sendEmail = require("../services/mailer");
 const { sealPdf } = require("../services/pdfSealing"); // ✉️ PDF-Sealing Service
 const { generateSignedUrl, deleteFiles } = require("../services/fileStorage"); // 🆕 For S3 download links + 🗑️ For deletion
@@ -591,6 +592,7 @@ router.get("/envelopes", verifyToken, requirePremium, async (req, res) => {
         archived: env.archived || false,
         archivedAt: env.archivedAt,
         createdAt: env.createdAt,
+        sentAt: env.sentAt, // 🆕 When envelope was sent
         expiresAt: env.expiresAt,
         completedAt: env.completedAt
       })),
@@ -697,8 +699,9 @@ router.get("/envelopes/:id", verifyToken, requirePremium, async (req, res) => {
 
 /**
  * POST /api/envelopes/:id/send - Send invitations to signers
+ * 🔒 Idempotency protected to prevent duplicate emails on retries
  */
-router.post("/envelopes/:id/send", verifyToken, requirePremium, async (req, res) => {
+router.post("/envelopes/:id/send", verifyToken, requirePremium, idempotency(), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -762,6 +765,11 @@ router.post("/envelopes/:id/send", verifyToken, requirePremium, async (req, res)
       envelope.status = 'SENT';
     }
 
+    // 🆕 Set sentAt timestamp (only on first send)
+    if (!envelope.sentAt) {
+      envelope.sentAt = new Date();
+    }
+
     await envelope.addAuditEvent('SENT', {
       userId: req.user.userId,
       email: req.user.email,
@@ -823,8 +831,9 @@ router.post("/envelopes/:id/send", verifyToken, requirePremium, async (req, res)
 
 /**
  * POST /api/envelopes/:id/remind - Remind ALL pending signers (no specific email needed)
+ * 🔒 Idempotency protected to prevent duplicate reminder emails
  */
-router.post("/envelopes/:id/remind", verifyToken, requirePremium, async (req, res) => {
+router.post("/envelopes/:id/remind", verifyToken, requirePremium, idempotency(), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -931,8 +940,9 @@ router.post("/envelopes/:id/remind", verifyToken, requirePremium, async (req, re
 
 /**
  * POST /api/envelopes/:id/resend - Resend invitation reminder to SPECIFIC signer
+ * 🔒 Idempotency protected to prevent duplicate emails
  */
-router.post("/envelopes/:id/resend", verifyToken, requirePremium, async (req, res) => {
+router.post("/envelopes/:id/resend", verifyToken, requirePremium, idempotency(), async (req, res) => {
   try {
     const { id } = req.params;
     const { signerEmail } = req.body;
@@ -2114,6 +2124,8 @@ router.post("/sign/:token/submit", signatureSubmitLimiter, async (req, res) => {
 
     // 🆕 ALWAYS seal PDF after EVERY signature (not just final one)
     // This allows signers to download partial PDFs with their signature
+    let sealingFailed = false;
+    let sealingError = null;
     try {
       console.log('🔒 Starting automatic PDF sealing...');
       const result = await sealPdf(envelope);
@@ -2139,6 +2151,8 @@ router.post("/sign/:token/submit", signatureSubmitLimiter, async (req, res) => {
       console.log(`✅ PDF sealed successfully: ${result.sealedS3Key}`);
     } catch (sealError) {
       console.error('⚠️ PDF sealing failed:', sealError.message);
+      sealingFailed = true;
+      sealingError = sealError.message;
       // Don't fail the whole request if sealing fails
       await envelope.addAuditEvent('PDF_SEALING_FAILED', {
         userId: null,
@@ -2248,6 +2262,8 @@ router.post("/sign/:token/submit", signatureSubmitLimiter, async (req, res) => {
       success: true,
       message,
       details, // 🆕 Additional context-aware info
+      sealingFailed, // 🆕 Flag if PDF sealing failed
+      sealingError: sealingFailed ? sealingError : null, // 🆕 Error message if sealing failed
       envelope: {
         _id: envelope._id,
         status: envelope.status,
