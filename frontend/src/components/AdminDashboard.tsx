@@ -271,7 +271,8 @@ interface AdminStats {
   };
   conversion: {
     rate: number;
-    premiumUpgradeRate: number;
+    premiumUpgradeRate?: number;
+    enterpriseUpgradeRate?: number;
     totalPaidUsers: number;
   };
   revenue: {
@@ -280,7 +281,8 @@ interface AdminStats {
     arpu: number;
     breakdown: {
       business: number;
-      premium: number;
+      premium?: number;
+      enterprise?: number;
     };
   };
   usage: {
@@ -318,7 +320,7 @@ const toEuro = (usd: number): number => usd * USD_TO_EUR;
 
 // Format Euro currency
 const formatEuro = (amount: number, decimals = 2): string => {
-  return `${amount.toFixed(decimals).replace('.', ',')} €`;
+  return `${(amount ?? 0).toFixed(decimals).replace('.', ',')} €`;
 };
 
 // Helper to get device icon
@@ -1377,7 +1379,7 @@ export default function AdminDashboard() {
                 <span>
                   {stats.costs.today.isLimitReached
                     ? `Tageslimit erreicht! ${formatEuro(toEuro(stats.costs.today.spent))} / ${formatEuro(toEuro(stats.costs.today.limit))}`
-                    : `${stats.costs.today.percentUsed.toFixed(0)}% des Tageslimits verbraucht (${formatEuro(toEuro(stats.costs.today.spent))} / ${formatEuro(toEuro(stats.costs.today.limit))})`
+                    : `${(stats.costs.today.percentUsed ?? 0).toFixed(0)}% des Tageslimits verbraucht (${formatEuro(toEuro(stats.costs.today.spent))} / ${formatEuro(toEuro(stats.costs.today.limit))})`
                   }
                 </span>
               </div>
@@ -1417,7 +1419,7 @@ export default function AdminDashboard() {
                 </div>
                 <div className={styles.statContent}>
                   <h3>Total Tokens (Monat)</h3>
-                  <p className={styles.statValue}>{(stats.costs.month.tokens / 1000).toFixed(1)}K</p>
+                  <p className={styles.statValue}>{((stats.costs.month.tokens ?? 0) / 1000).toFixed(1)}K</p>
                   <span className={styles.statSubtext}>
                     ~{formatEuro(toEuro(stats.costs.month.tokens * 0.00001))} equivalent
                   </span>
@@ -1577,7 +1579,7 @@ export default function AdminDashboard() {
                 </div>
                 <div className={styles.statContent}>
                   <h3>Conversion Rate</h3>
-                  <p className={styles.statValue}>{stats.conversion.rate.toFixed(1)}%</p>
+                  <p className={styles.statValue}>{(stats.conversion.rate ?? 0).toFixed(1)}%</p>
                   <span className={styles.statSubtext}>
                     {stats.conversion.totalPaidUsers} bezahlende User
                   </span>
@@ -1622,7 +1624,7 @@ export default function AdminDashboard() {
                   <h3>Aktive Abos</h3>
                   <p className={styles.statValue}>{stats.users.activeSubscriptions}</p>
                   <span className={styles.statSubtext}>
-                    {((stats.users.activeSubscriptions / stats.users.total) * 100).toFixed(1)}% Aktivierung
+                    {(stats.users.total > 0 ? (stats.users.activeSubscriptions / stats.users.total) * 100 : 0).toFixed(1)}% Aktivierung
                   </span>
                 </div>
               </div>
@@ -1633,7 +1635,7 @@ export default function AdminDashboard() {
                 </div>
                 <div className={styles.statContent}>
                   <h3>Premium Upgrade Rate</h3>
-                  <p className={styles.statValue}>{stats.conversion.premiumUpgradeRate.toFixed(1)}%</p>
+                  <p className={styles.statValue}>{(stats.conversion.premiumUpgradeRate ?? stats.conversion.enterpriseUpgradeRate ?? 0).toFixed(1)}%</p>
                   <span className={styles.statSubtext}>
                     {stats.users.premium} Premium User
                   </span>
@@ -1654,7 +1656,7 @@ export default function AdminDashboard() {
                   <h3>Total Analysen</h3>
                   <p className={styles.statValue}>{stats.usage.totalAnalyses}</p>
                   <span className={styles.statSubtext}>
-                    {stats.usage.avgAnalysesPerUser.toFixed(1)} pro User
+                    {(stats.usage.avgAnalysesPerUser ?? 0).toFixed(1)} pro User
                   </span>
                 </div>
               </div>
@@ -1691,7 +1693,7 @@ export default function AdminDashboard() {
                     {stats.system.mongoStatus === 'Connected' ? 'Online' : 'Offline'}
                   </p>
                   <span className={styles.statSubtext}>
-                    Uptime: {(stats.system.uptime / 3600).toFixed(1)}h
+                    Uptime: {((stats.system.uptime ?? 0) / 3600).toFixed(1)}h
                   </span>
                 </div>
               </div>
@@ -1727,7 +1729,7 @@ export default function AdminDashboard() {
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={[
                     { name: 'Business', revenue: stats.revenue.breakdown.business, users: stats.users.business },
-                    { name: 'Premium', revenue: stats.revenue.breakdown.premium, users: stats.users.premium }
+                    { name: 'Enterprise', revenue: stats.revenue.breakdown.enterprise ?? stats.revenue.breakdown.premium ?? 0, users: stats.users.premium }
                   ]}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
@@ -2147,7 +2149,7 @@ export default function AdminDashboard() {
                 <div className={styles.statContent}>
                   <h3>Bewertung</h3>
                   <p className={styles.statValue}>
-                    {betaStats?.feedback.avgRating.toFixed(1) || '0.0'}
+                    {(betaStats?.feedback.avgRating ?? 0).toFixed(1) || '0.0'}
                   </p>
                   <span className={styles.statSubtext}>
                     {betaStats?.feedback.withTestimonial || 0} Testimonials
@@ -3178,7 +3180,7 @@ export default function AdminDashboard() {
                 <div className={styles.statusItem}>
                   <span className={styles.statusLabel}>Heap Used</span>
                   <span className={styles.statusValue}>
-                    {(stats.system.memoryUsage.heapUsed / 1024 / 1024).toFixed(0)} MB
+                    {((stats.system.memoryUsage?.heapUsed ?? 0) / 1024 / 1024).toFixed(0)} MB
                   </span>
                 </div>
               </div>
