@@ -1476,26 +1476,51 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
               return; // Bereits ein PageBreak vorhanden
             }
 
-            // Neuen PageBreak Block erstellen
-            const pageBreakBlock: Block = {
-              id: crypto.randomUUID(),
-              type: 'page-break',
-              order: blockIndex,
-              content: {},
-              style: {},
-              locked: false,
-              aiGenerated: false,
-            };
-
-            // Alle Blöcke ab dieser Position verschieben
-            blocks.forEach((b) => {
-              if (b.order >= blockIndex) {
-                b.order++;
+            // Prüfen ob es NACH dem übergelaufenen Block schon einen PageBreak gibt
+            // (= nächste Seite existiert bereits)
+            let nextPBIndex = -1;
+            for (let i = blockIndex + 1; i < blocks.length; i++) {
+              if (blocks[i].type === 'page-break') {
+                nextPBIndex = i;
+                break;
               }
-            });
+            }
 
-            blocks.push(pageBreakBlock);
-            blocks.sort((a, b) => a.order - b.order);
+            if (nextPBIndex !== -1) {
+              // Word-like: Nächste Seite existiert -> PageBreak VOR den übergelaufenen Block verschieben
+              // Dadurch rutscht der Block auf die nächste Seite statt eine neue zu erstellen
+              const targetOrder = blocks[blockIndex].order;
+
+              // Alle Blöcke zwischen overflow und PageBreak um 1 nach hinten
+              for (let i = blockIndex; i < nextPBIndex; i++) {
+                blocks[i].order++;
+              }
+
+              // PageBreak an die Stelle des übergelaufenen Blocks setzen
+              blocks[nextPBIndex].order = targetOrder;
+
+              blocks.sort((a, b) => a.order - b.order);
+            } else {
+              // Letzte Seite: Neuen PageBreak erstellen (keine nächste Seite vorhanden)
+              const pageBreakBlock: Block = {
+                id: crypto.randomUUID(),
+                type: 'page-break',
+                order: blockIndex,
+                content: {},
+                style: {},
+                locked: false,
+                aiGenerated: false,
+              };
+
+              blocks.forEach((b) => {
+                if (b.order >= blockIndex) {
+                  b.order++;
+                }
+              });
+
+              blocks.push(pageBreakBlock);
+              blocks.sort((a, b) => a.order - b.order);
+            }
 
             // Aktive Seite = Seite des übergelaufenen Blocks (Anzahl PageBreaks davor)
             let pageOfBlock = 0;
