@@ -153,7 +153,7 @@ export const useCalendarStore = create<CalendarState>()(
             }
 
             const pastDate = new Date();
-            pastDate.setDate(pastDate.getDate() - 60);
+            pastDate.setDate(pastDate.getDate() - 365); // 1 Jahr zurück (für Jahresübersicht)
             const futureDate = new Date();
             futureDate.setDate(futureDate.getDate() + 1095); // 3 Jahre in die Zukunft (für langfristige Verträge)
 
