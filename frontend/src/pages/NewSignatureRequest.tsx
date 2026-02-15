@@ -181,7 +181,8 @@ export default function NewSignatureRequest() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const uploadRes = await fetch("/api/upload", {
+      // 🔧 allowDuplicate=true: Allow same PDF for multiple signature requests
+      const uploadRes = await fetch("/api/upload?allowDuplicate=true", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`

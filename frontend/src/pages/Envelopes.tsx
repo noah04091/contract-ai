@@ -1107,6 +1107,23 @@ export default function Envelopes() {
       return;
     }
 
+    // 🔧 Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newSignerEmail.trim())) {
+      toast.error("Bitte gültige E-Mail-Adresse eingeben");
+      return;
+    }
+
+    // 🔧 Check for duplicate email among other signers
+    const normalizedNewEmail = newSignerEmail.toLowerCase().trim();
+    const isDuplicate = selectedEnvelope.signers.some((s, idx) =>
+      idx !== editingSigner.index && s.email.toLowerCase().trim() === normalizedNewEmail
+    );
+    if (isDuplicate) {
+      toast.error("Diese E-Mail-Adresse wird bereits von einem anderen Unterzeichner verwendet");
+      return;
+    }
+
     try {
       const token = localStorage.getItem("token");
 

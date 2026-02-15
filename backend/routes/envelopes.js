@@ -337,6 +337,34 @@ router.post("/envelopes", verifyToken, requirePremium, async (req, res) => {
       });
     }
 
+    // ✅ Validate signer email format and name
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    for (let i = 0; i < signers.length; i++) {
+      const signer = signers[i];
+      if (!signer.email || !emailRegex.test(signer.email.trim())) {
+        return res.status(400).json({
+          success: false,
+          message: `Ungültige E-Mail-Adresse für Unterzeichner ${i + 1}: "${signer.email || 'leer'}"`
+        });
+      }
+      if (!signer.name || signer.name.trim().length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: `Name fehlt für Unterzeichner ${i + 1}`
+        });
+      }
+    }
+
+    // ✅ Check for duplicate emails among signers
+    const signerEmails = signers.map(s => s.email.toLowerCase().trim());
+    const uniqueEmails = new Set(signerEmails);
+    if (uniqueEmails.size !== signerEmails.length) {
+      return res.status(400).json({
+        success: false,
+        message: "Doppelte E-Mail-Adressen unter den Unterzeichnern gefunden"
+      });
+    }
+
     // ✅ OPTIONAL: signatureFields kann leer sein (werden später im Field Placement Editor hinzugefügt)
     if (!signatureFields || !Array.isArray(signatureFields)) {
       return res.status(400).json({
@@ -1096,6 +1124,120 @@ router.post("/envelopes/:id/seal", verifyToken, requirePremium, async (req, res)
 });
 
 /**
+ * PATCH /api/envelopes/:id/signer/:index - Update signer information
+ * Only works for DRAFT envelopes (not yet sent)
+ */
+router.patch("/envelopes/:id/signer/:index", verifyToken, requirePremium, async (req, res) => {
+  try {
+    const { id, index } = req.params;
+    const { email, name } = req.body;
+    const signerIndex = parseInt(index, 10);
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: "Ungültige Envelope-ID"
+      });
+    }
+
+    if (isNaN(signerIndex) || signerIndex < 0) {
+      return res.status(400).json({
+        success: false,
+        error: "Ungültiger Signer-Index"
+      });
+    }
+
+    // Find envelope and verify ownership
+    const envelope = await Envelope.findOne({
+      _id: id,
+      ownerId: req.user.userId
+    });
+
+    if (!envelope) {
+      return res.status(404).json({
+        success: false,
+        error: "Envelope nicht gefunden"
+      });
+    }
+
+    // Only allow updates for DRAFT envelopes
+    if (envelope.status !== 'DRAFT') {
+      return res.status(400).json({
+        success: false,
+        error: "Unterzeichner können nur im Entwurfsstatus geändert werden"
+      });
+    }
+
+    // Check if signer exists
+    if (signerIndex >= envelope.signers.length) {
+      return res.status(404).json({
+        success: false,
+        error: "Unterzeichner nicht gefunden"
+      });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (email && !emailRegex.test(email.trim())) {
+      return res.status(400).json({
+        success: false,
+        error: "Ungültige E-Mail-Adresse"
+      });
+    }
+
+    // Check for duplicate email
+    const normalizedEmail = email?.toLowerCase().trim();
+    if (normalizedEmail) {
+      const isDuplicate = envelope.signers.some((s, idx) =>
+        idx !== signerIndex && s.email.toLowerCase() === normalizedEmail
+      );
+      if (isDuplicate) {
+        return res.status(400).json({
+          success: false,
+          error: "Diese E-Mail-Adresse wird bereits von einem anderen Unterzeichner verwendet"
+        });
+      }
+    }
+
+    // Update signer
+    if (email) {
+      envelope.signers[signerIndex].email = normalizedEmail;
+    }
+    if (name) {
+      envelope.signers[signerIndex].name = name.trim();
+    }
+
+    // Also update signature fields if email changed
+    if (email) {
+      const oldEmail = envelope.signers[signerIndex].email;
+      envelope.signatureFields.forEach(field => {
+        if (field.assigneeEmail.toLowerCase() === oldEmail) {
+          field.assigneeEmail = normalizedEmail;
+        }
+      });
+    }
+
+    envelope.updatedAt = new Date();
+    await envelope.save();
+
+    console.log(`✅ Signer ${signerIndex} updated in envelope ${id}`);
+
+    res.json({
+      success: true,
+      message: "Unterzeichner aktualisiert",
+      signer: envelope.signers[signerIndex]
+    });
+
+  } catch (error) {
+    console.error("❌ Error updating signer:", error);
+    res.status(500).json({
+      success: false,
+      error: "Fehler beim Aktualisieren des Unterzeichners"
+    });
+  }
+});
+
+/**
  * PATCH /api/envelopes/:id/note - Update internal note
  */
 router.patch("/envelopes/:id/note", verifyToken, requirePremium, async (req, res) => {
@@ -1315,10 +1457,10 @@ router.post("/envelopes/:id/restore", verifyToken, requirePremium, async (req, r
     // Stelle vorherigen Status wieder her oder setze auf DRAFT
     const restoreToStatus = envelope.previousStatus || 'DRAFT';
 
-    // Wenn der vorherige Status SENT war, setze auf DRAFT (Tokens könnten abgelaufen sein)
+    // Wenn der vorherige Status SENT oder AWAITING_SIGNER_X war, setze auf DRAFT (Tokens könnten abgelaufen sein)
     // User kann dann erneut versenden
-    const safeRestoreStatus = ['SENT', 'AWAITING_SIGNER_1', 'AWAITING_SIGNER_2', 'AWAITING_SIGNER_3',
-      'AWAITING_SIGNER_4', 'AWAITING_SIGNER_5'].includes(restoreToStatus) ? 'DRAFT' : restoreToStatus;
+    const isActiveStatus = restoreToStatus === 'SENT' || restoreToStatus.startsWith('AWAITING_SIGNER_');
+    const safeRestoreStatus = isActiveStatus ? 'DRAFT' : restoreToStatus;
 
     envelope.status = safeRestoreStatus === 'DRAFT' ? 'DRAFT' : restoreToStatus;
     envelope.voidedAt = null;
@@ -2203,8 +2345,8 @@ router.post("/sign/:token/decline", signatureDeclineLimiter, async (req, res) =>
     // ✅ Invalidate token after decline (security)
     signer.tokenInvalidated = true;
 
-    // Update envelope status
-    if (envelope.status === 'SENT' || envelope.status === 'AWAITING_SIGNER_1' || envelope.status === 'AWAITING_SIGNER_2') {
+    // Update envelope status (handles AWAITING_SIGNER_1, _2, _3, etc.)
+    if (envelope.status === 'SENT' || envelope.status.startsWith('AWAITING_SIGNER_')) {
       envelope.status = 'DECLINED';
     }
 

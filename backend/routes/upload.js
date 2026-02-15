@@ -181,6 +181,9 @@ router.post("/", uploadMiddleware.single("file"), async (req, res) => {
   console.log(`\n📤 [${requestId}] Upload-only request started`);
   console.log(`👤 [${requestId}] User ID: ${req.user.userId} (${req.user.email})`);
 
+  // 🔧 allowDuplicate=true: Skip duplicate check (for signature requests)
+  const allowDuplicate = req.query.allowDuplicate === 'true' || req.body.allowDuplicate === true;
+
   try {
     if (!req.file) {
       console.log(`❌ [${requestId}] No file uploaded`);
@@ -266,7 +269,25 @@ router.post("/", uploadMiddleware.single("file"), async (req, res) => {
             }
           }
 
-          // ✅ Return duplicate response
+          // 🔧 If allowDuplicate=true, return existing contract as success (for signature requests)
+          if (allowDuplicate) {
+            console.log(`✅ [${requestId}] allowDuplicate=true - returning existing contract`);
+            return res.status(200).json({
+              success: true,
+              duplicate: true,
+              message: "Bestehender Vertrag wird verwendet",
+              contract: {
+                _id: existingContract._id,
+                name: existingContract.name,
+                s3Key: existingContract.s3Key,
+                uploadedAt: existingContract.uploadedAt || existingContract.createdAt
+              },
+              contractId: existingContract._id,
+              s3Key: existingContract.s3Key
+            });
+          }
+
+          // ✅ Return duplicate response (default behavior)
           return res.status(409).json({
             success: false,
             duplicate: true,
