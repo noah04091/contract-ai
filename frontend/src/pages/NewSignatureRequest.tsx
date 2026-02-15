@@ -376,6 +376,10 @@ export default function NewSignatureRequest() {
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
+                role="button"
+                tabIndex={0}
+                aria-label="PDF-Datei hochladen - klicken oder ziehen"
+                onKeyDown={(e) => e.key === "Enter" && fileInputRef.current?.click()}
               >
                 <input
                   ref={fileInputRef}
@@ -383,6 +387,7 @@ export default function NewSignatureRequest() {
                   accept=".pdf,application/pdf"
                   onChange={handleFileChange}
                   style={{ display: "none" }}
+                  aria-label="PDF-Datei auswählen"
                 />
 
                 {file ? (
@@ -428,12 +433,14 @@ export default function NewSignatureRequest() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                 >
-                  <label>Titel der Signaturanfrage</label>
+                  <label htmlFor="signature-title">Titel der Signaturanfrage</label>
                   <input
+                    id="signature-title"
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="z.B. Arbeitsvertrag Max Mustermann"
+                    aria-label="Titel der Signaturanfrage"
                   />
                 </motion.div>
               )}
@@ -585,20 +592,22 @@ export default function NewSignatureRequest() {
                 <div className={styles.addSignerForm}>
                   <div className={styles.inputRow}>
                     <div className={styles.inputGroup}>
-                      <Mail size={18} />
+                      <Mail size={18} aria-hidden="true" />
                       <input
                         type="email"
                         placeholder="E-Mail-Adresse"
+                        aria-label="E-Mail-Adresse des Unterzeichners"
                         value={currentEmail}
                         onChange={(e) => setCurrentEmail(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleAddSigner()}
                       />
                     </div>
                     <div className={styles.inputGroup}>
-                      <User size={18} />
+                      <User size={18} aria-hidden="true" />
                       <input
                         type="text"
                         placeholder="Vollständiger Name"
+                        aria-label="Vollständiger Name des Unterzeichners"
                         value={currentName}
                         onChange={(e) => setCurrentName(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleAddSigner()}
@@ -660,12 +669,14 @@ export default function NewSignatureRequest() {
 
               {/* Message (Optional) */}
               <div className={styles.messageSection}>
-                <label className={styles.sectionLabel}>
+                <label htmlFor="signature-message" className={styles.sectionLabel}>
                   Persönliche Nachricht
                   <span className={styles.optionalTag}>Optional</span>
                 </label>
                 <textarea
+                  id="signature-message"
                   placeholder="Fügen Sie eine Nachricht für die Unterzeichner hinzu..."
+                  aria-label="Persönliche Nachricht für die Unterzeichner"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   rows={3}

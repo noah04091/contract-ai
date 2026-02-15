@@ -684,9 +684,212 @@ Impressum: https://www.contract-ai.de/impressum
   `.trim();
 }
 
+/**
+ * Generate HTML email for signature reminder
+ * @param {Object} data - Email data (same as invitation)
+ * @returns {string} HTML email
+ */
+function generateSignatureReminderHTML(data) {
+  const { signer, envelope, ownerEmail, signUrl, expiresAt, signatureFields } = data;
+
+  // Calculate time remaining
+  const now = new Date();
+  const expiry = new Date(expiresAt);
+  const hoursRemaining = Math.max(0, Math.round((expiry - now) / (1000 * 60 * 60)));
+  const daysRemaining = Math.floor(hoursRemaining / 24);
+
+  let urgencyText = '';
+  let urgencyColor = '#f59e0b'; // Orange default
+  if (daysRemaining === 0) {
+    urgencyText = `Noch ${hoursRemaining} Stunden gültig`;
+    urgencyColor = '#dc2626'; // Red
+  } else if (daysRemaining === 1) {
+    urgencyText = 'Noch 1 Tag gültig';
+    urgencyColor = '#f59e0b'; // Orange
+  } else {
+    urgencyText = `Noch ${daysRemaining} Tage gültig`;
+  }
+
+  // Count field types (same as invitation)
+  const fieldCounts = { signature: 0, initial: 0, date: 0, text: 0 };
+  signatureFields.forEach(field => {
+    if (fieldCounts.hasOwnProperty(field.type)) {
+      fieldCounts[field.type]++;
+    }
+  });
+
+  const totalFields = signatureFields.length;
+  const fieldLabels = {
+    signature: { icon: '', label: 'Signatur' },
+    initial: { icon: '', label: 'Initialen' },
+    date: { icon: '', label: 'Datum' },
+    text: { icon: '', label: 'Textfeld' }
+  };
+
+  let fieldSummaryHTML = '';
+  Object.keys(fieldCounts).forEach(type => {
+    const count = fieldCounts[type];
+    if (count > 0) {
+      const { label } = fieldLabels[type];
+      fieldSummaryHTML += `<p style="margin: 4px 0; font-size: 14px;"><strong>${count}×</strong> ${label}</p>`;
+    }
+  });
+
+  const formattedExpiryDate = expiry.toLocaleString('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  const body = `
+    <!-- Reminder Badge -->
+    <div style="text-align: center; margin: 0 0 25px 0;">
+      <span style="display: inline-block; background-color: #fef3c7; color: #92400e; padding: 8px 20px; border-radius: 20px; font-size: 14px; font-weight: 600;">
+        Erinnerung
+      </span>
+    </div>
+
+    <p style="margin: 0 0 20px 0; text-align: center;">
+      Sie haben noch eine ausstehende Signaturanfrage von <strong>${ownerEmail}</strong>.
+    </p>
+
+    <!-- Urgency Banner -->
+    <div style="background-color: ${urgencyColor === '#dc2626' ? '#fef2f2' : '#fffbeb'}; border: 1px solid ${urgencyColor}; border-radius: 8px; padding: 12px 16px; margin: 20px 0; text-align: center;">
+      <p style="margin: 0; color: ${urgencyColor}; font-weight: 600; font-size: 15px;">
+        ${urgencyText}
+      </p>
+    </div>
+
+    <!-- Document Card -->
+    <div style="background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 20px; margin: 25px 0;">
+      <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">
+        ${envelope.title}
+      </p>
+      <p style="margin: 0 0 12px 0; font-size: 14px; color: #666666;">
+        Absender: ${ownerEmail}
+      </p>
+      <div style="padding-top: 12px; border-top: 1px solid #e9ecef;">
+        <p style="margin: 0 0 8px 0; font-size: 13px; color: #666666; font-weight: 600;">Ausstehende Felder:</p>
+        ${fieldSummaryHTML}
+      </div>
+    </div>
+
+    <!-- Info Box -->
+    <div style="background-color: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin: 25px 0;">
+      <p style="margin: 0; font-size: 13px; color: #6b7280; line-height: 1.6;">
+        Link gültig bis: <strong>${formattedExpiryDate}</strong><br>
+        Bei Fragen wenden Sie sich an: ${ownerEmail}
+      </p>
+    </div>
+  `;
+
+  return generateEmailTemplate({
+    title: `Erinnerung: Signatur ausstehend`,
+    preheader: `Bitte unterschreiben Sie "${envelope.title}" - ${urgencyText}`,
+    body: body,
+    cta: {
+      url: signUrl,
+      text: 'Jetzt signieren →'
+    }
+  });
+}
+
+/**
+ * Generate plain text email for signature reminder (fallback)
+ */
+function generateSignatureReminderText(data) {
+  const { signer, envelope, ownerEmail, signUrl, expiresAt, signatureFields } = data;
+
+  // Calculate time remaining
+  const now = new Date();
+  const expiry = new Date(expiresAt);
+  const hoursRemaining = Math.max(0, Math.round((expiry - now) / (1000 * 60 * 60)));
+  const daysRemaining = Math.floor(hoursRemaining / 24);
+
+  let urgencyText = '';
+  if (daysRemaining === 0) {
+    urgencyText = `Noch ${hoursRemaining} Stunden gültig`;
+  } else if (daysRemaining === 1) {
+    urgencyText = 'Noch 1 Tag gültig';
+  } else {
+    urgencyText = `Noch ${daysRemaining} Tage gültig`;
+  }
+
+  const formattedExpiryDate = expiry.toLocaleString('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  // Count field types
+  const fieldCounts = { signature: 0, initial: 0, date: 0, text: 0 };
+  signatureFields.forEach(field => {
+    if (fieldCounts.hasOwnProperty(field.type)) {
+      fieldCounts[field.type]++;
+    }
+  });
+
+  const fieldLabels = { signature: 'Signatur', initial: 'Initialen', date: 'Datum', text: 'Textfeld' };
+  let fieldSummary = '';
+  Object.keys(fieldCounts).forEach(type => {
+    const count = fieldCounts[type];
+    if (count > 0) {
+      fieldSummary += `  • ${count}x ${fieldLabels[type]}\n`;
+    }
+  });
+
+  return `
+═══════════════════════════════════════════════════
+           ERINNERUNG: SIGNATUR AUSSTEHEND
+═══════════════════════════════════════════════════
+
+Hallo ${signer.name},
+
+Sie haben noch eine ausstehende Signaturanfrage von ${ownerEmail}.
+
+*** ${urgencyText.toUpperCase()} ***
+
+═══════════════════════════════════════════════════
+
+DOKUMENT: ${envelope.title}
+ABSENDER: ${ownerEmail}
+
+AUSSTEHENDE FELDER:
+${fieldSummary}
+═══════════════════════════════════════════════════
+
+▶ JETZT SIGNIEREN:
+
+${signUrl}
+
+═══════════════════════════════════════════════════
+
+Link gültig bis: ${formattedExpiryDate}
+Bei Fragen: ${ownerEmail}
+
+═══════════════════════════════════════════════════
+
+Mit freundlichen Grüßen
+Contract AI Signaturservice
+
+---
+Diese E-Mail wurde automatisch generiert.
+
+Website: https://www.contract-ai.de
+Datenschutz: https://www.contract-ai.de/datenschutz
+Impressum: https://www.contract-ai.de/impressum
+  `.trim();
+}
+
 module.exports = {
   generateSignatureInvitationHTML,
   generateSignatureInvitationText,
+  generateSignatureReminderHTML,
+  generateSignatureReminderText,
   generateCompletionNotificationHTML,
   generateCompletionNotificationText,
   generateVoidNotificationHTML,

@@ -560,6 +560,9 @@ export default function EnhancedSignaturePage() {
   }, [currentPage, numPages, handleNextField, handlePreviousField]);
 
   async function handleSubmit() {
+    // ✅ Double-submit prevention: exit immediately if already submitting
+    if (isSubmitting) return;
+
     if (!allRequiredFieldsValid) {
       alert("Bitte füllen Sie alle Pflichtfelder aus.");
       return;
@@ -664,6 +667,9 @@ export default function EnhancedSignaturePage() {
   }, [envelope]);
 
   async function handleDecline() {
+    // ✅ Double-submit prevention: exit immediately if already submitting
+    if (isSubmitting) return;
+
     if (!token) {
       alert("Kein Token vorhanden");
       return;
@@ -838,8 +844,9 @@ export default function EnhancedSignaturePage() {
     );
   }
 
-  // Check if expired
-  const isExpired = new Date() > new Date(envelope.expiresAt);
+  // Check if expired (with proper validation for invalid/missing dates)
+  const expiresAtDate = envelope.expiresAt ? new Date(envelope.expiresAt) : null;
+  const isExpired = expiresAtDate && !isNaN(expiresAtDate.getTime()) && new Date() > expiresAtDate;
   if (isExpired) {
     return (
       <div className={styles.container}>

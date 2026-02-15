@@ -59,6 +59,25 @@ const signatureDeclineLimiter = rateLimit({
   }
 });
 
+/**
+ * Rate limiter for sending/reminding (prevents email abuse)
+ * 10 sends per minute per user
+ */
+const emailSendLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10, // Max 10 email sends per minute
+  message: { success: false, error: 'Zu viele E-Mail-Anfragen. Bitte warten Sie eine Minute.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    // Use user ID for authenticated endpoints
+    return req.user?.userId ||
+           req.headers['x-forwarded-for']?.split(',')[0] ||
+           req.connection.remoteAddress ||
+           'unknown';
+  }
+});
+
 // ===== UTILITY FUNCTIONS =====
 
 /**
@@ -208,22 +227,28 @@ function validateEnvelopeSubmission(envelope, signatures, signerEmail) {
 
 /**
  * Send signature invitation email (HTML + Plain Text)
+ * @param {Object} signer - Signer object
+ * @param {Object} envelope - Envelope object
+ * @param {string} ownerEmail - Owner email
+ * @param {boolean} isReminder - If true, use reminder templates
  */
-async function sendSignatureInvitation(signer, envelope, ownerEmail) {
+async function sendSignatureInvitation(signer, envelope, ownerEmail, isReminder = false) {
   const signUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/sign/${signer.token}`;
 
-  // 🆕 Get signature fields for this signer
+  // Get signature fields for this signer
   const signerFields = envelope.signatureFields.filter(
     field => field.assigneeEmail.toLowerCase() === signer.email.toLowerCase()
   );
 
-  // 🆕 Import email templates
+  // Import email templates
   const {
     generateSignatureInvitationHTML,
-    generateSignatureInvitationText
+    generateSignatureInvitationText,
+    generateSignatureReminderHTML,
+    generateSignatureReminderText
   } = require('../templates/signatureInvitationEmail');
 
-  // 🆕 Prepare data for templates
+  // Prepare data for templates
   const templateData = {
     signer: {
       name: signer.name,
@@ -239,18 +264,24 @@ async function sendSignatureInvitation(signer, envelope, ownerEmail) {
     signatureFields: signerFields
   };
 
-  // 🆕 Generate HTML and plain text versions
-  const htmlContent = generateSignatureInvitationHTML(templateData);
-  const textContent = generateSignatureInvitationText(templateData);
+  // Generate HTML and plain text versions (use reminder templates if isReminder)
+  const htmlContent = isReminder
+    ? generateSignatureReminderHTML(templateData)
+    : generateSignatureInvitationHTML(templateData);
+  const textContent = isReminder
+    ? generateSignatureReminderText(templateData)
+    : generateSignatureInvitationText(templateData);
 
-  const subject = `${envelope.title} - Signaturanfrage`;
+  const subject = isReminder
+    ? `Erinnerung: ${envelope.title} - Signatur ausstehend`
+    : `${envelope.title} - Signaturanfrage`;
 
   try {
     await sendEmail(signer.email, subject, textContent, htmlContent);
-    console.log(`✉️ Signature invitation sent to: ${signer.email} (${signerFields.length} fields)`);
+    console.log(`✉️ ${isReminder ? 'Reminder' : 'Invitation'} sent to: ${signer.email} (${signerFields.length} fields)`);
     return true;
   } catch (error) {
-    console.error(`❌ Failed to send invitation to ${signer.email}:`, error);
+    console.error(`❌ Failed to send ${isReminder ? 'reminder' : 'invitation'} to ${signer.email}:`, error);
     return false;
   }
 }
@@ -527,8 +558,10 @@ router.get("/envelopes", verifyToken, requirePremium, async (req, res) => {
     }
 
     // Search in title and signer emails
+    // ✅ Escape special regex characters to prevent ReDoS attacks
     if (search && search.trim()) {
-      const searchRegex = new RegExp(search.trim(), 'i');
+      const escapedSearch = search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const searchRegex = new RegExp(escapedSearch, 'i');
       query.$or = [
         { title: searchRegex },
         { 'signers.email': searchRegex },
@@ -701,7 +734,7 @@ router.get("/envelopes/:id", verifyToken, requirePremium, async (req, res) => {
  * POST /api/envelopes/:id/send - Send invitations to signers
  * 🔒 Idempotency protected to prevent duplicate emails on retries
  */
-router.post("/envelopes/:id/send", verifyToken, requirePremium, idempotency(), async (req, res) => {
+router.post("/envelopes/:id/send", verifyToken, requirePremium, emailSendLimiter, idempotency(), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -833,7 +866,7 @@ router.post("/envelopes/:id/send", verifyToken, requirePremium, idempotency(), a
  * POST /api/envelopes/:id/remind - Remind ALL pending signers (no specific email needed)
  * 🔒 Idempotency protected to prevent duplicate reminder emails
  */
-router.post("/envelopes/:id/remind", verifyToken, requirePremium, idempotency(), async (req, res) => {
+router.post("/envelopes/:id/remind", verifyToken, requirePremium, emailSendLimiter, idempotency(), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -895,10 +928,10 @@ router.post("/envelopes/:id/remind", verifyToken, requirePremium, idempotency(),
     // Save the updated tokens
     await envelope.save();
 
-    // Send reminders to all pending signers (with fresh tokens)
+    // Send reminders to all pending signers (with fresh tokens) - use reminder templates
     const sendResults = await Promise.allSettled(
       pendingSigners.map(signer =>
-        sendSignatureInvitation(signer, envelope, req.user.email)
+        sendSignatureInvitation(signer, envelope, req.user.email, true)
       )
     );
 
@@ -942,7 +975,7 @@ router.post("/envelopes/:id/remind", verifyToken, requirePremium, idempotency(),
  * POST /api/envelopes/:id/resend - Resend invitation reminder to SPECIFIC signer
  * 🔒 Idempotency protected to prevent duplicate emails
  */
-router.post("/envelopes/:id/resend", verifyToken, requirePremium, idempotency(), async (req, res) => {
+router.post("/envelopes/:id/resend", verifyToken, requirePremium, emailSendLimiter, idempotency(), async (req, res) => {
   try {
     const { id } = req.params;
     const { signerEmail } = req.body;
@@ -1007,8 +1040,8 @@ router.post("/envelopes/:id/resend", verifyToken, requirePremium, idempotency(),
       console.log(`🔄 Token refreshed for ${signer.email}`);
     }
 
-    // Send reminder (with fresh token if refreshed)
-    const sent = await sendSignatureInvitation(signer, envelope, req.user.email);
+    // Send reminder (with fresh token if refreshed) - use reminder templates
+    const sent = await sendSignatureInvitation(signer, envelope, req.user.email, true);
 
     if (sent) {
       await envelope.addAuditEvent('REMINDER_SENT', {
@@ -1830,9 +1863,9 @@ router.get("/sign/:token", async (req, res) => {
 
     console.log(`✅ Signature session loaded for: ${signer.email}`);
 
-    // Get signature fields for this signer
+    // Get signature fields for this signer (case-insensitive email comparison)
     const myFields = envelope.signatureFields.filter(
-      field => field.assigneeEmail === signer.email
+      field => field.assigneeEmail.toLowerCase() === signer.email.toLowerCase()
     );
 
     // 📄 Generate presigned URL for PDF preview
@@ -2022,7 +2055,8 @@ router.post("/sign/:token/submit", signatureSubmitLimiter, async (req, res) => {
     for (const sig of signatures) {
       const field = envelope.signatureFields.id(sig.fieldId);
 
-      if (field && field.assigneeEmail === signer.email) {
+      // ✅ Case-insensitive email comparison
+      if (field && field.assigneeEmail.toLowerCase() === signer.email.toLowerCase()) {
         field.value = sig.value;
         field.signedAt = now;
         updatedCount++;
