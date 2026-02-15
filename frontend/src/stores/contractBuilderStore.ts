@@ -818,6 +818,13 @@ async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
 // Cache für Base64-Daten, lebt außerhalb des Store-States
 const attachmentCache = new Map<string, string>();
 
+// Guard: Verhindert dass pushToHistory während Undo/Redo aufgerufen wird
+// (Auto-PageBreak feuert nach Undo und würde canRedo sofort zurücksetzen)
+let _isUndoRedoing = false;
+
+// Flag: Verhindert dass IntersectionObserver activePageIndex nach Auto-PageBreak zurücksetzt
+export const _pageBreakFlags = { lastAutoBreakTime: 0 };
+
 // Extrahiert Base64-Daten aus Blöcken und ersetzt sie mit Platzhaltern
 function stripAttachmentsForHistory(doc: ContractDocument): ContractDocument {
   const clone = JSON.parse(JSON.stringify(doc));
@@ -1490,12 +1497,17 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
             blocks.push(pageBreakBlock);
             blocks.sort((a, b) => a.order - b.order);
 
-            // Aktive Seite auf die neue Seite setzen
-            const pageBreakCount = blocks.filter((b) => b.type === 'page-break').length;
-            state.activePageIndex = pageBreakCount;
+            // Aktive Seite = Seite des übergelaufenen Blocks (Anzahl PageBreaks davor)
+            let pageOfBlock = 0;
+            for (const b of blocks) {
+              if (b.id === beforeBlockId) break;
+              if (b.type === 'page-break') pageOfBlock++;
+            }
+            state.activePageIndex = pageOfBlock;
 
             state.hasUnsavedChanges = true;
           });
+          _pageBreakFlags.lastAutoBreakTime = Date.now();
           get().pushToHistory();
         },
 
@@ -1715,6 +1727,7 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
         // ============================================
 
         pushToHistory: () => {
+          if (_isUndoRedoing) return; // Während Undo/Redo keine History pushen
           set((state) => {
             if (!state.document) return;
             // Remove future history if we're not at the end
@@ -1732,6 +1745,7 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
         },
 
         undo: () => {
+          _isUndoRedoing = true;
           set((state) => {
             if (state.historyIndex > 0) {
               state.historyIndex--;
@@ -1741,9 +1755,12 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
               state.hasUnsavedChanges = true;
             }
           });
+          // Guard für 500ms aktiv lassen (200ms useEffect-Delay + 50ms PageBreak-Delay + Puffer)
+          setTimeout(() => { _isUndoRedoing = false; }, 500);
         },
 
         redo: () => {
+          _isUndoRedoing = true;
           set((state) => {
             if (state.historyIndex < state.history.length - 1) {
               state.historyIndex++;
@@ -1753,6 +1770,7 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
               state.hasUnsavedChanges = true;
             }
           });
+          setTimeout(() => { _isUndoRedoing = false; }, 500);
         },
 
         // ============================================

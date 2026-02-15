@@ -23,7 +23,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { AlertTriangle, Trash2 } from 'lucide-react';
-import { useContractBuilderStore, Block } from '../../../stores/contractBuilderStore';
+import { useContractBuilderStore, Block, _pageBreakFlags } from '../../../stores/contractBuilderStore';
 import { SortableBlock } from './SortableBlock';
 import { BlockRenderer } from '../Blocks/BlockRenderer';
 import { DropZone } from './DropZone';
@@ -118,8 +118,11 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
           });
 
           // Aktiviere die am meisten sichtbare Seite (nur wenn >30% sichtbar)
+          // Nach Auto-PageBreak 1s warten, damit activePageIndex nicht sofort zurückgesetzt wird
           if (mostVisiblePage >= 0 && maxVisibility > 0.3) {
-            setActivePage(mostVisiblePage);
+            if (Date.now() - _pageBreakFlags.lastAutoBreakTime > 1000) {
+              setActivePage(mostVisiblePage);
+            }
           }
         },
         {
