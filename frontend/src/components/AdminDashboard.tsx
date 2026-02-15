@@ -2991,7 +2991,7 @@ export default function AdminDashboard() {
                         <tr>
                           <th style={{ textAlign: 'left', padding: '10px', borderBottom: '1px solid #e5e7eb', fontSize: '13px' }}>Zeitpunkt</th>
                           <th style={{ textAlign: 'left', padding: '10px', borderBottom: '1px solid #e5e7eb', fontSize: '13px' }}>Status</th>
-                          <th style={{ textAlign: 'center', padding: '10px', borderBottom: '1px solid #e5e7eb', fontSize: '13px' }}>User</th>
+                          <th style={{ textAlign: 'center', padding: '10px', borderBottom: '1px solid #e5e7eb', fontSize: '13px' }}>Geprüfte User</th>
                           <th style={{ textAlign: 'center', padding: '10px', borderBottom: '1px solid #e5e7eb', fontSize: '13px' }}>Verträge</th>
                           <th style={{ textAlign: 'center', padding: '10px', borderBottom: '1px solid #e5e7eb', fontSize: '13px' }}>Findings</th>
                           <th style={{ textAlign: 'center', padding: '10px', borderBottom: '1px solid #e5e7eb', fontSize: '13px' }}>Dauer</th>
