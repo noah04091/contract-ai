@@ -2048,17 +2048,22 @@ router.post("/sign/:token/submit", signatureSubmitLimiter, async (req, res) => {
       }
     }
 
-    // Update signature fields
+    // ✅ ATOMIC UPDATE: Update signature fields and signer status in one operation
+    // This prevents race conditions when multiple signers submit simultaneously
     const now = new Date();
+    const signerEmail = signer.email.toLowerCase();
+
+    // Build atomic update operations for signature fields
+    const fieldUpdates = {};
     let updatedCount = 0;
 
     for (const sig of signatures) {
-      const field = envelope.signatureFields.id(sig.fieldId);
-
-      // ✅ Case-insensitive email comparison
-      if (field && field.assigneeEmail.toLowerCase() === signer.email.toLowerCase()) {
-        field.value = sig.value;
-        field.signedAt = now;
+      const fieldIndex = envelope.signatureFields.findIndex(
+        f => f._id.toString() === sig.fieldId && f.assigneeEmail.toLowerCase() === signerEmail
+      );
+      if (fieldIndex !== -1) {
+        fieldUpdates[`signatureFields.${fieldIndex}.value`] = sig.value;
+        fieldUpdates[`signatureFields.${fieldIndex}.signedAt`] = now;
         updatedCount++;
       }
     }
@@ -2070,15 +2075,82 @@ router.post("/sign/:token/submit", signatureSubmitLimiter, async (req, res) => {
       });
     }
 
-    // Update signer status
-    signer.status = 'SIGNED';
-    signer.signedAt = now;
-    signer.ip = getClientIP(req);
-    signer.userAgent = req.headers['user-agent'] || 'unknown';
+    // Find the signer index for atomic update
+    const signerIndex = envelope.signers.findIndex(s => s.token === token);
+    if (signerIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: "Unterzeichner nicht gefunden"
+      });
+    }
 
-    // ✅ Invalidate token immediately after signing (security)
-    signer.tokenInvalidated = true;
-    console.log(`🔐 Token invalidated for: ${signer.email}`);
+    // ✅ ATOMIC UPDATE: Update signer status and fields in single operation
+    // Uses arrayFilters for precise targeting, prevents race conditions
+    const atomicResult = await Envelope.findOneAndUpdate(
+      {
+        _id: envelope._id,
+        'signers.token': token,
+        'signers.status': 'PENDING' // Only update if still PENDING (idempotency check)
+      },
+      {
+        $set: {
+          ...fieldUpdates,
+          [`signers.${signerIndex}.status`]: 'SIGNED',
+          [`signers.${signerIndex}.signedAt`]: now,
+          [`signers.${signerIndex}.ip`]: getClientIP(req),
+          [`signers.${signerIndex}.userAgent`]: req.headers['user-agent'] || 'unknown',
+          [`signers.${signerIndex}.tokenInvalidated`]: true,
+          updatedAt: now
+        }
+      },
+      { new: true }
+    );
+
+    // If no document was updated, it means either already signed or race condition
+    if (!atomicResult) {
+      // Re-check if already signed (idempotent case)
+      const freshEnvelope = await Envelope.findById(envelope._id);
+      const freshSigner = freshEnvelope?.signers.find(s => s.token === token);
+
+      if (freshSigner?.status === 'SIGNED') {
+        console.log(`⚠️ Race condition detected - already signed by ${signer.email}`);
+
+        // Return idempotent success response
+        let sealedPdfUrl = null;
+        if (freshEnvelope.s3KeySealed) {
+          try {
+            const { generateSignedUrl } = require("../services/fileStorage");
+            sealedPdfUrl = await generateSignedUrl(freshEnvelope.s3KeySealed);
+          } catch (error) {
+            console.error(`❌ Failed to generate sealed PDF URL:`, error);
+          }
+        }
+
+        return res.status(200).json({
+          success: true,
+          message: "Bereits signiert",
+          envelope: {
+            _id: freshEnvelope._id,
+            status: freshEnvelope.status,
+            allSigned: freshEnvelope.allSigned(),
+            completedAt: freshEnvelope.completedAt,
+            sealedPdfUrl
+          }
+        });
+      }
+
+      return res.status(409).json({
+        success: false,
+        message: "Konflikt beim Speichern - bitte erneut versuchen"
+      });
+    }
+
+    // Use the atomically updated envelope for subsequent operations
+    envelope = atomicResult;
+    // Re-get the signer reference from updated envelope
+    const updatedSigner = envelope.signers[signerIndex];
+
+    console.log(`🔐 Token invalidated for: ${updatedSigner.email} (atomic update)`);
 
     // Check if envelope status should be updated
     if (envelope.status === 'SENT') {
@@ -2104,9 +2176,9 @@ router.post("/sign/:token/submit", signatureSubmitLimiter, async (req, res) => {
     // Add audit event with integrity hashes
     await envelope.addAuditEvent('SIGNED', {
       userId: null,
-      email: signer.email,
-      ip: signer.ip,
-      userAgent: signer.userAgent,
+      email: updatedSigner.email,
+      ip: updatedSigner.ip,
+      userAgent: updatedSigner.userAgent,
       details: {
         signaturesCount: updatedCount,
         docHash,      // 🔒 Document integrity hash
@@ -2253,7 +2325,7 @@ router.post("/sign/:token/submit", signatureSubmitLimiter, async (req, res) => {
       }
     }
 
-    console.log(`✅ Signature submitted successfully by: ${signer.email}`);
+    console.log(`✅ Signature submitted successfully by: ${updatedSigner.email}`);
 
     // 📄 Generate presigned URL for sealed PDF download
     let sealedPdfUrl = null;
@@ -2276,7 +2348,7 @@ router.post("/sign/:token/submit", signatureSubmitLimiter, async (req, res) => {
       message = "✅ Signatur erfolgreich übermittelt! Das Dokument ist vollständig signiert.";
 
       // Only notify about owner notification if signer is NOT the owner
-      if (signer.role !== 'sender') {
+      if (updatedSigner.role !== 'sender') {
         details = "Der Vertragsinhaber wurde benachrichtigt.";
       }
     } else {
@@ -2286,7 +2358,7 @@ router.post("/sign/:token/submit", signatureSubmitLimiter, async (req, res) => {
         details = "Der nächste Unterzeichner wurde benachrichtigt.";
       } else {
         message = "✅ Signatur erfolgreich übermittelt!";
-        details = signer.role === 'sender'
+        details = updatedSigner.role === 'sender'
           ? "Alle Empfänger wurden benachrichtigt."
           : "Der Vertragsinhaber wurde benachrichtigt.";
       }

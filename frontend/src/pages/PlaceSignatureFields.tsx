@@ -110,6 +110,17 @@ export default function PlaceSignatureFields() {
       }))
     : [];
 
+  // ✅ Escape key handler for help modal (accessibility)
+  useEffect(() => {
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && showHelp) {
+        setShowHelp(false);
+      }
+    };
+    document.addEventListener('keydown', handleEscapeKey);
+    return () => document.removeEventListener('keydown', handleEscapeKey);
+  }, [showHelp]);
+
   // Handle fields change
   const handleFieldsChange = useCallback((newFields: SignatureField[]) => {
     setFields(newFields);

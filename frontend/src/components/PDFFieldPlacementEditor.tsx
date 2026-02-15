@@ -24,6 +24,7 @@ function getScale(renderedWidth: number, originalWidth: number): number {
 /**
  * Convert client (mouse/touch) coordinates to PDF coordinates
  * Accounts for zoom/scale and container offset
+ * ✅ FIXED: Now properly handles cases where wrapper != PDF canvas size
  */
 function clientToPdfXY(
   clientX: number,
@@ -33,12 +34,18 @@ function clientToPdfXY(
   originalWidth: number,
   originalHeight: number
 ): { xPdf: number; yPdf: number; scale: number } {
-  const rect = hostEl.getBoundingClientRect();
+  // ✅ FIX: Find the actual canvas element inside the wrapper for accurate bounds
+  const canvas = hostEl.querySelector('canvas');
+  const rect = canvas ? canvas.getBoundingClientRect() : hostEl.getBoundingClientRect();
 
-  const xRendered = Math.max(0, Math.min(clientX - rect.left, rect.width));
-  const yRendered = Math.max(0, Math.min(clientY - rect.top, rect.height));
+  // Use actual canvas/rendered width for accurate scale calculation
+  const actualRenderedWidth = canvas ? rect.width : renderedWidth;
+  const actualRenderedHeight = canvas ? rect.height : (renderedWidth * originalHeight / originalWidth);
 
-  const scale = getScale(renderedWidth, originalWidth);
+  const xRendered = Math.max(0, Math.min(clientX - rect.left, actualRenderedWidth));
+  const yRendered = Math.max(0, Math.min(clientY - rect.top, actualRenderedHeight));
+
+  const scale = getScale(actualRenderedWidth, originalWidth);
   const xPdf = xRendered / (scale || 1);
   const yPdf = yRendered / (scale || 1);
 

@@ -1,7 +1,9 @@
 // 📁 backend/utils/emailTemplate.js
 // ✅ Clean3 Design - Das Template das 100% im Postfach landet
 
-const logoUrl = 'https://www.contract-ai.de/logo.png';
+// ✅ Dynamic URLs from environment variables
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://www.contract-ai.de';
+const logoUrl = `${FRONTEND_URL}/logo.png`;
 
 function generateEmailTemplate({
   title,
@@ -99,11 +101,11 @@ function generateEmailTemplate({
                 © ${new Date().getFullYear()} Contract AI. Alle Rechte vorbehalten.
               </p>
               <p style="margin: 0; font-size: 12px;">
-                <a href="https://www.contract-ai.de" style="color: #3b82f6; text-decoration: none;">Website</a>
+                <a href="${FRONTEND_URL}" style="color: #3b82f6; text-decoration: none;">Website</a>
                 <span style="color: #cbd5e1; margin: 0 10px;">|</span>
-                <a href="https://www.contract-ai.de/datenschutz" style="color: #64748b; text-decoration: none;">Datenschutz</a>
+                <a href="${FRONTEND_URL}/datenschutz" style="color: #64748b; text-decoration: none;">Datenschutz</a>
                 <span style="color: #cbd5e1; margin: 0 10px;">|</span>
-                <a href="https://www.contract-ai.de/impressum" style="color: #64748b; text-decoration: none;">Impressum</a>
+                <a href="${FRONTEND_URL}/impressum" style="color: #64748b; text-decoration: none;">Impressum</a>
                 ${unsubscribeUrl ? `<span style="color: #cbd5e1; margin: 0 10px;">|</span>
                 <a href="${unsubscribeUrl}" style="color: #64748b; text-decoration: none;">Benachrichtigungen abmelden</a>` : ''}
               </p>

@@ -3,7 +3,24 @@
 
 const { generateEmailTemplate } = require('../utils/emailTemplate');
 
-const logoUrl = 'https://www.contract-ai.de/logo.png';
+// ✅ Dynamic URLs from environment variables
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://www.contract-ai.de';
+const logoUrl = `${FRONTEND_URL}/logo.png`;
+
+/**
+ * Escape HTML special characters to prevent XSS attacks
+ * @param {string} str - String to escape
+ * @returns {string} Escaped string safe for HTML insertion
+ */
+function escapeHtml(str) {
+  if (!str || typeof str !== 'string') return str || '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 /**
  * Generate HTML email for signature invitation
@@ -73,22 +90,22 @@ function generateSignatureInvitationHTML(data) {
 
   const body = `
     <p style="margin: 0 0 20px 0; text-align: center;">
-      <strong>${ownerEmail}</strong> hat Ihnen ein Dokument zur Unterschrift geschickt.
+      <strong>${escapeHtml(ownerEmail)}</strong> hat Ihnen ein Dokument zur Unterschrift geschickt.
     </p>
 
     <!-- Document Card -->
     <div style="background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 20px; margin: 25px 0;">
       <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">
-        ${envelope.title}
+        ${escapeHtml(envelope.title)}
       </p>
       <p style="margin: 0; font-size: 14px; color: #666666;">
-        Absender: ${ownerEmail}
+        Absender: ${escapeHtml(ownerEmail)}
       </p>
       ${envelope.message ? `
         <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e9ecef;">
           <p style="margin: 0; font-size: 14px; color: #555555;">
             <strong>Nachricht:</strong><br>
-            ${envelope.message}
+            ${escapeHtml(envelope.message)}
           </p>
         </div>
       ` : ''}
@@ -113,14 +130,14 @@ function generateSignatureInvitationHTML(data) {
       <p style="margin: 0; font-size: 13px; color: #8a6d00; line-height: 1.6;">
         • Link gültig bis: <strong>${formattedExpiryDate}</strong><br>
         • Leiten Sie diesen Link nicht weiter<br>
-        • Bei Fragen: ${ownerEmail}
+        • Bei Fragen: ${escapeHtml(ownerEmail)}
       </p>
     </div>
   `;
 
   return generateEmailTemplate({
     title: `Signaturanfrage`,
-    preheader: `${ownerEmail} bittet Sie, "${envelope.title}" zu unterschreiben`,
+    preheader: `${escapeHtml(ownerEmail)} bittet Sie, "${escapeHtml(envelope.title)}" zu unterschreiben`,
     body: body,
     cta: {
       url: signUrl,
@@ -152,8 +169,8 @@ function generateCompletionNotificationHTML(data) {
       <div style="display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0;">
         <span style="color: #22c55e; margin-right: 10px;">•</span>
         <span style="flex: 1;">
-          <strong>${s.name}</strong><br>
-          <span style="font-size: 13px; color: #666666;">${s.email} • ${signedDate}</span>
+          <strong>${escapeHtml(s.name)}</strong><br>
+          <span style="font-size: 13px; color: #666666;">${escapeHtml(s.email)} • ${signedDate}</span>
         </span>
       </div>
     `;
@@ -182,7 +199,7 @@ function generateCompletionNotificationHTML(data) {
     <!-- Document Card -->
     <div style="background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 20px; margin: 25px 0;">
       <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">
-        ${envelope.title}
+        ${escapeHtml(envelope.title)}
       </p>
       <p style="margin: 0; font-size: 14px; color: #666666;">
         Abgeschlossen am: ${completedDate}
@@ -208,7 +225,7 @@ function generateCompletionNotificationHTML(data) {
 
   return generateEmailTemplate({
     title: `Dokument vollständig signiert`,
-    preheader: `"${envelope.title}" wurde von allen Parteien unterschrieben`,
+    preheader: `"${escapeHtml(envelope.title)}" wurde von allen Parteien unterschrieben`,
     body: body,
     cta: {
       url: downloadLink,
@@ -315,9 +332,9 @@ Contract AI Signaturservice
 Diese E-Mail wurde automatisch generiert.
 Bitte antworten Sie nicht auf diese E-Mail.
 
-Website: ${process.env.FRONTEND_URL || 'http://localhost:5173'}
-Datenschutz: ${process.env.FRONTEND_URL || 'http://localhost:5173'}/datenschutz
-Impressum: ${process.env.FRONTEND_URL || 'http://localhost:5173'}/impressum
+Website: ${FRONTEND_URL}
+Datenschutz: ${FRONTEND_URL}/datenschutz
+Impressum: ${FRONTEND_URL}/impressum
   `.trim();
 }
 
@@ -378,9 +395,9 @@ Contract AI Signaturservice
 ---
 Diese E-Mail wurde automatisch generiert.
 
-Website: https://www.contract-ai.de
-Datenschutz: https://www.contract-ai.de/datenschutz
-Impressum: https://www.contract-ai.de/impressum
+Website: ${FRONTEND_URL}
+Datenschutz: ${FRONTEND_URL}/datenschutz
+Impressum: ${FRONTEND_URL}/impressum
   `.trim();
 }
 
@@ -420,10 +437,10 @@ function generateVoidNotificationHTML(data) {
     <!-- Document Card -->
     <div style="background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 20px; margin: 25px 0;">
       <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">
-        ${envelope.title}
+        ${escapeHtml(envelope.title)}
       </p>
       <p style="margin: 0; font-size: 14px; color: #666666;">
-        Absender: ${ownerEmail}
+        Absender: ${escapeHtml(ownerEmail)}
       </p>
       <p style="margin: 8px 0 0 0; font-size: 14px; color: #666666;">
         Storniert am: ${formattedDate}
@@ -437,7 +454,7 @@ function generateVoidNotificationHTML(data) {
         Grund der Stornierung:
       </p>
       <p style="margin: 0; padding: 12px 16px; background-color: #fef3c7; border-radius: 8px; font-size: 14px; color: #92400e;">
-        ${voidReason}
+        ${escapeHtml(voidReason)}
       </p>
     </div>
     ` : ''}
@@ -446,14 +463,14 @@ function generateVoidNotificationHTML(data) {
     <div style="background-color: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin: 25px 0;">
       <p style="margin: 0; font-size: 13px; color: #6b7280; line-height: 1.6;">
         Der ursprüngliche Signatur-Link ist nicht mehr gültig.<br>
-        Falls Sie Fragen haben, wenden Sie sich bitte an: ${ownerEmail}
+        Falls Sie Fragen haben, wenden Sie sich bitte an: ${escapeHtml(ownerEmail)}
       </p>
     </div>
   `;
 
   return generateEmailTemplate({
     title: `Signaturanfrage storniert`,
-    preheader: `Die Signaturanfrage für "${envelope.title}" wurde storniert`,
+    preheader: `Die Signaturanfrage für "${escapeHtml(envelope.title)}" wurde storniert`,
     body: body
   });
 }
@@ -505,9 +522,9 @@ Contract AI Signaturservice
 Diese E-Mail wurde automatisch generiert.
 Bitte antworten Sie nicht auf diese E-Mail.
 
-Website: https://www.contract-ai.de
-Datenschutz: https://www.contract-ai.de/datenschutz
-Impressum: https://www.contract-ai.de/impressum
+Website: ${FRONTEND_URL}
+Datenschutz: ${FRONTEND_URL}/datenschutz
+Impressum: ${FRONTEND_URL}/impressum
   `.trim();
 }
 
@@ -538,7 +555,7 @@ function generateDeclineNotificationHTML(data) {
 
   const body = `
     <p style="margin: 0 0 20px 0; text-align: center;">
-      <strong>${signer.name}</strong> (${signer.email}) hat die Signaturanfrage abgelehnt.
+      <strong>${escapeHtml(signer.name)}</strong> (${escapeHtml(signer.email)}) hat die Signaturanfrage abgelehnt.
     </p>
 
     <!-- Decline Badge -->
@@ -551,7 +568,7 @@ function generateDeclineNotificationHTML(data) {
     <!-- Document Card -->
     <div style="background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 20px; margin: 25px 0;">
       <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">
-        ${envelope.title}
+        ${escapeHtml(envelope.title)}
       </p>
       <p style="margin: 0; font-size: 14px; color: #666666;">
         Abgelehnt am: ${formattedDate}
@@ -564,7 +581,7 @@ function generateDeclineNotificationHTML(data) {
         Grund der Ablehnung:
       </p>
       <p style="margin: 0; padding: 12px 16px; background-color: #fef3c7; border-radius: 8px; font-size: 14px; color: #92400e;">
-        ${declineReason || 'Kein Grund angegeben'}
+        ${escapeHtml(declineReason) || 'Kein Grund angegeben'}
       </p>
     </div>
 
@@ -575,16 +592,16 @@ function generateDeclineNotificationHTML(data) {
       </p>
       <div style="background-color: #f8f9fa; border-radius: 8px; padding: 12px;">
         <p style="margin: 0 0 8px 0; font-size: 14px; color: #dc2626;">
-          <strong>${signer.name}</strong> - Abgelehnt
+          <strong>${escapeHtml(signer.name)}</strong> - Abgelehnt
         </p>
         ${signedSigners.map(s => `
           <p style="margin: 0 0 8px 0; font-size: 14px; color: #16a34a;">
-            <strong>${s.name}</strong> - Unterschrieben
+            <strong>${escapeHtml(s.name)}</strong> - Unterschrieben
           </p>
         `).join('')}
         ${pendingSigners.map(s => `
           <p style="margin: 0 0 8px 0; font-size: 14px; color: #6b7280;">
-            <strong>${s.name}</strong> - Ausstehend
+            <strong>${escapeHtml(s.name)}</strong> - Ausstehend
           </p>
         `).join('')}
       </div>
@@ -604,10 +621,10 @@ function generateDeclineNotificationHTML(data) {
 
   return generateEmailTemplate({
     title: `Signaturanfrage abgelehnt`,
-    preheader: `${signer.name} hat "${envelope.title}" abgelehnt`,
+    preheader: `${escapeHtml(signer.name)} hat "${escapeHtml(envelope.title)}" abgelehnt`,
     body: body,
     cta: {
-      url: `${process.env.FRONTEND_URL || 'https://www.contract-ai.de'}/envelopes`,
+      url: `${FRONTEND_URL}/envelopes`,
       text: 'Zur Übersicht →'
     }
   });
@@ -667,7 +684,7 @@ WAS BEDEUTET DAS?
 Der Signaturprozess wurde durch die Ablehnung gestoppt.
 Sie können das Dokument stornieren oder den Unterzeichner kontaktieren.
 
-Zur Übersicht: ${process.env.FRONTEND_URL || 'https://www.contract-ai.de'}/envelopes
+Zur Übersicht: ${FRONTEND_URL}/envelopes
 
 ═══════════════════════════════════════════════════
 
@@ -678,9 +695,9 @@ Contract AI Signaturservice
 Diese E-Mail wurde automatisch generiert.
 Bitte antworten Sie nicht auf diese E-Mail.
 
-Website: https://www.contract-ai.de
-Datenschutz: https://www.contract-ai.de/datenschutz
-Impressum: https://www.contract-ai.de/impressum
+Website: ${FRONTEND_URL}
+Datenschutz: ${FRONTEND_URL}/datenschutz
+Impressum: ${FRONTEND_URL}/impressum
   `.trim();
 }
 
@@ -752,7 +769,7 @@ function generateSignatureReminderHTML(data) {
     </div>
 
     <p style="margin: 0 0 20px 0; text-align: center;">
-      Sie haben noch eine ausstehende Signaturanfrage von <strong>${ownerEmail}</strong>.
+      Sie haben noch eine ausstehende Signaturanfrage von <strong>${escapeHtml(ownerEmail)}</strong>.
     </p>
 
     <!-- Urgency Banner -->
@@ -765,10 +782,10 @@ function generateSignatureReminderHTML(data) {
     <!-- Document Card -->
     <div style="background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 20px; margin: 25px 0;">
       <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">
-        ${envelope.title}
+        ${escapeHtml(envelope.title)}
       </p>
       <p style="margin: 0 0 12px 0; font-size: 14px; color: #666666;">
-        Absender: ${ownerEmail}
+        Absender: ${escapeHtml(ownerEmail)}
       </p>
       <div style="padding-top: 12px; border-top: 1px solid #e9ecef;">
         <p style="margin: 0 0 8px 0; font-size: 13px; color: #666666; font-weight: 600;">Ausstehende Felder:</p>
@@ -780,14 +797,14 @@ function generateSignatureReminderHTML(data) {
     <div style="background-color: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin: 25px 0;">
       <p style="margin: 0; font-size: 13px; color: #6b7280; line-height: 1.6;">
         Link gültig bis: <strong>${formattedExpiryDate}</strong><br>
-        Bei Fragen wenden Sie sich an: ${ownerEmail}
+        Bei Fragen wenden Sie sich an: ${escapeHtml(ownerEmail)}
       </p>
     </div>
   `;
 
   return generateEmailTemplate({
     title: `Erinnerung: Signatur ausstehend`,
-    preheader: `Bitte unterschreiben Sie "${envelope.title}" - ${urgencyText}`,
+    preheader: `Bitte unterschreiben Sie "${escapeHtml(envelope.title)}" - ${urgencyText}`,
     body: body,
     cta: {
       url: signUrl,
@@ -879,9 +896,9 @@ Contract AI Signaturservice
 ---
 Diese E-Mail wurde automatisch generiert.
 
-Website: https://www.contract-ai.de
-Datenschutz: https://www.contract-ai.de/datenschutz
-Impressum: https://www.contract-ai.de/impressum
+Website: ${FRONTEND_URL}
+Datenschutz: ${FRONTEND_URL}/datenschutz
+Impressum: ${FRONTEND_URL}/impressum
   `.trim();
 }
 

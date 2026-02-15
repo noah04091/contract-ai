@@ -161,34 +161,49 @@ export default function Envelopes() {
 
   // 🏢 Load Company Profile for Enterprise Branding
   useEffect(() => {
-    loadCompanyProfile().then(setCompanyProfile);
+    let isMounted = true;
+    loadCompanyProfile().then(profile => {
+      if (isMounted) setCompanyProfile(profile);
+    });
+    return () => { isMounted = false; };
   }, []);
 
   // 🔒 Fetch user plan for premium access check
   useEffect(() => {
+    let isMounted = true;
+    const abortController = new AbortController();
+
     const fetchUserPlan = async () => {
       try {
         const token = localStorage.getItem('token');
         if (!token) {
-          setPlanLoading(false);
+          if (isMounted) setPlanLoading(false);
           return;
         }
         const response = await fetch('/api/auth/me', {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
+          signal: abortController.signal
         });
-        if (response.ok) {
+        if (response.ok && isMounted) {
           const data = await response.json();
           // API gibt { user: { subscriptionPlan: ... } } zurück
           const user = data.user || data;
           setUserPlan(user.subscriptionPlan || user.plan || 'free');
         }
       } catch (err) {
-        console.error('Error fetching user plan:', err);
+        if (err instanceof Error && err.name !== 'AbortError') {
+          console.error('Error fetching user plan:', err);
+        }
       } finally {
-        setPlanLoading(false);
+        if (isMounted) setPlanLoading(false);
       }
     };
     fetchUserPlan();
+
+    return () => {
+      isMounted = false;
+      abortController.abort();
+    };
   }, []);
 
   // Helper: Check access and show upgrade modal if needed
@@ -210,11 +225,14 @@ export default function Envelopes() {
   }, [searchQuery]);
 
   // Load envelopes from API (triggered by debounced search, not direct input)
+  // ✅ Memory leak fix: AbortController ensures fetch is cancelled on cleanup
   useEffect(() => {
-    loadEnvelopes(true, 0);
+    const abortController = new AbortController();
+    loadEnvelopes(true, 0, abortController.signal);
+    return () => abortController.abort();
   }, [activeFilter, debouncedSearchQuery, sortBy, statusFilter]);
 
-  const loadEnvelopes = useCallback(async (isInitial: boolean = false, newOffset: number = 0) => {
+  const loadEnvelopes = useCallback(async (isInitial: boolean = false, newOffset: number = 0, signal?: AbortSignal) => {
     try {
       // Only show full loading spinner on very first load (no envelopes yet)
       if (isInitial && envelopes.length === 0) {
@@ -258,7 +276,8 @@ export default function Envelopes() {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json"
         },
-        credentials: "include"
+        credentials: "include",
+        signal // ✅ Pass AbortSignal to enable request cancellation
       });
 
       const data = await response.json();
@@ -314,6 +333,12 @@ export default function Envelopes() {
         }
       }
     } catch (err) {
+      // ✅ Memory leak fix: Don't update state if request was aborted (component unmounted)
+      if (err instanceof Error && err.name === 'AbortError') {
+        console.log("ℹ️ Envelope fetch aborted (component unmounted or new request)");
+        return; // Don't update state or set loading to false
+      }
+
       console.error("❌ Error loading envelopes:", err);
       const errorMessage = err instanceof Error ? err.message : "Unbekannter Fehler";
       // ✅ PREMIUM_REQUIRED ist kein Fehler - wird von UnifiedPremiumNotice behandelt
@@ -1227,6 +1252,27 @@ export default function Envelopes() {
 
     return () => clearTimeout(timeoutId);
   }, [internalNote, selectedEnvelope]);
+
+  // ✅ Escape key handler for all modals (accessibility improvement)
+  useEffect(() => {
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        // Close modals in order of priority (topmost first)
+        if (confirmDialog?.isOpen) {
+          setConfirmDialog({ ...confirmDialog, isOpen: false });
+        } else if (showQRCode) {
+          setShowQRCode(false);
+        } else if (showUpgradeModal) {
+          setShowUpgradeModal(false);
+        } else if (selectedEnvelope) {
+          setSelectedEnvelope(null);
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleEscapeKey);
+    return () => document.removeEventListener('keydown', handleEscapeKey);
+  }, [confirmDialog, showQRCode, showUpgradeModal, selectedEnvelope]);
 
   // Save note to backend
   const handleSaveNote = async () => {

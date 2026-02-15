@@ -99,6 +99,48 @@ function normalizedToPdfCoords(nx, ny, nwidth, nheight, pageWidth, pageHeight) {
 }
 
 /**
+ * ✅ Validiert Koordinaten gegen Seitengrenzen
+ * Gibt validierte/geclampte Koordinaten zurück oder null wenn ungültig
+ */
+function validateAndClampCoords(coords, pageWidth, pageHeight, fieldId) {
+  // Prüfe auf ungültige Werte (NaN, Infinity, null, undefined)
+  if (!coords || !Number.isFinite(coords.x) || !Number.isFinite(coords.y) ||
+      !Number.isFinite(coords.width) || !Number.isFinite(coords.height)) {
+    console.error(`❌ Invalid coordinates for field ${fieldId}:`, coords);
+    return null;
+  }
+
+  // Prüfe auf negative Dimensionen
+  if (coords.width <= 0 || coords.height <= 0) {
+    console.error(`❌ Invalid dimensions for field ${fieldId}: ${coords.width}x${coords.height}`);
+    return null;
+  }
+
+  // Prüfe ob Feld komplett außerhalb der Seite liegt
+  if (coords.x >= pageWidth || coords.y >= pageHeight ||
+      coords.x + coords.width <= 0 || coords.y + coords.height <= 0) {
+    console.warn(`⚠️ Field ${fieldId} is completely outside page bounds, skipping`);
+    return null;
+  }
+
+  // Clampe Koordinaten auf Seitengrenzen (mit 1pt Margin für Sicherheit)
+  const margin = 1;
+  const clampedCoords = {
+    x: Math.max(margin, Math.min(coords.x, pageWidth - coords.width - margin)),
+    y: Math.max(margin, Math.min(coords.y, pageHeight - coords.height - margin)),
+    width: Math.min(coords.width, pageWidth - margin * 2),
+    height: Math.min(coords.height, pageHeight - margin * 2)
+  };
+
+  // Warnung wenn Koordinaten angepasst wurden
+  if (clampedCoords.x !== coords.x || clampedCoords.y !== coords.y) {
+    console.warn(`⚠️ Field ${fieldId} coordinates clamped from (${Math.round(coords.x)}, ${Math.round(coords.y)}) to (${Math.round(clampedCoords.x)}, ${Math.round(clampedCoords.y)})`);
+  }
+
+  return clampedCoords;
+}
+
+/**
  * Rendert ALLE ausgefüllten Felder auf ihren platzierten Positionen
  */
 async function renderSignatureFields(pdfDoc, signatureFields) {
@@ -129,10 +171,10 @@ async function renderSignatureFields(pdfDoc, signatureFields) {
       const { width: pageWidth, height: pageHeight } = page.getSize();
 
       // Koordinaten bestimmen (verwende normalisierte wenn verfügbar, sonst pixel)
-      let coords;
+      let rawCoords;
       if (field.nx !== undefined && field.ny !== undefined) {
         // ✅ Verwende normalisierte Koordinaten
-        coords = normalizedToPdfCoords(
+        rawCoords = normalizedToPdfCoords(
           field.nx,
           field.ny,
           field.nwidth || 0.15,
@@ -142,7 +184,7 @@ async function renderSignatureFields(pdfDoc, signatureFields) {
         );
       } else if (field.x !== undefined && field.y !== undefined) {
         // 🔄 Fallback: Legacy pixel Koordinaten
-        coords = {
+        rawCoords = {
           x: field.x,
           y: pageHeight - field.y - field.height, // Flip Y-Achse
           width: field.width,
@@ -150,6 +192,13 @@ async function renderSignatureFields(pdfDoc, signatureFields) {
         };
       } else {
         console.warn(`⚠️ Field has no coordinates, skipping`);
+        continue;
+      }
+
+      // ✅ Validiere und clampe Koordinaten auf Seitengrenzen
+      const coords = validateAndClampCoords(rawCoords, pageWidth, pageHeight, field.id);
+      if (!coords) {
+        console.error(`❌ Field ${field.id} has invalid coordinates, skipping rendering`);
         continue;
       }
 
