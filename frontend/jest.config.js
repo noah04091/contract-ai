@@ -9,14 +9,7 @@ export default {
     '**/__tests__/**/*.test.tsx'
   ],
   transform: {
-    '^.+\\.tsx?$': ['ts-jest', {
-      tsconfig: {
-        jsx: 'react-jsx',
-        esModuleInterop: true,
-        allowSyntheticDefaultImports: true
-      },
-      diagnostics: false
-    }]
+    '^.+\\.tsx?$': '<rootDir>/jest-transform.cjs'
   },
   moduleNameMapper: {
     // Handle CSS imports (with CSS modules)
