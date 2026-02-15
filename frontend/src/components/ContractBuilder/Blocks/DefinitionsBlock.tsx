@@ -4,7 +4,7 @@
  * Unterstützt Inline-Editing per Doppelklick
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { BlockContent, useContractBuilderStore } from '../../../stores/contractBuilderStore';
 import { VariableHighlight } from '../Variables/VariableHighlight';
 import { Plus, X } from 'lucide-react';
@@ -40,12 +40,15 @@ export const DefinitionsBlock: React.FC<DefinitionsBlockProps> = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Default definitions if empty
-  const currentDefinitions: Definition[] = definitions.length > 0
-    ? definitions
-    : [
-        { term: 'Vertragsgegenstand', definition: 'bezeichnet die in diesem Vertrag vereinbarten Leistungen.' },
-        { term: 'Vergütung', definition: 'bezeichnet die für die Leistungen zu zahlende Gegenleistung.' },
-      ];
+  const currentDefinitions: Definition[] = useMemo(() =>
+    definitions.length > 0
+      ? definitions
+      : [
+          { term: 'Vertragsgegenstand', definition: 'bezeichnet die in diesem Vertrag vereinbarten Leistungen.' },
+          { term: 'Vergütung', definition: 'bezeichnet die für die Leistungen zu zahlende Gegenleistung.' },
+        ],
+    [definitions]
+  );
 
   useEffect(() => {
     if (editingField) {

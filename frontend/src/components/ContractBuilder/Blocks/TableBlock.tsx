@@ -3,7 +3,7 @@
  * Unterstützt Inline-Editing per Doppelklick
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { BlockContent, useContractBuilderStore } from '../../../stores/contractBuilderStore';
 import { VariableHighlight } from '../Variables/VariableHighlight';
 import styles from './TableBlock.module.css';
@@ -32,13 +32,19 @@ export const TableBlock: React.FC<TableBlockProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Default Tabelle falls leer
-  const tableHeaders = headers && headers.length > 0
-    ? headers
-    : ['Spalte 1', 'Spalte 2', 'Spalte 3'];
+  const tableHeaders = useMemo(() =>
+    headers && headers.length > 0
+      ? headers
+      : ['Spalte 1', 'Spalte 2', 'Spalte 3'],
+    [headers]
+  );
 
-  const tableRows = rows && rows.length > 0
-    ? rows
-    : [['Wert 1', 'Wert 2', 'Wert 3']];
+  const tableRows = useMemo(() =>
+    rows && rows.length > 0
+      ? rows
+      : [['Wert 1', 'Wert 2', 'Wert 3']],
+    [rows]
+  );
 
   useEffect(() => {
     if (editingCell) {

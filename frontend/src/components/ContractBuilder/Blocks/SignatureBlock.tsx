@@ -3,7 +3,7 @@
  * Unterstützt Inline-Editing per Doppelklick
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { BlockContent, useContractBuilderStore } from '../../../stores/contractBuilderStore';
 import { VariableHighlight } from '../Variables/VariableHighlight';
 import { PenTool, Calendar, MapPin, User } from 'lucide-react';
@@ -33,12 +33,15 @@ export const SignatureBlock: React.FC<SignatureBlockProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Default signature fields falls keine definiert
-  const fields = signatureFields && signatureFields.length > 0
-    ? signatureFields
-    : [
-        { partyIndex: 0, label: 'Partei 1', showDate: true, showPlace: true },
-        { partyIndex: 1, label: 'Partei 2', showDate: true, showPlace: true },
-      ];
+  const fields = useMemo(() =>
+    signatureFields && signatureFields.length > 0
+      ? signatureFields
+      : [
+          { partyIndex: 0, label: 'Partei 1', showDate: true, showPlace: true },
+          { partyIndex: 1, label: 'Partei 2', showDate: true, showPlace: true },
+        ],
+    [signatureFields]
+  );
 
   useEffect(() => {
     if (editingField) {

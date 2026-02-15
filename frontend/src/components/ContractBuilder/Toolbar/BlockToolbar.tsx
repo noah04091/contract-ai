@@ -279,7 +279,7 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({ className }) => {
           <div className={styles.aiModal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.aiModalHeader}>
               <span><Sparkles size={16} /> KI-Klausel generieren</span>
-              <button onClick={() => setShowAiModal(false)}>
+              <button onClick={() => setShowAiModal(false)} aria-label="KI-Generator schließen">
                 <X size={16} />
               </button>
             </div>
@@ -325,7 +325,7 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({ className }) => {
           <div className={styles.libraryModal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.libraryModalHeader}>
               <span><BookOpen size={16} /> Klausel aus Bibliothek einfügen</span>
-              <button onClick={() => setShowLibraryModal(false)}>
+              <button onClick={() => setShowLibraryModal(false)} aria-label="Bibliothek schließen">
                 <X size={16} />
               </button>
             </div>

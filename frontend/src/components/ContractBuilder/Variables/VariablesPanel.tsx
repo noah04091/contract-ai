@@ -62,7 +62,7 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
     setSelectedVariable,
   } = useContractBuilderStore();
 
-  const variables = currentDocument?.content.variables || [];
+  const variables = useMemo(() => currentDocument?.content.variables || [], [currentDocument?.content.variables]);
 
   // State für die zu scrollende Variable (nach Gruppen-Öffnung)
   const [pendingScrollToVariable, setPendingScrollToVariable] = useState<string | null>(null);
@@ -383,7 +383,7 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
         <div className={styles.helpBanner}>
           <div className={styles.helpBannerHeader}>
             <span>So funktionieren Variablen</span>
-            <button onClick={() => setShowHelp(false)}>
+            <button onClick={() => setShowHelp(false)} aria-label="Hilfe schließen">
               <X size={14} />
             </button>
           </div>
@@ -535,7 +535,7 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
               <div className={styles.quickFillForm}>
                 <div className={styles.quickFillHeader}>
                   <span>Schnell-Ausfüllen: {group}</span>
-                  <button onClick={cancelQuickFill} className={styles.quickFillClose}>
+                  <button onClick={cancelQuickFill} className={styles.quickFillClose} aria-label="Schnell-Ausfüllen schließen">
                     <X size={14} />
                   </button>
                 </div>

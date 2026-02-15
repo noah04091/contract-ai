@@ -150,7 +150,7 @@ export const LogoBlock: React.FC<LogoBlockProps> = ({
                     autoFocus
                   />
                   <button onClick={handleUrlSubmit}>OK</button>
-                  <button onClick={() => setShowUrlInput(false)}><X size={14} /></button>
+                  <button onClick={() => setShowUrlInput(false)} aria-label="URL-Eingabe abbrechen"><X size={14} /></button>
                 </div>
               )}
 

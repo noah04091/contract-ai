@@ -39,9 +39,10 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
   // Inline-Editing State
   const [editingVarName, setEditingVarName] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
+  const [validationError, setValidationError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const pendingClickRef = useRef<{varName: string; value: string} | null>(null);
-  const variables = currentDocument?.content.variables || [];
+  const variables = useMemo(() => currentDocument?.content.variables || [], [currentDocument?.content.variables]);
 
   // Variable-Werte als Map für Berechnungen
   const variableValuesMap = useMemo(() => {
@@ -246,7 +247,7 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
         if (variable.type === 'email') {
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           if (!emailRegex.test(trimmedValue)) {
-            alert('Bitte geben Sie eine gültige E-Mail-Adresse ein (z.B. name@beispiel.de)');
+            setValidationError('Ungültige E-Mail-Adresse (z.B. name@beispiel.de)');
             return; // Nicht speichern, Edit bleibt offen
           }
         }
@@ -255,7 +256,7 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
         if (variable.type === 'phone') {
           const digitsOnly = trimmedValue.replace(/[^0-9]/g, '');
           if (digitsOnly.length < 6) {
-            alert('Bitte geben Sie eine gültige Telefonnummer ein (mindestens 6 Ziffern)');
+            setValidationError('Ungültige Telefonnummer (mind. 6 Ziffern)');
             return; // Nicht speichern, Edit bleibt offen
           }
         }
@@ -264,7 +265,7 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
         if (variable.type === 'iban') {
           const ibanClean = trimmedValue.replace(/\s/g, '').toUpperCase();
           if (!/^[A-Z]{2}[0-9A-Z]{15,32}$/.test(ibanClean)) {
-            alert('Bitte geben Sie eine gültige IBAN ein (z.B. DE89370400440532013000)');
+            setValidationError('Ungültige IBAN (z.B. DE89370400440532013000)');
             return; // Nicht speichern, Edit bleibt offen
           }
         }
@@ -297,6 +298,7 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
       // Kein pending Klick - normal schließen
       setEditingVarName(null);
       setEditValue('');
+      setValidationError(null);
     }
   }, [editingVarName, editValue, setSelectedVariable]);
 
@@ -308,6 +310,7 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
     } else if (e.key === 'Escape') {
       setEditingVarName(null);
       setEditValue('');
+      setValidationError(null);
     }
   }, [handleSaveEdit]);
 
@@ -346,18 +349,29 @@ export const VariableHighlight: React.FC<VariableHighlightProps> = ({
     // Inline-Editing Input
     if (isCurrentlyEditing) {
       return (
-        <input
-          key={index}
-          ref={inputRef}
-          type="text"
-          value={editValue}
-          onChange={(e) => setEditValue(e.target.value)}
-          onBlur={handleSaveEdit}
-          onKeyDown={handleKeyDown}
-          className={styles.inlineEdit}
-          placeholder={toReadableLabel(segment.variableName || '')}
-          onClick={(e) => e.stopPropagation()}
-        />
+        <span key={index} style={{ position: 'relative', display: 'inline-block' }}>
+          <input
+            ref={inputRef}
+            type="text"
+            value={editValue}
+            onChange={(e) => { setEditValue(e.target.value); setValidationError(null); }}
+            onBlur={handleSaveEdit}
+            onKeyDown={handleKeyDown}
+            className={styles.inlineEdit}
+            placeholder={toReadableLabel(segment.variableName || '')}
+            onClick={(e) => e.stopPropagation()}
+            style={validationError ? { borderColor: '#dc2626', boxShadow: '0 0 0 2px rgba(220,38,38,0.2)' } : undefined}
+          />
+          {validationError && (
+            <span style={{
+              position: 'absolute', top: '100%', left: 0, zIndex: 10,
+              background: '#dc2626', color: 'white', fontSize: '0.75rem',
+              padding: '2px 8px', borderRadius: '4px', whiteSpace: 'nowrap', marginTop: '2px',
+            }}>
+              {validationError}
+            </span>
+          )}
+        </span>
       );
     }
 

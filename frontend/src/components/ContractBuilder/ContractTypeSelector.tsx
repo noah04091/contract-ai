@@ -192,7 +192,7 @@ export const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
               <p className={styles.subtitle}>Wählen Sie einen Vertragstyp als Grundlage</p>
             </div>
           </div>
-          <button className={styles.closeButton} onClick={onClose}>
+          <button className={styles.closeButton} onClick={onClose} aria-label="Vertragstyp-Auswahl schließen">
             <X size={20} />
           </button>
         </div>
@@ -236,7 +236,7 @@ export const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
           <div className={styles.draftsSection}>
             <div className={styles.draftsHeader}>
               <h3>Gespeicherte Entwürfe</h3>
-              <button className={styles.closeDrafts} onClick={() => setShowDrafts(false)}>
+              <button className={styles.closeDrafts} onClick={() => setShowDrafts(false)} aria-label="Entwürfe schließen">
                 <X size={16} />
               </button>
             </div>
@@ -327,7 +327,7 @@ export const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
           <div className={styles.draftsSection}>
             <div className={styles.draftsHeader}>
               <h3>Meine Vorlagen</h3>
-              <button className={styles.closeDrafts} onClick={() => setShowUserTemplates(false)}>
+              <button className={styles.closeDrafts} onClick={() => setShowUserTemplates(false)} aria-label="Vorlagen schließen">
                 <X size={16} />
               </button>
             </div>

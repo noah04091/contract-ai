@@ -134,7 +134,7 @@ export const BlockNotes: React.FC<BlockNotesProps> = ({
                   }}
                   autoFocus
                 />
-                <button onClick={handleSaveEdit}>
+                <button onClick={handleSaveEdit} aria-label="Notiz speichern">
                   <Check size={12} />
                 </button>
               </div>

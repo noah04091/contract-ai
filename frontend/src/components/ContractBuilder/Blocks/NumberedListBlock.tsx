@@ -3,7 +3,7 @@
  * Unterstützt Inline-Editing per Doppelklick
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { BlockContent, useContractBuilderStore } from '../../../stores/contractBuilderStore';
 import { VariableHighlight } from '../Variables/VariableHighlight';
 import styles from './NumberedListBlock.module.css';
@@ -32,9 +32,12 @@ export const NumberedListBlock: React.FC<NumberedListBlockProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Default items falls keine definiert
-  const listItems = items && items.length > 0
-    ? items
-    : ['Listenpunkt 1', 'Listenpunkt 2', 'Listenpunkt 3'];
+  const listItems = useMemo(() =>
+    items && items.length > 0
+      ? items
+      : ['Listenpunkt 1', 'Listenpunkt 2', 'Listenpunkt 3'],
+    [items]
+  );
 
   // Nummerierungsstil
   const getListStyleType = () => {

@@ -90,7 +90,7 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
     }
   }, []);
 
-  const blocks = currentDocument?.content.blocks || [];
+  const blocks = useMemo(() => currentDocument?.content.blocks || [], [currentDocument?.content.blocks]);
   const design = currentDocument?.design;
 
   // Blöcke nach Seiten gruppieren

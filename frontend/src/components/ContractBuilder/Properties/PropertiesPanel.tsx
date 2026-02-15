@@ -620,6 +620,7 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
   onOptimize,
 }) => {
   const content = block.content || {};
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   switch (block.type) {
     case 'header': {
@@ -642,9 +643,11 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
 
         // Max 2MB
         if (file.size > 2 * 1024 * 1024) {
-          alert('Logo darf maximal 2MB groß sein');
+          setUploadError('Logo darf maximal 2MB groß sein');
+          setTimeout(() => setUploadError(null), 4000);
           return;
         }
+        setUploadError(null);
 
         const reader = new FileReader();
         reader.onload = (event) => {
@@ -706,6 +709,9 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
                   <p className={styles.fieldHint}>
                     PNG, JPG oder SVG (max. 2MB)
                   </p>
+                  {uploadError && (
+                    <p style={{ color: '#dc2626', fontSize: '0.75rem', margin: '4px 0 0' }}>{uploadError}</p>
+                  )}
                 </>
               )}
             </div>

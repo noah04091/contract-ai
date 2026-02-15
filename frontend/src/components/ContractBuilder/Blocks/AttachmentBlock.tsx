@@ -515,6 +515,7 @@ export const AttachmentBlock: React.FC<AttachmentBlockProps> = ({
           <button
             className={styles.dismissError}
             onClick={() => setUploadError(null)}
+            aria-label="Fehler schließen"
           >
             <X size={14} />
           </button>
