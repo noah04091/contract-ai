@@ -55,8 +55,10 @@ interface Signer {
   name: string;
   role: string;
   order: number;
-  status: "PENDING" | "SIGNED";
+  status: "PENDING" | "SIGNED" | "DECLINED";
   signedAt?: string;
+  declinedAt?: string;
+  declineReason?: string;
   token: string;
   tokenExpires: string;
 }
@@ -76,7 +78,7 @@ interface Envelope {
   message: string;
   s3Key?: string;
   s3KeySealed?: string;
-  status: "DRAFT" | "SENT" | "SIGNED" | "COMPLETED" | "EXPIRED" | "VOIDED";
+  status: "DRAFT" | "SENT" | "SIGNED" | "COMPLETED" | "EXPIRED" | "VOIDED" | "DECLINED" | "AWAITING_SIGNER_1" | "AWAITING_SIGNER_2" | "AWAITING_SIGNER_3";
   signers: Signer[];
   createdAt: string;
   updatedAt: string;
@@ -603,10 +605,14 @@ export default function Envelopes() {
     switch (status) {
       case "DRAFT": return styles.statusDraft;
       case "SENT": return styles.statusSent;
+      case "AWAITING_SIGNER_1":
+      case "AWAITING_SIGNER_2":
+      case "AWAITING_SIGNER_3": return styles.statusSent; // Same as SENT
       case "SIGNED": return styles.statusSigned;
       case "COMPLETED": return styles.statusCompleted;
       case "EXPIRED": return styles.statusExpired;
       case "VOIDED": return styles.statusVoided;
+      case "DECLINED": return styles.statusDeclined || styles.statusVoided; // Fallback to voided style
       default: return styles.statusDefault;
     }
   };
@@ -616,10 +622,14 @@ export default function Envelopes() {
     switch (status) {
       case "DRAFT": return "Entwurf";
       case "SENT": return "Gesendet";
+      case "AWAITING_SIGNER_1": return "Warte auf Unterzeichner 1";
+      case "AWAITING_SIGNER_2": return "Warte auf Unterzeichner 2";
+      case "AWAITING_SIGNER_3": return "Warte auf Unterzeichner 3";
       case "SIGNED": return "Signiert";
       case "COMPLETED": return "Abgeschlossen";
       case "EXPIRED": return "Abgelaufen";
       case "VOIDED": return "Storniert";
+      case "DECLINED": return "Abgelehnt";
       default: return status;
     }
   };
@@ -692,7 +702,16 @@ export default function Envelopes() {
           description: `${signer.email} hat das Dokument unterschrieben`,
           time: signer.signedAt
         });
-      } else if (envelope.status === "SENT") {
+      } else if (signer.status === "DECLINED" && signer.declinedAt) {
+        events.push({
+          type: "declined",
+          title: `Abgelehnt von ${signer.name}`,
+          description: signer.declineReason
+            ? `${signer.email} hat abgelehnt: "${signer.declineReason}"`
+            : `${signer.email} hat die Signaturanfrage abgelehnt`,
+          time: signer.declinedAt
+        });
+      } else if (envelope.status === "SENT" || envelope.status?.startsWith("AWAITING_")) {
         events.push({
           type: "pending",
           title: `Warte auf ${signer.name}`,
@@ -728,6 +747,19 @@ export default function Envelopes() {
         type: "completed",
         title: "Storniert",
         description: "Die Signaturanfrage wurde storniert",
+        time: envelope.updatedAt
+      });
+    }
+
+    // Envelope declined
+    if (envelope.status === "DECLINED") {
+      const declinedSigner = envelope.signers.find(s => s.status === "DECLINED");
+      events.push({
+        type: "declined",
+        title: "Signaturanfrage abgelehnt",
+        description: declinedSigner
+          ? `${declinedSigner.name} (${declinedSigner.email}) hat die Signatur abgelehnt${declinedSigner.declineReason ? `: "${declinedSigner.declineReason}"` : ""}`
+          : "Ein Unterzeichner hat die Signaturanfrage abgelehnt",
         time: envelope.updatedAt
       });
     }
@@ -1021,10 +1053,19 @@ export default function Envelopes() {
       yPosition += 6;
       doc.text(`   Rolle: ${signer.role}`, 20, yPosition);
       yPosition += 6;
-      doc.text(`   Status: ${signer.status === "SIGNED" ? "✓ Signiert" : "○ Ausstehend"}`, 20, yPosition);
+      const statusText = signer.status === "SIGNED" ? "✓ Signiert" : signer.status === "DECLINED" ? "✗ Abgelehnt" : "○ Ausstehend";
+      doc.text(`   Status: ${statusText}`, 20, yPosition);
       yPosition += 6;
       if (signer.signedAt) {
         doc.text(`   Signiert am: ${formatDateTime(signer.signedAt)}`, 20, yPosition);
+        yPosition += 6;
+      }
+      if (signer.status === "DECLINED" && signer.declinedAt) {
+        doc.text(`   Abgelehnt am: ${formatDateTime(signer.declinedAt)}`, 20, yPosition);
+        yPosition += 6;
+      }
+      if (signer.status === "DECLINED" && signer.declineReason) {
+        doc.text(`   Ablehnungsgrund: ${signer.declineReason}`, 20, yPosition);
         yPosition += 6;
       }
       yPosition += 5;
@@ -2121,8 +2162,8 @@ export default function Envelopes() {
                                   <span className={styles.signerName}>
                                     {signer.name}
                                   </span>
-                                  <span className={`${styles.signerStatus} ${signer.status === "SIGNED" ? styles.signerStatusSigned : ""}`}>
-                                    {signer.status === "SIGNED" ? "✓ Signiert" : "○ Ausstehend"}
+                                  <span className={`${styles.signerStatus} ${signer.status === "SIGNED" ? styles.signerStatusSigned : signer.status === "DECLINED" ? styles.signerStatusDeclined : ""}`}>
+                                    {signer.status === "SIGNED" ? "✓ Signiert" : signer.status === "DECLINED" ? "✗ Abgelehnt" : "○ Ausstehend"}
                                   </span>
                                 </div>
                               ))}
@@ -2543,7 +2584,7 @@ export default function Envelopes() {
                       <div
                         key={idx}
                         className={`${styles.signerDetailCard} ${
-                          signer.status === "SIGNED" ? styles.signed : styles.pending
+                          signer.status === "SIGNED" ? styles.signed : signer.status === "DECLINED" ? styles.declined : styles.pending
                         }`}
                       >
                         <div className={styles.signerHeader}>
@@ -2555,6 +2596,8 @@ export default function Envelopes() {
                             className={`${styles.signerBadge} ${
                               signer.status === "SIGNED"
                                 ? styles.signed
+                                : signer.status === "DECLINED"
+                                ? styles.declined
                                 : styles.pending
                             }`}
                           >
@@ -2562,6 +2605,11 @@ export default function Envelopes() {
                               <>
                                 <CheckCircle size={14} />
                                 Signiert
+                              </>
+                            ) : signer.status === "DECLINED" ? (
+                              <>
+                                <XCircle size={14} />
+                                Abgelehnt
                               </>
                             ) : (
                               <>
@@ -2585,6 +2633,22 @@ export default function Envelopes() {
                               <CheckCircle size={14} />
                               <span>
                                 Signiert am: {formatDateTime(signer.signedAt)}
+                              </span>
+                            </div>
+                          )}
+                          {signer.status === "DECLINED" && signer.declinedAt && (
+                            <div className={styles.signerMetaRow}>
+                              <XCircle size={14} />
+                              <span>
+                                Abgelehnt am: {formatDateTime(signer.declinedAt)}
+                              </span>
+                            </div>
+                          )}
+                          {signer.status === "DECLINED" && signer.declineReason && (
+                            <div className={styles.signerMetaRow}>
+                              <AlertCircle size={14} />
+                              <span>
+                                Grund: {signer.declineReason}
                               </span>
                             </div>
                           )}
@@ -2660,6 +2724,8 @@ export default function Envelopes() {
                         className={`${styles.timelineItem} ${
                           event.type === "completed"
                             ? styles.completed
+                            : event.type === "declined"
+                            ? styles.declined
                             : styles.pending
                         }`}
                       >

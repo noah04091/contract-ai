@@ -11,7 +11,7 @@ const sendEmail = require("../services/mailer");
 const { sealPdf } = require("../services/pdfSealing"); // ✉️ PDF-Sealing Service
 const { generateSignedUrl, deleteFiles } = require("../services/fileStorage"); // 🆕 For S3 download links + 🗑️ For deletion
 const { generateEventsForEnvelope, markEnvelopeAsCompleted, deleteEnvelopeEvents } = require("../services/envelopeCalendarEvents"); // 📅 Calendar Integration
-const { generateVoidNotificationHTML, generateVoidNotificationText } = require("../templates/signatureInvitationEmail"); // 📧 Void Notification
+const { generateVoidNotificationHTML, generateVoidNotificationText, generateDeclineNotificationHTML, generateDeclineNotificationText } = require("../templates/signatureInvitationEmail"); // 📧 Void + Decline Notification
 const Envelope = require("../models/Envelope");
 const Contract = require("../models/Contract");
 
@@ -2223,7 +2223,49 @@ router.post("/sign/:token/decline", signatureDeclineLimiter, async (req, res) =>
 
     console.log(`✅ Signature declined by: ${signer.email}`);
 
-    // TODO: Send notification to owner (später in Email-Templates)
+    // 📧 Send decline notification to document owner
+    try {
+      // Get owner email from users collection
+      const owner = await req.db.collection("users").findOne({
+        _id: new ObjectId(envelope.ownerId)
+      });
+
+      if (owner && owner.email) {
+        const declineNotificationData = {
+          signer: {
+            name: signer.name,
+            email: signer.email
+          },
+          envelope: {
+            title: envelope.title,
+            signers: envelope.signers
+          },
+          ownerEmail: owner.email,
+          declineReason: reason || null,
+          declinedAt: now
+        };
+
+        await sendEmail({
+          to: owner.email,
+          subject: `Signatur abgelehnt: ${envelope.title}`,
+          html: generateDeclineNotificationHTML(declineNotificationData),
+          text: generateDeclineNotificationText(declineNotificationData)
+        });
+
+        console.log(`📧 Decline notification sent to owner: ${owner.email}`);
+      }
+    } catch (emailError) {
+      console.error('⚠️ Could not send decline notification email:', emailError.message);
+      // Don't fail the decline operation if email fails
+    }
+
+    // 📅 Delete calendar events since envelope is declined
+    try {
+      await deleteEnvelopeEvents(req.db, envelope._id);
+      console.log(`📅 Calendar events deleted for declined envelope`);
+    } catch (calendarError) {
+      console.error('⚠️ Could not delete calendar events:', calendarError.message);
+    }
 
     res.json({
       success: true,

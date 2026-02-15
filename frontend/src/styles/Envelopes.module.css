@@ -473,6 +473,11 @@
   font-weight: 600;
 }
 
+.signerStatusDeclined {
+  color: #dc2626;
+  font-weight: 600;
+}
+
 .actionsCell {
   display: flex;
   gap: 0.3rem; /* ✅ FIX: Noch kleinere Gap für kompaktere Buttons */
@@ -522,6 +527,12 @@
   background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
   color: #374151;
   text-decoration: line-through;
+}
+
+.statusDeclined {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #dc2626;
+  font-weight: 600;
 }
 
 .statusDefault {
@@ -1912,6 +1923,12 @@
   box-shadow: 0 0 0 4px rgba(209, 213, 219, 0.1);
 }
 
+.timelineItem.declined::before {
+  background: #dc2626;
+  border-color: #dc2626;
+  box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1);
+}
+
 .timelineContent {
   background: #f9fafb;
   border: 1px solid #e5e7eb;
@@ -1971,6 +1988,11 @@
   border-color: #f59e0b;
 }
 
+.signerDetailCard.declined {
+  background: linear-gradient(135deg, #fee2e2 0%, #fef2f2 100%);
+  border-color: #dc2626;
+}
+
 .signerHeader {
   display: flex;
   justify-content: space-between;
@@ -2014,6 +2036,11 @@
 
 .signerBadge.pending {
   background: #f59e0b;
+  color: white;
+}
+
+.signerBadge.declined {
+  background: #dc2626;
   color: white;
 }
 

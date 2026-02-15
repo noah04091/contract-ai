@@ -511,11 +511,186 @@ Impressum: https://www.contract-ai.de/impressum
   `.trim();
 }
 
+/**
+ * Generate HTML email for decline notification (sent to document owner when signer declines)
+ * @param {Object} data - Email data
+ * @param {Object} data.signer - Signer info (name, email)
+ * @param {Object} data.envelope - Envelope info (title)
+ * @param {string} data.ownerEmail - Owner/sender email
+ * @param {string} data.declineReason - Reason for declining (optional)
+ * @param {Date} data.declinedAt - Decline date
+ * @returns {string} HTML email
+ */
+function generateDeclineNotificationHTML(data) {
+  const { signer, envelope, declineReason, declinedAt } = data;
+
+  const formattedDate = new Date(declinedAt).toLocaleString('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  // Count remaining pending signers
+  const pendingSigners = envelope.signers?.filter(s => s.status === 'PENDING') || [];
+  const signedSigners = envelope.signers?.filter(s => s.status === 'SIGNED') || [];
+
+  const body = `
+    <p style="margin: 0 0 20px 0; text-align: center;">
+      <strong>${signer.name}</strong> (${signer.email}) hat die Signaturanfrage abgelehnt.
+    </p>
+
+    <!-- Decline Badge -->
+    <div style="text-align: center; margin: 25px 0;">
+      <span style="display: inline-block; background-color: #fee2e2; color: #dc2626; padding: 8px 20px; border-radius: 20px; font-size: 14px; font-weight: 600;">
+        Abgelehnt
+      </span>
+    </div>
+
+    <!-- Document Card -->
+    <div style="background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 20px; margin: 25px 0;">
+      <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">
+        ${envelope.title}
+      </p>
+      <p style="margin: 0; font-size: 14px; color: #666666;">
+        Abgelehnt am: ${formattedDate}
+      </p>
+    </div>
+
+    <!-- Decline Reason Section -->
+    <div style="margin: 25px 0;">
+      <p style="margin: 0 0 8px 0; font-weight: 600; color: #1a1a1a;">
+        Grund der Ablehnung:
+      </p>
+      <p style="margin: 0; padding: 12px 16px; background-color: #fef3c7; border-radius: 8px; font-size: 14px; color: #92400e;">
+        ${declineReason || 'Kein Grund angegeben'}
+      </p>
+    </div>
+
+    <!-- Signer Info -->
+    <div style="margin: 25px 0;">
+      <p style="margin: 0 0 12px 0; font-weight: 600; color: #1a1a1a;">
+        Unterzeichner-Status:
+      </p>
+      <div style="background-color: #f8f9fa; border-radius: 8px; padding: 12px;">
+        <p style="margin: 0 0 8px 0; font-size: 14px; color: #dc2626;">
+          <strong>${signer.name}</strong> - Abgelehnt
+        </p>
+        ${signedSigners.map(s => `
+          <p style="margin: 0 0 8px 0; font-size: 14px; color: #16a34a;">
+            <strong>${s.name}</strong> - Unterschrieben
+          </p>
+        `).join('')}
+        ${pendingSigners.map(s => `
+          <p style="margin: 0 0 8px 0; font-size: 14px; color: #6b7280;">
+            <strong>${s.name}</strong> - Ausstehend
+          </p>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- Info Box -->
+    <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 16px; margin: 25px 0;">
+      <p style="margin: 0 0 8px 0; font-weight: 600; color: #991b1b; font-size: 14px;">
+        Was bedeutet das?
+      </p>
+      <p style="margin: 0; font-size: 13px; color: #991b1b; line-height: 1.6;">
+        Der Signaturprozess wurde durch die Ablehnung gestoppt.<br>
+        Sie können das Dokument stornieren oder den Unterzeichner kontaktieren.
+      </p>
+    </div>
+  `;
+
+  return generateEmailTemplate({
+    title: `Signaturanfrage abgelehnt`,
+    preheader: `${signer.name} hat "${envelope.title}" abgelehnt`,
+    body: body,
+    cta: {
+      url: `${process.env.FRONTEND_URL || 'https://www.contract-ai.de'}/envelopes`,
+      text: 'Zur Übersicht →'
+    }
+  });
+}
+
+/**
+ * Generate plain text email for decline notification (fallback)
+ */
+function generateDeclineNotificationText(data) {
+  const { signer, envelope, declineReason, declinedAt } = data;
+
+  const formattedDate = new Date(declinedAt).toLocaleString('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  // Count remaining pending signers
+  const pendingSigners = envelope.signers?.filter(s => s.status === 'PENDING') || [];
+  const signedSigners = envelope.signers?.filter(s => s.status === 'SIGNED') || [];
+
+  let signerStatusList = `  - ${signer.name} (${signer.email}) - ABGELEHNT\n`;
+  signedSigners.forEach(s => {
+    signerStatusList += `  - ${s.name} (${s.email}) - Unterschrieben\n`;
+  });
+  pendingSigners.forEach(s => {
+    signerStatusList += `  - ${s.name} (${s.email}) - Ausstehend\n`;
+  });
+
+  return `
+SIGNATURANFRAGE ABGELEHNT
+
+${signer.name} (${signer.email}) hat die Signaturanfrage abgelehnt.
+
+═══════════════════════════════════════════════════
+
+DOKUMENT: ${envelope.title}
+ABGELEHNT AM: ${formattedDate}
+
+═══════════════════════════════════════════════════
+
+GRUND DER ABLEHNUNG:
+
+${declineReason || 'Kein Grund angegeben'}
+
+═══════════════════════════════════════════════════
+
+UNTERZEICHNER-STATUS:
+
+${signerStatusList}
+═══════════════════════════════════════════════════
+
+WAS BEDEUTET DAS?
+
+Der Signaturprozess wurde durch die Ablehnung gestoppt.
+Sie können das Dokument stornieren oder den Unterzeichner kontaktieren.
+
+Zur Übersicht: ${process.env.FRONTEND_URL || 'https://www.contract-ai.de'}/envelopes
+
+═══════════════════════════════════════════════════
+
+Mit freundlichen Grüßen
+Contract AI Signaturservice
+
+---
+Diese E-Mail wurde automatisch generiert.
+Bitte antworten Sie nicht auf diese E-Mail.
+
+Website: https://www.contract-ai.de
+Datenschutz: https://www.contract-ai.de/datenschutz
+Impressum: https://www.contract-ai.de/impressum
+  `.trim();
+}
+
 module.exports = {
   generateSignatureInvitationHTML,
   generateSignatureInvitationText,
   generateCompletionNotificationHTML,
   generateCompletionNotificationText,
   generateVoidNotificationHTML,
-  generateVoidNotificationText
+  generateVoidNotificationText,
+  generateDeclineNotificationHTML,
+  generateDeclineNotificationText
 };
