@@ -786,11 +786,8 @@ async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
   // Token-Fallback: authToken (von Login.tsx) ODER token (legacy)
   const token = localStorage.getItem('authToken') || localStorage.getItem('token');
 
-  // SICHERHEIT: Token validieren bevor API-Call
+  // Token-Check ohne Löschung — Token-Löschung gehört nur in den Logout-Flow
   if (!isTokenValid(token)) {
-    // Token ungültig oder abgelaufen - aufräumen
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('token');
     throw new Error('Sitzung abgelaufen. Bitte erneut anmelden.');
   }
 
@@ -804,10 +801,7 @@ async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
   });
 
   if (!response.ok) {
-    // Bei 401 auch Token aufräumen
     if (response.status === 401) {
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('token');
       throw new Error('Sitzung abgelaufen. Bitte erneut anmelden.');
     }
     const error = await response.json().catch(() => ({ error: 'Unbekannter Fehler' }));
