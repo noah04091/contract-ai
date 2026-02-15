@@ -786,8 +786,11 @@ async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
   // Token-Fallback: authToken (von Login.tsx) ODER token (legacy)
   const token = localStorage.getItem('authToken') || localStorage.getItem('token');
 
-  // Token-Check ohne Löschung — Token-Löschung gehört nur in den Logout-Flow
+  // SICHERHEIT: Token validieren bevor API-Call
   if (!isTokenValid(token)) {
+    // Token ungültig oder abgelaufen - aufräumen
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('token');
     throw new Error('Sitzung abgelaufen. Bitte erneut anmelden.');
   }
 
@@ -801,7 +804,10 @@ async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
   });
 
   if (!response.ok) {
+    // Bei 401 auch Token aufräumen
     if (response.status === 401) {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('token');
       throw new Error('Sitzung abgelaufen. Bitte erneut anmelden.');
     }
     const error = await response.json().catch(() => ({ error: 'Unbekannter Fehler' }));
@@ -809,61 +815,6 @@ async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
   }
 
   return response.json();
-}
-
-// ============================================
-// ATTACHMENT CACHE (History-Optimierung)
-// ============================================
-
-// Cache für Base64-Daten, lebt außerhalb des Store-States
-const attachmentCache = new Map<string, string>();
-
-// Extrahiert Base64-Daten aus Blöcken und ersetzt sie mit Platzhaltern
-function stripAttachmentsForHistory(doc: ContractDocument): ContractDocument {
-  const clone = JSON.parse(JSON.stringify(doc));
-  for (const block of clone.content.blocks) {
-    if (block.type !== 'attachment') continue;
-    // Legacy-Feld
-    if (block.content.attachmentFile && block.content.attachmentFile.startsWith('data:')) {
-      const cacheKey = `${block.id}::legacy`;
-      attachmentCache.set(cacheKey, block.content.attachmentFile);
-      block.content.attachmentFile = `__cached__::${cacheKey}`;
-    }
-    // Neues attachments-Array
-    if (block.content.attachments) {
-      for (const att of block.content.attachments) {
-        if (att.file && att.file.startsWith('data:')) {
-          const cacheKey = `${block.id}::${att.id}`;
-          attachmentCache.set(cacheKey, att.file);
-          att.file = `__cached__::${cacheKey}`;
-        }
-      }
-    }
-  }
-  return clone;
-}
-
-// Stellt Base64-Daten aus Cache wieder her
-function restoreAttachmentsFromCache(doc: ContractDocument): ContractDocument {
-  const clone = JSON.parse(JSON.stringify(doc));
-  for (const block of clone.content.blocks) {
-    if (block.type !== 'attachment') continue;
-    if (block.content.attachmentFile?.startsWith('__cached__::')) {
-      const cacheKey = block.content.attachmentFile.replace('__cached__::', '');
-      const data = attachmentCache.get(cacheKey);
-      if (data) block.content.attachmentFile = data;
-    }
-    if (block.content.attachments) {
-      for (const att of block.content.attachments) {
-        if (att.file?.startsWith('__cached__::')) {
-          const cacheKey = att.file.replace('__cached__::', '');
-          const data = attachmentCache.get(cacheKey);
-          if (data) att.file = data;
-        }
-      }
-    }
-  }
-  return clone;
 }
 
 // ============================================
@@ -1145,33 +1096,7 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
               console.log('Dokument lokal gespeichert:', document._id);
               return;
             } catch (err) {
-              // Bei Speicherplatz-Überschreitung: Anhänge strippen und erneut versuchen
-              if (err instanceof DOMException && err.name === 'QuotaExceededError') {
-                try {
-                  const strippedDoc = JSON.parse(JSON.stringify(document));
-                  for (const block of strippedDoc.content.blocks) {
-                    if (block.type !== 'attachment') continue;
-                    if (block.content.attachmentFile) {
-                      block.content.attachmentFile = '';
-                    }
-                    if (block.content.attachments) {
-                      for (const att of block.content.attachments) {
-                        att.file = '';
-                      }
-                    }
-                  }
-                  const localDocs = JSON.parse(localStorage.getItem('contractforge_local_docs') || '{}');
-                  localDocs[strippedDoc._id] = strippedDoc;
-                  localStorage.setItem('contractforge_local_docs', JSON.stringify(localDocs));
-                  set({ isSaving: false, lastSaved: new Date(), hasUnsavedChanges: false });
-                  console.warn('Dokument lokal gespeichert (ohne Anhänge - Speicherplatz voll)');
-                  return;
-                } catch (retryErr) {
-                  console.error('Lokales Speichern auch ohne Anhänge fehlgeschlagen:', retryErr);
-                }
-              }
               console.error('Lokales Speichern fehlgeschlagen:', err);
-              set({ isSaving: false, error: 'Lokales Speichern fehlgeschlagen' });
             }
           }
 
@@ -1721,7 +1646,7 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
             if (!state.document) return;
             // Remove future history if we're not at the end
             const newHistory = state.history.slice(0, state.historyIndex + 1);
-            newHistory.push(stripAttachmentsForHistory(state.document!));
+            newHistory.push(JSON.parse(JSON.stringify(state.document)));
             // Limit history size
             if (newHistory.length > 50) {
               newHistory.shift();
@@ -1737,7 +1662,7 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
           set((state) => {
             if (state.historyIndex > 0) {
               state.historyIndex--;
-              state.document = restoreAttachmentsFromCache(state.history[state.historyIndex]);
+              state.document = JSON.parse(JSON.stringify(state.history[state.historyIndex]));
               state.canUndo = state.historyIndex > 0;
               state.canRedo = true;
               state.hasUnsavedChanges = true;
@@ -1749,7 +1674,7 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
           set((state) => {
             if (state.historyIndex < state.history.length - 1) {
               state.historyIndex++;
-              state.document = restoreAttachmentsFromCache(state.history[state.historyIndex]);
+              state.document = JSON.parse(JSON.stringify(state.history[state.historyIndex]));
               state.canUndo = true;
               state.canRedo = state.historyIndex < state.history.length - 1;
               state.hasUnsavedChanges = true;
