@@ -528,7 +528,9 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
       }
     }
 
-    const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+    const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId, {
+      expand: ['default_payment_method']
+    });
     const priceId = subscription.items.data[0]?.price?.id;
 
     const priceMap = {
@@ -725,7 +727,10 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
       companyName,
       taxId,
       subscriptionId: stripeSubscriptionId,
-      customLogoBase64  // ✨ White-Label Logo (Enterprise)
+      customLogoBase64,  // ✨ White-Label Logo (Enterprise)
+      periodStart: subscription.current_period_start,
+      periodEnd: subscription.current_period_end,
+      paymentMethod: subscription.default_payment_method?.type || 'card'
     });
 
     console.log(`✅ Vollständige Rechnung generiert mit:`, {

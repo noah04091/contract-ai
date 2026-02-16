@@ -17,7 +17,10 @@ function generateInvoicePdf({
   companyName,
   taxId,
   subscriptionId,
-  customLogoBase64 = null  // ✨ NEU: White-Label Logo (Enterprise)
+  customLogoBase64 = null,  // ✨ NEU: White-Label Logo (Enterprise)
+  periodStart = null,       // Stripe current_period_start (Unix timestamp)
+  periodEnd = null,         // Stripe current_period_end (Unix timestamp)
+  paymentMethod = null      // Stripe payment method type (card, paypal, sepa_debit, etc.)
 }) {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
@@ -215,11 +218,19 @@ function generateInvoicePdf({
     const steuer = amount - netto;
     const planDisplayName = plan.charAt(0).toUpperCase() + plan.slice(1);
 
-    // Leistungszeitraum berechnen (aktueller Monat)
-    const now = new Date();
-    const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    const periodText = `${startDate.toLocaleDateString('de-DE')} – ${endDate.toLocaleDateString('de-DE')}`;
+    // Leistungszeitraum aus Stripe-Subscription (echte Abrechnungsperiode)
+    let periodText;
+    if (periodStart && periodEnd) {
+      const start = new Date(periodStart * 1000);
+      const end = new Date(periodEnd * 1000);
+      periodText = `${start.toLocaleDateString('de-DE')} – ${end.toLocaleDateString('de-DE')}`;
+    } else {
+      // Fallback: Ab heute + 1 Monat
+      const now = new Date();
+      const endDate = new Date(now);
+      endDate.setMonth(endDate.getMonth() + 1);
+      periodText = `${now.toLocaleDateString('de-DE')} – ${endDate.toLocaleDateString('de-DE')}`;
+    }
 
     doc.fillColor(darkGray)
        .fontSize(11)
@@ -269,10 +280,19 @@ function generateInvoicePdf({
        .font('Helvetica-Bold')
        .text('Zahlungshinweis:', 65, paymentTop + 15);
 
+    // Zahlungsmethode dynamisch anzeigen
+    const paymentMethodNames = {
+      'card': 'Kartenzahlung',
+      'paypal': 'PayPal',
+      'sepa_debit': 'SEPA-Lastschrift',
+      'link': 'Link',
+    };
+    const methodName = paymentMethodNames[paymentMethod] || 'Kartenzahlung';
+
     doc.fillColor(darkGray)
        .fontSize(10)
        .font('Helvetica')
-       .text('Diese Rechnung wurde bereits per Kreditkarte beglichen.', 65, paymentTop + 32)
+       .text(`Diese Rechnung wurde bereits per ${methodName} beglichen.`, 65, paymentTop + 32)
        .text('Es ist keine weitere Zahlung erforderlich.', 65, paymentTop + 45);
 
     // Footer
