@@ -200,7 +200,7 @@ export const ClauseBlock: React.FC<ClauseBlockProps> = ({
       {subclauses && subclauses.length > 0 && (
         <ol className={styles.subclauses}>
           {subclauses.map((sub, index) => (
-            <li key={index} className={styles.subclause}>
+            <li key={`sub-${sub.number || index}`} className={styles.subclause}>
               <span className={styles.subclauseNumber}>
                 {sub.number || `(${index + 1})`}
               </span>

@@ -19,7 +19,7 @@ interface SortableBlockProps {
   pageNumber?: number; // Für Seitenumbrüche
 }
 
-export const SortableBlock: React.FC<SortableBlockProps> = ({
+export const SortableBlock: React.FC<SortableBlockProps> = React.memo(({
   block,
   index,
   isSelected,
@@ -183,7 +183,7 @@ export const SortableBlock: React.FC<SortableBlockProps> = ({
       )}
     </div>
   );
-};
+});
 
 // Helper: Block-Typ Label
 function getBlockTypeLabel(type: string): string {

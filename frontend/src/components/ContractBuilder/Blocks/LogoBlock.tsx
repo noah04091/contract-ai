@@ -81,10 +81,21 @@ export const LogoBlock: React.FC<LogoBlockProps> = ({
     }
   };
 
-  // URL eingeben
+  // URL eingeben (nur http/https erlaubt)
   const handleUrlSubmit = () => {
-    if (urlInput.trim()) {
-      updateBlockContent(blockId, { logoUrl: urlInput.trim() });
+    const trimmed = urlInput.trim();
+    if (trimmed) {
+      try {
+        const url = new URL(trimmed);
+        if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+          setError('Nur HTTP/HTTPS URLs sind erlaubt');
+          return;
+        }
+      } catch {
+        setError('Ungültige URL');
+        return;
+      }
+      updateBlockContent(blockId, { logoUrl: trimmed });
       setShowUrlInput(false);
       setUrlInput('');
     }

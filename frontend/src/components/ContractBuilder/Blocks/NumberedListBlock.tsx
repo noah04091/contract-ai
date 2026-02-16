@@ -125,7 +125,7 @@ export const NumberedListBlock: React.FC<NumberedListBlockProps> = ({
         style={{ listStyleType: getListStyleType() }}
       >
         {listItems.map((item: string, index: number) => (
-          <li key={index} className={styles.listItem}>
+          <li key={`item-${index}-${item.slice(0, 20)}`} className={styles.listItem}>
             {editingField === `item-${index}` ? (
               <input
                 ref={inputRef}

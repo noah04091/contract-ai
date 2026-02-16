@@ -110,7 +110,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({
         <thead>
           <tr>
             {tableHeaders.map((header, index) => (
-              <th key={index} className={styles.headerCell}>
+              <th key={`h-${index}-${header.slice(0, 15)}`} className={styles.headerCell}>
                 {isEditingThis('header', undefined, index) ? (
                   <input
                     ref={inputRef}
@@ -134,9 +134,9 @@ export const TableBlock: React.FC<TableBlockProps> = ({
         </thead>
         <tbody>
           {tableRows.map((row, rowIndex) => (
-            <tr key={rowIndex} className={styles.tableRow}>
+            <tr key={`row-${rowIndex}`} className={styles.tableRow}>
               {row.map((cell, cellIndex) => (
-                <td key={cellIndex} className={styles.tableCell}>
+                <td key={`cell-${rowIndex}-${cellIndex}`} className={styles.tableCell}>
                   {isEditingThis('cell', rowIndex, cellIndex) ? (
                     <input
                       ref={inputRef}

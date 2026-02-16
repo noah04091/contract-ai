@@ -97,7 +97,7 @@ export const SignatureBlock: React.FC<SignatureBlockProps> = ({
 
       <div className={styles.signatureGrid}>
         {fields.map((field, index) => (
-          <div key={index} className={styles.signatureField}>
+          <div key={`sig-${field.partyIndex ?? index}-${field.label || index}`} className={styles.signatureField}>
             {/* Ort und Datum */}
             {(field.showPlace || field.showDate) && (
               <div className={styles.placeDateRow}>
@@ -156,7 +156,7 @@ export const SignatureBlock: React.FC<SignatureBlockProps> = ({
           </div>
           <div className={styles.witnessGrid}>
             {Array.from({ length: witnesses }).map((_, index) => (
-              <div key={index} className={styles.witnessField}>
+              <div key={`witness-${index}`} className={styles.witnessField}>
                 <div className={styles.signatureLine}>
                   <div className={styles.signatureLineInner} />
                 </div>
@@ -173,7 +173,7 @@ export const SignatureBlock: React.FC<SignatureBlockProps> = ({
   const renderClassicLayout = () => (
     <div className={styles.classicLayout}>
       {fields.map((field, index) => (
-        <div key={index} className={styles.classicSignatureField}>
+        <div key={`csig-${field.partyIndex ?? index}-${field.label || index}`} className={styles.classicSignatureField}>
           {/* Ort, Datum Zeile */}
           <div className={styles.classicPlaceDateRow}>
             <span className={styles.classicLabel}>Ort, Datum</span>
@@ -213,7 +213,7 @@ export const SignatureBlock: React.FC<SignatureBlockProps> = ({
         <div className={styles.classicWitnessSection}>
           <div className={styles.classicWitnessTitle}>Zeugen:</div>
           {Array.from({ length: witnesses }).map((_, index) => (
-            <div key={index} className={styles.classicSignatureField}>
+            <div key={`cwitness-${index}`} className={styles.classicSignatureField}>
               <div className={styles.classicPlaceDateRow}>
                 <span className={styles.classicLabel}>Ort, Datum</span>
                 <div className={styles.classicLine} />

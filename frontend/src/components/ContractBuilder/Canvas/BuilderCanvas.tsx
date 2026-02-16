@@ -62,6 +62,7 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
   const pageContentRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map()); // Refs für Intersection Observer
   const blockRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const pageObserverRef = useRef<IntersectionObserver | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [overflowPages, setOverflowPages] = useState<Set<number>>(new Set());
   const autoPageBreakProcessed = useRef<Set<string>>(new Set()); // Verhindert endlose Loops
@@ -138,14 +139,14 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
       });
 
       // Speichere Observer für Cleanup
-      (window as unknown as { __pageObserver?: IntersectionObserver }).__pageObserver = observer;
+      pageObserverRef.current = observer;
     }, 100);
 
     return () => {
       clearTimeout(timeoutId);
-      const obs = (window as unknown as { __pageObserver?: IntersectionObserver }).__pageObserver;
-      if (obs) {
-        obs.disconnect();
+      if (pageObserverRef.current) {
+        pageObserverRef.current.disconnect();
+        pageObserverRef.current = null;
       }
     };
   }, [view, setActivePage, pages.length]);

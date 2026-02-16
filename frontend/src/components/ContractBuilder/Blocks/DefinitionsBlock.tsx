@@ -143,7 +143,7 @@ export const DefinitionsBlock: React.FC<DefinitionsBlockProps> = ({
       {/* Definitions List */}
       <div className={styles.definitionsList}>
         {currentDefinitions.map((def, index) => (
-          <div key={index} className={styles.definitionItem}>
+          <div key={`def-${index}-${def.term.slice(0, 15)}`} className={styles.definitionItem}>
             <div className={styles.termRow}>
               {/* Term */}
               <span className={styles.termLabel}>

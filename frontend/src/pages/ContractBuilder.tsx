@@ -17,6 +17,7 @@ import {
   VariablesPanel,
   ContractTypeSelector,
 } from '../components/ContractBuilder';
+import { BuilderErrorBoundary } from '../components/ContractBuilder/BuilderErrorBoundary';
 import {
   Save,
   Download,
@@ -167,28 +168,29 @@ const ContractBuilder: React.FC = () => {
   }, [hasUnsavedChanges]);
 
   // AUTO-SAVE: Alle 30 Sekunden automatisch speichern
+  const autoSaveRef = useRef({ isSaving, isAutoSaving, saveDocument, hasUnsavedChanges });
+  autoSaveRef.current = { isSaving, isAutoSaving, saveDocument, hasUnsavedChanges };
+
   useEffect(() => {
-    // Nur auto-speichern wenn: Dokument existiert UND ungespeicherte Änderungen vorhanden
-    if (!currentDocument || !hasUnsavedChanges) return;
+    if (!currentDocument) return;
 
     const autoSaveInterval = setInterval(async () => {
-      // Nicht speichern wenn bereits manuell oder auto gespeichert wird
-      if (isSaving || isAutoSaving) return;
+      const { isSaving: saving, isAutoSaving: autoSaving, saveDocument: save, hasUnsavedChanges: unsaved } = autoSaveRef.current;
+      if (saving || autoSaving || !unsaved) return;
 
       setIsAutoSaving(true);
       try {
-        await saveDocument();
+        await save();
         setLastAutoSaved(new Date());
       } catch (error) {
         console.error('[Auto-Save] Fehler:', error);
-        // Stille Fehlerbehandlung - User nicht mit Auto-Save Fehlern nerven
       } finally {
         setIsAutoSaving(false);
       }
-    }, 30000); // 30 Sekunden
+    }, 30000);
 
     return () => clearInterval(autoSaveInterval);
-  }, [currentDocument, hasUnsavedChanges, isSaving, isAutoSaving, saveDocument]);
+  }, [currentDocument]);
 
   // Dokument laden oder Typ-Auswahl zeigen
   useEffect(() => {
@@ -1613,7 +1615,9 @@ const ContractBuilder: React.FC = () => {
 
         {/* Canvas */}
         <main className={styles.canvasWrapper}>
-          <BuilderCanvas />
+          <BuilderErrorBoundary>
+            <BuilderCanvas />
+          </BuilderErrorBoundary>
         </main>
 
         {/* Right Sidebar */}
