@@ -155,9 +155,9 @@ function generateInvoicePdf({
     }
 
     if (taxId) {
-      // USt-ID mit korrektem Format (inkl. Ländercode falls nicht vorhanden)
+      // USt-ID: Nur DE-Prefix hinzufügen wenn es eine reine Zahl ist (deutsche Steuernummer ohne Prefix)
       let formattedTaxId = taxId;
-      if (taxId && !taxId.startsWith('DE') && taxId.length > 2) {
+      if (taxId && /^\d+$/.test(taxId) && taxId.length >= 9) {
         formattedTaxId = `DE${taxId}`;
       }
       doc.fillColor(darkGray)
@@ -214,22 +214,37 @@ function generateInvoicePdf({
        .fill('white')
        .stroke(backgroundColor);
 
-    const netto = amount / 1.19;
-    const steuer = amount - netto;
+    // Reverse Charge Erkennung: EU B2B Kunde mit nicht-deutscher USt-IdNr.
+    const euCountries = ['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE'];
+    const customerCountry = customerAddress?.country || 'DE';
+    const isReverseCharge = taxId && euCountries.includes(customerCountry);
+
+    let netto, steuer;
+    if (isReverseCharge) {
+      // Reverse Charge: Betrag ist bereits netto (keine MwSt.)
+      netto = amount;
+      steuer = 0;
+    } else {
+      // Standard: 19% MwSt. inkl.
+      netto = amount / 1.19;
+      steuer = amount - netto;
+    }
+
     const planDisplayName = plan.charAt(0).toUpperCase() + plan.slice(1);
+    const dateFormat = { day: '2-digit', month: '2-digit', year: 'numeric' };
 
     // Leistungszeitraum aus Stripe-Subscription (echte Abrechnungsperiode)
     let periodText;
     if (periodStart && periodEnd) {
       const start = new Date(periodStart * 1000);
       const end = new Date(periodEnd * 1000);
-      periodText = `${start.toLocaleDateString('de-DE')} – ${end.toLocaleDateString('de-DE')}`;
+      periodText = `${start.toLocaleDateString('de-DE', dateFormat)} – ${end.toLocaleDateString('de-DE', dateFormat)}`;
     } else {
       // Fallback: Ab heute + 1 Monat
       const now = new Date();
       const endDate = new Date(now);
       endDate.setMonth(endDate.getMonth() + 1);
-      periodText = `${now.toLocaleDateString('de-DE')} – ${endDate.toLocaleDateString('de-DE')}`;
+      periodText = `${now.toLocaleDateString('de-DE', dateFormat)} – ${endDate.toLocaleDateString('de-DE', dateFormat)}`;
     }
 
     doc.fillColor(darkGray)
@@ -247,13 +262,24 @@ function generateInvoicePdf({
     const summaryTop = itemTop + itemHeight + 20;
     const summaryLeft = tableLeft + 300;
 
-    doc.fillColor(lightGray)
-       .fontSize(11)
-       .font('Helvetica')
-       .text('Zwischensumme:', summaryLeft, summaryTop)
-       .text('MwSt. (19%):', summaryLeft, summaryTop + 20)
-       .text(`€${netto.toFixed(2)}`, summaryLeft + 100, summaryTop, { align: 'right', width: 95 })
-       .text(`€${steuer.toFixed(2)}`, summaryLeft + 100, summaryTop + 20, { align: 'right', width: 95 });
+    if (isReverseCharge) {
+      // Reverse Charge: Keine MwSt., Hinweis auf Steuerschuldnerschaft
+      doc.fillColor(lightGray)
+         .fontSize(11)
+         .font('Helvetica')
+         .text('Nettobetrag:', summaryLeft, summaryTop)
+         .text('MwSt.:', summaryLeft, summaryTop + 20)
+         .text(`€${netto.toFixed(2)}`, summaryLeft + 100, summaryTop, { align: 'right', width: 95 })
+         .text('€0,00', summaryLeft + 100, summaryTop + 20, { align: 'right', width: 95 });
+    } else {
+      doc.fillColor(lightGray)
+         .fontSize(11)
+         .font('Helvetica')
+         .text('Zwischensumme:', summaryLeft, summaryTop)
+         .text('MwSt. (19%):', summaryLeft, summaryTop + 20)
+         .text(`€${netto.toFixed(2)}`, summaryLeft + 100, summaryTop, { align: 'right', width: 95 })
+         .text(`€${steuer.toFixed(2)}`, summaryLeft + 100, summaryTop + 20, { align: 'right', width: 95 });
+    }
 
     // Linie vor Gesamtsumme
     doc.strokeColor(lightGray)
@@ -263,14 +289,35 @@ function generateInvoicePdf({
        .stroke();
 
     // Gesamtsumme hervorgehoben
+    const totalAmount = isReverseCharge ? netto : amount;
     doc.fillColor(darkGray)
        .fontSize(14)
        .font('Helvetica-Bold')
        .text('Gesamtbetrag:', summaryLeft, summaryTop + 55)
-       .text(`€${amount.toFixed(2)}`, summaryLeft + 100, summaryTop + 55, { align: 'right', width: 95 });
+       .text(`€${totalAmount.toFixed(2)}`, summaryLeft + 100, summaryTop + 55, { align: 'right', width: 95 });
+
+    // Reverse Charge Hinweis (bei EU B2B)
+    let reverseChargeBoxHeight = 0;
+    if (isReverseCharge) {
+      const rcTop = summaryTop + 85;
+      reverseChargeBoxHeight = 45;
+      doc.rect(50, rcTop, 495, reverseChargeBoxHeight)
+         .fill('#fff8e1')
+         .stroke('#f59e0b');
+
+      doc.fillColor('#92400e')
+         .fontSize(10)
+         .font('Helvetica-Bold')
+         .text('Hinweis gem. § 13b UStG:', 65, rcTop + 10);
+
+      doc.fillColor('#92400e')
+         .fontSize(9)
+         .font('Helvetica')
+         .text('Steuerschuldnerschaft des Leistungsempfängers (Reverse Charge). Die Umsatzsteuer ist vom Leistungsempfänger zu entrichten.', 65, rcTop + 25, { width: 465 });
+    }
 
     // Zahlungshinweis Box
-    const paymentTop = summaryTop + 100;
+    const paymentTop = summaryTop + 100 + reverseChargeBoxHeight + (isReverseCharge ? 15 : 0);
     doc.rect(50, paymentTop, 495, 60)
        .fill('#f0f9ff')
        .stroke('#0071e3');
@@ -304,7 +351,7 @@ function generateInvoicePdf({
        .fontSize(9)
        .font('Helvetica')
        .text('Contract AI • Inhaber: Noah Liebold • Richard-Oberle-Weg 27 • 76448 Durmersheim • Deutschland', 50, footerTop + 15, { align: 'center', width: 495 })
-       .text('Steuernummer: 3928246507 • USt-IdNr.: DE361461136 • Registergericht: Amtsgericht Mannheim', 50, footerTop + 30, { align: 'center', width: 495 })
+       .text('Steuernummer: 3928246507 • USt-IdNr.: DE361461136', 50, footerTop + 30, { align: 'center', width: 495 })
        .text('E-Mail: info@contract-ai.de • Diese Rechnung wurde elektronisch erstellt und ist ohne Unterschrift gültig.', 50, footerTop + 45, { align: 'center', width: 495 });
 
     doc.end();

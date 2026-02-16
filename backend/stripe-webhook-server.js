@@ -673,7 +673,7 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
     const invoiceNumber = generateInvoiceNumber(latestNumber);
 
     const amount = session.amount_total ? session.amount_total / 100 : 0;
-    const invoiceDate = new Date().toLocaleDateString("de-DE");
+    const invoiceDate = new Date().toLocaleDateString("de-DE", { day: '2-digit', month: '2-digit', year: 'numeric' });
     const customerName = user?.name || email;
 
     // Stripe Invoice-Nummer holen (für Verknüpfung mit Custom-PDF)
