@@ -7,7 +7,7 @@ import Footer from "../../components/Footer";
 import AutoPlayVideo from "../../components/AutoPlayVideo";
 import {
   Search, Shield, Zap, FileText, AlertTriangle, CheckCircle,
-  ArrowRight, Play, Clock, BookOpen, Target, ChevronDown
+  ArrowRight, Clock, BookOpen, Target, ChevronDown
 } from "lucide-react";
 
 // Video
