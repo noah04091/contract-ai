@@ -47,6 +47,52 @@ import { WelcomePopup } from "../components/Tour";
 import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
 import { loadCompanyProfile, getJsPDFBranding, imageUrlToBase64, type CompanyProfile } from "../utils/pdfBranding"; // 🏢 Enterprise Branding
 
+// ✅ Fetch with Retry - Enterprise-grade network resilience
+const fetchWithRetry = async (
+  url: string,
+  options: RequestInit,
+  maxRetries = 2
+): Promise<Response> => {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      // Check if offline before attempting
+      if (!navigator.onLine) {
+        throw new Error("Keine Internetverbindung");
+      }
+
+      const response = await fetch(url, options);
+
+      // Retry on 5xx server errors
+      if (response.status >= 500 && attempt < maxRetries) {
+        const delay = Math.pow(2, attempt) * 1000;
+        console.log(`🔄 Server error ${response.status}, retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+
+      return response;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+
+      // Don't retry on abort
+      if (lastError.name === "AbortError") {
+        throw lastError;
+      }
+
+      // Retry on network errors
+      if (attempt < maxRetries) {
+        const delay = Math.pow(2, attempt) * 1000;
+        console.log(`🔄 Network error, retrying in ${delay}ms...`, lastError.message);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+
+  throw lastError || new Error("Request failed after retries");
+};
+
 // Plans mit vollem Envelopes/Signaturen Zugriff
 const ENVELOPES_ACCESS_PLANS = ['business', 'enterprise'];
 
@@ -122,6 +168,9 @@ export default function Envelopes() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const hasAccess = ENVELOPES_ACCESS_PLANS.includes(userPlan);
 
+  // 🌐 Offline Detection State
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
   // Search, pagination and archive states
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
@@ -157,6 +206,26 @@ export default function Envelopes() {
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // 🌐 Offline Detection Handler
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOffline(false);
+      toast.success("✅ Verbindung wiederhergestellt", { autoClose: 2000 });
+    };
+    const handleOffline = () => {
+      setIsOffline(true);
+      toast.warning("⚠️ Keine Internetverbindung", { autoClose: false, toastId: "offline-toast" });
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
   }, []);
 
   // 🏢 Load Company Profile for Enterprise Branding
@@ -270,7 +339,8 @@ export default function Envelopes() {
         params.append("status", statusFilter);
       }
 
-      const response = await fetch(`/api/envelopes?${params.toString()}`, {
+      // ✅ Use fetchWithRetry for network resilience
+      const response = await fetchWithRetry(`/api/envelopes?${params.toString()}`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -1388,20 +1458,34 @@ export default function Envelopes() {
     handleDeselectAll();
   };
 
+  // ✅ CSV Formula Injection Protection
+  // Prevents Excel/Sheets from executing formulas in user-controlled data
+  const sanitizeCSVValue = (value: string): string => {
+    if (!value) return "";
+    // Escape double quotes
+    let sanitized = value.replace(/"/g, '""');
+    // Prefix dangerous characters that could be interpreted as formulas
+    if (/^[=+\-@\t\r]/.test(sanitized)) {
+      sanitized = "'" + sanitized;
+    }
+    return sanitized;
+  };
+
   const handleBatchExport = () => {
     if (selectedEnvelopeIds.length === 0) return;
 
     const selectedEnvs = envelopes.filter(env => selectedEnvelopeIds.includes(env._id));
 
-    // Create CSV content
-    let csv = "Titel,Status,Empfänger,Signiert,Erstellt,Läuft ab\n";
+    // Create CSV content with BOM for Excel UTF-8 compatibility
+    let csv = "\uFEFFTitel,Status,Empfänger,Signiert,Erstellt,Läuft ab\n";
 
     selectedEnvs.forEach(env => {
       const signedCount = env.signers.filter(s => s.status === "SIGNED").length;
       const totalCount = env.signers.length;
       const recipientsText = env.signers.map(s => s.name).join("; ");
 
-      csv += `"${env.title}","${getStatusLabel(env.status)}","${recipientsText}","${signedCount}/${totalCount}","${formatDate(env.createdAt)}","${env.expiresAt ? formatDate(env.expiresAt) : "-"}"\n`;
+      // ✅ Sanitize all user-controlled values
+      csv += `"${sanitizeCSVValue(env.title)}","${sanitizeCSVValue(getStatusLabel(env.status))}","${sanitizeCSVValue(recipientsText)}","${signedCount}/${totalCount}","${formatDate(env.createdAt)}","${env.expiresAt ? formatDate(env.expiresAt) : "-"}"\n`;
     });
 
     // Download as CSV
@@ -1538,6 +1622,24 @@ export default function Envelopes() {
 
   return (
     <>
+      {/* 🌐 Offline Banner */}
+      {isOffline && (
+        <div style={{
+          background: "linear-gradient(90deg, #f59e0b, #d97706)",
+          color: "white",
+          padding: "10px 20px",
+          textAlign: "center",
+          fontWeight: 600,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "8px"
+        }}>
+          <AlertCircle size={18} />
+          Keine Internetverbindung - Einige Funktionen sind eingeschränkt
+        </div>
+      )}
+
       {/* 🔒 Premium Banner - Full Width - außerhalb pageContainer für korrektes Spacing */}
       {!planLoading && !hasAccess && (
         <UnifiedPremiumNotice
