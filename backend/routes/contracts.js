@@ -1575,9 +1575,26 @@ router.delete("/:id", verifyToken, async (req, res) => {
       return res.status(404).json({ message: "Vertrag nicht gefunden" });
     }
 
-    res.json({ 
-      success: true, 
-      message: "Vertrag erfolgreich gelöscht" 
+    // 📋 Activity Log: Vertrag gelöscht
+    try {
+      const { logActivityStandalone, ActivityTypes } = require('../services/activityLogger');
+      await logActivityStandalone({
+        type: ActivityTypes.CONTRACT_DELETED,
+        userId: req.user.userId,
+        description: `Vertrag gelöscht: ${id}`,
+        details: {
+          contractId: id
+        },
+        severity: 'info',
+        source: 'contracts'
+      });
+    } catch (logErr) {
+      console.error("Activity Log Error:", logErr);
+    }
+
+    res.json({
+      success: true,
+      message: "Vertrag erfolgreich gelöscht"
     });
 
   } catch (error) {

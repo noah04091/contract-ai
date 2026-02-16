@@ -4918,6 +4918,26 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
       }
     }
 
+    // 📋 Activity Log: Vertrag optimiert
+    try {
+      const { logActivity, ActivityTypes } = require('../services/activityLogger');
+      await logActivity(req.db, {
+        type: ActivityTypes.CONTRACT_OPTIMIZED,
+        userId: req.user.userId,
+        userEmail: user?.email,
+        description: `Vertrag optimiert: ${req.file?.originalname || 'Unbekannt'}`,
+        details: {
+          plan: plan,
+          filename: req.file?.originalname,
+          contractId: savedContractId?.toString()
+        },
+        severity: 'info',
+        source: 'optimize'
+      });
+    } catch (logErr) {
+      console.error("Activity Log Error:", logErr);
+    }
+
     // Sende erfolgreiche Antwort
     res.json({
       success: true,

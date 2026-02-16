@@ -148,6 +148,22 @@ module.exports = function(db) {
 
       console.log(`✅ User verifiziert: ${user.email}`);
 
+      // 📋 Activity Log: E-Mail verifiziert
+      try {
+        const { logActivity, ActivityTypes } = require('../services/activityLogger');
+        await logActivity(db, {
+          type: ActivityTypes.USER_VERIFIED,
+          userId: user._id.toString(),
+          userEmail: user.email,
+          description: `E-Mail verifiziert: ${user.email}`,
+          details: {},
+          severity: 'info',
+          source: 'emailVerification'
+        });
+      } catch (logErr) {
+        console.error("Activity Log Error:", logErr);
+      }
+
       // ✅ Onboarding Checklist aktualisieren - emailVerified = true
       await usersCollection.updateOne(
         { _id: user._id },

@@ -371,6 +371,29 @@ router.post("/login", authLimiter, async (req, res) => {
       }
     );
 
+    // 📋 Activity Log: Login
+    try {
+      const { logActivity, ActivityTypes } = require('../services/activityLogger');
+      await logActivity(dbInstance, {
+        type: ActivityTypes.USER_LOGIN,
+        userId: user._id.toString(),
+        userEmail: user.email,
+        description: `User eingeloggt: ${user.email}`,
+        details: {
+          plan: user.subscriptionPlan || 'free',
+          device: deviceInfo?.device || 'Unbekannt',
+          browser: deviceInfo?.browser || 'Unbekannt',
+          os: deviceInfo?.os || 'Unbekannt'
+        },
+        ip: ipAddress,
+        userAgent: userAgent,
+        severity: 'info',
+        source: 'auth'
+      });
+    } catch (logErr) {
+      console.error("Activity Log Error:", logErr);
+    }
+
     const token = jwt.sign(
       { email: user.email, userId: user._id },
       process.env.JWT_SECRET,
@@ -380,7 +403,7 @@ router.post("/login", authLimiter, async (req, res) => {
     // ✅ COOKIE-DEBUG: Log Cookie-Einstellungen
     console.log("🍪 Setting Cookie with options:", COOKIE_OPTIONS);
     res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
-    
+
     res.json({
       message: "✅ Login erfolgreich",
       isPremium: user.isPremium || false,

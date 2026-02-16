@@ -3638,6 +3638,26 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       responseData.originalContractId = savedContract._id;
     }
 
+    // 📋 Activity Log: Vertrag analysiert
+    try {
+      const { logActivity, ActivityTypes } = require('../services/activityLogger');
+      await logActivity(mongoClient.db("contract_ai"), {
+        type: ActivityTypes.CONTRACT_ANALYZED,
+        userId: req.user.userId,
+        userEmail: user?.email,
+        description: `Vertrag analysiert: ${req.file?.originalname || 'Unbekannt'}`,
+        details: {
+          plan: plan,
+          filename: req.file?.originalname,
+          analysisId: inserted?.insertedId?.toString()
+        },
+        severity: 'info',
+        source: 'analyze'
+      });
+    } catch (logErr) {
+      console.error("Activity Log Error:", logErr);
+    }
+
     // ✅ DIREKT responseData senden, KEIN data wrapper!
     res.json(responseData);
 

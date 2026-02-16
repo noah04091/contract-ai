@@ -543,6 +543,28 @@ router.delete("/users/:userId", verifyToken, verifyAdmin, async (req, res) => {
     // Delete the user
     const deleteResult = await usersCollection.deleteOne({ _id: new ObjectId(userId) });
 
+    // 📋 Activity Log: User gelöscht
+    if (deleteResult.deletedCount === 1) {
+      try {
+        const { logActivity, ActivityTypes } = require('../services/activityLogger');
+        await logActivity(db, {
+          type: ActivityTypes.USER_DELETED,
+          userId: userId,
+          userEmail: user.email,
+          description: `User gelöscht von Admin: ${user.email}`,
+          details: {
+            deletedBy: req.user.email,
+            contractsDeleted: contractsResult.deletedCount,
+            costEntriesDeleted: costResult.deletedCount
+          },
+          severity: 'warning',
+          source: 'admin'
+        });
+      } catch (logErr) {
+        console.error("Activity Log Error:", logErr);
+      }
+    }
+
     await client.close();
 
     if (deleteResult.deletedCount === 1) {
@@ -1151,6 +1173,25 @@ router.put("/users/:userId/suspend", verifyToken, verifyAdmin, async (req, res) 
       { _id: new ObjectId(userId) },
       { $set: updateData }
     );
+
+    // 📋 Activity Log: User gesperrt/entsperrt
+    try {
+      const { logActivity, ActivityTypes } = require('../services/activityLogger');
+      await logActivity(client.db("contract_ai"), {
+        type: suspended ? ActivityTypes.USER_SUSPENDED : ActivityTypes.USER_UNSUSPENDED,
+        userId: userId,
+        userEmail: user.email,
+        description: `User ${suspended ? 'gesperrt' : 'entsperrt'} von Admin: ${user.email}`,
+        details: {
+          suspendedBy: req.user.email,
+          reason: suspended ? (reason || 'Kein Grund angegeben') : null
+        },
+        severity: 'warning',
+        source: 'admin'
+      });
+    } catch (logErr) {
+      console.error("Activity Log Error:", logErr);
+    }
 
     await client.close();
 

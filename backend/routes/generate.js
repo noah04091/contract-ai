@@ -3245,6 +3245,26 @@ DAS IST KEIN "Vertrag neu schreiben" - DAS IST "Vertrag gezielt verbessern"!`;
     // ℹ️ AUTO-PDF wird jetzt in contracts.js generiert (wenn Frontend den Vertrag speichert)
     // Das verhindert Puppeteer Race Conditions (ETXTBSY Fehler)
 
+    // 📋 Activity Log: Vertrag generiert
+    try {
+      const { logActivity, ActivityTypes } = require('../services/activityLogger');
+      await logActivity(db, {
+        type: ActivityTypes.CONTRACT_GENERATED,
+        userId: req.user.userId,
+        userEmail: user?.email,
+        description: `Vertrag generiert: ${type}`,
+        details: {
+          contractType: type,
+          contractId: finalContractId?.toString(),
+          wasUpdate: !!existingContractId
+        },
+        severity: 'info',
+        source: 'generate'
+      });
+    } catch (logErr) {
+      console.error("Activity Log Error:", logErr);
+    }
+
     // Response mit allen Daten
     res.json({
       message: existingContractId

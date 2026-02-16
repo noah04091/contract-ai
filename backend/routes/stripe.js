@@ -229,6 +229,25 @@ router.post("/verify-subscription", verifyToken, async (req, res) => {
 
     console.log(`✅ [VERIFY] User ${email} erfolgreich auf ${plan} aktualisiert (Fallback)`);
 
+    // 📋 Activity Log: Subscription aktiviert
+    try {
+      const { logActivityStandalone, ActivityTypes } = require('../services/activityLogger');
+      await logActivityStandalone({
+        type: ActivityTypes.SUBSCRIPTION_ACTIVATED,
+        userId: userId,
+        userEmail: email,
+        description: `Subscription aktiviert: ${plan}`,
+        details: {
+          plan: plan,
+          stripeSubscriptionId: subscription.id
+        },
+        severity: 'info',
+        source: 'stripe'
+      });
+    } catch (logErr) {
+      console.error("Activity Log Error:", logErr);
+    }
+
     return res.json({
       success: true,
       subscriptionActive: true,
