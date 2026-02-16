@@ -676,6 +676,18 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
     const invoiceDate = new Date().toLocaleDateString("de-DE");
     const customerName = user?.name || email;
 
+    // Stripe Invoice-Nummer holen (für Verknüpfung mit Custom-PDF)
+    let stripeInvoiceNumber = null;
+    try {
+      if (subscription.latest_invoice) {
+        const stripeInvoice = await stripe.invoices.retrieve(subscription.latest_invoice);
+        stripeInvoiceNumber = stripeInvoice.number;
+        console.log(`📄 Stripe Invoice Number: ${stripeInvoiceNumber}`);
+      }
+    } catch (err) {
+      console.warn(`⚠️ Stripe Invoice Number nicht ermittelt:`, err.message);
+    }
+
     // 🆕 Checkout-Daten für vollständige Rechnung extrahieren
     let customerAddress = null;
     let companyName = null;
@@ -761,6 +773,7 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
 
     await invoicesCollection.insertOne({
       invoiceNumber,
+      stripeInvoiceNumber,  // Stripe's eigene Rechnungsnummer (z.B. D2A2BB9C-0093)
       customerEmail: email,
       customerName,
       plan,

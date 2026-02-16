@@ -194,9 +194,13 @@ router.get("/download/:invoiceNumber", verifyToken, async (req, res) => {
     try {
       console.log(`🔍 Suche Custom PDF: Email=${req.user.email}, InvoiceNumber=${invoiceNumber}`);
 
+      // Suche nach unserer eigenen Nummer ODER Stripe's Nummer
       const customInvoice = await invoicesCollection.findOne({
         customerEmail: req.user.email,
-        invoiceNumber: invoiceNumber
+        $or: [
+          { invoiceNumber: invoiceNumber },
+          { stripeInvoiceNumber: invoiceNumber }
+        ]
       });
 
       console.log(`📋 Custom Invoice gefunden: ${customInvoice ? 'JA' : 'NEIN'}`);
