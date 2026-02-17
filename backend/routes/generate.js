@@ -2068,9 +2068,41 @@ router.post("/", verifyToken, async (req, res) => {
     try {
       const generateV2 = require('./generateV2');
 
+      // 🔧 FIX: Frontend-Feldnamen auf V2-Struktur (parteiA/parteiB) mappen
+      const PARTY_FIELD_MAP = {
+        mietvertrag:      { a: 'landlord', aAddr: 'landlordAddress', b: 'tenant', bAddr: 'tenantAddress' },
+        kaufvertrag:      { a: 'seller', aAddr: 'sellerAddress', b: 'buyer', bAddr: 'buyerAddress' },
+        arbeitsvertrag:   { a: 'employer', aAddr: 'employerAddress', b: 'employee', bAddr: 'employeeAddress' },
+        freelancer:       { a: 'employer', aAddr: 'employerAddress', b: 'employee', bAddr: 'employeeAddress' },
+        nda:              { a: 'employer', aAddr: 'employerAddress', b: 'employee', bAddr: 'employeeAddress' },
+        aufhebungsvertrag:{ a: 'employer', aAddr: 'employerAddress', b: 'employee', bAddr: 'employeeAddress' },
+        darlehen:         { a: 'lender', aAddr: 'lenderAddress', b: 'borrower', bAddr: 'borrowerAddress' },
+        lizenzvertrag:    { a: 'licensor', aAddr: 'licensorAddress', b: 'licensee', bAddr: 'licenseeAddress' },
+        werkvertrag:      { a: 'employer', aAddr: 'employerAddress', b: 'employee', bAddr: 'employeeAddress' },
+        pacht:            { a: 'landlord', aAddr: 'landlordAddress', b: 'tenant', bAddr: 'tenantAddress' },
+        gesellschaft:     { a: 'employer', aAddr: 'employerAddress', b: 'employee', bAddr: 'employeeAddress' },
+      };
+
+      const v2Input = { ...formData };
+      const mapping = PARTY_FIELD_MAP[type];
+      if (mapping) {
+        if (formData[mapping.a] && !formData.parteiA) {
+          v2Input.parteiA = {
+            name: formData[mapping.a],
+            address: formData[mapping.aAddr] || ''
+          };
+        }
+        if (formData[mapping.b] && !formData.parteiB) {
+          v2Input.parteiB = {
+            name: formData[mapping.b],
+            address: formData[mapping.bAddr] || ''
+          };
+        }
+      }
+
       // V2 Flow ausführen
       const result = await generateV2.generateContractV2(
-        formData,
+        v2Input,
         type,
         req.user.userId,
         db
