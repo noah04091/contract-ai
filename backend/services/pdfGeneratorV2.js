@@ -430,7 +430,7 @@ const parseContractText = (text) => {
   let skipParties = false;
 
   for (const line of lines) {
-    const trimmed = line.trim();
+    const trimmed = line.trim().replace(/\*\*/g, '');
     if (!trimmed) continue;
 
     // Überspringe Parteien-Bereich im Text (wird separat gerendert)
@@ -438,7 +438,7 @@ const parseContractText = (text) => {
       skipParties = true;
       continue;
     }
-    if (skipParties && (trimmed === 'PRÄAMBEL' || trimmed.startsWith('§'))) {
+    if (skipParties && (trimmed.toUpperCase() === 'PRÄAMBEL' || trimmed.startsWith('§'))) {
       skipParties = false;
     }
     if (skipParties) continue;

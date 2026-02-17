@@ -473,11 +473,11 @@ ABSOLUT KRITISCHE REGELN:
 1. Erstelle einen VOLLSTÄNDIGEN Vertrag mit MINDESTENS 10-12 Paragraphen
 2. KEIN HTML, KEIN MARKDOWN - nur reiner Text
 3. Verwende EXAKT diese Struktur (keine Abweichungen!)
-4. WICHTIG - Umgang mit fehlenden Daten:
-   - Nutze NUR Daten, die im Prompt explizit angegeben sind
+4. WICHTIG - Umgang mit Daten:
+   - Nutze IMMER die konkreten Namen und Daten aus dem nachfolgenden Prompt
+   - Verwende Platzhalter NUR wenn die Daten im Prompt EXPLIZIT als fehlend markiert sind (z.B. "[NAME FEHLT]")
+   - Wenn ein Name angegeben wurde (z.B. "Vermieter: Max Mustermann"), verwende EXAKT diesen Namen im Vertrag
    - Erfinde NIEMALS falsche Namen, Adressen oder andere Daten
-   - Wenn Daten fehlen, verwende Platzhalter in eckigen Klammern wie [Name], [Straße], [PLZ], [Ort]
-   - Beispiel: Wenn kein Name angegeben wurde, schreibe "[Name des Verkäufers]" statt "Max Mustermann"
 5. Verwende professionelle juristische Sprache
 6. Jeder Paragraph muss detailliert ausformuliert sein (mindestens 3-4 Zeilen pro Absatz)
 7. KEINE UNTERSCHRIFTSLINIEN oder Unterschriftsblöcke - Der Vertrag endet nach § 10 SCHLUSSBESTIMMUNGEN
@@ -494,13 +494,15 @@ EXAKTE VERTRAGSSTRUKTUR (BITTE GENAU SO VERWENDEN):
 
 zwischen
 
-[Vollständige Angaben Partei A - nutze vorgegebene Daten ODER Platzhalter wie [Name], [Straße], [PLZ Ort]]
-- nachfolgend "[Kurzbezeichnung]" genannt -
+WICHTIG: Setze hier die ECHTEN Namen und Adressen aus den Eingabedaten ein!
+Verwende NIEMALS Platzhalter wie [Name] wenn der Name in den Eingabedaten vorhanden ist!
+Name Partei A aus Eingabedaten, Adresse Partei A aus Eingabedaten
+- nachfolgend "Vermieter" (oder passende Rolle) genannt -
 
 und
 
-[Vollständige Angaben Partei B - nutze vorgegebene Daten ODER Platzhalter wie [Name], [Straße], [PLZ Ort]]
-- nachfolgend "[Kurzbezeichnung]" genannt -
+Name Partei B aus Eingabedaten, Adresse Partei B aus Eingabedaten
+- nachfolgend "Mieter" (oder passende Rolle) genannt -
 
 PRÄAMBEL
 
