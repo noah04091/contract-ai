@@ -472,15 +472,6 @@ function extractContractDetails(text) {
   return details;
 }
 
-(async () => {
-  try {
-    await client.connect();
-    const db = client.db("contract_ai");
-    contractsCollection = db.collection("contracts");
-    analysisCollection = db.collection("analyses");
-    eventsCollection = db.collection("contract_events");
-    usersCollection = db.collection("users");
-
 // 🎓 Helper: Onboarding Checklist Item automatisch aktualisieren
 async function updateOnboardingChecklist(userId, itemId) {
   try {
@@ -505,6 +496,15 @@ async function updateOnboardingChecklist(userId, itemId) {
 
 // Export für andere Routes (z.B. analyze.js)
 router.updateOnboardingChecklist = updateOnboardingChecklist;
+
+(async () => {
+  try {
+    await client.connect();
+    const db = client.db("contract_ai");
+    contractsCollection = db.collection("contracts");
+    analysisCollection = db.collection("analyses");
+    eventsCollection = db.collection("contract_events");
+    usersCollection = db.collection("users");
 
     // 🚀 PERFORMANCE: MongoDB Indizes erstellen (idempotent - existierende werden übersprungen)
     try {
