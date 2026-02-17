@@ -227,55 +227,175 @@ async function handleStripeEvent(event) {
   switch (event.type) {
     case "invoice.paid": {
       const invoice = event.data.object; // Stripe Invoice
-
-      // Anti-Duplikat: nur einmal pro invoice.id
-      if (await mailsRepo.hasInvoiceMail(invoice.id)) {
-        console.log(`📧 Payment Email für Invoice ${invoice.id} bereits gesendet, überspringe`);
-        return;
-      }
-
-      // Betrag und Datum extrahieren
-      const amount = (invoice.amount_paid / 100).toFixed(2); // "0.00" Format
-      const paidAt = invoice.status_transitions?.paid_at
-        ? new Date(invoice.status_transitions.paid_at * 1000).toLocaleDateString("de-DE")
-        : new Date().toLocaleDateString("de-DE");
-
-      // Plan aus Invoice Line extrahieren
-      const line = invoice.lines?.data?.[0];
-      const plan = resolvePlanName(line);
-
       const customerEmail = invoice.customer_email;
       const isZero = (invoice.amount_paid || 0) === 0;
 
-      // Policy: 0,00 € – keine Payment-Mail bei Gutscheinen
+      // Policy: 0,00 € – keine Payment-Mail/PDF bei Gutscheinen
       const SEND_ZERO_EURO = false;
       if (isZero && !SEND_ZERO_EURO) {
-        console.log(`💰 Invoice ${invoice.id} ist €0.00 (Gutschein), überspringe Payment Email`);
+        console.log(`💰 Invoice ${invoice.id} ist €0.00 (Gutschein), überspringe`);
         await mailsRepo.markInvoiceMail(invoice.id);
         return;
       }
 
-      // Payment Confirmation Email senden (Fire-and-Forget)
+      // 1. Payment Confirmation Email (mit eigenem Duplikat-Check)
+      if (!(await mailsRepo.hasInvoiceMail(invoice.id))) {
+        const amount = (invoice.amount_paid / 100).toFixed(2);
+        const paidAt = invoice.status_transitions?.paid_at
+          ? new Date(invoice.status_transitions.paid_at * 1000).toLocaleDateString("de-DE")
+          : new Date().toLocaleDateString("de-DE");
+        const line = invoice.lines?.data?.[0];
+        const plan = resolvePlanName(line);
+
+        setImmediate(async () => {
+          try {
+            await sendEmail({
+              to: customerEmail,
+              subject: `Contract AI - Zahlungsbestaetigung`,
+              html: paymentTemplate({
+                amount,
+                date: paidAt,
+                plan,
+                accountUrl: "https://contract-ai.de/dashboard",
+                invoicesUrl: "https://contract-ai.de/profile",
+                zeroText: null
+              })
+            });
+            console.log(`💳 Payment Confirmation Email gesendet an ${customerEmail} für €${amount}`);
+            await mailsRepo.markInvoiceMail(invoice.id);
+          } catch (err) {
+            console.error(`❌ Fehler beim Senden der Payment Email:`, err);
+          }
+        });
+      }
+
+      // 2. Custom Invoice PDF generieren (für Renewals)
       setImmediate(async () => {
+        const client = new MongoClient(MONGO_URI);
         try {
-          await sendEmail({
-            to: customerEmail,
-            subject: `Contract AI - Zahlungsbestaetigung`,
-            html: paymentTemplate({
-              amount,
-              date: paidAt,
-              plan,
-              accountUrl: "https://contract-ai.de/dashboard",
-              invoicesUrl: "https://contract-ai.de/profile",
-              zeroText: isZero ? "Gutschein angewendet – Gesamt 0,00 €" : null
-            })
+          await client.connect();
+          const db = client.db("contract_ai");
+          const invoicesCollection = db.collection("invoices");
+          const usersCollection = db.collection("users");
+
+          // Duplikat-Check: Existiert bereits eine Custom-PDF für diese Stripe-Rechnung?
+          // (z.B. weil checkout.session.completed sie schon generiert hat)
+          if (invoice.number) {
+            const existingPdf = await invoicesCollection.findOne({
+              stripeInvoiceNumber: invoice.number
+            });
+            if (existingPdf) {
+              console.log(`📄 Custom PDF für ${invoice.number} existiert bereits, überspringe`);
+              return;
+            }
+          }
+
+          console.log(`📄 Generiere Custom Invoice PDF für: ${invoice.number || invoice.id}`);
+
+          // User laden
+          const user = await usersCollection.findOne({ stripeCustomerId: invoice.customer });
+          if (!user) {
+            console.warn(`⚠️ Kein User gefunden für Invoice PDF: ${invoice.customer}`);
+            return;
+          }
+
+          // Subscription für Zeitraum und Zahlungsmethode
+          const subscription = await stripe.subscriptions.retrieve(invoice.subscription, {
+            expand: ['default_payment_method']
           });
 
-          console.log(`💳 Payment Confirmation Email gesendet an ${customerEmail} für €${amount}`);
-          await mailsRepo.markInvoiceMail(invoice.id);
+          // Stripe Customer für Adresse und Firmendaten
+          const stripeCustomer = await stripe.customers.retrieve(invoice.customer);
+
+          const customerAddress = stripeCustomer.address || null;
+          const companyName = stripeCustomer.metadata?.company_name || null;
+          const taxId = stripeCustomer.metadata?.tax_id || null;
+          const customerName = stripeCustomer.name || user?.name || customerEmail;
+
+          // Plan aus Price ID ermitteln
+          const priceId = subscription.items.data[0]?.price?.id;
+          const priceMap = {
+            [process.env.STRIPE_BUSINESS_MONTHLY_PRICE_ID]: "business",
+            [process.env.STRIPE_BUSINESS_YEARLY_PRICE_ID]: "business",
+            [process.env.STRIPE_BUSINESS_PRICE_ID]: "business",
+            [process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID]: "enterprise",
+            [process.env.STRIPE_ENTERPRISE_YEARLY_PRICE_ID]: "enterprise",
+            [process.env.STRIPE_ENTERPRISE_PRICE_ID]: "enterprise",
+            [process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID]: "enterprise",
+            [process.env.STRIPE_PREMIUM_YEARLY_PRICE_ID]: "enterprise",
+            [process.env.STRIPE_PREMIUM_PRICE_ID]: "enterprise",
+          };
+          const detectedPlan = priceMap[priceId] || "business";
+
+          // Neue Rechnungsnummer generieren
+          const latestInvoice = await invoicesCollection
+            .find({})
+            .sort({ createdAt: -1 })
+            .limit(1)
+            .toArray();
+          const latestNumber = latestInvoice.length && latestInvoice[0].invoiceNumber && typeof latestInvoice[0].invoiceNumber === 'string'
+            ? parseInt(latestInvoice[0].invoiceNumber.split("-")[2]) || 0
+            : 0;
+          const invoiceNumber = generateInvoiceNumber(latestNumber);
+
+          const invoiceAmount = invoice.amount_paid / 100;
+          const invoiceDate = new Date().toLocaleDateString("de-DE", { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+          // PDF generieren
+          const pdfBuffer = await generateInvoicePdf({
+            customerName,
+            email: customerEmail,
+            plan: detectedPlan,
+            amount: invoiceAmount,
+            invoiceDate,
+            invoiceNumber,
+            customerAddress,
+            companyName,
+            taxId,
+            subscriptionId: invoice.subscription,
+            periodStart: subscription.current_period_start,
+            periodEnd: subscription.current_period_end,
+            paymentMethod: subscription.default_payment_method?.type || 'card'
+          });
+
+          // Rechnung per Email senden
+          await sendEmail({
+            to: customerEmail,
+            subject: "Contract AI - Deine Rechnung",
+            html: generateEmailTemplate({
+              title: "Deine Rechnung",
+              body: `
+                <p>Vielen Dank für deinen Kauf!</p>
+                <p>Im Anhang findest du die Rechnung zu deinem ${detectedPlan}-Abo.</p>
+              `,
+              preheader: "Hier ist deine aktuelle Rechnung von Contract AI."
+            }),
+            attachments: [{
+              filename: `Rechnung-${invoiceNumber}.pdf`,
+              content: pdfBuffer,
+            }]
+          });
+
+          // In MongoDB speichern
+          await invoicesCollection.insertOne({
+            invoiceNumber,
+            stripeInvoiceNumber: invoice.number || null,
+            customerEmail,
+            customerName,
+            plan: detectedPlan,
+            amount: invoiceAmount,
+            date: invoiceDate,
+            file: pdfBuffer,
+            createdAt: new Date()
+          });
+
+          console.log(`✅ Custom Invoice PDF generiert: ${invoiceNumber} (Stripe: ${invoice.number})`);
+
         } catch (err) {
-          console.error(`❌ Fehler beim Senden der Payment Email:`, err);
-          // Nicht als versendet markieren, damit Retry möglich ist
+          console.error(`❌ Fehler bei Invoice PDF (invoice.paid):`, err);
+          // Kein Crash - Fallback: Kunde hat weiterhin Stripe's Standard-Rechnung
+        } finally {
+          await client.close();
         }
       });
 
