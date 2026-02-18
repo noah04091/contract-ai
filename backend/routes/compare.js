@@ -5,6 +5,7 @@ const verifyToken = require("../middleware/verifyToken");
 const pdfParse = require("pdf-parse");
 const multer = require("multer");
 const { extractTextFromBuffer, isSupportedMimetype } = require("../services/textExtractor");
+const pdfExtractor = require("../services/pdfExtractor");
 const fs = require("fs");
 const fsPromises = require("fs").promises;
 const path = require("path");
@@ -539,11 +540,46 @@ router.post("/", verifyToken, upload.fields([
       extractTextFromBuffer(buffer2, file2.mimetype)
     ]);
 
-    const contract1Text = extracted1.text.trim();
-    const contract2Text = extracted2.text.trim();
+    let contract1Text = extracted1.text.trim();
+    let contract2Text = extracted2.text.trim();
+
+    // OCR-Fallback für gescannte PDFs mit wenig/keinem Text
+    const ocrFallback = async (buffer, mimetype, currentText, fileName) => {
+      const isPdf = mimetype === 'application/pdf';
+      const textTooShort = !currentText || currentText.length < 200;
+      if (isPdf && textTooShort) {
+        console.log(`🔍 [Compare] Wenig Text in ${fileName} (${currentText.length} Zeichen) — versuche OCR-Fallback...`);
+        try {
+          const ocrResult = await pdfExtractor.extractTextWithOCRFallback(buffer, {
+            mimetype,
+            enableOCR: true,
+            ocrThreshold: 50,
+            userId: req.user?.userId
+          });
+          if (ocrResult.success && ocrResult.text.trim().length > currentText.length) {
+            console.log(`✅ [Compare] OCR-Fallback erfolgreich für ${fileName}: ${ocrResult.text.length} Zeichen`);
+            return ocrResult.text.trim();
+          }
+        } catch (ocrErr) {
+          console.warn(`⚠️ [Compare] OCR-Fallback fehlgeschlagen für ${fileName}: ${ocrErr.message}`);
+        }
+      }
+      return currentText;
+    };
+
+    [contract1Text, contract2Text] = await Promise.all([
+      ocrFallback(buffer1, file1.mimetype, contract1Text, file1.originalname),
+      ocrFallback(buffer2, file2.mimetype, contract2Text, file2.originalname)
+    ]);
 
     if (!contract1Text || !contract2Text) {
-      const error = { message: "Mindestens eine Datei konnte nicht gelesen werden oder ist leer" };
+      const emptyFiles = [];
+      if (!contract1Text) emptyFiles.push(file1.originalname);
+      if (!contract2Text) emptyFiles.push(file2.originalname);
+      const error = {
+        message: "Mindestens eine Datei konnte nicht gelesen werden oder ist leer",
+        details: `Betroffene Datei(en): ${emptyFiles.join(', ')}. Falls es sich um gescannte PDFs handelt, bitte in besserer Qualität erneut scannen.`
+      };
       if (wantsSSE) {
         res.write(`data: ${JSON.stringify({ type: 'error', ...error })}\n\n`);
         return res.end();
