@@ -185,38 +185,50 @@ const LegalLens: React.FC = () => {
                   <span className={`${styles.demoDot} ${styles.demoDotRed}`}></span>
                   <span className={`${styles.demoDot} ${styles.demoDotYellow}`}></span>
                   <span className={`${styles.demoDot} ${styles.demoDotGreen}`}></span>
+                  <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#64748b', fontWeight: 500 }}>Legal Lens</span>
                 </div>
-                <div className={styles.demoContent}>
-                  <div className={styles.demoScore}>
-                    <div className={styles.demoScoreCircle}>
-                      <Eye size={24} />
+                <div className={styles.demoContent} style={{ display: 'flex', gap: '10px', padding: '10px' }}>
+                  {/* Dokument (links) */}
+                  <div style={{ flex: 1, background: '#fff', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '10px', fontSize: '9px', lineHeight: 1.6, color: '#64748b' }}>
+                    <div style={{ fontWeight: 700, color: '#1e293b', marginBottom: '6px', fontSize: '10px' }}>Mietvertrag.pdf</div>
+                    <div style={{ marginBottom: '4px' }}>§ 6 Der Mieter verpflichtet sich zur ordnungsgemäßen Pflege...</div>
+                    {/* Highlighted Clause */}
+                    <div style={{
+                      background: 'rgba(239, 68, 68, 0.12)',
+                      borderLeft: '3px solid #ef4444',
+                      padding: '6px 8px',
+                      borderRadius: '0 4px 4px 0',
+                      marginBottom: '4px',
+                      cursor: 'pointer',
+                      position: 'relative'
+                    }}>
+                      <span style={{ color: '#1e293b' }}>§ 7 Der Vermieter haftet nicht für Schäden, die durch höhere Gewalt entstehen...</span>
+                      <div style={{
+                        position: 'absolute', right: '-4px', top: '50%', transform: 'translateY(-50%)',
+                        width: '16px', height: '16px', borderRadius: '50%',
+                        background: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}>
+                        <MousePointer size={8} color="#fff" />
+                      </div>
                     </div>
-                    <div className={styles.demoScoreText}>
-                      <div className={styles.demoScoreLabel}>Legal Lens</div>
-                      <div className={styles.demoScoreTitle}>Klausel angeklickt</div>
-                    </div>
+                    <div>§ 8 Die Kaution beträgt drei Monatsmieten...</div>
                   </div>
-                  <div className={styles.demoFindings}>
-                    <div className={styles.demoFinding}>
-                      <div className={`${styles.demoFindingIcon} ${styles.risk}`}>
-                        <AlertTriangle size={14} />
-                      </div>
-                      <span className={styles.demoFindingText}>§ 7 Haftungsausschluss</span>
-                      <span className={`${styles.demoFindingBadge} ${styles.high}`}>Kritisch</span>
+                  {/* Erklärung (rechts) */}
+                  <div style={{ width: '45%', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '6px', border: '1px solid rgba(239, 68, 68, 0.2)', padding: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                      <AlertTriangle size={14} color="#ef4444" />
+                      <span style={{ fontSize: '10px', fontWeight: 700, color: '#dc2626' }}>Kritische Klausel</span>
                     </div>
-                    <div className={styles.demoFinding}>
-                      <div className={`${styles.demoFindingIcon} ${styles.warning}`}>
-                        <Scale size={14} />
-                      </div>
-                      <span className={styles.demoFindingText}>Fairness-Bewertung</span>
-                      <span className={`${styles.demoFindingBadge} ${styles.medium}`}>Einseitig</span>
+                    <div style={{ fontSize: '10px', color: '#334155', marginBottom: '8px', lineHeight: 1.5 }}>
+                      Diese Klausel schließt die Haftung <strong>sehr weit</strong> aus. "Höhere Gewalt" ist nicht definiert.
                     </div>
-                    <div className={styles.demoFinding}>
-                      <div className={`${styles.demoFindingIcon} ${styles.info}`}>
-                        <Lightbulb size={14} />
-                      </div>
-                      <span className={styles.demoFindingText}>Verhandlungstipp</span>
-                      <span className={`${styles.demoFindingBadge} ${styles.low}`}>Verfügbar</span>
+                    <div style={{
+                      background: '#fff', borderRadius: '4px', padding: '6px 8px',
+                      display: 'flex', alignItems: 'center', gap: '6px',
+                      border: '1px solid rgba(59, 130, 246, 0.2)'
+                    }}>
+                      <Lightbulb size={12} color="#3b82f6" />
+                      <span style={{ fontSize: '9px', color: '#3b82f6' }}>Tipp: Definition fordern</span>
                     </div>
                   </div>
                 </div>

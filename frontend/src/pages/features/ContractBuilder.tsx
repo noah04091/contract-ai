@@ -186,38 +186,61 @@ const ContractBuilder: React.FC = () => {
                   <span className={`${styles.demoDot} ${styles.demoDotRed}`}></span>
                   <span className={`${styles.demoDot} ${styles.demoDotYellow}`}></span>
                   <span className={`${styles.demoDot} ${styles.demoDotGreen}`}></span>
+                  <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#64748b', fontWeight: 500 }}>Contract Builder</span>
                 </div>
-                <div className={styles.demoContent}>
-                  <div className={styles.demoScore}>
-                    <div className={styles.demoScoreCircle}>
-                      <Layers size={24} />
-                    </div>
-                    <div className={styles.demoScoreText}>
-                      <div className={styles.demoScoreLabel}>Contract Builder</div>
-                      <div className={styles.demoScoreTitle}>3 Bausteine aktiv</div>
-                    </div>
+                <div className={styles.demoContent} style={{ display: 'flex', gap: '12px', padding: '12px' }}>
+                  {/* Klausel-Bibliothek (links) */}
+                  <div style={{ width: '45%', background: '#f8fafc', borderRadius: '8px', padding: '8px' }}>
+                    <div style={{ fontSize: '9px', color: '#64748b', fontWeight: 600, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Bausteine</div>
+                    {[
+                      { label: 'Präambel', color: '#3b82f6' },
+                      { label: 'Vergütung', color: '#8b5cf6' },
+                      { label: 'Haftung', color: '#f59e0b' },
+                    ].map((block, i) => (
+                      <div key={i} style={{
+                        display: 'flex', alignItems: 'center', gap: '6px',
+                        padding: '6px 8px', background: '#fff', borderRadius: '6px',
+                        marginBottom: '4px', cursor: 'grab',
+                        border: '1px dashed #e2e8f0', fontSize: '11px', color: '#334155'
+                      }}>
+                        <div style={{ width: '6px', height: '6px', borderRadius: '2px', background: block.color }} />
+                        {block.label}
+                        <span style={{ marginLeft: 'auto', color: '#94a3b8', fontSize: '10px' }}>+</span>
+                      </div>
+                    ))}
                   </div>
-                  <div className={styles.demoFindings}>
-                    <div className={styles.demoFinding}>
-                      <div className={`${styles.demoFindingIcon} ${styles.info}`}>
-                        <CheckCircle size={14} />
+                  {/* Vertragsvorschau (rechts) */}
+                  <div style={{ flex: 1, background: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', padding: '8px' }}>
+                    <div style={{ fontSize: '9px', color: '#64748b', fontWeight: 600, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ihr Vertrag</div>
+                    {[
+                      { label: '§ 1 Vertragsparteien', color: '#22c55e', done: true },
+                      { label: '§ 2 Leistungen', color: '#22c55e', done: true },
+                      { label: '§ 3 Vergütung', color: '#3b82f6', done: false, active: true },
+                    ].map((section, i) => (
+                      <div key={i} style={{
+                        display: 'flex', alignItems: 'center', gap: '6px',
+                        padding: '6px 8px', borderRadius: '6px', marginBottom: '4px',
+                        background: section.active ? 'rgba(59, 130, 246, 0.08)' : 'transparent',
+                        border: section.active ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid transparent',
+                        fontSize: '11px', color: '#334155'
+                      }}>
+                        <div style={{
+                          width: '14px', height: '14px', borderRadius: '4px',
+                          background: section.done ? '#22c55e' : '#e2e8f0',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        }}>
+                          {section.done && <CheckCircle size={10} color="#fff" />}
+                        </div>
+                        <span style={{ flex: 1 }}>{section.label}</span>
+                        {section.active && <span style={{ fontSize: '9px', color: '#3b82f6' }}>Bearbeiten</span>}
                       </div>
-                      <span className={styles.demoFindingText}>§ 1 Vertragsparteien</span>
-                      <span className={`${styles.demoFindingBadge} ${styles.low}`}>Fertig</span>
-                    </div>
-                    <div className={styles.demoFinding}>
-                      <div className={`${styles.demoFindingIcon} ${styles.info}`}>
-                        <CheckCircle size={14} />
-                      </div>
-                      <span className={styles.demoFindingText}>§ 2 Leistungsbeschreibung</span>
-                      <span className={`${styles.demoFindingBadge} ${styles.low}`}>Fertig</span>
-                    </div>
-                    <div className={styles.demoFinding}>
-                      <div className={`${styles.demoFindingIcon} ${styles.warning}`}>
-                        <Clock size={14} />
-                      </div>
-                      <span className={styles.demoFindingText}>§ 3 Vergütung</span>
-                      <span className={`${styles.demoFindingBadge} ${styles.medium}`}>Offen</span>
+                    ))}
+                    <div style={{
+                      marginTop: '8px', padding: '8px', borderRadius: '6px',
+                      border: '2px dashed #e2e8f0', textAlign: 'center',
+                      fontSize: '10px', color: '#94a3b8'
+                    }}>
+                      Baustein hierher ziehen
                     </div>
                   </div>
                 </div>

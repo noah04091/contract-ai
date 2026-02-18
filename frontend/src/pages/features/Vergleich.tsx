@@ -6,7 +6,7 @@ import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
 import AutoPlayVideo from "../../components/AutoPlayVideo";
 import {
-  GitCompare, Shield, Zap, FileText, AlertTriangle, CheckCircle,
+  Shield, Zap, FileText, AlertTriangle, CheckCircle,
   ArrowRight, Clock, Target, ChevronDown, BarChart3, Search, Sparkles, Eye
 } from "lucide-react";
 
@@ -190,40 +190,53 @@ const Vergleich: React.FC = () => {
                   <span className={`${styles.demoDot} ${styles.demoDotRed}`}></span>
                   <span className={`${styles.demoDot} ${styles.demoDotYellow}`}></span>
                   <span className={`${styles.demoDot} ${styles.demoDotGreen}`}></span>
+                  <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#64748b', fontWeight: 500 }}>Vergleich</span>
                 </div>
-                <div className={styles.demoContent}>
-                  <div className={styles.demoScore}>
-                    <div className={styles.demoScoreCircle}>
-                      <span className={styles.demoScoreValue}>
-                        <GitCompare size={28} />
-                      </span>
+                <div className={styles.demoContent} style={{ padding: '12px' }}>
+                  {/* Side-by-Side Comparison */}
+                  <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+                    {/* Vertrag A */}
+                    <div style={{ flex: 1, background: '#f8fafc', borderRadius: '8px', padding: '8px' }}>
+                      <div style={{ fontSize: '10px', fontWeight: 700, color: '#64748b', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <FileText size={12} /> Vertrag A
+                      </div>
+                      <div style={{ fontSize: '10px', color: '#334155', marginBottom: '4px' }}>Kündigungsfrist:</div>
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: '#ef4444', marginBottom: '8px' }}>6 Monate</div>
+                      <div style={{ fontSize: '10px', color: '#334155', marginBottom: '4px' }}>Monatspreis:</div>
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: '#22c55e' }}>€49/Monat</div>
                     </div>
-                    <div className={styles.demoScoreText}>
-                      <div className={styles.demoScoreLabel}>Vertragsvergleich</div>
-                      <div className={styles.demoScoreTitle}>Vertrag A vs. B</div>
+                    {/* VS Divider */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{
+                        width: '28px', height: '28px', borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '9px', fontWeight: 700, color: '#fff'
+                      }}>VS</div>
+                    </div>
+                    {/* Vertrag B */}
+                    <div style={{ flex: 1, background: 'rgba(34, 197, 94, 0.08)', borderRadius: '8px', padding: '8px', border: '1px solid rgba(34, 197, 94, 0.2)' }}>
+                      <div style={{ fontSize: '10px', fontWeight: 700, color: '#22c55e', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <FileText size={12} /> Vertrag B <CheckCircle size={10} />
+                      </div>
+                      <div style={{ fontSize: '10px', color: '#334155', marginBottom: '4px' }}>Kündigungsfrist:</div>
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: '#22c55e', marginBottom: '8px' }}>3 Monate</div>
+                      <div style={{ fontSize: '10px', color: '#334155', marginBottom: '4px' }}>Monatspreis:</div>
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: '#f59e0b' }}>€59/Monat</div>
                     </div>
                   </div>
-                  <div className={styles.demoFindings}>
-                    <div className={styles.demoFinding}>
-                      <div className={`${styles.demoFindingIcon} ${styles.success}`}>
-                        <CheckCircle size={14} />
+                  {/* Empfehlung */}
+                  <div style={{
+                    background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05))',
+                    borderRadius: '8px', padding: '10px',
+                    border: '1px solid rgba(34, 197, 94, 0.2)'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Target size={16} color="#22c55e" />
+                      <div>
+                        <div style={{ fontSize: '11px', fontWeight: 600, color: '#166534' }}>Empfehlung: Vertrag B</div>
+                        <div style={{ fontSize: '10px', color: '#64748b' }}>Flexibler durch kürzere Bindung</div>
                       </div>
-                      <span className={styles.demoFindingText}>Vertrag B: Kürzere Kündigungsfrist</span>
-                      <span className={`${styles.demoFindingBadge} ${styles.improved}`}>+Vorteil</span>
-                    </div>
-                    <div className={styles.demoFinding}>
-                      <div className={`${styles.demoFindingIcon} ${styles.warning}`}>
-                        <AlertTriangle size={14} />
-                      </div>
-                      <span className={styles.demoFindingText}>Vertrag A: Niedrigere Kosten</span>
-                      <span className={`${styles.demoFindingBadge} ${styles.medium}`}>+Vorteil</span>
-                    </div>
-                    <div className={styles.demoFinding}>
-                      <div className={`${styles.demoFindingIcon} ${styles.info}`}>
-                        <Target size={14} />
-                      </div>
-                      <span className={styles.demoFindingText}>Empfehlung: Vertrag B</span>
-                      <span className={`${styles.demoFindingBadge} ${styles.low}`}>Flexibler</span>
                     </div>
                   </div>
                 </div>

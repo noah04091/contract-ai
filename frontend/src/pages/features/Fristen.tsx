@@ -189,38 +189,79 @@ const Fristen: React.FC = () => {
                   <span className={`${styles.demoDot} ${styles.demoDotRed}`}></span>
                   <span className={`${styles.demoDot} ${styles.demoDotYellow}`}></span>
                   <span className={`${styles.demoDot} ${styles.demoDotGreen}`}></span>
+                  <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#64748b', fontWeight: 500 }}>März 2025</span>
                 </div>
                 <div className={styles.demoContent}>
-                  <div className={styles.demoScore}>
-                    <div className={styles.demoScoreCircle}>
-                      <span className={styles.demoScoreValue}>3</span>
+                  {/* Mini Calendar Grid */}
+                  <div style={{ padding: '4px 8px' }}>
+                    {/* Weekday Headers */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', marginBottom: '6px' }}>
+                      {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map(day => (
+                        <div key={day} style={{ fontSize: '10px', color: '#94a3b8', textAlign: 'center', fontWeight: 600 }}>{day}</div>
+                      ))}
                     </div>
-                    <div className={styles.demoScoreText}>
-                      <div className={styles.demoScoreLabel}>Anstehende Fristen</div>
-                      <div className={styles.demoScoreTitle}>Fristenkalender</div>
+                    {/* Calendar Days */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '3px' }}>
+                      {/* Empty cells for offset */}
+                      {[null, null, null, null, null, 1, 2].map((d, i) => (
+                        <div key={`w1-${i}`} style={{
+                          width: '28px', height: '28px', borderRadius: '6px',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '11px', color: d ? '#334155' : 'transparent',
+                          background: d === 1 ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
+                        }}>{d || '·'}</div>
+                      ))}
+                      {/* Week 2: 3-9 */}
+                      {[3, 4, 5, 6, 7, 8, 9].map(d => (
+                        <div key={`d-${d}`} style={{
+                          width: '28px', height: '28px', borderRadius: '6px',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '11px', color: '#334155',
+                          background: d === 7 ? 'rgba(234, 179, 8, 0.15)' : 'transparent',
+                          border: d === 7 ? '1px solid rgba(234, 179, 8, 0.4)' : 'none'
+                        }}>{d}</div>
+                      ))}
+                      {/* Week 3: 10-16 with deadline highlight */}
+                      {[10, 11, 12, 13, 14, 15, 16].map(d => (
+                        <div key={`d-${d}`} style={{
+                          width: '28px', height: '28px', borderRadius: '6px',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '11px', fontWeight: d === 14 ? 700 : 400,
+                          color: d === 14 ? '#fff' : '#334155',
+                          background: d === 14 ? 'linear-gradient(135deg, #ef4444, #dc2626)' : 'transparent',
+                          boxShadow: d === 14 ? '0 2px 8px rgba(239, 68, 68, 0.4)' : 'none'
+                        }}>{d}</div>
+                      ))}
+                      {/* Week 4: 17-23 */}
+                      {[17, 18, 19, 20, 21, 22, 23].map(d => (
+                        <div key={`d-${d}`} style={{
+                          width: '28px', height: '28px', borderRadius: '6px',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '11px', color: '#334155'
+                        }}>{d}</div>
+                      ))}
+                      {/* Week 5: 24-30 with reminder */}
+                      {[24, 25, 26, 27, 28, 29, 30].map(d => (
+                        <div key={`d-${d}`} style={{
+                          width: '28px', height: '28px', borderRadius: '6px',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '11px', color: '#334155',
+                          background: d === 28 ? 'rgba(34, 197, 94, 0.15)' : 'transparent',
+                          border: d === 28 ? '1px solid rgba(34, 197, 94, 0.4)' : 'none'
+                        }}>{d}</div>
+                      ))}
                     </div>
                   </div>
-                  <div className={styles.demoFindings}>
-                    <div className={styles.demoFinding}>
-                      <div className={`${styles.demoFindingIcon} ${styles.risk}`}>
-                        <AlertTriangle size={14} />
-                      </div>
-                      <span className={styles.demoFindingText}>Kündigungsfrist in 14 Tagen</span>
-                      <span className={`${styles.demoFindingBadge} ${styles.high}`}>Dringend</span>
+                  {/* Legend / Upcoming */}
+                  <div style={{ borderTop: '1px solid #e2e8f0', marginTop: '10px', paddingTop: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 8px', background: 'rgba(239, 68, 68, 0.08)', borderRadius: '6px', marginBottom: '6px' }}>
+                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444' }} />
+                      <span style={{ fontSize: '11px', color: '#334155', flex: 1 }}>14. März – Kündigungsfrist</span>
+                      <span style={{ fontSize: '10px', color: '#ef4444', fontWeight: 600 }}>Dringend</span>
                     </div>
-                    <div className={styles.demoFinding}>
-                      <div className={`${styles.demoFindingIcon} ${styles.warning}`}>
-                        <Clock size={14} />
-                      </div>
-                      <span className={styles.demoFindingText}>Auto-Verlängerung am 1. April</span>
-                      <span className={`${styles.demoFindingBadge} ${styles.medium}`}>30 Tage</span>
-                    </div>
-                    <div className={styles.demoFinding}>
-                      <div className={`${styles.demoFindingIcon} ${styles.info}`}>
-                        <Bell size={14} />
-                      </div>
-                      <span className={styles.demoFindingText}>Mietvertrag Kündigung möglich</span>
-                      <span className={`${styles.demoFindingBadge} ${styles.low}`}>90 Tage</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 8px' }}>
+                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e' }} />
+                      <span style={{ fontSize: '11px', color: '#64748b', flex: 1 }}>28. März – Erinnerung gesetzt</span>
                     </div>
                   </div>
                 </div>

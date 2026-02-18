@@ -6,7 +6,7 @@ import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
 import AutoPlayVideo from "../../components/AutoPlayVideo";
 import {
-  Activity, TrendingUp, AlertTriangle, Bell, Shield, CheckCircle,
+  Activity, TrendingUp, AlertTriangle, Bell, Shield,
   ArrowRight, ChevronDown, FileText, Clock, Zap, Search, Calendar, FolderOpen
 } from "lucide-react";
 
@@ -187,39 +187,49 @@ const LegalPulse: React.FC = () => {
                   <span className={`${styles.demoDot} ${styles.demoDotRed}`}></span>
                   <span className={`${styles.demoDot} ${styles.demoDotYellow}`}></span>
                   <span className={`${styles.demoDot} ${styles.demoDotGreen}`}></span>
+                  <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#64748b', fontWeight: 500 }}>Legal Pulse</span>
                 </div>
-                <div className={styles.demoContent}>
-                  <div className={styles.demoScore}>
-                    <div className={styles.demoScoreCircle}>
-                      <Activity size={24} />
+                <div className={styles.demoContent} style={{ padding: '12px' }}>
+                  {/* Pulse Animation Bar */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', padding: '8px', background: '#f8fafc', borderRadius: '8px' }}>
+                    <div style={{
+                      width: '32px', height: '32px', borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #22c55e, #16a34a)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      animation: 'pulse 2s infinite'
+                    }}>
+                      <Activity size={16} color="#fff" />
                     </div>
-                    <div className={styles.demoScoreText}>
-                      <div className={styles.demoScoreLabel}>Risiko-Monitor</div>
-                      <div className={styles.demoScoreTitle}>3 Alerts aktiv</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '11px', fontWeight: 600, color: '#166534' }}>Überwachung aktiv</div>
+                      <div style={{ fontSize: '10px', color: '#64748b' }}>12 Verträge • 100+ Quellen</div>
                     </div>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e', animation: 'pulse 1.5s infinite' }} />
                   </div>
-                  <div className={styles.demoFindings}>
-                    <div className={styles.demoFinding}>
-                      <div className={`${styles.demoFindingIcon} ${styles.risk}`}>
-                        <AlertTriangle size={14} />
+                  {/* Alert Timeline */}
+                  <div style={{ position: 'relative', paddingLeft: '16px' }}>
+                    <div style={{ position: 'absolute', left: '5px', top: '8px', bottom: '8px', width: '2px', background: '#e2e8f0' }} />
+                    {[
+                      { time: 'Heute', title: 'DSGVO-Update betrifft 3 Verträge', severity: 'high', color: '#ef4444' },
+                      { time: 'Gestern', title: 'Neue Informationspflicht erkannt', severity: 'medium', color: '#f59e0b' },
+                      { time: '3 Tage', title: 'Alle Arbeitsverträge aktuell', severity: 'ok', color: '#22c55e' },
+                    ].map((alert, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '10px', position: 'relative' }}>
+                        <div style={{
+                          width: '10px', height: '10px', borderRadius: '50%',
+                          background: alert.color, border: '2px solid #fff',
+                          boxShadow: '0 0 0 2px ' + alert.color + '33',
+                          position: 'absolute', left: '-16px', top: '4px'
+                        }} />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: '9px', color: '#94a3b8', marginBottom: '2px' }}>{alert.time}</div>
+                          <div style={{ fontSize: '10px', color: '#334155', lineHeight: 1.3 }}>{alert.title}</div>
+                        </div>
+                        {alert.severity === 'high' && (
+                          <span style={{ fontSize: '9px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>Aktion</span>
+                        )}
                       </div>
-                      <span className={styles.demoFindingText}>DSGVO-Update erforderlich</span>
-                      <span className={`${styles.demoFindingBadge} ${styles.high}`}>Hoch</span>
-                    </div>
-                    <div className={styles.demoFinding}>
-                      <div className={`${styles.demoFindingIcon} ${styles.warning}`}>
-                        <Bell size={14} />
-                      </div>
-                      <span className={styles.demoFindingText}>Neue Informationspflicht</span>
-                      <span className={`${styles.demoFindingBadge} ${styles.medium}`}>Mittel</span>
-                    </div>
-                    <div className={styles.demoFinding}>
-                      <div className={`${styles.demoFindingIcon} ${styles.info}`}>
-                        <CheckCircle size={14} />
-                      </div>
-                      <span className={styles.demoFindingText}>5 Verträge aktuell</span>
-                      <span className={`${styles.demoFindingBadge} ${styles.low}`}>OK</span>
-                    </div>
+                    ))}
                   </div>
                 </div>
               </div>

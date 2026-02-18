@@ -190,38 +190,58 @@ const Optimierung: React.FC = () => {
                   <span className={`${styles.demoDot} ${styles.demoDotRed}`}></span>
                   <span className={`${styles.demoDot} ${styles.demoDotYellow}`}></span>
                   <span className={`${styles.demoDot} ${styles.demoDotGreen}`}></span>
+                  <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#64748b', fontWeight: 500 }}>Optimierung</span>
                 </div>
-                <div className={styles.demoContent}>
-                  <div className={styles.demoScore}>
-                    <div className={styles.demoScoreCircle}>
-                      <span className={styles.demoScoreValue}>+35</span>
+                <div className={styles.demoContent} style={{ padding: '12px' }}>
+                  {/* Before/After Klausel */}
+                  <div style={{ marginBottom: '10px' }}>
+                    {/* Original (Durchgestrichen) */}
+                    <div style={{
+                      background: 'rgba(239, 68, 68, 0.08)',
+                      borderRadius: '6px', padding: '8px', marginBottom: '6px',
+                      borderLeft: '3px solid #ef4444'
+                    }}>
+                      <div style={{ fontSize: '9px', color: '#ef4444', fontWeight: 600, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <AlertTriangle size={10} /> ORIGINAL
+                      </div>
+                      <div style={{ fontSize: '10px', color: '#64748b', textDecoration: 'line-through', lineHeight: 1.4 }}>
+                        "Der Auftragnehmer haftet unbegrenzt für alle Schäden."
+                      </div>
                     </div>
-                    <div className={styles.demoScoreText}>
-                      <div className={styles.demoScoreLabel}>Fairness-Verbesserung</div>
-                      <div className={styles.demoScoreTitle}>Dienstleistungsvertrag.pdf</div>
+                    {/* Arrow */}
+                    <div style={{ display: 'flex', justifyContent: 'center', padding: '2px 0' }}>
+                      <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'linear-gradient(135deg, #22c55e, #16a34a)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <ArrowRight size={12} color="#fff" style={{ transform: 'rotate(90deg)' }} />
+                      </div>
+                    </div>
+                    {/* Optimiert */}
+                    <div style={{
+                      background: 'rgba(34, 197, 94, 0.08)',
+                      borderRadius: '6px', padding: '8px',
+                      borderLeft: '3px solid #22c55e'
+                    }}>
+                      <div style={{ fontSize: '9px', color: '#22c55e', fontWeight: 600, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Sparkles size={10} /> OPTIMIERT
+                      </div>
+                      <div style={{ fontSize: '10px', color: '#1e293b', lineHeight: 1.4 }}>
+                        "Die Haftung ist auf <strong>Vorsatz und grobe Fahrlässigkeit</strong> beschränkt, maximal <strong>€50.000</strong>."
+                      </div>
                     </div>
                   </div>
-                  <div className={styles.demoFindings}>
-                    <div className={styles.demoFinding}>
-                      <div className={`${styles.demoFindingIcon} ${styles.success}`}>
-                        <CheckCircle size={14} />
-                      </div>
-                      <span className={styles.demoFindingText}>Haftungsklausel ausbalanciert</span>
-                      <span className={`${styles.demoFindingBadge} ${styles.improved}`}>Optimiert</span>
-                    </div>
-                    <div className={styles.demoFinding}>
-                      <div className={`${styles.demoFindingIcon} ${styles.success}`}>
-                        <CheckCircle size={14} />
-                      </div>
-                      <span className={styles.demoFindingText}>Zahlungsziel von 60 auf 14 Tage</span>
-                      <span className={`${styles.demoFindingBadge} ${styles.improved}`}>Optimiert</span>
-                    </div>
-                    <div className={styles.demoFinding}>
-                      <div className={`${styles.demoFindingIcon} ${styles.warning}`}>
-                        <AlertTriangle size={14} />
-                      </div>
-                      <span className={styles.demoFindingText}>Kündigungsfrist prüfen</span>
-                      <span className={`${styles.demoFindingBadge} ${styles.medium}`}>Vorschlag</span>
+                  {/* Score Improvement */}
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: '10px',
+                    background: '#f8fafc', borderRadius: '6px', padding: '8px'
+                  }}>
+                    <div style={{
+                      width: '36px', height: '36px', borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #22c55e, #16a34a)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: '#fff', fontSize: '12px', fontWeight: 700
+                    }}>+35</div>
+                    <div>
+                      <div style={{ fontSize: '11px', fontWeight: 600, color: '#166534' }}>Fairness-Score verbessert</div>
+                      <div style={{ fontSize: '10px', color: '#64748b' }}>Von 52 auf 87 Punkte</div>
                     </div>
                   </div>
                 </div>
