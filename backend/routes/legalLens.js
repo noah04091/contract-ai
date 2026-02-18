@@ -55,7 +55,7 @@ const analysisRateLimiter = rateLimit({
  * Cache-Version: Erhöhe diese Nummer, wenn sich die Parsing-Logik ändert.
  * Alte Caches werden automatisch invalidiert und neu geparsed.
  */
-const CACHE_VERSION = 2;
+const CACHE_VERSION = 3;
 
 /**
  * Cache TTL in Millisekunden (30 Tage)
@@ -2436,6 +2436,23 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
     let text = contract.content || contract.extractedText || contract.fullText;
     let pdfQuality = null;
 
+    // HTML-Stripping: Wenn content HTML enthält, Tags entfernen
+    if (text && /<[a-z][\s\S]*>/i.test(text)) {
+      console.log(`🔧 [Legal Lens] HTML-Tags im Vertragstext erkannt, werden entfernt`);
+      text = text
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/p>/gi, '\n\n')
+        .replace(/<\/div>/gi, '\n')
+        .replace(/<\/li>/gi, '\n')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&nbsp;/g, ' ');
+    }
+
     if ((!text || text.length < 50) && contract.s3Key) {
       try {
         const command = new GetObjectCommand({
@@ -2552,7 +2569,8 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
     // Stufe 1: Vorverarbeitung (schnell)
     sendEvent('status', { message: 'Bereite Text auf...', progress: 15 });
 
-    const cleanedText = clauseParser.preprocessText(text);
+    const isOCR = extractionResult?.usedOCR || false;
+    const cleanedText = clauseParser.preprocessText(text, { isOCR });
     const { text: filteredText, removedBlocks } = clauseParser.removeHeaderFooter(cleanedText);
 
     sendEvent('status', {
@@ -2598,6 +2616,7 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
 
     let allClauses = [];
     let batchIndex = 0;
+    const existingTextHashes = new Set(); // Cross-Batch-Deduplizierung
 
     for (const batch of batches) {
       batchIndex++;
@@ -2645,12 +2664,24 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
             };
           });
 
-        allClauses = [...allClauses, ...validClauses];
+        // Cross-Batch-Deduplizierung: Nur Klauseln mit neuem Text-Hash behalten
+        const uniqueValidClauses = validClauses.filter(c => {
+          const normalized = (c.text || '').toLowerCase().replace(/\s+/g, ' ').trim().substring(0, 300);
+          const hash = clauseParser.generateHash(normalized);
+          if (existingTextHashes.has(hash)) {
+            console.log(`[Dedup] Cross-Batch Duplikat entfernt: "${(c.text || '').substring(0, 50)}..."`);
+            return false;
+          }
+          existingTextHashes.add(hash);
+          return true;
+        });
+
+        allClauses = [...allClauses, ...uniqueValidClauses];
 
         // Neue Klauseln direkt streamen!
-        if (validClauses.length > 0) {
+        if (uniqueValidClauses.length > 0) {
           sendEvent('clauses_batch', {
-            newClauses: validClauses,
+            newClauses: uniqueValidClauses,
             totalSoFar: allClauses.length,
             batchIndex,
             totalBatches: batches.length

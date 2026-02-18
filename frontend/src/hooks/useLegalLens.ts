@@ -352,7 +352,13 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
             onClausesBatch: (newClauses, totalSoFar) => {
               setClauses(prev => {
                 const existingIds = new Set(prev.map(c => c.id));
-                const uniqueNew = newClauses.filter(c => !existingIds.has(c.id));
+                const existingTextHashes = new Set(prev.map(c => generateContentHash(c.text)));
+                const uniqueNew = newClauses.filter(c => {
+                  if (existingIds.has(c.id)) return false;
+                  const hash = generateContentHash(c.text);
+                  if (existingTextHashes.has(hash)) return false;
+                  return true;
+                });
                 return [...prev, ...uniqueNew];
               });
               setStreamingStatus(`${totalSoFar} Klauseln analysiert...`);
@@ -421,9 +427,15 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
             },
             onClausesBatch: (newClauses, totalSoFar) => {
               setClauses(prev => {
-                // Merge neue Klauseln (dedupliziert nach ID)
+                // Merge neue Klauseln (dedupliziert nach ID + Text-Hash)
                 const existingIds = new Set(prev.map(c => c.id));
-                const uniqueNew = newClauses.filter(c => !existingIds.has(c.id));
+                const existingTextHashes = new Set(prev.map(c => generateContentHash(c.text)));
+                const uniqueNew = newClauses.filter(c => {
+                  if (existingIds.has(c.id)) return false;
+                  const hash = generateContentHash(c.text);
+                  if (existingTextHashes.has(hash)) return false;
+                  return true;
+                });
                 return [...prev, ...uniqueNew];
               });
               setStreamingStatus(`${totalSoFar} Klauseln analysiert...`);

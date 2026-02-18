@@ -103,7 +103,7 @@ class ClauseParser {
     } = options;
 
     // Vorverarbeitung
-    const cleanedText = this.preprocessText(text);
+    const cleanedText = this.preprocessText(text, { isOCR: options.isOCR });
 
     // Schritt 1: Erkenne Sektionen und Paragraphen
     const sections = this.extractSections(cleanedText);
@@ -166,8 +166,8 @@ class ClauseParser {
   /**
    * Vorverarbeitung des Texts
    */
-  preprocessText(text) {
-    return text
+  preprocessText(text, options = {}) {
+    let processed = text
       // Normalisiere Zeilenumbrüche
       .replace(/\r\n/g, '\n')
       .replace(/\r/g, '\n')
@@ -176,13 +176,19 @@ class ClauseParser {
       // Entferne führende/nachfolgende Leerzeichen pro Zeile
       .split('\n')
       .map(line => line.trim())
-      .join('\n')
-      // Korrigiere häufige OCR-Fehler
-      .replace(/l(\d)/g, '1$1')
-      .replace(/(\d)l/g, '$11')
-      .replace(/O(\d)/g, '0$1')
-      .replace(/(\d)O/g, '$10')
-      .trim();
+      .join('\n');
+
+    // OCR-Korrekturen NUR bei OCR-gescannten Texten anwenden
+    // Diese Regexe beschädigen sauberen digitalen Text (z.B. "legal" -> "1ega1")
+    if (options.isOCR) {
+      processed = processed
+        .replace(/l(\d)/g, '1$1')
+        .replace(/(\d)l/g, '$11')
+        .replace(/O(\d)/g, '0$1')
+        .replace(/(\d)O/g, '$10');
+    }
+
+    return processed.trim();
   }
 
   /**
@@ -865,14 +871,15 @@ class ClauseParser {
 
     const {
       detectRisk = true,
-      contractName = ''
+      contractName = '',
+      isOCR = false
     } = options;
 
     // ===== STUFE 1: Technische Vorverarbeitung =====
     console.log('📋 Stufe 1: Technische Vorverarbeitung...');
 
     // 1a. Grundlegende Textbereinigung
-    let cleanedText = this.preprocessText(text);
+    let cleanedText = this.preprocessText(text, { isOCR });
 
     // 1b. Header/Footer entfernen (wiederkehrende Textblöcke)
     const { text: filteredText, removedBlocks } = this.removeHeaderFooter(cleanedText);
@@ -1005,9 +1012,20 @@ class ClauseParser {
     }
 
     // Zeilen die 3+ mal vorkommen sind wahrscheinlich Header/Footer
+    // GUARD: Zeilen mit rechtlichen Begriffen NICHT entfernen (können legitimer Vertragstext sein)
+    const legalKeywords = ['verpflichtet', 'haftung', 'kündigung', 'frist',
+      'zahlung', 'leistung', 'gewährleistung', '§', 'gemäß', 'vertrag', 'pflicht',
+      'anspruch', 'recht', 'gesetz', 'vertragspartei'];
+
     const repeatedLines = [];
     for (const [line, count] of lineFrequency) {
       if (count >= 3) {
+        const lowerLine = line.toLowerCase();
+        const isLikelyLegalContent = legalKeywords.some(kw => lowerLine.includes(kw));
+        if (isLikelyLegalContent) {
+          console.log(`[Header/Footer] Behalte wiederholte Zeile mit Legal-Content: "${line.substring(0, 60)}..."`);
+          continue; // Nicht entfernen
+        }
         repeatedLines.push(line);
         removedBlocks.push({
           type: 'repeated_block',
@@ -1101,7 +1119,6 @@ class ClauseParser {
     // FIX: Intelligentes Batching - nicht mitten im § trennen
     // REDUZIERT von 50 auf 25 um Token-Limit nicht zu überschreiten
     const maxBlocksPerCall = 25;
-    const overlapBlocks = 5; // Overlap für Kontext
     const allClauses = [];
     const processedClauseIds = new Set(); // Deduplizierung bei Overlap
 
@@ -1149,6 +1166,8 @@ REGELN:
 4. Gebührentabellen/Konditionenübersichten = EINE Klausel "Konditionen" oder "Gebühren"
 5. Reine Kontaktdaten/Adressen/Handelsregister = EINE Klausel "Vertragsparteien" oder "Firmendaten"
 6. Ignoriere leere oder sinnlose Fragmente
+7. WICHTIG: Jeder Block darf in GENAU EINER Klausel vorkommen. Keine Überlappungen.
+8. Alle Blöcke müssen erfasst werden - überspringe keine.
 
 WICHTIG: Behalte die Block-IDs für Traceability!
 
@@ -1190,6 +1209,23 @@ Antworte NUR mit einem JSON-Array:
           parsed = JSON.parse(content);
           // Handle both array and object with clauses property
           const clausesArray = Array.isArray(parsed) ? parsed : (parsed.clauses || parsed.result || []);
+
+          // Fallback: GPT hat 0 Klauseln zurückgegeben
+          if (clausesArray.length === 0 && batchBlocks.length > 0) {
+            console.warn(`⚠️ GPT returned 0 clauses for ${batchBlocks.length} blocks - block-per-clause fallback`);
+            for (const block of batchBlocks) {
+              if (block.text && block.text.trim().length > 10) {
+                clausesArray.push({
+                  id: `fallback_${block.id}`,
+                  title: null,
+                  text: block.text,
+                  type: 'paragraph',
+                  sourceBlockIds: [block.id],
+                  confidence: 0.4
+                });
+              }
+            }
+          }
 
           // Map source block positions
           for (const clause of clausesArray) {
@@ -1352,6 +1388,8 @@ REGELN:
 3. Kurze eigenständige Sätze können einzelne Klauseln sein
 4. Gebührentabellen = EINE Klausel "Konditionen"
 5. Kontaktdaten = EINE Klausel "Vertragsparteien"
+6. WICHTIG: Jeder Block darf in GENAU EINER Klausel vorkommen. Keine Überlappungen.
+7. Alle Blöcke müssen erfasst werden - überspringe keine.
 
 Antworte NUR mit einem JSON-Array:
 [
@@ -1382,7 +1420,24 @@ Antworte NUR mit einem JSON-Array:
 
       const content = response.choices[0].message.content;
       const parsed = JSON.parse(content);
-      const clausesArray = Array.isArray(parsed) ? parsed : (parsed.clauses || parsed.result || []);
+      let clausesArray = Array.isArray(parsed) ? parsed : (parsed.clauses || parsed.result || []);
+
+      // ===== FALLBACK: GPT hat 0 Klauseln zurückgegeben =====
+      if (clausesArray.length === 0 && blocks.length > 0) {
+        console.warn(`⚠️ GPT returned 0 clauses for ${blocks.length} blocks - block-per-clause fallback`);
+        for (const block of blocks) {
+          if (block.text && block.text.trim().length > 10) {
+            clausesArray.push({
+              id: `fallback_${block.id}`,
+              title: null,
+              text: block.text,
+              type: 'paragraph',
+              sourceBlockIds: [block.id],
+              confidence: 0.4
+            });
+          }
+        }
+      }
 
       // ===== COVERAGE VERIFICATION =====
       // Sammle alle Block-IDs die von GPT erfasst wurden
@@ -1437,7 +1492,29 @@ Antworte NUR mit einem JSON-Array:
       const coveragePercent = Math.round((coveredBlockIds.size / blocks.length) * 100);
       console.log(`✅ [Coverage] ${coveragePercent}% der Blöcke erfasst (${coveredBlockIds.size}/${blocks.length})`);
 
-      return clausesArray;
+      // ===== TEXT-BASIERTE DEDUPLIZIERUNG =====
+      // Entfernt Duplikate die durch Orphaned-Block-Recovery oder GPT-Überlappung entstehen
+      const deduplicatedClauses = [];
+      const seenTextHashes = new Set();
+
+      for (const clause of clausesArray) {
+        const normalizedText = (clause.text || '')
+          .toLowerCase().replace(/\s+/g, ' ').trim().substring(0, 300);
+        const textHash = this.generateHash(normalizedText);
+
+        if (!seenTextHashes.has(textHash)) {
+          seenTextHashes.add(textHash);
+          deduplicatedClauses.push(clause);
+        } else {
+          console.log(`[Dedup] Duplikat entfernt: "${(clause.text || '').substring(0, 50)}..."`);
+        }
+      }
+
+      if (deduplicatedClauses.length < clausesArray.length) {
+        console.log(`[Dedup] ${clausesArray.length - deduplicatedClauses.length} Duplikate in Batch entfernt`);
+      }
+
+      return deduplicatedClauses;
 
     } catch (error) {
       console.error('❌ GPT Batch Error:', error.message);
