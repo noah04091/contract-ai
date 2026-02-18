@@ -12,7 +12,7 @@ const path = require("path");
 const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
 const { ObjectId, MongoClient } = require("mongodb");
-const { smartRateLimiter, uploadLimiter, generalLimiter } = require("../middleware/rateLimiter");
+const { standardLimiter, uploadLimiter, analyzeLimiter } = require("../middleware/rateLimiter");
 const { runBaselineRules } = require("../services/optimizer/rules");
 // 🔥 FIX 4+: Quality Layer imports (mit Sanitizer + Content-Mismatch Guard + Context-Aware Benchmarks)
 const { dedupeIssues, ensureCategory, sanitizeImprovedText, sanitizeText, sanitizeBenchmark, cleanPlaceholders, isTextMatchingCategory, generateContextAwareBenchmark } = require("../services/optimizer/quality");
@@ -3669,7 +3669,7 @@ BEGINNE JETZT MIT DER ANALYSE!`;
 };
 
 // 🚀 HAUPTROUTE: Universelle KI-Vertragsoptimierung mit Enhanced Security & Performance
-router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("file"), async (req, res) => {
+router.post("/", verifyToken, uploadLimiter, analyzeLimiter, upload.single("file"), async (req, res) => {
   const requestId = `opt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   console.log(`🚀 [${requestId}] ULTIMATIVE Vertragsoptimierung gestartet:`, {
     hasFile: !!req.file,
@@ -5059,7 +5059,7 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
 });
 
 // 🚀 STREAMING ENDPOINT mit Echtzeit-Progress-Updates
-router.post("/stream", verifyToken, uploadLimiter, smartRateLimiter, upload.single("file"), async (req, res) => {
+router.post("/stream", verifyToken, uploadLimiter, analyzeLimiter, upload.single("file"), async (req, res) => {
   const requestId = `opt_stream_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
   console.log(`🚀 [${requestId}] STREAMING OPTIMIZATION started:`, {
@@ -5716,7 +5716,7 @@ router.post("/stream", verifyToken, uploadLimiter, smartRateLimiter, upload.sing
 /**
  * Enhanced Health Check Endpoint with Comprehensive Monitoring
  */
-router.get("/health", generalLimiter, async (req, res) => {
+router.get("/health", standardLimiter, async (req, res) => {
   try {
     const HealthChecker = require('../utils/healthCheck');
     const healthChecker = new HealthChecker(req.db);
