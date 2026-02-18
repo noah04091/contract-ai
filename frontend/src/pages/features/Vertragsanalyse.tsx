@@ -7,7 +7,8 @@ import Footer from "../../components/Footer";
 import AutoPlayVideo from "../../components/AutoPlayVideo";
 import {
   Search, Shield, Zap, FileText, AlertTriangle, CheckCircle,
-  ArrowRight, Clock, BookOpen, Target, ChevronDown
+  ArrowRight, Clock, BookOpen, Target, ChevronDown, ThumbsUp,
+  Languages, BarChart3, Download
 } from "lucide-react";
 
 // Video
@@ -85,15 +86,15 @@ const Vertragsanalyse: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>Vertragsanalyse mit KI - Versteckte Risiken in 60 Sekunden aufdecken | Contract AI</title>
-        <meta name="description" content="KI analysiert Ihren Vertrag in 60 Sekunden. Chancen-Risiken-Score, kritische Klauseln, Handlungsempfehlungen. DSGVO-konform, EU-Server. Jetzt kostenlos testen!" />
-        <meta name="keywords" content="Vertragsanalyse, KI, AI, Vertrag prüfen, Risiken erkennen, Contract AI, Künstliche Intelligenz, Rechtstech, LegalTech" />
+        <title>Vertrag prüfen lassen – KI-Analyse in 60 Sek. | Contract AI</title>
+        <meta name="description" content="Vertrag prüfen lassen mit KI: Risiken & kritische Klauseln in 60 Sekunden erkennen. Chancen-Risiken-Score + Handlungsempfehlungen. DSGVO-konform, Server in Deutschland. ✓ Kostenlos testen" />
+        <meta name="keywords" content="Vertrag prüfen lassen, Vertrag prüfen, Vertragsanalyse, Vertrag prüfen lassen kostenlos, Mietvertrag prüfen, Arbeitsvertrag prüfen, KI Vertragsanalyse, Contract AI" />
 
         <link rel="canonical" href="https://www.contract-ai.de/features/vertragsanalyse" />
         <meta name="robots" content="index,follow" />
 
-        <meta property="og:title" content="Vertragsanalyse mit KI - Versteckte Risiken in 60 Sekunden aufdecken" />
-        <meta property="og:description" content="KI analysiert Ihren Vertrag in 60 Sekunden. Chancen-Risiken-Score, kritische Klauseln, Handlungsempfehlungen. Jetzt kostenlos testen!" />
+        <meta property="og:title" content="Vertrag prüfen lassen – KI-Analyse in 60 Sek. | Contract AI" />
+        <meta property="og:description" content="Vertrag prüfen lassen mit KI: Risiken & kritische Klauseln in 60 Sekunden erkennen. DSGVO-konform. ✓ Kostenlos testen" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.contract-ai.de/features/vertragsanalyse" />
         <meta property="og:image" content="https://www.contract-ai.de/og/og-vertragsanalyse.png" />
@@ -101,8 +102,8 @@ const Vertragsanalyse: React.FC = () => {
         <meta property="og:site_name" content="Contract AI" />
 
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Vertragsanalyse mit KI - Versteckte Risiken in 60 Sekunden aufdecken" />
-        <meta name="twitter:description" content="KI analysiert Ihren Vertrag in 60 Sekunden. Chancen-Risiken-Score, kritische Klauseln, Handlungsempfehlungen." />
+        <meta name="twitter:title" content="Vertrag prüfen lassen – KI-Analyse in 60 Sek. | Contract AI" />
+        <meta name="twitter:description" content="Vertrag prüfen lassen mit KI: Risiken & kritische Klauseln in 60 Sekunden erkennen. DSGVO-konform. ✓ Kostenlos testen" />
         <meta name="twitter:image" content="https://www.contract-ai.de/og/og-vertragsanalyse.png" />
 
         <script type="application/ld+json">
@@ -256,6 +257,83 @@ const Vertragsanalyse: React.FC = () => {
                   poster={analyseImg}
                   alt="Vertragsanalyse Demo"
                 />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ==========================================
+            FUNKTIONEN SECTION (6 Feature Cards)
+            ========================================== */}
+        <section className={styles.functionsSection} id="funktionen">
+          <div className={styles.container}>
+            <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <span className={styles.sectionEyebrow}>Funktionen</span>
+              <h2 className={styles.sectionTitle}>Alles was Sie für sichere Verträge brauchen</h2>
+              <p className={styles.sectionSubtitle}>
+                Modernste KI-Technologie analysiert jeden Aspekt Ihrer Verträge und liefert klare, verständliche Ergebnisse.
+              </p>
+            </div>
+
+            <div className={styles.functionsGrid}>
+              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.functionIcon}>
+                  <AlertTriangle size={24} />
+                </div>
+                <h3 className={styles.functionTitle}>Risiko-Erkennung</h3>
+                <p className={styles.functionDesc}>
+                  Automatische Identifizierung problematischer Klauseln und versteckter Kostenfallen.
+                </p>
+              </div>
+
+              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.functionIcon}>
+                  <BarChart3 size={24} />
+                </div>
+                <h3 className={styles.functionTitle}>Fairness-Score</h3>
+                <p className={styles.functionDesc}>
+                  Objektive Bewertung der Ausgewogenheit und Identifikation einseitiger Regelungen.
+                </p>
+              </div>
+
+              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.functionIcon}>
+                  <Zap size={24} />
+                </div>
+                <h3 className={styles.functionTitle}>Instant-Analyse</h3>
+                <p className={styles.functionDesc}>
+                  Komplette Vertragsanalyse in unter 60 Sekunden statt Stunden oder Tagen.
+                </p>
+              </div>
+
+              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.functionIcon}>
+                  <Languages size={24} />
+                </div>
+                <h3 className={styles.functionTitle}>Klare Sprache</h3>
+                <p className={styles.functionDesc}>
+                  Kompliziertes Juristendeutsch wird in verständliche Erklärungen übersetzt.
+                </p>
+              </div>
+
+              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.functionIcon}>
+                  <ThumbsUp size={24} />
+                </div>
+                <h3 className={styles.functionTitle}>Chancen-Analyse</h3>
+                <p className={styles.functionDesc}>
+                  Zeigt nicht nur Risiken, sondern auch günstige Klauseln und Vorteile auf.
+                </p>
+              </div>
+
+              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.functionIcon}>
+                  <Download size={24} />
+                </div>
+                <h3 className={styles.functionTitle}>PDF-Export</h3>
+                <p className={styles.functionDesc}>
+                  Professionelle Reports zum Speichern, Teilen und für Verhandlungen.
+                </p>
               </div>
             </div>
           </div>
@@ -480,43 +558,123 @@ const Vertragsanalyse: React.FC = () => {
         </section>
 
         {/* ==========================================
-            PROCESS SECTION
+            PROCESS SECTION - V5 Timeline with Line
             ========================================== */}
         <section className={styles.processSection} id="process">
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>So funktioniert's</span>
-              <h2 className={styles.sectionTitle}>In 3 einfachen Schritten</h2>
+              <h2 className={styles.sectionTitle}>In 3 Schritten zur Vertragsanalyse</h2>
+              <p className={styles.sectionSubtitle}>
+                Einfacher Prozess, professionelles Ergebnis. Keine technischen Kenntnisse erforderlich.
+              </p>
             </div>
 
-            <div className={styles.processTimeline}>
-              <div className={`${styles.processStep} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.processNumber}>1</div>
-                <div className={styles.processContent}>
-                  <h3 className={styles.processTitle}>Vertrag hochladen</h3>
-                  <p className={styles.processDesc}>
-                    PDF oder DOCX Ihres Vertrags hochladen – verschlüsselt und sicher auf EU-Servern verarbeitet.
-                  </p>
+            <div className={styles.processContainer}>
+              <div className={styles.processLine}></div>
+
+              <div className={styles.processTimeline}>
+                <div className={`${styles.processStep} ${styles.animateOnScroll}`} ref={addToRefs}>
+                  <div className={styles.processNumber}>1</div>
+                  <div className={styles.processContent}>
+                    <h3 className={styles.processTitle}>Vertrag hochladen</h3>
+                    <p className={styles.processDesc}>
+                      Laden Sie Ihren Vertrag als PDF oder DOCX hoch. Ihre Daten werden verschlüsselt übertragen und auf deutschen Servern verarbeitet.
+                    </p>
+                  </div>
+                </div>
+
+                <div className={`${styles.processStep} ${styles.animateOnScroll}`} ref={addToRefs}>
+                  <div className={styles.processNumber}>2</div>
+                  <div className={styles.processContent}>
+                    <h3 className={styles.processTitle}>KI-Analyse</h3>
+                    <p className={styles.processDesc}>
+                      Unsere KI erkennt automatisch den Vertragstyp und analysiert jede Klausel auf Risiken, Fairness und Verständlichkeit.
+                    </p>
+                  </div>
+                </div>
+
+                <div className={`${styles.processStep} ${styles.animateOnScroll}`} ref={addToRefs}>
+                  <div className={styles.processNumber}>3</div>
+                  <div className={styles.processContent}>
+                    <h3 className={styles.processTitle}>Ergebnis erhalten</h3>
+                    <p className={styles.processDesc}>
+                      Erhalten Sie einen detaillierten Report mit Chancen-Risiken-Score, markierten Problemstellen und konkreten Handlungsempfehlungen.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ==========================================
+            RISIKOERKENNUNG SECTION - V5 Design
+            ========================================== */}
+        <section className={styles.risksSection} id="risks">
+          <div className={styles.container}>
+            <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <span className={styles.sectionEyebrow}>Risikoerkennung</span>
+              <h2 className={styles.sectionTitle}>Typische Vertragsrisiken die wir finden</h2>
+              <p className={styles.sectionSubtitle}>
+                Unsere KI erkennt kritische Klauseln und erklärt, warum sie problematisch sind.
+              </p>
+            </div>
+
+            <div className={styles.risksGrid}>
+              <div className={`${styles.riskCard} ${styles.critical} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.riskHeader}>
+                  <h4 className={styles.riskTitle}>Überlange Kündigungsfristen</h4>
+                  <span className={`${styles.riskBadge} ${styles.critical}`}>Kritisch</span>
+                </div>
+                <div className={`${styles.riskIssue} ${styles.critical}`}>
+                  "Die Kündigungsfrist beträgt 12 Monate zum Quartalsende."
+                </div>
+                <div className={styles.riskSolution}>
+                  <CheckCircle size={18} />
+                  <span>Ungewöhnlich lang - schränkt Ihre Flexibilität stark ein. Standard sind 3 Monate.</span>
                 </div>
               </div>
 
-              <div className={`${styles.processStep} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.processNumber}>2</div>
-                <div className={styles.processContent}>
-                  <h3 className={styles.processTitle}>KI-Analyse</h3>
-                  <p className={styles.processDesc}>
-                    Intelligente Erkennung von Vertragstyp, Klauseln und Risiken. Bewertung nach objektiven Kriterien.
-                  </p>
+              <div className={`${styles.riskCard} ${styles.warning} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.riskHeader}>
+                  <h4 className={styles.riskTitle}>Versteckte Gebühren</h4>
+                  <span className={`${styles.riskBadge} ${styles.warning}`}>Warnung</span>
+                </div>
+                <div className={`${styles.riskIssue} ${styles.warning}`}>
+                  "Zusätzliche Gebühren können nach Ermessen erhoben werden."
+                </div>
+                <div className={styles.riskSolution}>
+                  <CheckCircle size={18} />
+                  <span>Gefahr unbegrenzter Zusatzkosten - fordern Sie eine klare Obergrenze.</span>
                 </div>
               </div>
 
-              <div className={`${styles.processStep} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.processNumber}>3</div>
-                <div className={styles.processContent}>
-                  <h3 className={styles.processTitle}>Ergebnis erhalten</h3>
-                  <p className={styles.processDesc}>
-                    Übersichtliche Zusammenfassung mit Chancen-Risiken-Score und konkreten Handlungsempfehlungen.
-                  </p>
+              <div className={`${styles.riskCard} ${styles.critical} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.riskHeader}>
+                  <h4 className={styles.riskTitle}>Einseitige Haftung</h4>
+                  <span className={`${styles.riskBadge} ${styles.critical}`}>Kritisch</span>
+                </div>
+                <div className={`${styles.riskIssue} ${styles.critical}`}>
+                  "Der Auftragnehmer haftet uneingeschränkt für alle Schäden."
+                </div>
+                <div className={styles.riskSolution}>
+                  <CheckCircle size={18} />
+                  <span>Extrem einseitig - fordern Sie eine angemessene Haftungsbegrenzung.</span>
+                </div>
+              </div>
+
+              <div className={`${styles.riskCard} ${styles.warning} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.riskHeader}>
+                  <h4 className={styles.riskTitle}>Vage Leistungsbeschreibung</h4>
+                  <span className={`${styles.riskBadge} ${styles.warning}`}>Warnung</span>
+                </div>
+                <div className={`${styles.riskIssue} ${styles.warning}`}>
+                  "Arbeitszeiten werden flexibel nach Bedarf festgelegt."
+                </div>
+                <div className={styles.riskSolution}>
+                  <CheckCircle size={18} />
+                  <span>Hohes Streitpotential - bestehen Sie auf konkrete Definitionen.</span>
                 </div>
               </div>
             </div>

@@ -1,10 +1,14 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { Wrench, Layers, MousePointer, Variable, Sparkles, FileDown, CheckCircle, Shield, FileText, ArrowRight } from "lucide-react";
+// import AutoPlayVideo from "../../components/AutoPlayVideo"; // Auskommentiert bis Video erstellt wird
+import {
+  Wrench, Layers, MousePointer, Sparkles, FileDown, CheckCircle,
+  Shield, FileText, ArrowRight, ChevronDown, Clock, Zap, AlertTriangle
+} from "lucide-react";
 
 const ContractBuilder: React.FC = () => {
   const { user } = useAuth();
@@ -12,9 +16,34 @@ const ContractBuilder: React.FC = () => {
   const targetInApp = "/contract-builder";
   const target = isAuthenticated ? targetInApp : `/login?next=${encodeURIComponent(targetInApp)}`;
 
+  const animatedRefs = useRef<(HTMLElement | null)[]>([]);
+
   useEffect(() => {
     window.scrollTo(0, 0);
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add(styles.visible);
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+    );
+
+    animatedRefs.current.forEach((ref) => {
+      if (ref) observer.observe(ref);
+    });
+
+    return () => observer.disconnect();
   }, []);
+
+  const addToRefs = (el: HTMLElement | null) => {
+    if (el && !animatedRefs.current.includes(el)) {
+      animatedRefs.current.push(el);
+    }
+  };
 
   const faqSchema = {
     "@context": "https://schema.org",
@@ -25,7 +54,7 @@ const ContractBuilder: React.FC = () => {
         "name": "Wie funktioniert der Contract Builder?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Der Contract Builder ist ein visueller Editor, mit dem Sie Verträge per Drag & Drop erstellen können. Wählen Sie Bausteine wie Klauseln, Parteien, Unterschriftsfelder aus und ziehen Sie diese auf Ihre Vorlage. Smart Variables ermöglichen automatisches Ausfüllen wiederkehrender Daten."
+          "text": "Der Contract Builder ist ein visueller Editor, mit dem Sie Verträge per Drag & Drop erstellen können."
         }
       },
       {
@@ -33,15 +62,7 @@ const ContractBuilder: React.FC = () => {
         "name": "Kann ich eigene Vorlagen erstellen?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Ja, Sie können Ihre Verträge als Vorlagen speichern und wiederverwenden. Organisieren Sie Ihre Vorlagen nach Vertragstypen und teilen Sie sie optional mit Ihrem Team."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Welche Exportformate werden unterstützt?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Exportieren Sie Ihre Verträge als professionelles PDF mit Ihrem Branding, als Word-Dokument zur weiteren Bearbeitung, oder nutzen Sie die integrierte Druckfunktion."
+          "text": "Ja, Sie können Ihre Verträge als Vorlagen speichern und wiederverwenden."
         }
       },
       {
@@ -49,23 +70,7 @@ const ContractBuilder: React.FC = () => {
         "name": "Brauche ich juristische Vorkenntnisse?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Nein, der Contract Builder ist für jeden bedienbar. Die Bausteine enthalten bereits rechtlich geprüfte Formulierungen. Die KI hilft bei Anpassungen."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Kann ich eigene Klauseln hinzufügen?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Ja, Sie können jederzeit eigene Texte eingeben oder von der KI generieren lassen. Alle Bausteine sind vollständig anpassbar."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Wie funktionieren Smart Variables?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Definieren Sie Variablen wie {{name}} oder {{adresse}} einmal und sie werden automatisch überall im Dokument eingesetzt, wo sie verwendet werden."
+          "text": "Nein, der Contract Builder ist für jeden bedienbar. Die Bausteine enthalten bereits rechtlich geprüfte Formulierungen."
         }
       }
     ]
@@ -74,405 +79,637 @@ const ContractBuilder: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>Contract Builder - Verträge visuell erstellen mit Drag & Drop | Contract AI</title>
-        <meta name="description" content="Erstellen Sie professionelle Verträge per Drag & Drop. Smart Variables, KI-Unterstützung, PDF-Export. Keine Programmierkenntnisse nötig. Jetzt kostenlos testen!" />
-        <meta name="keywords" content="Verträge erstellen, Vertragsgenerator, Drag Drop, Contract Builder, Vorlagen, KI, Smart Variables, PDF Export" />
+        <title>Vertrag selbst erstellen – Drag & Drop Editor | Contract AI</title>
+        <meta name="description" content="Vertrag selbst erstellen per Drag & Drop – ohne juristische Vorkenntnisse! Visueller Editor, Klausel-Bibliothek, KI-Unterstützung, PDF-Export. Professionell & einfach. ✓ Jetzt starten" />
+        <meta name="keywords" content="Vertrag selbst erstellen, Vertrag selber machen, Vertragseditor, Drag Drop Vertrag, Vertrag schreiben, Klausel Bibliothek, Contract Builder, Contract AI" />
 
         <link rel="canonical" href="https://www.contract-ai.de/features/contract-builder" />
         <meta name="robots" content="index,follow" />
 
-        {/* Open Graph */}
-        <meta property="og:title" content="Contract Builder - Verträge visuell erstellen mit Drag & Drop" />
-        <meta property="og:description" content="Erstellen Sie professionelle Verträge per Drag & Drop. Smart Variables, KI-Unterstützung, PDF-Export. Jetzt kostenlos testen!" />
+        <meta property="og:title" content="Vertrag selbst erstellen – Drag & Drop Editor | Contract AI" />
+        <meta property="og:description" content="Vertrag selbst erstellen per Drag & Drop – ohne Vorkenntnisse! Visueller Editor, KI-Unterstützung. ✓ Jetzt starten" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.contract-ai.de/features/contract-builder" />
         <meta property="og:image" content="https://www.contract-ai.de/og/og-contract-builder.png" />
         <meta property="og:locale" content="de_DE" />
         <meta property="og:site_name" content="Contract AI" />
 
-        {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Contract Builder - Verträge visuell erstellen mit Drag & Drop" />
-        <meta name="twitter:description" content="Erstellen Sie professionelle Verträge per Drag & Drop. Smart Variables, KI-Unterstützung, PDF-Export." />
+        <meta name="twitter:title" content="Vertrag selbst erstellen – Drag & Drop Editor | Contract AI" />
+        <meta name="twitter:description" content="Vertrag selbst erstellen per Drag & Drop – ohne Vorkenntnisse! Visueller Editor, KI-Unterstützung. ✓ Jetzt starten" />
         <meta name="twitter:image" content="https://www.contract-ai.de/og/og-contract-builder.png" />
 
-        {/* Schema.org FAQ Data */}
         <script type="application/ld+json">
           {JSON.stringify(faqSchema)}
         </script>
       </Helmet>
 
       <div className={styles.pageBackground}>
-        {/* Dots Pattern */}
-        <div className={styles.dotsPattern} />
-
-        {/* Floating Decorative Elements */}
-        <div className={styles.floatingElements}>
-          <Wrench className={styles.floatingIcon} size={28} />
-          <Layers className={styles.floatingIcon} size={24} />
-          <MousePointer className={styles.floatingIcon} size={22} />
-          <Variable className={styles.floatingIcon} size={26} />
-          <Sparkles className={styles.floatingIcon} size={20} />
-          <FileDown className={styles.floatingIcon} size={24} />
-          <CheckCircle className={styles.floatingIcon} size={22} />
-          <FileText className={styles.floatingIcon} size={26} />
+        {/* Ambient Background */}
+        <div className={styles.ambientBg}>
+          <div className={`${styles.ambientOrb} ${styles.orb1}`} />
+          <div className={`${styles.ambientOrb} ${styles.orb2}`} />
+          <div className={`${styles.ambientOrb} ${styles.orb3}`} />
         </div>
 
-        <div className={styles.featureContainer}>
+        {/* ==========================================
+            HERO SECTION - V5 Side-by-Side Layout
+            ========================================== */}
+        <section className={styles.hero}>
+          <div className={styles.containerLg}>
+            <div className={styles.heroContent}>
+              <div className={styles.heroBadge}>
+                <span className={styles.heroBadgeDot}></span>
+                Visueller Vertragseditor
+              </div>
 
-        {/* HERO */}
-        <section className={styles.heroSection}>
-          <div className={styles.heroIcon}>
-            <Wrench size={64} />
-          </div>
-          <h1 className={styles.heroTitle}>
-            Verträge erstellen wie ein <span className={styles.heroTitleHighlight}>Profi</span>
-          </h1>
-          <p className={styles.heroSubtitle}>
-            Visueller Baukasten für rechtssichere Verträge. Drag & Drop, Smart Variables und KI-Unterstützung – keine Vorkenntnisse nötig.
-          </p>
-          <div className={styles.heroButtons}>
-            <Link to={target} className={styles.ctaButton} style={{ fontSize: '18px', padding: '16px 32px' }} aria-label="Jetzt Vertrag erstellen">
-              Jetzt Vertrag erstellen
-            </Link>
-            <a href="#so-funktionierts" style={{ background: 'rgba(255,255,255,0.1)', color: '#007aff', border: '1px solid rgba(0,122,255,0.3)', padding: '12px 16px', borderRadius: '12px', fontWeight: '600', textDecoration: 'none' }} aria-label="So funktioniert der Builder">
-              So funktioniert der Builder
-            </a>
-          </div>
+              <h1 className={styles.heroTitle}>
+                Verträge erstellen<br/>
+                <span className={styles.heroTitleHighlight}>wie ein Profi</span>
+              </h1>
 
-          {/* Trust Badges */}
-          <div className={styles.trustBadges}>
-            <div className={styles.trustBadge}>
-              <Layers size={16} className={styles.trustBadgeIcon} />
-              <span>Drag & Drop</span>
+              <p className={styles.heroSubtitle}>
+                Visueller Baukasten für rechtssichere Verträge. Drag & Drop, Smart Variables
+                und KI-Unterstützung – keine Vorkenntnisse nötig. Professionelle Dokumente
+                in Minuten statt Stunden.
+              </p>
+
+              <div className={styles.heroCta}>
+                <Link to={target} className={styles.btnPrimary}>
+                  Jetzt Vertrag erstellen
+                  <ArrowRight size={20} />
+                </Link>
+                <a href="#funktionen" className={styles.btnSecondary}>
+                  Funktionen entdecken
+                </a>
+              </div>
             </div>
-            <div className={styles.trustBadge}>
-              <Variable size={16} className={styles.trustBadgeIcon} />
-              <span>Smart Variables</span>
-            </div>
-            <div className={styles.trustBadge}>
-              <Shield size={16} className={styles.trustBadgeIcon} />
-              <span>Rechtssicher</span>
+
+            {/* Interactive Demo Visual */}
+            <div className={styles.heroVisual}>
+              <div className={`${styles.floatingElement} ${styles.floatingElement1}`}>
+                <div className={`${styles.floatingIcon} ${styles.floatingIconBlue}`}>
+                  <MousePointer size={20} />
+                </div>
+                <div>
+                  <div className={styles.floatingText}>Drag & Drop</div>
+                  <div className={styles.floatingSubtext}>Einfache Bedienung</div>
+                </div>
+              </div>
+
+              <div className={`${styles.floatingElement} ${styles.floatingElement2}`}>
+                <div className={`${styles.floatingIcon} ${styles.floatingIconGreen}`}>
+                  <Sparkles size={20} />
+                </div>
+                <div>
+                  <div className={styles.floatingText}>KI-Klauseln</div>
+                  <div className={styles.floatingSubtext}>Intelligent</div>
+                </div>
+              </div>
+
+              <div className={styles.demoWindow}>
+                <div className={styles.demoHeader}>
+                  <span className={`${styles.demoDot} ${styles.demoDotRed}`}></span>
+                  <span className={`${styles.demoDot} ${styles.demoDotYellow}`}></span>
+                  <span className={`${styles.demoDot} ${styles.demoDotGreen}`}></span>
+                </div>
+                <div className={styles.demoContent}>
+                  <div className={styles.demoScore}>
+                    <div className={styles.demoScoreCircle}>
+                      <Layers size={24} />
+                    </div>
+                    <div className={styles.demoScoreText}>
+                      <div className={styles.demoScoreLabel}>Contract Builder</div>
+                      <div className={styles.demoScoreTitle}>3 Bausteine aktiv</div>
+                    </div>
+                  </div>
+                  <div className={styles.demoFindings}>
+                    <div className={styles.demoFinding}>
+                      <div className={`${styles.demoFindingIcon} ${styles.info}`}>
+                        <CheckCircle size={14} />
+                      </div>
+                      <span className={styles.demoFindingText}>§ 1 Vertragsparteien</span>
+                      <span className={`${styles.demoFindingBadge} ${styles.low}`}>Fertig</span>
+                    </div>
+                    <div className={styles.demoFinding}>
+                      <div className={`${styles.demoFindingIcon} ${styles.info}`}>
+                        <CheckCircle size={14} />
+                      </div>
+                      <span className={styles.demoFindingText}>§ 2 Leistungsbeschreibung</span>
+                      <span className={`${styles.demoFindingBadge} ${styles.low}`}>Fertig</span>
+                    </div>
+                    <div className={styles.demoFinding}>
+                      <div className={`${styles.demoFindingIcon} ${styles.warning}`}>
+                        <Clock size={14} />
+                      </div>
+                      <span className={styles.demoFindingText}>§ 3 Vergütung</span>
+                      <span className={`${styles.demoFindingBadge} ${styles.medium}`}>Offen</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
-        <div className={styles.contentContainer}>
 
-          {/* PAIN */}
-          <section className={styles.funktionSection}>
-            <h2 className={styles.sectionTitle}>Warum ein visueller Vertragsbaukasten?</h2>
-            <div className={styles.funktionGrid}>
-              <div className={styles.funktionItem}>
-                <div className={styles.funktionIcon}>
-                  <FileText size={20} />
-                </div>
-                <p className={styles.funktionText}>
-                  Verträge von Grund auf zu schreiben ist zeitaufwändig und fehleranfällig. Word-Vorlagen sind starr und schwer anpassbar. Juristisches Wissen fehlt oft, und jeder Fehler kann teuer werden. Wer nicht täglich mit Verträgen arbeitet, steht schnell vor einer Herausforderung.
-                </p>
-              </div>
-              <div className={styles.funktionItem}>
-                <div className={styles.funktionIcon}>
-                  <Wrench size={20} />
-                </div>
-                <p className={styles.funktionText}>
-                  Der Contract Builder löst dieses Problem: Ein visueller Editor, der Verträge aus bewährten Bausteinen zusammensetzt. Ziehen Sie Klauseln, Parteien und Unterschriftsfelder per Drag & Drop. Smart Variables füllen wiederkehrende Daten automatisch aus. Kein Jurastudium nötig.
-                </p>
-              </div>
+        {/* Trust Badges */}
+        <div className={styles.container}>
+          <div className={styles.trustBadgesRow}>
+            <div className={styles.trustBadge}>
+              <Layers size={18} />
+              Drag & Drop Editor
             </div>
-          </section>
-
-          {/* SOLUTION */}
-          <section className={styles.funktionSection}>
-            <h2 className={styles.sectionTitle}>Die Lösung: Verträge bauen statt schreiben</h2>
-            <p className={styles.funktionText} style={{ fontSize: '18px', lineHeight: '1.6', marginBottom: '24px' }}>
-              Der Contract Builder verwandelt Vertragsgestaltung in einen intuitiven Prozess. Wählen Sie aus einer Bibliothek von Bausteinen, passen Sie Inhalte an Ihre Bedürfnisse an und exportieren Sie professionelle Dokumente – alles in einer modernen Oberfläche.
-            </p>
-            <ul className={styles.featureList}>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>🧱</span>
-                <span className={styles.featureListContent}><strong>Baustein-Bibliothek:</strong> Kopfzeilen, Parteien, Klauseln, Unterschriften, Anlagen und mehr</span>
-              </li>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>🖱️</span>
-                <span className={styles.featureListContent}><strong>Drag & Drop:</strong> Bausteine einfach auf die Vorlage ziehen und anordnen</span>
-              </li>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>🔄</span>
-                <span className={styles.featureListContent}><strong>Smart Variables:</strong> Einmal definieren, überall automatisch einsetzen</span>
-              </li>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>✨</span>
-                <span className={styles.featureListContent}><strong>KI-Assistent:</strong> Lassen Sie Klauseln von der KI generieren oder optimieren</span>
-              </li>
-            </ul>
-          </section>
-
-          {/* HOW IT WORKS */}
-          <section id="so-funktionierts" className={styles.funktionSection}>
-            <h2 className={styles.sectionTitle}>So funktioniert's – in 4 Schritten</h2>
-            <div className={styles.funktionGrid}>
-              <div className={styles.funktionItem}>
-                <div className={styles.funktionIcon}>
-                  <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#007aff' }}>1</span>
-                </div>
-                <p className={styles.funktionText}>
-                  <strong>Vorlage wählen:</strong> Starten Sie mit einer leeren Vorlage oder wählen Sie aus professionellen Templates für verschiedene Vertragstypen.
-                </p>
-              </div>
-              <div className={styles.funktionItem}>
-                <div className={styles.funktionIcon}>
-                  <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#007aff' }}>2</span>
-                </div>
-                <p className={styles.funktionText}>
-                  <strong>Bausteine hinzufügen:</strong> Ziehen Sie Parteien, Klauseln, Tabellen und Unterschriftsfelder per Drag & Drop auf Ihre Vorlage.
-                </p>
-              </div>
-              <div className={styles.funktionItem}>
-                <div className={styles.funktionIcon}>
-                  <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#007aff' }}>3</span>
-                </div>
-                <p className={styles.funktionText}>
-                  <strong>Variablen ausfüllen:</strong> Definieren Sie Smart Variables für Namen, Adressen, Beträge – sie werden überall automatisch eingesetzt.
-                </p>
-              </div>
-              <div className={styles.funktionItem}>
-                <div className={styles.funktionIcon}>
-                  <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#007aff' }}>4</span>
-                </div>
-                <p className={styles.funktionText}>
-                  <strong>Exportieren:</strong> Laden Sie Ihren fertigen Vertrag als professionelles PDF herunter oder drucken Sie ihn direkt aus.
-                </p>
-              </div>
+            <div className={styles.trustBadge}>
+              <Sparkles size={18} />
+              Smart Variables
             </div>
-          </section>
-
-          {/* FEATURES GRID */}
-          <section className={styles.vorteileSection}>
-            <div className={styles.contentContainer}>
-              <h2 className={styles.sectionTitle}>Funktionen im Überblick</h2>
-              <div className={styles.vorteileGrid}>
-                <div className={styles.vorteilCard}>
-                  <h3 className={styles.vorteilTitle}>Baustein-Editor</h3>
-                  <p className={styles.vorteilText}>Über 15 verschiedene Bausteine: Kopfzeilen, Parteien, Klauseln, Tabellen, Definitionen, Hinweise, Unterschriften und mehr.</p>
-                </div>
-                <div className={styles.vorteilCard}>
-                  <h3 className={styles.vorteilTitle}>Smart Variables</h3>
-                  <p className={styles.vorteilText}>Variablen einmal definieren und überall im Dokument automatisch einsetzen. Perfekt für wiederkehrende Daten.</p>
-                </div>
-                <div className={styles.vorteilCard}>
-                  <h3 className={styles.vorteilTitle}>KI-Klauselgenerator</h3>
-                  <p className={styles.vorteilText}>Beschreiben Sie, was Sie brauchen – die KI generiert rechtssichere Klauseln mit Begründung.</p>
-                </div>
-                <div className={styles.vorteilCard}>
-                  <h3 className={styles.vorteilTitle}>Design-Anpassung</h3>
-                  <p className={styles.vorteilText}>Passen Sie Schriften, Farben und Layout an Ihr Corporate Design an. Professioneller Auftritt garantiert.</p>
-                </div>
-                <div className={styles.vorteilCard}>
-                  <h3 className={styles.vorteilTitle}>Vorlagen-Bibliothek</h3>
-                  <p className={styles.vorteilText}>Speichern Sie Ihre Verträge als Vorlagen und verwenden Sie sie für ähnliche Projekte wieder.</p>
-                </div>
-                <div className={styles.vorteilCard}>
-                  <h3 className={styles.vorteilTitle}>PDF-Export mit Anlagen</h3>
-                  <p className={styles.vorteilText}>Exportieren Sie Verträge als PDF inkl. hochgeladener Anlagen. Alles in einem Dokument.</p>
-                </div>
-              </div>
+            <div className={styles.trustBadge}>
+              <Shield size={18} />
+              Rechtssichere Klauseln
             </div>
-          </section>
+          </div>
+        </div>
 
-          {/* USE CASES */}
-          <section className={styles.beispielSection}>
-            <h2 className={styles.sectionTitle}>Typische Anwendungsfälle</h2>
-            <div className={styles.useCaseGrid}>
-              <div className={styles.useCaseCard}>
-                <h3 className={styles.useCaseTitle}>Dienstleistungsverträge</h3>
-                <p className={styles.useCaseChallenge}><strong>Bedarf:</strong> Wiederkehrende Kundenverträge</p>
-                <p className={styles.useCaseSolution}>Vorlage erstellen, Variablen anpassen, sofort versandfertig.</p>
-              </div>
-              <div className={styles.useCaseCard}>
-                <h3 className={styles.useCaseTitle}>Freelancer-Agreements</h3>
-                <p className={styles.useCaseChallenge}><strong>Bedarf:</strong> Schnelle Projektverträge</p>
-                <p className={styles.useCaseSolution}>Bausteine kombinieren, Leistungen definieren, unterschriftsreif in Minuten.</p>
-              </div>
-              <div className={styles.useCaseCard}>
-                <h3 className={styles.useCaseTitle}>NDAs & Geheimhaltung</h3>
-                <p className={styles.useCaseChallenge}><strong>Bedarf:</strong> Vertraulichkeitsvereinbarungen</p>
-                <p className={styles.useCaseSolution}>Professionelle NDA-Vorlage, Parteien eintragen, fertig.</p>
-              </div>
-              <div className={styles.useCaseCard}>
-                <h3 className={styles.useCaseTitle}>Kooperationsverträge</h3>
-                <p className={styles.useCaseChallenge}><strong>Bedarf:</strong> Partnerschaftsvereinbarungen</p>
-                <p className={styles.useCaseSolution}>Komplexe Regelungen übersichtlich strukturieren mit Klausel-Bausteinen.</p>
-              </div>
-            </div>
-            <div className={styles.beispielBox}>
-              <div className={styles.beispielIcon}>
-                <CheckCircle size={32} />
-              </div>
-              <p className={styles.beispielText}>
-                "Mit dem Contract Builder erstelle ich jetzt in 10 Minuten, wofür ich früher einen halben Tag gebraucht habe. Die Smart Variables sind genial."
-              </p>
-              <p className={styles.beispielHinweis}>
-                Feedback eines Agentur-Inhabers
+        {/* ==========================================
+            VIDEO SECTION - Auskommentiert bis Video erstellt wird
+            ==========================================
+        <section className={styles.videoSection} id="video">
+          <div className={styles.container}>
+            <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <span className={styles.sectionEyebrow}>So sieht's aus</span>
+              <h2 className={styles.sectionTitle}>Contract Builder in Aktion</h2>
+              <p className={styles.sectionSubtitle}>
+                Sehen Sie, wie einfach Sie Verträge per Drag & Drop erstellen können.
               </p>
             </div>
-          </section>
 
-          {/* DIFFERENTIATION */}
-          <section className={styles.funktionSection}>
-            <h2 className={styles.sectionTitle}>Warum Contract Builder?</h2>
-            <ul className={styles.featureList}>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>🎨</span>
-                <span className={styles.featureListContent}><strong>Visuell & Intuitiv:</strong> Keine Programmierkenntnisse, kein Jurastudium erforderlich</span>
-              </li>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>🚀</span>
-                <span className={styles.featureListContent}><strong>Schnelle Erstellung:</strong> Von der Idee zum fertigen Vertrag in Minuten statt Stunden</span>
-              </li>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>🔁</span>
-                <span className={styles.featureListContent}><strong>Wiederverwendbar:</strong> Einmal erstellen, immer wieder nutzen mit Vorlagen</span>
-              </li>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>🤖</span>
-                <span className={styles.featureListContent}><strong>KI-Unterstützung:</strong> Klauseln generieren, optimieren und rechtlich prüfen lassen</span>
-              </li>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>📄</span>
-                <span className={styles.featureListContent}><strong>Professionelle Ausgabe:</strong> PDF-Export mit Anlagen, druckfertig und versandbereit</span>
-              </li>
-            </ul>
-          </section>
+            <div className={`${styles.videoContainer} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <div className={styles.videoFrame}>
+                <AutoPlayVideo
+                  src="/videos/contract-builder-demo.mp4"
+                  poster="/videos/contract-builder-poster.jpg"
+                  alt="Contract Builder Demo"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+        */}
 
-          {/* SECURITY */}
-          <section className={styles.statsSection}>
-            <div className={styles.contentContainer}>
-              <h2 className={styles.sectionTitle}>Sicherheit & Qualität</h2>
-              <p style={{ color: '#666', textAlign: 'center', marginBottom: '40px', fontSize: '17px' }}>
-                Alle Bausteine basieren auf erprobten juristischen Formulierungen. Ihre Daten bleiben sicher auf EU-Servern.
-                Automatische Speicherung verhindert Datenverlust. Exportieren Sie jederzeit Ihre Dokumente.
+        {/* ==========================================
+            FUNKTIONEN SECTION (6 Feature Cards)
+            ========================================== */}
+        <section className={styles.functionsSection} id="funktionen">
+          <div className={styles.container}>
+            <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <span className={styles.sectionEyebrow}>Funktionen</span>
+              <h2 className={styles.sectionTitle}>Alles für professionelle Verträge</h2>
+              <p className={styles.sectionSubtitle}>
+                Der Contract Builder bietet alle Werkzeuge für die Erstellung rechtssicherer Verträge.
               </p>
-              <div className={styles.statsGrid}>
-                <div className={styles.statItem}>
-                  <div className={styles.statNumber}>15+</div>
-                  <div className={styles.statLabel}>Bausteintypen</div>
+            </div>
+
+            <div className={styles.functionsGrid}>
+              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.functionIcon}>
+                  <Layers size={24} />
                 </div>
-                <div className={styles.statItem}>
-                  <div className={styles.statNumber}>{'< 10min'}</div>
-                  <div className={styles.statLabel}>Durchschnittliche Erstellzeit</div>
+                <h3 className={styles.functionTitle}>Baustein-Editor</h3>
+                <p className={styles.functionDesc}>
+                  Über 15 verschiedene Bausteine: Kopfzeilen, Parteien, Klauseln, Tabellen, Unterschriften.
+                </p>
+              </div>
+
+              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.functionIcon}>
+                  <Sparkles size={24} />
                 </div>
-                <div className={styles.statItem}>
-                  <div className={styles.statNumber}>100%</div>
-                  <div className={styles.statLabel}>DSGVO-konform</div>
+                <h3 className={styles.functionTitle}>Smart Variables</h3>
+                <p className={styles.functionDesc}>
+                  Variablen einmal definieren und überall im Dokument automatisch einsetzen.
+                </p>
+              </div>
+
+              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.functionIcon}>
+                  <Wrench size={24} />
+                </div>
+                <h3 className={styles.functionTitle}>KI-Klauselgenerator</h3>
+                <p className={styles.functionDesc}>
+                  Beschreiben Sie, was Sie brauchen – die KI generiert rechtssichere Klauseln.
+                </p>
+              </div>
+
+              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.functionIcon}>
+                  <FileDown size={24} />
+                </div>
+                <h3 className={styles.functionTitle}>PDF-Export</h3>
+                <p className={styles.functionDesc}>
+                  Exportieren Sie Verträge als professionelles PDF inkl. hochgeladener Anlagen.
+                </p>
+              </div>
+
+              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.functionIcon}>
+                  <Shield size={24} />
+                </div>
+                <h3 className={styles.functionTitle}>Rechtssicher</h3>
+                <p className={styles.functionDesc}>
+                  Alle Bausteine enthalten rechtlich geprüfte Formulierungen und Klauseln.
+                </p>
+              </div>
+
+              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.functionIcon}>
+                  <FileText size={24} />
+                </div>
+                <h3 className={styles.functionTitle}>Vorlagen speichern</h3>
+                <p className={styles.functionDesc}>
+                  Speichern Sie Ihre Verträge als wiederverwendbare Vorlagen für die Zukunft.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ==========================================
+            PROBLEM SECTION
+            ========================================== */}
+        <section className={styles.problemSection} id="problem">
+          <div className={styles.container}>
+            <div className={styles.problemGrid}>
+              <div className={`${styles.problemContent} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <span className={styles.sectionEyebrow}>Das Problem</span>
+                <h2 className={styles.sectionTitleLeft}>Verträge schreiben ist zeitaufwändig</h2>
+                <p className={styles.problemText}>
+                  Verträge von Grund auf zu schreiben kostet Stunden. Word-Vorlagen sind starr
+                  und schwer anpassbar. Juristisches Wissen fehlt oft, und jeder Fehler kann
+                  teuer werden – im schlimmsten Fall tausende Euro.
+                </p>
+
+                <div className={styles.problemStats}>
+                  <div className={`${styles.problemStat} ${styles.danger}`}>
+                    <div className={styles.problemStatValue}>3-5h</div>
+                    <div className={styles.problemStatLabel}>durchschnittliche Erstellzeit pro Vertrag</div>
+                  </div>
+                  <div className={`${styles.problemStat} ${styles.warningBg}`}>
+                    <div className={styles.problemStatValue}>67%</div>
+                    <div className={styles.problemStatLabel}>nutzen veraltete oder fehlerhafte Vorlagen</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className={`${styles.problemVisual} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.problemDoc}>
+                  <div className={styles.problemDocHeader}>
+                    <div className={styles.problemDocIcon}>
+                      <FileText size={24} />
+                    </div>
+                    <div>
+                      <div className={styles.problemDocTitle}>Word-Vorlage</div>
+                      <div className={styles.problemDocSubtitle}>Manuell bearbeiten</div>
+                    </div>
+                  </div>
+                  <div className={styles.problemDocLines}>
+                    <div className={styles.problemDocLine}></div>
+                    <div className={styles.problemDocLine}></div>
+                    <div className={styles.problemDocLine}></div>
+                  </div>
+                  <div className={styles.problemDocHighlight}>
+                    <div className={styles.problemDocHighlightText}>
+                      "...stundenlange Recherche..."
+                    </div>
+                  </div>
+                </div>
+
+                <div className={`${styles.problemWarning} ${styles.problemWarning1}`}>
+                  <div className={`${styles.warningIcon} ${styles.red}`}>
+                    <AlertTriangle size={16} />
+                  </div>
+                  Veraltete Klauseln!
+                </div>
+
+                <div className={`${styles.problemWarning} ${styles.problemWarning2}`}>
+                  <div className={`${styles.warningIcon} ${styles.orange}`}>
+                    <Clock size={16} />
+                  </div>
+                  3-5h pro Vertrag
                 </div>
               </div>
             </div>
-          </section>
+          </div>
+        </section>
 
-          {/* FAQ */}
-          <section className={styles.funktionSection} aria-labelledby="faq-heading">
-            <h2 id="faq-heading" className={styles.sectionTitle}>Häufige Fragen</h2>
+        {/* ==========================================
+            SOLUTION SECTION
+            ========================================== */}
+        <section className={styles.solutionSection} id="solution">
+          <div className={styles.container}>
+            <div className={styles.solutionGrid}>
+              <div className={`${styles.solutionVisual} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.solutionComparison}>
+                  <div className={`${styles.comparisonCard} ${styles.before}`}>
+                    <span className={styles.comparisonLabel}>Klassische Methode</span>
+                    <div className={styles.comparisonIcon}>
+                      <FileText size={32} />
+                    </div>
+                    <div className={styles.comparisonTitle}>Word manuell bearbeiten</div>
+                    <div className={styles.comparisonDesc}>
+                      Vorlagen kopieren, anpassen, Recherche. Stundenlang.
+                    </div>
+                    <div className={styles.comparisonTime}>
+                      <Clock size={16} />
+                      3-5 Stunden
+                    </div>
+                  </div>
+
+                  <div className={styles.comparisonArrow}>
+                    <ArrowRight size={24} />
+                  </div>
+
+                  <div className={`${styles.comparisonCard} ${styles.after}`}>
+                    <span className={styles.comparisonLabel}>Mit Contract Builder</span>
+                    <div className={styles.comparisonIcon}>
+                      <Layers size={32} />
+                    </div>
+                    <div className={styles.comparisonTitle}>Bausteine per Drag & Drop</div>
+                    <div className={styles.comparisonDesc}>
+                      Smart Variables, KI-Unterstützung. In Minuten fertig.
+                    </div>
+                    <div className={styles.comparisonTime}>
+                      <Zap size={16} />
+                      10 Minuten
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className={`${styles.solutionContent} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <span className={styles.sectionEyebrow}>Die Lösung</span>
+                <h2 className={styles.sectionTitleLeft}>Verträge bauen statt schreiben</h2>
+                <p className={styles.solutionText}>
+                  Der Contract Builder verwandelt Vertragsgestaltung in einen intuitiven Prozess.
+                  Wählen Sie aus einer Bibliothek von Bausteinen und exportieren Sie professionelle Dokumente.
+                </p>
+
+                <div className={styles.solutionFeatures}>
+                  <div className={styles.solutionFeature}>
+                    <div className={styles.solutionFeatureIcon}>
+                      <Layers size={20} />
+                    </div>
+                    <div className={styles.solutionFeatureText}>
+                      <h4>15+ Bausteintypen</h4>
+                      <p>Parteien, Klauseln, Tabellen, Unterschriften und mehr</p>
+                    </div>
+                  </div>
+
+                  <div className={styles.solutionFeature}>
+                    <div className={styles.solutionFeatureIcon}>
+                      <Sparkles size={20} />
+                    </div>
+                    <div className={styles.solutionFeatureText}>
+                      <h4>Smart Variables</h4>
+                      <p>Einmal definieren, überall automatisch einsetzen</p>
+                    </div>
+                  </div>
+
+                  <div className={styles.solutionFeature}>
+                    <div className={styles.solutionFeatureIcon}>
+                      <Wrench size={20} />
+                    </div>
+                    <div className={styles.solutionFeatureText}>
+                      <h4>KI-Klauselgenerator</h4>
+                      <p>Beschreiben Sie, was Sie brauchen – KI liefert die Klausel</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ==========================================
+            PROCESS SECTION - V5 Timeline with Line
+            ========================================== */}
+        <section className={styles.processSection} id="process">
+          <div className={styles.container}>
+            <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <span className={styles.sectionEyebrow}>So funktioniert's</span>
+              <h2 className={styles.sectionTitle}>In 4 Schritten zum fertigen Vertrag</h2>
+              <p className={styles.sectionSubtitle}>
+                Von der leeren Seite zum professionellen Dokument.
+              </p>
+            </div>
+
+            <div className={styles.processContainer}>
+              <div className={styles.processLine}></div>
+
+              <div className={styles.processTimeline}>
+                <div className={`${styles.processStep} ${styles.animateOnScroll}`} ref={addToRefs}>
+                  <div className={styles.processNumber}>1</div>
+                  <div className={styles.processContent}>
+                    <h3 className={styles.processTitle}>Vorlage wählen</h3>
+                    <p className={styles.processDesc}>
+                      Starten Sie mit einer leeren Vorlage oder wählen Sie aus professionellen
+                      Templates für verschiedene Vertragstypen.
+                    </p>
+                  </div>
+                </div>
+
+                <div className={`${styles.processStep} ${styles.animateOnScroll}`} ref={addToRefs}>
+                  <div className={styles.processNumber}>2</div>
+                  <div className={styles.processContent}>
+                    <h3 className={styles.processTitle}>Bausteine hinzufügen</h3>
+                    <p className={styles.processDesc}>
+                      Ziehen Sie Parteien, Klauseln, Tabellen und Unterschriftsfelder
+                      per Drag & Drop auf Ihre Vorlage.
+                    </p>
+                  </div>
+                </div>
+
+                <div className={`${styles.processStep} ${styles.animateOnScroll}`} ref={addToRefs}>
+                  <div className={styles.processNumber}>3</div>
+                  <div className={styles.processContent}>
+                    <h3 className={styles.processTitle}>Variablen ausfüllen</h3>
+                    <p className={styles.processDesc}>
+                      Definieren Sie Smart Variables für Namen, Adressen, Beträge – sie werden
+                      überall automatisch eingesetzt.
+                    </p>
+                  </div>
+                </div>
+
+                <div className={`${styles.processStep} ${styles.animateOnScroll}`} ref={addToRefs}>
+                  <div className={styles.processNumber}>4</div>
+                  <div className={styles.processContent}>
+                    <h3 className={styles.processTitle}>PDF exportieren</h3>
+                    <p className={styles.processDesc}>
+                      Laden Sie Ihren fertigen Vertrag als professionelles PDF herunter
+                      oder drucken Sie ihn direkt aus.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ==========================================
+            STATS SECTION
+            ========================================== */}
+        <section className={styles.statsSection}>
+          <div className={styles.container}>
+            <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <span className={styles.sectionEyebrow}>Unsere Zahlen</span>
+              <h2 className={styles.sectionTitle}>Contract Builder in Zahlen</h2>
+            </div>
+
+            <div className={styles.statsGrid}>
+              <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.statNumber}>15+</div>
+                <div className={styles.statLabel}>Bausteintypen</div>
+              </div>
+              <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.statNumber}>{'< 10min'}</div>
+                <div className={styles.statLabel}>Durchschn. Erstellzeit</div>
+              </div>
+              <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.statNumber}>2.000+</div>
+                <div className={styles.statLabel}>Erstellte Verträge</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ==========================================
+            FAQ SECTION
+            ========================================== */}
+        <section className={styles.faqSection} id="faq">
+          <div className={styles.container}>
+            <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <span className={styles.sectionEyebrow}>Fragen & Antworten</span>
+              <h2 className={styles.sectionTitle}>Häufige Fragen</h2>
+            </div>
+
             <div className={styles.faqContainer}>
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
                   Brauche ich juristische Vorkenntnisse?
-                  <span className={styles.faqIcon}>▼</span>
+                  <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
-                <p className={styles.faqAnswer}>Nein, der Contract Builder ist für jeden bedienbar. Die Bausteine enthalten bereits rechtlich geprüfte Formulierungen. Die KI hilft bei Anpassungen.</p>
+                <p className={styles.faqAnswer}>
+                  Nein, der Contract Builder ist für jeden bedienbar. Die Bausteine enthalten
+                  bereits rechtlich geprüfte Formulierungen. Die KI hilft bei Anpassungen.
+                </p>
               </details>
+
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
                   Kann ich eigene Klauseln hinzufügen?
-                  <span className={styles.faqIcon}>▼</span>
+                  <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
-                <p className={styles.faqAnswer}>Ja, Sie können jederzeit eigene Texte eingeben oder von der KI generieren lassen. Alle Bausteine sind vollständig anpassbar.</p>
+                <p className={styles.faqAnswer}>
+                  Ja, Sie können jederzeit eigene Texte eingeben oder von der KI generieren
+                  lassen. Alle Bausteine sind vollständig anpassbar.
+                </p>
               </details>
+
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
                   Welche Exportformate gibt es?
-                  <span className={styles.faqIcon}>▼</span>
+                  <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
-                <p className={styles.faqAnswer}>Export als PDF (inkl. Anlagen), Druck-Funktion und Speicherung als wiederverwendbare Vorlage. Word-Export ist in Planung.</p>
+                <p className={styles.faqAnswer}>
+                  Export als PDF (inkl. Anlagen), Druck-Funktion und Speicherung als
+                  wiederverwendbare Vorlage. Word-Export ist in Planung.
+                </p>
               </details>
-              <details className={styles.faqItem}>
-                <summary className={styles.faqQuestion}>
-                  Werden meine Verträge gespeichert?
-                  <span className={styles.faqIcon}>▼</span>
-                </summary>
-                <p className={styles.faqAnswer}>Ja, automatische Speicherung auf EU-Servern. Sie können Ihre Verträge jederzeit bearbeiten oder löschen.</p>
-              </details>
+
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
                   Wie funktionieren Smart Variables?
-                  <span className={styles.faqIcon}>▼</span>
+                  <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
-                <p className={styles.faqAnswer}>Definieren Sie Variablen wie {'{{'}<em>name</em>{'}}'}  oder {'{{'}<em>adresse</em>{'}}'}  einmal und sie werden automatisch überall im Dokument eingesetzt, wo sie verwendet werden.</p>
-              </details>
-              <details className={styles.faqItem}>
-                <summary className={styles.faqQuestion}>
-                  Kann ich Vorlagen mit meinem Team teilen?
-                  <span className={styles.faqIcon}>▼</span>
-                </summary>
-                <p className={styles.faqAnswer}>Die Team-Funktion ist für Business-Nutzer verfügbar. Erstellen und teilen Sie Vorlagen innerhalb Ihrer Organisation.</p>
+                <p className={styles.faqAnswer}>
+                  Definieren Sie Variablen wie {'{{name}}'} oder {'{{adresse}}'} einmal und
+                  sie werden automatisch überall im Dokument eingesetzt.
+                </p>
               </details>
             </div>
-          </section>
+          </div>
+        </section>
 
-          {/* RELATED FEATURES */}
-          <section className={styles.relatedSection}>
-            <div className={styles.contentContainer}>
+        {/* ==========================================
+            RELATED FEATURES
+            ========================================== */}
+        <section className={styles.relatedSection}>
+          <div className={styles.container}>
+            <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <h2 className={styles.sectionTitle}>Verwandte Funktionen</h2>
-              <div className={styles.relatedGrid}>
-                <Link to="/features/generator" className={styles.relatedCard}>
-                  <span className={styles.relatedIcon}>📝</span>
-                  <div className={styles.relatedContent}>
-                    <div className={styles.relatedTitle}>Vertragsgenerator</div>
-                    <div className={styles.relatedDescription}>Lassen Sie komplette Verträge von der KI erstellen – basierend auf Ihren Vorgaben</div>
-                  </div>
-                  <ArrowRight size={20} className={styles.relatedArrow} />
-                </Link>
-                <Link to="/features/digitalesignatur" className={styles.relatedCard}>
-                  <span className={styles.relatedIcon}>✍️</span>
-                  <div className={styles.relatedContent}>
-                    <div className={styles.relatedTitle}>Digitale Signatur</div>
-                    <div className={styles.relatedDescription}>Unterschreiben Sie Ihre erstellten Verträge rechtsgültig digital</div>
-                  </div>
-                  <ArrowRight size={20} className={styles.relatedArrow} />
-                </Link>
-                <Link to="/features/legal-lens" className={styles.relatedCard}>
-                  <span className={styles.relatedIcon}>🔍</span>
-                  <div className={styles.relatedContent}>
-                    <div className={styles.relatedTitle}>Legal Lens</div>
-                    <div className={styles.relatedDescription}>Verstehen Sie jede Klausel – klicken Sie auf Textpassagen für Erklärungen</div>
-                  </div>
-                  <ArrowRight size={20} className={styles.relatedArrow} />
-                </Link>
-              </div>
             </div>
-          </section>
 
-          {/* FINAL CTA */}
-          <section className={styles.ctaSection}>
-            <div className={styles.ctaCard}>
-              <h2 className={styles.ctaTitle}>Erstellen Sie Ihren ersten Vertrag in Minuten</h2>
-              <p className={styles.ctaSubtitle}>
-                Kein Jurastudium nötig. Keine komplizierten Tools. Einfach Bausteine zusammensetzen und professionelle Verträge erstellen.
-              </p>
-              <div className={styles.ctaButtons}>
-                <button
-                  className={styles.secondaryButtonLight}
-                  onClick={() => document.getElementById('so-funktionierts')?.scrollIntoView({ behavior: 'smooth' })}
-                >
-                  So funktioniert es
-                </button>
-                <Link to={target} className={styles.ctaButton} style={{ fontSize: '18px', padding: '16px 32px' }} aria-label="Contract Builder starten">
-                  Contract Builder starten
-                </Link>
+            <div className={styles.relatedGrid}>
+              <Link to="/features/generator" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <span className={styles.relatedIcon}>📝</span>
+                <div className={styles.relatedContent}>
+                  <div className={styles.relatedTitle}>Vertragsgenerator</div>
+                  <div className={styles.relatedDescription}>
+                    Lassen Sie komplette Verträge von der KI erstellen
+                  </div>
+                </div>
+                <ArrowRight size={20} className={styles.relatedArrow} />
+              </Link>
+
+              <Link to="/features/digitalesignatur" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <span className={styles.relatedIcon}>✍️</span>
+                <div className={styles.relatedContent}>
+                  <div className={styles.relatedTitle}>Digitale Signatur</div>
+                  <div className={styles.relatedDescription}>
+                    Unterschreiben Sie Ihre Verträge rechtsgültig digital
+                  </div>
+                </div>
+                <ArrowRight size={20} className={styles.relatedArrow} />
+              </Link>
+
+              <Link to="/features/legal-lens" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <span className={styles.relatedIcon}>🔍</span>
+                <div className={styles.relatedContent}>
+                  <div className={styles.relatedTitle}>Legal Lens</div>
+                  <div className={styles.relatedDescription}>
+                    Verstehen Sie jede Klausel – Erklärungen per Klick
+                  </div>
+                </div>
+                <ArrowRight size={20} className={styles.relatedArrow} />
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* ==========================================
+            CTA SECTION
+            ========================================== */}
+        <section className={styles.ctaSection}>
+          <div className={styles.container}>
+            <div className={`${styles.ctaCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <div className={styles.ctaContent}>
+                <h2 className={styles.ctaTitle}>
+                  Erstellen Sie Ihren ersten Vertrag in Minuten
+                </h2>
+                <p className={styles.ctaSubtitle}>
+                  Kein Jurastudium nötig. Keine komplizierten Tools. Einfach Bausteine
+                  zusammensetzen und professionelle Verträge erstellen.
+                </p>
+                <div className={styles.ctaButtons}>
+                  <Link to={target} className={styles.btnWhite}>
+                    Contract Builder starten
+                    <ArrowRight size={20} />
+                  </Link>
+                </div>
               </div>
             </div>
-          </section>
-        </div>
-        </div>
+          </div>
+        </section>
+
       </div>
 
       <Footer />

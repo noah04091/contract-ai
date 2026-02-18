@@ -1,11 +1,14 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
 import AutoPlayVideo from "../../components/AutoPlayVideo";
-import { Calendar, Clock, AlertCircle, Mail, Shield, CheckCircle, ArrowRight, Play } from "lucide-react";
+import {
+  Calendar, Clock, AlertTriangle, Mail, Shield,
+  ArrowRight, ChevronDown, Bell, FileText, Zap, Target
+} from "lucide-react";
 
 // Video
 const fristenVideo = "/Videos/fristen.mp4";
@@ -14,105 +17,239 @@ import fristenImg from "../../assets/Fristen.webp";
 const Fristen: React.FC = () => {
   const { user } = useAuth();
   const isAuthenticated = user && user.subscriptionActive;
-  const targetInApp = "/deadlines";
+  const targetInApp = "/calendar";
   const target = isAuthenticated ? targetInApp : `/login?next=${encodeURIComponent(targetInApp)}`;
+
+  // Scroll animation refs
+  const animatedRefs = useRef<(HTMLElement | null)[]>([]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add(styles.visible);
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+    );
+
+    animatedRefs.current.forEach((ref) => {
+      if (ref) observer.observe(ref);
+    });
+
+    return () => observer.disconnect();
   }, []);
+
+  const addToRefs = (el: HTMLElement | null) => {
+    if (el && !animatedRefs.current.includes(el)) {
+      animatedRefs.current.push(el);
+    }
+  };
+
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Welche Arten von Fristen erkennt die KI?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Kündigungsfristen, Mindestlaufzeiten, automatische Verlängerungen, Zahlungsfristen, Gewährleistungszeiten und andere vertraglich relevante Stichtage."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Wie genau ist die automatische Erkennung?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Die KI erreicht eine Genauigkeit von über 95% bei Standardverträgen."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Funktioniert die Kalenderintegration mit allen Anbietern?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ja, wir unterstützen Google Kalender, Outlook, Apple Kalender und alle iCal-kompatiblen Apps."
+        }
+      }
+    ]
+  };
 
   return (
     <>
       <Helmet>
-        <title>Fristenkalender mit KI - Nie wieder Kündigungsfristen verpassen | Contract AI</title>
-        <meta name="description" content="Nie wieder Kündigungsfristen verpassen. KI erkennt Fristen automatisch, erinnert rechtzeitig per E-Mail. DSGVO-konform, Server in Frankfurt. Jetzt testen!" />
-        <meta name="keywords" content="Fristenkalender, Kündigungsfristen, Vertragsfristen, KI, Erinnerungen, Contract AI, Fristenverwaltung" />
+        <title>Kündigungsfrist nie wieder verpassen | Contract AI</title>
+        <meta name="description" content="Nie wieder Kündigungsfristen verpassen! KI erkennt alle Fristen automatisch, erinnert per E-Mail & synchronisiert mit Google/Outlook Kalender. Wie AboAlarm, nur besser. ✓ Kostenlos starten" />
+        <meta name="keywords" content="Kündigungsfrist vergessen, Kündigungsfrist verpassen, Fristenkalender, Vertragsfristen verwalten, Kündigungserinnerung, AboAlarm Alternative, Contract AI" />
 
         <link rel="canonical" href="https://www.contract-ai.de/features/fristen" />
         <meta name="robots" content="index,follow" />
 
-        {/* Open Graph */}
-        <meta property="og:title" content="Fristenkalender mit KI - Nie wieder Kündigungsfristen verpassen" />
-        <meta property="og:description" content="KI erkennt Fristen automatisch, erinnert rechtzeitig per E-Mail. DSGVO-konform, Server in Frankfurt." />
+        <meta property="og:title" content="Kündigungsfrist nie wieder verpassen | Contract AI" />
+        <meta property="og:description" content="Nie wieder Kündigungsfristen verpassen! KI erkennt Fristen automatisch, erinnert per E-Mail & Kalender. ✓ Kostenlos starten" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.contract-ai.de/features/fristen" />
         <meta property="og:image" content="https://www.contract-ai.de/og/og-fristen.png" />
         <meta property="og:locale" content="de_DE" />
         <meta property="og:site_name" content="Contract AI" />
 
-        {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Fristenkalender mit KI - Nie wieder Kündigungsfristen verpassen" />
-        <meta name="twitter:description" content="KI erkennt Fristen automatisch, erinnert rechtzeitig per E-Mail. DSGVO-konform." />
+        <meta name="twitter:title" content="Kündigungsfrist nie wieder verpassen | Contract AI" />
+        <meta name="twitter:description" content="Nie wieder Kündigungsfristen verpassen! KI erkennt Fristen automatisch, erinnert per E-Mail & Kalender. ✓ Kostenlos starten" />
         <meta name="twitter:image" content="https://www.contract-ai.de/og/og-fristen.png" />
+
+        <script type="application/ld+json">
+          {JSON.stringify(faqSchema)}
+        </script>
       </Helmet>
 
       <div className={styles.pageBackground}>
-        {/* Dots Pattern */}
-        <div className={styles.dotsPattern} />
-
-        {/* Floating Decorative Elements */}
-        <div className={styles.floatingElements}>
-          <Calendar className={styles.floatingIcon} size={28} />
-          <Shield className={styles.floatingIcon} size={24} />
-          <Clock className={styles.floatingIcon} size={22} />
-          <CheckCircle className={styles.floatingIcon} size={26} />
-          <Mail className={styles.floatingIcon} size={20} />
-          <AlertCircle className={styles.floatingIcon} size={24} />
-          <Calendar className={styles.floatingIcon} size={22} />
-          <Clock className={styles.floatingIcon} size={20} />
+        {/* Ambient Orbs */}
+        <div className={styles.ambientBg}>
+          <div className={`${styles.ambientOrb} ${styles.orb1}`}></div>
+          <div className={`${styles.ambientOrb} ${styles.orb2}`}></div>
+          <div className={`${styles.ambientOrb} ${styles.orb3}`}></div>
         </div>
 
-        <div className={styles.featureContainer}>
+        {/* ==========================================
+            HERO SECTION - V5 Side-by-Side Layout
+            ========================================== */}
+        <section className={styles.hero}>
+          <div className={styles.containerLg}>
+            <div className={styles.heroContent}>
+              <div className={styles.heroBadge}>
+                <span className={styles.heroBadgeDot}></span>
+                Intelligente Fristenverwaltung
+              </div>
 
-        {/* HERO */}
-        <section className={styles.heroSection}>
-          <div className={styles.heroIcon}>
-            <Calendar size={64} />
-          </div>
-          <h1 className={styles.heroTitle}>
-            Nie wieder <span className={styles.heroTitleHighlight}>Kündigungsfristen verpassen</span>
-          </h1>
-          <p className={styles.heroSubtitle}>
-            Contract AI erkennt Fristen automatisch in Ihren Verträgen und erinnert Sie rechtzeitig – per E-Mail und Kalenderintegration.
-          </p>
-          <div className={styles.heroButtons}>
-            <Link to={target} className={styles.ctaButton} aria-label="Zum Fristenkalender">
-              Zum Fristenkalender
-            </Link>
-            <a href="#so-funktionierts" style={{ background: 'rgba(255,255,255,0.1)', color: '#007aff', border: '1px solid rgba(0,122,255,0.3)', padding: '12px 16px', borderRadius: '12px', fontWeight: '600', textDecoration: 'none' }} aria-label="Mehr über Erinnerungen">
-              Mehr über Erinnerungen
-            </a>
-          </div>
-          {/* Trust Badges */}
-          <div className={styles.trustBadges}>
-            <div className={styles.trustBadge}>
-              <Calendar size={16} className={styles.trustBadgeIcon} />
-              <span>Automatische Erkennung</span>
+              <h1 className={styles.heroTitle}>
+                Nie wieder Fristen<br/>
+                <span className={styles.heroTitleHighlight}>verpassen</span>
+              </h1>
+
+              <p className={styles.heroSubtitle}>
+                Contract AI erkennt Fristen automatisch in Ihren Verträgen und
+                erinnert Sie rechtzeitig – per E-Mail und Kalenderintegration.
+              </p>
+
+              <div className={styles.heroCta}>
+                <Link to={target} className={styles.btnPrimary}>
+                  Zum Fristenkalender
+                  <ArrowRight size={20} />
+                </Link>
+                <a href="#video" className={styles.btnSecondary}>
+                  Live-Demo ansehen
+                </a>
+              </div>
             </div>
-            <div className={styles.trustBadge}>
-              <Mail size={16} className={styles.trustBadgeIcon} />
-              <span>E-Mail-Reminder</span>
-            </div>
-            <div className={styles.trustBadge}>
-              <CheckCircle size={16} className={styles.trustBadgeIcon} />
-              <span>Google/Outlook/iCal</span>
+
+            {/* Interactive Demo Visual */}
+            <div className={styles.heroVisual}>
+              <div className={`${styles.floatingElement} ${styles.floatingElement1}`}>
+                <div className={`${styles.floatingIcon} ${styles.floatingIconBlue}`}>
+                  <Mail size={20} />
+                </div>
+                <div>
+                  <div className={styles.floatingText}>E-Mail-Reminder</div>
+                  <div className={styles.floatingSubtext}>Automatisch</div>
+                </div>
+              </div>
+
+              <div className={`${styles.floatingElement} ${styles.floatingElement2}`}>
+                <div className={`${styles.floatingIcon} ${styles.floatingIconGreen}`}>
+                  <Calendar size={20} />
+                </div>
+                <div>
+                  <div className={styles.floatingText}>Kalender-Sync</div>
+                  <div className={styles.floatingSubtext}>Google/Outlook</div>
+                </div>
+              </div>
+
+              <div className={styles.demoWindow}>
+                <div className={styles.demoHeader}>
+                  <span className={`${styles.demoDot} ${styles.demoDotRed}`}></span>
+                  <span className={`${styles.demoDot} ${styles.demoDotYellow}`}></span>
+                  <span className={`${styles.demoDot} ${styles.demoDotGreen}`}></span>
+                </div>
+                <div className={styles.demoContent}>
+                  <div className={styles.demoScore}>
+                    <div className={styles.demoScoreCircle}>
+                      <span className={styles.demoScoreValue}>3</span>
+                    </div>
+                    <div className={styles.demoScoreText}>
+                      <div className={styles.demoScoreLabel}>Anstehende Fristen</div>
+                      <div className={styles.demoScoreTitle}>Fristenkalender</div>
+                    </div>
+                  </div>
+                  <div className={styles.demoFindings}>
+                    <div className={styles.demoFinding}>
+                      <div className={`${styles.demoFindingIcon} ${styles.risk}`}>
+                        <AlertTriangle size={14} />
+                      </div>
+                      <span className={styles.demoFindingText}>Kündigungsfrist in 14 Tagen</span>
+                      <span className={`${styles.demoFindingBadge} ${styles.high}`}>Dringend</span>
+                    </div>
+                    <div className={styles.demoFinding}>
+                      <div className={`${styles.demoFindingIcon} ${styles.warning}`}>
+                        <Clock size={14} />
+                      </div>
+                      <span className={styles.demoFindingText}>Auto-Verlängerung am 1. April</span>
+                      <span className={`${styles.demoFindingBadge} ${styles.medium}`}>30 Tage</span>
+                    </div>
+                    <div className={styles.demoFinding}>
+                      <div className={`${styles.demoFindingIcon} ${styles.info}`}>
+                        <Bell size={14} />
+                      </div>
+                      <span className={styles.demoFindingText}>Mietvertrag Kündigung möglich</span>
+                      <span className={`${styles.demoFindingBadge} ${styles.low}`}>90 Tage</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* VIDEO SHOWCASE */}
-        <section className={styles.videoSection}>
-          <div className={styles.videoContainer}>
-            <div style={{ textAlign: 'center' }}>
-              <div className={styles.videoLabel}>
-                <Play size={14} />
-                <span>So sieht's aus</span>
-              </div>
+        {/* Trust Badges */}
+        <div className={styles.container}>
+          <div className={styles.trustBadgesRow}>
+            <div className={styles.trustBadge}>
+              <Calendar size={18} />
+              Automatische Erkennung
             </div>
-            <h2 className={styles.sectionTitle}>Der Fristenkalender in Aktion</h2>
-            <div className={styles.videoFrame}>
-              <div className={styles.videoWrapper}>
+            <div className={styles.trustBadge}>
+              <Mail size={18} />
+              E-Mail-Erinnerungen
+            </div>
+            <div className={styles.trustBadge}>
+              <Shield size={18} />
+              DSGVO-konform
+            </div>
+          </div>
+        </div>
+
+        {/* ==========================================
+            VIDEO SECTION
+            ========================================== */}
+        <section className={styles.videoSection} id="video">
+          <div className={styles.container}>
+            <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <span className={styles.sectionEyebrow}>So sieht's aus</span>
+              <h2 className={styles.sectionTitle}>Der Fristenkalender in Aktion</h2>
+              <p className={styles.sectionSubtitle}>
+                Sehen Sie, wie Contract AI Fristen automatisch erkennt und Sie
+                rechtzeitig erinnert.
+              </p>
+            </div>
+
+            <div className={`${styles.videoContainer} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <div className={styles.videoFrame}>
                 <AutoPlayVideo
                   src={fristenVideo}
                   poster={fristenImg}
@@ -123,315 +260,442 @@ const Fristen: React.FC = () => {
           </div>
         </section>
 
-        <div className={styles.contentContainer}>
+        {/* ==========================================
+            PROBLEM SECTION
+            ========================================== */}
+        <section className={styles.problemSection} id="problem">
+          <div className={styles.container}>
+            <div className={styles.problemGrid}>
+              <div className={`${styles.problemContent} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <span className={styles.sectionEyebrow}>Das Problem</span>
+                <h2 className={styles.sectionTitleLeft}>Automatische Verlängerungen – die teure Falle</h2>
+                <p className={styles.problemText}>
+                  Versicherungen, Mobilfunkverträge, SaaS-Abos oder Mietverträge verlängern sich oft automatisch.
+                  Wer Kündigungsfristen verpasst, zahlt weiter – teils über Jahre. Ein übersehener Stichtag
+                  kann Sie Hunderte oder Tausende Euro kosten.
+                </p>
 
-          {/* PAIN */}
-          <section className={styles.funktionSection}>
-            <h2 className={styles.sectionTitle}>Automatische Verlängerungen – die teure Falle</h2>
-            <div className={styles.funktionGrid}>
-              <div className={styles.funktionItem}>
-                <div className={styles.funktionIcon}>
-                  <AlertCircle size={20} />
+                <div className={styles.problemStats}>
+                  <div className={`${styles.problemStat} ${styles.danger}`}>
+                    <div className={styles.problemStatValue}>67%</div>
+                    <div className={styles.problemStatLabel}>verpassen mindestens eine Kündigungsfrist pro Jahr</div>
+                  </div>
+                  <div className={`${styles.problemStat} ${styles.warningBg}`}>
+                    <div className={styles.problemStatValue}>500 EUR</div>
+                    <div className={styles.problemStatLabel}>durchschnittliche Kosten pro verpasster Frist</div>
+                  </div>
                 </div>
-                <p className={styles.funktionText}>
-                  Versicherungen, Mobilfunkverträge, SaaS-Abos oder Mietverträge verlängern sich oft automatisch. Wer Kündigungsfristen verpasst, zahlt weiter – teils über Jahre. Ein übersehener Stichtag kann Sie Hunderte oder Tausende Euro kosten. Besonders ärgerlich: Die wichtigen Termine stehen meist im Kleingedruckten versteckt.
-                </p>
               </div>
-              <div className={styles.funktionItem}>
-                <div className={styles.funktionIcon}>
-                  <Clock size={20} />
-                </div>
-                <p className={styles.funktionText}>
-                  Der Fristenkalender nimmt Ihnen das Risiko ab, indem er Fristen aus Verträgen herausliest und Erinnerungen setzt. Keine manuellen Kalendereinträge, keine vergessenen Stichtage, keine bösen Überraschungen bei der nächsten Abrechnung. Sie behalten die Kontrolle über Ihre Verträge.
-                </p>
-              </div>
-            </div>
-          </section>
 
-          {/* SOLUTION */}
-          <section className={styles.funktionSection}>
-            <h2 className={styles.sectionTitle}>Die Lösung: Intelligente Fristenerkennung mit automatischen Erinnerungen</h2>
-            <p className={styles.funktionText} style={{ fontSize: '18px', lineHeight: '1.6', marginBottom: '24px' }}>
-              Contract AI scannt Ihre Verträge nach allen relevanten Fristen und Stichtagen. Die KI erkennt nicht nur offensichtliche Termine, sondern findet auch versteckte Kündigungsfristen, Mindestlaufzeiten und Verlängerungsregeln – selbst wenn sie in kompliziertem Juristendeutsch formuliert sind.
-            </p>
-            <ul className={styles.featureList}>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>📋</span>
-                <span className={styles.featureListContent}><strong>Erkennung von Fristen & Laufzeiten:</strong> KI extrahiert Kündigungsfristen, Mindestlaufzeiten, Verlängerungsregeln und relevante Stichtage</span>
-              </li>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>⏰</span>
-                <span className={styles.featureListContent}><strong>Erinnerungen nach Wunsch:</strong> Legen Sie fest, wann Sie erinnert werden möchten (90/60/30/14 Tage vorher)</span>
-              </li>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>📱</span>
-                <span className={styles.featureListContent}><strong>Kalenderintegration:</strong> Ein Klick übernimmt Fristen in Google, Outlook oder iCal – automatisch synchronisiert</span>
-              </li>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>👥</span>
-                <span className={styles.featureListContent}><strong>Teilen & Verantwortlichkeiten:</strong> Weisen Sie Fristen Teammitgliedern zu – ideal für Unternehmen mit vielen Verträgen</span>
-              </li>
-            </ul>
-          </section>
+              <div className={`${styles.problemVisual} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.problemDoc}>
+                  <div className={styles.problemDocHeader}>
+                    <div className={styles.problemDocIcon}>
+                      <FileText size={24} />
+                    </div>
+                    <div>
+                      <div className={styles.problemDocTitle}>Mobilfunkvertrag.pdf</div>
+                      <div className={styles.problemDocSubtitle}>Automatische Verlängerung</div>
+                    </div>
+                  </div>
+                  <div className={styles.problemDocLines}>
+                    <div className={styles.problemDocLine}></div>
+                    <div className={styles.problemDocLine}></div>
+                    <div className={styles.problemDocLine}></div>
+                  </div>
+                  <div className={styles.problemDocHighlight}>
+                    <div className={styles.problemDocHighlightText}>
+                      "...verlängert sich automatisch um 12 Monate..."
+                    </div>
+                  </div>
+                </div>
 
-          {/* HOW IT WORKS */}
-          <section id="so-funktionierts" className={styles.funktionSection}>
-            <h2 className={styles.sectionTitle}>So funktioniert's – in 3 Schritten</h2>
-            <div className={styles.funktionGrid}>
-              <div className={styles.funktionItem}>
-                <div className={styles.funktionIcon}>
-                  <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#007aff' }}>1</span>
+                <div className={`${styles.problemWarning} ${styles.problemWarning1}`}>
+                  <div className={`${styles.warningIcon} ${styles.red}`}>
+                    <AlertTriangle size={16} />
+                  </div>
+                  Frist verpasst!
                 </div>
-                <p className={styles.funktionText}>
-                  <strong>Vertrag hochladen:</strong> PDF oder DOCX Ihres Vertrags hochladen – die KI scannt automatisch nach Fristen und Stichtagen.
-                </p>
-              </div>
-              <div className={styles.funktionItem}>
-                <div className={styles.funktionIcon}>
-                  <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#007aff' }}>2</span>
-                </div>
-                <p className={styles.funktionText}>
-                  <strong>Fristen-Extraktion:</strong> Intelligente Erkennung aller Kündigungsfristen, Verlängerungsregeln und wichtiger Termine – auch versteckte.
-                </p>
-              </div>
-              <div className={styles.funktionItem}>
-                <div className={styles.funktionIcon}>
-                  <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#007aff' }}>3</span>
-                </div>
-                <p className={styles.funktionText}>
-                  <strong>Automatische Erinnerungen:</strong> E-Mail-Benachrichtigungen und Kalendereinträge rechtzeitig vor Ablauf der Fristen.
-                </p>
-              </div>
-            </div>
-          </section>
 
-          {/* FEATURES GRID */}
-          <section className={styles.vorteileSection}>
-            <div className={styles.contentContainer}>
-              <h2 className={styles.sectionTitle}>Funktionen im Überblick</h2>
-              <div className={styles.vorteileGrid}>
-                <div className={styles.vorteilCard}>
-                  <h3 className={styles.vorteilTitle}>Automatische Fristenerkennung</h3>
-                  <p className={styles.vorteilText}>KI findet alle Kündigungsfristen, Mindestlaufzeiten und Verlängerungsregeln – auch versteckte.</p>
-                </div>
-                <div className={styles.vorteilCard}>
-                  <h3 className={styles.vorteilTitle}>Flexible Erinnerungen</h3>
-                  <p className={styles.vorteilText}>Mehrere Benachrichtigungen nach Ihren Wünschen: 90, 60, 30, 14 Tage vor dem Stichtag.</p>
-                </div>
-                <div className={styles.vorteilCard}>
-                  <h3 className={styles.vorteilTitle}>Kalender-Synchronisation</h3>
-                  <p className={styles.vorteilText}>Nahtlose Integration in Google Kalender, Outlook oder iCal mit automatischen Updates.</p>
-                </div>
-                <div className={styles.vorteilCard}>
-                  <h3 className={styles.vorteilTitle}>Team-Funktionen</h3>
-                  <p className={styles.vorteilText}>Fristen an Kollegen zuweisen, Verantwortlichkeiten definieren und gemeinsam verwalten.</p>
-                </div>
-                <div className={styles.vorteilCard}>
-                  <h3 className={styles.vorteilTitle}>Smart-Berechnung</h3>
-                  <p className={styles.vorteilText}>Automatische Berechnung von Kündigungsstichtagen basierend auf komplexen Vertragsklauseln.</p>
-                </div>
-                <div className={styles.vorteilCard}>
-                  <h3 className={styles.vorteilTitle}>Verlaufs-Tracking</h3>
-                  <p className={styles.vorteilText}>Alle Vertragsfristen im Überblick mit Historie und Dokumentation der Aktionen.</p>
+                <div className={`${styles.problemWarning} ${styles.problemWarning2}`}>
+                  <div className={`${styles.warningIcon} ${styles.orange}`}>
+                    <Clock size={16} />
+                  </div>
+                  +12 Monate gebunden
                 </div>
               </div>
             </div>
-          </section>
+          </div>
+        </section>
 
-          {/* USE CASES */}
-          <section className={styles.beispielSection}>
-            <h2 className={styles.sectionTitle}>Typische Szenarien</h2>
-            <div className={styles.useCaseGrid}>
-              <div className={styles.useCaseCard}>
-                <h3 className={styles.useCaseTitle}>Versicherung</h3>
-                <p className={styles.useCaseChallenge}>Laufzeit bis 31.12., Kündigungsfrist 3 Monate</p>
-                <p className={styles.useCaseSolution}><strong>→ Erinnerung am 30.09.</strong></p>
+        {/* ==========================================
+            SOLUTION SECTION
+            ========================================== */}
+        <section className={styles.solutionSection} id="solution">
+          <div className={styles.container}>
+            <div className={styles.solutionGrid}>
+              <div className={`${styles.solutionVisual} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.solutionComparison}>
+                  <div className={`${styles.comparisonCard} ${styles.before}`}>
+                    <span className={styles.comparisonLabel}>Vorher</span>
+                    <div className={styles.comparisonIcon}>
+                      <AlertTriangle size={32} />
+                    </div>
+                    <div className={styles.comparisonTitle}>Manuelle Verwaltung</div>
+                    <div className={styles.comparisonDesc}>
+                      Kalendereinträge vergessen, Fristen übersehen, teure Verlängerungen.
+                    </div>
+                    <div className={styles.comparisonTime}>
+                      <AlertTriangle size={16} />
+                      67% verpassen Fristen
+                    </div>
+                  </div>
+
+                  <div className={styles.comparisonArrow}>
+                    <ArrowRight size={24} />
+                  </div>
+
+                  <div className={`${styles.comparisonCard} ${styles.after}`}>
+                    <span className={styles.comparisonLabel}>Nachher</span>
+                    <div className={styles.comparisonIcon}>
+                      <Bell size={32} />
+                    </div>
+                    <div className={styles.comparisonTitle}>Automatische Erinnerungen</div>
+                    <div className={styles.comparisonDesc}>
+                      KI erkennt Fristen, erinnert rechtzeitig, Kalender synchronisiert.
+                    </div>
+                    <div className={styles.comparisonTime}>
+                      <Zap size={16} />
+                      Keine Frist mehr verpassen
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className={styles.useCaseCard}>
-                <h3 className={styles.useCaseTitle}>SaaS-Abo</h3>
-                <p className={styles.useCaseChallenge}>Verlängerung jährlich am 15.05.</p>
-                <p className={styles.useCaseSolution}><strong>→ Hinweis 14 Tage vorher.</strong></p>
-              </div>
-              <div className={styles.useCaseCard}>
-                <h3 className={styles.useCaseTitle}>Mietvertrag</h3>
-                <p className={styles.useCaseChallenge}>Kündigung mind. 3 Monate zum Monatsende</p>
-                <p className={styles.useCaseSolution}><strong>→ Automatische Berechnung des Stichtags.</strong></p>
-              </div>
-              <div className={styles.useCaseCard}>
-                <h3 className={styles.useCaseTitle}>Wartungsvertrag</h3>
-                <p className={styles.useCaseChallenge}>Mindestlaufzeit 24 Monate</p>
-                <p className={styles.useCaseSolution}><strong>→ Erinnerung zur Verhandlung 60 Tage vorher.</strong></p>
+
+              <div className={`${styles.solutionContent} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <span className={styles.sectionEyebrow}>Die Lösung</span>
+                <h2 className={styles.sectionTitleLeft}>Intelligente Fristenerkennung mit KI</h2>
+                <p className={styles.solutionText}>
+                  Contract AI scannt Ihre Verträge nach allen relevanten Fristen und Stichtagen.
+                  Die KI erkennt auch versteckte Kündigungsfristen, Mindestlaufzeiten und Verlängerungsregeln.
+                </p>
+
+                <div className={styles.solutionFeatures}>
+                  <div className={styles.solutionFeature}>
+                    <div className={styles.solutionFeatureIcon}>
+                      <Calendar size={20} />
+                    </div>
+                    <div className={styles.solutionFeatureText}>
+                      <h4>Automatische Erkennung</h4>
+                      <p>KI findet alle Fristen, auch versteckte Klauseln</p>
+                    </div>
+                  </div>
+
+                  <div className={styles.solutionFeature}>
+                    <div className={styles.solutionFeatureIcon}>
+                      <Bell size={20} />
+                    </div>
+                    <div className={styles.solutionFeatureText}>
+                      <h4>Flexible Erinnerungen</h4>
+                      <p>90, 60, 30, 14 Tage – oder individuell</p>
+                    </div>
+                  </div>
+
+                  <div className={styles.solutionFeature}>
+                    <div className={styles.solutionFeatureIcon}>
+                      <Mail size={20} />
+                    </div>
+                    <div className={styles.solutionFeatureText}>
+                      <h4>Kalender-Integration</h4>
+                      <p>Google, Outlook, iCal – automatisch synchronisiert</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className={styles.beispielBox}>
-              <div className={styles.beispielIcon}>
-                <Mail size={32} />
-              </div>
-              <p className={styles.beispielText}>
-                "Seit dem Fristenkalender haben wir keine teure Verlängerung mehr übersehen. Das spart uns jedes Jahr Tausende Euro."
+          </div>
+        </section>
+
+        {/* ==========================================
+            WHY US SECTION
+            ========================================== */}
+        <section className={styles.whySection} id="why">
+          <div className={styles.container}>
+            <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <span className={styles.sectionEyebrow}>Ihre Vorteile</span>
+              <h2 className={styles.sectionTitle}>Was der Fristenkalender bietet</h2>
+              <p className={styles.sectionSubtitle}>
+                Nie wieder wichtige Termine verpassen – automatisch und zuverlässig.
               </p>
-              <p className={styles.beispielHinweis}>
-                Feedback eines Unternehmenskunden mit 50+ Verträgen
+            </div>
+
+            <div className={styles.whyGrid}>
+              <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.whyIcon}>
+                  <Calendar size={28} />
+                </div>
+                <h3 className={styles.whyTitle}>Automatische Erkennung</h3>
+                <p className={styles.whyDesc}>
+                  KI findet alle Kündigungsfristen, Mindestlaufzeiten und
+                  Verlängerungsregeln – auch versteckte.
+                </p>
+              </div>
+
+              <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.whyIcon}>
+                  <Bell size={28} />
+                </div>
+                <h3 className={styles.whyTitle}>Flexible Erinnerungen</h3>
+                <p className={styles.whyDesc}>
+                  Mehrere Benachrichtigungen nach Ihren Wünschen: 90, 60, 30, 14 Tage
+                  vor dem Stichtag.
+                </p>
+              </div>
+
+              <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.whyIcon}>
+                  <Mail size={28} />
+                </div>
+                <h3 className={styles.whyTitle}>Kalender-Sync</h3>
+                <p className={styles.whyDesc}>
+                  Nahtlose Integration in Google Kalender, Outlook oder iCal
+                  mit automatischen Updates.
+                </p>
+              </div>
+
+              <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.whyIcon}>
+                  <Target size={28} />
+                </div>
+                <h3 className={styles.whyTitle}>Smart-Berechnung</h3>
+                <p className={styles.whyDesc}>
+                  Automatische Berechnung von Kündigungsstichtagen basierend
+                  auf komplexen Klauseln.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ==========================================
+            PROCESS SECTION - V5 Timeline with Line
+            ========================================== */}
+        <section className={styles.processSection} id="process">
+          <div className={styles.container}>
+            <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <span className={styles.sectionEyebrow}>So funktioniert's</span>
+              <h2 className={styles.sectionTitle}>In 3 Schritten zum Fristenkalender</h2>
+              <p className={styles.sectionSubtitle}>
+                Automatische Fristenerkennung und Erinnerungen – kinderleicht eingerichtet.
               </p>
             </div>
-          </section>
 
-          {/* DIFFERENTIATION */}
-          <section className={styles.funktionSection}>
-            <h2 className={styles.sectionTitle}>Warum Contract AI?</h2>
-            <ul className={styles.featureList}>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>🤖</span>
-                <span className={styles.featureListContent}><strong>Intelligente KI-Erkennung</strong> statt manueller Eingabe – auch komplexe Fristen werden automatisch gefunden</span>
-              </li>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>🇪🇺</span>
-                <span className={styles.featureListContent}><strong>Server in Deutschland (Frankfurt)</strong>, volle DSGVO-Konformität und EU-Datenschutz</span>
-              </li>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>📱</span>
-                <span className={styles.featureListContent}><strong>Nahtlose Kalenderintegration</strong> mit Google, Outlook und iCal – keine Doppeleingaben nötig</span>
-              </li>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>⚡</span>
-                <span className={styles.featureListContent}><strong>Mehrfach-Erinnerungen</strong> mit flexiblen Vorlaufzeiten – nie wieder einen Termin verpassen</span>
-              </li>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>👥</span>
-                <span className={styles.featureListContent}><strong>Team-Features für Unternehmen</strong> – Zuweisungen, Verantwortlichkeiten, gemeinsame Verwaltung</span>
-              </li>
-            </ul>
-          </section>
+            <div className={styles.processContainer}>
+              <div className={styles.processLine}></div>
 
-          {/* SECURITY */}
-          <section className={styles.statsSection}>
-            <div className={styles.contentContainer}>
-              <h2 className={styles.sectionTitle}>Sicherheit & Datenschutz</h2>
-              <p style={{ color: '#666', textAlign: 'center', marginBottom: '40px', fontSize: '17px' }}>
-                Ihre Vertragsdaten werden verschlüsselt übertragen und ausschließlich auf EU-Servern in Frankfurt verarbeitet. 
-                Fristen-Extraktion erfolgt datenschutzkonform, keine Weitergabe an Dritte. Löschung jederzeit auf Wunsch möglich.
-              </p>
-              <div className={styles.statsGrid}>
-                <div className={styles.statItem}>
-                  <div className={styles.statNumber}>100%</div>
-                  <div className={styles.statLabel}>Fristenerkennung</div>
+              <div className={styles.processTimeline}>
+                <div className={`${styles.processStep} ${styles.animateOnScroll}`} ref={addToRefs}>
+                  <div className={styles.processNumber}>1</div>
+                  <div className={styles.processContent}>
+                    <h3 className={styles.processTitle}>Vertrag hochladen</h3>
+                    <p className={styles.processDesc}>
+                      PDF oder DOCX Ihres Vertrags hochladen – die KI scannt automatisch nach Fristen und Stichtagen.
+                    </p>
+                  </div>
                 </div>
-                <div className={styles.statItem}>
-                  <div className={styles.statNumber}>∅ 30 Tage</div>
-                  <div className={styles.statLabel}>Vorlaufzeit</div>
+
+                <div className={`${styles.processStep} ${styles.animateOnScroll}`} ref={addToRefs}>
+                  <div className={styles.processNumber}>2</div>
+                  <div className={styles.processContent}>
+                    <h3 className={styles.processTitle}>Fristen-Extraktion</h3>
+                    <p className={styles.processDesc}>
+                      Intelligente Erkennung aller Kündigungsfristen, Verlängerungsregeln und wichtiger Termine.
+                    </p>
+                  </div>
                 </div>
-                <div className={styles.statItem}>
-                  <div className={styles.statNumber}>€500+</div>
-                  <div className={styles.statLabel}>Durchschnittliche Ersparnis</div>
+
+                <div className={`${styles.processStep} ${styles.animateOnScroll}`} ref={addToRefs}>
+                  <div className={styles.processNumber}>3</div>
+                  <div className={styles.processContent}>
+                    <h3 className={styles.processTitle}>Automatische Erinnerungen</h3>
+                    <p className={styles.processDesc}>
+                      E-Mail-Benachrichtigungen und Kalendereinträge rechtzeitig vor Ablauf der Fristen.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-          </section>
+          </div>
+        </section>
 
-          {/* FAQ */}
-          <section className={styles.funktionSection} aria-labelledby="faq-heading">
-            <h2 id="faq-heading" className={styles.sectionTitle}>Häufige Fragen</h2>
+        {/* ==========================================
+            STATS SECTION
+            ========================================== */}
+        <section className={styles.statsSection}>
+          <div className={styles.container}>
+            <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <span className={styles.sectionEyebrow}>Unsere Zahlen</span>
+              <h2 className={styles.sectionTitle}>Zuverlässige Fristenerkennung</h2>
+            </div>
+
+            <div className={styles.statsGrid}>
+              <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.statNumber}>95%+</div>
+                <div className={styles.statLabel}>Erkennungsgenauigkeit</div>
+              </div>
+              <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.statNumber}>30 Tage</div>
+                <div className={styles.statLabel}>Standard-Vorlaufzeit</div>
+              </div>
+              <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.statNumber}>500€+</div>
+                <div className={styles.statLabel}>Durchschnittliche Ersparnis</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ==========================================
+            FAQ SECTION
+            ========================================== */}
+        <section className={styles.faqSection} id="faq">
+          <div className={styles.container}>
+            <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <span className={styles.sectionEyebrow}>Fragen & Antworten</span>
+              <h2 className={styles.sectionTitle}>Häufige Fragen</h2>
+            </div>
+
             <div className={styles.faqContainer}>
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
                   Welche Arten von Fristen erkennt die KI?
-                  <span className={styles.faqIcon}>▼</span>
+                  <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
-                <p className={styles.faqAnswer}>Kündigungsfristen, Mindestlaufzeiten, automatische Verlängerungen, Zahlungsfristen, Gewährleistungszeiten und andere vertraglich relevante Stichtage. Auch komplexe Berechnungen wie "3 Monate zum Monatsende".</p>
+                <p className={styles.faqAnswer}>
+                  Kündigungsfristen, Mindestlaufzeiten, automatische Verlängerungen, Zahlungsfristen,
+                  Gewährleistungszeiten und andere vertraglich relevante Stichtage. Auch komplexe
+                  Berechnungen wie "3 Monate zum Monatsende".
+                </p>
               </details>
+
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
                   Wie genau ist die automatische Erkennung?
-                  <span className={styles.faqIcon}>▼</span>
+                  <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
-                <p className={styles.faqAnswer}>Die KI erreicht eine Genauigkeit von über 95% bei Standardverträgen. Bei unklaren Formulierungen markiert sie potentielle Fristen zur manuellen Überprüfung.</p>
+                <p className={styles.faqAnswer}>
+                  Die KI erreicht eine Genauigkeit von über 95% bei Standardverträgen. Bei unklaren
+                  Formulierungen markiert sie potenzielle Fristen zur manuellen Überprüfung.
+                </p>
               </details>
+
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
                   Kann ich eigene Erinnerungszeiten festlegen?
-                  <span className={styles.faqIcon}>▼</span>
+                  <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
-                <p className={styles.faqAnswer}>Ja, Sie können für jeden Vertragstyp individuelle Vorlaufzeiten definieren. Standard sind 90, 60, 30 und 14 Tage, aber Sie können beliebige Zeiträume wählen.</p>
+                <p className={styles.faqAnswer}>
+                  Ja, Sie können für jeden Vertragstyp individuelle Vorlaufzeiten definieren.
+                  Standard sind 90, 60, 30 und 14 Tage, aber Sie können beliebige Zeiträume wählen.
+                </p>
               </details>
+
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
                   Funktioniert die Kalenderintegration mit allen Anbietern?
-                  <span className={styles.faqIcon}>▼</span>
+                  <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
-                <p className={styles.faqAnswer}>Ja, wir unterstützen Google Kalender, Outlook, Apple Kalender und alle iCal-kompatiblen Apps. Die Synchronisation erfolgt bidirektional.</p>
+                <p className={styles.faqAnswer}>
+                  Ja, wir unterstützen Google Kalender, Outlook, Apple Kalender und alle
+                  iCal-kompatiblen Apps. Die Synchronisation erfolgt bidirektional.
+                </p>
               </details>
+
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
                   Was passiert bei Vertragsänderungen?
-                  <span className={styles.faqIcon}>▼</span>
+                  <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
-                <p className={styles.faqAnswer}>Bei Upload einer neuen Version erkennt die KI Änderungen an Fristen und aktualisiert automatisch alle Erinnerungen und Kalendereinträge.</p>
-              </details>
-              <details className={styles.faqItem}>
-                <summary className={styles.faqQuestion}>
-                  Können Teams gemeinsam Fristen verwalten?
-                  <span className={styles.faqIcon}>▼</span>
-                </summary>
-                <p className={styles.faqAnswer}>Ja, Sie können Fristen an Teammitglieder zuweisen, Verantwortlichkeiten definieren und gemeinsame Kalender erstellen. Ideal für Unternehmen mit vielen Verträgen.</p>
+                <p className={styles.faqAnswer}>
+                  Bei Upload einer neuen Version erkennt die KI Änderungen an Fristen und
+                  aktualisiert automatisch alle Erinnerungen und Kalendereinträge.
+                </p>
               </details>
             </div>
-          </section>
+          </div>
+        </section>
 
-          {/* RELATED FEATURES */}
-          <section className={styles.relatedSection}>
-            <div className={styles.contentContainer}>
+        {/* ==========================================
+            RELATED FEATURES
+            ========================================== */}
+        <section className={styles.relatedSection}>
+          <div className={styles.container}>
+            <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <h2 className={styles.sectionTitle}>Verwandte Funktionen</h2>
-              <div className={styles.relatedGrid}>
-                <Link to="/features/vertragsverwaltung" className={styles.relatedCard}>
-                  <span className={styles.relatedIcon}>📁</span>
-                  <div className={styles.relatedContent}>
-                    <div className={styles.relatedTitle}>Vertragsverwaltung</div>
-                    <div className={styles.relatedDescription}>Alle Verträge zentral organisieren, kategorisieren und durchsuchen</div>
-                  </div>
-                  <ArrowRight size={20} className={styles.relatedArrow} />
-                </Link>
-                <Link to="/features/email-upload" className={styles.relatedCard}>
-                  <span className={styles.relatedIcon}>📧</span>
-                  <div className={styles.relatedContent}>
-                    <div className={styles.relatedTitle}>E-Mail Upload</div>
-                    <div className={styles.relatedDescription}>Verträge per E-Mail hochladen – automatisch erkannt und importiert</div>
-                  </div>
-                  <ArrowRight size={20} className={styles.relatedArrow} />
-                </Link>
-                <Link to="/features/legalpulse" className={styles.relatedCard}>
-                  <span className={styles.relatedIcon}>📊</span>
-                  <div className={styles.relatedContent}>
-                    <div className={styles.relatedTitle}>Legal Pulse</div>
-                    <div className={styles.relatedDescription}>Marktdaten und Benchmarks zu Ihren Vertragskonditionen</div>
-                  </div>
-                  <ArrowRight size={20} className={styles.relatedArrow} />
-                </Link>
-              </div>
             </div>
-          </section>
 
-          {/* FINAL CTA */}
-          <section className={styles.ctaSection}>
-            <div className={styles.ctaCard}>
-              <h2 className={styles.ctaTitle}>Fristen im Griff – automatisch</h2>
-              <p className={styles.ctaSubtitle}>
-                Nie wieder wichtige Termine verpassen. Lassen Sie die KI Ihre Verträge überwachen und rechtzeitig erinnern.
-              </p>
-              <div className={styles.ctaButtons}>
-                <button
-                  className={styles.secondaryButtonLight}
-                  onClick={() => document.getElementById('so-funktionierts')?.scrollIntoView({ behavior: 'smooth' })}
-                >
-                  Mehr über Erinnerungen
-                </button>
-                <Link to={target} className={styles.ctaButton} aria-label="Zum Fristenkalender">
-                  Zum Fristenkalender
-                </Link>
+            <div className={styles.relatedGrid}>
+              <Link to="/features/vertragsverwaltung" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <span className={styles.relatedIcon}>📁</span>
+                <div className={styles.relatedContent}>
+                  <div className={styles.relatedTitle}>Vertragsverwaltung</div>
+                  <div className={styles.relatedDescription}>
+                    Alle Verträge zentral organisieren, kategorisieren und durchsuchen
+                  </div>
+                </div>
+                <ArrowRight size={20} className={styles.relatedArrow} />
+              </Link>
+
+              <Link to="/features/vertragsanalyse" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <span className={styles.relatedIcon}>🔍</span>
+                <div className={styles.relatedContent}>
+                  <div className={styles.relatedTitle}>Vertragsanalyse</div>
+                  <div className={styles.relatedDescription}>
+                    KI-gestützte Analyse von Risiken und kritischen Klauseln
+                  </div>
+                </div>
+                <ArrowRight size={20} className={styles.relatedArrow} />
+              </Link>
+
+              <Link to="/features/email-upload" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <span className={styles.relatedIcon}>📧</span>
+                <div className={styles.relatedContent}>
+                  <div className={styles.relatedTitle}>E-Mail Upload</div>
+                  <div className={styles.relatedDescription}>
+                    Verträge per E-Mail hochladen – automatisch erkannt und importiert
+                  </div>
+                </div>
+                <ArrowRight size={20} className={styles.relatedArrow} />
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* ==========================================
+            CTA SECTION
+            ========================================== */}
+        <section className={styles.ctaSection}>
+          <div className={styles.container}>
+            <div className={`${styles.ctaCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <div className={styles.ctaContent}>
+                <h2 className={styles.ctaTitle}>
+                  Fristen im Griff – automatisch
+                </h2>
+                <p className={styles.ctaSubtitle}>
+                  Nie wieder wichtige Termine verpassen. Lassen Sie die KI Ihre Verträge
+                  überwachen und rechtzeitig erinnern.
+                </p>
+                <div className={styles.ctaButtons}>
+                  <Link to={target} className={styles.btnWhite}>
+                    Jetzt kostenlos starten
+                    <ArrowRight size={20} />
+                  </Link>
+                </div>
               </div>
             </div>
-          </section>
-        </div>
-        </div>
+          </div>
+        </section>
+
       </div>
 
       <Footer />

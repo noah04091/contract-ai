@@ -82,15 +82,15 @@ const LegalPulse: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>Legal Pulse - Frühwarnsystem für Vertragsrisiken | Contract AI</title>
-        <meta name="description" content="Legal Pulse: Frühwarnsystem für Vertragsrisiken. Regelmäßige Checks, Risiko-Alerts, konkrete Empfehlungen. DSGVO-konform. Jetzt testen!" />
-        <meta name="keywords" content="Legal Pulse, Vertragsrisiken, Frühwarnsystem, Risiko-Alerts, Contract AI, Monitoring, LegalTech" />
+        <title>Vertragsrisiken erkennen – Frühwarnsystem | Contract AI</title>
+        <meta name="description" content="Vertragsrisiken früh erkennen mit Legal Pulse: Automatisches Monitoring, Risiko-Alerts bei Problemen, konkrete Handlungsempfehlungen. Proaktiv statt reaktiv. ✓ Jetzt aktivieren" />
+        <meta name="keywords" content="Vertragsrisiken erkennen, Vertragsüberwachung, Risiko-Monitoring, Frühwarnsystem Verträge, Vertragsrisiken, Legal Pulse, Contract AI" />
 
         <link rel="canonical" href="https://www.contract-ai.de/features/legalpulse" />
         <meta name="robots" content="index,follow" />
 
-        <meta property="og:title" content="Legal Pulse - Frühwarnsystem für Vertragsrisiken" />
-        <meta property="og:description" content="Regelmäßige Checks, Risiko-Alerts, konkrete Empfehlungen für Ihre Verträge." />
+        <meta property="og:title" content="Vertragsrisiken erkennen – Frühwarnsystem | Contract AI" />
+        <meta property="og:description" content="Vertragsrisiken früh erkennen: Automatisches Monitoring, Risiko-Alerts, Handlungsempfehlungen. ✓ Jetzt aktivieren" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.contract-ai.de/features/legalpulse" />
         <meta property="og:image" content="https://www.contract-ai.de/og/og-legalpulse.png" />
@@ -98,8 +98,8 @@ const LegalPulse: React.FC = () => {
         <meta property="og:site_name" content="Contract AI" />
 
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Legal Pulse - Frühwarnsystem für Vertragsrisiken" />
-        <meta name="twitter:description" content="Regelmäßige Checks, Risiko-Alerts, konkrete Empfehlungen für Ihre Verträge." />
+        <meta name="twitter:title" content="Vertragsrisiken erkennen – Frühwarnsystem | Contract AI" />
+        <meta name="twitter:description" content="Vertragsrisiken früh erkennen: Automatisches Monitoring, Risiko-Alerts, Handlungsempfehlungen. ✓ Jetzt aktivieren" />
         <meta name="twitter:image" content="https://www.contract-ai.de/og/og-legalpulse.png" />
 
         <script type="application/ld+json">
@@ -487,67 +487,6 @@ const LegalPulse: React.FC = () => {
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ==========================================
-            WHY US SECTION
-            ========================================== */}
-        <section className={styles.whySection} id="why">
-          <div className={styles.container}>
-            <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
-              <span className={styles.sectionEyebrow}>Ihre Vorteile</span>
-              <h2 className={styles.sectionTitle}>Warum Legal Pulse?</h2>
-              <p className={styles.sectionSubtitle}>
-                Proaktiver Schutz statt reaktiver Schadensbegrenzung – mit intelligenter Überwachung.
-              </p>
-            </div>
-
-            <div className={styles.whyGrid}>
-              <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon}>
-                  <Activity size={28} />
-                </div>
-                <h3 className={styles.whyTitle}>24/7 Überwachung</h3>
-                <p className={styles.whyDesc}>
-                  Legal Pulse arbeitet kontinuierlich im Hintergrund und erkennt relevante
-                  Änderungen automatisch – Sie müssen nichts tun.
-                </p>
-              </div>
-
-              <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon}>
-                  <Bell size={28} />
-                </div>
-                <h3 className={styles.whyTitle}>Keine Alert-Flut</h3>
-                <p className={styles.whyDesc}>
-                  Intelligente Filterung sorgt dafür, dass Sie nur über wirklich relevante
-                  Änderungen informiert werden – keine Newsletter-Müdigkeit.
-                </p>
-              </div>
-
-              <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon}>
-                  <FileText size={28} />
-                </div>
-                <h3 className={styles.whyTitle}>Sofort umsetzbar</h3>
-                <p className={styles.whyDesc}>
-                  Jeder Alert kommt mit konkreten Handlungsempfehlungen und Textvorschlägen
-                  – direkt in den Optimierer übertragbar.
-                </p>
-              </div>
-
-              <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon}>
-                  <Shield size={28} />
-                </div>
-                <h3 className={styles.whyTitle}>Compliance-Sicherheit</h3>
-                <p className={styles.whyDesc}>
-                  Bleiben Sie immer compliant – Legal Pulse warnt Sie rechtzeitig vor
-                  regulatorischen Änderungen, die Ihre Verträge betreffen.
-                </p>
               </div>
             </div>
           </div>

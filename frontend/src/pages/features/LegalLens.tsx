@@ -1,10 +1,14 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { Eye, MousePointer, MessageCircle, AlertTriangle, Scale, Lightbulb, CheckCircle, Shield, FileText, ArrowRight } from "lucide-react";
+// import AutoPlayVideo from "../../components/AutoPlayVideo"; // Auskommentiert bis Video erstellt wird
+import {
+  Eye, MousePointer, Scale, AlertTriangle,
+  ArrowRight, ChevronDown, Lightbulb, FileText, Clock, Zap
+} from "lucide-react";
 
 const LegalLens: React.FC = () => {
   const { user } = useAuth();
@@ -12,9 +16,34 @@ const LegalLens: React.FC = () => {
   const targetInApp = "/contracts";
   const target = isAuthenticated ? targetInApp : `/login?next=${encodeURIComponent(targetInApp)}`;
 
+  const animatedRefs = useRef<(HTMLElement | null)[]>([]);
+
   useEffect(() => {
     window.scrollTo(0, 0);
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add(styles.visible);
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+    );
+
+    animatedRefs.current.forEach((ref) => {
+      if (ref) observer.observe(ref);
+    });
+
+    return () => observer.disconnect();
   }, []);
+
+  const addToRefs = (el: HTMLElement | null) => {
+    if (el && !animatedRefs.current.includes(el)) {
+      animatedRefs.current.push(el);
+    }
+  };
 
   const faqSchema = {
     "@context": "https://schema.org",
@@ -25,7 +54,7 @@ const LegalLens: React.FC = () => {
         "name": "Was ist Legal Lens?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Legal Lens ist eine interaktive Vertragsansicht, bei der Sie auf jede Klausel klicken können, um sofort eine verständliche Erklärung, Risikobewertung und Verhandlungstipps zu erhalten. Komplexe Verträge werden so leicht verständlich."
+          "text": "Legal Lens ist eine interaktive Vertragsansicht, bei der Sie auf jede Klausel klicken können, um sofort eine verständliche Erklärung, Risikobewertung und Verhandlungstipps zu erhalten."
         }
       },
       {
@@ -33,7 +62,7 @@ const LegalLens: React.FC = () => {
         "name": "Wie funktioniert die Klausel-Erklärung?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Klicken Sie einfach auf eine Klausel im Vertrag. Die KI analysiert den Text sofort und zeigt: Was bedeutet das? Ist es fair? Welche Risiken gibt es? Wie können Sie verhandeln? Alles in verständlicher Sprache."
+          "text": "Klicken Sie einfach auf eine Klausel im Vertrag. Die KI analysiert den Text sofort und zeigt: Was bedeutet das? Ist es fair? Welche Risiken gibt es?"
         }
       },
       {
@@ -41,31 +70,7 @@ const LegalLens: React.FC = () => {
         "name": "Für wen ist Legal Lens geeignet?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Legal Lens ist für jeden geeignet, der Verträge verstehen möchte - Privatpersonen, Freiberufler, Unternehmer. Keine juristischen Vorkenntnisse nötig. Die KI erklärt alles in einfacher Sprache."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Muss ich den Vertrag vorher analysieren lassen?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Legal Lens funktioniert mit allen bereits hochgeladenen Verträgen. Die Klausel-Analyse erfolgt on-demand beim Klick."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Ersetzt Legal Lens eine anwaltliche Beratung?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Legal Lens hilft beim Verstehen, ersetzt aber keine Rechtsberatung. Bei kritischen Verträgen empfehlen wir zusätzlich einen Anwalt."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Welche Vertragstypen werden unterstützt?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Alle deutschen Vertragstypen: Arbeitsverträge, Mietverträge, Kaufverträge, NDAs, Dienstleistungsverträge, AGB und mehr."
+          "text": "Legal Lens ist für jeden geeignet, der Verträge verstehen möchte - Privatpersonen, Freiberufler, Unternehmer. Keine juristischen Vorkenntnisse nötig."
         }
       }
     ]
@@ -74,397 +79,600 @@ const LegalLens: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>Legal Lens - Vertragsklauseln verstehen mit einem Klick | Contract AI</title>
-        <meta name="description" content="Klicken Sie auf jede Klausel und verstehen Sie sofort, was sie bedeutet. Risikobewertung, Erklärungen, Verhandlungstipps. Komplexe Verträge einfach erklärt!" />
-        <meta name="keywords" content="Vertragsklauseln, Klauseln verstehen, Legal Lens, Risikobewertung, Verhandlungstipps, Vertragsanalyse, interaktiv" />
+        <title>Vertragsklauseln verstehen – Kleingedrucktes erklärt | Contract AI</title>
+        <meta name="description" content="Vertragsklauseln verstehen mit einem Klick: Kompliziertes Kleingedrucktes einfach erklärt. Risikobewertung, Bedeutung, Verhandlungstipps. Nie wieder im Dunkeln tappen! ✓ Jetzt testen" />
+        <meta name="keywords" content="Vertragsklauseln verstehen, Kleingedrucktes verstehen, Klausel Bedeutung, was bedeutet diese Klausel, Vertrag verstehen, Legal Lens, Contract AI" />
 
         <link rel="canonical" href="https://www.contract-ai.de/features/legal-lens" />
         <meta name="robots" content="index,follow" />
 
-        {/* Open Graph */}
-        <meta property="og:title" content="Legal Lens - Vertragsklauseln verstehen mit einem Klick" />
-        <meta property="og:description" content="Klicken Sie auf jede Klausel und verstehen Sie sofort, was sie bedeutet. Risikobewertung, Erklärungen, Verhandlungstipps." />
+        <meta property="og:title" content="Vertragsklauseln verstehen – Kleingedrucktes erklärt | Contract AI" />
+        <meta property="og:description" content="Vertragsklauseln verstehen mit einem Klick: Kleingedrucktes einfach erklärt, Risikobewertung inklusive. ✓ Jetzt testen" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.contract-ai.de/features/legal-lens" />
         <meta property="og:image" content="https://www.contract-ai.de/og/og-legal-lens.png" />
         <meta property="og:locale" content="de_DE" />
         <meta property="og:site_name" content="Contract AI" />
 
-        {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Legal Lens - Vertragsklauseln verstehen mit einem Klick" />
-        <meta name="twitter:description" content="Klicken Sie auf jede Klausel und verstehen Sie sofort, was sie bedeutet. Risikobewertung, Erklärungen, Verhandlungstipps." />
+        <meta name="twitter:title" content="Vertragsklauseln verstehen – Kleingedrucktes erklärt | Contract AI" />
+        <meta name="twitter:description" content="Vertragsklauseln verstehen mit einem Klick: Kleingedrucktes einfach erklärt, Risikobewertung inklusive. ✓ Jetzt testen" />
         <meta name="twitter:image" content="https://www.contract-ai.de/og/og-legal-lens.png" />
 
-        {/* Schema.org FAQ Data */}
         <script type="application/ld+json">
           {JSON.stringify(faqSchema)}
         </script>
       </Helmet>
 
       <div className={styles.pageBackground}>
-        {/* Dots Pattern */}
-        <div className={styles.dotsPattern} />
-
-        {/* Floating Decorative Elements */}
-        <div className={styles.floatingElements}>
-          <Eye className={styles.floatingIcon} size={28} />
-          <MousePointer className={styles.floatingIcon} size={24} />
-          <MessageCircle className={styles.floatingIcon} size={22} />
-          <AlertTriangle className={styles.floatingIcon} size={26} />
-          <Scale className={styles.floatingIcon} size={20} />
-          <Lightbulb className={styles.floatingIcon} size={24} />
-          <CheckCircle className={styles.floatingIcon} size={22} />
-          <FileText className={styles.floatingIcon} size={26} />
+        {/* Ambient Background */}
+        <div className={styles.ambientBg}>
+          <div className={`${styles.ambientOrb} ${styles.orb1}`} />
+          <div className={`${styles.ambientOrb} ${styles.orb2}`} />
+          <div className={`${styles.ambientOrb} ${styles.orb3}`} />
         </div>
 
-        <div className={styles.featureContainer}>
+        {/* ==========================================
+            HERO SECTION - V5 Side-by-Side Layout
+            ========================================== */}
+        <section className={styles.hero}>
+          <div className={styles.containerLg}>
+            <div className={styles.heroContent}>
+              <div className={styles.heroBadge}>
+                <span className={styles.heroBadgeDot}></span>
+                Interaktive Vertragsansicht
+              </div>
 
-        {/* HERO */}
-        <section className={styles.heroSection}>
-          <div className={styles.heroIcon}>
-            <Eye size={64} />
-          </div>
-          <h1 className={styles.heroTitle}>
-            Verträge verstehen mit einem <span className={styles.heroTitleHighlight}>Klick</span>
-          </h1>
-          <p className={styles.heroSubtitle}>
-            Legal Lens macht jeden Vertrag interaktiv. Klicken Sie auf eine Klausel und erfahren Sie sofort: Was bedeutet das? Ist es fair? Wie verhandeln Sie besser?
-          </p>
-          <div className={styles.heroButtons}>
-            <Link to={target} className={styles.ctaButton} style={{ fontSize: '18px', padding: '16px 32px' }} aria-label="Legal Lens ausprobieren">
-              Legal Lens ausprobieren
-            </Link>
-            <a href="#so-funktionierts" style={{ background: 'rgba(255,255,255,0.1)', color: '#007aff', border: '1px solid rgba(0,122,255,0.3)', padding: '12px 16px', borderRadius: '12px', fontWeight: '600', textDecoration: 'none' }} aria-label="So funktioniert Legal Lens">
-              So funktioniert es
-            </a>
-          </div>
+              <h1 className={styles.heroTitle}>
+                Klicken. Verstehen.<br/>
+                <span className={styles.heroTitleHighlight}>Verhandeln.</span>
+              </h1>
 
-          {/* Trust Badges */}
-          <div className={styles.trustBadges}>
-            <div className={styles.trustBadge}>
-              <MousePointer size={16} className={styles.trustBadgeIcon} />
-              <span>Klick-Erklärung</span>
+              <p className={styles.heroSubtitle}>
+                Legal Lens macht Verträge interaktiv. Klicken Sie auf eine Klausel und
+                erhalten Sie sofort: Erklärung, Risikobewertung, Verhandlungstipp.
+              </p>
+
+              <div className={styles.heroCta}>
+                <Link to={target} className={styles.btnPrimary}>
+                  Legal Lens testen
+                  <ArrowRight size={20} />
+                </Link>
+                <a href="#funktionen" className={styles.btnSecondary}>
+                  Funktionen entdecken
+                </a>
+              </div>
             </div>
-            <div className={styles.trustBadge}>
-              <Scale size={16} className={styles.trustBadgeIcon} />
-              <span>Fairness-Check</span>
-            </div>
-            <div className={styles.trustBadge}>
-              <Shield size={16} className={styles.trustBadgeIcon} />
-              <span>Risiko-Analyse</span>
+
+            {/* Interactive Demo Visual */}
+            <div className={styles.heroVisual}>
+              <div className={`${styles.floatingElement} ${styles.floatingElement1}`}>
+                <div className={`${styles.floatingIcon} ${styles.floatingIconOrange}`}>
+                  <AlertTriangle size={20} />
+                </div>
+                <div>
+                  <div className={styles.floatingText}>Kritisch</div>
+                  <div className={styles.floatingSubtext}>Haftungsklausel</div>
+                </div>
+              </div>
+
+              <div className={`${styles.floatingElement} ${styles.floatingElement2}`}>
+                <div className={`${styles.floatingIcon} ${styles.floatingIconBlue}`}>
+                  <Lightbulb size={20} />
+                </div>
+                <div>
+                  <div className={styles.floatingText}>Tipp</div>
+                  <div className={styles.floatingSubtext}>Deckelung fordern</div>
+                </div>
+              </div>
+
+              <div className={styles.demoWindow}>
+                <div className={styles.demoHeader}>
+                  <span className={`${styles.demoDot} ${styles.demoDotRed}`}></span>
+                  <span className={`${styles.demoDot} ${styles.demoDotYellow}`}></span>
+                  <span className={`${styles.demoDot} ${styles.demoDotGreen}`}></span>
+                </div>
+                <div className={styles.demoContent}>
+                  <div className={styles.demoScore}>
+                    <div className={styles.demoScoreCircle}>
+                      <Eye size={24} />
+                    </div>
+                    <div className={styles.demoScoreText}>
+                      <div className={styles.demoScoreLabel}>Legal Lens</div>
+                      <div className={styles.demoScoreTitle}>Klausel angeklickt</div>
+                    </div>
+                  </div>
+                  <div className={styles.demoFindings}>
+                    <div className={styles.demoFinding}>
+                      <div className={`${styles.demoFindingIcon} ${styles.risk}`}>
+                        <AlertTriangle size={14} />
+                      </div>
+                      <span className={styles.demoFindingText}>§ 7 Haftungsausschluss</span>
+                      <span className={`${styles.demoFindingBadge} ${styles.high}`}>Kritisch</span>
+                    </div>
+                    <div className={styles.demoFinding}>
+                      <div className={`${styles.demoFindingIcon} ${styles.warning}`}>
+                        <Scale size={14} />
+                      </div>
+                      <span className={styles.demoFindingText}>Fairness-Bewertung</span>
+                      <span className={`${styles.demoFindingBadge} ${styles.medium}`}>Einseitig</span>
+                    </div>
+                    <div className={styles.demoFinding}>
+                      <div className={`${styles.demoFindingIcon} ${styles.info}`}>
+                        <Lightbulb size={14} />
+                      </div>
+                      <span className={styles.demoFindingText}>Verhandlungstipp</span>
+                      <span className={`${styles.demoFindingBadge} ${styles.low}`}>Verfügbar</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
-        <div className={styles.contentContainer}>
 
-          {/* PAIN */}
-          <section className={styles.funktionSection}>
-            <h2 className={styles.sectionTitle}>Das Problem: Verträge sind unverständlich</h2>
-            <div className={styles.funktionGrid}>
-              <div className={styles.funktionItem}>
-                <div className={styles.funktionIcon}>
-                  <AlertTriangle size={20} />
-                </div>
-                <p className={styles.funktionText}>
-                  Juristische Sprache ist absichtlich komplex. Wichtige Klauseln verstecken sich in langen Absätzen. Selbst wenn Sie alles lesen, verstehen Sie oft nicht die Konsequenzen. "Salvatorische Klausel", "Haftungsfreistellung", "Gerichtsstandsvereinbarung" – was bedeutet das konkret für Sie?
-                </p>
-              </div>
-              <div className={styles.funktionItem}>
-                <div className={styles.funktionIcon}>
-                  <Eye size={20} />
-                </div>
-                <p className={styles.funktionText}>
-                  Legal Lens verwandelt jeden Vertrag in ein interaktives Dokument. Klicken Sie auf eine beliebige Stelle und die KI erklärt sofort: Was steht da wirklich? Ist es fair oder einseitig? Welche Risiken gibt es? Und was können Sie tun, um Ihre Position zu verbessern?
-                </p>
-              </div>
+        {/* Trust Badges */}
+        <div className={styles.container}>
+          <div className={styles.trustBadgesRow}>
+            <div className={styles.trustBadge}>
+              <MousePointer size={18} />
+              Klick = Erklärung
             </div>
-          </section>
-
-          {/* SOLUTION */}
-          <section className={styles.funktionSection}>
-            <h2 className={styles.sectionTitle}>Die Lösung: Interaktive Vertragsanalyse</h2>
-            <p className={styles.funktionText} style={{ fontSize: '18px', lineHeight: '1.6', marginBottom: '24px' }}>
-              Legal Lens zeigt Ihren Vertrag mit farbigen Markierungen: Grün für faire Klauseln, Gelb für Vorsicht, Rot für kritische Punkte. Klicken Sie auf eine Stelle und erhalten Sie sofort eine verständliche Erklärung – wie ein Anwalt, der neben Ihnen sitzt.
-            </p>
-            <ul className={styles.featureList}>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>🖱️</span>
-                <span className={styles.featureListContent}><strong>Klick-Erklärung:</strong> Tippen Sie auf jede Klausel für sofortige Erläuterung in einfacher Sprache</span>
-              </li>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>🎨</span>
-                <span className={styles.featureListContent}><strong>Farbcodierung:</strong> Ampelsystem zeigt auf einen Blick, wo Risiken lauern</span>
-              </li>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>⚖️</span>
-                <span className={styles.featureListContent}><strong>Fairness-Bewertung:</strong> Ist die Klausel ausgewogen oder einseitig?</span>
-              </li>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>💡</span>
-                <span className={styles.featureListContent}><strong>Verhandlungstipps:</strong> Konkrete Vorschläge, wie Sie die Klausel verbessern können</span>
-              </li>
-            </ul>
-          </section>
-
-          {/* HOW IT WORKS */}
-          <section id="so-funktionierts" className={styles.funktionSection}>
-            <h2 className={styles.sectionTitle}>So funktioniert's – in 3 Schritten</h2>
-            <div className={styles.funktionGrid}>
-              <div className={styles.funktionItem}>
-                <div className={styles.funktionIcon}>
-                  <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#007aff' }}>1</span>
-                </div>
-                <p className={styles.funktionText}>
-                  <strong>Vertrag öffnen:</strong> Laden Sie Ihren Vertrag hoch oder wählen Sie einen bereits analysierten Vertrag aus Ihrer Bibliothek.
-                </p>
-              </div>
-              <div className={styles.funktionItem}>
-                <div className={styles.funktionIcon}>
-                  <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#007aff' }}>2</span>
-                </div>
-                <p className={styles.funktionText}>
-                  <strong>Legal Lens aktivieren:</strong> Klicken Sie auf "Legal Lens" und der Vertrag wird mit Farbmarkierungen angezeigt.
-                </p>
-              </div>
-              <div className={styles.funktionItem}>
-                <div className={styles.funktionIcon}>
-                  <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#007aff' }}>3</span>
-                </div>
-                <p className={styles.funktionText}>
-                  <strong>Klauseln erkunden:</strong> Klicken Sie auf jede markierte Stelle für Erklärung, Risikobewertung und Verhandlungstipps.
-                </p>
-              </div>
+            <div className={styles.trustBadge}>
+              <Scale size={18} />
+              Fairness-Check
             </div>
-          </section>
-
-          {/* FEATURES GRID */}
-          <section className={styles.vorteileSection}>
-            <div className={styles.contentContainer}>
-              <h2 className={styles.sectionTitle}>Funktionen im Überblick</h2>
-              <div className={styles.vorteileGrid}>
-                <div className={styles.vorteilCard}>
-                  <h3 className={styles.vorteilTitle}>Klausel-Erklärung</h3>
-                  <p className={styles.vorteilText}>Jede Klausel wird in verständlicher Sprache erklärt. Kein Juristendeutsch, sondern klare Aussagen.</p>
-                </div>
-                <div className={styles.vorteilCard}>
-                  <h3 className={styles.vorteilTitle}>Risiko-Bewertung</h3>
-                  <p className={styles.vorteilText}>Farbcodierung zeigt sofort: Grün = OK, Gelb = Vorsicht, Rot = Kritisch. Kein Übersehen mehr.</p>
-                </div>
-                <div className={styles.vorteilCard}>
-                  <h3 className={styles.vorteilTitle}>Fairness-Check</h3>
-                  <p className={styles.vorteilText}>Ist die Klausel ausgewogen oder bevorzugt sie eine Seite? Sofortige Einschätzung.</p>
-                </div>
-                <div className={styles.vorteilCard}>
-                  <h3 className={styles.vorteilTitle}>Verhandlungstipps</h3>
-                  <p className={styles.vorteilText}>Konkrete Formulierungsvorschläge, um kritische Klauseln zu Ihren Gunsten anzupassen.</p>
-                </div>
-                <div className={styles.vorteilCard}>
-                  <h3 className={styles.vorteilTitle}>Kontext-Infos</h3>
-                  <p className={styles.vorteilText}>Erfahren Sie, warum eine Klausel problematisch ist und welche Alternativen üblich sind.</p>
-                </div>
-                <div className={styles.vorteilCard}>
-                  <h3 className={styles.vorteilTitle}>Smart Summary</h3>
-                  <p className={styles.vorteilText}>Zusammenfassung der wichtigsten Punkte auf einen Blick – perfekt für schnelle Entscheidungen.</p>
-                </div>
-              </div>
+            <div className={styles.trustBadge}>
+              <Lightbulb size={18} />
+              Verhandlungstipps
             </div>
-          </section>
+          </div>
+        </div>
 
-          {/* USE CASES */}
-          <section className={styles.beispielSection}>
-            <h2 className={styles.sectionTitle}>So hilft Legal Lens in der Praxis</h2>
-            <div className={styles.useCaseGrid}>
-              <div className={styles.useCaseCard}>
-                <h3 className={styles.useCaseTitle}>"Vertragsstrafe bei Verzug"</h3>
-                <p className={styles.useCaseChallenge}><strong>Im Vertrag:</strong> "Bei Verzug 5% des Auftragswertes pro Woche"</p>
-                <p className={styles.useCaseSolution}>Legal Lens: "Sehr hoch. Üblich sind max. 5% insgesamt. Tipp: Deckelung auf 10% des Gesamtwertes fordern."</p>
-              </div>
-              <div className={styles.useCaseCard}>
-                <h3 className={styles.useCaseTitle}>"Salvatorische Klausel"</h3>
-                <p className={styles.useCaseChallenge}><strong>Im Vertrag:</strong> Komplexer Absatz mit Fachbegriffen</p>
-                <p className={styles.useCaseSolution}>Legal Lens: "Standard-Klausel. Falls ein Teil ungültig wird, bleibt der Rest gültig. Kein Risiko."</p>
-              </div>
-              <div className={styles.useCaseCard}>
-                <h3 className={styles.useCaseTitle}>"Gerichtsstand Berlin"</h3>
-                <p className={styles.useCaseChallenge}><strong>Im Vertrag:</strong> "Ausschließlicher Gerichtsstand ist Berlin"</p>
-                <p className={styles.useCaseSolution}>Legal Lens: "Sie müssten bei Streit nach Berlin. Prüfen Sie, ob das praktikabel ist."</p>
-              </div>
-              <div className={styles.useCaseCard}>
-                <h3 className={styles.useCaseTitle}>"Haftungsausschluss"</h3>
-                <p className={styles.useCaseChallenge}><strong>Im Vertrag:</strong> "Jegliche Haftung wird ausgeschlossen"</p>
-                <p className={styles.useCaseSolution}>Legal Lens: "Kritisch! Vollständiger Haftungsausschluss ist oft unwirksam. Fordern Sie Nachbesserung."</p>
-              </div>
-            </div>
-            <div className={styles.beispielBox}>
-              <div className={styles.beispielIcon}>
-                <CheckCircle size={32} />
-              </div>
-              <p className={styles.beispielText}>
-                "Legal Lens hat mir bei einem Mietvertrag gezeigt, dass die Renovierungsklausel unwirksam ist. Das hätte ich nie selbst erkannt."
-              </p>
-              <p className={styles.beispielHinweis}>
-                Feedback eines Mieters
+        {/* ==========================================
+            VIDEO SECTION - Auskommentiert bis Video erstellt wird
+            ==========================================
+        <section className={styles.videoSection} id="video">
+          <div className={styles.container}>
+            <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <span className={styles.sectionEyebrow}>So sieht's aus</span>
+              <h2 className={styles.sectionTitle}>Legal Lens in Aktion</h2>
+              <p className={styles.sectionSubtitle}>
+                Sehen Sie, wie einfach Sie jede Klausel verstehen können.
               </p>
             </div>
-          </section>
 
-          {/* DIFFERENTIATION */}
-          <section className={styles.funktionSection}>
-            <h2 className={styles.sectionTitle}>Warum Legal Lens?</h2>
-            <ul className={styles.featureList}>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>🎯</span>
-                <span className={styles.featureListContent}><strong>Punktgenau:</strong> Erklärungen genau dort, wo Sie sie brauchen – direkt bei der Klausel</span>
-              </li>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>🗣️</span>
-                <span className={styles.featureListContent}><strong>Verständlich:</strong> Juristische Fachbegriffe werden in Alltagssprache übersetzt</span>
-              </li>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>⚡</span>
-                <span className={styles.featureListContent}><strong>Sofort:</strong> Keine Wartezeit – klicken und verstehen in Sekundenschnelle</span>
-              </li>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>💪</span>
-                <span className={styles.featureListContent}><strong>Handlungsfähig:</strong> Nicht nur verstehen, sondern auch wissen, was zu tun ist</span>
-              </li>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>📱</span>
-                <span className={styles.featureListContent}><strong>Überall nutzbar:</strong> Auf Desktop, Tablet oder Smartphone – perfekt für unterwegs</span>
-              </li>
-            </ul>
-          </section>
+            <div className={`${styles.videoContainer} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <div className={styles.videoFrame}>
+                <AutoPlayVideo
+                  src="/videos/legal-lens-demo.mp4"
+                  poster="/videos/legal-lens-poster.jpg"
+                  alt="Legal Lens Demo"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+        */}
 
-          {/* SECURITY */}
-          <section className={styles.statsSection}>
-            <div className={styles.contentContainer}>
-              <h2 className={styles.sectionTitle}>Vertrauen & Qualität</h2>
-              <p style={{ color: '#666', textAlign: 'center', marginBottom: '40px', fontSize: '17px' }}>
-                Legal Lens basiert auf modernster KI-Technologie, trainiert mit tausenden deutschen Verträgen und aktueller Rechtsprechung.
-                Ihre Verträge werden sicher auf EU-Servern verarbeitet.
+        {/* ==========================================
+            FUNKTIONEN SECTION (4 Feature Cards)
+            ========================================== */}
+        <section className={styles.functionsSection} id="funktionen">
+          <div className={styles.container}>
+            <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <span className={styles.sectionEyebrow}>Bei jedem Klick</span>
+              <h2 className={styles.sectionTitle}>Das erfahren Sie sofort</h2>
+              <p className={styles.sectionSubtitle}>
+                Klicken Sie auf eine Klausel und erhalten Sie alle wichtigen Informationen.
               </p>
-              <div className={styles.statsGrid}>
-                <div className={styles.statItem}>
-                  <div className={styles.statNumber}>{'< 2s'}</div>
-                  <div className={styles.statLabel}>Antwortzeit pro Klausel</div>
+            </div>
+
+            <div className={styles.functionsGrid}>
+              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.functionIcon}>
+                  <FileText size={24} />
                 </div>
-                <div className={styles.statItem}>
-                  <div className={styles.statNumber}>50+</div>
-                  <div className={styles.statLabel}>Klauseltypen erkannt</div>
+                <h3 className={styles.functionTitle}>Verständliche Erklärung</h3>
+                <p className={styles.functionDesc}>
+                  Was bedeutet diese Klausel konkret für Sie? In einfacher Sprache erklärt.
+                </p>
+              </div>
+
+              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.functionIcon}>
+                  <AlertTriangle size={24} />
                 </div>
-                <div className={styles.statItem}>
-                  <div className={styles.statNumber}>100%</div>
-                  <div className={styles.statLabel}>DSGVO-konform</div>
+                <h3 className={styles.functionTitle}>Risiko-Einschätzung</h3>
+                <p className={styles.functionDesc}>
+                  Grün, Gelb oder Rot – wie kritisch ist diese Klausel für Sie?
+                </p>
+              </div>
+
+              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.functionIcon}>
+                  <Scale size={24} />
+                </div>
+                <h3 className={styles.functionTitle}>Fairness-Bewertung</h3>
+                <p className={styles.functionDesc}>
+                  Ist die Klausel ausgewogen oder bevorzugt sie die Gegenseite?
+                </p>
+              </div>
+
+              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.functionIcon}>
+                  <Lightbulb size={24} />
+                </div>
+                <h3 className={styles.functionTitle}>Verhandlungstipp</h3>
+                <p className={styles.functionDesc}>
+                  Konkrete Formulierung, wie Sie bessere Konditionen aushandeln können.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ==========================================
+            PROBLEM SECTION
+            ========================================== */}
+        <section className={styles.problemSection} id="problem">
+          <div className={styles.container}>
+            <div className={styles.problemGrid}>
+              <div className={`${styles.problemContent} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <span className={styles.sectionEyebrow}>Das Problem</span>
+                <h2 className={styles.sectionTitleLeft}>Verträge sind absichtlich kompliziert</h2>
+                <p className={styles.problemText}>
+                  "Salvatorische Klausel", "Gewährleistungsausschluss", "Gerichtsstandsvereinbarung" –
+                  Juristen-Sprache, die kaum jemand versteht. Und genau das ist gewollt.
+                </p>
+
+                <div className={styles.problemStats}>
+                  <div className={`${styles.problemStat} ${styles.danger}`}>
+                    <div className={styles.problemStatValue}>73%</div>
+                    <div className={styles.problemStatLabel}>verstehen ihre Verträge nicht vollständig</div>
+                  </div>
+                  <div className={`${styles.problemStat} ${styles.warningBg}`}>
+                    <div className={styles.problemStatValue}>42%</div>
+                    <div className={styles.problemStatLabel}>übersehen kritische Klauseln</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className={`${styles.problemVisual} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.problemDoc}>
+                  <div className={styles.problemDocHeader}>
+                    <div className={styles.problemDocIcon}>
+                      <FileText size={24} />
+                    </div>
+                    <div>
+                      <div className={styles.problemDocTitle}>Vertrag.pdf</div>
+                      <div className={styles.problemDocSubtitle}>12 Seiten Juristen-Sprache</div>
+                    </div>
+                  </div>
+                  <div className={styles.problemDocLines}>
+                    <div className={styles.problemDocLine}></div>
+                    <div className={styles.problemDocLine}></div>
+                    <div className={styles.problemDocLine}></div>
+                  </div>
+                  <div className={styles.problemDocHighlight}>
+                    <div className={styles.problemDocHighlightText}>
+                      "...salvatorische Klausel..."
+                    </div>
+                  </div>
+                </div>
+
+                <div className={`${styles.problemWarning} ${styles.problemWarning1}`}>
+                  <div className={`${styles.warningIcon} ${styles.red}`}>
+                    <AlertTriangle size={16} />
+                  </div>
+                  Was bedeutet das?
+                </div>
+
+                <div className={`${styles.problemWarning} ${styles.problemWarning2}`}>
+                  <div className={`${styles.warningIcon} ${styles.orange}`}>
+                    <Clock size={16} />
+                  </div>
+                  Stunden googeln
                 </div>
               </div>
             </div>
-          </section>
+          </div>
+        </section>
 
-          {/* FAQ */}
-          <section className={styles.funktionSection} aria-labelledby="faq-heading">
-            <h2 id="faq-heading" className={styles.sectionTitle}>Häufige Fragen</h2>
+        {/* ==========================================
+            SOLUTION SECTION
+            ========================================== */}
+        <section className={styles.solutionSection} id="solution">
+          <div className={styles.container}>
+            <div className={styles.solutionGrid}>
+              <div className={`${styles.solutionVisual} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.solutionComparison}>
+                  <div className={`${styles.comparisonCard} ${styles.before}`}>
+                    <span className={styles.comparisonLabel}>Klassisch</span>
+                    <div className={styles.comparisonIcon}>
+                      <Clock size={32} />
+                    </div>
+                    <div className={styles.comparisonTitle}>Begriff googeln</div>
+                    <div className={styles.comparisonDesc}>
+                      Juristen-Artikel lesen, immer noch verwirrt.
+                    </div>
+                    <div className={styles.comparisonTime}>
+                      <Clock size={16} />
+                      Stunden
+                    </div>
+                  </div>
+
+                  <div className={styles.comparisonArrow}>
+                    <ArrowRight size={24} />
+                  </div>
+
+                  <div className={`${styles.comparisonCard} ${styles.after}`}>
+                    <span className={styles.comparisonLabel}>Mit Legal Lens</span>
+                    <div className={styles.comparisonIcon}>
+                      <MousePointer size={32} />
+                    </div>
+                    <div className={styles.comparisonTitle}>Klausel anklicken</div>
+                    <div className={styles.comparisonDesc}>
+                      Sofort verstehen, Tipp bekommen.
+                    </div>
+                    <div className={styles.comparisonTime}>
+                      <Zap size={16} />
+                      2 Sekunden
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className={`${styles.solutionContent} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <span className={styles.sectionEyebrow}>Die Lösung</span>
+                <h2 className={styles.sectionTitleLeft}>Klicken statt googeln</h2>
+                <p className={styles.solutionText}>
+                  Legal Lens zeigt Ihren Vertrag mit farbigen Markierungen. Klicken Sie auf eine
+                  Stelle und verstehen Sie sofort, was sie bedeutet.
+                </p>
+
+                <div className={styles.solutionFeatures}>
+                  <div className={styles.solutionFeature}>
+                    <div className={styles.solutionFeatureIcon}>
+                      <MousePointer size={20} />
+                    </div>
+                    <div className={styles.solutionFeatureText}>
+                      <h4>Ein Klick genügt</h4>
+                      <p>Klausel anklicken – Erklärung erscheint sofort</p>
+                    </div>
+                  </div>
+
+                  <div className={styles.solutionFeature}>
+                    <div className={styles.solutionFeatureIcon}>
+                      <Scale size={20} />
+                    </div>
+                    <div className={styles.solutionFeatureText}>
+                      <h4>Fairness auf einen Blick</h4>
+                      <p>Farbcodes zeigen: Grün = fair, Rot = kritisch</p>
+                    </div>
+                  </div>
+
+                  <div className={styles.solutionFeature}>
+                    <div className={styles.solutionFeatureIcon}>
+                      <Lightbulb size={20} />
+                    </div>
+                    <div className={styles.solutionFeatureText}>
+                      <h4>Konkrete Tipps</h4>
+                      <p>Wie Sie bessere Konditionen verhandeln können</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ==========================================
+            PROCESS SECTION - V5 Timeline with Line
+            ========================================== */}
+        <section className={styles.processSection} id="process">
+          <div className={styles.container}>
+            <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <span className={styles.sectionEyebrow}>So funktioniert's</span>
+              <h2 className={styles.sectionTitle}>In 3 Schritten zum Verständnis</h2>
+              <p className={styles.sectionSubtitle}>
+                Nie wieder Verträge unterschreiben, die Sie nicht verstehen.
+              </p>
+            </div>
+
+            <div className={styles.processContainer}>
+              <div className={styles.processLine}></div>
+
+              <div className={styles.processTimeline}>
+                <div className={`${styles.processStep} ${styles.animateOnScroll}`} ref={addToRefs}>
+                  <div className={styles.processNumber}>1</div>
+                  <div className={styles.processContent}>
+                    <h3 className={styles.processTitle}>Vertrag öffnen</h3>
+                    <p className={styles.processDesc}>
+                      Laden Sie einen Vertrag hoch oder wählen Sie einen aus Ihrer Bibliothek.
+                    </p>
+                  </div>
+                </div>
+
+                <div className={`${styles.processStep} ${styles.animateOnScroll}`} ref={addToRefs}>
+                  <div className={styles.processNumber}>2</div>
+                  <div className={styles.processContent}>
+                    <h3 className={styles.processTitle}>Legal Lens aktivieren</h3>
+                    <p className={styles.processDesc}>
+                      Ein Klick auf "Legal Lens" – der Vertrag wird mit Farbmarkierungen angezeigt.
+                    </p>
+                  </div>
+                </div>
+
+                <div className={`${styles.processStep} ${styles.animateOnScroll}`} ref={addToRefs}>
+                  <div className={styles.processNumber}>3</div>
+                  <div className={styles.processContent}>
+                    <h3 className={styles.processTitle}>Klauseln erkunden</h3>
+                    <p className={styles.processDesc}>
+                      Klicken Sie auf jede farbige Markierung für Erklärung und Tipps.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ==========================================
+            STATS SECTION
+            ========================================== */}
+        <section className={styles.statsSection}>
+          <div className={styles.container}>
+            <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <span className={styles.sectionEyebrow}>Unsere Zahlen</span>
+              <h2 className={styles.sectionTitle}>Legal Lens in Zahlen</h2>
+            </div>
+
+            <div className={styles.statsGrid}>
+              <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.statNumber}>{'< 2s'}</div>
+                <div className={styles.statLabel}>Antwortzeit</div>
+              </div>
+              <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.statNumber}>50+</div>
+                <div className={styles.statLabel}>Klauseltypen erkannt</div>
+              </div>
+              <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.statNumber}>15.000+</div>
+                <div className={styles.statLabel}>Klauseln analysiert</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ==========================================
+            FAQ SECTION
+            ========================================== */}
+        <section className={styles.faqSection} id="faq">
+          <div className={styles.container}>
+            <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <span className={styles.sectionEyebrow}>Fragen & Antworten</span>
+              <h2 className={styles.sectionTitle}>Häufige Fragen</h2>
+            </div>
+
             <div className={styles.faqContainer}>
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
-                  Muss ich den Vertrag vorher analysieren lassen?
-                  <span className={styles.faqIcon}>▼</span>
+                  Ersetzt Legal Lens einen Anwalt?
+                  <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
-                <p className={styles.faqAnswer}>Legal Lens funktioniert mit allen bereits hochgeladenen Verträgen. Die Klausel-Analyse erfolgt on-demand beim Klick.</p>
+                <p className={styles.faqAnswer}>
+                  Legal Lens hilft beim Verstehen, ersetzt aber keine Rechtsberatung. Bei
+                  kritischen Verträgen empfehlen wir zusätzlich einen Anwalt.
+                </p>
               </details>
+
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
-                  Ersetzt Legal Lens eine anwaltliche Beratung?
-                  <span className={styles.faqIcon}>▼</span>
+                  Welche Verträge funktionieren?
+                  <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
-                <p className={styles.faqAnswer}>Legal Lens hilft beim Verstehen, ersetzt aber keine Rechtsberatung. Bei kritischen Verträgen empfehlen wir zusätzlich einen Anwalt.</p>
+                <p className={styles.faqAnswer}>
+                  Alle deutschen Vertragstypen: Arbeitsverträge, Mietverträge, NDAs,
+                  Dienstleistungsverträge, AGB, Kaufverträge und mehr.
+                </p>
               </details>
-              <details className={styles.faqItem}>
-                <summary className={styles.faqQuestion}>
-                  Welche Vertragstypen werden unterstützt?
-                  <span className={styles.faqIcon}>▼</span>
-                </summary>
-                <p className={styles.faqAnswer}>Alle deutschen Vertragstypen: Arbeitsverträge, Mietverträge, Kaufverträge, NDAs, Dienstleistungsverträge, AGB und mehr.</p>
-              </details>
+
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
                   Wie genau sind die Erklärungen?
-                  <span className={styles.faqIcon}>▼</span>
+                  <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
-                <p className={styles.faqAnswer}>Die KI basiert auf tausenden analysierten Verträgen und aktueller Rechtsprechung. Erklärungen sind praxisnah und rechtlich fundiert.</p>
+                <p className={styles.faqAnswer}>
+                  Die KI wurde auf tausenden Verträgen trainiert und kennt aktuelle
+                  Rechtsprechung. Erklärungen sind praxisnah und verständlich.
+                </p>
               </details>
-              <details className={styles.faqItem}>
-                <summary className={styles.faqQuestion}>
-                  Funktioniert Legal Lens auf dem Smartphone?
-                  <span className={styles.faqIcon}>▼</span>
-                </summary>
-                <p className={styles.faqAnswer}>Ja, Legal Lens ist vollständig responsive und funktioniert auf allen Geräten – Desktop, Tablet und Smartphone.</p>
-              </details>
+
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
                   Was kostet Legal Lens?
-                  <span className={styles.faqIcon}>▼</span>
+                  <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
-                <p className={styles.faqAnswer}>Legal Lens ist in allen Premium-Plänen enthalten. Im Free-Tier können Sie es mit eingeschränkten Funktionen testen.</p>
+                <p className={styles.faqAnswer}>
+                  Legal Lens ist in allen Premium-Plänen enthalten. Im Free-Tier können
+                  Sie es mit eingeschränkten Funktionen testen.
+                </p>
               </details>
             </div>
-          </section>
+          </div>
+        </section>
 
-          {/* RELATED FEATURES */}
-          <section className={styles.relatedSection}>
-            <div className={styles.contentContainer}>
-              <h2 className={styles.sectionTitle}>Verwandte Funktionen</h2>
-              <div className={styles.relatedGrid}>
-                <Link to="/features/vertragsanalyse" className={styles.relatedCard}>
-                  <span className={styles.relatedIcon}>🔍</span>
-                  <div className={styles.relatedContent}>
-                    <div className={styles.relatedTitle}>Vertragsanalyse</div>
-                    <div className={styles.relatedDescription}>Komplette Analyse Ihres Vertrags mit Risiko-Score und Handlungsempfehlungen</div>
+        {/* ==========================================
+            RELATED FEATURES
+            ========================================== */}
+        <section className={styles.relatedSection}>
+          <div className={styles.container}>
+            <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <h2 className={styles.sectionTitle}>Weitere Analyse-Tools</h2>
+            </div>
+
+            <div className={styles.relatedGrid}>
+              <Link to="/features/vertragsanalyse" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <span className={styles.relatedIcon}>🔍</span>
+                <div className={styles.relatedContent}>
+                  <div className={styles.relatedTitle}>Vertragsanalyse</div>
+                  <div className={styles.relatedDescription}>
+                    Komplette Analyse mit Risiko-Score
                   </div>
-                  <ArrowRight size={20} className={styles.relatedArrow} />
-                </Link>
-                <Link to="/features/optimierung" className={styles.relatedCard}>
-                  <span className={styles.relatedIcon}>✨</span>
-                  <div className={styles.relatedContent}>
-                    <div className={styles.relatedTitle}>Optimierung</div>
-                    <div className={styles.relatedDescription}>KI-Vorschläge zur Verbesserung problematischer Klauseln</div>
+                </div>
+                <ArrowRight size={20} className={styles.relatedArrow} />
+              </Link>
+
+              <Link to="/features/optimierung" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <span className={styles.relatedIcon}>✨</span>
+                <div className={styles.relatedContent}>
+                  <div className={styles.relatedTitle}>Optimierung</div>
+                  <div className={styles.relatedDescription}>
+                    KI-Vorschläge für bessere Klauseln
                   </div>
-                  <ArrowRight size={20} className={styles.relatedArrow} />
-                </Link>
-                <Link to="/features/legalpulse" className={styles.relatedCard}>
-                  <span className={styles.relatedIcon}>📊</span>
-                  <div className={styles.relatedContent}>
-                    <div className={styles.relatedTitle}>Legal Pulse</div>
-                    <div className={styles.relatedDescription}>Marktdaten und Benchmarks zu Vertragsklauseln</div>
+                </div>
+                <ArrowRight size={20} className={styles.relatedArrow} />
+              </Link>
+
+              <Link to="/features/vergleich" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <span className={styles.relatedIcon}>⚖️</span>
+                <div className={styles.relatedContent}>
+                  <div className={styles.relatedTitle}>Vertragsvergleich</div>
+                  <div className={styles.relatedDescription}>
+                    Zwei Versionen vergleichen
                   </div>
-                  <ArrowRight size={20} className={styles.relatedArrow} />
-                </Link>
+                </div>
+                <ArrowRight size={20} className={styles.relatedArrow} />
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* ==========================================
+            CTA SECTION
+            ========================================== */}
+        <section className={styles.ctaSection}>
+          <div className={styles.container}>
+            <div className={`${styles.ctaCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <div className={styles.ctaContent}>
+                <h2 className={styles.ctaTitle}>
+                  Verstehen Sie jeden Vertrag – Klick für Klick
+                </h2>
+                <p className={styles.ctaSubtitle}>
+                  Nie wieder Verträge unterschreiben, die Sie nicht verstehen.
+                </p>
+                <div className={styles.ctaButtons}>
+                  <Link to={target} className={styles.btnWhite}>
+                    Legal Lens jetzt testen
+                    <ArrowRight size={20} />
+                  </Link>
+                </div>
               </div>
             </div>
-          </section>
+          </div>
+        </section>
 
-          {/* FINAL CTA */}
-          <section className={styles.ctaSection}>
-            <div className={styles.ctaCard}>
-              <h2 className={styles.ctaTitle}>Verstehen Sie jeden Vertrag – Klausel für Klausel</h2>
-              <p className={styles.ctaSubtitle}>
-                Nie wieder Verträge unterschreiben, die Sie nicht verstehen. Legal Lens macht juristische Sprache verständlich.
-              </p>
-              <div className={styles.ctaButtons}>
-                <button
-                  className={styles.secondaryButtonLight}
-                  onClick={() => document.getElementById('so-funktionierts')?.scrollIntoView({ behavior: 'smooth' })}
-                >
-                  So funktioniert es
-                </button>
-                <Link to={target} className={styles.ctaButton} style={{ fontSize: '18px', padding: '16px 32px' }} aria-label="Legal Lens jetzt testen">
-                  Legal Lens jetzt testen
-                </Link>
-              </div>
-            </div>
-          </section>
-        </div>
-        </div>
       </div>
 
       <Footer />

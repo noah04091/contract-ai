@@ -1,10 +1,17 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { FolderOpen, CheckCircle, Clock, FileText, Shield, Zap, Target, ArrowRight } from "lucide-react";
+// import AutoPlayVideo from "../../components/AutoPlayVideo"; // Auskommentiert bis Video erstellt wird
+import {
+  Search, Shield, Cloud, Tags, Clock,
+  ArrowRight, ChevronDown, FileText
+} from "lucide-react";
+
+// Video - Auskommentiert bis Video erstellt wird
+// const vertragsverwaltungVideo = "/Videos/vertragsverwaltung.mp4";
 
 const Vertragsverwaltung: React.FC = () => {
   const { user } = useAuth();
@@ -12,9 +19,34 @@ const Vertragsverwaltung: React.FC = () => {
   const targetInApp = "/contracts";
   const target = isAuthenticated ? targetInApp : `/login?next=${encodeURIComponent(targetInApp)}`;
 
+  const animatedRefs = useRef<(HTMLElement | null)[]>([]);
+
   useEffect(() => {
     window.scrollTo(0, 0);
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add(styles.visible);
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+    );
+
+    animatedRefs.current.forEach((ref) => {
+      if (ref) observer.observe(ref);
+    });
+
+    return () => observer.disconnect();
   }, []);
+
+  const addToRefs = (el: HTMLElement | null) => {
+    if (el && !animatedRefs.current.includes(el)) {
+      animatedRefs.current.push(el);
+    }
+  };
 
   const faqSchema = {
     "@context": "https://schema.org",
@@ -22,26 +54,26 @@ const Vertragsverwaltung: React.FC = () => {
     "mainEntity": [
       {
         "@type": "Question",
-        "name": "Wie sicher ist die Vertragsverwaltung?",
+        "name": "Wie viele Verträge kann ich speichern?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Alle Verträge werden verschlüsselt auf deutschen Servern in Frankfurt gespeichert. Vollständige DSGVO-Konformität, keine Weitergabe an Dritte. Sie können Dokumente jederzeit löschen."
+          "text": "Mit dem Free-Plan können Sie bis zu 5 Verträge speichern. Business bietet 50 Verträge, Enterprise ist unbegrenzt."
         }
       },
       {
         "@type": "Question",
-        "name": "Kann ich Verträge in Ordnern organisieren?",
+        "name": "Ist meine Vertragsdatenbank sicher?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Ja, Sie können beliebig viele Ordner erstellen und Verträge per Drag & Drop organisieren. Unterordner, Farb-Coding und intelligente Filter helfen bei der Übersicht."
+          "text": "Ja, alle Daten werden auf deutschen Servern (Frankfurt) verschlüsselt gespeichert. Vollständig DSGVO-konform."
         }
       },
       {
         "@type": "Question",
-        "name": "Funktioniert die Suche auch im Vertragsinhalt?",
+        "name": "Kann ich Verträge kategorisieren?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Ja, die Volltextsuche durchsucht nicht nur Dateinamen, sondern auch den kompletten Vertragsinhalt. Finden Sie Klauseln, Begriffe oder Daten in Sekundenschnelle."
+          "text": "Ja, Sie können eigene Tags erstellen und Verträge nach beliebigen Kriterien organisieren."
         }
       }
     ]
@@ -50,397 +82,435 @@ const Vertragsverwaltung: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>Vertragsverwaltung - Alle Verträge zentral & sicher organisieren | Contract AI</title>
-        <meta name="description" content="📂 Verwalten Sie alle Verträge zentral in der Cloud. Intelligente Ordner, Volltextsuche, automatische Erinnerungen. DSGVO-konform auf deutschen Servern. Jetzt testen!" />
-        <meta name="keywords" content="Vertragsverwaltung, Vertragsmanagement, Cloud-Speicher, Ordnerverwaltung, Contract AI, DSGVO, LegalTech" />
+        <title>Verträge verwalten – Vertragsmanagement Software | Contract AI</title>
+        <meta name="description" content="Alle Verträge digital verwalten an einem Ort: Smart-Search findet alles in Sekunden, Cloud-Speicher, Tagging, Fristen-Alerts. Vertragsmanagement Software Made in Germany. ✓ Kostenlos starten" />
+        <meta name="keywords" content="Verträge verwalten, Vertragsverwaltung, Vertragsmanagement Software, Verträge organisieren, Verträge digital verwalten, alle Verträge an einem Ort, Contract AI" />
 
         <link rel="canonical" href="https://www.contract-ai.de/features/vertragsverwaltung" />
         <meta name="robots" content="index,follow" />
 
-        {/* Open Graph */}
-        <meta property="og:title" content="Vertragsverwaltung - Alle Verträge zentral & sicher organisieren" />
-        <meta property="og:description" content="Zentrale Vertragsverwaltung in der Cloud. Ordner, Suche, Erinnerungen – alles DSGVO-konform. Jetzt testen!" />
+        <meta property="og:title" content="Verträge verwalten – Vertragsmanagement Software | Contract AI" />
+        <meta property="og:description" content="Alle Verträge digital verwalten: Smart-Search, Cloud-Speicher, Fristen-Alerts. Made in Germany. ✓ Kostenlos starten" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.contract-ai.de/features/vertragsverwaltung" />
         <meta property="og:image" content="https://www.contract-ai.de/og/og-vertragsverwaltung.png" />
         <meta property="og:locale" content="de_DE" />
         <meta property="og:site_name" content="Contract AI" />
 
-        {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Vertragsverwaltung - Alle Verträge zentral & sicher organisieren" />
-        <meta name="twitter:description" content="Zentrale Vertragsverwaltung in der Cloud. Ordner, Suche, Erinnerungen – DSGVO-konform." />
+        <meta name="twitter:title" content="Verträge verwalten – Vertragsmanagement Software | Contract AI" />
+        <meta name="twitter:description" content="Alle Verträge digital verwalten: Smart-Search, Cloud-Speicher, Fristen-Alerts. Made in Germany. ✓ Kostenlos starten" />
         <meta name="twitter:image" content="https://www.contract-ai.de/og/og-vertragsverwaltung.png" />
 
-        {/* Schema.org FAQ Data */}
         <script type="application/ld+json">
           {JSON.stringify(faqSchema)}
         </script>
       </Helmet>
 
       <div className={styles.pageBackground}>
-        {/* Dots Pattern */}
-        <div className={styles.dotsPattern} />
-
-        {/* Floating Decorative Elements */}
-        <div className={styles.floatingElements}>
-          <FolderOpen className={styles.floatingIcon} size={28} />
-          <Shield className={styles.floatingIcon} size={24} />
-          <FileText className={styles.floatingIcon} size={22} />
-          <CheckCircle className={styles.floatingIcon} size={26} />
-          <Target className={styles.floatingIcon} size={20} />
-          <Clock className={styles.floatingIcon} size={24} />
-          <Zap className={styles.floatingIcon} size={22} />
-          <FolderOpen className={styles.floatingIcon} size={20} />
+        {/* Ambient Orbs */}
+        <div className={styles.ambientBg}>
+          <div className={`${styles.ambientOrb} ${styles.orb1}`}></div>
+          <div className={`${styles.ambientOrb} ${styles.orb2}`}></div>
+          <div className={`${styles.ambientOrb} ${styles.orb3}`}></div>
         </div>
 
-        <div className={styles.featureContainer}>
+        {/* Hero Section */}
+        <section className={styles.hero}>
+          <div className={styles.containerLg}>
+            <div className={styles.heroContent}>
+              <div className={styles.heroBadge}>
+                <span className={styles.heroBadgeDot}></span>
+                Digitale Vertragsverwaltung
+              </div>
 
-        {/* HERO */}
-        <section className={styles.heroSection}>
-          <div className={styles.heroIcon}>
-            <FolderOpen size={64} />
-          </div>
-          <h1 className={styles.heroTitle}>
-            Verträge zentral verwalten – <span className={styles.heroTitleHighlight}>mühelos</span>
-          </h1>
-          <p className={styles.heroSubtitle}>
-            Schluss mit Papierstapeln und verstreuten Dateien. Organisieren Sie alle Verträge zentral, sicher und intelligent in der Cloud – mit automatischen Erinnerungen und Volltextsuche.
-          </p>
-          <div className={styles.heroButtons}>
-            <Link to={target} className={styles.ctaButton} style={{ fontSize: '18px', padding: '16px 32px' }} aria-label="Verträge jetzt verwalten">
-              📂 Verträge jetzt verwalten
-            </Link>
-            <a href="#so-funktionierts" style={{ background: 'rgba(255,255,255,0.1)', color: '#007aff', border: '1px solid rgba(0,122,255,0.3)', padding: '12px 16px', borderRadius: '12px', fontWeight: '600', textDecoration: 'none' }} aria-label="Wie die Verwaltung funktioniert">
-              Wie die Verwaltung funktioniert
-            </a>
-          </div>
+              <h1 className={styles.heroTitle}>
+                Alle Verträge<br/>
+                <span className={styles.heroTitleHighlight}>an einem Ort</span>
+              </h1>
 
-          {/* Trust Badges */}
-          <div className={styles.trustBadges}>
-            <div className={styles.trustBadge}>
-              <Shield size={16} className={styles.trustBadgeIcon} />
-              <span>DSGVO-konform</span>
+              <p className={styles.heroSubtitle}>
+                Schluss mit Ordner-Chaos. Contract AI organisiert Ihre Verträge zentral,
+                durchsuchbar und sicher – mit Smart-Search, Tagging und automatischen
+                Erinnerungen.
+              </p>
+
+              <div className={styles.heroCta}>
+                <Link to={target} className={styles.btnPrimary}>
+                  Verträge organisieren
+                  <ArrowRight size={20} />
+                </Link>
+                <a href="#funktionen" className={styles.btnSecondary}>
+                  Funktionen entdecken
+                </a>
+              </div>
             </div>
-            <div className={styles.trustBadge}>
-              <Target size={16} className={styles.trustBadgeIcon} />
-              <span>Server in Frankfurt</span>
-            </div>
-            <div className={styles.trustBadge}>
-              <Zap size={16} className={styles.trustBadgeIcon} />
-              <span>Sofort verfügbar</span>
+
+            {/* Dashboard Preview */}
+            <div className={styles.heroVisual}>
+              <div className={`${styles.floatingElement} ${styles.floatingElement1}`}>
+                <div className={`${styles.floatingIcon} ${styles.floatingIconBlue}`}>
+                  <Search size={20} />
+                </div>
+                <div>
+                  <div className={styles.floatingText}>Smart-Search</div>
+                  <div className={styles.floatingSubtext}>{'< 2s Ergebnis'}</div>
+                </div>
+              </div>
+
+              <div className={`${styles.floatingElement} ${styles.floatingElement2}`}>
+                <div className={`${styles.floatingIcon} ${styles.floatingIconGreen}`}>
+                  <Shield size={20} />
+                </div>
+                <div>
+                  <div className={styles.floatingText}>DSGVO</div>
+                  <div className={styles.floatingSubtext}>Deutsche Server</div>
+                </div>
+              </div>
+
+              <div className={styles.demoWindow}>
+                <div className={styles.demoHeader}>
+                  <span className={`${styles.demoDot} ${styles.demoDotRed}`}></span>
+                  <span className={`${styles.demoDot} ${styles.demoDotYellow}`}></span>
+                  <span className={`${styles.demoDot} ${styles.demoDotGreen}`}></span>
+                </div>
+                <div className={styles.demoContent}>
+                  {/* Search Bar */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', background: '#f1f5f9', borderRadius: '6px', marginBottom: '14px' }}>
+                    <Search size={16} style={{ color: '#64748b' }} />
+                    <span style={{ fontSize: '12px', color: '#94a3b8' }}>Verträge durchsuchen...</span>
+                  </div>
+
+                  {/* Contract List */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', background: 'rgba(59, 130, 246, 0.05)', borderRadius: '6px', borderLeft: '3px solid #3b82f6' }}>
+                      <FileText size={16} style={{ color: '#3b82f6' }} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '12px', fontWeight: 600, color: '#1e293b' }}>Mietvertrag_2024.pdf</div>
+                        <div style={{ fontSize: '10px', color: '#64748b' }}>Wohnung • Gültig bis 31.12.2025</div>
+                      </div>
+                      <span style={{ fontSize: '10px', background: '#dbeafe', color: '#1d4ed8', padding: '2px 6px', borderRadius: '4px' }}>Wohnung</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', background: '#f8fafc', borderRadius: '6px' }}>
+                      <FileText size={16} style={{ color: '#64748b' }} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '12px', fontWeight: 600, color: '#1e293b' }}>Arbeitsvertrag_GmbH.pdf</div>
+                        <div style={{ fontSize: '10px', color: '#64748b' }}>Arbeit • Unbefristet</div>
+                      </div>
+                      <span style={{ fontSize: '10px', background: '#fef3c7', color: '#92400e', padding: '2px 6px', borderRadius: '4px' }}>Arbeit</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', background: '#f8fafc', borderRadius: '6px' }}>
+                      <FileText size={16} style={{ color: '#64748b' }} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '12px', fontWeight: 600, color: '#1e293b' }}>KFZ_Versicherung.pdf</div>
+                        <div style={{ fontSize: '10px', color: '#64748b' }}>Auto • Kündigbar 30.11</div>
+                      </div>
+                      <span style={{ fontSize: '10px', background: '#dcfce7', color: '#166534', padding: '2px 6px', borderRadius: '4px' }}>Auto</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
-        <div className={styles.contentContainer}>
 
-          {/* PAIN */}
-          <section className={styles.funktionSection}>
-            <h2 className={styles.sectionTitle}>Warum Vertragsverwaltung so wichtig ist</h2>
-            <div className={styles.funktionGrid}>
-              <div className={styles.funktionItem}>
-                <div className={styles.funktionIcon}>
-                  <Clock size={20} />
+        {/* Trust Badges */}
+        <div className={styles.container}>
+          <div className={styles.trustBadgesRow}>
+            <div className={styles.trustBadge}>
+              <Cloud size={18} />
+              Sichere Cloud
+            </div>
+            <div className={styles.trustBadge}>
+              <Search size={18} />
+              Smart-Search
+            </div>
+            <div className={styles.trustBadge}>
+              <Tags size={18} />
+              Tagging-System
+            </div>
+            <div className={styles.trustBadge}>
+              <Shield size={18} />
+              DSGVO-konform
+            </div>
+          </div>
+        </div>
+
+        {/* Video Section - Auskommentiert bis Video erstellt wird
+        <section className={styles.videoSection} id="video">
+          <div className={styles.container}>
+            <div className={`${styles.videoContainer} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <div className={styles.videoFrame}>
+                <AutoPlayVideo
+                  src={vertragsverwaltungVideo}
+                  poster="/videos/vertragsverwaltung-poster.jpg"
+                  alt="Vertragsverwaltung Demo"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+        */}
+
+        {/* Funktionen - 6 Feature Cards */}
+        <section className={`${styles.functionsSection} ${styles.animateOnScroll}`} ref={addToRefs} id="funktionen">
+          <div className={styles.container}>
+            <div className={styles.sectionHeader}>
+              <span className={styles.sectionEyebrow}>Funktionen</span>
+              <h2 className={styles.sectionTitle}>Was die Vertragsverwaltung kann</h2>
+            </div>
+
+            <div className={styles.functionsGrid}>
+              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.functionIcon}>
+                  <Search size={24} />
                 </div>
-                <p className={styles.funktionText}>
-                  Verträge in E-Mail-Postfächern, auf dem Desktop, in Papierordnern – Chaos kostet Zeit und Nerven. Wichtige Kündigungsfristen werden übersehen, Dokumente sind nicht auffindbar, wenn man sie braucht, und bei Streitfällen fehlen plötzlich entscheidende Unterlagen.
+                <h3 className={styles.functionTitle}>Smart-Search</h3>
+                <p className={styles.functionDesc}>
+                  Volltextsuche durch alle Verträge. Finden Sie jeden Vertrag in Sekunden.
                 </p>
               </div>
-              <div className={styles.funktionItem}>
-                <div className={styles.funktionIcon}>
-                  <FolderOpen size={20} />
+
+              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.functionIcon}>
+                  <Tags size={24} />
                 </div>
-                <p className={styles.funktionText}>
-                  Contract AI bringt Ordnung in Ihre Vertragswelt. Zentrale Cloud-Speicherung mit intelligenter Organisation, automatischen Erinnerungen und Volltextsuche. Ob am PC oder unterwegs – Sie haben alle Verträge griffbereit, sicher und DSGVO-konform gespeichert.
+                <h3 className={styles.functionTitle}>Eigene Tags</h3>
+                <p className={styles.functionDesc}>
+                  Erstellen Sie Tags und kategorisieren Sie Verträge nach Ihren Bedürfnissen.
+                </p>
+              </div>
+
+              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.functionIcon}>
+                  <Clock size={24} />
+                </div>
+                <h3 className={styles.functionTitle}>Erinnerungen</h3>
+                <p className={styles.functionDesc}>
+                  Automatische Benachrichtigungen vor Kündigungsfristen per E-Mail.
+                </p>
+              </div>
+
+              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.functionIcon}>
+                  <Cloud size={24} />
+                </div>
+                <h3 className={styles.functionTitle}>Cloud-Speicher</h3>
+                <p className={styles.functionDesc}>
+                  Verschlüsselte Speicherung auf deutschen Servern. Überall Zugriff.
+                </p>
+              </div>
+
+              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.functionIcon}>
+                  <FileText size={24} />
+                </div>
+                <h3 className={styles.functionTitle}>Notizen & Anhänge</h3>
+                <p className={styles.functionDesc}>
+                  Fügen Sie Notizen hinzu und verknüpfen Sie zusammengehörige Dokumente.
+                </p>
+              </div>
+
+              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.functionIcon}>
+                  <Shield size={24} />
+                </div>
+                <h3 className={styles.functionTitle}>DSGVO-konform</h3>
+                <p className={styles.functionDesc}>
+                  256-bit Verschlüsselung, EU-Hosting, vollständige Datenschutzkonformität.
                 </p>
               </div>
             </div>
-          </section>
+          </div>
+        </section>
 
-          {/* SOLUTION */}
-          <section className={styles.funktionSection}>
-            <h2 className={styles.sectionTitle}>Die Lösung: Intelligente Cloud-Vertragsverwaltung</h2>
-            <p className={styles.funktionText} style={{ fontSize: '18px', lineHeight: '1.6', marginBottom: '24px' }}>
-              Speichern Sie alle Verträge zentral in der Contract AI Cloud. Organisieren Sie mit Ordnern, Tags und Farben. Die intelligente Suche findet jede Klausel in Sekunden – egal ob im Dateinamen oder tief im Vertragstext. Automatische Erinnerungen sorgen dafür, dass Sie keine Frist mehr verpassen.
-            </p>
-            <ul className={styles.featureList}>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>📁</span>
-                <span className={styles.featureListContent}><strong>Ordner & Unterordner:</strong> Strukturieren Sie Verträge nach Projekten, Kunden oder Kategorien</span>
-              </li>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>🔍</span>
-                <span className={styles.featureListContent}><strong>Volltextsuche:</strong> Durchsuchen Sie alle Verträge gleichzeitig – selbst im Vertragsinhalt</span>
-              </li>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>🔔</span>
-                <span className={styles.featureListContent}><strong>Automatische Erinnerungen:</strong> Werden Sie per E-Mail an Kündigungsfristen erinnert</span>
-              </li>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>🔒</span>
-                <span className={styles.featureListContent}><strong>Maximale Sicherheit:</strong> Verschlüsselte Speicherung auf deutschen Servern (Frankfurt)</span>
-              </li>
-            </ul>
-          </section>
-
-          {/* HOW IT WORKS */}
-          <section id="so-funktionierts" className={styles.funktionSection}>
-            <h2 className={styles.sectionTitle}>So funktioniert's – in 3 Schritten</h2>
-            <div className={styles.funktionGrid}>
-              <div className={styles.funktionItem}>
-                <div className={styles.funktionIcon}>
-                  <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#007aff' }}>1</span>
-                </div>
-                <p className={styles.funktionText}>
-                  <strong>Verträge hochladen:</strong> Laden Sie PDFs oder DOCX-Dateien per Drag & Drop hoch – alles verschlüsselt und sicher.
-                </p>
-              </div>
-              <div className={styles.funktionItem}>
-                <div className={styles.funktionIcon}>
-                  <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#007aff' }}>2</span>
-                </div>
-                <p className={styles.funktionText}>
-                  <strong>Ordner erstellen:</strong> Organisieren Sie Verträge in Ordnern, nutzen Sie Tags und Farben für bessere Übersicht.
-                </p>
-              </div>
-              <div className={styles.funktionItem}>
-                <div className={styles.funktionIcon}>
-                  <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#007aff' }}>3</span>
-                </div>
-                <p className={styles.funktionText}>
-                  <strong>Jederzeit abrufen:</strong> Finden Sie jeden Vertrag in Sekunden – mit intelligenter Suche und Filteroptionen.
-                </p>
-              </div>
+        {/* Process Section - 3 Schritte */}
+        <section className={`${styles.processSection} ${styles.animateOnScroll}`} ref={addToRefs}>
+          <div className={styles.container}>
+            <div className={styles.sectionHeader}>
+              <span className={styles.sectionEyebrow}>So funktioniert's</span>
+              <h2 className={styles.sectionTitle}>In 3 Schritten zur Ordnung</h2>
             </div>
-          </section>
 
-          {/* FEATURES GRID */}
-          <section className={styles.vorteileSection}>
-            <div className={styles.contentContainer}>
-              <h2 className={styles.sectionTitle}>Funktionen im Überblick</h2>
-              <div className={styles.vorteileGrid}>
-                <div className={styles.vorteilCard}>
-                  <h3 className={styles.vorteilTitle}>Ordner & Unterordner</h3>
-                  <p className={styles.vorteilText}>Strukturieren Sie Verträge hierarchisch nach Projekten, Kunden oder Kategorien – beliebig viele Ebenen möglich.</p>
+            <div className={styles.processContainer}>
+              <div className={styles.processLine}></div>
+
+              <div className={styles.processTimeline}>
+                <div className={`${styles.processStep} ${styles.animateOnScroll}`} ref={addToRefs}>
+                  <div className={styles.processNumber}>1</div>
+                  <div className={styles.processContent}>
+                    <h3 className={styles.processTitle}>Verträge hochladen</h3>
+                    <p className={styles.processDesc}>
+                      Per Drag & Drop, E-Mail-Weiterleitung oder Scanner.
+                      PDF, DOCX und Bilder werden unterstützt.
+                    </p>
+                  </div>
                 </div>
-                <div className={styles.vorteilCard}>
-                  <h3 className={styles.vorteilTitle}>Intelligente Suche</h3>
-                  <p className={styles.vorteilText}>Volltextsuche durchsucht Dateinamen UND Vertragsinhalt. Finden Sie jede Klausel in Sekunden.</p>
+
+                <div className={`${styles.processStep} ${styles.animateOnScroll}`} ref={addToRefs}>
+                  <div className={styles.processNumber}>2</div>
+                  <div className={styles.processContent}>
+                    <h3 className={styles.processTitle}>Automatische Erkennung</h3>
+                    <p className={styles.processDesc}>
+                      Die KI erkennt Vertragstyp, Fristen und wichtige Daten –
+                      ohne manuelle Eingabe.
+                    </p>
+                  </div>
                 </div>
-                <div className={styles.vorteilCard}>
-                  <h3 className={styles.vorteilTitle}>Automatische Erinnerungen</h3>
-                  <p className={styles.vorteilText}>Kündigungsfristen werden automatisch erkannt. Erhalten Sie Erinnerungen per E-Mail – nie wieder eine Frist verpassen.</p>
-                </div>
-                <div className={styles.vorteilCard}>
-                  <h3 className={styles.vorteilTitle}>Tags & Filter</h3>
-                  <p className={styles.vorteilText}>Versehen Sie Verträge mit Tags und nutzen Sie Filter, um schnell die richtigen Dokumente zu finden.</p>
-                </div>
-                <div className={styles.vorteilCard}>
-                  <h3 className={styles.vorteilTitle}>Multi-Device Sync</h3>
-                  <p className={styles.vorteilText}>Greifen Sie von jedem Gerät auf Ihre Verträge zu – PC, Tablet, Smartphone. Alles automatisch synchronisiert.</p>
-                </div>
-                <div className={styles.vorteilCard}>
-                  <h3 className={styles.vorteilTitle}>Sichere Löschung</h3>
-                  <p className={styles.vorteilText}>Löschen Sie Verträge jederzeit dauerhaft – inklusive aller Backups. Volle Kontrolle über Ihre Daten.</p>
+
+                <div className={`${styles.processStep} ${styles.animateOnScroll}`} ref={addToRefs}>
+                  <div className={styles.processNumber}>3</div>
+                  <div className={styles.processContent}>
+                    <h3 className={styles.processTitle}>Organisieren & Verwalten</h3>
+                    <p className={styles.processDesc}>
+                      Tags hinzufügen, Erinnerungen setzen und alle Verträge
+                      jederzeit im Blick haben.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-          </section>
+          </div>
+        </section>
 
-          {/* USE CASES */}
-          <section className={styles.beispielSection}>
-            <h2 className={styles.sectionTitle}>Typische Anwendungsfälle</h2>
-            <div className={styles.useCaseGrid}>
-              <div className={styles.useCaseCard}>
-                <h3 className={styles.useCaseTitle}>Freiberufler & Freelancer</h3>
-                <p className={styles.useCaseChallenge}><strong>Herausforderung:</strong> Dutzende Kundenverträge verwalten</p>
-                <p className={styles.useCaseSolution}><strong>Lösung:</strong> Ordner pro Kunde, automatische Erinnerungen an Zahlungsfristen</p>
+        {/* Stats Section - Kompakt */}
+        <section className={`${styles.statsSection} ${styles.animateOnScroll}`} ref={addToRefs}>
+          <div className={styles.container}>
+            <div className={styles.statsGrid}>
+              <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.statNumber}>{'< 2s'}</div>
+                <div className={styles.statLabel}>Suchzeit</div>
               </div>
-              <div className={styles.useCaseCard}>
-                <h3 className={styles.useCaseTitle}>Unternehmen & Agenturen</h3>
-                <p className={styles.useCaseChallenge}><strong>Herausforderung:</strong> Lieferanten-, Kunden- und Mitarbeiterverträge im Blick</p>
-                <p className={styles.useCaseSolution}><strong>Lösung:</strong> Kategorisierung nach Typ, Team-Zugriff, zentrale Ablage</p>
+              <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.statNumber}>256-bit</div>
+                <div className={styles.statLabel}>Verschlüsselung</div>
               </div>
-              <div className={styles.useCaseCard}>
-                <h3 className={styles.useCaseTitle}>Privatpersonen</h3>
-                <p className={styles.useCaseChallenge}><strong>Herausforderung:</strong> Mietvertrag, Versicherungen, Handyvertrag – alles verstreut</p>
-                <p className={styles.useCaseSolution}><strong>Lösung:</strong> Alle privaten Verträge an einem Ort mit Kündigungserinnerungen</p>
-              </div>
-              <div className={styles.useCaseCard}>
-                <h3 className={styles.useCaseTitle}>Startups & Gründer</h3>
-                <p className={styles.useCaseChallenge}><strong>Herausforderung:</strong> Schnell wachsende Vertragszahl, oft remote</p>
-                <p className={styles.useCaseSolution}><strong>Lösung:</strong> Cloud-basiert, von überall abrufbar, skalierbar</p>
+              <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.statNumber}>Frankfurt</div>
+                <div className={styles.statLabel}>Server-Standort</div>
               </div>
             </div>
-            <div className={styles.beispielBox}>
-              <div className={styles.beispielIcon}>
-                <CheckCircle size={32} />
-              </div>
-              <p className={styles.beispielText}>
-                "Endlich habe ich alle Verträge an einem Ort. Die Suche ist so schnell, dass ich jeden Vertrag in Sekunden finde."
-              </p>
-              <p className={styles.beispielHinweis}>
-                Feedback eines Premium-Nutzers
-              </p>
+          </div>
+        </section>
+
+        {/* FAQ Section */}
+        <section className={`${styles.faqSection} ${styles.animateOnScroll}`} ref={addToRefs}>
+          <div className={styles.container}>
+            <div className={styles.sectionHeader}>
+              <h2 className={styles.sectionTitle}>Häufige Fragen</h2>
             </div>
-          </section>
 
-          {/* DIFFERENTIATION */}
-          <section className={styles.funktionSection}>
-            <h2 className={styles.sectionTitle}>Warum Contract AI?</h2>
-            <ul className={styles.featureList}>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>🔒</span>
-                <span className={styles.featureListContent}><strong>Maximale Sicherheit:</strong> Deutsche Server (Frankfurt), SSL-Verschlüsselung, DSGVO-konform</span>
-              </li>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>⚡</span>
-                <span className={styles.featureListContent}><strong>Blitzschnelle Suche:</strong> Volltextsuche durchsucht alle Verträge gleichzeitig</span>
-              </li>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>🔔</span>
-                <span className={styles.featureListContent}><strong>Nie wieder Fristen verpassen:</strong> Automatische E-Mail-Erinnerungen</span>
-              </li>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>📱</span>
-                <span className={styles.featureListContent}><strong>Von überall zugreifen:</strong> Web, Desktop, Tablet, Smartphone – voll synchronisiert</span>
-              </li>
-              <li className={styles.featureListItem}>
-                <span className={styles.featureListIcon}>🎨</span>
-                <span className={styles.featureListContent}><strong>Flexibel organisierbar:</strong> Ordner, Tags, Farben – wie Sie es brauchen</span>
-              </li>
-            </ul>
-          </section>
-
-          {/* SECURITY */}
-          <section className={styles.statsSection}>
-            <div className={styles.contentContainer}>
-              <h2 className={styles.sectionTitle}>Sicherheit & Datenschutz</h2>
-              <p style={{ color: '#666', textAlign: 'center', marginBottom: '40px', fontSize: '17px' }}>
-                Ihre Verträge sind bei uns sicherer als auf Ihrem eigenen Rechner. Verschlüsselte Übertragung und Speicherung auf zertifizierten Servern in Frankfurt (Deutschland).
-                Keine Weitergabe an Dritte. Löschung jederzeit auf Knopfdruck möglich.
-              </p>
-              <div className={styles.statsGrid}>
-                <div className={styles.statItem}>
-                  <div className={styles.statNumber}>100%</div>
-                  <div className={styles.statLabel}>DSGVO-konform</div>
-                </div>
-                <div className={styles.statItem}>
-                  <div className={styles.statNumber}>🇩🇪</div>
-                  <div className={styles.statLabel}>Server in Deutschland</div>
-                </div>
-                <div className={styles.statItem}>
-                  <div className={styles.statNumber}>24/7</div>
-                  <div className={styles.statLabel}>Verfügbar</div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* FAQ */}
-          <section className={styles.funktionSection} aria-labelledby="faq-heading">
-            <h2 id="faq-heading" className={styles.sectionTitle}>Häufige Fragen</h2>
             <div className={styles.faqContainer}>
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
-                  Wie sicher ist die Vertragsverwaltung?
-                  <span className={styles.faqIcon}>▼</span>
+                  Wie viele Verträge kann ich speichern?
+                  <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
-                <p className={styles.faqAnswer}>Sehr sicher. Alle Verträge werden verschlüsselt übertragen und auf deutschen Servern in Frankfurt gespeichert. Vollständige DSGVO-Konformität, keine Weitergabe an Dritte.</p>
+                <p className={styles.faqAnswer}>
+                  Free: 5 Verträge. Business: 50 Verträge. Enterprise: Unbegrenzt.
+                  Max. 15 MB pro Vertrag.
+                </p>
               </details>
+
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
-                  Kann ich meine Verträge in Ordnern organisieren?
-                  <span className={styles.faqIcon}>▼</span>
+                  Sind meine Verträge sicher?
+                  <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
-                <p className={styles.faqAnswer}>Ja, Sie können beliebig viele Ordner und Unterordner erstellen. Zusätzlich stehen Tags, Farben und Filter zur Verfügung.</p>
+                <p className={styles.faqAnswer}>
+                  Ja, 256-bit AES Verschlüsselung, deutsche Server (Frankfurt),
+                  vollständig DSGVO-konform.
+                </p>
               </details>
+
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
-                  Funktioniert die Suche auch im Vertragsinhalt?
-                  <span className={styles.faqIcon}>▼</span>
+                  Wie funktionieren die Erinnerungen?
+                  <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
-                <p className={styles.faqAnswer}>Ja, die Volltextsuche durchsucht nicht nur Dateinamen, sondern auch den kompletten Vertragsinhalt. Sie finden Klauseln, Begriffe oder Daten in Sekundenschnelle.</p>
+                <p className={styles.faqAnswer}>
+                  Die KI erkennt Fristen automatisch. Sie erhalten E-Mail-Erinnerungen
+                  30, 14 und 3 Tage vorher.
+                </p>
               </details>
+
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
-                  Kann ich Verträge von mehreren Geräten verwalten?
-                  <span className={styles.faqIcon}>▼</span>
+                  Kann ich Verträge exportieren?
+                  <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
-                <p className={styles.faqAnswer}>Ja, Contract AI ist vollständig Cloud-basiert. Sie können von PC, Tablet oder Smartphone auf Ihre Verträge zugreifen – alles automatisch synchronisiert.</p>
-              </details>
-              <details className={styles.faqItem}>
-                <summary className={styles.faqQuestion}>
-                  Wie funktionieren die automatischen Erinnerungen?
-                  <span className={styles.faqIcon}>▼</span>
-                </summary>
-                <p className={styles.faqAnswer}>Die KI erkennt Kündigungsfristen automatisch. Sie erhalten rechtzeitig E-Mail-Erinnerungen, damit Sie keine Frist verpassen.</p>
-              </details>
-              <details className={styles.faqItem}>
-                <summary className={styles.faqQuestion}>
-                  Kann ich Verträge wieder löschen?
-                  <span className={styles.faqIcon}>▼</span>
-                </summary>
-                <p className={styles.faqAnswer}>Ja, Sie können Verträge jederzeit dauerhaft löschen – inklusive aller Backups. Sie behalten volle Kontrolle über Ihre Daten.</p>
+                <p className={styles.faqAnswer}>
+                  Ja, jederzeit als ZIP-Archiv. Ihre Daten gehören Ihnen.
+                </p>
               </details>
             </div>
-          </section>
+          </div>
+        </section>
 
-          {/* RELATED FEATURES */}
-          <section className={styles.relatedSection}>
-            <div className={styles.contentContainer}>
+        {/* Related Features */}
+        <section className={`${styles.relatedSection} ${styles.animateOnScroll}`} ref={addToRefs}>
+          <div className={styles.container}>
+            <div className={styles.sectionHeader}>
               <h2 className={styles.sectionTitle}>Verwandte Funktionen</h2>
-              <div className={styles.relatedGrid}>
-                <Link to="/features/fristen" className={styles.relatedCard}>
-                  <span className={styles.relatedIcon}>📅</span>
-                  <div className={styles.relatedContent}>
-                    <div className={styles.relatedTitle}>Fristenkalender</div>
-                    <div className={styles.relatedDescription}>Automatische Erkennung und Erinnerungen für alle Fristen</div>
-                  </div>
-                  <ArrowRight size={20} className={styles.relatedArrow} />
-                </Link>
-                <Link to="/features/email-upload" className={styles.relatedCard}>
-                  <span className={styles.relatedIcon}>📧</span>
-                  <div className={styles.relatedContent}>
-                    <div className={styles.relatedTitle}>E-Mail Upload</div>
-                    <div className={styles.relatedDescription}>Verträge per E-Mail hochladen – automatisch importiert</div>
-                  </div>
-                  <ArrowRight size={20} className={styles.relatedArrow} />
-                </Link>
-                <Link to="/features/digitalesignatur" className={styles.relatedCard}>
-                  <span className={styles.relatedIcon}>✍️</span>
-                  <div className={styles.relatedContent}>
-                    <div className={styles.relatedTitle}>Digitale Signatur</div>
-                    <div className={styles.relatedDescription}>Unterschreiben Sie Ihre Verträge rechtsgültig digital</div>
-                  </div>
-                  <ArrowRight size={20} className={styles.relatedArrow} />
-                </Link>
-              </div>
             </div>
-          </section>
 
-          {/* FINAL CTA */}
-          <section className={styles.ctaSection}>
+            <div className={styles.relatedGrid}>
+              <Link to="/features/vertragsanalyse" className={styles.relatedCard}>
+                <span className={styles.relatedIcon}>🔍</span>
+                <div className={styles.relatedContent}>
+                  <div className={styles.relatedTitle}>Vertragsanalyse</div>
+                  <div className={styles.relatedDescription}>
+                    Verträge automatisch auf Risiken prüfen
+                  </div>
+                </div>
+                <ArrowRight size={20} className={styles.relatedArrow} />
+              </Link>
+
+              <Link to="/features/fristen" className={styles.relatedCard}>
+                <span className={styles.relatedIcon}>📅</span>
+                <div className={styles.relatedContent}>
+                  <div className={styles.relatedTitle}>Fristenkalender</div>
+                  <div className={styles.relatedDescription}>
+                    Alle Termine im Kalender-Überblick
+                  </div>
+                </div>
+                <ArrowRight size={20} className={styles.relatedArrow} />
+              </Link>
+
+              <Link to="/features/email-upload" className={styles.relatedCard}>
+                <span className={styles.relatedIcon}>📧</span>
+                <div className={styles.relatedContent}>
+                  <div className={styles.relatedTitle}>E-Mail-Upload</div>
+                  <div className={styles.relatedDescription}>
+                    Verträge per E-Mail hochladen
+                  </div>
+                </div>
+                <ArrowRight size={20} className={styles.relatedArrow} />
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className={`${styles.ctaSection} ${styles.animateOnScroll}`} ref={addToRefs}>
+          <div className={styles.container}>
             <div className={styles.ctaCard}>
-              <h2 className={styles.ctaTitle}>Bringen Sie Ordnung in Ihre Vertragswelt</h2>
-              <p className={styles.ctaSubtitle}>
-                Über 92% unserer Nutzer finden, dass Contract AI ihre Vertragsverwaltung deutlich vereinfacht hat. Probieren Sie es jetzt kostenlos aus!
-              </p>
-              <div className={styles.ctaButtons}>
-                <button
-                  className={styles.secondaryButtonLight}
-                  onClick={() => document.getElementById('so-funktionierts')?.scrollIntoView({ behavior: 'smooth' })}
-                >
-                  So funktioniert die Verwaltung
-                </button>
-                <Link to={target} className={styles.ctaButton} style={{ fontSize: '18px', padding: '16px 32px' }} aria-label="Jetzt kostenlos starten">
-                  📂 Jetzt kostenlos starten
-                </Link>
+              <div className={styles.ctaContent}>
+                <h2 className={styles.ctaTitle}>Bringen Sie Ordnung in Ihre Verträge</h2>
+                <p className={styles.ctaSubtitle}>
+                  Schluss mit Chaos. Alle Verträge zentral, durchsuchbar, mit automatischen Erinnerungen.
+                </p>
+                <div className={styles.ctaButtons}>
+                  <Link to={target} className={styles.btnWhite}>
+                    Jetzt kostenlos starten
+                    <ArrowRight size={20} />
+                  </Link>
+                </div>
               </div>
             </div>
-          </section>
-        </div>
-        </div>
+          </div>
+        </section>
+
       </div>
 
       <Footer />
