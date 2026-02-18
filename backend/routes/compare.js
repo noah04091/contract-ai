@@ -196,35 +196,87 @@ Erstelle eine klare Empfehlung: Welcher Anbieter bietet das bessere Gesamtpaket?
 };
 
 // 🧠 Smart Chunking: Intelligent text preparation for large contracts
+// GPT-4o hat 128K Context → zwei Verträge à 30K Zeichen = ~15K Tokens → passt direkt
 const CHUNK_CONFIG = {
-  MAX_DIRECT_LENGTH: 6000,        // Under 6000 chars: use directly
-  MAX_SINGLE_SUMMARY: 15000,      // 6000-15000 chars: single summary
-  CHUNK_SIZE: 8000,               // For very large texts: chunk size
+  MAX_DIRECT_LENGTH: 120000,      // Under 120K chars: use directly (~95% aller Verträge)
+  MAX_SINGLE_SUMMARY: 300000,     // 120K-300K chars: smart truncation (kein AI-Call)
+  CHUNK_SIZE: 80000,              // For extreme texts (>300K): chunk size
   MAX_CHUNKS: 4                   // Maximum chunks to process
 };
+
+// 🧠 Smart Truncation für Extremfälle (>120K Zeichen) — kein AI-Call nötig
+// 50% Anfang, 30% Mitte (Keyword-verankert), 20% Ende
+function optimizeTextForComparison(text, maxLength = 120000) {
+  if (text.length <= maxLength) return text;
+
+  console.log(`🔧 Smart Truncation: ${text.length} → ${maxLength} Zeichen`);
+
+  const beginLength = Math.floor(maxLength * 0.5);
+  const middleLength = Math.floor(maxLength * 0.3);
+  const endLength = Math.floor(maxLength * 0.2);
+
+  // Anfang: Erste 50% — enthält Vertragsparteien, Definitionen, Präambel
+  const beginning = text.substring(0, beginLength);
+
+  // Ende: Letzte 20% — enthält Schlussbestimmungen, Gerichtsstand, Unterschriften
+  const ending = text.substring(text.length - endLength);
+
+  // Mitte: 30% — Keyword-verankert um die wichtigsten Abschnitte zu treffen
+  const keywords = [
+    'Haftung', 'Kündigung', 'Zahlung', 'Gewährleistung', 'Vertragslaufzeit',
+    'Vertragsstrafe', 'Geheimhaltung', 'Datenschutz', 'Schadensersatz',
+    'Kündigungsfrist', 'Zahlungsbedingungen', 'Force Majeure', 'Höhere Gewalt',
+    'Wettbewerbsverbot', 'Intellectual Property', 'Urheberrecht'
+  ];
+
+  // Finde den besten Anker-Punkt in der Mitte des Texts
+  const middleStart = beginLength;
+  const middleEnd = text.length - endLength;
+  const middleSection = text.substring(middleStart, middleEnd);
+
+  let bestAnchor = Math.floor(middleSection.length / 2); // Fallback: exakte Mitte
+  for (const keyword of keywords) {
+    const idx = middleSection.indexOf(keyword);
+    if (idx !== -1) {
+      bestAnchor = idx;
+      console.log(`  📌 Keyword-Anker gefunden: "${keyword}" bei Position ${idx}`);
+      break;
+    }
+  }
+
+  // Extrahiere middleLength Zeichen um den Anker herum
+  const anchorStart = Math.max(0, bestAnchor - Math.floor(middleLength / 2));
+  const anchorEnd = Math.min(middleSection.length, anchorStart + middleLength);
+  const middle = middleSection.substring(anchorStart, anchorEnd);
+
+  const result = beginning + '\n\n[...]\n\n' + middle + '\n\n[...]\n\n' + ending;
+  console.log(`✅ Smart Truncation: ${text.length} → ${result.length} Zeichen`);
+  return result;
+}
 
 async function summarizeContractChunk(text, chunkNumber = null, totalChunks = null) {
   const chunkInfo = chunkNumber ? `(Teil ${chunkNumber}/${totalChunks})` : '';
 
   const completion = await openai.chat.completions.create({
-    model: "gpt-4-turbo",
+    model: "gpt-4o",
     messages: [
       {
         role: "system",
-        content: "Du bist ein Experte für Vertragsanalyse. Extrahiere die wichtigsten Klauseln und Bedingungen aus dem Vertragstext."
+        content: "Du bist ein spezialisierter Vertragsanwalt. Extrahiere alle wesentlichen Klauseln und Bedingungen. Behalte exakte Paragraphen-Referenzen (§-Nummern), Zahlen, Fristen und Beträge bei. Kürze NIEMALS konkrete Angaben."
       },
       {
         role: "user",
-        content: `Erstelle eine strukturierte Zusammenfassung dieses Vertragstexts ${chunkInfo}.
-Fokussiere auf:
-- Hauptpflichten der Parteien
-- Zahlungsbedingungen und Fristen
-- Kündigungsfristen und -bedingungen
-- Haftungsklauseln und Gewährleistung
-- Besondere Klauseln (Wettbewerbsverbot, Geheimhaltung, etc.)
-- Laufzeit und Verlängerung
+        content: `Erstelle eine detaillierte, strukturierte Zusammenfassung dieses Vertragstexts ${chunkInfo}.
 
-Fasse die wichtigsten Punkte kurz und präzise zusammen (max. 1500 Zeichen).
+PFLICHT — Für jeden Punkt angeben:
+- Exakte Paragraphen-Referenz (z.B. §3 Abs. 2, Klausel 4.1)
+- Konkrete Zahlen, Fristen, Beträge wörtlich übernehmen
+- Hauptpflichten der Parteien mit Fundstelle
+- Zahlungsbedingungen und Fristen mit exakten Beträgen
+- Kündigungsfristen und -bedingungen mit Fristen
+- Haftungsklauseln und Gewährleistung mit Obergrenzen
+- Besondere Klauseln (Wettbewerbsverbot, Geheimhaltung, etc.)
+- Laufzeit und Verlängerung mit exakten Daten
 
 VERTRAGSTEXT:
 """
@@ -232,8 +284,8 @@ ${text}
 """`
       }
     ],
-    temperature: 0.2,
-    max_tokens: 800,
+    temperature: 0.1,
+    max_tokens: 3000,
   });
 
   return completion.choices[0].message.content;
@@ -242,22 +294,20 @@ ${text}
 async function prepareContractText(fullText) {
   const textLength = fullText.length;
 
-  // Small text: use directly
+  // Stufe 1: ≤120K Zeichen → Direkt verwenden (deckt ~95% aller Verträge ab)
   if (textLength <= CHUNK_CONFIG.MAX_DIRECT_LENGTH) {
-    console.log(`📄 Text kurz genug (${textLength} Zeichen) - direkte Verwendung`);
+    console.log(`📄 Stufe 1: Text direkt verwendbar (${textLength} Zeichen)`);
     return fullText;
   }
 
-  // Medium text: single summary
+  // Stufe 2: ≤300K Zeichen → Smart Truncation ohne AI-Call
   if (textLength <= CHUNK_CONFIG.MAX_SINGLE_SUMMARY) {
-    console.log(`📄 Mittlerer Text (${textLength} Zeichen) - erstelle Summary...`);
-    const summary = await summarizeContractChunk(fullText);
-    console.log(`✅ Summary erstellt (${summary.length} Zeichen)`);
-    return summary;
+    console.log(`📄 Stufe 2: Smart Truncation (${textLength} Zeichen)`);
+    return optimizeTextForComparison(fullText, CHUNK_CONFIG.MAX_DIRECT_LENGTH);
   }
 
-  // Large text: multi-chunk processing
-  console.log(`📄 Großer Text (${textLength} Zeichen) - Multi-Chunk Verarbeitung...`);
+  // Stufe 3: >300K Zeichen → Multi-Chunk AI-Summarization (Fallback, praktisch nie)
+  console.log(`📄 Stufe 3: Multi-Chunk AI-Summarization (${textLength} Zeichen) — Extremfall`);
 
   const chunks = [];
   const chunkSize = CHUNK_CONFIG.CHUNK_SIZE;
@@ -266,7 +316,6 @@ async function prepareContractText(fullText) {
     CHUNK_CONFIG.MAX_CHUNKS
   );
 
-  // Calculate optimal chunk positions to cover the whole document
   const step = Math.floor(textLength / maxChunks);
 
   for (let i = 0; i < maxChunks; i++) {
@@ -277,14 +326,12 @@ async function prepareContractText(fullText) {
 
   console.log(`🔄 Verarbeite ${chunks.length} Chunks parallel...`);
 
-  // Process all chunks in parallel
   const summaries = await Promise.all(
     chunks.map((chunk, idx) =>
       summarizeContractChunk(chunk, idx + 1, chunks.length)
     )
   );
 
-  // Combine summaries
   const combined = summaries.join('\n\n--- Abschnitt ---\n\n');
   console.log(`✅ Alle Chunks zusammengefasst (${combined.length} Zeichen)`);
 
@@ -307,11 +354,9 @@ async function analyzeContracts(contract1Text, contract2Text, userProfile = 'ind
   console.log(`📊 Verarbeitet: V1=${preparedText1.length} chars, V2=${preparedText2.length} chars`);
 
   const analysisPrompt = `
-${systemPrompt}
-
 ${modeConfig.promptAddition}
 
-AUFGABE: Vergleiche diese zwei Verträge systematisch und erstelle eine strukturierte Analyse.
+AUFGABE: Erstelle einen professionellen Vertragsvergleich auf dem Niveau einer bezahlten anwaltlichen Erstberatung.
 
 VERTRAG 1:
 """
@@ -323,64 +368,126 @@ VERTRAG 2:
 ${preparedText2}
 """
 
-Erstelle eine JSON-Antwort mit folgender Struktur:
+ARBEITSWEISE — Du bist ein Anwalt, der beide Verträge nebeneinander auf dem Schreibtisch liegen hat. Gehe JEDEN Paragraphen durch:
+
+SCHRITT 1 — UNTERSCHIEDE (differences):
+Gehe das folgende Prüfschema Punkt für Punkt durch. Prüfe JEDEN Bereich: Gibt es einen Unterschied zwischen den Verträgen? Wenn ja → dokumentiere ihn. Wenn nein → überspringe ihn.
+
+PRÜFSCHEMA:
+□ Leistungsumfang / Vertragsgegenstand — Was genau wird geschuldet?
+□ Leistungsart — Dienstvertrag (Bemühen) vs. Werkvertrag (Erfolg)?
+□ Vertragslaufzeit — Befristet vs. unbefristet? Mindestlaufzeit?
+□ Kündigungsfristen — Wie lang? Zum Quartalsende/Jahresende? Automatische Verlängerung?
+□ Vergütungsstruktur — Pauschale vs. Stundensatz? Höhe?
+□ Zahlungsfristen — 14 Tage, 30 Tage, sofort?
+□ Verzugszinsen — Welcher Prozentsatz über Basiszins?
+□ Preisanpassungsklauseln — Jährliche Erhöhung erlaubt?
+□ Mindestabnahme / Mindestvolumen — Gibt es garantierte Auftragsmengen?
+□ SLA / Verfügbarkeit — Garantierte Uptime? Reaktionszeiten?
+□ SLA-Sanktionen / Gutschriften — Was passiert bei Nichteinhaltung?
+□ Haftungshöhe — Maximale Haftung pro Schadensfall/Jahr?
+□ Haftungsausschlüsse — Leichte Fahrlässigkeit? Mittelbare Schäden? Kardinalpflichten?
+□ Geheimhaltung — Dauer der Verpflichtung? Befristet vs. unbefristet?
+□ Wettbewerbsverbot — Existiert eines? Dauer nach Vertragsende?
+□ Datenschutz / AVV — Welche Regelungen? Unterauftragnehmer-Genehmigung?
+□ IP-Rechte / Urheberrecht — Wem gehören die Arbeitsergebnisse?
+□ Gerichtsstand — Welcher Ort? Ausschließlich?
+□ Rechtswahl — UN-Kaufrecht ausgeschlossen?
+□ Schlussbestimmungen — Schriftformklausel? Salvatorische Klausel? Nebenabreden?
+
+Finde ALLE tatsächlich vorhandenen Unterschiede — keine künstlichen Auffüllungen, aber auch KEINE Auslassungen.
+
+Für JEDEN Unterschied:
+- "category": Rechtskategorie (Kündigung, Haftung, Zahlung, Gewährleistung, Datenschutz, Laufzeit, IP-Rechte, Wettbewerb, etc.)
+- "section": Exakte Fundstelle (z.B. "§3 Abs. 2", "Klausel 4.1"). Bei fehlenden Klauseln: die Fundstelle des Vertrags, der die Klausel HAT
+- "contract1": Wörtliches Zitat aus Vertrag 1. Bei fehlender Klausel: "Keine entsprechende Regelung vorhanden — [was das konkret bedeutet]"
+- "contract2": Wörtliches Zitat aus Vertrag 2. Bei fehlender Klausel: "Keine entsprechende Regelung vorhanden — [was das konkret bedeutet]"
+- "severity": "low"|"medium"|"high"|"critical" — critical bei echten Rechtsrisiken oder komplett fehlenden Schutzklauseln
+- "impact": Argumentiere wie ein Anwalt gegenüber deinem Mandanten: WARUM ist das wichtig? Welche konkreten Risiken entstehen? Verweise auf §§ BGB, HGB, DSGVO wo relevant. Erkläre die PRAKTISCHE Auswirkung.
+- "recommendation": Sage dem Mandanten konkret WAS zu tun ist — nicht "prüfen Sie das", sondern "Ergänzen Sie in Vertrag 1 eine IP-Klausel nach dem Vorbild von §8 Vertrag 2" oder "Streichen Sie die automatische Preisanpassung in §3 Abs. 5"
+
+SCHRITT 2 — STÄRKEN & SCHWÄCHEN:
+Für jeden Vertrag die wesentlichen Stärken und Schwächen mit Fundstelle benennen.
+Schreibe nicht "Gute Haftungsklausel" sondern "Klare Haftungsbegrenzung auf den jährlichen Auftragswert von max. 102.000 EUR (§5 Abs. 2)"
+
+SCHRITT 3 — SCORE:
+Bewerte jeden Vertrag auf einer Skala von 0-100:
+- 0-30: Stark mangelhaft, viele fehlende oder problematische Klauseln
+- 31-50: Unterdurchschnittlich, wesentliche Schwächen
+- 51-70: Durchschnittlich, solide Grundstruktur mit Verbesserungsbedarf
+- 71-85: Gut, professionell formuliert mit kleineren Lücken
+- 86-100: Exzellent, umfassend und ausgewogen
+
+SCHRITT 4 — GESAMTURTEIL (overallRecommendation.reasoning):
+Schreibe ein fundiertes Urteil: Welcher Vertrag ist besser und WARUM? Welche konkreten Risiken bestehen? Was MUSS vor Unterzeichnung geändert werden? Schreibe ausführlich (4-6 Sätze).
+
+SCHRITT 5 — ZUSAMMENFASSUNG (summary):
+Fasse die wichtigsten Erkenntnisse verständlich für einen Nicht-Juristen zusammen (4-6 Sätze).
+
+Antworte NUR mit validem JSON:
 
 {
   "differences": [
     {
-      "category": "Kategorie (z.B. Kündigung, Haftung, Zahlung, Leistung, Datenschutz)",
-      "section": "Spezifischer Bereich (z.B. Kündigungsfristen)",
-      "contract1": "Relevanter Text aus Vertrag 1",
-      "contract2": "Relevanter Text aus Vertrag 2", 
+      "category": "string",
+      "section": "string",
+      "contract1": "string",
+      "contract2": "string",
       "severity": "low|medium|high|critical",
-      "impact": "Beschreibung der praktischen Auswirkung",
-      "recommendation": "Konkrete Empfehlung"
+      "impact": "string",
+      "recommendation": "string"
     }
   ],
   "contract1Analysis": {
-    "strengths": ["Liste der Stärken"],
-    "weaknesses": ["Liste der Schwächen"],
+    "strengths": ["string"],
+    "weaknesses": ["string"],
     "riskLevel": "low|medium|high",
-    "score": "Numerischer Score von 0-100"
+    "score": number
   },
   "contract2Analysis": {
-    "strengths": ["Liste der Stärken"],
-    "weaknesses": ["Liste der Schwächen"], 
+    "strengths": ["string"],
+    "weaknesses": ["string"],
     "riskLevel": "low|medium|high",
-    "score": "Numerischer Score von 0-100"
+    "score": number
   },
   "overallRecommendation": {
     "recommended": 1 oder 2,
-    "reasoning": "Detaillierte Begründung der Empfehlung",
-    "confidence": "Prozent-Wert 0-100"
+    "reasoning": "string",
+    "confidence": number
   },
-  "summary": "2-3 Sätze Zusammenfassung des Vergleichs"
+  "summary": "string"
 }
 
-WICHTIG:
-- Mindestens 5-8 relevante Unterschiede identifizieren
-- Severity realistische einschätzen (critical nur bei echten Risiken)
-- Scores basierend auf objektiven Kriterien vergeben
-- Konkrete, umsetzbare Empfehlungen geben
-- Bei ${userProfile}-Profil entsprechend fokussieren
+Fokus-Profil: ${userProfile}
 `;
 
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-4-turbo",
+      model: "gpt-4o",
       messages: [
-        { role: "system", content: "Du bist ein erfahrener Anwalt für Vertragsrecht. Antworte immer mit validen JSON ohne zusätzlichen Text." },
+        {
+          role: "system",
+          content: `Du bist ein hochspezialisierter Vertragsanwalt mit 20+ Jahren Erfahrung im deutschen Vertragsrecht. Ein Mandant bezahlt dich für eine vollständige, gründliche Erstberatung. ${systemPrompt}
+
+DEINE ARBEITSWEISE:
+- Du gehst JEDEN einzelnen Paragraphen beider Verträge durch — ohne Ausnahme
+- Du übersprings NICHTS. Auch unterschiedliche Zahlungsfristen, Verzugszinssätze oder Formulierungsunterschiede sind relevant
+- Fehlende Klauseln (nur in einem Vertrag vorhanden) sind oft die wichtigsten Unterschiede — erkenne und melde sie ALLE
+- Zitiere wörtlich aus den Verträgen, paraphrasiere nicht
+- Begründe rechtlich mit §§ BGB, HGB, DSGVO wo relevant
+- Jede Empfehlung muss konkret und umsetzbar sein
+- Sei GRÜNDLICH und AUSFÜHRLICH — dein Mandant bezahlt für Tiefe, nicht für Kürze
+- Antworte ausschließlich mit validem JSON`
+        },
         { role: "user", content: analysisPrompt }
       ],
-      temperature: 0.3,
-      max_tokens: 4000,
+      temperature: 0.1,
+      max_tokens: 16000,
+      response_format: { type: "json_object" },
     });
 
     const response = completion.choices[0].message.content;
-    
-    // Clean up the response and parse JSON
-    const cleanedResponse = response.replace(/```json\n?|\n?```/g, '').trim();
-    const analysis = JSON.parse(cleanedResponse);
+    const analysis = JSON.parse(response);
     
     // Validate and enhance the analysis
     return enhanceAnalysis(analysis);
@@ -393,30 +500,25 @@ WICHTIG:
 
 // Function to enhance and validate the analysis
 function enhanceAnalysis(analysis) {
-  // Ensure minimum required differences
-  if (analysis.differences.length < 3) {
-    // Add some generic differences if too few found
-    analysis.differences.push({
-      category: "Allgemeine Bedingungen",
-      section: "Vertragsstruktur",
-      contract1: "Strukturierter Aufbau",
-      contract2: "Komplexere Struktur",
-      severity: "low",
-      impact: "Unterschiedliche Lesbarkeit und Verständlichkeit",
-      recommendation: "Prüfen Sie beide Verträge sorgfältig auf Vollständigkeit"
-    });
-  }
+  // Log für Transparenz — kein fester Schwellenwert, Qualität zählt
+  console.log(`📊 Analyse-Ergebnis: ${analysis.differences?.length || 0} Unterschiede gefunden`);
+
+  // Ensure required fields exist
+  if (!analysis.differences) analysis.differences = [];
+  if (!analysis.contract1Analysis) analysis.contract1Analysis = { strengths: [], weaknesses: [], riskLevel: 'medium', score: 50 };
+  if (!analysis.contract2Analysis) analysis.contract2Analysis = { strengths: [], weaknesses: [], riskLevel: 'medium', score: 50 };
+  if (!analysis.overallRecommendation) analysis.overallRecommendation = { recommended: 1, reasoning: '', confidence: 50 };
 
   // Ensure scores are in valid range
-  analysis.contract1Analysis.score = Math.max(0, Math.min(100, analysis.contract1Analysis.score || 50));
-  analysis.contract2Analysis.score = Math.max(0, Math.min(100, analysis.contract2Analysis.score || 50));
-  
+  analysis.contract1Analysis.score = Math.max(0, Math.min(100, Number(analysis.contract1Analysis.score) || 50));
+  analysis.contract2Analysis.score = Math.max(0, Math.min(100, Number(analysis.contract2Analysis.score) || 50));
+
   // Ensure confidence is in valid range
-  analysis.overallRecommendation.confidence = Math.max(0, Math.min(100, analysis.overallRecommendation.confidence || 75));
-  
+  analysis.overallRecommendation.confidence = Math.max(0, Math.min(100, Number(analysis.overallRecommendation.confidence) || 75));
+
   // Add categories array
   analysis.categories = [...new Set(analysis.differences.map(d => d.category))];
-  
+
   return analysis;
 }
 
@@ -618,8 +720,7 @@ router.post("/", verifyToken, upload.fields([
           extraRefs: {
             comparisonId: comparisonId,
             role: "contract1",
-            userProfile,
-            pageCount: pdfData1.numpages || 1
+            userProfile
           }
         }),
         saveContract({
@@ -630,9 +731,8 @@ router.post("/", verifyToken, upload.fields([
           fileSize: file2.size,
           extraRefs: {
             comparisonId: comparisonId,
-            role: "contract2", 
-            userProfile,
-            pageCount: pdfData2.numpages || 1
+            role: "contract2",
+            userProfile
           }
         })
       ]);

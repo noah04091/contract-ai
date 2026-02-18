@@ -225,18 +225,18 @@ Du schreibst JETZT NICHT den Vertrag selbst! Deine Aufgabe ist es, klare ANWEISU
 Du erstellst einen META-PROMPT (Anleitung für Phase 2), NICHT den Vertrag selbst!
 
 BEISPIEL FÜR META-PROMPT:
-"Erstelle einen vollständigen, umfassenden Mietvertrag nach BGB zwischen Vermieter und Mieter mit PRÄAMBEL und folgenden Pflicht-Paragraphen: § 1 Mietgegenstand, § 2 Mietzeit, § 3 Miete und Nebenkosten... Verwende EXAKT die Begriffe 'Vermieter' und 'Mieter' (keine anderen Bezeichnungen). Nutze vorhandene Daten aus den Eingaben. Wenn Namen oder Adressen fehlen, verwende Platzhalter wie [Name des Vermieters], [Straße], [PLZ Ort]. Die Wohnung ist 85 qm groß, 2. OG. Miete: 950€, Nebenkosten: 200€, Kaution: 2850€. Mietbeginn: 01.01.2025. Erwähne NICHT: Garten, Balkon, Stellplatz (außer explizit genannt). Individuelle Anforderungen: Haustiere nach Absprache erlaubt. Der Vertrag soll professionell, detailliert und umfassend sein (mindestens 4000-5000 Zeichen)."
+"Erstelle einen vollständigen, umfassenden Mietvertrag nach BGB. Die Vertragsparteien sind: Vermieter Max Mustermann, Musterstraße 1, 12345 Berlin und Mieter Anna Schmidt, Hauptstr. 5, 80331 München. Verwende EXAKT diese Namen im gesamten Vertrag — KEINE Platzhalter wie [Name des Vermieters]! Verwende EXAKT die Begriffe 'Vermieter' und 'Mieter' (keine anderen Bezeichnungen). Pflicht-Paragraphen: § 1 Mietgegenstand, § 2 Mietzeit, § 3 Miete und Nebenkosten... Die Wohnung ist 85 qm groß, 2. OG. Miete: 950€, Nebenkosten: 200€, Kaution: 2850€. Mietbeginn: 01.01.2025. Erwähne NICHT: Garten, Balkon, Stellplatz (außer explizit genannt). Individuelle Anforderungen (VERBINDLICH als feste Klauseln!): Haustiere nach Absprache erlaubt. Der Vertrag soll professionell, detailliert und umfassend sein (mindestens 4000-5000 Zeichen)."
 
 REGELN FÜR DEINEN META-PROMPT:
-1. Beschreibe ALLE Eingabedaten präzise (Namen, Beträge, Daten)
-   - Nutze NUR Daten, die explizit in den Eingaben vorhanden sind
-   - Wenn Daten fehlen, instruiere Phase 2 Platzhalter zu verwenden wie [Name], [Straße], [PLZ Ort]
+1. Beschreibe ALLE Eingabedaten präzise — gib die EXAKTEN Namen und Adressen der Parteien an
+   - Übernimm Namen und Daten WÖRTLICH aus den Eingaben
+   - Verwende Platzhalter NUR wenn ein Feld explizit als "[NAME FEHLT]" markiert ist
    - NIEMALS falsche/erfundene Namen oder Adressen instruieren
 2. Liste ALLE Pflicht-Paragraphen auf: ${typeProfile.mustClauses.join(', ')}
 3. Definiere verbotene Themen (was NICHT erfunden werden darf)
 4. Verwende exakte Rollenbegriffe: ${typeProfile.roles.A} und ${typeProfile.roles.B}
-5. Integriere individuelle Anforderungen mit höchster Priorität
-6. WICHTIG: Fordere PRÄAMBEL mit vollständigen Vertragsparteien (aus Eingabedaten ODER Platzhalter)
+5. Integriere individuelle Anforderungen als VERBINDLICHE Klauseln (NICHT optional formulieren!)
+6. WICHTIG: Übernimm die EXAKTEN Parteinamen aus den Eingabedaten in den Meta-Prompt. Fordere PRÄAMBEL mit vollständigen Vertragsparteien
 7. WICHTIG: Fordere umfassende, detaillierte Paragraphen (mindestens 4000-5000 Zeichen Gesamtlänge)
 8. WICHTIG: Betone professionellen, ausführlichen Stil - KEINE Kurzfassungen oder Minimalismus
 
@@ -347,7 +347,9 @@ function buildPhase1UserPrompt(input, contractType, typeProfile) {
   });
 
   if (input.customRequirements && input.customRequirements.trim()) {
-    prompt += `\n⚠️ INDIVIDUELLE ANFORDERUNGEN (HÖCHSTE PRIORITÄT!):\n${input.customRequirements}\n`;
+    prompt += `\n⚠️ VERBINDLICHE INDIVIDUELLE ANFORDERUNGEN (MÜSSEN als feste Vertragsklauseln aufgenommen werden!):\n`;
+    prompt += `Diese Anforderungen sind NICHT optional — sie müssen als bindende Klauseln im Vertrag erscheinen:\n`;
+    prompt += `${input.customRequirements}\n`;
   }
 
   // 🆕 INDIVIDUELL: mustClauses-Override aus Input
@@ -453,7 +455,7 @@ function parsePhase1Response(response) {
  * @param {Object} snapshot - Snapshot aus Phase 1
  * @returns {Promise<{contractText: string, timingMs: number, tokenCount: Object, retries: number}>}
  */
-async function runPhase2_ContractGeneration(generatedPrompt, snapshot) {
+async function runPhase2_ContractGeneration(generatedPrompt, snapshot, originalInput) {
   const startTime = Date.now();
 
   console.log("🔄 Phase 2: Contract Generation gestartet");
@@ -588,13 +590,13 @@ PRÄAMBEL
 (4) Es gilt das Recht der Bundesrepublik Deutschland.
 
 Erstelle den Vertrag exakt nach den nachfolgenden Vorgaben und dieser Struktur!` },
-          { role: "user", content: generatedPrompt }
+          { role: "user", content: generatedPrompt + buildOriginalDataBlock(originalInput) }
         ]
       }),
       RETRY_SETTINGS.timeoutMs
     );
 
-    const contractText = completion.choices[0].message.content;
+    const contractText = replacePlaceholders(completion.choices[0].message.content, originalInput);
     const tokenCount = {
       prompt: completion.usage.prompt_tokens,
       completion: completion.usage.completion_tokens,
@@ -703,6 +705,155 @@ Bewerte die Übereinstimmung!`;
       notes: [`Self-Check technisch fehlgeschlagen: ${error.message}`]
     };
   }
+}
+
+// ===== HELPER: Original-Daten Block für Phase 2 =====
+
+/**
+ * Baut einen strukturierten Block mit Original-Eingabedaten für Phase 2
+ * Wird an den generatedPrompt angehängt, damit Phase 2 die echten Namen kennt
+ */
+function buildOriginalDataBlock(input) {
+  if (!input) return '';
+
+  let block = '\n\n===VERBINDLICHE ORIGINALDATEN (HÖCHSTE PRIORITÄT!)===\n';
+  block += 'Die folgenden Daten MÜSSEN exakt so im Vertrag verwendet werden:\n\n';
+
+  if (input.parteiA?.name) {
+    block += `PARTEI A NAME: ${input.parteiA.name}\n`;
+    if (input.parteiA.address) block += `PARTEI A ADRESSE: ${input.parteiA.address}\n`;
+  }
+  if (input.parteiB?.name) {
+    block += `PARTEI B NAME: ${input.parteiB.name}\n`;
+    if (input.parteiB.address) block += `PARTEI B ADRESSE: ${input.parteiB.address}\n`;
+  }
+
+  // Alle weiteren Vertragsdetails (Miete, Fläche, etc.)
+  const skipKeys = ['parteiA', 'parteiB', 'title', 'customRequirements', 'rolesA', 'rolesB', 'mustClauses', 'forbiddenTopics', 'forbiddenSynonyms'];
+  Object.entries(input).forEach(([key, value]) => {
+    if (!skipKeys.includes(key) && value && typeof value === 'string' && value.trim()) {
+      block += `${key}: ${value}\n`;
+    }
+  });
+
+  if (input.customRequirements?.trim()) {
+    block += `\nVERBINDLICHE ZUSATZANFORDERUNGEN (MÜSSEN als feste Vertragsklauseln formuliert werden, NICHT optional!):\n`;
+    block += `${input.customRequirements}\n`;
+  }
+
+  block += '===ENDE ORIGINALDATEN===\n';
+  return block;
+}
+
+/**
+ * Deterministisches Post-Processing: Ersetzt verbleibende Platzhalter durch echte Daten
+ * Sicherheitsnetz falls GPT trotzdem Platzhalter generiert
+ */
+function replacePlaceholders(text, input) {
+  if (!input || !text) return text;
+
+  let result = text;
+
+  // Partei A Platzhalter ersetzen
+  if (input.parteiA?.name) {
+    const nameA = input.parteiA.name;
+    result = result
+      // Exakte Muster
+      .replace(/\[Name des Vermieters?\]/gi, nameA)
+      .replace(/\[Name des Verkäufers?\]/gi, nameA)
+      .replace(/\[Name des Arbeitgebers?\]/gi, nameA)
+      .replace(/\[Name des Auftraggebers?\]/gi, nameA)
+      .replace(/\[Name des Verpächters?\]/gi, nameA)
+      .replace(/\[Name des Darlehensgebers?\]/gi, nameA)
+      .replace(/\[Name des Gesellschafters? A?\]/gi, nameA)
+      // Kurzformen
+      .replace(/\[Vermieter\]/gi, nameA)
+      .replace(/\[Verkäufer\]/gi, nameA)
+      .replace(/\[Arbeitgeber\]/gi, nameA)
+      .replace(/\[Auftraggeber\]/gi, nameA)
+      .replace(/\[Verpächter\]/gi, nameA)
+      .replace(/\[Darlehensgeber\]/gi, nameA)
+      .replace(/\[Lizenzgeber\]/gi, nameA)
+      .replace(/\[Name des Lizenzgebers?\]/gi, nameA)
+      .replace(/\[Offenlegende Partei\]/gi, nameA)
+      .replace(/\[Name der [Oo]ffenlegenden Partei\]/gi, nameA)
+      // Generische Muster
+      .replace(/\[Name Partei A\]/gi, nameA)
+      .replace(/\[Partei A\]/gi, nameA)
+      .replace(/\[NAME FEHLT\]/gi, nameA)
+      // Vollständiger-Name-Varianten
+      .replace(/\[vollständiger Name des Vermieters?\]/gi, nameA)
+      .replace(/\[vollständiger Name des Verkäufers?\]/gi, nameA)
+      .replace(/\[vollständiger Name des Arbeitgebers?\]/gi, nameA)
+      .replace(/\[vollständiger Name des Auftraggebers?\]/gi, nameA)
+      .replace(/\[Vor- und (?:Zu|Nach)name (?:des )?(?:Vermieters?|Verkäufers?|Arbeitgebers?|Auftraggebers?|Verpächters?|Darlehensgebers?)\]/gi, nameA)
+      .replace(/\[Vor- und (?:Zu|Nach)name Partei A\]/gi, nameA);
+  }
+
+  // Partei B Platzhalter ersetzen
+  if (input.parteiB?.name) {
+    const nameB = input.parteiB.name;
+    result = result
+      // Exakte Muster
+      .replace(/\[Name des Mieters?\]/gi, nameB)
+      .replace(/\[Name des Käufers?\]/gi, nameB)
+      .replace(/\[Name des Arbeitnehmers?\]/gi, nameB)
+      .replace(/\[Name des Auftragnehmers?\]/gi, nameB)
+      .replace(/\[Name des Pächters?\]/gi, nameB)
+      .replace(/\[Name des Darlehensnehmers?\]/gi, nameB)
+      .replace(/\[Name des Gesellschafters? B?\]/gi, nameB)
+      .replace(/\[Name des Freelancers?\]/gi, nameB)
+      // Kurzformen
+      .replace(/\[Mieter\]/gi, nameB)
+      .replace(/\[Käufer\]/gi, nameB)
+      .replace(/\[Arbeitnehmer\]/gi, nameB)
+      .replace(/\[Auftragnehmer\]/gi, nameB)
+      .replace(/\[Pächter\]/gi, nameB)
+      .replace(/\[Darlehensnehmer\]/gi, nameB)
+      .replace(/\[Freelancer\]/gi, nameB)
+      .replace(/\[Lizenznehmer\]/gi, nameB)
+      .replace(/\[Name des Lizenznehmers?\]/gi, nameB)
+      .replace(/\[Empfangende Partei\]/gi, nameB)
+      .replace(/\[Name der [Ee]mpfangenden Partei\]/gi, nameB)
+      // Generische Muster
+      .replace(/\[Name Partei B\]/gi, nameB)
+      .replace(/\[Partei B\]/gi, nameB)
+      // Vollständiger-Name-Varianten
+      .replace(/\[vollständiger Name des Mieters?\]/gi, nameB)
+      .replace(/\[vollständiger Name des Käufers?\]/gi, nameB)
+      .replace(/\[vollständiger Name des Arbeitnehmers?\]/gi, nameB)
+      .replace(/\[vollständiger Name des Auftragnehmers?\]/gi, nameB)
+      .replace(/\[Vor- und (?:Zu|Nach)name (?:des )?(?:Mieters?|Käufers?|Arbeitnehmers?|Auftragnehmers?|Pächters?|Darlehensnehmers?)\]/gi, nameB)
+      .replace(/\[Vor- und (?:Zu|Nach)name Partei B\]/gi, nameB);
+  }
+
+  // Adressen ersetzen (Partei A)
+  if (input.parteiA?.address) {
+    result = result
+      .replace(/\[Straße\],?\s*\[PLZ Ort\]/gi, input.parteiA.address)
+      .replace(/\[Adresse des Vermieters?\]/gi, input.parteiA.address)
+      .replace(/\[Adresse des Verkäufers?\]/gi, input.parteiA.address)
+      .replace(/\[Adresse des Arbeitgebers?\]/gi, input.parteiA.address)
+      .replace(/\[Adresse des Auftraggebers?\]/gi, input.parteiA.address)
+      .replace(/\[Adresse des Lizenzgebers?\]/gi, input.parteiA.address)
+      .replace(/\[Adresse der [Oo]ffenlegenden Partei\]/gi, input.parteiA.address)
+      .replace(/\[Adresse Partei A\]/gi, input.parteiA.address);
+  }
+
+  // Adressen ersetzen (Partei B)
+  if (input.parteiB?.address) {
+    result = result
+      .replace(/\[Adresse des Mieters?\]/gi, input.parteiB.address)
+      .replace(/\[Adresse des Käufers?\]/gi, input.parteiB.address)
+      .replace(/\[Adresse des Arbeitnehmers?\]/gi, input.parteiB.address)
+      .replace(/\[Adresse des Auftragnehmers?\]/gi, input.parteiB.address)
+      .replace(/\[Adresse des Lizenznehmers?\]/gi, input.parteiB.address)
+      .replace(/\[Adresse der [Ee]mpfangenden Partei\]/gi, input.parteiB.address)
+      .replace(/\[Adresse des Freelancers?\]/gi, input.parteiB.address)
+      .replace(/\[Adresse Partei B\]/gi, input.parteiB.address);
+  }
+
+  return result;
 }
 
 // ===== REPAIR-PASS: Ergänzt fehlende Pflichtklauseln =====
@@ -1242,7 +1393,7 @@ async function generateContractV2(input, contractType, userId, db, runLabel = nu
   const phase1 = await runPhase1_MetaPrompt(input, contractType, typeProfile);
 
   // PHASE 2: Contract Generation
-  let phase2 = await runPhase2_ContractGeneration(phase1.generatedPrompt, phase1.snapshot);
+  let phase2 = await runPhase2_ContractGeneration(phase1.generatedPrompt, phase1.snapshot, input);
 
   // REPAIR-PASS (nur für individuell & darlehen zur Optimierung)
   // Ergänzt fehlende Pflichtklauseln und behebt formale Mängel
@@ -1253,6 +1404,8 @@ async function generateContractV2(input, contractType, userId, db, runLabel = nu
       contractType,
       input
     );
+    // Sicherheitsnetz: Repair-Pass kann Platzhalter wieder einführen
+    phase2.contractText = replacePlaceholders(phase2.contractText, input);
   }
 
   // VALIDATOR (deterministisch)
@@ -1294,14 +1447,14 @@ async function generateContractV2(input, contractType, userId, db, runLabel = nu
           top_p: MODEL_SETTINGS.phase2.top_p,
           max_tokens: MODEL_SETTINGS.phase2.max_tokens,
           messages: [
-            { role: "system", content: "Du bist Fachanwalt für deutsches Vertragsrecht. Erstelle den Vertrag exakt nach den Vorgaben." },
-            { role: "user", content: phase1.generatedPrompt }
+            { role: "system", content: "Du bist Fachanwalt für deutsches Vertragsrecht. Erstelle den Vertrag exakt nach den Vorgaben. Verwende die EXAKTEN Namen und Daten aus den Originaldaten." },
+            { role: "user", content: phase1.generatedPrompt + buildOriginalDataBlock(input) }
           ]
         }),
         RETRY_SETTINGS.timeoutMs
       );
 
-      phase2.contractText = retryCompletion.choices[0].message.content;
+      phase2.contractText = replacePlaceholders(retryCompletion.choices[0].message.content, input);
       phase2.retries = retriesUsed;
 
       // REPAIR-PASS auch im Retry (nur für individuell & darlehen)
@@ -1312,6 +1465,8 @@ async function generateContractV2(input, contractType, userId, db, runLabel = nu
           contractType,
           input
         );
+        // Sicherheitsnetz: Repair-Pass kann Platzhalter wieder einführen
+        phase2.contractText = replacePlaceholders(phase2.contractText, input);
       }
 
       // Validator & Self-Check erneut

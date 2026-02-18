@@ -839,6 +839,134 @@ const createStyles = (theme) => {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
+// UNIVERSELLE PARTEI-NAMEN AUFLÖSUNG
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Löst Parteinamen aus verschiedenen Feldnamen auf (seller/buyer, landlord/tenant, etc.)
+ * Ermöglicht einheitlichen Zugriff unabhängig vom Vertragstyp
+ */
+const resolvePartyNames = (parties) => {
+  if (!parties) return { partyAName: null, partyBName: null, partyAAddress: null, partyBAddress: null, partyACity: null, partyBCity: null };
+
+  // Partei A Name: typ-spezifisch → generisch → null
+  const partyAName =
+    parties.seller || parties.partyA ||
+    parties.landlord || parties.employer || parties.lender ||
+    parties.nameClient || parties.licensor ||
+    parties.verpachter || parties.darlehensgeber ||
+    (parties.parteiA?.name ? parties.parteiA.name : null) ||
+    null;
+
+  // Partei B Name: typ-spezifisch → generisch → null
+  const partyBName =
+    parties.buyer || parties.partyB || parties.buyerName ||
+    parties.tenant || parties.employee || parties.borrower ||
+    parties.nameFreelancer || parties.licensee ||
+    parties.pachter || parties.darlehensnehmer ||
+    (parties.parteiB?.name ? parties.parteiB.name : null) ||
+    null;
+
+  // Partei A Adresse
+  const partyAAddress =
+    parties.sellerAddress || parties.partyAAddress ||
+    parties.landlordAddress || parties.employerAddress || parties.lenderAddress ||
+    parties.clientAddress || parties.licensorAddress ||
+    null;
+
+  // Partei B Adresse
+  const partyBAddress =
+    parties.buyerAddress || parties.partyBAddress ||
+    parties.tenantAddress || parties.employeeAddress || parties.borrowerAddress ||
+    parties.freelancerAddress || parties.licenseeAddress ||
+    null;
+
+  // City fields
+  const partyACity = parties.sellerCity || parties.partyACity || null;
+  const partyBCity = parties.buyerCity || parties.partyBCity || null;
+
+  return { partyAName, partyBName, partyAAddress, partyBAddress, partyACity, partyBCity };
+};
+
+/**
+ * Proper Case Normalisierung für Namen und Adressen
+ * Konvertiert "naomi baba" → "Naomi Baba", "richard oberle weg 27" → "Richard Oberle Weg 27"
+ * Lässt bereits korrekte Groß-/Kleinschreibung unverändert (z.B. "GmbH", "Dr. Schmidt")
+ */
+const toProperCase = (str) => {
+  if (!str || typeof str !== 'string') return str;
+  const trimmed = str.trim();
+  if (!trimmed) return str;
+
+  // Wenn der String bereits gemischte Groß-/Kleinschreibung hat → nicht ändern
+  const hasUpper = /[A-ZÄÖÜ]/.test(trimmed);
+  const hasLower = /[a-zäöüß]/.test(trimmed);
+  if (hasUpper && hasLower) return trimmed;
+
+  // Rein lowercase oder rein uppercase → Title Case anwenden
+  return trimmed.replace(/\b\w+/g, word => {
+    // Kurze Wörter wie "in", "am", "der" NICHT kapitalisieren, außer am Anfang
+    const lowerWords = ['in', 'am', 'an', 'im', 'bei', 'der', 'die', 'das', 'und', 'oder', 'von', 'vom', 'zum', 'zur'];
+    if (lowerWords.includes(word.toLowerCase()) && trimmed.indexOf(word) > 0) {
+      return word.toLowerCase();
+    }
+    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+  });
+};
+
+/**
+ * Extrahiert Parteinamen und -adressen aus dem Vertragstext
+ * Parst den "zwischen ... und ..." Block der Präambel
+ * Gibt die Namen zurück wie sie im LLM-generierten Text stehen (korrekte Groß-/Kleinschreibung)
+ */
+const extractPartiesFromText = (contractText) => {
+  if (!contractText) return null;
+
+  let partyAName = null, partyBName = null;
+  let partyAAddress = null, partyBAddress = null;
+
+  try {
+    // Suche den "zwischen" Block: "zwischen\n\nName, Adresse\n\n– nachfolgend"
+    const zwischenRegex = /zwischen\s*\n\s*\n?\s*([^\n]+)/i;
+    const matchA = contractText.match(zwischenRegex);
+    if (matchA) {
+      const line = matchA[1].trim();
+      // Entferne eventuelle "– nachfolgend" am Ende
+      const cleanLine = line.replace(/\s*[-–—]\s*nachfolgend.*$/i, '').trim();
+      const commaIdx = cleanLine.indexOf(',');
+      if (commaIdx > 0) {
+        partyAName = cleanLine.substring(0, commaIdx).trim();
+        partyAAddress = cleanLine.substring(commaIdx + 1).trim();
+      } else {
+        partyAName = cleanLine;
+      }
+    }
+
+    // Suche den "und" Block nach dem ersten "nachfolgend":
+    // "nachfolgend ... und\n\nName, Adresse\n\n– nachfolgend"
+    const undRegex = /nachfolgend[^]*?und\s*\n\s*\n?\s*([^\n]+)/i;
+    const matchB = contractText.match(undRegex);
+    if (matchB) {
+      const line = matchB[1].trim();
+      const cleanLine = line.replace(/\s*[-–—]\s*nachfolgend.*$/i, '').trim();
+      const commaIdx = cleanLine.indexOf(',');
+      if (commaIdx > 0) {
+        partyBName = cleanLine.substring(0, commaIdx).trim();
+        partyBAddress = cleanLine.substring(commaIdx + 1).trim();
+      } else {
+        partyBName = cleanLine;
+      }
+    }
+  } catch (err) {
+    console.warn('⚠️ [PDF] Party extraction from text failed:', err.message);
+  }
+
+  // Nur zurückgeben wenn mindestens ein Name gefunden wurde
+  if (!partyAName && !partyBName) return null;
+  return { partyAName, partyBName, partyAAddress, partyBAddress };
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
 // REACT-PDF KOMPONENTEN - Design-spezifisch
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -847,7 +975,7 @@ const createStyles = (theme) => {
  * WICHTIG: Alle CoverPage Layouts verwenden wrap: false um leere Seiten zu verhindern!
  * Das Deckblatt darf NIE umbrechen - lieber Content abschneiden als leere Seite erzeugen.
  */
-const CoverPage = ({ styles, theme, companyProfile, contractType, parties, partyLabels, currentDate, documentId, isDraft, logoBase64 }) => {
+const CoverPage = ({ styles, theme, companyProfile, contractType, parties, partyLabels, resolvedParties, currentDate, documentId, isDraft, logoBase64 }) => {
   const e = React.createElement;
   const c = theme.colors;
   const layoutType = theme.layout;
@@ -882,15 +1010,15 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
           e(View, { style: styles.partiesContainer },
             e(Text, { style: styles.partiesLabel }, 'Vertragsparteien'),
             e(View, { style: styles.partyBox },
-              e(Text, { style: styles.partyName }, companyProfile?.companyName || parties?.seller || '[Partei A]'),
-              (companyProfile?.street || parties?.sellerAddress) && e(Text, { style: styles.partyAddress }, companyProfile?.street || parties?.sellerAddress),
-              (companyProfile?.zip || parties?.sellerCity) && e(Text, { style: styles.partyAddress }, companyProfile?.zip ? `${companyProfile.zip} ${companyProfile.city || ''}` : parties?.sellerCity),
+              e(Text, { style: styles.partyName }, resolvedParties.partyAName || '[Vertragspartei A]'),
+              resolvedParties.partyAAddress && e(Text, { style: styles.partyAddress }, resolvedParties.partyAAddress),
+              resolvedParties.partyACity && e(Text, { style: styles.partyAddress }, resolvedParties.partyACity),
               e(Text, { style: styles.partyRole }, `– ${partyLabels.partyA} –`)
             ),
             e(View, { style: styles.partyBox },
-              e(Text, { style: styles.partyName }, parties?.buyer || parties?.partyB || '[Partei B]'),
-              parties?.buyerAddress && e(Text, { style: styles.partyAddress }, parties.buyerAddress),
-              parties?.buyerCity && e(Text, { style: styles.partyAddress }, parties.buyerCity),
+              e(Text, { style: styles.partyName }, resolvedParties.partyBName || '[Vertragspartei B]'),
+              resolvedParties.partyBAddress && e(Text, { style: styles.partyAddress }, resolvedParties.partyBAddress),
+              resolvedParties.partyBCity && e(Text, { style: styles.partyAddress }, resolvedParties.partyBCity),
               e(Text, { style: styles.partyRole }, `– ${partyLabels.partyB} –`)
             )
           )
@@ -926,14 +1054,14 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
         e(View, { style: styles.partiesContainer },
           e(Text, { style: styles.partiesLabel }, 'zwischen'),
           e(View, { style: styles.partyBox },
-            e(Text, { style: styles.partyName }, companyProfile?.companyName || parties?.seller || '[Partei A]'),
-            (companyProfile?.street || parties?.sellerAddress) && e(Text, { style: styles.partyAddress }, companyProfile?.street || parties?.sellerAddress),
+            e(Text, { style: styles.partyName }, resolvedParties.partyAName || '[Vertragspartei A]'),
+            resolvedParties.partyAAddress && e(Text, { style: styles.partyAddress }, resolvedParties.partyAAddress),
             e(Text, { style: styles.partyRole }, partyLabels.partyA)
           ),
           e(Text, { style: styles.partiesLabel }, 'und'),
           e(View, { style: styles.partyBox },
-            e(Text, { style: styles.partyName }, parties?.buyer || parties?.partyB || '[Partei B]'),
-            parties?.buyerAddress && e(Text, { style: styles.partyAddress }, parties.buyerAddress),
+            e(Text, { style: styles.partyName }, resolvedParties.partyBName || '[Vertragspartei B]'),
+            resolvedParties.partyBAddress && e(Text, { style: styles.partyAddress }, resolvedParties.partyBAddress),
             e(Text, { style: styles.partyRole }, partyLabels.partyB)
           )
         )
@@ -974,16 +1102,16 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
         e(View, { style: styles.partiesContainer },
           e(Text, { style: styles.partiesLabel }, '~ zwischen ~'),
           e(View, { style: styles.partyBox },
-            e(Text, { style: styles.partyName }, companyProfile?.companyName || parties?.seller || '[Partei A]'),
-            (companyProfile?.street || parties?.sellerAddress) && e(Text, { style: styles.partyAddress }, companyProfile?.street || parties?.sellerAddress),
-            (companyProfile?.zip || parties?.sellerCity) && e(Text, { style: styles.partyAddress }, companyProfile?.zip ? `${companyProfile.zip} ${companyProfile.city || ''}` : parties?.sellerCity),
+            e(Text, { style: styles.partyName }, resolvedParties.partyAName || '[Vertragspartei A]'),
+            resolvedParties.partyAAddress && e(Text, { style: styles.partyAddress }, resolvedParties.partyAAddress),
+            resolvedParties.partyACity && e(Text, { style: styles.partyAddress }, resolvedParties.partyACity),
             e(Text, { style: styles.partyRole }, `– nachfolgend „${partyLabels.partyA}" genannt –`)
           ),
           e(Text, { style: styles.partiesLabel }, '~ und ~'),
           e(View, { style: styles.partyBox },
-            e(Text, { style: styles.partyName }, parties?.buyer || parties?.partyB || '[Partei B]'),
-            parties?.buyerAddress && e(Text, { style: styles.partyAddress }, parties.buyerAddress),
-            parties?.buyerCity && e(Text, { style: styles.partyAddress }, parties.buyerCity),
+            e(Text, { style: styles.partyName }, resolvedParties.partyBName || '[Vertragspartei B]'),
+            resolvedParties.partyBAddress && e(Text, { style: styles.partyAddress }, resolvedParties.partyBAddress),
+            resolvedParties.partyBCity && e(Text, { style: styles.partyAddress }, resolvedParties.partyBCity),
             e(Text, { style: styles.partyRole }, `– nachfolgend „${partyLabels.partyB}" genannt –`)
           )
         )
@@ -1025,9 +1153,9 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
                 e(Text, { style: styles.partyRole }, partyLabels.partyA)
               ),
               e(View, { style: styles.partyBoxContent },
-                e(Text, { style: styles.partyName }, companyProfile?.companyName || parties?.seller || '[Name]'),
-                (companyProfile?.street || parties?.sellerAddress) && e(Text, { style: styles.partyAddress }, companyProfile?.street || parties?.sellerAddress),
-                (companyProfile?.zip || parties?.sellerCity) && e(Text, { style: styles.partyAddress }, companyProfile?.zip ? `${companyProfile.zip} ${companyProfile.city || ''}` : parties?.sellerCity)
+                e(Text, { style: styles.partyName }, resolvedParties.partyAName || '[Name]'),
+                resolvedParties.partyAAddress && e(Text, { style: styles.partyAddress }, resolvedParties.partyAAddress),
+                resolvedParties.partyACity && e(Text, { style: styles.partyAddress }, resolvedParties.partyACity)
               )
             ),
             e(Text, { style: styles.partiesLabel }, 'Partei B'),
@@ -1036,9 +1164,9 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
                 e(Text, { style: styles.partyRole }, partyLabels.partyB)
               ),
               e(View, { style: styles.partyBoxContent },
-                e(Text, { style: styles.partyName }, parties?.buyer || parties?.partyB || '[Name]'),
-                parties?.buyerAddress && e(Text, { style: styles.partyAddress }, parties.buyerAddress),
-                parties?.buyerCity && e(Text, { style: styles.partyAddress }, parties.buyerCity)
+                e(Text, { style: styles.partyName }, resolvedParties.partyBName || '[Name]'),
+                resolvedParties.partyBAddress && e(Text, { style: styles.partyAddress }, resolvedParties.partyBAddress),
+                resolvedParties.partyBCity && e(Text, { style: styles.partyAddress }, resolvedParties.partyBCity)
               )
             )
           )
@@ -1079,16 +1207,16 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
       e(View, { style: styles.partiesContainer },
         e(Text, { style: styles.partiesLabel }, 'zwischen'),
         e(View, { style: styles.partyBox },
-          e(Text, { style: styles.partyName }, companyProfile?.companyName || parties?.seller || parties?.partyA || '[Vertragspartei A]'),
-          (companyProfile?.street || parties?.sellerAddress || parties?.partyAAddress) && e(Text, { style: styles.partyAddress }, companyProfile?.street || parties?.sellerAddress || parties?.partyAAddress),
-          (companyProfile?.zip || parties?.sellerCity || parties?.partyACity) && e(Text, { style: styles.partyAddress }, companyProfile?.zip ? `${companyProfile.zip} ${companyProfile.city || ''}` : (parties?.sellerCity || parties?.partyACity || '')),
+          e(Text, { style: styles.partyName }, resolvedParties.partyAName || '[Vertragspartei A]'),
+          resolvedParties.partyAAddress && e(Text, { style: styles.partyAddress }, resolvedParties.partyAAddress),
+          resolvedParties.partyACity && e(Text, { style: styles.partyAddress }, resolvedParties.partyACity),
           e(Text, { style: styles.partyRole }, `– nachfolgend „${partyLabels.partyA}" genannt –`)
         ),
         e(Text, { style: styles.partiesLabel }, 'und'),
         e(View, { style: styles.partyBox },
-          e(Text, { style: styles.partyName }, parties?.buyer || parties?.partyB || parties?.buyerName || '[Vertragspartei B]'),
-          (parties?.buyerAddress || parties?.partyBAddress) && e(Text, { style: styles.partyAddress }, parties?.buyerAddress || parties?.partyBAddress),
-          (parties?.buyerCity || parties?.partyBCity) && e(Text, { style: styles.partyAddress }, parties?.buyerCity || parties?.partyBCity),
+          e(Text, { style: styles.partyName }, resolvedParties.partyBName || '[Vertragspartei B]'),
+          resolvedParties.partyBAddress && e(Text, { style: styles.partyAddress }, resolvedParties.partyBAddress),
+          resolvedParties.partyBCity && e(Text, { style: styles.partyAddress }, resolvedParties.partyBCity),
           e(Text, { style: styles.partyRole }, `– nachfolgend „${partyLabels.partyB}" genannt –`)
         )
       )
@@ -1253,7 +1381,7 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType, do
 /**
  * Unterschriften-Seite Komponente
  */
-const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qrCode, documentId, currentDate, attachments = [], contractType = 'Vertrag' }) => {
+const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, resolvedParties, qrCode, documentId, currentDate, attachments = [], contractType = 'Vertrag' }) => {
   const e = React.createElement;
   const layoutType = theme.layout;
 
@@ -1290,7 +1418,7 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
                 e(View, { style: styles.signatureLine }),
                 e(Text, { style: styles.signatureHint }, 'Unterschrift')
               ),
-              e(Text, { style: styles.signatureName }, companyProfile?.companyName || parties?.seller || partyLabels.partyA)
+              e(Text, { style: styles.signatureName }, resolvedParties.partyAName || partyLabels.partyA)
             ),
             e(View, { style: styles.signatureColumn },
               e(Text, { style: styles.signatureLabel }, partyLabels.partyB),
@@ -1302,7 +1430,7 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
                 e(View, { style: styles.signatureLine }),
                 e(Text, { style: styles.signatureHint }, 'Unterschrift')
               ),
-              e(Text, { style: styles.signatureName }, parties?.buyer || parties?.partyB || partyLabels.partyB)
+              e(Text, { style: styles.signatureName }, resolvedParties.partyBName || partyLabels.partyB)
             )
           ),
           e(View, { style: styles.verificationContainer },
@@ -1349,7 +1477,7 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
                 e(View, { style: styles.signatureLine }),
                 e(Text, { style: styles.signatureHint }, 'Unterschrift')
               ),
-              e(Text, { style: styles.signatureName }, companyProfile?.companyName || parties?.seller || partyLabels.partyA)
+              e(Text, { style: styles.signatureName }, resolvedParties.partyAName || partyLabels.partyA)
             ),
             e(View, { style: styles.signatureColumn },
               e(Text, { style: styles.signatureLabel }, partyLabels.partyB),
@@ -1361,7 +1489,7 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
                 e(View, { style: styles.signatureLine }),
                 e(Text, { style: styles.signatureHint }, 'Unterschrift')
               ),
-              e(Text, { style: styles.signatureName }, parties?.buyer || parties?.partyB || partyLabels.partyB)
+              e(Text, { style: styles.signatureName }, resolvedParties.partyBName || partyLabels.partyB)
             )
           ),
           e(View, { style: styles.verificationContainer },
@@ -1401,7 +1529,7 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
             e(View, { style: styles.signatureLine }),
             e(Text, { style: styles.signatureHint }, 'Unterschrift')
           ),
-          e(Text, { style: styles.signatureName }, companyProfile?.companyName || parties?.seller || partyLabels.partyA),
+          e(Text, { style: styles.signatureName }, resolvedParties.partyAName || partyLabels.partyA),
           companyProfile?.companyName && e(Text, { style: styles.signatureRole }, '(Geschäftsführung)')
         ),
         e(View, { style: styles.signatureColumn },
@@ -1414,7 +1542,7 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, qr
             e(View, { style: styles.signatureLine }),
             e(Text, { style: styles.signatureHint }, 'Unterschrift')
           ),
-          e(Text, { style: styles.signatureName }, parties?.buyer || parties?.partyB || partyLabels.partyB),
+          e(Text, { style: styles.signatureName }, resolvedParties.partyBName || partyLabels.partyB),
           e(Text, { style: styles.signatureRole }, '(Name in Druckschrift)')
         )
       ),
@@ -1516,6 +1644,31 @@ const generatePDFv2 = async (contractText, companyProfile, contractType, parties
   // Parteien-Labels basierend auf Vertragstyp
   const partyLabels = getPartyLabels(contractType);
 
+  // Universelle Parteinamen-Auflösung (unabhängig vom Vertragstyp)
+  const resolvedParties = resolvePartyNames(parties);
+
+  // 🔧 SMART PARTY NAMES: Extrahiere Namen aus dem Vertragstext (höchste Priorität!)
+  // Der LLM-generierte Vertragstext hat die korrekte Groß-/Kleinschreibung
+  const textParties = extractPartiesFromText(contractText);
+  if (textParties) {
+    console.log('📝 [PDF] Parteinamen aus Vertragstext extrahiert:', JSON.stringify(textParties));
+    // Text-extrahierte Namen überschreiben Form-Daten (höchste Priorität)
+    if (textParties.partyAName) resolvedParties.partyAName = textParties.partyAName;
+    if (textParties.partyBName) resolvedParties.partyBName = textParties.partyBName;
+    if (textParties.partyAAddress) resolvedParties.partyAAddress = textParties.partyAAddress;
+    if (textParties.partyBAddress) resolvedParties.partyBAddress = textParties.partyBAddress;
+  }
+
+  // Proper Case als Sicherheitsnetz (falls Daten aus Formular ganz klein geschrieben sind)
+  if (resolvedParties.partyAName) resolvedParties.partyAName = toProperCase(resolvedParties.partyAName);
+  if (resolvedParties.partyBName) resolvedParties.partyBName = toProperCase(resolvedParties.partyBName);
+  if (resolvedParties.partyAAddress) resolvedParties.partyAAddress = toProperCase(resolvedParties.partyAAddress);
+  if (resolvedParties.partyBAddress) resolvedParties.partyBAddress = toProperCase(resolvedParties.partyBAddress);
+  if (resolvedParties.partyACity) resolvedParties.partyACity = toProperCase(resolvedParties.partyACity);
+  if (resolvedParties.partyBCity) resolvedParties.partyBCity = toProperCase(resolvedParties.partyBCity);
+
+  console.log('👥 [PDF] Finale Parteinamen:', JSON.stringify(resolvedParties));
+
   // Vertragstext parsen
   const sections = parseContractText(contractText);
   console.log(`📊 ${sections.length} Abschnitte gefunden`);
@@ -1537,6 +1690,7 @@ const generatePDFv2 = async (contractText, companyProfile, contractType, parties
       contractType,
       parties,
       partyLabels,
+      resolvedParties,
       currentDate,
       documentId,
       isDraft,
@@ -1561,6 +1715,7 @@ const generatePDFv2 = async (contractText, companyProfile, contractType, parties
       partyLabels,
       companyProfile,
       parties,
+      resolvedParties,
       qrCode,
       documentId,
       currentDate,
@@ -1580,6 +1735,9 @@ const generatePDFv2 = async (contractText, companyProfile, contractType, parties
 module.exports = {
   generatePDFv2,
   getPartyLabels,
+  resolvePartyNames,
+  extractPartiesFromText,
+  toProperCase,
   parseContractText,
   DESIGN_THEMES
 };

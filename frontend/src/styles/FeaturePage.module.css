@@ -2922,7 +2922,7 @@
 }
 
 .problemWarning2 {
-  bottom: 40px;
+  bottom: -15px;
   left: -30px;
   animation-delay: 0.5s;
 }

@@ -3614,7 +3614,12 @@ export default function Generate() {
       
       setContractText(data.contractText);
       setGeneratedHTML(data.contractHTML || "");
-      
+
+      // Erfasse contractId aus Backend-Response (verhindert Duplikate bei handleSave)
+      if (data.contractId) {
+        setSavedContractId(data.contractId);
+      }
+
       setContractData((prev: any) => ({
         ...prev,
         contractType: selectedType.name,
@@ -3685,8 +3690,11 @@ export default function Generate() {
         name: `${contractData.contractType || 'Vertrag'} - ${new Date().toLocaleDateString('de-DE')}`,
         content: contractText || '',
         isGenerated: true,
+        contractType: selectedType?.id || contractData.contractType,
+        formData: contractData.parties,
+        designVariant: selectedDesignVariant,
         metadata: {
-          contractType: contractData.contractType,
+          contractType: selectedType?.id || contractData.contractType,
           parties: {
             ...contractData.parties,
             // ✅ Include updated buyer data from form
@@ -3706,8 +3714,8 @@ export default function Generate() {
         bodyData.htmlContent = null;
         bodyData.contractHTML = null;
       } else {
-        // Bei CREATE: Sende Original HTML
-        bodyData.htmlContent = generatedHTML || undefined;
+        // Bei CREATE: Sende Original HTML (contractHTML ist der richtige Feldname)
+        bodyData.contractHTML = generatedHTML || undefined;
       }
 
       const res = await fetch(url, {
